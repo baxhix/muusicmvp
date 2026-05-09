@@ -10,12 +10,31 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
-export const env = schema.parse({
-  APP_URL: process.env.APP_URL,
-  DATABASE_URL: process.env.DATABASE_URL,
-  AUTH_SECRET: process.env.AUTH_SECRET,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  EMAIL_FROM: process.env.EMAIL_FROM,
-  MAPBOX_TOKEN: process.env.MAPBOX_TOKEN,
-  NODE_ENV: process.env.NODE_ENV,
-});
+type Env = z.infer<typeof schema>;
+
+let cached: Env | undefined;
+
+function load(): Env {
+  if (cached) return cached;
+  cached = schema.parse({
+    APP_URL: process.env.APP_URL,
+    DATABASE_URL: process.env.DATABASE_URL,
+    AUTH_SECRET: process.env.AUTH_SECRET,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
+    MAPBOX_TOKEN: process.env.MAPBOX_TOKEN,
+    NODE_ENV: process.env.NODE_ENV,
+  });
+  return cached;
+}
+
+/**
+ * Lazy-validated env. Reads `process.env` on first property access, not at
+ * module import — so Next.js's build-time "collecting page data" pass can
+ * import server modules without runtime envs being set yet.
+ */
+export const env = new Proxy({} as Env, {
+  get(_t, prop: string | symbol) {
+    return load()[prop as keyof Env];
+  },
+}) as Env;

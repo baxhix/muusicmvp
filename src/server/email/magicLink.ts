@@ -1,4 +1,4 @@
-import { resend } from './resend';
+import { getResend } from './resend';
 import { env } from '../env';
 
 export async function sendMagicLink(to: string, token: string): Promise<void> {
@@ -26,7 +26,7 @@ export async function sendMagicLink(to: string, token: string): Promise<void> {
     </div>
   `;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: env.EMAIL_FROM,
     to,
     subject: 'Seu link de acesso ao muusic',
