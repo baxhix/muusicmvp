@@ -115,8 +115,11 @@ export async function stopListening(userId: string): Promise<void> {
 
 /**
  * Find other users currently listening to the same track and create
- * `same_track` notifications for them (de-duped per pair within 1h).
- * Returns the list of created notification rows.
+ * `same_track` notifications BOTH WAYS (de-duped per directed pair within 1h):
+ *   - For every other user B currently on the same track: notify B about A
+ *     (the source) AND notify A about B.
+ *
+ * Returns the list of created notifications so realtime can push them.
  */
 export async function notifySameTrackListeners(
   sourceUserId: string,
@@ -141,37 +144,42 @@ export async function notifySameTrackListeners(
   const dedupeCutoff = new Date(Date.now() - SAME_TRACK_DEDUPE_MS);
   const created: Array<{ userId: string; notificationId: string }> = [];
 
-  for (const { userId } of others) {
-    // Skip if a same_track notification for this pair+track already exists recently.
+  /** Insert one same_track notification (target ← source) if not deduped. */
+  async function notifyOnce(targetUserId: string, fromUserId: string) {
     const existing = await db
       .select({ id: notifications.id })
       .from(notifications)
       .where(
         and(
-          eq(notifications.userId, userId),
+          eq(notifications.userId, targetUserId),
           eq(notifications.kind, 'same_track'),
-          eq(notifications.sourceUserId, sourceUserId),
+          eq(notifications.sourceUserId, fromUserId),
           eq(notifications.trackId, trackId),
           gt(notifications.createdAt, dedupeCutoff),
         ),
       )
       .limit(1);
-
-    if (existing.length) continue;
+    if (existing.length) return;
 
     const inserted = await db
       .insert(notifications)
       .values({
-        userId,
+        userId: targetUserId,
         kind: 'same_track',
-        sourceUserId,
+        sourceUserId: fromUserId,
         trackId,
       })
       .returning({ id: notifications.id });
 
     if (inserted[0]) {
-      created.push({ userId, notificationId: inserted[0].id });
+      created.push({ userId: targetUserId, notificationId: inserted[0].id });
     }
+  }
+
+  for (const { userId: otherId } of others) {
+    // Bilateral: notify the OTHER about the source, AND the source about the other.
+    await notifyOnce(otherId, sourceUserId);
+    await notifyOnce(sourceUserId, otherId);
   }
 
   return created;
