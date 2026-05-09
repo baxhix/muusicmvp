@@ -46,6 +46,23 @@
   border: 1.5px solid #000;
 }
 
+/* Halo pulse — fires once when unread count grows. Visual nudge so the
+   user notices the bell without a sound. */
+.bellPulse::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #ef4444;
+  opacity: 0;
+  pointer-events: none;
+  animation: bellPulse 0.9s ease-out;
+}
+@keyframes bellPulse {
+  0%   { transform: scale(0.8);  opacity: 0.85; }
+  100% { transform: scale(1.6);  opacity: 0;    }
+}
+
 /* ── Dropdown panel ── */
 .panel {
   position: absolute;

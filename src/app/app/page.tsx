@@ -5,18 +5,17 @@ import Link from 'next/link';
 import { useState, useCallback } from 'react';
 
 import TopBar from '@/components/app/TopBar';
-import StatusToggle from '@/components/app/StatusToggle';
 import FilterTabs from '@/components/app/FilterTabs';
 import { LiveBadgeLayer } from '@/components/app/LiveBadge';
-import ChatStack from '@/components/app/ChatStack';
-import ChatPanel from '@/components/app/ChatPanel';
+import LiveChatStack from '@/components/app/LiveChatStack';
+import LiveChatPanel from '@/components/app/LiveChatPanel';
+import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
 import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import BottomNav from '@/components/app/BottomNav';
 import FeedPanel from '@/components/app/FeedPanel';
 import ProfilePanel, { type ProfileUser } from '@/components/app/ProfilePanel';
-import SuperfanMissions from '@/components/app/SuperfanMissions';
 import SuperfansPanel from '@/components/app/SuperfansPanel';
 import SideBar from '@/components/app/SideBar';
 import Onboarding from '@/components/app/Onboarding';
@@ -28,11 +27,10 @@ import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 
-import { useChatPanel } from '@/hooks/useChatPanel';
+import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
-import { chatUsers } from '@/data/chatData';
 import { liveBadges, badgeSets } from '@/data/mapData';
-import type { FilterTabId, ChatUser, LiveBadgeData } from '@/types';
+import type { FilterTabId, LiveBadgeData } from '@/types';
 import { globeStore } from '@/lib/globeStore';
 
 import styles from './page.module.css';
@@ -46,7 +44,7 @@ const USER_CITIES: Record<string, { center: [number, number]; zoom: number }> = 
 };
 
 export default function AppPage() {
-  const { activeUser, isOpen, toggleChat, closeChat } = useChatPanel();
+  const chat = useChatLive();
   const [badgePositionIdx, setBadgePositionIdx] = useState(0);
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
@@ -56,6 +54,7 @@ export default function AppPage() {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showSuperchat, setShowSuperchat] = useState(false);
+  const [showUserPicker, setShowUserPicker] = useState(false);
   const [songIdx, setSongIdx] = useState(0);
 
   // Asks for browser geolocation on first authenticated load (per session).
@@ -73,12 +72,6 @@ export default function AppPage() {
     nowPlaying: { title: 'Forro da Despedida', artist: 'Forró do Alagoano' },
   };
 
-  const handleUserClick = useCallback((user: ChatUser) => {
-    toggleChat(user);
-    const city = USER_CITIES[user.id];
-    if (city) globeStore.flyTo(city.center, city.zoom);
-  }, [toggleChat]);
-
   const handleBadgeClick = useCallback((badge: LiveBadgeData) => {
     const city = USER_CITIES[badge.id];
     if (city) globeStore.flyTo(city.center, city.zoom);
@@ -87,6 +80,9 @@ export default function AppPage() {
   const handleTabChange = useCallback((idx: number, _tabId: FilterTabId) => {
     setBadgePositionIdx(idx);
   }, []);
+
+  const activeConversation =
+    chat.conversations.find((c) => c.id === chat.activeId) ?? null;
 
   return (
     <>
@@ -121,9 +117,6 @@ export default function AppPage() {
 
           {/* Floating users (background ambient) */}
           <FloatingUsers />
-
-          {/* Chat panel */}
-          <ChatPanel user={activeUser} isOpen={isOpen} onClose={closeChat} />
         </div>
 
         <BottomNav
@@ -142,8 +135,24 @@ export default function AppPage() {
       />
 
       <SideBar />
-      {/* <SuperfanMissions /> */}
-      <ChatStack users={chatUsers} onUserClick={handleUserClick} />
+      <LiveChatStack
+        conversations={chat.conversations}
+        activeId={chat.activeId}
+        onOpen={chat.open}
+        onAddClick={() => setShowUserPicker(true)}
+      />
+      <LiveChatPanel
+        conversation={activeConversation}
+        messages={chat.messages}
+        loading={chat.loadingMessages}
+        onClose={chat.close}
+        onSend={chat.send}
+      />
+      <UserPicker
+        open={showUserPicker}
+        onClose={() => setShowUserPicker(false)}
+        onPick={(uid) => chat.openDmWith(uid)}
+      />
       <ListeningTogether playerExpanded={playerExpanded} playerSize={playerSize} />
 
       {showProfile

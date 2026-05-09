@@ -5,6 +5,8 @@ import { useNotificationsLive } from '@/hooks/useNotificationsLive';
 import type { ApiNotification } from '@/lib/api/types';
 import styles from './NotificationBell.module.css';
 
+const PULSE_MS = 900;
+
 function timeAgo(iso: string): string {
   const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diffSec < 60) return 'agora';
@@ -38,7 +40,20 @@ export default function NotificationBell() {
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotificationsLive();
   const [open, setOpen] = useState(false);
+  const [pulse, setPulse] = useState(false);
+  const lastUnreadRef = useRef(unreadCount);
   const dropRef = useRef<HTMLDivElement>(null);
+
+  // Pulse when unread count grows
+  useEffect(() => {
+    if (unreadCount > lastUnreadRef.current) {
+      setPulse(true);
+      const id = setTimeout(() => setPulse(false), PULSE_MS);
+      lastUnreadRef.current = unreadCount;
+      return () => clearTimeout(id);
+    }
+    lastUnreadRef.current = unreadCount;
+  }, [unreadCount]);
 
   // Close on outside click
   useEffect(() => {
@@ -55,7 +70,7 @@ export default function NotificationBell() {
   return (
     <div className={styles.wrap} ref={dropRef}>
       <button
-        className={styles.bell}
+        className={`${styles.bell} ${pulse ? styles.bellPulse : ''}`}
         onClick={() => setOpen((v) => !v)}
         aria-label={`Notificações${unreadCount ? ` (${unreadCount} não lidas)` : ''}`}
       >
