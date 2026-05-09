@@ -7,6 +7,10 @@ const schema = z.object({
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().min(1),
   MAPBOX_TOKEN: z.string().min(1),
+  // Optional: when set, the session cookie is scoped to this domain so it's
+  // shared between muusic.live and admin.muusic.live. Use leading dot:
+  // ".muusic.live"
+  COOKIE_DOMAIN: z.string().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -23,6 +27,7 @@ function load(): Env {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     MAPBOX_TOKEN: process.env.MAPBOX_TOKEN,
+    COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
     NODE_ENV: process.env.NODE_ENV,
   });
   return cached;

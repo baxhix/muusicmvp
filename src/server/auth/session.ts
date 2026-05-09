@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '../db';
 import { tokens, users, type User } from '../db/schema';
+import { env } from '../env';
 import { hashToken, SESSION_TTL_MS, generateToken } from './tokens';
 
 export const SESSION_COOKIE = 'muusic_session';
@@ -25,6 +26,8 @@ export async function createSession(userId: string): Promise<void> {
     sameSite: 'lax',
     path: '/',
     expires: expiresAt,
+    // When set (prod), shares the cookie with subdomains (e.g. admin.*).
+    ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
   });
 }
 
@@ -58,5 +61,12 @@ export async function destroySession(): Promise<void> {
   if (raw) {
     await db.delete(tokens).where(eq(tokens.tokenHash, hashToken(raw)));
   }
-  cookieStore.delete(SESSION_COOKIE);
+  cookieStore.set(SESSION_COOKIE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    expires: new Date(0),
+    ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
+  });
 }

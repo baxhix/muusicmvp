@@ -24,8 +24,12 @@ import LocateButton from '@/components/app/LocateButton';
 import EditProfileModal from '@/components/app/EditProfileModal';
 import DeleteAccountModal from '@/components/app/DeleteAccountModal';
 import PlaylistModal from '@/components/app/PlaylistModal';
+import NotificationBell from '@/components/app/NotificationBell';
+import SuperchatTrigger from '@/components/app/SuperchatTrigger';
+import SuperchatPanel from '@/components/app/SuperchatPanel';
 
 import { useChatPanel } from '@/hooks/useChatPanel';
+import { useLocationSync } from '@/hooks/useLocationSync';
 import { chatUsers } from '@/data/chatData';
 import { liveBadges, badgeSets } from '@/data/mapData';
 import type { FilterTabId, ChatUser, LiveBadgeData } from '@/types';
@@ -51,7 +55,12 @@ export default function AppPage() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(false);
+  const [showSuperchat, setShowSuperchat] = useState(false);
   const [songIdx, setSongIdx] = useState(0);
+
+  // Asks for browser geolocation on first authenticated load (per session).
+  // Server snaps to city centroid + per-user jitter; exact GPS isn't stored.
+  useLocationSync();
 
   const LOGGED_USER: ProfileUser = {
     id: 'me',
@@ -171,6 +180,14 @@ export default function AppPage() {
       />
 
       <LocateButton />
+
+      {/* Realtime UI surfaces */}
+      <NotificationBell />
+      <SuperchatTrigger onClick={() => setShowSuperchat(true)} />
+      <SuperchatPanel
+        open={showSuperchat}
+        onClose={() => setShowSuperchat(false)}
+      />
 
       <Onboarding />
     </>

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNowPlaying } from '@/hooks/useNowPlaying';
 import { useSpotifyNowPlaying } from '@/hooks/useSpotifyNowPlaying';
+import { useListeningTracker } from '@/hooks/useListeningTracker';
 import { startSpotifyLogin, disconnectSpotify } from '@/lib/spotify';
 import { TRACKS_CATALOG } from '@/data/tracksCatalog';
 import styles from './NowPlaying.module.css';
@@ -79,8 +80,17 @@ export default function NowPlaying({
     },
     [songIdx, onSongIdxChange]
   );
-  const { isPlaying, togglePlay, progressPercent, formattedCurrent, formattedTotal } =
+  const { isPlaying, togglePlay, progressPercent, formattedCurrent, formattedTotal, progressSecs } =
     useNowPlaying(64, 204);
+
+  // Reports listening activity to the realtime server. Server upserts
+  // now_playing + appends to listening_history; same_track notifications
+  // fire automatically on track change.
+  useListeningTracker({
+    youtubeId: SONGS[songIdx]?.youtubeId ?? null,
+    positionSeconds: progressSecs,
+    isPaused: !isPlaying,
+  });
 
   // Notifica os callbacks ao montar com o tamanho inicial (default = video)
   useEffect(() => {
