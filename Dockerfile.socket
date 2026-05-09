@@ -15,8 +15,9 @@ ENV SOCKET_PORT=3002
 RUN addgroup -g 1001 -S nodejs && adduser -S realtime -u 1001
 
 COPY --from=deps --chown=realtime:nodejs /app/node_modules ./node_modules
-COPY --chown=realtime:nodejs package.json package-lock.json tsconfig.json ./
+COPY --chown=realtime:nodejs package.json package-lock.json tsconfig.json drizzle.config.ts ./
 COPY --chown=realtime:nodejs src ./src
+COPY --chown=realtime:nodejs drizzle ./drizzle
 
 USER realtime
 EXPOSE 3002

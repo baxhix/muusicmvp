@@ -68,10 +68,11 @@ Required values:
 
 ```bash
 docker compose up -d postgres
-docker compose exec web echo ok 2>/dev/null  # web isn't up yet, expected to fail
+docker compose build socket   # socket image is the one that ships with src/ + tsx + drizzle/
 
-# Run migrations + seed via a one-shot container so we don't depend on web
-docker compose run --rm web sh -c "npx tsx src/server/db/migrate.ts && npx tsx src/server/db/seed.ts"
+# Run migrations + seed via the socket image (web standalone has no src/)
+docker compose run --rm socket npx tsx src/server/db/migrate.ts
+docker compose run --rm socket npx tsx src/server/db/seed.ts
 ```
 
 Quick verification:
