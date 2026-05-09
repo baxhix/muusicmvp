@@ -1,0 +1,231 @@
+.section {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.stackWrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 200px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 64px;
+  align-items: center;
+  padding: 80px 56px;
+  background: rgba(2, 2, 5, 0.985);
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  position: sticky;
+  width: 100%;
+  /* Sombra acima — faz parecer que o card "subiu" sobre o anterior */
+  box-shadow: 0 -28px 60px -10px rgba(0, 0, 0, 0.55);
+}
+
+/* Stack escalonado — cada card gruda mais abaixo que o anterior, criando o
+   efeito de empilhamento conforme a página rola. */
+.row:nth-child(1) {
+  top: 64px;  z-index: 1;
+  background: transparent;
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: none;
+}
+.row:nth-child(2) { top: 90px;  z-index: 2; }
+.row:nth-child(3) { top: 116px; z-index: 3; }
+.row:nth-child(4) { top: 142px; z-index: 4; }
+.row:nth-child(5) { top: 168px; z-index: 5; }
+.row:nth-child(6) { top: 194px; z-index: 6; }
+
+/* ── Media ── */
+.media {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--surface-3) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--line-strong, #2A2A33);
+  position: relative;
+  overflow: hidden;
+  justify-self: end;
+  width: 100%;
+  max-width: 540px;
+  opacity: 0;
+  transform: scale(0.94) translateY(18px);
+  transition:
+    opacity 0.75s cubic-bezier(0.16,1,0.3,1),
+    transform 0.75s cubic-bezier(0.16,1,0.3,1);
+}
+.media::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.rowVisible .media {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.mediaTag {
+  position: absolute;
+  top: 16px; left: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  background: rgba(8,8,10,0.7);
+  padding: 5px 9px;
+  border-radius: 3px;
+  border: 1px solid var(--line, rgba(255,255,255,0.07));
+}
+
+/* ── Content ── */
+.content {
+  display: flex;
+  flex-direction: column;
+  max-width: 460px;
+  justify-self: start;
+}
+
+.num {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.65s cubic-bezier(0.16,1,0.3,1) 0.12s,
+    transform 0.65s cubic-bezier(0.16,1,0.3,1) 0.12s;
+}
+
+.title {
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--ink);
+  margin-bottom: 18px;
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.65s cubic-bezier(0.16,1,0.3,1) 0.22s,
+    transform 0.65s cubic-bezier(0.16,1,0.3,1) 0.22s;
+}
+
+.title em {
+  font-family: var(--serif);
+  font-style: italic;
+  display: inline-block;
+  color: var(--ink-mute);
+  letter-spacing: -0.01em;
+  transition: color 0.5s ease 0.5s, letter-spacing 0.5s ease 0.5s;
+}
+
+.desc {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.65s cubic-bezier(0.16,1,0.3,1) 0.34s,
+    transform 0.65s cubic-bezier(0.16,1,0.3,1) 0.34s;
+}
+
+.rowVisible .num,
+.rowVisible .title,
+.rowVisible .desc {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rowVisible .title em {
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+/* ── Media Compositions ── */
+.mediaPulse {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.mediaPulseCore {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: media-pulse 2.4s ease-out infinite;
+}
+.mediaPulseDot {
+  position: absolute;
+  width: 5px; height: 5px;
+  background: var(--ink);
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.mediaBars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px;
+}
+.mediaBar {
+  width: 6px;
+  background: var(--ink);
+  border-radius: 2px;
+  opacity: 0.65;
+  animation: bar-bounce 1.2s ease-in-out infinite;
+}
+
+.mediaNet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.mediaNetNode {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+}
+.mediaNetNodeCenter {
+  width: 14px; height: 14px;
+  background: var(--accent);
+  box-shadow: 0 0 24px var(--accent);
+  z-index: 2;
+}
+
+@media (max-width: 1100px) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 48px 32px;
+  }
+  .media { justify-self: center; max-width: 100%; }
+  .content { max-width: 100%; justify-self: center; text-align: center; align-items: center; }
+}

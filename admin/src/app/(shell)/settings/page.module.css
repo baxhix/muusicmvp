@@ -1,0 +1,245 @@
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tabsRow {
+  margin: -18px 0 0;
+  padding: 0;
+}
+
+.tabsCard {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 14px 0;
+  background: var(--bg);
+}
+
+/* ── Generic form blocks ─────────────────────── */
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 800px) {
+  .formGrid { grid-template-columns: 1fr; }
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface-2);
+}
+
+.formBody {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Equipe ─────────────────────────────────── */
+
+.memberCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.memberText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.memberName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.memberEmail {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  line-height: 1.2;
+}
+.memberMute {
+  font-size: 12.5px;
+  color: var(--text-mute);
+}
+
+/* ── Integrações ────────────────────────────── */
+
+.integrationsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 18px;
+}
+
+.integration {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+.integration:hover { border-color: var(--border-strong); }
+
+.intHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.intName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.intCategory {
+  font-size: 11px;
+  color: var(--text-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.intLogo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--text-soft);
+  font-size: 13px;
+  letter-spacing: -0.04em;
+}
+.intDescription {
+  font-size: 12.5px;
+  color: var(--text-mute);
+  line-height: 1.5;
+  flex: 1;
+}
+.intFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* ── Faturamento ────────────────────────────── */
+
+.planHero {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+  padding: 18px;
+}
+@media (max-width: 900px) {
+  .planHero { grid-template-columns: 1fr; }
+}
+
+.planMain {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.planLabel {
+  font-size: 11px;
+  color: var(--text-mute);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.planName {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.planPrice {
+  font-size: 13px;
+  color: var(--text-mute);
+  font-feature-settings: 'tnum' 1;
+}
+.planSeats {
+  font-size: 12.5px;
+  color: var(--text-mute);
+}
+.planNext {
+  font-size: 12.5px;
+  color: var(--text-mute);
+}
+
+.paymentBox {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.paymentBrand {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.paymentMeta {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+.invoiceCell {
+  font-size: 13px;
+  color: var(--text);
+}
+.invoiceMute {
+  font-size: 12.5px;
+  color: var(--text-mute);
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ── API Keys ───────────────────────────────── */
+
+.keyCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.keyLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.keyPrefix {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-mute);
+}
+
+.keyScopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}

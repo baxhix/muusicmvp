@@ -1,0 +1,60 @@
+.btn {
+  position: fixed;
+  /* Mesma linha do player (bottom 24px), na extrema esquerda */
+  bottom: 24px;
+  left: 16px;
+  z-index: 25;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(11,11,13,0.92) 0%, rgba(2,2,3,0.95) 100%);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 10px 28px -8px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.02) inset;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: color 160ms ease, transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease;
+}
+.btn:hover {
+  color: #F5F5F7;
+  transform: scale(1.06);
+}
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.7; cursor: wait; }
+
+/* Quando o usuário já compartilhou a localização — destaca em ciano */
+.btnActive {
+  color: #38BDF8;
+  box-shadow:
+    0 10px 28px -8px rgba(0,0,0,0.7),
+    0 0 18px -2px rgba(56, 189, 248, 0.55),
+    0 0 0 1px rgba(56, 189, 248, 0.18) inset;
+}
+.btnActive:hover { color: #7DD3FC; }
+
+@keyframes locate-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.spin {
+  animation: locate-spin 0.9s linear infinite;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  /* Mobile: player ocupa quase toda a largura — sobe o botão pra acima dele */
+  .btn {
+    bottom: 168px;
+    left: 16px;
+    right: auto;
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -1,0 +1,495 @@
+/* ── PROFILE PANEL ─────────────────────────────────────────
+   Same glass morphism DNA as FeedPanel — independent component
+───────────────────────────────────────────────────────────── */
+
+@keyframes panelIn {
+  /* Combina translateX(-50%) (centralização) com translateY de "subida" */
+  from { opacity: 0; transform: translate(-50%, 24px) scale(0.98); }
+  to   { opacity: 1; transform: translate(-50%, 0)    scale(1);    }
+}
+
+/* Backdrop — escurece e desfoca o resto do site */
+@keyframes profileBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px) saturate(0.9);
+  -webkit-backdrop-filter: blur(8px) saturate(0.9);
+  pointer-events: auto;
+  animation: profileBackdropIn 240ms ease both;
+  cursor: pointer;
+}
+
+.panel {
+  position: fixed;
+  /* Acima da BottomNav, centralizado horizontalmente */
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(8vh + 30px);
+  width: min(440px, calc(100vw - 32px));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 35%,
+      rgba(2,2,3,0.76) 65%,
+      rgba(2,2,3,0.80) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: none;
+  border-radius: 20px;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 0 0 0.5px rgba(255,255,255,0.04) inset,
+    0 1px 0 rgba(255,255,255,0.08) inset;
+  overflow: hidden;
+  animation: panelIn 0.38s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── Header (mesmo padrão do SuperfansPanel) ─────────────── */
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 18px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  color: #F5F5F7;
+  margin: 0;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  color: rgba(245,245,247,0.6);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  flex-shrink: 0;
+}
+.closeBtn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #F5F5F7;
+  border-color: rgba(255,255,255,0.10);
+}
+.closeBtn:active { transform: translateY(-50%) scale(0.94); }
+
+/* ── Scroll area ─────────────────────────────────────────── */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.scroll::-webkit-scrollbar { width: 2px; }
+.scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+}
+
+/* ── Avatar section ─────────────────────────────────────── */
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 18px 0;
+  gap: 16px;
+}
+
+/* Wrapper relativo: avatar centralizado, badge à direita */
+.avatarWrap {
+  position: relative;
+  width: 118px;
+}
+
+/* Ring wrapper — 1 px border at exactly 6 px from the image edge
+   104px image + 6px gap × 2 sides + 1px border × 2 = 118px */
+.avatarRing {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.offline {
+  border-color: rgba(255,255,255,0.18);
+}
+
+.online {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(61,219,116,0.25);
+}
+
+.avatarImg {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Player + toggle online/offline ────────────────────── */
+.playerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px 0;
+}
+
+.onlineToggleWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.onlineToggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255,255,255,0.10);
+  cursor: pointer;
+  padding: 0;
+  transition: background 220ms ease;
+  flex-shrink: 0;
+}
+.onlineToggle:hover { background: rgba(255,255,255,0.16); }
+.onlineToggleOn { background: rgba(61,219,116,0.85); }
+.onlineToggleOn:hover { background: rgba(61,219,116,1); }
+
+.onlineToggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.onlineToggleOn .onlineToggleKnob { transform: translateX(20px); }
+
+.onlineToggleLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245,245,247,0.55);
+  letter-spacing: -0.005em;
+}
+
+/* ── Botões de ação abaixo do player ────────────────── */
+.actionsRow {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px 4px;
+  justify-content: center;
+}
+
+.actionBtn {
+  flex: 1 1 0;
+  max-width: 170px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: transparent;
+  color: #F5F5F7;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.actionBtn:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.18);
+}
+.actionBtn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── User info ───────────────────────────────────────────── */
+.userInfo {
+  padding: 16px 18px 0;
+  text-align: center;
+}
+
+.userName {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.userMeta {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(245,245,247,0.55);
+  line-height: 1.5;
+}
+
+/* Linha única: cidade · streams */
+.userMetaLine {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+.userMetaCity {
+  color: rgba(245,245,247,0.55);
+  font-weight: 400;
+}
+.userMetaSep {
+  color: rgba(245,245,247,0.35);
+  font-weight: 400;
+}
+.userStreamsNum {
+  color: #F5F5F7;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.userStreamsLabel {
+  color: rgba(245,245,247,0.55);
+  font-weight: 400;
+}
+
+/* ── Tabs ────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  margin: 18px 16px 0;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px 8px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: rgba(245,245,247,0.55);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.tab:hover { color: #F5F5F7; }
+.tabActive {
+  background: rgba(255,255,255,0.08);
+  color: #F5F5F7;
+}
+
+/* ── Tab content ─────────────────────────────────────────── */
+.tabContent {
+  padding: 8px 0 40px;
+}
+
+/* History */
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  cursor: pointer;
+  transition: background 0.13s;
+}
+.historyItem:hover { background: rgba(255,255,255,0.025); }
+
+.historyThumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.historyInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.historyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F5F5F7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.historyArtist {
+  font-size: 12px;
+  color: rgba(245,245,247,0.55);
+}
+.historyAgo {
+  font-size: 12px;
+  color: rgba(245,245,247,0.45);
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+
+/* Communities */
+.communityItem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  cursor: pointer;
+  transition: background 0.13s;
+}
+.communityItem:hover { background: rgba(255,255,255,0.025); }
+
+.communityEmoji {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.communityInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.communityName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F5F5F7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.communityMembers {
+  font-size: 12px;
+  color: rgba(245,245,247,0.55);
+}
+
+.joinBtn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(245,245,247,0.7);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.joinBtn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--ink);
+}
+
+/* Idols grid */
+.idolGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 12px 18px;
+}
+
+.idolItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.idolImg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 8px;
+}
+.idolItem:hover .idolImg {
+  border-color: rgba(255,255,255,0.28);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+.idolName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F5F5F7;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+  line-height: 1.25;
+}
+.idolGenre {
+  font-size: 12px;
+  color: rgba(245,245,247,0.55);
+  text-align: center;
+  line-height: 1.2;
+}

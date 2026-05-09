@@ -1,0 +1,44 @@
+.pill {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 999px;
+  padding: 8px 20px;
+  pointer-events: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  animation: dot-blink 1.8s ease-in-out infinite;
+}
+
+.val {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.sep {
+  width: 1px;
+  height: 14px;
+  background: var(--line);
+}

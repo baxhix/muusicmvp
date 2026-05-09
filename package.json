@@ -1,0 +1,45 @@
+{
+  "name": "muusic-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/server/db/migrate.ts",
+    "db:seed": "tsx src/server/db/seed.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "realtime:dev": "tsx watch src/server/realtime/server.ts",
+    "realtime:start": "tsx src/server/realtime/server.ts"
+  },
+  "dependencies": {
+    "@types/mapbox-gl": "^3.4.1",
+    "drizzle-orm": "^0.45.2",
+    "mapbox-gl": "^3.23.0",
+    "next": "^15.1.0",
+    "pg": "^8.20.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^6.12.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "three": "^0.149.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.149.0",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9",
+    "eslint-config-next": "^15.1.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

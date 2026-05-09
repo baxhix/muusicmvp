@@ -1,0 +1,23 @@
+# ─── deps ──────────────────────────────────────────────────────────────────
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# ─── runner ────────────────────────────────────────────────────────────────
+# Runs the Socket.IO server with `tsx` (no precompile step needed for a
+# small server; trade-off is +tsx in node_modules vs simpler build).
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV SOCKET_PORT=3002
+
+RUN addgroup -g 1001 -S nodejs && adduser -S realtime -u 1001
+
+COPY --from=deps --chown=realtime:nodejs /app/node_modules ./node_modules
+COPY --chown=realtime:nodejs package.json package-lock.json tsconfig.json ./
+COPY --chown=realtime:nodejs src ./src
+
+USER realtime
+EXPOSE 3002
+CMD ["npx", "tsx", "src/server/realtime/server.ts"]

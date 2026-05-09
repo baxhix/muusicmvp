@@ -1,0 +1,33 @@
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.shell > * { pointer-events: auto; }
+
+.mapLayer {
+  flex: 1;
+  position: relative;
+  pointer-events: none;
+}
+.mapLayer > * { pointer-events: auto; }
+
+.backBtn {
+  position: fixed;
+  top: 54px; left: 20px;
+  z-index: 20;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: grid;
+  place-items: center;
+  color: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.backBtn svg { display: none; }

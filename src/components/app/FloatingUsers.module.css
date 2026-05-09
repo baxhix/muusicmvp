@@ -1,0 +1,207 @@
+/* ── FLOATING USERS ── */
+
+@keyframes floatDrift {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(6px); }
+}
+
+/* Wrapper — handles pointer events and positioning */
+.wrapper {
+  position: absolute;
+  pointer-events: auto;
+  cursor: default;
+  animation: floatDrift var(--float-dur, 4s) ease-in-out var(--float-del, 0s) infinite;
+}
+
+.wrapperClickable { cursor: pointer; }
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 40px;
+  padding: 6px 11px 6px 7px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.wrapper:hover .badge {
+  background: rgba(6,6,8,0.92);
+  border-color: rgba(255,255,255,0.07);
+}
+
+/* ── Hover preview card ── */
+@keyframes previewIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.preview {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  background: linear-gradient(160deg,
+    rgba(8,8,18,0.97) 0%,
+    rgba(5,5,13,0.96) 100%);
+  backdrop-filter: blur(36px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(36px) brightness(0.72) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 11px 12px;
+  z-index: 50;
+  pointer-events: none;
+  animation: previewIn 0.2s cubic-bezier(0.16,1,0.3,1) both;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.04) inset;
+}
+
+.previewTop {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.previewAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.12);
+}
+
+.previewMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.previewNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.previewName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.previewCity {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(245,245,247,0.55);
+  white-space: nowrap;
+}
+.previewCity svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+.previewDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 9px 0 8px;
+}
+
+.previewSongRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.previewMusicIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.previewSongInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.previewSongTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #F5F5F7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.previewArtist {
+  font-size: 12px;
+  color: rgba(245,245,247,0.55);
+  white-space: nowrap;
+}
+
+/* Phase classes — applied to .wrapper */
+.entering {
+  animation:
+    fadeSlideIn 0.9s cubic-bezier(0.16,1,0.3,1) both,
+    floatDrift var(--float-dur, 4s) ease-in-out var(--float-del, 0s) 0.9s infinite;
+}
+
+.visible {
+  opacity: 1;
+  animation: floatDrift var(--float-dur, 4s) ease-in-out var(--float-del, 0s) infinite;
+}
+
+.exiting {
+  animation: fadeSlideOut 0.75s ease forwards;
+}
+
+/* Avatar */
+.avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  display: block;
+}
+
+/* Info */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #F5F5F7;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.song {
+  font-size: 12px;
+  color: rgba(245,245,247,0.55);
+  white-space: nowrap;
+}

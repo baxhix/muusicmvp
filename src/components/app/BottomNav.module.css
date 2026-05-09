@@ -1,0 +1,121 @@
+.nav {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 24px;
+  background: transparent;
+  pointer-events: none;
+}
+
+.inner {
+  width: 280px;
+  background: linear-gradient(160deg,
+    rgba(11,11,13,0.78) 0%,
+    rgba(5,5,7,0.74) 50%,
+    rgba(2,2,3,0.76) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 999px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: color 0.15s, transform 0.15s;
+  padding: 6px 8px;
+  border-radius: var(--r-md);
+  min-width: unset;
+  text-decoration: none;
+}
+.item:hover { color: var(--ink); transform: translateY(-1px); }
+.itemActive { color: var(--ink); }
+
+.item svg { width: 20px; height: 20px; }
+
+.label { display: none; }
+
+.dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: none;
+}
+.itemActive .dot { display: block; }
+
+/* Icon wrapper for badge positioning */
+.iconWrap {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+}
+.iconWrap svg {
+  width: 20px;
+  height: 20px;
+}
+
+.unreadBadge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #f87171;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+  border: 1.5px solid rgba(0,0,0,0.6);
+}
+
+/* Center action */
+.itemCenter {
+  width: 36px; height: 36px;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.08) !important;
+  color: rgba(245,245,247,0.75) !important;
+  min-width: auto;
+  padding: 0;
+  flex-direction: row;
+  gap: 0;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, color 0.15s, transform 0.15s !important;
+}
+.itemCenter:hover {
+  background: rgba(255,255,255,0.14) !important;
+  color: rgba(245,245,247,0.95) !important;
+  transform: scale(1.07) !important;
+  box-shadow: none !important;
+}
+.itemCenter svg { width: 20px; height: 20px; }
+.itemCenter .label,
+.itemCenter .dot { display: none; }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .nav { padding: 10px 0 18px; }
+  .inner {
+    width: calc(100% - 32px);     /* ocupa quase a largura da tela */
+    max-width: 320px;
+  }
+}

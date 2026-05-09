@@ -1,0 +1,159 @@
+/* ── LISTENING TOGETHER ── */
+
+@keyframes avatarIn {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.55); }
+  70%  { opacity: 1; transform: translateY(-3px) scale(1.06); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+@keyframes avatarOut {
+  0%   { opacity: 1; transform: translateY(0)    scale(1);    }
+  100% { opacity: 0; transform: translateY(12px) scale(0.65); }
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1);    }
+}
+
+/* Root — anchored just above the player */
+.root {
+  position: fixed;
+  bottom: 102px; /* overridden inline; kept as fallback */
+  left: clamp(16px, calc(25% - 196px), 380px);
+  width: auto;
+  pointer-events: auto;
+  z-index: 20;
+  transition: bottom 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Avatar row */
+.avatars {
+  display: flex;
+  align-items: center;
+}
+
+/* Each avatar wrapper */
+.wrap {
+  position: relative;
+  margin-left: -10px;
+  cursor: pointer;
+  z-index: calc(7 - var(--i));
+  animation: avatarIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), z-index 0s;
+}
+.wrap:first-child { margin-left: 0; }
+
+.wrap:hover {
+  transform: translateY(-6px) scale(1.15);
+  z-index: 20 !important;
+}
+
+/* Exit — last avatar (highest --i) exits first */
+.wrapExiting {
+  animation: avatarOut 0.28s cubic-bezier(0.55, 0, 1, 0.45) both;
+  animation-delay: calc((6 - var(--i)) * 0.045s);
+  pointer-events: none;
+}
+
+/* Avatar image */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.9);
+  object-fit: cover;
+  display: block;
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.7),
+    0 1px 3px rgba(0,0,0,0.5);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.wrap:hover .avatar {
+  box-shadow:
+    0 6px 22px rgba(0,0,0,0.8),
+    0 0 0 2px rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px) scale(0.95);
+  background: linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 9px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Arrow */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(6,6,14,0.96);
+}
+
+.tooltipVisible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.tooltipName {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.tooltipCity {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-mute);
+  margin-top: 3px;
+}
+
+/* Live listener count badge */
+@keyframes countIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.liveCount {
+  margin-left: 10px;
+  white-space: nowrap;
+  line-height: 1;
+  animation: countIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.liveCountNum {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  display: inline-block;
+}
+
+.liveCountLabel {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(245,245,247,0.45);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  /* Esconde a barra de "ouvindo juntos" em mobile pra liberar viewport */
+  .root { display: none !important; }
+}

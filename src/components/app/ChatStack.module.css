@@ -1,0 +1,202 @@
+/* ── CHAT DOCK ── */
+
+.dock {
+  position: fixed;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 16;
+  pointer-events: auto;
+}
+
+/* "Chat" label */
+.label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  align-self: flex-end;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+}
+
+/* List of avatars */
+.list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Each avatar wrapper */
+.item {
+  position: relative;
+  cursor: pointer;
+  margin-top: -30px;
+  transition:
+    transform    0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+    margin-top   0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    z-index      0s;
+  transform-origin: right center;
+}
+.item:first-child { margin-top: 0; }
+
+/* Expanded state — aplicado via classe JS */
+.listExpanded .item {
+  margin-top: 12px;
+}
+
+/* Avatar image */
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2.5px solid rgba(0,0,0,0.85);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+  transition: box-shadow 0.2s, filter 0.2s;
+}
+
+/* Offline → grayscale */
+.avatarOffline {
+  filter: grayscale(100%) brightness(0.85);
+}
+
+.item:hover .avatar {
+  box-shadow:
+    0 6px 28px rgba(0,0,0,0.75),
+    0 0 0 2px rgba(255,255,255,0.18);
+}
+
+/* Status dot */
+.dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.85);
+}
+
+.online  { background: #3ddb74; box-shadow: 0 0 6px rgba(61,219,116,0.8); }
+.away    { background: #fb923c; box-shadow: 0 0 6px rgba(251,146,60,0.7); }
+.offline { background: rgba(255,255,255,0.28); }
+
+/* Unread badge */
+.badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 2.5px solid rgba(0,0,0,0.85);
+  background: #f87171;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  z-index: 5;
+}
+
+/* ── iOS-style message bubble ── */
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateX(10px) scale(0.88); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+@keyframes bubbleOut {
+  from { opacity: 1; transform: translateX(0)    scale(1);    }
+  to   { opacity: 0; transform: translateX(6px)  scale(0.92); }
+}
+
+.bubble {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #000;
+  border-radius: 18px 18px 4px 18px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.55),
+    0 0 0 0.5px rgba(255,255,255,0.06);
+  z-index: 40;
+}
+
+/* right-pointing tail */
+.bubble::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  bottom: 6px;
+  border: 6px solid transparent;
+  border-left-color: #000;
+  border-right-width: 0;
+}
+
+.bubbleIn  { animation: bubbleIn  0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
+.bubbleOut { animation: bubbleOut 0.22s ease-in both; }
+
+.bubbleText {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f5f5f7;
+  line-height: 1.45;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  background: linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 10px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s cubic-bezier(0.16,1,0.3,1);
+}
+.item:hover .tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.tooltipName {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+.tooltipSub {
+  display: block;
+  font-size: 8px;
+  font-weight: 400;
+  color: rgba(245,245,247,0.5);
+  margin-top: 1px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  /* Stack mais compacto em tablet */
+}
+@media (max-width: 768px) {
+  /* Esconde o stack flutuante de chats em mobile (BottomNav tem o ícone) */
+  .stack, .stackInner, .floater { display: none !important; }
+}

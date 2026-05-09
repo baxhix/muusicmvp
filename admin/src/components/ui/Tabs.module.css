@@ -1,0 +1,94 @@
+.list {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+}
+
+.bordered {
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+
+.tab {
+  position: relative;
+  height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-mute);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+  border-radius: var(--r-sm);
+}
+.tab:hover {
+  color: var(--text);
+}
+.tab[aria-selected='true'] {
+  color: var(--text);
+}
+
+.bordered .tab {
+  border-radius: 0;
+  height: 38px;
+  padding: 0 14px 0 12px;
+  margin-bottom: -1px;
+}
+.bordered .tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+  border-radius: var(--r-full) var(--r-full) 0 0;
+}
+.bordered .tab[aria-selected='true']::after {
+  background: var(--accent);
+}
+
+/* Pill variant (segmented) */
+.pills {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.pills .tab {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+}
+.pills .tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-xs);
+}
+
+.count {
+  display: inline-grid;
+  place-items: center;
+  height: 16px;
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  color: var(--text-soft);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.tab[aria-selected='true'] .count {
+  background: var(--accent-soft);
+  color: var(--text);
+}

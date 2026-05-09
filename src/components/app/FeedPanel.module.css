@@ -1,0 +1,268 @@
+/* ── FEED PANEL ── */
+.panel {
+  position: fixed;
+  top: calc(22vh - 10px);
+  right: 160px;
+  bottom: 20px;
+  width: 398px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 35%,
+      rgba(2,2,3,0.76) 65%,
+      rgba(2,2,3,0.80) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: none;
+  border-radius: 20px;
+  padding: 0 8px;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 0 0 0.5px rgba(255,255,255,0.04) inset,
+    0 1px 0 rgba(255,255,255,0.08) inset;
+  transition: transform 0.48s cubic-bezier(0.16,1,0.3,1),
+              opacity 0.4s ease;
+  pointer-events: auto;
+  overflow: hidden;
+}
+.panel::before,
+.panel::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.panel::before {
+  top: 56px;
+  height: 32px;
+  background: linear-gradient(to bottom,
+    rgba(5,5,7,0.6) 0%,
+    transparent 100%);
+}
+.panel::after {
+  bottom: 0;
+  height: 72px;
+  background: linear-gradient(to top,
+    rgba(2,2,3,0.98) 0%,
+    rgba(2,2,3,0.6) 60%,
+    transparent 100%);
+}
+.panelMinimized {
+  transform: translateY(68%);
+}
+
+/* Gradient colado na base inferior visível do feed contraído */
+.minimizedGradient {
+  position: fixed;
+  left: calc(100% - 160px - 398px);
+  right: 160px;
+  bottom: 0;
+  height: 36px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(2,2,3,0.97) 100%);
+  pointer-events: none;
+  z-index: 16;
+  border-radius: 0 0 20px 20px;
+}
+
+/* reset ::after quando minimizado — gradiente vem do elemento .minimizedGradient */
+.panelMinimized::after {
+  display: none;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Margin negativo cancela o padding lateral do .panel pro header
+     ir edge-to-edge (8px é o panel padding). */
+  margin: 0 -8px;
+  padding: 22px 26px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: linear-gradient(180deg, rgba(2,2,3,0.55) 0%, rgba(2,2,3,0.25) 100%);
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.header:hover .liveDot {
+  box-shadow: 0 0 14px rgba(61,219,116,0.9);
+}
+.liveDot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(61,219,116,0.7);
+  flex-shrink: 0;
+  animation: feedPulse 2.2s ease-in-out infinite;
+}
+@keyframes feedPulse {
+  0%,100% { opacity: 1; transform: scale(1);    box-shadow: 0 0 10px rgba(61,219,116,0.7); }
+  50%      { opacity: 0.55; transform: scale(0.75); box-shadow: 0 0 4px rgba(61,219,116,0.3); }
+}
+.title {
+  font-size: 14px; font-weight: 700;
+  letter-spacing: -0.01em; color: var(--ink);
+}
+.sub {
+  font-size: 10px; color: var(--ink-mute);
+  font-family: var(--mono);
+}
+.spacer { flex: 1; }
+
+/* Stories divider */
+.storiesDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.05);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Scroll area */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 40px;
+}
+.scroll::-webkit-scrollbar { width: 2px; }
+.scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+}
+
+/* Post card */
+.post {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  cursor: pointer;
+  transition: background 0.15s;
+  animation: postIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+.post:hover { background: rgba(255,255,255,0.018); }
+@keyframes postIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.postHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+}
+.meta { flex: 1; min-width: 0; }
+.name {
+  font-size: 12px; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.handle { font-size: 10px; color: var(--ink-mute); margin-top: 1px; }
+.time {
+  font-size: 10px; color: var(--ink-faint);
+  font-family: var(--mono); white-space: nowrap; padding-top: 1px;
+  flex-shrink: 0;
+}
+
+/* Location chip */
+.loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px; color: var(--ink-mute);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 100px;
+  padding: 2px 8px 2px 5px;
+  margin-bottom: 9px;
+}
+.loc svg { width: 9px; height: 9px; flex-shrink: 0; }
+
+/* Post text */
+.text {
+  font-size: 12.5px; line-height: 1.58;
+  color: rgba(245,245,247,0.82);
+  margin: 0 0 11px;
+}
+
+/* Song card */
+.songCard {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-bottom: 11px;
+  transition: background 0.15s;
+}
+.songCard:hover { background: rgba(255,255,255,0.045); }
+.songIcon {
+  width: 30px; height: 30px;
+  background: rgba(61,219,116,0.1);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  flex-shrink: 0; color: var(--accent);
+}
+.songIcon svg { width: 14px; height: 14px; }
+.songInfo { min-width: 0; }
+.songTitle {
+  font-size: 11px; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.songArtist { font-size: 10px; color: var(--ink-mute); margin-top: 1px; }
+
+/* Reactions */
+.reactions { display: flex; align-items: center; gap: 18px; }
+.rxn {
+  display: flex; align-items: center; gap: 5px;
+  background: none; border: none;
+  color: var(--ink-mute); font-size: 11px;
+  font-family: var(--sans); cursor: pointer;
+  padding: 0; transition: color 0.15s;
+}
+.rxn:hover { color: var(--ink); }
+.rxn svg { width: 13px; height: 13px; }
+.rxnLiked { color: #f87171 !important; }
+.rxnLiked svg { fill: #f87171; stroke: none !important; }
+
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .panel {
+    right: 16px;
+    width: 360px;
+  }
+  .minimizedGradient {
+    left: calc(100% - 16px - 360px);
+    right: 16px;
+  }
+}
+@media (max-width: 768px) {
+  /* Em mobile o feed vira um painel inferior full-width, escondido por padrão */
+  .panel {
+    top: auto;
+    bottom: 92px;            /* acima da BottomNav */
+    left: 12px;
+    right: 12px;
+    width: auto;
+    height: 60vh;
+    border-radius: 16px;
+  }
+  .panelMinimized {
+    transform: translateY(calc(100% - 56px)); /* só header visível */
+  }
+  .minimizedGradient { display: none; }
+}

@@ -1,0 +1,193 @@
+/* ── MEDIA POST (image + video) ── */
+.card {
+  margin: 16px 14px 0;
+  border-radius: 16px;
+  background: linear-gradient(145deg,
+    rgba(10,7,20,0.88) 0%,
+    rgba(7,5,14,0.85) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow:
+    0 0 0 1px rgba(168,85,247,0.15),
+    0 8px 32px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Top glow edge */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(168,85,247,0.6) 40%,
+    rgba(236,72,153,0.4) 70%,
+    transparent 100%);
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px 10px;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(245,245,247,0.92);
+  letter-spacing: -0.01em;
+}
+
+.time {
+  font-size: 10px;
+  color: rgba(245,245,247,0.3);
+  font-family: var(--mono);
+}
+
+/* ── Image media ── */
+.image {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  max-height: 280px;
+}
+
+/* ── Video wrapper ── */
+.videoWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  max-height: 420px;
+  background: #000;
+  overflow: hidden;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Play/pause overlay button */
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.22);
+  transition: background 0.15s;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+}
+.playOverlay:hover { background: rgba(0,0,0,0.34); }
+
+.playOverlay.playing { background: transparent; }
+.playOverlay.playing:hover { background: rgba(0,0,0,0.18); }
+
+.playIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.18s;
+}
+.playOverlay.playing .playIcon {
+  opacity: 0;
+}
+.playOverlay.playing:hover .playIcon {
+  opacity: 1;
+  transform: scale(1.08);
+}
+.playIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Mute button */
+.muteBtn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: rgba(255,255,255,0.85);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.muteBtn:hover {
+  background: rgba(0,0,0,0.72);
+  transform: scale(1.08);
+}
+.muteBtn svg { width: 14px; height: 14px; }
+
+/* ── Action bar ── */
+.actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 32px;
+  padding: 14px 18px 18px;
+}
+
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: rgba(245,245,247,0.5);
+  font-size: 11px;
+  font-family: var(--sans);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s, transform 0.15s cubic-bezier(0.34,1.56,0.64,1);
+}
+.btn:hover {
+  color: rgba(245,245,247,0.95);
+  transform: scale(1.12);
+}
+.btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+.btn img { width: 22px; height: 22px; flex-shrink: 0; object-fit: contain; }
+
+/* O chapéu (heart) tem viewBox largo (570×315), precisa de mais largura
+   para aparecer no mesmo tamanho visual dos outros ícones */
+.btnHat svg { width: 38px; height: 22px; }
+
+.btnLiked {
+  color: #f59e0b !important;
+}
+
+.spacer { display: none; }

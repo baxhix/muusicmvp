@@ -1,0 +1,116 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+
+.helper {
+  font-size: 12px;
+  color: var(--text-mute);
+  line-height: 1.4;
+}
+
+.error {
+  font-size: 12px;
+  color: var(--danger);
+  line-height: 1.4;
+}
+
+.required {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.3;
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.input::placeholder { color: var(--text-faint); }
+.input:hover:not(:disabled):not(:focus) { border-color: var(--border-strong); }
+.input:focus {
+  outline: none;
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input.invalid {
+  border-color: var(--danger-line);
+}
+.input.invalid:focus {
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+/* Sizes */
+.sm { height: 28px; font-size: 12.5px; padding: 0 8px; }
+.md { height: 34px; font-size: 13.5px; padding: 0 10px; }
+.lg { height: 40px; font-size: 14px; padding: 0 12px; }
+
+/* With leading/trailing icons */
+.hasLeading { padding-left: 32px; }
+.hasTrailing { padding-right: 32px; }
+
+.adornment {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  color: var(--text-mute);
+  pointer-events: none;
+  width: 32px;
+  height: 100%;
+}
+.leading { left: 0; }
+.trailing { right: 0; }
+
+/* Select-specific chevron */
+.selectChevron {
+  pointer-events: none;
+}
+
+/* Textarea */
+.textarea {
+  min-height: 88px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+/* SearchInput pill variant — Vercel-style global search */
+.searchPill {
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border-color: var(--border-soft);
+}
+.searchPill:focus {
+  background: var(--surface);
+}

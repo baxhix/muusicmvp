@@ -1,0 +1,552 @@
+/* ── NOW PLAYING ── */
+
+@keyframes waveBar {
+  from { transform: scaleY(0.25); opacity: 0.45; }
+  to   { transform: scaleY(1);    opacity: 1; }
+}
+
+/* ── Container ── */
+.player {
+  position: fixed;
+  bottom: 24px;
+  left: clamp(16px, calc(25% - 196px), 380px);
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.018) 0%, transparent 65%),
+    linear-gradient(160deg,
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 50%,
+      rgba(2,2,3,0.76) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border-radius: 999px;
+  padding: 11px 16px 11px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 22;
+  cursor: pointer;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  transition:
+    width         0.4s cubic-bezier(0.16,1,0.3,1),
+    border-radius 0.4s cubic-bezier(0.16,1,0.3,1),
+    padding       0.4s cubic-bezier(0.16,1,0.3,1),
+    transform     0.2s;
+}
+.player:hover { transform: translateY(-2px); }
+
+/* ── MINI (estado mais reduzido) ── */
+/* width: auto + fit-content garante que a caixa termine logo após o play */
+.playerMini {
+  width: auto;
+  padding: 6px 12px 6px 6px;
+  gap: 10px;
+}
+/* Botão play/pause um pouco maior no mini */
+.playerMini .miniPlay {
+  width: 34px;
+  height: 34px;
+}
+.playerMini .miniPlay svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── HORIZONTAL (pill padrão com info + controles) ── */
+.playerHorizontal {
+  width: 296px;
+}
+
+/* ── Versão embutida (sem position fixed, sem expand)
+   Mesmo visual do horizontal da home, só limitado a 100% do container */
+.playerEmbed {
+  position: relative;
+  max-width: 296px;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  cursor: default;
+  z-index: auto;
+  box-sizing: border-box;
+}
+.playerEmbed:hover { transform: none; }
+
+/* ── Expandido ── */
+.playerExpanded {
+  width: 296px;
+  border-radius: 11px;
+  padding: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  cursor: default;
+  transform: translateY(-2px);
+}
+.playerExpanded:hover { transform: translateY(-2px); }
+
+/* ── VIDEO (player com YouTube embed integrado ACIMA) ── */
+.playerVideo {
+  width: 320px;
+  border-radius: 12px;
+  padding: 0 12px 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  cursor: default;
+  transform: translateY(-2px);
+  gap: 10px;
+}
+.playerVideo:hover { transform: translateY(-2px); }
+
+/* Shell do iframe — fica COLADO no topo do player, com cantos arredondados em cima */
+.videoShell {
+  width: calc(100% + 24px);
+  margin: 0 -12px 12px;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px 12px 0 0;
+  background: #000;
+  aspect-ratio: 16 / 9;
+}
+
+.videoIframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Poster (custom thumbnail antes de iniciar o vídeo) ── */
+.videoPoster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: #000;
+  cursor: pointer;
+  display: block;
+  overflow: hidden;
+}
+.videoPosterImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.videoPosterOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.45) 100%);
+  pointer-events: none;
+  transition: background 220ms ease;
+}
+.videoPoster:hover .videoPosterOverlay {
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.35) 100%);
+}
+.videoPosterPlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.96);
+  color: #08080A;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), background 200ms ease;
+}
+.videoPoster:hover .videoPosterPlay {
+  transform: translate(-50%, -50%) scale(1.08);
+  background: #fff;
+}
+.videoPoster:active .videoPosterPlay { transform: translate(-50%, -50%) scale(0.96); }
+.videoPosterPlay svg { width: 22px; height: 22px; margin-left: 2px; }
+
+/* ── Máscaras pra esconder UI da YouTube ── */
+/* Topo: cobre título + canal + "mais opções" + "Watch on YouTube" */
+.videoMaskTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+/* Canto inferior direito: cobre CC + settings + qualidade
+   (deixa o fullscreen visível à direita) */
+.videoMaskBottomRight {
+  position: absolute;
+  bottom: 0;
+  right: 36px;
+  width: 110px;
+  height: 38px;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 65%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Capa ── */
+.art {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  transition: width  0.4s cubic-bezier(0.16,1,0.3,1),
+              height 0.4s cubic-bezier(0.16,1,0.3,1),
+              border-radius 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+/* Capa do mini player */
+.playerMini .art {
+  width: 40px;
+  height: 40px;
+}
+.art img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  animation: art-swap 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes art-swap {
+  from { opacity: 0; transform: scale(1.15) rotate(-6deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.artExpanded {
+  width: 46px; height: 46px;
+  border-radius: 6px;
+}
+.artExpanded img {
+  /* expanded volta a ter cantos suaves, não círculo */
+}
+
+/* ── Info ── */
+.info {
+  flex: 1;
+  min-width: 0;
+  animation: info-swap 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes info-swap {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.artist {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Mini controls (estado mais reduzido) — só play/pause ── */
+.miniControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Wave por cima da imagem do álbum (só no mini) */
+.waveOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+}
+.waveOverlay .waveBar {
+  width: 2.5px;
+  border-radius: 2px;
+  background: #FFFFFF;
+  transform-origin: center;
+}
+.waveOverlay .waveBar:nth-child(1) { height: 6px;  animation: waveBar 0.55s ease-in-out infinite alternate; animation-delay: 0s;    }
+.waveOverlay .waveBar:nth-child(2) { height: 12px; animation: waveBar 0.55s ease-in-out infinite alternate; animation-delay: 0.12s; }
+.waveOverlay .waveBar:nth-child(3) { height: 9px;  animation: waveBar 0.55s ease-in-out infinite alternate; animation-delay: 0.24s; }
+.waveOverlay .waveBar:nth-child(4) { height: 14px; animation: waveBar 0.55s ease-in-out infinite alternate; animation-delay: 0.06s; }
+
+/* Quando está pausado no mini, a wave não anima — só fica como ícone */
+.wavePaused .waveBar {
+  animation-play-state: paused;
+  opacity: 0.45;
+}
+
+/* ── Inline controls (collapsed state) ── */
+.inlineControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Mini wave — playing indicator */
+.wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+.waveBar {
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: waveBar 0.55s ease-in-out infinite alternate;
+}
+.waveBar:nth-child(1) { height: 5px;  animation-delay: 0s;    }
+.waveBar:nth-child(2) { height: 11px; animation-delay: 0.12s; }
+.waveBar:nth-child(3) { height: 8px;  animation-delay: 0.24s; }
+.waveBar:nth-child(4) { height: 13px; animation-delay: 0.06s; }
+
+/* Play/pause circle button */
+.miniPlay {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.15s;
+}
+.miniPlay:hover {
+  background: rgba(255,255,255,0.18);
+  transform: scale(1.08);
+}
+.miniPlay:active { transform: scale(0.94); }
+.miniPlay svg { width: 13px; height: 13px; }
+
+/* Botão de playlist (lista de músicas) */
+.miniQueue {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: rgba(245,245,247,0.45);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.15s;
+  margin-left: 2px;
+}
+.miniQueue:hover {
+  color: var(--ink);
+  transform: scale(1.1);
+}
+.miniQueue:active { transform: scale(0.92); }
+.miniQueue svg { width: 15px; height: 15px; }
+
+/* Previous + next track buttons */
+.miniPrev,
+.miniNext {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: rgba(245,245,247,0.45);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: color 0.15s, transform 0.15s;
+}
+.miniPrev:hover,
+.miniNext:hover {
+  color: var(--ink);
+  transform: scale(1.1);
+}
+.miniPrev:active,
+.miniNext:active { transform: scale(0.92); }
+.miniPrev svg,
+.miniNext svg { width: 13px; height: 13px; }
+
+/* ── Área expandida (progress + controls) ── */
+.expand {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.expandOpen {
+  display: flex;
+  animation: expandIn 0.38s cubic-bezier(0.16,1,0.3,1) both;
+  margin-top: 6px;
+}
+@keyframes expandIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Progresso ── */
+.progTrack {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.progFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--ink-mute);
+  font-family: var(--mono);
+  margin-top: 4px;
+}
+
+/* ── Controles ── */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  padding-top: 2px;
+}
+.ctrlBtn {
+  background: none;
+  border: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: color 0.15s;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.ctrlBtn:hover { color: var(--ink); }
+.ctrlBtn svg { width: 18px; height: 18px; }
+
+.ctrlPlay {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0;
+}
+.ctrlPlay:hover { background: #e0e0e2; }
+.ctrlPlay svg { width: 17px; height: 17px; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .player {
+    bottom: 96px;       /* acima da BottomNav */
+    left: 12px;
+  }
+  .playerHorizontal,
+  .playerExpanded {
+    right: 12px;
+    width: auto;
+    max-width: 360px;
+  }
+  .playerMini {
+    width: auto;
+    right: auto;     /* não estica até o canto direito */
+  }
+}
+@media (max-width: 480px) {
+  .playerHorizontal,
+  .playerExpanded {
+    width: auto;
+    max-width: calc(100% - 24px);
+    padding: 9px 12px 9px 9px;
+  }
+  .playerHorizontal .miniNext,
+  .playerHorizontal .miniPrev { display: none; }   /* só play/pause em telas bem pequenas */
+  .playerHorizontal .wave { display: none; }
+}
+
+/* ── Spotify integration ── */
+.spotifyBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #1DB954;        /* verde Spotify */
+  border: 2px solid rgba(8,8,10,0.95);
+  box-shadow: 0 0 8px rgba(29, 185, 84, 0.55);
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 160ms ease;
+}
+.spotifyBadge:hover { transform: scale(1.18); }
+
+.spotifyConnect {
+  display: inline;
+  margin-left: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #1DB954;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: -0.005em;
+  transition: color 160ms ease, opacity 160ms ease;
+  opacity: 0.85;
+}
+.spotifyConnect:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* Label "Conectado ao Spotify" — não-clicável, só visual */
+.spotifyConnected {
+  display: inline;
+  margin-left: 6px;
+  color: #1DB954;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  opacity: 0.85;
+}

@@ -1,0 +1,120 @@
+.badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 40px;
+  padding: 7px 12px 7px 8px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    top 0.55s cubic-bezier(0.16,1,0.3,1),
+    left 0.55s cubic-bezier(0.16,1,0.3,1),
+    opacity 0.3s ease,
+    transform 0.2s,
+    background 0.2s;
+  animation: badge-float 4s ease-in-out infinite;
+}
+.badge:nth-child(1) { animation-delay: 0s;    animation-duration: 4.0s; }
+.badge:nth-child(2) { animation-delay: -1.5s; animation-duration: 3.8s; }
+.badge:nth-child(3) { animation-delay: -3s;   animation-duration: 4.3s; }
+
+.badgeMoving {
+  animation-play-state: paused;
+  opacity: 0.4;
+}
+.badge:hover {
+  background: rgba(10,10,10,0.95);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.avatarImg {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  display: block;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.song {
+  font-size: 12px;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@keyframes barAnim {
+  from { transform: scaleY(0.2); opacity: 0.45; }
+  to   { transform: scaleY(1);   opacity: 1; }
+}
+
+.audio {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 10px;
+}
+.audio span {
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: barAnim 0.5s ease-in-out infinite alternate;
+}
+.audio span:nth-child(1) { height: 4px;  animation-delay: 0s;    }
+.audio span:nth-child(2) { height: 9px;  animation-delay: 0.13s; }
+.audio span:nth-child(3) { height: 6px;  animation-delay: 0.26s; }
+
+/* Pulse dot */
+.pulseDot {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+}
+.pulseDot::before, .pulseDot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: rgba(61,219,116,0.25);
+  animation: dot-pulse 2s ease-out infinite;
+}
+.pulseDot::after {
+  animation-delay: 0.8s;
+  inset: -8px;
+  background: rgba(61,219,116,0.12);
+}

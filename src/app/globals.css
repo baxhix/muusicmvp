@@ -1,0 +1,198 @@
+/* ============================================================
+   FANVERSE — GLOBAL DESIGN SYSTEM
+   All CSS variables, resets, and shared keyframes live here.
+   Component-specific layout is in each *.module.css file.
+   ============================================================ */
+
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
+/* ── Design tokens (app palette) ── */
+:root {
+  --bg:        #000000;
+  --surface:   rgba(0,0,0,0.80);
+  --surface-2: rgba(0,0,0,0.88);
+  --surface-3: rgba(10,10,10,0.92);
+  --ink:       #F5F5F7;
+  --ink-soft:  #A1A1AA;
+  --ink-mute:  #71717A;
+  --ink-faint: #3F3F46;
+  --accent:    #3DDB74;
+  --accent-2:  #7DD3FC;
+  --accent-warm: #FCB76B;
+  --line:      rgba(255,255,255,0.07);
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ── Landing page palette overrides (applied on landing layout) ── */
+[data-page="landing"] {
+  --bg: #08080A;
+  --bg-grad: radial-gradient(ellipse at 50% -20%, #14141C 0%, #0A0A0E 35%, #08080A 100%);
+  --surface: rgba(8,8,18,0.72);
+  --surface-2: rgba(12,12,26,0.80);
+  --surface-3: rgba(18,18,36,0.86);
+  --line: #1A1A21;
+  --line-strong: #2A2A33;
+  --accent: #7DD3FC;
+  --accent-soft: rgba(125,211,252,0.10);
+  --accent-line: rgba(125,211,252,0.25);
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 14px;
+  --r-xl: 24px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #000000;
+}
+
+html, body {
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ── Shared Keyframes ── */
+
+@keyframes badge-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+@keyframes bar-anim {
+  from { transform: scaleY(0.2); opacity: 0.5; }
+  to   { transform: scaleY(1);   opacity: 1; }
+}
+
+@keyframes dot-pulse {
+  0%   { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2);   opacity: 0; }
+}
+
+@keyframes dot-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes badge-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes online-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(61,219,116,0.7); }
+  50%       { box-shadow: 0 0 12px rgba(61,219,116,1); }
+}
+
+@keyframes chat-in {
+  from { opacity: 0; transform: translateX(16px) scale(0.85); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%            { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes wave-bar {
+  from { transform: scaleY(0.3); opacity: 0.5; }
+  to   { transform: scaleY(1);   opacity: 1; }
+}
+
+@keyframes expand-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Landing keyframes */
+@keyframes pulse-soft {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft, rgba(125,211,252,0.10)); }
+  50%       { box-shadow: 0 0 0 8px rgba(125,211,252,0.04); }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes hero-sub-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes globe-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+
+@keyframes audio-bar {
+  from { transform: scaleY(0.2); opacity: 0.6; }
+  to   { transform: scaleY(1);   opacity: 1; }
+}
+
+@keyframes bar-bounce {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
+@keyframes stars-twinkle-a {
+  0%   { opacity: 1; }
+  20%  { opacity: 0.55; }
+  45%  { opacity: 0.85; }
+  70%  { opacity: 0.40; }
+  100% { opacity: 0.90; }
+}
+
+@keyframes stars-twinkle-b {
+  0%   { opacity: 0.80; }
+  30%  { opacity: 1; }
+  55%  { opacity: 0.45; }
+  80%  { opacity: 0.90; }
+  100% { opacity: 0.60; }
+}
+
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes wave-dance {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
+@keyframes media-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(125,211,252,0.5); }
+  100% { box-shadow: 0 0 0 100px rgba(125,211,252,0); }
+}
