@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useAuth } from '@/lib/auth/AuthContext';
 import styles from './TopBar.module.css';
+
+/** Display name fallback chain: name → email local part → 'Usuário'. */
+function displayName(user: { name: string | null; email: string } | null): string {
+  if (!user) return 'Usuário';
+  if (user.name && user.name.trim()) return user.name;
+  return user.email.split('@')[0];
+}
 
 /* ── Helpers / shared subcomponents ─────────────────────────────────────── */
 
@@ -172,6 +180,11 @@ interface TopBarProps {
 }
 
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
+  const { user, logout } = useAuth();
+  const userLabel = displayName(user);
+  const userEmail = user?.email ?? '';
+  const userAvatar = user?.avatarUrl ?? '/ana-beatriz-avatar.png';
+
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SubScreen>(null);
   const drawerRef = useRef<HTMLElement>(null);
@@ -258,11 +271,11 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         aria-label="Menu do usuário"
       >
         <div className={styles.userInfo}>
-          <span className={styles.userName}>Ana Beatriz</span>
+          <span className={styles.userName}>{userLabel}</span>
         </div>
         <div className={`${styles.avatar} ${online ? styles.avatarOnline : ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/ana-beatriz-avatar.png" alt="Meu perfil" className={styles.avatarImg} />
+          <img src={userAvatar} alt="Meu perfil" className={styles.avatarImg} />
           {online && <span className={styles.onlineDot} />}
         </div>
       </div>
@@ -302,7 +315,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   <div className={styles.drawerIdentityAvatarWrap}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/ana-beatriz-avatar.png"
+                      src={userAvatar}
                       alt="Foto de perfil"
                       className={`${styles.drawerIdentityAvatar} ${online ? styles.drawerIdentityAvatarOnline : ''}`}
                     />
@@ -338,7 +351,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       </div>
                     )}
                   </div>
-                  <h2 className={styles.drawerIdentityName}>Ana Beatriz</h2>
+                  <h2 className={styles.drawerIdentityName}>{userLabel}</h2>
+                  {userEmail && (
+                    <span className={styles.drawerIdentityEmail}>{userEmail}</span>
+                  )}
                   <div className={styles.drawerIdentityStatusRow}>
                     <span className={`${styles.drawerStatusDot} ${online ? styles.drawerStatusDotOn : styles.drawerStatusDotOff}`} />
                     <span className={styles.drawerIdentityStatusLabel}>
@@ -442,7 +458,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   <div className={styles.drawerDivider} />
                   <button
                     className={`${styles.drawerItem} ${styles.drawerItemLogout}`}
-                    onClick={closeAll}
+                    onClick={() => {
+                      closeAll();
+                      logout();
+                    }}
                   >
                     <DrawerItemIcon name="logout" />
                     <span>Sair</span>

@@ -18,6 +18,8 @@ interface AuthContextValue {
   refresh: () => Promise<void>;
   /** Send magic link to the given email. Returns true on accepted (200). */
   requestMagicLink: (email: string) => Promise<boolean>;
+  /** Sign out: clears the session cookie + DB row, redirects to /auth. */
+  logout: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthContextValue | null>(null);
@@ -56,8 +58,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/api/auth/logout');
+    } catch (err) {
+      console.error('logout failed:', err);
+    }
+    setUser(null);
+    // Hard navigation drops in-memory state (socket, hooks) cleanly.
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth';
+    }
+  }, []);
+
   return (
-    <Ctx.Provider value={{ user, loading, refresh, requestMagicLink }}>
+    <Ctx.Provider value={{ user, loading, refresh, requestMagicLink, logout }}>
       {children}
     </Ctx.Provider>
   );

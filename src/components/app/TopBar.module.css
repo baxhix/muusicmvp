@@ -256,6 +256,15 @@
   margin: 0;
 }
 
+.drawerIdentityEmail {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: -0.005em;
+  word-break: break-all;
+}
+
 /* Linha de status (online/offline)
    Bullet + label + toggle */
 .drawerIdentityStatusRow {
