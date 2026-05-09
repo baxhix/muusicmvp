@@ -79,6 +79,11 @@ services:
     build:
       context: ./admin
       dockerfile: Dockerfile
+      args:
+        # Inlined into the admin client bundle at build time so the
+        # AdminAuthGate can call https://muusic.live/api/auth/me with
+        # credentials.
+        NEXT_PUBLIC_API_BASE_URL: ${APP_URL}
     container_name: muusic_admin
     restart: unless-stopped
     environment:
