@@ -158,32 +158,38 @@ export function useChatLive(): UseChatLiveResult {
     [activeId, socket, user],
   );
 
-  // ── Realtime: incoming chat messages ───────────────────────────────────
+  // ── Realtime: incoming chat messages (active thread) ───────────────────
   useEffect(() => {
     if (!socket) return;
     const onMessage = (msg: ApiMessage) => {
       const isActive = msg.conversationId === activeIdRef.current;
-      // Append if it's for the active conversation; replace optimistic.
       if (isActive) {
         setMessages((prev) => {
           const filtered = prev.filter((m) => !m.id.startsWith('tmp-') || m.body !== msg.body);
           if (filtered.some((m) => m.id === msg.id)) return filtered;
           return [...filtered, msg];
         });
-        // User is currently viewing this thread — keep the read marker fresh
-        // so the unread badge doesn't pop up on the dock for messages they
-        // can already see.
+        // User is viewing this thread — keep the read marker fresh.
         api
           .post(`/api/conversations/${msg.conversationId}/read`)
           .catch((err) => console.error('mark read (active) failed:', err));
       }
-      // Always nudge the conversation list (move-to-top + lastMessage update,
-      // and refresh unreadCount for inactive threads).
       loadList();
     };
     socket.on('chat:message', onMessage);
     return () => {
       socket.off('chat:message', onMessage);
+    };
+  }, [socket, loadList]);
+
+  // ── Realtime: per-user thread update poke (fires for ALL conversations
+  // the user is in, even ones they haven't opened in this session) ────────
+  useEffect(() => {
+    if (!socket) return;
+    const onThreadUpdate = () => loadList();
+    socket.on('chat:thread:update', onThreadUpdate);
+    return () => {
+      socket.off('chat:thread:update', onThreadUpdate);
     };
   }, [socket, loadList]);
 

@@ -19,7 +19,8 @@ const typingSchema = z.object({
 
 type Ack = (res: { ok: boolean; error?: string; messageId?: string }) => void;
 
-const room = (conversationId: string) => `conv:${conversationId}`;
+const room     = (conversationId: string) => `conv:${conversationId}`;
+const userRoom = (userId: string)         => `user:${userId}`;
 
 export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
   const userId = socket.data.userId;
@@ -49,23 +50,34 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
     if (!inIt) return ack?.({ ok: false, error: 'forbidden' });
 
     try {
-      const message = await sendMessage(
+      const result = await sendMessage(
         parsed.data.conversationId,
         userId,
         parsed.data.body,
       );
 
-      io.to(room(parsed.data.conversationId)).emit('chat:message', message);
+      // Broadcast the message body to clients viewing the thread (joined room).
+      io.to(room(parsed.data.conversationId)).emit('chat:message', result.message);
 
-      // Push 'message' notifications to DM recipients in real-time
-      // (the DB rows were already inserted by sendMessage; this just nudges UIs).
-      io.to(room(parsed.data.conversationId)).emit('notify:peek', {
-        kind: 'message',
-        conversationId: parsed.data.conversationId,
-        messageId: message.id,
-      });
+      // Poke each recipient's PERSONAL room so unread counts / dock badges
+      // refresh even when they haven't opened the conversation yet.
+      for (const recipientId of result.recipientIds) {
+        io.to(userRoom(recipientId)).emit('chat:thread:update', {
+          conversationId: parsed.data.conversationId,
+          lastMessageId: result.message.id,
+        });
+        // Also wake up the notifications hook for DMs (where we did insert
+        // notification rows).
+        if (result.conversationType === 'dm') {
+          io.to(userRoom(recipientId)).emit('notify:new', {
+            kind: 'message',
+            conversationId: parsed.data.conversationId,
+            messageId: result.message.id,
+          });
+        }
+      }
 
-      ack?.({ ok: true, messageId: message.id });
+      ack?.({ ok: true, messageId: result.message.id });
     } catch {
       ack?.({ ok: false, error: 'send_failed' });
     }

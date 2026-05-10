@@ -74,6 +74,6 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const message = await sendMessage(id, user.id, parsed.body);
-  return NextResponse.json({ message }, { status: 201 });
+  const result = await sendMessage(id, user.id, parsed.body);
+  return NextResponse.json({ message: result.message }, { status: 201 });
 }
