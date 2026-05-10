@@ -139,8 +139,15 @@
 
 .itemText {
   font-size: 13px;
-  color: #f5f5f7;
+  color: rgba(245, 245, 247, 0.7);
   line-height: 1.4;
+}
+
+/* Bold + white emphasis for the dynamic parts of a notification line
+   (source user's name/email, track title+artist, etc.) */
+.itemStrong {
+  color: #ffffff;
+  font-weight: 700;
 }
 .itemMeta {
   font-size: 11px;

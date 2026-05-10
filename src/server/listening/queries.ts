@@ -5,6 +5,7 @@ import {
   notifications,
   nowPlaying,
   tracks,
+  users,
   type Track,
 } from '../db/schema';
 
@@ -185,15 +186,73 @@ export async function notifySameTrackListeners(
   return created;
 }
 
-/** List notifications for a user — unread first, then recent read. */
+/**
+ * List notifications for a user, hydrating each row with the source user's
+ * name/email and the track's title/artist when applicable. The UI uses
+ * these to render a humanized line ("João is listening to Boiadeira by
+ * Ana Castela") without a second roundtrip per row.
+ */
 export async function listNotifications(userId: string, limit = 50) {
   const rows = await db
-    .select()
+    .select({
+      id: notifications.id,
+      userId: notifications.userId,
+      kind: notifications.kind,
+      sourceUserId: notifications.sourceUserId,
+      trackId: notifications.trackId,
+      artist: notifications.artist,
+      album: notifications.album,
+      conversationId: notifications.conversationId,
+      messageId: notifications.messageId,
+      payload: notifications.payload,
+      createdAt: notifications.createdAt,
+      readAt: notifications.readAt,
+      // Joined source user (nullable — DM vs same_track)
+      sourceUserName: users.name,
+      sourceUserEmail: users.email,
+      sourceUserAvatar: users.avatarUrl,
+      // Joined track (nullable — message kind notifications have no track)
+      trackTitle: tracks.title,
+      trackArtist: tracks.artist,
+      trackYoutubeId: tracks.youtubeId,
+    })
     .from(notifications)
+    .leftJoin(users, eq(users.id, notifications.sourceUserId))
+    .leftJoin(tracks, eq(tracks.id, notifications.trackId))
     .where(eq(notifications.userId, userId))
     .orderBy(desc(notifications.createdAt))
     .limit(limit);
-  return rows;
+
+  return rows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    kind: r.kind,
+    sourceUserId: r.sourceUserId,
+    trackId: r.trackId,
+    artist: r.artist,
+    album: r.album,
+    conversationId: r.conversationId,
+    messageId: r.messageId,
+    payload: r.payload,
+    createdAt: r.createdAt,
+    readAt: r.readAt,
+    sourceUser: r.sourceUserId
+      ? {
+          id: r.sourceUserId,
+          name: r.sourceUserName,
+          email: r.sourceUserEmail,
+          avatarUrl: r.sourceUserAvatar,
+        }
+      : null,
+    track: r.trackId
+      ? {
+          id: r.trackId,
+          title: r.trackTitle,
+          artist: r.trackArtist,
+          youtubeId: r.trackYoutubeId,
+        }
+      : null,
+  }));
 }
 
 /** Mark a single notification read (no-op if not owned by user). */

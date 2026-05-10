@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNotificationsLive } from '@/hooks/useNotificationsLive';
 import type { ApiNotification } from '@/lib/api/types';
 import styles from './NotificationBell.module.css';
@@ -15,18 +15,70 @@ function timeAgo(iso: string): string {
   return `${Math.floor(diffSec / 86400)}d`;
 }
 
-function describe(n: ApiNotification): string {
+/** Display label for the source user — name if set, else email local-part. */
+function sourceLabel(n: ApiNotification): string {
+  if (!n.sourceUser) return 'Alguém';
+  if (n.sourceUser.name?.trim()) return n.sourceUser.name.trim();
+  // Fall back to the local-part of the email so we don't leak the domain.
+  const local = n.sourceUser.email.split('@')[0];
+  return local || n.sourceUser.email;
+}
+
+/** Display label for the track — "Title — Artist". */
+function trackLabel(n: ApiNotification): string | null {
+  if (!n.track) return null;
+  return `${n.track.title} — ${n.track.artist}`;
+}
+
+/**
+ * Renders the notification text with the source user and the track shown
+ * in bold/white. Returns a JSX fragment so the rich segments stay typed.
+ */
+function describe(n: ApiNotification): ReactNode {
+  const Strong = ({ children }: { children: ReactNode }) => (
+    <strong className={styles.itemStrong}>{children}</strong>
+  );
+
   switch (n.kind) {
-    case 'same_track':
-      return 'Alguém está ouvindo a mesma música que você';
-    case 'same_artist':
-      return 'Alguém está curtindo o mesmo artista';
-    case 'same_album':
-      return 'Alguém está ouvindo o mesmo álbum';
-    case 'message':
-      return 'Nova mensagem no chat';
-    case 'mention':
-      return 'Você foi mencionado';
+    case 'same_track': {
+      const track = trackLabel(n);
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> está ouvindo{' '}
+          {track ? <Strong>{track}</Strong> : 'a mesma música'} agora
+        </Fragment>
+      );
+    }
+    case 'same_artist': {
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> está curtindo{' '}
+          {n.artist ? <Strong>{n.artist}</Strong> : 'o mesmo artista'}
+        </Fragment>
+      );
+    }
+    case 'same_album': {
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> está ouvindo{' '}
+          {n.album ? <Strong>{n.album}</Strong> : 'o mesmo álbum'}
+        </Fragment>
+      );
+    }
+    case 'message': {
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> mandou uma mensagem
+        </Fragment>
+      );
+    }
+    case 'mention': {
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> mencionou você
+        </Fragment>
+      );
+    }
     default:
       return 'Notificação';
   }

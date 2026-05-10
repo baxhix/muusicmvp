@@ -85,6 +85,20 @@ export interface ApiNotification {
   payload: unknown;
   createdAt: string;
   readAt: string | null;
+  /** Hydrated by listNotifications via JOIN with users. */
+  sourceUser: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  } | null;
+  /** Hydrated by listNotifications via JOIN with tracks. */
+  track: {
+    id: string;
+    title: string;
+    artist: string;
+    youtubeId: string;
+  } | null;
 }
 
 export interface ApiLocation {
