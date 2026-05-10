@@ -83,9 +83,21 @@ export function useChatLive(): UseChatLiveResult {
         .then((res) => {
           // API returns newest-first; flip to oldest-first for display.
           setMessages([...res.messages].reverse());
+          // Optimistically zero this thread's unreadCount in the list while
+          // the server-side mark-read POST is in flight.
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === conversationId ? { ...c, unreadCount: 0 } : c,
+            ),
+          );
         })
         .catch((err) => console.error('messages fetch failed:', err))
         .finally(() => setLoadingMessages(false));
+
+      // Persist the read marker so it survives reloads / other devices.
+      api
+        .post(`/api/conversations/${conversationId}/read`)
+        .catch((err) => console.error('mark read failed:', err));
 
       socket?.emit('chat:join', { conversationId });
     },
@@ -150,15 +162,23 @@ export function useChatLive(): UseChatLiveResult {
   useEffect(() => {
     if (!socket) return;
     const onMessage = (msg: ApiMessage) => {
+      const isActive = msg.conversationId === activeIdRef.current;
       // Append if it's for the active conversation; replace optimistic.
-      if (msg.conversationId === activeIdRef.current) {
+      if (isActive) {
         setMessages((prev) => {
           const filtered = prev.filter((m) => !m.id.startsWith('tmp-') || m.body !== msg.body);
           if (filtered.some((m) => m.id === msg.id)) return filtered;
           return [...filtered, msg];
         });
+        // User is currently viewing this thread — keep the read marker fresh
+        // so the unread badge doesn't pop up on the dock for messages they
+        // can already see.
+        api
+          .post(`/api/conversations/${msg.conversationId}/read`)
+          .catch((err) => console.error('mark read (active) failed:', err));
       }
-      // Always nudge the conversation list (move-to-top + lastMessage update).
+      // Always nudge the conversation list (move-to-top + lastMessage update,
+      // and refresh unreadCount for inactive threads).
       loadList();
     };
     socket.on('chat:message', onMessage);

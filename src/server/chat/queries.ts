@@ -3,13 +3,19 @@ import { db } from '../db';
 import { conversationParticipants, messages } from '../db/schema';
 
 /**
- * List the current user's DMs with their last message and the "other" participant.
- * Newest activity first. Empty conversations are still returned (lastMessage = null).
+ * List the current user's DMs with their last message, the "other" participant,
+ * and an `unreadCount` of messages received since this user's last read marker.
+ *
+ * Unread is computed as: count of messages in the conversation NOT sent by the
+ * current user AND newer than `cp.last_read_message_id` (or all of them if the
+ * marker is null). The dock-style chat avatars use this to render a red badge.
  */
 export async function listConversationsForUser(userId: string) {
   const rows = await db.execute(sql`
     WITH user_convs AS (
-      SELECT conversation_id FROM conversation_participants WHERE user_id = ${userId}
+      SELECT conversation_id, last_read_message_id
+      FROM conversation_participants
+      WHERE user_id = ${userId}
     ),
     last_msg AS (
       SELECT DISTINCT ON (conversation_id)
@@ -28,7 +34,18 @@ export async function listConversationsForUser(userId: string) {
       lm.created_at     AS last_message_created_at,
       other.id          AS other_user_id,
       other.name        AS other_user_name,
-      other.avatar_url  AS other_user_avatar
+      other.avatar_url  AS other_user_avatar,
+      (
+        SELECT COUNT(*)::int FROM messages m
+        WHERE m.conversation_id = c.id
+          AND m.sender_id <> ${userId}
+          AND (
+            uc.last_read_message_id IS NULL
+            OR m.created_at > (
+              SELECT created_at FROM messages WHERE id = uc.last_read_message_id
+            )
+          )
+      ) AS unread_count
     FROM conversations c
     JOIN user_convs uc ON uc.conversation_id = c.id
     LEFT JOIN last_msg lm ON lm.conversation_id = c.id
@@ -61,7 +78,29 @@ export async function listConversationsForUser(userId: string) {
           avatarUrl: r.other_user_avatar as string | null,
         }
       : null,
+    unreadCount: r.unread_count as number,
   }));
+}
+
+/**
+ * Mark the conversation read up to its latest message for the given user.
+ * Idempotent — sets `last_read_message_id` to the most recent message id.
+ */
+export async function markConversationRead(
+  conversationId: string,
+  userId: string,
+): Promise<void> {
+  await db.execute(sql`
+    UPDATE conversation_participants
+    SET last_read_message_id = (
+      SELECT id FROM messages
+      WHERE conversation_id = ${conversationId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    )
+    WHERE conversation_id = ${conversationId}
+      AND user_id = ${userId}
+  `);
 }
 
 /** Returns true if the user is a participant of the conversation. */

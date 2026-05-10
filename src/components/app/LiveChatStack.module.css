@@ -63,6 +63,29 @@
   display: block;
 }
 
+/* Red circle on the avatar when there are unread messages.
+   Positioned top-right so it pops above the avatar border. */
+.unreadBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #000;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+  pointer-events: none;
+}
+
 .tooltip {
   position: absolute;
   right: calc(100% + 12px);

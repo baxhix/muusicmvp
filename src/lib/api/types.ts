@@ -51,6 +51,8 @@ export interface ApiConversationSummary {
     name: string | null;
     avatarUrl: string | null;
   } | null;
+  /** Messages received in this thread that the current user hasn't read yet. */
+  unreadCount: number;
 }
 
 export interface ApiMessage {

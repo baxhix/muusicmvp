@@ -38,6 +38,11 @@ export default function LiveChatStack({
           const isActive = activeId === c.id;
           const preview = c.lastMessage?.body;
 
+          const unread = c.unreadCount;
+          const ariaLabel = unread > 0
+            ? `${u.name ?? 'Conversa'} (${unread} ${unread === 1 ? 'mensagem' : 'mensagens'} não lidas)`
+            : u.name ?? 'Conversa';
+
           return (
             <button
               key={c.id}
@@ -45,10 +50,16 @@ export default function LiveChatStack({
               onClick={() => onOpen(c.id)}
               onMouseEnter={() => setHovered(c.id)}
               onMouseLeave={() => setHovered(null)}
-              aria-label={u.name ?? 'Conversa'}
+              aria-label={ariaLabel}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img} alt={u.name ?? ''} className={styles.avatar} />
+
+              {unread > 0 && (
+                <span className={styles.unreadBadge} aria-hidden="true">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
 
               {hovered === c.id && (
                 <div className={styles.tooltip}>
