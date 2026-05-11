@@ -59,9 +59,6 @@ export default function RankingModal({ open, onClose }: Props) {
         <header className={styles.header}>
           <div className={styles.titleWrap}>
             <h2 className={styles.title}>Ranking</h2>
-            <p className={styles.subtitle}>
-              Quem mais ouve, conversa e visita a plataforma
-            </p>
           </div>
           <div className={styles.headerActions}>
             <button
