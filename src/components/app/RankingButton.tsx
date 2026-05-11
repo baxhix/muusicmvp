@@ -7,9 +7,9 @@ interface Props {
 }
 
 /**
- * Floating top-bar trigger that opens the global RankingModal. Sits next
- * to the SuperchatTrigger and NotificationBell so the whole "social"
- * row lives together visually.
+ * Top-bar pill that opens the global Ranking — rendered by the
+ * SuperfansPanel (its design + live /api/ranking data). Sits next to
+ * the FilterTabs in the .topBar wrapper.
  */
 export default function RankingButton({ onClick }: Props) {
   return (
