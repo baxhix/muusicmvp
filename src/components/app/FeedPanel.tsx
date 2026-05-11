@@ -37,14 +37,18 @@ const ACTIVITIES: ActivityCardData[] = [
 /* ── Media posts data ───────────────────────────────────── */
 const MEDIA: MediaPostData[] = [
   {
-    type: 'image',
+    type: 'carousel',
     user: 'Central de Fãs Ana Castela',
     avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
     time: '8min',
     likes: 4821,
     comments: 312,
-    src: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80',
-    alt: 'Show Ana Castela',
+    items: [
+      { src: '/feed/ana-castela-1.jpg', alt: 'Ana Castela no palco com microfone de glitter' },
+      { src: '/feed/ana-castela-2.jpg', alt: 'Ana Castela cantando em trio no palco' },
+      { src: '/feed/ana-castela-3.jpg', alt: 'Ana Castela em close, perfil de chapéu' },
+      { src: '/feed/ana-castela-4.jpg', alt: 'Ana Castela e sanfoneiro em foto preto e branco' },
+    ],
   },
   {
     type: 'video',

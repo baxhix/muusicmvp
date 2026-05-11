@@ -12,9 +12,14 @@ type BasePost = {
   comments: number;
 };
 
-export type ImagePostData  = BasePost & { type: 'image';  src: string; alt?: string };
-export type VideoPostData  = BasePost & { type: 'video';  poster: string; src?: string };
-export type MediaPostData  = ImagePostData | VideoPostData;
+export type ImagePostData    = BasePost & { type: 'image';  src: string; alt?: string };
+export type VideoPostData    = BasePost & { type: 'video';  poster: string; src?: string };
+export type CarouselPostData = BasePost & {
+  type: 'carousel';
+  /** Ordered list of slides — first one is shown by default. */
+  items: { src: string; alt?: string }[];
+};
+export type MediaPostData    = ImagePostData | VideoPostData | CarouselPostData;
 
 /* ── Icons ── */
 const HeartIcon = () => (
@@ -78,12 +83,26 @@ const SoundOffIcon = () => (
     <path d="M13 5l-4 6M9 5l4 6"/>
   </svg>
 );
+const ChevronLeft = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 3L5 8l5 5" />
+  </svg>
+);
+const ChevronRight = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 3l5 5-5 5" />
+  </svg>
+);
 
 /* ── Component ── */
 export default function MediaPost({ data }: { data: MediaPostData }) {
   const [liked, setLiked]     = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted]     = useState(true);
+  // Carousel-only: index of the visible slide. Living on the component
+  // so each post owns its own state — multiple carousels in the same
+  // feed advance independently.
+  const [slideIdx, setSlideIdx] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const togglePlay = () => {
@@ -120,6 +139,13 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           src={data.src}
           alt={data.alt ?? data.user}
           className={styles.image}
+        />
+      ) : data.type === 'carousel' ? (
+        <CarouselMedia
+          items={data.items}
+          fallbackAlt={data.user}
+          index={slideIdx}
+          onChange={setSlideIdx}
         />
       ) : (
         <div className={styles.videoWrap}>
@@ -179,6 +205,91 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           <span style={{ visibility: 'hidden', fontSize: '11px' }}>0</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ── Carousel sub-component ──────────────────────────────────────────
+ * Single visible slide with prev/next chevrons and dot indicators.
+ * The chevrons hide at boundaries (no wraparound) to match Instagram
+ * behavior — the dots already tell the user where they are. State is
+ * lifted to the parent so MediaPost owns the index, which keeps the
+ * "actions" footer stable across slides. */
+function CarouselMedia({
+  items,
+  fallbackAlt,
+  index,
+  onChange,
+}: {
+  items: { src: string; alt?: string }[];
+  fallbackAlt: string;
+  index: number;
+  onChange: (next: number) => void;
+}) {
+  if (items.length === 0) return null;
+  const safeIndex = Math.min(Math.max(index, 0), items.length - 1);
+  const atStart = safeIndex === 0;
+  const atEnd = safeIndex === items.length - 1;
+
+  return (
+    <div className={styles.carousel}>
+      <div
+        className={styles.carouselTrack}
+        style={{ transform: `translateX(-${safeIndex * 100}%)` }}
+      >
+        {items.map((slide, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={slide.src}
+            alt={slide.alt ?? fallbackAlt}
+            className={styles.carouselSlide}
+            // Lazy-load slides beyond the first to save bandwidth when
+            // the user never advances past slide 1.
+            loading={i === 0 ? 'eager' : 'lazy'}
+            draggable={false}
+          />
+        ))}
+      </div>
+
+      {!atStart && (
+        <button
+          type="button"
+          className={`${styles.carouselNav} ${styles.carouselNavPrev}`}
+          onClick={() => onChange(safeIndex - 1)}
+          aria-label="Imagem anterior"
+        >
+          <ChevronLeft />
+        </button>
+      )}
+      {!atEnd && (
+        <button
+          type="button"
+          className={`${styles.carouselNav} ${styles.carouselNavNext}`}
+          onClick={() => onChange(safeIndex + 1)}
+          aria-label="Próxima imagem"
+        >
+          <ChevronRight />
+        </button>
+      )}
+
+      <div className={styles.carouselDots} role="tablist" aria-label="Slides">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`${styles.carouselDot} ${i === safeIndex ? styles.carouselDotActive : ''}`}
+            onClick={() => onChange(i)}
+            aria-label={`Ir para imagem ${i + 1} de ${items.length}`}
+            aria-current={i === safeIndex ? 'true' : undefined}
+            role="tab"
+          />
+        ))}
+      </div>
+
+      <span className={styles.carouselCounter} aria-hidden="true">
+        {safeIndex + 1}/{items.length}
+      </span>
     </div>
   );
 }
