@@ -184,14 +184,23 @@
   white-space: pre-wrap;
 }
 .msgIn .bubble {
+  /* Fallback for messages whose inline gradient style fails to load
+     (shouldn't happen in practice — the JSX always sets one for
+     incoming). Subtle neutral chip so the layout never collapses. */
   background: rgba(255, 255, 255, 0.06);
   color: #f5f5f7;
   border-top-left-radius: 4px;
+  /* Soft shadow under the gradient so it lifts off the panel rather
+     than blending into the dark bg. */
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.28);
 }
+/* Outgoing — naked text. No background, no shadow, no radius corner
+   asymmetry. Right-alignment comes from the parent .msgOut class. */
 .msgOut .bubble {
-  background: var(--accent, #3ddb74);
-  color: #061110;
-  border-top-right-radius: 4px;
+  background: transparent;
+  color: #f5f5f7;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 .time {

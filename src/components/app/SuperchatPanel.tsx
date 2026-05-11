@@ -31,28 +31,29 @@ function senderAvatarUrl(m: ApiMessage): string {
 }
 
 /**
- * Picks a deterministic accent color for a user's bubbles. Ten hues
- * spaced around the color wheel, all picked from the Tailwind-600/700
- * shade range — saturated and modern, while every entry still passes
- * WCAG AA contrast (≥ 4.5:1) against white text.
+ * Picks a deterministic gradient pair for a user's bubbles. Ten gradients
+ * spaced around the color wheel — each goes between two adjacent hues of
+ * the same darkness band (Tailwind 600↔700) so the gradient adds depth
+ * without floating into bright shades that lose AA contrast against
+ * white text. Every endpoint passes ≥ 4.5:1 with white.
  *
- * Hash → index keeps the same user on the same color across re-renders
+ * Hash → index keeps the same user on the same gradient across re-renders
  * and across reloads, so reading flow stays predictable.
  */
-const USER_BUBBLE_PALETTE = [
-  '#4F46E5', // indigo  — bluish purple
-  '#2563EB', // blue
-  '#0284C7', // sky
-  '#0F766E', // teal
-  '#15803D', // green   — forest
-  '#4D7C0F', // lime    — olive
-  '#B45309', // amber   — burnt orange
-  '#DC2626', // red
-  '#DB2777', // pink
-  '#7C3AED', // violet  — purple
+const USER_BUBBLE_PALETTE: Array<{ from: string; to: string }> = [
+  { from: '#4F46E5', to: '#7C3AED' }, // indigo → violet
+  { from: '#2563EB', to: '#4F46E5' }, // blue → indigo
+  { from: '#0284C7', to: '#2563EB' }, // sky → blue
+  { from: '#0F766E', to: '#047857' }, // teal → emerald
+  { from: '#15803D', to: '#0F766E' }, // green → teal
+  { from: '#4D7C0F', to: '#15803D' }, // lime → green
+  { from: '#B45309', to: '#B91C1C' }, // amber → red
+  { from: '#DC2626', to: '#BE185D' }, // red → pink
+  { from: '#DB2777', to: '#A21CAF' }, // pink → fuchsia
+  { from: '#7C3AED', to: '#A21CAF' }, // violet → fuchsia
 ];
 
-function colorForUserId(userId: string): string {
+function gradientForUserId(userId: string): { from: string; to: string } {
   let h = 0;
   for (let i = 0; i < userId.length; i++) {
     h = (h * 31 + userId.charCodeAt(i)) & 0xffff;
@@ -249,7 +250,19 @@ function renderItem(
     prev && prev._type === 'message' && prev.senderId === m.senderId;
   const showHead = !isMine && !prevSameSender;
 
-  const bubbleColor = isMine ? undefined : colorForUserId(m.senderId);
+  // Outgoing messages render naked text on the panel — no bubble bg at
+  // all. Incoming messages get a vibrant 135deg gradient drawn from
+  // USER_BUBBLE_PALETTE keyed on the senderId, so the same user always
+  // gets the same gradient across the room.
+  const bubbleStyle = isMine
+    ? undefined
+    : (() => {
+        const g = gradientForUserId(m.senderId);
+        return {
+          background: `linear-gradient(135deg, ${g.from} 0%, ${g.to} 100%)`,
+          color: '#FFFFFF',
+        };
+      })();
 
   return (
     <div
@@ -265,7 +278,7 @@ function renderItem(
       )}
       <div
         className={styles.bubble}
-        style={bubbleColor ? { background: bubbleColor, color: '#FFFFFF' } : undefined}
+        style={bubbleStyle}
       >
         {m.body}
       </div>
