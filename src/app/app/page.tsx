@@ -168,10 +168,13 @@ export default function AppPage() {
 
         {/* Map Layer */}
         <div className={styles.mapLayer}>
-          {/* Top center row: filter pills + ranking pill side-by-side */}
+          {/* Top center row: filter pills + Ranking + Superchat + Notifications
+              side-by-side so nothing overlaps the username at the top-right. */}
           <div className={styles.topBar}>
             <FilterTabs onTabChange={handleTabChange} />
             <RankingButton onClick={() => setShowSuperfans(true)} />
+            <SuperchatTrigger onClick={() => setShowSuperchat(true)} />
+            <NotificationBell />
           </div>
 
           {/* Live badges */}
@@ -258,9 +261,9 @@ export default function AppPage() {
 
       <LocateButton />
 
-      {/* Realtime UI surfaces */}
-      <NotificationBell />
-      <SuperchatTrigger onClick={() => setShowSuperchat(true)} />
+      {/* NotificationBell + SuperchatTrigger are rendered inline inside the
+          topBar so they don't overlap the username at the top-right. The
+          SuperchatPanel that they open stays here so it overlays everything. */}
       <SuperchatPanel
         open={showSuperchat}
         onClose={() => setShowSuperchat(false)}

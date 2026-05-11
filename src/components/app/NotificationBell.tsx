@@ -148,16 +148,33 @@ export default function NotificationBell() {
             <div className={styles.empty}>Sem novidades por enquanto.</div>
           ) : (
             <ul className={styles.list}>
-              {notifications.slice(0, 30).map((n) => (
-                <li
-                  key={n.id}
-                  className={`${styles.item} ${n.readAt ? styles.itemRead : styles.itemUnread}`}
-                  onClick={() => !n.readAt && markRead(n.id)}
-                >
-                  <div className={styles.itemText}>{describe(n)}</div>
-                  <div className={styles.itemMeta}>{timeAgo(n.createdAt)}</div>
-                </li>
-              ))}
+              {notifications.slice(0, 30).map((n) => {
+                const avatar =
+                  n.sourceUser?.avatarUrl ??
+                  (n.sourceUser?.id ? `https://i.pravatar.cc/72?u=${n.sourceUser.id}` : null);
+                return (
+                  <li
+                    key={n.id}
+                    className={`${styles.item} ${n.readAt ? styles.itemRead : styles.itemUnread}`}
+                    onClick={() => !n.readAt && markRead(n.id)}
+                  >
+                    {avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={avatar}
+                        alt=""
+                        className={styles.itemAvatar}
+                      />
+                    ) : (
+                      <span className={styles.itemAvatarPlaceholder} aria-hidden="true" />
+                    )}
+                    <div className={styles.itemBody}>
+                      <div className={styles.itemText}>{describe(n)}</div>
+                      <div className={styles.itemMeta}>{timeAgo(n.createdAt)}</div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

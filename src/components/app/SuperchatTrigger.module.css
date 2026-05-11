@@ -1,34 +1,43 @@
+/* Sibling of FilterTabs + Ranking + NotificationBell inside .topBar.
+   Pill style — matches the Ranking button so the whole control surface
+   reads as one row. */
 .btn {
-  position: fixed;
-  top: 18px;
-  right: 220px;
-  z-index: 105;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(245, 245, 247, 0.92);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: linear-gradient(160deg,
+    rgba(11, 11, 13, 0.78) 0%,
+    rgba(5, 5, 7, 0.74) 50%,
+    rgba(2, 2, 3, 0.76) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   transition: background 0.15s, border-color 0.15s, transform 0.15s, color 0.15s;
+  flex-shrink: 0;
 }
 .btn:hover {
-  background: rgba(0, 0, 0, 0.7);
-  border-color: rgba(61, 219, 116, 0.5);
+  border-color: rgba(61, 219, 116, 0.55);
   color: var(--accent, #3ddb74);
   transform: translateY(-1px);
 }
-.btn svg {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
+.btn svg { width: 16px; height: 16px; display: block; }
+.label { letter-spacing: 0.02em; }
 
-@media (max-width: 480px) {
-  .btn { right: 130px; }
+/* Mobile: keep just the icon to save space (still inside the topBar row). */
+@media (max-width: 600px) {
+  .btn {
+    height: 32px;
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+  .label { display: none; }
 }
