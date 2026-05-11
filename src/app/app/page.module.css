@@ -15,6 +15,25 @@
 }
 .mapLayer > * { pointer-events: auto; }
 
+/* Top center row that holds FilterTabs + RankingButton side-by-side.
+   Centered as a single block so both pills feel like one control surface. */
+.topBar {
+  position: fixed;
+  top: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 50;
+  pointer-events: auto;
+  max-width: calc(100vw - 32px);
+}
+
+@media (max-width: 768px) {
+  .topBar { top: 16px; gap: 6px; }
+}
+
 .backBtn {
   position: fixed;
   top: 54px; left: 20px;

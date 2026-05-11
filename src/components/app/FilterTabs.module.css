@@ -1,8 +1,8 @@
+/* Pill of filter chips. Positioning is owned by the parent `.topBar`
+   wrapper in page.module.css so the FilterTabs can sit next to the
+   RankingButton without absolute-positioning hacks. */
 .tabs {
-  position: fixed;
-  top: 42px; left: 50%;
-  transform: translateX(-50%);
-  display: flex;
+  display: inline-flex;
   gap: 8px;
   background: linear-gradient(160deg,
     rgba(11,11,13,0.78) 0%,
@@ -39,8 +39,8 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .tabs {
-    top: 16px;
-    max-width: calc(100vw - 88px);   /* deixa espaço pro avatar do TopBar */
+    /* Wrapping in the parent topBar handles scrolling on narrow screens. */
+    max-width: calc(100vw - 132px);  /* leaves room for the Ranking pill */
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -53,7 +53,7 @@
 }
 @media (max-width: 480px) {
   .tabs {
-    max-width: calc(100vw - 76px);
+    max-width: calc(100vw - 120px);
     padding: 4px;
   }
   .tab {

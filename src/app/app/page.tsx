@@ -166,7 +166,11 @@ export default function AppPage() {
 
         {/* Map Layer */}
         <div className={styles.mapLayer}>
-          <FilterTabs onTabChange={handleTabChange} />
+          {/* Top center row: filter pills + ranking pill side-by-side */}
+          <div className={styles.topBar}>
+            <FilterTabs onTabChange={handleTabChange} />
+            <RankingButton onClick={() => setShowRanking(true)} />
+          </div>
 
           {/* Live badges */}
           <LiveBadgeLayer
@@ -180,7 +184,10 @@ export default function AppPage() {
         </div>
 
         <BottomNav
-          onSuperfansOpen={() => setShowSuperfans(true)}
+          /* The crown icon is the second 'social' affordance — also opens
+             the global Ranking modal. The existing Superfans panel stays
+             reachable via the dedicated state. */
+          onSuperfansOpen={() => setShowRanking(true)}
           onProfileOpen={() => setShowProfile(true)}
         />
       </div>
@@ -257,7 +264,8 @@ export default function AppPage() {
         open={showSuperchat}
         onClose={() => setShowSuperchat(false)}
       />
-      <RankingButton onClick={() => setShowRanking(true)} />
+      {/* RankingButton is rendered inline next to FilterTabs in the topBar;
+          the modal stays here so it overlays everything. */}
       <RankingModal
         open={showRanking}
         onClose={() => setShowRanking(false)}
