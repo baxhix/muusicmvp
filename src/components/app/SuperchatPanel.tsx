@@ -132,37 +132,35 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
       aria-label="Superchat"
     >
       <header className={styles.header}>
-        <div className={styles.titleWrap}>
-          <h2 className={styles.title}>Superchat</h2>
-          {joined && participantCount > 0 && (
-            <button
-              type="button"
-              className={styles.participantsStack}
-              onClick={() => setShowParticipants(true)}
-              aria-label={`Ver ${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`}
-              title={`${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`}
-            >
-              {participantPreviews.slice(0, 5).map((p, i) => (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  key={p.id}
-                  src={p.avatarUrl ?? `https://i.pravatar.cc/72?u=${p.id}`}
-                  alt={p.name ?? ''}
-                  className={styles.participantsAvatar}
-                  style={{ ['--i' as string]: i } as React.CSSProperties}
-                />
-              ))}
-              {participantCount > participantPreviews.length && (
-                <span
-                  className={styles.participantsMore}
-                  style={{ ['--i' as string]: participantPreviews.slice(0, 5).length } as React.CSSProperties}
-                >
-                  +{participantCount - participantPreviews.slice(0, 5).length}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
+        <h2 className={styles.title}>Superchat</h2>
+        {joined && participantCount > 0 && (
+          <button
+            type="button"
+            className={styles.participantsStack}
+            onClick={() => setShowParticipants(true)}
+            aria-label={`Ver ${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`}
+            title={`${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`}
+          >
+            {participantPreviews.slice(0, 5).map((p, i) => (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                key={p.id}
+                src={p.avatarUrl ?? `https://i.pravatar.cc/72?u=${p.id}`}
+                alt={p.name ?? ''}
+                className={styles.participantsAvatar}
+                style={{ ['--i' as string]: i } as React.CSSProperties}
+              />
+            ))}
+            {participantCount > participantPreviews.length && (
+              <span
+                className={styles.participantsMore}
+                style={{ ['--i' as string]: participantPreviews.slice(0, 5).length } as React.CSSProperties}
+              >
+                +{participantCount - participantPreviews.slice(0, 5).length}
+              </span>
+            )}
+          </button>
+        )}
         <button
           type="button"
           className={styles.closeBtn}
