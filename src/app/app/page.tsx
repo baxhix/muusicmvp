@@ -2,11 +2,10 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 import TopBar from '@/components/app/TopBar';
 import FilterTabs from '@/components/app/FilterTabs';
-import { LiveBadgeLayer } from '@/components/app/LiveBadge';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import UserPicker from '@/components/app/UserPicker';
@@ -33,26 +32,17 @@ import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { liveBadges, badgeSets } from '@/data/mapData';
 import { TRACKS_CATALOG } from '@/data/tracksCatalog';
-import type { FilterTabId, LiveBadgeData } from '@/types';
 import { globeStore } from '@/lib/globeStore';
 
 import styles from './page.module.css';
 
 const Globe = dynamic(() => import('@/components/app/Globe'), { ssr: false });
 
-const USER_CITIES: Record<string, { center: [number, number]; zoom: number }> = {
-  mariana:   { center: [-46.6333, -23.5505], zoom: 10 },
-  joaopedro: { center: [11.5820,  48.1351],  zoom: 10 },
-  camila:    { center: [139.6917, 35.6895],  zoom: 10 },
-};
-
 export default function AppPage() {
   const { user: authUser } = useAuth();
   const chat = useChatLive();
   const { users: liveUsers } = useLiveUsers();
-  const [badgePositionIdx, setBadgePositionIdx] = useState(0);
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
   const [showProfile, setShowProfile] = useState(false);
@@ -134,15 +124,6 @@ export default function AppPage() {
     nowPlaying: undefined,
   };
 
-  const handleBadgeClick = useCallback((badge: LiveBadgeData) => {
-    const city = USER_CITIES[badge.id];
-    if (city) globeStore.flyTo(city.center, city.zoom);
-  }, []);
-
-  const handleTabChange = useCallback((idx: number, _tabId: FilterTabId) => {
-    setBadgePositionIdx(idx);
-  }, []);
-
   const activeConversation =
     chat.conversations.find((c) => c.id === chat.activeId) ?? null;
 
@@ -176,7 +157,7 @@ export default function AppPage() {
           {/* Top center row: filter pills + Ranking + Superchat + Notifications
               side-by-side so nothing overlaps the username at the top-right. */}
           <div className={styles.topBar}>
-            <FilterTabs onTabChange={handleTabChange} />
+            <FilterTabs />
             <RankingButton onClick={() => setShowSuperfans(true)} />
             <SuperchatTrigger
               onClick={() => setShowSuperchat(true)}
@@ -185,14 +166,10 @@ export default function AppPage() {
             <NotificationBell />
           </div>
 
-          {/* Live badges */}
-          <LiveBadgeLayer
-            badges={liveBadges}
-            positions={badgeSets[badgePositionIdx]}
-            onBadgeClick={handleBadgeClick}
-          />
-
-          {/* Floating users (background ambient) */}
+          {/* Floating overlay of every real online user — anchored to
+              deterministic screen positions so the roster is always visible
+              regardless of how the globe is rotated. Real lat/lng markers
+              are owned by <Globe /> via globeStore.setLiveUsers. */}
           <FloatingUsers />
         </div>
 
