@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
-import type { ApiMessage, ApiSuperchatResponse } from '@/lib/api/types';
+import type {
+  ApiMessage,
+  ApiSuperchatParticipantPreview,
+  ApiSuperchatResponse,
+} from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useSocket } from './useSocket';
 
@@ -34,6 +38,8 @@ export type SuperchatFeedItem =
 interface UseSuperchatResult {
   conversationId: string | null;
   participantCount: number;
+  /** First ~5 participants (newest joiners) for the header avatar stack. */
+  participantPreviews: ApiSuperchatParticipantPreview[];
   feed: SuperchatFeedItem[];
   loading: boolean;
   send: (body: string) => Promise<void>;
@@ -53,6 +59,9 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
   const { socket } = useSocket();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
+  const [participantPreviews, setParticipantPreviews] = useState<
+    ApiSuperchatParticipantPreview[]
+  >([]);
   const [messages, setMessages] = useState<ApiMessage[]>([]);
   const [activities, setActivities] = useState<SuperchatActivity[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,6 +75,7 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
       setActivities([]);
       setConversationId(null);
       setParticipantCount(0);
+      setParticipantPreviews([]);
       setLoading(false);
       return;
     }
@@ -78,6 +88,7 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
         setConversationId(res.conversation.id);
         setMessages([...res.messages].reverse()); // newest-last for chat UIs
         setParticipantCount(res.participantCount);
+        setParticipantPreviews(res.participantPreviews ?? []);
       })
       .catch((err) => {
         console.error('superchat fetch failed:', err);
@@ -206,5 +217,12 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
     ...activities.map((a): SuperchatFeedItem => ({ ...a, _type: 'activity' })),
   ].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
-  return { conversationId, participantCount, feed, loading, send };
+  return {
+    conversationId,
+    participantCount,
+    participantPreviews,
+    feed,
+    loading,
+    send,
+  };
 }

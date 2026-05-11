@@ -73,7 +73,8 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     }
   }, []);
 
-  const { feed, send, loading, participantCount } = useSuperchat(open && joined);
+  const { feed, send, loading, participantCount, participantPreviews } =
+    useSuperchat(open && joined);
 
   const [draft, setDraft] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
@@ -128,26 +129,49 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
       role="dialog"
       aria-label="Superchat"
     >
-      <div className={styles.header}>
-        <div className={styles.title}>
-          <span className={styles.titleText}>Superchat</span>
-          {joined && (
+      <header className={styles.header}>
+        <div className={styles.titleWrap}>
+          <h2 className={styles.title}>Superchat</h2>
+          {joined && participantCount > 0 && (
             <button
               type="button"
-              className={styles.participantsLink}
+              className={styles.participantsStack}
               onClick={() => setShowParticipants(true)}
-              aria-label={`Ver ${participantCount} participantes`}
+              aria-label={`Ver ${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`}
+              title={`${participantCount} ${participantCount === 1 ? 'participante' : 'participantes'}`}
             >
-              {participantCount} {participantCount === 1 ? 'participante' : 'participantes'}
+              {participantPreviews.slice(0, 5).map((p, i) => (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  key={p.id}
+                  src={p.avatarUrl ?? `https://i.pravatar.cc/72?u=${p.id}`}
+                  alt={p.name ?? ''}
+                  className={styles.participantsAvatar}
+                  style={{ ['--i' as string]: i } as React.CSSProperties}
+                />
+              ))}
+              {participantCount > participantPreviews.length && (
+                <span
+                  className={styles.participantsMore}
+                  style={{ ['--i' as string]: participantPreviews.slice(0, 5).length } as React.CSSProperties}
+                >
+                  +{participantCount - participantPreviews.slice(0, 5).length}
+                </span>
+              )}
             </button>
           )}
         </div>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar superchat">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <button
+          type="button"
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label="Fechar"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-      </div>
+      </header>
 
       {!joined ? (
         <EntranceScreen onEnter={handleEnter} />

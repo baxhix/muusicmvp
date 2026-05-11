@@ -67,6 +67,17 @@ export interface ApiMessage {
   senderAvatarUrl?: string | null;
 }
 
+/**
+ * Minimal participant shape used for the avatar-stack preview in the
+ * Superchat header. The full participant rows (with email, city, etc.)
+ * are fetched separately by ParticipantsModal.
+ */
+export interface ApiSuperchatParticipantPreview {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 export interface ApiSuperchatResponse {
   conversation: {
     id: string;
@@ -77,6 +88,7 @@ export interface ApiSuperchatResponse {
   messages: ApiMessage[];
   hasMore: boolean;
   participantCount: number;
+  participantPreviews: ApiSuperchatParticipantPreview[];
 }
 
 export interface ApiSuperchatParticipant {

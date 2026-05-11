@@ -4,6 +4,7 @@ import {
   countSuperchatParticipants,
   ensureSuperchatMembership,
   getSuperchat,
+  listSuperchatParticipantPreviews,
 } from '@/server/chat/dm';
 import { listMessages } from '@/server/chat/queries';
 
@@ -25,15 +26,18 @@ export async function GET() {
   }
 
   await ensureSuperchatMembership(user.id);
-  const [{ messages, hasMore }, participantCount] = await Promise.all([
-    listMessages(room.id, { limit: 50 }),
-    countSuperchatParticipants(),
-  ]);
+  const [{ messages, hasMore }, participantCount, participantPreviews] =
+    await Promise.all([
+      listMessages(room.id, { limit: 50 }),
+      countSuperchatParticipants(),
+      listSuperchatParticipantPreviews(5),
+    ]);
 
   return NextResponse.json({
     conversation: { id: room.id, type: room.type, name: room.name, slug: room.slug },
     messages,
     hasMore,
     participantCount,
+    participantPreviews,
   });
 }

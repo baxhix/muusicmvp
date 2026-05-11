@@ -124,6 +124,32 @@ export async function countSuperchatParticipants(): Promise<number> {
   return (result.rows[0]?.n as number) ?? 0;
 }
 
+/**
+ * Lightweight slice of participants for the header avatar stack —
+ * `limit` newest joiners. Ordered the same as the full list so the
+ * preview and the modal stay visually consistent.
+ */
+export async function listSuperchatParticipantPreviews(limit = 5) {
+  const id = await getSuperchatId();
+  if (!id) return [];
+  const result = await db.execute(sql`
+    SELECT
+      u.id         AS id,
+      u.name       AS name,
+      u.avatar_url AS avatar_url
+    FROM conversation_participants cp
+    JOIN users u ON u.id = cp.user_id
+    WHERE cp.conversation_id = ${id}
+    ORDER BY cp.joined_at DESC
+    LIMIT ${limit}
+  `);
+  return result.rows.map((r) => ({
+    id: r.id as string,
+    name: r.name as string | null,
+    avatarUrl: r.avatar_url as string | null,
+  }));
+}
+
 /** Public profile rows of every user in the Superchat, newest joiner first. */
 export async function listSuperchatParticipants() {
   const id = await getSuperchatId();
