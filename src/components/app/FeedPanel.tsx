@@ -44,10 +44,10 @@ const MEDIA: MediaPostData[] = [
     likes: 4821,
     comments: 312,
     items: [
-      { src: '/feed/ana-castela-1.jpg', alt: 'Ana Castela no palco com microfone de glitter' },
-      { src: '/feed/ana-castela-2.jpg', alt: 'Ana Castela cantando em trio no palco' },
-      { src: '/feed/ana-castela-3.jpg', alt: 'Ana Castela em close, perfil de chapéu' },
-      { src: '/feed/ana-castela-4.jpg', alt: 'Ana Castela e sanfoneiro em foto preto e branco' },
+      { src: '/feed/ana-castela-1.png', alt: 'Ana Castela no palco com microfone de glitter' },
+      { src: '/feed/ana-castela-2.png', alt: 'Ana Castela cantando em trio no palco' },
+      { src: '/feed/ana-castela-3.png', alt: 'Ana Castela em close, perfil de chapéu' },
+      { src: '/feed/ana-castela-4.png', alt: 'Ana Castela e sanfoneiro em foto preto e branco' },
     ],
   },
   {
@@ -60,7 +60,7 @@ const MEDIA: MediaPostData[] = [
     src: '/feed/simplesmente-acontece.mp4',
     // Poster reuses one of the carousel stills — same envelope, gives
     // the video a real first frame even before the file downloads.
-    poster: '/feed/ana-castela-2.jpg',
+    poster: '/feed/ana-castela-2.png',
   },
   {
     type: 'video',
@@ -70,7 +70,7 @@ const MEDIA: MediaPostData[] = [
     likes: 6240,
     comments: 412,
     src: '/feed/musica-vira-abraco.mp4',
-    poster: '/feed/ana-castela-4.jpg',
+    poster: '/feed/ana-castela-4.png',
   },
 ];
 
