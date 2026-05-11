@@ -7,85 +7,94 @@ import styles from './BottomNav.module.css';
 interface BottomNavProps {
   onSuperfansOpen?: () => void;
   onProfileOpen?: () => void;
+  /** Open the global Superchat panel (wired in page.tsx). */
+  onSuperchatOpen?: () => void;
 }
 
-const NAV_ITEMS = [
-  {
-    id: 'map',
-    label: 'Mapa',
-    href: '/app',
-    icon: (
-      <svg viewBox="0 0 22 22" fill="none">
-        <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.6"/>
-        <path d="M3 11h16M11 3c-2 2.5-3 5-3 8s1 5.5 3 8M11 3c2 2.5 3 5 3 8s-1 5.5-3 8" stroke="currentColor" strokeWidth="1.3"/>
-      </svg>
-    ),
-  },
-  {
-    id: 'explore',
-    label: 'Explorar',
-    href: '',
-    icon: (
-      <svg viewBox="0 0 22 22" fill="none">
-        <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.6"/>
-        <path d="M15.5 15.5L19 19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-];
-
-export default function BottomNav({ onSuperfansOpen, onProfileOpen }: BottomNavProps = {}) {
+export default function BottomNav({
+  onSuperfansOpen,
+  onProfileOpen,
+  onSuperchatOpen,
+}: BottomNavProps = {}) {
   const pathname = usePathname();
 
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.inner}>
-        {NAV_ITEMS.slice(0, 2).map((item) => {
-          const isActive = pathname === item.href;
-          const cls = `${styles.item} ${isActive ? styles.itemActive : ''}`;
-          const children = (
-            <>
-              {item.icon}
-              <div className={styles.dot} aria-hidden="true" />
-              <span className={styles.label}>{item.label}</span>
-            </>
-          );
-          return item.href ? (
-            <Link
-              key={item.id}
-              href={item.href}
-              className={cls}
-              aria-label={item.label}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              {children}
-            </Link>
-          ) : (
-            <button key={item.id} className={cls} aria-label={item.label}>
-              {children}
-            </button>
-          );
-        })}
+        {/* Mapa */}
+        <Link
+          href="/app"
+          className={`${styles.item} ${pathname === '/app' ? styles.itemActive : ''}`}
+          aria-label="Mapa"
+          aria-current={pathname === '/app' ? 'page' : undefined}
+        >
+          <svg viewBox="0 0 22 22" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.6" />
+            <path
+              d="M3 11h16M11 3c-2 2.5-3 5-3 8s1 5.5 3 8M11 3c2 2.5 3 5 3 8s-1 5.5-3 8"
+              stroke="currentColor"
+              strokeWidth="1.3"
+            />
+          </svg>
+          <div className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>Mapa</span>
+        </Link>
 
-        {/* Center crown button — Superfãs */}
+        {/* Feed — disabled (temporariamente) */}
+        <button
+          type="button"
+          className={`${styles.item} ${styles.itemDisabled}`}
+          disabled
+          aria-disabled="true"
+          title="Feed desabilitado temporariamente"
+          aria-label="Feed (desabilitado temporariamente)"
+        >
+          {/* Feed icon — stacked lines like an article list */}
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="4"  width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+            <rect x="3" y="10" width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+            <rect x="3" y="16" width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          <div className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>
+            Feed
+            <span className={styles.labelHint}> (desabilitado temporariamente)</span>
+          </span>
+        </button>
+
+        {/* Center crown button — opens Ranking/Superfans */}
         <button
           className={`${styles.item} ${styles.itemCenter}`}
           onClick={onSuperfansOpen}
-          aria-label="Superfãs"
+          aria-label="Ranking"
         >
           <svg viewBox="0 0 24 24" fill="none">
-            <path d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            <path
+              d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
         </button>
 
-        {/* Chat */}
+        {/* Chat → opens the Superchat panel */}
         <button
-          className={`${styles.item} ${pathname === '/app/chat' ? styles.itemActive : ''}`}
-          aria-label="Chat"
+          type="button"
+          className={styles.item}
+          onClick={onSuperchatOpen}
+          aria-label="Abrir Superchat"
         >
           <svg viewBox="0 0 24 24" fill="none">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           <div className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Chat</span>
@@ -98,8 +107,13 @@ export default function BottomNav({ onSuperfansOpen, onProfileOpen }: BottomNavP
           aria-label="Perfil"
         >
           <svg viewBox="0 0 22 22" fill="none">
-            <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6"/>
-            <path d="M4 19c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+            <path
+              d="M4 19c0-3.5 3-6 7-6s7 2.5 7 6"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
           </svg>
           <div className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Perfil</span>

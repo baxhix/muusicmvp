@@ -496,6 +496,22 @@
   color: rgba(245,245,247,0.75);
 }
 
+/* Disabled drawer entries — washed-out look, no hover affordance, no clicks.
+   Used for everything except "Editar perfil" and "Sair" until those flows
+   are implemented. */
+.drawerItemDisabled {
+  opacity: 0.38;
+  cursor: not-allowed !important;
+}
+.drawerItemDisabled:hover {
+  background: transparent !important;
+  color: inherit !important;
+}
+.drawerItemDisabled:hover .drawerItemIcon,
+.drawerItemDisabled:hover .drawerChevron {
+  color: inherit !important;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .userMenu { top: 16px; right: 12px; gap: 6px; }

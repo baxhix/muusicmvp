@@ -197,10 +197,12 @@ export default function AppPage() {
         </div>
 
         <BottomNav
-          /* Crown icon opens the same SuperfansPanel (Ranking design + real
-             /api/ranking data). */
+          /* Crown icon → SuperfansPanel (Ranking).
+             Chat icon  → Superchat panel.
+             Profile icon → ProfilePanel. */
           onSuperfansOpen={() => setShowSuperfans(true)}
           onProfileOpen={() => setShowProfile(true)}
+          onSuperchatOpen={() => setShowSuperchat(true)}
         />
       </div>
 

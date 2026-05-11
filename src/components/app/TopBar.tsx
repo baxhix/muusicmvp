@@ -391,8 +391,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       <DrawerChevron />
                     </button>
                     <button
-                      className={styles.drawerItem}
-                      onClick={() => setSection('activity')}
+                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="activity" />
                       <span>Minha atividade</span>
@@ -403,16 +405,20 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Privacidade</span>
                     <button
-                      className={styles.drawerItem}
-                      onClick={() => setSection('messages')}
+                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="messages" />
                       <span>Mensagens</span>
                       <DrawerChevron />
                     </button>
                     <button
-                      className={styles.drawerItem}
-                      onClick={() => setSection('map')}
+                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="map" />
                       <span>Mapa</span>
@@ -423,8 +429,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Segurança</span>
                     <button
-                      className={styles.drawerItem}
-                      onClick={() => setSection('password')}
+                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="lock" />
                       <span>Alterar senha</span>
@@ -435,24 +443,30 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Legal</span>
                     <button
-                      className={styles.drawerItem}
-                      onClick={() => setSection('terms')}
+                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="file" />
                       <span>Termos de Uso</span>
                       <DrawerChevron />
                     </button>
                     <button
-                      className={styles.drawerItem}
-                      onClick={() => setSection('privacy')}
+                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="shield" />
                       <span>Política de Privacidade</span>
                       <DrawerChevron />
                     </button>
                     <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDelete}`}
-                      onClick={() => { setOpen(false); onDeleteAccountOpen?.(); }}
+                      className={`${styles.drawerItem} ${styles.drawerItemDelete} ${styles.drawerItemDisabled}`}
+                      disabled
+                      aria-disabled="true"
+                      title="Em breve"
                     >
                       <DrawerItemIcon name="trash" />
                       <span>Excluir conta</span>
