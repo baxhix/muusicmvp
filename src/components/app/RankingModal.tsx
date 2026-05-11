@@ -23,9 +23,19 @@ function formatNumber(n: number): string {
   return new Intl.NumberFormat('pt-BR').format(n);
 }
 
+function describeError(code: string): string {
+  if (code === 'migration_missing') {
+    return 'Tabela user_activities ausente no banco. Aplique a migration 0003 na VPS.';
+  }
+  if (code === 'network_error') return 'Falha de conexão. Verifique sua internet.';
+  if (code === 'query_failed') return 'Erro ao consultar o ranking no servidor.';
+  if (code === 'unauthorized') return 'Sessão expirada. Faça login novamente.';
+  return `Erro ao carregar ranking (${code}).`;
+}
+
 export default function RankingModal({ open, onClose }: Props) {
   const { user } = useAuth();
-  const { ranking, loading, refresh } = useRanking(open);
+  const { ranking, loading, error, refresh } = useRanking(open);
 
   // ESC fecha
   useEffect(() => {
@@ -88,6 +98,10 @@ export default function RankingModal({ open, onClose }: Props) {
         <div className={styles.list}>
           {loading && ranking.length === 0 ? (
             <div className={styles.empty}>Carregando ranking…</div>
+          ) : error ? (
+            <div className={`${styles.empty} ${styles.errorEmpty}`}>
+              {describeError(error)}
+            </div>
           ) : ranking.length === 0 ? (
             <div className={styles.empty}>Sem dados ainda. Toca uma música pra começar.</div>
           ) : (
