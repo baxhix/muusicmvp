@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Instrument_Serif } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/AuthContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import GlobalErrorLogger from '@/components/GlobalErrorLogger';
 import './globals.css';
 
 const inter = Inter({
@@ -35,7 +37,10 @@ export default function RootLayout({
       className={`${inter.variable} ${instrumentSerif.variable}`}
     >
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <ErrorBoundary>
+          <GlobalErrorLogger />
+          <AuthProvider>{children}</AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

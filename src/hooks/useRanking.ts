@@ -44,10 +44,36 @@ export function useRanking(enabled: boolean): UseRankingResult {
     }
   }, [user]);
 
+  // Auto-fetch on enable transition. Aborted via `cancelled` flag so a
+  // panel-close while the request is still in flight doesn't push stale
+  // data onto a no-longer-rendered component.
   useEffect(() => {
-    if (!enabled) return;
-    refresh();
-  }, [enabled, refresh]);
+    if (!enabled || !user) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    api
+      .get<{ ranking: ApiRankingRow[] }>('/api/ranking')
+      .then((res) => {
+        if (!cancelled) setRanking(res.ranking);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('ranking fetch failed:', err);
+        if (err instanceof ApiError) {
+          const body = err.body as { error?: string } | null;
+          setError(body?.error ?? `HTTP ${err.status}`);
+        } else {
+          setError('network_error');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, user]);
 
   return { ranking, loading, error, refresh };
 }

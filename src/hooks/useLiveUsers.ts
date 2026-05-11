@@ -31,14 +31,32 @@ export function useLiveUsers(): { users: ApiOnlineUser[]; loading: boolean } {
     }
   }, [user]);
 
-  // Initial fetch + polling fallback (covers cases where the socket is down
-  // or behind a flaky proxy).
+  // Initial fetch + polling fallback. Uses an abort flag for the
+  // first fetch so a fast unmount / logout doesn't setState on a dead
+  // instance. The interval-driven polls are guarded by `cancelled` too.
   useEffect(() => {
     if (!user) return;
-    load();
-    const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
-  }, [user, load]);
+    let cancelled = false;
+    const fetchOnce = () => {
+      api
+        .get<{ users: ApiOnlineUser[] }>('/api/users/online')
+        .then((res) => {
+          if (!cancelled) setUsers(res.users);
+        })
+        .catch((err) => {
+          if (!cancelled) console.error('useLiveUsers fetch failed:', err);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+    fetchOnce();
+    const id = setInterval(fetchOnce, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [user]);
 
   // Realtime presence — refetch on each event. The events themselves only
   // carry userId, so a refetch is the simplest way to also pick up

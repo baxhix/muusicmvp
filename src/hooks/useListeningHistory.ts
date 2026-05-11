@@ -41,14 +41,31 @@ export function useListeningHistory(): UseListeningHistoryResult {
     }
   }, [user]);
 
+  // Initial fetch — uses an aborted-flag pattern so unmounting / logout
+  // during the in-flight request doesn't fire setState on a dead instance.
   useEffect(() => {
     if (!user) {
       setItems([]);
       setLoading(false);
       return;
     }
-    refresh();
-  }, [user, refresh]);
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get<{ items: ApiHistoryItem[]; hasMore: boolean }>('/api/me/history')
+      .then((res) => {
+        if (!cancelled) setItems(res.items);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('history fetch failed:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Pick up new entries as the user listens — same_track notifications fire
   // on each track change, which is also when listening_history gets a new row.

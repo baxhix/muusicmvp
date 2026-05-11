@@ -42,6 +42,8 @@ export function useMyActivities(): UseMyActivitiesResult {
     }
   }, [user]);
 
+  // Initial fetch — same aborted-flag pattern as useListeningHistory so
+  // unmount during the in-flight request doesn't setState on dead state.
   useEffect(() => {
     if (!user) {
       setItems([]);
@@ -49,8 +51,27 @@ export function useMyActivities(): UseMyActivitiesResult {
       setLoading(false);
       return;
     }
-    refresh();
-  }, [user, refresh]);
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get<{ items: ApiActivityItem[]; hasMore: boolean; totalPoints: number }>(
+        '/api/me/activities',
+      )
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res.items);
+        setTotalPoints(res.totalPoints);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('activities fetch failed:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Stream activities fire alongside same_track notify:new events, and
   // chat_started fires the chat:thread:update poke. Both signal it's

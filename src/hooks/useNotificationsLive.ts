@@ -41,14 +41,30 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
     }
   }, [user]);
 
+  // Initial fetch with abort-flag pattern.
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       setLoading(false);
       return;
     }
-    load();
-  }, [user, load]);
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get<{ notifications: ApiNotification[] }>('/api/notifications')
+      .then((res) => {
+        if (!cancelled) setNotifications(res.notifications);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('notifications fetch failed:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!socket) return;
@@ -60,9 +76,20 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
   }, [socket, load]);
 
   const markRead = useCallback(async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)),
-    );
+    // No-op when already read — preserves array identity so React doesn't
+    // re-render unnecessarily (and avoids potential closure-in-dep loops
+    // in consumer effects).
+    let shouldPost = false;
+    setNotifications((prev) => {
+      const idx = prev.findIndex((n) => n.id === id);
+      if (idx === -1) return prev;
+      if (prev[idx].readAt) return prev;
+      shouldPost = true;
+      const next = [...prev];
+      next[idx] = { ...next[idx], readAt: new Date().toISOString() };
+      return next;
+    });
+    if (!shouldPost) return;
     try {
       await api.post(`/api/notifications/${id}/read`);
     } catch (err) {
