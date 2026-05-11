@@ -2,18 +2,25 @@
 
 import { useEffect } from 'react';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { globeStore } from '@/lib/globeStore';
 import styles from './LocateButton.module.css';
 
 export default function LocateButton() {
   const { location, loading, error, request } = useUserLocation();
+  const { user } = useAuth();
 
-  // Sempre que `location` mudar, propaga pro Globe (cria marker + flyTo)
+  // Sempre que `location` mudar, propaga pro Globe (cria marker + flyTo).
+  // Passa o avatar do user logado pra o badge mostrar a foto real + "Você".
   useEffect(() => {
     if (location) {
-      globeStore.setUserLocation({ lat: location.lat, lng: location.lng });
+      globeStore.setUserLocation({
+        coords: { lat: location.lat, lng: location.lng },
+        avatarUrl: user?.avatarUrl ?? null,
+        name: 'Você',
+      });
     }
-  }, [location]);
+  }, [location, user?.avatarUrl]);
 
   const handleClick = async () => {
     const coords = await request();

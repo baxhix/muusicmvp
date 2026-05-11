@@ -391,19 +391,32 @@ export default function Globe() {
     map.on('load', () => {
       rafId = requestAnimationFrame(rotate);
 
-      // Handler de localização do usuário — cria/atualiza o marker e centraliza
-      globeStore.registerUserLocation((coords) => {
+      // Handler de localização do user logado — renderiza um badge no mesmo
+      // estilo do FloatingUsers (avatar + nome em pill), ancorado em
+      // [lng, lat] real. Sempre rotulado "Você".
+      globeStore.registerUserLocation((payload) => {
         if (userLocationMarker) {
           userLocationMarker.remove();
           userLocationMarker = null;
         }
-        if (!coords) return;
+        if (!payload) return;
+
+        const { coords, avatarUrl, name } = payload;
+        // Sanitize before injecting into innerHTML.
+        const safeName   = (name ?? 'Você').replace(/[<>&"']/g, '');
+        const safeAvatar = (avatarUrl ?? '').replace(/["<>]/g, '');
+        const avatarSrc  = safeAvatar || 'https://i.pravatar.cc/72?u=me';
 
         const el = document.createElement('div');
         el.className = styles.userLocationMarker;
         el.innerHTML = `
           <span class="${styles.userLocationPulse}" aria-hidden="true"></span>
-          <span class="${styles.userLocationCore}" aria-hidden="true"></span>
+          <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização)">
+            <img src="${avatarSrc}" alt="" class="${styles.userBadgeAvatar}" />
+            <div class="${styles.userBadgeInfo}">
+              <span class="${styles.userBadgeName}">${safeName}</span>
+            </div>
+          </div>
         `;
         userLocationMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([coords.lng, coords.lat])

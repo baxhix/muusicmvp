@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import TopBar from '@/components/app/TopBar';
 import FilterTabs from '@/components/app/FilterTabs';
@@ -62,6 +62,22 @@ export default function AppPage() {
   // Asks for browser geolocation on first authenticated load (per session).
   // Server snaps to city centroid + per-user jitter; exact GPS isn't stored.
   useLocationSync();
+
+  // Drop a "Você" badge on the Globe at the user's persisted (jittered)
+  // city-level location whenever lat/lng or the avatar change. Cleans the
+  // marker on logout. The Globe registers its handler on map load, so this
+  // effect re-runs once authUser arrives.
+  useEffect(() => {
+    if (authUser?.lat != null && authUser?.lng != null) {
+      globeStore.setUserLocation({
+        coords: { lat: authUser.lat, lng: authUser.lng },
+        avatarUrl: authUser.avatarUrl,
+        name: 'Você',
+      });
+    } else {
+      globeStore.setUserLocation(null);
+    }
+  }, [authUser?.lat, authUser?.lng, authUser?.avatarUrl]);
 
   // Build the ProfileUser shape from the live auth record. Falls back to a
   // pravatar placeholder when no avatar has been uploaded yet so the UI
