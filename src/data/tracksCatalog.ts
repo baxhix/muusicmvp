@@ -42,4 +42,13 @@ export const TRACKS_CATALOG: CatalogTrack[] = [
   { title: 'Hoje Eu Lembrei de Você',  artist: 'Ana Castela',                                      year: 2026, youtubeId: 'CnY6xryxYDw' },
   { title: 'Casalzão',                 artist: 'Hugo & Heitor & Ana Castela',                      year: 2023, youtubeId: 'vrNn4xCw7cY' },
   { title: 'Hino Agro',                artist: 'Ana Castela, Léo & Raphael, Luan Pereira & +',     year: 2023, youtubeId: 'qqu9UarfxmI' },
+
+  // ── Test additions (extreme metal / hardcore — diferentes do catálogo
+  //     principal pra exercitar a detecção de "mesma música" entre
+  //     usuários com gostos muito distintos)
+  { title: 'Babykiller',               artist: 'Devourment',                                       year: 2000, youtubeId: 'ES_RXRuFNVw' },
+  { title: 'Ballbuster',               artist: "Lilith's Demise",                                  year: 2024, youtubeId: 'IPBwBSDYLNU' },
+  { title: 'Treacherous',              artist: 'Beneath the Massacre',                             year: 2020, youtubeId: 'l7BTiFYtaho' },
+  { title: 'Ultraviolência',           artist: 'Surra',                                            year: 2023, youtubeId: 'NpcLwltd_bw' },
+  { title: 'Futurephobia',             artist: 'VIOLATOR',                                         year: 2017, youtubeId: 'DmU3e84nVC0' },
 ];
