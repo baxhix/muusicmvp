@@ -91,7 +91,7 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
           <div className={styles.avatarWrap}>
             <div className={`${styles.avatarRing} ${user.isOnline ? styles.online : styles.offline}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={user.img} alt={user.name} className={styles.avatarImg} />
+              <img key={user.img} src={user.img} alt={user.name} className={styles.avatarImg} />
             </div>
           </div>
         </div>

@@ -275,7 +275,12 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         </div>
         <div className={`${styles.avatar} ${online ? styles.avatarOnline : ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={userAvatar} alt="Meu perfil" className={styles.avatarImg} />
+          <img
+            key={userAvatar}
+            src={userAvatar}
+            alt="Meu perfil"
+            className={styles.avatarImg}
+          />
           {online && <span className={styles.onlineDot} />}
         </div>
       </div>
@@ -315,6 +320,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   <div className={styles.drawerIdentityAvatarWrap}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
+                      key={userAvatar}
                       src={userAvatar}
                       alt="Foto de perfil"
                       className={`${styles.drawerIdentityAvatar} ${online ? styles.drawerIdentityAvatarOnline : ''}`}

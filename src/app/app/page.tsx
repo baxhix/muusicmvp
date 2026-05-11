@@ -29,6 +29,7 @@ import SuperchatPanel from '@/components/app/SuperchatPanel';
 
 import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { liveBadges, badgeSets } from '@/data/mapData';
 import type { FilterTabId, LiveBadgeData } from '@/types';
 import { globeStore } from '@/lib/globeStore';
@@ -44,6 +45,7 @@ const USER_CITIES: Record<string, { center: [number, number]; zoom: number }> = 
 };
 
 export default function AppPage() {
+  const { user: authUser } = useAuth();
   const chat = useChatLive();
   const [badgePositionIdx, setBadgePositionIdx] = useState(0);
   const [playerExpanded, setPlayerExpanded] = useState(false);
@@ -61,15 +63,18 @@ export default function AppPage() {
   // Server snaps to city centroid + per-user jitter; exact GPS isn't stored.
   useLocationSync();
 
+  // Build the ProfileUser shape from the live auth record. Falls back to a
+  // pravatar placeholder when no avatar has been uploaded yet so the UI
+  // never shows a broken image.
   const LOGGED_USER: ProfileUser = {
-    id: 'me',
-    name: 'Você',
-    city: 'São Paulo',
-    state: 'SP',
-    streams: 14832,
-    img: 'https://i.pravatar.cc/72?img=68',
+    id: authUser?.id ?? 'me',
+    name: authUser?.name ?? authUser?.email?.split('@')[0] ?? 'Você',
+    city: authUser?.city ?? '—',
+    state: authUser?.countryCode ?? '',
+    streams: 0,
+    img: authUser?.avatarUrl ?? `https://i.pravatar.cc/72?u=${authUser?.id ?? 'me'}`,
     isOnline: true,
-    nowPlaying: { title: 'Forro da Despedida', artist: 'Forró do Alagoano' },
+    nowPlaying: undefined,
   };
 
   const handleBadgeClick = useCallback((badge: LiveBadgeData) => {
