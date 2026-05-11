@@ -37,14 +37,29 @@ export async function GET() {
   // Hydrate reactions in a single batch query so every message arrives
   // ready to render — saves N round-trips on the client during initial
   // paint and keeps the panel from flickering chips in late.
-  const reactionsByMessage = await listReactionsForMessages(
-    user.id,
-    messages.map((m) => m.id),
-  );
-  const messagesWithReactions = messages.map((m) => ({
-    ...m,
-    reactions: reactionsByMessage.get(m.id) ?? [],
-  }));
+  //
+  // Graceful degradation: if the reactions table is missing or the
+  // query fails for any reason, we serve messages without reactions
+  // rather than 500'ing the whole endpoint. Without this guard, a
+  // missed migration on deploy made the Superchat appear empty —
+  // because the panel can't render messages it never received.
+  let messagesWithReactions: typeof messages;
+  try {
+    const reactionsByMessage = await listReactionsForMessages(
+      user.id,
+      messages.map((m) => m.id),
+    );
+    messagesWithReactions = messages.map((m) => ({
+      ...m,
+      reactions: reactionsByMessage.get(m.id) ?? [],
+    }));
+  } catch (err) {
+    console.error(
+      '[/api/superchat] reactions hydration failed — serving messages without them:',
+      err,
+    );
+    messagesWithReactions = messages.map((m) => ({ ...m, reactions: [] }));
+  }
 
   return NextResponse.json({
     conversation: { id: room.id, type: room.type, name: room.name, slug: room.slug },
