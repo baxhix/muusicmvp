@@ -52,12 +52,25 @@ const MEDIA: MediaPostData[] = [
   },
   {
     type: 'video',
-    user: 'Central de Fãs Ana Castela',
+    user: 'Ana Castela',
     avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
     time: '22min',
     likes: 9103,
     comments: 874,
-    poster: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80',
+    src: '/feed/simplesmente-acontece.mp4',
+    // Poster reuses one of the carousel stills — same envelope, gives
+    // the video a real first frame even before the file downloads.
+    poster: '/feed/ana-castela-2.jpg',
+  },
+  {
+    type: 'video',
+    user: 'Ana Castela',
+    avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
+    time: '1h',
+    likes: 6240,
+    comments: 412,
+    src: '/feed/musica-vira-abraco.mp4',
+    poster: '/feed/ana-castela-4.jpg',
   },
 ];
 
@@ -110,8 +123,9 @@ export default function FeedPanel() {
         <ActivityCard data={ACTIVITIES[0]} />
         <MediaPost data={MEDIA[0]} />
         <ActivityCard data={ACTIVITIES[1]} />
-        <ActivityCard data={ACTIVITIES[2]} />
         <MediaPost data={MEDIA[1]} />
+        <ActivityCard data={ACTIVITIES[2]} />
+        <MediaPost data={MEDIA[2]} />
         <ActivityCard data={ACTIVITIES[3]} />
 
         {/* Repetição para o loop do scroll */}
@@ -120,8 +134,9 @@ export default function FeedPanel() {
 
         <AudioPost />
         <ActivityCard data={ACTIVITIES[2]} />
-        <MediaPost data={MEDIA[1]} />
+        <MediaPost data={MEDIA[2]} />
         <ActivityCard data={ACTIVITIES[0]} />
+        <MediaPost data={MEDIA[1]} />
         <ActivityCard data={ACTIVITIES[3]} />
         <MediaPost data={MEDIA[0]} />
         <ActivityCard data={ACTIVITIES[1]} />
