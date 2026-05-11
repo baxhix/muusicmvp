@@ -2,7 +2,7 @@
 .bar {
   position: fixed;
   top: 0;
-  left: 14px;
+  left: 0;          /* anchored to the very left edge of the viewport */
   bottom: 0;
   width: 52px;
   z-index: 14;
