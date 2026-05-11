@@ -57,18 +57,32 @@
 }
 
 /* ── Header ─────────────────────────────── */
-
+/*
+ * 3-column flex: an invisible spacer on the left mirrors the close
+ * button on the right, so the title in the middle reads as centered
+ * without any absolute positioning. The close button is a plain
+ * static element — no translate hacks — which keeps the click target
+ * still under the cursor on mousedown.
+ */
 .header {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
   padding: 22px 18px 18px;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
 }
 
+.headerSpacer {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  visibility: hidden;
+}
+
 .title {
+  flex: 1;
+  min-width: 0;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.022em;
@@ -79,10 +93,6 @@
 }
 
 .closeBtn {
-  position: absolute;
-  top: 50%;
-  right: 18px;
-  transform: translateY(-50%);
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -92,15 +102,19 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
   flex-shrink: 0;
+  padding: 0;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 .closeBtn:hover {
   background: rgba(255,255,255,0.08);
   color: #F5F5F7;
   border-color: rgba(255,255,255,0.10);
 }
-.closeBtn:active { transform: scale(0.94); }
+.closeBtn:focus-visible {
+  outline: 2px solid var(--accent, #3ddb74);
+  outline-offset: 2px;
+}
 
 /* ── My card ────────────────────────────── */
 

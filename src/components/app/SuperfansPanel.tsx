@@ -162,6 +162,9 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
       aria-label="Ranking de superfãs"
     >
       <header className={styles.header}>
+        {/* Mirrors the close button on the opposite side so the title
+            reads centered in a plain flex row — no absolute layout. */}
+        <span className={styles.headerSpacer} aria-hidden="true" />
         <h2 className={styles.title}>Superfãs</h2>
         <button
           type="button"
