@@ -49,6 +49,16 @@ httpServer.listen(PORT, () => {
   console.log(`[realtime] listening on :${PORT} (origin=${env.APP_URL})`);
 });
 
+// Top-level safety net — log instead of crash. A single bad query inside
+// a socket handler shouldn't take down the entire realtime process and
+// drop every connected client.
+process.on('unhandledRejection', (reason) => {
+  console.error('[realtime] unhandledRejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[realtime] uncaughtException:', err);
+});
+
 // Graceful shutdown — close active sockets so processes don't hang on SIGTERM.
 const shutdown = (signal: string) => {
   console.log(`[realtime] received ${signal}, shutting down`);

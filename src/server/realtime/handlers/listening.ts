@@ -22,61 +22,71 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
   const userId = socket.data.userId;
 
   socket.on('listening:tick', async (input: unknown) => {
-    const parsed = tickSchema.safeParse(input);
-    if (!parsed.success) return;
+    try {
+      const parsed = tickSchema.safeParse(input);
+      if (!parsed.success) return;
 
-    const track = await findTrackByYoutubeId(parsed.data.youtubeId);
-    if (!track) return;
+      const track = await findTrackByYoutubeId(parsed.data.youtubeId);
+      if (!track) return;
 
-    const { trackChanged } = await recordListeningTick(
-      userId,
-      track.id,
-      parsed.data.positionSeconds,
-      parsed.data.isPaused,
-    );
+      const { trackChanged } = await recordListeningTick(
+        userId,
+        track.id,
+        parsed.data.positionSeconds,
+        parsed.data.isPaused,
+      );
 
-    if (!trackChanged) return;
+      if (!trackChanged) return;
 
-    const created = await notifySameTrackListeners(userId, track.id);
+      const created = await notifySameTrackListeners(userId, track.id);
 
-    console.log(
-      `[listening] user=${userId} → track=${track.id} (${track.title}); same-track notifications created: ${created.length}`,
-    );
+      console.log(
+        `[listening] user=${userId} → track=${track.id} (${track.title}); same-track notifications created: ${created.length}`,
+      );
 
-    if (created.length === 0) return;
+      if (created.length === 0) return;
 
-    // Batch-fetch source-user details so every emit carries enough data
-    // for the receiver to render a toast without a follow-up REST hop.
-    const sourceIds = Array.from(new Set(created.map((c) => c.sourceUserId)));
-    const sources = await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        avatarUrl: users.avatarUrl,
-      })
-      .from(users)
-      .where(inArray(users.id, sourceIds));
-    const sourceById = new Map(sources.map((u) => [u.id, u]));
+      // Batch-fetch source-user details so every emit carries enough data
+      // for the receiver to render a toast without a follow-up REST hop.
+      const sourceIds = Array.from(new Set(created.map((c) => c.sourceUserId)));
+      const sources = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
+        })
+        .from(users)
+        .where(inArray(users.id, sourceIds));
+      const sourceById = new Map(sources.map((u) => [u.id, u]));
 
-    for (const c of created) {
-      const src = sourceById.get(c.sourceUserId);
-      io.to(userRoom(c.userId)).emit('notify:new', {
-        id: c.notificationId,
-        kind: 'same_track',
-        sourceUserId: c.sourceUserId,
-        sourceName: src?.name ?? null,
-        sourceEmail: src?.email ?? null,
-        sourceAvatarUrl: src?.avatarUrl ?? null,
-        trackId: track.id,
-        trackTitle: track.title,
-        trackArtist: track.artist,
-        trackYoutubeId: track.youtubeId,
-      });
+      for (const c of created) {
+        const src = sourceById.get(c.sourceUserId);
+        io.to(userRoom(c.userId)).emit('notify:new', {
+          id: c.notificationId,
+          kind: 'same_track',
+          sourceUserId: c.sourceUserId,
+          sourceName: src?.name ?? null,
+          sourceEmail: src?.email ?? null,
+          sourceAvatarUrl: src?.avatarUrl ?? null,
+          trackId: track.id,
+          trackTitle: track.title,
+          trackArtist: track.artist,
+          trackYoutubeId: track.youtubeId,
+        });
+      }
+    } catch (err) {
+      // Catch-all so a transient DB hiccup or constraint violation doesn't
+      // crash the realtime process and drop every active socket connection.
+      console.error('[listening:tick] handler failed:', err);
     }
   });
 
   socket.on('listening:stop', async () => {
-    await stopListening(userId);
+    try {
+      await stopListening(userId);
+    } catch (err) {
+      console.error('[listening:stop] handler failed:', err);
+    }
   });
 }

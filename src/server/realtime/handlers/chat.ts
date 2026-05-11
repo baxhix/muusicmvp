@@ -26,30 +26,39 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
   const userId = socket.data.userId;
 
   socket.on('chat:join', async (input: unknown, ack?: Ack) => {
-    const parsed = joinSchema.safeParse(input);
-    if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
+    try {
+      const parsed = joinSchema.safeParse(input);
+      if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
 
-    const ok = await userIsInConversation(userId, parsed.data.conversationId);
-    if (!ok) return ack?.({ ok: false, error: 'forbidden' });
+      const ok = await userIsInConversation(userId, parsed.data.conversationId);
+      if (!ok) return ack?.({ ok: false, error: 'forbidden' });
 
-    socket.join(room(parsed.data.conversationId));
-    ack?.({ ok: true });
+      socket.join(room(parsed.data.conversationId));
+      ack?.({ ok: true });
+    } catch (err) {
+      console.error('[chat:join] handler failed:', err);
+      ack?.({ ok: false, error: 'internal' });
+    }
   });
 
   socket.on('chat:leave', (input: unknown) => {
-    const parsed = joinSchema.safeParse(input);
-    if (!parsed.success) return;
-    socket.leave(room(parsed.data.conversationId));
+    try {
+      const parsed = joinSchema.safeParse(input);
+      if (!parsed.success) return;
+      socket.leave(room(parsed.data.conversationId));
+    } catch (err) {
+      console.error('[chat:leave] handler failed:', err);
+    }
   });
 
   socket.on('chat:send', async (input: unknown, ack?: Ack) => {
-    const parsed = sendSchema.safeParse(input);
-    if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
-
-    const inIt = await userIsInConversation(userId, parsed.data.conversationId);
-    if (!inIt) return ack?.({ ok: false, error: 'forbidden' });
-
     try {
+      const parsed = sendSchema.safeParse(input);
+      if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
+
+      const inIt = await userIsInConversation(userId, parsed.data.conversationId);
+      if (!inIt) return ack?.({ ok: false, error: 'forbidden' });
+
       const result = await sendMessage(
         parsed.data.conversationId,
         userId,
@@ -78,18 +87,23 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       }
 
       ack?.({ ok: true, messageId: result.message.id });
-    } catch {
+    } catch (err) {
+      console.error('[chat:send] handler failed:', err);
       ack?.({ ok: false, error: 'send_failed' });
     }
   });
 
   socket.on('chat:typing', (input: unknown) => {
-    const parsed = typingSchema.safeParse(input);
-    if (!parsed.success) return;
-    socket.to(room(parsed.data.conversationId)).emit('chat:typing', {
-      conversationId: parsed.data.conversationId,
-      userId,
-      isTyping: parsed.data.isTyping,
-    });
+    try {
+      const parsed = typingSchema.safeParse(input);
+      if (!parsed.success) return;
+      socket.to(room(parsed.data.conversationId)).emit('chat:typing', {
+        conversationId: parsed.data.conversationId,
+        userId,
+        isTyping: parsed.data.isTyping,
+      });
+    } catch (err) {
+      console.error('[chat:typing] handler failed:', err);
+    }
   });
 }
