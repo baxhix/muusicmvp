@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { inArray } from 'drizzle-orm';
+import { db } from '../../db';
+import { users } from '../../db/schema';
 import {
   findTrackByYoutubeId,
   notifySameTrackListeners,
@@ -36,20 +39,39 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
 
     const created = await notifySameTrackListeners(userId, track.id);
 
-    // Operational visibility — easy to grep in `docker compose logs socket`
-    // when notifications aren't behaving. Includes the count so we can tell
-    // 'no overlap' from 'every pair was already deduped'.
     console.log(
       `[listening] user=${userId} → track=${track.id} (${track.title}); same-track notifications created: ${created.length}`,
     );
 
-    // Push real-time notify events to each matched user's personal room.
-    for (const { userId: targetUserId, notificationId } of created) {
-      io.to(userRoom(targetUserId)).emit('notify:new', {
-        id: notificationId,
+    if (created.length === 0) return;
+
+    // Batch-fetch source-user details so every emit carries enough data
+    // for the receiver to render a toast without a follow-up REST hop.
+    const sourceIds = Array.from(new Set(created.map((c) => c.sourceUserId)));
+    const sources = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        avatarUrl: users.avatarUrl,
+      })
+      .from(users)
+      .where(inArray(users.id, sourceIds));
+    const sourceById = new Map(sources.map((u) => [u.id, u]));
+
+    for (const c of created) {
+      const src = sourceById.get(c.sourceUserId);
+      io.to(userRoom(c.userId)).emit('notify:new', {
+        id: c.notificationId,
         kind: 'same_track',
-        sourceUserId: userId,
+        sourceUserId: c.sourceUserId,
+        sourceName: src?.name ?? null,
+        sourceEmail: src?.email ?? null,
+        sourceAvatarUrl: src?.avatarUrl ?? null,
         trackId: track.id,
+        trackTitle: track.title,
+        trackArtist: track.artist,
+        trackYoutubeId: track.youtubeId,
       });
     }
   });

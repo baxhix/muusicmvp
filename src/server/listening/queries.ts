@@ -132,7 +132,13 @@ export async function stopListening(userId: string): Promise<void> {
 export async function notifySameTrackListeners(
   sourceUserId: string,
   trackId: string,
-): Promise<Array<{ userId: string; notificationId: string }>> {
+): Promise<
+  Array<{
+    userId: string;
+    sourceUserId: string;
+    notificationId: string;
+  }>
+> {
   const since = new Date(Date.now() - SAME_TRACK_WINDOW_MS);
 
   // Other users currently on this track.
@@ -150,7 +156,11 @@ export async function notifySameTrackListeners(
   if (others.length === 0) return [];
 
   const dedupeCutoff = new Date(Date.now() - SAME_TRACK_DEDUPE_MS);
-  const created: Array<{ userId: string; notificationId: string }> = [];
+  const created: Array<{
+    userId: string;
+    sourceUserId: string;
+    notificationId: string;
+  }> = [];
 
   /** Insert one same_track notification (target ← source) if not deduped. */
   async function notifyOnce(targetUserId: string, fromUserId: string) {
@@ -180,7 +190,11 @@ export async function notifySameTrackListeners(
       .returning({ id: notifications.id });
 
     if (inserted[0]) {
-      created.push({ userId: targetUserId, notificationId: inserted[0].id });
+      created.push({
+        userId: targetUserId,
+        sourceUserId: fromUserId,
+        notificationId: inserted[0].id,
+      });
     }
   }
 

@@ -303,53 +303,41 @@
   100% { transform: scale(5);   opacity: 0; }
 }
 
-/* Badge no MESMO estilo do liveUserBadge (avatar + info + tail).
-   Identidade visual idêntica aos outros usuários. Distinção visual de
-   "sou eu" fica restrita a um anel ciano discreto no avatar. */
+/* Mesma classe que .badge do FloatingUsers — formato idêntico aos
+   mocks pra coerência visual no mapa. Distinção do "Você" fica só
+   no anel sutil em volta do avatar. */
 .userBadge {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, calc(-100% - 4px));
+  transform: translate(-50%, calc(-100% - 6px));
   display: flex;
   align-items: center;
   gap: 7px;
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 40px;
-  padding: 5px 11px 5px 5px;
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  padding: 6px 11px 6px 7px;
   z-index: 3;
   white-space: nowrap;
   pointer-events: auto;
+  transition: border-color 0.15s, background 0.15s;
 }
-
-/* Tail apontando pro ponto exato — idêntica à do liveUserBadge */
-.userBadge::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  background: rgba(0, 0, 0, 0.88);
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+.userBadge:hover {
+  background: rgba(6, 6, 8, 0.92);
+  border-color: rgba(255, 255, 255, 0.07);
 }
 
 .userBadgeAvatar {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
-  /* Anel ciano sutil só pra marcar "Você" sem mudar a forma do badge */
+  /* Identity ring — só pra marcar "Você" mantendo o formato. */
   border: 1.5px solid rgba(56, 189, 248, 0.7);
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.35);
   display: block;
   flex-shrink: 0;
 }
@@ -357,25 +345,25 @@
 .userBadgeInfo {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1px;
   min-width: 0;
 }
 
 .userBadgeName {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #F5F5F7;
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
 }
 
 .userBadgeSong {
-  font-size: 10.5px;
-  color: rgba(245, 245, 247, 0.6);
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 160px;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -398,52 +386,37 @@
   pointer-events: none;
 }
 
+/* Idêntico ao .badge do FloatingUsers — mesma forma exata pra que
+   user real e mock sejam indistinguíveis visualmente. */
 .liveUserBadge {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, calc(-100% - 4px));
+  transform: translate(-50%, calc(-100% - 6px));
   display: flex;
   align-items: center;
   gap: 7px;
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 40px;
-  padding: 5px 11px 5px 5px;
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  padding: 6px 11px 6px 7px;
   white-space: nowrap;
   pointer-events: auto;
-  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 .liveUserBadge:hover {
-  border-color: rgba(61, 219, 116, 0.5);
-  transform: translate(-50%, calc(-100% - 6px)) scale(1.04);
   background: rgba(6, 6, 8, 0.92);
-}
-
-.liveUserBadge::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  background: rgba(0, 0, 0, 0.88);
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.07);
 }
 
 .liveUserAvatar {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
   display: block;
   flex-shrink: 0;
 }
@@ -451,28 +424,24 @@
 .liveUserInfo {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1px;
   min-width: 0;
 }
 
 .liveUserName {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #F5F5F7;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 160px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .liveUserSong {
-  font-size: 10.5px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.55);
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 160px;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 5px;

@@ -28,6 +28,7 @@ import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import RankingButton from '@/components/app/RankingButton';
 import RankingModal from '@/components/app/RankingModal';
+import SameTrackToast from '@/components/app/SameTrackToast';
 
 import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
@@ -270,6 +271,11 @@ export default function AppPage() {
         open={showRanking}
         onClose={() => setShowRanking(false)}
       />
+
+      {/* Floating queue of "X is listening to the same song" notifications,
+          driven by socket `notify:new` events of kind 'same_track'. Each
+          toast holds 6s, then fades out. */}
+      <SameTrackToast />
 
       <Onboarding />
     </>
