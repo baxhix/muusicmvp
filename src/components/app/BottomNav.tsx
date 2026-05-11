@@ -40,14 +40,16 @@ export default function BottomNav({
           <span className={styles.label}>Mapa</span>
         </Link>
 
-        {/* Feed — disabled (temporariamente) */}
+        {/* Feed — temporarily inactive. The button is `disabled` AND has
+            `pointer-events: none` via .itemDisabled so any click is a
+            no-op without needing an onClick handler. */}
         <button
           type="button"
           className={`${styles.item} ${styles.itemDisabled}`}
           disabled
           aria-disabled="true"
-          title="Feed desabilitado temporariamente"
-          aria-label="Feed (desabilitado temporariamente)"
+          title="Feed inativo temporariamente"
+          aria-label="Feed (Feed inativo temporariamente)"
         >
           {/* Feed icon — stacked lines like an article list */}
           <svg viewBox="0 0 22 22" fill="none">
@@ -58,7 +60,7 @@ export default function BottomNav({
           <div className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>
             Feed
-            <span className={styles.labelHint}> (desabilitado temporariamente)</span>
+            <span className={styles.labelHint}> (Feed inativo temporariamente)</span>
           </span>
         </button>
 

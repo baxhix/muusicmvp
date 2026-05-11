@@ -106,11 +106,11 @@
   border: 1.5px solid rgba(0,0,0,0.6);
 }
 
-/* Center action */
+/* Center action — Superfãs/Ranking. No background plate; the icon
+   stands alone like the other nav items, just slightly larger. */
 .itemCenter {
   width: 36px; height: 36px;
-  border-radius: 50% !important;
-  background: rgba(255,255,255,0.08) !important;
+  background: transparent !important;
   color: rgba(245,245,247,0.75) !important;
   min-width: auto;
   padding: 0;
@@ -118,10 +118,10 @@
   gap: 0;
   display: grid;
   place-items: center;
-  transition: background 0.15s, color 0.15s, transform 0.15s !important;
+  transition: color 0.15s, transform 0.15s !important;
 }
 .itemCenter:hover {
-  background: rgba(255,255,255,0.14) !important;
+  background: transparent !important;
   color: rgba(245,245,247,0.95) !important;
   transform: scale(1.07) !important;
   box-shadow: none !important;

@@ -13,7 +13,6 @@ import NowPlaying from '@/components/app/NowPlaying';
 import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import BottomNav from '@/components/app/BottomNav';
-import FeedPanel from '@/components/app/FeedPanel';
 import ProfilePanel, { type ProfileUser } from '@/components/app/ProfilePanel';
 import SuperfansPanel from '@/components/app/SuperfansPanel';
 import SideBar from '@/components/app/SideBar';
@@ -213,15 +212,17 @@ export default function AppPage() {
       />
       <ListeningTogether playerExpanded={playerExpanded} playerSize={playerSize} />
 
-      {showProfile
-        ? <ProfilePanel
-            user={LOGGED_USER}
-            isOwnProfile
-            onClose={() => setShowProfile(false)}
-            onEditProfile={() => setShowEditProfile(true)}
-          />
-        : <FeedPanel />
-      }
+      {/* Feed is temporarily inactive — the FeedPanel surface stays out
+          of the tree until the feature is re-enabled. ProfilePanel
+          still renders on demand. */}
+      {showProfile && (
+        <ProfilePanel
+          user={LOGGED_USER}
+          isOwnProfile
+          onClose={() => setShowProfile(false)}
+          onEditProfile={() => setShowEditProfile(true)}
+        />
+      )}
 
       <SuperfansPanel
         open={showSuperfans}
