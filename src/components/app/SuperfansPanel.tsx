@@ -183,7 +183,6 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
             <div className={styles.meAvatarWrap}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img key={me.img} src={me.img} alt={me.name} className={styles.meAvatar} />
-              <span className={styles.meBadge}>Você</span>
             </div>
             <div className={styles.meInfo}>
               <span className={styles.meName}>{me.name}</span>
@@ -249,7 +248,7 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
                 </div>
                 <div className={styles.fanInfo}>
                   <span className={styles.fanName}>{fan.name}</span>
-                  <span className={styles.fanCity}>{fan.city} · Nv. {fan.level}</span>
+                  <span className={styles.fanCity}>{fan.city}</span>
                 </div>
                 <div className={styles.fanPoints}>
                   <span className={styles.fanPointsNum}>{formatPoints(fan.fanpoints)}</span>
