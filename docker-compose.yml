@@ -47,6 +47,10 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:?EMAIL_FROM is required}
       MAPBOX_TOKEN: ${MAPBOX_TOKEN:?MAPBOX_TOKEN is required}
       NEXT_PUBLIC_SOCKET_URL: ${SOCKET_URL:-${APP_URL}}
+      AVATARS_DIR: /app/uploads/avatars
+    volumes:
+      # Avatar uploads persist across container rebuilds.
+      - uploads:/app/uploads
     ports:
       - "127.0.0.1:3010:3000"
     depends_on:
@@ -93,3 +97,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads:

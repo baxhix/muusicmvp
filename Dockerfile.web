@@ -27,11 +27,17 @@ ENV HOSTNAME=0.0.0.0
 
 # Run as non-root.
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-USER nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Avatar upload destination — Compose mounts a named volume here so files
+# survive container rebuilds. Created with the right ownership so the
+# unprivileged nextjs user can write to it.
+RUN mkdir -p /app/uploads/avatars && chown -R nextjs:nodejs /app/uploads
+
+USER nextjs
 
 EXPOSE 3000
 CMD ["node", "server.js"]

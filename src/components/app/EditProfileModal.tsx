@@ -1,6 +1,14 @@
 'use client';
 
-import { useEffect, useState, type AnimationEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type ChangeEvent,
+} from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { api, ApiError } from '@/lib/api/client';
 import styles from './EditProfileModal.module.css';
 
 interface EditProfileModalProps {
@@ -27,17 +35,37 @@ function Toggle({
   );
 }
 
+const PLACEHOLDER_AVATAR = (id: string) => `https://i.pravatar.cc/96?u=${id}`;
+
 export default function EditProfileModal({ open, onClose }: EditProfileModalProps) {
+  const { user, refresh } = useAuth();
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
 
-  // Form state
-  const [userName, setUserName] = useState('Ana Beatriz');
+  // Form state (initialised when the modal opens from current user values).
+  const [name, setName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [language, setLanguage] = useState<'pt' | 'en' | 'es'>('pt');
   const [appearOnMap, setAppearOnMap] = useState(true);
   const [allowInteractions, setAllowInteractions] = useState(true);
   const [showCity, setShowCity] = useState(true);
   const [showStreams, setShowStreams] = useState(true);
 
+  // Loading flags & feedback
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync form with the latest user record whenever the modal opens.
+  useEffect(() => {
+    if (open && user) {
+      setName(user.name ?? '');
+      setAvatarUrl(user.avatarUrl ?? null);
+      setError(null);
+    }
+  }, [open, user]);
+
+  // Animation phase machine
   useEffect(() => {
     if (open) {
       setPhase((p) => (p === 'idle' || p === 'out' ? 'in' : p));
@@ -52,7 +80,7 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
     if (phase === 'out' && e.animationName.includes('edit-fall')) setPhase('idle');
   };
 
-  // ESC fecha
+  // ESC closes
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -61,9 +89,101 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
   }, [open, onClose]);
 
   if (phase === 'idle') return null;
-
   const isIn = phase === 'in';
   const isOut = phase === 'out';
+
+  const onPickAvatar = () => fileInputRef.current?.click();
+
+  const onAvatarChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file
+    if (!file) return;
+
+    // Quick client-side guards mirror the server limits.
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Imagem muito grande (máx 2 MB).');
+      return;
+    }
+    if (!/^image\/(jpe?g|png|webp|gif)$/i.test(file.type)) {
+      setError('Formato não suportado. Use JPG, PNG, WebP ou GIF.');
+      return;
+    }
+
+    setError(null);
+    setAvatarBusy(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/me/avatar', {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const code = (data as { error?: string }).error ?? 'upload_failed';
+        setError(
+          code === 'too_large'        ? 'Imagem muito grande (máx 2 MB).' :
+          code === 'unsupported_type' ? 'Formato não suportado.' :
+                                        'Falha no upload. Tenta de novo.',
+        );
+        return;
+      }
+      const data = (await res.json()) as { avatarUrl: string };
+      setAvatarUrl(data.avatarUrl);
+      await refresh();
+    } catch (err) {
+      console.error('avatar upload failed:', err);
+      setError('Falha no upload. Verifica sua conexão.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const onRemoveAvatar = async () => {
+    if (!avatarUrl && !user?.avatarUrl) return;
+    setError(null);
+    setAvatarBusy(true);
+    try {
+      await api.delete('/api/me/avatar');
+      setAvatarUrl(null);
+      await refresh();
+    } catch (err) {
+      console.error('avatar remove failed:', err);
+      setError('Não consegui remover a foto.');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const onSave = async () => {
+    if (!user) return;
+    const trimmed = name.trim();
+    if (trimmed.length === 0) {
+      setError('O nome não pode ficar em branco.');
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+    try {
+      // Only PATCH the name (avatar is saved immediately on upload).
+      if (trimmed !== (user.name ?? '')) {
+        await api.patch('/api/me/profile', { name: trimmed });
+        await refresh();
+      }
+      onClose();
+    } catch (err) {
+      const code = err instanceof ApiError ? err.message : 'unknown';
+      console.error('save profile failed:', err);
+      setError(`Não consegui salvar agora (${code}).`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const displayAvatar =
+    avatarUrl ?? (user ? PLACEHOLDER_AVATAR(user.id) : '/ana-castela-box.jpg');
 
   return (
     <>
@@ -94,25 +214,45 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
         </header>
 
         <div className={styles.body}>
+          {/* Hidden file input — controlled by the photo buttons below. */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={onAvatarChange}
+            style={{ display: 'none' }}
+          />
+
           {/* Foto de perfil */}
           <div className={styles.photoRow}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/ana-beatriz-avatar.png"
+              src={displayAvatar}
               alt="Foto de perfil"
               className={styles.avatar}
+              style={avatarBusy ? { opacity: 0.5 } : undefined}
             />
             <div className={styles.photoActions}>
-              <button type="button" className={styles.photoBtn}>
+              <button
+                type="button"
+                className={styles.photoBtn}
+                onClick={onPickAvatar}
+                disabled={avatarBusy}
+              >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
                      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                   <circle cx="8.5" cy="8.5" r="1.5"/>
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
-                Alterar foto de perfil
+                {avatarBusy ? 'Enviando…' : 'Alterar foto de perfil'}
               </button>
-              <button type="button" className={styles.photoLink}>
+              <button
+                type="button"
+                className={styles.photoLink}
+                onClick={onRemoveAvatar}
+                disabled={avatarBusy || !avatarUrl}
+              >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
                      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"/>
@@ -131,12 +271,16 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
             <input
               type="text"
               className={styles.fieldInput}
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              placeholder="Como podemos te chamar?"
             />
           </div>
 
-          {/* Idioma do app */}
+          {error && <div className={styles.errorBox}>{error}</div>}
+
+          {/* Idioma do app (mock até backend de preferências) */}
           <h3 className={styles.sectionTitle}>Idioma do app</h3>
           <p className={styles.sectionDesc}>
             Escolha o idioma que você prefere usar no aplicativo.
@@ -165,58 +309,34 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
             </button>
           </div>
 
-          {/* Toggles de visibilidade */}
+          {/* Toggles de visibilidade (mock até backend de preferências) */}
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Aparecer no Mapa</span>
-              <Toggle
-                checked={appearOnMap}
-                onChange={setAppearOnMap}
-                ariaLabel="Aparecer no Mapa"
-              />
+              <Toggle checked={appearOnMap} onChange={setAppearOnMap} ariaLabel="Aparecer no Mapa" />
             </div>
-            <p className={styles.toggleDesc}>
-              Mostra seu perfil no mapa com localização aproximada.
-            </p>
+            <p className={styles.toggleDesc}>Mostra seu perfil no mapa com localização aproximada.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Permitir Interações</span>
-              <Toggle
-                checked={allowInteractions}
-                onChange={setAllowInteractions}
-                ariaLabel="Permitir Interações"
-              />
+              <Toggle checked={allowInteractions} onChange={setAllowInteractions} ariaLabel="Permitir Interações" />
             </div>
-            <p className={styles.toggleDesc}>
-              Permite que outros usuários enviem mensagens e interajam com você.
-            </p>
+            <p className={styles.toggleDesc}>Permite que outros usuários enviem mensagens e interajam com você.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Mostrar Cidade</span>
-              <Toggle
-                checked={showCity}
-                onChange={setShowCity}
-                ariaLabel="Mostrar Cidade"
-              />
+              <Toggle checked={showCity} onChange={setShowCity} ariaLabel="Mostrar Cidade" />
             </div>
-            <p className={styles.toggleDesc}>
-              Mostra sua cidade no perfil e na presença no mapa.
-            </p>
+            <p className={styles.toggleDesc}>Mostra sua cidade no perfil e na presença no mapa.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Total de Streams</span>
-              <Toggle
-                checked={showStreams}
-                onChange={setShowStreams}
-                ariaLabel="Total de Streams"
-              />
+              <Toggle checked={showStreams} onChange={setShowStreams} ariaLabel="Total de Streams" />
             </div>
-            <p className={styles.toggleDesc}>
-              Mostra seu total de streams no perfil.
-            </p>
+            <p className={styles.toggleDesc}>Mostra seu total de streams no perfil.</p>
           </div>
         </div>
 
@@ -224,9 +344,10 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
           <button
             type="button"
             className={styles.btnPrimary}
-            onClick={onClose}
+            onClick={onSave}
+            disabled={saving}
           >
-            Salvar alterações
+            {saving ? 'Salvando…' : 'Salvar alterações'}
           </button>
         </footer>
       </aside>
