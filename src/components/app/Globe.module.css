@@ -356,7 +356,7 @@
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   white-space: nowrap;
 }
 
@@ -435,7 +435,7 @@
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
 }
 
 .liveUserSong {

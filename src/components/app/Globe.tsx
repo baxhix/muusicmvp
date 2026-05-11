@@ -119,13 +119,18 @@ export default function Globe() {
 
         const el = document.createElement('div');
         el.className = styles.userLocationMarker;
+        // The equalizer bars always render next to the name so the
+        // "Você" pin reads as a live, listening presence even before
+        // any track loads. When a song is playing we also show the
+        // title underneath; the bars stay anchored to the name row
+        // to avoid duplication.
         el.innerHTML = `
           <span class="${styles.userLocationPulse}" aria-hidden="true"></span>
-          <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
+          <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização, online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
             <img src="${avatarSrc}" alt="" class="${styles.userBadgeAvatar}" />
             <div class="${styles.userBadgeInfo}">
-              <span class="${styles.userBadgeName}">${safeName}</span>
-              ${safeTitle ? `<span class="${styles.userBadgeSong}">${audioBarsHtml}${safeTitle}</span>` : ''}
+              <span class="${styles.userBadgeName}">${safeName}${audioBarsHtml}</span>
+              ${safeTitle ? `<span class="${styles.userBadgeSong}">${safeTitle}</span>` : ''}
             </div>
           </div>
         `;
@@ -161,12 +166,15 @@ export default function Globe() {
               <span></span><span></span><span></span><span></span>
             </span>`;
 
+          // Equalizer bars sit next to the name on every online-user
+          // badge — a steady visual cue that this person is live on
+          // the platform. The song row stays text-only.
           const html = `
-            <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName}${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
+            <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName} (online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
               <img src="${avatarSrc}" alt="" class="${styles.liveUserAvatar}" />
               <div class="${styles.liveUserInfo}">
-                <span class="${styles.liveUserName}">${safeName}</span>
-                ${safeTitle ? `<span class="${styles.liveUserSong}">${audioBarsHtml}${safeTitle}</span>` : ''}
+                <span class="${styles.liveUserName}">${safeName}${audioBarsHtml}</span>
+                ${safeTitle ? `<span class="${styles.liveUserSong}">${safeTitle}</span>` : ''}
               </div>
             </div>
           `;
