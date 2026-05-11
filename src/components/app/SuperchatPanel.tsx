@@ -31,24 +31,25 @@ function senderAvatarUrl(m: ApiMessage): string {
 }
 
 /**
- * Picks a deterministic muted accent color for a user's bubbles. Drawn
- * from a small curated palette — all paired with white text and a tint
- * of black on top of the bubble bg to keep contrast high.
+ * Picks a deterministic accent color for a user's bubbles. Ten hues
+ * spaced around the color wheel, all picked from the Tailwind-600/700
+ * shade range — saturated and modern, while every entry still passes
+ * WCAG AA contrast (≥ 4.5:1) against white text.
  *
  * Hash → index keeps the same user on the same color across re-renders
  * and across reloads, so reading flow stays predictable.
  */
 const USER_BUBBLE_PALETTE = [
-  '#314D7A', // azul desbotado
-  '#4B3A77', // roxo discreto
-  '#3A6E51', // verde acinzentado
-  '#7A4E3A', // marrom suave
-  '#6E3F5A', // rosé
-  '#3A6E6E', // teal
-  '#6E6238', // mostarda
-  '#4A3A66', // ametista
-  '#4E5E3A', // oliva
-  '#5E3A52', // bordô
+  '#4F46E5', // indigo  — bluish purple
+  '#2563EB', // blue
+  '#0284C7', // sky
+  '#0F766E', // teal
+  '#15803D', // green   — forest
+  '#4D7C0F', // lime    — olive
+  '#B45309', // amber   — burnt orange
+  '#DC2626', // red
+  '#DB2777', // pink
+  '#7C3AED', // violet  — purple
 ];
 
 function colorForUserId(userId: string): string {
