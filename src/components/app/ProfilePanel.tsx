@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import NowPlaying from './NowPlaying';
+import { useListeningHistory } from '@/hooks/useListeningHistory';
+import type { ApiHistoryItem } from '@/lib/api/types';
 import styles from './ProfilePanel.module.css';
 
 /* ── Types ─────────────────────────────────────────────── */
@@ -32,16 +34,70 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'idolos',      label: 'Ídolos'      },
 ];
 
-const HISTORY = [
-  { id: 'h1', title: 'Forro da Despedida', artist: 'Forró do Alagoano', ago: '5 min',  img: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&q=80' },
-  { id: 'h2', title: 'Bem Bolado',         artist: 'Xote das Meninas',  ago: '12 min', img: 'https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=120&q=80' },
-  { id: 'h3', title: 'Solteiro Feliz',     artist: 'Simone & Simaria',  ago: '1 h',    img: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=120&q=80' },
-  { id: 'h4', title: 'Amei Te Ver',        artist: 'Tiago Iorc',        ago: '2 h',    img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=120&q=80' },
-  { id: 'h5', title: 'Erro Gostoso',       artist: 'Wesley Safadão',    ago: '3 h',    img: '/ana-castela-box.jpg' },
-  { id: 'h6', title: 'Olha Onde Eu Tô',    artist: 'Gusttavo Lima',     ago: '5 h',    img: 'https://images.unsplash.com/photo-1525362081669-2b476bb628c3?w=120&q=80' },
-];
-
 const FALLBACK_THUMB = '/ana-castela-box.jpg';
+
+function timeAgo(iso: string): string {
+  const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diffSec < 60)     return 'agora';
+  if (diffSec < 3600)   return `${Math.floor(diffSec / 60)} min`;
+  if (diffSec < 86400)  return `${Math.floor(diffSec / 3600)} h`;
+  if (diffSec < 604800) return `${Math.floor(diffSec / 86400)} d`;
+  return `${Math.floor(diffSec / 604800)} sem`;
+}
+
+function youtubeThumb(youtubeId: string): string {
+  return `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+}
+
+function HistoryRow({
+  item,
+  onToggleLike,
+}: {
+  item: ApiHistoryItem;
+  onToggleLike: (id: string) => void;
+}) {
+  return (
+    <div className={styles.historyItem}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={youtubeThumb(item.youtubeId)}
+        alt={item.title}
+        className={styles.historyThumb}
+        onError={(e) => {
+          const target = e.currentTarget;
+          if (!target.src.endsWith(FALLBACK_THUMB)) target.src = FALLBACK_THUMB;
+        }}
+      />
+      <div className={styles.historyInfo}>
+        <span className={styles.historyTitle}>{item.title}</span>
+        <span className={styles.historyArtist}>
+          {item.artist}
+          {item.plays > 1 && (
+            <span className={styles.historyPlays}> · {item.plays}× tocou</span>
+          )}
+        </span>
+      </div>
+      <button
+        type="button"
+        className={`${styles.likeBtn} ${item.liked ? styles.likeBtnOn : ''}`}
+        onClick={() => onToggleLike(item.trackId)}
+        aria-label={item.liked ? 'Remover curtida' : 'Curtir música'}
+        aria-pressed={item.liked}
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path
+            d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z"
+            fill={item.liked ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      <span className={styles.historyAgo}>{timeAgo(item.lastPlayedAt)}</span>
+    </div>
+  );
+}
 
 const COMMUNITIES = [
   { id: 'c1', name: 'Fãs do Forró do Alagoano', members: '12,4k', emoji: '🎺' },
@@ -62,6 +118,9 @@ const IDOLS = [
 export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEditProfile }: Props) {
   const [tab, setTab] = useState<TabId>('historico');
   const [online, setOnline] = useState<boolean>(user.isOnline);
+  // History only meaningful for the logged-in user (others' history isn't
+  // exposed by the API). When isOwnProfile=false, the hook returns [].
+  const { items: history, loading: historyLoading, toggleLike } = useListeningHistory();
 
   return (
     <>
@@ -186,27 +245,30 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
         {/* ── Tab content ── */}
         <div className={styles.tabContent}>
 
-          {tab === 'historico' && HISTORY.map(item => (
-            <div key={item.id} className={styles.historyItem}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item.img}
-                alt={item.title}
-                className={styles.historyThumb}
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (!target.src.endsWith(FALLBACK_THUMB)) {
-                    target.src = FALLBACK_THUMB;
-                  }
-                }}
-              />
-              <div className={styles.historyInfo}>
-                <span className={styles.historyTitle}>{item.title}</span>
-                <span className={styles.historyArtist}>{item.artist}</span>
+          {tab === 'historico' && (
+            isOwnProfile ? (
+              historyLoading ? (
+                <div className={styles.historyEmpty}>Carregando histórico…</div>
+              ) : history.length === 0 ? (
+                <div className={styles.historyEmpty}>
+                  Ainda não tem música no histórico. Bota pra tocar lá embaixo
+                  pra começar a registrar.
+                </div>
+              ) : (
+                history.map((item) => (
+                  <HistoryRow
+                    key={item.trackId}
+                    item={item}
+                    onToggleLike={toggleLike}
+                  />
+                ))
+              )
+            ) : (
+              <div className={styles.historyEmpty}>
+                Histórico privado.
               </div>
-              <span className={styles.historyAgo}>{item.ago}</span>
-            </div>
-          ))}
+            )
+          )}
 
           {tab === 'comunidades' && COMMUNITIES.map(c => (
             <div key={c.id} className={styles.communityItem}>

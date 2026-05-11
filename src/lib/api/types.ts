@@ -110,3 +110,16 @@ export interface ApiLocation {
   lat: number;
   lng: number;
 }
+
+export interface ApiHistoryItem {
+  trackId: string;
+  title: string;
+  artist: string;
+  youtubeId: string;
+  /** ISO timestamp of the most recent listen. */
+  lastPlayedAt: string;
+  /** Total plays of this track by the user. */
+  plays: number;
+  /** Whether the user has liked this track. */
+  liked: boolean;
+}

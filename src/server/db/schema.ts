@@ -194,6 +194,30 @@ export const notifications = pgTable(
   ],
 );
 
+/**
+ * User likes on tracks. Composite primary key (user, track) so the same
+ * pair can't appear twice; deleting a row unlikes.
+ */
+export const trackLikes = pgTable(
+  'track_likes',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    trackId: uuid('track_id')
+      .notNull()
+      .references(() => tracks.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.trackId] }),
+    index('track_likes_user_created_idx').on(t.userId, t.createdAt),
+    index('track_likes_track_idx').on(t.trackId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Conversation = typeof conversations.$inferSelect;
@@ -202,3 +226,4 @@ export type Track = typeof tracks.$inferSelect;
 export type NowPlaying = typeof nowPlaying.$inferSelect;
 export type ListeningHistoryRow = typeof listeningHistory.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type TrackLike = typeof trackLikes.$inferSelect;

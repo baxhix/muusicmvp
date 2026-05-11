@@ -386,6 +386,49 @@
   flex-shrink: 0;
 }
 
+.historyPlays {
+  color: rgba(245,245,247,0.4);
+}
+
+/* Like (heart) button — sits between info and timestamp.
+   Unliked: outlined heart, low-contrast.
+   Liked: filled, red. */
+.likeBtn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.likeBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fca5a5;
+  transform: scale(1.08);
+}
+.likeBtn:active { transform: scale(0.94); }
+
+.likeBtnOn {
+  color: #ef4444;
+}
+.likeBtnOn:hover {
+  color: #ef4444;
+}
+
+.historyEmpty {
+  padding: 36px 24px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.5);
+}
+
 /* Communities */
 .communityItem {
   display: flex;

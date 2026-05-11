@@ -15,6 +15,13 @@
       "when": 1778337233416,
       "tag": "0001_redundant_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778500472995,
+      "tag": "0002_bitter_wind_dancer",
+      "breakpoints": true
     }
   ]
 }
