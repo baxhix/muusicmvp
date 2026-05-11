@@ -17,6 +17,11 @@ export interface HistoryRow {
  * first. Each row aggregates total plays of that track + whether the user
  * has liked it. Paginate with the `before` cursor (lastPlayedAt of the
  * oldest row received).
+ *
+ * Source: `user_activities` filtered to kind='stream' — the same ledger
+ * that drives the points system, so the Histórico tab and the Minha
+ * Atividade tab show consistent data. Every play that gave points
+ * appears here; nothing else can.
  */
 export async function getListeningHistory(
   userId: string,
@@ -32,17 +37,18 @@ export async function getListeningHistory(
       t.title       AS title,
       t.artist      AS artist,
       t.youtube_id  AS youtube_id,
-      MAX(lh.started_at) AS last_played_at,
-      COUNT(*)::int      AS plays,
+      MAX(a.created_at) AS last_played_at,
+      COUNT(*)::int     AS plays,
       EXISTS (
         SELECT 1 FROM track_likes tl
         WHERE tl.user_id = ${userId} AND tl.track_id = t.id
       ) AS liked
-    FROM listening_history lh
-    JOIN tracks t ON t.id = lh.track_id
-    WHERE lh.user_id = ${userId}
+    FROM user_activities a
+    JOIN tracks t ON t.id = a.track_id
+    WHERE a.user_id = ${userId}
+      AND a.kind = 'stream'
     GROUP BY t.id, t.title, t.artist, t.youtube_id
-    ${cursor ? sql`HAVING MAX(lh.started_at) < ${cursor}` : sql``}
+    ${cursor ? sql`HAVING MAX(a.created_at) < ${cursor}` : sql``}
     ORDER BY last_played_at DESC
     LIMIT ${limit + 1}
   `);
