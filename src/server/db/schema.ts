@@ -218,6 +218,44 @@ export const trackLikes = pgTable(
   ],
 );
 
+/**
+ * Append-only ledger of point-bearing activities. The user's total score
+ * is just SUM(points) over this table — single source of truth, no
+ * denormalized counter to drift.
+ *
+ * `kind`:
+ *   - 'stream'        → started a new track (100 pts)
+ *   - 'login'         → magic-link verified, session created (50 pts)
+ *   - 'chat_started'  → opened a fresh DM with someone (200 pts)
+ *
+ * `trackId` / `conversationId` are optional context — set when the
+ * activity is about a specific track or conversation.
+ */
+export const userActivities = pgTable(
+  'user_activities',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: text('kind', {
+      enum: ['stream', 'login', 'chat_started'],
+    }).notNull(),
+    points: integer('points').notNull(),
+    trackId: uuid('track_id').references(() => tracks.id, { onDelete: 'set null' }),
+    conversationId: uuid('conversation_id').references(() => conversations.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('user_activities_user_created_idx').on(t.userId, t.createdAt),
+    index('user_activities_kind_idx').on(t.kind),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Conversation = typeof conversations.$inferSelect;
@@ -227,3 +265,4 @@ export type NowPlaying = typeof nowPlaying.$inferSelect;
 export type ListeningHistoryRow = typeof listeningHistory.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type TrackLike = typeof trackLikes.$inferSelect;
+export type UserActivity = typeof userActivities.$inferSelect;

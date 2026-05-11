@@ -26,6 +26,8 @@ import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
+import RankingButton from '@/components/app/RankingButton';
+import RankingModal from '@/components/app/RankingModal';
 
 import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
@@ -57,6 +59,7 @@ export default function AppPage() {
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showSuperchat, setShowSuperchat] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
+  const [showRanking, setShowRanking] = useState(false);
   const [songIdx, setSongIdx] = useState(0);
 
   // Asks for browser geolocation on first authenticated load (per session).
@@ -217,6 +220,11 @@ export default function AppPage() {
       <SuperchatPanel
         open={showSuperchat}
         onClose={() => setShowSuperchat(false)}
+      />
+      <RankingButton onClick={() => setShowRanking(true)} />
+      <RankingModal
+        open={showRanking}
+        onClose={() => setShowRanking(false)}
       />
 
       <Onboarding />

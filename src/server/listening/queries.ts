@@ -8,6 +8,7 @@ import {
   users,
   type Track,
 } from '../db/schema';
+import { recordActivity } from '../activities/queries';
 
 const SAME_TRACK_WINDOW_MS = 2 * 60 * 1000; // 2 min: count as "listening together"
 const SAME_TRACK_DEDUPE_MS = 60 * 60 * 1000; // 1h: don't re-notify same pair+track
@@ -60,6 +61,10 @@ export async function recordListeningTick(
       startedAt: new Date(),
       durationListenedSeconds: 0,
     });
+
+    // Each new stream is worth points. Fire-and-forget so a logging
+    // failure doesn't block the tick.
+    void recordActivity(userId, 'stream', { trackId });
   } else {
     // Same track: update duration on the currently-open row.
     await db

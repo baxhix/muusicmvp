@@ -4,6 +4,7 @@ import { db } from '../db';
 import { tokens, users, type User } from '../db/schema';
 import { env } from '../env';
 import { hashToken, SESSION_TTL_MS, generateToken } from './tokens';
+import { recordActivity } from '../activities/queries';
 
 export const SESSION_COOKIE = 'muusic_session';
 
@@ -29,6 +30,10 @@ export async function createSession(userId: string): Promise<void> {
     // When set (prod), shares the cookie with subdomains (e.g. admin.*).
     ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
   });
+
+  // Each magic-link verification counts as a login activity. Fire and
+  // forget so an audit-log failure doesn't break sign-in.
+  void recordActivity(userId, 'login');
 }
 
 /** Read the session cookie and return the current user, or null. */

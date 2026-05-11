@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import NowPlaying from './NowPlaying';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
-import type { ApiHistoryItem } from '@/lib/api/types';
+import { useMyActivities } from '@/hooks/useMyActivities';
+import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
 import styles from './ProfilePanel.module.css';
 
 /* ── Types ─────────────────────────────────────────────── */
-type TabId = 'historico' | 'comunidades' | 'idolos';
+type TabId = 'historico' | 'atividade' | 'comunidades' | 'idolos';
 
 export interface ProfileUser {
   id: string;
@@ -29,9 +30,10 @@ interface Props {
 
 /* ── Static mock content ─────────────────────────────────── */
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'historico',   label: 'Histórico'   },
-  { id: 'comunidades', label: 'Comunidades' },
-  { id: 'idolos',      label: 'Ídolos'      },
+  { id: 'historico',   label: 'Histórico'         },
+  { id: 'atividade',   label: 'Minha Atividade'   },
+  { id: 'comunidades', label: 'Comunidades'       },
+  { id: 'idolos',      label: 'Ídolos'            },
 ];
 
 const FALLBACK_THUMB = '/ana-castela-box.jpg';
@@ -47,6 +49,65 @@ function timeAgo(iso: string): string {
 
 function youtubeThumb(youtubeId: string): string {
   return `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+}
+
+function describeActivity(a: ApiActivityItem): string {
+  switch (a.kind) {
+    case 'stream':
+      if (a.trackTitle) {
+        return `Tocou “${a.trackTitle}”${a.trackArtist ? ` — ${a.trackArtist}` : ''}`;
+      }
+      return 'Tocou uma música';
+    case 'login':
+      return 'Fez login no muusic';
+    case 'chat_started':
+      return a.conversationSlug === 'superchat'
+        ? 'Entrou no Superchat'
+        : 'Iniciou uma nova conversa';
+    default:
+      return 'Atividade';
+  }
+}
+
+function activityIcon(kind: ApiActivityItem['kind']) {
+  if (kind === 'stream') {
+    return (
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 1v9" /><path d="M6 3v9" />
+        <circle cx="4.5" cy="12" r="1.5" />
+        <circle cx="8.5" cy="10" r="1.5" />
+      </svg>
+    );
+  }
+  if (kind === 'login') {
+    return (
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 1.5l-3 3 3 3" /><path d="M4 4.5h7" />
+        <path d="M11 8.5v3a1 1 0 0 1-1 1H3" />
+      </svg>
+    );
+  }
+  // chat_started
+  return (
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 12 4v4.5a1.5 1.5 0 0 1-1.5 1.5H6l-3 2.5V9.5a1.5 1.5 0 0 1-1-1.5z" />
+    </svg>
+  );
+}
+
+function ActivityRow({ item }: { item: ApiActivityItem }) {
+  return (
+    <div className={styles.activityItem}>
+      <div className={`${styles.activityIcon} ${styles[`activityIcon_${item.kind}`]}`}>
+        {activityIcon(item.kind)}
+      </div>
+      <div className={styles.activityInfo}>
+        <span className={styles.activityText}>{describeActivity(item)}</span>
+        <span className={styles.activityTime}>{timeAgo(item.createdAt)}</span>
+      </div>
+      <span className={styles.activityPoints}>+{item.points}</span>
+    </div>
+  );
 }
 
 function HistoryRow({
@@ -121,6 +182,7 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
   // History only meaningful for the logged-in user (others' history isn't
   // exposed by the API). When isOwnProfile=false, the hook returns [].
   const { items: history, loading: historyLoading, toggleLike } = useListeningHistory();
+  const { items: activities, totalPoints, loading: activitiesLoading } = useMyActivities();
 
   return (
     <>
@@ -267,6 +329,36 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
               <div className={styles.historyEmpty}>
                 Histórico privado.
               </div>
+            )
+          )}
+
+          {tab === 'atividade' && (
+            isOwnProfile ? (
+              <>
+                <div className={styles.activityHeader}>
+                  <div className={styles.activityTotal}>
+                    <span className={styles.activityTotalValue}>
+                      {totalPoints.toLocaleString('pt-BR')}
+                    </span>
+                    <span className={styles.activityTotalLabel}>pontos totais</span>
+                  </div>
+                  <p className={styles.activityScoring}>
+                    +100 por música · +200 por nova conversa · +50 por login
+                  </p>
+                </div>
+                {activitiesLoading ? (
+                  <div className={styles.historyEmpty}>Carregando atividades…</div>
+                ) : activities.length === 0 ? (
+                  <div className={styles.historyEmpty}>
+                    Ainda sem atividade registrada. Faça login, toque uma música
+                    ou inicie uma conversa pra começar a pontuar.
+                  </div>
+                ) : (
+                  activities.map((a) => <ActivityRow key={a.id} item={a} />)
+                )}
+              </>
+            ) : (
+              <div className={styles.historyEmpty}>Atividade privada.</div>
             )
           )}
 

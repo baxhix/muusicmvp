@@ -123,3 +123,29 @@ export interface ApiHistoryItem {
   /** Whether the user has liked this track. */
   liked: boolean;
 }
+
+export interface ApiRankingRow {
+  userId: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  city: string | null;
+  country: string | null;
+  streams: number;
+  logins: number;
+  chatsStarted: number;
+  points: number;
+}
+
+export type ApiActivityKind = 'stream' | 'login' | 'chat_started';
+
+export interface ApiActivityItem {
+  id: string;
+  kind: ApiActivityKind;
+  points: number;
+  /** ISO timestamp. */
+  createdAt: string;
+  trackTitle: string | null;
+  trackArtist: string | null;
+  conversationSlug: string | null;
+}

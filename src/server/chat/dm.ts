@@ -1,6 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { conversationParticipants, conversations, users } from '../db/schema';
+import { recordActivity } from '../activities/queries';
 
 /**
  * Get the existing 1-on-1 DM between two users, or create one.
@@ -40,7 +41,7 @@ export async function getOrCreateDm(
 
   // Create a new DM. Must be transactional so the conversation row + both
   // participant rows go in atomically.
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [conv] = await tx
       .insert(conversations)
       .values({ type: 'dm' })
@@ -51,8 +52,15 @@ export async function getOrCreateDm(
       { conversationId: conv.id, userId: userIdB },
     ]);
 
-    return { id: conv.id, created: true };
+    return { id: conv.id, created: true as const };
   });
+
+  // The initiator (userIdA — passed as the first arg from the route handler
+  // where it comes from the authed user) gets points for starting a chat.
+  // Fire-and-forget; failures are logged inside recordActivity.
+  void recordActivity(userIdA, 'chat_started', { conversationId: result.id });
+
+  return result;
 }
 
 /** Verify a user exists by id (for DM creation guards). */
