@@ -97,6 +97,31 @@ export const messages = pgTable(
 );
 
 /**
+ * Per-(message, user, emoji) reaction marker. One row exists only when
+ * the user has that reaction active; toggling off deletes the row.
+ * The unique constraint guarantees a user can hold each emoji on a
+ * given message exactly once.
+ */
+export const messageReactions = pgTable(
+  'message_reactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    messageId: uuid('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    emoji: text('emoji').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('message_reactions_unique').on(t.messageId, t.userId, t.emoji),
+    index('message_reactions_message_idx').on(t.messageId),
+  ],
+);
+
+/**
  * Canonical track catalog. Seeded with NowPlaying.tsx discography on first migration.
  * youtubeId is the natural key for de-dup.
  */

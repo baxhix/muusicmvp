@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
 import type {
   ApiMessage,
+  ApiMessageReaction,
   ApiSuperchatParticipantPreview,
   ApiSuperchatResponse,
 } from '@/lib/api/types';
@@ -43,6 +44,13 @@ interface UseSuperchatResult {
   feed: SuperchatFeedItem[];
   loading: boolean;
   send: (body: string) => Promise<void>;
+  /**
+   * Toggle a reaction on a message. The optimistic update flips the
+   * local `mine` flag and bumps the count immediately; the server's
+   * authoritative aggregation lands on the next `chat:reaction` event
+   * and overrides the optimistic state.
+   */
+  react: (messageId: string, emoji: string) => void;
 }
 
 /**
@@ -129,6 +137,34 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
     };
   }, [socket]);
 
+  // Subscribe to reaction broadcasts. The server emits the new
+  // aggregated list, so we just overwrite the local `reactions` for
+  // that message — no diffing logic on the client.
+  useEffect(() => {
+    if (!socket) return;
+    const onReaction = (raw: unknown) => {
+      const payload = raw as {
+        conversationId?: string;
+        messageId?: string;
+        reactions?: ApiMessageReaction[];
+      };
+      if (!payload?.messageId || payload.conversationId !== idRef.current) return;
+      if (!Array.isArray(payload.reactions)) return;
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === payload.messageId
+            ? { ...m, reactions: payload.reactions }
+            : m,
+        ),
+      );
+    };
+    socket.on('chat:reaction', onReaction);
+    return () => {
+      socket.off('chat:reaction', onReaction);
+    };
+  }, [socket]);
+
   // Subscribe to inline activity events.
   useEffect(() => {
     if (!socket) return;
@@ -211,6 +247,60 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
     [conversationId, user, socket],
   );
 
+  const react = useCallback(
+    (messageId: string, emoji: string) => {
+      if (!socket || !user) return;
+
+      // Optimistic toggle: flip `mine` and adjust the count locally so
+      // the user sees instant feedback. The authoritative aggregation
+      // arrives via `chat:reaction` and overrides this. We deliberately
+      // don't roll back on error — that would create a stuttery UX;
+      // the server broadcast is the source of truth.
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          const reactions = m.reactions ?? [];
+          const existing = reactions.find((r) => r.emoji === emoji);
+          if (!existing) {
+            return {
+              ...m,
+              reactions: [...reactions, { emoji, count: 1, mine: true }],
+            };
+          }
+          if (existing.mine) {
+            // Was mine — toggle off.
+            const next = reactions
+              .map((r) =>
+                r.emoji === emoji
+                  ? { ...r, count: r.count - 1, mine: false }
+                  : r,
+              )
+              .filter((r) => r.count > 0);
+            return { ...m, reactions: next };
+          }
+          // Wasn't mine — toggle on.
+          return {
+            ...m,
+            reactions: reactions.map((r) =>
+              r.emoji === emoji ? { ...r, count: r.count + 1, mine: true } : r,
+            ),
+          };
+        }),
+      );
+
+      socket.emit(
+        'chat:react',
+        { messageId, emoji },
+        (ack: { ok: boolean; error?: string } | undefined) => {
+          if (!ack?.ok) {
+            console.error('superchat react rejected:', ack?.error);
+          }
+        },
+      );
+    },
+    [socket, user],
+  );
+
   // Merge messages + activities by timestamp so the feed reads chronologically.
   const feed: SuperchatFeedItem[] = [
     ...messages.map((m): SuperchatFeedItem => ({ ...m, _type: 'message' })),
@@ -224,5 +314,6 @@ export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
     feed,
     loading,
     send,
+    react,
   };
 }

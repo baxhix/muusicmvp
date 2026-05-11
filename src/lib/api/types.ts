@@ -55,6 +55,14 @@ export interface ApiConversationSummary {
   unreadCount: number;
 }
 
+/** Aggregated reaction shown next to a message (one entry per emoji). */
+export interface ApiMessageReaction {
+  emoji: string;
+  count: number;
+  /** Whether the requesting user is among the reactors for this emoji. */
+  mine: boolean;
+}
+
 export interface ApiMessage {
   id: string;
   conversationId: string;
@@ -65,6 +73,12 @@ export interface ApiMessage {
   senderName?: string | null;
   senderEmail?: string | null;
   senderAvatarUrl?: string | null;
+  /**
+   * Aggregated reactions ordered by the first time each emoji appeared
+   * on the message. Defaults to [] when omitted by the server (e.g. on
+   * a freshly-broadcast message before anyone reacts).
+   */
+  reactions?: ApiMessageReaction[];
 }
 
 /**

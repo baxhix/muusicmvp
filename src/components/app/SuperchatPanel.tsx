@@ -75,7 +75,7 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     }
   }, []);
 
-  const { feed, send, loading, participantCount, participantPreviews } =
+  const { feed, send, react, loading, participantCount, participantPreviews } =
     useSuperchat(open && joined);
 
   const [draft, setDraft] = useState('');
@@ -185,7 +185,7 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
             ) : feed.length === 0 ? (
               <div className={styles.placeholder}>Seja o primeiro a mandar uma mensagem 👋</div>
             ) : (
-              feed.map((item, i) => renderItem(item, i, feed, user.id))
+              feed.map((item, i) => renderItem(item, i, feed, user.id, react))
             )}
             <div ref={endRef} />
           </div>
@@ -227,6 +227,7 @@ function renderItem(
   i: number,
   feed: SuperchatFeedItem[],
   myUserId: string,
+  onReact: (messageId: string, emoji: string) => void,
 ) {
   if (item._type === 'activity') {
     return (
@@ -242,7 +243,8 @@ function renderItem(
     );
   }
 
-  // It's a message.
+  // It's a message — delegate to MessageRow which owns the picker
+  // hover/open state so each row maintains its own affordance state.
   const m = item;
   const isMine = m.senderId === myUserId;
   const prev = i > 0 ? feed[i - 1] : null;
@@ -250,10 +252,39 @@ function renderItem(
     prev && prev._type === 'message' && prev.senderId === m.senderId;
   const showHead = !isMine && !prevSameSender;
 
+  return (
+    <MessageRow
+      key={m.id}
+      m={m}
+      isMine={isMine}
+      showHead={showHead}
+      onReact={onReact}
+    />
+  );
+}
+
+/* ── Reactions ─────────────────────────────────────────────── */
+
+/** Curated set of quick-pick reactions shown in the hover picker. */
+const QUICK_REACTIONS = ['❤️', '🔥', '😂', '👍', '😮', '😢'] as const;
+
+function MessageRow({
+  m,
+  isMine,
+  showHead,
+  onReact,
+}: {
+  m: ApiMessage;
+  isMine: boolean;
+  showHead: boolean;
+  onReact: (messageId: string, emoji: string) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const reactions = m.reactions ?? [];
+
   // Outgoing messages render naked text on the panel — no bubble bg at
   // all. Incoming messages get a vibrant 135deg gradient drawn from
-  // USER_BUBBLE_PALETTE keyed on the senderId, so the same user always
-  // gets the same gradient across the room.
+  // USER_BUBBLE_PALETTE keyed on the senderId.
   const bubbleStyle = isMine
     ? undefined
     : (() => {
@@ -266,8 +297,9 @@ function renderItem(
 
   return (
     <div
-      key={m.id}
       className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}
+      onMouseEnter={() => setPickerOpen(true)}
+      onMouseLeave={() => setPickerOpen(false)}
     >
       {showHead && (
         <div className={styles.msgHead}>
@@ -276,12 +308,55 @@ function renderItem(
           <span className={styles.msgSender}>{senderLabel(m)}</span>
         </div>
       )}
-      <div
-        className={styles.bubble}
-        style={bubbleStyle}
-      >
-        {m.body}
+
+      <div className={styles.bubbleWrap}>
+        <div className={styles.bubble} style={bubbleStyle}>
+          {m.body}
+        </div>
+
+        {/* Quick-pick reactions popover. Float above the bubble so the
+            user sees their options without the chips below moving. */}
+        {pickerOpen && (
+          <div
+            className={`${styles.reactPicker} ${isMine ? styles.reactPickerOut : styles.reactPickerIn}`}
+            role="toolbar"
+            aria-label="Reagir à mensagem"
+          >
+            {QUICK_REACTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                className={styles.reactPickerBtn}
+                onClick={() => onReact(m.id, emoji)}
+                aria-label={`Reagir com ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {reactions.length > 0 && (
+        <div
+          className={`${styles.reactChips} ${isMine ? styles.reactChipsOut : styles.reactChipsIn}`}
+        >
+          {reactions.map((r) => (
+            <button
+              key={r.emoji}
+              type="button"
+              className={`${styles.reactChip} ${r.mine ? styles.reactChipMine : ''}`}
+              onClick={() => onReact(m.id, r.emoji)}
+              aria-label={`${r.emoji} ${r.count} ${r.mine ? '(você reagiu)' : ''}`}
+              aria-pressed={r.mine}
+            >
+              <span className={styles.reactChipEmoji}>{r.emoji}</span>
+              <span className={styles.reactChipCount}>{r.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className={styles.time}>{formatTime(m.createdAt)}</div>
     </div>
   );

@@ -7,6 +7,7 @@ import {
   listSuperchatParticipantPreviews,
 } from '@/server/chat/dm';
 import { listMessages } from '@/server/chat/queries';
+import { listReactionsForMessages } from '@/server/chat/reactions';
 
 export const runtime = 'nodejs';
 
@@ -33,9 +34,21 @@ export async function GET() {
       listSuperchatParticipantPreviews(5),
     ]);
 
+  // Hydrate reactions in a single batch query so every message arrives
+  // ready to render — saves N round-trips on the client during initial
+  // paint and keeps the panel from flickering chips in late.
+  const reactionsByMessage = await listReactionsForMessages(
+    user.id,
+    messages.map((m) => m.id),
+  );
+  const messagesWithReactions = messages.map((m) => ({
+    ...m,
+    reactions: reactionsByMessage.get(m.id) ?? [],
+  }));
+
   return NextResponse.json({
     conversation: { id: room.id, type: room.type, name: room.name, slug: room.slug },
-    messages,
+    messages: messagesWithReactions,
     hasMore,
     participantCount,
     participantPreviews,
