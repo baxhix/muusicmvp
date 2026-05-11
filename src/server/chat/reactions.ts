@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { messageReactions } from '../db/schema';
 
@@ -29,8 +29,8 @@ export async function getReactableConversation(
     FROM messages m
     JOIN conversation_participants cp
       ON cp.conversation_id = m.conversation_id
-     AND cp.user_id = ${userId}
-    WHERE m.id = ${messageId}
+     AND cp.user_id = ${userId}::uuid
+    WHERE m.id = ${messageId}::uuid
     LIMIT 1
   `);
   return (rows.rows[0]?.conversation_id as string | undefined) ?? null;
@@ -99,10 +99,10 @@ export async function listReactionsForMessage(
     SELECT
       emoji,
       COUNT(*)::int AS count,
-      BOOL_OR(user_id = ${userId}) AS mine,
-      MIN(created_at)              AS first_seen
+      BOOL_OR(user_id = ${userId}::uuid) AS mine,
+      MIN(created_at)                    AS first_seen
     FROM message_reactions
-    WHERE message_id = ${messageId}
+    WHERE message_id = ${messageId}::uuid
     GROUP BY emoji
     ORDER BY first_seen
   `);
@@ -117,6 +117,13 @@ export async function listReactionsForMessage(
  * Batch variant for hydrating a list of messages in one query. Returns
  * a Map keyed by messageId — messages with no reactions are not present
  * in the map (caller can default to []).
+ *
+ * Uses raw SQL with explicit ::uuid casts because mixing the typed
+ * Drizzle query builder with parameter bindings for uuid comparisons
+ * inside aggregates (BOOL_OR) was generating SQL that Postgres
+ * rejected with ambiguous types — taking the /api/superchat GET to
+ * a 500. The single-message variant above uses the same raw style
+ * and has been working reliably from the socket path.
  */
 export async function listReactionsForMessages(
   userId: string,
@@ -125,29 +132,28 @@ export async function listReactionsForMessages(
   const out = new Map<string, ReactionAggregation[]>();
   if (messageIds.length === 0) return out;
 
-  const rows = await db
-    .select({
-      messageId: messageReactions.messageId,
-      emoji: messageReactions.emoji,
-      count: sql<number>`COUNT(*)::int`,
-      mine: sql<boolean>`BOOL_OR(${messageReactions.userId} = ${userId})`,
-      firstSeen: sql<Date>`MIN(${messageReactions.createdAt})`,
-    })
-    .from(messageReactions)
-    .where(inArray(messageReactions.messageId, messageIds))
-    .groupBy(messageReactions.messageId, messageReactions.emoji);
+  const rows = await db.execute(sql`
+    SELECT
+      message_id,
+      emoji,
+      COUNT(*)::int  AS count,
+      BOOL_OR(user_id = ${userId}::uuid) AS mine,
+      MIN(created_at) AS first_seen
+    FROM message_reactions
+    WHERE message_id = ANY(${messageIds}::uuid[])
+    GROUP BY message_id, emoji
+    ORDER BY message_id, first_seen
+  `);
 
-  // Stable per-message ordering by firstSeen — same intent as the
-  // single-message variant above.
-  rows.sort((a, b) => {
-    if (a.messageId !== b.messageId) return 0;
-    return a.firstSeen.getTime() - b.firstSeen.getTime();
-  });
-
-  for (const r of rows) {
-    const arr = out.get(r.messageId) ?? [];
-    arr.push({ emoji: r.emoji, count: r.count, mine: r.mine });
-    out.set(r.messageId, arr);
+  for (const r of rows.rows) {
+    const mid = r.message_id as string;
+    const arr = out.get(mid) ?? [];
+    arr.push({
+      emoji: r.emoji as string,
+      count: r.count as number,
+      mine: r.mine as boolean,
+    });
+    out.set(mid, arr);
   }
   return out;
 }
