@@ -14,21 +14,24 @@ interface UseSuperchatResult {
 }
 
 /**
- * Convenience hook around the global Superchat room. Auto-joins on mount
- * (the GET endpoint also adds the user as participant if they aren't yet).
+ * Hook around the global Superchat room. The GET endpoint also auto-joins
+ * the caller as participant — to gate that behind an explicit "Entrar"
+ * action, pass `enabled=false` until the user clicks the button.
  */
-export function useSuperchat(): UseSuperchatResult {
+export function useSuperchat(enabled: boolean = true): UseSuperchatResult {
   const { user } = useAuth();
   const { socket } = useSocket();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ApiMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const idRef = useRef<string | null>(null);
   idRef.current = conversationId;
 
-  // Initial load
+  // Initial load — fetches + joins the user via the GET endpoint, but
+  // only when `enabled` is true so the SuperchatPanel can keep the user
+  // on the entrance screen until they explicitly opt in.
   useEffect(() => {
-    if (!user) {
+    if (!enabled || !user) {
       setMessages([]);
       setConversationId(null);
       setLoading(false);
@@ -52,7 +55,7 @@ export function useSuperchat(): UseSuperchatResult {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [enabled, user]);
 
   // Join the room once we know the id
   useEffect(() => {

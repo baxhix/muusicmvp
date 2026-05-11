@@ -1,6 +1,6 @@
 import { and, desc, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { conversationParticipants, messages } from '../db/schema';
+import { conversationParticipants, messages, users } from '../db/schema';
 
 /**
  * List the current user's DMs with their last message, the "other" participant,
@@ -144,8 +144,15 @@ export async function listMessages(
       senderId: messages.senderId,
       body: messages.body,
       createdAt: messages.createdAt,
+      // Sender hydration for multi-user rooms (Superchat): each message
+      // arrives with the sender's display name + avatar so the UI can
+      // render 'who said this' without a per-message lookup.
+      senderName: users.name,
+      senderEmail: users.email,
+      senderAvatarUrl: users.avatarUrl,
     })
     .from(messages)
+    .leftJoin(users, eq(users.id, messages.senderId))
     .where(where)
     .orderBy(desc(messages.createdAt))
     .limit(limit + 1);

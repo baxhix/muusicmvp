@@ -5,11 +5,23 @@ import {
   conversations,
   messages,
   notifications,
+  users,
   type Message,
 } from '../db/schema';
 
+/**
+ * Message enriched with the sender's display name + avatar. Used by both
+ * REST and Socket.IO emits so multi-user rooms (Superchat) can render the
+ * sender's identity next to every bubble without per-message lookups.
+ */
+export interface HydratedMessage extends Message {
+  senderName: string | null;
+  senderEmail: string | null;
+  senderAvatarUrl: string | null;
+}
+
 export interface SendMessageResult {
-  message: Message;
+  message: HydratedMessage;
   /** Other participants of the conversation (excluding the sender). */
   recipientIds: string[];
   /** 'dm' | 'group' — caller decides whether to fan-out to user rooms. */
@@ -36,7 +48,7 @@ export async function sendMessage(
   if (!trimmed) throw new Error('empty_message');
   if (trimmed.length > 4000) throw new Error('message_too_long');
 
-  return await db.transaction(async (tx) => {
+  const txResult = await db.transaction(async (tx) => {
     const [msg] = await tx
       .insert(messages)
       .values({ conversationId, senderId, body: trimmed })
@@ -75,10 +87,30 @@ export async function sendMessage(
       );
     }
 
-    return {
-      message: msg,
-      recipientIds: others.map((p) => p.userId),
-      conversationType: (conv?.type ?? 'dm') as 'dm' | 'group',
-    };
+    return { msg, others, conv };
   });
+
+  // Hydrate the sender once for the realtime emit + REST response. Outside
+  // the transaction so the row-level locks release as soon as the insert
+  // commits.
+  const [sender] = await db
+    .select({
+      name: users.name,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+    })
+    .from(users)
+    .where(eq(users.id, senderId))
+    .limit(1);
+
+  return {
+    message: {
+      ...txResult.msg,
+      senderName: sender?.name ?? null,
+      senderEmail: sender?.email ?? null,
+      senderAvatarUrl: sender?.avatarUrl ?? null,
+    },
+    recipientIds: txResult.others.map((p) => p.userId),
+    conversationType: (txResult.conv?.type ?? 'dm') as 'dm' | 'group',
+  };
 }

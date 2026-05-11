@@ -61,6 +61,10 @@ export interface ApiMessage {
   senderId: string;
   body: string;
   createdAt: string;
+  /** Hydrated by listMessages / sendMessage via JOIN with users. */
+  senderName?: string | null;
+  senderEmail?: string | null;
+  senderAvatarUrl?: string | null;
 }
 
 export interface ApiSuperchatResponse {
