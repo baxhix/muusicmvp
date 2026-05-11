@@ -1,48 +1,60 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useUserLocation } from '@/hooks/useUserLocation';
+import { useLocationSync } from '@/hooks/useLocationSync';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { globeStore } from '@/lib/globeStore';
 import styles from './LocateButton.module.css';
 
+/**
+ * Top-right floating control that lets the user either:
+ *
+ *  - Share their location for the first time (or after a previous deny):
+ *    triggers the browser geolocation prompt and POSTs the result to
+ *    /api/me/location, which is what actually makes the user visible on
+ *    other people's maps.
+ *
+ *  - When already synced: just centers the globe on their (jittered)
+ *    city-level coords.
+ *
+ * The button used to call `useUserLocation` which only updated a local
+ * marker — that's why granting location here did NOT make the user
+ * appear in `/api/users/online` for others, causing asymmetric
+ * visibility. Now it routes through `useLocationSync` so the backend
+ * always gets the update.
+ */
 export default function LocateButton() {
-  const { location, loading, error, request } = useUserLocation();
   const { user } = useAuth();
+  const { status, request } = useLocationSync();
 
-  // Sempre que `location` mudar, propaga pro Globe (cria marker + flyTo).
-  // Passa o avatar do user logado pra o badge mostrar a foto real + "Você".
-  useEffect(() => {
-    if (location) {
-      globeStore.setUserLocation({
-        coords: { lat: location.lat, lng: location.lng },
-        avatarUrl: user?.avatarUrl ?? null,
-        name: 'Você',
-      });
-    }
-  }, [location, user?.avatarUrl]);
+  const hasCoords = user?.lat != null && user?.lng != null;
+  const loading = status === 'requesting';
+  const isCallToAction = !hasCoords && !loading;
 
-  const handleClick = async () => {
-    const coords = await request();
-    if (coords) {
-      globeStore.flyTo([coords.lng, coords.lat], 11);
+  const handleClick = () => {
+    if (hasCoords && user) {
+      globeStore.flyTo([user.lng as number, user.lat as number], 11);
+    } else {
+      request();
     }
   };
+
+  const title =
+    status === 'denied'
+      ? 'Permissão negada — habilite a localização nas configurações do navegador.'
+      : status === 'unavailable'
+        ? 'Não consegui detectar sua localização.'
+        : hasCoords
+          ? 'Centralizar no meu local'
+          : 'Compartilhar localização — assim você aparece no mapa pros outros';
 
   return (
     <button
       type="button"
-      className={`${styles.btn} ${location ? styles.btnActive : ''}`}
+      className={`${styles.btn} ${hasCoords ? styles.btnActive : ''} ${isCallToAction ? styles.btnPulse : ''}`}
       onClick={handleClick}
       disabled={loading}
-      aria-label="Mostrar minha localização no mapa"
-      title={
-        error
-          ? error
-          : location
-            ? 'Centralizar no meu local'
-            : 'Mostrar minha localização'
-      }
+      aria-label={hasCoords ? 'Centralizar no meu local' : 'Compartilhar minha localização'}
+      title={title}
     >
       {loading ? (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className={styles.spin}>

@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, ilike, ne, or } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, isNotNull, ne, or } from 'drizzle-orm';
 import { db } from '../db';
 import { nowPlaying, tracks, users } from '../db/schema';
 
@@ -33,6 +33,12 @@ export async function listOnlineUsers(excludeUserId: string, limit = 200) {
       and(
         ne(users.id, excludeUserId),
         gt(users.lastSeenAt, since),
+        // Only surface users who have actually shared their location. The
+        // map markers need coords, and clients filter out null-coord rows
+        // anyway — filtering server-side keeps payloads tight and
+        // eliminates one source of asymmetric visibility.
+        isNotNull(users.lat),
+        isNotNull(users.lng),
       ),
     )
     .orderBy(desc(users.lastSeenAt))
