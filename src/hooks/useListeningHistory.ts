@@ -67,13 +67,20 @@ export function useListeningHistory(): UseListeningHistoryResult {
     };
   }, [user]);
 
-  // Pick up new entries as the user listens — same_track notifications fire
-  // on each track change, which is also when listening_history gets a new row.
+  // Pick up new entries as the user listens. Two pokes:
+  //   - `me:activity:new` fires to the LISTENING user's own room when
+  //     they change tracks — this is the one that keeps Histórico live
+  //     while the panel stays open.
+  //   - `notify:new` is for receiving same-track notifications about
+  //     other users; we re-fetch on it too because that's a moment
+  //     the user might want to glance at their list anyway.
   useEffect(() => {
     if (!socket) return;
     const onPoke = () => refresh();
+    socket.on('me:activity:new', onPoke);
     socket.on('notify:new', onPoke);
     return () => {
+      socket.off('me:activity:new', onPoke);
       socket.off('notify:new', onPoke);
     };
   }, [socket, refresh]);

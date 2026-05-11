@@ -73,15 +73,24 @@ export function useMyActivities(): UseMyActivitiesResult {
     };
   }, [user]);
 
-  // Stream activities fire alongside same_track notify:new events, and
-  // chat_started fires the chat:thread:update poke. Both signal it's
-  // worth refetching.
+  // Three pokes converge here so the activity ledger stays live:
+  //   - `me:activity:new` — fires to the user's own room on their own
+  //     listening track-change (this is the one that was missing before
+  //     and kept the panel stale during solo listening).
+  //   - `notify:new` — fires when another user starts the same track;
+  //     a same-track row also lands in the user's history-relevant
+  //     timeline, so re-fetch is appropriate.
+  //   - `chat:thread:update` — fires for any conversation update.
+  //     chat_started is the only activity-kind under chat, so this
+  //     keeps the points total in sync after a fresh DM.
   useEffect(() => {
     if (!socket) return;
     const onPoke = () => refresh();
+    socket.on('me:activity:new', onPoke);
     socket.on('notify:new', onPoke);
     socket.on('chat:thread:update', onPoke);
     return () => {
+      socket.off('me:activity:new', onPoke);
       socket.off('notify:new', onPoke);
       socket.off('chat:thread:update', onPoke);
     };

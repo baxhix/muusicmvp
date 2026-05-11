@@ -29,7 +29,15 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
       if (!parsed.success) return;
 
       const track = await findTrackByYoutubeId(parsed.data.youtubeId);
-      if (!track) return;
+      if (!track) {
+        // Surface in logs — a user playing a YouTube ID we never seeded
+        // means their listening will be invisible to history, ranking
+        // and same-track matching. Easy to miss without this hint.
+        console.warn(
+          `[listening:tick] user=${userId} played unknown youtubeId=${parsed.data.youtubeId} — not in tracks catalog, skipping`,
+        );
+        return;
+      }
 
       const { trackChanged } = await recordListeningTick(
         userId,
@@ -39,6 +47,18 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
       );
 
       if (!trackChanged) return;
+
+      // Poke the listening user's own client so the Histórico /
+      // Minha Atividade views refresh live. notify:new is reserved
+      // for same-track notifications fanned out to OTHER users —
+      // it never fires for the source of the listen, so without
+      // this self-event an open Profile panel would stay stale
+      // until manually closed and reopened.
+      io.to(userRoom(userId)).emit('me:activity:new', {
+        kind: 'stream',
+        trackId: track.id,
+        createdAt: new Date().toISOString(),
+      });
 
       // ── Broadcast a small system message to Superchat: "X tocou Y +100"
       // Fire-and-forget (catch logs only). Skipped on conv-id lookup failure.
