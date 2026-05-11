@@ -6,6 +6,10 @@ export interface UserLocationPayload {
   avatarUrl?: string | null;
   /** Label rendered next to the avatar (e.g. "Você"). */
   name?: string | null;
+  /** Current track playing — when set, the badge shows the title and an
+   *  animated audio-bars indicator. */
+  trackTitle?: string | null;
+  trackArtist?: string | null;
 }
 
 export interface LiveMapUser {

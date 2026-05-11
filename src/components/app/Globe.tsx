@@ -394,8 +394,9 @@ export default function Globe() {
       rafId = requestAnimationFrame(rotate);
 
       // Handler de localização do user logado — renderiza um badge no mesmo
-      // estilo do FloatingUsers (avatar + nome em pill), ancorado em
-      // [lng, lat] real. Sempre rotulado "Você".
+      // estilo do liveUserBadge (avatar + nome + música), ancorado em
+      // [lng, lat] real. Sempre rotulado "Você"; distinção visual fica no
+      // anel ciano do avatar.
       globeStore.registerUserLocation((payload) => {
         if (userLocationMarker) {
           userLocationMarker.remove();
@@ -403,20 +404,27 @@ export default function Globe() {
         }
         if (!payload) return;
 
-        const { coords, avatarUrl, name } = payload;
+        const { coords, avatarUrl, name, trackTitle } = payload;
         // Sanitize before injecting into innerHTML.
         const safeName   = (name ?? 'Você').replace(/[<>&"']/g, '');
         const safeAvatar = (avatarUrl ?? '').replace(/["<>]/g, '');
+        const safeTitle  = (trackTitle ?? '').replace(/[<>&"']/g, '');
         const avatarSrc  = safeAvatar || 'https://i.pravatar.cc/72?u=me';
+
+        const audioBarsHtml = `
+          <span class="${styles.audioBars}" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </span>`;
 
         const el = document.createElement('div');
         el.className = styles.userLocationMarker;
         el.innerHTML = `
           <span class="${styles.userLocationPulse}" aria-hidden="true"></span>
-          <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização)">
+          <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
             <img src="${avatarSrc}" alt="" class="${styles.userBadgeAvatar}" />
             <div class="${styles.userBadgeInfo}">
               <span class="${styles.userBadgeName}">${safeName}</span>
+              ${safeTitle ? `<span class="${styles.userBadgeSong}">${audioBarsHtml}${safeTitle}</span>` : ''}
             </div>
           </div>
         `;
@@ -447,12 +455,17 @@ export default function Globe() {
           const safeTitle = (u.trackTitle ?? '').replace(/[<>&"']/g, '');
           const avatarSrc = safeAvatar || `https://i.pravatar.cc/72?u=${u.id}`;
 
+          const audioBarsHtml = `
+            <span class="${styles.audioBars}" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </span>`;
+
           const html = `
             <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName}${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
               <img src="${avatarSrc}" alt="" class="${styles.liveUserAvatar}" />
               <div class="${styles.liveUserInfo}">
                 <span class="${styles.liveUserName}">${safeName}</span>
-                ${safeTitle ? `<span class="${styles.liveUserSong}">♪ ${safeTitle}</span>` : ''}
+                ${safeTitle ? `<span class="${styles.liveUserSong}">${audioBarsHtml}${safeTitle}</span>` : ''}
               </div>
             </div>
           `;

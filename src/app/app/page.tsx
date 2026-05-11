@@ -34,6 +34,7 @@ import { useLocationSync } from '@/hooks/useLocationSync';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { liveBadges, badgeSets } from '@/data/mapData';
+import { TRACKS_CATALOG } from '@/data/tracksCatalog';
 import type { FilterTabId, LiveBadgeData } from '@/types';
 import { globeStore } from '@/lib/globeStore';
 
@@ -68,21 +69,34 @@ export default function AppPage() {
   // Server snaps to city centroid + per-user jitter; exact GPS isn't stored.
   useLocationSync();
 
+  // Current track of the logged-in player — drives the audio-bars indicator
+  // on the "Você" badge. Source of truth is `songIdx` controlled here and
+  // passed into <NowPlaying />.
+  const currentTrack = TRACKS_CATALOG[songIdx] ?? null;
+
   // Drop a "Você" badge on the Globe at the user's persisted (jittered)
-  // city-level location whenever lat/lng or the avatar change. Cleans the
-  // marker on logout. The Globe registers its handler on map load, so this
-  // effect re-runs once authUser arrives.
+  // city-level location whenever lat/lng, avatar OR the current track
+  // change. Cleans the marker on logout. The Globe registers its handler
+  // on map load, so this effect re-runs once authUser arrives.
   useEffect(() => {
     if (authUser?.lat != null && authUser?.lng != null) {
       globeStore.setUserLocation({
         coords: { lat: authUser.lat, lng: authUser.lng },
         avatarUrl: authUser.avatarUrl,
         name: 'Você',
+        trackTitle: currentTrack?.title ?? null,
+        trackArtist: currentTrack?.artist ?? null,
       });
     } else {
       globeStore.setUserLocation(null);
     }
-  }, [authUser?.lat, authUser?.lng, authUser?.avatarUrl]);
+  }, [
+    authUser?.lat,
+    authUser?.lng,
+    authUser?.avatarUrl,
+    currentTrack?.title,
+    currentTrack?.artist,
+  ]);
 
   // Render every other online user with location as a badge on the globe.
   // The server-side per-user jitter (~4 km within the city centroid) keeps
