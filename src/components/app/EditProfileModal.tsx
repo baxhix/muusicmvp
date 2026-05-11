@@ -56,13 +56,18 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync form with the latest user record whenever the modal opens.
+  // Sync from auth state only on the closed→open transition. After that,
+  // local state owns the form values so optimistic updates from uploads
+  // don't get clobbered when refresh() lands a moment later.
+  const prevOpenRef = useRef(open);
   useEffect(() => {
-    if (open && user) {
+    const justOpened = open && !prevOpenRef.current;
+    if (justOpened && user) {
       setName(user.name ?? '');
       setAvatarUrl(user.avatarUrl ?? null);
       setError(null);
     }
+    prevOpenRef.current = open;
   }, [open, user]);
 
   // Animation phase machine
@@ -227,6 +232,10 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
           <div className={styles.photoRow}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              // key forces React to unmount/remount the img when the URL
+              // changes, sidestepping any DOM-level caching of the previous
+              // src that occasionally keeps the old image visible.
+              key={displayAvatar}
               src={displayAvatar}
               alt="Foto de perfil"
               className={styles.avatar}
