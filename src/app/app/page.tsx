@@ -31,6 +31,7 @@ import RankingModal from '@/components/app/RankingModal';
 
 import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
+import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { liveBadges, badgeSets } from '@/data/mapData';
 import type { FilterTabId, LiveBadgeData } from '@/types';
@@ -49,6 +50,7 @@ const USER_CITIES: Record<string, { center: [number, number]; zoom: number }> = 
 export default function AppPage() {
   const { user: authUser } = useAuth();
   const chat = useChatLive();
+  const { users: liveUsers } = useLiveUsers();
   const [badgePositionIdx, setBadgePositionIdx] = useState(0);
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
@@ -81,6 +83,26 @@ export default function AppPage() {
       globeStore.setUserLocation(null);
     }
   }, [authUser?.lat, authUser?.lng, authUser?.avatarUrl]);
+
+  // Render every other online user with location as a badge on the globe.
+  // The server-side per-user jitter (~4 km within the city centroid) keeps
+  // overlapping avatars visually separated when zoomed in. We filter out
+  // the current user (already shown as the "Você" badge above) and any
+  // users without coords.
+  useEffect(() => {
+    const mapped = liveUsers
+      .filter((u) => u.lat != null && u.lng != null && u.id !== authUser?.id)
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        avatarUrl: u.avatarUrl,
+        lat: u.lat as number,
+        lng: u.lng as number,
+        trackTitle: u.nowPlaying?.title ?? null,
+        trackArtist: u.nowPlaying?.artist ?? null,
+      }));
+    globeStore.setLiveUsers(mapped);
+  }, [liveUsers, authUser?.id]);
 
   // Build the ProfileUser shape from the live auth record. Falls back to a
   // pravatar placeholder when no avatar has been uploaded yet so the UI

@@ -36,9 +36,14 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
 
     const created = await notifySameTrackListeners(userId, track.id);
 
+    // Operational visibility — easy to grep in `docker compose logs socket`
+    // when notifications aren't behaving. Includes the count so we can tell
+    // 'no overlap' from 'every pair was already deduped'.
+    console.log(
+      `[listening] user=${userId} → track=${track.id} (${track.title}); same-track notifications created: ${created.length}`,
+    );
+
     // Push real-time notify events to each matched user's personal room.
-    // The DB rows were inserted by notifySameTrackListeners; this just
-    // makes the UI light up without polling.
     for (const { userId: targetUserId, notificationId } of created) {
       io.to(userRoom(targetUserId)).emit('notify:new', {
         id: notificationId,

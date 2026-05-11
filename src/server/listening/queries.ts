@@ -10,8 +10,10 @@ import {
 } from '../db/schema';
 import { recordActivity } from '../activities/queries';
 
-const SAME_TRACK_WINDOW_MS = 2 * 60 * 1000; // 2 min: count as "listening together"
-const SAME_TRACK_DEDUPE_MS = 60 * 60 * 1000; // 1h: don't re-notify same pair+track
+const SAME_TRACK_WINDOW_MS = 2 * 60 * 1000;  // 2 min: count as "listening together"
+const SAME_TRACK_DEDUPE_MS = 10 * 60 * 1000; // 10 min: don't re-notify same pair+track
+// (Was 1h, but that hid every retest in the same dev session. 10 min still
+// blocks loop spam without being annoying during normal use.)
 
 /** Look up a track by youtubeId. Returns null if not in catalog. */
 export async function findTrackByYoutubeId(youtubeId: string): Promise<Track | null> {

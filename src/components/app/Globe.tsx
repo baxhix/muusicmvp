@@ -46,6 +46,8 @@ export default function Globe() {
     const clusterMarkers: mapboxgl.Marker[] = [];
     const hubMarkers: mapboxgl.Marker[] = [];
     let userLocationMarker: mapboxgl.Marker | null = null;
+    /** Live presence markers keyed by user.id (so diff updates are O(1)) */
+    const liveUserMarkers = new Map<string, mapboxgl.Marker>();
 
     map.on('style.load', () => {
       map.setFog({
@@ -423,6 +425,62 @@ export default function Globe() {
           .addTo(map);
       });
 
+      // ── Live presence markers (other users) ──────────────────────────
+      // The Globe component owns marker lifecycle (create/update/remove)
+      // keyed by user.id. The list of users is pushed from AppPage via
+      // globeStore.setLiveUsers whenever /api/users/online refreshes.
+      globeStore.registerLiveUsers((users) => {
+        const nextIds = new Set(users.map((u) => u.id));
+
+        // Remove markers for users that disappeared.
+        for (const [id, marker] of liveUserMarkers) {
+          if (!nextIds.has(id)) {
+            marker.remove();
+            liveUserMarkers.delete(id);
+          }
+        }
+
+        for (const u of users) {
+          // Sanitize before innerHTML.
+          const safeName = (u.name ?? 'Anônimo').replace(/[<>&"']/g, '');
+          const safeAvatar = (u.avatarUrl ?? '').replace(/["<>]/g, '');
+          const safeTitle = (u.trackTitle ?? '').replace(/[<>&"']/g, '');
+          const avatarSrc = safeAvatar || `https://i.pravatar.cc/72?u=${u.id}`;
+
+          const html = `
+            <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName}${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
+              <img src="${avatarSrc}" alt="" class="${styles.liveUserAvatar}" />
+              <div class="${styles.liveUserInfo}">
+                <span class="${styles.liveUserName}">${safeName}</span>
+                ${safeTitle ? `<span class="${styles.liveUserSong}">♪ ${safeTitle}</span>` : ''}
+              </div>
+            </div>
+          `;
+
+          const existing = liveUserMarkers.get(u.id);
+          if (existing) {
+            // Reuse the DOM element to avoid flicker. Position update is
+            // cheap on Mapbox markers.
+            const el = existing.getElement();
+            if (el.innerHTML !== html) el.innerHTML = html;
+            existing.setLngLat([u.lng, u.lat]);
+          } else {
+            const wrapper = document.createElement('div');
+            wrapper.className = styles.liveUserWrap;
+            wrapper.innerHTML = html;
+            // Click → flyTo this user's spot
+            wrapper.style.cursor = 'pointer';
+            wrapper.addEventListener('click', () => {
+              map.flyTo({ center: [u.lng, u.lat], zoom: 11, duration: 1400 });
+            });
+            const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
+              .setLngLat([u.lng, u.lat])
+              .addTo(map);
+            liveUserMarkers.set(u.id, marker);
+          }
+        }
+      });
+
       globeStore.register((center, zoom) => {
         userInteracting = true;
         cancelAnimationFrame(rafId);
@@ -468,6 +526,8 @@ export default function Globe() {
       clusterMarkers.forEach((m) => m.remove());
       hubMarkers.forEach((m) => m.remove());
       if (userLocationMarker) userLocationMarker.remove();
+      liveUserMarkers.forEach((m) => m.remove());
+      liveUserMarkers.clear();
       map.remove();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
