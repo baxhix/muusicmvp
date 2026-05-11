@@ -1,6 +1,9 @@
 'use client';
 
-import { useEffect, useState, type AnimationEvent } from 'react';
+import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
+import { useRanking } from '@/hooks/useRanking';
+import { useAuth } from '@/lib/auth/AuthContext';
+import type { ApiRankingRow } from '@/lib/api/types';
 import styles from './SuperfansPanel.module.css';
 
 interface SuperfansPanelProps {
@@ -8,99 +11,75 @@ interface SuperfansPanelProps {
   onClose: () => void;
 }
 
-type Superfan = {
+type Trend = 'up' | 'down' | 'same';
+
+interface Superfan {
   rank: number;
+  userId: string;
   name: string;
   fanpoints: number;
   level: number;
   img: string;
   city: string;
-  trend?: 'up' | 'down' | 'same';
-};
-
-const TOP_6: Superfan[] = [
-  { rank: 1, name: 'Isabela M.',     fanpoints: 12847, level: 12, img: 'https://i.pravatar.cc/96?img=44', city: 'São Paulo',      trend: 'up' },
-  { rank: 2, name: 'Mariana Lopes',  fanpoints: 11203, level: 11, img: 'https://i.pravatar.cc/96?img=47', city: 'Rio de Janeiro', trend: 'up' },
-  { rank: 3, name: 'João Pedro',     fanpoints: 10956, level: 11, img: 'https://i.pravatar.cc/96?img=8',  city: 'Belo Horizonte', trend: 'same' },
-  { rank: 4, name: 'Pedro H.',       fanpoints: 9420,  level: 10, img: 'https://i.pravatar.cc/96?img=12', city: 'Curitiba',       trend: 'up' },
-  { rank: 5, name: 'Camila F.',      fanpoints: 8721,  level: 9,  img: 'https://i.pravatar.cc/96?img=53', city: 'Fortaleza',      trend: 'down' },
-  { rank: 6, name: 'Diógenis Silva', fanpoints: 5210,  level: 8,  img: 'https://i.pravatar.cc/96?img=15', city: 'São Paulo',      trend: 'up' },
-];
-
-// ── Gera fãs ranks 7–100 deterministicamente ────────────────────────────────
-const NAMES_POOL = [
-  'Lucas Andrade', 'Beatriz Costa', 'Gabriel Souza', 'Larissa Mendes', 'Felipe Rocha',
-  'Juliana Reis', 'Rafael Lima', 'Camila Duarte', 'Thiago Silva', 'Aline Ferreira',
-  'Bruno Carvalho', 'Carolina Pires', 'Eduardo Vieira', 'Fernanda Alves', 'Gustavo Nunes',
-  'Helena Martins', 'Igor Ramos', 'Jéssica Brito', 'Kauã Teixeira', 'Letícia Pinto',
-  'Marcelo Ortiz', 'Natália Cunha', 'Otávio Moura', 'Paula Cardoso', 'Rodrigo Barros',
-  'Sabrina Tavares', 'Tomás Faria', 'Úrsula Maia', 'Vinícius Castro', 'Yasmin Lopes',
-  'Adrian Cole', 'Mia Walker', 'Liam Hayes', 'Nora Bennett', 'Ezra Park',
-  'Zara Khan', 'Hiroshi Tanaka', 'Yuki Sato', 'Wei Zhang', 'Mei Chen',
-  'Anastasia Volkova', 'Dmitri Sokolov', 'Adaeze Okafor', 'Kwame Mwangi',
-];
-const CITIES_POOL = [
-  'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba', 'Fortaleza',
-  'Porto Alegre', 'Brasília', 'Salvador', 'Recife', 'Manaus',
-  'Lisboa', 'Madrid', 'Paris', 'London', 'Berlin',
-  'New York', 'Los Angeles', 'Chicago', 'Miami',
-  'Tokyo', 'Beijing', 'Shanghai', 'Moscou', 'Lagos', 'Cairo',
-];
-const TRENDS: Array<'up' | 'down' | 'same'> = ['up', 'down', 'same'];
-
-function generateExtraFans(): Superfan[] {
-  const out: Superfan[] = [];
-  let seed = 0xFA17E0;
-  const rand = () => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 0xFFFFFFFF;
-  };
-  // Pontuação decresce do rank 7 (~5000) até rank 100 (~120)
-  for (let rank = 7; rank <= 100; rank++) {
-    const t = (rank - 7) / 93; // 0 → 1
-    const fanpoints = Math.round(5000 - t * 4880 + (rand() - 0.5) * 200);
-    const level = Math.max(1, Math.round(8 - t * 7 + (rand() - 0.5)));
-    const name = NAMES_POOL[Math.floor(rand() * NAMES_POOL.length)];
-    const city = CITIES_POOL[Math.floor(rand() * CITIES_POOL.length)];
-    const trend = TRENDS[Math.floor(rand() * TRENDS.length)];
-    const imgId = 1 + Math.floor(rand() * 70);
-    out.push({
-      rank,
-      name,
-      fanpoints: Math.max(80, fanpoints),
-      level,
-      img: `https://i.pravatar.cc/96?img=${imgId}`,
-      city,
-      trend,
-    });
-  }
-  return out;
+  trend: Trend;
 }
 
-const EXTRA_FANS = generateExtraFans();
-const ALL_FANS: Superfan[] = [...TOP_6, ...EXTRA_FANS];
+// ── Mocks for fields the backend doesn't track yet ─────────────────────────
+//
+// Level / next-level threshold and trend are derived from data we DO have
+// (points + a deterministic hash of the user id) so the UI lights up
+// realistically without inventing fake users. Replace these helpers when
+// the backend grows a "fan_level" or "weekly_delta" surface.
 
-const ME: Superfan & { nextLevelAt: number } = {
-  rank: 7,
-  name: 'Ana Beatriz',
-  fanpoints: 3480,
-  level: 7,
-  img: '/ana-beatriz-avatar.png',
-  city: 'São Paulo',
-  trend: 'up',
-  nextLevelAt: 5000,
-};
+function levelFor(points: number): number {
+  // Smooth curve: level 1 at 0 pts, level 2 at 100, level 3 at 400, level 4 at 900…
+  return Math.max(1, Math.floor(Math.sqrt(Math.max(0, points) / 100)) + 1);
+}
+
+function nextLevelAtFor(level: number): number {
+  return level * level * 100;
+}
+
+function trendFor(userId: string): Trend {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) {
+    h = (h * 31 + userId.charCodeAt(i)) & 0xffff;
+  }
+  const trends: Trend[] = ['up', 'same', 'up', 'down', 'up', 'same']; // bias toward 'up'
+  return trends[h % trends.length];
+}
+
+function displayName(r: ApiRankingRow): string {
+  return r.name?.trim() || r.email.split('@')[0];
+}
+
+function avatarSrc(r: ApiRankingRow): string {
+  return r.avatarUrl ?? `https://i.pravatar.cc/96?u=${r.userId}`;
+}
+
+function rowToSuperfan(r: ApiRankingRow, rank: number): Superfan {
+  return {
+    rank,
+    userId: r.userId,
+    name: displayName(r),
+    fanpoints: r.points,
+    level: levelFor(r.points),
+    img: avatarSrc(r),
+    city: r.city ?? '—',
+    trend: trendFor(r.userId),
+  };
+}
 
 const formatPoints = (n: number) => n.toLocaleString('pt-BR');
 
 export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
+  const { user: authUser } = useAuth();
+  const { ranking, loading, error } = useRanking(open);
+
   // Phase: 'idle' = unmounted; 'in' = rise; 'open' = idle visible; 'out' = fall.
-  const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(
-    open ? 'in' : 'idle'
-  );
+  const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [showAll, setShowAll] = useState(false);
 
-  // Drive phase from `open` prop.
   useEffect(() => {
     if (open) {
       setPhase((p) => (p === 'idle' || p === 'out' ? 'in' : p));
@@ -109,15 +88,10 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
     }
   }, [open]);
 
-  // When entry/exit animations finish, settle into next phase.
   const handleAnimationEnd = (e: AnimationEvent<HTMLElement>) => {
     if (e.target !== e.currentTarget) return;
-    if (phase === 'in' && e.animationName.includes('superfans-rise')) {
-      setPhase('open');
-    }
-    if (phase === 'out' && e.animationName.includes('superfans-fall')) {
-      setPhase('idle');
-    }
+    if (phase === 'in' && e.animationName.includes('superfans-rise')) setPhase('open');
+    if (phase === 'out' && e.animationName.includes('superfans-fall')) setPhase('idle');
   };
 
   // ESC closes
@@ -128,12 +102,56 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
+  // ── Derive Superfan rows from the live ranking ─────────────────────────
+  const fans: Superfan[] = useMemo(
+    () => ranking.map((r, i) => rowToSuperfan(r, i + 1)),
+    [ranking],
+  );
+
+  const top6 = fans.slice(0, 6);
+
+  const me: Superfan & { nextLevelAt: number } | null = useMemo(() => {
+    if (!authUser) return null;
+    const found = fans.find((f) => f.userId === authUser.id);
+    if (found) {
+      return { ...found, nextLevelAt: nextLevelAtFor(found.level + 1 - 1) || nextLevelAtFor(found.level) };
+    }
+    // Fallback: user exists but hasn't appeared in ranking yet (just signed up).
+    return {
+      rank: fans.length + 1,
+      userId: authUser.id,
+      name: displayName({
+        userId: authUser.id,
+        name: authUser.name,
+        email: authUser.email,
+        avatarUrl: authUser.avatarUrl,
+        city: authUser.city,
+        country: authUser.country,
+        streams: 0,
+        logins: 0,
+        chatsStarted: 0,
+        points: 0,
+      }),
+      fanpoints: 0,
+      level: 1,
+      img: authUser.avatarUrl ?? `https://i.pravatar.cc/96?u=${authUser.id}`,
+      city: authUser.city ?? '—',
+      trend: 'same',
+      nextLevelAt: nextLevelAtFor(2),
+    };
+  }, [authUser, fans]);
+
   if (phase === 'idle') return null;
 
   const isIn = phase === 'in';
   const isOut = phase === 'out';
 
-  const meProgressPct = Math.min(100, Math.round((ME.fanpoints / ME.nextLevelAt) * 100));
+  // Recompute nextLevelAt from the actual current level (level^2 * 100 is the
+  // boundary into NEXT level; if user is already at level L, target = L+1 boundary).
+  const meNextLevelAt = me ? nextLevelAtFor(me.level + 1) : 100;
+  const meProgressPct = me
+    ? Math.min(100, Math.max(0, Math.round((me.fanpoints / meNextLevelAt) * 100)))
+    : 0;
 
   return (
     <aside
@@ -158,73 +176,93 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
       </header>
 
       {/* Minha posição */}
-      <section className={styles.meCard} aria-label="Minha posição">
-        <div className={styles.meRow}>
-          <span className={styles.meRank}>#{ME.rank}</span>
-          <div className={styles.meAvatarWrap}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ME.img} alt={ME.name} className={styles.meAvatar} />
-            <span className={styles.meBadge}>Você</span>
+      {me && (
+        <section className={styles.meCard} aria-label="Minha posição">
+          <div className={styles.meRow}>
+            <span className={styles.meRank}>#{me.rank}</span>
+            <div className={styles.meAvatarWrap}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img key={me.img} src={me.img} alt={me.name} className={styles.meAvatar} />
+              <span className={styles.meBadge}>Você</span>
+            </div>
+            <div className={styles.meInfo}>
+              <span className={styles.meName}>{me.name}</span>
+              <span className={styles.meCity}>{me.city}</span>
+            </div>
+            <div className={styles.mePoints}>
+              <span className={styles.mePointsNum}>{formatPoints(me.fanpoints)}</span>
+              <span className={styles.mePointsLabel}>Fanpoints</span>
+            </div>
           </div>
-          <div className={styles.meInfo}>
-            <span className={styles.meName}>{ME.name}</span>
-            <span className={styles.meCity}>{ME.city}</span>
-          </div>
-          <div className={styles.mePoints}>
-            <span className={styles.mePointsNum}>{formatPoints(ME.fanpoints)}</span>
-            <span className={styles.mePointsLabel}>Fanpoints</span>
-          </div>
-        </div>
 
-        <div className={styles.meProgress}>
-          <div className={styles.meProgressBar}>
-            <div
-              className={styles.meProgressFill}
-              style={{ width: `${meProgressPct}%` }}
-            />
+          <div className={styles.meProgress}>
+            <div className={styles.meProgressBar}>
+              <div
+                className={styles.meProgressFill}
+                style={{ width: `${meProgressPct}%` }}
+              />
+            </div>
+            <div className={styles.meProgressLabel}>
+              <span>Nível {me.level}</span>
+              <span>
+                {formatPoints(Math.max(0, meNextLevelAt - me.fanpoints))} para nível {me.level + 1}
+              </span>
+            </div>
           </div>
-          <div className={styles.meProgressLabel}>
-            <span>Nível {ME.level}</span>
-            <span>
-              {formatPoints(ME.nextLevelAt - ME.fanpoints)} para nível {ME.level + 1}
-            </span>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <div className={styles.divider} />
 
-      {/* Top fans */}
       <div className={styles.listHeader}>
         <span className={styles.listEyebrow}>Ranking global</span>
-        <span className={styles.listMeta}>Atualizado agora</span>
+        <span className={styles.listMeta}>
+          {loading ? 'Atualizando…' : 'Atualizado agora'}
+        </span>
       </div>
 
       <div className={styles.list}>
-        {(showAll ? ALL_FANS : TOP_6).map((fan) => (
-          <button key={fan.rank} type="button" className={styles.fanRow}>
-            <span className={`${styles.rank} ${fan.rank <= 3 ? styles.rankTop : ''}`}>
-              {fan.rank === 1 ? '🥇' : fan.rank === 2 ? '🥈' : fan.rank === 3 ? '🥉' : `#${fan.rank}`}
-            </span>
-            <div className={styles.fanAvatarWrap}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={fan.img} alt={fan.name} className={styles.fanAvatar} />
-              {fan.rank === 1 && <span className={styles.crownTop} aria-hidden="true">👑</span>}
-            </div>
-            <div className={styles.fanInfo}>
-              <span className={styles.fanName}>{fan.name}</span>
-              <span className={styles.fanCity}>{fan.city} · Nv. {fan.level}</span>
-            </div>
-            <div className={styles.fanPoints}>
-              <span className={styles.fanPointsNum}>{formatPoints(fan.fanpoints)}</span>
-              {fan.trend === 'up' && <span className={`${styles.trend} ${styles.trendUp}`}>▲</span>}
-              {fan.trend === 'down' && <span className={`${styles.trend} ${styles.trendDown}`}>▼</span>}
-              {fan.trend === 'same' && <span className={`${styles.trend} ${styles.trendSame}`}>—</span>}
-            </div>
-          </button>
-        ))}
+        {error ? (
+          <div className={styles.emptyState}>
+            Não consegui carregar o ranking agora ({error}).
+          </div>
+        ) : fans.length === 0 ? (
+          <div className={styles.emptyState}>
+            {loading ? 'Carregando ranking…' : 'Sem fãs ainda. Toca uma música pra começar a pontuar.'}
+          </div>
+        ) : (
+          (showAll ? fans : top6).map((fan) => {
+            const isMe = fan.userId === authUser?.id;
+            return (
+              <button
+                key={fan.userId}
+                type="button"
+                className={`${styles.fanRow} ${isMe ? styles.fanRowMe : ''}`}
+              >
+                <span className={`${styles.rank} ${fan.rank <= 3 ? styles.rankTop : ''}`}>
+                  {fan.rank === 1 ? '🥇' : fan.rank === 2 ? '🥈' : fan.rank === 3 ? '🥉' : `#${fan.rank}`}
+                </span>
+                <div className={styles.fanAvatarWrap}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img key={fan.img} src={fan.img} alt={fan.name} className={styles.fanAvatar} />
+                  {fan.rank === 1 && <span className={styles.crownTop} aria-hidden="true">👑</span>}
+                </div>
+                <div className={styles.fanInfo}>
+                  <span className={styles.fanName}>{fan.name}</span>
+                  <span className={styles.fanCity}>{fan.city} · Nv. {fan.level}</span>
+                </div>
+                <div className={styles.fanPoints}>
+                  <span className={styles.fanPointsNum}>{formatPoints(fan.fanpoints)}</span>
+                  {fan.trend === 'up'   && <span className={`${styles.trend} ${styles.trendUp}`}>▲</span>}
+                  {fan.trend === 'down' && <span className={`${styles.trend} ${styles.trendDown}`}>▼</span>}
+                  {fan.trend === 'same' && <span className={`${styles.trend} ${styles.trendSame}`}>—</span>}
+                </div>
+              </button>
+            );
+          })
+        )}
 
-        {!showAll && (
+        {!showAll && fans.length > top6.length && (
           <button
             type="button"
             className={styles.seeMoreBtn}
@@ -239,7 +277,7 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
       </div>
 
       <footer className={styles.footer}>
-        <button type="button" className={styles.ctaPrimary}>
+        <button type="button" className={styles.ctaPrimary} disabled>
           Ver missões diárias
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

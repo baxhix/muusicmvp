@@ -27,7 +27,6 @@ import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import RankingButton from '@/components/app/RankingButton';
-import RankingModal from '@/components/app/RankingModal';
 import SameTrackToast from '@/components/app/SameTrackToast';
 
 import { useChatLive } from '@/hooks/useChatLive';
@@ -57,13 +56,15 @@ export default function AppPage() {
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
   const [showProfile, setShowProfile] = useState(false);
+  // Single state for "ranking-style" panel — both the Ranking button in
+  // the top bar and the crown icon in the bottom nav route here. Uses the
+  // SuperfansPanel UI fed with real /api/ranking data.
   const [showSuperfans, setShowSuperfans] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showSuperchat, setShowSuperchat] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
-  const [showRanking, setShowRanking] = useState(false);
   const [songIdx, setSongIdx] = useState(0);
 
   // Asks for browser geolocation on first authenticated load (per session).
@@ -170,7 +171,7 @@ export default function AppPage() {
           {/* Top center row: filter pills + ranking pill side-by-side */}
           <div className={styles.topBar}>
             <FilterTabs onTabChange={handleTabChange} />
-            <RankingButton onClick={() => setShowRanking(true)} />
+            <RankingButton onClick={() => setShowSuperfans(true)} />
           </div>
 
           {/* Live badges */}
@@ -185,10 +186,9 @@ export default function AppPage() {
         </div>
 
         <BottomNav
-          /* The crown icon is the second 'social' affordance — also opens
-             the global Ranking modal. The existing Superfans panel stays
-             reachable via the dedicated state. */
-          onSuperfansOpen={() => setShowRanking(true)}
+          /* Crown icon opens the same SuperfansPanel (Ranking design + real
+             /api/ranking data). */
+          onSuperfansOpen={() => setShowSuperfans(true)}
           onProfileOpen={() => setShowProfile(true)}
         />
       </div>
@@ -266,11 +266,8 @@ export default function AppPage() {
         onClose={() => setShowSuperchat(false)}
       />
       {/* RankingButton is rendered inline next to FilterTabs in the topBar;
-          the modal stays here so it overlays everything. */}
-      <RankingModal
-        open={showRanking}
-        onClose={() => setShowRanking(false)}
-      />
+          the SuperfansPanel above is what opens (ranking-style design fed
+          by real /api/ranking data). */}
 
       {/* Floating queue of "X is listening to the same song" notifications,
           driven by socket `notify:new` events of kind 'same_track'. Each
