@@ -83,10 +83,19 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [feed.length]);
 
+  // Stable ref so the mark-read effect below doesn't re-run just because
+  // the parent recreated the onMarkRead callback. Without this, a fresh
+  // closure every parent render would retrigger the effect → markRead →
+  // setState → parent re-render → infinite loop.
+  const onMarkReadRef = useRef(onMarkRead);
+  useEffect(() => {
+    onMarkReadRef.current = onMarkRead;
+  }, [onMarkRead]);
+
   useEffect(() => {
     if (!open || !joined) return;
-    onMarkRead?.();
-  }, [open, joined, feed.length, onMarkRead]);
+    onMarkReadRef.current?.();
+  }, [open, joined, feed.length]);
 
   const handleEnter = () => {
     try {

@@ -219,12 +219,25 @@ export function useChatLive(): UseChatLiveResult {
   );
 
   const markRead = useCallback(async (conversationId: string) => {
-    // Optimistic local zero so the badge disappears immediately.
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === conversationId ? { ...c, unreadCount: 0 } : c,
-      ),
-    );
+    // No-op when nothing actually needs marking — both the local state
+    // setter and the POST below are skipped if unreadCount is already 0.
+    //
+    // Why this matters: prev.map(...) ALWAYS returns a fresh array, even
+    // when no element actually changed. React then re-renders the page,
+    // and any caller that passes a fresh closure as `onMarkRead` ends up
+    // recreating the callback on every render — which retriggers the
+    // effect that called markRead in the first place. Infinite loop.
+    let shouldFetch = false;
+    setConversations((prev) => {
+      const idx = prev.findIndex((c) => c.id === conversationId);
+      if (idx === -1) return prev;
+      if (prev[idx].unreadCount === 0) return prev;
+      shouldFetch = true;
+      const next = [...prev];
+      next[idx] = { ...next[idx], unreadCount: 0 };
+      return next;
+    });
+    if (!shouldFetch) return;
     try {
       await api.post(`/api/conversations/${conversationId}/read`);
     } catch (err) {
