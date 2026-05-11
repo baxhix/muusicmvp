@@ -22,6 +22,14 @@ interface UseChatLiveResult {
   send: (body: string) => Promise<void>;
   /** open or create a DM with another user */
   openDmWith: (otherUserId: string) => Promise<void>;
+  /**
+   * Mark every message in this conversation as read for the current user.
+   * Optimistically zeroes unreadCount locally and POSTs to the server.
+   * Used by SuperchatPanel (which doesn't go through `open`) plus any
+   * other surface that wants to reset the badge without rendering the
+   * full LiveChatPanel.
+   */
+  markRead: (conversationId: string) => Promise<void>;
 }
 
 /**
@@ -210,6 +218,22 @@ export function useChatLive(): UseChatLiveResult {
     [loadList, open],
   );
 
+  const markRead = useCallback(async (conversationId: string) => {
+    // Optimistic local zero so the badge disappears immediately.
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === conversationId ? { ...c, unreadCount: 0 } : c,
+      ),
+    );
+    try {
+      await api.post(`/api/conversations/${conversationId}/read`);
+    } catch (err) {
+      console.error('markRead failed:', err);
+      // Rollback on failure — refetch the list to recover the true count.
+      loadList();
+    }
+  }, [loadList]);
+
   return {
     conversations,
     loadingList,
@@ -220,5 +244,6 @@ export function useChatLive(): UseChatLiveResult {
     loadingMessages,
     send,
     openDmWith,
+    markRead,
   };
 }

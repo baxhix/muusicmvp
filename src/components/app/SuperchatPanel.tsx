@@ -9,6 +9,13 @@ import styles from './SuperchatPanel.module.css';
 interface SuperchatPanelProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * Called when the user has 'seen' the room — on first load after
+   * entering and on every incoming message while the panel stays open.
+   * Parent (page.tsx) wires this to useChatLive.markRead so the
+   * SuperchatTrigger badge clears.
+   */
+  onMarkRead?: () => void;
 }
 
 const JOINED_KEY = 'muusic:superchat:joined';
@@ -28,7 +35,7 @@ function senderAvatarUrl(m: ApiMessage): string {
   return m.senderAvatarUrl ?? `https://i.pravatar.cc/72?u=${m.senderId}`;
 }
 
-export default function SuperchatPanel({ open, onClose }: SuperchatPanelProps) {
+export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatPanelProps) {
   const { user } = useAuth();
 
   // 'joined' is persisted in localStorage so the entrance screen only shows
@@ -54,6 +61,14 @@ export default function SuperchatPanel({ open, onClose }: SuperchatPanelProps) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  // Mark the Superchat conversation as read whenever the panel is open
+  // and the user has joined. Re-runs on each new message arrival so the
+  // badge doesn't reappear while the user is actively reading.
+  useEffect(() => {
+    if (!open || !joined) return;
+    onMarkRead?.();
+  }, [open, joined, messages.length, onMarkRead]);
 
   const handleEnter = () => {
     try {

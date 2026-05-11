@@ -2,6 +2,7 @@
    Pill style — matches the Ranking button so the whole control surface
    reads as one row. */
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -30,6 +31,28 @@
 }
 .btn svg { width: 16px; height: 16px; display: block; }
 .label { letter-spacing: 0.02em; }
+
+/* Red unread-count badge — same visual language as NotificationBell. */
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #000;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+  pointer-events: none;
+}
 
 /* Mobile: keep just the icon to save space (still inside the topBar row). */
 @media (max-width: 600px) {

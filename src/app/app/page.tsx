@@ -146,6 +146,11 @@ export default function AppPage() {
   const activeConversation =
     chat.conversations.find((c) => c.id === chat.activeId) ?? null;
 
+  // Superchat lives in the same conversation list as DMs (type='group').
+  // Pluck it so the trigger pill can show its unread count badge and the
+  // panel can call markRead through useChatLive.
+  const superchat = chat.conversations.find((c) => c.type === 'group') ?? null;
+
   return (
     <>
       <Globe />
@@ -173,7 +178,10 @@ export default function AppPage() {
           <div className={styles.topBar}>
             <FilterTabs onTabChange={handleTabChange} />
             <RankingButton onClick={() => setShowSuperfans(true)} />
-            <SuperchatTrigger onClick={() => setShowSuperchat(true)} />
+            <SuperchatTrigger
+              onClick={() => setShowSuperchat(true)}
+              unreadCount={superchat?.unreadCount ?? 0}
+            />
             <NotificationBell />
           </div>
 
@@ -267,6 +275,9 @@ export default function AppPage() {
       <SuperchatPanel
         open={showSuperchat}
         onClose={() => setShowSuperchat(false)}
+        onMarkRead={() => {
+          if (superchat) void chat.markRead(superchat.id);
+        }}
       />
       {/* RankingButton is rendered inline next to FilterTabs in the topBar;
           the SuperfansPanel above is what opens (ranking-style design fed
