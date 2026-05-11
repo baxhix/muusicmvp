@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import type { ApiOnlineUser } from '@/lib/api/types';
@@ -20,8 +20,6 @@ interface FloatingUser {
   center?: [number, number];
   zoom?: number;
 }
-
-const MAX_VISIBLE = 4;
 
 /** Stable hash → 0..1 floats. Same user always lands on same screen position. */
 function hashFloats(seed: string, count: number): number[] {
@@ -60,99 +58,26 @@ function projectToFloating(u: ApiOnlineUser): FloatingUser {
   };
 }
 
-function getRandMs(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
-}
-
-type Phase = 'hidden' | 'entering' | 'visible' | 'exiting';
-
+/**
+ * Floating overlay badges for online users — anchored to deterministic
+ * screen positions (not lat/lng) so they stay visible regardless of how
+ * the globe is rotated. ALL real users are rendered at all times; there
+ * is no cycling or max-visible cap. The list source is /api/users/online,
+ * filtered to users with public-shareable identity.
+ *
+ * The Globe component also renders a Mapbox marker per user at their real
+ * coords — that one moves with the map. This component complements it
+ * by keeping a visible roster on the screen at a glance.
+ */
 export default function FloatingUsers() {
   const { users: liveUsers } = useLiveUsers();
-
-  const pool = useMemo(
-    () => liveUsers.map(projectToFloating),
-    [liveUsers],
-  );
-
-  const [states, setStates] = useState<Record<string, Phase>>({});
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const visCount = useRef(0);
 
-  // Schedule entry/exit cycle for one user
-  useEffect(() => {
-    const ids = pool.map((u) => u.id);
-    const idSet = new Set(ids);
-
-    // Cancel timers and remove state for users who left.
-    for (const [id, t] of timers.current) {
-      if (!idSet.has(id)) {
-        clearTimeout(t);
-        timers.current.delete(id);
-      }
-    }
-    setStates((prev) => {
-      const next: Record<string, Phase> = {};
-      for (const id of ids) {
-        next[id] = prev[id] ?? 'hidden';
-      }
-      return next;
-    });
-
-    function schedule(id: string, delay?: number) {
-      const t = setTimeout(() => {
-        if (visCount.current >= MAX_VISIBLE) {
-          schedule(id, getRandMs(2, 5));
-          return;
-        }
-        visCount.current++;
-        setStates((s) => ({ ...s, [id]: 'entering' }));
-
-        const t2 = setTimeout(() => {
-          setStates((s) => ({ ...s, [id]: 'visible' }));
-          const t3 = setTimeout(() => {
-            setStates((s) => ({ ...s, [id]: 'exiting' }));
-            const t4 = setTimeout(() => {
-              visCount.current = Math.max(0, visCount.current - 1);
-              setStates((s) => ({ ...s, [id]: 'hidden' }));
-              schedule(id, getRandMs(3, 9));
-            }, 800);
-            timers.current.set(id, t4);
-          }, getRandMs(6, 14));
-          timers.current.set(id, t3);
-        }, 900);
-        timers.current.set(id, t2);
-      }, delay ?? getRandMs(0, 8));
-      timers.current.set(id, t);
-    }
-
-    // Schedule new users that don't have a timer yet
-    for (const id of ids) {
-      if (!timers.current.has(id)) {
-        schedule(id, getRandMs(0, 10));
-      }
-    }
-
-    return () => {
-      // (intentionally don't clear all on every effect run — only the unmount
-      // case below is the full cleanup)
-    };
-  }, [pool]);
-
-  // Unmount: kill every timer
-  useEffect(() => {
-    return () => {
-      for (const t of timers.current.values()) clearTimeout(t);
-      timers.current.clear();
-      visCount.current = 0;
-    };
-  }, []);
+  const pool = useMemo(() => liveUsers.map(projectToFloating), [liveUsers]);
 
   return (
     <>
       {pool.map((user) => {
-        const phase = states[user.id] ?? 'hidden';
-        if (phase === 'hidden') return null;
         const isHovered = hoveredId === user.id;
         return (
           <div
@@ -168,7 +93,7 @@ export default function FloatingUsers() {
             onMouseLeave={() => setHoveredId(null)}
             onClick={() => user.center && globeStore.flyTo(user.center, user.zoom ?? 10)}
           >
-            <div className={`${styles.badge} ${styles[phase]}`}>
+            <div className={`${styles.badge} ${styles.visible}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={user.img} alt={user.name} className={styles.avatar} />
               <div className={styles.info}>
@@ -192,8 +117,8 @@ export default function FloatingUsers() {
                     </div>
                     <span className={styles.previewCity}>
                       <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 1a3.5 3.5 0 00-3.5 3.5C2.5 7.5 6 11 6 11s3.5-3.5 3.5-6.5A3.5 3.5 0 006 1z"/>
-                        <circle cx="6" cy="4.5" r="1"/>
+                        <path d="M6 1a3.5 3.5 0 00-3.5 3.5C2.5 7.5 6 11 6 11s3.5-3.5 3.5-6.5A3.5 3.5 0 006 1z" />
+                        <circle cx="6" cy="4.5" r="1" />
                       </svg>
                       {user.city}
                     </span>
@@ -204,11 +129,11 @@ export default function FloatingUsers() {
                     <div className={styles.previewDivider} />
                     <div className={styles.previewSongRow}>
                       <svg className={styles.previewMusicIcon} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 1v7"/>
-                        <path d="M5 3v7"/>
-                        <circle cx="3.5" cy="10" r="1.5"/>
-                        <circle cx="7.5" cy="8" r="1.5"/>
-                        <path d="M5 3l4-2"/>
+                        <path d="M9 1v7" />
+                        <path d="M5 3v7" />
+                        <circle cx="3.5" cy="10" r="1.5" />
+                        <circle cx="7.5" cy="8" r="1.5" />
+                        <path d="M5 3l4-2" />
                       </svg>
                       <div className={styles.previewSongInfo}>
                         <span className={styles.previewSongTitle}>{user.song}</span>

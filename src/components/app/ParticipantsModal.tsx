@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '@/lib/api/client';
 import type { ApiSuperchatParticipant } from '@/lib/api/types';
 import styles from './ParticipantsModal.module.css';
@@ -58,11 +59,16 @@ export default function ParticipantsModal({ open, onClose }: Props) {
   }, [open, onClose]);
 
   if (!open) return null;
+  if (typeof window === 'undefined') return null; // SSR guard
 
   const online = participants.filter(isOnline);
   const offline = participants.filter((p) => !isOnline(p));
 
-  return (
+  // Render through a portal into document.body so the backdrop covers
+  // the whole viewport even when the modal is mounted INSIDE another
+  // position:fixed container (SuperchatPanel) that would otherwise trap
+  // it inside its 420px slot via the stacking-context rules.
+  return createPortal(
     <div
       className={styles.backdrop}
       onClick={onClose}
@@ -115,7 +121,8 @@ export default function ParticipantsModal({ open, onClose }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
