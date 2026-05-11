@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useSocket } from './useSocket';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ApiNotification } from '@/lib/api/types';
+import { useNotificationsLive } from './useNotificationsLive';
 
 export interface SameTrackToastPayload {
-  id: string;             // notification id (also used as React key)
+  id: string;
   sourceUserId: string;
   sourceName: string | null;
   sourceEmail: string | null;
@@ -22,45 +23,50 @@ interface QueueItem extends SameTrackToastPayload {
 const HOLD_MS = 6000;
 
 /**
- * Listens for socket `notify:new` events of kind 'same_track' and exposes a
- * short-lived queue for the floating SameTrackToast component to render.
- * Each toast auto-removes after HOLD_MS. Multiple toasts can coexist (they
- * stack visually).
+ * Drives the floating SameTrackToast queue.
+ *
+ * Implementation note: rather than listening to the raw `notify:new`
+ * socket event (whose payload shape changed across versions and may be
+ * incomplete when the socket container is older than the web container),
+ * we piggy-back on `useNotificationsLive`. That hook already refetches
+ * /api/notifications on every notify:new poke and the response is
+ * hydrated with sourceUser + track via JOINs.
+ *
+ * The first list snapshot after mount is treated as 'historical' — we
+ * don't toast notifications that already existed when the user landed
+ * on the page. Anything that appears later becomes a toast for HOLD_MS.
  */
 export function useSameTrackToasts(): {
   toasts: QueueItem[];
   dismiss: (id: string) => void;
 } {
-  const { socket } = useSocket();
+  const { notifications } = useNotificationsLive();
   const [toasts, setToasts] = useState<QueueItem[]>([]);
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  const firstSnapshotRef = useRef(true);
 
   const dismiss = useCallback((id: string) => {
     setToasts((cur) => cur.filter((t) => t.id !== id));
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
-    const onNew = (raw: unknown) => {
-      const payload = raw as Partial<SameTrackToastPayload> & { kind?: string };
-      if (payload?.kind !== 'same_track') return;
-      // Defensive: bail if the server didn't include the new fields (older builds).
-      if (!payload.id || !payload.trackTitle) return;
+    if (firstSnapshotRef.current) {
+      // Mark everything in the very first list snapshot as "already seen"
+      // so we don't toast every existing notification on page load.
+      for (const n of notifications) seenIdsRef.current.add(n.id);
+      firstSnapshotRef.current = false;
+      return;
+    }
 
-      const item: QueueItem = {
-        id: payload.id,
-        sourceUserId: payload.sourceUserId!,
-        sourceName: payload.sourceName ?? null,
-        sourceEmail: payload.sourceEmail ?? null,
-        sourceAvatarUrl: payload.sourceAvatarUrl ?? null,
-        trackId: payload.trackId!,
-        trackTitle: payload.trackTitle,
-        trackArtist: payload.trackArtist ?? '',
-        trackYoutubeId: payload.trackYoutubeId ?? '',
-        enteredAt: Date.now(),
-      };
+    for (const n of notifications) {
+      if (seenIdsRef.current.has(n.id)) continue;
+      seenIdsRef.current.add(n.id);
 
+      if (n.kind !== 'same_track') continue;
+      if (n.readAt) continue;
+
+      const item = buildToast(n);
       setToasts((cur) => {
-        // Avoid duplicates if the same socket event arrives twice (reconnect).
         if (cur.some((t) => t.id === item.id)) return cur;
         return [...cur, item];
       });
@@ -69,13 +75,23 @@ export function useSameTrackToasts(): {
       setTimeout(() => {
         setToasts((cur) => cur.filter((t) => t.id !== item.id));
       }, HOLD_MS);
-    };
-
-    socket.on('notify:new', onNew);
-    return () => {
-      socket.off('notify:new', onNew);
-    };
-  }, [socket]);
+    }
+  }, [notifications]);
 
   return { toasts, dismiss };
+}
+
+function buildToast(n: ApiNotification): QueueItem {
+  return {
+    id: n.id,
+    sourceUserId: n.sourceUser?.id ?? n.sourceUserId ?? '',
+    sourceName: n.sourceUser?.name ?? null,
+    sourceEmail: n.sourceUser?.email ?? null,
+    sourceAvatarUrl: n.sourceUser?.avatarUrl ?? null,
+    trackId: n.track?.id ?? n.trackId ?? '',
+    trackTitle: n.track?.title ?? 'a mesma música',
+    trackArtist: n.track?.artist ?? '',
+    trackYoutubeId: n.track?.youtubeId ?? '',
+    enteredAt: Date.now(),
+  };
 }
