@@ -76,6 +76,17 @@ export interface ApiSuperchatResponse {
   };
   messages: ApiMessage[];
   hasMore: boolean;
+  participantCount: number;
+}
+
+export interface ApiSuperchatParticipant {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  city: string | null;
+  joinedAt: string;
+  lastSeenAt: string | null;
 }
 
 export interface ApiNotification {

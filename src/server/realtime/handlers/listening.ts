@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { inArray } from 'drizzle-orm';
 import { db } from '../../db';
 import { users } from '../../db/schema';
+import { getSuperchatId } from '../../chat/dm';
+import { POINTS } from '../../activities/queries';
 import {
   findTrackByYoutubeId,
   notifySameTrackListeners,
@@ -37,6 +39,26 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
       );
 
       if (!trackChanged) return;
+
+      // ── Broadcast a small system message to Superchat: "X tocou Y +100"
+      // Fire-and-forget (catch logs only). Skipped on conv-id lookup failure.
+      try {
+        const superchatId = await getSuperchatId();
+        if (superchatId) {
+          io.to(`conv:${superchatId}`).emit('chat:activity', {
+            kind: 'stream',
+            conversationId: superchatId,
+            userId,
+            userName: socket.data.userName ?? null,
+            points: POINTS.stream,
+            trackTitle: track.title,
+            trackArtist: track.artist,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      } catch (err) {
+        console.error('[listening:tick] superchat activity emit failed:', err);
+      }
 
       const created = await notifySameTrackListeners(userId, track.id);
 

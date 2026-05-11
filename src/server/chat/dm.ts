@@ -99,3 +99,56 @@ export async function getSuperchat() {
     .limit(1);
   return rows[0] ?? null;
 }
+
+/**
+ * In-memory cache of the Superchat conversation id. Set on first lookup —
+ * the row never changes id once seeded, so a single query is enough per
+ * process lifetime.
+ */
+let _superchatIdCache: string | null = null;
+export async function getSuperchatId(): Promise<string | null> {
+  if (_superchatIdCache) return _superchatIdCache;
+  const room = await getSuperchat();
+  if (room) _superchatIdCache = room.id;
+  return _superchatIdCache;
+}
+
+/** Count of users joined to the Superchat room. */
+export async function countSuperchatParticipants(): Promise<number> {
+  const id = await getSuperchatId();
+  if (!id) return 0;
+  const result = await db.execute(sql`
+    SELECT COUNT(*)::int AS n FROM conversation_participants
+    WHERE conversation_id = ${id}
+  `);
+  return (result.rows[0]?.n as number) ?? 0;
+}
+
+/** Public profile rows of every user in the Superchat, newest joiner first. */
+export async function listSuperchatParticipants() {
+  const id = await getSuperchatId();
+  if (!id) return [];
+  const result = await db.execute(sql`
+    SELECT
+      u.id           AS id,
+      u.name         AS name,
+      u.email        AS email,
+      u.avatar_url   AS avatar_url,
+      u.city         AS city,
+      cp.joined_at   AS joined_at,
+      u.last_seen_at AS last_seen_at
+    FROM conversation_participants cp
+    JOIN users u ON u.id = cp.user_id
+    WHERE cp.conversation_id = ${id}
+    ORDER BY cp.joined_at DESC
+  `);
+  return result.rows.map((r) => ({
+    id: r.id as string,
+    name: r.name as string | null,
+    email: r.email as string,
+    avatarUrl: r.avatar_url as string | null,
+    city: r.city as string | null,
+    joinedAt: (r.joined_at as Date).toISOString(),
+    lastSeenAt: r.last_seen_at ? (r.last_seen_at as Date).toISOString() : null,
+  }));
+}

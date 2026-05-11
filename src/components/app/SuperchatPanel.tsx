@@ -1,20 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState, KeyboardEvent } from 'react';
-import { useSuperchat } from '@/hooks/useSuperchat';
+import { useSuperchat, type SuperchatFeedItem } from '@/hooks/useSuperchat';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiMessage } from '@/lib/api/types';
+import ParticipantsModal from './ParticipantsModal';
 import styles from './SuperchatPanel.module.css';
 
 interface SuperchatPanelProps {
   open: boolean;
   onClose: () => void;
-  /**
-   * Called when the user has 'seen' the room — on first load after
-   * entering and on every incoming message while the panel stays open.
-   * Parent (page.tsx) wires this to useChatLive.markRead so the
-   * SuperchatTrigger badge clears.
-   */
   onMarkRead?: () => void;
 }
 
@@ -35,46 +30,69 @@ function senderAvatarUrl(m: ApiMessage): string {
   return m.senderAvatarUrl ?? `https://i.pravatar.cc/72?u=${m.senderId}`;
 }
 
+/**
+ * Picks a deterministic muted accent color for a user's bubbles. Drawn
+ * from a small curated palette — all paired with white text and a tint
+ * of black on top of the bubble bg to keep contrast high.
+ *
+ * Hash → index keeps the same user on the same color across re-renders
+ * and across reloads, so reading flow stays predictable.
+ */
+const USER_BUBBLE_PALETTE = [
+  '#314D7A', // azul desbotado
+  '#4B3A77', // roxo discreto
+  '#3A6E51', // verde acinzentado
+  '#7A4E3A', // marrom suave
+  '#6E3F5A', // rosé
+  '#3A6E6E', // teal
+  '#6E6238', // mostarda
+  '#4A3A66', // ametista
+  '#4E5E3A', // oliva
+  '#5E3A52', // bordô
+];
+
+function colorForUserId(userId: string): string {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) {
+    h = (h * 31 + userId.charCodeAt(i)) & 0xffff;
+  }
+  return USER_BUBBLE_PALETTE[h % USER_BUBBLE_PALETTE.length];
+}
+
 export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatPanelProps) {
   const { user } = useAuth();
 
-  // 'joined' is persisted in localStorage so the entrance screen only shows
-  // on the very first interaction. The user can still tap Sair to reset
-  // (TODO if/when we add that flow).
+  // 'joined' persisted in localStorage so the entrance screen only shows
+  // on the very first interaction.
   const [joined, setJoined] = useState(false);
   useEffect(() => {
     try {
       setJoined(localStorage.getItem(JOINED_KEY) === '1');
     } catch {
-      // localStorage may be blocked in private windows — treat as not-joined.
       setJoined(false);
     }
   }, []);
 
-  // Only fetch/join the room once the user is open AND has accepted the
-  // entrance screen.
-  const { messages, send, loading } = useSuperchat(open && joined);
+  const { feed, send, loading, participantCount } = useSuperchat(open && joined);
 
   const [draft, setDraft] = useState('');
+  const [showParticipants, setShowParticipants] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [feed.length]);
 
-  // Mark the Superchat conversation as read whenever the panel is open
-  // and the user has joined. Re-runs on each new message arrival so the
-  // badge doesn't reappear while the user is actively reading.
   useEffect(() => {
     if (!open || !joined) return;
     onMarkRead?.();
-  }, [open, joined, messages.length, onMarkRead]);
+  }, [open, joined, feed.length, onMarkRead]);
 
   const handleEnter = () => {
     try {
       localStorage.setItem(JOINED_KEY, '1');
     } catch {
-      // ignore — entering still works for this session
+      // ignore
     }
     setJoined(true);
   };
@@ -99,12 +117,21 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     <div
       className={`${styles.panel} ${open ? styles.panelOpen : ''}`}
       role="dialog"
-      aria-label="Superchat — sala global"
+      aria-label="Superchat"
     >
       <div className={styles.header}>
         <div className={styles.title}>
-          <span>Superchat</span>
-          <span className={styles.titleHint}>sala global</span>
+          <span className={styles.titleText}>Superchat</span>
+          {joined && (
+            <button
+              type="button"
+              className={styles.participantsLink}
+              onClick={() => setShowParticipants(true)}
+              aria-label={`Ver ${participantCount} participantes`}
+            >
+              {participantCount} {participantCount === 1 ? 'participante' : 'participantes'}
+            </button>
+          )}
         </div>
         <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar superchat">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -118,39 +145,12 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
       ) : (
         <>
           <div className={styles.messages}>
-            {loading ? (
+            {loading && feed.length === 0 ? (
               <div className={styles.placeholder}>Carregando…</div>
-            ) : messages.length === 0 ? (
+            ) : feed.length === 0 ? (
               <div className={styles.placeholder}>Seja o primeiro a mandar uma mensagem 👋</div>
             ) : (
-              messages.map((m, i) => {
-                const isMine = m.senderId === user.id;
-                // Collapse the avatar/name header for consecutive messages from
-                // the same sender so a burst of texts feels conversational.
-                const prev = i > 0 ? messages[i - 1] : null;
-                const showHead = !isMine && (!prev || prev.senderId !== m.senderId);
-
-                return (
-                  <div
-                    key={m.id}
-                    className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}
-                  >
-                    {showHead && (
-                      <div className={styles.msgHead}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={senderAvatarUrl(m)}
-                          alt=""
-                          className={styles.msgAvatar}
-                        />
-                        <span className={styles.msgSender}>{senderLabel(m)}</span>
-                      </div>
-                    )}
-                    <div className={styles.bubble}>{m.body}</div>
-                    <div className={styles.time}>{formatTime(m.createdAt)}</div>
-                  </div>
-                );
-              })
+              feed.map((item, i) => renderItem(item, i, feed, user.id))
             )}
             <div ref={endRef} />
           </div>
@@ -178,6 +178,64 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
           </div>
         </>
       )}
+
+      <ParticipantsModal
+        open={showParticipants}
+        onClose={() => setShowParticipants(false)}
+      />
+    </div>
+  );
+}
+
+function renderItem(
+  item: SuperchatFeedItem,
+  i: number,
+  feed: SuperchatFeedItem[],
+  myUserId: string,
+) {
+  if (item._type === 'activity') {
+    return (
+      <div key={item.id} className={styles.activity}>
+        <span className={styles.activityIcon} aria-hidden="true">♪</span>
+        <span className={styles.activityText}>
+          <strong>{item.userName ?? 'Alguém'}</strong> tocou{' '}
+          <em>{item.trackTitle}</em>
+          {item.trackArtist ? ` — ${item.trackArtist}` : ''}{' '}
+          <span className={styles.activityPoints}>+{item.points} pts</span>
+        </span>
+      </div>
+    );
+  }
+
+  // It's a message.
+  const m = item;
+  const isMine = m.senderId === myUserId;
+  const prev = i > 0 ? feed[i - 1] : null;
+  const prevSameSender =
+    prev && prev._type === 'message' && prev.senderId === m.senderId;
+  const showHead = !isMine && !prevSameSender;
+
+  const bubbleColor = isMine ? undefined : colorForUserId(m.senderId);
+
+  return (
+    <div
+      key={m.id}
+      className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}
+    >
+      {showHead && (
+        <div className={styles.msgHead}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={senderAvatarUrl(m)} alt="" className={styles.msgAvatar} />
+          <span className={styles.msgSender}>{senderLabel(m)}</span>
+        </div>
+      )}
+      <div
+        className={styles.bubble}
+        style={bubbleColor ? { background: bubbleColor, color: '#FFFFFF' } : undefined}
+      >
+        {m.body}
+      </div>
+      <div className={styles.time}>{formatTime(m.createdAt)}</div>
     </div>
   );
 }
