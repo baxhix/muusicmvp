@@ -40,16 +40,14 @@ export default function BottomNav({
           <span className={styles.label}>Mapa</span>
         </Link>
 
-        {/* Feed — temporarily inactive. The button is `disabled` AND has
-            `pointer-events: none` via .itemDisabled so any click is a
-            no-op without needing an onClick handler. */}
+        {/* Feed — the FeedPanel surface is rendered as the default
+            resting view in page.tsx, so this button doesn't need to
+            navigate anywhere. Kept as a non-link landmark for the
+            user to recognize where the feed lives. */}
         <button
           type="button"
-          className={`${styles.item} ${styles.itemDisabled}`}
-          disabled
-          aria-disabled="true"
-          title="Feed inativo temporariamente"
-          aria-label="Feed (Feed inativo temporariamente)"
+          className={styles.item}
+          aria-label="Feed"
         >
           {/* Feed icon — stacked lines like an article list */}
           <svg viewBox="0 0 22 22" fill="none">
@@ -58,10 +56,7 @@ export default function BottomNav({
             <rect x="3" y="16" width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
           </svg>
           <div className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>
-            Feed
-            <span className={styles.labelHint}> (Feed inativo temporariamente)</span>
-          </span>
+          <span className={styles.label}>Feed</span>
         </button>
 
         {/* Center crown button — opens Ranking/Superfans */}
