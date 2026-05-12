@@ -327,7 +327,9 @@
     border-color 0.15s,
     background 0.15s,
     padding 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    gap 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    gap 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    max-width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .userBadge:hover {
   background: rgba(6, 6, 8, 0.92);
@@ -344,14 +346,28 @@
  * opacity. No display:none toggling — the transition stays smooth.
  * Click handler is unaffected: tapping the avatar opens the
  * profile regardless of which mode the badge is in. */
-/* Compact badge: width AND height collapse to the avatar's footprint
-   so the circular `border-radius: 40px` of .userBadge / .liveUserBadge
-   reads as a perfect circle. Without max-height: 0 here, the hidden
-   info block still contributes height through its content's line-
-   height, pushing the badge into an oval. */
+/* Compact badge: force EXACT square geometry (36×36) so the circular
+   `border-radius: 40px` of .userBadge / .liveUserBadge can't render
+   anything but a perfect circle. Flex auto-sizing was occasionally
+   giving the container uneven width vs height (the absolutely-
+   positioned chip, the box-shadow ring, sub-pixel rounding, etc.),
+   and any unevenness with a heavy border-radius reads as an oval.
+   Using min/max width + min/max height + aspect-ratio together
+   means every browser arrives at the same square box. */
 .badgeCompact {
   gap: 0;
   padding: 4px;
+  min-width: 36px;
+  max-width: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  justify-content: center;
+  align-items: center;
+  /* The chip needs to extend beyond the badge edge — explicit
+     overflow: visible so the bounds clip can't sneak in. */
+  overflow: visible;
 }
 .badgeCompact .userBadgeInfo,
 .badgeCompact .liveUserInfo {
@@ -370,6 +386,13 @@
 .badgeCompact:hover {
   gap: 7px;
   padding: 6px 11px 6px 7px;
+  /* Hover undoes the lock so the badge expands to its real width. */
+  min-width: 0;
+  max-width: 260px;
+  min-height: 0;
+  max-height: 56px;
+  aspect-ratio: auto;
+  justify-content: flex-start;
 }
 .badgeCompact:hover .userBadgeInfo,
 .badgeCompact:hover .liveUserInfo {
@@ -554,7 +577,13 @@
   padding: 6px 11px 6px 7px;
   white-space: nowrap;
   pointer-events: auto;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    padding 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    gap 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    max-width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    max-height 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .liveUserBadge:hover {
   background: rgba(6, 6, 8, 0.92);
