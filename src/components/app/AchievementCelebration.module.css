@@ -1,6 +1,6 @@
 /* Non-modal full-screen overlay. pointer-events: none so the user
    keeps interacting with everything underneath; the celebration is
-   purely visual. */
+   purely visual (dim + centered message). */
 .root {
   position: fixed;
   inset: 0;
@@ -9,6 +9,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  transition: background 480ms ease-out;
+}
+
+/* Active during a celebration: semi-transparent black backdrop
+   covers the whole viewport. Fade follows the same 480ms beat as
+   the frame entrance so they read as one motion. */
+.rootActive {
+  background: rgba(0, 0, 0, 0.62);
 }
 
 .frame {

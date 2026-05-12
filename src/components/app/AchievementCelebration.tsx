@@ -25,9 +25,9 @@ const CONFETTI_COLORS = [
  * sees on screen. 500 stays as "500"; 1000+ collapses to "X mil".
  */
 function formatMilestone(points: number): string {
-  if (points < 1000) return `${points} pontos`;
+  if (points < 1000) return `${points} Fanpoints`;
   const k = Math.round(points / 1000);
-  return `${k} mil pontos`;
+  return `${k} mil Fanpoints`;
 }
 
 /** Fire a multi-burst confetti sweep using the brand palette. */
@@ -62,8 +62,15 @@ export default function AchievementCelebration() {
   // milestones queue naturally as the current one expires from the
   // hook's state.
   const current = myAchievements[myAchievements.length - 1] ?? null;
+  // While a celebration is active, dim the rest of the screen by
+  // toggling .rootActive on the wrapper — pure CSS opacity transition
+  // on the wrapper's background, no extra DOM. pointer-events stay
+  // `none` so the user keeps interacting with the platform.
   return (
-    <div className={styles.root} aria-live="polite">
+    <div
+      className={`${styles.root} ${current ? styles.rootActive : ''}`}
+      aria-live="polite"
+    >
       {current && <CelebrationFrame key={current._localId} item={current} />}
     </div>
   );
