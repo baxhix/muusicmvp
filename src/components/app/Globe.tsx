@@ -371,10 +371,11 @@ export default function Globe() {
       const wasCompact = badge?.classList.contains(styles.badgeCompact) ?? false;
       if (wasCompact && badge) {
         badge.classList.remove(styles.badgeCompact);
-        // Force a reflow so the layout reflects the expanded geometry
-        // before we read scrollWidth / clientWidth.
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        badge.offsetHeight;
+        // Force a sync reflow so the layout reflects the expanded
+        // geometry before we read scrollWidth / clientWidth. `void`
+        // marks the read as intentionally discarded — passes
+        // no-unused-expressions without needing a disable comment.
+        void badge.offsetHeight;
       }
 
       const overflow = inner.scrollWidth - container.clientWidth;
