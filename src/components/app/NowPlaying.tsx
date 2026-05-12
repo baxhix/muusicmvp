@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNowPlaying } from '@/hooks/useNowPlaying';
 import { useSpotifyNowPlaying } from '@/hooks/useSpotifyNowPlaying';
 import { useListeningTracker } from '@/hooks/useListeningTracker';
@@ -28,7 +28,13 @@ const FALLBACK_IMG = '/ana-castela-box.jpg';
 
 export type PlayerSize = 'mini' | 'horizontal' | 'expanded' | 'video';
 
-/** Constrói a URL de embed pra um vídeo específico (com a música atual) */
+/**
+ * Build the iframe URL for a video. `enablejsapi=1` is the magic
+ * flag that makes the YouTube embed broadcast state changes via
+ * postMessage — required for the autoplay-next behavior wired
+ * below. Other params kill YouTube chrome (related videos, captions
+ * auto-load, etc.) so the player feels like ours.
+ */
 function buildVideoSrc(youtubeId: string): string {
   const params = new URLSearchParams({
     autoplay: '1',
@@ -38,6 +44,7 @@ function buildVideoSrc(youtubeId: string): string {
     playsinline: '1',
     cc_load_policy: '0',
     fs: '1',
+    enablejsapi: '1',
   });
   return `https://www.youtube-nocookie.com/embed/${youtubeId}?${params.toString()}`;
 }
@@ -72,11 +79,14 @@ export default function NowPlaying({
   const [videoStarted, setVideoStarted] = useState(false);
 
   // Live playlist — seeded from the static catalog, replaced by the
-  // /api/tracks response on mount. Memoising the derived `img` field
-  // here keeps the rest of the component identical to the old shape
-  // (SONGS was just CatalogTrack + img).
+  // /api/tracks response on mount. useMemo stabilises identity so
+  // downstream useEffect deps don't churn on every render.
   const { tracks: catalog } = useTracksCatalog();
-  const SONGS: PlayerSong[] = catalog.map(withCover);
+  const SONGS: PlayerSong[] = useMemo(() => catalog.map(withCover), [catalog]);
+
+  // Ref to the YouTube iframe so we can postMessage / subscribe to
+  // its state events for autoplay-next on song-end.
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Reset videoStarted ao sair do estado video
   useEffect(() => {
@@ -129,13 +139,76 @@ export default function NowPlaying({
     return () => clearInterval(id);
   }, [isPlaying, expanded, isVideo, useSpotifyData]);
 
+  // Deps include SONGS.length so the wraparound math stays in sync
+  // when admin adds tracks at runtime (catalog grows beyond what the
+  // initial render captured).
   const goNext = useCallback(() => {
     setSongIdx((i) => (i + 1) % SONGS.length);
-  }, []);
+  }, [SONGS.length, setSongIdx]);
 
   const goPrev = useCallback(() => {
     setSongIdx((i) => (i - 1 + SONGS.length) % SONGS.length);
-  }, []);
+  }, [SONGS.length, setSongIdx]);
+
+  // ── Continuous autoplay ────────────────────────────────────────
+  // After the user manually starts the first video (browser autoplay
+  // policy gate satisfied via the videoPoster click), we subscribe
+  // to the YouTube iframe's state-change events. When a track hits
+  // ENDED (playerState 0), we advance to the next song so the
+  // session keeps going hands-free — each new track triggers a fresh
+  // listening:tick on the server, which is what the admin panel
+  // reads to attribute streams to the user.
+  useEffect(() => {
+    if (!isVideo || !videoStarted) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    // Tell the embedded player to start broadcasting events via
+    // postMessage. Has to be sent AFTER the iframe loads — try once
+    // immediately (in case it's already loaded from React's first
+    // render) and again on the 'load' event.
+    const subscribe = () => {
+      iframe.contentWindow?.postMessage(
+        JSON.stringify({ event: 'listening', id: 'muusic-player' }),
+        '*',
+      );
+    };
+    subscribe();
+    iframe.addEventListener('load', subscribe);
+
+    const onMessage = (e: MessageEvent) => {
+      // Origin check — YouTube can serve from either host depending
+      // on the embed flavor.
+      if (
+        !e.origin.endsWith('youtube-nocookie.com') &&
+        !e.origin.endsWith('youtube.com')
+      ) {
+        return;
+      }
+      let data: unknown;
+      try {
+        data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+      } catch {
+        return;
+      }
+      const payload = data as {
+        event?: string;
+        info?: { playerState?: number };
+      };
+      // PlayerState 0 = ENDED in the YouTube IFrame Player API.
+      if (
+        payload?.event === 'infoDelivery' &&
+        payload.info?.playerState === 0
+      ) {
+        goNext();
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      iframe.removeEventListener('load', subscribe);
+    };
+  }, [isVideo, videoStarted, songIdx, goNext]);
 
   // Música atual: Spotify real OU mock rotacionando
   const song = useSpotifyData
@@ -202,6 +275,7 @@ export default function NowPlaying({
           ) : (
             <>
               <iframe
+                ref={iframeRef}
                 key={SONGS[songIdx].youtubeId}
                 className={styles.videoIframe}
                 src={buildVideoSrc(SONGS[songIdx].youtubeId)}
