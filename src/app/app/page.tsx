@@ -32,7 +32,7 @@ import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { TRACKS_CATALOG } from '@/data/tracksCatalog';
+import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import { globeStore } from '@/lib/globeStore';
 
 import styles from './page.module.css';
@@ -64,7 +64,8 @@ export default function AppPage() {
   // Current track of the logged-in player — drives the audio-bars indicator
   // on the "Você" badge. Source of truth is `songIdx` controlled here and
   // passed into <NowPlaying />.
-  const currentTrack = TRACKS_CATALOG[songIdx] ?? null;
+  const { tracks: catalog } = useTracksCatalog();
+  const currentTrack = catalog[songIdx] ?? null;
 
   // Drop a "Você" badge on the Globe at the user's persisted (jittered)
   // city-level location whenever lat/lng, avatar OR the current track

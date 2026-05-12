@@ -11,6 +11,7 @@ import {
   IconStar,
   IconSettings,
   IconLogout,
+  IconMusic,
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard',  label: 'Dashboard',  icon: IconDashboard },
   { href: '/feed',       label: 'Feed',       icon: IconFeed },
   { href: '/users',      label: 'Usuários',   icon: IconUsers },
+  { href: '/tracks',     label: 'Músicas',    icon: IconMusic },
   { href: '/moderation', label: 'Moderação',  icon: IconShield, badge: 12 },
   { href: '/superfans',  label: 'Superfãs',   icon: IconStar },
 ];

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
-import { SONGS } from './NowPlaying';
+import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import styles from './PlaylistModal.module.css';
 
 /** Normaliza string pra busca: minúsculas + sem acentos */
@@ -30,6 +30,18 @@ export default function PlaylistModal({
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [query, setQuery] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
+  // Live catalog — replaces the old static `SONGS` import. We derive
+  // the cover image from the YouTube id right here so the modal stays
+  // self-contained (matches the shape NowPlaying composes too).
+  const { tracks: catalog } = useTracksCatalog();
+  const SONGS = useMemo(
+    () =>
+      catalog.map((s) => ({
+        ...s,
+        img: `https://i.ytimg.com/vi/${s.youtubeId}/hqdefault.jpg`,
+      })),
+    [catalog],
+  );
 
   // Limpa a busca ao fechar
   useEffect(() => {
@@ -77,7 +89,9 @@ export default function PlaylistModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, onClose, highlightIdx, query]);
 
-  // Filtragem por título + artista (sem acentos / case-insensitive)
+  // Filtragem por título + artista (sem acentos / case-insensitive).
+  // Depende de SONGS pra recomputar quando o catálogo é atualizado
+  // pelo hook (admin adicionou uma faixa nova, por exemplo).
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
     const all = SONGS.map((s, i) => ({ ...s, originalIdx: i }));
@@ -86,7 +100,7 @@ export default function PlaylistModal({
       const haystack = normalize(`${s.title} ${s.artist}`);
       return haystack.includes(q);
     });
-  }, [query]);
+  }, [query, SONGS]);
   const filteredCount = filtered.length;
 
   // Reset highlight quando a query muda

@@ -5,16 +5,23 @@ import { useNowPlaying } from '@/hooks/useNowPlaying';
 import { useSpotifyNowPlaying } from '@/hooks/useSpotifyNowPlaying';
 import { useListeningTracker } from '@/hooks/useListeningTracker';
 import { startSpotifyLogin, disconnectSpotify } from '@/lib/spotify';
-import { TRACKS_CATALOG } from '@/data/tracksCatalog';
+import { useTracksCatalog } from '@/hooks/useTracksCatalog';
+import type { CatalogTrack } from '@/data/tracksCatalog';
 import styles from './NowPlaying.module.css';
 
-/** Player playlist — same data as the DB seed (`tracks` table) plus a derived
- *  cover image from the YouTube thumbnail. Source of truth lives in
- *  `src/data/tracksCatalog.ts`. */
-export const SONGS = TRACKS_CATALOG.map((s) => ({
-  ...s,
-  img: `https://i.ytimg.com/vi/${s.youtubeId}/hqdefault.jpg`,
-}));
+/**
+ * Derived player song — adds the YouTube thumbnail used as cover art.
+ * No longer a module-level const: the playlist is now fetched at
+ * runtime via useTracksCatalog so admin additions reflect inside
+ * the platform without a redeploy.
+ */
+export interface PlayerSong extends CatalogTrack {
+  img: string;
+}
+
+function withCover(t: CatalogTrack): PlayerSong {
+  return { ...t, img: `https://i.ytimg.com/vi/${t.youtubeId}/hqdefault.jpg` };
+}
 
 const SONG_INTERVAL_MS = 8500;
 const FALLBACK_IMG = '/ana-castela-box.jpg';
@@ -63,6 +70,13 @@ export default function NowPlaying({
   const isMini = size === 'mini';
   const isVideo = size === 'video';
   const [videoStarted, setVideoStarted] = useState(false);
+
+  // Live playlist — seeded from the static catalog, replaced by the
+  // /api/tracks response on mount. Memoising the derived `img` field
+  // here keeps the rest of the component identical to the old shape
+  // (SONGS was just CatalogTrack + img).
+  const { tracks: catalog } = useTracksCatalog();
+  const SONGS: PlayerSong[] = catalog.map(withCover);
 
   // Reset videoStarted ao sair do estado video
   useEffect(() => {

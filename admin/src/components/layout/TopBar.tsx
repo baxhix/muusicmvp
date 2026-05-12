@@ -10,6 +10,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/dashboard':  'Dashboard',
   '/feed':       'Feed',
   '/users':      'Usuários',
+  '/tracks':     'Músicas',
   '/moderation': 'Moderação',
   '/superfans':  'Superfãs',
   '/settings':   'Configurações',
