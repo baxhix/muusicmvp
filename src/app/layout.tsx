@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Instrument_Serif } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth/AuthContext';
+import { UniverseProvider } from '@/lib/universe/UniverseContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import GlobalErrorLogger from '@/components/GlobalErrorLogger';
 import './globals.css';
@@ -39,7 +40,9 @@ export default function RootLayout({
       <body>
         <ErrorBoundary>
           <GlobalErrorLogger />
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <UniverseProvider>{children}</UniverseProvider>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>

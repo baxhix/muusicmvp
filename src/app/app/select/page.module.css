@@ -1,0 +1,206 @@
+/* Full-page selection surface — sits over the rotating globe via a
+   semi-transparent black + soft blur so the universe choice feels
+   like the gate to the muusic experience, not a separate page. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(
+      80% 60% at 50% 40%,
+      rgba(8, 8, 12, 0.55) 0%,
+      rgba(2, 2, 4, 0.92) 80%
+    ),
+    rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(20px) brightness(0.7) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) brightness(0.7) saturate(1.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  overflow-y: auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+  max-width: 560px;
+}
+
+.eyebrow {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(61, 219, 116, 0.10);
+  border: 1px solid rgba(61, 219, 116, 0.30);
+  color: var(--accent, #3ddb74);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #F5F5F7;
+  line-height: 1.1;
+}
+.title em {
+  font-family: var(--font-serif), serif;
+  font-style: italic;
+  font-weight: 400;
+  background: linear-gradient(135deg, #5dffa1 0%, #3DDB74 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lead {
+  margin: 0;
+  font-size: 15.5px;
+  color: rgba(245, 245, 247, 0.62);
+  letter-spacing: -0.005em;
+  line-height: 1.5;
+}
+
+/* Selection grid — 2 cards side-by-side on tablet+, stacks on mobile. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+  gap: 18px;
+  justify-content: center;
+}
+
+/* ── Universe card ─────────────────────────────────── */
+
+.card {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  padding: 0;
+  color: inherit;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 240ms ease-out,
+              box-shadow 240ms ease-out;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+.card:focus-visible {
+  outline: none;
+  border-color: var(--accent, #3ddb74);
+  box-shadow: 0 0 0 3px rgba(61, 219, 116, 0.25);
+}
+
+.cover {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.04);
+  background-size: cover;
+  background-position: center top;
+}
+
+.coverOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.78) 100%
+  );
+}
+
+.coverFooter {
+  position: absolute;
+  inset: auto 18px 18px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #ffffff;
+}
+
+.cardName {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.05;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+
+.cardTag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cardBody {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cardDesc {
+  font-size: 13.5px;
+  color: rgba(245, 245, 247, 0.68);
+  letter-spacing: -0.005em;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  font-weight: 600;
+  color: #F5F5F7;
+  letter-spacing: -0.005em;
+  transition: background 160ms ease-out;
+}
+.card:hover .cta {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.footer {
+  margin-top: 36px;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.45);
+  text-align: center;
+  max-width: 480px;
+}
+
+@media (max-width: 720px) {
+  .title { font-size: 28px; }
+  .lead  { font-size: 14.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+  .card:hover { transform: none; }
+}

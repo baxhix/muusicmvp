@@ -1,18 +1,32 @@
 'use client';
 
+import { useState } from 'react';
+import { useUniverse } from '@/lib/universe/UniverseContext';
 import styles from './SideBar.module.css';
 
 const STORE_URL =
   'https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka';
 
 export default function SideBar() {
+  const { config } = useUniverse();
+  // Track artist-logo load failure so we fall back to the muusic icon
+  // when the universe's logo file isn't on disk yet (or 404s for any
+  // other reason). Resets when the universe changes.
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  const useArtistLogo = !!config && !logoFailed;
+  const logoSrc = useArtistLogo ? config.logoUrl : '/icon-muusic.svg';
+  const logoAlt = useArtistLogo ? config.name : 'muusic';
+
   return (
     <aside className={styles.bar}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/icon-muusic.svg"
-        alt="muusic"
+        key={logoSrc} // re-mounts on universe change → fresh onError eval
+        src={logoSrc}
+        alt={logoAlt}
         className={styles.logo}
+        onError={() => setLogoFailed(true)}
       />
 
       <a

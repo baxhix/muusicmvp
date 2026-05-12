@@ -36,7 +36,9 @@ import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUniverse } from '@/lib/universe/UniverseContext';
 import { globeStore } from '@/lib/globeStore';
+import { useRouter } from 'next/navigation';
 
 import styles from './page.module.css';
 
@@ -44,7 +46,22 @@ const Globe = dynamic(() => import('@/components/app/Globe'), { ssr: false });
 
 export default function AppPage() {
   const { user: authUser } = useAuth();
+  const { universeId, hydrated: universeHydrated } = useUniverse();
+  const router = useRouter();
   const chat = useChatLive();
+
+  // Universe gate: once the localStorage read has resolved and the
+  // user is authenticated, redirect to the selection screen if they
+  // haven't picked a universe yet. `hydrated` is critical — without
+  // it we'd bounce to /select on every fresh load before the persisted
+  // choice is read.
+  useEffect(() => {
+    if (!universeHydrated) return;
+    if (!authUser) return; // unauthenticated path handled elsewhere
+    if (!universeId) {
+      router.replace('/app/select');
+    }
+  }, [universeHydrated, authUser, universeId, router]);
   const { users: liveUsers, totalRegistered } = useLiveUsers();
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
