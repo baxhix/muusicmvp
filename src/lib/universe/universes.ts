@@ -13,7 +13,7 @@ export interface UniverseConfig {
   id: string;
   /** Nome exibido — vai no card de seleção e no header. */
   name: string;
-  /** Genre/category tag — mostrado no card de seleção. */
+  /** Genre/category tag — futuro uso interno (filtros, agrupamento). */
   tag: string;
   /** Frase curta vendendo o universo. */
   description: string;
@@ -23,6 +23,12 @@ export interface UniverseConfig {
   coverUrl: string;
   /** Asset path do logo que substitui o ícone muusic na SideBar. */
   logoUrl: string;
+  /**
+   * Opcional: rótulo de uma segunda ação no card de seleção, mostrada
+   * abaixo do CTA principal. Universos sem esse campo só mostram
+   * "Entrar". Hoje usado pra "Entrar sem ser superfã" no Countrybeat.
+   */
+  secondaryCtaLabel?: string;
 }
 
 export const UNIVERSES: Record<string, UniverseConfig> = {
@@ -43,6 +49,7 @@ export const UNIVERSES: Record<string, UniverseConfig> = {
     accentColor: '#0F766E',
     coverUrl: '/universes/countrybeat/cover.png',
     logoUrl: '/universes/countrybeat/logo.svg',
+    secondaryCtaLabel: 'Entrar sem ser superfã',
   },
 };
 

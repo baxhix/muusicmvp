@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUniverse } from '@/lib/universe/UniverseContext';
@@ -11,11 +11,9 @@ import styles from './page.module.css';
  * Universe selection screen — the post-login gate where the user picks
  * which artist's Fanverse they want to enter. The choice is persisted
  * in localStorage via UniverseContext; subsequent /app visits skip
- * this screen and land directly in the chosen universe.
- *
- * Until the V1 differentiation lands (per-universe palette, curated
- * content, etc.) all universes load the same app shell — the only
- * difference today is the SideBar logo swap.
+ * this screen and land directly in the chosen universe. The page is
+ * also reachable from the sidebar grid icon as a "trocar universo"
+ * affordance.
  */
 export default function UniverseSelectPage() {
   const { user, loading: authLoading } = useAuth();
@@ -25,26 +23,34 @@ export default function UniverseSelectPage() {
   // Not logged in → bounce to the auth screen. We DON'T auto-redirect
   // when the user already has a universe — the page is also reached
   // intentionally via the sidebar grid icon (= "trocar universo"), and
-  // bouncing back to /app would defeat the whole purpose. The post-
-  // login first-time gate lives in /app/page.tsx, which redirects HERE
-  // when no universe is picked yet; the reverse direction stays manual.
+  // bouncing back to /app would defeat the whole purpose.
   useEffect(() => {
     if (authLoading || !hydrated) return;
     if (!user) router.replace('/auth');
   }, [authLoading, hydrated, user, router]);
 
+  // Generate the starfield once per visit. Hand-tuned: 80 dots is
+  // enough to feel dense without taxing the renderer. Each gets a
+  // random size, opacity and twinkle delay so the field shimmers
+  // organically.
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 80 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: 0.6 + Math.random() * 1.6,
+        opacity: 0.35 + Math.random() * 0.55,
+        delay: Math.random() * -4, // negative so animations are mid-cycle on mount
+        duration: 3 + Math.random() * 4,
+      })),
+    [],
+  );
+
   const handlePick = (config: UniverseConfig) => {
     setUniverse(config.id);
-    // Hard navigation instead of router.replace. The soft client
-    // transition was producing a race where /app/select unmounts
-    // while /app mounts in the same React commit — Mapbox /
-    // canvas-confetti / other DOM-heavy children would fire
-    // appendChild on a target already torn down ("Cannot read
-    // properties of undefined (reading 'appendChild')").
-    //
-    // location.assign discards the whole React tree, then /app
-    // mounts fresh with the universe already persisted in
-    // localStorage — same outcome the user expects, zero race.
+    // Hard navigation — see fix(universe-select) commit notes. Soft
+    // router.replace produced an appendChild race between the select
+    // screen unmounting and /app's Mapbox + confetti children mounting.
     if (typeof window !== 'undefined') {
       window.location.assign('/app');
     }
@@ -54,70 +60,94 @@ export default function UniverseSelectPage() {
 
   return (
     <div className={styles.scrim}>
-      <div className={styles.header}>
-        <span className={styles.eyebrow}>Escolha seu universo</span>
-        <h1 className={styles.title}>
-          Onde sua tribo <em>está</em>.
-        </h1>
-        <p className={styles.lead}>
-          Cada Fanverse reúne uma comunidade de superfãs em torno de um
-          artista. Escolha por onde começar — você pode trocar a qualquer
-          momento depois.
-        </p>
-      </div>
-
-      <div className={styles.grid}>
-        {list.map((u) => (
-          <button
-            key={u.id}
-            type="button"
-            className={styles.card}
-            onClick={() => handlePick(u)}
-            aria-label={`Entrar no Fanverse ${u.name}`}
-          >
-            <div
-              className={styles.cover}
-              style={{ backgroundImage: `url(${u.coverUrl})` }}
-            >
-              <div className={styles.coverOverlay} />
-              <div className={styles.coverFooter}>
-                <span className={styles.cardName}>{u.name}</span>
-                <span
-                  className={styles.cardTag}
-                  style={{
-                    background: `${u.accentColor}40`,
-                    border: `1px solid ${u.accentColor}80`,
-                    color: '#ffffff',
-                  }}
-                >
-                  {u.tag}
-                </span>
-              </div>
-            </div>
-
-            <div className={styles.cardBody}>
-              <p className={styles.cardDesc}>{u.description}</p>
-              <span className={styles.cta}>
-                Entrar
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path
-                    d="M6 3l5 5-5 5"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </button>
+      {/* Starfield — animated twinkling dots matching the Mapbox globe's
+          space-color aesthetic. Lives below everything else (z-index 0). */}
+      <div className={styles.starfield} aria-hidden="true">
+        {stars.map((s, i) => (
+          <span
+            key={i}
+            className={styles.star}
+            style={{
+              left: `${s.x}%`,
+              top: `${s.y}%`,
+              width: `${s.size}px`,
+              height: `${s.size}px`,
+              ['--star-opacity' as string]: s.opacity.toFixed(2),
+              animationDelay: `${s.delay}s`,
+              animationDuration: `${s.duration}s`,
+            }}
+          />
         ))}
       </div>
 
-      <p className={styles.footer}>
-        Por enquanto, todos os universos compartilham o mesmo ambiente.
-        Em breve cada um terá curadoria, cores e descobertas exclusivas.
-      </p>
+      {/* Two-column layout: intro text left, universe cards right. */}
+      <div className={styles.layout}>
+        <header className={styles.intro}>
+          <h1 className={styles.title}>
+            Escolha o seu <em>Fanverse</em>
+          </h1>
+          <p className={styles.lead}>
+            Cada Fanverse reúne uma comunidade de superfãs em torno de um
+            artista. Escolha por onde começar — você pode trocar a qualquer
+            momento depois pelo ícone na lateral.
+          </p>
+        </header>
+
+        <div className={styles.grid}>
+          {list.map((u) => (
+            <article key={u.id} className={styles.card}>
+              <button
+                type="button"
+                className={styles.cardClickable}
+                onClick={() => handlePick(u)}
+                aria-label={`Entrar no Fanverse ${u.name}`}
+              >
+                <div
+                  className={styles.cover}
+                  style={{ backgroundImage: `url(${u.coverUrl})` }}
+                />
+                {/* Single gradient block sitting behind the text. Stronger
+                    than the previous overlay so the name + description
+                    read cleanly on any cover shot. */}
+                <div className={styles.textBackdrop} />
+                <div className={styles.cardContent}>
+                  <h2 className={styles.cardName}>{u.name}</h2>
+                  <p className={styles.cardDesc}>{u.description}</p>
+                  <span className={styles.cta}>
+                    Entrar
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path
+                        d="M6 3l5 5-5 5"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </button>
+
+              {/* Secondary CTA — only present on universes that opt-in
+                  via UniverseConfig.secondaryCtaLabel. Sits on top of
+                  the card via absolute positioning so the click target
+                  doesn't bubble up to the primary button. */}
+              {u.secondaryCtaLabel && (
+                <button
+                  type="button"
+                  className={styles.secondaryCta}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePick(u);
+                  }}
+                >
+                  {u.secondaryCtaLabel}
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

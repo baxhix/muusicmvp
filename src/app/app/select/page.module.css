@@ -1,53 +1,101 @@
-/* Full-page selection surface — sits over the rotating globe via a
-   semi-transparent black + soft blur so the universe choice feels
-   like the gate to the muusic experience, not a separate page. */
+/* ──────────────────────────────────────────────────────────
+   Full-page Fanverse selection — starry sky backdrop, intro
+   text on the left, universe cards on the right.
+   ────────────────────────────────────────────────────────── */
+
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: radial-gradient(
-      80% 60% at 50% 40%,
-      rgba(8, 8, 12, 0.55) 0%,
-      rgba(2, 2, 4, 0.92) 80%
+  /* Deep-space backdrop matching the Mapbox globe's space-color.
+     Two radial-gradient washes layer subtle nebulae over the
+     starfield below — gives depth without competing with the cards. */
+  background:
+    radial-gradient(
+      ellipse 70% 50% at 20% 0%,
+      rgba(40, 30, 80, 0.35) 0%,
+      transparent 60%
     ),
-    rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(20px) brightness(0.7) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) brightness(0.7) saturate(1.2);
+    radial-gradient(
+      ellipse 60% 70% at 90% 100%,
+      rgba(20, 30, 70, 0.30) 0%,
+      transparent 60%
+    ),
+    #000005;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 48px;
   overflow-y: auto;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 36px;
-  max-width: 560px;
+/* ── Starfield ────────────────────────────────────────────── */
+
+.starfield {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.eyebrow {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(61, 219, 116, 0.10);
-  border: 1px solid rgba(61, 219, 116, 0.30);
-  color: var(--accent, #3ddb74);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-bottom: 16px;
+.star {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50%;
+  /* The opacity baseline + twinkle floor/ceiling come from a CSS
+     custom prop set inline by React — each star pulses with its own
+     intensity so the field reads alive but never busy. */
+  opacity: var(--star-opacity, 0.5);
+  animation-name: twinkle;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: var(--star-opacity, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    opacity: calc(var(--star-opacity, 0.5) * 0.35);
+    transform: scale(0.75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star { animation: none; }
+}
+
+/* ── Layout ───────────────────────────────────────────────── */
+
+/* Intro (left) + cards (right). Wraps at narrow widths so mobile
+   stacks the intro above the cards. */
+.layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  width: 100%;
+  max-width: 960px;
+}
+
+.intro {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 380px;
+  text-align: left;
 }
 
 .title {
-  margin: 0 0 8px;
-  font-size: 36px;
+  margin: 0 0 16px;
+  font-size: 44px;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: #F5F5F7;
-  line-height: 1.1;
+  line-height: 1.05;
+  text-align: left;
 }
 .title em {
   font-family: var(--font-serif), serif;
@@ -61,118 +109,140 @@
 
 .lead {
   margin: 0;
-  font-size: 15.5px;
+  font-size: 15px;
   color: rgba(245, 245, 247, 0.62);
   letter-spacing: -0.005em;
-  line-height: 1.5;
+  line-height: 1.55;
+  max-width: 360px;
+  text-align: left;
 }
 
-/* Selection grid — explicit 2-column layout so cards ALWAYS sit
-   side-by-side on any reasonable viewport. The previous `auto-fit
-   minmax(280px, 340px)` collapsed to a single column on widths
-   between mobile-real and ~620px (admin sidebar + comfortable
-   reading). Stacks only at the explicit mobile breakpoint below. */
+/* ── Cards grid (right side) ─────────────────────────────── */
+
+/* 20% smaller than the previous 720 → 576 max. The 2-col grid
+   inside stays explicit so cards always sit side-by-side. */
 .grid {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 576px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
+  gap: 14px;
 }
 
-/* ── Universe card ─────────────────────────────────── */
+/* ── Single universe card ───────────────────────────────── */
 
 .card {
   position: relative;
-  width: 100%;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: block;
+  border-radius: 16px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+}
+
+/* The whole card is one big button so anywhere on the cover is
+   clickable. The secondary "Entrar sem ser superfã" button sits
+   absolutely above this so its click doesn't bubble up. */
+.cardClickable {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  overflow: hidden;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  padding: 0;
   color: inherit;
   transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
               border-color 240ms ease-out,
               box-shadow 240ms ease-out;
 }
-.card:hover {
+.cardClickable:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
-.card:focus-visible {
+.cardClickable:focus-visible {
   outline: none;
   border-color: var(--accent, #3ddb74);
   box-shadow: 0 0 0 3px rgba(61, 219, 116, 0.25);
 }
 
+/* Cover image. The image itself is a background on a dedicated div
+   so we can run a constant gentle pan/zoom (parallax-like motion)
+   without disturbing the card layout. Hover intensifies the motion. */
 .cover {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.04);
-  background-size: cover;
-  background-position: center top;
-}
-
-.coverOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.10) 0%,
-    rgba(0, 0, 0, 0.78) 100%
-  );
+  background-size: cover;
+  background-position: center 30%;
+  background-color: rgba(255, 255, 255, 0.04);
+  transform: scale(1.06);
+  animation: cover-parallax 14s ease-in-out infinite alternate;
+  will-change: transform, background-position;
 }
 
-.coverFooter {
+.cardClickable:hover .cover {
+  animation-duration: 6s;
+}
+
+@keyframes cover-parallax {
+  0%   { transform: scale(1.06) translate3d(-1%, -1%, 0); }
+  100% { transform: scale(1.12) translate3d(1%, 1%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover { animation: none; transform: scale(1.06); }
+}
+
+/* Gradient block dedicated to making the text legible no matter
+   what cover image is below. Stronger than a generic overlay so
+   names/descriptions don't compete with the photo. */
+.textBackdrop {
   position: absolute;
-  inset: auto 18px 18px 18px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 65%;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
+  pointer-events: none;
+}
+
+.cardContent {
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #ffffff;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+  /* Aspect-ratio reserves a fixed portrait shape regardless of
+     content. 3:4 keeps the trading-card look at smaller sizes. */
+  aspect-ratio: 3 / 4;
+  justify-content: flex-end;
 }
 
 .cardName {
-  font-size: 22px;
+  margin: 0;
+  font-size: 28px;
   font-weight: 700;
-  letter-spacing: -0.022em;
+  letter-spacing: -0.025em;
+  color: #ffffff;
   line-height: 1.05;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
 }
 
-.cardTag {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.cardBody {
-  padding: 16px 18px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
 .cardDesc {
-  font-size: 13.5px;
-  color: rgba(245, 245, 247, 0.68);
-  letter-spacing: -0.005em;
-  line-height: 1.5;
   margin: 0;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: -0.005em;
+  line-height: 1.45;
 }
 
 .cta {
@@ -180,39 +250,73 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 12px;
   font-weight: 600;
   color: #F5F5F7;
   letter-spacing: -0.005em;
   transition: background 160ms ease-out;
+  margin-top: 4px;
+  align-self: stretch;
 }
-.card:hover .cta {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.footer {
-  margin-top: 36px;
-  font-size: 12px;
-  color: rgba(245, 245, 247, 0.45);
-  text-align: center;
-  max-width: 480px;
+.cardClickable:hover .cta {
+  background: rgba(255, 255, 255, 0.18);
 }
 
-@media (max-width: 540px) {
-  .title { font-size: 28px; }
-  .lead  { font-size: 14.5px; }
-  /* Real mobile widths: stack the cards. Above 540px we stay
-     side-by-side even on small tablets. */
+/* Secondary CTA — floats above the card (so the click is captured
+   before bubbling) at the top, visually distinct from the main
+   "Entrar" pill. Today only the Countrybeat universe uses this. */
+.secondaryCta {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 160ms ease-out, transform 160ms ease-out;
+}
+.secondaryCta:hover {
+  background: rgba(0, 0, 0, 0.85);
+  transform: translateX(-50%) translateY(-1px);
+}
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .scrim { padding: 32px 20px; }
+  .layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28px;
+    max-width: 480px;
+  }
+  .intro { max-width: none; }
+  .title { font-size: 32px; }
   .grid {
-    grid-template-columns: 1fr;
-    max-width: 360px;
+    max-width: none;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .card { transition: none; }
-  .card:hover { transform: none; }
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+  .cardName { font-size: 24px; }
 }
