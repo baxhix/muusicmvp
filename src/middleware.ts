@@ -37,6 +37,13 @@ function applyCors(res: NextResponse, origin: string): NextResponse {
     'Access-Control-Allow-Headers',
     'Content-Type,Authorization',
   );
+  // Headers the client is allowed to read off the response (CORS hides
+  // anything not on this list, even when the status itself comes
+  // through). X-Total-Count is used by paginated list endpoints.
+  res.headers.set(
+    'Access-Control-Expose-Headers',
+    'X-Total-Count',
+  );
   // Vary so any intermediate cache keys per origin instead of cross-mixing.
   res.headers.append('Vary', 'Origin');
   return res;

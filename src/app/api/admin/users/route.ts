@@ -6,10 +6,16 @@ import { listAllUsers } from '@/server/admin/queries';
 export const runtime = 'nodejs';
 
 const querySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
 
+/**
+ * Returns the registered users in the shape the admin "Usuários" table
+ * consumes directly. The total count rides along in a header so the
+ * response body itself is a plain array — keeps the existing
+ * usersService.list() consumer unchanged on the admin side.
+ */
 export async function GET(req: Request) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
@@ -23,6 +29,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'invalid_query' }, { status: 400 });
   }
 
-  const result = await listAllUsers(parsed.data);
-  return NextResponse.json(result);
+  const { users, total } = await listAllUsers(parsed.data);
+  return NextResponse.json(users, {
+    headers: { 'X-Total-Count': String(total) },
+  });
 }

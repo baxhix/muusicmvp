@@ -62,6 +62,9 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * served by the backend.
  */
 const mockRoutes: Record<string, () => unknown> = {
+  // Real backend path — mocked here too so designers running the admin
+  // standalone (no APP_URL set) still see a populated table.
+  'GET /api/admin/users': () => MOCK_USERS,
   'GET /users':       () => MOCK_USERS,
   'GET /posts':       () => MOCK_POSTS,
   'GET /reports':     () => MOCK_REPORTS,

@@ -47,31 +47,170 @@ export async function getAdminKpis() {
   };
 }
 
-/** Paginated list of all users with their last-seen + city. */
+/**
+ * Shape consumed by the admin "Usuários" table. Maps real DB fields
+ * 1:1 where we have them; fills sensible defaults for fields the
+ * backend doesn't track yet (age/sex/phone/plan/status/etc.).
+ *
+ * Kept here (not in admin/src) so the API contract is server-owned —
+ * future expansion of stored fields just relaxes the defaults.
+ */
+export interface AdminUserRow {
+  id: string;
+  name: string;
+  handle: string;
+  email: string;
+  avatar: string | null;
+  role: 'fan' | 'creator';
+  status: 'active';
+  plan: 'free';
+  age: number;
+  sex: 'NaoInformado';
+  phone: string;
+  city: string;
+  state: string;
+  lastStream: {
+    title: string;
+    artist?: string;
+    playedAt: string;
+  } | null;
+  streamHistory: never[];
+  totalStreams: number;
+  fanpoints: number;
+  level: number;
+  totalSpentBRL: number;
+  followers: number;
+  following: number;
+  posts: number;
+  termsAcceptedAt: string;
+  createdAt: string;
+  lastActiveAt: string;
+  isOnline: boolean;
+  verified: boolean;
+}
+
+/**
+ * Levels match the admin/UI ranking buckets used elsewhere — derived
+ * from fanpoints so the admin sees the same number the user sees on
+ * their own profile.
+ */
+function levelFromFanpoints(points: number): number {
+  return Math.max(1, Math.floor(Math.sqrt(Math.max(0, points) / 100)) + 1);
+}
+
+function handleFromEmail(email: string): string {
+  return email.split('@')[0] ?? 'user';
+}
+
+/**
+ * Paginated list of registered users — joins last-stream + totals so
+ * the admin table can render the same row the production query
+ * returns without any extra round-trip per user.
+ */
 export async function listAllUsers(opts: { limit?: number; offset?: number } = {}) {
-  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+  const limit = Math.min(Math.max(opts.limit ?? 200, 1), 500);
   const offset = Math.max(opts.offset ?? 0, 0);
 
-  const rows = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      city: users.city,
-      country: users.country,
-      avatarUrl: users.avatarUrl,
-      role: users.role,
-      createdAt: users.createdAt,
-      lastSeenAt: users.lastSeenAt,
-    })
-    .from(users)
-    .orderBy(sql`${users.createdAt} DESC`)
-    .limit(limit)
-    .offset(offset);
+  const rows = await db.execute(sql`
+    SELECT
+      u.id,
+      u.email,
+      u.name,
+      u.city,
+      u.country,
+      u.country_code,
+      u.avatar_url,
+      u.role,
+      u.created_at,
+      u.last_seen_at,
+      ls.title       AS last_stream_title,
+      ls.artist      AS last_stream_artist,
+      ls.played_at   AS last_stream_played_at,
+      COALESCE(s.total, 0)::int  AS total_streams,
+      COALESCE(p.total, 0)::int  AS fanpoints
+    FROM users u
+    LEFT JOIN LATERAL (
+      SELECT t.title, t.artist, a.created_at AS played_at
+      FROM user_activities a
+      JOIN tracks t ON t.id = a.track_id
+      WHERE a.user_id = u.id AND a.kind = 'stream'
+      ORDER BY a.created_at DESC
+      LIMIT 1
+    ) ls ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT COUNT(*)::int AS total
+      FROM user_activities
+      WHERE user_id = u.id AND kind = 'stream'
+    ) s ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT COALESCE(SUM(points), 0)::int AS total
+      FROM user_activities
+      WHERE user_id = u.id
+    ) p ON TRUE
+    ORDER BY u.created_at DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `);
+
+  const onlineSince = new Date(Date.now() - ONLINE_WINDOW_MS);
+
+  const items: AdminUserRow[] = rows.rows.map((r) => {
+    const createdAt = (r.created_at as Date).toISOString();
+    const lastSeenAt = r.last_seen_at
+      ? (r.last_seen_at as Date).toISOString()
+      : createdAt;
+    const fanpoints = (r.fanpoints as number) ?? 0;
+    const email = r.email as string;
+    const name = (r.name as string | null)?.trim() || handleFromEmail(email);
+
+    return {
+      id: r.id as string,
+      name,
+      handle: handleFromEmail(email),
+      email,
+      avatar: (r.avatar_url as string | null) ?? null,
+      // Real DB role is 'user' | 'admin'; the admin UI splits the user
+      // population into 'fan' vs 'creator' for visual grouping. Until
+      // we model creators explicitly, every regular user reads as 'fan'
+      // and admins also display as 'fan' since the table isn't the
+      // place to single them out — that's the responsibility of the
+      // permissions tab elsewhere.
+      role: 'fan',
+      status: 'active',
+      plan: 'free',
+      age: 0,
+      sex: 'NaoInformado',
+      phone: '',
+      city: (r.city as string | null) ?? '',
+      state: (r.country_code as string | null) ?? '',
+      lastStream:
+        r.last_stream_title && r.last_stream_played_at
+          ? {
+              title: r.last_stream_title as string,
+              artist: (r.last_stream_artist as string | undefined) ?? undefined,
+              playedAt: (r.last_stream_played_at as Date).toISOString(),
+            }
+          : null,
+      streamHistory: [],
+      totalStreams: (r.total_streams as number) ?? 0,
+      fanpoints,
+      level: levelFromFanpoints(fanpoints),
+      totalSpentBRL: 0,
+      followers: 0,
+      following: 0,
+      posts: 0,
+      termsAcceptedAt: createdAt,
+      createdAt,
+      lastActiveAt: lastSeenAt,
+      isOnline: r.last_seen_at
+        ? (r.last_seen_at as Date).getTime() >= onlineSince.getTime()
+        : false,
+      verified: false,
+    };
+  });
 
   const [{ value: total }] = await db.select({ value: count() }).from(users);
 
-  return { users: rows, total };
+  return { users: items, total };
 }
 
 /** Top tracks by listening count in the past N days. */
