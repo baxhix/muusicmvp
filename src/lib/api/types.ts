@@ -92,6 +92,27 @@ export interface ApiSuperchatParticipantPreview {
   avatarUrl: string | null;
 }
 
+/** Shape returned by /api/users/:id/profile — drives ProfilePanel. */
+export interface ApiUserProfile {
+  id: string;
+  name: string | null;
+  /** Only present when the caller is viewing their own profile. */
+  email: string | null;
+  city: string | null;
+  country: string | null;
+  countryCode: string | null;
+  avatarUrl: string | null;
+  fanpoints: number;
+  streams: number;
+  isOnline: boolean;
+  nowPlaying: {
+    trackId: string;
+    title: string;
+    artist: string;
+    youtubeId: string | null;
+  } | null;
+}
+
 export interface ApiSuperchatResponse {
   conversation: {
     id: string;

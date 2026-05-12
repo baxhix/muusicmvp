@@ -35,6 +35,7 @@ import { useLocationSync } from '@/hooks/useLocationSync';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { globeStore } from '@/lib/globeStore';
 
 import styles from './page.module.css';
@@ -48,6 +49,15 @@ export default function AppPage() {
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
   const [showProfile, setShowProfile] = useState(false);
+  /**
+   * Which user the profile panel currently displays. `null` means
+   * "the logged-in user" — that's the default whenever the panel is
+   * opened via the navbar/topbar. Set to another id when the user
+   * clicks a presence pin on the globe; the ProfilePanel then renders
+   * that user's data (fetched via useUserProfile below) with the
+   * other-user button set (Acenar / Enviar mensagem).
+   */
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   // Single state for "ranking-style" panel — both the Ranking button in
   // the top bar and the crown icon in the bottom nav route here. Uses the
   // SuperfansPanel UI fed with real /api/ranking data.
@@ -120,19 +130,64 @@ export default function AppPage() {
     globeStore.setTotalRegistered(totalRegistered);
   }, [totalRegistered]);
 
-  // Build the ProfileUser shape from the live auth record. Falls back to a
-  // pravatar placeholder when no avatar has been uploaded yet so the UI
-  // never shows a broken image.
-  const LOGGED_USER: ProfileUser = {
-    id: authUser?.id ?? 'me',
-    name: authUser?.name ?? authUser?.email?.split('@')[0] ?? 'Você',
-    city: authUser?.city ?? '—',
-    state: authUser?.countryCode ?? '',
-    streams: 0,
-    img: authUser?.avatarUrl ?? `https://i.pravatar.cc/72?u=${authUser?.id ?? 'me'}`,
-    isOnline: true,
-    nowPlaying: undefined,
-  };
+  // Wire pin-click on the globe → open that user's profile.
+  useEffect(() => {
+    globeStore.registerOpenUserProfile((userId) => {
+      setViewingUserId(userId);
+      setShowProfile(true);
+    });
+  }, []);
+
+  // Fetch the full profile (identity + fanpoints + streams + now-playing)
+  // for whichever user the panel is showing. We fetch own AND other —
+  // both routes through the same endpoint so the same data shape feeds
+  // both the own-profile and other-user-profile renders.
+  const profileTargetId =
+    viewingUserId ?? (showProfile ? authUser?.id ?? null : null);
+  const { profile: viewingProfile } = useUserProfile(profileTargetId);
+
+  // Build the ProfileUser shape consumed by ProfilePanel. When the
+  // remote profile has loaded, we use its values (fanpoints, streams,
+  // city, etc.); otherwise we fall back to the local auth record so the
+  // first paint isn't empty. The flag `isOwnProfile` is derived from
+  // whether viewingUserId points at the logged-in user.
+  const isOwnProfile =
+    viewingUserId === null || viewingUserId === (authUser?.id ?? '__never__');
+  const displayedUser: ProfileUser = viewingProfile
+    ? {
+        id: viewingProfile.id,
+        name:
+          viewingProfile.name?.trim() ||
+          viewingProfile.email?.split('@')[0] ||
+          'Anônimo',
+        city: viewingProfile.city ?? '—',
+        state: viewingProfile.countryCode ?? '',
+        streams: viewingProfile.streams,
+        fanpoints: viewingProfile.fanpoints,
+        img:
+          viewingProfile.avatarUrl ??
+          `https://i.pravatar.cc/72?u=${viewingProfile.id}`,
+        isOnline: viewingProfile.isOnline,
+        nowPlaying: viewingProfile.nowPlaying
+          ? {
+              title: viewingProfile.nowPlaying.title,
+              artist: viewingProfile.nowPlaying.artist,
+            }
+          : undefined,
+      }
+    : {
+        id: authUser?.id ?? 'me',
+        name: authUser?.name ?? authUser?.email?.split('@')[0] ?? 'Você',
+        city: authUser?.city ?? '—',
+        state: authUser?.countryCode ?? '',
+        streams: 0,
+        fanpoints: 0,
+        img:
+          authUser?.avatarUrl ??
+          `https://i.pravatar.cc/72?u=${authUser?.id ?? 'me'}`,
+        isOnline: true,
+        nowPlaying: undefined,
+      };
 
   const activeConversation =
     chat.conversations.find((c) => c.id === chat.activeId) ?? null;
@@ -225,10 +280,31 @@ export default function AppPage() {
 
       {showProfile
         ? <ProfilePanel
-            user={LOGGED_USER}
-            isOwnProfile
-            onClose={() => setShowProfile(false)}
+            user={displayedUser}
+            isOwnProfile={isOwnProfile}
+            onClose={() => {
+              setShowProfile(false);
+              // Reset to "own" so the next navbar open lands on the
+              // logged user, not the last-viewed other user.
+              setViewingUserId(null);
+            }}
             onEditProfile={() => setShowEditProfile(true)}
+            onOpenMessages={() => setShowSuperchat(true)}
+            onSendMessage={(uid) => {
+              setShowProfile(false);
+              setViewingUserId(null);
+              chat.openDmWith(uid);
+            }}
+            onWave={(uid, label) => {
+              // For now, only client-side acknowledgment — backend
+              // event will land in a follow-up. The toast lives on
+              // the chat thread surface so the user sees it without
+              // an additional UI primitive.
+              console.log(`wave → ${uid} (${label})`);
+            }}
+            onReport={(uid, label) => {
+              console.log(`report → ${uid} (${label})`);
+            }}
           />
         : <FeedPanel />
       }

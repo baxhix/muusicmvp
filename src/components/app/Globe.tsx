@@ -427,8 +427,13 @@ export default function Globe() {
             wrapper.innerHTML = html;
             // Click → flyTo this user's spot
             wrapper.style.cursor = 'pointer';
+            // Click on a live presence pin: fly the camera there
+            // AND open this user's ProfilePanel. Both happen — the
+            // flyTo gives the spatial confirmation, the panel gives
+            // the social context (avatar, fanpoints, message/wave).
             wrapper.addEventListener('click', () => {
               map.flyTo({ center: [u.lng, u.lat], zoom: 11, duration: 1400 });
+              globeStore.openUserProfile(u.id);
             });
             const marker = new mapboxgl.Marker({
               element: wrapper,

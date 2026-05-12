@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import NowPlaying from './NowPlaying';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
@@ -16,6 +16,8 @@ export interface ProfileUser {
   city: string;
   state: string;
   streams: number;
+  /** Total fan points accumulated across all activities. */
+  fanpoints: number;
   img: string;
   isOnline: boolean;
   nowPlaying?: { title: string; artist: string; cover?: string };
@@ -25,7 +27,16 @@ interface Props {
   user: ProfileUser;
   isOwnProfile?: boolean;
   onClose?: () => void;
+  /** Own-profile only: opens the EditProfileModal. */
   onEditProfile?: () => void;
+  /** Own-profile only: opens the user's messages surface (Superchat). */
+  onOpenMessages?: () => void;
+  /** Other-profile only: starts/jumps to a DM with the displayed user. */
+  onSendMessage?: (userId: string, label: string) => void;
+  /** Other-profile only: send a "wave" (poke) to the displayed user. */
+  onWave?: (userId: string, label: string) => void;
+  /** Other-profile only: report this user. */
+  onReport?: (userId: string, label: string) => void;
 }
 
 /* ── Static mock content ─────────────────────────────────── */
@@ -176,9 +187,32 @@ const IDOLS = [
 ];
 
 /* ── Component ───────────────────────────────────────────── */
-export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEditProfile }: Props) {
+export default function ProfilePanel({
+  user,
+  isOwnProfile = false,
+  onClose,
+  onEditProfile,
+  onOpenMessages,
+  onSendMessage,
+  onWave,
+  onReport,
+}: Props) {
   const [tab, setTab] = useState<TabId>('historico');
   const [online, setOnline] = useState<boolean>(user.isOnline);
+  const [reportMenuOpen, setReportMenuOpen] = useState(false);
+  const reportMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Click-outside dismisses the report dropdown so it doesn't trap
+  // focus when the user moves on.
+  useEffect(() => {
+    if (!reportMenuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (reportMenuRef.current?.contains(e.target as Node)) return;
+      setReportMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [reportMenuOpen]);
   // History only meaningful for the logged-in user (others' history isn't
   // exposed by the API). When isOwnProfile=false, the hook returns [].
   const { items: history, loading: historyLoading, toggleLike } = useListeningHistory();
@@ -227,6 +261,11 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
               {user.streams.toLocaleString('pt-BR')}
             </span>{' '}
             <span className={styles.userStreamsLabel}>streams</span>
+            <span className={styles.userMetaSep}>·</span>
+            <span className={styles.userFanpointsNum}>
+              {user.fanpoints.toLocaleString('pt-BR')}
+            </span>{' '}
+            <span className={styles.userFanpointsLabel}>FP</span>
           </p>
         </div>
 
@@ -254,11 +293,15 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
           </div>
         )}
 
-        {/* ── Botões de ação abaixo do player ── */}
+        {/* ── Botões de ação ──────────────────────────────
+            Own profile:  [ Editar perfil ] [ Minhas mensagens ]
+            Other profile: [ Acenar       ] [ Enviar mensagem  ] [ ⋯ → Denunciar ]
+            The "⋯" menu only renders for other profiles. */}
         <div className={styles.actionsRow}>
           {isOwnProfile ? (
             <>
               <button
+                type="button"
                 className={styles.actionBtn}
                 onClick={() => {
                   onClose?.();
@@ -267,26 +310,80 @@ export default function ProfilePanel({ user, isOwnProfile = false, onClose, onEd
               >
                 Editar perfil
               </button>
-              <button className={styles.actionBtn} aria-label="Chat">
-                Chat
+              <button
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => {
+                  onClose?.();
+                  onOpenMessages?.();
+                }}
+                aria-label="Minhas mensagens"
+              >
+                Minhas mensagens
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
                      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" />
                 </svg>
               </button>
             </>
           ) : (
             <>
-              <button className={styles.actionBtn}>Seguir</button>
-              <button className={styles.actionBtn} aria-label="Chat">
-                Chat
+              <button
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => onWave?.(user.id, user.name)}
+                aria-label={`Acenar para ${user.name}`}
+              >
+                Acenar
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
                      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <line x1="22" y1="2" x2="11" y2="13"/>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  <path d="M3 12s2-4 9-4 9 4 9 4-2 4-9 4-9-4-9-4z" />
+                  <path d="M10 9l2 3 2-3" />
                 </svg>
               </button>
+              <button
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => onSendMessage?.(user.id, user.name)}
+                aria-label={`Enviar mensagem para ${user.name}`}
+              >
+                Enviar mensagem
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
+                     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+              <div className={styles.reportMenuWrap} ref={reportMenuRef}>
+                <button
+                  type="button"
+                  className={styles.reportMenuBtn}
+                  onClick={() => setReportMenuOpen((v) => !v)}
+                  aria-label="Mais opções"
+                  aria-expanded={reportMenuOpen}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="5" cy="12" r="1.6" />
+                    <circle cx="12" cy="12" r="1.6" />
+                    <circle cx="19" cy="12" r="1.6" />
+                  </svg>
+                </button>
+                {reportMenuOpen && (
+                  <div className={styles.reportMenu} role="menu">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.reportMenuItem}
+                      onClick={() => {
+                        setReportMenuOpen(false);
+                        onReport?.(user.id, user.name);
+                      }}
+                    >
+                      Denunciar usuário
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

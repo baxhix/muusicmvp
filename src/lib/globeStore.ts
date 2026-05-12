@@ -26,6 +26,7 @@ export interface LiveMapUser {
 type SetUserLocationFn = (payload: UserLocationPayload | null) => void;
 type SetLiveUsersFn = (users: LiveMapUser[]) => void;
 type SetTotalRegisteredFn = (total: number) => void;
+type OpenUserProfileFn = (userId: string) => void;
 
 let _flyTo: FlyToFn | null = null;
 let _setUserLocation: SetUserLocationFn | null = null;
@@ -33,6 +34,7 @@ let _setLiveUsers: SetLiveUsersFn | null = null;
 let _liveUsersBuffer: LiveMapUser[] | null = null;
 let _setTotalRegistered: SetTotalRegisteredFn | null = null;
 let _totalRegisteredBuffer: number | null = null;
+let _openUserProfile: OpenUserProfileFn | null = null;
 
 export const globeStore = {
   register: (fn: FlyToFn) => { _flyTo = fn; },
@@ -76,4 +78,13 @@ export const globeStore = {
     if (_setTotalRegistered) _setTotalRegistered(total);
     else _totalRegisteredBuffer = total;
   },
+
+  /**
+   * Page registers a handler that opens the ProfilePanel for a given
+   * user id. Globe calls openUserProfile(id) when a presence pin is
+   * clicked, so the click goes from raw DOM → page state without a
+   * direct React dependency.
+   */
+  registerOpenUserProfile: (fn: OpenUserProfileFn) => { _openUserProfile = fn; },
+  openUserProfile: (userId: string) => { _openUserProfile?.(userId); },
 };
