@@ -349,13 +349,40 @@ export default function Globe() {
      * overflow amount (4–7s) — faster than the previous 8–12s, since
      * the box is now narrower and the texts that overflow tend to
      * overflow harder.
+     *
+     * The measurement happens in EXPANDED geometry even when the
+     * badge is rendered compact at the moment. Otherwise the song
+     * container is sitting at max-width: 0 and we'd compute an
+     * overflow equal to the full text width, calibrating the marquee
+     * to scroll way too far once the badge expands on hover. Solution:
+     * temporarily strip .badgeCompact, force-reflow, measure, then
+     * put the class back. Browsers don't paint within a synchronous
+     * block, so the user never sees the flicker.
      */
     const activateMarquee = (rootEl: HTMLElement, innerClass: string) => {
       const inner = rootEl.querySelector<HTMLElement>('.' + innerClass);
       if (!inner) return;
       const container = inner.parentElement;
       if (!container) return;
+
+      const badge = rootEl.querySelector<HTMLElement>(
+        '.' + styles.userBadge + ', .' + styles.liveUserBadge,
+      );
+      const wasCompact = badge?.classList.contains(styles.badgeCompact) ?? false;
+      if (wasCompact && badge) {
+        badge.classList.remove(styles.badgeCompact);
+        // Force a reflow so the layout reflects the expanded geometry
+        // before we read scrollWidth / clientWidth.
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        badge.offsetHeight;
+      }
+
       const overflow = inner.scrollWidth - container.clientWidth;
+
+      if (wasCompact && badge) {
+        badge.classList.add(styles.badgeCompact);
+      }
+
       if (overflow > 1) {
         const seconds = Math.max(4, Math.min(7, overflow / 48));
         inner.style.setProperty('--marquee-distance', `${overflow}px`);

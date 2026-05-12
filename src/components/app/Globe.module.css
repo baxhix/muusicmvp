@@ -469,10 +469,11 @@
 .userBadgeSongInnerActive {
   animation: marquee-pingpong var(--marquee-duration) ease-in-out infinite alternate;
 }
-.userBadge:hover .userBadgeSongInner,
-.liveUserBadge:hover .userBadgeSongInner {
-  animation-play-state: paused;
-}
+/* Marquee runs whenever the text is visible. We DON'T pause on hover
+   because the compact pin expands on hover — pausing right when the
+   user opens it would freeze the very motion they're hovering to
+   see. prefers-reduced-motion still kills the animation entirely
+   via the rule near the bottom of this file. */
 
 @keyframes marquee-pingpong {
   from { transform: translateX(0); }
