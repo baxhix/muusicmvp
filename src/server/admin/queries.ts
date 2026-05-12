@@ -103,6 +103,37 @@ function handleFromEmail(email: string): string {
 }
 
 /**
+ * db.execute(sql`...`) returns timestamp columns as STRINGS (ISO),
+ * not Date objects — unlike the typed query builder which coerces
+ * to Date via Drizzle's type system. So calling `.toISOString()`
+ * directly on the value throws "X.toISOString is not a function"
+ * in production builds (where TS casts are erased).
+ *
+ * This helper handles both shapes defensively + returns null when
+ * the column was NULL, instead of producing "Invalid Date" strings.
+ */
+function asIso(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
+}
+
+/** Same coercion as asIso, but yields a millisecond epoch — for time math. */
+function asEpoch(value: unknown): number | null {
+  if (value == null) return null;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.getTime();
+  }
+  return null;
+}
+
+/**
  * Paginated list of registered users — joins last-stream + totals so
  * the admin table can render the same row the production query
  * returns without any extra round-trip per user.
@@ -151,16 +182,16 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
     LIMIT ${limit} OFFSET ${offset}
   `);
 
-  const onlineSince = new Date(Date.now() - ONLINE_WINDOW_MS);
+  const onlineSinceMs = Date.now() - ONLINE_WINDOW_MS;
 
   const items: AdminUserRow[] = rows.rows.map((r) => {
-    const createdAt = (r.created_at as Date).toISOString();
-    const lastSeenAt = r.last_seen_at
-      ? (r.last_seen_at as Date).toISOString()
-      : createdAt;
+    const createdAt = asIso(r.created_at) ?? new Date().toISOString();
+    const lastSeenAt = asIso(r.last_seen_at) ?? createdAt;
+    const lastSeenMs = asEpoch(r.last_seen_at);
     const fanpoints = (r.fanpoints as number) ?? 0;
     const email = r.email as string;
     const name = (r.name as string | null)?.trim() || handleFromEmail(email);
+    const playedAt = asIso(r.last_stream_played_at);
 
     return {
       id: r.id as string,
@@ -183,11 +214,11 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       city: (r.city as string | null) ?? '',
       state: (r.country_code as string | null) ?? '',
       lastStream:
-        r.last_stream_title && r.last_stream_played_at
+        r.last_stream_title && playedAt
           ? {
               title: r.last_stream_title as string,
               artist: (r.last_stream_artist as string | undefined) ?? undefined,
-              playedAt: (r.last_stream_played_at as Date).toISOString(),
+              playedAt,
             }
           : null,
       streamHistory: [],
@@ -201,9 +232,7 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       termsAcceptedAt: createdAt,
       createdAt,
       lastActiveAt: lastSeenAt,
-      isOnline: r.last_seen_at
-        ? (r.last_seen_at as Date).getTime() >= onlineSince.getTime()
-        : false,
+      isOnline: lastSeenMs !== null && lastSeenMs >= onlineSinceMs,
       verified: false,
     };
   });
