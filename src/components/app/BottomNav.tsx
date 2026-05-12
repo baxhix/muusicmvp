@@ -27,6 +27,7 @@ export default function BottomNav({
           className={`${styles.item} ${pathname === '/app' ? styles.itemActive : ''}`}
           aria-label="Mapa"
           aria-current={pathname === '/app' ? 'page' : undefined}
+          data-tooltip="Mapa"
         >
           <svg viewBox="0 0 22 22" fill="none">
             <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.6" />
@@ -48,6 +49,7 @@ export default function BottomNav({
           type="button"
           className={styles.item}
           aria-label="Feed"
+          data-tooltip="Feed"
         >
           {/* Feed icon — stacked lines like an article list */}
           <svg viewBox="0 0 22 22" fill="none">
@@ -63,7 +65,8 @@ export default function BottomNav({
         <button
           className={`${styles.item} ${styles.itemCenter}`}
           onClick={onSuperfansOpen}
-          aria-label="Ranking"
+          aria-label="Superfãs"
+          data-tooltip="Superfãs"
         >
           <svg viewBox="0 0 24 24" fill="none">
             <path
@@ -83,6 +86,7 @@ export default function BottomNav({
           className={styles.item}
           onClick={onSuperchatOpen}
           aria-label="Abrir Superchat"
+          data-tooltip="Superchat"
         >
           <svg viewBox="0 0 24 24" fill="none">
             <path
@@ -102,6 +106,7 @@ export default function BottomNav({
           className={`${styles.item} ${pathname === '/app/profile' ? styles.itemActive : ''}`}
           onClick={onProfileOpen}
           aria-label="Perfil"
+          data-tooltip="Perfil"
         >
           <svg viewBox="0 0 22 22" fill="none">
             <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />

@@ -24,6 +24,7 @@
 }
 
 .item {
+  position: relative; /* anchor for the ::before/::after tooltip */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -41,6 +42,75 @@
 }
 .item:hover { color: var(--ink); transform: translateY(-1px); }
 .itemActive { color: var(--ink); }
+
+/* ── Custom tooltips ──────────────────────────────────────────────
+ * Pure-CSS tooltip system driven by the `data-tooltip` attribute on
+ * each nav item. Two pseudo-elements per item:
+ *   ::before  the bubble (label)
+ *   ::after   the little arrow pointing down at the item
+ *
+ * Fade-in with a 300ms delay on hover so a quick mouse sweep doesn't
+ * flash every label; hide is instant on leave for snappy dismissal.
+ * Uses design-system tokens (var(--sans), var(--ink), var(--r-sm))
+ * so the look stays in sync with the rest of the app.
+ *
+ * Only items that declare data-tooltip get the affordance — keeps the
+ * pseudo-element out of the disabled-state outline.
+ * ──────────────────────────────────────────────────────────────────── */
+.item[data-tooltip]::before,
+.item[data-tooltip]::after {
+  pointer-events: none;
+  position: absolute;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.item[data-tooltip]::before {
+  content: attr(data-tooltip);
+  bottom: calc(100% + 8px);
+  left: 50%;
+  padding: 5px 10px;
+  border-radius: var(--r-sm, 6px);
+  background: rgba(20, 20, 24, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.95);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.item[data-tooltip]::after {
+  content: '';
+  bottom: calc(100% + 4px);
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(20, 20, 24, 0.96);
+}
+
+.item[data-tooltip]:hover::before,
+.item[data-tooltip]:focus-visible::before,
+.item[data-tooltip]:hover::after,
+.item[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  /* Delay only on the show — hide stays instant so it feels responsive. */
+  transition-delay: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item[data-tooltip]::before,
+  .item[data-tooltip]::after {
+    transition: opacity 60ms linear;
+  }
+}
 
 /* Disabled state — used by the Feed button while it's temporarily off. */
 .itemDisabled {

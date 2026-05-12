@@ -210,70 +210,31 @@
 
 /* ── Reactions ──────────────────────────────────────────────────── */
 
-/* Wrapper that lets the picker float above the bubble without
-   shifting it during the show/hide cycle. */
+/* Wrapper kept for layout symmetry with the previous picker-above-
+   bubble layout (other components reference it). */
 .bubbleWrap {
   position: relative;
   display: inline-block;
-  /* Min-width keeps the picker from overlapping a 1-char message. */
   min-width: 28px;
 }
 
-/* Quick-pick popover. Appears 6px above the bubble, anchored to the
-   side that matches the message direction. opacity transition on
-   mount (no enter animation lib, just CSS). */
-.reactPicker {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  display: flex;
-  gap: 2px;
-  padding: 4px 6px;
-  border-radius: 999px;
-  background: rgba(20, 20, 24, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-  z-index: 5;
-  animation: react-picker-in 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.reactPickerIn  { left: 0; }
-.reactPickerOut { right: 0; }
-
-@keyframes react-picker-in {
-  from { opacity: 0; transform: translateY(4px) scale(0.94); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-
-.reactPickerBtn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 17px;
-  line-height: 1;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  transition: background 0.12s, transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.reactPickerBtn:hover {
-  background: rgba(255, 255, 255, 0.10);
-  transform: scale(1.18);
-}
-.reactPickerBtn:active { transform: scale(1.05); }
-
-/* Chip row below the bubble — one per emoji on the message. */
-.reactChips {
+/* Single always-visible bar that combines:
+   - existing reactions (chips with count) — persistent so users can
+     scan who reacted with what without any interaction (WhatsApp /
+     Slack / Discord pattern).
+   - the remaining quick-pick options (subtle, no count) — one click
+     adds a brand-new reaction; no hover gate needed.
+   Same vertical position regardless of state so the layout doesn't
+   jump when a reaction count changes.
+*/
+.reactBar {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 5px;
 }
-.reactChipsIn  { justify-content: flex-start; }
-.reactChipsOut { justify-content: flex-end; }
+.reactBarIn  { justify-content: flex-start; }
+.reactBarOut { justify-content: flex-end; }
 
 .reactChip {
   display: inline-flex;
@@ -288,7 +249,7 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.12s, border-color 0.12s, transform 0.12s;
+  transition: background 0.12s, border-color 0.12s, transform 0.12s, opacity 0.12s;
 }
 .reactChip:hover {
   background: rgba(255, 255, 255, 0.10);
@@ -307,6 +268,22 @@
 .reactChipMine:hover {
   background: rgba(61, 219, 116, 0.22);
   border-color: rgba(61, 219, 116, 0.6);
+}
+
+/* Picker-only emojis (no one reacted yet with these). Lower opacity
+   at rest so the bar reads as "available reactions" without
+   competing visually with chips that have counts. Hovering brings
+   them up to full visibility. */
+.reactChipPicker {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  opacity: 0.45;
+}
+.reactChipPicker:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .reactChipEmoji {

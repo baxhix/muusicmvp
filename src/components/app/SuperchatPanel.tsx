@@ -277,7 +277,6 @@ function MessageRow({
   showHead: boolean;
   onReact: (messageId: string, emoji: string) => void;
 }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
   const reactions = m.reactions ?? [];
 
   // Outgoing messages render naked text on the panel — no bubble bg at
@@ -293,12 +292,17 @@ function MessageRow({
         };
       })();
 
+  // Build the combined reactions row: existing reactions (chips with
+  // count, accent-tinted when the current user is among the reactors)
+  // followed by the remaining quick-pick options. Both are click-to-
+  // toggle. Always rendered — no hover gate — so chips stay permanently
+  // visible (WhatsApp/Slack/Discord pattern) and adding a new reaction
+  // is one click away without first needing to mouseover the message.
+  const reactedEmojis = new Set(reactions.map((r) => r.emoji));
+  const pickerOptions = QUICK_REACTIONS.filter((e) => !reactedEmojis.has(e));
+
   return (
-    <div
-      className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}
-      onMouseEnter={() => setPickerOpen(true)}
-      onMouseLeave={() => setPickerOpen(false)}
-    >
+    <div className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}>
       {showHead && (
         <div className={styles.msgHead}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -311,49 +315,38 @@ function MessageRow({
         <div className={styles.bubble} style={bubbleStyle}>
           {m.body}
         </div>
-
-        {/* Quick-pick reactions popover. Float above the bubble so the
-            user sees their options without the chips below moving. */}
-        {pickerOpen && (
-          <div
-            className={`${styles.reactPicker} ${isMine ? styles.reactPickerOut : styles.reactPickerIn}`}
-            role="toolbar"
-            aria-label="Reagir à mensagem"
-          >
-            {QUICK_REACTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                className={styles.reactPickerBtn}
-                onClick={() => onReact(m.id, emoji)}
-                aria-label={`Reagir com ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {reactions.length > 0 && (
-        <div
-          className={`${styles.reactChips} ${isMine ? styles.reactChipsOut : styles.reactChipsIn}`}
-        >
-          {reactions.map((r) => (
-            <button
-              key={r.emoji}
-              type="button"
-              className={`${styles.reactChip} ${r.mine ? styles.reactChipMine : ''}`}
-              onClick={() => onReact(m.id, r.emoji)}
-              aria-label={`${r.emoji} ${r.count} ${r.mine ? '(você reagiu)' : ''}`}
-              aria-pressed={r.mine}
-            >
-              <span className={styles.reactChipEmoji}>{r.emoji}</span>
-              <span className={styles.reactChipCount}>{r.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <div
+        className={`${styles.reactBar} ${isMine ? styles.reactBarOut : styles.reactBarIn}`}
+      >
+        {reactions.map((r) => (
+          <button
+            key={r.emoji}
+            type="button"
+            className={`${styles.reactChip} ${r.mine ? styles.reactChipMine : ''}`}
+            onClick={() => onReact(m.id, r.emoji)}
+            aria-label={`${r.emoji} ${r.count} ${r.mine ? '(você reagiu)' : ''}`}
+            aria-pressed={r.mine}
+            title={`${r.count} ${r.count === 1 ? 'pessoa reagiu' : 'pessoas reagiram'}`}
+          >
+            <span className={styles.reactChipEmoji}>{r.emoji}</span>
+            <span className={styles.reactChipCount}>{r.count}</span>
+          </button>
+        ))}
+        {pickerOptions.map((emoji) => (
+          <button
+            key={emoji}
+            type="button"
+            className={`${styles.reactChip} ${styles.reactChipPicker}`}
+            onClick={() => onReact(m.id, emoji)}
+            aria-label={`Reagir com ${emoji}`}
+            title={`Reagir com ${emoji}`}
+          >
+            <span className={styles.reactChipEmoji}>{emoji}</span>
+          </button>
+        ))}
+      </div>
 
       <div className={styles.time}>{formatTime(m.createdAt)}</div>
     </div>
