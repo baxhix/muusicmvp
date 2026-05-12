@@ -28,9 +28,22 @@
   flex-shrink: 0;
 }
 
-.storeLink {
+/* Vertical stack that holds the grid + store icons. margin-top/bottom
+   auto centers the pair within the bar's flex column. */
+.midStack {
   margin-top: auto;
   margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Shared icon-button look used by both the universe switcher and the
+   store link. Was previously the .storeLink selector — extracted so a
+   second sibling button can pick up the same treatment without
+   duplication. */
+.iconBtn {
   width: 36px;
   height: 36px;
   display: flex;
@@ -46,14 +59,14 @@
   text-decoration: none;
 }
 
-.storeLink:hover {
+.iconBtn:hover {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.28);
   color: #fff;
   transform: translateY(-1px);
 }
 
-.storeLink svg {
+.iconBtn svg {
   width: 18px;
   height: 18px;
   display: block;

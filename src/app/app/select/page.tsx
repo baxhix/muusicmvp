@@ -19,21 +19,19 @@ import styles from './page.module.css';
  */
 export default function UniverseSelectPage() {
   const { user, loading: authLoading } = useAuth();
-  const { universeId, setUniverse, hydrated } = useUniverse();
+  const { setUniverse, hydrated } = useUniverse();
   const router = useRouter();
 
-  // Not logged in → bounce to the auth screen. Already chose a universe →
-  // skip the selection screen and go to the app.
+  // Not logged in → bounce to the auth screen. We DON'T auto-redirect
+  // when the user already has a universe — the page is also reached
+  // intentionally via the sidebar grid icon (= "trocar universo"), and
+  // bouncing back to /app would defeat the whole purpose. The post-
+  // login first-time gate lives in /app/page.tsx, which redirects HERE
+  // when no universe is picked yet; the reverse direction stays manual.
   useEffect(() => {
     if (authLoading || !hydrated) return;
-    if (!user) {
-      router.replace('/auth');
-      return;
-    }
-    if (universeId) {
-      router.replace('/app');
-    }
-  }, [authLoading, hydrated, user, universeId, router]);
+    if (!user) router.replace('/auth');
+  }, [authLoading, hydrated, user, router]);
 
   const handlePick = (config: UniverseConfig) => {
     setUniverse(config.id);

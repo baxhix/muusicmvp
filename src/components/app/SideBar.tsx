@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useUniverse } from '@/lib/universe/UniverseContext';
 import styles from './SideBar.module.css';
 
@@ -29,31 +30,53 @@ export default function SideBar() {
         onError={() => setLogoFailed(true)}
       />
 
-      <a
-        href={STORE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={styles.storeLink}
-        aria-label="Loja oficial Ana Castela"
-        title="Loja oficial"
-      >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M5 8h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 8z"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M9 8V6a3 3 0 0 1 6 0v2"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </a>
+      {/* ── Mid stack: grid (switch universe) above the store link.
+          Both share .iconBtn so the visual treatment stays consistent. */}
+      <div className={styles.midStack}>
+        <Link
+          href="/app/select"
+          className={styles.iconBtn}
+          aria-label="Trocar universo"
+          title="Trocar universo"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="3"  y="3"  width="7" height="7" rx="1.5"
+                  stroke="currentColor" strokeWidth="1.6" />
+            <rect x="14" y="3"  width="7" height="7" rx="1.5"
+                  stroke="currentColor" strokeWidth="1.6" />
+            <rect x="3"  y="14" width="7" height="7" rx="1.5"
+                  stroke="currentColor" strokeWidth="1.6" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5"
+                  stroke="currentColor" strokeWidth="1.6" />
+          </svg>
+        </Link>
+
+        <a
+          href={STORE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.iconBtn}
+          aria-label="Loja oficial Ana Castela"
+          title="Loja oficial"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M5 8h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 8z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9 8V6a3 3 0 0 1 6 0v2"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </a>
+      </div>
     </aside>
   );
 }
