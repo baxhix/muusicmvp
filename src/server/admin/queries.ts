@@ -8,6 +8,7 @@ import {
   tracks,
   users,
 } from '../db/schema';
+import { env } from '../env';
 
 const ONLINE_WINDOW_MS = 60_000;
 
@@ -103,22 +104,16 @@ function handleFromEmail(email: string): string {
 }
 
 /**
- * Convert the relative `/uploads/avatars/<hash>` paths the backend
- * persists into absolute URLs so admin clients hosted on a different
- * subdomain (admin.muusic.live) can load them. Absolute URLs (Spotify,
- * pravatar, etc.) and null pass through unchanged.
- *
- * Hard-coded import of `env` is fine here — this helper only runs
- * server-side. The browser-side admin doesn't import this file.
+ * Convert the relative paths the backend persists for uploaded
+ * avatars (`/api/avatars/<filename>`) into absolute URLs so admin
+ * clients hosted on a different subdomain (admin.muusic.live) can
+ * load them. Absolute URLs (Spotify CDN, pravatar fallbacks) pass
+ * through untouched. Returns null only when the input is empty.
  */
 function absoluteAvatar(raw: string | null | undefined): string | null {
   if (!raw) return null;
   if (/^https?:\/\//i.test(raw) || raw.startsWith('//')) return raw;
   if (raw.startsWith('/')) {
-    // Lazy require so the env Proxy doesn't crash on import time
-    // if APP_URL isn't set in some narrow ad-hoc context.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { env } = require('../env') as typeof import('../env');
     return env.APP_URL ? `${env.APP_URL}${raw}` : raw;
   }
   return raw;
