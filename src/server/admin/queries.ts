@@ -103,6 +103,28 @@ function handleFromEmail(email: string): string {
 }
 
 /**
+ * Convert the relative `/uploads/avatars/<hash>` paths the backend
+ * persists into absolute URLs so admin clients hosted on a different
+ * subdomain (admin.muusic.live) can load them. Absolute URLs (Spotify,
+ * pravatar, etc.) and null pass through unchanged.
+ *
+ * Hard-coded import of `env` is fine here — this helper only runs
+ * server-side. The browser-side admin doesn't import this file.
+ */
+function absoluteAvatar(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('//')) return raw;
+  if (raw.startsWith('/')) {
+    // Lazy require so the env Proxy doesn't crash on import time
+    // if APP_URL isn't set in some narrow ad-hoc context.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { env } = require('../env') as typeof import('../env');
+    return env.APP_URL ? `${env.APP_URL}${raw}` : raw;
+  }
+  return raw;
+}
+
+/**
  * db.execute(sql`...`) returns timestamp columns as STRINGS (ISO),
  * not Date objects — unlike the typed query builder which coerces
  * to Date via Drizzle's type system. So calling `.toISOString()`
@@ -198,7 +220,7 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       name,
       handle: handleFromEmail(email),
       email,
-      avatar: (r.avatar_url as string | null) ?? null,
+      avatar: absoluteAvatar(r.avatar_url as string | null),
       // Real DB role is 'user' | 'admin'; the admin UI splits the user
       // population into 'fan' vs 'creator' for visual grouping. Until
       // we model creators explicitly, every regular user reads as 'fan'
@@ -347,7 +369,7 @@ export async function getSuperfansForAdmin(limit = 100): Promise<AdminSuperfanRo
         id: r.user_id as string,
         name,
         handle: handleFromEmail(email),
-        avatar: (r.avatar_url as string | null) ?? null,
+        avatar: absoluteAvatar(r.avatar_url as string | null),
         city: (r.city as string | null) ?? '',
         state: (r.country_code as string | null) ?? '',
       },

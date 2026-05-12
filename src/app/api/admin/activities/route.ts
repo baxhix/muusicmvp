@@ -3,6 +3,18 @@ import { z } from 'zod';
 import { sql } from 'drizzle-orm';
 import { db } from '@/server/db';
 import { requireAdmin } from '@/server/auth/requireAdmin';
+import { env } from '@/server/env';
+
+/**
+ * Mirror of admin/queries.ts:absoluteAvatar — local copy so this route
+ * doesn't pull in the larger query module just for the helper.
+ */
+function absoluteAvatar(raw: string | null): string | null {
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw) || raw.startsWith('//')) return raw;
+  if (raw.startsWith('/')) return env.APP_URL ? `${env.APP_URL}${raw}` : raw;
+  return raw;
+}
 
 export const runtime = 'nodejs';
 
@@ -66,7 +78,7 @@ export async function GET(req: Request) {
       id: r.user_id as string,
       name: r.user_name as string | null,
       email: r.user_email as string,
-      avatarUrl: r.user_avatar as string | null,
+      avatarUrl: absoluteAvatar(r.user_avatar as string | null),
     },
     trackTitle: r.track_title as string | null,
     trackArtist: r.track_artist as string | null,

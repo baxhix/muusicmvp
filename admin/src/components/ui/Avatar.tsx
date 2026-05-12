@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import styles from './Avatar.module.css';
 
@@ -26,11 +29,27 @@ export default function Avatar({
   status,
   className,
 }: AvatarProps) {
+  // Track image load failure so a broken / deleted upload falls back
+  // to initials instead of leaving the browser's broken-image icon
+  // visible in the table. Reset whenever src changes so a previously
+  // failed URL can be re-attempted if it's been swapped to a new one.
+  const [errored, setErrored] = useState(false);
+  useEffect(() => {
+    setErrored(false);
+  }, [src]);
+
+  const showImg = !!src && !errored;
+
   return (
     <span className={cn(styles.avatar, styles[size], className)} aria-label={name}>
-      {src ? (
+      {showImg ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={name ?? ''} className={styles.img} />
+        <img
+          src={src}
+          alt={name ?? ''}
+          className={styles.img}
+          onError={() => setErrored(true)}
+        />
       ) : (
         <span>{initials(name)}</span>
       )}
