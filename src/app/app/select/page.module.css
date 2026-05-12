@@ -24,8 +24,11 @@
     #000005;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 48px;
+  /* Layout anchors to the left side of the viewport — feels less
+     "marketing centered" and more "console", matching the intent
+     of putting the title hard left. */
+  justify-content: flex-start;
+  padding: 48px 64px 48px 96px;
   overflow-y: auto;
 }
 
@@ -88,6 +91,9 @@
   text-align: left;
 }
 
+/* Title intentionally stays in the same sans face / weight throughout
+   — "Fanverse" no longer gets the serif italic accent. The dropped
+   <em> tag means we don't need a special em rule either. */
 .title {
   margin: 0 0 16px;
   font-size: 44px;
@@ -96,15 +102,6 @@
   color: #F5F5F7;
   line-height: 1.05;
   text-align: left;
-}
-.title em {
-  font-family: var(--font-serif), serif;
-  font-style: italic;
-  font-weight: 400;
-  background: linear-gradient(135deg, #5dffa1 0%, #3DDB74 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .lead {
@@ -119,33 +116,35 @@
 
 /* ── Cards grid (right side) ─────────────────────────────── */
 
-/* 20% smaller than the previous 720 → 576 max. The 2-col grid
-   inside stays explicit so cards always sit side-by-side. */
+/* Fixed 320px-wide columns now that each card is locked at 320×520.
+   gap: 18px between the two and the grid keeps to flex-end so the
+   title gets all the breathing room on the left. */
 .grid {
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: 576px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  display: flex;
+  gap: 18px;
+  flex-shrink: 0;
 }
 
 /* ── Single universe card ───────────────────────────────── */
 
+/* Wraps the clickable cover + an optional secondary CTA below.
+   Flex column with gap so the secondary CTA renders as a sibling
+   under the card body — outside its click region — instead of
+   absolutely positioned on top. */
 .card {
-  position: relative;
-  display: block;
-  border-radius: 16px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-/* The whole card is one big button so anywhere on the cover is
-   clickable. The secondary "Entrar sem ser superfã" button sits
-   absolutely above this so its click doesn't bubble up. */
+/* Fixed 320×520 box per spec. The main button fills it; cover image
+   + textBackdrop + content all live inside. */
 .cardClickable {
   position: relative;
   display: block;
-  width: 100%;
+  width: 320px;
+  height: 520px;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.04);
@@ -197,33 +196,35 @@
   .cover { animation: none; transform: scale(1.06); }
 }
 
-/* Gradient block dedicated to making the text legible no matter
-   what cover image is below. Stronger than a generic overlay so
-   names/descriptions don't compete with the photo. */
+/* Heavier gradient block so the bottom of the card reads as nearly
+   solid black behind the text — name + description + CTA stay
+   crisp on any cover photo, including bright ones. The early-kicking
+   dark stop is what does the heavy lifting here. */
 .textBackdrop {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 65%;
+  height: 72%;
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.55) 45%,
-    rgba(0, 0, 0, 0.92) 100%
+    rgba(0, 0, 0, 0.55) 25%,
+    rgba(0, 0, 0, 0.90) 55%,
+    rgba(0, 0, 0, 1) 100%
   );
   pointer-events: none;
 }
 
+/* Content fills the card (parent is fixed 320×520), aligned to the
+   bottom so the cover photo dominates the top portion. */
 .cardContent {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px 16px;
-  /* Aspect-ratio reserves a fixed portrait shape regardless of
-     content. 3:4 keeps the trading-card look at smaller sizes. */
-  aspect-ratio: 3 / 4;
+  padding: 16px 18px 18px;
   justify-content: flex-end;
 }
 
@@ -267,56 +268,47 @@
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* Secondary CTA — floats above the card (so the click is captured
-   before bubbling) at the top, visually distinct from the main
-   "Entrar" pill. Today only the Countrybeat universe uses this. */
+/* Secondary CTA — sits BELOW the card (a regular sibling, not an
+   absolute overlay). Pill-style ghost button so it reads as a
+   secondary, "softer" entry path next to the main card click. */
 .secondaryCta {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(245, 245, 247, 0.85);
   font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 500;
   letter-spacing: -0.005em;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 160ms ease-out, transform 160ms ease-out;
+  transition: background 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out, color 160ms ease-out;
 }
 .secondaryCta:hover {
-  background: rgba(0, 0, 0, 0.85);
-  transform: translateX(-50%) translateY(-1px);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
-/* ── Mobile ──────────────────────────────────────────────── */
-@media (max-width: 880px) {
-  .scrim { padding: 32px 20px; }
+/* ── Mobile ────────────────────────────────────────────────
+   Cards are locked at 320×520, so on viewports tighter than the
+   intro-pad + 2*320 + gap + outer padding (~1000px) we let things
+   wrap instead of cramping the layout. */
+@media (max-width: 1040px) {
+  .scrim { padding: 32px; justify-content: center; }
   .layout {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 28px;
-    max-width: 480px;
   }
-  .intro { max-width: none; }
-  .title { font-size: 32px; }
-  .grid {
-    max-width: none;
-  }
+  .intro { max-width: 640px; }
+  .grid { flex-wrap: wrap; justify-content: flex-start; }
 }
 
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
-    max-width: 320px;
-    margin: 0 auto;
-  }
-  .cardName { font-size: 24px; }
+@media (max-width: 720px) {
+  .scrim { padding: 24px 20px; }
+  .title { font-size: 32px; }
+  .grid { justify-content: center; }
 }
