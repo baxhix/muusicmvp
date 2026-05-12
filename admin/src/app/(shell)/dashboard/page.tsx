@@ -306,7 +306,9 @@ export default function DashboardPage() {
                 <div className={styles.chartTitle}>Crescimento da plataforma</div>
                 <div className={styles.chartSubtitle}>Usuários ativos × novos cadastros nos últimos 90 dias</div>
               </div>
-              <Badge tone="brand" dot>Em alta</Badge>
+              {/* Convention: "Em alta" badges use size="lg" platform-
+                  wide so trending signals read as first-class status. */}
+              <Badge tone="brand" size="lg" dot>Em alta</Badge>
             </div>
             <div className={styles.chartBody}>
               {growth ? <LineChart series={growth} /> : null}
