@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/AuthContext';
 import styles from './Sidebar.module.css';
 
 interface NavItem {
@@ -36,6 +38,25 @@ const SECONDARY_NAV: NavItem[] = [
 
 export default function Sidebar({ open = false }: { open?: boolean }) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await logout();
+      // logout() reloads on success — if it returns here, the reload
+      // didn't fire (e.g. mock mode) so flip the button back to idle.
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  // Profile footer text — fall back to the email prefix when the user
+  // hasn't set a display name yet (most magic-link signups don't).
+  const displayName = user.name?.trim() || user.email.split('@')[0];
+  const displayRole = user.role === 'admin' ? 'Admin · muusic' : 'Conta';
 
   const renderItem = (item: NavItem) => {
     const Icon = item.icon;
@@ -83,15 +104,24 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
       </div>
 
       <div className={styles.footer}>
-        <div className={styles.profile} role="button" tabIndex={0}>
-          <Avatar name="Marcelo Admin" size="sm" />
+        <div className={styles.profile}>
+          <Avatar name={displayName} src={user.avatarUrl ?? undefined} size="sm" />
           <div className={styles.profileBody}>
-            <div className={styles.profileName}>Marcelo Baxhix</div>
-            <div className={styles.profileRole}>Owner · Fanverse</div>
+            <div className={styles.profileName} title={user.email}>
+              {displayName}
+            </div>
+            <div className={styles.profileRole}>{displayRole}</div>
           </div>
-          <span className={styles.itemIcon} title="Sair">
+          <button
+            type="button"
+            className={styles.logoutBtn}
+            onClick={handleLogout}
+            disabled={signingOut}
+            aria-label="Sair"
+            title="Sair"
+          >
             <IconLogout size={14} />
-          </span>
+          </button>
         </div>
       </div>
     </aside>

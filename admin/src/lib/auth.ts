@@ -72,3 +72,29 @@ export const muusicAppUrl = (path = '/') => {
   const base = API_BASE || '';
   return `${base}${path}`;
 };
+
+/**
+ * POST /api/auth/logout — destroys the session cookie on the muusic
+ * backend. The cookie is scoped to `.muusic.live` so this drops auth
+ * across every subdomain at once.
+ *
+ * Resolves with `true` on success, `false` on transport failure — the
+ * caller decides whether to retry or fall back to a local-only sign-out
+ * (e.g. force-reload to surface the AdminAuthGate sign-in card).
+ */
+export async function logout(): Promise<boolean> {
+  if (!API_BASE) {
+    // Mock mode — nothing to invalidate on the server. Pretend success
+    // so the UI can still re-render the sign-in card.
+    return true;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

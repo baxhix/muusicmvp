@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { checkAdminAuth, type AuthCheckResult } from '@/lib/auth';
+import { AuthProvider } from '@/lib/AuthContext';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
@@ -83,7 +84,9 @@ export default function AdminAuthGate({ children }: Props) {
     );
   }
 
-  return <>{children}</>;
+  // `authenticated` AND user.role === 'admin' — checkAdminAuth filters
+  // forbidden cases above so by here `auth.user` is guaranteed non-null.
+  return <AuthProvider user={auth.user!}>{children}</AuthProvider>;
 }
 
 /* ── Sign-in card ───────────────────────────────────────────
