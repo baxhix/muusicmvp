@@ -323,11 +323,92 @@
   z-index: 3;
   white-space: nowrap;
   pointer-events: auto;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    padding 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    gap 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .userBadge:hover {
   background: rgba(6, 6, 8, 0.92);
   border-color: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Compact mode (zoom-out) ───────────────────────────────────
+ * At low zoom, the info block collapses behind the avatar so a
+ * crowded globe view doesn't look like a wall of text. The audio
+ * bars get their own overlay near the avatar so a listening pin
+ * still reads as "alive" without the full badge.
+ *
+ * On hover, the info animates back in smoothly via max-width +
+ * opacity. No display:none toggling — the transition stays smooth.
+ * Click handler is unaffected: tapping the avatar opens the
+ * profile regardless of which mode the badge is in. */
+.badgeCompact {
+  gap: 0;
+  padding: 4px;
+}
+.badgeCompact .userBadgeInfo,
+.badgeCompact .liveUserInfo {
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transition:
+    max-width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms ease-out,
+    margin 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  margin: 0;
+}
+.badgeCompact:hover {
+  gap: 7px;
+  padding: 6px 11px 6px 7px;
+}
+.badgeCompact:hover .userBadgeInfo,
+.badgeCompact:hover .liveUserInfo {
+  max-width: 200px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Audio-bars overlay shown ONLY in compact mode (and only when a
+   track is playing). Sits as a small chip on the bottom-right of
+   the avatar so a listening user is recognizable at a glance. */
+.compactBarsBadge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent, #3ddb74);
+  border: 2px solid rgba(0, 0, 0, 0.88);
+  border-radius: 999px;
+  padding: 2px 4px;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+.compactBarsBadge .audioBars {
+  height: 8px;
+  gap: 1.5px;
+}
+.compactBarsBadge .audioBars > span {
+  background: #0a0a0a;
+}
+.badgeCompact .compactBarsBadge {
+  display: inline-flex;
+}
+.badgeCompact:hover .compactBarsBadge {
+  display: none;
+}
+
+/* Anchor for the compact audio-bars chip — same dimensions as the
+   inner avatar so absolute-positioned children land where expected. */
+.avatarWrap {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 .userBadgeAvatar {
@@ -339,7 +420,6 @@
   border: 1.5px solid rgba(56, 189, 248, 0.7);
   box-shadow: 0 0 6px rgba(56, 189, 248, 0.35);
   display: block;
-  flex-shrink: 0;
 }
 
 .userBadgeInfo {
@@ -457,7 +537,6 @@
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
   display: block;
-  flex-shrink: 0;
 }
 
 .liveUserInfo {

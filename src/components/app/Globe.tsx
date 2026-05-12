@@ -233,6 +233,33 @@ export default function Globe() {
     };
 
     /**
+     * Build the avatar-wrap markup used by both badge types. Wraps the
+     * <img> in a position:relative span so the compact audio-bars chip
+     * can be absolutely positioned at the avatar's bottom-right corner.
+     * The chip itself is only rendered when there's a track playing —
+     * empty pin = no chip.
+     */
+    const buildAvatarMarkup = (
+      avatarSrc: string,
+      avatarClass: string,
+      hasTrack: boolean,
+    ): string => {
+      const barsChip = hasTrack
+        ? `<span class="${styles.compactBarsBadge}" aria-hidden="true">
+             <span class="${styles.audioBars}">
+               <span></span><span></span><span></span><span></span>
+             </span>
+           </span>`
+        : '';
+      return `
+        <span class="${styles.avatarWrap}">
+          <img src="${avatarSrc}" alt="" class="${avatarClass}" />
+          ${barsChip}
+        </span>
+      `;
+    };
+
+    /**
      * Deterministic radial offset per user id so two presence pins
      * sharing a city centroid land side-by-side instead of stacking.
      * The offset magnitude is zoom-dependent — biggest at globe view
@@ -283,6 +310,34 @@ export default function Globe() {
     };
 
     map.on('zoom', reapplyMarkerOffsets);
+
+    // ── Compact badge mode at low zoom ─────────────────────────────
+    // When the camera is pulled back beyond COMPACT_ZOOM_THRESHOLD,
+    // every presence badge (Você + live) collapses to "avatar only"
+    // with a tiny audio-bars chip overlay. On hover any badge still
+    // expands to the full row via CSS — no JS needed for the
+    // interaction itself. Zoom-in past the threshold de-compacts
+    // every badge at once.
+    const COMPACT_ZOOM_THRESHOLD = 4;
+    const isCompactZoom = () => map.getZoom() <= COMPACT_ZOOM_THRESHOLD;
+
+    const applyCompactClass = (root: HTMLElement | null | undefined) => {
+      if (!root) return;
+      const badge = root.querySelector<HTMLElement>(
+        '.' + styles.userBadge + ', .' + styles.liveUserBadge,
+      );
+      if (!badge) return;
+      badge.classList.toggle(styles.badgeCompact, isCompactZoom());
+    };
+
+    const reapplyCompactState = () => {
+      if (userLocationMarker) applyCompactClass(userLocationMarker.getElement());
+      for (const [, marker] of liveUserMarkers) {
+        applyCompactClass(marker.getElement());
+      }
+    };
+
+    map.on('zoom', reapplyCompactState);
 
     /**
      * Measure the song-row's inner text vs its container width. When
@@ -339,14 +394,20 @@ export default function Globe() {
 
         const el = document.createElement('div');
         el.className = styles.userLocationMarker;
-        // Equalizer bars stay next to the name. The song row gained
-        // a fixed-width container + marquee-eligible inner span so
-        // "Title — Artist" can ping-pong horizontally when the text
-        // overflows, instead of widening the badge.
+        // Avatar lives inside an .avatarWrap so a tiny audio-bars chip
+        // can overlay at its bottom-right when the badge collapses to
+        // compact mode at low zoom. The .userBadgeInfo block holds the
+        // expanded row content — it smoothly slides away in compact
+        // mode and back in on hover.
+        const avatarHtml = buildAvatarMarkup(
+          avatarSrc,
+          styles.userBadgeAvatar,
+          !!safeTitle,
+        );
         el.innerHTML = `
           <span class="${styles.userLocationPulse}" aria-hidden="true"></span>
           <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização, online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
-            <img src="${avatarSrc}" alt="" class="${styles.userBadgeAvatar}" />
+            ${avatarHtml}
             <div class="${styles.userBadgeInfo}">
               <span class="${styles.userBadgeName}">${safeName}${audioBarsHtml}</span>
               ${songInnerHtml ? `<div class="${styles.userBadgeSong}"><span class="${styles.userBadgeSongInner}">${songInnerHtml}</span></div>` : ''}
@@ -356,6 +417,10 @@ export default function Globe() {
         userLocationMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([coords.lng, coords.lat])
           .addTo(map);
+        // Apply the current compact state immediately so a fresh
+        // marker at globe-zoom shows up collapsed instead of flashing
+        // expanded for a frame.
+        applyCompactClass(el);
         // Measure after mount so scrollWidth/clientWidth reflect the
         // real laid-out element. requestAnimationFrame buys a frame
         // for layout to settle.
@@ -397,9 +462,14 @@ export default function Globe() {
           // the platform. Song row uses the same marquee-capable
           // structure as the "Você" pin so long titles ping-pong
           // instead of widening the card.
+          const avatarHtml = buildAvatarMarkup(
+            avatarSrc,
+            styles.liveUserAvatar,
+            !!safeTitle,
+          );
           const html = `
             <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName} (online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
-              <img src="${avatarSrc}" alt="" class="${styles.liveUserAvatar}" />
+              ${avatarHtml}
               <div class="${styles.liveUserInfo}">
                 <span class="${styles.liveUserName}">${safeName}${audioBarsHtml}</span>
                 ${songInnerHtml ? `<div class="${styles.liveUserSong}"><span class="${styles.userBadgeSongInner}">${songInnerHtml}</span></div>` : ''}
@@ -414,6 +484,10 @@ export default function Globe() {
             const el = existing.getElement();
             if (el.innerHTML !== html) {
               el.innerHTML = html;
+              // The new innerHTML doesn't carry the compact class —
+              // re-apply it based on the current zoom so a track-change
+              // re-render doesn't flash the expanded layout.
+              applyCompactClass(el);
               if (songInnerHtml) {
                 requestAnimationFrame(() =>
                   activateMarquee(el, styles.userBadgeSongInner),
@@ -443,6 +517,7 @@ export default function Globe() {
               .setLngLat([u.lng, u.lat])
               .addTo(map);
             liveUserMarkers.set(u.id, marker);
+            applyCompactClass(wrapper);
             if (songInnerHtml) {
               requestAnimationFrame(() =>
                 activateMarquee(wrapper, styles.userBadgeSongInner),
