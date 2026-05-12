@@ -40,21 +40,31 @@ export function useSameTrackToasts(): {
   toasts: QueueItem[];
   dismiss: (id: string) => void;
 } {
-  const { notifications } = useNotificationsLive();
+  const { notifications, loading } = useNotificationsLive();
   const [toasts, setToasts] = useState<QueueItem[]>([]);
   const seenIdsRef = useRef<Set<string>>(new Set());
-  const firstSnapshotRef = useRef(true);
+  const baselineSetRef = useRef(false);
 
   const dismiss = useCallback((id: string) => {
     setToasts((cur) => cur.filter((t) => t.id !== id));
   }, []);
 
   useEffect(() => {
-    if (firstSnapshotRef.current) {
-      // Mark everything in the very first list snapshot as "already seen"
-      // so we don't toast every existing notification on page load.
+    // Wait until the initial fetch from /api/notifications completes
+    // before deciding which ids are "historical". Without this guard,
+    // the first effect run sees the React state's initial value (an
+    // empty array), marks zero ids as seen, flips the baseline flag,
+    // and then the populated list that arrives milliseconds later
+    // gets treated as a wave of brand-new notifications — toasting
+    // every pre-existing same-track notification on every page load.
+    if (loading) return;
+
+    if (!baselineSetRef.current) {
+      // Page just finished loading: snapshot everything currently in
+      // /api/notifications as already-seen so we only toast events
+      // that arrive AFTER this point.
       for (const n of notifications) seenIdsRef.current.add(n.id);
-      firstSnapshotRef.current = false;
+      baselineSetRef.current = true;
       return;
     }
 
@@ -76,7 +86,7 @@ export function useSameTrackToasts(): {
         setToasts((cur) => cur.filter((t) => t.id !== item.id));
       }, HOLD_MS);
     }
-  }, [notifications]);
+  }, [notifications, loading]);
 
   return { toasts, dismiss };
 }
