@@ -1,8 +1,21 @@
 import { getResend } from './resend';
 import { env } from '../env';
 
-export async function sendMagicLink(to: string, token: string): Promise<void> {
-  const url = `${env.APP_URL}/api/auth/verify?token=${encodeURIComponent(token)}`;
+/**
+ * Send a magic-link email. `returnTo`, when present, is appended to the
+ * verify URL so the user lands back on the origin that started the
+ * login flow (e.g. admin.muusic.live or painel.muusic.live). The verify
+ * route re-validates returnTo against an allowlist before redirecting,
+ * so this is just a passthrough — no trust is implied here.
+ */
+export async function sendMagicLink(
+  to: string,
+  token: string,
+  returnTo?: string,
+): Promise<void> {
+  const params = new URLSearchParams({ token });
+  if (returnTo) params.set('returnTo', returnTo);
+  const url = `${env.APP_URL}/api/auth/verify?${params.toString()}`;
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">

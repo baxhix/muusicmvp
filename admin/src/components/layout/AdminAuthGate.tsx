@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
-import { checkAdminAuth, muusicAppUrl, type AuthCheckResult } from '@/lib/auth';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { checkAdminAuth, type AuthCheckResult } from '@/lib/auth';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 const POLL_MS = 60_000; // re-verify every minute
 
@@ -12,7 +14,9 @@ interface Props {
 /**
  * Top-level gate for /admin/*. Verifies the visitor has an authenticated
  * muusic session AND role === 'admin'. Renders friendly fallbacks while
- * loading / when not allowed.
+ * loading / when not allowed — including a magic-link sign-in form so
+ * the admin can be logged into directly without bouncing through the
+ * main app.
  *
  * In dev (when NEXT_PUBLIC_API_BASE_URL is unset), checkAdminAuth returns
  * a mock admin so the UI is usable standalone.
@@ -45,11 +49,7 @@ export default function AdminAuthGate({ children }: Props) {
   if (auth.status === 'unauthenticated') {
     return (
       <div style={fullScreen}>
-        <div style={card}>
-          <h1 style={title}>Acesso restrito</h1>
-          <p style={muted}>Você precisa fazer login no muusic primeiro.</p>
-          <a href={muusicAppUrl('/auth')} style={btn}>Ir pra tela de login</a>
-        </div>
+        <SignInCard />
       </div>
     );
   }
@@ -84,6 +84,121 @@ export default function AdminAuthGate({ children }: Props) {
   }
 
   return <>{children}</>;
+}
+
+/* ── Sign-in card ───────────────────────────────────────────
+ * Direct magic-link login from inside the admin app. POSTs to
+ * /api/auth/request with `returnTo` set to the admin URL so the
+ * verify redirect lands back here. Cookies are scoped to
+ * .muusic.live, so once the session lands AdminAuthGate's poll
+ * picks it up on the next interval (or immediately on reload).
+ * ──────────────────────────────────────────────────────────── */
+function SignInCard() {
+  const [email, setEmail] = useState('');
+  const [phase, setPhase] = useState<'idle' | 'sending' | 'sent' | 'error'>(
+    'idle',
+  );
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setPhase('sending');
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/request`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmed,
+          // Bring the user back to admin (not muusic.live/app) after they
+          // click the magic link in their inbox.
+          returnTo:
+            typeof window !== 'undefined' ? window.location.href : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setErrorMsg(
+          body?.error === 'email_failed'
+            ? 'Falha no envio do email. Tenta de novo em alguns segundos.'
+            : 'Algo deu errado. Verifica o email e tenta novamente.',
+        );
+        setPhase('error');
+        return;
+      }
+      setPhase('sent');
+    } catch {
+      setErrorMsg('Não consegui falar com o backend.');
+      setPhase('error');
+    }
+  };
+
+  if (phase === 'sent') {
+    return (
+      <div style={card}>
+        <h1 style={title}>Confere seu email</h1>
+        <p style={muted}>
+          Mandei um link de acesso pra <strong>{email}</strong>. O link
+          expira em 15 minutos. Depois de clicar, você volta pra cá já
+          logado.
+        </p>
+        <button
+          type="button"
+          style={{ ...secondaryBtn, marginTop: 24 }}
+          onClick={() => {
+            setPhase('idle');
+            setEmail('');
+            setErrorMsg(null);
+          }}
+        >
+          Enviar pra outro email
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={card}>
+      <h1 style={title}>Acesso ao painel</h1>
+      <p style={{ ...muted, textAlign: 'left' }}>
+        Entra com o email que tem perfil de admin. Você recebe um link
+        único pra fazer login — sem senha.
+      </p>
+      <form onSubmit={onSubmit} style={{ marginTop: 20 }}>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          autoFocus
+          placeholder="seu@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={phase === 'sending'}
+          style={input}
+        />
+        {phase === 'error' && errorMsg && (
+          <p style={errorText}>{errorMsg}</p>
+        )}
+        <button
+          type="submit"
+          disabled={phase === 'sending' || !email.trim()}
+          style={{
+            ...btn,
+            marginTop: 16,
+            width: '100%',
+            opacity: phase === 'sending' || !email.trim() ? 0.55 : 1,
+            cursor:
+              phase === 'sending' || !email.trim() ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {phase === 'sending' ? 'Enviando…' : 'Mandar link de acesso'}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 // Inline styles to avoid pulling in an extra .module.css for a gate.
@@ -127,10 +242,41 @@ const btn: React.CSSProperties = {
   padding: '10px 20px',
   background: 'var(--ink)',
   color: 'var(--bg)',
+  border: 'none',
   borderRadius: 'var(--r-sm)',
   textDecoration: 'none',
   fontWeight: 600,
   fontSize: 14,
+  cursor: 'pointer',
+};
+const secondaryBtn: React.CSSProperties = {
+  display: 'inline-block',
+  padding: '8px 16px',
+  background: 'transparent',
+  color: 'var(--ink-mute)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--r-sm)',
+  fontWeight: 500,
+  fontSize: 13,
+  cursor: 'pointer',
+};
+const input: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  background: 'var(--bg-subtle, var(--bg))',
+  color: 'var(--ink)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--r-sm)',
+  fontSize: 14,
+  fontFamily: 'inherit',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+const errorText: React.CSSProperties = {
+  margin: '12px 0 0',
+  color: '#dc2626',
+  fontSize: 13,
+  textAlign: 'left',
 };
 const code: React.CSSProperties = {
   display: 'inline-block',
