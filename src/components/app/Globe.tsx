@@ -244,14 +244,15 @@ export default function Globe() {
       avatarClass: string,
       hasTrack: boolean,
     ): string => {
-      // Compact mode shows only 3 bars — fewer, calmer rhythm than the
-      // 4-bar inline indicator next to the name. The 4th bar's CSS
-      // nth-child rule simply has no element to apply to here.
+      // Compact mode shows 3 pulsing dots inside a square container,
+      // so border-radius: 50% always renders a perfect circle. The
+      // previous "audio bars" inside a pill rendered as an oval
+      // because the bars were taller than wide.
       const barsChip = hasTrack
         ? `<span class="${styles.compactBarsBadge}" aria-hidden="true">
-             <span class="${styles.audioBars}">
-               <span></span><span></span><span></span>
-             </span>
+             <span class="${styles.compactDot}"></span>
+             <span class="${styles.compactDot}"></span>
+             <span class="${styles.compactDot}"></span>
            </span>`
         : '';
       return `

@@ -379,35 +379,57 @@
   pointer-events: auto;
 }
 
-/* Audio-bars overlay shown ONLY in compact mode (and only when a
-   track is playing). Sits as a small chip on the bottom-right of
-   the avatar so a listening user is recognizable at a glance. */
+/* "Listening" indicator shown ONLY in compact mode (and only when a
+   track is playing). A 16×16 SQUARE container with border-radius 50%
+   so it's a perfect circle regardless of inner content — three small
+   dots inside pulse in opacity + scale with staggered delays.
+   Switching from rectangular audio-bars to dots was the fix: the
+   previous container had border-radius: 999px (pill) and inner bars
+   that were taller than wide, so the chip rendered as an oval. */
 .compactBarsBadge {
   position: absolute;
   bottom: -3px;
   right: -3px;
   display: none;
-  align-items: center;
-  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
   background: var(--accent, #3ddb74);
   border: 2px solid rgba(0, 0, 0, 0.88);
-  border-radius: 999px;
-  padding: 2px 4px;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5px;
+  padding: 0;
   pointer-events: none;
+  /* Promote to its own layer — the dot animations stay GPU-cheap. */
   transform: translateZ(0);
 }
-.compactBarsBadge .audioBars {
-  height: 8px;
-  gap: 1.5px;
-}
-.compactBarsBadge .audioBars > span {
+
+.compactDot {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
   background: #0a0a0a;
+  animation: compact-dot-pulse 0.95s ease-in-out infinite;
 }
+.compactDot:nth-child(1) { animation-delay: -0.30s; }
+.compactDot:nth-child(2) { animation-delay: -0.10s; }
+.compactDot:nth-child(3) { animation-delay: -0.50s; }
+
+@keyframes compact-dot-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.7); }
+  50%      { opacity: 1;    transform: scale(1.1); }
+}
+
 .badgeCompact .compactBarsBadge {
   display: inline-flex;
 }
 .badgeCompact:hover .compactBarsBadge {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compactDot { animation: none; opacity: 0.85; }
 }
 
 /* Anchor for the compact audio-bars chip — same dimensions as the
