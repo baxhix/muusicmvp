@@ -98,7 +98,6 @@ function CelebrationFrame({ item }: { item: MyAchievement }) {
   return (
     <div className={`${styles.frame} ${exiting ? styles.frameExit : ''}`}>
       <div className={styles.message}>
-        <span className={styles.eyebrow}>Conquista</span>
         <h2 className={styles.headline}>
           Você atingiu <em>{formatMilestone(item.points)}</em>.
         </h2>
