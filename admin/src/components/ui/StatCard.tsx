@@ -12,6 +12,12 @@ export interface StatCardProps {
   trendLabel?: string;
   /** numeric series for an inline sparkline */
   spark?: number[];
+  /**
+   * When true, renders a slow-pulsing green presence dot next to the
+   * value. Used for the "Online agora" tile to telegraph that the
+   * number is live and reflects the platform's current state.
+   */
+  live?: boolean;
   className?: string;
 }
 
@@ -59,6 +65,7 @@ export default function StatCard({
   trend,
   trendLabel,
   spark,
+  live,
   className,
 }: StatCardProps) {
   const direction = trend == null ? 'flat' : trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat';
@@ -69,7 +76,10 @@ export default function StatCard({
         <span className={styles.label}>{label}</span>
         {icon && <span className={styles.icon}>{icon}</span>}
       </div>
-      <div className={styles.value}>{value}</div>
+      <div className={styles.value}>
+        {value}
+        {live && <LiveDot />}
+      </div>
       {trend != null && (
         <div
           className={cn(
@@ -88,5 +98,19 @@ export default function StatCard({
       )}
       {spark && spark.length > 1 && <Sparkline data={spark} />}
     </div>
+  );
+}
+
+/**
+ * Slow-pulsing presence dot. ~2s cycle, opacity drifts between 1
+ * and 0.4, halo expands subtly. Intentionally calm — the tile reads
+ * as "live" without strobing the dashboard.
+ */
+function LiveDot() {
+  return (
+    <span className={styles.liveDot} aria-label="live" role="img">
+      <span className={styles.liveDotHalo} aria-hidden="true" />
+      <span className={styles.liveDotCore} aria-hidden="true" />
+    </span>
   );
 }

@@ -191,21 +191,6 @@ function Donut({ data }: { data: { label: string; value: number; color: string }
   );
 }
 
-/* ── Activity icon ──────────────────────────────────────── */
-
-function ActivityIcon({ type }: { type: ActivityEntry['type'] }) {
-  switch (type) {
-    case 'user.signup':       return <IconUsers size={14} />;
-    case 'user.banned':       return <IconAlert size={14} />;
-    case 'user.suspended':    return <IconShield size={14} />;
-    case 'post.published':    return <IconFeed size={14} />;
-    case 'post.removed':      return <IconAlert size={14} />;
-    case 'report.opened':     return <IconShield size={14} />;
-    case 'report.resolved':   return <IconCheck size={14} />;
-    case 'payout.completed':  return <IconStar size={14} />;
-  }
-}
-
 /* ── Page ───────────────────────────────────────────────── */
 
 export default function DashboardPage() {
@@ -296,6 +281,10 @@ export default function DashboardPage() {
                 trend={k.trend}
                 trendLabel={k.helperText}
                 spark={k.spark}
+                // The "online-users" tile is the only one that
+                // reflects a real-time number — the live dot
+                // signals that to the operator at a glance.
+                live={k.id === 'online-users'}
               />
             ) : (
               <StatCard
@@ -339,23 +328,48 @@ export default function DashboardPage() {
             <div className={styles.activityList}>
               {(activity ?? []).slice(0, 6).map((a) => (
                 <div key={a.id} className={styles.activityItem}>
-                  <span className={styles.activityIcon}>
-                    <ActivityIcon type={a.type} />
-                  </span>
                   <div className={styles.activityBody}>
+                    {/* Subject built as a single tokenised line so the
+                        actor + the song/object stay bold and the
+                        connective copy ("ouviu", " — ", etc.) recedes
+                        to a muted gray. The backend sends us a
+                        composite `subject` string ("Tocou X") which we
+                        keep intact but display in muted weight; the
+                        actor is bolded; the meta line shows artist +
+                        points context in the same muted treatment. */}
                     <div className={styles.activitySubject}>
                       {a.actor && (
                         <>
                           <span className={styles.activityActor}>{a.actor.name}</span>{' '}
                         </>
                       )}
-                      {a.subject}
+                      <span className={styles.activityCopy}>{a.subject}</span>
                     </div>
                     {a.meta && <div className={styles.activityMeta}>{a.meta}</div>}
                   </div>
                   <span className={styles.activityWhen}>{formatRelative(a.createdAt)}</span>
                 </div>
               ))}
+              {(activity?.length ?? 0) > 0 && (
+                <a className={styles.activitySeeAll} href="/users">
+                  Ver todas as atividades
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M6 3l5 5-5 5"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </a>
+              )}
             </div>
           </Card>
         </div>
