@@ -14,12 +14,16 @@ export const POINTS: Record<ActivityKind, number> = {
  * Append a single point-bearing activity. Safe to fire-and-forget — failures
  * are logged but don't propagate to the caller (we don't want a missed
  * audit row to break a chat send or a song change).
+ *
+ * Returns the milestones crossed by this single activity so callers can
+ * emit celebratory events (confetti + social toast). Empty array on the
+ * common case where no threshold was breached, or on an insert failure.
  */
 export async function recordActivity(
   userId: string,
   kind: ActivityKind,
   ctx: { trackId?: string; conversationId?: string } = {},
-): Promise<void> {
+): Promise<{ crossedMilestones: number[]; newTotal: number }> {
   try {
     await db.insert(userActivities).values({
       userId,
@@ -28,9 +32,36 @@ export async function recordActivity(
       trackId: ctx.trackId ?? null,
       conversationId: ctx.conversationId ?? null,
     });
+    // After persistence, derive the user's running total and figure
+    // out which milestones (if any) the activity just unlocked. Pre-
+    // activity total is `newTotal - thisActivityPoints`, so threshold
+    // crossings are clean to compute without an extra read.
+    const newTotal = await getUserPoints(userId);
+    const prev = Math.max(0, newTotal - POINTS[kind]);
+    return { crossedMilestones: findCrossedMilestones(prev, newTotal), newTotal };
   } catch (err) {
     console.error('recordActivity failed:', { userId, kind, err });
+    return { crossedMilestones: [], newTotal: 0 };
   }
+}
+
+/**
+ * Point milestones we celebrate. 500 is the first "you're getting
+ * somewhere" recognition; after that every kilopoint is its own beat.
+ * Encoded as a generator so the list scales without a hardcoded cap.
+ */
+export function findCrossedMilestones(prev: number, current: number): number[] {
+  if (current <= prev) return [];
+  const out: number[] = [];
+  // Special case: the very first milestone at 500.
+  if (prev < 500 && current >= 500) out.push(500);
+  // Then every full kilopoint crossed.
+  const prevK = Math.max(0, Math.floor(prev / 1000));
+  const currK = Math.floor(current / 1000);
+  for (let k = prevK + 1; k <= currK; k++) {
+    out.push(k * 1000);
+  }
+  return out;
 }
 
 export interface RankingRow {

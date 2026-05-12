@@ -27,6 +27,8 @@ import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import RankingButton from '@/components/app/RankingButton';
 import SameTrackToast from '@/components/app/SameTrackToast';
+import AchievementCelebration from '@/components/app/AchievementCelebration';
+import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 
 import { useChatLive } from '@/hooks/useChatLive';
 import { useLocationSync } from '@/hooks/useLocationSync';
@@ -274,6 +276,13 @@ export default function AppPage() {
           driven by socket `notify:new` events of kind 'same_track'. Each
           toast holds 6s, then fades out. */}
       <SameTrackToast />
+
+      {/* Self-celebration when the logged-in user crosses a point
+          milestone — confetti + centered congrats line, ~7s. */}
+      <AchievementCelebration />
+
+      {/* Social proof — small toast when ANY user crosses a milestone. */}
+      <SocialAchievementToast />
 
       <Onboarding />
     </>

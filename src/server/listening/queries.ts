@@ -27,14 +27,16 @@ export async function findTrackByYoutubeId(youtubeId: string): Promise<Track | n
 
 /**
  * Apply a listening "tick" — idempotent state update.
- * Returns whether the track changed (caller may want to fire notifications).
+ * Returns whether the track changed (caller may want to fire
+ * notifications) plus any point milestones the resulting activity
+ * crossed (caller emits achievement events).
  */
 export async function recordListeningTick(
   userId: string,
   trackId: string,
   positionSeconds: number,
   isPaused: boolean,
-): Promise<{ trackChanged: boolean }> {
+): Promise<{ trackChanged: boolean; crossedMilestones: number[]; newTotal: number }> {
   // Fetch current state.
   const current = await db
     .select()
@@ -43,6 +45,8 @@ export async function recordListeningTick(
     .limit(1);
 
   const trackChanged = !current[0] || current[0].trackId !== trackId;
+  let crossedMilestones: number[] = [];
+  let newTotal = 0;
 
   if (trackChanged) {
     // Close previous open history row (if any).
@@ -64,9 +68,11 @@ export async function recordListeningTick(
       durationListenedSeconds: 0,
     });
 
-    // Each new stream is worth points. Fire-and-forget so a logging
-    // failure doesn't block the tick.
-    void recordActivity(userId, 'stream', { trackId });
+    // Each new stream is worth points. Await so the caller can fan
+    // out achievement events when this tick crosses a milestone.
+    const result = await recordActivity(userId, 'stream', { trackId });
+    crossedMilestones = result.crossedMilestones;
+    newTotal = result.newTotal;
   } else {
     // Same track: update duration on the currently-open row.
     await db
@@ -103,7 +109,7 @@ export async function recordListeningTick(
       },
     });
 
-  return { trackChanged };
+  return { trackChanged, crossedMilestones, newTotal };
 }
 
 /** Close any open listening rows and clear the user's now_playing. */

@@ -39,12 +39,55 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
         return;
       }
 
-      const { trackChanged } = await recordListeningTick(
-        userId,
-        track.id,
-        parsed.data.positionSeconds,
-        parsed.data.isPaused,
-      );
+      const { trackChanged, crossedMilestones, newTotal } =
+        await recordListeningTick(
+          userId,
+          track.id,
+          parsed.data.positionSeconds,
+          parsed.data.isPaused,
+        );
+
+      // Fan out achievement events whenever this tick crosses any
+      // milestone (500 first, then every 1000pts). Two channels:
+      //   - me:achievement → only to the user who earned it, for the
+      //     full-screen confetti + "Você atingiu X" celebration.
+      //   - social:achievement → broadcast to the whole platform so
+      //     every connected user sees "Fulano conquistou X mil pontos".
+      // Best-effort: log on failure but don't bubble up — the listen
+      // itself succeeded.
+      if (crossedMilestones.length > 0) {
+        try {
+          const sourceRow = await db
+            .select({
+              name: users.name,
+              email: users.email,
+              avatarUrl: users.avatarUrl,
+            })
+            .from(users)
+            .where(inArray(users.id, [userId]))
+            .limit(1);
+          const source = sourceRow[0];
+          for (const milestone of crossedMilestones) {
+            io.to(userRoom(userId)).emit('me:achievement', {
+              kind: 'points_milestone',
+              points: milestone,
+              total: newTotal,
+              createdAt: new Date().toISOString(),
+            });
+            io.emit('social:achievement', {
+              kind: 'points_milestone',
+              userId,
+              userName: source?.name ?? null,
+              userEmail: source?.email ?? null,
+              userAvatarUrl: source?.avatarUrl ?? null,
+              points: milestone,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        } catch (err) {
+          console.error('[listening:tick] achievement broadcast failed:', err);
+        }
+      }
 
       if (!trackChanged) return;
 
