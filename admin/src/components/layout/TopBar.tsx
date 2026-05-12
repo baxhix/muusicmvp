@@ -9,6 +9,7 @@ import styles from './TopBar.module.css';
 const ROUTE_LABELS: Record<string, string> = {
   '/dashboard':  'Dashboard',
   '/engagement': 'Engajamento',
+  '/fanverse':   'Fanverse',
   '/feed':       'Feed',
   '/users':      'Usuários',
   '/tracks':     'Músicas',

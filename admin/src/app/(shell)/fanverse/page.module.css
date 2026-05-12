@@ -1,0 +1,230 @@
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Headline KPI row aggregating both universes at the top. */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* Universe-card grid. Stacks at small screens; pairs side-by-side
+   from 960px+ so the operator scans them in one glance. */
+.universeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 14px;
+}
+
+/* ── Single universe card ────────────────────────────── */
+
+.universe {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  transition: transform var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+.universe:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* Banner — full-bleed cover with a gradient overlay so the name + tag
+   text on top stays legible regardless of cover image. */
+.universeCover {
+  position: relative;
+  aspect-ratio: 16 / 6;
+  width: 100%;
+  background-color: var(--surface-2);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+.universeCoverOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.70) 100%
+  );
+}
+
+/* Name + tag float above the cover. */
+.universeHeader {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #ffffff;
+}
+.universeName {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.05;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+}
+.universeTag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.universeBody {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.universeDesc {
+  font-size: 13px;
+  color: var(--text-mute);
+  letter-spacing: -0.005em;
+  line-height: 1.5;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.statTile {
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statValue {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-mute);
+  letter-spacing: 0.01em;
+}
+
+/* Tiny pulsing live dot reused on the "Online agora" stat. */
+.liveDot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+.liveDotCore {
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  background: var(--success, #16a34a);
+  animation: live-dot-core 2s ease-in-out infinite;
+}
+.liveDotHalo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(22,163,74,0.45) 0%, transparent 70%);
+  animation: live-dot-halo 2s ease-in-out infinite;
+}
+@keyframes live-dot-core {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+@keyframes live-dot-halo {
+  0%, 100% { transform: scale(1);   opacity: 0.55; }
+  50%      { transform: scale(1.8); opacity: 0;    }
+}
+
+.universeFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.openLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-mute);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  letter-spacing: -0.005em;
+  transition: color var(--dur-fast) var(--ease-out), gap var(--dur-fast) var(--ease-out);
+}
+.openLink:hover {
+  color: var(--text);
+  gap: 9px;
+}
+.openLink svg {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.openLink:hover svg {
+  transform: translateX(2px);
+}
+
+.engagementBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--brand, #4F46E5);
+  background: rgba(79, 70, 229, 0.10);
+  border: 1px solid rgba(79, 70, 229, 0.25);
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDotCore, .liveDotHalo { animation: none; }
+}
