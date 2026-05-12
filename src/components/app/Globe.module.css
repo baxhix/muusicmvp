@@ -360,13 +360,53 @@
   white-space: nowrap;
 }
 
+/* Song row — fixed visible width so the badge itself doesn't grow
+   with track-name length. The inner element holds the actual text
+   and gets a ping-pong marquee applied at runtime only when the
+   text overflows the container. */
 .userBadgeSong {
+  max-width: 160px;
+  overflow: hidden;
   font-size: 12px;
-  color: rgba(245, 245, 247, 0.55);
+  line-height: 1.25;
+  position: relative;
+}
+.userBadgeSongInner {
+  display: inline-block;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  /* Default: zero distance / no animation. Both vars get overridden
+     inline by the JS measurement step when overflow > 0. */
+  --marquee-distance: 0px;
+  --marquee-duration: 10s;
+}
+.userBadgeSongInnerActive {
+  animation: marquee-pingpong var(--marquee-duration) ease-in-out infinite alternate;
+}
+.userBadge:hover .userBadgeSongInner,
+.liveUserBadge:hover .userBadgeSongInner {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-pingpong {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-1 * var(--marquee-distance))); }
+}
+
+/* Song-row tokens used by BOTH badge types (Você + live presence).
+   Semibold white title, regular gray artist — taps the same neutral
+   secondary that .userBadgeSong already used (0.55 alpha on white). */
+.trackTitle {
+  font-weight: 600;
+  color: #F5F5F7;
+  letter-spacing: -0.005em;
+}
+.trackArtist {
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .userBadgeSongInnerActive { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -439,12 +479,11 @@
 }
 
 .liveUserSong {
+  max-width: 160px;
+  overflow: hidden;
   font-size: 12px;
-  color: rgba(245, 245, 247, 0.55);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  line-height: 1.25;
+  position: relative;
 }
 
 /* ──────────────────────────────────────────────

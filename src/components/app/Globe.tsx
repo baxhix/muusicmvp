@@ -214,6 +214,49 @@ export default function Globe() {
     // Inicia o relógio de inatividade no mount — sem atividade por 6s, gira.
     handleActivity();
 
+    /**
+     * Build the "Title — Artist" inner markup. Title in semibold white,
+     * artist in regular neutral gray (design-system token). Returns
+     * empty string when there's no title at all.
+     */
+    const buildSongInnerHtml = (
+      title: string | null | undefined,
+      artist: string | null | undefined,
+    ): string => {
+      const safeTitle = (title ?? '').replace(/[<>&"']/g, '');
+      if (!safeTitle) return '';
+      const safeArtist = (artist ?? '').replace(/[<>&"']/g, '');
+      const artistMarkup = safeArtist
+        ? `<span class="${styles.trackArtist}"> — ${safeArtist}</span>`
+        : '';
+      return `<span class="${styles.trackTitle}">${safeTitle}</span>${artistMarkup}`;
+    };
+
+    /**
+     * Measure the song-row's inner text vs its container width. When
+     * the text overflows, set CSS vars + add the marquee-active class
+     * so the ping-pong animation kicks in. Duration scales with the
+     * overflow amount (8–12s) so longer texts don't whip past faster
+     * than the eye can follow.
+     */
+    const activateMarquee = (rootEl: HTMLElement, innerClass: string) => {
+      const inner = rootEl.querySelector<HTMLElement>('.' + innerClass);
+      if (!inner) return;
+      const container = inner.parentElement;
+      if (!container) return;
+      const overflow = inner.scrollWidth - container.clientWidth;
+      if (overflow > 1) {
+        const seconds = Math.max(8, Math.min(12, overflow / 24));
+        inner.style.setProperty('--marquee-distance', `${overflow}px`);
+        inner.style.setProperty('--marquee-duration', `${seconds}s`);
+        inner.classList.add(styles.userBadgeSongInnerActive);
+      } else {
+        inner.classList.remove(styles.userBadgeSongInnerActive);
+        inner.style.removeProperty('--marquee-distance');
+        inner.style.removeProperty('--marquee-duration');
+      }
+    };
+
     map.on('load', () => {
       rafId = requestAnimationFrame(rotate);
 
@@ -228,12 +271,13 @@ export default function Globe() {
         }
         if (!payload) return;
 
-        const { coords, avatarUrl, name, trackTitle } = payload;
+        const { coords, avatarUrl, name, trackTitle, trackArtist } = payload;
         // Sanitize before injecting into innerHTML.
         const safeName   = (name ?? 'Você').replace(/[<>&"']/g, '');
         const safeAvatar = (avatarUrl ?? '').replace(/["<>]/g, '');
         const safeTitle  = (trackTitle ?? '').replace(/[<>&"']/g, '');
         const avatarSrc  = safeAvatar || 'https://i.pravatar.cc/72?u=me';
+        const songInnerHtml = buildSongInnerHtml(trackTitle, trackArtist);
 
         const audioBarsHtml = `
           <span class="${styles.audioBars}" aria-hidden="true">
@@ -242,24 +286,29 @@ export default function Globe() {
 
         const el = document.createElement('div');
         el.className = styles.userLocationMarker;
-        // The equalizer bars always render next to the name so the
-        // "Você" pin reads as a live, listening presence even before
-        // any track loads. When a song is playing we also show the
-        // title underneath; the bars stay anchored to the name row
-        // to avoid duplication.
+        // Equalizer bars stay next to the name. The song row gained
+        // a fixed-width container + marquee-eligible inner span so
+        // "Title — Artist" can ping-pong horizontally when the text
+        // overflows, instead of widening the badge.
         el.innerHTML = `
           <span class="${styles.userLocationPulse}" aria-hidden="true"></span>
           <div class="${styles.userBadge}" role="img" aria-label="${safeName} (sua localização, online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
             <img src="${avatarSrc}" alt="" class="${styles.userBadgeAvatar}" />
             <div class="${styles.userBadgeInfo}">
               <span class="${styles.userBadgeName}">${safeName}${audioBarsHtml}</span>
-              ${safeTitle ? `<span class="${styles.userBadgeSong}">${safeTitle}</span>` : ''}
+              ${songInnerHtml ? `<div class="${styles.userBadgeSong}"><span class="${styles.userBadgeSongInner}">${songInnerHtml}</span></div>` : ''}
             </div>
           </div>
         `;
         userLocationMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([coords.lng, coords.lat])
           .addTo(map);
+        // Measure after mount so scrollWidth/clientWidth reflect the
+        // real laid-out element. requestAnimationFrame buys a frame
+        // for layout to settle.
+        if (songInnerHtml) {
+          requestAnimationFrame(() => activateMarquee(el, styles.userBadgeSongInner));
+        }
       });
 
       // ── Live presence markers (other users) ──────────────────────────
@@ -283,6 +332,7 @@ export default function Globe() {
           const safeAvatar = (u.avatarUrl ?? '').replace(/["<>]/g, '');
           const safeTitle = (u.trackTitle ?? '').replace(/[<>&"']/g, '');
           const avatarSrc = safeAvatar || `https://i.pravatar.cc/72?u=${u.id}`;
+          const songInnerHtml = buildSongInnerHtml(u.trackTitle, u.trackArtist);
 
           const audioBarsHtml = `
             <span class="${styles.audioBars}" aria-hidden="true">
@@ -291,13 +341,15 @@ export default function Globe() {
 
           // Equalizer bars sit next to the name on every online-user
           // badge — a steady visual cue that this person is live on
-          // the platform. The song row stays text-only.
+          // the platform. Song row uses the same marquee-capable
+          // structure as the "Você" pin so long titles ping-pong
+          // instead of widening the card.
           const html = `
             <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName} (online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
               <img src="${avatarSrc}" alt="" class="${styles.liveUserAvatar}" />
               <div class="${styles.liveUserInfo}">
                 <span class="${styles.liveUserName}">${safeName}${audioBarsHtml}</span>
-                ${safeTitle ? `<span class="${styles.liveUserSong}">${safeTitle}</span>` : ''}
+                ${songInnerHtml ? `<div class="${styles.liveUserSong}"><span class="${styles.userBadgeSongInner}">${songInnerHtml}</span></div>` : ''}
               </div>
             </div>
           `;
@@ -307,7 +359,14 @@ export default function Globe() {
             // Reuse the DOM element to avoid flicker. Position update is
             // cheap on Mapbox markers.
             const el = existing.getElement();
-            if (el.innerHTML !== html) el.innerHTML = html;
+            if (el.innerHTML !== html) {
+              el.innerHTML = html;
+              if (songInnerHtml) {
+                requestAnimationFrame(() =>
+                  activateMarquee(el, styles.userBadgeSongInner),
+                );
+              }
+            }
             existing.setLngLat([u.lng, u.lat]);
           } else {
             const wrapper = document.createElement('div');
@@ -322,6 +381,11 @@ export default function Globe() {
               .setLngLat([u.lng, u.lat])
               .addTo(map);
             liveUserMarkers.set(u.id, marker);
+            if (songInnerHtml) {
+              requestAnimationFrame(() =>
+                activateMarquee(wrapper, styles.userBadgeSongInner),
+              );
+            }
           }
         }
       });
