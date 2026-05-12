@@ -42,7 +42,7 @@ const Globe = dynamic(() => import('@/components/app/Globe'), { ssr: false });
 export default function AppPage() {
   const { user: authUser } = useAuth();
   const chat = useChatLive();
-  const { users: liveUsers } = useLiveUsers();
+  const { users: liveUsers, totalRegistered } = useLiveUsers();
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
   const [showProfile, setShowProfile] = useState(false);
@@ -109,6 +109,13 @@ export default function AppPage() {
       }));
     globeStore.setLiveUsers(mapped);
   }, [liveUsers, authUser?.id]);
+
+  // Push the total registered head-count to the globe so it can scatter
+  // ambient "fan presence" dots around Paraná — independent from the
+  // live presence markers above, which only show users currently online.
+  useEffect(() => {
+    globeStore.setTotalRegistered(totalRegistered);
+  }, [totalRegistered]);
 
   // Build the ProfileUser shape from the live auth record. Falls back to a
   // pravatar placeholder when no avatar has been uploaded yet so the UI

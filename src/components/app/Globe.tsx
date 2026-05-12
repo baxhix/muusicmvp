@@ -43,10 +43,133 @@ export default function Globe() {
         'star-intensity': 0.45,
       } as Parameters<typeof map.setFog>[0]);
 
-      // No mock data layers — the map carries only real users via the
-      // liveUserMarkers map (set from globeStore.setLiveUsers) and the
-      // logged-in user's own marker (globeStore.setUserLocation). Both
-      // are anchored to actual lat/lng, never to fake screen positions.
+      // Ambient "fan presence" source — populated by globeStore.setTotalRegistered.
+      // Starts empty; the handler below builds the FeatureCollection
+      // deterministically around Paraná state cities as soon as we get
+      // a real head-count from /api/users/online.
+      map.addSource('parana-fans', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      // Subtle glow halo. Bigger, blurred, low opacity — gives a soft
+      // "warm zone" feel at lower zooms, then fades into the dot at
+      // street zoom so it doesn't dominate the rua-level view.
+      map.addLayer({
+        id: 'parana-fans-glow',
+        type: 'circle',
+        source: 'parana-fans',
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 4,
+            5, 7,
+            9, 11,
+            14, 14,
+          ],
+          'circle-color': '#3ddb74',
+          'circle-blur': 1.2,
+          'circle-opacity': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 0.18,
+            5, 0.32,
+            9, 0.4,
+            14, 0.22,
+          ],
+        },
+      });
+
+      // Hard dot in the center of each glow. Stays small but visible
+      // at every zoom level — that's the "every dot is a registered
+      // fan" affordance the user can rely on at street view too.
+      map.addLayer({
+        id: 'parana-fans-dot',
+        type: 'circle',
+        source: 'parana-fans',
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 1.4,
+            5, 2.2,
+            9, 3.2,
+            14, 4,
+          ],
+          'circle-color': '#5dffa1',
+          'circle-opacity': 0.95,
+          'circle-stroke-color': 'rgba(0,0,0,0.55)',
+          'circle-stroke-width': 0.5,
+        },
+      });
+    });
+
+    // ── Paraná-anchored fan presence dots ────────────────────────────
+    // 8 city centers spread across the state. The dot generator cycles
+    // through this list (city = i % cities.length) so a population of
+    // N spreads naturally; small deterministic jitter from `hashFloat`
+    // keeps repeated picks from stacking on top of each other.
+    const PARANA_CITIES: Array<[number, number]> = [
+      [-49.27, -25.43], // Curitiba
+      [-51.16, -23.31], // Londrina
+      [-51.94, -23.42], // Maringá
+      [-53.46, -24.96], // Cascavel
+      [-54.59, -25.55], // Foz do Iguaçu
+      [-50.16, -25.09], // Ponta Grossa
+      [-51.46, -25.39], // Guarapuava
+      [-51.09, -26.23], // União da Vitória
+    ];
+
+    /** Deterministic float in [0, 1) seeded by an integer. */
+    const hashFloat = (seed: number): number => {
+      let h = (seed | 0) ^ 0x9e3779b9;
+      h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+      h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+      h ^= h >>> 16;
+      return (h >>> 0) / 4294967296;
+    };
+
+    const buildParanaFeatures = (count: number): GeoJSON.Feature[] => {
+      if (count <= 0) return [];
+      const features: GeoJSON.Feature[] = [];
+      for (let i = 0; i < count; i++) {
+        const city = PARANA_CITIES[i % PARANA_CITIES.length];
+        // Two-axis jitter up to ~0.18° (~20 km) so dots don't pile
+        // exactly on the city center yet stay clearly within the
+        // state's bounding box.
+        const jx = (hashFloat(i * 31 + 7) - 0.5) * 0.36;
+        const jy = (hashFloat(i * 31 + 17) - 0.5) * 0.36;
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [city[0] + jx, city[1] + jy] },
+          properties: { idx: i },
+        });
+      }
+      return features;
+    };
+
+    /** Last value we drew — avoids rebuilding the source on equal counts. */
+    let lastParanaCount = -1;
+    globeStore.registerTotalRegistered((total) => {
+      if (total === lastParanaCount) return;
+      lastParanaCount = total;
+      const src = map.getSource('parana-fans');
+      // `getSource` might be undefined if `style.load` hasn't fired yet
+      // (handler called from the buffer). Re-try once the style is in.
+      if (!src) {
+        map.once('style.load', () => {
+          const retry = map.getSource('parana-fans');
+          if (retry && 'setData' in retry) {
+            (retry as mapboxgl.GeoJSONSource).setData({
+              type: 'FeatureCollection',
+              features: buildParanaFeatures(total),
+            });
+          }
+        });
+        return;
+      }
+      (src as mapboxgl.GeoJSONSource).setData({
+        type: 'FeatureCollection',
+        features: buildParanaFeatures(total),
+      });
     });
 
     // ─── Auto-rotation ───────────────────────────────────────────────────────

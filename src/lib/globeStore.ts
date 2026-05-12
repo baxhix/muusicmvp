@@ -25,11 +25,14 @@ export interface LiveMapUser {
 
 type SetUserLocationFn = (payload: UserLocationPayload | null) => void;
 type SetLiveUsersFn = (users: LiveMapUser[]) => void;
+type SetTotalRegisteredFn = (total: number) => void;
 
 let _flyTo: FlyToFn | null = null;
 let _setUserLocation: SetUserLocationFn | null = null;
 let _setLiveUsers: SetLiveUsersFn | null = null;
 let _liveUsersBuffer: LiveMapUser[] | null = null;
+let _setTotalRegistered: SetTotalRegisteredFn | null = null;
+let _totalRegisteredBuffer: number | null = null;
 
 export const globeStore = {
   register: (fn: FlyToFn) => { _flyTo = fn; },
@@ -54,5 +57,23 @@ export const globeStore = {
   setLiveUsers: (users: LiveMapUser[]) => {
     if (_setLiveUsers) _setLiveUsers(users);
     else _liveUsersBuffer = users;
+  },
+
+  /**
+   * Globe registers a handler that scatters ambient "fan presence"
+   * dots whose COUNT reflects the platform's total registered users.
+   * Buffered the same way live users are — caller may publish before
+   * the map style finishes loading.
+   */
+  registerTotalRegistered: (fn: SetTotalRegisteredFn) => {
+    _setTotalRegistered = fn;
+    if (_totalRegisteredBuffer !== null) {
+      fn(_totalRegisteredBuffer);
+      _totalRegisteredBuffer = null;
+    }
+  },
+  setTotalRegistered: (total: number) => {
+    if (_setTotalRegistered) _setTotalRegistered(total);
+    else _totalRegisteredBuffer = total;
   },
 };

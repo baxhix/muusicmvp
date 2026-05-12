@@ -8,22 +8,38 @@ import { useSocket } from './useSocket';
 
 const POLL_MS = 30_000; // refetch every 30s, plus on socket presence events
 
+/** Response shape from /api/users/online. */
+interface OnlineUsersResponse {
+  users: ApiOnlineUser[];
+  totalRegistered: number;
+}
+
 /**
- * Live list of online users. Initial fetch via REST (`/api/users/online`),
- * then refreshed every 30s and on `presence:online`/`presence:offline`
- * socket broadcasts.
+ * Live list of online users + total registered head-count. Initial
+ * fetch via REST (`/api/users/online`), then refreshed every 30s and
+ * on `presence:online`/`presence:offline` socket broadcasts.
+ *
+ * `totalRegistered` powers the ambient "fan presence" dots scattered
+ * on the map — independent from `users.length` which only counts
+ * users currently online.
  */
-export function useLiveUsers(): { users: ApiOnlineUser[]; loading: boolean } {
+export function useLiveUsers(): {
+  users: ApiOnlineUser[];
+  totalRegistered: number;
+  loading: boolean;
+} {
   const { user } = useAuth();
   const { socket } = useSocket();
   const [users, setUsers] = useState<ApiOnlineUser[]>([]);
+  const [totalRegistered, setTotalRegistered] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await api.get<{ users: ApiOnlineUser[] }>('/api/users/online');
+      const res = await api.get<OnlineUsersResponse>('/api/users/online');
       setUsers(res.users);
+      setTotalRegistered(res.totalRegistered ?? 0);
     } catch (err) {
       console.error('useLiveUsers fetch failed:', err);
     } finally {
@@ -39,9 +55,11 @@ export function useLiveUsers(): { users: ApiOnlineUser[]; loading: boolean } {
     let cancelled = false;
     const fetchOnce = () => {
       api
-        .get<{ users: ApiOnlineUser[] }>('/api/users/online')
+        .get<OnlineUsersResponse>('/api/users/online')
         .then((res) => {
-          if (!cancelled) setUsers(res.users);
+          if (cancelled) return;
+          setUsers(res.users);
+          setTotalRegistered(res.totalRegistered ?? 0);
         })
         .catch((err) => {
           if (!cancelled) console.error('useLiveUsers fetch failed:', err);
@@ -72,5 +90,5 @@ export function useLiveUsers(): { users: ApiOnlineUser[]; loading: boolean } {
     };
   }, [socket, load]);
 
-  return { users, loading };
+  return { users, totalRegistered, loading };
 }
