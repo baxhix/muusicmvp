@@ -278,6 +278,27 @@ function MessageRow({
   onReact: (messageId: string, emoji: string) => void;
 }) {
   const reactions = m.reactions ?? [];
+  const reactedEmojis = new Set(reactions.map((r) => r.emoji));
+  const pickerOptions = QUICK_REACTIONS.filter((e) => !reactedEmojis.has(e));
+
+  // Picker visibility: hidden by default, toggled by the "+" button.
+  // Persistent state per message so each conversation row keeps track
+  // of its own popover independently.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const reactBarRef = useRef<HTMLDivElement | null>(null);
+
+  // Click-outside closes the picker. Listen on the document while
+  // open; tear down on close to keep us off the event hot-path when
+  // nothing's expanded.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (reactBarRef.current?.contains(e.target as Node)) return;
+      setPickerOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [pickerOpen]);
 
   // Outgoing messages render naked text on the panel — no bubble bg at
   // all. Incoming messages get a vibrant 135deg gradient drawn from
@@ -291,15 +312,6 @@ function MessageRow({
           color: '#FFFFFF',
         };
       })();
-
-  // Build the combined reactions row: existing reactions (chips with
-  // count, accent-tinted when the current user is among the reactors)
-  // followed by the remaining quick-pick options. Both are click-to-
-  // toggle. Always rendered — no hover gate — so chips stay permanently
-  // visible (WhatsApp/Slack/Discord pattern) and adding a new reaction
-  // is one click away without first needing to mouseover the message.
-  const reactedEmojis = new Set(reactions.map((r) => r.emoji));
-  const pickerOptions = QUICK_REACTIONS.filter((e) => !reactedEmojis.has(e));
 
   return (
     <div className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}>
@@ -317,7 +329,17 @@ function MessageRow({
         </div>
       </div>
 
+      {/* Reactions bar
+       * - Chips for reactions ALREADY made are persistent — count +
+       *   emoji visible at all times so anyone can see who reacted
+       *   with what without interacting (WhatsApp/Slack/Discord).
+       * - The 6-emoji picker is gated behind a small "+" affordance
+       *   so the bar stays compact when no one's reacted yet, and
+       *   doesn't blast the user with all six options upfront.
+       * - Click-outside closes the picker; the bar itself is a click
+       *   sanctuary so chip toggles don't auto-close it. */}
       <div
+        ref={reactBarRef}
         className={`${styles.reactBar} ${isMine ? styles.reactBarOut : styles.reactBarIn}`}
       >
         {reactions.map((r) => (
@@ -334,18 +356,40 @@ function MessageRow({
             <span className={styles.reactChipCount}>{r.count}</span>
           </button>
         ))}
-        {pickerOptions.map((emoji) => (
+        {pickerOptions.length > 0 && (
           <button
-            key={emoji}
             type="button"
-            className={`${styles.reactChip} ${styles.reactChipPicker}`}
-            onClick={() => onReact(m.id, emoji)}
-            aria-label={`Reagir com ${emoji}`}
-            title={`Reagir com ${emoji}`}
+            className={`${styles.reactChip} ${styles.reactAddBtn} ${pickerOpen ? styles.reactAddBtnOpen : ''}`}
+            onClick={() => setPickerOpen((v) => !v)}
+            aria-label="Adicionar reação"
+            aria-expanded={pickerOpen}
+            title="Adicionar reação"
           >
-            <span className={styles.reactChipEmoji}>{emoji}</span>
+            {pickerOpen ? '×' : '+'}
           </button>
-        ))}
+        )}
+        {pickerOpen && pickerOptions.length > 0 && (
+          <div
+            className={`${styles.reactPickerPopover} ${isMine ? styles.reactPickerPopoverOut : styles.reactPickerPopoverIn}`}
+            role="toolbar"
+            aria-label="Escolher reação"
+          >
+            {pickerOptions.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                className={styles.reactPickerBtn}
+                onClick={() => {
+                  onReact(m.id, emoji);
+                  setPickerOpen(false);
+                }}
+                aria-label={`Reagir com ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className={styles.time}>{formatTime(m.createdAt)}</div>

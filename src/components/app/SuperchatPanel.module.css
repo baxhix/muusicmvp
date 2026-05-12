@@ -270,22 +270,6 @@
   border-color: rgba(61, 219, 116, 0.6);
 }
 
-/* Picker-only emojis (no one reacted yet with these). Lower opacity
-   at rest so the bar reads as "available reactions" without
-   competing visually with chips that have counts. Hovering brings
-   them up to full visibility. */
-.reactChipPicker {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.04);
-  padding: 2px 6px;
-  opacity: 0.45;
-}
-.reactChipPicker:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
 .reactChipEmoji {
   font-size: 12.5px;
   line-height: 1;
@@ -296,6 +280,83 @@
   letter-spacing: 0.02em;
   min-width: 8px;
   text-align: left;
+}
+
+/* "+" affordance to open the picker. Sits at the tail of the chip
+   row, intentionally subtle so it doesn't compete with real chips. */
+.reactAddBtn {
+  padding: 0;
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+.reactAddBtn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(245, 245, 247, 0.95);
+}
+.reactAddBtnOpen {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f5f5f7;
+}
+
+/* Picker popover — opens above the bar when "+" is clicked.
+   Side anchor follows message direction so it doesn't reach over the
+   panel edge for outgoing messages. */
+.reactPickerPopover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  display: flex;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(20, 20, 24, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  z-index: 4;
+  animation: react-popover-in 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.reactPickerPopoverIn  { left: 0; }
+.reactPickerPopoverOut { right: 0; }
+
+@keyframes react-popover-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.reactPickerBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s, transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.reactPickerBtn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  transform: scale(1.18);
+}
+.reactPickerBtn:active { transform: scale(1.05); }
+
+/* The bar needs `position: relative` so the popover anchors to it. */
+.reactBar {
+  position: relative;
 }
 
 .inputArea {
