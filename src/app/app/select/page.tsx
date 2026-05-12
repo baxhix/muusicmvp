@@ -35,9 +35,19 @@ export default function UniverseSelectPage() {
 
   const handlePick = (config: UniverseConfig) => {
     setUniverse(config.id);
-    // Navigate immediately — the context update is synchronous in the
-    // same tick as setUniverse, so /app's guard sees the new value.
-    router.replace('/app');
+    // Hard navigation instead of router.replace. The soft client
+    // transition was producing a race where /app/select unmounts
+    // while /app mounts in the same React commit — Mapbox /
+    // canvas-confetti / other DOM-heavy children would fire
+    // appendChild on a target already torn down ("Cannot read
+    // properties of undefined (reading 'appendChild')").
+    //
+    // location.assign discards the whole React tree, then /app
+    // mounts fresh with the universe already persisted in
+    // localStorage — same outcome the user expects, zero race.
+    if (typeof window !== 'undefined') {
+      window.location.assign('/app');
+    }
   };
 
   const list = Object.values(UNIVERSES);
