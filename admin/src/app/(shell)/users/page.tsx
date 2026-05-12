@@ -107,7 +107,17 @@ export default function UsersPage() {
   const { push } = useToast();
 
   useEffect(() => {
-    usersService.list().then(setUsers);
+    usersService
+      .list()
+      .then(setUsers)
+      .catch((err) => {
+        // Surface fetch failures instead of leaving the table stuck in
+        // loading state forever. Falling back to [] also flips the
+        // Table out of skeleton mode so the user sees the empty-state
+        // copy rather than spinning indefinitely.
+        console.error('usersService.list failed:', err);
+        setUsers([]);
+      });
   }, []);
 
   /* ── Aggregates for KPIs ─────────────────────────────── */
