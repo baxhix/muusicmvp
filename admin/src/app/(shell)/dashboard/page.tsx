@@ -218,20 +218,42 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityEntry[] | null>(null);
 
   useEffect(() => {
-    Promise.all([
+    // allSettled: one metric failing doesn't kill the rest. Each card
+    // gets a clean either-or path — populated on success, kept as
+    // empty-state on failure (with the error in the console).
+    Promise.allSettled([
       metricsService.kpis(),
       metricsService.growth(),
       metricsService.postsByType(),
       metricsService.planDistribution(),
       metricsService.reportsByReason(),
       metricsService.activity(),
-    ]).then(([k, g, pt, pd, rr, a]) => {
-      setKpis(k);
-      setGrowth(g);
-      setPostsByType(pt);
-      setPlanDist(pd);
-      setReportsByReason(rr);
-      setActivity(a);
+    ]).then((results) => {
+      const setters: ((v: unknown) => void)[] = [
+        setKpis as (v: unknown) => void,
+        setGrowth as (v: unknown) => void,
+        setPostsByType as (v: unknown) => void,
+        setPlanDist as (v: unknown) => void,
+        setReportsByReason as (v: unknown) => void,
+        setActivity as (v: unknown) => void,
+      ];
+      const labels = [
+        'kpis',
+        'growth',
+        'postsByType',
+        'planDistribution',
+        'reportsByReason',
+        'activity',
+      ];
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled') {
+          setters[i](r.value);
+        } else {
+          console.error(`metricsService.${labels[i]} failed:`, r.reason);
+          // Empty array keeps the card out of perpetual loading mode.
+          setters[i]([]);
+        }
+      });
     });
   }, []);
 

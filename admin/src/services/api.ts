@@ -134,4 +134,24 @@ const httpDriver: ApiClient = {
 const driverEnv = process.env.NEXT_PUBLIC_API_DRIVER;
 const useHttp = driverEnv === 'http' || (driverEnv == null && BASE_URL !== '');
 
-export const api: ApiClient = useHttp ? httpDriver : mockDriver;
+/**
+ * Per-path driver pick. Live paths under /api/admin/* go to the real
+ * muusic backend (httpDriver); legacy paths used by services we
+ * haven't migrated yet (settings/team/reports/etc) stay on mockDriver
+ * so the screens keep rendering instead of 404'ing the moment
+ * BASE_URL is set.
+ *
+ * Migration target: as each service grows a real /api/admin/* endpoint,
+ * its path naturally graduates to httpDriver — no code change here.
+ */
+function pickDriver(path: string): ApiClient {
+  if (!useHttp) return mockDriver;
+  return path.startsWith('/api/admin/') ? httpDriver : mockDriver;
+}
+
+export const api: ApiClient = {
+  get:    <T,>(path: string) => pickDriver(path).get<T>(path),
+  post:   <T,>(path: string, body?: unknown) => pickDriver(path).post<T>(path, body),
+  patch:  <T,>(path: string, body?: unknown) => pickDriver(path).patch<T>(path, body),
+  delete: <T,>(path: string) => pickDriver(path).delete<T>(path),
+};

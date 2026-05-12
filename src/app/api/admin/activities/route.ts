@@ -58,7 +58,10 @@ export async function GET(req: Request) {
     id: r.id as string,
     kind: r.kind as 'stream' | 'login' | 'chat_started',
     points: r.points as number,
-    createdAt: (r.created_at as Date).toISOString(),
+    // db.execute returns timestamps as ISO strings in production —
+    // same coercion trap that 500'd /api/admin/users. Wrap defensively
+    // so .toISOString() always sees a Date instance.
+    createdAt: new Date(r.created_at as string | Date).toISOString(),
     user: {
       id: r.user_id as string,
       name: r.user_name as string | null,

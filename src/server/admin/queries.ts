@@ -271,6 +271,102 @@ export async function topTracks(days = 30, limit = 20) {
 }
 
 /** Daily new-user counts for the past N days (oldest → newest). */
+/**
+ * Shape the admin Superfãs table consumes. Maps user identity + the
+ * existing ranking aggregates and synthesizes a couple of fields the
+ * UI needs but the backend doesn't track yet (totalSpentBRL,
+ * totalListenMinutes, tags). Synthesis is honest — listening minutes
+ * are estimated as `streams * 3` (rough avg track length) and spent
+ * amount is 0 until billing exists.
+ */
+export interface AdminSuperfanRow {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    handle: string;
+    avatar: string | null;
+    city: string;
+    state: string;
+  };
+  rank: number;
+  fanpoints: number;
+  totalSpentBRL: number;
+  totalListenMinutes: number;
+  interactions: number;
+  daysActive: number;
+  joinedAt: string;
+  tags: string[];
+}
+
+/**
+ * Top users by total points, hydrated with the identity fields the
+ * admin Superfãs table needs (handle, city/state, joinedAt, etc.).
+ * Mirrors the in-app /api/ranking response but with admin-friendly
+ * shape so the table renders with zero further mapping on the client.
+ */
+export async function getSuperfansForAdmin(limit = 100): Promise<AdminSuperfanRow[]> {
+  const result = await db.execute(sql`
+    SELECT
+      u.id           AS user_id,
+      u.email        AS email,
+      u.name         AS name,
+      u.avatar_url   AS avatar_url,
+      u.city         AS city,
+      u.country_code AS country_code,
+      u.created_at   AS created_at,
+      COUNT(*) FILTER (WHERE a.kind = 'stream')::int  AS streams,
+      COUNT(*) FILTER (WHERE a.kind = 'login')::int   AS logins,
+      COUNT(*) FILTER (WHERE a.kind = 'chat_started')::int AS chats_started,
+      COALESCE(SUM(a.points), 0)::int                  AS points
+    FROM users u
+    LEFT JOIN user_activities a ON a.user_id = u.id
+    GROUP BY u.id, u.email, u.name, u.avatar_url, u.city, u.country_code, u.created_at
+    ORDER BY points DESC, streams DESC, u.created_at ASC
+    LIMIT ${limit}
+  `);
+
+  const now = Date.now();
+  return result.rows.map((r, i): AdminSuperfanRow => {
+    const email = r.email as string;
+    const name = (r.name as string | null)?.trim() || handleFromEmail(email);
+    const points = (r.points as number) ?? 0;
+    const streams = (r.streams as number) ?? 0;
+    const logins = (r.logins as number) ?? 0;
+    const chatsStarted = (r.chats_started as number) ?? 0;
+    const createdAtMs = asEpoch(r.created_at) ?? now;
+    const joinedAt = asIso(r.created_at) ?? new Date().toISOString();
+    const daysActive = Math.max(
+      1,
+      Math.floor((now - createdAtMs) / (24 * 60 * 60 * 1000)),
+    );
+
+    return {
+      id: r.user_id as string,
+      user: {
+        id: r.user_id as string,
+        name,
+        handle: handleFromEmail(email),
+        avatar: (r.avatar_url as string | null) ?? null,
+        city: (r.city as string | null) ?? '',
+        state: (r.country_code as string | null) ?? '',
+      },
+      rank: i + 1,
+      fanpoints: points,
+      totalSpentBRL: 0,
+      // Rough estimate: 3 min average track length × number of streams.
+      // Replace with real SUM(duration_listened_seconds) when the listen
+      // history starts to carry useful duration data per row.
+      totalListenMinutes: streams * 3,
+      // Counts every point-bearing action the user took.
+      interactions: streams + logins + chatsStarted,
+      daysActive,
+      joinedAt,
+      tags: [],
+    };
+  });
+}
+
 export async function userGrowth(days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const rows = await db.execute(sql`
