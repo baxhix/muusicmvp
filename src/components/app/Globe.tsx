@@ -233,11 +233,64 @@ export default function Globe() {
     };
 
     /**
+     * Deterministic radial offset per user id so two presence pins
+     * sharing a city centroid land side-by-side instead of stacking.
+     * The offset magnitude is zoom-dependent — biggest at globe view
+     * (where city-level jitter looks like the same pixel), zero at
+     * street zoom where the real coords are already separated.
+     *
+     *   zoom ≤ 3  → R = 56 px (city-cluster view, max spread)
+     *   zoom ≤ 6  → R = 36 px
+     *   zoom ≤ 9  → R = 18 px
+     *   zoom > 9  → R = 0     (no offset; respect the real coord)
+     */
+    const hashUserId = (id: string): number => {
+      let h = 2166136261;
+      for (let i = 0; i < id.length; i++) {
+        h ^= id.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    };
+
+    const radiusForZoom = (zoom: number): number => {
+      if (zoom <= 3) return 56;
+      if (zoom <= 6) return 36;
+      if (zoom <= 9) return 18;
+      return 0;
+    };
+
+    const offsetForUser = (id: string, zoom: number): [number, number] => {
+      const R = radiusForZoom(zoom);
+      if (R === 0) return [0, 0];
+      const h = hashUserId(id);
+      // Distribute around a circle; the +0.13 keeps consecutive ids
+      // from landing on cardinal directions exclusively.
+      const theta = ((h % 360) / 360) * Math.PI * 2 + 0.13;
+      return [Math.cos(theta) * R, Math.sin(theta) * R];
+    };
+
+    /**
+     * Walk every live marker and re-apply its offset based on the
+     * current zoom. Cheap (O(N) of presence markers, typically < 50)
+     * and only runs on zoom events.
+     */
+    const reapplyMarkerOffsets = () => {
+      const zoom = map.getZoom();
+      for (const [id, marker] of liveUserMarkers) {
+        marker.setOffset(offsetForUser(id, zoom));
+      }
+    };
+
+    map.on('zoom', reapplyMarkerOffsets);
+
+    /**
      * Measure the song-row's inner text vs its container width. When
      * the text overflows, set CSS vars + add the marquee-active class
      * so the ping-pong animation kicks in. Duration scales with the
-     * overflow amount (8–12s) so longer texts don't whip past faster
-     * than the eye can follow.
+     * overflow amount (4–7s) — faster than the previous 8–12s, since
+     * the box is now narrower and the texts that overflow tend to
+     * overflow harder.
      */
     const activateMarquee = (rootEl: HTMLElement, innerClass: string) => {
       const inner = rootEl.querySelector<HTMLElement>('.' + innerClass);
@@ -246,7 +299,7 @@ export default function Globe() {
       if (!container) return;
       const overflow = inner.scrollWidth - container.clientWidth;
       if (overflow > 1) {
-        const seconds = Math.max(8, Math.min(12, overflow / 24));
+        const seconds = Math.max(4, Math.min(7, overflow / 48));
         inner.style.setProperty('--marquee-distance', `${overflow}px`);
         inner.style.setProperty('--marquee-duration', `${seconds}s`);
         inner.classList.add(styles.userBadgeSongInnerActive);
@@ -377,7 +430,11 @@ export default function Globe() {
             wrapper.addEventListener('click', () => {
               map.flyTo({ center: [u.lng, u.lat], zoom: 11, duration: 1400 });
             });
-            const marker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
+            const marker = new mapboxgl.Marker({
+              element: wrapper,
+              anchor: 'center',
+              offset: offsetForUser(u.id, map.getZoom()),
+            })
               .setLngLat([u.lng, u.lat])
               .addTo(map);
             liveUserMarkers.set(u.id, marker);

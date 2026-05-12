@@ -360,12 +360,11 @@
   white-space: nowrap;
 }
 
-/* Song row — fixed visible width so the badge itself doesn't grow
-   with track-name length. The inner element holds the actual text
-   and gets a ping-pong marquee applied at runtime only when the
-   text overflows the container. */
+/* Song row — tight 134px container. Intentionally narrow so the
+   whole badge has a predictable, compact footprint even when the
+   track name is long; the marquee covers what doesn't fit. */
 .userBadgeSong {
-  max-width: 160px;
+  max-width: 134px;
   overflow: hidden;
   font-size: 12px;
   line-height: 1.25;
@@ -479,7 +478,7 @@
 }
 
 .liveUserSong {
-  max-width: 160px;
+  max-width: 134px;
   overflow: hidden;
   font-size: 12px;
   line-height: 1.25;
