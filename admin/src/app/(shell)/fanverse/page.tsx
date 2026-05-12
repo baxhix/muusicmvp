@@ -46,8 +46,7 @@ const UNIVERSES: Universe[] = [
     tag: 'Sertanejo',
     description:
       'Universo da Boiadeira — superfãs, atividade ao redor do mapa e moderação dos shows.',
-    coverUrl:
-      'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
+    coverUrl: '/fanverse/ana-castela.png',
     accentColor: '#D97706',
     stats: {
       totalSuperfans: 18420,
@@ -64,8 +63,7 @@ const UNIVERSES: Universe[] = [
     tag: 'Country',
     description:
       'Coletivo Countrybeat — comunidades, lançamentos colaborativos e Superchats temáticos.',
-    coverUrl:
-      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80',
+    coverUrl: '/fanverse/countrybeat.png',
     accentColor: '#0F766E',
     stats: {
       totalSuperfans: 6210,

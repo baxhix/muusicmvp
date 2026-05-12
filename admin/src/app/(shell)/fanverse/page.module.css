@@ -15,11 +15,12 @@
   gap: 12px;
 }
 
-/* Universe-card grid. Stacks at small screens; pairs side-by-side
-   from 960px+ so the operator scans them in one glance. */
+/* Universe-card grid — narrower minmax now that the covers are
+   portrait. 320px lets 3 cards fit on a 1100px+ workspace and still
+   keeps each card readable on mobile. */
 .universeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 14px;
 }
 
@@ -41,15 +42,17 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
 
-/* Banner — full-bleed cover with a gradient overlay so the name + tag
-   text on top stays legible regardless of cover image. */
+/* Banner — portrait cover dominates the card vertically. 3:4 ratio
+   gives plenty of room for the artist photo without making the card
+   read like a hero banner. background-position: center top so the
+   subject's face isn't lost when the image is cropped. */
 .universeCover {
   position: relative;
-  aspect-ratio: 16 / 6;
+  aspect-ratio: 3 / 4;
   width: 100%;
   background-color: var(--surface-2);
   background-size: cover;
-  background-position: center;
+  background-position: center top;
   overflow: hidden;
 }
 .universeCoverOverlay {
