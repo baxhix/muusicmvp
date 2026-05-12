@@ -244,10 +244,13 @@ export default function Globe() {
       avatarClass: string,
       hasTrack: boolean,
     ): string => {
+      // Compact mode shows only 3 bars — fewer, calmer rhythm than the
+      // 4-bar inline indicator next to the name. The 4th bar's CSS
+      // nth-child rule simply has no element to apply to here.
       const barsChip = hasTrack
         ? `<span class="${styles.compactBarsBadge}" aria-hidden="true">
              <span class="${styles.audioBars}">
-               <span></span><span></span><span></span><span></span>
+               <span></span><span></span><span></span>
              </span>
            </span>`
         : '';
