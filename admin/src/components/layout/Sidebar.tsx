@@ -12,6 +12,7 @@ import {
   IconSettings,
   IconLogout,
   IconMusic,
+  IconTrendingUp,
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ interface NavItem {
 
 const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard',  label: 'Dashboard',  icon: IconDashboard },
+  { href: '/engagement', label: 'Engajamento', icon: IconTrendingUp },
   { href: '/feed',       label: 'Feed',       icon: IconFeed },
   { href: '/users',      label: 'Usuários',   icon: IconUsers },
   { href: '/tracks',     label: 'Músicas',    icon: IconMusic },

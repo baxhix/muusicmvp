@@ -384,6 +384,65 @@ export async function getSuperfansForAdmin(limit = 100): Promise<AdminSuperfanRo
   });
 }
 
+/**
+ * Engagement snapshot — counts the platform's social activity in a
+ * single round trip. Each kpi maps to a concept the engagement page
+ * surfaces; values are computed cheaply (COUNT(*) on indexed cols).
+ *
+ * For metrics we don't yet instrument (chat dwell time, pins visited,
+ * community participation), the admin page renders "em breve" tiles
+ * without a server hit — this endpoint is intentionally scoped to
+ * what's measurable today, so the dashboard never lies.
+ */
+export interface AdminEngagement {
+  totalMessages: number;
+  totalReactions: number;
+  chatsStarted: number;
+  superchatParticipants: number;
+  /** Daily message volume for the past N days (oldest → newest). */
+  messagesPerDay: Array<{ day: string; count: number }>;
+}
+
+export async function getEngagement(days = 30): Promise<AdminEngagement> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const [counts, perDay] = await Promise.all([
+    db.execute(sql`
+      SELECT
+        (SELECT COUNT(*)::int FROM messages)                                  AS total_messages,
+        (SELECT COUNT(*)::int FROM message_reactions)                         AS total_reactions,
+        (SELECT COUNT(*)::int FROM user_activities WHERE kind = 'chat_started') AS chats_started,
+        (SELECT COUNT(*)::int FROM conversation_participants cp
+           JOIN conversations c ON c.id = cp.conversation_id
+           WHERE c.type = 'group')                                            AS superchat_participants
+    `),
+    db.execute(sql`
+      SELECT
+        to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS count
+      FROM messages
+      WHERE created_at >= ${since}
+      GROUP BY day
+      ORDER BY day ASC
+    `),
+  ]);
+  const row = counts.rows[0] as {
+    total_messages: number;
+    total_reactions: number;
+    chats_started: number;
+    superchat_participants: number;
+  };
+  return {
+    totalMessages: row.total_messages ?? 0,
+    totalReactions: row.total_reactions ?? 0,
+    chatsStarted: row.chats_started ?? 0,
+    superchatParticipants: row.superchat_participants ?? 0,
+    messagesPerDay: perDay.rows.map((r) => ({
+      day: r.day as string,
+      count: r.count as number,
+    })),
+  };
+}
+
 export async function userGrowth(days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const rows = await db.execute(sql`

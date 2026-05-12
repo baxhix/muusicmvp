@@ -1,0 +1,126 @@
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  margin: 6px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sectionTitle span {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-mute);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Trend chart container */
+.chartCard {
+  padding: 20px 18px 24px;
+}
+
+.chartHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.chartTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.chartSubtitle {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-top: 2px;
+}
+
+.chartBody {
+  height: 200px;
+  margin-top: 8px;
+}
+
+/* Placeholder cards for metrics we don't measure yet — same shape
+   as a normal Card but with a muted body + a "Em breve" label so
+   it's obvious the data isn't available, not just absent. */
+.comingSoon {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-xs);
+  position: relative;
+}
+
+.comingSoonLabel {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: var(--surface-2);
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+}
+
+.comingSoonTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-mute);
+  letter-spacing: -0.005em;
+}
+
+.comingSoonDesc {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+  max-width: 380px;
+}
+
+.comingSoonList {
+  margin: 6px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 12px;
+  color: var(--text-faint);
+  line-height: 1.7;
+}
+
+/* Mini grid for "coming soon" placeholders so they form a row */
+.placeholderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
