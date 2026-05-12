@@ -42,13 +42,14 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
 
-/* Banner — portrait cover dominates the card vertically. 3:4 ratio
-   gives plenty of room for the artist photo without making the card
-   read like a hero banner. background-position: center top so the
-   subject's face isn't lost when the image is cropped. */
+/* Banner — landscape-leaning cover so the cards stay compact in the
+   admin context (operator scans many at once, no need for a hero
+   shot). 4:3 ratio cuts ~50% off the previous portrait height.
+   background-position: center top so the subject's face still
+   anchors above the gradient mask. */
 .universeCover {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 4 / 3;
   width: 100%;
   background-color: var(--surface-2);
   background-size: cover;

@@ -67,12 +67,18 @@
   line-height: 1.5;
 }
 
-/* Selection grid — 2 cards side-by-side on tablet+, stacks on mobile. */
+/* Selection grid — explicit 2-column layout so cards ALWAYS sit
+   side-by-side on any reasonable viewport. The previous `auto-fit
+   minmax(280px, 340px)` collapsed to a single column on widths
+   between mobile-real and ~620px (admin sidebar + comfortable
+   reading). Stacks only at the explicit mobile breakpoint below. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
-  justify-content: center;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 /* ── Universe card ─────────────────────────────────── */
@@ -195,9 +201,15 @@
   max-width: 480px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 540px) {
   .title { font-size: 28px; }
   .lead  { font-size: 14.5px; }
+  /* Real mobile widths: stack the cards. Above 540px we stay
+     side-by-side even on small tablets. */
+  .grid {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
