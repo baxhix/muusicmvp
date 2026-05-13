@@ -2,44 +2,30 @@
 
 import styles from './SingleBanner.module.css';
 
+interface Props {
+  /** Click handler for the "Entre no Superchat!" CTA inside the
+   *  banner. Wired in /app/page.tsx to setShowSuperchat(true). */
+  onOpenSuperchat: () => void;
+}
+
 /**
- * "Agora ou Nunca" single promo — fixed-position horizontal banner
- * anchored just BELOW the centered filter strip in the header.
- * Click opens YouTube search for the track in a new tab.
+ * "Agora ou Nunca" single promo — fixed-position horizontal pill
+ * anchored just BELOW the centered filter strip in the header. No
+ * longer links out to YouTube; the banner is now a presentational
+ * surface and the in-pill button opens the Superchat where fans
+ * discuss the song.
  *
  * Visual language follows the existing platform identity:
- *   - Translucent dark gradient surface (~58% alpha) with a saturated
- *     backdrop blur. Globe / lights bleed through gently, but text
- *     stays legible.
- *   - Accent-green hover state (matches every other interactive
- *     element across the app).
- *   - Two-line text hierarchy: bold title + muted lighter-weight
- *     artists line.
- *
- * Microinteractions intentionally restrained but layered:
- *   - Lift + accent ring on hover (centering preserved).
- *   - Cover art zooms 1.06× to suggest "into the cover".
- *   - Sweeping highlight gleam crosses the banner once per hover.
- *   - Continuous play-button pulse ring, stops on hover (static
- *     glow takes over).
- *   - Slight haptic-y scale-down on press.
+ *   - Translucent dark gradient + saturated backdrop blur.
+ *   - Continuous (very subtle) yellow→red gleam sweeping across.
+ *   - Pulsing red "live" dot in the listener badge.
+ *   - Pill silhouette (border-radius: 999px).
  */
-const SINGLE_URL =
-  // Drop the real Spotify/YouTube link here when it's available.
-  // For now the search URL on YouTube reliably surfaces the track.
-  'https://www.youtube.com/results?search_query=Ana+Castela+Pedro+Sampaio+Agora+ou+Nunca';
-
-export default function SingleBanner() {
+export default function SingleBanner({ onOpenSuperchat }: Props) {
   return (
-    <a
-      href={SINGLE_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={styles.banner}
-      aria-label="Ouvir Agora ou Nunca, novo single da Ana Castela e Pedro Sampaio"
-    >
-      {/* Cover art on the left. Image preserved via object-fit so the
-          square crop reads cleanly. */}
+    <div className={styles.banner}>
+      {/* Cover art on the left. Image preserved via object-fit so
+          the square crop reads cleanly. */}
       <span className={styles.coverWrap}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -50,8 +36,8 @@ export default function SingleBanner() {
         />
       </span>
 
-      {/* Text column — title, artists, and a live "X people listening"
-          badge stacked vertically. */}
+      {/* Text column — title, artists, and a live "X people
+          listening" badge stacked vertically. */}
       <span className={styles.textBlock}>
         <span className={styles.title}>Agora ou Nunca</span>
         <span className={styles.subtitle}>Ana Castela &amp; Pedro Sampaio</span>
@@ -62,19 +48,30 @@ export default function SingleBanner() {
         </span>
       </span>
 
-      {/* Big play CTA on the right — always visible, accent-green
-          circle with the classic play glyph + a soft pulse so the
-          eye gets drawn there. Whole banner is the click target;
-          this just makes the affordance unmistakable. */}
-      <span className={styles.playBtn} aria-hidden="true">
-        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+      {/* CTA — opens the Superchat. Combines a play glyph (visual
+          hook, this is music) with the explicit verbal action. */}
+      <button
+        type="button"
+        className={styles.ctaBtn}
+        onClick={onOpenSuperchat}
+        aria-label="Entre no Superchat"
+      >
+        <svg
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          fill="currentColor"
+          aria-hidden="true"
+          className={styles.ctaIcon}
+        >
           <path d="M4 2.5v11l9-5.5z" />
         </svg>
-      </span>
+        <span>Entre no Superchat!</span>
+      </button>
 
-      {/* Sweeping highlight gleam — fires once per hover (CSS animation
-          on parent:hover), gives the banner a fresh "polish" feel. */}
+      {/* Subtle yellow→red gleam sweeping continuously across the
+          pill. Decorative; the click target is the CTA above. */}
       <span className={styles.gleam} aria-hidden="true" />
-    </a>
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 /* ── Single promo banner ──────────────────────────────────────────
    Horizontal pill anchored just BELOW the centered filter strip in
-   the header. Fixed position so it stays visible as the user pans /
-   zooms the globe. Translucent surface lets the world bleed through;
-   backdrop blur keeps the text legible.
+   the header. Fixed position, translucent surface, fully rounded
+   silhouette. Decorative — the CTA button inside is the click
+   target.
 */
 .banner {
   position: fixed;
@@ -14,14 +14,15 @@
   display: inline-flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 18px 10px 10px;
-  /* Wider pill so the new "X people listening" badge has room
-     without crowding the play CTA. */
-  width: clamp(440px, 60vw, 720px);
+  padding: 10px 14px 10px 10px;
+  /* 100px narrower than the previous step — keeps the pill from
+     dominating the header while still housing cover + 3-line text
+     + CTA. */
+  width: clamp(340px, 50vw, 620px);
   height: 88px;
 
-  /* Translucent gradient surface — the Globe / lights underneath
-     bleed through; saturated backdrop blur keeps text crisp. */
+  /* Translucent surface + saturated backdrop blur. Globe shows
+     through gently. */
   background: linear-gradient(
     180deg,
     rgba(20, 20, 24, 0.58) 0%,
@@ -37,33 +38,8 @@
   color: inherit;
   text-decoration: none;
   overflow: hidden;
-  cursor: pointer;
-  transition:
-    transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 220ms ease-out,
-    box-shadow 220ms ease-out,
-    background 220ms ease-out;
-}
-.banner:hover {
-  transform: translateX(-50%) translateY(-2px);
-  border-color: rgba(255, 168, 60, 0.55);
-  background: linear-gradient(
-    180deg,
-    rgba(26, 26, 30, 0.68) 0%,
-    rgba(12, 12, 16, 0.68) 100%
-  );
-  box-shadow:
-    0 16px 36px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 168, 60, 0.20) inset,
-    0 0 28px rgba(255, 90, 30, 0.22);
-}
-.banner:active {
-  transform: translateX(-50%) translateY(-1px) scale(0.99);
-  transition-duration: 80ms;
-}
-.banner:focus-visible {
-  outline: 2px solid rgba(255, 168, 60, 0.7);
-  outline-offset: 2px;
+  /* Decorative container — no hover scale or pointer cursor on the
+     pill itself; the CTA button is the click target. */
 }
 
 /* ── Cover art ────────────────────────────────────────────────── */
@@ -72,8 +48,6 @@
   width: 68px;
   height: 68px;
   flex-shrink: 0;
-  /* Pill banner → keep the cover round-edged too, just less so;
-     reads as a square album cover with softened corners. */
   border-radius: 14px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.4);
@@ -84,11 +58,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
-.banner:hover .cover {
-  transform: scale(1.06);
 }
 
 /* ── Text column ───────────────────────────────────────────────── */
@@ -111,10 +80,7 @@
   text-overflow: ellipsis;
   margin: 0;
 }
-.banner:hover .title { color: #ffffff; }
 
-/* Slightly more breathing room above the artists line so the title
-   and subtitle don't feel cramped against each other. */
 .subtitle {
   font-size: 12px;
   font-weight: 400;
@@ -161,49 +127,64 @@
   50%      { opacity: 0.45; transform: scale(0.78); }
 }
 
-/* ── Play CTA — now white per spec ─────────────────────────────── */
-.playBtn {
-  width: 44px;
-  height: 44px;
+/* ── CTA — "Entre no Superchat!" ───────────────────────────────── */
+/* White pill with a play glyph + label. Sits at the right end of
+   the banner as the explicit affordance. Soft idle pulse + lift
+   on hover. */
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
+  padding: 9px 16px 9px 14px;
+  border: none;
+  border-radius: 999px;
   background: #ffffff;
   color: #050505;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: pointer;
   box-shadow:
     0 0 0 0 rgba(255, 255, 255, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.4);
-  animation: playPulse 2.2s ease-in-out infinite;
+  animation: ctaPulse 2.4s ease-in-out infinite;
   transition:
     transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 220ms ease-out,
     background 200ms ease-out;
 }
-.playBtn svg {
-  transform: translateX(1px); /* optical centering of the triangle */
-}
-.banner:hover .playBtn {
-  transform: scale(1.08);
+.ctaBtn:hover {
+  transform: translateY(-1px) scale(1.03);
   background: #ffffff;
   box-shadow:
-    0 0 0 6px rgba(255, 255, 255, 0.16),
+    0 0 0 6px rgba(255, 255, 255, 0.14),
     0 6px 16px rgba(0, 0, 0, 0.45);
   animation: none;
 }
-.banner:active .playBtn {
-  transform: scale(1.02);
+.ctaBtn:active {
+  transform: translateY(0) scale(0.98);
   transition-duration: 80ms;
 }
-@keyframes playPulse {
+.ctaBtn:focus-visible {
+  outline: 2px solid rgba(255, 200, 120, 0.85);
+  outline-offset: 2px;
+}
+.ctaIcon {
+  /* Optical centering of the triangle inside the inline-flex row. */
+  transform: translateX(1px);
+}
+@keyframes ctaPulse {
   0% {
     box-shadow:
-      0 0 0 0    rgba(255, 255, 255, 0.4),
+      0 0 0 0    rgba(255, 255, 255, 0.38),
       0 4px 12px rgba(0, 0, 0, 0.4);
   }
   70% {
     box-shadow:
-      0 0 0 10px rgba(255, 255, 255, 0),
+      0 0 0 8px  rgba(255, 255, 255, 0),
       0 4px 12px rgba(0, 0, 0, 0.4);
   }
   100% {
@@ -213,50 +194,38 @@
   }
 }
 
-/* ── Continuous yellow → red gleam ─────────────────────────────── */
-/* Always running (no longer hover-gated), sweeps slowly across the
-   pill so the eye picks up the motion without it feeling busy.
-   Color band is yellow → red — echoes the live energy of the
-   "Tropa do Chapelão" world. */
+/* ── Subtle continuous yellow→red gleam ────────────────────────── */
+/* Always running. Color band kept restrained: low opacity + no
+   blend mode, so it reads as a quiet ambient sweep instead of a
+   spotlight. Slow loop (~7s) for the same reason. */
 .gleam {
   position: absolute;
   top: 0;
-  left: -40%;
-  width: 40%;
+  left: -35%;
+  width: 32%;
   height: 100%;
   background: linear-gradient(
     115deg,
     transparent 0%,
-    rgba(255, 215, 80, 0.38) 35%,
-    rgba(255, 90, 35, 0.42) 65%,
+    rgba(255, 215, 80, 0.16) 35%,
+    rgba(255, 90, 35, 0.18) 65%,
     transparent 100%
   );
   transform: skewX(-12deg);
   pointer-events: none;
-  /* Mix-blend keeps the gleam vibrant over the dark surface
-     without washing out the artwork. */
-  mix-blend-mode: screen;
-  animation: gleamSweep 5.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  animation: gleamSweep 7s linear infinite;
 }
 @keyframes gleamSweep {
-  0%   { opacity: 0;    left: -40%; }
-  12%  { opacity: 0.9; }
-  55%  { opacity: 0.9; }
-  72%  { opacity: 0;    left: 105%; }
+  0%   { opacity: 0;    left: -35%; }
+  10%  { opacity: 1; }
+  60%  { opacity: 1; }
+  78%  { opacity: 0;    left: 105%; }
   100% { opacity: 0;    left: 105%; }
-}
-
-/* On hover, accelerate the sweep so the banner feels "ready" to be
-   clicked but don't change the colors — consistency. */
-.banner:hover .gleam {
-  animation-duration: 3.6s;
 }
 
 /* ── Reduced motion respect ────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .banner,
-  .cover,
-  .playBtn,
+  .ctaBtn,
   .gleam,
   .badgeDot {
     animation: none !important;
@@ -266,17 +235,17 @@
 
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Smaller viewports: re-anchor to match the topBar's mobile top
-     of 16px + ~32px height + 8px breathing room, and slim the pill
-     down to fit. */
   .banner {
     top: 56px;
-    width: clamp(320px, 94vw, 480px);
+    width: clamp(300px, 94vw, 460px);
     height: 76px;
-    padding: 8px 14px 8px 8px;
+    padding: 8px 12px 8px 8px;
     gap: 10px;
   }
   .coverWrap { width: 58px; height: 58px; }
-  .playBtn   { width: 38px; height: 38px; }
-  .badge     { margin-top: 4px; font-size: 10px; }
+  .ctaBtn {
+    padding: 8px 12px 8px 10px;
+    font-size: 12px;
+  }
+  .badge { margin-top: 4px; font-size: 10px; }
 }

@@ -333,7 +333,7 @@ export default function AppPage() {
       {/* "Agora ou Nunca" single promo — fixed pill anchored to the
           top-left, between the SideBar and the centered FilterTabs
           row. Self-contained, knows its own positioning. */}
-      <SingleBanner />
+      <SingleBanner onOpenSuperchat={() => setShowSuperchat(true)} />
 
       <LiveChatStack
         conversations={chat.conversations}
