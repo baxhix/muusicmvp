@@ -16,18 +16,25 @@
 .panelOpen { right: 0; }
 
 .header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 18px 18px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
 }
+/* Header avatar bumped from 36 → 56 — the chat detail is the focal
+   view, so the user's face should read at the same weight as the
+   name beside it. Border thickness + radius scale stay the same
+   proportionally. */
 .headerAvatar {
-  width: 36px; height: 36px;
+  width: 56px; height: 56px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
 }
 .headerInfo {
   flex: 1;
@@ -36,7 +43,7 @@
   min-width: 0;
 }
 .headerName {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #f5f5f7;
   letter-spacing: -0.01em;
@@ -44,6 +51,75 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── Kebab menu (denounce / block) ───────────────────────────
+   Wraps the trigger button + dropdown so the floating menu can be
+   absolutely positioned relative to the button without leaking out
+   of the header's flex flow. */
+.kebabWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.kebabBtn {
+  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.kebabBtn:hover,
+.kebabBtn[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+}
+.kebabBtn svg { display: block; }
+
+.kebabMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 188px;
+  padding: 6px;
+  background: linear-gradient(180deg, rgba(18, 18, 22, 0.98), rgba(10, 10, 12, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 5;
+  animation: kebabIn 0.14s ease-out;
+}
+@keyframes kebabIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.kebabItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.92);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.kebabItem:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+/* Destructive variant for "Bloquear" — same hover bg but red text
+   so the consequence reads before the click. */
+.kebabItemDanger { color: #f87171; }
+.kebabItemDanger:hover { background: rgba(248, 113, 113, 0.12); color: #fca5a5; }
+
 .closeBtn {
   width: 26px; height: 26px;
   display: inline-flex;
