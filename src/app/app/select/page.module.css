@@ -114,23 +114,27 @@
 /* ── Cards grid (right side) ─────────────────────────────── */
 
 /* Fixed 320px-wide columns now that each card is locked at 320×520.
-   gap: 18px between the two and the grid keeps to flex-end so the
-   title gets all the breathing room on the left. */
+   align-items: flex-start so a card with a secondary CTA below it
+   (Countrybeat) doesn't stretch the sibling card (Ana Castela) to
+   match its taller footprint — each card uses its own intrinsic
+   height. */
 .grid {
   display: flex;
   gap: 18px;
   flex-shrink: 0;
+  align-items: flex-start;
 }
 
 /* ── Single universe card ───────────────────────────────── */
 
-/* The article is the positioning context for both the clickable
-   cover and the optional secondary CTA. Cards still align to the
-   row's start; the article itself doesn't take extra space below
-   the cover. */
+/* Flex column wrapper: cover button on top, optional secondary CTA
+   sitting BELOW it as a sibling. The card body itself stays locked
+   at 320×520 while the secondary CTA flows naturally underneath. */
 .card {
-  position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 /* Fixed 320×520 box per spec. The main button fills it; cover image
@@ -266,18 +270,11 @@
   background: rgba(255, 255, 255, 0.18);
 }
 
-/* Secondary CTA — absolutely positioned ON the card so it reads as
-   "à frente" (in front of) the cover. Anchored to the lower section
-   of the card, centered horizontally. z-index lifts it above the
-   card's hover shadow so it stays prominent even when the card
-   lifts on hover. Accent-green background + glow shadow make it the
-   loudest call-to-action on the screen. */
+/* Secondary CTA — sits BELOW the card as a regular sibling (not an
+   overlay). Keeps the loud accent-green treatment + glow shadow so
+   it remains the most prominent CTA on the screen even though it's
+   outside the card frame. */
 .secondaryCta {
-  position: absolute;
-  bottom: 78px;
-  left: 50%;
-  z-index: 5;
-  transform: translateX(-50%);
   padding: 14px 26px;
   border-radius: 999px;
   background: var(--accent, #3ddb74);
@@ -296,13 +293,13 @@
               box-shadow 200ms ease-out;
 }
 .secondaryCta:hover {
-  transform: translateX(-50%) translateY(-2px);
+  transform: translateY(-2px);
   background: #4be086;
   box-shadow: 0 18px 38px rgba(61, 219, 116, 0.50),
               0 6px 18px rgba(0, 0, 0, 0.5);
 }
 .secondaryCta:active {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
 /* ── Mobile ────────────────────────────────────────────────
