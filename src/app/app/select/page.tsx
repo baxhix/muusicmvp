@@ -83,7 +83,11 @@ export default function UniverseSelectPage() {
       {/* Two-column layout: intro text left, universe cards right. */}
       <div className={styles.layout}>
         <header className={styles.intro}>
-          <h1 className={styles.title}>Escolha o seu Fanverse</h1>
+          <h1 className={styles.title}>
+            Escolha o seu
+            <br />
+            Fanverse
+          </h1>
           <p className={styles.lead}>
             Cada Fanverse reúne uma comunidade de superfãs em torno de um
             artista. Escolha por onde começar — você pode trocar a qualquer
@@ -112,7 +116,7 @@ export default function UniverseSelectPage() {
                   <h2 className={styles.cardName}>{u.name}</h2>
                   <p className={styles.cardDesc}>{u.description}</p>
                   <span className={styles.cta}>
-                    Acessar o Fanverse {u.name}
+                    Acessar
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <path
                         d="M6 3l5 5-5 5"
