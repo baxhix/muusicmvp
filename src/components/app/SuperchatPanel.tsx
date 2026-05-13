@@ -5,6 +5,7 @@ import { useSuperchat, type SuperchatFeedItem } from '@/hooks/useSuperchat';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiMessage } from '@/lib/api/types';
 import ParticipantsModal from './ParticipantsModal';
+import MessageBody from './MessageBody';
 import styles from './SuperchatPanel.module.css';
 
 interface SuperchatPanelProps {
@@ -325,7 +326,7 @@ function MessageRow({
 
       <div className={styles.bubbleWrap}>
         <div className={styles.bubble} style={bubbleStyle}>
-          {m.body}
+          <MessageBody body={m.body} maxPreviewWidth={360} />
         </div>
       </div>
 

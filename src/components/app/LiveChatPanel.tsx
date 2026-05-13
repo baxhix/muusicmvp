@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import MessageBody from './MessageBody';
 import styles from './LiveChatPanel.module.css';
 
 // Stubbed for now — backend endpoints for report/block don't exist
@@ -346,7 +347,9 @@ export default function LiveChatPanel({
                   className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}
                 >
                   <div className={styles.bubbleRow}>
-                    <div className={styles.bubble}>{m.body}</div>
+                    <div className={styles.bubble}>
+                      <MessageBody body={m.body} maxPreviewWidth={300} />
+                    </div>
 
                     {/* Reaction trigger — appears on hover (CSS-only
                         fade-in) and on tap opens the emoji picker.

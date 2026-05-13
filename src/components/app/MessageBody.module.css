@@ -1,0 +1,41 @@
+.text {
+  /* Inherits the bubble's font-size/line-height. Wrapping span keeps
+     the linkified output flowing inline with normal text. */
+  display: inline;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.link {
+  color: #6ec9ff;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+.link:hover {
+  color: #9ddcff;
+}
+
+/* Inline preview block — sits BELOW the text on its own line, with a
+   16:9 aspect ratio enforced so YouTube/Vimeo embeds resize naturally
+   with their container. Width is clamped to 100% of the parent bubble
+   so the preview never escapes the chat panel. */
+.previewWrap {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #000;
+}
