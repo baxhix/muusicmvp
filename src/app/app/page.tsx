@@ -9,6 +9,7 @@ import FilterTabs from '@/components/app/FilterTabs';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import ConversationsSidebar from '@/components/app/ConversationsSidebar';
+import SingleBanner from '@/components/app/SingleBanner';
 import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
 import ListeningTogether from '@/components/app/ListeningTogether';
@@ -347,6 +348,12 @@ export default function AppPage() {
       />
 
       <SideBar />
+
+      {/* "Agora ou Nunca" single promo — fixed pill anchored to the
+          top-left, between the SideBar and the centered FilterTabs
+          row. Self-contained, knows its own positioning. */}
+      <SingleBanner />
+
       <LiveChatStack
         conversations={chat.conversations}
         activeId={chat.activeId}
