@@ -36,6 +36,14 @@ const HOLD_MS = 6000;
  * don't toast notifications that already existed when the user landed
  * on the page. Anything that appears later becomes a toast for HOLD_MS.
  */
+/**
+ * Anything older than this many ms BEFORE the page mounted counts as
+ * "historical" and never toasts. 5s of clock-skew slack covers
+ * differences between server and client time without letting truly
+ * old notifications leak through.
+ */
+const HISTORICAL_GRACE_MS = 5_000;
+
 export function useSameTrackToasts(): {
   toasts: QueueItem[];
   dismiss: (id: string) => void;
@@ -44,6 +52,11 @@ export function useSameTrackToasts(): {
   const [toasts, setToasts] = useState<QueueItem[]>([]);
   const seenIdsRef = useRef<Set<string>>(new Set());
   const baselineSetRef = useRef(false);
+  // Records the page-mount time minus a small grace window. Anything
+  // with a server createdAt older than this cutoff is definitionally
+  // historical — we never toast it. This is the authoritative guard,
+  // working alongside the baseline-set flag below as defense in depth.
+  const mountCutoffRef = useRef(Date.now() - HISTORICAL_GRACE_MS);
 
   const dismiss = useCallback((id: string) => {
     setToasts((cur) => cur.filter((t) => t.id !== id));
@@ -53,16 +66,13 @@ export function useSameTrackToasts(): {
     // Wait until the initial fetch from /api/notifications completes
     // before deciding which ids are "historical". Without this guard,
     // the first effect run sees the React state's initial value (an
-    // empty array), marks zero ids as seen, flips the baseline flag,
-    // and then the populated list that arrives milliseconds later
-    // gets treated as a wave of brand-new notifications — toasting
-    // every pre-existing same-track notification on every page load.
+    // empty array), flips the baseline flag, and then the populated
+    // list that arrives milliseconds later gets treated as new arrivals.
     if (loading) return;
 
     if (!baselineSetRef.current) {
-      // Page just finished loading: snapshot everything currently in
-      // /api/notifications as already-seen so we only toast events
-      // that arrive AFTER this point.
+      // Snapshot everything currently known as already-seen so a
+      // subsequent same-payload refetch doesn't re-fire each row.
       for (const n of notifications) seenIdsRef.current.add(n.id);
       baselineSetRef.current = true;
       return;
@@ -74,6 +84,17 @@ export function useSameTrackToasts(): {
 
       if (n.kind !== 'same_track') continue;
       if (n.readAt) continue;
+
+      // Authoritative guard: only toast events that were CREATED on
+      // the server after the page mounted (with a 5s grace for clock
+      // skew). A historical notification refetched mid-session — for
+      // any reason — gets silently skipped. The baseline check above
+      // handles the initial fetch path; this check handles every
+      // other path (socket reconnect replays, race conditions, etc.).
+      const createdAtMs = n.createdAt
+        ? new Date(n.createdAt).getTime()
+        : Number.POSITIVE_INFINITY;
+      if (createdAtMs < mountCutoffRef.current) continue;
 
       const item = buildToast(n);
       setToasts((cur) => {
