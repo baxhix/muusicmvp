@@ -178,6 +178,37 @@ export default function ReportDetailDrawer({
             </span>
           )}
         </div>
+
+        {/* Evidence image — only when the reporter attached one.
+            Click to open the raw file in a new tab. */}
+        {report.image && (
+          <a
+            href={report.image}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              marginTop: 12,
+              maxWidth: 320,
+              borderRadius: 10,
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'rgba(0, 0, 0, 0.4)',
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={report.image}
+              alt="Anexo da denúncia"
+              style={{
+                display: 'block',
+                width: '100%',
+                maxHeight: 240,
+                objectFit: 'cover',
+              }}
+            />
+          </a>
+        )}
       </div>
 
       {/* ── Alvo da denúncia ───────────────────────── */}

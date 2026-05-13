@@ -281,6 +281,49 @@ export const userActivities = pgTable(
   ],
 );
 
+/**
+ * User-submitted reports. Created from anywhere a "Denunciar" button
+ * exists in the app (today: chat kebab menu); later: post overflow,
+ * profile overflow, etc.
+ *
+ * `target_user_id` is the user being reported. `reporter_id` is who
+ * filed it. `image_url` is optional — same upload pipeline as
+ * `users.avatar_url` but writes to a dedicated reports directory so
+ * the two storages stay logically separated.
+ *
+ * `status` defaults to 'open'; admin moderation flips it through
+ * 'resolved' / 'dismissed' / 'escalated'. Indexed on status +
+ * created_at so the admin list view stays fast as the queue grows.
+ */
+export const reports = pgTable(
+  'reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    reporterId: uuid('reporter_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    targetUserId: uuid('target_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Source surface — 'chat_user' today; future: 'post', 'profile'. */
+    source: text('source').notNull(),
+    /** Free-text description (optional — UI marks the field optional). */
+    description: text('description'),
+    /** Public URL to an attached evidence image (optional). */
+    imageUrl: text('image_url'),
+    status: text('status').notNull().default('open'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('reports_status_idx').on(t.status),
+    index('reports_created_at_idx').on(t.createdAt),
+    index('reports_target_user_id_idx').on(t.targetUserId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Conversation = typeof conversations.$inferSelect;
@@ -291,3 +334,5 @@ export type ListeningHistoryRow = typeof listeningHistory.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type TrackLike = typeof trackLikes.$inferSelect;
 export type UserActivity = typeof userActivities.$inferSelect;
+export type Report = typeof reports.$inferSelect;
+export type NewReport = typeof reports.$inferInsert;

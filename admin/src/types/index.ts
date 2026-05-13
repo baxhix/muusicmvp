@@ -112,6 +112,8 @@ export interface Report {
   };
   reason: ReportReason;
   description?: string;
+  /** URL of an evidence image uploaded by the reporter (optional). */
+  image?: string;
   status: ReportStatus;
   priority: 'low' | 'medium' | 'high';
   assignedTo?: { id: ID; name: string };

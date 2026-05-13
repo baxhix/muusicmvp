@@ -5,17 +5,11 @@ import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
+import ReportModal from './ReportModal';
 import styles from './LiveChatPanel.module.css';
 
-// Stubbed for now — backend endpoints for report/block don't exist
-// yet. The handlers below confirm with the user and log to console;
-// wire to /api/report + /api/block once those land.
-async function reportUser(userId: string, name: string | null): Promise<void> {
-  if (!window.confirm(`Denunciar ${name ?? 'este usuário'}? A equipe da muusic vai revisar a conta.`)) return;
-  console.warn('[chat] TODO: POST /api/report', { targetUserId: userId });
-  window.alert('Denúncia enviada. Obrigado por reportar.');
-}
-
+/** Block-user remains stubbed — the /api/block endpoint doesn't exist
+ *  yet. Reporting (above) is wired to real /api/reports. */
 async function blockUser(userId: string, name: string | null): Promise<void> {
   if (!window.confirm(`Bloquear ${name ?? 'este usuário'}? Vocês não vão mais conseguir trocar mensagens.`)) return;
   console.warn('[chat] TODO: POST /api/block', { targetUserId: userId });
@@ -131,6 +125,7 @@ export default function LiveChatPanel({
     senderName: string;
     body: string;
   } | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -324,7 +319,7 @@ export default function LiveChatPanel({
                   className={styles.kebabItem}
                   onClick={() => {
                     setMenuOpen(false);
-                    reportUser(other.id, other.name ?? null);
+                    setReportOpen(true);
                   }}
                 >
                   Denunciar usuário
@@ -524,6 +519,18 @@ export default function LiveChatPanel({
           </svg>
         </button>
       </div>
+
+      {/* Report modal — mounted at the panel root so the scrim covers
+          everything. `targetUserId` is the OTHER user in this DM. */}
+      {other && (
+        <ReportModal
+          open={reportOpen}
+          targetUserId={other.id}
+          targetName={other.name ?? null}
+          source="chat_user"
+          onClose={() => setReportOpen(false)}
+        />
+      )}
     </div>
   );
 }
