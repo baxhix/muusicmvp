@@ -14,7 +14,9 @@
   display: inline-flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 14px 10px 10px;
+  /* Extra right padding so the CTA button sits visibly inset from
+     the pill's edge — gives the action room to breathe. */
+  padding: 10px 24px 10px 10px;
   /* 100px narrower than the previous step — keeps the pill from
      dominating the header while still housing cover + 3-line text
      + CTA. */
@@ -93,12 +95,22 @@
   margin-top: 6px;
 }
 
+/* ── Actions column (CTA + listener badge) ─────────────────────── */
+.actionsBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 /* ── "X people listening" badge ────────────────────────────────── */
+/* Now lives BELOW the CTA, centered under it. Slightly larger to
+   read at a glance now that it isn't tucked into the text column. */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 5px;
   font-size: 10.5px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.78);
@@ -194,39 +206,9 @@
   }
 }
 
-/* ── Subtle continuous yellow→red gleam ────────────────────────── */
-/* Always running. Color band kept restrained: low opacity + no
-   blend mode, so it reads as a quiet ambient sweep instead of a
-   spotlight. Slow loop (~7s) for the same reason. */
-.gleam {
-  position: absolute;
-  top: 0;
-  left: -35%;
-  width: 32%;
-  height: 100%;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    rgba(255, 215, 80, 0.16) 35%,
-    rgba(255, 90, 35, 0.18) 65%,
-    transparent 100%
-  );
-  transform: skewX(-12deg);
-  pointer-events: none;
-  animation: gleamSweep 7s linear infinite;
-}
-@keyframes gleamSweep {
-  0%   { opacity: 0;    left: -35%; }
-  10%  { opacity: 1; }
-  60%  { opacity: 1; }
-  78%  { opacity: 0;    left: 105%; }
-  100% { opacity: 0;    left: 105%; }
-}
-
 /* ── Reduced motion respect ────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .ctaBtn,
-  .gleam,
   .badgeDot {
     animation: none !important;
     transition-duration: 100ms !important;
@@ -239,7 +221,7 @@
     top: 56px;
     width: clamp(300px, 94vw, 460px);
     height: 76px;
-    padding: 8px 12px 8px 8px;
+    padding: 8px 18px 8px 8px;
     gap: 10px;
   }
   .coverWrap { width: 58px; height: 58px; }
@@ -247,5 +229,6 @@
     padding: 8px 12px 8px 10px;
     font-size: 12px;
   }
-  .badge { margin-top: 4px; font-size: 10px; }
+  .badge { font-size: 10px; }
+  .actionsBlock { gap: 4px; }
 }
