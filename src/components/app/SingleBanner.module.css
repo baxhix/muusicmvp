@@ -1,32 +1,30 @@
 /* ── Single promo banner ──────────────────────────────────────────
-   Fixed-position horizontal pill sitting between the SideBar (52px
-   wide, anchored to the left edge) and the centered topBar pills.
-   Width is tuned so on standard desktop viewports there's still
-   ample air between the banner's right edge and the FilterTabs.
+   Fixed-position card sitting between the SideBar (52px wide, anchored
+   to the left edge) and the centered topBar pills. Cover is fixed at
+   140×140 per spec; the banner adapts around it (~360-380px wide,
+   ~172px tall).
 */
 .banner {
   position: fixed;
-  /* Same vertical anchor as the topBar so banner + filter pills sit
-     on a shared horizontal axis; reads as part of one strip. */
   top: 42px;
-  /* SideBar is 52px wide → 64px leaves 12px of gutter from its
-     right edge, matching the topBar's padding cadence. */
   left: 64px;
   z-index: 49;
   display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 14px 8px 8px;
-  width: 280px;
-  height: 64px;
+  align-items: stretch;
+  gap: 14px;
+  padding: 16px;
+  /* Width clamps so on 1024px viewports the centered topBar pills
+     still have ~20-30px of breathing room from the banner's right
+     edge. Banner is hidden entirely below 900px (see media query). */
+  width: clamp(320px, 32vw, 380px);
   background: linear-gradient(
     180deg,
     rgba(20, 20, 24, 0.92) 0%,
     rgba(8, 8, 12, 0.92) 100%
   );
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
   color: inherit;
@@ -48,12 +46,12 @@
     rgba(10, 12, 14, 0.94) 100%
   );
   box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(61, 219, 116, 0.18) inset,
-    0 0 24px rgba(61, 219, 116, 0.18);
+    0 16px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(61, 219, 116, 0.2) inset,
+    0 0 28px rgba(61, 219, 116, 0.22);
 }
 .banner:active {
-  transform: translateY(-1px) scale(0.985);
+  transform: translateY(-1px) scale(0.99);
   transition-duration: 80ms;
 }
 .banner:focus-visible {
@@ -61,16 +59,16 @@
   outline-offset: 2px;
 }
 
-/* ── Cover art ─────────────────────────────────────────────────── */
+/* ── Cover art (140×140 per spec) ──────────────────────────────── */
 .coverWrap {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 140px;
+  height: 140px;
   flex-shrink: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
 }
 .cover {
   display: block;
@@ -84,119 +82,104 @@
   transform: scale(1.06);
 }
 
-/* Play icon overlay — hidden until hover, then fades + scales up
-   from the cover center. */
-.playOverlay {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(
-    circle at center,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.25) 60%,
-    transparent 100%
-  );
-  color: #ffffff;
-  opacity: 0;
-  transform: scale(0.85);
-  transition:
-    opacity 220ms ease-out,
-    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.banner:hover .playOverlay {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* ── Text block ────────────────────────────────────────────────── */
+/* ── Text + Play column on the right ───────────────────────────── */
 .textBlock {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1px;
   min-width: 0;
   flex: 1;
-}
-
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--accent, #3ddb74);
-  text-transform: uppercase;
-  line-height: 1;
-}
-/* Pulsing dot before the "NOVO SINGLE" kicker — pure CSS heartbeat,
-   ~1.5s cadence, sized to match the kicker line-height. */
-.kickerDot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent, #3ddb74);
-  box-shadow: 0 0 6px rgba(61, 219, 116, 0.85);
-  animation: kickerPulse 1.6s ease-in-out infinite;
-}
-@keyframes kickerPulse {
-  0%, 100% { opacity: 1;   transform: scale(1);   }
-  50%      { opacity: 0.45; transform: scale(0.8); }
+  padding-right: 4px;
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   color: #f5f5f7;
-  line-height: 1.15;
-  /* Keep the title on one line; long names get an ellipsis. */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.1;
+  /* Allow a 2-line wrap if needed (long single names) but stay
+     tidy with hyphens off. */
+  margin: 0;
+}
+.banner:hover .title {
+  color: #ffffff;
 }
 
 .subtitle {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.005em;
-  color: rgba(245, 245, 247, 0.58);
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: rgba(245, 245, 247, 0.7);
+  line-height: 1.3;
+  margin-top: 6px;
 }
 
-/* ── Equalizer mini-animation ──────────────────────────────────── */
-.eq {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 14px;
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 220ms ease-out;
-}
-.banner:hover .eq { opacity: 1; }
-.eq span {
-  width: 2px;
+/* Big play CTA — sits bottom-right of the text column. Accent
+   green, with a continuous soft pulse so the eye is drawn here.
+   The whole banner is the click target — this is just the
+   primary affordance. */
+.playBtn {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
   background: var(--accent, #3ddb74);
-  border-radius: 2px;
-  animation: eqBar 1.1s ease-in-out infinite;
-  transform-origin: bottom;
+  color: #061110;
+  box-shadow:
+    0 0 0 0 rgba(61, 219, 116, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.4);
+  animation: playPulse 2.2s ease-in-out infinite;
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms ease-out,
+    background 200ms ease-out;
 }
-.eq span:nth-child(1) { animation-delay: 0s;    height: 7px;  }
-.eq span:nth-child(2) { animation-delay: 0.2s;  height: 12px; }
-.eq span:nth-child(3) { animation-delay: 0.4s;  height: 9px;  }
-@keyframes eqBar {
-  0%, 100% { transform: scaleY(0.45); }
-  50%      { transform: scaleY(1);    }
+.playBtn svg {
+  /* Optical centering — the play triangle's visual centroid sits
+     slightly right of its bounding box, so a 2px nudge feels
+     centered. */
+  transform: translateX(1px);
+}
+.banner:hover .playBtn {
+  transform: scale(1.08);
+  background: #4be086;
+  box-shadow:
+    0 0 0 6px rgba(61, 219, 116, 0.18),
+    0 8px 18px rgba(0, 0, 0, 0.45);
+  animation: none; /* hover takes over; let the static glow read. */
+}
+.banner:active .playBtn {
+  transform: scale(1.02);
+  transition-duration: 80ms;
+}
+
+/* Pulse ring expanding out of the play button — used in idle state
+   to draw the eye without overwhelming. */
+@keyframes playPulse {
+  0% {
+    box-shadow:
+      0 0 0 0   rgba(61, 219, 116, 0.55),
+      0 6px 14px rgba(0, 0, 0, 0.4);
+  }
+  70% {
+    box-shadow:
+      0 0 0 10px rgba(61, 219, 116, 0),
+      0 6px 14px rgba(0, 0, 0, 0.4);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0   rgba(61, 219, 116, 0),
+      0 6px 14px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* ── Sweeping highlight gleam ──────────────────────────────────── */
-/* Plays once per hover (animation kicks in via :hover, doesn't loop). */
 .gleam {
   position: absolute;
   top: 0;
@@ -226,9 +209,7 @@
 @media (prefers-reduced-motion: reduce) {
   .banner,
   .cover,
-  .playOverlay,
-  .kickerDot,
-  .eq span,
+  .playBtn,
   .gleam {
     animation: none !important;
     transition-duration: 100ms !important;
@@ -236,9 +217,9 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  /* On narrow viewports the centered topBar pills get squeezed
-     against the banner. Hide the banner below 900px — the
-     promotion isn't worth losing chat/filter affordances. */
+@media (max-width: 1100px) {
+  /* Below this width the banner + centered topBar pills start to
+     crowd each other. Hiding the banner is a cleaner trade-off than
+     scaling it down to a barely-legible size. */
   .banner { display: none; }
 }

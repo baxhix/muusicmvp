@@ -37,8 +37,9 @@ export default function SingleBanner() {
       className={styles.banner}
       aria-label="Ouvir Agora ou Nunca, novo single da Ana Castela e Pedro Sampaio"
     >
-      {/* Cover art on the left. Image is preserved via object-fit so the
-          face-illustration crops cleanly when squeezed into a square. */}
+      {/* Cover art on the left — fixed 140×140 per spec. Image is
+          preserved via object-fit so the face-illustration crops
+          cleanly when squeezed into a square. */}
       <span className={styles.coverWrap}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -47,32 +48,24 @@ export default function SingleBanner() {
           className={styles.cover}
           draggable={false}
         />
-        {/* Play icon overlay — invisible until hover for the "wake up
-            and listen" affordance. */}
-        <span className={styles.playOverlay} aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+      </span>
+
+      {/* Text + play column on the right. Title sits over the subtitle
+          (artists list), play button anchored bottom-right as the
+          primary affordance. */}
+      <span className={styles.textBlock}>
+        <span className={styles.title}>Agora ou Nunca</span>
+        <span className={styles.subtitle}>Ana Castela &amp; Pedro Sampaio</span>
+
+        {/* Big play CTA — always visible, accent-green circle with
+            the classic play glyph + a soft pulse so the eye gets
+            drawn there. Whole banner is the click target; this just
+            makes the affordance unmistakable. */}
+        <span className={styles.playBtn} aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
             <path d="M4 2.5v11l9-5.5z" />
           </svg>
         </span>
-      </span>
-
-      {/* Text block — kicker / title / subtitle. */}
-      <span className={styles.textBlock}>
-        <span className={styles.kicker}>
-          <span className={styles.kickerDot} aria-hidden="true" />
-          NOVO SINGLE
-        </span>
-        <span className={styles.title}>Agora ou Nunca</span>
-        <span className={styles.subtitle}>Ana Castela × Pedro Sampaio</span>
-      </span>
-
-      {/* Equalizer microanimation on the right — communicates "music
-          plays here" without needing audio. Three bars looping out of
-          phase so the motion feels organic, not metronomic. */}
-      <span className={styles.eq} aria-hidden="true">
-        <span />
-        <span />
-        <span />
       </span>
 
       {/* Sweeping highlight gleam — fires once per hover (CSS animation
