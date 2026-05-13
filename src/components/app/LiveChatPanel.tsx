@@ -20,12 +20,44 @@ async function blockUser(userId: string, name: string | null): Promise<void> {
   window.alert(`${name ?? 'Usuário'} bloqueado.`);
 }
 
+/** Shape of the now-playing line shown under the user's name in the
+ *  chat header. When the parent doesn't have a live nowPlaying for
+ *  the conversation partner, a deterministic mock is picked from
+ *  MOCK_NOW_PLAYING (see below) so the slot is never empty. */
+export interface ChatNowPlaying {
+  title: string;
+  artist: string;
+}
+
 interface Props {
   conversation: ApiConversationSummary | null;
   messages: ApiMessage[];
   loading: boolean;
+  /** Optional live now-playing for the other user (from useLiveUsers). */
+  otherNowPlaying?: ChatNowPlaying | null;
   onClose: () => void;
   onSend: (body: string) => Promise<void>;
+}
+
+/** Fallback now-playing pool — picked deterministically by hashing
+ *  the conversation partner's id so each user always shows the same
+ *  mock track. Used only when the live presence list doesn't carry
+ *  a real now-playing for them. */
+const MOCK_NOW_PLAYING: ChatNowPlaying[] = [
+  { title: 'Pipoco', artist: 'Ana Castela, Melody, DJ Chris no Beat' },
+  { title: 'Boiadeira', artist: 'Ana Castela' },
+  { title: 'Solteiro Forçado', artist: 'Ana Castela' },
+  { title: 'Nosso Quadro', artist: 'Ana Castela' },
+  { title: 'Erro Gostoso', artist: 'Ana Castela' },
+];
+
+function pickMockTrack(userId: string): ChatNowPlaying {
+  // Tiny deterministic hash → index. Same user always gets the same
+  // mock track across reloads.
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) | 0;
+  const idx = Math.abs(h) % MOCK_NOW_PLAYING.length;
+  return MOCK_NOW_PLAYING[idx];
 }
 
 function formatTime(iso: string): string {
@@ -78,6 +110,7 @@ export default function LiveChatPanel({
   conversation,
   messages,
   loading,
+  otherNowPlaying,
   onClose,
   onSend,
 }: Props) {
@@ -176,6 +209,14 @@ export default function LiveChatPanel({
 
   const other = conversation?.otherUser;
   const avatar = other?.avatarUrl ?? (other ? `https://i.pravatar.cc/72?u=${other.id}` : null);
+  // Resolve the now-playing line: real data from the parent if the
+  // user is online and listening to something, else a deterministic
+  // mock so the slot never reads as "empty". The slot itself is part
+  // of the header's identity now — always visible when there's a
+  // conversation open.
+  const nowPlaying: ChatNowPlaying | null = other
+    ? otherNowPlaying ?? pickMockTrack(other.id)
+    : null;
 
   return (
     <div
@@ -192,6 +233,26 @@ export default function LiveChatPanel({
         )}
         <div className={styles.headerInfo}>
           <span className={styles.headerName}>{other?.name ?? 'Conversa'}</span>
+          {/* Now-playing line: title in white-bold, artist in muted
+              gray. Matches the same treatment used on the map pin
+              preview so the user feels they're seeing the same data
+              they would on the globe, just relocated into the chat. */}
+          {nowPlaying && (
+            <span className={styles.headerNowPlaying}>
+              <svg
+                className={styles.headerNoteIcon}
+                viewBox="0 0 16 16"
+                width="11"
+                height="11"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M13 2.5v7.2a2.6 2.6 0 1 1-1.5-2.36V4.7L7 5.9v5.6a2.6 2.6 0 1 1-1.5-2.36V4.5L13 2.5z" />
+              </svg>
+              <span className={styles.headerTrackTitle}>{nowPlaying.title}</span>
+              <span className={styles.headerTrackArtist}>{nowPlaying.artist}</span>
+            </span>
+          )}
         </div>
 
         {/* Kebab menu — denounce/block. Stubbed handlers (see top of

@@ -70,25 +70,29 @@
   display: block;
   transition: filter 0.2s ease;
 }
-/* Offline users get a muted grayscale treatment so the row reads as
-   "less alive" at a glance. The status dot below carries the
-   authoritative on/off signal — this is a reinforcing cue. */
+/* Offline users get a SUBTLE desaturation — not full grayscale —
+   so the cover photo still reads as "themselves" but visibly muted.
+   The status dash below carries the authoritative on/off signal;
+   the filter is a reinforcing cue that doesn't drain all life from
+   the avatar. */
 .avatarOffline {
-  filter: grayscale(100%) brightness(0.82);
+  filter: saturate(0.55) brightness(0.88);
 }
 
-/* ── Presence dot ──────────────────────────────────────────────
-   Small circle anchored to the bottom-right of the avatar. Green
-   = online, gray = offline. The white-ish ring (border) gives
-   contrast against any avatar background. */
+/* ── Presence dash ─────────────────────────────────────────────
+   Horizontal pill anchored to the bottom of the avatar — reads
+   as a dash more than a dot, matching the language we use in the
+   tooltip + chat detail header. Green for online (with soft glow),
+   neutral gray for offline. */
 .statusDot {
   position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.85);
+  left: 50%;
+  bottom: -3px;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 5px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(0, 0, 0, 0.85);
   pointer-events: none;
 }
 .statusDotOnline {

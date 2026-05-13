@@ -218,6 +218,21 @@ export default function AppPage() {
   const activeConversation =
     chat.conversations.find((c) => c.id === chat.activeId) ?? null;
 
+  // Pull the live now-playing for the OTHER user in the active DM —
+  // drives the "now playing" line in the chat panel header. When the
+  // user is offline or hasn't been seen with a track, this is null;
+  // LiveChatPanel falls back to a deterministic mock for that case.
+  const activeOtherNowPlaying = (() => {
+    const otherId = activeConversation?.otherUser?.id;
+    if (!otherId) return null;
+    const liveOther = liveUsers.find((u) => u.id === otherId);
+    if (!liveOther?.nowPlaying) return null;
+    return {
+      title: liveOther.nowPlaying.title,
+      artist: liveOther.nowPlaying.artist,
+    };
+  })();
+
   // Superchat lives in the same conversation list as DMs (type='group').
   // Pluck it so the trigger pill can show its unread count badge and the
   // panel can call markRead through useChatLive.
@@ -295,6 +310,7 @@ export default function AppPage() {
         conversation={activeConversation}
         messages={chat.messages}
         loading={chat.loadingMessages}
+        otherNowPlaying={activeOtherNowPlaying}
         onClose={chat.close}
         onSend={chat.send}
       />
