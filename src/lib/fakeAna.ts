@@ -36,23 +36,52 @@ https://www.youtube.com/watch?v=CKNjiHKiNvM`;
 
 /** Pool of random messages auto-posted by Ana every two minutes. The
  *  scheduler picks one at random and posts it as if she were live
- *  on the chat. Pure flavor content — no per-fan personalization. */
+ *  on the chat. Tone leans warm + fan-connection — quick personal
+ *  voice notes, never broadcast-marketing. */
 const RANDOM_MESSAGES: readonly string[] = [
-  'Boiadeira chegou! 🤠 Como tá o sertão de vocês hoje?',
-  'Quem aí já tá no embalo do novo álbum? 🎶',
-  'Show essa semana — quem vai? 💚',
-  'Manda nos comentários a música que tu mais escuta de mim. Quero ver!',
-  'Tô com saudades de cantar com vocês ao vivo, viu?',
-  'Bora subir #Pipoco nas paradas hoje?',
-  'Toda noite uma surpresa nova vindo aí. Fica de olho!',
-  'Quem aqui já viu Boiadeira ao vivo? Conta a melhor parte 👇',
-  'Fanverse na muusic é demais — vocês são os melhores fãs do mundo 🌎💚',
-  'Quero ver vídeo de vocês cantando alto comigo nos shows. Manda aí!',
-  'Hoje é dia de country na trilha sonora? 🎸',
-  'Fala pra mim: ouvindo Erro Gostoso ou Pipoco hoje?',
-  'A boiada nunca dorme — bora dar replay nas minhas músicas? 💚',
-  'Mensagem da Ana pra vocês: vão atrás dos sonhos. Eu acreditei e tô aqui.',
-  'Quem aí já mandou flores pra Boiadeira hoje? 🌻',
+  // ── Warmth + presence ───────────────────────────────────────
+  'Boiadeira chegou! 🤠 Como tá o coração de vocês hoje?',
+  'Acabei de chegar do estúdio e já vim aqui matar a saudade. 💚',
+  'Tô com vocês até dormir. Quem aí ainda tá acordado?',
+  'Bom dia, minha boiada! Hoje vai ser dia bom — sinto isso aqui no peito.',
+  'Boa noite, gente. Manda um coração antes de eu dormir 💚',
+  'Saudade de vocês desde o último show. Quem foi me conta a melhor parte 👇',
+  'Sem vocês não tem Boiadeira. Tô aqui pra lembrar disso todo dia.',
+  'Tô tomando café aqui pensando: como vocês são especiais pra mim.',
+
+  // ── Convite pra ação (interação) ────────────────────────────
+  'Manda pra mim: qual minha música tu escuta mais? Quero ver tudo!',
+  'Conta uma história aí: onde você estava quando ouviu Pipoco a primeira vez?',
+  'Já tem boiadeiro/boiadeira aqui que vai pro próximo show? Avisa nos comentários.',
+  'Posta um vídeo seu cantando comigo e me marca, viu? Eu vou olhar.',
+  'Que tal hoje a gente fazer um replay maratona nas minhas músicas? Bora?',
+  'Fala uma coisa boa que aconteceu hoje. Quero ler todas.',
+  'Quem tá ouvindo agora e onde? Comenta aí — quero mapear minha boiada 🌎',
+
+  // ── Vida + rotina (humaniza) ────────────────────────────────
+  'Hoje foi dia de ensaio pesado. Quase morri, mas vale a pena por vocês 🎸',
+  'Pegando estrada de novo. Manda música boa pra eu ouvir? 🎶',
+  'Tô comendo açaí enquanto leio vocês aqui. Que delícia esse momento.',
+  'Acabei de tomar banho de cachoeira no interior. Recomendo demais.',
+  'Bastidor: tô vestindo o chapéu mais estiloso do mundo agora 🤠 Foto vem depois.',
+
+  // ── Country / sertão vibe ───────────────────────────────────
+  'Hoje é dia de country forte na caixa? Bota 🎸 nos comentários se sim.',
+  'Quem aí gosta da Boiadeira mais que da Ana? Acho que vocês me amam mais de chapéu kkk',
+  'O sertão tem cura, viu? Quando bater tristeza, dá replay no nosso som.',
+  'A vida no campo me ensinou tudo. E vocês me ensinam o resto 💚',
+
+  // ── Gratidão + motivação ────────────────────────────────────
+  'Obrigada por estarem aqui. Sério mesmo. Vocês mudam minha vida.',
+  'Lembrete: sonho não tem prazo de validade. Eu sou prova disso 💚',
+  'Acredita em você. Eu acredito.',
+  'Vocês me fazem cantar mais alto, mais bonito. É verdade.',
+  'A gente vai conquistar muita coisa juntos ainda. Cola comigo.',
+
+  // ── Música ao vivo / lançamento ─────────────────────────────
+  'Surpresa nova vindo aí essa semana. Fica de olho aqui no muusic 👀',
+  'Quem aí ainda não viu meu clipe novo? Cola no perfil — link na bio.',
+  'Já tô gravando música nova com o pessoal. Em breve mais notícia.',
 ];
 
 /** Canned thank-you replies for when the fan types something to her.

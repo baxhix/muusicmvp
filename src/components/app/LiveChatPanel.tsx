@@ -244,7 +244,20 @@ export default function LiveChatPanel({
         {avatar && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={avatar} alt={other?.name ?? ''} className={styles.headerAvatar} />
+            <img
+              src={avatar}
+              alt={other?.name ?? ''}
+              className={styles.headerAvatar}
+              onError={(e) => {
+                // 404? Fall back to deterministic pravatar so the chat
+                // header doesn't render with a broken-image icon. Same
+                // resilience pattern as the dock + sidebar.
+                const img = e.currentTarget;
+                const otherId = other?.id ?? 'unknown';
+                const fb = `https://i.pravatar.cc/96?u=${otherId}`;
+                if (img.src !== fb) img.src = fb;
+              }}
+            />
           </>
         )}
         <div className={styles.headerInfo}>

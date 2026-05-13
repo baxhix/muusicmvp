@@ -81,6 +81,15 @@ export default function LiveChatStack({
                 src={img}
                 alt={u.name ?? ''}
                 className={`${styles.avatar} ${isOnline ? '' : styles.avatarOffline}`}
+                onError={(e) => {
+                  // Avatar 404? Fall back to a deterministic pravatar so
+                  // the dock never shows a broken-image icon — most
+                  // visible for the fake Ana contact when her bundled
+                  // PNG is missing from /public on a stale deploy.
+                  const img = e.currentTarget;
+                  const fb = `https://i.pravatar.cc/72?u=${u.id}`;
+                  if (img.src !== fb) img.src = fb;
+                }}
               />
 
               {/* Presence dot — green for online, neutral gray for

@@ -155,6 +155,14 @@ export default function ConversationsSidebar({
                     src={img}
                     alt=""
                     className={`${styles.avatar} ${isOnline ? styles.avatarOnline : styles.avatarOffline}`}
+                    onError={(e) => {
+                      // Same pravatar fallback as the dock — keeps the
+                      // sidebar from showing broken-image icons when
+                      // an avatar URL 404s.
+                      const img = e.currentTarget;
+                      const fb = `https://i.pravatar.cc/72?u=${u.id}`;
+                      if (img.src !== fb) img.src = fb;
+                    }}
                   />
                   <span
                     className={`${styles.statusDash} ${isOnline ? styles.statusDashOnline : styles.statusDashOffline}`}
