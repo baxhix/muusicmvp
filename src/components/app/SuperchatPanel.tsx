@@ -5,8 +5,15 @@ import { useSuperchat, type SuperchatFeedItem } from '@/hooks/useSuperchat';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiMessage } from '@/lib/api/types';
 import ParticipantsModal from './ParticipantsModal';
-import MessageBody from './MessageBody';
+import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import styles from './SuperchatPanel.module.css';
+
+/** Pointer to the message currently being replied to. The actual
+ *  quote is materialized at SEND time by buildReplyBody(). */
+interface ReplyTarget {
+  senderName: string;
+  body: string;
+}
 
 interface SuperchatPanelProps {
   open: boolean;
@@ -81,6 +88,7 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
 
   const [draft, setDraft] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,8 +121,23 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
   const onSubmit = () => {
     const text = draft.trim();
     if (!text) return;
-    send(text);
+    // Wrap with the shared reply-prefix format so the renderer
+    // shows the quoted block for every viewer, same UX as DMs.
+    const body = replyingTo
+      ? buildReplyBody(replyingTo.senderName, replyingTo.body, text)
+      : text;
+    send(body);
     setDraft('');
+    setReplyingTo(null);
+  };
+
+  const onReplyTo = (m: ApiMessage) => {
+    // Skip chained-reply accumulation: only quote the most-recent
+    // bubble's actual body, not whatever it was replying to.
+    setReplyingTo({
+      senderName: m.senderName ?? m.senderEmail ?? 'Mensagem',
+      body: stripReplyPrefix(m.body),
+    });
   };
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -184,15 +207,37 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
             ) : feed.length === 0 ? (
               <div className={styles.placeholder}>Seja o primeiro a mandar uma mensagem 👋</div>
             ) : (
-              renderFeedWithDaySeparators(feed, user.id, react)
+              renderFeedWithDaySeparators(feed, user.id, react, onReplyTo)
             )}
             <div ref={endRef} />
           </div>
 
+          {replyingTo && (
+            <div className={styles.replyBanner}>
+              <div className={styles.replyBannerBar} aria-hidden="true" />
+              <div className={styles.replyBannerInfo}>
+                <span className={styles.replyBannerSender}>
+                  Respondendo a {replyingTo.senderName}
+                </span>
+                <span className={styles.replyBannerText}>{replyingTo.body}</span>
+              </div>
+              <button
+                type="button"
+                className={styles.replyBannerClose}
+                onClick={() => setReplyingTo(null)}
+                aria-label="Cancelar resposta"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <div className={styles.inputArea}>
             <input
               className={styles.field}
-              placeholder="Manda essa pra galera…"
+              placeholder={replyingTo ? 'Sua resposta…' : 'Manda essa pra galera…'}
               autoComplete="off"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -259,6 +304,7 @@ function renderFeedWithDaySeparators(
   feed: SuperchatFeedItem[],
   myUserId: string,
   onReact: (messageId: string, emoji: string) => void,
+  onReplyTo: (m: ApiMessage) => void,
 ): ReactNode[] {
   const nodes: ReactNode[] = [];
   let lastDay: string | null = null;
@@ -273,7 +319,7 @@ function renderFeedWithDaySeparators(
       );
       lastDay = k;
     }
-    nodes.push(renderItem(item, i, feed, myUserId, onReact));
+    nodes.push(renderItem(item, i, feed, myUserId, onReact, onReplyTo));
   }
   return nodes;
 }
@@ -284,6 +330,7 @@ function renderItem(
   feed: SuperchatFeedItem[],
   myUserId: string,
   onReact: (messageId: string, emoji: string) => void,
+  onReplyTo: (m: ApiMessage) => void,
 ) {
   if (item._type === 'activity') {
     return (
@@ -315,6 +362,7 @@ function renderItem(
       isMine={isMine}
       showHead={showHead}
       onReact={onReact}
+      onReplyTo={onReplyTo}
     />
   );
 }
@@ -329,33 +377,38 @@ function MessageRow({
   isMine,
   showHead,
   onReact,
+  onReplyTo,
 }: {
   m: ApiMessage;
   isMine: boolean;
   showHead: boolean;
   onReact: (messageId: string, emoji: string) => void;
+  onReplyTo: (m: ApiMessage) => void;
 }) {
   const reactions = m.reactions ?? [];
-  const reactedEmojis = new Set(reactions.map((r) => r.emoji));
-  const pickerOptions = QUICK_REACTIONS.filter((e) => !reactedEmojis.has(e));
 
-  // Picker visibility: hidden by default, toggled by the "+" button.
-  // Persistent state per message so each conversation row keeps track
-  // of its own popover independently.
+  // Picker visibility per row. Hover shows the smile + reply
+  // buttons; clicking smile toggles the emoji picker popover.
+  // Persistent per-row state so each message tracks its own.
   const [pickerOpen, setPickerOpen] = useState(false);
-  const reactBarRef = useRef<HTMLDivElement | null>(null);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
 
-  // Click-outside closes the picker. Listen on the document while
-  // open; tear down on close to keep us off the event hot-path when
-  // nothing's expanded.
+  // Click-outside / Escape closes the picker — matches DM panel UX.
   useEffect(() => {
     if (!pickerOpen) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (reactBarRef.current?.contains(e.target as Node)) return;
+      if (pickerRef.current?.contains(e.target as Node)) return;
       setPickerOpen(false);
     };
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') setPickerOpen(false);
+    };
     document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [pickerOpen]);
 
   // Outgoing messages render naked text on the panel — no bubble bg at
@@ -381,74 +434,94 @@ function MessageRow({
         </div>
       )}
 
-      <div className={styles.bubbleWrap}>
+      {/* Bubble + hover actions row — actions live on the OUTSIDE
+          edge of the bubble (right for incoming, left for outgoing)
+          so they don't crowd the timestamp below. Same layout +
+          interaction model as LiveChatPanel. */}
+      <div className={styles.bubbleRow}>
         <div className={styles.bubble} style={bubbleStyle}>
           <MessageBody body={m.body} maxPreviewWidth={360} />
         </div>
-      </div>
 
-      {/* Reactions bar
-       * - Chips for reactions ALREADY made are persistent — count +
-       *   emoji visible at all times so anyone can see who reacted
-       *   with what without interacting (WhatsApp/Slack/Discord).
-       * - The 6-emoji picker is gated behind a small "+" affordance
-       *   so the bar stays compact when no one's reacted yet, and
-       *   doesn't blast the user with all six options upfront.
-       * - Click-outside closes the picker; the bar itself is a click
-       *   sanctuary so chip toggles don't auto-close it. */}
-      <div
-        ref={reactBarRef}
-        className={`${styles.reactBar} ${isMine ? styles.reactBarOut : styles.reactBarIn}`}
-      >
-        {reactions.map((r) => (
+        <span className={styles.msgActions}>
           <button
-            key={r.emoji}
             type="button"
-            className={`${styles.reactChip} ${r.mine ? styles.reactChipMine : ''}`}
-            onClick={() => onReact(m.id, r.emoji)}
-            aria-label={`${r.emoji} ${r.count} ${r.mine ? '(você reagiu)' : ''}`}
-            aria-pressed={r.mine}
-            title={`${r.count} ${r.count === 1 ? 'pessoa reagiu' : 'pessoas reagiram'}`}
+            className={styles.actionBtn}
+            onClick={() => onReplyTo(m)}
+            aria-label="Responder à mensagem"
+            title="Responder"
           >
-            <span className={styles.reactChipEmoji}>{r.emoji}</span>
-            <span className={styles.reactChipCount}>{r.count}</span>
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 4L4 9l5 5" />
+              <path d="M4 9h7a3 3 0 0 1 3 3v0" />
+            </svg>
           </button>
-        ))}
-        {pickerOptions.length > 0 && (
           <button
             type="button"
-            className={`${styles.reactChip} ${styles.reactAddBtn} ${pickerOpen ? styles.reactAddBtnOpen : ''}`}
+            className={styles.actionBtn}
             onClick={() => setPickerOpen((v) => !v)}
-            aria-label="Adicionar reação"
+            aria-label="Reagir à mensagem"
+            aria-haspopup="menu"
             aria-expanded={pickerOpen}
-            title="Adicionar reação"
           >
-            {pickerOpen ? '×' : '+'}
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.4" />
+              <circle cx="5.8" cy="6.6" r="0.7" fill="currentColor" />
+              <circle cx="10.2" cy="6.6" r="0.7" fill="currentColor" />
+              <path d="M5.6 10c.7.9 1.6 1.3 2.4 1.3.9 0 1.7-.4 2.4-1.3" strokeLinecap="round" />
+            </svg>
           </button>
-        )}
-        {pickerOpen && pickerOptions.length > 0 && (
-          <div
-            className={`${styles.reactPickerPopover} ${isMine ? styles.reactPickerPopoverOut : styles.reactPickerPopoverIn}`}
-            role="toolbar"
-            aria-label="Escolher reação"
-          >
-            {pickerOptions.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                className={styles.reactPickerBtn}
-                onClick={() => {
-                  onReact(m.id, emoji);
-                  setPickerOpen(false);
-                }}
-                aria-label={`Reagir com ${emoji}`}
-              >
-                {emoji}
-              </button>
-            ))}
+        </span>
+
+        {pickerOpen && (
+          <div className={styles.reactPicker} ref={pickerRef} role="menu">
+            {QUICK_REACTIONS.map((emoji) => {
+              const mineAlready = reactions.some(
+                (r) => r.emoji === emoji && r.mine,
+              );
+              return (
+                <button
+                  key={emoji}
+                  type="button"
+                  role="menuitem"
+                  className={`${styles.reactPickerItem} ${mineAlready ? styles.reactPickerItemActive : ''}`}
+                  onClick={() => {
+                    onReact(m.id, emoji);
+                    setPickerOpen(false);
+                  }}
+                  aria-label={`Reagir com ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Aggregated reaction badges — slim pill per emoji, anchored
+          to the bubble side (right for outgoing, left for incoming).
+          Click toggles the current user's reaction for that emoji. */}
+      {reactions.length > 0 && (
+        <div className={styles.reactionBadgeRow}>
+          {reactions.map((r) => (
+            <button
+              key={r.emoji}
+              type="button"
+              className={`${styles.reactionBadge} ${r.mine ? styles.reactionBadgeMine : ''}`}
+              onClick={() => onReact(m.id, r.emoji)}
+              aria-label={`${r.emoji} ${r.count} ${r.mine ? '(você reagiu)' : ''}`}
+              aria-pressed={r.mine}
+              title={`${r.count} ${r.count === 1 ? 'pessoa reagiu' : 'pessoas reagiram'}`}
+            >
+              <span>{r.emoji}</span>
+              {r.count > 1 && (
+                <span className={styles.reactionBadgeCount}>{r.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className={styles.time}>{formatTime(m.createdAt)}</div>
     </div>

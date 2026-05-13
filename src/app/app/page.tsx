@@ -322,8 +322,10 @@ export default function AppPage() {
         activeId={chat.activeId}
         onlineUserIds={onlineUserIds}
         onOpen={chat.open}
-        onAddClick={() => setShowUserPicker(true)}
-        onShowAll={() => setShowConversationsSidebar(true)}
+        // The "+" trigger on the dock now opens the full conversations
+        // drawer; the drawer carries the search + its own "+" that
+        // pops the UserPicker for actually starting a new chat.
+        onAddClick={() => setShowConversationsSidebar(true)}
       />
       <ConversationsSidebar
         open={showConversationsSidebar}

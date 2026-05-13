@@ -154,7 +154,7 @@ export default function ConversationsSidebar({
                   <img
                     src={img}
                     alt=""
-                    className={`${styles.avatar} ${isOnline ? '' : styles.avatarOffline}`}
+                    className={`${styles.avatar} ${isOnline ? styles.avatarOnline : styles.avatarOffline}`}
                   />
                   <span
                     className={`${styles.statusDash} ${isOnline ? styles.statusDashOnline : styles.statusDashOffline}`}

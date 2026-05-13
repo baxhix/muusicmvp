@@ -226,17 +226,16 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-top-left-radius: 4px;
 }
-/* Outgoing bubbles render as NAKED text — no fill — with only a
-   thin gray accent on the right edge marking them as "yours". This
-   reduces visual mass for the user's own messages (they already
-   know what they said) and lets the other person's words dominate. */
+/* Outgoing bubbles render as fully naked text — no fill, no border,
+   no accent. The right-alignment alone is enough to mark them as
+   "yours" without adding any visual weight that competes with the
+   other user's voice. */
 .msgOut .bubble {
   background: transparent;
   color: #f5f5f7;
   border: none;
-  border-right: 2px solid rgba(160, 160, 165, 0.55);
   border-radius: 0;
-  padding-right: 11px;
+  padding: 9px 0;
 }
 .time {
   margin-top: 3px;

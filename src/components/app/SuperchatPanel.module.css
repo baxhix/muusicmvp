@@ -230,155 +230,221 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Reactions ──────────────────────────────────────────────────── */
+/* ── Reactions + reply hover actions ─────────────────────────────
+   Lifted whole-cloth from LiveChatPanel so the Superchat behaves
+   exactly like the DM panel — same triggers, same picker, same
+   badge style. The only Superchat-specific difference is the
+   reaction badges carry an aggregated count (multi-user), shown
+   only when count > 1. */
 
-/* Wrapper kept for layout symmetry with the previous picker-above-
-   bubble layout (other components reference it). */
-.bubbleWrap {
+/* Wraps the bubble + the hover-actions span so the actions can sit
+   on either side of the bubble (right for incoming, left for
+   outgoing). Column layout below keeps timestamp anchored. */
+.bubbleRow {
   position: relative;
-  display: inline-block;
-  min-width: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.msgIn  .bubbleRow { flex-direction: row; }
+.msgOut .bubbleRow { flex-direction: row-reverse; }
+
+/* Hover actions container — fades in on bubble hover, stays
+   visible while a child is "armed" (picker expanded). */
+.msgActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+  flex-shrink: 0;
+}
+.msg:hover .msgActions,
+.msgActions:has(button[aria-expanded='true']) {
+  opacity: 1;
+}
+.actionBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  background: rgba(20, 20, 22, 0.85);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
+  flex-shrink: 0;
+}
+.actionBtn:hover {
+  background: rgba(38, 38, 42, 0.95);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+.actionBtn[aria-expanded='true'] {
+  background: rgba(38, 38, 42, 0.95);
+  color: #ffffff;
 }
 
-/* Single always-visible bar that combines:
-   - existing reactions (chips with count) — persistent so users can
-     scan who reacted with what without any interaction (WhatsApp /
-     Slack / Discord pattern).
-   - the remaining quick-pick options (subtle, no count) — one click
-     adds a brand-new reaction; no hover gate needed.
-   Same vertical position regardless of state so the layout doesn't
-   jump when a reaction count changes.
-*/
-.reactBar {
+/* Floating 6-emoji picker — opens just above the actions row. Side
+   anchor follows message direction. */
+.reactPicker {
+  position: absolute;
+  bottom: calc(100% + 6px);
   display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: linear-gradient(180deg, rgba(22, 22, 26, 0.98), rgba(12, 12, 14, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 6;
+  animation: pickerIn 0.14s ease-out;
+}
+.msgIn  .reactPicker { left: 0; }
+.msgOut .reactPicker { right: 0; }
+
+@keyframes pickerIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.reactPickerItem {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+.reactPickerItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.18);
+}
+.reactPickerItemActive {
+  background: rgba(61, 219, 116, 0.18);
+}
+
+/* Aggregated reaction badges row — slim pill per emoji, anchored
+   to the bubble side. Count badge only renders when count > 1
+   since count=1 is implied by the emoji alone. */
+.reactionBadgeRow {
+  display: inline-flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 5px;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  max-width: 100%;
 }
-.reactBarIn  { justify-content: flex-start; }
-.reactBarOut { justify-content: flex-end; }
+.msgIn  .reactionBadgeRow { align-self: flex-start; }
+.msgOut .reactionBadgeRow { align-self: flex-end; }
 
-.reactChip {
+.reactionBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 2px 8px 2px 6px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(245, 245, 247, 0.85);
-  font-size: 11.5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(22, 22, 26, 0.96);
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.12s, border-color 0.12s, transform 0.12s, opacity 0.12s;
+  line-height: 1;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
-.reactChip:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.14);
-  transform: translateY(-1px);
+.reactionBadge:hover {
+  transform: scale(1.06);
+  border-color: rgba(255, 255, 255, 0.22);
 }
-.reactChip:active { transform: translateY(0) scale(0.96); }
-
-/* "I've reacted with this" — accent ring + tint so the user can see
-   their own contributions at a glance. */
-.reactChipMine {
+.reactionBadgeMine {
   background: rgba(61, 219, 116, 0.14);
   border-color: rgba(61, 219, 116, 0.45);
   color: var(--accent, #3ddb74);
 }
-.reactChipMine:hover {
-  background: rgba(61, 219, 116, 0.22);
-  border-color: rgba(61, 219, 116, 0.6);
-}
-
-.reactChipEmoji {
-  font-size: 12.5px;
-  line-height: 1;
-}
-.reactChipCount {
+.reactionBadgeCount {
   font-family: var(--mono, ui-monospace);
   font-size: 10.5px;
   letter-spacing: 0.02em;
-  min-width: 8px;
-  text-align: left;
 }
 
-/* "+" affordance to open the picker. Sits at the tail of the chip
-   row, intentionally subtle so it doesn't compete with real chips. */
-.reactAddBtn {
-  padding: 0;
+/* ── Reply banner ──────────────────────────────────────────────
+   Same shape as the DM panel's reply banner. Sits between the
+   message list and the input area when the user has armed a reply.
+   Click X (or just send) to clear. */
+.replyBanner {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 8px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(20, 20, 22, 0.65);
+  flex-shrink: 0;
+  animation: replyBannerIn 0.16s ease-out;
+}
+@keyframes replyBannerIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.replyBannerBar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent, #3ddb74);
+  flex-shrink: 0;
+}
+.replyBannerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.replyBannerSender {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent, #3ddb74);
+  letter-spacing: -0.005em;
+}
+.replyBannerText {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.replyBannerClose {
   width: 22px;
   height: 22px;
-  display: inline-grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.06);
-  color: rgba(245, 245, 247, 0.55);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-}
-.reactAddBtn:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: rgba(245, 245, 247, 0.95);
-}
-.reactAddBtnOpen {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #f5f5f7;
-}
-
-/* Picker popover — opens above the bar when "+" is clicked.
-   Side anchor follows message direction so it doesn't reach over the
-   panel edge for outgoing messages. */
-.reactPickerPopover {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  display: flex;
-  gap: 2px;
-  padding: 4px 6px;
-  border-radius: 999px;
-  background: rgba(20, 20, 24, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  z-index: 4;
-  animation: react-popover-in 140ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.reactPickerPopoverIn  { left: 0; }
-.reactPickerPopoverOut { right: 0; }
-
-@keyframes react-popover-in {
-  from { opacity: 0; transform: translateY(4px) scale(0.94); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-
-.reactPickerBtn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 17px;
-  line-height: 1;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  display: grid;
-  place-items: center;
-  transition: background 0.12s, transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  flex-shrink: 0;
 }
-.reactPickerBtn:hover {
-  background: rgba(255, 255, 255, 0.10);
-  transform: scale(1.18);
-}
-.reactPickerBtn:active { transform: scale(1.05); }
-
-/* The bar needs `position: relative` so the popover anchors to it. */
-.reactBar {
-  position: relative;
+.replyBannerClose:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .inputArea {

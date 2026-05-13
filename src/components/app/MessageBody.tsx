@@ -157,6 +157,14 @@ export default function MessageBody({ body, maxPreviewWidth = 320 }: Props) {
   const visibleBody = reply ? reply.rest : body;
   const preview = firstVideoPreview(visibleBody);
 
+  // When a video preview will render, hide its URL from the text —
+  // the embed itself IS the affordance, the raw link adds clutter.
+  // Surrounding text is preserved so messages like "olha esse: <url>
+  // que doideira" still show "olha esse: que doideira" + the embed.
+  const textToRender = preview
+    ? visibleBody.replace(preview.href, '').replace(/\s{2,}/g, ' ').trim()
+    : visibleBody;
+
   return (
     <>
       {reply && (
@@ -166,7 +174,9 @@ export default function MessageBody({ body, maxPreviewWidth = 320 }: Props) {
         </div>
       )}
 
-      <span className={styles.text}>{renderLinkified(visibleBody)}</span>
+      {textToRender && (
+        <span className={styles.text}>{renderLinkified(textToRender)}</span>
+      )}
 
       {preview && (
         <div

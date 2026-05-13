@@ -8,24 +8,22 @@ interface Props {
   conversations: ApiConversationSummary[];
   activeId: string | null;
   /**
-   * Set of currently-online user ids. Each avatar gets a green/gray
-   * status dot + the offline-grayscale treatment based on whether
-   * its `otherUser.id` is in this set. Driven by `useLiveUsers`
-   * (presence socket events).
+   * Set of currently-online user ids. Drives the green/gray ring +
+   * status dot per avatar (via `useLiveUsers`'s presence stream).
    */
   onlineUserIds?: ReadonlySet<string>;
   onOpen: (conversationId: string) => void;
-  onAddClick: () => void;
   /**
-   * Fired when the user taps the "ver tudo" overflow trigger — opens
-   * the ConversationsSidebar which shows ALL conversations (the dock
-   * itself only renders the latest few for compactness).
+   * Fired when the user taps the "+" trigger on the dock. The
+   * trigger no longer opens UserPicker directly — instead it pops
+   * the full ConversationsSidebar, which carries both the search +
+   * the secondary "+" affordance for actually starting a new chat.
    */
-  onShowAll?: () => void;
+  onAddClick: () => void;
 }
 
 /** Max DM avatars rendered on the dock. The rest are reachable via
- *  the "ver tudo" trigger that pops the full ConversationsSidebar. */
+ *  the "+" trigger that opens the full ConversationsSidebar. */
 const DOCK_LIMIT = 7;
 
 /**
@@ -39,14 +37,12 @@ export default function LiveChatStack({
   onlineUserIds,
   onOpen,
   onAddClick,
-  onShowAll,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   // Filter to DMs only — the global Superchat is opened via SuperchatTrigger.
   const allDms = conversations.filter((c) => c.type === 'dm' && c.otherUser);
   const dms = allDms.slice(0, DOCK_LIMIT);
-  const overflowCount = Math.max(0, allDms.length - DOCK_LIMIT);
 
   return (
     <div className={styles.dock}>
@@ -74,7 +70,7 @@ export default function LiveChatStack({
           return (
             <button
               key={c.id}
-              className={`${styles.item} ${isActive ? styles.itemActive : ''}`}
+              className={`${styles.item} ${isActive ? styles.itemActive : ''} ${isOnline ? '' : styles.itemOffline}`}
               onClick={() => onOpen(c.id)}
               onMouseEnter={() => setHovered(c.id)}
               onMouseLeave={() => setHovered(null)}
@@ -121,43 +117,13 @@ export default function LiveChatStack({
         <button
           className={styles.addBtn}
           onClick={onAddClick}
-          aria-label="Iniciar nova conversa"
-          title="Nova conversa"
+          aria-label="Abrir lista de conversas"
+          title="Ver todas as conversas"
         >
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="M8 3v10M3 8h10" />
           </svg>
         </button>
-
-        {/* Overflow trigger — only renders when there are more
-            conversations than the dock can comfortably show.
-            Reads as "see all your conversations". */}
-        {onShowAll && allDms.length > 0 && (
-          <button
-            className={styles.allBtn}
-            onClick={onShowAll}
-            aria-label={
-              overflowCount > 0
-                ? `Ver todas as conversas (mais ${overflowCount})`
-                : 'Ver todas as conversas'
-            }
-            title="Ver todas"
-          >
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-              <circle cx="3" cy="4"  r="1" fill="currentColor" />
-              <path d="M6.5 4h6.5" />
-              <circle cx="3" cy="8"  r="1" fill="currentColor" />
-              <path d="M6.5 8h6.5" />
-              <circle cx="3" cy="12" r="1" fill="currentColor" />
-              <path d="M6.5 12h6.5" />
-            </svg>
-            {overflowCount > 0 && (
-              <span className={styles.allBtnCount} aria-hidden="true">
-                +{overflowCount}
-              </span>
-            )}
-          </button>
-        )}
       </div>
     </div>
   );
