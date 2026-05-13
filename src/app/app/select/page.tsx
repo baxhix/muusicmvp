@@ -83,11 +83,7 @@ export default function UniverseSelectPage() {
       {/* Two-column layout: intro text left, universe cards right. */}
       <div className={styles.layout}>
         <header className={styles.intro}>
-          <h1 className={styles.title}>
-            Escolha o seu
-            <br />
-            Fanverse
-          </h1>
+          <h1 className={styles.title}>Escolha o seu Fanverse</h1>
           <p className={styles.lead}>
             Cada Fanverse reúne uma comunidade de superfãs em torno de um
             artista. Escolha por onde começar — você pode trocar a qualquer
