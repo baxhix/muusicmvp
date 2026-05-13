@@ -302,25 +302,6 @@ export default function AppPage() {
             <NotificationBell />
           </div>
 
-          {/* Promo banner — fixed-position image sitting just below the
-              filter strip. Click opens the Superchat (same handler as
-              SuperchatTrigger), so the banner reads as both a teaser and
-              a shortcut into the room. Aspect ratio comes from the image
-              itself; width clamps so it never overflows on mobile. */}
-          <button
-            type="button"
-            className={styles.superchatBanner}
-            onClick={() => setShowSuperchat(true)}
-            aria-label="Abrir Superchat"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/banner-superchat.png"
-              alt="Entre no Superchat — sala global de fãs"
-              draggable={false}
-            />
-          </button>
-
           {/* Floating overlay of every real online user — anchored to
               deterministic screen positions so the roster is always visible
               regardless of how the globe is rotated. Real lat/lng markers
