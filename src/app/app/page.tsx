@@ -346,6 +346,7 @@ export default function AppPage() {
         otherNowPlaying={activeOtherNowPlaying}
         onClose={chat.close}
         onSend={chat.send}
+        onReact={chat.react}
       />
       <UserPicker
         open={showUserPicker}

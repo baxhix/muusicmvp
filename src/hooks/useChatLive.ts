@@ -5,6 +5,7 @@ import { api } from '@/lib/api/client';
 import type {
   ApiConversationSummary,
   ApiMessage,
+  ApiMessageReaction,
 } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useSocket } from './useSocket';
@@ -20,6 +21,13 @@ interface UseChatLiveResult {
   messages: ApiMessage[];
   loadingMessages: boolean;
   send: (body: string) => Promise<void>;
+  /**
+   * Toggle a reaction emoji on a message. Sends `chat:react` over the
+   * socket and waits for the broadcast `chat:reaction` event to update
+   * local state. Toggle semantics — calling with the same emoji twice
+   * removes the user's reaction.
+   */
+  react: (messageId: string, emoji: string) => void;
   /** open or create a DM with another user */
   openDmWith: (otherUserId: string) => Promise<void>;
   /**
@@ -166,6 +174,52 @@ export function useChatLive(): UseChatLiveResult {
     [activeId, socket, user],
   );
 
+  // ── Toggle a reaction on a message via socket ────────────────────────
+  const react = useCallback(
+    (messageId: string, emoji: string) => {
+      if (!socket) return;
+      socket.emit(
+        'chat:react',
+        { messageId, emoji },
+        (ack: { ok: boolean; error?: string } | undefined) => {
+          if (!ack?.ok) {
+            console.warn('chat:react rejected:', ack?.error);
+          }
+        },
+      );
+      // No optimistic local update — the server broadcasts the new
+      // aggregated reactions to everyone in the conversation room
+      // (including us) via `chat:reaction`, which then patches state.
+    },
+    [socket],
+  );
+
+  // ── Realtime: reactions update for the active thread ──────────────────
+  useEffect(() => {
+    if (!socket) return;
+    const onReaction = (payload: {
+      conversationId: string;
+      messageId: string;
+      reactions: ApiMessageReaction[];
+    }) => {
+      // Only update if the change is for the thread we're viewing.
+      // Background reactions on other conversations don't affect the
+      // message list rendered here.
+      if (payload.conversationId !== activeIdRef.current) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === payload.messageId
+            ? { ...m, reactions: payload.reactions }
+            : m,
+        ),
+      );
+    };
+    socket.on('chat:reaction', onReaction);
+    return () => {
+      socket.off('chat:reaction', onReaction);
+    };
+  }, [socket]);
+
   // ── Realtime: incoming chat messages (active thread) ───────────────────
   useEffect(() => {
     if (!socket) return;
@@ -256,6 +310,7 @@ export function useChatLive(): UseChatLiveResult {
     messages,
     loadingMessages,
     send,
+    react,
     openDmWith,
     markRead,
   };

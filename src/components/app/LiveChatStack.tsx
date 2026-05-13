@@ -121,12 +121,6 @@ export default function LiveChatStack({
               {hovered === c.id && (
                 <div className={styles.tooltip}>
                   <span className={styles.tooltipName}>{u.name ?? 'Anônimo'}</span>
-                  <span
-                    className={`${styles.tooltipStatus} ${isOnline ? styles.tooltipStatusOnline : styles.tooltipStatusOffline}`}
-                  >
-                    <span className={styles.tooltipStatusDash} aria-hidden="true" />
-                    {isOnline ? 'Online' : 'Offline'}
-                  </span>
                   {preview && <span className={styles.tooltipSub}>{preview}</span>}
                 </div>
               )}

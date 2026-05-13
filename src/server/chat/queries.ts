@@ -1,6 +1,7 @@
 import { and, desc, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { conversationParticipants, messages, users } from '../db/schema';
+import { listReactionsForMessages } from './reactions';
 
 /**
  * List the current user's DMs with their last message, the "other" participant,
@@ -124,10 +125,15 @@ export async function userIsInConversation(
 /**
  * Page messages of a conversation, newest first.
  * Use `before` (timestamp) to fetch the next older page.
+ *
+ * Pass `viewerId` when you want each message hydrated with its
+ * aggregated reactions list (and a `mine` flag per emoji). Skipped
+ * when the caller doesn't pass a viewer — keeps the query light
+ * for paths that don't render reactions.
  */
 export async function listMessages(
   conversationId: string,
-  opts: { limit?: number; before?: Date } = {},
+  opts: { limit?: number; before?: Date; viewerId?: string } = {},
 ) {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
   const where = opts.before
@@ -158,5 +164,25 @@ export async function listMessages(
     .limit(limit + 1);
 
   const hasMore = rows.length > limit;
-  return { messages: rows.slice(0, limit), hasMore };
+  const page = rows.slice(0, limit);
+
+  // Hydrate aggregated reactions per message so the UI can render
+  // them on initial load — previously this only happened for the
+  // Superchat path, and DM reactions disappeared when the user left
+  // and re-entered the conversation.
+  if (opts.viewerId && page.length > 0) {
+    const reactionsByMsg = await listReactionsForMessages(
+      opts.viewerId,
+      page.map((m) => m.id),
+    );
+    return {
+      messages: page.map((m) => ({
+        ...m,
+        reactions: reactionsByMsg.get(m.id) ?? [],
+      })),
+      hasMore,
+    };
+  }
+
+  return { messages: page, hasMore };
 }

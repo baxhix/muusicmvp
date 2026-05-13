@@ -1,7 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
+import type {
+  ApiConversationSummary,
+  ApiMessage,
+  ApiMessageReaction,
+} from '@/lib/api/types';
 import {
   FAKE_ANA_CONVERSATION_ID,
   FAKE_ANA_USER_ID,
@@ -184,6 +188,45 @@ export function useChatLiveWithFakes() {
     [base],
   );
 
+  /** Toggle a reaction. For Ana's fake messages this lives in local
+   *  state on `anaMessages[i].reactions`; for real messages it
+   *  delegates to the base hook (socket round-trip). */
+  const react = useCallback(
+    (messageId: string, emoji: string) => {
+      const targetsAna = anaMessages.some((m) => m.id === messageId);
+      if (targetsAna) {
+        setAnaMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== messageId) return m;
+            const cur: ApiMessageReaction[] = m.reactions ?? [];
+            const existing = cur.find((r) => r.emoji === emoji);
+            let next: ApiMessageReaction[];
+            if (existing?.mine) {
+              // Toggle off: drop the row entirely (single-user reactor pool
+              // for the fake conversation; count is always 1).
+              next = cur.filter((r) => r.emoji !== emoji);
+            } else if (existing) {
+              // Someone else already reacted with this emoji — flip mine
+              // and bump count. Unreachable in practice for Ana (no other
+              // users), but keeps the helper consistent.
+              next = cur.map((r) =>
+                r.emoji === emoji
+                  ? { ...r, mine: true, count: r.count + 1 }
+                  : r,
+              );
+            } else {
+              next = [...cur, { emoji, count: 1, mine: true }];
+            }
+            return { ...m, reactions: next };
+          }),
+        );
+        return;
+      }
+      base.react(messageId, emoji);
+    },
+    [base, anaMessages],
+  );
+
   const activeId = activeOverride ?? base.activeId;
   const messages =
     activeOverride === FAKE_ANA_CONVERSATION_ID ? anaMessages : base.messages;
@@ -198,6 +241,7 @@ export function useChatLiveWithFakes() {
     messages,
     loadingMessages,
     send,
+    react,
     openDmWith,
     markRead,
   };

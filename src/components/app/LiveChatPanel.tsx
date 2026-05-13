@@ -33,6 +33,8 @@ interface Props {
   otherNowPlaying?: ChatNowPlaying | null;
   onClose: () => void;
   onSend: (body: string) => Promise<void>;
+  /** Toggle a reaction emoji on a message. Server-persisted via socket. */
+  onReact: (messageId: string, emoji: string) => void;
 }
 
 /** Fallback now-playing pool — picked deterministically by hashing
@@ -109,14 +111,11 @@ export default function LiveChatPanel({
   otherNowPlaying,
   onClose,
   onSend,
+  onReact,
 }: Props) {
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
-  // Local reactions store: messageId → emoji (or null when cleared).
-  // Stays client-side until the reactions API lands; switching
-  // conversations resets it so we don't leak state across DMs.
-  const [reactions, setReactions] = useState<Record<string, string | null>>({});
   const [pickerOpenId, setPickerOpenId] = useState<string | null>(null);
   // Pointer to the message currently being replied to. Lives in
   // component state — the actual quote is materialized at SEND time
@@ -157,13 +156,12 @@ export default function LiveChatPanel({
   }, [menuOpen]);
 
   // When the conversation changes (or panel closes), drop any open
-  // kebab menu — otherwise it'd survive the next open() with stale
-  // target context. Also resets the reaction picker + local
-  // reactions store so DMs don't leak each other's tapbacks.
+  // kebab menu / picker / reply target so they don't leak across
+  // threads. Reactions themselves are server-persisted (m.reactions),
+  // no local store to clear here.
   useEffect(() => {
     setMenuOpen(false);
     setPickerOpenId(null);
-    setReactions({});
     setReplyingTo(null);
   }, [conversation?.id]);
 
@@ -188,13 +186,7 @@ export default function LiveChatPanel({
   }, [pickerOpenId]);
 
   const toggleReaction = (msgId: string, emoji: string) => {
-    setReactions((cur) => ({
-      ...cur,
-      // Tapping the same emoji clears the reaction; tapping a
-      // different one replaces it. One reaction per message per
-      // user — matches iMessage tapback behavior.
-      [msgId]: cur[msgId] === emoji ? null : emoji,
-    }));
+    onReact(msgId, emoji);
     setPickerOpenId(null);
   };
 
@@ -372,7 +364,7 @@ export default function LiveChatPanel({
               }
 
               const isMine = m.senderId === user?.id;
-              const myReaction = reactions[m.id] ?? null;
+              const msgReactions = m.reactions ?? [];
               const pickerOpen = pickerOpenId === m.id;
 
               nodes.push(
@@ -433,37 +425,49 @@ export default function LiveChatPanel({
 
                     {pickerOpen && (
                       <div className={styles.reactPicker} ref={pickerRef} role="menu">
-                        {REACTION_EMOJIS.map((e) => (
-                          <button
-                            key={e}
-                            type="button"
-                            role="menuitem"
-                            className={`${styles.reactPickerItem} ${myReaction === e ? styles.reactPickerItemActive : ''}`}
-                            onClick={() => toggleReaction(m.id, e)}
-                            aria-label={`Reagir com ${e}`}
-                          >
-                            {e}
-                          </button>
-                        ))}
+                        {REACTION_EMOJIS.map((e) => {
+                          const mineAlready = msgReactions.some(
+                            (r) => r.emoji === e && r.mine,
+                          );
+                          return (
+                            <button
+                              key={e}
+                              type="button"
+                              role="menuitem"
+                              className={`${styles.reactPickerItem} ${mineAlready ? styles.reactPickerItemActive : ''}`}
+                              onClick={() => toggleReaction(m.id, e)}
+                              aria-label={`Reagir com ${e}`}
+                            >
+                              {e}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
 
-                  {/* Reaction badge — only renders when the user has
-                      picked an emoji. Sits BELOW the bubble, anchored
-                      to the bubble side (right for outgoing, left for
-                      incoming) so it visually attaches to the message
-                      it belongs to. */}
-                  {myReaction && (
-                    <button
-                      type="button"
-                      className={styles.reactionBadge}
-                      onClick={() => toggleReaction(m.id, myReaction)}
-                      aria-label="Remover reação"
-                      title="Tocar para remover"
-                    >
-                      <span aria-hidden="true">{myReaction}</span>
-                    </button>
+                  {/* Aggregated reaction badges — one chip per emoji,
+                      mine-styled when the user is among the reactors.
+                      Counts hidden when 1 (DM = mostly 1:1 reactions
+                      anyway). Click toggles your own contribution. */}
+                  {msgReactions.length > 0 && (
+                    <div className={styles.reactionBadgeRow}>
+                      {msgReactions.map((r) => (
+                        <button
+                          key={r.emoji}
+                          type="button"
+                          className={`${styles.reactionBadge} ${r.mine ? styles.reactionBadgeMine : ''}`}
+                          onClick={() => toggleReaction(m.id, r.emoji)}
+                          aria-label={`${r.emoji} ${r.count}${r.mine ? ' (você reagiu)' : ''}`}
+                          aria-pressed={r.mine}
+                        >
+                          <span aria-hidden="true">{r.emoji}</span>
+                          {r.count > 1 && (
+                            <span className={styles.reactionBadgeCount}>{r.count}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   )}
 
                   <div className={styles.time}>{formatTime(m.createdAt)}</div>

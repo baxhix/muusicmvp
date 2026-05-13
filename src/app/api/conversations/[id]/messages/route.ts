@@ -50,6 +50,11 @@ export async function GET(
   const { messages, hasMore } = await listMessages(id, {
     limit: parsed.data.limit,
     before: parsed.data.before ? new Date(parsed.data.before) : undefined,
+    // Passing the viewer id hydrates each message with its aggregated
+    // reactions (and the per-emoji `mine` flag) so the panel can
+    // render reactions on initial load — was previously local-only
+    // state that vanished when the user left and re-entered.
+    viewerId: user.id,
   });
 
   return NextResponse.json({ messages, hasMore });

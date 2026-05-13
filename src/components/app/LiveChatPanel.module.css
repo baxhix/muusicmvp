@@ -388,30 +388,51 @@
   background: rgba(61, 219, 116, 0.18);
 }
 
-/* ── Reaction badge (the user's current reaction) ─────────────
-   Sits just below the bubble, anchored to the bubble's own side
-   so it visually attaches to the message. Tapping it removes the
-   reaction (toggle behavior matches iMessage). */
-.reactionBadge {
-  margin-top: -4px;
+/* ── Aggregated reaction badges ────────────────────────────────
+   Server-persisted reactions render as a row of small pills below
+   the bubble — one per emoji, with the count when > 1. The user's
+   own contribution gets the accent-tinted variant so they can spot
+   what they reacted with at a glance. Click toggles your reaction. */
+.reactionBadgeRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
   margin-bottom: 2px;
+  max-width: 100%;
+}
+.msgIn  .reactionBadgeRow { align-self: flex-start; }
+.msgOut .reactionBadgeRow { align-self: flex-end; }
+
+.reactionBadge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
   border-radius: 999px;
   background: rgba(22, 22, 26, 0.96);
   border: 1.5px solid rgba(255, 255, 255, 0.1);
-  font-size: 14px;
-  line-height: 1;
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.12s ease;
+  font-family: inherit;
+  line-height: 1;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 .reactionBadge:hover {
   transform: scale(1.06);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.reactionBadgeMine {
+  background: rgba(61, 219, 116, 0.14);
+  border-color: rgba(61, 219, 116, 0.45);
+  color: var(--accent, #3ddb74);
+}
+.reactionBadgeCount {
+  font-family: var(--mono, ui-monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
 }
 
 /* ── Reply banner ──────────────────────────────────────────────
