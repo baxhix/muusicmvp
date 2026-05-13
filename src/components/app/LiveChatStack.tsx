@@ -16,7 +16,17 @@ interface Props {
   onlineUserIds?: ReadonlySet<string>;
   onOpen: (conversationId: string) => void;
   onAddClick: () => void;
+  /**
+   * Fired when the user taps the "ver tudo" overflow trigger — opens
+   * the ConversationsSidebar which shows ALL conversations (the dock
+   * itself only renders the latest few for compactness).
+   */
+  onShowAll?: () => void;
 }
+
+/** Max DM avatars rendered on the dock. The rest are reachable via
+ *  the "ver tudo" trigger that pops the full ConversationsSidebar. */
+const DOCK_LIMIT = 7;
 
 /**
  * Dock-style horizontal chat list — real conversations from /api/conversations.
@@ -29,11 +39,14 @@ export default function LiveChatStack({
   onlineUserIds,
   onOpen,
   onAddClick,
+  onShowAll,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   // Filter to DMs only — the global Superchat is opened via SuperchatTrigger.
-  const dms = conversations.filter((c) => c.type === 'dm' && c.otherUser);
+  const allDms = conversations.filter((c) => c.type === 'dm' && c.otherUser);
+  const dms = allDms.slice(0, DOCK_LIMIT);
+  const overflowCount = Math.max(0, allDms.length - DOCK_LIMIT);
 
   return (
     <div className={styles.dock}>
@@ -115,6 +128,36 @@ export default function LiveChatStack({
             <path d="M8 3v10M3 8h10" />
           </svg>
         </button>
+
+        {/* Overflow trigger — only renders when there are more
+            conversations than the dock can comfortably show.
+            Reads as "see all your conversations". */}
+        {onShowAll && allDms.length > 0 && (
+          <button
+            className={styles.allBtn}
+            onClick={onShowAll}
+            aria-label={
+              overflowCount > 0
+                ? `Ver todas as conversas (mais ${overflowCount})`
+                : 'Ver todas as conversas'
+            }
+            title="Ver todas"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              <circle cx="3" cy="4"  r="1" fill="currentColor" />
+              <path d="M6.5 4h6.5" />
+              <circle cx="3" cy="8"  r="1" fill="currentColor" />
+              <path d="M6.5 8h6.5" />
+              <circle cx="3" cy="12" r="1" fill="currentColor" />
+              <path d="M6.5 12h6.5" />
+            </svg>
+            {overflowCount > 0 && (
+              <span className={styles.allBtnCount} aria-hidden="true">
+                +{overflowCount}
+              </span>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

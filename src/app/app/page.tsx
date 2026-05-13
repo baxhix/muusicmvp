@@ -8,6 +8,7 @@ import TopBar from '@/components/app/TopBar';
 import FilterTabs from '@/components/app/FilterTabs';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
+import ConversationsSidebar from '@/components/app/ConversationsSidebar';
 import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
 import ListeningTogether from '@/components/app/ListeningTogether';
@@ -93,6 +94,10 @@ export default function AppPage() {
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showSuperchat, setShowSuperchat] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
+  // Full-list conversations drawer — opens from the dock's "ver
+  // tudo" overflow trigger. The dock itself only shows the latest
+  // few DMs so the user can reach the rest without scrolling.
+  const [showConversationsSidebar, setShowConversationsSidebar] = useState(false);
   const [songIdx, setSongIdx] = useState(0);
 
   // Asks for browser geolocation on first authenticated load (per session).
@@ -305,6 +310,19 @@ export default function AppPage() {
         onlineUserIds={onlineUserIds}
         onOpen={chat.open}
         onAddClick={() => setShowUserPicker(true)}
+        onShowAll={() => setShowConversationsSidebar(true)}
+      />
+      <ConversationsSidebar
+        open={showConversationsSidebar}
+        conversations={chat.conversations}
+        activeId={chat.activeId}
+        onlineUserIds={onlineUserIds}
+        onClose={() => setShowConversationsSidebar(false)}
+        onOpenConversation={chat.open}
+        onNewConversation={() => {
+          setShowConversationsSidebar(false);
+          setShowUserPicker(true);
+        }}
       />
       <LiveChatPanel
         conversation={activeConversation}
