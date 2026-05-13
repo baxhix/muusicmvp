@@ -49,7 +49,7 @@
   z-index: 49; /* below topBar (z=50) so the pills always win the
                   click region if they ever overlap on narrow
                   viewports */
-  width: clamp(280px, 90vw, 640px);
+  width: clamp(280px, 90vw, 560px);
   padding: 0;
   border: none;
   background: transparent;
