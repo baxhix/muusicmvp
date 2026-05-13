@@ -34,6 +34,56 @@
   .topBar { top: 16px; gap: 6px; }
 }
 
+/* ── Superchat promo banner ────────────────────────────────────
+   Lives just below the topBar (FilterTabs + Ranking + Superchat
+   pill + bell). Position: fixed so it stays anchored as the user
+   pans/zooms the globe. Click opens the Superchat. The image
+   itself sets the aspect ratio; the wrapper just constrains the
+   width + handles hover affordance. */
+.superchatBanner {
+  position: fixed;
+  /* topBar.top (42) + topBar height (~36) + breathing room (10) */
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 49; /* below topBar (z=50) so the pills always win the
+                  click region if they ever overlap on narrow
+                  viewports */
+  width: clamp(280px, 90vw, 640px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms ease-out;
+}
+.superchatBanner:hover {
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+.superchatBanner:active {
+  transform: translateX(-50%) translateY(0);
+}
+.superchatBanner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none; /* clicks reach the button */
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  /* topBar.top (16) + topBar height (~32) + breathing room (8) */
+  .superchatBanner { top: 56px; }
+}
+
 .backBtn {
   position: fixed;
   top: 54px; left: 20px;
