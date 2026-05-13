@@ -4,23 +4,24 @@ import styles from './SingleBanner.module.css';
 
 /**
  * "Agora ou Nunca" single promo — fixed-position horizontal banner
- * anchored to the top-left of the app shell, slotted between the
- * SideBar (left vertical strip) and the centered FilterTabs row.
+ * anchored just BELOW the centered filter strip in the header.
+ * Click opens YouTube search for the track in a new tab.
  *
  * Visual language follows the existing platform identity:
- *   - Dark gradient surface w/ backdrop-filter blur (same as TopBar
- *     userMenu pill, ChatStack tooltip, NowPlaying card).
+ *   - Translucent dark gradient surface (~58% alpha) with a saturated
+ *     backdrop blur. Globe / lights bleed through gently, but text
+ *     stays legible.
  *   - Accent-green hover state (matches every other interactive
  *     element across the app).
- *   - Three-line text hierarchy: kicker (uppercase muted) → title
- *     (bold white) → subtitle (muted gray) — same pattern used in
- *     the chat header now-playing line + map pin preview.
+ *   - Two-line text hierarchy: bold title + muted lighter-weight
+ *     artists line.
  *
  * Microinteractions intentionally restrained but layered:
- *   - Lift + accent ring on hover.
+ *   - Lift + accent ring on hover (centering preserved).
  *   - Cover art zooms 1.06× to suggest "into the cover".
  *   - Sweeping highlight gleam crosses the banner once per hover.
- *   - Continuous equalizer bars on the right echo "this is music".
+ *   - Continuous play-button pulse ring, stops on hover (static
+ *     glow takes over).
  *   - Slight haptic-y scale-down on press.
  */
 const SINGLE_URL =
@@ -37,9 +38,8 @@ export default function SingleBanner() {
       className={styles.banner}
       aria-label="Ouvir Agora ou Nunca, novo single da Ana Castela e Pedro Sampaio"
     >
-      {/* Cover art on the left — fixed 140×140 per spec. Image is
-          preserved via object-fit so the face-illustration crops
-          cleanly when squeezed into a square. */}
+      {/* Cover art on the left. Image preserved via object-fit so the
+          square crop reads cleanly. */}
       <span className={styles.coverWrap}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -50,22 +50,20 @@ export default function SingleBanner() {
         />
       </span>
 
-      {/* Text + play column on the right. Title sits over the subtitle
-          (artists list), play button anchored bottom-right as the
-          primary affordance. */}
+      {/* Text column — title over the artists line. */}
       <span className={styles.textBlock}>
         <span className={styles.title}>Agora ou Nunca</span>
         <span className={styles.subtitle}>Ana Castela &amp; Pedro Sampaio</span>
+      </span>
 
-        {/* Big play CTA — always visible, accent-green circle with
-            the classic play glyph + a soft pulse so the eye gets
-            drawn there. Whole banner is the click target; this just
-            makes the affordance unmistakable. */}
-        <span className={styles.playBtn} aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-            <path d="M4 2.5v11l9-5.5z" />
-          </svg>
-        </span>
+      {/* Big play CTA on the right — always visible, accent-green
+          circle with the classic play glyph + a soft pulse so the
+          eye gets drawn there. Whole banner is the click target;
+          this just makes the affordance unmistakable. */}
+      <span className={styles.playBtn} aria-hidden="true">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+          <path d="M4 2.5v11l9-5.5z" />
+        </svg>
       </span>
 
       {/* Sweeping highlight gleam — fires once per hover (CSS animation
