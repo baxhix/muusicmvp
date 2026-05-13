@@ -34,13 +34,44 @@ function loadDb(): DrizzleDb {
       // Also cap idle-in-transaction so an aborted client can't keep
       // a row-lock indefinitely.
       idle_in_transaction_session_timeout: 10_000,
+      // Stamp the app name so pg_stat_activity rows from this pool
+      // are easy to spot vs an external psql session.
+      application_name: 'muusic-web',
     });
   const instance = drizzle(pool, { schema });
+  // Cache the pool reference globally in dev (HMR creates new module
+  // instances) AND in prod, so the new pool-stats route below can
+  // reach it without re-creating a pool.
+  global.__pg_pool = pool;
   if (env.NODE_ENV !== 'production') {
-    global.__pg_pool = pool;
+    global.__pg_db = instance;
+  } else {
     global.__pg_db = instance;
   }
   return instance;
+}
+
+/** Pool diagnostics for ops health-check / capacity verification.
+ *  Returns the current counts from the underlying pg.Pool. */
+export function getPoolStats(): {
+  total: number;
+  idle: number;
+  waiting: number;
+  max: number;
+} {
+  loadDb();
+  const pool = global.__pg_pool;
+  if (!pool) return { total: 0, idle: 0, waiting: 0, max: 0 };
+  return {
+    total: pool.totalCount,
+    idle: pool.idleCount,
+    waiting: pool.waitingCount,
+    // pg.Pool doesn't expose max as a public field but stamps it
+    // as `options.max` internally. Cast carefully.
+    max:
+      (pool as unknown as { options?: { max?: number } }).options?.max ??
+      0,
+  };
 }
 
 /**
