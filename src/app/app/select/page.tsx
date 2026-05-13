@@ -85,9 +85,7 @@ export default function UniverseSelectPage() {
         <header className={styles.intro}>
           <h1 className={styles.title}>Escolha o seu Fanverse</h1>
           <p className={styles.lead}>
-            Cada Fanverse reúne uma comunidade de superfãs em torno de um
-            artista. Escolha por onde começar — você pode trocar a qualquer
-            momento depois pelo ícone na lateral.
+            Cada Fanverse reúne uma comunidade de superfãs em torno de um artista.
           </p>
         </header>
 
@@ -125,24 +123,32 @@ export default function UniverseSelectPage() {
                   </span>
                 </div>
               </button>
-
-              {/* Secondary CTA — sits OUTSIDE the card (below it) so
-                  the universes that opt-in via secondaryCtaLabel get
-                  a visually distinct second affordance. Click handler
-                  fires handlePick directly; no bubbling concern since
-                  it's now a sibling, not a descendant. */}
-              {u.secondaryCtaLabel && (
-                <button
-                  type="button"
-                  className={styles.secondaryCta}
-                  onClick={() => handlePick(u)}
-                >
-                  {u.secondaryCtaLabel}
-                </button>
-              )}
             </article>
           ))}
         </div>
+
+        {/* Secondary CTA row — lives OUTSIDE the cards grid so the
+            button(s) sit centered on the page horizontal axis instead
+            of being anchored under whichever card they belong to.
+            Today only Countrybeat opts in, but the loop supports any
+            universe with a `secondaryCtaLabel`. */}
+        {list.some((u) => u.secondaryCtaLabel) && (
+          <div className={styles.secondaryCtaRow}>
+            {list.map(
+              (u) =>
+                u.secondaryCtaLabel && (
+                  <button
+                    key={`secondary-${u.id}`}
+                    type="button"
+                    className={styles.secondaryCta}
+                    onClick={() => handlePick(u)}
+                  >
+                    {u.secondaryCtaLabel}
+                  </button>
+                ),
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
