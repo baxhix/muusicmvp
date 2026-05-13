@@ -17,7 +17,8 @@ interface OnlineUsersResponse {
 /**
  * Live list of online users + total registered head-count. Initial
  * fetch via REST (`/api/users/online`), then refreshed every 30s and
- * on `presence:online`/`presence:offline` socket broadcasts.
+ * on `presence:batch` socket broadcasts (server coalesces presence
+ * transitions into per-250ms batched payloads to avoid storms).
  *
  * `totalRegistered` powers the ambient "fan presence" dots scattered
  * on the map — independent from `users.length` which only counts
@@ -76,17 +77,18 @@ export function useLiveUsers(): {
     };
   }, [user]);
 
-  // Realtime presence — refetch on each event. The events themselves only
-  // carry userId, so a refetch is the simplest way to also pick up
-  // now-playing changes that come along.
+  // Realtime presence — refetch on each batched event. The server
+  // coalesces individual presence:online/offline transitions into
+  // one `presence:batch` per 250ms window so a 1k-user reconnect
+  // storm doesn't fan out to a 1M socket-write thunder. Refetch is
+  // still the simplest way to also pick up now-playing changes
+  // that come along; the batch is just the trigger.
   useEffect(() => {
     if (!socket) return;
     const reload = () => load();
-    socket.on('presence:online', reload);
-    socket.on('presence:offline', reload);
+    socket.on('presence:batch', reload);
     return () => {
-      socket.off('presence:online', reload);
-      socket.off('presence:offline', reload);
+      socket.off('presence:batch', reload);
     };
   }, [socket, load]);
 
