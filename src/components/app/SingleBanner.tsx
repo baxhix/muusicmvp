@@ -50,10 +50,16 @@ export default function SingleBanner() {
         />
       </span>
 
-      {/* Text column — title over the artists line. */}
+      {/* Text column — title, artists, and a live "X people listening"
+          badge stacked vertically. */}
       <span className={styles.textBlock}>
         <span className={styles.title}>Agora ou Nunca</span>
         <span className={styles.subtitle}>Ana Castela &amp; Pedro Sampaio</span>
+        <span className={styles.badge}>
+          <span className={styles.badgeDot} aria-hidden="true" />
+          <strong className={styles.badgeCount}>12.988</strong>
+          <span className={styles.badgeLabel}>pessoas ouvindo</span>
+        </span>
       </span>
 
       {/* Big play CTA on the right — always visible, accent-green
