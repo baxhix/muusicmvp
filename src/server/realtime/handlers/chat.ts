@@ -5,6 +5,12 @@ import {
   getReactableConversation,
   toggleReaction,
 } from '../../chat/reactions';
+import {
+  joinBucket,
+  reactBucket,
+  sendBucket,
+  typingBucket,
+} from '../rateLimit';
 import type { AppServer, AppSocket } from '../types';
 
 const sendSchema = z.object({
@@ -40,6 +46,9 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
   socket.on('chat:join', async (input: unknown, ack?: Ack) => {
     try {
+      if (!joinBucket.consume(userId)) {
+        return ack?.({ ok: false, error: 'rate_limited' });
+      }
       const parsed = joinSchema.safeParse(input);
       if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
 
@@ -66,6 +75,9 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
   socket.on('chat:send', async (input: unknown, ack?: Ack) => {
     try {
+      if (!sendBucket.consume(userId)) {
+        return ack?.({ ok: false, error: 'rate_limited' });
+      }
       const parsed = sendSchema.safeParse(input);
       if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
 
@@ -108,6 +120,9 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
   socket.on('chat:typing', (input: unknown) => {
     try {
+      // Typing fires on every keystroke from misbehaving clients.
+      // Silent drop (no ack) when over budget — UI degrades gracefully.
+      if (!typingBucket.consume(userId)) return;
       const parsed = typingSchema.safeParse(input);
       if (!parsed.success) return;
       socket.to(room(parsed.data.conversationId)).emit('chat:typing', {
@@ -132,6 +147,9 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       ack?: (res: { ok: boolean; error?: string }) => void,
     ) => {
       try {
+        if (!reactBucket.consume(userId)) {
+          return ack?.({ ok: false, error: 'rate_limited' });
+        }
         const parsed = reactSchema.safeParse(input);
         if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
 
