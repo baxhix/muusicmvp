@@ -269,11 +269,24 @@
    so it doesn't push the conversation way down on open. */
 .messages > .daySeparator:first-child { margin-top: 4px; }
 
-/* ── Reaction trigger button ──────────────────────────────────
-   Small smiley-face button that fades in on bubble hover. Click
-   toggles the emoji picker. Stays out of layout flow (no width
-   when hidden) so it never shifts bubble alignment. */
-.reactBtn {
+/* ── Message hover actions (react + reply) ────────────────────
+   Both actions share an identical pill button. The wrapper fades
+   in on bubble hover and stays visible while either action is
+   "armed" (picker open). Out of layout flow until visible so it
+   never shifts bubble alignment. */
+.msgActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+  flex-shrink: 0;
+}
+.msg:hover .msgActions,
+.msgActions:has(button[aria-expanded='true']) {
+  opacity: 1;
+}
+.actionBtn {
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -285,18 +298,17 @@
   background: rgba(20, 20, 22, 0.85);
   color: rgba(245, 245, 247, 0.7);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease, transform 0.14s ease;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
   flex-shrink: 0;
 }
-.msg:hover .reactBtn,
-.reactBtn[aria-expanded='true'] {
-  opacity: 1;
-}
-.reactBtn:hover {
+.actionBtn:hover {
   background: rgba(38, 38, 42, 0.95);
   color: #ffffff;
   transform: scale(1.08);
+}
+.actionBtn[aria-expanded='true'] {
+  background: rgba(38, 38, 42, 0.95);
+  color: #ffffff;
 }
 
 /* ── Reaction picker popover ──────────────────────────────────
@@ -376,6 +388,71 @@
 .reactionBadge:hover {
   transform: scale(1.06);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Reply banner ──────────────────────────────────────────────
+   Sits between the messages list and the input area when the user
+   has armed a "Respondendo a…" action. Shows the original sender
+   + truncated original body, with an X to cancel. */
+.replyBanner {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 8px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(20, 20, 22, 0.65);
+  flex-shrink: 0;
+  animation: replyBannerIn 0.16s ease-out;
+}
+@keyframes replyBannerIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.replyBannerBar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent, #3ddb74);
+  flex-shrink: 0;
+}
+.replyBannerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.replyBannerSender {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent, #3ddb74);
+  letter-spacing: -0.005em;
+}
+.replyBannerText {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.replyBannerClose {
+  width: 22px;
+  height: 22px;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.replyBannerClose:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .inputArea {

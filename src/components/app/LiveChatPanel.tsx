@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import MessageBody from './MessageBody';
+import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import styles from './LiveChatPanel.module.css';
 
 // Stubbed for now — backend endpoints for report/block don't exist
@@ -123,6 +123,13 @@ export default function LiveChatPanel({
   // conversations resets it so we don't leak state across DMs.
   const [reactions, setReactions] = useState<Record<string, string | null>>({});
   const [pickerOpenId, setPickerOpenId] = useState<string | null>(null);
+  // Pointer to the message currently being replied to. Lives in
+  // component state — the actual quote is materialized at SEND time
+  // by wrapping the body via buildReplyBody().
+  const [replyingTo, setReplyingTo] = useState<{
+    senderName: string;
+    body: string;
+  } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -161,6 +168,7 @@ export default function LiveChatPanel({
     setMenuOpen(false);
     setPickerOpenId(null);
     setReactions({});
+    setReplyingTo(null);
   }, [conversation?.id]);
 
   // Close the reaction picker on outside click / Escape, mirroring
@@ -197,8 +205,15 @@ export default function LiveChatPanel({
   const submit = async () => {
     const text = draft.trim();
     if (!text) return;
+    // If the user is replying to a message, wrap the body in the
+    // shared reply-prefix format BEFORE sending so both sides see
+    // the same quoted preview when MessageBody renders it.
+    const body = replyingTo
+      ? buildReplyBody(replyingTo.senderName, replyingTo.body, text)
+      : text;
     setDraft('');
-    await onSend(text);
+    setReplyingTo(null);
+    await onSend(body);
   };
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -351,28 +366,51 @@ export default function LiveChatPanel({
                       <MessageBody body={m.body} maxPreviewWidth={300} />
                     </div>
 
-                    {/* Reaction trigger — appears on hover (CSS-only
-                        fade-in) and on tap opens the emoji picker.
-                        Positioned on the OUTSIDE edge of the bubble
-                        (right for incoming, left for outgoing) so
-                        it doesn't crowd the message timestamp. */}
-                    <button
-                      type="button"
-                      className={styles.reactBtn}
-                      onClick={() =>
-                        setPickerOpenId((cur) => (cur === m.id ? null : m.id))
-                      }
-                      aria-label="Reagir à mensagem"
-                      aria-haspopup="menu"
-                      aria-expanded={pickerOpen}
-                    >
-                      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                        <circle cx="8" cy="8" r="6.4" />
-                        <circle cx="5.8" cy="6.6" r="0.7" fill="currentColor" />
-                        <circle cx="10.2" cy="6.6" r="0.7" fill="currentColor" />
-                        <path d="M5.6 10c.7.9 1.6 1.3 2.4 1.3.9 0 1.7-.4 2.4-1.3" strokeLinecap="round" />
-                      </svg>
-                    </button>
+                    {/* Hover actions — reaction trigger + reply
+                        button. Both fade in on bubble hover. The
+                        reply button captures the original message
+                        (after stripping any existing reply prefix
+                        so chained replies only quote the latest)
+                        and focuses the input. */}
+                    <span className={styles.msgActions}>
+                      <button
+                        type="button"
+                        className={styles.actionBtn}
+                        onClick={() => {
+                          const senderName = isMine
+                            ? 'Você'
+                            : other?.name ?? 'Conversa';
+                          setReplyingTo({
+                            senderName,
+                            body: stripReplyPrefix(m.body),
+                          });
+                        }}
+                        aria-label="Responder à mensagem"
+                        title="Responder"
+                      >
+                        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M9 4L4 9l5 5" />
+                          <path d="M4 9h7a3 3 0 0 1 3 3v0" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.actionBtn}
+                        onClick={() =>
+                          setPickerOpenId((cur) => (cur === m.id ? null : m.id))
+                        }
+                        aria-label="Reagir à mensagem"
+                        aria-haspopup="menu"
+                        aria-expanded={pickerOpen}
+                      >
+                        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                          <circle cx="8" cy="8" r="6.4" />
+                          <circle cx="5.8" cy="6.6" r="0.7" fill="currentColor" />
+                          <circle cx="10.2" cy="6.6" r="0.7" fill="currentColor" />
+                          <path d="M5.6 10c.7.9 1.6 1.3 2.4 1.3.9 0 1.7-.4 2.4-1.3" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </span>
 
                     {pickerOpen && (
                       <div className={styles.reactPicker} ref={pickerRef} role="menu">
@@ -419,10 +457,32 @@ export default function LiveChatPanel({
         <div ref={endRef} />
       </div>
 
+      {replyingTo && (
+        <div className={styles.replyBanner}>
+          <div className={styles.replyBannerBar} aria-hidden="true" />
+          <div className={styles.replyBannerInfo}>
+            <span className={styles.replyBannerSender}>
+              Respondendo a {replyingTo.senderName}
+            </span>
+            <span className={styles.replyBannerText}>{replyingTo.body}</span>
+          </div>
+          <button
+            type="button"
+            className={styles.replyBannerClose}
+            onClick={() => setReplyingTo(null)}
+            aria-label="Cancelar resposta"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       <div className={styles.inputArea}>
         <input
           className={styles.field}
-          placeholder="Mensagem…"
+          placeholder={replyingTo ? 'Sua resposta…' : 'Mensagem…'}
           autoComplete="off"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
