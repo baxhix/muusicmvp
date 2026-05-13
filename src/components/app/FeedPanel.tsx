@@ -38,8 +38,8 @@ const ACTIVITIES: ActivityCardData[] = [
 const MEDIA: MediaPostData[] = [
   {
     type: 'carousel',
-    user: 'Central de Fãs Ana Castela',
-    avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
+    user: 'Central Ana Castela',
+    avatar: '/central-anacastela.png',
     time: '8min',
     likes: 4821,
     comments: 312,
@@ -53,7 +53,7 @@ const MEDIA: MediaPostData[] = [
   {
     type: 'video',
     user: 'Ana Castela',
-    avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
+    avatar: '/central-anacastela.png',
     time: '22min',
     likes: 9103,
     comments: 874,
@@ -65,7 +65,7 @@ const MEDIA: MediaPostData[] = [
   {
     type: 'video',
     user: 'Ana Castela',
-    avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
+    avatar: '/central-anacastela.png',
     time: '1h',
     likes: 6240,
     comments: 412,

@@ -170,16 +170,36 @@ export async function listMessages(
   // them on initial load — previously this only happened for the
   // Superchat path, and DM reactions disappeared when the user left
   // and re-entered the conversation.
+  //
+  // DEFENSIVE: any failure inside listReactionsForMessages must NOT
+  // break message delivery. Wrap in try/catch and fall through to
+  // the no-reactions branch so the conversation history always
+  // renders even if reaction queries hit some edge case.
   if (opts.viewerId && page.length > 0) {
-    const reactionsByMsg = await listReactionsForMessages(
-      opts.viewerId,
-      page.map((m) => m.id),
-    );
+    try {
+      const reactionsByMsg = await listReactionsForMessages(
+        opts.viewerId,
+        page.map((m) => m.id),
+      );
+      return {
+        messages: page.map((m) => ({
+          ...m,
+          reactions: reactionsByMsg.get(m.id) ?? [],
+        })),
+        hasMore,
+      };
+    } catch (err) {
+      // Log but don't propagate — the conversation history is
+      // far more important than the reactions chips.
+      console.error('listMessages reaction hydration failed:', err);
+    }
+  }
+
+  // Always provide reactions=[] when viewerId was passed so the
+  // client doesn't see a different shape between success/failure.
+  if (opts.viewerId) {
     return {
-      messages: page.map((m) => ({
-        ...m,
-        reactions: reactionsByMsg.get(m.id) ?? [],
-      })),
+      messages: page.map((m) => ({ ...m, reactions: [] })),
       hasMore,
     };
   }

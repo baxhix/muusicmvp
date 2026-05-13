@@ -19,6 +19,21 @@ export const FAKE_ANA_CONVERSATION_ID = 'fake-conv-ana-castela';
  *  Falls back to the existing universe cover if the file is missing. */
 export const FAKE_ANA_AVATAR_URL = '/ana-castela.png';
 
+/** Second simulated contact: an official "Central Ana Castela"
+ *  account that posts updates more in the voice of a community
+ *  manager / news desk than the artist herself. */
+export const FAKE_CENTRAL_USER_ID = 'fake-central-anacastela';
+export const FAKE_CENTRAL_CONVERSATION_ID = 'fake-conv-central-anacastela';
+export const FAKE_CENTRAL_AVATAR_URL = '/central-anacastela.png';
+
+/** Tracks shown in the chat header when each contact's thread is
+ *  active. Both currently point to the launch single — easy to
+ *  override per-contact later. */
+export const FAKE_CENTRAL_NOW_PLAYING = {
+  title: 'Solta o Pipoco',
+  artist: 'Ana Castela',
+};
+
 /** Track that powers the now-playing line in the chat header. */
 export const FAKE_ANA_NOW_PLAYING = {
   title: 'Solta o Pipoco',
@@ -102,6 +117,46 @@ export function pickRandomAnaReply(): string {
   return REPLY_MESSAGES[Math.floor(Math.random() * REPLY_MESSAGES.length)];
 }
 
+/** Pool of messages for the Central Ana Castela community account.
+ *  Tone is informative + community-news, distinct from the artist's
+ *  warm personal voice — covers tour dates, releases, contests,
+ *  fan-club perks. */
+const CENTRAL_MESSAGES: readonly string[] = [
+  // Tour / shows
+  '🗓️ Próximo show oficial: Festa do Peão (Barretos). Garanta seu ingresso pelo site da Central.',
+  '📍 Cidades confirmadas pra 2026: Goiânia, Cuiabá, Sinop, Rio Verde. Lista completa em breve.',
+  'Hoje tem a Boiadeira no palco do Caldas Country — quem vai? Comenta a cidade aí 👇',
+  '⚠️ Lembrete: ingressos da turnê só são oficiais pelos canais autorizados. Cuidado com revendas.',
+
+  // Lançamentos / clipes
+  '🎵 Top 3 da semana: Pipoco, Boiadeira, Erro Gostoso. Bombando todo o sertão.',
+  'Clipe novo na conta oficial — passa lá e curte, isso ajuda a galera a chegar mais longe 💚',
+  '📈 Pipoco passou de 500M de plays. Vocês são responsáveis por isso. Obrigada de coração.',
+  'Próximo lançamento dia 28. Fica de olho aqui na Central pra ser o primeiro a ouvir.',
+
+  // Comunidade / Fanverse
+  'Tropa do Chapelão tá crescendo todo dia. Bem-vinda, gente nova! 🤠',
+  '💚 Notícia: Fanverse oficial da Ana ganhou ranking de superfãs. Conferiram já?',
+  'Posta aqui no muusic uma foto cantando música da Ana e ganhe pontos no ranking 📸',
+  'Aviso importante: contas com selo verificado são oficiais. Outras se passando por Ana, denunciem.',
+
+  // Concursos / interação
+  '🎁 Sorteio essa semana: meet & greet em Barretos. Detalhes amanhã na Central.',
+  'Quem participa do quiz semanal sobre as músicas? Sextou é dia.',
+  'Indique uma cidade pra próxima turnê. Nas que mais aparecerem, a gente vai 🚌',
+
+  // Bastidores / curiosidades
+  '👀 Bastidor exclusivo: bate-papo da Ana com a tropa do Chapelão amanhã às 18h.',
+  'Sabia? "Pipoco" foi gravada em 4 takes. A Ana disse que o tom só fechou no 4º 🎶',
+  '📸 Foto inédita do ensaio chegando na Central daqui a pouco. Não percam.',
+];
+
+export function pickRandomCentralMessage(): string {
+  return CENTRAL_MESSAGES[
+    Math.floor(Math.random() * CENTRAL_MESSAGES.length)
+  ];
+}
+
 /** Stable createdAt for the launch message — derived once at module
  *  load so re-renders don't reshuffle the message ordering. Anchored
  *  to "five minutes before mount" so the inline relative time labels
@@ -150,6 +205,50 @@ export function buildAnaConversation(args: {
       avatarUrl: FAKE_ANA_AVATAR_URL,
       // The artist's verified badge — drives the blue check on her
       // avatar across the dock, sidebar, and chat header.
+      verified: true,
+    },
+    unreadCount: args.unreadCount,
+  };
+}
+
+/** Initial buffer for the Central account — single welcome message
+ *  pinned at first-mount so the contact never reads as empty. */
+const CENTRAL_WELCOME_TS = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+export function buildInitialCentralMessages(): ApiMessage[] {
+  return [
+    {
+      id: 'fake-central-msg-welcome',
+      conversationId: FAKE_CENTRAL_CONVERSATION_ID,
+      senderId: FAKE_CENTRAL_USER_ID,
+      body: 'Oi, tropa! 🤠 Aqui é a Central Ana Castela — canal oficial pra novidades, datas de show e bastidores. Bem-vinda(o)!',
+      createdAt: CENTRAL_WELCOME_TS,
+      senderName: 'Central Ana Castela',
+      senderAvatarUrl: FAKE_CENTRAL_AVATAR_URL,
+    },
+  ];
+}
+
+/** Mirror of buildAnaConversation for the Central account. */
+export function buildCentralConversation(args: {
+  lastMessage: ApiMessage | null;
+  unreadCount: number;
+}): ApiConversationSummary {
+  return {
+    id: FAKE_CENTRAL_CONVERSATION_ID,
+    type: 'dm',
+    createdAt: CENTRAL_WELCOME_TS,
+    lastMessage: args.lastMessage
+      ? {
+          id: args.lastMessage.id,
+          body: args.lastMessage.body,
+          senderId: args.lastMessage.senderId,
+          createdAt: args.lastMessage.createdAt,
+        }
+      : null,
+    otherUser: {
+      id: FAKE_CENTRAL_USER_ID,
+      name: 'Central Ana Castela',
+      avatarUrl: FAKE_CENTRAL_AVATAR_URL,
       verified: true,
     },
     unreadCount: args.unreadCount,
