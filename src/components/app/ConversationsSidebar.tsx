@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
+import VerifiedBadge from './VerifiedBadge';
 import styles from './ConversationsSidebar.module.css';
 
 interface Props {
@@ -168,11 +169,19 @@ export default function ConversationsSidebar({
                     className={`${styles.statusDash} ${isOnline ? styles.statusDashOnline : styles.statusDashOffline}`}
                     aria-hidden="true"
                   />
+                  {u.verified && (
+                    <span className={styles.verifiedBadge}>
+                      <VerifiedBadge size={14} />
+                    </span>
+                  )}
                 </span>
 
                 <span className={styles.rowInfo}>
                   <span className={styles.rowName}>
                     {u.name ?? 'Anônimo'}
+                    {u.verified && (
+                      <VerifiedBadge size={13} className={styles.inlineVerified} />
+                    )}
                   </span>
                   {preview && (
                     <span className={styles.rowPreview}>{preview}</span>

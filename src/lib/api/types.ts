@@ -50,6 +50,13 @@ export interface ApiConversationSummary {
     id: string;
     name: string | null;
     avatarUrl: string | null;
+    /**
+     * True for verified accounts (currently only the fake Ana Castela
+     * fixture, but the schema is here for real verification later).
+     * Drives the blue check badge on chat dock / sidebar / panel
+     * header avatars.
+     */
+    verified?: boolean;
   } | null;
   /** Messages received in this thread that the current user hasn't read yet. */
   unreadCount: number;

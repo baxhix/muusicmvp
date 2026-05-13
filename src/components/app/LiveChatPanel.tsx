@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
+import VerifiedBadge from './VerifiedBadge';
 import styles from './LiveChatPanel.module.css';
 
 // Stubbed for now — backend endpoints for report/block don't exist
@@ -242,7 +243,7 @@ export default function LiveChatPanel({
     >
       <div className={styles.header}>
         {avatar && (
-          <>
+          <span className={styles.headerAvatarWrap}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatar}
@@ -258,10 +259,20 @@ export default function LiveChatPanel({
                 if (img.src !== fb) img.src = fb;
               }}
             />
-          </>
+            {other?.verified && (
+              <span className={styles.headerVerified}>
+                <VerifiedBadge size={20} />
+              </span>
+            )}
+          </span>
         )}
         <div className={styles.headerInfo}>
-          <span className={styles.headerName}>{other?.name ?? 'Conversa'}</span>
+          <span className={styles.headerName}>
+            {other?.name ?? 'Conversa'}
+            {other?.verified && (
+              <VerifiedBadge size={16} className={styles.headerInlineVerified} />
+            )}
+          </span>
           {/* Now-playing line: title in white-bold, artist in muted
               gray. Matches the same treatment used on the map pin
               preview so the user feels they're seeing the same data

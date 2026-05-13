@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
+import VerifiedBadge from './VerifiedBadge';
 import styles from './LiveChatStack.module.css';
 
 interface Props {
@@ -100,6 +101,16 @@ export default function LiveChatStack({
                 className={`${styles.statusDot} ${isOnline ? styles.statusDotOnline : styles.statusDotOffline}`}
                 aria-hidden="true"
               />
+
+              {/* Verified check — top-right corner. Currently only
+                  rendered for Ana Castela; same flag travels through
+                  ApiConversationSummary.otherUser for any future
+                  verified contact. */}
+              {u.verified && (
+                <span className={styles.verifiedBadge}>
+                  <VerifiedBadge size={16} />
+                </span>
+              )}
 
               {unread > 0 && (
                 <span className={styles.unreadBadge} aria-hidden="true">

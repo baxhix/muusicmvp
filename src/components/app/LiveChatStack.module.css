@@ -113,6 +113,18 @@
   background: rgba(160, 160, 165, 0.85);
 }
 
+/* Verified blue-check — top-right corner of the avatar, opposite
+   the presence dot. Slight black drop-shadow so the check pops
+   over light avatar backgrounds. */
+.verifiedBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: inline-flex;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
 /* Red circle on the avatar when there are unread messages.
    Positioned top-right so it pops above the avatar border. */
 .unreadBadge {

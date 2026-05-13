@@ -30,7 +30,7 @@ export const FAKE_ANA_NOW_PLAYING = {
  * the conversation. Includes the new music video URL so the inline
  * video preview component renders the YouTube embed below the text.
  */
-const VIDEO_LAUNCH_MESSAGE = `Oi, boiada! 🤠 Acabou de sair meu clipe novo — corre lá e me conta o que achou! 💚
+const VIDEO_LAUNCH_MESSAGE = `Oi, tropa do Chapelão! 🤠 Acabou de sair meu clipe novo — corre lá e me conta o que achou! 💚
 
 https://www.youtube.com/watch?v=CKNjiHKiNvM`;
 
@@ -43,7 +43,7 @@ const RANDOM_MESSAGES: readonly string[] = [
   'Boiadeira chegou! 🤠 Como tá o coração de vocês hoje?',
   'Acabei de chegar do estúdio e já vim aqui matar a saudade. 💚',
   'Tô com vocês até dormir. Quem aí ainda tá acordado?',
-  'Bom dia, minha boiada! Hoje vai ser dia bom — sinto isso aqui no peito.',
+  'Bom dia, minha tropa do Chapelão! Hoje vai ser dia bom — sinto isso aqui no peito.',
   'Boa noite, gente. Manda um coração antes de eu dormir 💚',
   'Saudade de vocês desde o último show. Quem foi me conta a melhor parte 👇',
   'Sem vocês não tem Boiadeira. Tô aqui pra lembrar disso todo dia.',
@@ -56,7 +56,7 @@ const RANDOM_MESSAGES: readonly string[] = [
   'Posta um vídeo seu cantando comigo e me marca, viu? Eu vou olhar.',
   'Que tal hoje a gente fazer um replay maratona nas minhas músicas? Bora?',
   'Fala uma coisa boa que aconteceu hoje. Quero ler todas.',
-  'Quem tá ouvindo agora e onde? Comenta aí — quero mapear minha boiada 🌎',
+  'Quem tá ouvindo agora e onde? Comenta aí — quero mapear minha tropa do Chapelão 🌎',
 
   // ── Vida + rotina (humaniza) ────────────────────────────────
   'Hoje foi dia de ensaio pesado. Quase morri, mas vale a pena por vocês 🎸',
@@ -148,6 +148,9 @@ export function buildAnaConversation(args: {
       id: FAKE_ANA_USER_ID,
       name: 'Ana Castela',
       avatarUrl: FAKE_ANA_AVATAR_URL,
+      // The artist's verified badge — drives the blue check on her
+      // avatar across the dock, sidebar, and chat header.
+      verified: true,
     },
     unreadCount: args.unreadCount,
   };
