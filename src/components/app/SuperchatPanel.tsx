@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useSuperchat, type SuperchatFeedItem } from '@/hooks/useSuperchat';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiMessage } from '@/lib/api/types';
@@ -184,7 +184,7 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
             ) : feed.length === 0 ? (
               <div className={styles.placeholder}>Seja o primeiro a mandar uma mensagem 👋</div>
             ) : (
-              feed.map((item, i) => renderItem(item, i, feed, user.id, react))
+              renderFeedWithDaySeparators(feed, user.id, react)
             )}
             <div ref={endRef} />
           </div>
@@ -219,6 +219,63 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
       />
     </div>
   );
+}
+
+/** Stable per-day cache key. Identical helpers ship in LiveChatPanel —
+ *  duplicated rather than shared because they're literally three lines
+ *  and the chat panels don't have a common module yet. */
+function dayKey(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/** "Hoje" / "Ontem" / formatted PT-BR date. Same UX language as the
+ *  DM panel so the two chats feel like one product. */
+function formatDayLabel(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  if (isSameDay(d, now)) return 'Hoje';
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (isSameDay(d, yesterday)) return 'Ontem';
+
+  return d.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+  });
+}
+
+/** Iterate the feed once, emitting a day-separator chip every time
+ *  the calendar day changes between consecutive items. Used in place
+ *  of the previous `feed.map` so both message + activity rows get
+ *  grouped by date. */
+function renderFeedWithDaySeparators(
+  feed: SuperchatFeedItem[],
+  myUserId: string,
+  onReact: (messageId: string, emoji: string) => void,
+): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let lastDay: string | null = null;
+  for (let i = 0; i < feed.length; i++) {
+    const item = feed[i];
+    const k = dayKey(item.createdAt);
+    if (k !== lastDay) {
+      nodes.push(
+        <div key={`day-${k}-${item.id}`} className={styles.daySeparator}>
+          <span>{formatDayLabel(item.createdAt)}</span>
+        </div>,
+      );
+      lastDay = k;
+    }
+    nodes.push(renderItem(item, i, feed, myUserId, onReact));
+  }
+  return nodes;
 }
 
 function renderItem(

@@ -31,7 +31,12 @@ import SameTrackToast from '@/components/app/SameTrackToast';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 
-import { useChatLive } from '@/hooks/useChatLive';
+import { useChatLiveWithFakes } from '@/hooks/useChatLiveWithFakes';
+import {
+  FAKE_ANA_CONVERSATION_ID,
+  FAKE_ANA_NOW_PLAYING,
+  FAKE_ANA_USER_ID,
+} from '@/lib/fakeAna';
 import { useLocationSync } from '@/hooks/useLocationSync';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -49,7 +54,7 @@ export default function AppPage() {
   const { user: authUser } = useAuth();
   const { universeId, hydrated: universeHydrated } = useUniverse();
   const router = useRouter();
-  const chat = useChatLive();
+  const chat = useChatLiveWithFakes();
 
   // Universe gate: once the localStorage read has resolved and the
   // user is authenticated, redirect to the selection screen if they
@@ -69,7 +74,10 @@ export default function AppPage() {
   // the child doesn't see a new reference on every render — only
   // when the actual roster changes (by ids list).
   const onlineUserIds = useMemo(
-    () => new Set(liveUsers.map((u) => u.id)),
+    // The fake Ana Castela contact always reads as online — she's
+    // the "always-on" VIP affordance, otherwise her dash would
+    // misleadingly look gray.
+    () => new Set([...liveUsers.map((u) => u.id), FAKE_ANA_USER_ID]),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [liveUsers.map((u) => u.id).join('|')],
   );
@@ -227,7 +235,12 @@ export default function AppPage() {
   // drives the "now playing" line in the chat panel header. When the
   // user is offline or hasn't been seen with a track, this is null;
   // LiveChatPanel falls back to a deterministic mock for that case.
+  // SPECIAL CASE: the fake Ana Castela conversation always shows the
+  // featured launch track, regardless of presence.
   const activeOtherNowPlaying = (() => {
+    if (activeConversation?.id === FAKE_ANA_CONVERSATION_ID) {
+      return FAKE_ANA_NOW_PLAYING;
+    }
     const otherId = activeConversation?.otherUser?.id;
     if (!otherId) return null;
     const liveOther = liveUsers.find((u) => u.id === otherId);

@@ -138,6 +138,28 @@
   color: rgba(245, 245, 247, 0.5);
 }
 
+/* ── Day separator ───────────────────────────────────────────────
+   Same chip + same language ("Hoje" / "Ontem" / formatted date) as
+   the DM panel so the two chats feel like one product. */
+.daySeparator {
+  align-self: center;
+  margin: 14px 0 6px;
+  display: flex;
+  align-items: center;
+}
+.daySeparator span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.6);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+.messages > .daySeparator:first-child { margin-top: 4px; }
+
 .msg {
   display: flex;
   flex-direction: column;
