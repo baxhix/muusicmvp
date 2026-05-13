@@ -16,7 +16,25 @@ function loadDb(): DrizzleDb {
   if (global.__pg_db) return global.__pg_db;
   const pool =
     global.__pg_pool ??
-    new Pool({ connectionString: env.DATABASE_URL, max: 10 });
+    new Pool({
+      connectionString: env.DATABASE_URL,
+      // Was 10 — too tight for ~50 concurrent chat:send/react. Each
+      // path takes 3-4 queries, so 10 connections × ~50ms/query =
+      // ~200 q/s ceiling, which we hit at <100 active users. Raise
+      // to 50: comfortably handles 1k+ users with headroom for
+      // analytics + admin queries on the side. Postgres itself
+      // handles 100+ idle connections fine on modern hardware.
+      max: 50,
+      // Defense against a runaway query holding a connection: cap
+      // every query at 5s. The chat-side queries take <50ms in
+      // healthy conditions; anything above 5s is almost certainly a
+      // bug (missing index, lock contention, etc.) and we'd rather
+      // surface it as a clear error than slowly drain the pool.
+      statement_timeout: 5_000,
+      // Also cap idle-in-transaction so an aborted client can't keep
+      // a row-lock indefinitely.
+      idle_in_transaction_session_timeout: 10_000,
+    });
   const instance = drizzle(pool, { schema });
   if (env.NODE_ENV !== 'production') {
     global.__pg_pool = pool;
