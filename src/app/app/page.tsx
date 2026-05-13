@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import TopBar from '@/components/app/TopBar';
 import FilterTabs from '@/components/app/FilterTabs';
@@ -63,6 +63,15 @@ export default function AppPage() {
     }
   }, [universeHydrated, authUser, universeId, router]);
   const { users: liveUsers, totalRegistered } = useLiveUsers();
+  // Stable Set of currently-online user ids, passed to LiveChatStack
+  // so each avatar can render a green/gray presence dot. Memoized so
+  // the child doesn't see a new reference on every render — only
+  // when the actual roster changes (by ids list).
+  const onlineUserIds = useMemo(
+    () => new Set(liveUsers.map((u) => u.id)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [liveUsers.map((u) => u.id).join('|')],
+  );
   const [playerExpanded, setPlayerExpanded] = useState(false);
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
   const [showProfile, setShowProfile] = useState(false);
@@ -278,6 +287,7 @@ export default function AppPage() {
       <LiveChatStack
         conversations={chat.conversations}
         activeId={chat.activeId}
+        onlineUserIds={onlineUserIds}
         onOpen={chat.open}
         onAddClick={() => setShowUserPicker(true)}
       />

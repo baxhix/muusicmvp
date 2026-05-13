@@ -7,6 +7,13 @@ import styles from './LiveChatStack.module.css';
 interface Props {
   conversations: ApiConversationSummary[];
   activeId: string | null;
+  /**
+   * Set of currently-online user ids. Each avatar gets a green/gray
+   * status dot + the offline-grayscale treatment based on whether
+   * its `otherUser.id` is in this set. Driven by `useLiveUsers`
+   * (presence socket events).
+   */
+  onlineUserIds?: ReadonlySet<string>;
   onOpen: (conversationId: string) => void;
   onAddClick: () => void;
 }
@@ -19,6 +26,7 @@ interface Props {
 export default function LiveChatStack({
   conversations,
   activeId,
+  onlineUserIds,
   onOpen,
   onAddClick,
 }: Props) {
@@ -37,11 +45,18 @@ export default function LiveChatStack({
           const img = u.avatarUrl ?? `https://i.pravatar.cc/72?u=${u.id}`;
           const isActive = activeId === c.id;
           const preview = c.lastMessage?.body;
+          // Presence flag: if the live-users hook hasn't loaded yet
+          // (`onlineUserIds` undefined) we default to OFFLINE so the
+          // UI never shows a misleading green dot during the brief
+          // hydration window.
+          const isOnline = onlineUserIds?.has(u.id) ?? false;
 
           const unread = c.unreadCount;
+          const statusLabel = isOnline ? 'online' : 'offline';
+          const baseLabel = u.name ?? 'Conversa';
           const ariaLabel = unread > 0
-            ? `${u.name ?? 'Conversa'} (${unread} ${unread === 1 ? 'mensagem' : 'mensagens'} não lidas)`
-            : u.name ?? 'Conversa';
+            ? `${baseLabel}, ${statusLabel}, ${unread} ${unread === 1 ? 'mensagem' : 'mensagens'} não lidas`
+            : `${baseLabel}, ${statusLabel}`;
 
           return (
             <button
@@ -53,7 +68,20 @@ export default function LiveChatStack({
               aria-label={ariaLabel}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img} alt={u.name ?? ''} className={styles.avatar} />
+              <img
+                src={img}
+                alt={u.name ?? ''}
+                className={`${styles.avatar} ${isOnline ? '' : styles.avatarOffline}`}
+              />
+
+              {/* Presence dot — green for online, neutral gray for
+                  offline. Lives on the bottom-right corner of the
+                  avatar so it reads at a glance without crowding
+                  the unread badge (top-right). */}
+              <span
+                className={`${styles.statusDot} ${isOnline ? styles.statusDotOnline : styles.statusDotOffline}`}
+                aria-hidden="true"
+              />
 
               {unread > 0 && (
                 <span className={styles.unreadBadge} aria-hidden="true">
@@ -64,6 +92,12 @@ export default function LiveChatStack({
               {hovered === c.id && (
                 <div className={styles.tooltip}>
                   <span className={styles.tooltipName}>{u.name ?? 'Anônimo'}</span>
+                  <span
+                    className={`${styles.tooltipStatus} ${isOnline ? styles.tooltipStatusOnline : styles.tooltipStatusOffline}`}
+                  >
+                    <span className={styles.tooltipStatusDash} aria-hidden="true" />
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
                   {preview && <span className={styles.tooltipSub}>{preview}</span>}
                 </div>
               )}
