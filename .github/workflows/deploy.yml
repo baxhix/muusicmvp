@@ -98,12 +98,30 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      # Debug-friendly preflight — host is in vars (not secrets) so
+      # the value is visible in logs. nc confirms the TCP/22 path
+      # before we even invoke appleboy/ssh-action, narrowing where
+      # any future failures come from (network vs. SSH auth).
+      - name: Verify host reachability
+        run: |
+          HOST="${{ vars.DEPLOY_HOST }}"
+          if [ -z "$HOST" ]; then
+            echo "::error::vars.DEPLOY_HOST is empty — add a Repository Variable named DEPLOY_HOST in Settings → Secrets and variables → Actions → Variables"
+            exit 1
+          fi
+          echo "Dialing $HOST:22 from runner $(curl -s ifconfig.me)…"
+          nc -vz -w 5 "$HOST" 22 || {
+            echo "::error::TCP connection to $HOST:22 timed out from this runner. Likely cause: host-side firewall (Hostinger panel firewall, ufw, or fail2ban) blocking the runner's IP."
+            exit 1
+          }
+
       - name: SSH deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host:     ${{ secrets.DEPLOY_HOST }}
+          host:     ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key:      ${{ secrets.DEPLOY_SSH_KEY }}
+          port:     22
           script_stop: true
           script: |
             set -euo pipefail
