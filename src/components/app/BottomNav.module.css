@@ -43,10 +43,11 @@
   text-decoration: none;
 }
 .item:hover { color: var(--ink); transform: translateY(-1px); }
-/* Active state — lilac leaning pink. Same hue used by the .dot
-   indicator below so the two cues stay chromatically aligned. */
-.itemActive { color: #d946ef; }
-.itemActive:hover { color: #e879f9; }
+/* Active state — icon stays neutral (var(--ink)); the lilac
+   indicator lives on the .dot below the icon, NOT on the icon
+   itself. Keeps the visual weight calm while the colored dot
+   still calls out "you are here". */
+.itemActive { color: var(--ink); }
 
 /* ── Custom tooltips ──────────────────────────────────────────────
  * Pure-CSS tooltip system driven by the `data-tooltip` attribute on

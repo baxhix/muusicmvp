@@ -62,24 +62,27 @@
   font-family: var(--mono);
 }
 
-/* ── Image media ── */
+/* ── Image media ──
+ * Width-locked + auto-height so each post respects the photo's
+ * native aspect ratio. Portraits stay tall, landscape stays
+ * short. No max-height cap or object-fit crop — what you upload
+ * is what you see. */
 .image {
   width: 100%;
+  height: auto;
   display: block;
-  object-fit: cover;
-  max-height: 280px;
 }
 
 /* ── Carousel ───────────────────────────────────────────
- * Same width + max-height envelope as a single image post,
- * so a carousel feels like a normal media card with two
- * extra chrome elements: chevrons + dots.
- * The track translates horizontally; each slide is 100% of
- * the visible area, sized via flex-shrink: 0. */
+ * Width-locked container that grows in height to whatever the
+ * current slide demands. The track is horizontally translated
+ * to swap slides; each slide keeps its native height via
+ * `height: auto` so portrait + landscape mixes don't get
+ * letterboxed or cropped.
+ */
 .carousel {
   position: relative;
   width: 100%;
-  max-height: 280px;
   overflow: hidden;
   background: #000;
   user-select: none;
@@ -88,7 +91,7 @@
 .carouselTrack {
   display: flex;
   width: 100%;
-  height: 100%;
+  align-items: flex-start;  /* slides start at top, take own height */
   transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
@@ -96,8 +99,7 @@
 .carouselSlide {
   flex: 0 0 100%;
   width: 100%;
-  max-height: 280px;
-  object-fit: cover;
+  height: auto;
   display: block;
   pointer-events: none; /* let clicks pass through to chevrons */
 }
