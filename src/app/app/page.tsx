@@ -9,7 +9,6 @@ import FilterTabs from '@/components/app/FilterTabs';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import ConversationsSidebar from '@/components/app/ConversationsSidebar';
-import SingleBanner from '@/components/app/SingleBanner';
 import ArtistBox from '@/components/app/ArtistBox';
 import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
@@ -339,10 +338,6 @@ export default function AppPage() {
           row + progress bar by default, expands to reveal the
           missions list when clicked. */}
       <ArtistBox />
-
-      {/* "Agora ou Nunca" single promo — fixed pill anchored below
-          the filter strip. Self-contained, knows its own positioning. */}
-      <SingleBanner onOpenSuperchat={() => setShowSuperchat(true)} />
 
       <LiveChatStack
         conversations={chat.conversations}

@@ -9,7 +9,10 @@
 .player {
   position: fixed;
   bottom: 24px;
-  left: clamp(16px, calc(25% - 196px), 380px);
+  /* Aligned to the ArtistBox column at top-left (which sits at
+     left: 68px). Keeps the player + Fanverse card vertically
+     stacked on the same axis instead of floating mid-screen. */
+  left: 68px;
   background:
     radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.018) 0%, transparent 65%),
     linear-gradient(160deg,
