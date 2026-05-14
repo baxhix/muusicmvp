@@ -215,21 +215,30 @@ export default function NowPlaying({
     ? { title: spotifyTrack.title, artist: spotifyTrack.artist, img: spotifyTrack.img }
     : SONGS[songIdx];
 
-  // Cliques expandem em ciclo: mini → horizontal → expanded → video → mini
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (embed) return;
-    if ((e.target as HTMLElement).closest('button, iframe, .video-shell')) return;
-    setSize(curr => {
-      const next: PlayerSize =
-        curr === 'mini' ? 'horizontal' :
-        curr === 'horizontal' ? 'expanded' :
-        curr === 'expanded' ? 'video' :
-        'mini';
-      onExpandChange?.(next === 'expanded' || next === 'video');
-      onSizeChange?.(next);
-      return next;
-    });
-  }, [embed, onExpandChange, onSizeChange]);
+  // ⚠️ Cycle disabled — player is locked to 'video' for now. The
+  // mini/horizontal/expanded variants will come back in a future
+  // iteration; to re-enable, restore the body below and the
+  // onClick wiring on the player root. Kept as a stub so the
+  // import/types stay live and the diff to revert is minimal.
+  //
+  // const handleClick = useCallback((e: React.MouseEvent) => {
+  //   if (embed) return;
+  //   if ((e.target as HTMLElement).closest('button, iframe, .video-shell')) return;
+  //   setSize(curr => {
+  //     const next: PlayerSize =
+  //       curr === 'mini' ? 'horizontal' :
+  //       curr === 'horizontal' ? 'expanded' :
+  //       curr === 'expanded' ? 'video' :
+  //       'mini';
+  //     onExpandChange?.(next === 'expanded' || next === 'video');
+  //     onSizeChange?.(next);
+  //     return next;
+  //   });
+  // }, [embed, onExpandChange, onSizeChange]);
+  // The setter is still referenced by future code paths (and React
+  // would warn about an unused useState destructure) — touch it
+  // here to keep things tidy without changing behavior.
+  void setSize;
 
   return (
     <div
@@ -241,7 +250,8 @@ export default function NowPlaying({
         !embed && expanded ? styles.playerExpanded : '',
         !embed && isVideo ? styles.playerVideo : '',
       ].filter(Boolean).join(' ')}
-      onClick={handleClick}
+      /* onClick={handleClick} — disabled while player is locked to
+         'video' (see commented handleClick above). */
       role="region"
       aria-label="Tocando agora"
     >
