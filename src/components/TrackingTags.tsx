@@ -1,44 +1,68 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Script from 'next/script';
-import { getActiveSiteTags } from '@/server/admin/tags';
 
 /**
  * Renders every enabled tracking tag configured under
- * /admin/settings → Tags. This is a SERVER component — runs on
- * every page render but the DB read is cached for 60s
- * in-process (see getActiveSiteTags), so the realistic cost is
- * one query per minute per Node process.
+ * /admin/settings → Tags. This is a CLIENT component on purpose:
+ * if it were a server component reading from DB, the layout would
+ * have to be `async`, which forces every route to opt out of
+ * static pre-rendering. With `/app` being heavily client-side and
+ * pre-rendered statically, mixing in an async layout caused
+ * hydration mismatches (React error #418).
  *
- * Each supported kind has its own snippet. Adding a new kind:
+ * Trade-off: tags load slightly later (a single GET /api/site-tags/public
+ * + script injection after first paint). Acceptable because all
+ * snippets already use next/script `afterInteractive` strategy
+ * anyway — the wire latency added here is one round-trip.
+ *
+ * Adding a new kind:
  *   1. Add it to KNOWN_TAG_KINDS in src/server/admin/tags.ts
  *   2. Extend the CHECK constraint in a migration
- *   3. Add a case here
+ *   3. Add a case in renderTag() below
  *   4. Add a label/placeholder in the admin Tags tab
- *
- * All snippets use `next/script` with `afterInteractive` so they
- * load AFTER the first paint and never block the player's UI.
  */
-export default async function TrackingTags() {
-  let tags: { kind: string; value: string }[] = [];
-  try {
-    tags = await getActiveSiteTags();
-  } catch (err) {
-    // Belt-and-suspenders: getActiveSiteTags already swallows DB
-    // errors, but if the import itself fails (e.g. during a build
-    // without DATABASE_URL) we still don't want to break the page.
-    console.warn('TrackingTags: failed to read site tags', err);
-    return null;
-  }
+export default function TrackingTags() {
+  const [tags, setTags] = useState<{ kind: string; value: string }[] | null>(null);
 
-  // ENV fallback for the GA tag — keeps analytics live the first
-  // time this component ships, before the DB row is written.
-  if (
-    !tags.some((t) => t.kind === 'analytics') &&
-    process.env.NEXT_PUBLIC_GA_ID
-  ) {
-    tags = [...tags, { kind: 'analytics', value: process.env.NEXT_PUBLIC_GA_ID }];
-  }
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/site-tags/public', { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((data: { tags?: { kind: string; value: string }[] }) => {
+        if (cancelled) return;
+        let next = data.tags ?? [];
+        // ENV fallback for the GA tag — keeps analytics live the
+        // first time this component ships, before the admin Tags
+        // module is filled.
+        if (
+          !next.some((t) => t.kind === 'analytics') &&
+          process.env.NEXT_PUBLIC_GA_ID
+        ) {
+          next = [
+            ...next,
+            { kind: 'analytics', value: process.env.NEXT_PUBLIC_GA_ID },
+          ];
+        }
+        setTags(next);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn('TrackingTags: tag fetch failed', err);
+        // Env fallback still tries to keep GA alive if it's set.
+        const fallback: { kind: string; value: string }[] = [];
+        if (process.env.NEXT_PUBLIC_GA_ID) {
+          fallback.push({ kind: 'analytics', value: process.env.NEXT_PUBLIC_GA_ID });
+        }
+        setTags(fallback);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  if (tags.length === 0) return null;
+  if (!tags || tags.length === 0) return null;
 
   return (
     <>

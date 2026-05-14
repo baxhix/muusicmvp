@@ -6,10 +6,9 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { init, identify, reset, setContext, track } from './index';
 
 interface AnalyticsProviderProps {
-  /** Optional PostHog project key. Falls back to
-   *  NEXT_PUBLIC_POSTHOG_KEY when omitted. Passed by the root
-   *  layout so the admin Tags module (DB row) can override the
-   *  env value without a redeploy. */
+  /** Optional PostHog project key. Falls back to env, then to the
+   *  client-side fetch of /api/site-tags/public. Kept as a prop so
+   *  tests can inject deterministic values. */
   posthogKey?: string;
   /** Optional PostHog host (e.g. https://eu.i.posthog.com). */
   posthogHost?: string;
@@ -52,14 +51,42 @@ export default function AnalyticsProvider({
     sessionIdRef.current = generateSessionId();
     sessionStartRef.current = Date.now();
 
-    // Prefer the prop passed in (DB-driven via admin Tags) and
-    // fall back to env for local dev / first-deploy scenarios.
-    init({
-      posthogKey: posthogKey || process.env.NEXT_PUBLIC_POSTHOG_KEY,
-      posthogHost: posthogHost || process.env.NEXT_PUBLIC_POSTHOG_HOST,
-      debug: process.env.NODE_ENV !== 'production',
-      sessionId: sessionIdRef.current,
-    }).catch((err) => console.warn('analytics init failed:', err));
+    // Resolve the PostHog key:
+    //   1. Prop passed in (tests)
+    //   2. NEXT_PUBLIC_POSTHOG_KEY env (build-time, baked in JS)
+    //   3. /api/site-tags/public (runtime, admin-editable)
+    //
+    // We boot eagerly with whatever 1+2 give us; if both miss, we
+    // fall back to (3) and re-init when the fetch resolves. This
+    // keeps analytics warm in production (where the env key is the
+    // common case) while still letting the admin rotate keys
+    // through the Tags UI without a redeploy.
+    const eagerKey = posthogKey || process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const eagerHost = posthogHost || process.env.NEXT_PUBLIC_POSTHOG_HOST;
+
+    if (eagerKey) {
+      init({
+        posthogKey: eagerKey,
+        posthogHost: eagerHost,
+        debug: process.env.NODE_ENV !== 'production',
+        sessionId: sessionIdRef.current,
+      }).catch((err) => console.warn('analytics init failed:', err));
+    } else {
+      // Lazy fallback — fetch the admin-managed value.
+      fetch('/api/site-tags/public', { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((data: { tags?: { kind: string; value: string }[] }) => {
+          const ph = (data.tags ?? []).find((t) => t.kind === 'posthog');
+          if (!ph?.value) return;
+          init({
+            posthogKey: ph.value,
+            posthogHost: eagerHost,
+            debug: process.env.NODE_ENV !== 'production',
+            sessionId: sessionIdRef.current,
+          }).catch((err) => console.warn('analytics init (lazy) failed:', err));
+        })
+        .catch((err) => console.warn('analytics tag fetch failed:', err));
+    }
 
     setContext({
       pathname,
