@@ -116,6 +116,9 @@
   transition: background 0.12s;
 }
 .item:hover { background: rgba(255, 255, 255, 0.04); }
+.itemSelected,
+.itemSelected:hover { background: rgba(61, 219, 116, 0.10); }
+.item:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .itemAvatar {
   width: 36px;
@@ -151,4 +154,87 @@
   font-size: 11px;
   color: rgba(245, 245, 247, 0.4);
   border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ── Group mode add-ons ────────────────────────────────────────
+   Name input above the search, member-count footer + "Criar grupo"
+   CTA at the bottom, plus a small round checkbox on each row. */
+.nameRow {
+  padding: 0 14px;
+  margin: 12px 0 0;
+}
+.nameField {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.nameField:focus {
+  border-color: rgba(61, 219, 116, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+}
+.nameField::placeholder { color: rgba(245, 245, 247, 0.4); }
+
+.checkBox {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  flex-shrink: 0;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.checkBoxOn {
+  background: var(--accent, #3ddb74);
+  border-color: var(--accent, #3ddb74);
+  color: #061110;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.25);
+}
+.footerCount {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: -0.005em;
+}
+.createBtn {
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: var(--accent, #3ddb74);
+  color: #061110;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.createBtn:hover:not(:disabled) {
+  background: #4be086;
+  transform: translateY(-1px);
+}
+.createBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.4);
 }

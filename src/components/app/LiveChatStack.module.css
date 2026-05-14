@@ -91,6 +91,12 @@
   filter: saturate(0.55) brightness(0.88);
 }
 
+/* Group avatars use a softer rounded-square so they read distinctly
+   from the circular DM avatars at a glance. */
+.avatarGroup {
+  border-radius: 12px !important;
+}
+
 /* ── Presence dot ──────────────────────────────────────────────
    Circular indicator at the bottom-right corner of the avatar.
    Green when online (with a soft glow), neutral gray when offline.

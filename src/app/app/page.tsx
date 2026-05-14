@@ -110,6 +110,11 @@ export default function AppPage() {
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showSuperchat, setShowSuperchat] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
+  // Separate from showUserPicker because the UserPicker renders in
+  // a different mode (with name field + multi-select + Create CTA).
+  // Both pickers share the same modal component, just keyed by which
+  // flag is true.
+  const [showGroupPicker, setShowGroupPicker] = useState(false);
   // Full-list conversations drawer — opens from the dock's "ver
   // tudo" overflow trigger. The dock itself only shows the latest
   // few DMs so the user can reach the rest without scrolling.
@@ -359,6 +364,10 @@ export default function AppPage() {
           setShowConversationsSidebar(false);
           setShowUserPicker(true);
         }}
+        onNewGroup={() => {
+          setShowConversationsSidebar(false);
+          setShowGroupPicker(true);
+        }}
       />
       <LiveChatPanel
         conversation={activeConversation}
@@ -373,6 +382,15 @@ export default function AppPage() {
         open={showUserPicker}
         onClose={() => setShowUserPicker(false)}
         onPick={(uid) => chat.openDmWith(uid)}
+      />
+      <UserPicker
+        open={showGroupPicker}
+        mode="group"
+        onClose={() => setShowGroupPicker(false)}
+        onCreateGroup={async ({ name, memberIds }) => {
+          await chat.createGroup({ name, memberIds });
+          setShowGroupPicker(false);
+        }}
       />
       <ListeningTogether playerExpanded={playerExpanded} playerSize={playerSize} />
 

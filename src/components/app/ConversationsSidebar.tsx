@@ -16,6 +16,8 @@ interface Props {
   onOpenConversation: (conversationId: string) => void;
   /** Fired when the user clicks "+ Nova conversa" — typically opens UserPicker. */
   onNewConversation: () => void;
+  /** Fired when the user clicks "Novo grupo" — opens UserPicker in group mode. */
+  onNewGroup: () => void;
 }
 
 /**
@@ -39,6 +41,7 @@ export default function ConversationsSidebar({
   onClose,
   onOpenConversation,
   onNewConversation,
+  onNewGroup,
 }: Props) {
   const [query, setQuery] = useState('');
 
@@ -62,7 +65,12 @@ export default function ConversationsSidebar({
   // DMs only — the global Superchat lives at the bottom of the
   // screen via SuperchatTrigger, doesn't belong in this list.
   const dms = useMemo(
-    () => conversations.filter((c) => c.type === 'dm' && c.otherUser),
+    () =>
+      conversations.filter((c) =>
+        c.type === 'dm'
+          ? !!c.otherUser
+          : c.type === 'group' && !!c.name,
+      ),
     [conversations],
   );
 
@@ -70,7 +78,9 @@ export default function ConversationsSidebar({
     const q = query.trim().toLowerCase();
     if (!q) return dms;
     return dms.filter((c) => {
-      const name = (c.otherUser?.name ?? '').toLowerCase();
+      const name = (
+        c.type === 'group' ? c.name ?? '' : c.otherUser?.name ?? ''
+      ).toLowerCase();
       return name.includes(q);
     });
   }, [dms, query]);
@@ -84,6 +94,21 @@ export default function ConversationsSidebar({
     >
       <header className={styles.header}>
         <h2 className={styles.title}>Suas conversas</h2>
+        <button
+          type="button"
+          className={styles.newBtn}
+          onClick={onNewGroup}
+          aria-label="Novo grupo"
+          title="Novo grupo"
+        >
+          {/* Group icon — two stacked heads, signals "more than one". */}
+          <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="6.5" cy="6.5" r="2.5" />
+            <path d="M2 15c0-2.2 2-4 4.5-4S11 12.8 11 15" />
+            <circle cx="13" cy="5.5" r="2" />
+            <path d="M12 14c0-1.7 1.6-3 3.5-3s.5 0 .5 0" />
+          </svg>
+        </button>
         <button
           type="button"
           className={styles.newBtn}
@@ -131,9 +156,21 @@ export default function ConversationsSidebar({
           </div>
         ) : (
           filtered.map((c) => {
-            const u = c.otherUser!;
-            const img = u.avatarUrl ?? `https://i.pravatar.cc/72?u=${u.id}`;
-            const isOnline = onlineUserIds?.has(u.id) ?? false;
+            const isGroup = c.type === 'group';
+            const u = c.otherUser;
+            const seedId = isGroup ? c.id : (u?.id ?? c.id);
+            const displayName = isGroup
+              ? (c.name ?? 'Grupo')
+              : (u?.name ?? 'Anônimo');
+            const img = isGroup
+              ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
+              : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
+            // Groups have no presence concept — always rendered as
+            // "active" so they don't get the offline grayscale.
+            const isOnline = isGroup
+              ? true
+              : (onlineUserIds?.has(u?.id ?? '') ?? false);
+            const isVerified = !isGroup && !!u?.verified;
             const isActive = activeId === c.id;
             const previewRaw = c.lastMessage?.body ?? '';
             // Strip any reply-prefix so the preview shows the
@@ -155,21 +192,22 @@ export default function ConversationsSidebar({
                   <img
                     src={img}
                     alt=""
-                    className={`${styles.avatar} ${isOnline ? styles.avatarOnline : styles.avatarOffline}`}
+                    className={`${styles.avatar} ${isOnline ? styles.avatarOnline : styles.avatarOffline} ${isGroup ? styles.avatarGroup : ''}`}
                     onError={(e) => {
-                      // Same pravatar fallback as the dock — keeps the
-                      // sidebar from showing broken-image icons when
-                      // an avatar URL 404s.
                       const img = e.currentTarget;
-                      const fb = `https://i.pravatar.cc/72?u=${u.id}`;
+                      const fb = `https://i.pravatar.cc/72?u=${seedId}`;
                       if (img.src !== fb) img.src = fb;
                     }}
                   />
-                  <span
-                    className={`${styles.statusDash} ${isOnline ? styles.statusDashOnline : styles.statusDashOffline}`}
-                    aria-hidden="true"
-                  />
-                  {u.verified && (
+                  {/* Status dash only for DMs — groups don't have a
+                      single "online" state. */}
+                  {!isGroup && (
+                    <span
+                      className={`${styles.statusDash} ${isOnline ? styles.statusDashOnline : styles.statusDashOffline}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {isVerified && (
                     <span className={styles.verifiedBadge}>
                       <VerifiedBadge size={14} />
                     </span>
@@ -178,8 +216,8 @@ export default function ConversationsSidebar({
 
                 <span className={styles.rowInfo}>
                   <span className={styles.rowName}>
-                    {u.name ?? 'Anônimo'}
-                    {u.verified && (
+                    {displayName}
+                    {isVerified && (
                       <VerifiedBadge size={13} className={styles.inlineVerified} />
                     )}
                   </span>

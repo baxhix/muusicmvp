@@ -332,6 +332,7 @@ export function useChatLiveWithFakes() {
     send,
     react,
     openDmWith,
+    createGroup: base.createGroup,
     markRead,
   };
 }

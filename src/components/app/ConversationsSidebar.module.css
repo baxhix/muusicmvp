@@ -169,6 +169,12 @@
   filter: saturate(0.55) brightness(0.88);
 }
 
+/* Group avatars use a rounded-square so they read distinctly from
+   the circular DM avatars at a glance. */
+.avatarGroup {
+  border-radius: 12px !important;
+}
+
 /* Circular corner dot. Renamed from statusDash → kept the same
    class name to avoid TS churn across files, but visually it's now
    a small round indicator at the bottom-right. */

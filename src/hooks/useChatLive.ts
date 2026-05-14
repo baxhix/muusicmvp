@@ -31,6 +31,16 @@ interface UseChatLiveResult {
   /** open or create a DM with another user */
   openDmWith: (otherUserId: string) => Promise<void>;
   /**
+   * Create a new group conversation and open it. Calls
+   * POST /api/conversations with the group payload; refreshes the
+   * list and routes the user into the new conversation on success.
+   */
+  createGroup: (args: {
+    name: string;
+    memberIds: string[];
+    imageUrl?: string | null;
+  }) => Promise<void>;
+  /**
    * Mark every message in this conversation as read for the current user.
    * Optimistically zeroes unreadCount locally and POSTs to the server.
    * Used by SuperchatPanel (which doesn't go through `open`) plus any
@@ -272,6 +282,32 @@ export function useChatLive(): UseChatLiveResult {
     [loadList, open],
   );
 
+  // ── Create a new group + open it ─────────────────────────────────────
+  const createGroup = useCallback(
+    async (args: {
+      name: string;
+      memberIds: string[];
+      imageUrl?: string | null;
+    }) => {
+      try {
+        const res = await api.post<{ id: string; created: boolean }>(
+          '/api/conversations',
+          {
+            type: 'group',
+            name: args.name,
+            memberIds: args.memberIds,
+            imageUrl: args.imageUrl ?? null,
+          },
+        );
+        await loadList();
+        open(res.id);
+      } catch (err) {
+        console.error('createGroup failed:', err);
+      }
+    },
+    [loadList, open],
+  );
+
   const markRead = useCallback(async (conversationId: string) => {
     // No-op when nothing actually needs marking — both the local state
     // setter and the POST below are skipped if unreadCount is already 0.
@@ -312,6 +348,7 @@ export function useChatLive(): UseChatLiveResult {
     send,
     react,
     openDmWith,
+    createGroup,
     markRead,
   };
 }

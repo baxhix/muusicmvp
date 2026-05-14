@@ -41,32 +41,51 @@ export default function LiveChatStack({
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
-  // Filter to DMs only — the global Superchat is opened via SuperchatTrigger.
-  const allDms = conversations.filter((c) => c.type === 'dm' && c.otherUser);
-  const dms = allDms.slice(0, DOCK_LIMIT);
+  // Include both DMs (with a resolvable other user) AND user-created
+  // groups. The global Superchat (named room, accessed via
+  // SuperchatTrigger) is excluded — it has no slug check available
+  // here, but in practice it's the only group without `name` set by
+  // the createGroup flow, and we skip rendering it explicitly below.
+  const dockable = conversations.filter((c) => {
+    if (c.type === 'dm') return !!c.otherUser;
+    // Groups must have a name (user-created); the unnamed Superchat
+    // shouldn't appear in the dock since it has its own trigger.
+    return c.type === 'group' && !!c.name;
+  });
+  const items = dockable.slice(0, DOCK_LIMIT);
 
   return (
     <div className={styles.dock}>
       <span className={styles.label}>Chat</span>
 
       <div className={styles.list}>
-        {dms.map((c) => {
-          const u = c.otherUser!;
-          const img = u.avatarUrl ?? `https://i.pravatar.cc/72?u=${u.id}`;
+        {items.map((c) => {
+          const isGroup = c.type === 'group';
+          // Normalize fields so the rest of the render is shape-agnostic.
+          const u = c.otherUser;
+          const displayName = isGroup
+            ? (c.name ?? 'Grupo')
+            : (u?.name ?? 'Conversa');
+          const seedId = isGroup ? c.id : (u?.id ?? c.id);
+          const img = isGroup
+            ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
+            : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
           const isActive = activeId === c.id;
           const preview = c.lastMessage?.body;
-          // Presence flag: if the live-users hook hasn't loaded yet
-          // (`onlineUserIds` undefined) we default to OFFLINE so the
-          // UI never shows a misleading green dot during the brief
-          // hydration window.
-          const isOnline = onlineUserIds?.has(u.id) ?? false;
+          // Groups have no presence concept — always "active" visually
+          // (no grayscale, no ring). DMs use the live presence set.
+          const isOnline = isGroup
+            ? true
+            : (onlineUserIds?.has(u?.id ?? '') ?? false);
+          const isVerified = !isGroup && !!u?.verified;
 
           const unread = c.unreadCount;
-          const statusLabel = isOnline ? 'online' : 'offline';
-          const baseLabel = u.name ?? 'Conversa';
+          const statusLabel = isGroup
+            ? `${c.memberCount ?? 0} membros`
+            : isOnline ? 'online' : 'offline';
           const ariaLabel = unread > 0
-            ? `${baseLabel}, ${statusLabel}, ${unread} ${unread === 1 ? 'mensagem' : 'mensagens'} não lidas`
-            : `${baseLabel}, ${statusLabel}`;
+            ? `${displayName}, ${statusLabel}, ${unread} ${unread === 1 ? 'mensagem' : 'mensagens'} não lidas`
+            : `${displayName}, ${statusLabel}`;
 
           return (
             <button
@@ -80,33 +99,30 @@ export default function LiveChatStack({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={img}
-                alt={u.name ?? ''}
-                className={`${styles.avatar} ${isOnline ? '' : styles.avatarOffline}`}
+                alt={displayName}
+                className={`${styles.avatar} ${isOnline ? '' : styles.avatarOffline} ${isGroup ? styles.avatarGroup : ''}`}
                 onError={(e) => {
                   // Avatar 404? Fall back to a deterministic pravatar so
-                  // the dock never shows a broken-image icon — most
-                  // visible for the fake Ana contact when her bundled
-                  // PNG is missing from /public on a stale deploy.
+                  // the dock never shows a broken-image icon.
                   const img = e.currentTarget;
-                  const fb = `https://i.pravatar.cc/72?u=${u.id}`;
+                  const fb = `https://i.pravatar.cc/72?u=${seedId}`;
                   if (img.src !== fb) img.src = fb;
                 }}
               />
 
-              {/* Presence dot — green for online, neutral gray for
-                  offline. Lives on the bottom-right corner of the
-                  avatar so it reads at a glance without crowding
-                  the unread badge (top-right). */}
-              <span
-                className={`${styles.statusDot} ${isOnline ? styles.statusDotOnline : styles.statusDotOffline}`}
-                aria-hidden="true"
-              />
+              {/* Presence dot — DMs only. Groups don't have a
+                  single "online" state, so skip the indicator
+                  entirely instead of showing a misleading dot. */}
+              {!isGroup && (
+                <span
+                  className={`${styles.statusDot} ${isOnline ? styles.statusDotOnline : styles.statusDotOffline}`}
+                  aria-hidden="true"
+                />
+              )}
 
-              {/* Verified check — top-right corner. Currently only
-                  rendered for Ana Castela; same flag travels through
-                  ApiConversationSummary.otherUser for any future
-                  verified contact. */}
-              {u.verified && (
+              {/* Verified check — DM-only (group avatars don't
+                  carry a verified flag). */}
+              {isVerified && (
                 <span className={styles.verifiedBadge}>
                   <VerifiedBadge size={16} />
                 </span>
@@ -120,7 +136,7 @@ export default function LiveChatStack({
 
               {hovered === c.id && (
                 <div className={styles.tooltip}>
-                  <span className={styles.tooltipName}>{u.name ?? 'Anônimo'}</span>
+                  <span className={styles.tooltipName}>{displayName}</span>
                   {preview && <span className={styles.tooltipSub}>{preview}</span>}
                 </div>
               )}

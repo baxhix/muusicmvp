@@ -211,22 +211,37 @@ export default function LiveChatPanel({
     }
   };
 
+  const isGroup = conversation?.type === 'group';
   const other = conversation?.otherUser;
-  const avatar = other?.avatarUrl ?? (other ? `https://i.pravatar.cc/72?u=${other.id}` : null);
+  // Display identity is shape-dependent:
+  //   DM    → conversation.otherUser.{name,avatar,verified}
+  //   Group → conversation.{name,imageUrl} (no verified concept)
+  const headerName = isGroup
+    ? (conversation?.name ?? 'Grupo')
+    : (other?.name ?? 'Conversa');
+  const seedId = isGroup ? (conversation?.id ?? 'unknown') : (other?.id ?? 'unknown');
+  const avatar = isGroup
+    ? (conversation?.imageUrl ?? `https://i.pravatar.cc/96?u=${seedId}`)
+    : (other?.avatarUrl ?? (other ? `https://i.pravatar.cc/72?u=${other.id}` : null));
+  const isVerified = !isGroup && !!other?.verified;
   // Resolve the now-playing line: real data from the parent if the
   // user is online and listening to something, else a deterministic
-  // mock so the slot never reads as "empty". The slot itself is part
-  // of the header's identity now — always visible when there's a
-  // conversation open.
-  const nowPlaying: ChatNowPlaying | null = other
+  // mock so the slot never reads as "empty". Skipped entirely for
+  // groups — they don't have a single "now playing".
+  const nowPlaying: ChatNowPlaying | null = !isGroup && other
     ? otherNowPlaying ?? pickMockTrack(other.id)
+    : null;
+  // Member count fallback line for groups — replaces the now-playing
+  // slot so the header has something below the name.
+  const memberCountLine = isGroup
+    ? `${conversation?.memberCount ?? 0} ${(conversation?.memberCount ?? 0) === 1 ? 'membro' : 'membros'}`
     : null;
 
   return (
     <div
       className={`${styles.panel} ${isOpen ? styles.panelOpen : ''}`}
       role="dialog"
-      aria-label={`Chat com ${other?.name ?? ''}`}
+      aria-label={`Chat com ${headerName}`}
     >
       <div className={styles.header}>
         {avatar && (
@@ -234,19 +249,18 @@ export default function LiveChatPanel({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatar}
-              alt={other?.name ?? ''}
-              className={styles.headerAvatar}
+              alt={headerName}
+              className={`${styles.headerAvatar} ${isGroup ? styles.headerAvatarGroup : ''}`}
               onError={(e) => {
                 // 404? Fall back to deterministic pravatar so the chat
                 // header doesn't render with a broken-image icon. Same
                 // resilience pattern as the dock + sidebar.
                 const img = e.currentTarget;
-                const otherId = other?.id ?? 'unknown';
-                const fb = `https://i.pravatar.cc/96?u=${otherId}`;
+                const fb = `https://i.pravatar.cc/96?u=${seedId}`;
                 if (img.src !== fb) img.src = fb;
               }}
             />
-            {other?.verified && (
+            {isVerified && (
               <span className={styles.headerVerified}>
                 <VerifiedBadge size={20} />
               </span>
@@ -255,16 +269,16 @@ export default function LiveChatPanel({
         )}
         <div className={styles.headerInfo}>
           <span className={styles.headerName}>
-            {other?.name ?? 'Conversa'}
-            {other?.verified && (
+            {headerName}
+            {isVerified && (
               <VerifiedBadge size={16} className={styles.headerInlineVerified} />
             )}
           </span>
-          {/* Now-playing line: title in white-bold, artist in muted
-              gray. Matches the same treatment used on the map pin
-              preview so the user feels they're seeing the same data
-              they would on the globe, just relocated into the chat. */}
-          {nowPlaying && (
+          {/* DMs: now-playing line (track + artist).
+              Groups: member count instead — same slot, different
+              content, identical typography hierarchy so the header
+              footprint stays consistent across both shapes. */}
+          {nowPlaying ? (
             <span className={styles.headerNowPlaying}>
               <svg
                 className={styles.headerNoteIcon}
@@ -279,7 +293,13 @@ export default function LiveChatPanel({
               <span className={styles.headerTrackTitle}>{nowPlaying.title}</span>
               <span className={styles.headerTrackArtist}>{nowPlaying.artist}</span>
             </span>
-          )}
+          ) : memberCountLine ? (
+            <span className={styles.headerNowPlaying}>
+              <span className={styles.headerTrackArtist}>
+                {memberCountLine}
+              </span>
+            </span>
+          ) : null}
         </div>
 
         {/* Kebab menu — denounce/block. Stubbed handlers (see top of

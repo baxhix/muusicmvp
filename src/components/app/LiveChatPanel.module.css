@@ -42,6 +42,12 @@
   flex-shrink: 0;
   display: block;
 }
+/* Group header avatar uses a rounded-square so it reads distinctly
+   from circular DM avatars at a glance — matches the same treatment
+   used in the dock + sidebar. */
+.headerAvatarGroup {
+  border-radius: 14px;
+}
 /* Larger verified check anchored to the bottom-right corner of the
    header avatar — opposite corner from the (future) status dot so
    the two cues won't collide if/when we add presence to this header. */
