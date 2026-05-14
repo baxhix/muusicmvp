@@ -1,7 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocationSync } from '@/hooks/useLocationSync';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { globeStore } from '@/lib/globeStore';
 import styles from './BottomNav.module.css';
 
 interface BottomNavProps {
@@ -18,16 +20,43 @@ export default function BottomNav({
 }: BottomNavProps = {}) {
   const pathname = usePathname();
 
+  // Map icon now mirrors the bottom-left LocateButton: first click
+  // (no coords yet) prompts the browser for geolocation + posts to
+  // /api/me/location; subsequent clicks just fly the globe to the
+  // user's stored coords. Same hook, same handler shape.
+  const { user } = useAuth();
+  const { status, request } = useLocationSync();
+  const hasCoords = user?.lat != null && user?.lng != null;
+  const locating = status === 'requesting';
+
+  const handleMapClick = () => {
+    if (hasCoords && user) {
+      globeStore.flyTo([user.lng as number, user.lat as number], 11);
+    } else {
+      request();
+    }
+  };
+
+  const mapTooltip = locating
+    ? 'Localizando…'
+    : hasCoords
+      ? 'Centralizar no meu local'
+      : 'Compartilhar localização';
+
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.inner}>
-        {/* Mapa */}
-        <Link
-          href="/app"
+        {/* Mapa — now behaves like LocateButton in the bottom-left
+            corner: requests permission OR centers on the user. No
+            longer a router link since we're already on /app
+            whenever this bar is visible. */}
+        <button
+          type="button"
           className={`${styles.item} ${pathname === '/app' ? styles.itemActive : ''}`}
-          aria-label="Mapa"
-          aria-current={pathname === '/app' ? 'page' : undefined}
-          data-tooltip="Mapa"
+          onClick={handleMapClick}
+          disabled={locating}
+          aria-label={mapTooltip}
+          data-tooltip={mapTooltip}
         >
           <svg viewBox="0 0 22 22" fill="none">
             <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.6" />
@@ -39,7 +68,7 @@ export default function BottomNav({
           </svg>
           <div className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Mapa</span>
-        </Link>
+        </button>
 
         {/* Feed — the FeedPanel surface is rendered as the default
             resting view in page.tsx, so this button doesn't need to
