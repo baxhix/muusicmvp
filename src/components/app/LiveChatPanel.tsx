@@ -35,6 +35,13 @@ interface Props {
   onSend: (body: string) => Promise<void>;
   /** Toggle a reaction emoji on a message. Server-persisted via socket. */
   onReact: (messageId: string, emoji: string) => void;
+  /** Fired from the kebab menu when the user clicks "Ver membros"
+   *  in a group conversation. Parent should open GroupMembersPanel. */
+  onOpenMembers?: () => void;
+  /** Fired from the kebab menu when the user clicks "Sair do
+   *  grupo". Parent should open a confirm + call the DELETE
+   *  /members/:userId endpoint. */
+  onLeaveGroup?: () => void;
 }
 
 /** Fallback now-playing pool — picked deterministically by hashing
@@ -112,6 +119,8 @@ export default function LiveChatPanel({
   onClose,
   onSend,
   onReact,
+  onOpenMembers,
+  onLeaveGroup,
 }: Props) {
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
@@ -302,12 +311,11 @@ export default function LiveChatPanel({
           ) : null}
         </div>
 
-        {/* Kebab menu — denounce/block. Stubbed handlers (see top of
-            file) since the backend endpoints don't exist yet. The menu
-            itself follows the standard floating-menu pattern: click
-            outside or press Esc to close, also auto-closes when the
-            user switches conversations. */}
-        {other && (
+        {/* Kebab menu — content depends on conversation type:
+            - DM:    Denunciar / Bloquear usuário
+            - Group: Ver membros / Sair / (Excluir if owner)
+            Both flows share the same floating-menu UX. */}
+        {(other || isGroup) && (
           <div className={styles.kebabWrap} ref={menuRef}>
             <button
               type="button"
@@ -325,28 +333,57 @@ export default function LiveChatPanel({
             </button>
             {menuOpen && (
               <div className={styles.kebabMenu} role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.kebabItem}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setReportOpen(true);
-                  }}
-                >
-                  Denunciar usuário
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
-                  onClick={() => {
-                    setMenuOpen(false);
-                    blockUser(other.id, other.name ?? null);
-                  }}
-                >
-                  Bloquear usuário
-                </button>
+                {isGroup ? (
+                  <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.kebabItem}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenMembers?.();
+                      }}
+                    >
+                      Ver membros
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onLeaveGroup?.();
+                      }}
+                    >
+                      Sair do grupo
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.kebabItem}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setReportOpen(true);
+                      }}
+                    >
+                      Denunciar usuário
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (other) blockUser(other.id, other.name ?? null);
+                      }}
+                    >
+                      Bloquear usuário
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

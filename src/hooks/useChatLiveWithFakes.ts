@@ -333,6 +333,7 @@ export function useChatLiveWithFakes() {
     react,
     openDmWith,
     createGroup: base.createGroup,
+    refreshConversations: base.refreshConversations,
     markRead,
   };
 }

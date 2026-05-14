@@ -60,10 +60,11 @@ RUN mkdir -p /app/node_modules /tmp/migrate-deps && \
     rm -rf /tmp/migrate-deps && \
     chown -R nextjs:nodejs /app/node_modules
 
-# Avatar + report-evidence upload destinations — Compose mounts a named
-# volume here so files survive container rebuilds. Created with the right
-# ownership so the unprivileged nextjs user can write to them.
-RUN mkdir -p /app/uploads/avatars /app/uploads/reports && \
+# Avatar + report-evidence + group-image upload destinations — Compose
+# mounts a named volume here so files survive container rebuilds.
+# Created with the right ownership so the unprivileged nextjs user can
+# write to them.
+RUN mkdir -p /app/uploads/avatars /app/uploads/reports /app/uploads/groups && \
     chown -R nextjs:nodejs /app/uploads
 
 USER nextjs

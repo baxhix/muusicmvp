@@ -81,6 +81,6 @@ export async function POST(
     return NextResponse.json({ error: 'user_not_found' }, { status: 404 });
   }
 
-  await addMember(id, parsed.data.userId);
+  await addMember(id, parsed.data.userId, user.id);
   return NextResponse.json({ ok: true });
 }

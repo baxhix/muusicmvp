@@ -49,6 +49,7 @@ services:
       NEXT_PUBLIC_SOCKET_URL: ${SOCKET_URL:-${APP_URL}}
       AVATARS_DIR: /app/uploads/avatars
       REPORTS_DIR: /app/uploads/reports
+      GROUPS_DIR: /app/uploads/groups
     volumes:
       # Avatar + report-evidence uploads persist across container
       # rebuilds. Both directories live under the same `uploads`

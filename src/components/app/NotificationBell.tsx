@@ -79,6 +79,18 @@ function describe(n: ApiNotification): ReactNode {
         </Fragment>
       );
     }
+    case 'group_added': {
+      // Group name lives on the notification payload (createGroup +
+      // addMember stash it there so the bell doesn't need to join).
+      const payload = (n.payload ?? {}) as { groupName?: string };
+      const groupName = payload.groupName?.trim() || 'um grupo';
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> te adicionou ao grupo{' '}
+          <Strong>{groupName}</Strong>
+        </Fragment>
+      );
+    }
     default:
       return 'Notificação';
   }

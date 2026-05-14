@@ -103,6 +103,16 @@ export interface ApiMessage {
  * Superchat header. The full participant rows (with email, city, etc.)
  * are fetched separately by ParticipantsModal.
  */
+/** One row in the group roster returned by GET /api/conversations/:id/members. */
+export interface ApiGroupMember {
+  id: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  role: 'owner' | 'admin' | 'member';
+  joinedAt: string;
+}
+
 export interface ApiSuperchatParticipantPreview {
   id: string;
   name: string | null;
@@ -156,7 +166,13 @@ export interface ApiSuperchatParticipant {
 export interface ApiNotification {
   id: string;
   userId: string;
-  kind: 'same_track' | 'same_artist' | 'same_album' | 'message' | 'mention';
+  kind:
+    | 'same_track'
+    | 'same_artist'
+    | 'same_album'
+    | 'message'
+    | 'mention'
+    | 'group_added';
   sourceUserId: string | null;
   trackId: string | null;
   artist: string | null;

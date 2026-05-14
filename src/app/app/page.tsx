@@ -9,6 +9,7 @@ import FilterTabs from '@/components/app/FilterTabs';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import ConversationsSidebar from '@/components/app/ConversationsSidebar';
+import GroupMembersPanel from '@/components/app/GroupMembersPanel';
 import ArtistBox from '@/components/app/ArtistBox';
 import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
@@ -115,6 +116,13 @@ export default function AppPage() {
   // Both pickers share the same modal component, just keyed by which
   // flag is true.
   const [showGroupPicker, setShowGroupPicker] = useState(false);
+  // Members roster for the currently-active group. Driven by the
+  // kebab "Ver membros" item; closed via X or after the user leaves.
+  const [showGroupMembers, setShowGroupMembers] = useState(false);
+  // When the kebab "Adicionar membro" trigger is fired we open the
+  // SingleProps UserPicker variant. Reuses the same modal that
+  // starts DMs; on pick we POST /members instead of openDmWith.
+  const [addingMemberToGroup, setAddingMemberToGroup] = useState<string | null>(null);
   // Full-list conversations drawer — opens from the dock's "ver
   // tudo" overflow trigger. The dock itself only shows the latest
   // few DMs so the user can reach the rest without scrolling.
@@ -377,6 +385,54 @@ export default function AppPage() {
         onClose={chat.close}
         onSend={chat.send}
         onReact={chat.react}
+        onOpenMembers={() => setShowGroupMembers(true)}
+        onLeaveGroup={async () => {
+          // Direct call — confirm + DELETE the caller's membership.
+          // After success, close the chat panel so the user lands
+          // back on the map / feed.
+          if (!activeConversation || !authUser) return;
+          if (!window.confirm('Sair desse grupo? Você não receberá mais mensagens dele.')) return;
+          try {
+            const res = await fetch(
+              `/api/conversations/${activeConversation.id}/members/${authUser.id}`,
+              { method: 'DELETE', credentials: 'include' },
+            );
+            if (!res.ok) {
+              window.alert('Não foi possível sair do grupo.');
+              return;
+            }
+            chat.close();
+          } catch (err) {
+            console.error('leave group failed:', err);
+          }
+        }}
+      />
+
+      {/* Members roster — opened from the kebab "Ver membros" entry
+          when the active conversation is a group. */}
+      <GroupMembersPanel
+        open={showGroupMembers && activeConversation?.type === 'group'}
+        conversationId={activeConversation?.type === 'group' ? activeConversation.id : null}
+        currentUserId={authUser?.id ?? ''}
+        myRole={activeConversation?.myRole ?? null}
+        onClose={() => setShowGroupMembers(false)}
+        onAddMember={() => {
+          if (!activeConversation) return;
+          setAddingMemberToGroup(activeConversation.id);
+        }}
+        onLeft={() => {
+          // After the user leaves: close everything + refresh list
+          setShowGroupMembers(false);
+          chat.close();
+          void chat.refreshConversations();
+        }}
+        onImageUpdated={() => {
+          // Pull a fresh conversations list so the dock + sidebar +
+          // chat header pick up the new imageUrl. The members panel
+          // itself doesn't need a refresh since the image isn't in
+          // its payload.
+          void chat.refreshConversations();
+        }}
       />
       <UserPicker
         open={showUserPicker}
@@ -390,6 +446,48 @@ export default function AppPage() {
         onCreateGroup={async ({ name, memberIds }) => {
           await chat.createGroup({ name, memberIds });
           setShowGroupPicker(false);
+        }}
+      />
+
+      {/* "Adicionar membro" — single-pick UserPicker that POSTs to
+          /api/conversations/:id/members. Open only while
+          addingMemberToGroup carries the active conversation id. */}
+      <UserPicker
+        open={addingMemberToGroup !== null}
+        onClose={() => setAddingMemberToGroup(null)}
+        onPick={async (uid) => {
+          const convId = addingMemberToGroup;
+          if (!convId) return;
+          try {
+            const res = await fetch(
+              `/api/conversations/${convId}/members`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ userId: uid }),
+              },
+            );
+            if (!res.ok) {
+              const data = (await res.json().catch(() => ({}))) as { error?: string };
+              window.alert(
+                data.error === 'user_not_found'
+                  ? 'Usuário não encontrado.'
+                  : 'Não foi possível adicionar o membro.',
+              );
+              return;
+            }
+            // Refresh the conversations list so the dock/sidebar
+            // pick up the new memberCount + any related metadata.
+            // The members panel itself re-fetches on open via its
+            // useEffect; toggle to force a fresh fetch.
+            setAddingMemberToGroup(null);
+            setShowGroupMembers(false);
+            setTimeout(() => setShowGroupMembers(true), 30);
+            void chat.refreshConversations();
+          } catch (err) {
+            console.error('add member failed:', err);
+          }
         }}
       />
       <ListeningTogether playerExpanded={playerExpanded} playerSize={playerSize} />

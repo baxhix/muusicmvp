@@ -1,6 +1,11 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { conversationParticipants, conversations, users } from '../db/schema';
+import {
+  conversationParticipants,
+  conversations,
+  notifications,
+  users,
+} from '../db/schema';
 
 /**
  * Build a new user-created group conversation in a single transaction.
@@ -70,6 +75,22 @@ export async function createGroup(args: {
       })),
     ]);
 
+    // Notify every newly-added member (everyone EXCEPT the owner)
+    // that they were added to a group. The user's notification list
+    // (poll via /api/notifications, the NotificationBell renders it)
+    // will pick this up on next refresh.
+    await tx.insert(notifications).values(
+      otherMemberIds.map((userId) => ({
+        userId,
+        kind: 'group_added' as const,
+        sourceUserId: args.ownerId,
+        conversationId: conv.id,
+        // Stash the group name so the bell can render it without a
+        // join when the group is later renamed/deleted.
+        payload: { groupName: trimmedName },
+      })),
+    );
+
     return { id: conv.id };
   });
 }
@@ -97,15 +118,41 @@ export async function updateGroup(
 
 /** Add a single user to a group as a 'member'. Idempotent via the
  *  composite PK on conversation_participants — re-adding a member
- *  is a no-op. */
+ *  is a no-op.
+ *
+ *  When `actorId` is provided AND the row was actually inserted
+ *  (returning rowcount > 0), also writes a 'group_added' notification
+ *  for the new user. The actor lookup powers the "X te adicionou ao
+ *  grupo Y" message in the notification bell. */
 export async function addMember(
   conversationId: string,
   userId: string,
+  actorId?: string,
 ): Promise<void> {
-  await db
+  const inserted = await db
     .insert(conversationParticipants)
     .values({ conversationId, userId, role: 'member' })
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .returning({ userId: conversationParticipants.userId });
+
+  // No notification on no-op re-add.
+  if (inserted.length === 0) return;
+  if (!actorId) return;
+
+  // Fetch the group name for the payload — saves the bell a join.
+  const [conv] = await db
+    .select({ name: conversations.name })
+    .from(conversations)
+    .where(eq(conversations.id, conversationId))
+    .limit(1);
+
+  await db.insert(notifications).values({
+    userId,
+    kind: 'group_added',
+    sourceUserId: actorId,
+    conversationId,
+    payload: { groupName: conv?.name ?? 'um grupo' },
+  });
 }
 
 /** Remove a user from a group. Used for both "kick" (admin removing

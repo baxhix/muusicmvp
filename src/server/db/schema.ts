@@ -216,7 +216,14 @@ export const notifications = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     kind: text('kind', {
-      enum: ['same_track', 'same_artist', 'same_album', 'message', 'mention'],
+      enum: [
+        'same_track',
+        'same_artist',
+        'same_album',
+        'message',
+        'mention',
+        'group_added',
+      ],
     }).notNull(),
     sourceUserId: uuid('source_user_id').references(() => users.id, { onDelete: 'cascade' }),
     trackId: uuid('track_id').references(() => tracks.id, { onDelete: 'set null' }),

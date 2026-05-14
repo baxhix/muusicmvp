@@ -40,6 +40,11 @@ interface UseChatLiveResult {
     memberIds: string[];
     imageUrl?: string | null;
   }) => Promise<void>;
+  /** Force a refetch of the conversations list. Used by mutations
+   *  done via REST (e.g. group image upload, add member) that don't
+   *  go through the socket and therefore can't ride the existing
+   *  chat:thread:update broadcast. */
+  refreshConversations: () => Promise<void>;
   /**
    * Mark every message in this conversation as read for the current user.
    * Optimistically zeroes unreadCount locally and POSTs to the server.
@@ -349,6 +354,7 @@ export function useChatLive(): UseChatLiveResult {
     react,
     openDmWith,
     createGroup,
+    refreshConversations: loadList,
     markRead,
   };
 }
