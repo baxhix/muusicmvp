@@ -29,6 +29,25 @@ export const metadata: Metadata = {
     'Descubra o que o mundo está ouvindo, em tempo real. Conecte-se com fãs ao seu redor.',
 };
 
+/**
+ * Force every route to render on the server at request time
+ * instead of being pre-rendered statically at build time.
+ *
+ * Why: /app is a complex client component with lots of dynamic
+ * state (auth, live users, conversations, feed posts). Static
+ * pre-rendering it works MOST of the time, but small drifts
+ * between build-time HTML and runtime client expectations were
+ * triggering React hydration mismatches (#418). Switching to
+ * dynamic rendering guarantees the HTML React expects to hydrate
+ * is generated from the SAME code path the client is about to
+ * run — no drift possible.
+ *
+ * Cost: ~30-80ms TTFB on first hit per request vs ~0ms for
+ * pre-rendered. The /app player loads once per session and stays
+ * open, so the tradeoff is worth the correctness guarantee.
+ */
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: {
