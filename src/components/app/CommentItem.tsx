@@ -2,9 +2,17 @@
 
 import { useCallback, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
+import { track } from '@/lib/analytics';
 import type { ApiFeedComment, ApiFeedCommentReactionResult } from '@/lib/api/types';
 import CommentInput from './CommentInput';
 import styles from './CommentsPanel.module.css';
+
+/** Local mention-count helper. Mirrors the regex in CommentsPanel
+ *  + the server-side parseMentions so analytics stay aligned. */
+const MENTION_COUNT_RE = /@\[[^\]]+\]\([0-9a-f-]{36}\)/g;
+function countMentions(body: string): number {
+  return (body.match(MENTION_COUNT_RE) ?? []).length;
+}
 
 /**
  * One comment row — top-level OR reply. Stays presentational: all
@@ -148,6 +156,11 @@ export default function CommentItem({
         ...comment,
         reactions: { count: res.count, mine: res.mine },
       });
+      track('comment_reaction_toggled', {
+        comment_id: comment.id,
+        action: res.action,
+        emoji: '❤️',
+      });
     } catch (err) {
       onChanged({ ...comment, reactions: prev });
       if (err instanceof ApiError && err.status !== 401) {
@@ -161,10 +174,14 @@ export default function CommentItem({
     onDeleted(comment.id);
     try {
       await api.delete(`/api/feed/comments/${comment.id}`);
+      track('comment_deleted', {
+        comment_id: comment.id,
+        is_own: comment.author.id === currentUserId,
+      });
     } catch (err) {
       console.error('delete comment failed:', err);
     }
-  }, [canDelete, comment.id, onDeleted]);
+  }, [canDelete, comment.id, comment.author.id, currentUserId, onDeleted]);
 
   const handleReplySubmit = useCallback(
     async (body: string) => {
@@ -174,6 +191,13 @@ export default function CommentItem({
           `/api/feed/comments/${comment.id}/replies`,
           { body },
         );
+        track('comment_reply_created', {
+          post_id: comment.postId,
+          parent_comment_id: comment.id,
+          comment_id: id,
+          body_length: body.length,
+          mention_count: countMentions(body),
+        });
         const optimistic: ApiFeedComment = {
           id,
           postId: comment.postId,

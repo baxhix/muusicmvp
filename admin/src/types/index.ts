@@ -134,7 +134,8 @@ export type SiteTagKind =
   | 'facebook'   // Meta Pixel (numeric pixel ID)
   | 'clarity'    // Microsoft Clarity (short alphanumeric)
   | 'tiktok'     // TikTok Pixel (CXXXXXX...)
-  | 'hotjar';    // Hotjar (numeric HJID)
+  | 'hotjar'     // Hotjar (numeric HJID)
+  | 'posthog';   // PostHog project key (phc_…) — drives Product Analytics
 
 export interface SiteTag {
   kind: SiteTagKind;

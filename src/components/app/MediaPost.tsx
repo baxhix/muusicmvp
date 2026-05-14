@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { track } from '@/lib/analytics';
 import CommentsPanel from './CommentsPanel';
 import styles from './MediaPost.module.css';
 
@@ -240,7 +241,15 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
       <div className={styles.actions}>
         <button
           className={`${styles.btn} ${styles.btnHat} ${liked ? styles.btnLiked : ''}`}
-          onClick={() => setLiked(l => !l)}
+          onClick={() => {
+            const next = !liked;
+            setLiked(next);
+            track(next ? 'feed_post_liked' : 'feed_post_unliked', {
+              post_id: data.dbId,
+              post_key: postKey,
+              creator_name: data.user,
+            });
+          }}
           aria-label="Like"
         >
           <HeartIcon />

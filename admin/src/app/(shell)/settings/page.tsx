@@ -538,6 +538,16 @@ const TAG_CATALOG: TagCatalogEntry[] = [
     helperText: 'Site ID numérico (HJID).',
     docsUrl: 'https://insights.hotjar.com',
   },
+  {
+    kind: 'posthog',
+    name: 'PostHog',
+    brand: '#1D4AFF',
+    monogram: 'PH',
+    description: 'Product Analytics (eventos, funis, cohorts, retenção). Ferramenta principal de analytics.',
+    placeholder: 'phc_xxxxxxxxxxxxxxxxxxxxxx',
+    helperText: 'Project API key — começa com "phc_". Encontrada em Settings → Project no PostHog.',
+    docsUrl: 'https://app.posthog.com',
+  },
 ];
 
 function TagsTab() {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { track } from '@/lib/analytics';
 import type {
   ApiFeedComment,
   ApiFeedCommentsPage,
@@ -10,6 +11,14 @@ import type {
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
 import styles from './CommentsPanel.module.css';
+
+/** Pull every @[Display](uuid) token out of a body — same shape
+ *  the server uses to extract mentions, mirrored here so the
+ *  client-side `mention_count` analytic stays accurate. */
+const MENTION_COUNT_RE = /@\[[^\]]+\]\([0-9a-f-]{36}\)/g;
+function countMentions(body: string): number {
+  return (body.match(MENTION_COUNT_RE) ?? []).length;
+}
 
 /**
  * Top-level comments panel for a single feed post.
@@ -126,6 +135,12 @@ export default function CommentsPanel({ postKey, initialCommentCount, open }: Pr
           { body },
         );
         setPostId(res.postId);
+        track('comment_created', {
+          post_id: res.postId,
+          comment_id: res.id,
+          body_length: body.length,
+          mention_count: countMentions(body),
+        });
         // Optimistic prepend.
         const optimistic: ApiFeedComment = {
           id: res.id,

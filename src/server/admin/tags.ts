@@ -29,6 +29,7 @@ export const KNOWN_TAG_KINDS = [
   'clarity',
   'tiktok',
   'hotjar',
+  'posthog',
 ] as const;
 export type SiteTagKind = (typeof KNOWN_TAG_KINDS)[number];
 

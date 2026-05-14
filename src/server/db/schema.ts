@@ -494,7 +494,7 @@ export type UserActivity = typeof userActivities.$inferSelect;
  */
 export const siteTags = pgTable('site_tags', {
   kind: text('kind', {
-    enum: ['analytics', 'gtm', 'facebook', 'clarity', 'tiktok', 'hotjar'],
+    enum: ['analytics', 'gtm', 'facebook', 'clarity', 'tiktok', 'hotjar', 'posthog'],
   }).primaryKey(),
   value: text('value').notNull().default(''),
   enabled: boolean('enabled').notNull().default(false),

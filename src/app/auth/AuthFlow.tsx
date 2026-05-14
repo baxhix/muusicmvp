@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { track } from '@/lib/analytics';
 import styles from './magicLink.module.css';
 
 type Step = 'enter-email' | 'sent';
@@ -31,9 +32,11 @@ export default function AuthFlow() {
     }
     setError(null);
     setSubmitting(true);
+    track('auth_login_requested', { method: 'magic_link' });
     const ok = await requestMagicLink(trimmed);
     setSubmitting(false);
     if (!ok) {
+      track('auth_login_failed', { reason: 'magic_link_request_failed' });
       setError('Não consegui enviar agora. Tenta de novo em alguns segundos.');
       return;
     }

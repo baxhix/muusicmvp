@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { track } from '@/lib/analytics';
 import { useSocket } from './useSocket';
 
 const TICK_MS = 10_000; // emit a tick every 10s while playing
@@ -24,11 +25,21 @@ export function useListeningTracker(input: {
   youtubeId: string | null;
   positionSeconds: number;
   isPaused: boolean;
+  /** Optional metadata. When present, included in the
+   *  player_track_started / _completed analytics events for nicer
+   *  PostHog cohort filtering. */
+  trackTitle?: string;
+  artist?: string;
 }) {
   const { user } = useAuth();
   const { socket, connected } = useSocket();
   const lastTrackRef = useRef<string | null>(null);
   const lastTickRef = useRef(0);
+  // Track previous isPaused to detect pause/resume transitions.
+  const wasPausedRef = useRef<boolean>(input.isPaused);
+  // Track when the current track started so player_track_completed
+  // can emit duration_listened_seconds when the user moves on.
+  const trackStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user || !socket || !connected) return;
@@ -55,8 +66,39 @@ export function useListeningTracker(input: {
         positionSeconds: Math.max(0, Math.floor(positionSeconds)),
         isPaused,
       });
+      // Analytics: emit player_track_completed for the OUTGOING
+      // track (if any) + player_track_started for the new one.
+      // We do this here (rather than purely server-side) so PostHog
+      // gets these events even if the socket tick is delayed.
+      if (trackChanged) {
+        if (lastTrackRef.current && trackStartedAtRef.current) {
+          track('player_track_completed', {
+            track_id: lastTrackRef.current,
+            duration_listened_seconds: Math.round(
+              (now - trackStartedAtRef.current) / 1000,
+            ),
+          });
+        }
+        track('player_track_started', {
+          track_id: youtubeId,
+          track_title: input.trackTitle,
+          artist: input.artist,
+        });
+        trackStartedAtRef.current = now;
+      }
       lastTrackRef.current = youtubeId;
       lastTickRef.current = now;
+    }
+
+    // Pause / resume transitions — independent of track change.
+    if (wasPausedRef.current !== isPaused) {
+      wasPausedRef.current = isPaused;
+      if (youtubeId) {
+        track(isPaused ? 'player_track_paused' : 'player_track_resumed', {
+          track_id: youtubeId,
+          position_seconds: Math.max(0, Math.floor(positionSeconds)),
+        });
+      }
     }
   }, [user, socket, connected, input]);
 

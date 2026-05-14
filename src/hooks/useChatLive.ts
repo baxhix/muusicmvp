@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
+import { track } from '@/lib/analytics';
 import type {
   ApiConversationSummary,
   ApiMessage,
@@ -9,6 +10,15 @@ import type {
 } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useSocket } from './useSocket';
+
+/** Count @[Name](uuid) tokens in a message body. Same regex shape
+ *  the server uses to parse mentions — keeps the analytics
+ *  mention_count consistent with what actually triggers
+ *  comment_mention / chat_mention notifications. */
+const MENTION_COUNT_RE = /@\[[^\]]+\]\([0-9a-f-]{36}\)/g;
+function countMentions(body: string): number {
+  return (body.match(MENTION_COUNT_RE) ?? []).length;
+}
 
 interface UseChatLiveResult {
   conversations: ApiConversationSummary[];
@@ -67,6 +77,12 @@ export function useChatLive(): UseChatLiveResult {
   const { socket } = useSocket();
 
   const [conversations, setConversations] = useState<ApiConversationSummary[]>([]);
+  // Mirror of `conversations` accessible from stale closures (the
+  // socket `chat:send` ack runs outside the React render cycle).
+  const conversationsRef = useRef<ApiConversationSummary[]>([]);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
   const [loadingList, setLoadingList] = useState(true);
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -182,6 +198,24 @@ export function useChatLive(): UseChatLiveResult {
           if (!ack?.ok) {
             console.error('chat:send rejected:', ack?.error);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
+            return;
+          }
+          // Resolve conversation type from the active conversation
+          // in the local cache. The hook owns `conversations` (see
+          // the list state above), so it's already in memory.
+          const conv = conversationsRef.current.find((c) => c.id === activeId);
+          const mentionCount = countMentions(text);
+          track('chat_message_sent', {
+            conversation_id: activeId,
+            conversation_type: conv?.type ?? 'dm',
+            body_length: text.length,
+            mention_count: mentionCount,
+          });
+          if (mentionCount > 0) {
+            track('chat_mention_used', {
+              conversation_id: activeId,
+              mention_count: mentionCount,
+            });
           }
         },
       );
@@ -199,7 +233,19 @@ export function useChatLive(): UseChatLiveResult {
         (ack: { ok: boolean; error?: string } | undefined) => {
           if (!ack?.ok) {
             console.warn('chat:react rejected:', ack?.error);
+            return;
           }
+          // We don't yet know if the reaction was added or removed
+          // (the server doesn't pipe action back through ack) — the
+          // 'chat:reaction' broadcast we listen to elsewhere
+          // resolves it, but for the analytics event we treat the
+          // toggle as "added" optimistically. PostHog cohorts then
+          // see one event per toggle.
+          track('chat_message_reacted', {
+            message_id: messageId,
+            emoji,
+            action: 'added',
+          });
         },
       );
       // No optimistic local update — the server broadcasts the new

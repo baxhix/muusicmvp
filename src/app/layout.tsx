@@ -5,6 +5,8 @@ import { UniverseProvider } from '@/lib/universe/UniverseContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import GlobalErrorLogger from '@/components/GlobalErrorLogger';
 import TrackingTags from '@/components/TrackingTags';
+import AnalyticsProvider from '@/lib/analytics/AnalyticsProvider';
+import { getActiveSiteTags } from '@/server/admin/tags';
 import './globals.css';
 
 const inter = Inter({
@@ -28,11 +30,19 @@ export const metadata: Metadata = {
     'Descubra o que o mundo está ouvindo, em tempo real. Conecte-se com fãs ao seu redor.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Resolve the PostHog key + host from the DB-driven site tags
+  // (set in /admin/settings → Tags). Falls back to env vars when
+  // the admin hasn't filled in the row yet. Cached for 60s
+  // in-process so the layout pays this cost at most once a minute
+  // per Node process.
+  const activeTags = await getActiveSiteTags().catch(() => []);
+  const posthogKey = activeTags.find((t) => t.kind === 'posthog')?.value;
+
   return (
     <html
       lang="pt-BR"
@@ -43,6 +53,12 @@ export default function RootLayout({
         <ErrorBoundary>
           <GlobalErrorLogger />
           <AuthProvider>
+            {/* Analytics has to live INSIDE AuthProvider so it can
+                read the current user for identify(). It's a
+                side-effect-only component — renders nothing.
+                The PostHog key comes from the admin Tags module
+                (DB) with NEXT_PUBLIC_POSTHOG_KEY as a fallback. */}
+            <AnalyticsProvider posthogKey={posthogKey} />
             <UniverseProvider>{children}</UniverseProvider>
           </AuthProvider>
         </ErrorBoundary>
