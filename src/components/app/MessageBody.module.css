@@ -49,6 +49,26 @@
   color: #9ddcff;
 }
 
+/* Mention pill — inline accent-tinted span around the @Display.
+   Reads as a soft chip without taking the bubble layout into
+   pieces. Hover lifts the bg a notch so users can tell it's
+   semantically interactive (even though the click target isn't
+   wired yet). */
+.mention {
+  display: inline;
+  padding: 1px 5px;
+  margin: 0 1px;
+  border-radius: 5px;
+  color: var(--accent, #3ddb74);
+  background: rgba(61, 219, 116, 0.14);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition: background 0.14s ease;
+}
+.mention:hover {
+  background: rgba(61, 219, 116, 0.22);
+}
+
 /* Inline preview block — sits BELOW the text on its own line, with a
    16:9 aspect ratio enforced so YouTube/Vimeo embeds resize naturally
    with their container. Width is clamped to 100% of the parent bubble

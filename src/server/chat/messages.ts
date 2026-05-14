@@ -26,6 +26,11 @@ export interface SendMessageResult {
   recipientIds: string[];
   /** 'dm' | 'group' — caller decides whether to fan-out to user rooms. */
   conversationType: 'dm' | 'group';
+  /** Subset of recipientIds that were @-mentioned in the body (group
+   *  conversations only — always empty for DMs since mentions are
+   *  redundant in 1:1 threads). Drives the realtime notify:new push
+   *  in the socket handler. */
+  mentionedUserIds: string[];
 }
 
 /**
@@ -39,6 +44,20 @@ export interface SendMessageResult {
  *
  * Caller must have already verified the sender is a participant.
  */
+/** Pull every @[Display](uuid) token out of the body. Lifted to
+ *  the server so the notification fan-out doesn't have to trust
+ *  the client to pass the mentioned ids — we parse them ourselves
+ *  from the canonical body format the client produced. */
+const SERVER_MENTION_REGEX = /@\[[^\]]+\]\(([0-9a-f-]{36})\)/g;
+function parseMentions(body: string): string[] {
+  const ids: string[] = [];
+  let m: RegExpExecArray | null;
+  // RegExp objects are stateful with /g; reset each call.
+  const re = new RegExp(SERVER_MENTION_REGEX.source, 'g');
+  while ((m = re.exec(body)) !== null) ids.push(m[1]);
+  return Array.from(new Set(ids));
+}
+
 export async function sendMessage(
   conversationId: string,
   senderId: string,
@@ -87,7 +106,31 @@ export async function sendMessage(
       );
     }
 
-    return { msg, others, conv };
+    // Mention notifications — fire ONLY in groups (DMs are 1:1, so
+    // a generic 'message' notification is already enough). Filter
+    // mentioned ids against the actual participant set so an
+    // injected/stale @[…] in the body can't notify random users.
+    let validMentions: string[] = [];
+    if (conv?.type === 'group') {
+      const mentioned = parseMentions(trimmed);
+      const validIds = new Set(others.map((o) => o.userId));
+      validMentions = mentioned.filter(
+        (id) => id !== senderId && validIds.has(id),
+      );
+      if (validMentions.length > 0) {
+        await tx.insert(notifications).values(
+          validMentions.map((userId) => ({
+            userId,
+            kind: 'mention' as const,
+            sourceUserId: senderId,
+            conversationId,
+            messageId: msg.id,
+          })),
+        );
+      }
+    }
+
+    return { msg, others, conv, validMentions };
   });
 
   // Hydrate the sender once for the realtime emit + REST response. Outside
@@ -112,5 +155,6 @@ export async function sendMessage(
     },
     recipientIds: txResult.others.map((p) => p.userId),
     conversationType: (txResult.conv?.type ?? 'dm') as 'dm' | 'group',
+    mentionedUserIds: txResult.validMentions,
   };
 }

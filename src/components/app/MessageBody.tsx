@@ -87,6 +87,34 @@ function parseReplyHeader(body: string): ReplyHeader | null {
   };
 }
 
+// ── Mention token ────────────────────────────────────────────────
+// Mentions are stored inline in the body as @[Display Name](uuid).
+// Format chosen because it's:
+//   - Markdown-link-ish, so it's familiar to most devs
+//   - Parseable with a single regex
+//   - Survives copy/paste + storage as-is (no schema column needed)
+//
+// Capture groups: (1) display name, (2) uuid. Global flag lets us
+// split() the body around all mentions.
+const MENTION_REGEX =
+  /(@\[[^\]]+\]\([0-9a-f-]{36}\))/g;
+const MENTION_PARSE_REGEX =
+  /^@\[([^\]]+)\]\(([0-9a-f-]{36})\)$/;
+
+/** Extracts every userId mentioned in a body. Used server-side to
+ *  fan out notifications, exported here so the chat panel can also
+ *  preview / validate before sending. */
+export function extractMentionedUserIds(body: string): string[] {
+  const ids: string[] = [];
+  const re = new RegExp(MENTION_REGEX.source, 'g');
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(body)) !== null) {
+    const parsed = m[0].match(MENTION_PARSE_REGEX);
+    if (parsed) ids.push(parsed[2]);
+  }
+  return Array.from(new Set(ids));
+}
+
 // ── URL detection ────────────────────────────────────────────────
 // Matches http(s) URLs. Intentionally simple — chat messages are
 // short, we don't need IANA-compliant URL parsing here. The capture
@@ -144,9 +172,36 @@ function firstMediaPreview(body: string): Preview | null {
   return null;
 }
 
-/** Linkify the plain text body — splits on URL_REGEX, keeps order. */
-function renderLinkified(body: string) {
-  const parts = body.split(URL_REGEX);
+/** Render plain text with two enhancements:
+ *
+ *   - URL_REGEX matches get wrapped in <a target=_blank> (linkified).
+ *   - MENTION_REGEX matches get rendered as accent-colored pills.
+ *
+ * Done in two passes (mentions first, then linkify inside the
+ * remaining text segments) so a URL inside a mention's display
+ * name doesn't accidentally split the mention apart.
+ */
+function renderRichText(body: string) {
+  // First split on mentions — these are the "tokens" we want to
+  // peel out wholesale. Anything not a mention goes through the
+  // linkifier.
+  const mentionParts = body.split(MENTION_REGEX);
+  return mentionParts.map((part, i) => {
+    const m = part.match(MENTION_PARSE_REGEX);
+    if (m) {
+      return (
+        <span key={i} className={styles.mention} data-user-id={m[2]}>
+          @{m[1]}
+        </span>
+      );
+    }
+    return <Fragment key={i}>{renderLinkifiedInner(part)}</Fragment>;
+  });
+}
+
+/** Linkify a fragment that's already been peeled of mentions. */
+function renderLinkifiedInner(text: string) {
+  const parts = text.split(URL_REGEX);
   return parts.map((part, i) => {
     if (URL_REGEX.test(part)) {
       // Reset regex state — split keeps the captures but `test` is
@@ -194,7 +249,7 @@ export default function MessageBody({ body, maxPreviewWidth = 320 }: Props) {
       )}
 
       {textToRender && (
-        <span className={styles.text}>{renderLinkified(textToRender)}</span>
+        <span className={styles.text}>{renderRichText(textToRender)}</span>
       )}
 
       {preview && preview.kind !== 'image' && (

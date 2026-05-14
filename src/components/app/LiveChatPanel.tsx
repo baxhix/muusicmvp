@@ -6,6 +6,12 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
 import ReportModal from './ReportModal';
+import MentionAutocomplete from './MentionAutocomplete';
+import {
+  useConversationMembers,
+  type MentionableMember,
+} from '@/hooks/useConversationMembers';
+import { useAuth as useAuthCtx } from '@/lib/auth/AuthContext';
 import styles from './LiveChatPanel.module.css';
 
 /** Block-user remains stubbed — the /api/block endpoint doesn't exist
@@ -124,6 +130,21 @@ export default function LiveChatPanel({
 }: Props) {
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
+  // @mention autocomplete state. `mentionStart` is the cursor
+  // position where the active "@" sits; null means no autocomplete
+  // is open right now. `mentionQuery` is the text typed AFTER the
+  // "@" — used to filter the suggestions. `pickedMentions` accumu-
+  // lates user picks so we can serialize them into the canonical
+  // @[name](uuid) format at send time.
+  const [mentionStart, setMentionStart] = useState<number | null>(null);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [pickedMentions, setPickedMentions] = useState<MentionableMember[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { user: authUser } = useAuthCtx();
+  const mentionMembers = useConversationMembers(
+    conversation ?? null,
+    authUser?.id ?? null,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerOpenId, setPickerOpenId] = useState<string | null>(null);
   // Pointer to the message currently being replied to. Lives in
@@ -199,22 +220,111 @@ export default function LiveChatPanel({
     setPickerOpenId(null);
   };
 
+  /** Convert each picked mention's "@Display" occurrence in the
+   *  draft body into the canonical "@[Display](uuid)" form. Done
+   *  at send time so the input itself stays human-readable while
+   *  the user composes. Stale picks (display name removed from
+   *  input by the user) just don't match anything — harmless. */
+  const serializeMentions = (text: string): string => {
+    let out = text;
+    for (const m of pickedMentions) {
+      const display = m.name ?? m.email.split('@')[0] ?? 'usuário';
+      // Word-boundary-ish replace — avoid matching @João inside
+      // @Joãotruck. Surround the match with a non-word lookahead.
+      const re = new RegExp(
+        `@${display.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}(?!\\w)`,
+        'g',
+      );
+      out = out.replace(re, `@[${display}](${m.id})`);
+    }
+    return out;
+  };
+
   const submit = async () => {
     const text = draft.trim();
     if (!text) return;
+    const mentioned = serializeMentions(text);
     // If the user is replying to a message, wrap the body in the
     // shared reply-prefix format BEFORE sending so both sides see
     // the same quoted preview when MessageBody renders it.
     const body = replyingTo
-      ? buildReplyBody(replyingTo.senderName, replyingTo.body, text)
-      : text;
+      ? buildReplyBody(replyingTo.senderName, replyingTo.body, mentioned)
+      : mentioned;
     setDraft('');
     setReplyingTo(null);
+    setPickedMentions([]);
+    setMentionStart(null);
+    setMentionQuery('');
     await onSend(body);
+  };
+
+  /** Inspect the input value + caret position to decide whether the
+   *  mention autocomplete should be open. We open when there's an
+   *  unfinished "@" token immediately to the left of the caret
+   *  (i.e. no whitespace between the "@" and the caret). */
+  const updateMentionState = (value: string, caret: number) => {
+    // Walk backwards from the caret to find a recent "@" or break.
+    let i = caret - 1;
+    while (i >= 0) {
+      const ch = value[i];
+      if (ch === '@') {
+        // Found a candidate "@". It must be at the start OR
+        // preceded by whitespace to count as a fresh trigger
+        // (so emails like "marcelo@host" don't open it).
+        const prev = i === 0 ? ' ' : value[i - 1];
+        if (/\s/.test(prev)) {
+          setMentionStart(i);
+          setMentionQuery(value.slice(i + 1, caret));
+          return;
+        }
+        break;
+      }
+      if (/\s/.test(ch)) break;
+      i--;
+    }
+    setMentionStart(null);
+    setMentionQuery('');
+  };
+
+  const handleDraftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDraft(value);
+    updateMentionState(value, e.target.selectionStart ?? value.length);
+  };
+
+  const handlePickMention = (m: MentionableMember) => {
+    if (mentionStart === null || !inputRef.current) return;
+    const display = m.name ?? m.email.split('@')[0] ?? 'usuário';
+    const before = draft.slice(0, mentionStart);
+    const afterCaret = draft.slice(
+      inputRef.current.selectionStart ?? draft.length,
+    );
+    // Always trailing space so the next thing the user types is
+    // separated from the mention. Caret jumps to right after it.
+    const inserted = `@${display} `;
+    const nextValue = `${before}${inserted}${afterCaret}`;
+    setDraft(nextValue);
+    setPickedMentions((cur) =>
+      cur.find((x) => x.id === m.id) ? cur : [...cur, m],
+    );
+    setMentionStart(null);
+    setMentionQuery('');
+    // Restore focus + put caret right after the inserted mention.
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (!el) return;
+      const pos = before.length + inserted.length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+    });
   };
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      // Mention autocomplete consumes Enter to pick the highlight.
+      // Don't submit while it's open — its global keydown listener
+      // already called preventDefault on this Enter.
+      if (mentionStart !== null) return;
       e.preventDefault();
       submit();
     }
@@ -560,12 +670,35 @@ export default function LiveChatPanel({
       )}
 
       <div className={styles.inputArea}>
+        {/* Mention autocomplete — anchored above this input area.
+            Only rendered when the user has an active "@" trigger
+            in the draft (mentionStart !== null). */}
+        {mentionStart !== null && (
+          <MentionAutocomplete
+            members={mentionMembers}
+            query={mentionQuery}
+            onPick={handlePickMention}
+            onClose={() => {
+              setMentionStart(null);
+              setMentionQuery('');
+            }}
+          />
+        )}
+
         <input
+          ref={inputRef}
           className={styles.field}
           placeholder={replyingTo ? 'Sua resposta…' : 'Mensagem…'}
           autoComplete="off"
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={handleDraftChange}
+          onSelect={(e) => {
+            // Selection change (cursor moved without value change)
+            // — re-evaluate whether we should still be showing the
+            // mention popover for the new caret position.
+            const el = e.currentTarget;
+            updateMentionState(el.value, el.selectionStart ?? el.value.length);
+          }}
           onKeyDown={onKey}
           maxLength={4000}
         />

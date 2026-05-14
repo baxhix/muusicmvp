@@ -95,16 +95,27 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
       // Poke each recipient's PERSONAL room so unread counts / dock badges
       // refresh even when they haven't opened the conversation yet.
+      const mentionedSet = new Set(result.mentionedUserIds);
       for (const recipientId of result.recipientIds) {
         io.to(userRoom(recipientId)).emit('chat:thread:update', {
           conversationId: parsed.data.conversationId,
           lastMessageId: result.message.id,
         });
-        // Also wake up the notifications hook for DMs (where we did insert
-        // notification rows).
+        // notify:new push paths:
+        //   - DMs: every recipient gets a 'message' notify (we
+        //     already inserted a notification row server-side).
+        //   - Groups: only @-mentioned recipients get a 'mention'
+        //     notify (we inserted a 'mention' row for those, and
+        //     skipped per-message group notifs to avoid fanout).
         if (result.conversationType === 'dm') {
           io.to(userRoom(recipientId)).emit('notify:new', {
             kind: 'message',
+            conversationId: parsed.data.conversationId,
+            messageId: result.message.id,
+          });
+        } else if (mentionedSet.has(recipientId)) {
+          io.to(userRoom(recipientId)).emit('notify:new', {
+            kind: 'mention',
             conversationId: parsed.data.conversationId,
             messageId: result.message.id,
           });
