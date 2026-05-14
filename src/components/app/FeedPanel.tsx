@@ -92,7 +92,10 @@ const MEDIA: MediaPostData[] = [
 
 /* ── Main component ──────────────────────────────────────── */
 export default function FeedPanel() {
-  const [minimized, setMinimized] = useState(true);
+  // Feed lands expanded by default — was `true` (minimized), but the
+  // expanded layout is now the resting view we want users to see first.
+  // The header is still a toggle, so power users can collapse manually.
+  const [minimized, setMinimized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* Auto-scroll quando minimizado */

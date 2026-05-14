@@ -2,8 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import styles from './TopBar.module.css';
+
+// Official store URL — same one previously hosted in SideBar's
+// midStack icon. Kept as a module-level constant so the drawer
+// item below stays a one-liner.
+const STORE_URL =
+  'https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka';
 
 /** Display name fallback chain: name → email local part → 'Usuário'. */
 function displayName(user: { name: string | null; email: string } | null): string {
@@ -31,7 +38,7 @@ function BackArrow() {
 }
 
 /** Ícones lineares discretos para os itens do drawer */
-function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' }) {
+function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' }) {
   const props = {
     viewBox: '0 0 24 24',
     fill: 'none' as const,
@@ -107,6 +114,26 @@ function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'ma
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
           <polyline points="16 17 21 12 16 7" />
           <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      );
+    case 'grid':
+      // 2×2 squares — same glyph that used to live in the SideBar
+      // for "Trocar universo".
+      return (
+        <svg {...props}>
+          <rect x="3"  y="3"  width="7" height="7" rx="1.5" />
+          <rect x="14" y="3"  width="7" height="7" rx="1.5" />
+          <rect x="3"  y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      );
+    case 'bag':
+      // Shopping bag — same glyph that used to live in the SideBar
+      // for "Loja oficial".
+      return (
+        <svg {...props}>
+          <path d="M5 8h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 8z" />
+          <path d="M9 8V6a3 3 0 0 1 6 0v2" />
         </svg>
       );
   }
@@ -380,6 +407,34 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                 </div>
 
                 <nav className={styles.drawerNav}>
+                  {/* Fanverse section — switch universe + official
+                      store. Both items used to live in the SideBar's
+                      vertical midStack; moved here so the left-edge
+                      bar can stay focused on the logo + the dock. */}
+                  <div className={styles.drawerSection}>
+                    <span className={styles.drawerEyebrow}>Fanverse</span>
+                    <Link
+                      href="/app/select"
+                      className={styles.drawerItem}
+                      onClick={() => setOpen(false)}
+                    >
+                      <DrawerItemIcon name="grid" />
+                      <span>Trocar Fanverse</span>
+                      <DrawerChevron />
+                    </Link>
+                    <a
+                      href={STORE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.drawerItem}
+                      onClick={() => setOpen(false)}
+                    >
+                      <DrawerItemIcon name="bag" />
+                      <span>Loja oficial</span>
+                      <DrawerChevron />
+                    </a>
+                  </div>
+
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Conta</span>
                     <button
