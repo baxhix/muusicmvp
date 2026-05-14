@@ -71,3 +71,26 @@
   display: block;
   background: #000;
 }
+
+/* Image attachments — separate container from .previewWrap because
+   we DON'T want the 16:9 aspect lock here. Photos (portrait,
+   square, landscape) keep their natural ratio so live concert
+   shots don't get letterboxed inside the bubble. */
+.imageWrap {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.imageFrame {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Cap absurdly tall images so a portrait crop doesn't push the
+     bubble off the screen — scrollable instead. */
+  max-height: 480px;
+  object-fit: cover;
+}

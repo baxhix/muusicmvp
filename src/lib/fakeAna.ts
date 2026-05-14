@@ -49,11 +49,29 @@ const VIDEO_LAUNCH_MESSAGE = `Oi, tropa do Chapelão! 🤠 Acabou de sair meu cl
 
 https://www.youtube.com/watch?v=CKNjiHKiNvM`;
 
+/** Live photos dropped on chat as if Ana/Central just posted them.
+ *  Local paths under /public/feed (see deploy notes — the actual
+ *  PNGs need to be saved at these exact filenames, one per image
+ *  attached to the source request). MessageBody auto-detects these
+ *  paths via LOCAL_IMAGE_PATH_REGEX and renders them inline as
+ *  attachments below any caption text. */
+const FESPOP_PHOTO_MESSAGES: readonly string[] = [
+  'Direto do palco do FESPOP 🤠 muito amor pra tropa do Chapelão. Quem tava aí? 💚\n/feed/ana-castela-fespop-1.png',
+  'Foto que peguei agorinha pra vocês, antes da próxima música 📸\n/feed/ana-castela-fespop-2.png',
+  'O figurino dessa noite tava demais, né? Vocês merecem 💛\n/feed/ana-castela-fespop-3.png',
+  'Esse foi um dos momentos mais especiais — sentindo cada palavra. Obrigada 💚\n/feed/ana-castela-fespop-4.png',
+];
+
 /** Pool of random messages auto-posted by Ana every two minutes. The
  *  scheduler picks one at random and posts it as if she were live
  *  on the chat. Tone leans warm + fan-connection — quick personal
- *  voice notes, never broadcast-marketing. */
+ *  voice notes, never broadcast-marketing.
+ *
+ *  Note: the FESPOP photo messages above ARE included in the pool
+ *  via spread, so they surface naturally alongside the text-only
+ *  blurbs. */
 const RANDOM_MESSAGES: readonly string[] = [
+  ...FESPOP_PHOTO_MESSAGES,
   // ── Warmth + presence ───────────────────────────────────────
   'Boiadeira chegou! 🤠 Como tá o coração de vocês hoje?',
   'Acabei de chegar do estúdio e já vim aqui matar a saudade. 💚',
@@ -117,11 +135,21 @@ export function pickRandomAnaReply(): string {
   return REPLY_MESSAGES[Math.floor(Math.random() * REPLY_MESSAGES.length)];
 }
 
+/** Same FESPOP photo set rerendered in the Central account's
+ *  community-news voice. Mixed into CENTRAL_MESSAGES below. */
+const CENTRAL_FESPOP_MESSAGES: readonly string[] = [
+  '🎤 Bastidores do show no FESPOP — registro oficial. Compartilha com a tropa!\n/feed/ana-castela-fespop-1.png',
+  '📸 Mais um clique exclusivo da noite. Foto: equipe Central.\n/feed/ana-castela-fespop-2.png',
+  '⭐ Ana subiu ao palco com o look assinado pela Tropa do Chapelão. Olha que potência!\n/feed/ana-castela-fespop-3.png',
+  '🔥 Cena marcante da apresentação no FESPOP. Esse momento entrou pra história.\n/feed/ana-castela-fespop-4.png',
+];
+
 /** Pool of messages for the Central Ana Castela community account.
  *  Tone is informative + community-news, distinct from the artist's
  *  warm personal voice — covers tour dates, releases, contests,
  *  fan-club perks. */
 const CENTRAL_MESSAGES: readonly string[] = [
+  ...CENTRAL_FESPOP_MESSAGES,
   // Tour / shows
   '🗓️ Próximo show oficial: Festa do Peão (Barretos). Garanta seu ingresso pelo site da Central.',
   '📍 Cidades confirmadas pra 2026: Goiânia, Cuiabá, Sinop, Rio Verde. Lista completa em breve.',

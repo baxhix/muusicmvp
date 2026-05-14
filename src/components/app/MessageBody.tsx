@@ -106,22 +106,41 @@ const VIMEO_REGEX = /vimeo\.com\/(\d+)/i;
 // "video unavailable" frame if the codec isn't supported.
 const VIDEO_FILE_REGEX = /^https?:\/\/\S+\.(mp4|webm|mov)(\?\S*)?$/i;
 
+// Image file (http URL form). Same shape as VIDEO_FILE_REGEX but
+// covers common raster + lossless formats served over the wire.
+const IMAGE_URL_REGEX =
+  /^https?:\/\/\S+\.(png|jpe?g|webp|gif|avif)(\?\S*)?$/i;
+
+// Local image path — anything starting with "/" and ending in an
+// image extension. Used so chat fixtures (e.g. the fake Ana posts)
+// can reference assets bundled in /public without needing a full URL.
+const LOCAL_IMAGE_PATH_REGEX =
+  /(?:^|\s)(\/[\w./-]+\.(?:png|jpe?g|webp|gif|avif))(?=\s|$)/i;
+
 type Preview =
   | { kind: 'youtube'; id: string; href: string }
   | { kind: 'vimeo'; id: string; href: string }
-  | { kind: 'file'; href: string };
+  | { kind: 'file'; href: string }
+  | { kind: 'image'; href: string };
 
-/** Scan the body and return the FIRST preview-able video URL. */
-function firstVideoPreview(body: string): Preview | null {
+/** Scan the body and return the FIRST preview-able media reference.
+ *  Looks for YouTube/Vimeo embeds, bare video files, image URLs,
+ *  and finally local image paths starting with "/". */
+function firstMediaPreview(body: string): Preview | null {
   const urls = body.match(URL_REGEX);
-  if (!urls) return null;
-  for (const href of urls) {
-    const yt = href.match(YT_REGEX);
-    if (yt) return { kind: 'youtube', id: yt[1], href };
-    const vimeo = href.match(VIMEO_REGEX);
-    if (vimeo) return { kind: 'vimeo', id: vimeo[1], href };
-    if (VIDEO_FILE_REGEX.test(href)) return { kind: 'file', href };
+  if (urls) {
+    for (const href of urls) {
+      const yt = href.match(YT_REGEX);
+      if (yt) return { kind: 'youtube', id: yt[1], href };
+      const vimeo = href.match(VIMEO_REGEX);
+      if (vimeo) return { kind: 'vimeo', id: vimeo[1], href };
+      if (VIDEO_FILE_REGEX.test(href)) return { kind: 'file', href };
+      if (IMAGE_URL_REGEX.test(href)) return { kind: 'image', href };
+    }
   }
+  // Local-path fallback for in-bundle assets like /feed/something.png
+  const pathMatch = body.match(LOCAL_IMAGE_PATH_REGEX);
+  if (pathMatch) return { kind: 'image', href: pathMatch[1] };
   return null;
 }
 
@@ -155,7 +174,7 @@ export default function MessageBody({ body, maxPreviewWidth = 320 }: Props) {
   // would render twice (once in the quote, once below).
   const reply = parseReplyHeader(body);
   const visibleBody = reply ? reply.rest : body;
-  const preview = firstVideoPreview(visibleBody);
+  const preview = firstMediaPreview(visibleBody);
 
   // When a video preview will render, hide its URL from the text —
   // the embed itself IS the affordance, the raw link adds clutter.
@@ -178,7 +197,7 @@ export default function MessageBody({ body, maxPreviewWidth = 320 }: Props) {
         <span className={styles.text}>{renderLinkified(textToRender)}</span>
       )}
 
-      {preview && (
+      {preview && preview.kind !== 'image' && (
         <div
           className={styles.previewWrap}
           style={{ maxWidth: `${maxPreviewWidth}px` }}
@@ -212,6 +231,24 @@ export default function MessageBody({ body, maxPreviewWidth = 320 }: Props) {
               preload="metadata"
             />
           )}
+        </div>
+      )}
+
+      {/* Image attachments render in their own container (no
+          16:9 lock from .previewWrap) so portraits / squares keep
+          their natural aspect ratio. */}
+      {preview && preview.kind === 'image' && (
+        <div
+          className={styles.imageWrap}
+          style={{ maxWidth: `${maxPreviewWidth}px` }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={preview.href}
+            alt=""
+            className={styles.imageFrame}
+            loading="lazy"
+          />
         </div>
       )}
     </>

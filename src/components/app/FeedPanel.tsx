@@ -36,6 +36,22 @@ const ACTIVITIES: ActivityCardData[] = [
 
 /* ── Media posts data ───────────────────────────────────── */
 const MEDIA: MediaPostData[] = [
+  // Newest post first — FESPOP show. Photos shot live; same set
+  // also flows through the Ana + Central chats (see fakeAna.ts).
+  {
+    type: 'carousel',
+    user: 'Central Ana Castela',
+    avatar: '/central-anacastela.png',
+    time: '12min',
+    likes: 7384,
+    comments: 521,
+    items: [
+      { src: '/feed/ana-castela-fespop-1.png', alt: 'Ana Castela cantando no palco do FESPOP com chapéu AGROTHOMMY' },
+      { src: '/feed/ana-castela-fespop-2.png', alt: 'Ana Castela sob o letreiro FESPOP com microfone' },
+      { src: '/feed/ana-castela-fespop-3.png', alt: 'Ana Castela em close no palco com camisa branca bordada' },
+      { src: '/feed/ana-castela-fespop-4.png', alt: 'Ana Castela cantando com luzes rosa ao fundo' },
+    ],
+  },
   {
     type: 'carousel',
     user: 'Central Ana Castela',
