@@ -1,45 +1,85 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import {
+  type DailyMissionId,
+  useDailyMissions,
+} from '@/hooks/useDailyMissions';
 import styles from './ArtistBox.module.css';
 
-const MISSIONS = [
-  { id: 1, icon: '🎵', name: 'Ouça 5 músicas hoje',       xp: '+50 FP',  done: true  },
-  { id: 2, icon: '❤️', name: 'Reaja a um post no feed',   xp: '+30 FP',  done: false },
-  { id: 3, icon: '💬', name: 'Inicie uma conversa',        xp: '+40 FP',  done: false },
-  { id: 4, icon: '🔥', name: 'Sequência de 3 dias',        xp: '+120 FP', done: false },
+/**
+ * Per-mission display metadata. Stays client-side because there's no
+ * reason for the server to ship icons + Portuguese copy on every
+ * /api/me/missions call. The server returns just { id, progress,
+ * target, done }; we stitch the rest here.
+ *
+ * `xp` is the reward awarded once the mission is complete — same
+ * semantics as the old mock, but now stitched by id.
+ */
+interface MissionMeta {
+  id: DailyMissionId;
+  icon: string;
+  name: string;
+  xp: string;
+}
+
+const MISSION_META: MissionMeta[] = [
+  { id: 'listen_5',    icon: '🎵', name: 'Ouça 5 músicas hoje',     xp: '+50 FP'  },
+  { id: 'like_track',  icon: '❤️', name: 'Curtir uma música',        xp: '+30 FP'  },
+  { id: 'start_chat',  icon: '💬', name: 'Inicie uma conversa',      xp: '+40 FP'  },
+  { id: 'daily_login', icon: '🔥', name: 'Login diário',              xp: '+120 FP' },
 ];
 
-const TOTAL     = MISSIONS.length;
-const FP_EARNED = MISSIONS.filter(m => m.done).reduce((acc, m) => {
-  const n = parseInt(m.xp.replace(/\D/g, ''), 10);
-  return acc + n;
-}, 0);
+const TOTAL = MISSION_META.length;
+
+/** Sum of XP across only the missions currently completed. */
+function sumEarnedXp(
+  meta: MissionMeta[],
+  doneById: Record<string, boolean>,
+): number {
+  return meta
+    .filter((m) => doneById[m.id])
+    .reduce(
+      (acc, m) => acc + parseInt(m.xp.replace(/\D/g, ''), 10),
+      0,
+    );
+}
 
 export default function ArtistBox() {
-  const [done, setDone] = useState<Record<number, boolean>>(
-    Object.fromEntries(MISSIONS.map(m => [m.id, m.done]))
-  );
   const [open, setOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentH, setContentH] = useState(0);
 
   // Logged-in user's current Fanpoints balance — fetched live via
   // useUserProfile so it stays accurate when the user earns/spends
-  // FP elsewhere. Falls back to 0 while the request is in flight
-  // so the row doesn't render an empty space on first paint.
+  // FP elsewhere.
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
 
+  // Live daily-mission progress from the platform's real activity
+  // (listening_history, track_likes, user_activities). Polled every
+  // 60s + on demand via refresh().
+  const { missions } = useDailyMissions();
+
+  // Map "id → done" for the metadata renderer below.
+  const doneById = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (missions) for (const m of missions) map[m.id] = m.done;
+    return map;
+  }, [missions]);
+
+  const completed = MISSION_META.filter((m) => doneById[m.id]).length;
+  const progress  = Math.round((completed / TOTAL) * 100);
+  const fpEarned  = sumEarnedXp(MISSION_META, doneById);
+
+  // Remeasure the collapsible height whenever the missions change
+  // (e.g. a flip from not-done to done changes the rendered marker).
   useEffect(() => {
     if (contentRef.current) setContentH(contentRef.current.scrollHeight);
-  }, [done]);
-
-  const completed = Object.values(done).filter(Boolean).length;
-  const progress  = Math.round((completed / TOTAL) * 100);
+  }, [doneById]);
 
   return (
     <div className={styles.box}>
@@ -82,26 +122,30 @@ export default function ArtistBox() {
 
           <div className={styles.divider} />
 
-          {/* Missions list */}
+          {/* Missions list — done/not-done driven by the server.
+              Click is a no-op now since check state is computed
+              from real activity (used to toggle local state). */}
           <div className={styles.missionsList}>
-            {MISSIONS.map(m => (
-              <div
-                key={m.id}
-                className={`${styles.mission} ${done[m.id] ? styles.missionDone : ''}`}
-                onClick={() => setDone(d => ({ ...d, [m.id]: !d[m.id] }))}
-              >
-                <span className={styles.missionIcon}>{m.icon}</span>
-                <div className={styles.missionText}>
-                  <span className={styles.missionName}>{m.name}</span>
+            {MISSION_META.map((m) => {
+              const isDone = doneById[m.id] ?? false;
+              return (
+                <div
+                  key={m.id}
+                  className={`${styles.mission} ${isDone ? styles.missionDone : ''}`}
+                >
+                  <span className={styles.missionIcon}>{m.icon}</span>
+                  <div className={styles.missionText}>
+                    <span className={styles.missionName}>{m.name}</span>
+                  </div>
+                  <span className={styles.missionXp}>{m.xp}</span>
+                  <div className={styles.missionCheck}>
+                    <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1.5 4l2 2 3-3.5"/>
+                    </svg>
+                  </div>
                 </div>
-                <span className={styles.missionXp}>{m.xp}</span>
-                <div className={styles.missionCheck}>
-                  <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1.5 4l2 2 3-3.5"/>
-                  </svg>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
@@ -125,7 +169,7 @@ export default function ArtistBox() {
       <div className={styles.footer} onClick={() => setOpen(o => !o)}>
         <div className={styles.footerRow}>
           <span className={styles.missionsTitle}>Missões do Dia</span>
-          <span className={styles.xpTotal}>{FP_EARNED} Fanpoints</span>
+          <span className={styles.xpTotal}>{fpEarned} Fanpoints</span>
         </div>
         <div className={styles.footerArrow}>
           <svg
