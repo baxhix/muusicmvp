@@ -31,6 +31,15 @@ services:
       retries: 10
 
   web:
+    # CI/CD: GitHub Actions pushes ghcr.io/<owner>/muusicmvp-web:latest
+    # to GHCR on every push to main. The VPS does `docker compose pull
+    # web` to grab the new image, then `up -d` to swap containers.
+    #
+    # `build:` is kept as a fallback so local devs (and the VPS in
+    # emergencies) can still build from source via
+    # `docker compose up -d --build web`.
+    image: ${WEB_IMAGE:-ghcr.io/baxhix/muusicmvp-web:latest}
+    pull_policy: missing
     build:
       context: .
       dockerfile: Dockerfile.web
@@ -62,6 +71,8 @@ services:
         condition: service_healthy
 
   socket:
+    image: ${SOCKET_IMAGE:-ghcr.io/baxhix/muusicmvp-socket:latest}
+    pull_policy: missing
     build:
       context: .
       dockerfile: Dockerfile.socket
@@ -84,6 +95,8 @@ services:
         condition: service_healthy
 
   admin:
+    image: ${ADMIN_IMAGE:-ghcr.io/baxhix/muusicmvp-admin:latest}
+    pull_policy: missing
     build:
       context: ./admin
       dockerfile: Dockerfile

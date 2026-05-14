@@ -1,0 +1,123 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # allow manual reruns / emergency rebuilds
+
+# Required so the workflow can push to GitHub Container Registry.
+# `packages: write` is the key bit — `GITHUB_TOKEN` gets that scope.
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  # github.repository_owner is your GitHub username/org in lowercase.
+  # GHCR requires lowercase image names; the trick below normalizes it.
+  IMAGE_OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────
+  # 1. Build all three service images in parallel + push to GHCR.
+  #    Heavy layer caching via type=gha so subsequent runs reuse:
+  #    npm install, Next.js .next/cache, drizzle install, etc.
+  # ──────────────────────────────────────────────────────────────────
+  build:
+    name: Build & push ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: web
+            dockerfile: Dockerfile.web
+            context: .
+            build_args: |
+              NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+          - service: socket
+            dockerfile: Dockerfile.socket
+            context: .
+            build_args: ""
+          - service: admin
+            dockerfile: admin/Dockerfile
+            context: ./admin
+            build_args: |
+              NEXT_PUBLIC_API_BASE_URL=${{ vars.APP_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Compute the image name in lowercase — GHCR rejects mixed case.
+      # The output `image` is referenced by the next step.
+      - name: Normalize image name
+        id: img
+        run: |
+          owner_lc=$(echo "${{ env.IMAGE_OWNER }}" | tr '[:upper:]' '[:lower:]')
+          echo "image=${{ env.REGISTRY }}/${owner_lc}/muusicmvp-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ steps.img.outputs.image }}:latest
+            ${{ steps.img.outputs.image }}:sha-${{ github.sha }}
+          build-args: ${{ matrix.build_args }}
+          # GitHub-hosted layer cache. `scope` is per-service so
+          # the web build doesn't trash the socket cache.
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # ──────────────────────────────────────────────────────────────────
+  # 2. SSH into the VPS, pull the new images, restart the affected
+  #    containers. Only runs once ALL three image builds succeed.
+  # ──────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to VPS
+    needs: build
+    runs-on: ubuntu-latest
+    # Skip the deploy on workflow_dispatch from a fork or rerun
+    # without intent — gated by branch name as a basic safety belt.
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host:     ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key:      ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/muusic
+
+            # git pull keeps docker-compose.yml + any non-image
+            # tracked files (e.g. drizzle migrations the runner
+            # image already has baked in, but they're useful for
+            # local psql access) in sync with main.
+            git pull --ff-only
+
+            # Pull the fresh images and recreate ONLY the services
+            # that come from the build — leave postgres untouched.
+            docker compose pull web socket admin
+            docker compose up -d --no-build web socket admin
+
+            # Prune dangling images from older deploys, but keep
+            # anything < 24h in case of fast rollback. Best-effort
+            # — never fail the workflow on prune errors.
+            docker image prune -f --filter "until=24h" || true
