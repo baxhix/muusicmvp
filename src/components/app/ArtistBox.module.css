@@ -1,0 +1,405 @@
+/* ── ARTIST BOX ── */
+.box {
+  position: fixed;
+  top: 42px;
+  left: 68px;
+  width: 310px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(160deg,
+      rgba(6,6,14,0.96) 0%,
+      rgba(4,4,10,0.94) 35%,
+      rgba(8,6,18,0.95) 65%,
+      rgba(4,4,12,0.97) 100%);
+  backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  border: none;
+  border-radius: 20px;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 0 0 0.5px rgba(255,255,255,0.04) inset,
+    0 1px 0 rgba(255,255,255,0.08) inset;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* ── Artist header row ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 8px;
+}
+
+/* Artist photo */
+.photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Text group */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nameLine {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.label {
+  font-size: 17px;
+  font-weight: 800;
+  color: rgba(245,245,247,0.97);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  flex-shrink: 0;
+}
+
+.name {
+  font-size: 17px;
+  font-weight: 800;
+  color: rgba(245,245,247,0.97);
+  letter-spacing: -0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+}
+
+/* ── User section ── */
+.userSection {
+  padding: 14px 14px 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.userAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(61,219,116,0.45);
+  box-shadow: 0 0 8px rgba(61,219,116,0.2);
+}
+
+.userInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.userNameRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.superfanBadge {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #f59e0b;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 100px;
+  padding: 2px 7px 2px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.userStats {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.userStat {
+  font-size: 12px;
+  color: rgba(245,245,247,0.45);
+  font-family: var(--sans);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.userStatVal {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(245,245,247,0.85);
+}
+
+.statDot {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(245,245,247,0.18);
+  flex-shrink: 0;
+}
+
+/* Member since */
+.memberSince {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245,245,247,0.35);
+  font-family: var(--sans);
+  margin-top: 3px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Achievements row */
+.achievements {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  border: none;
+  background: none;
+}
+
+/* ── Divider ── */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 16px;
+  flex-shrink: 0;
+}
+
+/* ── Collapsible content wrapper ── */
+.content {
+  overflow: hidden;
+  transition: max-height 0.42s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Gradient mask shown when collapsed */
+.contentMask {
+  height: 16px;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(5,5,13,0.96) 100%);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* ── Missions list (always fully visible when box is open) ── */
+.missionsList {
+  padding: 4px 14px 4px;
+}
+
+/* ── Mission item ── */
+.mission {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.mission:hover { background: rgba(255,255,255,0.04); }
+
+.missionDone {
+  opacity: 0.45;
+}
+
+.missionIcon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
+.missionText {
+  flex: 1;
+  min-width: 0;
+}
+
+.missionName {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245,245,247,0.85);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.missionDone .missionName {
+  text-decoration: line-through;
+  color: rgba(245,245,247,0.4);
+}
+
+.missionXp {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #f59e0b;
+  font-family: var(--mono);
+  flex-shrink: 0;
+  background: rgba(245,158,11,0.1);
+  border-radius: 100px;
+  padding: 2px 6px;
+}
+
+.missionDone .missionXp {
+  color: rgba(245,245,247,0.25);
+  background: rgba(255,255,255,0.04);
+}
+
+.missionCheck {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.missionDone .missionCheck {
+  background: #3ddb74;
+  border-color: #3ddb74;
+}
+
+.missionCheck svg {
+  width: 8px;
+  height: 8px;
+  color: #fff;
+  opacity: 0;
+}
+
+.missionDone .missionCheck svg {
+  opacity: 1;
+}
+
+/* ── Always-visible footer ── */
+.footer {
+  padding: 6px 16px 6px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.missionsTitle {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(245,245,247,0.35);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-family: var(--sans);
+}
+
+.xpTotal {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #f59e0b;
+  font-family: var(--sans);
+  letter-spacing: 0.02em;
+}
+
+.footerArrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px 0 6px;
+}
+
+.footerChevron {
+  width: 18px;
+  height: 18px;
+  color: rgba(245,245,247,0.3);
+  transition: transform 0.32s cubic-bezier(0.16,1,0.3,1), color 0.2s;
+}
+.footer:hover .footerChevron {
+  color: rgba(245,245,247,0.6);
+}
+.footerChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Progress bar ── */
+.progressWrap {
+  margin: 4px 16px 8px;
+  transition: opacity 0.2s;
+}
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.progressText {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245,245,247,0.4);
+  font-family: var(--sans);
+}
+
+.progressTrack {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #9333ea 0%, #f59e0b 100%);
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .box { max-width: 320px; }
+}
+@media (max-width: 768px) {
+  .box { display: none; }    /* esconde o card do artista em mobile */
+}

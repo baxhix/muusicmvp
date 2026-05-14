@@ -10,6 +10,7 @@ import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import ConversationsSidebar from '@/components/app/ConversationsSidebar';
 import SingleBanner from '@/components/app/SingleBanner';
+import ArtistBox from '@/components/app/ArtistBox';
 import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
 import ListeningTogether from '@/components/app/ListeningTogether';
@@ -330,9 +331,15 @@ export default function AppPage() {
 
       <SideBar />
 
-      {/* "Agora ou Nunca" single promo — fixed pill anchored to the
-          top-left, between the SideBar and the centered FilterTabs
-          row. Self-contained, knows its own positioning. */}
+      {/* Artist identity box — fixed top-left card showing the
+          current Fanverse + the user's daily missions panel.
+          Self-positioned (top:42 / left:68); collapses to a header
+          row + progress bar by default, expands to reveal the
+          missions list when clicked. */}
+      <ArtistBox />
+
+      {/* "Agora ou Nunca" single promo — fixed pill anchored below
+          the filter strip. Self-contained, knows its own positioning. */}
       <SingleBanner onOpenSuperchat={() => setShowSuperchat(true)} />
 
       <LiveChatStack
