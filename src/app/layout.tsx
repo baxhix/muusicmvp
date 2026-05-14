@@ -48,8 +48,16 @@ export default async function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${instrumentSerif.variable}`}
     >
-      <body>
+      <head>
+        {/* Pixels e tags de tracking (GA4, Clarity, Meta Pixel,
+            etc.) carregam no <head> via next/script
+            afterInteractive — mesma estratégia que o snippet
+            oficial do Clarity/GA, sem bloquear o first paint. As
+            tags ativas vêm do site_tags (admin Tags) ou de env
+            como fallback. */}
         <TrackingTags />
+      </head>
+      <body>
         <ErrorBoundary>
           <GlobalErrorLogger />
           <AuthProvider>

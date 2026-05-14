@@ -78,6 +78,13 @@
       "when": 1778862000000,
       "tag": "0010_site_tags_posthog",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778865000000,
+      "tag": "0011_clarity_default",
+      "breakpoints": true
     }
   ]
 }
