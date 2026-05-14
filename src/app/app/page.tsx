@@ -311,9 +311,11 @@ export default function AppPage() {
         </div>
 
         <BottomNav
-          /* Crown icon → SuperfansPanel (Ranking).
+          /* Music icon → PlaylistModal (registered track catalog).
+             Crown icon → SuperfansPanel (Ranking).
              Chat icon  → Superchat panel.
              Profile icon → ProfilePanel. */
+          onPlaylistOpen={() => setShowPlaylist(true)}
           onSuperfansOpen={() => setShowSuperfans(true)}
           onProfileOpen={() => setShowProfile(true)}
           onSuperchatOpen={() => setShowSuperchat(true)}

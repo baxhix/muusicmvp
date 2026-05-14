@@ -11,12 +11,16 @@ interface BottomNavProps {
   onProfileOpen?: () => void;
   /** Open the global Superchat panel (wired in page.tsx). */
   onSuperchatOpen?: () => void;
+  /** Open the playlist modal (catalog of registered tracks). Wired
+   *  in page.tsx to setShowPlaylist(true). */
+  onPlaylistOpen?: () => void;
 }
 
 export default function BottomNav({
   onSuperfansOpen,
   onProfileOpen,
   onSuperchatOpen,
+  onPlaylistOpen,
 }: BottomNavProps = {}) {
   const pathname = usePathname();
 
@@ -70,24 +74,43 @@ export default function BottomNav({
           <span className={styles.label}>Mapa</span>
         </button>
 
-        {/* Feed — the FeedPanel surface is rendered as the default
-            resting view in page.tsx, so this button doesn't need to
-            navigate anywhere. Kept as a non-link landmark for the
-            user to recognize where the feed lives. */}
+        {/* Músicas — opens the PlaylistModal with the catalog of
+            registered tracks. The old "Feed" landmark was passive
+            (the FeedPanel surface is already the resting view in
+            page.tsx); promoting this slot to a real action gives
+            the user a one-tap path into the music library. */}
         <button
           type="button"
           className={styles.item}
-          aria-label="Feed"
-          data-tooltip="Feed"
+          onClick={onPlaylistOpen}
+          aria-label="Abrir lista de músicas"
+          data-tooltip="Músicas"
         >
-          {/* Feed icon — stacked lines like an article list */}
+          {/* Music list icon — stacked lines + a music note on the
+              right tail, reads as "playlist" / "library". */}
           <svg viewBox="0 0 22 22" fill="none">
-            <rect x="3" y="4"  width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
-            <rect x="3" y="10" width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
-            <rect x="3" y="16" width="16" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M3 5h11M3 11h11M3 17h7"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <path
+              d="M19 7v9.2"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+            <circle
+              cx="17.4"
+              cy="16.7"
+              r="1.7"
+              fill="currentColor"
+              stroke="none"
+            />
           </svg>
           <div className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Feed</span>
+          <span className={styles.label}>Músicas</span>
         </button>
 
         {/* Center crown button — opens Ranking/Superfans */}
