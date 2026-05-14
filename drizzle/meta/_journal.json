@@ -43,6 +43,13 @@
       "when": 1778678665232,
       "tag": "0005_curved_kulan_gath",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778767649066,
+      "tag": "0006_previous_pestilence",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireUser } from '@/server/auth/requireUser';
 import { listConversationsForUser } from '@/server/chat/queries';
 import { getOrCreateDm, userExists } from '@/server/chat/dm';
+import { createGroup } from '@/server/chat/groups';
 
 export const runtime = 'nodejs';
 
@@ -15,30 +16,89 @@ export async function GET() {
   return NextResponse.json({ conversations });
 }
 
-const createSchema = z.object({
+/**
+ * Polymorphic conversation creator.
+ *
+ *   { type: 'dm',    otherUserId }
+ *     → getOrCreateDm (idempotent — same pair always resolves to
+ *       the same conversation row).
+ *
+ *   { type: 'group', name, memberIds[, imageUrl] }
+ *     → always creates a new group. The caller is auto-included as
+ *       'owner'; everyone in memberIds gets role='member'.
+ *
+ * Back-compat: an old client sending just { otherUserId } (no
+ * `type` field) still works — the schema treats type as optional
+ * defaulting to 'dm'.
+ */
+const dmSchema = z.object({
+  type: z.literal('dm').optional(),
   otherUserId: z.string().uuid(),
 });
+
+const groupSchema = z.object({
+  type: z.literal('group'),
+  name: z.string().min(1).max(80),
+  imageUrl: z.string().max(500).optional().nullable(),
+  // Need at least one other member; the auth user is auto-added as owner.
+  memberIds: z.array(z.string().uuid()).min(1).max(500),
+});
+
+const createSchema = z.union([dmSchema, groupSchema]);
 
 export async function POST(req: Request) {
   const auth = await requireUser();
   if (auth instanceof NextResponse) return auth;
   const user = auth;
 
-  let parsed;
+  let body: unknown;
   try {
-    parsed = createSchema.parse(await req.json());
+    body = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  if (parsed.otherUserId === user.id) {
-    return NextResponse.json({ error: 'cannot_dm_self' }, { status: 400 });
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  if (!(await userExists(parsed.otherUserId))) {
+  // ── Group branch ──────────────────────────────────────────────
+  if (parsed.data.type === 'group') {
+    try {
+      const { id } = await createGroup({
+        ownerId: user.id,
+        name: parsed.data.name,
+        imageUrl: parsed.data.imageUrl ?? null,
+        memberIds: parsed.data.memberIds,
+      });
+      return NextResponse.json({ id, created: true, type: 'group' }, { status: 201 });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'create_failed';
+      const status =
+        code === 'empty_name' || code === 'name_too_long' || code === 'not_enough_members'
+          ? 400
+          : code === 'user_not_found'
+            ? 404
+            : 500;
+      if (status === 500) {
+        console.error('createGroup failed:', err);
+      }
+      return NextResponse.json({ error: code }, { status });
+    }
+  }
+
+  // ── DM branch (default) ───────────────────────────────────────
+  if (parsed.data.otherUserId === user.id) {
+    return NextResponse.json({ error: 'cannot_dm_self' }, { status: 400 });
+  }
+  if (!(await userExists(parsed.data.otherUserId))) {
     return NextResponse.json({ error: 'user_not_found' }, { status: 404 });
   }
 
-  const { id, created } = await getOrCreateDm(user.id, parsed.otherUserId);
-  return NextResponse.json({ id, created }, { status: created ? 201 : 200 });
+  const { id, created } = await getOrCreateDm(user.id, parsed.data.otherUserId);
+  return NextResponse.json(
+    { id, created, type: 'dm' },
+    { status: created ? 201 : 200 },
+  );
 }

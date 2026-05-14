@@ -14,7 +14,7 @@ import { listReactionsForMessages } from './reactions';
 export async function listConversationsForUser(userId: string) {
   const rows = await db.execute(sql`
     WITH user_convs AS (
-      SELECT conversation_id, last_read_message_id
+      SELECT conversation_id, last_read_message_id, role
       FROM conversation_participants
       WHERE user_id = ${userId}
     ),
@@ -28,7 +28,11 @@ export async function listConversationsForUser(userId: string) {
     SELECT
       c.id              AS conversation_id,
       c.type            AS conversation_type,
+      c.name            AS conversation_name,
+      c.image_url       AS conversation_image_url,
+      c.created_by      AS conversation_created_by,
       c.created_at      AS conversation_created_at,
+      uc.role           AS my_role,
       lm.id             AS last_message_id,
       lm.body           AS last_message_body,
       lm.sender_id      AS last_message_sender_id,
@@ -36,6 +40,12 @@ export async function listConversationsForUser(userId: string) {
       other.id          AS other_user_id,
       other.name        AS other_user_name,
       other.avatar_url  AS other_user_avatar,
+      -- Cheap count for the dock badge — exact participants list is
+      -- fetched on demand from /api/conversations/:id/members.
+      (
+        SELECT COUNT(*)::int FROM conversation_participants cpc
+        WHERE cpc.conversation_id = c.id
+      ) AS member_count,
       (
         SELECT COUNT(*)::int FROM messages m
         WHERE m.conversation_id = c.id
@@ -63,7 +73,12 @@ export async function listConversationsForUser(userId: string) {
   return rows.rows.map((r) => ({
     id: r.conversation_id as string,
     type: r.conversation_type as 'dm' | 'group',
+    name: (r.conversation_name as string | null) ?? null,
+    imageUrl: (r.conversation_image_url as string | null) ?? null,
+    createdBy: (r.conversation_created_by as string | null) ?? null,
     createdAt: r.conversation_created_at as Date,
+    myRole: r.my_role as 'owner' | 'admin' | 'member',
+    memberCount: (r.member_count as number) ?? 0,
     lastMessage: r.last_message_id
       ? {
           id: r.last_message_id as string,

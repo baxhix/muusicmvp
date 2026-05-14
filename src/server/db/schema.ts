@@ -57,6 +57,16 @@ export const conversations = pgTable(
     // For named/global rooms (e.g. 'superchat'). Null for DMs.
     slug: text('slug'),
     name: text('name'),
+    // Custom group avatar (user-uploaded). Null for DMs + named
+    // rooms; user-created groups POST one via the same upload
+    // pipeline as user avatars / report images.
+    imageUrl: text('image_url'),
+    // Who created the group. Null for DMs + system-created rooms
+    // like the global Superchat. Used to default the 'owner' role
+    // on the participants row + drive "only owner can delete" checks.
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique('conversations_slug_unique').on(t.slug)],
@@ -71,6 +81,13 @@ export const conversationParticipants = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    // Role within the conversation. DMs are always 'member' both
+    // sides. Groups default new joiners to 'member'; the creator
+    // is stamped 'owner' at create time. 'admin' is a future role
+    // for delegated moderation.
+    role: text('role', { enum: ['owner', 'admin', 'member'] })
+      .notNull()
+      .default('member'),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
     lastReadMessageId: uuid('last_read_message_id'),
   },

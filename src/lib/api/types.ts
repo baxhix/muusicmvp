@@ -39,6 +39,16 @@ export interface ApiSearchUser {
 export interface ApiConversationSummary {
   id: string;
   type: 'dm' | 'group';
+  /** Group display name. Null for DMs (use otherUser.name instead). */
+  name?: string | null;
+  /** Group avatar URL (user-uploaded). Null for DMs. */
+  imageUrl?: string | null;
+  /** UUID of the user who created the group. Null for DMs + system rooms. */
+  createdBy?: string | null;
+  /** Requesting user's role inside this conversation. */
+  myRole?: 'owner' | 'admin' | 'member';
+  /** Total participant count — drives the "X membros" line in the dock + panel header. */
+  memberCount?: number;
   createdAt: string;
   lastMessage: {
     id: string;
