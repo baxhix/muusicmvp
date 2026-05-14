@@ -47,8 +47,17 @@ export default async function RootLayout({
     <html
       lang="pt-BR"
       className={`${inter.variable} ${instrumentSerif.variable}`}
+      // Suppress hydration warnings caused by browser extensions
+      // (Grammarly, password managers, dark-mode tweakers, etc.)
+      // that mutate <html>/<body> attributes BEFORE React hydrates.
+      // Those external mutations are unavoidable and trigger React
+      // error #418 in production builds even when our SSR is clean.
+      // suppressHydrationWarning only suppresses the diff on the
+      // tagged element + its attributes — children are still
+      // hydration-checked normally.
+      suppressHydrationWarning
     >
-      <body>
+      <body suppressHydrationWarning>
         {/* Pixels e tags de tracking (GA4, Clarity, Meta Pixel,
             etc.) — next/script com strategy="afterInteractive"
             injeta os scripts no DOM real (head, na prática), sem
