@@ -27,7 +27,6 @@ import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
-import RankingButton from '@/components/app/RankingButton';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
@@ -290,11 +289,11 @@ export default function AppPage() {
 
         {/* Map Layer */}
         <div className={styles.mapLayer}>
-          {/* Top center row: filter pills + Ranking + Superchat + Notifications
-              side-by-side so nothing overlaps the username at the top-right. */}
+          {/* Top center row: filter pills + Superchat CTA + notifications
+              side-by-side. Ranking (Superfãs) is reachable via the
+              BottomNav crown icon — no longer duplicated up here. */}
           <div className={styles.topBar}>
             <FilterTabs />
-            <RankingButton onClick={() => setShowSuperfans(true)} />
             <SuperchatTrigger
               onClick={() => setShowSuperchat(true)}
               unreadCount={superchat?.unreadCount ?? 0}
@@ -443,9 +442,9 @@ export default function AppPage() {
           if (superchat) void chat.markRead(superchat.id);
         }}
       />
-      {/* RankingButton is rendered inline next to FilterTabs in the topBar;
-          the SuperfansPanel above is what opens (ranking-style design fed
-          by real /api/ranking data). */}
+      {/* Ranking (SuperfansPanel) opens via the BottomNav crown icon
+          — the inline RankingButton that used to sit in the topBar
+          row was removed; the panel below is what actually opens. */}
 
       {/* Floating queue of "X is listening to the same song" notifications,
           driven by socket `notify:new` events of kind 'same_track'. Each

@@ -7,7 +7,11 @@
 /* Avatar trigger */
 .userMenu {
   position: fixed;
-  top: 18px;
+  /* Was 18px — aligned now to the same top axis as the centered
+     .topBar row (FilterTabs / SuperchatTrigger / NotificationBell)
+     so the user name + avatar sit on the same horizontal line as
+     the rest of the header controls. */
+  top: 42px;
   right: 14px;
   z-index: 110;
   pointer-events: auto;
@@ -15,6 +19,9 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  /* Match the height of the topBar pills (~36px) so vertical
+     centering reads consistent across both halves of the header. */
+  height: 36px;
 }
 
 /* User info block (left of avatar) */
