@@ -48,16 +48,15 @@ export default async function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${instrumentSerif.variable}`}
     >
-      <head>
-        {/* Pixels e tags de tracking (GA4, Clarity, Meta Pixel,
-            etc.) carregam no <head> via next/script
-            afterInteractive — mesma estratégia que o snippet
-            oficial do Clarity/GA, sem bloquear o first paint. As
-            tags ativas vêm do site_tags (admin Tags) ou de env
-            como fallback. */}
-        <TrackingTags />
-      </head>
       <body>
+        {/* Pixels e tags de tracking (GA4, Clarity, Meta Pixel,
+            etc.) — next/script com strategy="afterInteractive"
+            injeta os scripts no DOM real (head, na prática), sem
+            bloquear o first paint. Renderizado dentro de <body>
+            porque o App Router do Next 15 gerencia <head> via
+            metadata API; declarar <head> manualmente aqui causou
+            hydration mismatch (React error #418). */}
+        <TrackingTags />
         <ErrorBoundary>
           <GlobalErrorLogger />
           <AuthProvider>
