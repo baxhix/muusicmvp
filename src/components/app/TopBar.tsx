@@ -214,6 +214,15 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SubScreen>(null);
+  // Gate for the portal below. We can't render createPortal during
+  // SSR (no document) but `typeof window !== 'undefined'` evaluates
+  // DIFFERENTLY on server (false) vs client first render (true) —
+  // that mismatch crashes React with hydration error #418 the moment
+  // the route renders dynamically. Mount flag matches on both sides
+  // because useState's initial value is identical, and only flips
+  // after the first effect runs (always client-side).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const drawerRef = useRef<HTMLElement>(null);
 
   // Estado dos toggles persistido em localStorage
@@ -312,7 +321,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         </div>
       </div>
 
-      {typeof window !== 'undefined' && createPortal(
+      {mounted && createPortal(
         <>
           {open && (
             <div
