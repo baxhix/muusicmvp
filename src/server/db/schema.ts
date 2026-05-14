@@ -205,8 +205,89 @@ export const listeningHistory = pgTable(
 );
 
 /**
- * Notifications for "same music" matches and chat events.
- * `payload` keeps shape flexible per `kind` without schema churn.
+ * Feed posts. Today the feed renders mock data from FeedPanel.tsx,
+ * but the comments system has to attach to a stable identifier per
+ * post — so we lazy-insert a row here the first time anyone
+ * interacts with a post, keyed by a deterministic `postKey` slug
+ * (derived from the post's media src).
+ *
+ * Real user-authored posts (later) will share this table; the
+ * `authorUserId` FK is nullable so the current Central Ana Castela
+ * mocks can sit here under "no author".
+ */
+export const feedPosts = pgTable(
+  'feed_posts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    postKey: text('post_key').notNull(),
+    authorUserId: uuid('author_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('feed_posts_post_key_unique').on(t.postKey)],
+);
+
+/**
+ * Feed comments. Adjacency-list threading via parentCommentId — null
+ * for top-level, set for replies. Soft delete via deletedAt so the
+ * thread doesn't lose its shape when a parent is removed.
+ */
+export const feedComments = pgTable(
+  'feed_comments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => feedPosts.id, { onDelete: 'cascade' }),
+    // Self-FK; cascade so hard-deleting a parent cleans up replies too
+    // (admin moderation). The product surface uses soft delete instead.
+    parentCommentId: uuid('parent_comment_id'),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('feed_comments_post_created_idx').on(t.postId, t.createdAt),
+    index('feed_comments_parent_created_idx').on(t.parentCommentId, t.createdAt),
+    index('feed_comments_author_idx').on(t.authorId),
+  ],
+);
+
+/**
+ * One row per (comment, user, emoji). MVP UI only ever fires ❤️,
+ * but the schema keeps emoji explicit so we can add more (😂 🔥 etc.)
+ * without churn. Single row per user per emoji enforced by the
+ * unique constraint, so the toggle stays idempotent.
+ */
+export const feedCommentReactions = pgTable(
+  'feed_comment_reactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    commentId: uuid('comment_id')
+      .notNull()
+      .references(() => feedComments.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    emoji: text('emoji').notNull().default('❤️'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique('feed_comment_reactions_unique').on(t.commentId, t.userId, t.emoji),
+    index('feed_comment_reactions_comment_idx').on(t.commentId),
+  ],
+);
+
+/**
+ * Notifications for "same music" matches, chat events, and feed
+ * comment events. `payload` keeps shape flexible per `kind` without
+ * schema churn. `feedPostId` + `commentId` are nullable FKs used by
+ * the comment_* kinds so the bell can deep-link straight to the
+ * post + scroll to the right comment.
  */
 export const notifications = pgTable(
   'notifications',
@@ -223,6 +304,9 @@ export const notifications = pgTable(
         'message',
         'mention',
         'group_added',
+        'comment_reaction',
+        'comment_reply',
+        'comment_mention',
       ],
     }).notNull(),
     sourceUserId: uuid('source_user_id').references(() => users.id, { onDelete: 'cascade' }),
@@ -233,6 +317,8 @@ export const notifications = pgTable(
       onDelete: 'cascade',
     }),
     messageId: uuid('message_id').references(() => messages.id, { onDelete: 'cascade' }),
+    feedPostId: uuid('feed_post_id').references(() => feedPosts.id, { onDelete: 'cascade' }),
+    commentId: uuid('comment_id').references(() => feedComments.id, { onDelete: 'cascade' }),
     payload: jsonb('payload'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     readAt: timestamp('read_at', { withTimezone: true }),
@@ -360,3 +446,9 @@ export type TrackLike = typeof trackLikes.$inferSelect;
 export type UserActivity = typeof userActivities.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
+export type FeedPost = typeof feedPosts.$inferSelect;
+export type NewFeedPost = typeof feedPosts.$inferInsert;
+export type FeedComment = typeof feedComments.$inferSelect;
+export type NewFeedComment = typeof feedComments.$inferInsert;
+export type FeedCommentReaction = typeof feedCommentReactions.$inferSelect;
+export type NewFeedCommentReaction = typeof feedCommentReactions.$inferInsert;

@@ -1,0 +1,406 @@
+/* ──────────────────────────────────────────────────────────────
+ * Comments panel for feed posts. Lives INSIDE MediaPost, below
+ * the action bar, opening + closing in place. Same dark-gradient
+ * + accent-purple identity as the parent card so it feels like
+ * an extension of the post rather than a popover.
+ *
+ * Layout flows: header → input → thread list. The thread renders
+ * top-level CommentItems; each one can expand its own reply list
+ * inline (light left-indent) without nesting beyond one level.
+ * ────────────────────────────────────────────────────────────── */
+
+.panel {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 7, 20, 0.55) 0%,
+    rgba(8, 6, 16, 0.78) 100%
+  );
+  padding: 6px 14px 12px;
+  animation: panelIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Top thin glow separator — mirrors the MediaPost top edge. */
+.panel::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: 0 -14px 10px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(168, 85, 247, 0.35) 40%,
+    rgba(236, 72, 153, 0.25) 70%,
+    transparent 100%
+  );
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.headerTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.92);
+  letter-spacing: -0.01em;
+}
+.headerCount {
+  font-size: 10.5px;
+  font-family: var(--mono, ui-monospace);
+  color: rgba(245, 245, 247, 0.38);
+  letter-spacing: 0.02em;
+}
+
+/* ── Input row ─────────────────────────────────────────── */
+.inputRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 6px 6px 6px 10px;
+  margin-bottom: 14px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.inputRow:focus-within {
+  border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.04);
+}
+.inputAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: rgba(245, 245, 247, 0.95);
+  font-family: var(--sans);
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+  line-height: 1.45;
+  padding: 5px 0;
+  max-height: 96px;
+  min-height: 22px;
+}
+.input::placeholder {
+  color: rgba(245, 245, 247, 0.32);
+}
+.sendBtn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+}
+.sendBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.sendBtn:not(:disabled):hover {
+  transform: scale(1.08);
+}
+.sendBtn svg { width: 13px; height: 13px; }
+.sendSpinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Thread ─────────────────────────────────────────────── */
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.empty {
+  text-align: center;
+  padding: 18px 8px;
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.42);
+  letter-spacing: -0.005em;
+}
+.empty strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.78);
+  margin-bottom: 2px;
+}
+
+/* "Carregar mais comentários" footer button. */
+.loadMore {
+  margin-top: 4px;
+  align-self: stretch;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.72);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.loadMore:hover {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.3);
+  color: #fff;
+}
+.loadMore:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Skeleton ───────────────────────────────────────────── */
+.skeletonRow {
+  display: flex;
+  gap: 9px;
+  padding: 4px 0;
+}
+.skeletonAvatar,
+.skeletonLineA,
+.skeletonLineB {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}
+.skeletonAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.skeletonLines { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.skeletonLineA { height: 10px; width: 60%; }
+.skeletonLineB { height: 10px; width: 90%; }
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Single comment ─────────────────────────────────────── */
+.comment {
+  display: flex;
+  gap: 9px;
+  position: relative;
+}
+.commentReply {
+  margin-left: 36px;
+  position: relative;
+}
+/* Subtle vertical thread line for replies. */
+.commentReply::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 6px;
+  width: 2px;
+  height: calc(100% - 12px);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.identityRow {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 1px;
+  flex-wrap: wrap;
+}
+.authorName {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.01em;
+}
+.authorHandle {
+  font-size: 10.5px;
+  color: rgba(245, 245, 247, 0.42);
+  letter-spacing: -0.005em;
+}
+.authorTime {
+  font-size: 10px;
+  color: rgba(245, 245, 247, 0.3);
+  font-family: var(--mono, ui-monospace);
+  letter-spacing: 0.02em;
+}
+
+.text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.86);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  letter-spacing: -0.005em;
+}
+.textDeleted {
+  font-style: italic;
+  color: rgba(245, 245, 247, 0.32);
+}
+
+/* Inline @mention chip — reuses the message body style identity
+   so a mention reads the same in feed comments and group chats. */
+.mention {
+  color: #c084fc;
+  font-weight: 600;
+  background: rgba(168, 85, 247, 0.12);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* ── Comment action row (like / reply / delete) ────────── */
+.commentActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 5px;
+}
+.actionBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.42);
+  cursor: pointer;
+  transition: color 0.15s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: -0.005em;
+}
+.actionBtn:hover {
+  color: rgba(245, 245, 247, 0.92);
+}
+.actionBtn svg {
+  width: 13px;
+  height: 13px;
+}
+.actionBtn.danger:hover {
+  color: #f87171;
+}
+
+/* Heart button: pulses on toggle + shifts to accent color when active. */
+.likeBtn { position: relative; }
+.likeBtn .heart {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.likeBtn.liked {
+  color: #f43f5e;
+}
+.likeBtn.liked .heart {
+  fill: currentColor;
+  stroke: currentColor;
+  animation: pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.4); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+/* Show "Ver respostas" toggle as a separate, subtle button row
+   beneath the action row when there are replies. */
+.viewReplies {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(168, 85, 247, 0.85);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: -0.005em;
+  transition: color 0.15s;
+}
+.viewReplies:hover { color: #c084fc; }
+.viewReplies .threadDash {
+  display: inline-block;
+  width: 16px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.replies {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: panelIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Inline reply composer that opens under a comment. */
+.replyComposer {
+  margin-top: 8px;
+  margin-left: 36px;
+}
+
+/* Mobile: tighten the reply indent + reply composer margin so the
+   text column stays readable on narrow screens. The thread line
+   shifts in too — without this it disappears off the left edge of
+   the comment row at <420px widths. */
+@media (max-width: 480px) {
+  .panel { padding: 6px 10px 12px; }
+  .commentReply { margin-left: 24px; }
+  .commentReply::before { left: -14px; }
+  .replyComposer { margin-left: 24px; }
+  .commentActions { gap: 12px; }
+  .identityRow { gap: 6px; }
+  .authorHandle { display: none; } /* keep name + time, drop handle */
+}

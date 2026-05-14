@@ -91,6 +91,30 @@ function describe(n: ApiNotification): ReactNode {
         </Fragment>
       );
     }
+    case 'comment_reaction': {
+      // Emoji is stashed in payload by toggleCommentReaction.
+      const payload = (n.payload ?? {}) as { emoji?: string };
+      const emoji = payload.emoji?.trim() || '❤️';
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> reagiu com {emoji} ao seu comentário
+        </Fragment>
+      );
+    }
+    case 'comment_reply': {
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> respondeu ao seu comentário
+        </Fragment>
+      );
+    }
+    case 'comment_mention': {
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> te mencionou em um comentário
+        </Fragment>
+      );
+    }
     default:
       return 'Notificação';
   }

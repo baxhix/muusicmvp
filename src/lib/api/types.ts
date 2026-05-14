@@ -172,13 +172,18 @@ export interface ApiNotification {
     | 'same_album'
     | 'message'
     | 'mention'
-    | 'group_added';
+    | 'group_added'
+    | 'comment_reaction'
+    | 'comment_reply'
+    | 'comment_mention';
   sourceUserId: string | null;
   trackId: string | null;
   artist: string | null;
   album: string | null;
   conversationId: string | null;
   messageId: string | null;
+  feedPostId: string | null;
+  commentId: string | null;
   payload: unknown;
   createdAt: string;
   readAt: string | null;
@@ -233,6 +238,58 @@ export interface ApiRankingRow {
 }
 
 export type ApiActivityKind = 'stream' | 'login' | 'chat_started';
+
+/**
+ * One row in a feed post's comment thread. Used for both top-level
+ * comments and inline replies — the discriminator is
+ * `parentCommentId`: null → top-level, set → reply.
+ *
+ *   - `replyCount` is `null` on replies (we deliberately keep
+ *     threads flat — no nested replies — so a reply can't have its
+ *     own reply count).
+ *   - `deletedAt !== null` is the soft-delete signal. The UI renders
+ *     "Comentário removido" in place of body; the author + avatar
+ *     can still be shown so the thread doesn't look broken.
+ */
+export interface ApiFeedComment {
+  id: string;
+  postId: string;
+  parentCommentId: string | null;
+  body: string;
+  createdAt: string;
+  deletedAt: string | null;
+  author: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  };
+  reactions: {
+    /** Total ❤️ count across all users. */
+    count: number;
+    /** Whether the requesting user is among the reactors. */
+    mine: boolean;
+  };
+  /** Number of replies on this comment. Null for replies themselves. */
+  replyCount: number | null;
+}
+
+/** Page returned by GET /api/feed/posts/:postKey/comments. */
+export interface ApiFeedCommentsPage {
+  /** Resolved feed_posts.id — clients store this for follow-up calls. */
+  postId: string;
+  items: ApiFeedComment[];
+  hasMore: boolean;
+  /** ISO timestamp of the oldest item. Pass back as ?before= for the next page. */
+  nextCursor: string | null;
+}
+
+/** Result of POSTing a reaction toggle. */
+export interface ApiFeedCommentReactionResult {
+  action: 'added' | 'removed';
+  count: number;
+  mine: boolean;
+}
 
 export interface ApiActivityItem {
   id: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import CommentsPanel from './CommentsPanel';
 import styles from './MediaPost.module.css';
 
 /* ── Types ── */
@@ -95,6 +96,22 @@ const ChevronRight = () => (
 );
 
 /* ── Component ── */
+/**
+ * Derive a stable identifier for this post from its media. The
+ * comments backend keys feed_posts by `post_key`, lazy-creating the
+ * row on first interaction — see `getOrCreateFeedPost` in
+ * `src/server/feed/comments.ts`. We don't include `time` / `user`
+ * because both can drift while the same underlying media is still
+ * the same post (e.g. relative time text refreshes on rerender).
+ */
+function postKeyFor(data: MediaPostData): string {
+  if (data.type === 'image') return `media:image:${data.src}`;
+  if (data.type === 'video') return `media:video:${data.src ?? data.poster}`;
+  // For carousels, the first slide's src is stable across rerenders.
+  const first = data.items[0]?.src ?? data.user;
+  return `media:carousel:${first}`;
+}
+
 export default function MediaPost({ data }: { data: MediaPostData }) {
   const [liked, setLiked]     = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -103,7 +120,10 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
   // so each post owns its own state — multiple carousels in the same
   // feed advance independently.
   const [slideIdx, setSlideIdx] = useState(0);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const postKey = postKeyFor(data);
 
   const togglePlay = () => {
     const v = videoRef.current;
@@ -193,7 +213,12 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           {data.likes + (liked ? 1 : 0)}
         </button>
 
-        <button className={styles.btn} aria-label="Comentar">
+        <button
+          className={`${styles.btn} ${commentsOpen ? styles.btnLiked : ''}`}
+          onClick={() => setCommentsOpen((v) => !v)}
+          aria-label={commentsOpen ? 'Fechar comentários' : 'Comentar'}
+          aria-expanded={commentsOpen}
+        >
           <CommentIcon />
           {data.comments}
         </button>
@@ -205,6 +230,16 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           <span style={{ visibility: 'hidden', fontSize: '11px' }}>0</span>
         </button>
       </div>
+
+      {/* Comments — lazy-mounted: the panel only fetches on first
+          open, and toggling collapses the section without losing the
+          loaded state. Sits inside the card so it inherits the same
+          dark-gradient identity as the post header + media. */}
+      <CommentsPanel
+        postKey={postKey}
+        initialCommentCount={data.comments}
+        open={commentsOpen}
+      />
     </div>
   );
 }

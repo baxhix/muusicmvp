@@ -50,6 +50,13 @@
       "when": 1778767649066,
       "tag": "0006_previous_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778854049066,
+      "tag": "0007_feed_comments",
+      "breakpoints": true
     }
   ]
 }
