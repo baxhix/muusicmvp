@@ -33,17 +33,12 @@ jobs:
           - service: web
             dockerfile: Dockerfile.web
             context: .
-            build_args: |
-              NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
           - service: socket
             dockerfile: Dockerfile.socket
             context: .
-            build_args: ""
           - service: admin
             dockerfile: admin/Dockerfile
             context: ./admin
-            build_args: |
-              NEXT_PUBLIC_API_BASE_URL=${{ vars.APP_URL }}
 
     steps:
       - name: Checkout
@@ -76,7 +71,15 @@ jobs:
           tags: |
             ${{ steps.img.outputs.image }}:latest
             ${{ steps.img.outputs.image }}:sha-${{ github.sha }}
-          build-args: ${{ matrix.build_args }}
+          # All build args passed to every image — Dockerfiles that
+          # don't declare a matching `ARG` just ignore them (with a
+          # harmless warning), so we don't need per-service plumbing.
+          # `secrets.*` / `vars.*` are only allowed in `steps` blocks
+          # (NOT inside matrix.include — that's a GitHub Actions
+          # parser restriction, which is why this lives here.
+          build-args: |
+            NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.APP_URL }}
           # GitHub-hosted layer cache. `scope` is per-service so
           # the web build doesn't trash the socket cache.
           cache-from: type=gha,scope=${{ matrix.service }}
