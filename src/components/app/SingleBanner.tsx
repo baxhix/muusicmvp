@@ -70,7 +70,7 @@ export default function SingleBanner({ onOpenSuperchat }: Props) {
         <span className={styles.badge}>
           <span className={styles.badgeDot} aria-hidden="true" />
           <strong className={styles.badgeCount}>12.988</strong>
-          <span className={styles.badgeLabel}>pessoas ouvindo</span>
+          <span className={styles.badgeLabel}>pessoas na sala</span>
         </span>
       </div>
     </div>
