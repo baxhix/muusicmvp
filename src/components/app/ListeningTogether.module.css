@@ -20,7 +20,12 @@
 .root {
   position: fixed;
   bottom: 102px; /* overridden inline; kept as fallback */
-  left: clamp(16px, calc(25% - 196px), 380px);
+  /* Anchored to the same X as the NowPlaying player (which is
+     pinned to left: 68px to align with the ArtistBox column). The
+     two surfaces share a left edge so the "+455 pessoas ouvindo
+     com você" row always reads as part of the player stack,
+     never floating off to the side. */
+  left: 68px;
   width: auto;
   pointer-events: auto;
   z-index: 20;
