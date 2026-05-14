@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { IconImage, IconX } from '@/components/icons';
 import { feedService } from '@/services/feed';
+import { resolveAssetUrl } from '@/lib/utils';
 import type { FeedMediaItem } from '@/types';
 import styles from './FeedImageUploader.module.css';
 
@@ -216,7 +217,11 @@ export default function FeedImageUploader({
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.url} alt={item.alt ?? ''} className={styles.tileImg} />
+                <img
+                  src={resolveAssetUrl(item.url)}
+                  alt={item.alt ?? ''}
+                  className={styles.tileImg}
+                />
                 {idx === 0 && <span className={styles.coverBadge}>Capa</span>}
                 <button
                   type="button"

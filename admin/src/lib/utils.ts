@@ -21,3 +21,31 @@ export function pluralize(
 ): string {
   return count === 1 ? singular : plural;
 }
+
+/**
+ * Resolve a relative `/api/...` path to the absolute URL the main
+ * muusic app serves it from.
+ *
+ * Why this exists: uploaded feed images come back from the server
+ * as relative URLs (`/api/feed/images/<file>`), which the PUBLIC
+ * site resolves against its own origin just fine. The admin runs
+ * on a different origin (its own subdomain in prod), so
+ * `<img src="/api/...">` would hit the admin's own server and
+ * 404. Calling `resolveAssetUrl(url)` at render time prepends
+ * NEXT_PUBLIC_API_BASE_URL so the request lands on the main app.
+ *
+ * Already-absolute URLs (http / https / data / blob) pass through.
+ */
+export function resolveAssetUrl(url: string | null | undefined): string {
+  if (!url) return '';
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:') ||
+    url.startsWith('blob:')
+  ) {
+    return url;
+  }
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+  return url.startsWith('/') ? `${base}${url}` : url;
+}

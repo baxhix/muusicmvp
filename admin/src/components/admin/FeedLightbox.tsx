@@ -7,6 +7,7 @@ import {
   IconChevronRight,
   IconX,
 } from '@/components/icons';
+import { resolveAssetUrl } from '@/lib/utils';
 import type { FeedMediaItem } from '@/types';
 import styles from './FeedLightbox.module.css';
 
@@ -178,7 +179,7 @@ export default function FeedLightbox({
             className={`${styles.image} ${zoomed ? styles.zoomed : ''} ${
               dragging ? styles.zoomedDragging : ''
             }`}
-            src={current.url}
+            src={resolveAssetUrl(current.url)}
             alt={current.alt ?? `Imagem ${safeIndex + 1}`}
             draggable={false}
             onClick={onImageClick}

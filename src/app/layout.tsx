@@ -4,7 +4,7 @@ import { AuthProvider } from '@/lib/auth/AuthContext';
 import { UniverseProvider } from '@/lib/universe/UniverseContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import GlobalErrorLogger from '@/components/GlobalErrorLogger';
-import GoogleAnalytics from '@/components/GoogleAnalytics';
+import TrackingTags from '@/components/TrackingTags';
 import './globals.css';
 
 const inter = Inter({
@@ -39,7 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${instrumentSerif.variable}`}
     >
       <body>
-        <GoogleAnalytics />
+        <TrackingTags />
         <ErrorBoundary>
           <GlobalErrorLogger />
           <AuthProvider>

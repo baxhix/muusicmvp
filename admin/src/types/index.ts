@@ -123,6 +123,33 @@ export interface FeedItemInput {
   action?: FeedItemAction;
 }
 
+/* ── Site tracking tags ───────────────────────────────────────
+ * One row per third-party tag the platform injects globally —
+ * Google Analytics, Google Tag Manager, Facebook Pixel,
+ * Microsoft Clarity, TikTok Pixel, Hotjar. Edited from
+ * /admin/settings → Tags, read server-side by the public layout. */
+export type SiteTagKind =
+  | 'analytics'  // Google Analytics 4 (G-XXXXXXX)
+  | 'gtm'        // Google Tag Manager (GTM-XXXXXXX)
+  | 'facebook'   // Meta Pixel (numeric pixel ID)
+  | 'clarity'    // Microsoft Clarity (short alphanumeric)
+  | 'tiktok'     // TikTok Pixel (CXXXXXX...)
+  | 'hotjar';    // Hotjar (numeric HJID)
+
+export interface SiteTag {
+  kind: SiteTagKind;
+  value: string;
+  enabled: boolean;
+  /** ISO timestamp of the last edit. */
+  updatedAt: string;
+  updatedBy: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  } | null;
+}
+
 export interface Post {
   id: ID;
   authorId: ID;

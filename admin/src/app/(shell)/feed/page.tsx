@@ -28,6 +28,7 @@ import FeedStatusBadge from '@/components/admin/FeedStatusBadge';
 import FeedComposerDrawer from '@/components/admin/FeedComposerDrawer';
 import FeedLightbox from '@/components/admin/FeedLightbox';
 import { feedService } from '@/services/feed';
+import { resolveAssetUrl } from '@/lib/utils';
 import type {
   FeedItem,
   FeedItemStatus,
@@ -243,7 +244,7 @@ export default function AdminFeedPage() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={p.media[0].url}
+                  src={resolveAssetUrl(p.media[0].url)}
                   alt={p.media[0].alt ?? ''}
                   className={styles.thumbImg}
                 />
@@ -327,7 +328,7 @@ export default function AdminFeedPage() {
               <Avatar
                 size="sm"
                 name={p.author.name ?? p.author.email}
-                src={p.author.avatarUrl ?? undefined}
+                src={p.author.avatarUrl ? resolveAssetUrl(p.author.avatarUrl) : undefined}
               />
               <div className={styles.authorText}>
                 <span className={styles.authorName}>

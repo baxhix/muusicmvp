@@ -486,8 +486,28 @@ export type ListeningHistoryRow = typeof listeningHistory.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type TrackLike = typeof trackLikes.$inferSelect;
 export type UserActivity = typeof userActivities.$inferSelect;
+/**
+ * Third-party analytics / tracking tag configuration. One row per
+ * kind (the natural key). Edited from /admin/settings → Tags, read
+ * server-side by the public layout. `enabled=false` pauses the tag
+ * without losing the value.
+ */
+export const siteTags = pgTable('site_tags', {
+  kind: text('kind', {
+    enum: ['analytics', 'gtm', 'facebook', 'clarity', 'tiktok', 'hotjar'],
+  }).primaryKey(),
+  value: text('value').notNull().default(''),
+  enabled: boolean('enabled').notNull().default(false),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedById: uuid('updated_by_id').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
+
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
+export type SiteTag = typeof siteTags.$inferSelect;
+export type NewSiteTag = typeof siteTags.$inferInsert;
 export type FeedPost = typeof feedPosts.$inferSelect;
 export type NewFeedPost = typeof feedPosts.$inferInsert;
 export type FeedComment = typeof feedComments.$inferSelect;
