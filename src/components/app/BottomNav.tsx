@@ -67,7 +67,7 @@ export default function BottomNav({
             <path
               d="M3 11h16M11 3c-2 2.5-3 5-3 8s1 5.5 3 8M11 3c2 2.5 3 5 3 8s-1 5.5-3 8"
               stroke="currentColor"
-              strokeWidth="1.3"
+              strokeWidth="1.6"
             />
           </svg>
           <div className={styles.dot} aria-hidden="true" />
@@ -75,10 +75,9 @@ export default function BottomNav({
         </button>
 
         {/* Músicas — opens the PlaylistModal with the catalog of
-            registered tracks. The old "Feed" landmark was passive
-            (the FeedPanel surface is already the resting view in
-            page.tsx); promoting this slot to a real action gives
-            the user a one-tap path into the music library. */}
+            registered tracks. Icon is a stroked play triangle so
+            it sits in the same visual family as the other outline
+            icons in the bar (map, chat, profile). */}
         <button
           type="button"
           className={styles.item}
@@ -86,27 +85,13 @@ export default function BottomNav({
           aria-label="Abrir lista de músicas"
           data-tooltip="Músicas"
         >
-          {/* Music list icon — stacked lines + a music note on the
-              right tail, reads as "playlist" / "library". */}
           <svg viewBox="0 0 22 22" fill="none">
             <path
-              d="M3 5h11M3 11h11M3 17h7"
+              d="M7 4.5v13l11-6.5z"
               stroke="currentColor"
               strokeWidth="1.6"
+              strokeLinejoin="round"
               strokeLinecap="round"
-            />
-            <path
-              d="M19 7v9.2"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="17.4"
-              cy="16.7"
-              r="1.7"
-              fill="currentColor"
-              stroke="none"
             />
           </svg>
           <div className={styles.dot} aria-hidden="true" />

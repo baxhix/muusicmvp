@@ -14,7 +14,9 @@
     rgba(2,2,3,0.76) 100%);
   backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.06);
+  /* Thicker border per spec (was 1px). Alpha bumped a notch so the
+     extra weight reads cleanly against the dark surface. */
+  border: 3px solid rgba(255,255,255,0.12);
   border-radius: 999px;
   padding: 8px 10px;
   display: flex;
@@ -41,7 +43,10 @@
   text-decoration: none;
 }
 .item:hover { color: var(--ink); transform: translateY(-1px); }
-.itemActive { color: var(--ink); }
+/* Active state — lilac leaning pink. Same hue used by the .dot
+   indicator below so the two cues stay chromatically aligned. */
+.itemActive { color: #d946ef; }
+.itemActive:hover { color: #e879f9; }
 
 /* ── Custom tooltips ──────────────────────────────────────────────
  * Pure-CSS tooltip system driven by the `data-tooltip` attribute on
@@ -123,7 +128,10 @@
   color: inherit;
 }
 
-.item svg { width: 20px; height: 20px; }
+/* Standardized icon footprint — bumped 20→22 for more presence,
+   same dimensions across every slot (including center crown) so
+   the bar reads as a single, well-aligned set. */
+.item svg { width: 22px; height: 22px; }
 
 .label { display: none; }
 
@@ -138,22 +146,25 @@
 .dot {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: var(--accent);
+  /* Active indicator dot — matches the new lilac-pink active icon
+     color so the two cues stay aligned. */
+  background: #d946ef;
+  box-shadow: 0 0 6px rgba(217, 70, 239, 0.55);
   display: none;
 }
 .itemActive .dot { display: block; }
 
-/* Icon wrapper for badge positioning */
+/* Icon wrapper for badge positioning. Matches .item svg footprint. */
 .iconWrap {
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: grid;
   place-items: center;
 }
 .iconWrap svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .unreadBadge {
@@ -196,7 +207,7 @@
   transform: scale(1.07) !important;
   box-shadow: none !important;
 }
-.itemCenter svg { width: 20px; height: 20px; }
+.itemCenter svg { width: 22px; height: 22px; }
 .itemCenter .label,
 .itemCenter .dot { display: none; }
 
