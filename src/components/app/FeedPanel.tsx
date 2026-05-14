@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Stories from './Stories';
 import AudioPost from './AudioPost';
 import ActivityCard, { type ActivityCardData } from './ActivityCard';
 import MediaPost, { type MediaPostData } from './MediaPost';
+import { useAdminFeedPosts } from '@/hooks/useAdminFeedPosts';
+import type { ApiFeedPost } from '@/lib/api/types';
 import styles from './FeedPanel.module.css';
 
 /* ── Activity cards data ─────────────────────────────────── */
@@ -90,6 +92,59 @@ const MEDIA: MediaPostData[] = [
   },
 ];
 
+/* ── Admin → MediaPostData adapter ─────────────────────────
+ * Bridge between the API shape (ApiFeedPost) and the renderer
+ * shape (MediaPostData). Today admin posts are 'image' type so
+ * we just split 1 image vs N images into image-vs-carousel.
+ * When 'video' / 'story' types unlock on the admin side, extend
+ * the switch — the rest of the feed plumbing already supports
+ * them via the existing MediaPost variants. */
+function relativeTime(iso: string): string {
+  const dt = new Date(iso).getTime();
+  const secs = Math.max(1, Math.floor((Date.now() - dt) / 1000));
+  if (secs < 60) return 'agora';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}m`;
+  return `${Math.floor(days / 365)}a`;
+}
+
+function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
+  if (!p.media || p.media.length === 0) return null;
+  const user = p.author?.name || 'Central Ana Castela';
+  const avatar = p.author?.avatarUrl || '/central-anacastela.png';
+  const time = relativeTime(p.publishedAt ?? p.createdAt);
+
+  const base = {
+    user,
+    avatar,
+    time,
+    likes: 0,
+    comments: 0,
+    dbId: p.id,
+    description: p.description ?? undefined,
+  };
+
+  if (p.media.length === 1) {
+    return {
+      ...base,
+      type: 'image' as const,
+      src: p.media[0].url,
+      alt: p.media[0].alt ?? undefined,
+    };
+  }
+  return {
+    ...base,
+    type: 'carousel' as const,
+    items: p.media.map((m) => ({ src: m.url, alt: m.alt ?? undefined })),
+  };
+}
+
 /* ── Main component ──────────────────────────────────────── */
 export default function FeedPanel() {
   // Feed lands expanded by default — was `true` (minimized), but the
@@ -97,6 +152,18 @@ export default function FeedPanel() {
   // The header is still a toggle, so power users can collapse manually.
   const [minimized, setMinimized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Admin-CMS posts. Rendered at the top of the feed when present —
+  // a flat list above the mock content so the team's real posts
+  // lead. Falls back to just the mock content while loading or if
+  // the fetch fails (the hook silently swallows non-401 errors).
+  const { posts: adminPosts } = useAdminFeedPosts();
+  const adminMedia = useMemo<MediaPostData[]>(() => {
+    if (!adminPosts) return [];
+    return adminPosts
+      .map(adminPostToMediaData)
+      .filter((m): m is MediaPostData => m !== null);
+  }, [adminPosts]);
 
   /* Auto-scroll quando minimizado */
   useEffect(() => {
@@ -140,6 +207,14 @@ export default function FeedPanel() {
 
         <AudioPost />
         <ActivityCard data={ACTIVITIES[0]} />
+
+        {/* Admin-CMS posts published from /admin/feed lead the feed.
+            Falls back to nothing while loading so the mock content
+            still shows up if the team hasn't published anything yet. */}
+        {adminMedia.map((m) => (
+          <MediaPost key={m.dbId} data={m} />
+        ))}
+
         <MediaPost data={MEDIA[0]} />
         <ActivityCard data={ACTIVITIES[1]} />
         <MediaPost data={MEDIA[1]} />

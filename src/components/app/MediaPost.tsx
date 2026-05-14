@@ -4,13 +4,25 @@ import { useState, useRef } from 'react';
 import CommentsPanel from './CommentsPanel';
 import styles from './MediaPost.module.css';
 
-/* ── Types ── */
+/* ── Types ──
+ * `MediaPostData` covers BOTH the legacy mock feed (handcrafted
+ * carousel/video entries from FeedPanel.tsx) AND admin-CMS posts
+ * coming from `/api/feed/posts`. The two share enough rendering
+ * surface that a single component covers them — the new `dbId`
+ * field lets CommentsPanel attach to the real post row by id
+ * instead of by mock-derived postKey. */
 type BasePost = {
   user: string;
   avatar: string;
   time: string;
   likes: number;
   comments: number;
+  /** Real `feed_posts.id` for CMS posts. Mock posts leave this off
+   *  and rely on the derived postKey path. */
+  dbId?: string;
+  /** Optional caption/description below the media. Admin posts
+   *  use this; mock posts leave it off. */
+  description?: string;
 };
 
 export type ImagePostData    = BasePost & { type: 'image';  src: string; alt?: string };
@@ -105,6 +117,9 @@ const ChevronRight = () => (
  * the same post (e.g. relative time text refreshes on rerender).
  */
 function postKeyFor(data: MediaPostData): string {
+  // CMS posts: use the real DB id directly — no upsert needed
+  // because the row already exists on the server side.
+  if (data.dbId) return `feed:${data.dbId}`;
   if (data.type === 'image') return `media:image:${data.src}`;
   if (data.type === 'video') return `media:video:${data.src ?? data.poster}`;
   // For carousels, the first slide's src is stable across rerenders.
@@ -199,6 +214,25 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           >
             {muted ? <SoundOffIcon /> : <SoundOnIcon />}
           </button>
+        </div>
+      )}
+
+      {/* Optional caption — admin-CMS posts ship a `description`.
+          Mock posts don't, so this collapses cleanly. Whitespace
+          is preserved so multi-line drafts read like the admin
+          composer rendered them. */}
+      {data.description && (
+        <div
+          style={{
+            padding: '10px 14px 0',
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            color: 'rgba(245, 245, 247, 0.82)',
+            letterSpacing: '-0.005em',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {data.description}
         </div>
       )}
 

@@ -1,0 +1,168 @@
+/* Drag-and-drop image uploader for the composer drawer.
+ *
+ * Two zones in one component:
+ *   1) Drop / picker zone — accepts multiple files, shows current
+ *      upload progress as a horizontal bar at the bottom.
+ *   2) Tile grid — one tile per uploaded image, drag-to-reorder,
+ *      hover reveals remove button. First tile gets a "Capa" badge
+ *      since the public feed renders index-0 first.
+ *
+ * Sticks to the admin's surface / border / radius tokens so it
+ * inherits theme switches automatically. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 18px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-mute);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.dropZone:hover,
+.dropZoneActive {
+  border-color: var(--brand);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.dropTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.dropHint {
+  font-size: 11.5px;
+  color: var(--text-mute);
+}
+
+.fileInput { display: none; }
+
+.uploading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-mute);
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--brand);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  cursor: grab;
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.tileDragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+.tileDropTarget {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.tileImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.coverBadge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.removeBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.74);
+  color: #fff;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.tile:hover .removeBtn,
+.tile:focus-within .removeBtn {
+  opacity: 1;
+}
+.removeBtn:hover {
+  background: var(--danger);
+  transform: scale(1.06);
+}
+
+/* Counter shown to the right of the title. */
+.counter {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  font-feature-settings: 'tnum' 1;
+}
+
+.errorRow {
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--danger);
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  background: var(--danger-bg, rgba(239, 68, 68, 0.08));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}

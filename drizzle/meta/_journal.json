@@ -57,6 +57,13 @@
       "when": 1778854049066,
       "tag": "0007_feed_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778856000000,
+      "tag": "0008_admin_feed_cms",
+      "breakpoints": true
     }
   ]
 }

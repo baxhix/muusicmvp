@@ -59,6 +59,7 @@ services:
       AVATARS_DIR: /app/uploads/avatars
       REPORTS_DIR: /app/uploads/reports
       GROUPS_DIR: /app/uploads/groups
+      FEED_DIR: /app/uploads/feed
     volumes:
       # Avatar + report-evidence uploads persist across container
       # rebuilds. Both directories live under the same `uploads`

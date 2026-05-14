@@ -70,10 +70,22 @@ export interface HydratedComment {
   replyCount: number | null;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Resolve a stable `feed_posts.id` for the given client postKey.
- * Idempotent: existing rows are returned as-is; new rows are
- * inserted with no author (mock posts) for now.
+ *
+ * Two shapes of `postKey` are accepted:
+ *   1. A real `feed_posts.id` UUID — comes from admin CMS posts
+ *      that the public feed addresses by id. We short-circuit the
+ *      upsert and just verify the row exists.
+ *   2. A derived slug (e.g. `media:carousel:/feed/ana-1.png`) — the
+ *      legacy bridge path for mock posts. Idempotent upsert keyed
+ *      on `post_key`.
+ *
+ * Splitting on UUID shape means CMS posts share their id between
+ * the admin row and the comment thread without needing a separate
+ * "bridge" row to exist.
  */
 export async function getOrCreateFeedPost(
   postKey: string,
@@ -83,7 +95,18 @@ export async function getOrCreateFeedPost(
   if (!trimmed) throw new Error('invalid_post_key');
   if (trimmed.length > 500) throw new Error('post_key_too_long');
 
-  // Try fast path first — most calls hit existing posts.
+  // UUID path → direct lookup by id, no insert.
+  if (UUID_RE.test(trimmed)) {
+    const [row] = await db
+      .select({ id: feedPosts.id })
+      .from(feedPosts)
+      .where(eq(feedPosts.id, trimmed))
+      .limit(1);
+    if (!row) throw new Error('feed_post_not_found');
+    return { id: row.id };
+  }
+
+  // Slug path → upsert keyed on post_key.
   const existing = await db
     .select({ id: feedPosts.id })
     .from(feedPosts)

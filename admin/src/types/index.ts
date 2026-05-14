@@ -59,6 +59,70 @@ export interface User {
 export type PostType = 'audio' | 'image' | 'video' | 'text';
 export type PostStatus = 'published' | 'draft' | 'review' | 'removed';
 
+/* ── Admin Feed CMS ───────────────────────────────────────────
+ * Distinct from the legacy `Post` type above (which models the
+ * mocked "all posts on the platform" surface). These shapes mirror
+ * `ApiFeedPost` on the public API + power the Admin > Feed module
+ * end-to-end.
+ *
+ * `FeedItemType` already lists every format the backend's CHECK
+ * constraint supports — the UI only enables 'image' for now, but
+ * adding 'video' / 'story' / 'poll' / 'sponsored' / 'broadcast'
+ * later doesn't need a type-system change. */
+
+export type FeedItemType =
+  | 'image'
+  | 'video'
+  | 'carousel'
+  | 'story'
+  | 'poll'
+  | 'sponsored'
+  | 'broadcast';
+
+export type FeedItemStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
+
+export interface FeedMediaItem {
+  url: string;
+  alt?: string | null;
+}
+
+export interface FeedItem {
+  id: ID;
+  type: FeedItemType | null;
+  status: FeedItemStatus | null;
+  title: string | null;
+  description: string | null;
+  media: FeedMediaItem[];
+  /** ISO timestamp — when scheduled. Null otherwise. */
+  scheduledAt: string | null;
+  /** ISO timestamp — when last (or first) published. Null otherwise. */
+  publishedAt: string | null;
+  /** Soft-hide toggle independent of lifecycle status. */
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  } | null;
+}
+
+/** Lifecycle directive that resolves to status + timestamps server-side. */
+export type FeedItemAction = 'publish' | 'schedule' | 'draft';
+
+/** Body shape accepted by POST /api/admin/feed and PATCH .../:id. */
+export interface FeedItemInput {
+  type?: FeedItemType;
+  title?: string | null;
+  description?: string | null;
+  media?: FeedMediaItem[];
+  scheduledAt?: string | null;
+  isActive?: boolean;
+  action?: FeedItemAction;
+}
+
 export interface Post {
   id: ID;
   authorId: ID;

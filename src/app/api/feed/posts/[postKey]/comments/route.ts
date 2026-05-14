@@ -65,7 +65,11 @@ export async function GET(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'list_failed';
     const status =
-      code === 'invalid_post_key' || code === 'post_key_too_long' ? 400 : 500;
+      code === 'invalid_post_key' || code === 'post_key_too_long'
+        ? 400
+        : code === 'feed_post_not_found'
+          ? 404
+          : 500;
     if (status === 500) console.error('GET comments failed:', err);
     return NextResponse.json({ error: code }, { status });
   }

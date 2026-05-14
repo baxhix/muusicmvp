@@ -1,0 +1,145 @@
+/* Composer drawer for creating + editing feed publications.
+ *
+ * Layout is one tall column; sections separated by 1-px borders so
+ * the form reads as a checklist (type → mídia → texto → publicação).
+ * The drawer chrome (header, footer, scroll) comes from the shared
+ * Drawer component — we only style the form body here.
+ */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* Type selector — segmented pills. "Imagem" is the only one enabled
+   today; the rest stay visible but disabled so the team can SEE
+   what's coming without bumping into 404s. */
+.typeRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+}
+.typeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+  text-align: left;
+}
+.typeOption:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--surface-hover);
+}
+.typeOptionActive {
+  border-color: var(--brand);
+  background: var(--brand-bg, rgba(168, 85, 247, 0.08));
+  color: var(--text);
+}
+.typeOption:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.typeIcon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-mute);
+}
+.typeOptionActive .typeIcon {
+  background: var(--brand);
+  color: #fff;
+}
+.typeMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.typeName { font-size: 12.5px; font-weight: 600; }
+.typeHint {
+  font-size: 10.5px;
+  color: var(--text-mute);
+  letter-spacing: -0.005em;
+}
+
+/* Publish mode selector (Publicar agora / Agendar / Rascunho). */
+.modeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.modeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.modeOption:hover { border-color: var(--brand); background: var(--surface-hover); }
+.modeOptionActive {
+  border-color: var(--brand);
+  background: var(--brand-bg, rgba(168, 85, 247, 0.08));
+}
+.modeLabel { font-size: 12.5px; font-weight: 600; letter-spacing: -0.005em; }
+.modeHint { font-size: 10.5px; color: var(--text-mute); }
+
+.activeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.activeRowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.activeRowTitle { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.activeRowHint { font-size: 11px; color: var(--text-mute); }
+
+@media (max-width: 600px) {
+  .modeRow { grid-template-columns: 1fr; }
+}

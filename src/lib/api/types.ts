@@ -239,6 +239,54 @@ export interface ApiRankingRow {
 
 export type ApiActivityKind = 'stream' | 'login' | 'chat_started';
 
+/* ── Feed CMS (admin + public) ─────────────────────────────────── */
+
+export type ApiFeedPostType =
+  | 'image'
+  | 'video'
+  | 'carousel'
+  | 'story'
+  | 'poll'
+  | 'sponsored'
+  | 'broadcast';
+
+export type ApiFeedPostStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
+
+export interface ApiFeedMediaItem {
+  url: string;
+  alt?: string | null;
+}
+
+/**
+ * One feed post as returned by both:
+ *   - `/api/feed/posts` (public, status=published+isActive only)
+ *   - `/api/admin/feed`  (admin, all states)
+ *
+ * The shape is identical because the public list is just a filtered
+ * subset of the admin list — keeping a single client type means the
+ * public renderer reuses the same media-rendering code path that the
+ * admin preview uses.
+ */
+export interface ApiFeedPost {
+  id: string;
+  type: ApiFeedPostType | null;
+  status: ApiFeedPostStatus | null;
+  title: string | null;
+  description: string | null;
+  media: ApiFeedMediaItem[];
+  scheduledAt: string | null;
+  publishedAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  } | null;
+}
+
 /**
  * One row in a feed post's comment thread. Used for both top-level
  * comments and inline replies — the discriminator is

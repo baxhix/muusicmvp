@@ -215,17 +215,59 @@ export const listeningHistory = pgTable(
  * `authorUserId` FK is nullable so the current Central Ana Castela
  * mocks can sit here under "no author".
  */
+/**
+ * Feed posts. Two shapes share this table:
+ *
+ *   1) "Bridge" rows: created by getOrCreateFeedPost() to anchor
+ *      comments on the mock feed entries in FeedPanel.tsx. These
+ *      only carry `postKey` + maybe `authorUserId`; the CMS fields
+ *      stay null. The public listing query ignores them.
+ *
+ *   2) "CMS" rows: created from /admin/feed by Central Ana Castela.
+ *      `type`, `status`, `description`, `media`, scheduling fields
+ *      are set; `postKey` stays null. These are what
+ *      `GET /api/feed/posts` returns to drive the real public feed.
+ *
+ * Splitting bridge vs CMS by null vs not-null status keeps the
+ * comments/reactions/notifications wiring untouched while the CMS
+ * grows on top.
+ */
 export const feedPosts = pgTable(
   'feed_posts',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    postKey: text('post_key').notNull(),
+    // Nullable since 0008: only mock bridge rows carry a postKey.
+    postKey: text('post_key'),
+    // Original author of the post. For CMS rows this is the admin
+    // who created the post (set by the create endpoint); for bridge
+    // rows this stays null.
     authorUserId: uuid('author_user_id').references(() => users.id, {
       onDelete: 'set null',
     }),
+    // CMS-only fields ──
+    type: text('type', {
+      enum: ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast'],
+    }),
+    status: text('status', {
+      enum: ['published', 'scheduled', 'draft', 'inactive'],
+    }),
+    title: text('title'),
+    description: text('description'),
+    // Array of { url, alt? }. Order is significant — carousel slides
+    // render in array order.
+    media: jsonb('media'),
+    scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique('feed_posts_post_key_unique').on(t.postKey)],
+  (t) => [
+    unique('feed_posts_post_key_unique').on(t.postKey),
+    index('feed_posts_status_published_idx').on(t.status, t.publishedAt),
+    index('feed_posts_status_scheduled_idx').on(t.status, t.scheduledAt),
+    index('feed_posts_status_updated_idx').on(t.status, t.updatedAt),
+  ],
 );
 
 /**
