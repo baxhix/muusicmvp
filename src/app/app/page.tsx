@@ -92,7 +92,12 @@ export default function AppPage() {
     [liveUsers.map((u) => u.id).join('|')],
   );
   const [playerExpanded, setPlayerExpanded] = useState(false);
-  const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('mini');
+  // Default to `horizontal` so the player + ArtistBox share the
+  // same 296px column width at left:68. Mini collapses the player
+  // to just the play button which made the two cards look
+  // mismatched at rest; horizontal is also the more informative
+  // resting state (track title + artist + transport visible).
+  const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('horizontal');
   const [showProfile, setShowProfile] = useState(false);
   /**
    * Which user the profile panel currently displays. `null` means
