@@ -9,11 +9,11 @@
 .player {
   position: fixed;
   bottom: 24px;
-  /* Aligned to the ArtistBox column at top-left. left:18 matches
-     the chat dock's right:18 so the page has symmetric gutters on
-     both sides. Keeps the player + Fanverse card vertically
-     stacked on the same axis instead of floating mid-screen. */
-  left: 18px;
+  /* Aligned to the ArtistBox column. Both at left:42 — wider
+     gutter from the screen edge so the left column feels framed.
+     Chat dock keeps its 18px right gap (asymmetric: dock is a
+     slim 44px column, doesn't need as much breathing room). */
+  left: 42px;
   background:
     radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.018) 0%, transparent 65%),
     linear-gradient(160deg,

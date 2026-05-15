@@ -7,13 +7,17 @@
 /* Avatar trigger */
 .userMenu {
   position: fixed;
-  /* Was 18px — aligned now to the same top axis as the centered
-     .topBar row (FilterTabs / SuperchatTrigger / NotificationBell)
-     so the user name + avatar sit on the same horizontal line as
-     the rest of the header controls. */
+  /* Aligned to the same top axis as the centered .topBar row
+     (HeroOrb / SuperchatTrigger) so the avatar sits on the same
+     horizontal line as the rest of the header controls. */
   top: 42px;
   right: 14px;
-  z-index: 110;
+  /* High z-index + dedicated stacking context so the avatar isn't
+     dimmed by the Globe's edge vignette (.vignette z=1) which
+     covers the right side of the screen with a radial-black wash.
+     Was 110 — bumped to 200 to clear any future overlay. */
+  z-index: 200;
+  isolation: isolate;
   pointer-events: auto;
   display: flex;
   align-items: center;
@@ -22,6 +26,25 @@
   /* Match the height of the topBar pills (~36px) so vertical
      centering reads consistent across both halves of the header. */
   height: 36px;
+}
+
+/* Subtle luminous halo behind the avatar — cancels the vignette's
+ * darkening that was making the photo look "opaque" against the
+ * darkened top-right corner of the globe. Mirrors the same fix
+ * applied on the chat dock at right:18. */
+.userMenu::before {
+  content: '';
+  position: absolute;
+  inset: -6px -10px;
+  background: radial-gradient(
+    ellipse 70% 80% at 50% 50%,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.25) 55%,
+    transparent 85%
+  );
+  filter: blur(10px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* User info block (left of avatar) */
