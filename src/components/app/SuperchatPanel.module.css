@@ -1,40 +1,88 @@
+/* SuperchatPanel — repaginated to share the same right-column
+ * envelope as FeedPanel / ConversationsSidebar / CommunityPanel
+ * per product feedback. Slot geometry, surface treatment, and
+ * rise/fall choreography all in sync. Keep this `.panel` block
+ * visually aligned with the others — drift in one means drift
+ * in all four. */
 .panel {
   position: fixed;
-  top: 0; right: -420px;
-  width: min(420px, calc(100vw - 32px));
-  height: 100vh;
-  z-index: 100;
+  top: 10vh;
+  height: 80vh;
+  right: 104px;
+  width: 398px;
+  /* Sits in the same overlay layer as ConversationsSidebar /
+   * CommunityPanel — above FeedPanel (z:15) so when Superchat
+   * opens it covers the Feed cleanly. */
+  z-index: 25;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, rgba(11, 11, 13, 0.97), rgba(2, 2, 3, 0.98));
-  border-left: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: -16px 0 60px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: right 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  isolation: isolate;
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 35%,
+      rgba(2,2,3,0.76) 65%,
+      rgba(2,2,3,0.80) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: none;
+  border-radius: 20px;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 0 0 0.5px rgba(255,255,255,0.04) inset,
+    0 1px 0 rgba(255,255,255,0.08) inset;
+  overflow: hidden;
+  /* Rise/fall — same curves as the sibling panels. */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(60vh) scale(0.97);
+  visibility: hidden;
+  transition:
+    opacity 320ms cubic-bezier(0.7, 0, 0.84, 0),
+    transform 320ms cubic-bezier(0.7, 0, 0.84, 0),
+    visibility 0s linear 320ms;
 }
-.panelOpen { right: 0; }
+.panelOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  transition:
+    opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel { transition: opacity 120ms linear, visibility 0s; transform: none; }
+  .panelOpen { transition: opacity 120ms linear, visibility 0s; transform: none; }
+}
 
-/* Header — single row: title left, participants stack inline next to
-   it, close button hugging the right. Plain flex layout, no absolute
-   positioning, so the close button can't drift on :active. */
+/* Standardized panel header — keep in sync with FeedPanel /
+ * ConversationsSidebar / CommunityPanel:
+ *   padding:        20px 20px 14px
+ *   title:          16px / 700 / -0.01em letter-spacing / #F5F5F7
+ *   bottom border:  1px rgba(255,255,255,0.06)
+ * Superchat-specific extras: the participantsStack chip sits
+ * after the title, the closeBtn hugs the right (margin-left:auto).
+ */
 .header {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
-  padding: 22px 18px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, transparent 100%);
+  gap: 8px;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
   flex-shrink: 0;
 }
 
 .title {
   margin: 0;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.022em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   color: #F5F5F7;
   text-align: left;
   /* No flex grow — the title hugs its content so the participants
@@ -98,25 +146,27 @@
 
 .closeBtn {
   /* Pushed to the right by margin-left: auto — title + participants
-     stack hug the left, everything between them and close is empty. */
+     stack hug the left, everything between them and close is empty.
+     Sizing matches the other standardized panels (28px circle,
+     neutral white tints). */
   margin-left: auto;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(245, 245, 247, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.65);
   cursor: pointer;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   padding: 0;
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #F5F5F7;
-  border-color: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 .closeBtn:focus-visible {
   outline: 2px solid var(--accent, #3ddb74);
@@ -611,3 +661,27 @@
   filter: brightness(1.05);
 }
 .entranceBtn:active { transform: translateY(0); }
+
+/* ── Responsive — mirrors FeedPanel / ConversationsSidebar /
+ * CommunityPanel breakpoints so all the right-column panels
+ * occupy the same slot at every viewport. ─────────────────── */
+@media (max-width: 1024px) {
+  .panel {
+    right: 104px;
+    width: 320px;
+  }
+}
+@media (max-width: 768px) {
+  /* Mobile: bottom-anchored sheet above the BottomNav. Same
+   * rise/fall transform applies — panel slides up from below the
+   * bottom edge instead of the right slot. */
+  .panel {
+    top: auto;
+    bottom: 92px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    height: 60vh;
+    border-radius: 16px;
+  }
+}

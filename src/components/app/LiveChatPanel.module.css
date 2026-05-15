@@ -3,7 +3,14 @@
   top: 0; right: -420px;
   width: min(420px, calc(100vw - 32px));
   height: 100vh;
-  z-index: 100;
+  /* Sits ABOVE the right-rail chat dock (z:200) per product
+   * feedback — when a DM / group conversation is open the panel
+   * needs to cover the dock avatars so message reading and the
+   * input row aren't competing for the same pixels. The dock is
+   * intentionally still mounted underneath so the user can pick
+   * a different conversation by hovering the dock once the panel
+   * closes. */
+  z-index: 250;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, rgba(11, 11, 13, 0.97), rgba(2, 2, 3, 0.98));
