@@ -30,6 +30,14 @@ interface Props {
   onCommunityToggle?: () => void;
   /** Drives the active-state outline on the Comunidade shortcut. */
   communityOpen?: boolean;
+  /**
+   * Whether the FeedPanel is currently expanded. The Feed has its
+   * own internal `minimized` state but broadcasts the value via
+   * `app:feed-state-change` — `/app/page.tsx` mirrors it and passes
+   * it here so the Feed shortcut paints the same lilac active
+   * outline as Chat / Comunidade.
+   */
+  feedOpen?: boolean;
 }
 
 /** Max DM avatars kept in the dock's render list. The remainder are
@@ -57,6 +65,7 @@ export default function LiveChatStack({
   chatOpen = false,
   onCommunityToggle,
   communityOpen = false,
+  feedOpen = false,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -176,30 +185,34 @@ export default function LiveChatStack({
           aria-pressed={chatOpen}
           title={chatOpen ? 'Fechar conversas' : 'Ver todas as conversas'}
         >
-          {/* Hamburger: communicates "see the full list" better than
-              the previous "+" plus icon, which mistakenly suggested
-              "create new conversation" (the create flow lives one
-              level deeper inside the drawer's UserPicker). The
-              click is now a TOGGLE — the parent flips `showChat`
-              so a second click collapses the panel. */}
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M3 4h10M3 8h10M3 12h10" />
+          {/* Speech-bubble icon — single rounded bubble with a tail
+              at the bottom-left. Distinct from:
+                • the Comunidade cluster icon above (multi-bubble),
+                • the Superchat single-bubble in BottomNav (tail at
+                  bottom-right, larger 24px viewbox).
+              Communicates 1:1 / DMs directly, replacing the
+              previous hamburger icon which read as "list / menu". */}
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 4h10a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 13 12H7l-3 2.5V12H3a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 3 4z" />
           </svg>
         </button>
 
         {/* Feed shortcut — dispatches `app:toggle-feed` which the
-            FeedPanel listens to. Same decoupled CustomEvent pattern
-            we use for notifications, so the dock stays unaware of
-            the feed's internal open/minimized state. */}
+            FeedPanel listens to. The Feed's open/closed state
+            reaches us here via `feedOpen` (page.tsx mirrors the
+            FeedPanel's `app:feed-state-change` broadcast), driving
+            the lilac active outline so this shortcut behaves
+            consistently with the Chat / Comunidade ones. */}
         <button
-          className={styles.dockShortcut}
+          className={`${styles.dockShortcut} ${feedOpen ? styles.dockShortcutActive : ''}`}
           onClick={() => {
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('app:toggle-feed'));
             }
           }}
-          aria-label="Abrir feed"
-          title="Feed"
+          aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
+          aria-pressed={feedOpen}
+          title={feedOpen ? 'Fechar feed' : 'Feed'}
         >
           {/* Feed/list icon — three lines of content reading as a
               short post + meta line, distinct from the hamburger. */}

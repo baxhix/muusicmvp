@@ -177,6 +177,24 @@ export default function AppPage() {
     return () => window.removeEventListener('app:open-notifications', onOpenNotif);
   }, []);
 
+  // Mirror of FeedPanel's internal `minimized` flag, kept here so
+  // the right-rail dock can paint the Feed shortcut's active state
+  // in sync. The Feed dispatches `app:feed-state-change` whenever
+  // its open/closed state flips (header click or `app:toggle-feed`
+  // shortcut); we just listen and copy. Default `true` matches the
+  // Feed's "lands expanded" default.
+  const [feedOpen, setFeedOpen] = useState(true);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ open: boolean }>).detail;
+      if (detail && typeof detail.open === 'boolean') {
+        setFeedOpen(detail.open);
+      }
+    };
+    window.addEventListener('app:feed-state-change', handler);
+    return () => window.removeEventListener('app:feed-state-change', handler);
+  }, []);
+
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
@@ -469,6 +487,7 @@ export default function AppPage() {
         chatOpen={showChat}
         onCommunityToggle={() => setShowCommunity(!showCommunity)}
         communityOpen={showCommunity}
+        feedOpen={feedOpen}
       />
       <ConversationsSidebar
         open={showChat}

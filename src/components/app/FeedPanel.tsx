@@ -329,6 +329,21 @@ export default function FeedPanel() {
     return () => window.removeEventListener('app:toggle-feed', onToggle);
   }, []);
 
+  // Broadcast the panel's open/closed state so external surfaces
+  // (the right-rail dock's Feed shortcut) can paint their active
+  // state in sync. Fires whenever `minimized` flips, regardless of
+  // whether the change came from the header click, the dock
+  // shortcut, or any future trigger. Subscribers read
+  // `detail.open` (true = expanded, false = minimized).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('app:feed-state-change', {
+        detail: { open: !minimized },
+      }),
+    );
+  }, [minimized]);
+
   return (
     <>
     {minimized && <div className={styles.minimizedGradient} />}
