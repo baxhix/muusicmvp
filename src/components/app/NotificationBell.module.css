@@ -82,18 +82,29 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 360px;
+  width: 380px;
   max-height: 60vh;
   overflow-y: auto;
-  background: linear-gradient(180deg, rgba(11, 11, 13, 0.97), rgba(2, 2, 3, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.85);
+  /* Surface aligned with SuperfansPanel / PlaylistModal — same
+   * dark gradient + heavier drop shadow + larger radius. Border
+   * removed (the drop shadow + top highlight already separate it
+   * from the backdrop). */
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(11,11,13,0.96) 0%,
+      rgba(5,5,7,0.96) 50%,
+      rgba(2,2,3,0.97) 100%);
+  border: none;
+  border-radius: 20px;
+  box-shadow:
+    0 40px 100px -10px rgba(0,0,0,0.85),
+    0 1px 0 rgba(255,255,255,0.05) inset;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   animation: pop 0.15s ease;
   z-index: 60;
-  pointer-events: auto; /* always interactive even when .wrap is non-clickable */
+  pointer-events: auto;
 }
 
 /* Triggerless-mode panel positioning. The bell glyph is gone so
@@ -109,27 +120,48 @@
   to   { opacity: 1; transform: translateY(0);    }
 }
 
+/* Header aligned with the SuperfansPanel / PlaylistModal pattern:
+ * centered headline, generous padding, bottom hairline. The
+ * "Marcar todas" CTA floats to the right anchored absolutely so
+ * the title stays optically centered against the panel width. */
 .head {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px 10px;
+  justify-content: center;
+  padding: 22px 18px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
 }
 .headTitle {
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 700;
-  color: #f5f5f7;
+  letter-spacing: -0.022em;
+  color: #F5F5F7;
+  margin: 0;
+  line-height: 1.1;
+  text-align: center;
 }
 .markAll {
-  font-size: 11px;
-  color: rgba(245, 245, 247, 0.6);
-  background: none;
-  border: none;
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 5px 11px;
   cursor: pointer;
-  text-decoration: underline;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.markAll:hover { color: #f5f5f7; }
+.markAll:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
 
 .empty {
   padding: 24px 14px;

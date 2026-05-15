@@ -30,6 +30,11 @@ export default function PlaylistModal({
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [query, setQuery] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
+  /** Truncate the list to a small "above the fold" set by default;
+   *  user expands via the "Ver mais" CTA below. Reset on close so
+   *  reopening the modal starts at 7 again. */
+  const PREVIEW_COUNT = 7;
+  const [showAll, setShowAll] = useState(false);
   // Live catalog — replaces the old static `SONGS` import. We derive
   // the cover image from the YouTube id right here so the modal stays
   // self-contained (matches the shape NowPlaying composes too).
@@ -46,10 +51,21 @@ export default function PlaylistModal({
   // Limpa a busca ao fechar
   useEffect(() => {
     if (!open) {
-      const t = setTimeout(() => { setQuery(''); setHighlightIdx(0); }, 360);
+      const t = setTimeout(() => {
+        setQuery('');
+        setHighlightIdx(0);
+        setShowAll(false);
+      }, 360);
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  // Searching always expands the visible list — a 7-item cap on a
+  // searched result set hides matches the user is actively looking
+  // for. Once the user types, "Ver mais" disappears.
+  useEffect(() => {
+    if (query) setShowAll(true);
+  }, [query]);
 
   useEffect(() => {
     if (open) {
@@ -102,6 +118,10 @@ export default function PlaylistModal({
     });
   }, [query, SONGS]);
   const filteredCount = filtered.length;
+  // Visible slice — capped at PREVIEW_COUNT until the user clicks
+  // "Ver mais" (or types a search, which auto-expands).
+  const visible = showAll ? filtered : filtered.slice(0, PREVIEW_COUNT);
+  const hiddenCount = filteredCount - visible.length;
 
   // Reset highlight quando a query muda
   useEffect(() => { setHighlightIdx(0); }, [query]);
@@ -194,7 +214,7 @@ export default function PlaylistModal({
             </div>
           ) : (
             <ul id="playlist-suggestions" className={styles.list} role="listbox">
-              {filtered.map((s, i) => {
+              {visible.map((s, i) => {
                 const isCurrent = s.originalIdx === currentIdx;
                 const isHighlighted = i === highlightIdx;
                 return (
@@ -253,6 +273,15 @@ export default function PlaylistModal({
                 );
               })}
             </ul>
+          )}
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              className={styles.viewMoreBtn}
+              onClick={() => setShowAll(true)}
+            >
+              Ver mais ({hiddenCount})
+            </button>
           )}
         </div>
       </aside>
