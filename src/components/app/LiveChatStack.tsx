@@ -15,12 +15,21 @@ interface Props {
   onlineUserIds?: ReadonlySet<string>;
   onOpen: (conversationId: string) => void;
   /**
-   * Fired when the user taps the "+" trigger on the dock. The
-   * trigger no longer opens UserPicker directly — instead it pops
-   * the full ConversationsSidebar, which carries both the search +
-   * the secondary "+" affordance for actually starting a new chat.
+   * Fired when the user taps the hamburger / Chat trigger. Behaves
+   * as a TOGGLE — the parent flips its own state so a second click
+   * collapses the Chat panel. Pair with `chatOpen` so the dock can
+   * paint the active-state.
    */
   onAddClick: () => void;
+  /** Drives the active-state outline on the Chat shortcut. */
+  chatOpen?: boolean;
+  /**
+   * Toggle the Comunidade panel. Same contract as `onAddClick` —
+   * the parent owns the open/closed state and just flips it here.
+   */
+  onCommunityToggle?: () => void;
+  /** Drives the active-state outline on the Comunidade shortcut. */
+  communityOpen?: boolean;
 }
 
 /** Max DM avatars kept in the dock's render list. The remainder are
@@ -45,6 +54,9 @@ export default function LiveChatStack({
   onlineUserIds,
   onOpen,
   onAddClick,
+  chatOpen = false,
+  onCommunityToggle,
+  communityOpen = false,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -158,15 +170,18 @@ export default function LiveChatStack({
         })}
 
         <button
-          className={styles.addBtn}
+          className={`${styles.addBtn} ${chatOpen ? styles.dockShortcutActive : ''}`}
           onClick={onAddClick}
-          aria-label="Abrir lista de conversas"
-          title="Ver todas as conversas"
+          aria-label={chatOpen ? 'Fechar lista de conversas' : 'Abrir lista de conversas'}
+          aria-pressed={chatOpen}
+          title={chatOpen ? 'Fechar conversas' : 'Ver todas as conversas'}
         >
           {/* Hamburger: communicates "see the full list" better than
               the previous "+" plus icon, which mistakenly suggested
               "create new conversation" (the create flow lives one
-              level deeper inside the drawer's UserPicker). */}
+              level deeper inside the drawer's UserPicker). The
+              click is now a TOGGLE — the parent flips `showChat`
+              so a second click collapses the panel. */}
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
             <path d="M3 4h10M3 8h10M3 12h10" />
           </svg>
@@ -194,21 +209,17 @@ export default function LiveChatStack({
           </svg>
         </button>
 
-        {/* Comunidade / Fórum — opens the CommunityPanel via the
-            `app:open-community` CustomEvent. The forum's actual
-            content (threads, posts) isn't built yet; the panel
-            currently renders a placeholder shell, but the entry
-            point is live so the user has a real destination to
-            land on. */}
+        {/* Comunidade / Fórum — opens the CommunityPanel. Toggle
+            behavior: clicking the icon while the panel is open
+            closes it. Wired via the `onCommunityToggle` prop so
+            the parent owns the open/closed state (drives the
+            active-state outline below). */}
         <button
-          className={styles.dockShortcut}
-          onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('app:open-community'));
-            }
-          }}
-          aria-label="Comunidade"
-          title="Comunidade"
+          className={`${styles.dockShortcut} ${communityOpen ? styles.dockShortcutActive : ''}`}
+          onClick={onCommunityToggle}
+          aria-label={communityOpen ? 'Fechar comunidade' : 'Abrir comunidade'}
+          aria-pressed={communityOpen}
+          title={communityOpen ? 'Fechar comunidade' : 'Comunidade'}
         >
           {/* Chat-bubble cluster icon — reads as multi-thread
               discussion without overlapping the single-bubble

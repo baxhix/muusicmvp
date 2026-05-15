@@ -165,18 +165,16 @@ export default function AppPage() {
     else setActiveOverlay((curr) => (curr === 'community' ? null : curr));
   };
 
-  // Listen for the BottomNav's notification trigger + the dock's
-  // Comunidade trigger — both route through the same coordinator so
-  // opening either closes any other open overlay.
+  // Listen for the BottomNav's notification trigger — routes
+  // through the same coordinator so opening notifications closes
+  // any other open overlay. (Comunidade no longer needs a listener
+  // here: the dock shortcut now toggles through the
+  // `onCommunityToggle` prop on LiveChatStack instead of firing a
+  // CustomEvent, so the parent owns the open/closed state directly.)
   useEffect(() => {
     const onOpenNotif = () => setActiveOverlay('notifications');
-    const onOpenCommunity = () => setActiveOverlay('community');
     window.addEventListener('app:open-notifications', onOpenNotif);
-    window.addEventListener('app:open-community', onOpenCommunity);
-    return () => {
-      window.removeEventListener('app:open-notifications', onOpenNotif);
-      window.removeEventListener('app:open-community', onOpenCommunity);
-    };
+    return () => window.removeEventListener('app:open-notifications', onOpenNotif);
   }, []);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -461,11 +459,16 @@ export default function AppPage() {
         activeId={chat.activeId}
         onlineUserIds={onlineUserIds}
         onOpen={chat.open}
-        // The hamburger trigger on the dock now opens the Chat panel
-        // (same singleton slot as the Feed). The drawer carries the
-        // search + its own "+" that pops the UserPicker for actually
-        // starting a new chat.
-        onAddClick={() => setShowChat(true)}
+        /* Chat hamburger and Comunidade dock shortcuts are TOGGLES
+           — a second click on the same icon collapses the panel.
+           Inter-panel switching is still handled by the
+           activeOverlay singleton (setShowChat / setShowCommunity
+           wrappers already clear other slots when they set
+           'chat' / 'community'). */
+        onAddClick={() => setShowChat(!showChat)}
+        chatOpen={showChat}
+        onCommunityToggle={() => setShowCommunity(!showCommunity)}
+        communityOpen={showCommunity}
       />
       <ConversationsSidebar
         open={showChat}
