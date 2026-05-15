@@ -259,12 +259,15 @@
   letter-spacing: -0.005em;
 }
 
-/* ── Discrete Loja da Boiadeira affiliate link ──
- * Now sits inline on the wallet row beside the Fanpoints count
- * (was its own line). Margin removed because the wallet row owns
- * the horizontal padding now. Hover still lifts the contrast so
- * it reads as interactive without competing with the primary
- * missions footer. */
+/* ── Wallet-row secondary CTA ──
+ * Pill-styled button that lives next to the Fanpoints count.
+ * Currently labeled "Conheça os benefícios" and wired to toggle
+ * the missions list (per product feedback the "Loja da Boiadeira"
+ * action moved into the discount badge below). The class name is
+ * kept as `.storeLink` to avoid churn — happy to rename when
+ * another pass through the file lines up. `font-family: inherit`
+ * + `cursor: pointer` cover the <button> render now that this
+ * isn't always an <a>. */
 .storeLink {
   display: inline-flex;
   align-items: center;
@@ -274,10 +277,12 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(245, 245, 247, 0.62);
+  font-family: inherit;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.005em;
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
   white-space: nowrap;
@@ -289,22 +294,31 @@
 }
 .storeLink svg { flex-shrink: 0; }
 
-/* ── "15% OFF desbloqueado" reward badge ──
+/* ── "15% OFF na Loja da Boiadeira" CTA badge ──
  * Sits under the wallet row, green-accented to read as an earned
- * reward (matches the platform's success / Fanpoint palette). The
- * percentage is white-bold; "desbloqueado" runs in a quieter
- * lowercase tone next to it. Check icon up front anchors the
- * "earned" affordance. */
+ * reward (matches the platform's success / Fanpoint palette).
+ * Border removed per product feedback — the soft green fill alone
+ * is enough surface. Doubles as the affiliate link to the store
+ * now (the explicit "Loja da Boiadeira" pill that used to live
+ * on the wallet row was retired and the store URL moved here).
+ * Cart icon up front announces the destination; the percent is
+ * white-bold, the store-name copy stays muted gray. */
 .discountBadge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin: 0 16px 6px;
-  padding: 5px 11px;
+  margin: 0 16px 12px;
+  padding: 6px 12px;
   border-radius: 999px;
   background: rgba(61, 219, 116, 0.10);
-  border: 1px solid rgba(61, 219, 116, 0.32);
+  border: none;
   width: fit-content;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.discountBadge:hover {
+  background: rgba(61, 219, 116, 0.16);
 }
 .discountIcon {
   display: inline-flex;
@@ -314,8 +328,8 @@
   flex-shrink: 0;
 }
 .discountIcon svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
 }
 .discountText {
   font-size: 11px;
@@ -328,39 +342,6 @@
   color: #FFFFFF;
   font-weight: 700;
   letter-spacing: 0.01em;
-}
-
-/* ── Simple "Conheça os benefícios" CTA ──
- * Text-button style — no fill, no heavy border. Reads as a
- * secondary affordance under the rewards stack. Hover slides the
- * arrow right by 2px so the action still feels tactile without
- * shouting. */
-.benefitsBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0 16px 12px;
-  padding: 4px 0;
-  background: none;
-  border: none;
-  color: rgba(245, 245, 247, 0.62);
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  cursor: pointer;
-  width: fit-content;
-  transition: color 0.15s ease;
-}
-.benefitsBtn:hover {
-  color: #F5F5F7;
-}
-.benefitsBtn svg {
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}
-.benefitsBtn:hover svg {
-  transform: translateX(2px);
 }
 
 /* ── Divider ── */

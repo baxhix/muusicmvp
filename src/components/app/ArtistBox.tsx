@@ -104,11 +104,12 @@ export default function ArtistBox() {
         </div>
       </div>
 
-      {/* Wallet row — Fanpoints balance on the left + Loja da
-          Boiadeira affiliate link on the right share a single row
-          per product feedback (used to stack vertically). Below the
-          row sits a "15% OFF desbloqueado" reward badge and the
-          "Conheça os benefícios" CTA. */}
+      {/* Wallet row — Fanpoints balance on the left + "Conheça os
+          benefícios" CTA on the right. The CTA used to be the
+          "Loja da Boiadeira" affiliate link; per product feedback
+          the benefits surface is now the primary action up here,
+          and the store link moved into the discount badge below
+          (with the "15% OFF" context attached). */}
       <div className={styles.walletRow}>
         <div className={styles.fanpointsRow}>
           <span className={styles.fanpointsIcon} aria-hidden="true">
@@ -122,67 +123,47 @@ export default function ArtistBox() {
           <span className={styles.fanpointsLabel}>Fanpoints</span>
         </div>
 
-        {/* Loja da Boiadeira — affiliate link to the official Ana
-            Castela store. Same URL surfaced from the TopBar's
-            drawer "Loja oficial" entry; duplicated here as a soft
-            inline CTA so members can reach the shop straight from
-            the artist box without opening the drawer. */}
-        <a
+        {/* Conheça os benefícios — pill-styled secondary CTA (no
+            arrow / no icon, per product feedback). Toggles the
+            collapsible missions list below, same affordance the
+            footer "Missões do Dia" row offers. When a dedicated
+            benefits surface ships, route the click there. */}
+        <button
+          type="button"
           className={styles.storeLink}
-          href={STORE_URL}
-          target="_blank"
-          rel="noreferrer noopener"
+          onClick={() => setOpen((o) => !o)}
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="12"
-            height="12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M3 9l1.5-5h15L21 9" />
-            <path d="M4 9h16v11H4z" />
-            <path d="M9 13h6" />
-          </svg>
-          <span>Loja da Boiadeira</span>
-        </a>
+          Conheça os benefícios
+        </button>
       </div>
 
-      {/* Unlocked-discount badge — reads as "you've earned this".
-          The percentage itself is bold; "desbloqueado" runs in a
-          quieter weight + uppercase letterspacing for the eyebrow
-          feel. Hardcoded to 15% for now; future iterations can
-          drive the tier off the user's Fanpoints balance. */}
-      <div className={styles.discountBadge}>
+      {/* Earned-discount badge that doubles as the Loja da
+          Boiadeira CTA — cart icon, percent in white-bold, store
+          name in muted gray. Tinted green to read as a reward,
+          but border-less per product feedback so it sits softer
+          against the artist box. Clicking opens the store in a
+          new tab. */}
+      <a
+        className={styles.discountBadge}
+        href={STORE_URL}
+        target="_blank"
+        rel="noreferrer noopener"
+      >
         <span className={styles.discountIcon} aria-hidden="true">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 8.5l3 3 7-7.5" />
+          {/* Shopping-cart icon — replaced the previous check
+              mark per product feedback (the badge is now a CTA
+              for the store, not just a "you unlocked this"
+              acknowledgment). */}
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1.5 1.5h2l1.4 8.2a1.2 1.2 0 0 0 1.2 1H13a1.2 1.2 0 0 0 1.2-1l.85-5.2H4" />
+            <circle cx="6" cy="13.5" r="1" />
+            <circle cx="12" cy="13.5" r="1" />
           </svg>
         </span>
         <span className={styles.discountText}>
-          <strong>15% OFF</strong> desbloqueado
+          <strong>15% OFF</strong> na Loja da Boiadeira
         </span>
-      </div>
-
-      {/* Simple "Conheça os benefícios" CTA — text-button style
-          so it reads as a soft secondary action, not a competing
-          primary. Wired to onOpen-toggle for now (same affordance
-          as clicking the box footer); when the benefits surface
-          ships, route it there. */}
-      <button
-        type="button"
-        className={styles.benefitsBtn}
-        onClick={() => setOpen((o) => !o)}
-      >
-        Conheça os benefícios
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M5 3l5 5-5 5" />
-        </svg>
-      </button>
+      </a>
 
       {/* ── Collapsible content ── */}
       <div
