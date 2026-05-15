@@ -1,12 +1,21 @@
 /* HeroOrb — wrapper styling.
  *
- * Per product feedback the previous CSS halo pseudo-elements
- * (a heavy `filter: blur()` over radial + conic gradients) were
- * dominating the surface around the canvas as a fuzzy pink/red
- * cloud — exactly the "blur" the user wanted gone. Both
- * `.wrap::before` and `.wrap::after` are retired here; the orb is
- * now just the crisp WebGL canvas with its own additive-blended
- * line tangle.
+ * Previous iteration retired the CSS halo pseudo-elements
+ * altogether because they were carrying heavy `filter: blur()`
+ * clouds that read as a fuzzy bloom around the canvas. Doing
+ * that without anything to replace them made the WebGL canvas
+ * blend into the dark map below — the orb's line tangle is
+ * crisp but small (120×120), and the additive-blended strokes
+ * over a dark backdrop don't carry much surface presence.
+ *
+ * The halo is back here in a much-quieter form:
+ *   • No `filter: blur()`. Anywhere.
+ *   • A single sharp radial gradient on `.wrap::before` provides
+ *     a soft pink → violet → transparent falloff sitting BEHIND
+ *     the canvas (z-index: -1). The gradient stops do the
+ *     softening; no GPU blur kernel.
+ *   • The halo lives inside a tight `inset: -8%` so it never
+ *     dominates the surrounding bar.
  *
  * Pointer-events stay enabled on .wrap so future hover affordances
  * (tooltip, click handler) can hook in without restructuring. */
@@ -15,9 +24,29 @@
   position: relative;
   display: inline-block;
   flex-shrink: 0;
-  /* Stacking context kept so future positioned children (e.g. a
-   * tooltip) layer predictably above the canvas. */
+  /* Stacking context keeps the halo pseudo + the canvas layered
+   * predictably above other absolutely-positioned page elements. */
   isolation: isolate;
+}
+
+/* Soft anchor halo behind the canvas — pure radial gradient, no
+ * `filter`, no `blur()`. The stops carry the fade themselves so
+ * the GPU doesn't need a blur pass. Tuned to read as a faint pink
+ * /violet ambient ring rather than a bloom cloud. */
+.wrap::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(244, 63, 94, 0.32) 0%,    /* rose-500 inner */
+    rgba(236, 72, 153, 0.22) 35%,  /* pink-500 mid */
+    rgba(168, 85, 247, 0.14) 60%,  /* violet-500 outer */
+    transparent 82%
+  );
+  pointer-events: none;
 }
 
 .canvas {
