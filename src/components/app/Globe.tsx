@@ -244,15 +244,19 @@ export default function Globe() {
       avatarClass: string,
       hasTrack: boolean,
     ): string => {
-      // Compact mode shows 3 pulsing dots inside a square container,
-      // so border-radius: 50% always renders a perfect circle. The
-      // previous "audio bars" inside a pill rendered as an oval
-      // because the bars were taller than wide.
+      // Compact mode shows a classic "now playing" equalizer — three
+      // vertical bars of staggered heights animating in scaleY — inside
+      // a fixed-size square container. The container is 14×14 with
+      // `border-radius: 50%`, so the chip stays a perfect circle no
+      // matter what shape its inner content takes (an earlier
+      // implementation used a pill that turned into an oval when the
+      // bars were taller than wide; another iteration swapped to dots,
+      // which read as low-resolution noise at this scale).
       const barsChip = hasTrack
         ? `<span class="${styles.compactBarsBadge}" aria-hidden="true">
-             <span class="${styles.compactDot}"></span>
-             <span class="${styles.compactDot}"></span>
-             <span class="${styles.compactDot}"></span>
+             <span class="${styles.compactBar}"></span>
+             <span class="${styles.compactBar}"></span>
+             <span class="${styles.compactBar}"></span>
            </span>`
         : '';
       return `

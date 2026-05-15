@@ -347,13 +347,14 @@
  * Click handler is unaffected: tapping the avatar opens the
  * profile regardless of which mode the badge is in. */
 /* Compact badge: force EXACT square geometry (36×36) so the circular
-   `border-radius: 40px` of .userBadge / .liveUserBadge can't render
-   anything but a perfect circle. Flex auto-sizing was occasionally
-   giving the container uneven width vs height (the absolutely-
-   positioned chip, the box-shadow ring, sub-pixel rounding, etc.),
-   and any unevenness with a heavy border-radius reads as an oval.
-   Using min/max width + min/max height + aspect-ratio together
-   means every browser arrives at the same square box. */
+   shape can't render anything but a perfect circle. Flex auto-sizing
+   was occasionally giving the container uneven width vs height (the
+   absolutely-positioned chip, the box-shadow ring, sub-pixel rounding,
+   etc.), and any unevenness with a heavy border-radius reads as an
+   oval. Using min/max width + min/max height + aspect-ratio together
+   means every browser arrives at the same square box, and the
+   explicit `border-radius: 50%` overrides the inherited 40px so the
+   circle survives sub-pixel rounding during zoom transitions. */
 .badgeCompact {
   gap: 0;
   padding: 4px;
@@ -362,6 +363,7 @@
   min-height: 36px;
   max-height: 36px;
   aspect-ratio: 1 / 1;
+  border-radius: 50%;
   box-sizing: border-box;
   justify-content: center;
   align-items: center;
@@ -403,45 +405,53 @@
 }
 
 /* "Listening" indicator shown ONLY in compact mode (and only when a
-   track is playing). A 16×16 SQUARE container with border-radius 50%
-   so it's a perfect circle regardless of inner content — three small
-   dots inside pulse in opacity + scale with staggered delays.
-   Switching from rectangular audio-bars to dots was the fix: the
-   previous container had border-radius: 999px (pill) and inner bars
-   that were taller than wide, so the chip rendered as an oval. */
+   track is playing). A 14×14 SQUARE container with border-radius 50%
+   so the chip is a perfect circle regardless of what we paint
+   inside — three vertical bars animating in scaleY read as the
+   classic "now playing" equalizer.
+   The container's fixed square dimensions decouple it from the bar
+   geometry, so the bars can be taller than wide (as they should be)
+   without ever turning the chip into an oval. */
 .compactBarsBadge {
   position: absolute;
-  bottom: -3px;
-  right: -3px;
+  bottom: -2px;
+  right: -2px;
   display: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
   border-radius: 50%;
   background: var(--accent, #3ddb74);
-  border: 2px solid rgba(0, 0, 0, 0.88);
-  align-items: center;
+  border: 1.5px solid rgba(0, 0, 0, 0.88);
+  align-items: flex-end;
   justify-content: center;
   gap: 1.5px;
-  padding: 0;
+  /* Tighter inner padding so the bars sit just inside the bottom
+     edge of the circle — equalizer reads as "rooted" rather than
+     centered. */
+  padding: 1px 0 2px;
   pointer-events: none;
-  /* Promote to its own layer — the dot animations stay GPU-cheap. */
+  box-shadow: 0 0 8px rgba(61, 219, 116, 0.45);
+  /* Promote to its own layer — the bar animations stay GPU-cheap. */
   transform: translateZ(0);
 }
 
-.compactDot {
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: #0a0a0a;
-  animation: compact-dot-pulse 0.95s ease-in-out infinite;
+.compactBar {
+  width: 1.5px;
+  background: #07140c;
+  border-radius: 1px;
+  transform-origin: bottom;
+  animation: compact-bar-pulse 0.85s ease-in-out infinite;
 }
-.compactDot:nth-child(1) { animation-delay: -0.30s; }
-.compactDot:nth-child(2) { animation-delay: -0.10s; }
-.compactDot:nth-child(3) { animation-delay: -0.50s; }
+/* Different rest heights give the equalizer a natural stagger so
+   it doesn't read as three identical bars marching in sync. */
+.compactBar:nth-child(1) { height: 4px; animation-delay: -0.30s; }
+.compactBar:nth-child(2) { height: 7px; animation-delay: -0.10s; }
+.compactBar:nth-child(3) { height: 5px; animation-delay: -0.55s; }
 
-@keyframes compact-dot-pulse {
-  0%, 100% { opacity: 0.35; transform: scale(0.7); }
-  50%      { opacity: 1;    transform: scale(1.1); }
+@keyframes compact-bar-pulse {
+  0%, 100% { transform: scaleY(0.45); opacity: 0.8; }
+  50%      { transform: scaleY(1);    opacity: 1;   }
 }
 
 .badgeCompact .compactBarsBadge {
@@ -452,27 +462,36 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .compactDot { animation: none; opacity: 0.85; }
+  .compactBar { animation: none; transform: scaleY(0.85); opacity: 0.9; }
 }
 
 /* Anchor for the compact audio-bars chip — same dimensions as the
-   inner avatar so absolute-positioned children land where expected. */
+   inner avatar so absolute-positioned children land where expected.
+   `aspect-ratio` + `flex-shrink: 0` make sure the wrap never collapses
+   into an oval when the parent flex container distributes space. */
 .avatarWrap {
   position: relative;
   display: inline-block;
   flex-shrink: 0;
+  aspect-ratio: 1 / 1;
   line-height: 0;
 }
 
 .userBadgeAvatar {
   width: 26px;
   height: 26px;
+  /* Hard locks against shrink + sub-pixel rounding — any chance the
+     avatar could land non-square will read as an oval at this scale. */
+  min-width: 26px;
+  min-height: 26px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
   /* Identity ring — só pra marcar "Você" mantendo o formato. */
   border: 1.5px solid rgba(56, 189, 248, 0.7);
   box-shadow: 0 0 6px rgba(56, 189, 248, 0.35);
   display: block;
+  flex-shrink: 0;
 }
 
 .userBadgeInfo {
@@ -593,10 +612,16 @@
 .liveUserAvatar {
   width: 26px;
   height: 26px;
+  /* Hard locks against shrink + sub-pixel rounding — same defense as
+     `.userBadgeAvatar` above. */
+  min-width: 26px;
+  min-height: 26px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
   display: block;
+  flex-shrink: 0;
 }
 
 .liveUserInfo {
