@@ -306,14 +306,17 @@
 }
 .idleBanner > span {
   /* Pill-style chip — gives the message presence against the
-   * darkened backdrop while staying visually quiet. */
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+   * darkened backdrop while staying visually quiet. Font shrunk
+   * (11.5 → 9.5) and weight relaxed (700 → 600) so the chip reads
+   * as a small annotation rather than a screaming label.
+   * Padding pulled in proportionally so the pill stays compact. */
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.98);
+  color: rgba(255, 255, 255, 0.95);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-  padding: 6px 14px;
+  padding: 4px 11px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
