@@ -111,12 +111,6 @@ function renderBody(body: string): React.ReactNode {
   });
 }
 
-function handle(email: string): string {
-  if (!email) return '';
-  const local = email.split('@')[0] ?? '';
-  return local ? `@${local}` : '';
-}
-
 export default function CommentItem({
   comment,
   currentUserId,
@@ -239,9 +233,9 @@ export default function CommentItem({
           <span className={styles.authorName}>
             {comment.author.name ?? comment.author.email}
           </span>
-          {comment.author.email && (
-            <span className={styles.authorHandle}>{handle(comment.author.email)}</span>
-          )}
+          {/* @handle removed per product feedback — the display name +
+              avatar already identify the author, and the handle was
+              adding visual noise without providing extra signal. */}
           <span className={styles.authorTime}>
             {relativeTime(comment.createdAt)}
           </span>
@@ -261,13 +255,16 @@ export default function CommentItem({
             aria-pressed={comment.reactions.mine}
           >
             <HeartIcon filled={comment.reactions.mine} />
-            {comment.reactions.count > 0 ? comment.reactions.count : 'Curtir'}
+            {/* "Curtir" label removed per product feedback — only the
+                count surfaces when there is one. Empty heart on its
+                own is enough affordance to invite the action. */}
+            {comment.reactions.count > 0 ? comment.reactions.count : null}
           </button>
 
           {!isReply && !comment.deletedAt && (
             <button
               type="button"
-              className={styles.actionBtn}
+              className={`${styles.actionBtn} ${styles.replyBtn}`}
               onClick={() => setReplyComposerOpen((v) => !v)}
               aria-label="Responder"
             >
@@ -282,9 +279,13 @@ export default function CommentItem({
               className={`${styles.actionBtn} ${styles.danger}`}
               onClick={handleDelete}
               aria-label="Apagar comentário"
+              title="Apagar comentário"
             >
+              {/* "Apagar" label removed per product feedback — the
+                  trash icon is unambiguous on its own. The
+                  aria-label / title still announce the action for
+                  screen readers and the hover tooltip. */}
               <TrashIcon />
-              Apagar
             </button>
           )}
         </div>

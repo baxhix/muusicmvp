@@ -262,11 +262,11 @@
   color: rgba(245, 245, 247, 0.95);
   letter-spacing: -0.01em;
 }
-.authorHandle {
-  font-size: 10.5px;
-  color: rgba(245, 245, 247, 0.42);
-  letter-spacing: -0.005em;
-}
+/* .authorHandle removed — the comment author's @handle is no
+ * longer rendered (product feedback: it added noise without
+ * signal). Kept the rule out entirely so the orphan class doesn't
+ * tempt a future readder; the mobile-only `display: none` override
+ * below was dropped together. */
 .authorTime {
   font-size: 10px;
   color: rgba(245, 245, 247, 0.3);
@@ -328,6 +328,13 @@
 }
 .actionBtn.danger:hover {
   color: #f87171;
+}
+
+/* "Responder" — bumped to 12px per product feedback so the primary
+ * reply CTA reads slightly larger than the heart/trash icons next
+ * to it (which stay at the default 10.5px). */
+.actionBtn.replyBtn {
+  font-size: 12px;
 }
 
 /* Heart button: pulses on toggle + shifts to accent color when active. */
@@ -403,5 +410,4 @@
   .replyComposer { margin-left: 24px; }
   .commentActions { gap: 12px; }
   .identityRow { gap: 6px; }
-  .authorHandle { display: none; } /* keep name + time, drop handle */
 }
