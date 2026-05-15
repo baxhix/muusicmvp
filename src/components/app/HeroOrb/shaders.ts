@@ -1,28 +1,41 @@
 /**
- * GLSL shaders for the HeroOrb line-network sphere.
- *
- * Kept in a separate module so the React component stays focused on
- * Three.js plumbing. Both shaders are GLSL ES 1.00 (WebGL 1 baseline)
- * so they run anywhere modern browsers do.
+ * GLSL shaders for the HeroOrb flowing-ribbon sphere.
  *
  * Geometry topology
  * -----------------
- * We render a `THREE.LineSegments` mesh: each pair of vertices in
- * the position buffer becomes one line segment. The base positions
- * sit on a unit sphere (the orb's resting form); the vertex shader
- * applies the same layered simplex-noise displacement to each
- * vertex, which means CONNECTED vertices stay connected as the
- * orb morphs (both endpoints of a segment get the same noise
- * because they share basePos values along their chord).
+ * We render a THREE.LineSegments mesh whose vertices are sampled
+ * along closed parametric curves on a unit sphere (each curve is a
+ * tilted great-circle with a slight radius variation — see
+ * buildFlowingCurves in HeroOrb.tsx). Adjacent vertices along the
+ * same curve are connected as segments; multiple curves cross each
+ * other so the wireframe reads as a tangle of light ribbons
+ * wrapping the orb.
  *
- * Color movement
- * --------------
- * Each line carries a unique `aLineId` attribute. The fragment
- * shader feeds that id (plus uTime) into a fract() cycle that
- * drives where the line samples the 3-color palette. Result: every
- * line cycles through purple → magenta → orange independently, on
- * a long enough loop that the swarm always shows a balanced
- * distribution of colors.
+ * Per-vertex attributes:
+ *   - position    : base XYZ on the unit sphere (curve sampling)
+ *   - aT          : [0,1) parametric position along the curve
+ *   - aPathSeed   : random [0,1) per CURVE — drives independent
+ *                   color cycles + flow-phase offsets so the
+ *                   ribbons don't shimmer in lockstep.
+ *
+ * Vertex shader
+ * -------------
+ * Applies layered simplex noise displacement along the radial
+ * axis — the whole sphere morphs. Adjacent vertices on a curve
+ * displace consistently because they share the same basePos
+ * chord, so segments never tear apart even at large amplitudes.
+ *
+ * Fragment shader
+ * ---------------
+ *   - Color phase loops the 3-stop palette over time + along the
+ *     curve. Different pathSeeds keep curves in different cycles.
+ *   - "Flow" effect is a running sine wave of brightness moving
+ *     along the curve via `aT - time` → simulates light traveling
+ *     through each ribbon like an LED chase, the dominant motion
+ *     the reference image was asking for.
+ *   - Noise also modulates brightness so the wave brightens more
+ *     in deformation hotspots — the orb feels alive instead of
+ *     just blinking.
  */
 
 export const VERTEX_SHADER = /* glsl */ `
@@ -31,12 +44,14 @@ export const VERTEX_SHADER = /* glsl */ `
   uniform vec2  uMouse;
   uniform float uIntensity;
 
-  attribute float aLineId;
+  attribute float aT;
+  attribute float aPathSeed;
 
-  varying float vLineId;
+  varying float vT;
+  varying float vPathSeed;
   varying float vNoise;
 
-  // -- Ashima 3D simplex noise.
+  // -- Ashima 3D simplex noise (standard reference implementation).
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
@@ -99,33 +114,24 @@ export const VERTEX_SHADER = /* glsl */ `
   }
 
   void main() {
-    vLineId = aLineId;
+    vT        = aT;
+    vPathSeed = aPathSeed;
+
     float t = uTime * uSpeed;
 
     vec3 basePos = position;
     vec3 normal  = normalize(basePos);
 
-    // Layered noise displacement. Same algorithm as the original
-    // particle orb so connected endpoints displace identically and
-    // segments don't tear apart as the sphere morphs.
+    // Layered noise displacement. Same algorithm as before so
+    // adjacent vertices on a curve displace consistently and the
+    // ribbons don't tear apart.
     float n1 = snoise(basePos * 1.6 + vec3(t * 0.25));
     float n2 = snoise(basePos * 3.0 - vec3(t * 0.40));
     float disp = (n1 * 0.7 + n2 * 0.3) * 0.22 * uIntensity;
     vec3 pos = basePos + normal * disp;
-
-    // Pass noise sample to the fragment so brightness can ride the
-    // morph (lines passing through "high-pressure" zones glow more).
     vNoise = n1;
 
-    // Tiny per-vertex wobble — both endpoints of a segment share
-    // basePos so they stay together, but the resulting visible
-    // motion of the segment is slightly off-axis from the bulk
-    // rotation.
-    float wobble = sin(t * 0.5 + dot(basePos, vec3(1.7, 2.3, 1.1))) * 0.04;
-    float cw = cos(wobble), sw = sin(wobble);
-    pos.xz = mat2(cw, -sw, sw, cw) * pos.xz;
-
-    // Mouse parallax.
+    // Mouse parallax — small body shift.
     pos.xy += uMouse * 0.06;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
@@ -136,34 +142,48 @@ export const FRAGMENT_SHADER = /* glsl */ `
   precision mediump float;
 
   uniform float uTime;
-  uniform vec3  uColorA;  // purple
-  uniform vec3  uColorB;  // magenta
-  uniform vec3  uColorC;  // orange
+  uniform vec3  uColorA;   // purple
+  uniform vec3  uColorB;   // magenta
+  uniform vec3  uColorC;   // orange
 
-  varying float vLineId;
+  varying float vT;
+  varying float vPathSeed;
   varying float vNoise;
 
   void main() {
-    // Per-line dynamic color: each line samples the palette at a
-    // moving offset (fract loops 0→1 → 0→1...). LineId stagger
-    // ensures the swarm always shows all three colors at once.
-    float phase = fract(vLineId * 0.0173 + uTime * 0.07);
+    float t = uTime * 0.5;
 
+    // ─── Color phase ───────────────────────────────────────
+    // Loops the 3-stop palette along each curve. The path seed
+    // staggers each curve's cycle so the swarm always shows all
+    // three colors at once.
+    float colorPhase = fract(vT + vPathSeed * 0.13 + t * 0.06);
     vec3 col;
-    if (phase < 0.42) {
-      col = mix(uColorA, uColorB, phase / 0.42);
+    if (colorPhase < 0.42) {
+      col = mix(uColorA, uColorB, colorPhase / 0.42);
     } else {
-      col = mix(uColorB, uColorC, (phase - 0.42) / 0.58);
+      col = mix(uColorB, uColorC, (colorPhase - 0.42) / 0.58);
     }
 
-    // Brightness rides the noise — lines passing through "valleys"
-    // of the deformation field glow stronger. Adds the "energy
-    // pulse" effect across the structure.
-    float glow = 1.1 + 0.6 * vNoise;
-    col *= max(glow, 0.35);
+    // ─── Flow ─────────────────────────────────────────────
+    // A sine wave of brightness running along the curve at uTime
+    // pace. Each path has its own offset (via pathSeed) so the
+    // bright crests don't all align. Sharpened with pow() so the
+    // crests read as discrete "pulses" traveling along the
+    // ribbon rather than a uniform glow.
+    float wave = sin((vT * 6.2831 + vPathSeed * 9.4248) - t * 3.5);
+    float flow = pow(0.5 + 0.5 * wave, 2.4);
 
-    // Alpha — kept slightly translucent so where two lines cross
-    // additive blending bleeds them together into a brighter knot.
-    gl_FragColor = vec4(col, 0.85);
+    // Noise also modulates brightness so the wave brightens more
+    // in deformation hotspots — gives the impression of energy
+    // flowing through the active morph zones.
+    float brightness = 0.35 + 1.1 * flow + 0.35 * vNoise;
+
+    col *= max(brightness, 0.25);
+
+    // Alpha — slight translucency so overlapping ribbons saturate
+    // through additive blending to a near-white core where they
+    // cross.
+    gl_FragColor = vec4(col, 0.88);
   }
 `;

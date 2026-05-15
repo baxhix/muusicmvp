@@ -6,51 +6,60 @@ import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders';
 import styles from './HeroOrb.module.css';
 
 /**
- * HeroOrb — premium abstract line-network sphere.
+ * HeroOrb — premium flowing-ribbon sphere.
  *
- * Renders an animated wireframe-like sphere made of glowing lines
- * that morph with simplex noise and cycle through a purple →
- * magenta → orange palette. Built with raw Three.js (the project
- * already ships three@0.149, and a single 70x70 component doesn't
- * justify adding R3F + postprocessing for ~250kb).
+ * Renders a tangle of luminous curves wrapping a noise-deformed
+ * sphere, with light "pulses" flowing along each curve — same
+ * silk-ribbon energy the inspiration image captures. Built with
+ * raw Three.js (the project already ships three@0.149 and a
+ * single 70x70 component doesn't justify adding R3F).
  *
  * Topology
- *  • Generate N base points on a unit sphere (spherical Fibonacci —
- *    even distribution without polar pinching).
- *  • For each point, find its 3 nearest neighbors. Connect them
- *    with line segments. Dedupe undirected pairs so the segment
- *    list is the true edge set of the "neural sphere" network.
- *  • Each vertex inherits an `aLineId` attribute identifying which
- *    segment it belongs to — the fragment shader uses that id to
- *    drive its dynamic color phase.
+ *  • N closed curves on the unit sphere. Each curve is a tilted
+ *    great-circle (random orthogonal basis) with a slight radius
+ *    variation so the rings don't all share the orb's surface
+ *    pixel-perfect. Vertices are sampled around each ring at
+ *    uniform parametric spacing.
+ *  • Each vertex carries:
+ *      - aT          → [0,1) position along its curve
+ *      - aPathSeed   → random [0,1) per CURVE, drives independent
+ *                      color phases + flow offsets
+ *  • LineSegments index buffer pairs adjacent vertices and closes
+ *    the loop (last → first). Each curve becomes a closed ring.
  *
  * Animation
  *  • Vertex shader applies layered Ashima 3D simplex noise to each
- *    vertex along its radial axis. Both endpoints of a segment
- *    share the same basePos chord, so they displace together and
- *    the segment never tears.
- *  • The parent THREE.LineSegments rotates on Y at a slow constant
- *    rate; X is sin-modulated for asymmetric movement.
- *  • Each line's color cycles independently through the palette via
- *    `fract(lineId * k + time)` — over a long enough loop, the
- *    swarm always shows balanced color distribution.
+ *    vertex along its radial axis (same algorithm as before so
+ *    adjacent vertices displace consistently and the ribbons
+ *    never tear).
+ *  • Fragment shader runs a sine wave of brightness along each
+ *    curve (parametric position `aT` minus time), staggered per
+ *    curve via pathSeed → a bright crest travels around each
+ *    ribbon like an LED chase. This is the "flow" effect.
+ *  • Color cycles the 3-stop purple/magenta/orange palette per
+ *    curve.
+ *  • Parent THREE.LineSegments rotates slowly on Y + sin-modulated
+ *    on X so the whole tangle also drifts in space.
  *
  * Performance + lifecycle
  *  • IntersectionObserver pauses the rAF when offscreen.
  *  • prefers-reduced-motion drops uSpeed to a near-static value.
- *  • All three resources are dispose()d on unmount.
- *  • DPR capped at 2 — backing canvas at 70 CSS px renders at
- *    140x140 max.
+ *  • All Three resources are dispose()d on unmount.
+ *  • DPR capped at 2 — backing canvas at 70 CSS px renders at max
+ *    140x140.
  */
 
 interface HeroOrbProps {
   /** Render footprint in CSS px (square). */
   size?: number;
-  /** Approximate number of base points on the sphere. Each point
-   *  generates ~3 line segments, so the visible segment count is
-   *  roughly 3× this value. */
-  baseNodes?: number;
-  /** Time multiplier for the noise + rotation + color cycle. */
+  /** How many ribbons wrap the orb. 8-14 reads well at 70×70;
+   *  bigger sizes can push to 20+. Each curve becomes a visible
+   *  flowing strand, so more = denser tangle, fewer = airier. */
+  curveCount?: number;
+  /** Vertices sampled around each ring. Higher = smoother curves
+   *  but more draw calls. 60-100 is the sweet spot. */
+  verticesPerCurve?: number;
+  /** Time multiplier for the noise + rotation + flow + color cycle. */
   speed?: number;
   colors?: {
     primary?: string;
@@ -64,7 +73,8 @@ interface HeroOrbProps {
 
 const DEFAULTS = {
   size: 70,
-  baseNodes: 110,
+  curveCount: 11,
+  verticesPerCurve: 80,
   speed: 1,
   colors: {
     primary:   '#9333ea', // violet-600
@@ -74,80 +84,95 @@ const DEFAULTS = {
   enableMouseInteraction: true,
 };
 
-/** Number of nearest neighbours each base point connects to. 3 is
- *  the sweet spot: enough to feel like a network, sparse enough
- *  that individual lines stay visible at 70x70. Bumping to 4 makes
- *  the orb look more like a triangulated mesh. */
-const NEIGHBOURS_PER_NODE = 3;
-
 /**
- * Build the line-network geometry.
+ * Build the flowing-curve network geometry.
  *
- * Returns positions + per-vertex line ids ready to feed into a
- * BufferGeometry on a LineSegments. Computed once at mount because
- * the topology never changes — only the per-vertex displacement
- * in the shader does.
+ * Returns positions + parametric attribute + index buffers. The
+ * topology is fixed for the lifetime of the component — only the
+ * per-vertex deformation in the shader animates.
  */
-function buildLineNetwork(baseNodeCount: number): {
+function buildFlowingCurves(
+  curveCount: number,
+  verticesPerCurve: number,
+): {
   positions: Float32Array;
-  lineIds: Float32Array;
-  segmentCount: number;
+  aT: Float32Array;
+  aPathSeed: Float32Array;
+  indices: Uint16Array;
 } {
-  // 1) Spherical Fibonacci layout for the base nodes.
-  const nodes: THREE.Vector3[] = [];
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < baseNodeCount; i++) {
-    const y = 1 - (i / (baseNodeCount - 1)) * 2; // [-1, 1]
-    const r = Math.sqrt(1 - y * y);
-    const theta = golden * i;
-    nodes.push(
-      new THREE.Vector3(Math.cos(theta) * r, y, Math.sin(theta) * r),
-    );
-  }
+  const totalVertices = curveCount * verticesPerCurve;
+  const positions  = new Float32Array(totalVertices * 3);
+  const aT         = new Float32Array(totalVertices);
+  const aPathSeed  = new Float32Array(totalVertices);
+  // Each curve is a closed loop with `verticesPerCurve` segments,
+  // each contributing 2 indices. Total = curveCount * vpc * 2.
+  const indices = new Uint16Array(curveCount * verticesPerCurve * 2);
 
-  // 2) For each node, find its NEIGHBOURS_PER_NODE nearest neighbours
-  //    by squared distance. Pure O(n²) — fine for n ≤ ~300; for a
-  //    real-time-built larger network we'd switch to a k-d tree.
-  const pairs = new Set<string>();
-  const segments: Array<[THREE.Vector3, THREE.Vector3]> = [];
-  for (let i = 0; i < nodes.length; i++) {
-    const distances: Array<{ j: number; d2: number }> = [];
-    for (let j = 0; j < nodes.length; j++) {
-      if (j === i) continue;
-      distances.push({ j, d2: nodes[i].distanceToSquared(nodes[j]) });
+  let vi = 0; // vertex cursor
+  let ii = 0; // index cursor
+
+  const u = new THREE.Vector3();
+  const v = new THREE.Vector3();
+
+  /** Random unit vector (uniform distribution on the sphere). */
+  const randomDir = (out: THREE.Vector3) => {
+    // Marsaglia (1972) method — gives uniform sphere sampling.
+    let x1 = 0, x2 = 0, s = 2;
+    while (s >= 1) {
+      x1 = Math.random() * 2 - 1;
+      x2 = Math.random() * 2 - 1;
+      s = x1 * x1 + x2 * x2;
     }
-    distances.sort((a, b) => a.d2 - b.d2);
-    for (let k = 0; k < NEIGHBOURS_PER_NODE; k++) {
-      const j = distances[k]?.j;
-      if (j === undefined) break;
-      const key = i < j ? `${i}-${j}` : `${j}-${i}`;
-      if (pairs.has(key)) continue;
-      pairs.add(key);
-      segments.push([nodes[i], nodes[j]]);
+    const factor = 2 * Math.sqrt(1 - s);
+    out.set(x1 * factor, x2 * factor, 1 - 2 * s);
+    return out;
+  };
+
+  for (let c = 0; c < curveCount; c++) {
+    // Pick two random orthogonal unit vectors — they span the
+    // plane of this curve's great circle. v is orthogonalized
+    // against u via Gram-Schmidt.
+    randomDir(u);
+    randomDir(v);
+    v.addScaledVector(u, -v.dot(u)).normalize();
+
+    // Slight per-curve radius variation so the rings don't all
+    // sit on the same sphere surface — adds visual depth.
+    const radius = 0.92 + Math.random() * 0.12;
+    const pathSeed = Math.random();
+    const startVertex = vi;
+
+    for (let i = 0; i < verticesPerCurve; i++) {
+      const t = i / verticesPerCurve;
+      const angle = t * Math.PI * 2;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+
+      positions[vi * 3]     = (u.x * cosA + v.x * sinA) * radius;
+      positions[vi * 3 + 1] = (u.y * cosA + v.y * sinA) * radius;
+      positions[vi * 3 + 2] = (u.z * cosA + v.z * sinA) * radius;
+      aT[vi]        = t;
+      aPathSeed[vi] = pathSeed;
+      vi++;
+    }
+
+    // Emit `verticesPerCurve` segment pairs closing the ring:
+    // (start, start+1), (start+1, start+2), …, (start+last, start).
+    for (let i = 0; i < verticesPerCurve; i++) {
+      const a = startVertex + i;
+      const b = startVertex + ((i + 1) % verticesPerCurve);
+      indices[ii++] = a;
+      indices[ii++] = b;
     }
   }
 
-  // 3) Pack into typed arrays. Each segment = 2 vertices * 3 floats.
-  const positions = new Float32Array(segments.length * 6);
-  const lineIds = new Float32Array(segments.length * 2);
-  for (let i = 0; i < segments.length; i++) {
-    const [a, b] = segments[i];
-    positions[i * 6]     = a.x;
-    positions[i * 6 + 1] = a.y;
-    positions[i * 6 + 2] = a.z;
-    positions[i * 6 + 3] = b.x;
-    positions[i * 6 + 4] = b.y;
-    positions[i * 6 + 5] = b.z;
-    lineIds[i * 2]     = i;
-    lineIds[i * 2 + 1] = i;
-  }
-
-  return { positions, lineIds, segmentCount: segments.length };
+  return { positions, aT, aPathSeed, indices };
 }
 
 export default function HeroOrb({
   size = DEFAULTS.size,
-  baseNodes = DEFAULTS.baseNodes,
+  curveCount = DEFAULTS.curveCount,
+  verticesPerCurve = DEFAULTS.verticesPerCurve,
   speed = DEFAULTS.speed,
   colors = DEFAULTS.colors,
   enableMouseInteraction = DEFAULTS.enableMouseInteraction,
@@ -170,7 +195,7 @@ export default function HeroOrb({
     const renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,
-      antialias: true, // line edges benefit from MSAA at this size
+      antialias: true,
       powerPreference: 'low-power',
     });
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -182,12 +207,17 @@ export default function HeroOrb({
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
     camera.position.z = 4.6;
 
-    /* ── Build geometry ──────────────────────────────────────── */
-    const { positions, lineIds } = buildLineNetwork(baseNodes);
+    /* ── Build geometry ──────────────────────────────────── */
+    const { positions, aT, aPathSeed, indices } = buildFlowingCurves(
+      curveCount,
+      verticesPerCurve,
+    );
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('aLineId',  new THREE.BufferAttribute(lineIds, 1));
+    geometry.setAttribute('position',  new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('aT',        new THREE.BufferAttribute(aT, 1));
+    geometry.setAttribute('aPathSeed', new THREE.BufferAttribute(aPathSeed, 1));
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
     const colA = new THREE.Color(colors.primary   ?? DEFAULTS.colors.primary);
     const colB = new THREE.Color(colors.secondary ?? DEFAULTS.colors.secondary);
@@ -214,7 +244,7 @@ export default function HeroOrb({
     const lines = new THREE.LineSegments(geometry, material);
     scene.add(lines);
 
-    /* ── Mouse parallax ──────────────────────────────────────── */
+    /* ── Mouse parallax ──────────────────────────────────── */
     const targetMouse = new THREE.Vector2();
     const onMouseMove = (e: MouseEvent) => {
       if (!mouseInteractionRef.current) return;
@@ -223,14 +253,14 @@ export default function HeroOrb({
     };
     window.addEventListener('mousemove', onMouseMove, { passive: true });
 
-    /* ── Pause when offscreen ───────────────────────────────── */
+    /* ── Pause when offscreen ──────────────────────────── */
     const io = new IntersectionObserver(
       ([entry]) => { pausedRef.current = !entry.isIntersecting; },
       { threshold: 0 },
     );
     io.observe(canvas);
 
-    /* ── Reduced motion ─────────────────────────────────────── */
+    /* ── Reduced motion ────────────────────────────────── */
     const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
     reducedMotionRef.current = motionMq.matches;
     const onMotionChange = (e: MediaQueryListEvent) => {
@@ -238,7 +268,7 @@ export default function HeroOrb({
     };
     motionMq.addEventListener('change', onMotionChange);
 
-    /* ── rAF loop ───────────────────────────────────────────── */
+    /* ── rAF loop ──────────────────────────────────────── */
     const clock = new THREE.Clock();
     let rafId = 0;
     let smoothedMouseX = 0;
@@ -258,8 +288,8 @@ export default function HeroOrb({
       smoothedMouseY += (targetMouse.y - smoothedMouseY) * 0.07;
       material.uniforms.uMouse.value.set(smoothedMouseX, smoothedMouseY);
 
-      lines.rotation.y = t * 0.18 * effSpeed;
-      lines.rotation.x = Math.sin(t * 0.09) * 0.18;
+      lines.rotation.y = t * 0.16 * effSpeed;
+      lines.rotation.x = Math.sin(t * 0.08) * 0.20;
 
       renderer.render(scene, camera);
     };
@@ -275,7 +305,7 @@ export default function HeroOrb({
       renderer.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, baseNodes, colors.primary, colors.secondary, colors.accent]);
+  }, [size, curveCount, verticesPerCurve, colors.primary, colors.secondary, colors.accent]);
 
   return (
     <div
