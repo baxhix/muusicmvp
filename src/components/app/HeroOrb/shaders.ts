@@ -124,9 +124,12 @@ export const VERTEX_SHADER = /* glsl */ `
 
     // Layered noise displacement. Same algorithm as before so
     // adjacent vertices on a curve displace consistently and the
-    // ribbons don't tear apart.
-    float n1 = snoise(basePos * 1.6 + vec3(t * 0.25));
-    float n2 = snoise(basePos * 3.0 - vec3(t * 0.40));
+    // ribbons don't tear apart. Noise scrolling sped up (0.25/0.40
+    // → 0.55/0.90) so the morph through the orb's surface feels
+    // turbulent rather than meditative — matches the "dinamismo e
+    // velocidade" framing.
+    float n1 = snoise(basePos * 1.6 + vec3(t * 0.55));
+    float n2 = snoise(basePos * 3.0 - vec3(t * 0.90));
     float disp = (n1 * 0.7 + n2 * 0.3) * 0.22 * uIntensity;
     vec3 pos = basePos + normal * disp;
     vNoise = n1;
@@ -151,13 +154,18 @@ export const FRAGMENT_SHADER = /* glsl */ `
   varying float vNoise;
 
   void main() {
-    float t = uTime * 0.5;
+    // Fragment "clock" runs faster now — was uTime * 0.5; bumped to
+    // uTime * 0.9 so both the color cycle and the flow sine wave
+    // advance roughly 1.8× quicker. The reference brief asked for
+    // more dynamism and the pulses now actually race along each
+    // ribbon instead of drifting.
+    float t = uTime * 0.9;
 
     // ─── Color phase ───────────────────────────────────────
     // Loops the 3-stop palette along each curve. The path seed
     // staggers each curve's cycle so the swarm always shows all
     // three colors at once.
-    float colorPhase = fract(vT + vPathSeed * 0.13 + t * 0.06);
+    float colorPhase = fract(vT + vPathSeed * 0.13 + t * 0.10);
     vec3 col;
     if (colorPhase < 0.42) {
       col = mix(uColorA, uColorB, colorPhase / 0.42);
@@ -170,8 +178,10 @@ export const FRAGMENT_SHADER = /* glsl */ `
     // pace. Each path has its own offset (via pathSeed) so the
     // bright crests don't all align. Sharpened with pow() so the
     // crests read as discrete "pulses" traveling along the
-    // ribbon rather than a uniform glow.
-    float wave = sin((vT * 6.2831 + vPathSeed * 9.4248) - t * 3.5);
+    // ribbon rather than a uniform glow. Crest scroll speed jumped
+    // from t * 3.5 → t * 7.0 so the LED-chase effect reads as fast
+    // streaks, not a meditative breath.
+    float wave = sin((vT * 6.2831 + vPathSeed * 9.4248) - t * 7.0);
     float flow = pow(0.5 + 0.5 * wave, 2.0);
 
     // Noise also modulates brightness so the wave brightens more

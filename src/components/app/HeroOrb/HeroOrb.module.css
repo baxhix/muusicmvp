@@ -1,12 +1,12 @@
 /* HeroOrb — wrapper styling.
  *
- * At 70x70 the additive-blended particles produce a tight bright
- * core but the visual reads as more "premium" when the canvas is
- * surrounded by a soft outer glow that bleeds into the surface
- * below. We render that as a radial gradient on a pseudo-element
- * BEHIND the canvas so it doesn't interfere with the WebGL
- * compositing. The gradient pulses with a very slow keyframe to
- * match the in-shader breathing pulse.
+ * Per product feedback the previous CSS halo pseudo-elements
+ * (a heavy `filter: blur()` over radial + conic gradients) were
+ * dominating the surface around the canvas as a fuzzy pink/red
+ * cloud — exactly the "blur" the user wanted gone. Both
+ * `.wrap::before` and `.wrap::after` are retired here; the orb is
+ * now just the crisp WebGL canvas with its own additive-blended
+ * line tangle.
  *
  * Pointer-events stay enabled on .wrap so future hover affordances
  * (tooltip, click handler) can hook in without restructuring. */
@@ -15,94 +15,9 @@
   position: relative;
   display: inline-block;
   flex-shrink: 0;
-  /* Stacking context so the ::before halo doesn't escape behind
-   * other absolutely-positioned page elements. */
+  /* Stacking context kept so future positioned children (e.g. a
+   * tooltip) layer predictably above the canvas. */
   isolation: isolate;
-}
-
-/* Soft ambient halo behind the canvas. Two stacked pseudo-elements:
- *
- *   ::before — the radial gradient itself, slightly enlarged from
- *              the previous "whisper" tuning and now with a slow
- *              hue-rotate cycling colors across the spectrum so
- *              the surface around the orb feels alive.
- *   ::after  — a second rotating gradient layer using a conic
- *              cycle that drifts behind the first, adding the
- *              angular color movement the user asked for.
- *
- * Both layers respect prefers-reduced-motion (animations zeroed
- * below). */
-.wrap::before {
-  content: '';
-  position: absolute;
-  /* Larger halo footprint per product feedback — the reference orb
-   * carries a heavy outer glow that bleeds into the surrounding
-   * dark surface. -40% gives the halo more room to fade out. */
-  inset: -40%;
-  z-index: -1;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(244, 63, 94,  0.55) 0%,   /* rose-500 hot core */
-    rgba(236, 72, 153, 0.42) 22%,  /* pink-500 inner shell */
-    rgba(168, 85, 247, 0.28) 50%,  /* violet-500 outer */
-    rgba(124, 58, 237, 0.10) 75%,  /* violet-600 fade */
-    transparent 90%
-  );
-  filter: blur(10px);
-  /* Two overlapping animations: opacity/scale breath + a slow hue
-   * rotation that keeps the pink/violet relationship moving on a
-   * long cycle. */
-  animation:
-    heroOrbBreath 5.5s ease-in-out infinite alternate,
-    heroOrbHueDrift 14s linear infinite;
-  pointer-events: none;
-}
-
-/* Second layer — a conic gradient that ROTATES so the color spots
- * sweep around the orb perimeter. Lower opacity than ::before so it
- * reads as motion underneath the main halo, not a second halo. */
-.wrap::after {
-  content: '';
-  position: absolute;
-  inset: -40%;
-  z-index: -2;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(244, 63, 94,  0.32),
-    rgba(168, 85, 247, 0.22),
-    rgba(236, 72, 153, 0.30),
-    rgba(124, 58, 237, 0.22),
-    rgba(244, 63, 94,  0.32)
-  );
-  filter: blur(16px);
-  animation: heroOrbConicSpin 9s linear infinite;
-  pointer-events: none;
-  opacity: 0.85;
-}
-
-@keyframes heroOrbBreath {
-  0%   { opacity: 0.75; transform: scale(0.97); }
-  100% { opacity: 1;    transform: scale(1.05); }
-}
-
-@keyframes heroOrbHueDrift {
-  0%   { filter: blur(6px) hue-rotate(0deg);   }
-  100% { filter: blur(6px) hue-rotate(360deg); }
-}
-
-@keyframes heroOrbConicSpin {
-  0%   { transform: rotate(0deg);   }
-  100% { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wrap::before,
-  .wrap::after {
-    animation: none;
-    opacity: 0.65;
-  }
 }
 
 .canvas {

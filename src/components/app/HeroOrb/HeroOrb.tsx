@@ -297,8 +297,13 @@ export default function HeroOrb({
       smoothedMouseY += (targetMouse.y - smoothedMouseY) * 0.07;
       material.uniforms.uMouse.value.set(smoothedMouseX, smoothedMouseY);
 
-      lines.rotation.y = t * 0.16 * effSpeed;
-      lines.rotation.x = Math.sin(t * 0.08) * 0.20;
+      // Faster rotation per product feedback — the previous 0.16
+      // rad/s read as a slow drift; bumped to 0.42 so the wireframe
+      // sphere visibly rolls under the bright flow pulses. X-axis
+      // sinusoid amplitude widened from 0.20 → 0.32 and frequency
+      // sped up so the orb also visibly tumbles.
+      lines.rotation.y = t * 0.42 * effSpeed;
+      lines.rotation.x = Math.sin(t * 0.18) * 0.32;
 
       renderer.render(scene, camera);
     };
