@@ -104,50 +104,85 @@ export default function ArtistBox() {
         </div>
       </div>
 
-      {/* Current Fanpoints balance — sits right under the header
-          (i.e. just below the artist photo + name row). Small
-          amber chip so it reads as a status / wallet badge, not
-          a competing CTA. */}
-      <div className={styles.fanpointsRow}>
-        <span className={styles.fanpointsIcon} aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.3 21.4 12 18 5.7 21.4 7 14.4 2 9.5 8.9 8.6 12 2" />
+      {/* Wallet row — Fanpoints balance on the left + Loja da
+          Boiadeira affiliate link on the right share a single row
+          per product feedback (used to stack vertically). Below the
+          row sits a "15% OFF desbloqueado" reward badge and the
+          "Conheça os benefícios" CTA. */}
+      <div className={styles.walletRow}>
+        <div className={styles.fanpointsRow}>
+          <span className={styles.fanpointsIcon} aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.3 21.4 12 18 5.7 21.4 7 14.4 2 9.5 8.9 8.6 12 2" />
+            </svg>
+          </span>
+          <span className={styles.fanpointsValue}>
+            {fanpoints.toLocaleString('pt-BR')}
+          </span>
+          <span className={styles.fanpointsLabel}>Fanpoints</span>
+        </div>
+
+        {/* Loja da Boiadeira — affiliate link to the official Ana
+            Castela store. Same URL surfaced from the TopBar's
+            drawer "Loja oficial" entry; duplicated here as a soft
+            inline CTA so members can reach the shop straight from
+            the artist box without opening the drawer. */}
+        <a
+          className={styles.storeLink}
+          href={STORE_URL}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 9l1.5-5h15L21 9" />
+            <path d="M4 9h16v11H4z" />
+            <path d="M9 13h6" />
           </svg>
-        </span>
-        <span className={styles.fanpointsValue}>
-          {fanpoints.toLocaleString('pt-BR')}
-        </span>
-        <span className={styles.fanpointsLabel}>Fanpoints</span>
+          <span>Loja da Boiadeira</span>
+        </a>
       </div>
 
-      {/* Loja da Boiadeira — discrete affiliate link to the official
-          Ana Castela store. Same URL surfaced from the TopBar's
-          drawer "Loja oficial" entry; duplicated here as a soft
-          inline CTA so members can reach the shop straight from the
-          artist box without opening the drawer. */}
-      <a
-        className={styles.storeLink}
-        href={STORE_URL}
-        target="_blank"
-        rel="noreferrer noopener"
+      {/* Unlocked-discount badge — reads as "you've earned this".
+          The percentage itself is bold; "desbloqueado" runs in a
+          quieter weight + uppercase letterspacing for the eyebrow
+          feel. Hardcoded to 15% for now; future iterations can
+          drive the tier off the user's Fanpoints balance. */}
+      <div className={styles.discountBadge}>
+        <span className={styles.discountIcon} aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 8.5l3 3 7-7.5" />
+          </svg>
+        </span>
+        <span className={styles.discountText}>
+          <strong>15% OFF</strong> desbloqueado
+        </span>
+      </div>
+
+      {/* Simple "Conheça os benefícios" CTA — text-button style
+          so it reads as a soft secondary action, not a competing
+          primary. Wired to onOpen-toggle for now (same affordance
+          as clicking the box footer); when the benefits surface
+          ships, route it there. */}
+      <button
+        type="button"
+        className={styles.benefitsBtn}
+        onClick={() => setOpen((o) => !o)}
       >
-        <svg
-          viewBox="0 0 24 24"
-          width="12"
-          height="12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M3 9l1.5-5h15L21 9" />
-          <path d="M4 9h16v11H4z" />
-          <path d="M9 13h6" />
+        Conheça os benefícios
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M5 3l5 5-5 5" />
         </svg>
-        <span>Loja da Boiadeira</span>
-      </a>
+      </button>
 
       {/* ── Collapsible content ── */}
       <div
