@@ -133,7 +133,7 @@ export default function ArtistBox() {
           className={styles.storeLink}
           onClick={() => setOpen((o) => !o)}
         >
-          Conheça os benefícios
+          Meus benefícios
         </button>
       </div>
 
@@ -150,14 +150,15 @@ export default function ArtistBox() {
         rel="noreferrer noopener"
       >
         <span className={styles.discountIcon} aria-hidden="true">
-          {/* Shopping-cart icon — replaced the previous check
-              mark per product feedback (the badge is now a CTA
-              for the store, not just a "you unlocked this"
-              acknowledgment). */}
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1.5 1.5h2l1.4 8.2a1.2 1.2 0 0 0 1.2 1H13a1.2 1.2 0 0 0 1.2-1l.85-5.2H4" />
-            <circle cx="6" cy="13.5" r="1" />
-            <circle cx="12" cy="13.5" r="1" />
+          {/* Unlocked padlock — the shackle tilts up with only its
+              left leg connecting to the body, signalling "you've
+              unlocked this benefit". Replaced the cart icon per
+              product feedback so the badge reads as a reward
+              affordance again (the destination is still the
+              store, but the cue up front is "unlocked"). */}
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="7.5" width="10" height="6.5" rx="1.4" />
+            <path d="M5.2 7.5V5.2a2.8 2.8 0 0 1 5.4-1" />
           </svg>
         </span>
         <span className={styles.discountText}>

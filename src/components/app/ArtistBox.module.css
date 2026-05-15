@@ -295,14 +295,15 @@
 .storeLink svg { flex-shrink: 0; }
 
 /* ── "15% OFF na Loja da Boiadeira" CTA badge ──
- * Sits under the wallet row, green-accented to read as an earned
- * reward (matches the platform's success / Fanpoint palette).
- * Border removed per product feedback — the soft green fill alone
- * is enough surface. Doubles as the affiliate link to the store
- * now (the explicit "Loja da Boiadeira" pill that used to live
- * on the wallet row was retired and the store URL moved here).
- * Cart icon up front announces the destination; the percent is
- * white-bold, the store-name copy stays muted gray. */
+ * Sits under the wallet row, lilac-tinted per product feedback
+ * (was green, but the discount slot reads as a perk rather than
+ * a success acknowledgement — the platform's lilac accent fits
+ * better there). Border-less; the soft fill alone carries the
+ * surface. Doubles as the affiliate link to the store (the
+ * explicit "Loja da Boiadeira" pill that used to live on the
+ * wallet row was retired and the URL moved here). Unlocked
+ * padlock icon up front announces "you've earned this"; the
+ * percent is white-bold, the store-name copy stays muted gray. */
 .discountBadge {
   display: inline-flex;
   align-items: center;
@@ -310,7 +311,7 @@
   margin: 0 16px 12px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(61, 219, 116, 0.10);
+  background: rgba(168, 85, 247, 0.14);
   border: none;
   width: fit-content;
   text-decoration: none;
@@ -318,13 +319,13 @@
   transition: background 0.15s ease;
 }
 .discountBadge:hover {
-  background: rgba(61, 219, 116, 0.16);
+  background: rgba(168, 85, 247, 0.22);
 }
 .discountIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #3DDB74;
+  color: #c084fc;
   flex-shrink: 0;
 }
 .discountIcon svg {
