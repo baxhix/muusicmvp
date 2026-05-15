@@ -75,9 +75,35 @@ function makeSeries(baseValue: number, drift: number, jitter: number, points: nu
   return out;
 }
 
+/**
+ * Three commensurable platform-health series — the dashboard
+ * renders these with `normalizePerSeries`, so each one uses the
+ * full vertical space of the chart regardless of absolute scale.
+ *
+ *   - signups (units):         daily new signups, ~80-220 range
+ *   - sessionMin (minutes):    avg session length, ~10-25 range
+ *   - engagementScore (0-100): composite of likes + comments +
+ *                              messages + listen time, smoothed
+ *
+ * Replace this mock with the real series shape when the backend
+ * ships /api/admin/growth?series=signups,session,engagement.
+ */
 export const MOCK_GROWTH: ChartSeries[] = [
-  { id: 'mau',     label: 'Usuários ativos', data: makeSeries(42000, 480, 800, 90) },
-  { id: 'signups', label: 'Novos cadastros', data: makeSeries(120,    2,  18, 90) },
+  {
+    id: 'signups',
+    label: 'Novos usuários',
+    data: makeSeries(120, 2, 18, 90),
+  },
+  {
+    id: 'sessionMin',
+    label: 'Tempo médio de sessão (min)',
+    data: makeSeries(14, 0.06, 2.2, 90),
+  },
+  {
+    id: 'engagementScore',
+    label: 'Score médio de engajamento',
+    data: makeSeries(62, 0.18, 4.5, 90),
+  },
 ];
 
 export const MOCK_REVENUE: ChartSeries[] = [

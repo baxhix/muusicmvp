@@ -46,11 +46,26 @@ function formatKpi(k: Kpi): string {
 function LineChart({
   series,
   height = 220,
-  strokeColors = ['var(--text)', 'var(--info)'],
+  strokeColors = ['var(--text)', 'var(--info)', 'var(--brand)'],
+  /**
+   * When true, each series is normalized to its OWN min-max range
+   * before plotting. Use this when the series share an X axis but
+   * have wildly different scales (e.g. signups in the hundreds vs
+   * session minutes in the teens vs an engagement score 0-100) —
+   * each line then uses the full vertical space and the SHAPE of
+   * each is comparable even though the absolute values aren't.
+   *
+   * Without it, the lines all share a single y-scale based on the
+   * overall min/max, which works when the series are commensurable
+   * (active users vs new signups) but flattens any series with a
+   * smaller magnitude into a horizontal noise floor.
+   */
+  normalizePerSeries = false,
 }: {
   series: ChartSeries[];
   height?: number;
   strokeColors?: string[];
+  normalizePerSeries?: boolean;
 }) {
   if (series.length === 0 || series[0].data.length === 0) return null;
 
@@ -59,25 +74,36 @@ function LineChart({
   const padX = 24;
   const padY = 16;
 
+  // Per-series range when normalizing; one shared range otherwise.
+  const seriesRanges = series.map((s) => {
+    const values = s.data.map((p) => p.value);
+    const sMin = Math.min(...values);
+    const sMax = Math.max(...values);
+    return { min: sMin, max: sMax, range: sMax - sMin || 1 };
+  });
   const allValues = series.flatMap((s) => s.data.map((p) => p.value));
-  const min = Math.min(...allValues);
-  const max = Math.max(...allValues);
-  const range = max - min || 1;
+  const globalMin = Math.min(...allValues);
+  const globalMax = Math.max(...allValues);
+  const globalRange = globalMax - globalMin || 1;
 
   const points = series[0].data.length;
   const stepX = (w - padX * 2) / (points - 1);
 
-  const buildPath = (s: ChartSeries) =>
-    s.data
+  const buildPath = (s: ChartSeries, idx: number) => {
+    const { min, range } = normalizePerSeries
+      ? seriesRanges[idx]
+      : { min: globalMin, range: globalRange };
+    return s.data
       .map((p, i) => {
         const x = padX + i * stepX;
         const y = padY + (h - padY * 2) * (1 - (p.value - min) / range);
         return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
       })
       .join(' ');
+  };
 
-  const buildArea = (s: ChartSeries) =>
-    `${buildPath(s)} L ${(padX + (points - 1) * stepX).toFixed(2)},${h - padY} L ${padX},${h - padY} Z`;
+  const buildArea = (s: ChartSeries, idx: number) =>
+    `${buildPath(s, idx)} L ${(padX + (points - 1) * stepX).toFixed(2)},${h - padY} L ${padX},${h - padY} Z`;
 
   // Y grid lines
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => padY + (h - padY * 2) * p);
@@ -112,9 +138,9 @@ function LineChart({
       ))}
       {series.map((s, i) => (
         <g key={s.id}>
-          <path d={buildArea(s)} fill={`url(#area-${s.id})`} />
+          <path d={buildArea(s, i)} fill={`url(#area-${s.id})`} />
           <path
-            d={buildPath(s)}
+            d={buildPath(s, i)}
             fill="none"
             stroke={strokeColors[i % strokeColors.length]}
             strokeWidth="1.5"
@@ -304,24 +330,48 @@ export default function DashboardPage() {
             <div className={styles.chartHead}>
               <div>
                 <div className={styles.chartTitle}>Crescimento da plataforma</div>
-                <div className={styles.chartSubtitle}>Usuários ativos × novos cadastros nos últimos 90 dias</div>
+                <div className={styles.chartSubtitle}>
+                  Novos usuários · tempo médio de sessão · score de engajamento — últimos 90 dias
+                </div>
               </div>
               {/* Convention: "Em alta" badges use size="lg" platform-
                   wide so trending signals read as first-class status. */}
               <Badge tone="brand" size="lg" dot>Em alta</Badge>
             </div>
             <div className={styles.chartBody}>
-              {growth ? <LineChart series={growth} /> : null}
+              {/* Each series is normalized to its own min-max range so
+                  signups (units) / session minutes / 0-100 score
+                  share the chart without one flattening the others.
+                  Trade-off: absolute Y values aren't comparable
+                  across lines — we read SHAPE, not magnitude. The
+                  legend below shows the current snapshot per
+                  series so the absolute numbers stay one glance
+                  away. */}
+              {growth ? <LineChart series={growth} normalizePerSeries /> : null}
             </div>
             <div className={styles.legend}>
-              <span className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: 'var(--text)' }} />
-                Usuários ativos
-              </span>
-              <span className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: 'var(--info)' }} />
-                Novos cadastros
-              </span>
+              {(growth ?? []).map((s, i) => {
+                const last = s.data[s.data.length - 1]?.value ?? 0;
+                const isMinutes = s.id === 'sessionMin';
+                const isScore   = s.id === 'engagementScore';
+                const formatted = isMinutes
+                  ? `${last.toFixed(1)} min`
+                  : isScore
+                    ? `${last.toFixed(0)} / 100`
+                    : formatNumber(last);
+                // Stroke palette matches LineChart's default
+                // strokeColors order: text → info → brand.
+                const dotColor =
+                  i === 0 ? 'var(--text)' :
+                  i === 1 ? 'var(--info)' :
+                  'var(--brand)';
+                return (
+                  <span key={s.id} className={styles.legendItem}>
+                    <span className={styles.legendDot} style={{ background: dotColor }} />
+                    {s.label} · <strong>{formatted}</strong>
+                  </span>
+                );
+              })}
             </div>
           </Card>
 

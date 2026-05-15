@@ -1,0 +1,146 @@
+/* Convites — invite-code CMS. Same density rhythm as the Activity
+ * log and Algoritmo screens. Code cell uses monospace + a small
+ * copy button so operators can hand the code to a user fast. */
+
+.page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.batchInput {
+  width: 64px;
+}
+
+/* ── KPI strip ────────────────────────────────────────────── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+/* ── Filters ──────────────────────────────────────────────── */
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 8px;
+  padding: 12px;
+}
+@media (max-width: 900px) {
+  .filters { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .filters { grid-template-columns: 1fr; }
+}
+
+.tableCard { overflow: hidden; }
+
+/* ── Cell: Code ───────────────────────────────────────────── */
+.cellCode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  padding: 3px 10px;
+  border-radius: var(--r-sm);
+}
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.copyBtn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.noteChip {
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-mute);
+  border: 1px solid var(--border-soft);
+}
+
+/* ── Cell: Pessoa (autor / resgatador) ─────────────────────── */
+.cellPerson {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.personText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.personName {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.personMeta {
+  font-size: 11px;
+  color: var(--text-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+/* ── Cell: Loop viral ──────────────────────────────────────── */
+.treeCell {
+  font-size: 12.5px;
+  color: var(--text);
+}
+.parentRef {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+/* ── Row actions ──────────────────────────────────────────── */
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}

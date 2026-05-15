@@ -385,3 +385,15 @@ export const IconCode = (p: IconProps) => (
     <polyline points="8 6 2 12 8 18" />
   </svg>
 );
+
+// Ticket icon — used by the Convites nav entry. Diagonal ticket
+// stub with a notch on the left side and a small dotted line down
+// the middle (perforation hint).
+export const IconTicket = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8Z" />
+    <path d="M12 6v2" />
+    <path d="M12 11v2" />
+    <path d="M12 16v2" />
+  </svg>
+);
