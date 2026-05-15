@@ -47,41 +47,41 @@ function adminStoryToStory(p: ApiFeedPost): Story | null {
  * /public/central-anacastela.png we already serve elsewhere.
  *
  * To swap any of these previews: drop a new file at the same path
- * (public/stories/ana-{1..5}.jpg) — no code change needed. */
+ * (public/stories/ana-{1..5}.png) — no code change needed. */
 const STORIES: Story[] = [
   {
     id: 's1',
     user: 'Ana Castela',
     avatar: '/central-anacastela.png',
-    img: '/stories/ana-1.jpg',
+    img: '/stories/ana-1.png',
     seen: false,
   },
   {
     id: 's2',
     user: 'Ana Castela',
     avatar: '/central-anacastela.png',
-    img: '/stories/ana-2.jpg',
+    img: '/stories/ana-2.png',
     seen: false,
   },
   {
     id: 's3',
     user: 'Ana Castela',
     avatar: '/central-anacastela.png',
-    img: '/stories/ana-3.jpg',
+    img: '/stories/ana-3.png',
     seen: false,
   },
   {
     id: 's4',
     user: 'Ana Castela',
     avatar: '/central-anacastela.png',
-    img: '/stories/ana-4.jpg',
+    img: '/stories/ana-4.png',
     seen: true,
   },
   {
     id: 's5',
     user: 'Ana Castela',
     avatar: '/central-anacastela.png',
-    img: '/stories/ana-5.jpg',
+    img: '/stories/ana-5.png',
     seen: true,
   },
 ];
