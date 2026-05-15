@@ -417,33 +417,41 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                 </div>
 
                 <nav className={styles.drawerNav}>
-                  {/* Fanverse section — switch universe + official
-                      store. Both items used to live in the SideBar's
-                      vertical midStack; moved here so the left-edge
-                      bar can stay focused on the logo + the dock. */}
-                  <div className={styles.drawerSection}>
-                    <span className={styles.drawerEyebrow}>Fanverse</span>
-                    <Link
-                      href="/app/select"
-                      className={styles.drawerItem}
-                      onClick={() => setOpen(false)}
-                    >
-                      <DrawerItemIcon name="grid" />
-                      <span>Trocar Fanverse</span>
-                      <DrawerChevron />
-                    </Link>
-                    <a
-                      href={STORE_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.drawerItem}
-                      onClick={() => setOpen(false)}
-                    >
-                      <DrawerItemIcon name="bag" />
-                      <span>Loja oficial</span>
-                      <DrawerChevron />
-                    </a>
-                  </div>
+                  {/* Fanverse section retired per product feedback —
+                      both items ("Trocar Fanverse" + "Loja oficial")
+                      were hidden from the drawer. The Loja URL is
+                      still surfaced from the ArtistBox discount
+                      badge ("15% OFF na Loja da Boiadeira") and the
+                      universe switcher (/app/select) is still
+                      reachable via direct URL when needed. Keeping
+                      the markup commented out here in a single
+                      block so wiring it back is a one-liner if the
+                      product direction changes.
+
+                      <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Fanverse</span>
+                        <Link
+                          href="/app/select"
+                          className={styles.drawerItem}
+                          onClick={() => setOpen(false)}
+                        >
+                          <DrawerItemIcon name="grid" />
+                          <span>Trocar Fanverse</span>
+                          <DrawerChevron />
+                        </Link>
+                        <a
+                          href={STORE_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.drawerItem}
+                          onClick={() => setOpen(false)}
+                        >
+                          <DrawerItemIcon name="bag" />
+                          <span>Loja oficial</span>
+                          <DrawerChevron />
+                        </a>
+                      </div>
+                  */}
 
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Conta</span>
