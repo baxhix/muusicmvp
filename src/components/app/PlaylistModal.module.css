@@ -35,7 +35,11 @@
   max-height: calc(100vh - 160px);
   left: 50%;
   width: min(480px, calc(100vw - 32px));
-  margin-left: min(0px, calc(-50vw + 16px));
+  /* Centering is handled by transform: translateX(-50%) alone.
+   * The previous margin-left helper was producing a huge negative
+   * value on wide viewports (min(0px, -50vw+16px) ≈ -700px on a
+   * 1440 screen) and dragging the modal off the left edge — the
+   * issue the user reported as "oculto do lado esquerdo." */
   transform: translateX(-50%);
   z-index: 135;
   display: flex;
