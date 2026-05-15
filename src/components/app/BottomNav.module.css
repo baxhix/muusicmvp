@@ -25,40 +25,49 @@
 .nav::before {
   content: '';
   position: absolute;
-  /* Sized larger than the pill (which is ~290x52) so the blur
-   * radius bleeds outward and looks like ambient light, not a
-   * defined object. Centered horizontally on the pill via 50% +
-   * translateX. The bottom value lines up roughly with the pill
-   * center (nav padding-bottom 24px + pill height ~52px / 2). */
+  /* Shadow tuned to read as a SUBTLE ambient tint, not a dramatic
+   * halo. Earlier sizing (380x110, alphas up to 0.55) was reading as
+   * a discrete glowing object; trimmed to roughly the pill footprint
+   * (~290x72) with alphas cut by ~40% so the lilac tone is now a
+   * whisper that lives behind the bar instead of competing with it.
+   *
+   * Centered horizontally on the pill via 50% + translateX. The
+   * `bottom` value lines up roughly with the pill center
+   * (nav padding-bottom 24px + pill height ~52px / 2). */
   left: 50%;
   bottom: 18px;
-  width: 380px;
-  height: 110px;
+  width: 300px;
+  height: 72px;
   transform: translateX(-50%);
   background: radial-gradient(
-    ellipse 55% 100% at 50% 50%,
-    rgba(192, 132, 252, 0.55) 0%,
-    rgba(217, 70, 239, 0.32) 38%,
-    rgba(168, 85, 247, 0.18) 60%,
-    transparent 82%
+    ellipse 60% 100% at 50% 50%,
+    rgba(192, 132, 252, 0.30) 0%,
+    rgba(217, 70, 239, 0.18) 40%,
+    rgba(168, 85, 247, 0.09) 65%,
+    transparent 85%
   );
-  filter: blur(28px);
+  /* Slightly less blur for the smaller shape — keeps the falloff
+   * crisp instead of bleeding into nothingness. */
+  filter: blur(22px);
   pointer-events: none;
   z-index: -1;
-  animation: navbarGlow 4.5s ease-in-out infinite alternate;
+  animation: navbarGlow 5s ease-in-out infinite alternate;
 }
 @keyframes navbarGlow {
+  /* Tightened pulse range: never below 0.45, never above 0.75 (was
+   * 0.55-1.0). Scale animation amplitude also halved so the glow
+   * doesn't visibly bloom in and out — it just breathes gently. */
   0%   {
-    opacity: 0.55;
-    transform: translate(-52%, 0) scale(1);
+    opacity: 0.45;
+    transform: translate(-51%, 0) scale(1);
   }
   100% {
-    opacity: 1;
-    transform: translate(-48%, -3px) scale(1.08);
+    opacity: 0.75;
+    transform: translate(-49%, -1px) scale(1.03);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .nav::before { animation: none; opacity: 0.6; }
+  .nav::before { animation: none; opacity: 0.5; }
 }
 
 .inner {
@@ -268,10 +277,12 @@
 @media (max-width: 480px) {
   .nav { padding: 10px 0 18px; }
   .nav::before {
-    width: 95vw;
-    max-width: 360px;
-    height: 96px;
-    bottom: 14px;
+    /* Match the trimmed desktop footprint roughly — keep the glow
+     * subtle on mobile too. width tracks the pill's calc width. */
+    width: 90vw;
+    max-width: 320px;
+    height: 64px;
+    bottom: 12px;
   }
   .inner {
     width: calc(100% - 32px);
