@@ -8,23 +8,39 @@
   width: 100%;
 }
 
-/* Headline KPI row aggregating both universes at the top. */
+/* Headline KPI row aggregating both universes at the top. Untouched
+ * by the universe-card resize — these are platform-wide indicators
+ * rendered with the shared StatCard component. */
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
-/* Universe-card grid — narrower minmax now that the covers are
-   portrait. 320px lets 3 cards fit on a 1100px+ workspace and still
-   keeps each card readable on mobile. */
+/* Universe-card grid. Shrunk from minmax(320px, 1fr) → 240px so 3-4
+ * cards fit on a typical 1100-1400px admin workspace and the new
+ * compact card has room to breathe. */
 .universeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
 }
 
-/* ── Single universe card ────────────────────────────── */
+/* ── Single universe card (compact variant) ────────────────
+ *
+ * Originally these were tall hero cards with portrait covers. The
+ * admin context is operator-driven (scan many at a glance, not a
+ * marketing page), so we trimmed the whole card ~40% by:
+ *   - flatter cover (16/9 instead of 4/3)
+ *   - smaller title + tag
+ *   - tighter body padding + gap
+ *   - tighter stat tiles + smaller fonts
+ *   - tighter footer
+ *
+ * The visual budget per card now matches a table-row-with-thumbnail
+ * density: enough to recognize the universe + scan its 4 KPIs, no
+ * dead space.
+ * ──────────────────────────────────────────────────────── */
 
 .universe {
   position: relative;
@@ -42,14 +58,12 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
 
-/* Banner — landscape-leaning cover so the cards stay compact in the
-   admin context (operator scans many at once, no need for a hero
-   shot). 4:3 ratio cuts ~50% off the previous portrait height.
-   background-position: center top so the subject's face still
-   anchors above the gradient mask. */
+/* Cover banner. 16/9 keeps the subject's face well-framed while
+ * shaving ~25% off the previous 4/3 height. background-position keeps
+ * the face anchored above the gradient mask. */
 .universeCover {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   width: 100%;
   background-color: var(--surface-2);
   background-size: cover;
@@ -66,54 +80,57 @@
   );
 }
 
-/* Name + tag float above the cover. */
+/* Name + tag float above the cover — tighter offsets for the smaller
+ * cover area. */
 .universeHeader {
   position: absolute;
-  bottom: 14px;
-  left: 18px;
-  right: 18px;
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   color: #ffffff;
 }
 .universeName {
-  font-size: 22px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: -0.022em;
-  line-height: 1.05;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  letter-spacing: -0.018em;
+  line-height: 1.1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
 }
 .universeTag {
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 4px 10px;
+  padding: 2px 7px;
   border-radius: var(--r-full);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
 .universeBody {
-  padding: 16px 18px 18px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .universeDesc {
-  font-size: 13px;
+  font-size: 11.5px;
   color: var(--text-mute);
   letter-spacing: -0.005em;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
+/* Stat grid. Gap bumped to 10px (was 8px) so each tile feels like its
+ * own card, not part of a continuous block. */
 .statGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
 
 @media (max-width: 720px) {
@@ -122,39 +139,52 @@
   }
 }
 
+/* Outlined chip instead of filled block — the previous filled tiles
+ * (background: surface-2 + no border) read as a single colored slab
+ * when grouped. Each chip now has its own border + lighter fill so
+ * the 4 metrics scan as distinct indicators rather than four cells of
+ * the same data. */
 .statTile {
-  padding: 10px 12px;
+  padding: 7px 9px 8px;
   border-radius: var(--r-sm);
-  background: var(--surface-2);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  min-width: 0;
 }
 
 .statValue {
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.012em;
   font-variant-numeric: tabular-nums;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .statLabel {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--text-mute);
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tiny pulsing live dot reused on the "Online agora" stat. */
 .liveDot {
   position: relative;
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   flex-shrink: 0;
 }
 .liveDotCore {
@@ -184,16 +214,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 4px;
-  padding-top: 14px;
+  margin-top: 2px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-soft);
 }
 
 .openLink {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
+  gap: 5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-mute);
   text-decoration: none;
@@ -207,7 +237,7 @@
 }
 .openLink:hover {
   color: var(--text);
-  gap: 9px;
+  gap: 8px;
 }
 .openLink svg {
   transition: transform var(--dur-fast) var(--ease-out);
@@ -219,13 +249,13 @@
 .engagementBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
+  gap: 4px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--brand, #4F46E5);
   background: rgba(79, 70, 229, 0.10);
   border: 1px solid rgba(79, 70, 229, 0.25);
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: var(--r-full);
 }
 
