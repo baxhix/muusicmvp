@@ -50,7 +50,11 @@
 }
 
 .name {
-  font-size: 12px;
+  /* Bumped 12 → 14 so the creator's name reads as proper primary
+   * content in the post header, not a caption. The verified badge
+   * size scaled accordingly via VerifiedBadge's size prop on the
+   * MediaPost render (kept at 13 for crisp optical match). */
+  font-size: 14px;
   font-weight: 700;
   color: rgba(245,245,247,0.92);
   letter-spacing: -0.01em;
@@ -70,8 +74,11 @@
 }
 
 .time {
-  font-size: 10px;
-  color: rgba(245,245,247,0.3);
+  /* Bumped 10 → 12 to match the larger name above; still mono +
+   * dimmed so it reads as the secondary timestamp annotation, not
+   * a peer of the name. */
+  font-size: 12px;
+  color: rgba(245,245,247,0.4);
   font-family: var(--mono);
 }
 
