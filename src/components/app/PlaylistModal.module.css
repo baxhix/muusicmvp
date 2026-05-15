@@ -178,8 +178,9 @@
   border-color: rgba(255,255,255,0.16);
 }
 .searchInput:focus {
-  border-color: rgba(125, 211, 252, 0.55);
-  background: rgba(125, 211, 252, 0.04);
+  /* White focus ring across all /app inputs (no more accent tint). */
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
 }
 /* Some o "x" nativo dos navegadores */
 .searchInput::-webkit-search-cancel-button {
@@ -388,25 +389,31 @@
 
 /* "Ver mais" CTA — visible only when the playlist is truncated to
  * its preview slice (top 7) and the user hasn't expanded yet.
- * Renders below the list; styled as a subtle text button rather
- * than a primary action so it doesn't compete with the track rows. */
+ *
+ * Standardized "Ver mais" pattern across the /app modals (Playlist,
+ * Superfãs, Notificações): borderless, subtle background tint that
+ * brightens on hover. Keep this in sync with .seeMoreBtn in
+ * SuperfansPanel.module.css — both should look identical. */
 .viewMoreBtn {
-  margin: 4px auto 14px;
-  padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 999px;
-  color: rgba(245, 245, 247, 0.85);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 8px auto 14px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.025);
+  border: none;
+  border-radius: 6px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
   align-self: center;
 }
 .viewMoreBtn:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  color: #F5F5F7;
 }

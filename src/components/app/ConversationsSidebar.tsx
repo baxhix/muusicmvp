@@ -93,7 +93,7 @@ export default function ConversationsSidebar({
       aria-hidden={!open}
     >
       <header className={styles.header}>
-        <h2 className={styles.title}>Suas conversas</h2>
+        <h2 className={styles.title}>Chat</h2>
         <button
           type="button"
           className={styles.newBtn}

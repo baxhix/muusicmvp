@@ -206,19 +206,20 @@
 }
 
 /* ── Current Fanpoints balance ──
-   Compact amber chip sitting immediately under the artist header
-   (i.e. right below the photo + name row). Reads as a wallet/
-   status indicator: small star icon + the count in bold accent
-   amber + a muted "Fanpoints" label. */
+   Inline wallet line under the artist header. Per product feedback
+   the amber tinted chip background was removed — the star icon +
+   bold amber count + muted "Fanpoints" label already carry enough
+   signal on their own, and removing the box keeps the surface
+   visually quieter. */
 .fanpointsRow {
   display: flex;
   align-items: center;
   gap: 7px;
   margin: 0 16px 10px;
-  padding: 7px 11px;
-  border-radius: 10px;
-  background: rgba(245, 158, 11, 0.10);
-  border: 1px solid rgba(245, 158, 11, 0.22);
+  padding: 4px 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
 }
 .fanpointsIcon {
   display: inline-flex;
@@ -241,6 +242,36 @@
   color: rgba(245, 245, 247, 0.55);
   letter-spacing: -0.005em;
 }
+
+/* ── Discrete Loja da Boiadeira affiliate link ──
+   Inline pill-styled anchor under the wallet line. Intentionally
+   low-contrast — meant to read as a quiet secondary affordance,
+   not a CTA that competes with the missions footer. Hover lifts
+   the contrast slightly so it still feels interactive. */
+.storeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: 0 16px 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.62);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  width: fit-content;
+}
+.storeLink:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
+.storeLink svg { flex-shrink: 0; }
 
 /* ── Divider ── */
 .divider {

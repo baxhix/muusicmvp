@@ -71,8 +71,9 @@
   transition: border-color 0.15s, background 0.15s;
 }
 .inputRow:focus-within {
-  border-color: rgba(168, 85, 247, 0.45);
-  background: rgba(168, 85, 247, 0.04);
+  /* White focus ring across all /app inputs (no more accent tint). */
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
 }
 .inputAvatar {
   width: 22px;

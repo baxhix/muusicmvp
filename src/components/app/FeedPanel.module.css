@@ -1,11 +1,11 @@
 /* ── FEED PANEL ── */
 .panel {
   position: fixed;
-  /* Feed occupies exactly 90vh, vertically centered. 5vh gutter
+  /* Feed occupies exactly 80vh, vertically centered. 10vh gutter
    * top + bottom keeps the panel just shy of the viewport edges
    * so the navbar and the topbar still have room to breathe. */
-  top: 5vh;
-  height: 90vh;
+  top: 10vh;
+  height: 80vh;
   /* Anchored 42px to the LEFT of the chat dock list.
    *
    * Chat dock geometry (LiveChatStack.module.css):

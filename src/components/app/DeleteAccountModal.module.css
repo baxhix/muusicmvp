@@ -215,8 +215,9 @@
   border-color: rgba(255, 255, 255, 0.16);
 }
 .input:focus {
-  border-color: rgba(125, 211, 252, 0.55);
-  background: rgba(125, 211, 252, 0.04);
+  /* White focus ring across all /app inputs (no more accent tint). */
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* ── Footer ─────────────────────────────── */

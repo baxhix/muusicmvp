@@ -78,7 +78,10 @@
 }
 .input::placeholder { color: rgba(245, 245, 247, 0.35); }
 .input:focus {
-  border-color: rgba(61, 219, 116, 0.55);
+  /* White focus ring — matches the /app input pattern (no accent
+   * tint). Keeps the magic-link form visually consistent with the
+   * rest of the platform. */
+  border-color: rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.06);
 }
 .input:disabled { opacity: 0.6; cursor: not-allowed; }

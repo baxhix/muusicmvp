@@ -97,7 +97,9 @@
 }
 .searchInput::placeholder { color: rgba(245, 245, 247, 0.4); }
 .searchInput:focus {
-  border-color: rgba(61, 219, 116, 0.5);
+  /* Per product feedback every focused input across /app uses a
+   * white border now — no more accent green / cyan tint. */
+  border-color: rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.07);
 }
 /* Hide the native ✕ that some browsers add to <input type=search>. */

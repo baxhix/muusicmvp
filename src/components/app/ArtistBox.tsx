@@ -9,6 +9,13 @@ import {
 } from '@/hooks/useDailyMissions';
 import styles from './ArtistBox.module.css';
 
+// Loja da Boiadeira — official Ana Castela store. Same URL the
+// TopBar drawer points to, duplicated here so the ArtistBox stays
+// a self-contained module (importing TopBar internals would couple
+// the two surfaces unnecessarily).
+const STORE_URL =
+  'https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka';
+
 /**
  * Per-mission display metadata. Stays client-side because there's no
  * reason for the server to ship icons + Portuguese copy on every
@@ -112,6 +119,35 @@ export default function ArtistBox() {
         </span>
         <span className={styles.fanpointsLabel}>Fanpoints</span>
       </div>
+
+      {/* Loja da Boiadeira — discrete affiliate link to the official
+          Ana Castela store. Same URL surfaced from the TopBar's
+          drawer "Loja oficial" entry; duplicated here as a soft
+          inline CTA so members can reach the shop straight from the
+          artist box without opening the drawer. */}
+      <a
+        className={styles.storeLink}
+        href={STORE_URL}
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="12"
+          height="12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M3 9l1.5-5h15L21 9" />
+          <path d="M4 9h16v11H4z" />
+          <path d="M9 13h6" />
+        </svg>
+        <span>Loja da Boiadeira</span>
+      </a>
 
       {/* ── Collapsible content ── */}
       <div

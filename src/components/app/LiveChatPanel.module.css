@@ -525,7 +525,8 @@
   transition: border-color 0.15s, background 0.15s;
 }
 .field:focus {
-  border-color: rgba(61, 219, 116, 0.5);
+  /* White focus ring across all /app inputs (no more accent tint). */
+  border-color: rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.06);
 }
 .field::placeholder { color: rgba(245, 245, 247, 0.4); }
