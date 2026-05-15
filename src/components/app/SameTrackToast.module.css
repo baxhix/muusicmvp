@@ -1,11 +1,14 @@
-/* Floating queue of "same music" toasts, positioned just above the
-   bottom nav. Stacks vertically when multiple events arrive at once.
-   Sits between the player area and the navbar at the bottom-center. */
+/* Floating queue of "same music" toasts, positioned right above the
+   bottom nav. Stacks vertically when multiple events arrive at once. */
 .root {
   position: fixed;
-  /* Above the bottom nav (~72px) + safe gap. On mobile the player sits
-     just above the nav, so we anchor at ~150px to clear it. */
-  bottom: 96px;
+  /* Navbar pill geometry (BottomNav.module.css):
+   *   - .nav padding-bottom 24px + pill height ~50px ⇒ pill top
+   *     sits at ~74px from the screen bottom.
+   *   - We dock the toast at 84px so it floats with a 10px gap
+   *     directly above the pill, per product feedback ("logo
+   *     acima da navbar"). */
+  bottom: 84px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
@@ -18,8 +21,10 @@
 }
 
 @media (max-width: 768px) {
-  /* Above the player + bottom nav on mobile */
-  .root { bottom: 168px; }
+  /* On mobile the player rises above the nav, so the toast needs to
+   * clear both. Keep the same "right above the navbar" intent — just
+   * land it a bit higher so the player doesn't overlap. */
+  .root { bottom: 156px; }
 }
 
 @keyframes sameTrackIn {
