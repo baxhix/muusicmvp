@@ -1,12 +1,11 @@
 /* ── FEED PANEL ── */
 .panel {
   position: fixed;
-  /* Feed occupies exactly 80vh, vertically centered. The previous
-   * top:22vh + bottom:20px gave roughly 78vh of arbitrary height.
-   * 80vh centered = 10vh gutter top + bottom — symmetric and the
-   * panel matches the SuperfansPanel's "framed" feel. */
-  top: 10vh;
-  height: 80vh;
+  /* Feed occupies exactly 90vh, vertically centered. 5vh gutter
+   * top + bottom keeps the panel just shy of the viewport edges
+   * so the navbar and the topbar still have room to breathe. */
+  top: 5vh;
+  height: 90vh;
   /* Anchored 42px to the LEFT of the chat dock list.
    *
    * Chat dock geometry (LiveChatStack.module.css):
