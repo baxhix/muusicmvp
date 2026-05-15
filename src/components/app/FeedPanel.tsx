@@ -119,7 +119,7 @@ const MEDIA: MediaPostData[] = [
   },
   {
     type: 'video',
-    user: 'Ana Castela',
+    user: 'Central Ana Castela',
     avatar: '/central-anacastela.png',
     time: '22min',
     likes: 9103,
@@ -131,7 +131,7 @@ const MEDIA: MediaPostData[] = [
   },
   {
     type: 'video',
-    user: 'Ana Castela',
+    user: 'Central Ana Castela',
     avatar: '/central-anacastela.png',
     time: '1h',
     likes: 6240,
@@ -168,8 +168,14 @@ function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
   // Stories surface in their own rail (see useAdminStories below),
   // never in the main feed.
   if (p.type === 'story') return null;
-  const user = p.author?.name || 'Central Ana Castela';
-  const avatar = p.author?.avatarUrl || '/central-anacastela.png';
+  // Per product feedback every post in /app's feed surfaces as
+  // "Central Ana Castela" — the platform's official artist
+  // channel. Admin-supplied author metadata (`p.author?.name`,
+  // `p.author?.avatarUrl`) is intentionally ignored here so the
+  // feed reads as a single coherent channel. Revisit if/when we
+  // want multi-author feeds again.
+  const user = 'Central Ana Castela';
+  const avatar = '/central-anacastela.png';
   const time = relativeTime(p.publishedAt ?? p.createdAt);
 
   const base = {
