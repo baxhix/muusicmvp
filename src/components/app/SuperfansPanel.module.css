@@ -24,9 +24,15 @@
   top: auto;
   bottom: 100px;
   max-height: calc(100vh - 160px);
+  /* Sized + centered the same way as PlaylistModal — per product
+   * feedback the two cards should share the same footprint
+   * (520px → min(480px, calc(100vw - 32px))). `transform:
+   * translateX(-50%)` handles the centering now; the keyframes
+   * below preserve that translateX so the rise/fall animations
+   * don't undo the horizontal centering. */
   left: 50%;
-  width: 520px;
-  margin-left: -260px;
+  width: min(480px, calc(100vw - 32px));
+  transform: translateX(-50%);
   z-index: 25;
   display: flex;
   flex-direction: column;
@@ -61,13 +67,18 @@
   animation: superfans-fall 320ms cubic-bezier(0.7, 0, 0.84, 0) both;
 }
 
+/* Each keyframe now carries `translateX(-50%)` explicitly so the
+ * horizontal centering survives across the rise/fall — otherwise
+ * the animation's transform would overwrite the resting
+ * `transform: translateX(-50%)` on `.panel` and drop the card to
+ * `left: 50%` un-corrected (off-center 240px to the right). */
 @keyframes superfans-rise {
-  from { opacity: 0; transform: translateY(60vh) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)    scale(1); }
+  from { opacity: 0; transform: translate(-50%, 60vh) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, 0)    scale(1); }
 }
 @keyframes superfans-fall {
-  from { opacity: 1; transform: translateY(0)    scale(1); }
-  to   { opacity: 0; transform: translateY(40vh) scale(0.97); }
+  from { opacity: 1; transform: translate(-50%, 0)    scale(1); }
+  to   { opacity: 0; transform: translate(-50%, 40vh) scale(0.97); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -449,20 +460,9 @@
   color: #F5F5F7;
 }
 
-/* ── Mobile / narrow ────────────────────── */
-
-@media (max-width: 560px) {
-  .panel {
-    width: calc(100% - 32px);
-    margin-left: 0;
-    transform: translateX(-50%);
-  }
-  @keyframes superfans-rise {
-    from { opacity: 0; transform: translate(-50%, 60vh) scale(0.97); }
-    to   { opacity: 1; transform: translate(-50%, 0)    scale(1); }
-  }
-  @keyframes superfans-fall {
-    from { opacity: 1; transform: translate(-50%, 0)    scale(1); }
-    to   { opacity: 0; transform: translate(-50%, 40vh) scale(0.97); }
-  }
-}
+/* ── Mobile / narrow ──────────────────────
+ * No explicit override needed anymore: the desktop `.panel` width
+ * clamps via `min(480px, calc(100vw - 32px))` so the card auto-
+ * fits any viewport ≥ 32px wide. The previous breakpoint
+ * (520px desktop + calc(100%-32) mobile) was retired together
+ * with the fixed-width desktop layout. */

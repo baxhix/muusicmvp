@@ -407,26 +407,35 @@ export default function AppPage() {
                 notifications to surface. Purely visual; pointer
                 events stay on for future hover affordances. */}
             <HeroOrb size={120} />
-            {/* NotificationBell stays mounted (its panel + event
-                listener are needed) but renders without the trigger
-                glyph. The visible entry point now lives in the
-                BottomNav notifications slot, which dispatches the
-                'app:open-notifications' CustomEvent the bell
-                listens to. Controlled mode — the parent's overlay
-                coordinator owns the open state so opening another
-                surface auto-closes the bell panel (and vice-versa). */}
-            <NotificationBell
-              hideTrigger
-              open={showNotifications}
-              onOpenChange={(next) => {
-                if (next) setActiveOverlay('notifications');
-                else
-                  setActiveOverlay((curr) =>
-                    curr === 'notifications' ? null : curr,
-                  );
-              }}
-            />
           </div>
+
+          {/* NotificationBell stays mounted (its panel + event
+              listener are needed) but renders without the trigger
+              glyph. The visible entry point now lives in the
+              BottomNav notifications slot, which dispatches the
+              'app:open-notifications' CustomEvent the bell
+              listens to. Controlled mode — the parent's overlay
+              coordinator owns the open state so opening another
+              surface auto-closes the bell panel (and vice-versa).
+              IMPORTANT: rendered OUTSIDE `.topBar` because the
+              topBar uses `transform: translateX(-50%)`, which
+              creates a containing block for `position: fixed`
+              descendants — that was anchoring the panel to the
+              topBar's coordinate space and pushing it off the top
+              of the viewport. Hoisting the bell to the mapLayer
+              level lets the panel's `position: fixed` resolve
+              against the actual viewport. */}
+          <NotificationBell
+            hideTrigger
+            open={showNotifications}
+            onOpenChange={(next) => {
+              if (next) setActiveOverlay('notifications');
+              else
+                setActiveOverlay((curr) =>
+                  curr === 'notifications' ? null : curr,
+                );
+            }}
+          />
 
           {/* Floating overlay of every real online user — anchored to
               deterministic screen positions so the roster is always visible
