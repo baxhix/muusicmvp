@@ -1,6 +1,13 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useNotificationsLive } from '@/hooks/useNotificationsLive';
 import type { ApiNotification } from '@/lib/api/types';
 import styles from './NotificationBell.module.css';
@@ -140,12 +147,45 @@ function describe(n: ApiNotification): ReactNode {
  */
 interface NotificationBellProps {
   hideTrigger?: boolean;
+  /** When set, the parent owns the open state — the panel only
+   *  reads from this prop and reports changes via onOpenChange.
+   *  Used by /app's overlay coordinator so opening another modal
+   *  can force-close this one (and vice-versa). */
+  open?: boolean;
+  onOpenChange?: (next: boolean) => void;
 }
 
-export default function NotificationBell({ hideTrigger = false }: NotificationBellProps = {}) {
+export default function NotificationBell({
+  hideTrigger = false,
+  open: openProp,
+  onOpenChange,
+}: NotificationBellProps = {}) {
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotificationsLive();
-  const [open, setOpen] = useState(false);
+  // Uncontrolled fallback — used when the parent doesn't pass an
+  // explicit open prop. In /app we go full-controlled.
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  // setOpen is memoized so the useEffect listeners below don't churn
+  // their bound handlers on every render. The latest `open` value is
+  // read off a ref so the function identity stays stable across
+  // toggles (otherwise the outside-click effect would re-subscribe
+  // every time the panel opens or closes).
+  const openRef = useRef(open);
+  openRef.current = open;
+  const setOpen = useCallback(
+    (next: boolean | ((prev: boolean) => boolean)) => {
+      const resolved =
+        typeof next === 'function' ? next(openRef.current) : next;
+      if (isControlled) {
+        onOpenChange?.(resolved);
+      } else {
+        setInternalOpen(resolved);
+      }
+    },
+    [isControlled, onOpenChange],
+  );
   const [pulse, setPulse] = useState(false);
   const lastUnreadRef = useRef(unreadCount);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -171,7 +211,7 @@ export default function NotificationBell({ hideTrigger = false }: NotificationBe
     };
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
-  }, [open]);
+  }, [open, setOpen]);
 
   // External-open hook. The BottomNav's right-most slot now is a
   // notifications icon — it fires this CustomEvent so the same
@@ -183,7 +223,7 @@ export default function NotificationBell({ hideTrigger = false }: NotificationBe
     window.addEventListener('app:open-notifications', onExternalOpen);
     return () =>
       window.removeEventListener('app:open-notifications', onExternalOpen);
-  }, []);
+  }, [setOpen]);
 
   return (
     <div

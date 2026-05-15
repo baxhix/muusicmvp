@@ -6,6 +6,18 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { globeStore } from '@/lib/globeStore';
 import styles from './BottomNav.module.css';
 
+/** Which of the singleton overlays is currently open in /app.
+ *  Mirrors the `ActiveOverlay` union in app/page.tsx — kept as a
+ *  loose string union here so BottomNav stays decoupled from the
+ *  page's local types. The active-dot under each icon lights up
+ *  for the matching value. */
+export type BottomNavActiveOverlay =
+  | null
+  | 'superfans'
+  | 'playlist'
+  | 'superchat'
+  | 'notifications';
+
 interface BottomNavProps {
   onSuperfansOpen?: () => void;
   onProfileOpen?: () => void;
@@ -14,12 +26,18 @@ interface BottomNavProps {
   /** Open the playlist modal (catalog of registered tracks). Wired
    *  in page.tsx to setShowPlaylist(true). */
   onPlaylistOpen?: () => void;
+  /** Which overlay is currently open — drives the active-dot under
+   *  the matching nav icon so the user always knows which modal is
+   *  on screen. Null when no overlay is open (only the map slot may
+   *  still light up via pathname). */
+  activeOverlay?: BottomNavActiveOverlay;
 }
 
 export default function BottomNav({
   onSuperfansOpen,
   onSuperchatOpen,
   onPlaylistOpen,
+  activeOverlay = null,
 }: BottomNavProps = {}) {
   const pathname = usePathname();
 
@@ -79,7 +97,7 @@ export default function BottomNav({
             other nav item so the row reads as a uniform set. */}
         <button
           type="button"
-          className={styles.item}
+          className={`${styles.item} ${activeOverlay === 'playlist' ? styles.itemActive : ''}`}
           onClick={onPlaylistOpen}
           aria-label="Abrir lista de músicas"
           data-tooltip="Músicas"
@@ -99,7 +117,7 @@ export default function BottomNav({
 
         {/* Center crown — Superfãs */}
         <button
-          className={`${styles.item} ${styles.itemCenter}`}
+          className={`${styles.item} ${styles.itemCenter} ${activeOverlay === 'superfans' ? styles.itemActive : ''}`}
           onClick={onSuperfansOpen}
           aria-label="Superfãs"
           data-tooltip="Superfãs"
@@ -114,12 +132,18 @@ export default function BottomNav({
             />
             <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
+          {/* Active-dot — shown when SuperfansPanel is open. Hidden
+              by default via `.itemCenter .dot` so it doesn't sit
+              under the crown; the `.itemCenter.itemActive .dot`
+              override below brings it back when this slot owns the
+              active overlay. */}
+          <span className={styles.dot} aria-hidden="true" />
         </button>
 
         {/* Superchat */}
         <button
           type="button"
-          className={styles.item}
+          className={`${styles.item} ${activeOverlay === 'superchat' ? styles.itemActive : ''}`}
           onClick={onSuperchatOpen}
           aria-label="Abrir Superchat"
           data-tooltip="Superchat"
@@ -142,7 +166,7 @@ export default function BottomNav({
             here via the 'app:open-notifications' CustomEvent. */}
         <button
           type="button"
-          className={styles.item}
+          className={`${styles.item} ${activeOverlay === 'notifications' ? styles.itemActive : ''}`}
           onClick={openNotifications}
           aria-label="Notificações"
           data-tooltip="Notificações"

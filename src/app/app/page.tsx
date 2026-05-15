@@ -110,14 +110,47 @@ export default function AppPage() {
    * other-user button set (Acenar / Enviar mensagem).
    */
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
-  // Single state for "ranking-style" panel — both the Ranking button in
-  // the top bar and the crown icon in the bottom nav route here. Uses the
-  // SuperfansPanel UI fed with real /api/ranking data.
-  const [showSuperfans, setShowSuperfans] = useState(false);
+  /** Singleton overlay coordinator. Only one of these surfaces can
+   *  be open at a time — opening any of them auto-closes whichever
+   *  is currently open. Notifications is included here too even
+   *  though the component manages its own visible state, because
+   *  we pass `open` + `onOpenChange` as a controlled prop. */
+  type ActiveOverlay = null | 'superfans' | 'playlist' | 'superchat' | 'notifications';
+  const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
+  const showSuperfans     = activeOverlay === 'superfans';
+  const showPlaylist      = activeOverlay === 'playlist';
+  const showSuperchat     = activeOverlay === 'superchat';
+  const showNotifications = activeOverlay === 'notifications';
+
+  // Per-overlay setShow helpers — preserve the boolean shape the
+  // existing call sites use. Setting true swaps to that overlay
+  // (closing any other); setting false only clears the state if
+  // THIS overlay is the active one (so closing Playlist while
+  // Notifications is open doesn't bounce Notifications shut).
+  const setShowSuperfans = (v: boolean) => {
+    if (v) setActiveOverlay('superfans');
+    else setActiveOverlay((curr) => (curr === 'superfans' ? null : curr));
+  };
+  const setShowPlaylist = (v: boolean) => {
+    if (v) setActiveOverlay('playlist');
+    else setActiveOverlay((curr) => (curr === 'playlist' ? null : curr));
+  };
+  const setShowSuperchat = (v: boolean) => {
+    if (v) setActiveOverlay('superchat');
+    else setActiveOverlay((curr) => (curr === 'superchat' ? null : curr));
+  };
+
+  // Listen for the BottomNav's notification trigger — routes
+  // through the same coordinator so opening notifications closes
+  // any other open overlay.
+  useEffect(() => {
+    const onOpenNotif = () => setActiveOverlay('notifications');
+    window.addEventListener('app:open-notifications', onOpenNotif);
+    return () => window.removeEventListener('app:open-notifications', onOpenNotif);
+  }, []);
+
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [showPlaylist, setShowPlaylist] = useState(false);
-  const [showSuperchat, setShowSuperchat] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
   // Separate from showUserPicker because the UserPicker renders in
   // a different mode (with name field + multi-select + Create CTA).
@@ -332,8 +365,20 @@ export default function AppPage() {
                 glyph. The visible entry point now lives in the
                 BottomNav notifications slot, which dispatches the
                 'app:open-notifications' CustomEvent the bell
-                listens to. */}
-            <NotificationBell hideTrigger />
+                listens to. Controlled mode — the parent's overlay
+                coordinator owns the open state so opening another
+                surface auto-closes the bell panel (and vice-versa). */}
+            <NotificationBell
+              hideTrigger
+              open={showNotifications}
+              onOpenChange={(next) => {
+                if (next) setActiveOverlay('notifications');
+                else
+                  setActiveOverlay((curr) =>
+                    curr === 'notifications' ? null : curr,
+                  );
+              }}
+            />
           </div>
 
           {/* Floating overlay of every real online user — anchored to
@@ -352,6 +397,9 @@ export default function AppPage() {
           onSuperfansOpen={() => setShowSuperfans(true)}
           onProfileOpen={() => setShowProfile(true)}
           onSuperchatOpen={() => setShowSuperchat(true)}
+          /* Drives the active-dot under each nav icon — lights the
+             slot matching whichever singleton overlay is open. */
+          activeOverlay={activeOverlay}
         />
       </div>
 

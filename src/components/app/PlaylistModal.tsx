@@ -133,11 +133,12 @@ export default function PlaylistModal({
 
   return (
     <>
-      <div
-        className={`${styles.backdrop} ${isOut ? styles.backdropOut : ''}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      {/* Backdrop removed per product feedback — was covering the
+          BottomNav and dimming the rest of the page. PlaylistModal
+          now mirrors SuperfansPanel: just the panel, dismissible
+          via the close button or Escape (handled above). The
+          backdrop CSS classes stay in the module for the closing
+          animation hook on the panel itself. */}
       <aside
         className={`${styles.panel} ${isIn ? styles.panelEntering : ''} ${isOut ? styles.panelClosing : ''}`}
         onAnimationEnd={handleAnimationEnd}

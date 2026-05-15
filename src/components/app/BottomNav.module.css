@@ -271,8 +271,16 @@
   box-shadow: none !important;
 }
 .itemCenter svg { width: 22px; height: 22px; }
-.itemCenter .label,
+.itemCenter .label { display: none; }
+/* The crown center button hides its dot by default — but when the
+ * SuperfansPanel is open, we want the same lilac dot the other
+ * slots get. The dot sits a few pixels lower than the regular .dot
+ * rule because the crown svg is taller. */
 .itemCenter .dot { display: none; }
+.itemCenter.itemActive .dot {
+  display: block;
+  bottom: -4px;
+}
 
 @media (max-width: 480px) {
   .nav { padding: 10px 0 18px; }
