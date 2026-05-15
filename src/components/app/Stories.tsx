@@ -36,47 +36,52 @@ function adminStoryToStory(p: ApiFeedPost): Story | null {
   };
 }
 
+/**
+ * Mock stories rendered when no admin-CMS stories are present.
+ *
+ * All entries belong to the same creator (Ana Castela) per product
+ * decision — the name labels under each ring were already removed
+ * in Stories.tsx render. Images live under /public/stories/ so they
+ * ship with the build (no third-party CDN dependency for these
+ * placeholders). The avatar reuses the existing
+ * /public/central-anacastela.png we already serve elsewhere.
+ *
+ * To swap any of these previews: drop a new file at the same path
+ * (public/stories/ana-{1..5}.jpg) — no code change needed. */
 const STORIES: Story[] = [
   {
     id: 's1',
     user: 'Ana Castela',
-    avatar: 'https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa',
-    img: 'https://images.unsplash.com/photo-1501386761578-eaa54b4e9f8a?w=800&q=80',
+    avatar: '/central-anacastela.png',
+    img: '/stories/ana-1.jpg',
     seen: false,
   },
   {
     id: 's2',
-    user: 'Gusttavo Lima',
-    avatar: 'https://i.pravatar.cc/96?img=11',
-    img: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
+    user: 'Ana Castela',
+    avatar: '/central-anacastela.png',
+    img: '/stories/ana-2.jpg',
     seen: false,
   },
   {
     id: 's3',
-    user: 'Wesley Safadão',
-    avatar: 'https://i.pravatar.cc/96?img=22',
-    img: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80',
+    user: 'Ana Castela',
+    avatar: '/central-anacastela.png',
+    img: '/stories/ana-3.jpg',
     seen: false,
   },
   {
     id: 's4',
-    user: 'Simone & Simaria',
-    avatar: 'https://i.pravatar.cc/96?img=45',
-    img: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80',
+    user: 'Ana Castela',
+    avatar: '/central-anacastela.png',
+    img: '/stories/ana-4.jpg',
     seen: true,
   },
   {
     id: 's5',
-    user: 'Marília M.',
-    avatar: 'https://i.pravatar.cc/96?img=35',
-    img: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=800&q=80',
-    seen: true,
-  },
-  {
-    id: 's6',
-    user: 'Zé Neto & Cris',
-    avatar: 'https://i.pravatar.cc/96?img=60',
-    img: 'https://images.unsplash.com/photo-1468234560867-5cb522c3f00a?w=800&q=80',
+    user: 'Ana Castela',
+    avatar: '/central-anacastela.png',
+    img: '/stories/ana-5.jpg',
     seen: true,
   },
 ];
