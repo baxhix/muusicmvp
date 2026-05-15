@@ -16,17 +16,32 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1);    }
 }
 
-/* Root — anchored just above the player */
+/* Root — anchored just above the bottom navbar, horizontally
+ * centered. Per product feedback the listener simulation used to
+ * sit above the player (left: 68px, dynamic bottom based on
+ * player size) but the row reads as a global ambient signal, not
+ * a player-stack annotation — so it now lives above the navbar
+ * regardless of how the player is sized.
+ *
+ * Vertical stack near the bottom edge (all in fixed coords from
+ * the viewport bottom):
+ *   ~74px  — top of the navbar pill (BottomNav padding-bottom 24
+ *            + pill height ~50)
+ *   84px   — SameTrackToast lives here (pop-in pill, ~52px tall)
+ *   ~136px — top of that toast when it's visible
+ *   152px  — bottom of THIS row (avatars are 36px tall)
+ *   ~188px — top of this row's avatars
+ *
+ * 16px clear gap between the toast's top edge and this row's
+ * bottom edge keeps them readable as separate stacked surfaces
+ * when both happen to be on screen at the same time. */
 .root {
   position: fixed;
-  bottom: 102px; /* overridden inline; kept as fallback */
-  /* Anchored to the same X as the NowPlaying player (which is
-     pinned to left: 68px to align with the ArtistBox column). The
-     two surfaces share a left edge so the "+455 pessoas ouvindo
-     com você" row always reads as part of the player stack,
-     never floating off to the side. */
-  left: 68px;
+  bottom: 152px;
+  left: 50%;
+  transform: translateX(-50%);
   width: auto;
+  max-width: calc(100vw - 32px);
   pointer-events: auto;
   z-index: 20;
   transition: bottom 0.4s cubic-bezier(0.16,1,0.3,1);

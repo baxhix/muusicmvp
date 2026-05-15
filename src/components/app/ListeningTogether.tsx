@@ -22,11 +22,21 @@ const EXIT_MS  = 500;  // duration of exit animation cycle
 type PlayerSize = 'mini' | 'horizontal' | 'expanded' | 'video';
 
 interface ListeningTogetherProps {
+  /**
+   * Vestigial props from when this row floated above the player
+   * (its bottom offset grew with the player's vertical footprint).
+   * Per product feedback the row now sits above the bottom navbar
+   * at a fixed position, so these no longer drive layout. Kept on
+   * the type so existing call sites don't break.
+   *
+   * @deprecated Will be removed once all consumers stop passing them.
+   */
   playerExpanded?: boolean;
+  /** @deprecated See `playerExpanded`. */
   playerSize?: PlayerSize;
 }
 
-export default function ListeningTogether({ playerExpanded = false, playerSize }: ListeningTogetherProps) {
+export default function ListeningTogether(_props: ListeningTogetherProps = {}) {
   const [hoveredId, setHoveredId]   = useState<string | null>(null);
   const [visibleCount, setVisible]  = useState(0);
   const [exiting, setExiting]       = useState(false);
@@ -55,20 +65,13 @@ export default function ListeningTogether({ playerExpanded = false, playerSize }
     return () => clearTimeout(t);
   }, [visibleCount, exiting]);
 
-  // Offset baseado no tamanho do player:
-  // - mini/horizontal: ~80px (apenas pílula compacta)
-  // - expanded:        +112px de altura (progress + controles)
-  // - video:           +180px de iframe 16:9 (320px largura → 180px altura)
-  // playerSize tem prioridade sobre playerExpanded (boolean legado)
-  const bottomOffset = (() => {
-    if (playerSize === 'video') return 308;     // 102 base + ~206 (vídeo + audio expandido)
-    if (playerSize === 'expanded') return 214;
-    if (playerSize === 'mini' || playerSize === 'horizontal') return 102;
-    return playerExpanded ? 214 : 102;
-  })();
+  // Vertical position is now fully owned by the CSS (`bottom: 88px`
+  // above the navbar). The component used to compute a dynamic
+  // offset based on the player's size — removed alongside the
+  // re-anchor per product feedback.
 
   return (
-    <div className={styles.root} style={{ bottom: bottomOffset }}>
+    <div className={styles.root}>
       <div className={styles.avatars}>
         {LISTENERS.slice(0, visibleCount).map((user, i) => (
           <div
