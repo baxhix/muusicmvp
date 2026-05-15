@@ -5,6 +5,17 @@
   display: inline-block;
 }
 
+/* Triggerless mode — bell + halo hidden, panel still renders via
+ * the fixed-position variant below. Used when an external surface
+ * (BottomNav) is the only visible entry point. Width:0 keeps the
+ * adjacent FilterTabs / Superchat from feeling a layout shift. */
+.wrapHidden {
+  width: 0;
+  height: 0;
+  overflow: visible; /* don't clip the dropdown panel */
+  pointer-events: none;
+}
+
 .bell {
   position: relative;
   display: inline-flex;
@@ -82,6 +93,16 @@
   -webkit-backdrop-filter: blur(14px);
   animation: pop 0.15s ease;
   z-index: 60;
+  pointer-events: auto; /* always interactive even when .wrap is non-clickable */
+}
+
+/* Triggerless-mode panel positioning. The bell glyph is gone so
+ * `.wrap` collapsed to 0 — we anchor the panel to the viewport's
+ * top-right instead, roughly where the bell used to live. */
+.panelFixed {
+  position: fixed;
+  top: 64px;
+  right: 16px;
 }
 @keyframes pop {
   from { opacity: 0; transform: translateY(-4px); }

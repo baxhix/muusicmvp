@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { track } from '@/lib/analytics';
 import CommentsPanel from './CommentsPanel';
 import VerifiedBadge from './VerifiedBadge';
@@ -156,6 +156,19 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Authoritative comment count. Seeded from the prop (which is
+  // either the mock value or the real server count returned by
+  // /api/feed/posts), then updated live by CommentsPanel whenever
+  // the user creates / deletes a top-level OR a reply. We don't
+  // rely on `data.comments` after mount because the prop is stale
+  // once the user interacts.
+  const [commentCount, setCommentCount] = useState<number>(data.comments);
+  // Sync if the parent re-renders with a fresh post object
+  // (e.g. admin posts hydrating after the initial fetch).
+  useEffect(() => {
+    setCommentCount(data.comments);
+  }, [data.comments]);
+
   const postKey = postKeyFor(data);
 
   const togglePlay = () => {
@@ -291,8 +304,9 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           );
         })()}
 
-        {/* Comment button — count hidden when zero so the icon
-            doesn't sit next to a literal "0". */}
+        {/* Comment button — uses the live count (commentCount)
+            that's updated by CommentsPanel via onCountChange.
+            Hidden when zero so the icon doesn't sit next to a "0". */}
         <button
           className={`${styles.btn} ${commentsOpen ? styles.btnLiked : ''}`}
           onClick={() => setCommentsOpen((v) => !v)}
@@ -300,7 +314,7 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           aria-expanded={commentsOpen}
         >
           <CommentIcon />
-          {data.comments > 0 ? data.comments : null}
+          {commentCount > 0 ? commentCount : null}
         </button>
 
         <div className={styles.spacer} />
@@ -319,6 +333,7 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
         postKey={postKey}
         initialCommentCount={data.comments}
         open={commentsOpen}
+        onCountChange={setCommentCount}
       />
     </div>
   );

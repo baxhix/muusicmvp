@@ -287,6 +287,10 @@ export interface ApiFeedPost {
    *  Null for permanent posts; set on stories. */
   expiresAt: string | null;
   isActive: boolean;
+  /** Number of non-deleted comments on this post. Computed
+   *  server-side; clients use this for the comment-count badge
+   *  without doing an extra fetch per post. */
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
   author: {

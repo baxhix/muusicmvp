@@ -110,6 +110,8 @@ export interface FeedItem {
   expiresAt: string | null;
   /** Soft-hide toggle independent of lifecycle status. */
   isActive: boolean;
+  /** Number of non-deleted comments. Server-computed. */
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
   author: {

@@ -1,20 +1,71 @@
 .nav {
+  /* `.nav` hosts the ::before glow that lives BEHIND the pill.
+   * position:relative gives the pseudo a stacking context to
+   * anchor against; overflow stays unset so the blurred glow
+   * can spill out beyond the nav's bounding box. */
+  position: relative;
   display: flex;
   justify-content: center;
-  /* Slightly tighter top padding now that the inner bar is itself
-   * shorter — the gap above stays comfortable but the whole footer
-   * is a touch less heavy. */
-  padding: 10px 0 22px;
+  padding: 12px 0 24px;
   background: transparent;
   pointer-events: none;
 }
 
+/* Animated lilac glow — rendered as a SHADOW behind the pill.
+ *
+ * Implementation: a wide, blurred ellipse sitting behind `.inner`
+ * (z-index: -1 on the pseudo, .nav clipping unset). The shape
+ * breathes slowly via opacity + scale + a small lateral drift so
+ * the surface around the pill picks up the lilac tone without
+ * any animation happening INSIDE the bar itself.
+ *
+ * Disabled when prefers-reduced-motion is set — the static glow
+ * remains so the surface still feels intentional, just doesn't
+ * pulse. */
+.nav::before {
+  content: '';
+  position: absolute;
+  /* Sized larger than the pill (which is ~290x52) so the blur
+   * radius bleeds outward and looks like ambient light, not a
+   * defined object. Centered horizontally on the pill via 50% +
+   * translateX. The bottom value lines up roughly with the pill
+   * center (nav padding-bottom 24px + pill height ~52px / 2). */
+  left: 50%;
+  bottom: 18px;
+  width: 380px;
+  height: 110px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse 55% 100% at 50% 50%,
+    rgba(192, 132, 252, 0.55) 0%,
+    rgba(217, 70, 239, 0.32) 38%,
+    rgba(168, 85, 247, 0.18) 60%,
+    transparent 82%
+  );
+  filter: blur(28px);
+  pointer-events: none;
+  z-index: -1;
+  animation: navbarGlow 4.5s ease-in-out infinite alternate;
+}
+@keyframes navbarGlow {
+  0%   {
+    opacity: 0.55;
+    transform: translate(-52%, 0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-48%, -3px) scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav::before { animation: none; opacity: 0.6; }
+}
+
 .inner {
-  /* Anchor for the animated gradient + the absolutely-positioned
-   * active dots on each item. overflow: hidden contains the shimmer
-   * inside the pill regardless of how far the gradient travels. */
+  /* Sits ABOVE the glow. No internal shimmer anymore — the only
+   * lilac effect is the radial blur behind the pill. */
   position: relative;
-  overflow: hidden;
+  z-index: 1;
   width: 280px;
   background: linear-gradient(160deg,
     rgba(11,11,13,0.78) 0%,
@@ -24,71 +75,46 @@
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   border: 3px solid rgba(255,255,255,0.12);
   border-radius: 999px;
-  /* Shorter than before (was 8px/10px) so the bar reads as a slim
-   * pill. Items get less padding too — see .item below. */
-  padding: 5px 10px;
+  /* Restored padding from the previous tightening — matches the
+   * original height: 8/10 → resting bar height back to its old
+   * value. */
+  padding: 8px 10px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   pointer-events: auto;
 }
 
-/* Animated lilac shimmer behind the navbar — a wide diagonal band
- * that drifts across the pill ~7s per pass. Sits beneath every
- * other child via z-index. Disabled when the user has
- * prefers-reduced-motion. */
-.inner::before {
-  content: '';
-  position: absolute;
-  /* Oversize the band so the gradient never has a hard edge inside
-   * the bar — translateX always keeps the lit middle visible. */
-  inset: -120% -50%;
-  background: linear-gradient(110deg,
-    transparent 30%,
-    rgba(192, 132, 252, 0.18) 45%,
-    rgba(217, 70, 239, 0.32) 50%,
-    rgba(168, 85, 247, 0.18) 55%,
-    transparent 70%);
-  animation: navbarShimmer 7s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(8px);
-}
-@keyframes navbarShimmer {
-  0%   { transform: translateX(-30%); }
-  100% { transform: translateX(30%);  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .inner::before { animation: none; opacity: 0.5; }
-}
-
 .item {
   position: relative;
-  /* Above the shimmer layer. */
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Active-state shift fix: the activation dot now sits absolutely
-   * below the icon (see .dot), so the item itself doesn't grow on
-   * activate. gap is therefore unused — kept at 0 to remove any
-   * stale vertical drift. */
   gap: 0;
   background: none;
   border: none;
-  color: var(--ink-mute);
+  /* All icons render in pure white, uniform stroke weight. The
+   * previous mute color (var(--ink-mute)) made resting icons look
+   * inconsistent next to the active one — flat white reads as a
+   * single coherent set. */
+  color: #ffffff;
   cursor: pointer;
   font-family: var(--sans);
-  transition: color 0.15s, transform 0.15s;
-  /* Tighter padding (was 6/8 → 4/8). Keeps the bar shorter overall
-   * without cropping the touch target. */
-  padding: 4px 8px;
+  transition: color 0.15s, transform 0.15s, opacity 0.15s;
+  /* Original padding restored — height back to where it was. */
+  padding: 6px 8px;
   border-radius: var(--r-md);
   min-width: unset;
   text-decoration: none;
+  /* Faint resting opacity so hover/active still has somewhere to
+   * lift to without changing color. */
+  opacity: 0.78;
 }
-.item:hover { color: var(--ink); transform: translateY(-1px); }
-.itemActive { color: var(--ink); }
+.item:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.itemActive { opacity: 1; }
 
 /* ── Tooltips (unchanged behaviour) ──────────────────────────── */
 .item[data-tooltip]::before,
@@ -152,8 +178,9 @@
   color: inherit;
 }
 
-/* Standardized icon footprint — 22x22 across every slot so the bar
- * reads as a single well-aligned set. */
+/* Standardized icon footprint — 22x22 across every slot (including
+ * the play button — no more rounded-square wrapper). Uniform
+ * stroke weight comes from the SVGs themselves (all 1.6). */
 .item svg { width: 22px; height: 22px; }
 
 .label { display: none; }
@@ -165,15 +192,12 @@
   margin-left: 4px;
 }
 
-/* Active-state dot. Absolutely positioned BELOW the icon so its
- * presence never changes the item's height — flipping itemActive
- * on/off used to push the icon up/down by ~3.5px and look like a
- * twitch on every tab switch. Now the icon stays perfectly still
- * and only the lilac dot fades in. */
+/* Active-state dot — absolutely positioned so the icon never
+ * shifts on activate/deactivate (the original concrete bug from
+ * the previous round). */
 .dot {
   position: absolute;
-  /* Just below the icon row, inside the bar. */
-  bottom: -1px;
+  bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
   width: 4px;
@@ -187,34 +211,6 @@
 }
 .itemActive .dot { opacity: 1; }
 
-/* Play tile — wraps the music/play icon in a rounded-square so it
- * reads as the "primary play action" amid the stroke-only icons of
- * the bar. Slight border + faint fill; brightens on hover. Stays
- * the same overall footprint as a 22x22 icon to keep the row
- * vertical rhythm aligned. */
-.playTile {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.05);
-  transition: border-color 150ms, background 150ms, transform 150ms;
-}
-.playTile svg {
-  width: 14px;
-  height: 14px;
-  /* Optical centering — the play triangle leans right, so nudge
-   * left by 1px so it looks centered inside the tile. */
-  transform: translateX(1px);
-}
-.item:hover .playTile {
-  border-color: rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.10);
-}
-
-/* Icon wrapper for badge positioning. */
 .iconWrap {
   position: relative;
   width: 22px;
@@ -250,18 +246,18 @@
 .itemCenter {
   width: 36px; height: 36px;
   background: transparent !important;
-  color: rgba(245,245,247,0.75) !important;
+  color: #ffffff !important;
+  opacity: 0.85;
   min-width: auto;
   padding: 0;
   flex-direction: row;
   gap: 0;
   display: grid;
   place-items: center;
-  transition: color 0.15s, transform 0.15s !important;
+  transition: opacity 0.15s, transform 0.15s !important;
 }
 .itemCenter:hover {
-  background: transparent !important;
-  color: rgba(245,245,247,0.95) !important;
+  opacity: 1;
   transform: scale(1.07) !important;
   box-shadow: none !important;
 }
@@ -270,7 +266,13 @@
 .itemCenter .dot { display: none; }
 
 @media (max-width: 480px) {
-  .nav { padding: 8px 0 16px; }
+  .nav { padding: 10px 0 18px; }
+  .nav::before {
+    width: 95vw;
+    max-width: 360px;
+    height: 96px;
+    bottom: 14px;
+  }
   .inner {
     width: calc(100% - 32px);
     max-width: 320px;

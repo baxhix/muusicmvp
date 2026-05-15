@@ -311,7 +311,13 @@ export default function AppPage() {
               onClick={() => setShowSuperchat(true)}
               unreadCount={superchat?.unreadCount ?? 0}
             />
-            <NotificationBell />
+            {/* NotificationBell stays mounted (its panel + event
+                listener are needed) but renders without the trigger
+                glyph. The visible entry point now lives in the
+                BottomNav notifications slot, which dispatches the
+                'app:open-notifications' CustomEvent the bell
+                listens to. */}
+            <NotificationBell hideTrigger />
           </div>
 
           {/* Floating overlay of every real online user — anchored to

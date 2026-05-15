@@ -124,7 +124,25 @@ function describe(n: ApiNotification): ReactNode {
  * Floating bell — top-right badge showing unread count, click toggles a
  * dropdown panel. Marks each notification read on click.
  */
-export default function NotificationBell() {
+/**
+ * Triggerless mode (`hideTrigger`)
+ * ─────────────────────────────────
+ * Per product feedback, the top-bar bell glyph is gone — the only
+ * visible notifications entry point lives in the BottomNav. When
+ * `hideTrigger` is true, the bell button + its pulse halo are
+ * hidden (display: none on the wrap class), but the component
+ * stays mounted to:
+ *   1. Subscribe to the 'app:open-notifications' window event
+ *      dispatched by the BottomNav.
+ *   2. Render the dropdown panel via a top-right fixed anchor
+ *      (.panelFixed) when open, mirroring the position the bell
+ *      used to occupy.
+ */
+interface NotificationBellProps {
+  hideTrigger?: boolean;
+}
+
+export default function NotificationBell({ hideTrigger = false }: NotificationBellProps = {}) {
   const { notifications, unreadCount, markRead, markAllRead } =
     useNotificationsLive();
   const [open, setOpen] = useState(false);
@@ -168,21 +186,30 @@ export default function NotificationBell() {
   }, []);
 
   return (
-    <div className={styles.wrap} ref={dropRef}>
-      <button
-        className={`${styles.bell} ${pulse ? styles.bellPulse : ''}`}
-        onClick={() => setOpen((v) => !v)}
-        aria-label={`Notificações${unreadCount ? ` (${unreadCount} não lidas)` : ''}`}
-      >
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M10 2a5 5 0 0 0-5 5v3.5L3.5 13h13L15 10.5V7a5 5 0 0 0-5-5z" />
-          <path d="M8 16a2 2 0 0 0 4 0" />
-        </svg>
-        {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
-      </button>
+    <div
+      className={`${styles.wrap} ${hideTrigger ? styles.wrapHidden : ''}`}
+      ref={dropRef}
+    >
+      {!hideTrigger && (
+        <button
+          className={`${styles.bell} ${pulse ? styles.bellPulse : ''}`}
+          onClick={() => setOpen((v) => !v)}
+          aria-label={`Notificações${unreadCount ? ` (${unreadCount} não lidas)` : ''}`}
+        >
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M10 2a5 5 0 0 0-5 5v3.5L3.5 13h13L15 10.5V7a5 5 0 0 0-5-5z" />
+            <path d="M8 16a2 2 0 0 0 4 0" />
+          </svg>
+          {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        </button>
+      )}
 
       {open && (
-        <div className={styles.panel} role="dialog" aria-label="Notificações">
+        <div
+          className={`${styles.panel} ${hideTrigger ? styles.panelFixed : ''}`}
+          role="dialog"
+          aria-label="Notificações"
+        >
           <div className={styles.head}>
             <span className={styles.headTitle}>Notificações</span>
             {unreadCount > 0 && (

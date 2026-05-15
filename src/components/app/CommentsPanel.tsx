@@ -48,11 +48,21 @@ interface Props {
   initialCommentCount?: number;
   /** Render — only matters for layout; mounting still loads on first open. */
   open: boolean;
+  /** Fires whenever the panel's authoritative comment count changes:
+   *  on initial fetch, after a successful create, after a delete.
+   *  Used by MediaPost to keep the icon badge in sync with reality
+   *  instead of relying on the stale prop. */
+  onCountChange?: (count: number) => void;
 }
 
 const PAGE_SIZE = 10;
 
-export default function CommentsPanel({ postKey, initialCommentCount, open }: Props) {
+export default function CommentsPanel({
+  postKey,
+  initialCommentCount,
+  open,
+  onCountChange,
+}: Props) {
   const { user } = useAuth();
   const currentUserId = user?.id ?? null;
   const currentUserAvatar = user?.avatarUrl ?? null;
@@ -65,6 +75,16 @@ export default function CommentsPanel({ postKey, initialCommentCount, open }: Pr
   const [initialLoading, setInitialLoading] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Delta from the server-side count seeded by `initialCommentCount`.
+  // Counts both top-level and replies (matches the server's
+  // correlated COUNT subquery which doesn't distinguish levels).
+  // Lifted to MediaPost via the effect below.
+  const [countDelta, setCountDelta] = useState<number>(0);
+  useEffect(() => {
+    if (!onCountChange) return;
+    onCountChange((initialCommentCount ?? 0) + countDelta);
+  }, [initialCommentCount, countDelta, onCountChange]);
 
   // Reply state — owned here so CommentItem can stay presentational.
   const [repliesByParent, setRepliesByParent] = useState<
@@ -159,6 +179,8 @@ export default function CommentsPanel({ postKey, initialCommentCount, open }: Pr
           replyCount: 0,
         };
         setComments((prev) => [optimistic, ...prev]);
+        // Top-level create — bump the lifted count.
+        setCountDelta((d) => d + 1);
       } catch (err) {
         console.error('post comment failed:', err);
         throw err;
@@ -197,6 +219,7 @@ export default function CommentsPanel({ postKey, initialCommentCount, open }: Pr
           : c,
       ),
     );
+    setCountDelta((d) => d - 1);
   }, []);
 
   const deleteReply = useCallback((id: string) => {
@@ -209,6 +232,7 @@ export default function CommentsPanel({ postKey, initialCommentCount, open }: Pr
       }
       return out;
     });
+    setCountDelta((d) => d - 1);
   }, []);
 
   const onReplyCreated = useCallback(
@@ -217,6 +241,9 @@ export default function CommentsPanel({ postKey, initialCommentCount, open }: Pr
         const list = prev[parentId] ?? [];
         return { ...prev, [parentId]: [...list, reply] };
       });
+      // Reply create — bump the lifted count (the server's
+      // COUNT(*) subquery counts replies too).
+      setCountDelta((d) => d + 1);
       // Auto-open the thread + bump the parent's replyCount.
       setOpenReplyThreads((prev) => {
         const next = new Set(prev);

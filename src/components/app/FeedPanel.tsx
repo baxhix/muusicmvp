@@ -127,8 +127,14 @@ function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
     user,
     avatar,
     time,
+    // Likes don't have a stored count yet (no likes table on the
+    // server). MediaPost's local toggle adds +1 when the viewer
+    // taps the hat — sufficient for the optimistic UX until a real
+    // likes endpoint ships.
     likes: 0,
-    comments: 0,
+    // Real server-side count of non-deleted comments. Empty posts
+    // render as `null` thanks to the count > 0 gate in MediaPost.
+    comments: p.commentCount ?? 0,
     dbId: p.id,
     description: p.description ?? undefined,
   };

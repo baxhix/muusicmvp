@@ -23,10 +23,6 @@ export default function BottomNav({
 }: BottomNavProps = {}) {
   const pathname = usePathname();
 
-  // Map icon now mirrors the bottom-left LocateButton: first click
-  // (no coords yet) prompts the browser for geolocation + posts to
-  // /api/me/location; subsequent clicks just fly the globe to the
-  // user's stored coords. Same hook, same handler shape.
   const { user } = useAuth();
   const { status, request } = useLocationSync();
   const hasCoords = user?.lat != null && user?.lng != null;
@@ -46,11 +42,9 @@ export default function BottomNav({
       ? 'Centralizar no meu local'
       : 'Compartilhar localização';
 
-  // The right-most slot now opens the Notifications panel that
-  // already lives in the TopBar. We can't grab a ref to that bell
-  // from here (it manages its own open state), so we dispatch a
-  // window-level CustomEvent the bell subscribes to. Keeps the two
-  // surfaces decoupled while sharing a single panel impl.
+  // Open notifications by dispatching a window-level CustomEvent the
+  // (now hidden) NotificationBell listens to. Keeps the trigger and
+  // the panel decoupled.
   const openNotifications = () => {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent('app:open-notifications'));
@@ -59,10 +53,7 @@ export default function BottomNav({
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.inner}>
-        {/* Mapa — now behaves like LocateButton in the bottom-left
-            corner: requests permission OR centers on the user. No
-            longer a router link since we're already on /app
-            whenever this bar is visible. */}
+        {/* Mapa */}
         <button
           type="button"
           className={`${styles.item} ${pathname === '/app' ? styles.itemActive : ''}`}
@@ -83,10 +74,9 @@ export default function BottomNav({
           <span className={styles.label}>Mapa</span>
         </button>
 
-        {/* Músicas — opens the PlaylistModal with the catalog of
-            registered tracks. Icon is wrapped in a rounded-square
-            tile so it stands out as the "primary play" action vs
-            the other stroke-only icons. */}
+        {/* Músicas (Play) — back to plain stroke icon, no tile
+            wrapper. Same stroke weight + same white color as every
+            other nav item so the row reads as a uniform set. */}
         <button
           type="button"
           className={styles.item}
@@ -94,22 +84,20 @@ export default function BottomNav({
           aria-label="Abrir lista de músicas"
           data-tooltip="Músicas"
         >
-          <span className={styles.playTile} aria-hidden="true">
-            <svg viewBox="0 0 22 22" fill="none">
-              <path
-                d="M7 4.5v13l11-6.5z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
+          <svg viewBox="0 0 22 22" fill="none">
+            <path
+              d="M7 4.5v13l11-6.5z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
           <span className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Músicas</span>
         </button>
 
-        {/* Center crown button — opens Ranking/Superfans */}
+        {/* Center crown — Superfãs */}
         <button
           className={`${styles.item} ${styles.itemCenter}`}
           onClick={onSuperfansOpen}
@@ -128,7 +116,7 @@ export default function BottomNav({
           </svg>
         </button>
 
-        {/* Chat → opens the Superchat panel */}
+        {/* Superchat */}
         <button
           type="button"
           className={styles.item}
@@ -149,10 +137,9 @@ export default function BottomNav({
           <span className={styles.label}>Chat</span>
         </button>
 
-        {/* Notifications — replaces the previous Profile slot.
-            Bell icon dispatches a window-level CustomEvent the
-            TopBar bell listens to, so both surfaces drive the
-            same panel implementation. */}
+        {/* Notificações — single source. The top-bar bell trigger
+            was removed; the panel is rendered hidden and surfaces
+            here via the 'app:open-notifications' CustomEvent. */}
         <button
           type="button"
           className={styles.item}

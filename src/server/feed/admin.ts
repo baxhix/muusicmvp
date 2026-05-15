@@ -11,7 +11,12 @@ import {
   sql,
 } from 'drizzle-orm';
 import { db } from '../db';
-import { feedPosts, users, type FeedPost } from '../db/schema';
+import {
+  feedPosts,
+  feedComments,
+  users,
+  type FeedPost,
+} from '../db/schema';
 
 /**
  * Admin feed CMS server module.
@@ -79,6 +84,11 @@ export interface HydratedAdminFeedPost {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Number of non-deleted comments. Computed via a correlated
+   *  subquery in selectWithAuthor() so listing endpoints can show
+   *  the real count next to the comment icon without an extra
+   *  fetch per post. */
+  commentCount: number;
   author: {
     id: string;
     name: string | null;
@@ -136,6 +146,7 @@ function hydrate(row: FeedPost & {
   authorName: string | null;
   authorEmail: string | null;
   authorAvatarUrl: string | null;
+  commentCount: number;
 }): HydratedAdminFeedPost {
   return {
     id: row.id,
@@ -150,6 +161,10 @@ function hydrate(row: FeedPost & {
     isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    // Defensive: the subquery returns 0 for posts with no comments,
+    // but during a fresh row insert the count may briefly be null
+    // before any commit lands.
+    commentCount: Number(row.commentCount ?? 0),
     author: row.authorUserId
       ? {
           id: row.authorUserId,
@@ -162,6 +177,18 @@ function hydrate(row: FeedPost & {
 }
 
 function selectWithAuthor() {
+  // Comment count as a correlated subquery. Excludes soft-deleted
+  // rows (deleted_at IS NOT NULL). Cheaper than a GROUP BY join on
+  // a feed where each post commonly carries a handful of comments,
+  // and keeps the row shape stable (no risk of duplicate rows from
+  // a misconfigured aggregate). The result is hydrated as
+  // `comment_count` and surfaced to ApiFeedPost.commentCount.
+  const commentCount = sql<number>`(
+    SELECT COUNT(*)::int FROM ${feedComments}
+    WHERE ${feedComments.postId} = ${feedPosts.id}
+      AND ${feedComments.deletedAt} IS NULL
+  )`.as('comment_count');
+
   return db
     .select({
       id: feedPosts.id,
@@ -181,6 +208,7 @@ function selectWithAuthor() {
       authorName: users.name,
       authorEmail: users.email,
       authorAvatarUrl: users.avatarUrl,
+      commentCount,
     })
     .from(feedPosts)
     .leftJoin(users, eq(users.id, feedPosts.authorUserId));
