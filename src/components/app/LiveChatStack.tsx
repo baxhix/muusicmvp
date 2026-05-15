@@ -194,15 +194,21 @@ export default function LiveChatStack({
           </svg>
         </button>
 
-        {/* Comunidade / Fórum — placeholder slot. The forum surface
-            doesn't exist yet; the button is wired with a stable
-            label so we can route it once the panel ships. Disabled
-            in the meantime to avoid dead-click confusion. */}
+        {/* Comunidade / Fórum — opens the CommunityPanel via the
+            `app:open-community` CustomEvent. The forum's actual
+            content (threads, posts) isn't built yet; the panel
+            currently renders a placeholder shell, but the entry
+            point is live so the user has a real destination to
+            land on. */}
         <button
-          className={`${styles.dockShortcut} ${styles.dockShortcutDisabled}`}
-          aria-label="Comunidade — em breve"
-          title="Comunidade (em breve)"
-          disabled
+          className={styles.dockShortcut}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('app:open-community'));
+            }
+          }}
+          aria-label="Comunidade"
+          title="Comunidade"
         >
           {/* Chat-bubble cluster icon — reads as multi-thread
               discussion without overlapping the single-bubble

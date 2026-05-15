@@ -11,6 +11,7 @@ import TopBar from '@/components/app/TopBar';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import ConversationsSidebar from '@/components/app/ConversationsSidebar';
+import CommunityPanel from '@/components/app/CommunityPanel';
 import GroupMembersPanel from '@/components/app/GroupMembersPanel';
 import ArtistBox from '@/components/app/ArtistBox';
 import UserPicker from '@/components/app/UserPicker';
@@ -116,26 +117,27 @@ export default function AppPage() {
    *  though the component manages its own visible state, because
    *  we pass `open` + `onOpenChange` as a controlled prop.
    *
-   *  'chat' opens the full ConversationsSidebar in the right slot
-   *  (same geometry as FeedPanel). Because both occupy the same
-   *  real estate, opening Chat also dispatches `app:close-feed`
-   *  to minimize the Feed, and clicking the dock's Feed shortcut
-   *  fires `app:toggle-feed` which we listen to below to clear
-   *  activeOverlay — so the two are effectively mutually
-   *  exclusive without lifting the Feed's internal state. */
+   *  'chat' and 'community' both open in the right column slot
+   *  (same geometry as FeedPanel). Per product feedback they sit
+   *  ABOVE the Feed via z-index — the Feed stays mounted in the
+   *  background and is simply covered while one of them is open.
+   *  Singleton-only-among-overlays still applies, so opening Chat
+   *  closes Community and vice-versa. */
   type ActiveOverlay =
     | null
     | 'superfans'
     | 'playlist'
     | 'superchat'
     | 'notifications'
-    | 'chat';
+    | 'chat'
+    | 'community';
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
   const showSuperfans     = activeOverlay === 'superfans';
   const showPlaylist      = activeOverlay === 'playlist';
   const showSuperchat     = activeOverlay === 'superchat';
   const showNotifications = activeOverlay === 'notifications';
   const showChat          = activeOverlay === 'chat';
+  const showCommunity     = activeOverlay === 'community';
 
   // Per-overlay setShow helpers — preserve the boolean shape the
   // existing call sites use. Setting true swaps to that overlay
@@ -155,38 +157,26 @@ export default function AppPage() {
     else setActiveOverlay((curr) => (curr === 'superchat' ? null : curr));
   };
   const setShowChat = (v: boolean) => {
-    if (v) {
-      setActiveOverlay('chat');
-      // Chat + Feed share the right slot — opening Chat collapses
-      // the Feed so they don't both bid for the same real estate.
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('app:close-feed'));
-      }
-    } else {
-      setActiveOverlay((curr) => (curr === 'chat' ? null : curr));
-    }
+    if (v) setActiveOverlay('chat');
+    else setActiveOverlay((curr) => (curr === 'chat' ? null : curr));
+  };
+  const setShowCommunity = (v: boolean) => {
+    if (v) setActiveOverlay('community');
+    else setActiveOverlay((curr) => (curr === 'community' ? null : curr));
   };
 
-  // Listen for the BottomNav's notification trigger — routes
-  // through the same coordinator so opening notifications closes
-  // any other open overlay.
+  // Listen for the BottomNav's notification trigger + the dock's
+  // Comunidade trigger — both route through the same coordinator so
+  // opening either closes any other open overlay.
   useEffect(() => {
     const onOpenNotif = () => setActiveOverlay('notifications');
+    const onOpenCommunity = () => setActiveOverlay('community');
     window.addEventListener('app:open-notifications', onOpenNotif);
-    return () => window.removeEventListener('app:open-notifications', onOpenNotif);
-  }, []);
-
-  // When the dock's Feed shortcut fires `app:toggle-feed`, the Feed
-  // takes over the right slot — so we clear the activeOverlay (which
-  // closes Chat if it was open). Notifications/Superfã/Playlist are
-  // anchored elsewhere, but Chat would visually fight for the same
-  // space, so this is the easy way to keep them mutually exclusive
-  // without lifting Feed's internal `minimized` state up here.
-  useEffect(() => {
-    const onToggleFeed = () =>
-      setActiveOverlay((curr) => (curr === 'chat' ? null : curr));
-    window.addEventListener('app:toggle-feed', onToggleFeed);
-    return () => window.removeEventListener('app:toggle-feed', onToggleFeed);
+    window.addEventListener('app:open-community', onOpenCommunity);
+    return () => {
+      window.removeEventListener('app:open-notifications', onOpenNotif);
+      window.removeEventListener('app:open-community', onOpenCommunity);
+    };
   }, []);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -492,6 +482,14 @@ export default function AppPage() {
           setShowChat(false);
           setShowGroupPicker(true);
         }}
+      />
+      {/* Comunidade / Fórum — placeholder shell rendered in the same
+          right-column slot. Opens via the dock's "Comunidade"
+          shortcut (CustomEvent `app:open-community`). Actual forum
+          functionality ships in a follow-up. */}
+      <CommunityPanel
+        open={showCommunity}
+        onClose={() => setShowCommunity(false)}
       />
       <LiveChatPanel
         conversation={activeConversation}

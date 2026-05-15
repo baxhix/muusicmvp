@@ -20,7 +20,10 @@
   height: 80vh;
   right: 104px;
   width: 398px;
-  z-index: 15;
+  /* Sits ABOVE the FeedPanel (z:15) so Chat layers cleanly on top
+   * when both are mounted. Same slot — when Chat opens the user
+   * sees only Chat; closing Chat reveals the Feed underneath. */
+  z-index: 25;
   display: flex;
   flex-direction: column;
   isolation: isolate;
@@ -69,55 +72,72 @@
 }
 
 /* ── Header ────────────────────────────────────────────────── */
+/* ── Standardized panel header (must stay in sync with
+ *    FeedPanel.module.css `.header` and CommunityPanel.module.css
+ *    `.header`):
+ *      padding:        20px 20px 14px
+ *      title:          16px / 700 / -0.01em letter-spacing / #F5F5F7
+ *      bottom border:  1px rgba(255,255,255,0.06)
+ *    Action buttons (new conversation, new group, close) sit on
+ *    the right with neutral white tints — no accent green so the
+ *    header treatment matches the other panels. */
 .header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 18px 18px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 8px;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
   flex-shrink: 0;
 }
 .title {
   flex: 1;
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
-  color: #f5f5f7;
+  color: #F5F5F7;
   letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 .newBtn {
-  width: 30px; height: 30px;
+  width: 28px; height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid rgba(61, 219, 116, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 50%;
-  background: rgba(61, 219, 116, 0.12);
-  color: var(--accent, #3ddb74);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.65);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.14s ease, transform 0.14s ease, border-color 0.14s ease;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
 }
 .newBtn:hover {
-  background: rgba(61, 219, 116, 0.2);
-  border-color: rgba(61, 219, 116, 0.7);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+  transform: scale(1.04);
 }
 
 .closeBtn {
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  color: rgba(245, 245, 247, 0.7);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.65);
   cursor: pointer;
   flex-shrink: 0;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
-.closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
 
 /* ── Search field ──────────────────────────────────────────── */
 .searchWrap {

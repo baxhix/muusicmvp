@@ -1,0 +1,176 @@
+/* ── Community / Fórum panel ──
+ *
+ * Mirrors FeedPanel + ConversationsSidebar geometry and surface
+ * treatment so the three right-column panels feel like the same
+ * envelope. Keep this block visually in sync with both — if any
+ * value drifts (slot, padding, blur, header typography), update
+ * everywhere together.
+ *
+ *  Slot geometry (must match FeedPanel.module.css + ConversationsSidebar):
+ *    top:    10vh
+ *    height: 80vh
+ *    right:  104px        // = 18 (gap) + 44 (dock width) + 42 (gap)
+ *    width:  398px
+ */
+.panel {
+  position: fixed;
+  top: 10vh;
+  height: 80vh;
+  right: 104px;
+  width: 398px;
+  /* Same overlay layer as ConversationsSidebar — sits ABOVE the
+   * FeedPanel (z:15) so the Community box covers the Feed cleanly
+   * when open. The activeOverlay singleton in /app/page.tsx makes
+   * sure Chat and Community are never both open at the same time. */
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 35%,
+      rgba(2,2,3,0.76) 65%,
+      rgba(2,2,3,0.80) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: none;
+  border-radius: 20px;
+  box-shadow:
+    0 32px 80px rgba(0,0,0,0.7),
+    0 0 0 0.5px rgba(255,255,255,0.04) inset,
+    0 1px 0 rgba(255,255,255,0.08) inset;
+  overflow: hidden;
+  /* Rise/fall — same curves as ConversationsSidebar. */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(60vh) scale(0.97);
+  visibility: hidden;
+  transition:
+    opacity 320ms cubic-bezier(0.7, 0, 0.84, 0),
+    transform 320ms cubic-bezier(0.7, 0, 0.84, 0),
+    visibility 0s linear 320ms;
+}
+.panelOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  transition:
+    opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel { transition: opacity 120ms linear, visibility 0s; transform: none; }
+  .panelOpen { transition: opacity 120ms linear, visibility 0s; transform: none; }
+}
+
+/* ── Standardized header — keep in sync with FeedPanel +
+ * ConversationsSidebar. */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
+  flex-shrink: 0;
+}
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.closeBtn {
+  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
+
+/* ── Body + placeholder content ── */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 28px;
+}
+.placeholder {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  max-width: 280px;
+  color: rgba(245, 245, 247, 0.65);
+}
+.placeholderIcon {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.55);
+}
+.placeholderIcon svg {
+  width: 24px;
+  height: 24px;
+}
+.placeholderTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.005em;
+}
+.placeholderBody {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+/* ── Responsive — mirrors FeedPanel + ConversationsSidebar
+ * breakpoints so all three panels occupy the same slot at every
+ * viewport. ───────────────────── */
+@media (max-width: 1024px) {
+  .panel {
+    right: 104px;
+    width: 320px;
+  }
+}
+@media (max-width: 768px) {
+  .panel {
+    top: auto;
+    bottom: 92px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    height: 60vh;
+    border-radius: 16px;
+  }
+}

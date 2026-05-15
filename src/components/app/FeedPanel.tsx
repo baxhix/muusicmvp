@@ -270,18 +270,14 @@ export default function FeedPanel() {
   // the two components directly. Mirrors the
   // `app:open-notifications` pattern in NotificationBell.
   //
-  // We also listen to `app:close-feed`: page.tsx fires it when
-  // opening the Chat panel (Chat + Feed share the right slot, so
-  // Chat opening means Feed needs to collapse out of the way).
+  // Chat / Comunidade no longer force the Feed to minimize when
+  // they open — they layer on top via z-index instead. The Feed
+  // stays mounted underneath and reappears as soon as the overlay
+  // closes (no extra coordination needed).
   useEffect(() => {
     const onToggle = () => setMinimized((m) => !m);
-    const onForceClose = () => setMinimized(true);
     window.addEventListener('app:toggle-feed', onToggle);
-    window.addEventListener('app:close-feed', onForceClose);
-    return () => {
-      window.removeEventListener('app:toggle-feed', onToggle);
-      window.removeEventListener('app:close-feed', onForceClose);
-    };
+    return () => window.removeEventListener('app:toggle-feed', onToggle);
   }, []);
 
   return (

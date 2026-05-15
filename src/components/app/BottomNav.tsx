@@ -12,17 +12,18 @@ import styles from './BottomNav.module.css';
  *  page's local types. The active-dot under each icon lights up
  *  for the matching value.
  *
- *  'chat' is included so the type aligns with the page's union,
- *  but no nav icon currently maps to it (the chat panel opens
- *  from the right-rail dock, not from BottomNav). When the chat
- *  is the active overlay no dot lights up here. */
+ *  'chat' and 'community' are included so the type aligns with
+ *  the page's union, but no nav icon maps to them (both panels
+ *  open from the right-rail dock, not from BottomNav). When
+ *  either is the active overlay no dot lights up here. */
 export type BottomNavActiveOverlay =
   | null
   | 'superfans'
   | 'playlist'
   | 'superchat'
   | 'notifications'
-  | 'chat';
+  | 'chat'
+  | 'community';
 
 interface BottomNavProps {
   onSuperfansOpen?: () => void;
