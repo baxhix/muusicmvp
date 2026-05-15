@@ -2,7 +2,19 @@
 .panel {
   position: fixed;
   top: calc(22vh - 10px);
-  right: 160px;
+  /* Anchored 42px to the LEFT of the chat dock list.
+   *
+   * Chat dock geometry (LiveChatStack.module.css):
+   *   .dock  right: 18px
+   *   .item  width: 44px
+   *   → dock occupies viewport-right − 62px through viewport-right − 18px.
+   *
+   * Feed right edge sits 42px to the left of the dock list:
+   *   18px (screen gap) + 44px (dock width) + 42px (requested gap) = 104px
+   *
+   * Same calc lives in .minimizedGradient below — change both
+   * together if the dock width or screen gap ever moves. */
+  right: 104px;
   bottom: 20px;
   width: 398px;
   z-index: 15;
@@ -58,11 +70,13 @@
   transform: translateY(68%);
 }
 
-/* Gradient colado na base inferior visível do feed contraído */
+/* Gradient colado na base inferior visível do feed contraído.
+ * Tracks the panel's right offset (104px) so it stays anchored
+ * under the feed regardless of the chat dock position. */
 .minimizedGradient {
   position: fixed;
-  left: calc(100% - 160px - 398px);
-  right: 160px;
+  left: calc(100% - 104px - 398px);
+  right: 104px;
   bottom: 0;
   height: 36px;
   background: linear-gradient(to bottom,
@@ -243,13 +257,16 @@
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
+  /* Stay anchored 42px to the left of the chat dock on tablet too —
+   * same math as desktop (right: 104px). Width shrinks to give the
+   * left column room to breathe. */
   .panel {
-    right: 16px;
-    width: 360px;
+    right: 104px;
+    width: 320px;
   }
   .minimizedGradient {
-    left: calc(100% - 16px - 360px);
-    right: 16px;
+    left: calc(100% - 104px - 320px);
+    right: 104px;
   }
 }
 @media (max-width: 768px) {
