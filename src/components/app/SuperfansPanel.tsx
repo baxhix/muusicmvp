@@ -190,6 +190,22 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
             <div className={styles.meInfo}>
               <span className={styles.meName}>{me.name}</span>
               <span className={styles.meCity}>{me.city}</span>
+              {/* "Meus benefícios" CTA pinned next to the name — only
+                  inside the user's row at the top of the panel, per
+                  product feedback. Same pill treatment as the
+                  ArtistBox wallet-row button so users feel a
+                  consistent perks affordance across surfaces.
+                  Routed to a no-op for now; when the dedicated
+                  benefits surface ships, wire the click there. */}
+              <button
+                type="button"
+                className={styles.meBenefitsBtn}
+                onClick={() => {
+                  // TODO: open the benefits surface when it exists.
+                }}
+              >
+                Meus benefícios
+              </button>
             </div>
             <div className={styles.mePoints}>
               <span className={styles.mePointsNum}>{formatPoints(me.fanpoints)}</span>
@@ -247,7 +263,10 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
                 <div className={styles.fanAvatarWrap}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img key={fan.img} src={fan.img} alt={fan.name} className={styles.fanAvatar} />
-                  {fan.rank === 1 && <span className={styles.crownTop} aria-hidden="true">👑</span>}
+                  {/* Crown emoji on the rank-1 fan removed per product
+                      feedback — the 🥇 in the rank column already
+                      carries the "first place" cue, and stacking two
+                      gold accents read as busy. */}
                 </div>
                 <div className={styles.fanInfo}>
                   <span className={styles.fanName}>{fan.name}</span>

@@ -206,6 +206,36 @@
   color: rgba(245,245,247,0.55);
 }
 
+/* "Meus benefícios" pill — same neutral-white pill treatment as
+ * the ArtistBox wallet-row button so the perks affordance reads
+ * consistent across both surfaces. Sits below the city inside
+ * .meInfo (the column is `flex-direction: column`); `align-self:
+ * flex-start` keeps the pill hugging its content width instead of
+ * stretching to fill the column. */
+.meBenefitsBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.62);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.meBenefitsBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
+
 .mePoints {
   display: flex;
   flex-direction: column;
@@ -271,19 +301,20 @@
   padding: 16px 18px 8px;
 }
 
-.listEyebrow {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(245,245,247,0.55);
-  font-weight: 600;
-}
-
+/* "Ranking global" + "Atualizado agora" line — per product
+ * feedback both swatches should read like the "Fanpoints" label
+ * on the ArtistBox wallet row (font 11 / 600 / muted gray /
+ * tight letter-spacing). The previous uppercase eyebrow + mono
+ * meta were carrying their own visual signature; this folds them
+ * into the same quiet typography. */
+.listEyebrow,
 .listMeta {
-  font-size: 10px;
-  color: rgba(245,245,247,0.55);
-  font-family: var(--mono, monospace);
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: -0.005em;
+  font-family: inherit;
+  text-transform: none;
 }
 
 /* ── List ───────────────────────────────── */
@@ -377,13 +408,10 @@
   object-fit: cover;
 }
 
-.crownTop {
-  position: absolute;
-  top: -8px;
-  right: -6px;
-  font-size: 14px;
-  filter: drop-shadow(0 0 8px rgba(245, 192, 98, 0.55));
-}
+/* .crownTop retired — the rank-1 crown emoji that used to sit
+ * on the leader's avatar is gone per product feedback (the 🥇 in
+ * the rank column carries the cue already). Block removed; the
+ * `.fanAvatarWrap` markup no longer renders the crown span. */
 
 .fanInfo {
   flex: 1;
