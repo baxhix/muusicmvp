@@ -3,7 +3,19 @@
 import { useState, useRef } from 'react';
 import { track } from '@/lib/analytics';
 import CommentsPanel from './CommentsPanel';
+import VerifiedBadge from './VerifiedBadge';
 import styles from './MediaPost.module.css';
+
+/** Display name → verified flag. Centralized so the rule lives in
+ *  one place; expand as more official accounts launch. Treats name
+ *  comparisons case-insensitively and tolerates trailing whitespace. */
+function isVerifiedCreator(name: string): boolean {
+  const VERIFIED = new Set([
+    'central ana castela',
+    'ana castela',
+  ]);
+  return VERIFIED.has(name.trim().toLowerCase());
+}
 
 /* ── Types ──
  * `MediaPostData` covers BOTH the legacy mock feed (handcrafted
@@ -168,7 +180,16 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={data.avatar} alt={data.user} className={styles.avatar} />
         <div className={styles.meta}>
-          <div className={styles.name}>{data.user}</div>
+          <div className={styles.name}>
+            {data.user}
+            {/* Verified badge on official accounts. For now the
+             *  Central Ana Castela account is the only verified
+             *  creator on the platform; widen this check as more
+             *  official accounts onboard. */}
+            {isVerifiedCreator(data.user) && (
+              <VerifiedBadge size={13} className={styles.verifiedBadge} />
+            )}
+          </div>
           <div className={styles.time}>{data.time}</div>
         </div>
       </div>
@@ -244,23 +265,34 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
 
       {/* Actions */}
       <div className={styles.actions}>
-        <button
-          className={`${styles.btn} ${styles.btnHat} ${liked ? styles.btnLiked : ''}`}
-          onClick={() => {
-            const next = !liked;
-            setLiked(next);
-            track(next ? 'feed_post_liked' : 'feed_post_unliked', {
-              post_id: data.dbId,
-              post_key: postKey,
-              creator_name: data.user,
-            });
-          }}
-          aria-label="Like"
-        >
-          <HeartIcon />
-          {data.likes + (liked ? 1 : 0)}
-        </button>
+        {/* Hat (likes) — count is hidden when zero (or zero + not
+            liked yet by current viewer). Once the local "liked"
+            flag flips, we show the +1 even on a previously-zero
+            post so the user gets immediate feedback. */}
+        {(() => {
+          const total = data.likes + (liked ? 1 : 0);
+          return (
+            <button
+              className={`${styles.btn} ${styles.btnHat} ${liked ? styles.btnLiked : ''}`}
+              onClick={() => {
+                const next = !liked;
+                setLiked(next);
+                track(next ? 'feed_post_liked' : 'feed_post_unliked', {
+                  post_id: data.dbId,
+                  post_key: postKey,
+                  creator_name: data.user,
+                });
+              }}
+              aria-label="Like"
+            >
+              <HeartIcon />
+              {total > 0 ? total : null}
+            </button>
+          );
+        })()}
 
+        {/* Comment button — count hidden when zero so the icon
+            doesn't sit next to a literal "0". */}
         <button
           className={`${styles.btn} ${commentsOpen ? styles.btnLiked : ''}`}
           onClick={() => setCommentsOpen((v) => !v)}
@@ -268,7 +300,7 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           aria-expanded={commentsOpen}
         >
           <CommentIcon />
-          {data.comments}
+          {data.comments > 0 ? data.comments : null}
         </button>
 
         <div className={styles.spacer} />

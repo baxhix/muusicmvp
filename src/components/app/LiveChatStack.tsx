@@ -150,8 +150,12 @@ export default function LiveChatStack({
           aria-label="Abrir lista de conversas"
           title="Ver todas as conversas"
         >
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M8 3v10M3 8h10" />
+          {/* Hamburger: communicates "see the full list" better than
+              the previous "+" plus icon, which mistakenly suggested
+              "create new conversation" (the create flow lives one
+              level deeper inside the drawer's UserPicker). */}
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M3 4h10M3 8h10M3 12h10" />
           </svg>
         </button>
       </div>

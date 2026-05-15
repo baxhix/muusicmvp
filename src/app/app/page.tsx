@@ -19,9 +19,9 @@ import BottomNav from '@/components/app/BottomNav';
 import FeedPanel from '@/components/app/FeedPanel';
 import ProfilePanel, { type ProfileUser } from '@/components/app/ProfilePanel';
 import SuperfansPanel from '@/components/app/SuperfansPanel';
-import SideBar from '@/components/app/SideBar';
+// SideBar removed from this screen — logo strip is no longer rendered.
 import Onboarding from '@/components/app/Onboarding';
-import LocateButton from '@/components/app/LocateButton';
+// LocateButton removed from this screen — geo prompt is no longer rendered.
 import EditProfileModal from '@/components/app/EditProfileModal';
 import DeleteAccountModal from '@/components/app/DeleteAccountModal';
 import PlaylistModal from '@/components/app/PlaylistModal';
@@ -342,7 +342,10 @@ export default function AppPage() {
         onOpenPlaylist={() => setShowPlaylist(true)}
       />
 
-      <SideBar />
+      {/* SideBar (left-edge logo strip) intentionally removed —
+          product feedback wanted the top-left corner cleaner. The
+          universe switcher that used to live there moved into the
+          TopBar user drawer already, so there's no orphaned action. */}
 
       {/* Artist identity box — fixed top-left card showing the
           current Fanverse + the user's daily missions panel.
@@ -546,7 +549,10 @@ export default function AppPage() {
         onSelect={setSongIdx}
       />
 
-      <LocateButton />
+      {/* LocateButton (bottom-left geolocation pill) removed per
+          product feedback — it competed with the player for the
+          bottom-left corner and most users now share location at
+          onboarding. Re-add via this same spot if it comes back. */}
 
       {/* NotificationBell + SuperchatTrigger are rendered inline inside the
           topBar so they don't overlap the username at the top-right. The

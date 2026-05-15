@@ -1,12 +1,20 @@
 .nav {
   display: flex;
   justify-content: center;
-  padding: 12px 0 24px;
+  /* Slightly tighter top padding now that the inner bar is itself
+   * shorter — the gap above stays comfortable but the whole footer
+   * is a touch less heavy. */
+  padding: 10px 0 22px;
   background: transparent;
   pointer-events: none;
 }
 
 .inner {
+  /* Anchor for the animated gradient + the absolutely-positioned
+   * active dots on each item. overflow: hidden contains the shimmer
+   * inside the pill regardless of how far the gradient travels. */
+  position: relative;
+  overflow: hidden;
   width: 280px;
   background: linear-gradient(160deg,
     rgba(11,11,13,0.78) 0%,
@@ -14,55 +22,75 @@
     rgba(2,2,3,0.76) 100%);
   backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  /* Thicker border per spec (was 1px). Alpha bumped a notch so the
-     extra weight reads cleanly against the dark surface. */
   border: 3px solid rgba(255,255,255,0.12);
   border-radius: 999px;
-  padding: 8px 10px;
+  /* Shorter than before (was 8px/10px) so the bar reads as a slim
+   * pill. Items get less padding too — see .item below. */
+  padding: 5px 10px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   pointer-events: auto;
 }
 
+/* Animated lilac shimmer behind the navbar — a wide diagonal band
+ * that drifts across the pill ~7s per pass. Sits beneath every
+ * other child via z-index. Disabled when the user has
+ * prefers-reduced-motion. */
+.inner::before {
+  content: '';
+  position: absolute;
+  /* Oversize the band so the gradient never has a hard edge inside
+   * the bar — translateX always keeps the lit middle visible. */
+  inset: -120% -50%;
+  background: linear-gradient(110deg,
+    transparent 30%,
+    rgba(192, 132, 252, 0.18) 45%,
+    rgba(217, 70, 239, 0.32) 50%,
+    rgba(168, 85, 247, 0.18) 55%,
+    transparent 70%);
+  animation: navbarShimmer 7s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(8px);
+}
+@keyframes navbarShimmer {
+  0%   { transform: translateX(-30%); }
+  100% { transform: translateX(30%);  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inner::before { animation: none; opacity: 0.5; }
+}
+
 .item {
-  position: relative; /* anchor for the ::before/::after tooltip */
+  position: relative;
+  /* Above the shimmer layer. */
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  /* Active-state shift fix: the activation dot now sits absolutely
+   * below the icon (see .dot), so the item itself doesn't grow on
+   * activate. gap is therefore unused — kept at 0 to remove any
+   * stale vertical drift. */
+  gap: 0;
   background: none;
   border: none;
   color: var(--ink-mute);
   cursor: pointer;
   font-family: var(--sans);
   transition: color 0.15s, transform 0.15s;
-  padding: 6px 8px;
+  /* Tighter padding (was 6/8 → 4/8). Keeps the bar shorter overall
+   * without cropping the touch target. */
+  padding: 4px 8px;
   border-radius: var(--r-md);
   min-width: unset;
   text-decoration: none;
 }
 .item:hover { color: var(--ink); transform: translateY(-1px); }
-/* Active state — icon stays neutral (var(--ink)); the lilac
-   indicator lives on the .dot below the icon, NOT on the icon
-   itself. Keeps the visual weight calm while the colored dot
-   still calls out "you are here". */
 .itemActive { color: var(--ink); }
 
-/* ── Custom tooltips ──────────────────────────────────────────────
- * Pure-CSS tooltip system driven by the `data-tooltip` attribute on
- * each nav item. Two pseudo-elements per item:
- *   ::before  the bubble (label)
- *   ::after   the little arrow pointing down at the item
- *
- * Fade-in with a 300ms delay on hover so a quick mouse sweep doesn't
- * flash every label; hide is instant on leave for snappy dismissal.
- * Uses design-system tokens (var(--sans), var(--ink), var(--r-sm))
- * so the look stays in sync with the rest of the app.
- *
- * Only items that declare data-tooltip get the affordance — keeps the
- * pseudo-element out of the disabled-state outline.
- * ──────────────────────────────────────────────────────────────────── */
+/* ── Tooltips (unchanged behaviour) ──────────────────────────── */
 .item[data-tooltip]::before,
 .item[data-tooltip]::after {
   pointer-events: none;
@@ -71,7 +99,6 @@
   transform: translate(-50%, 4px);
   transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
-
 .item[data-tooltip]::before {
   content: attr(data-tooltip);
   bottom: calc(100% + 8px);
@@ -89,7 +116,6 @@
   white-space: nowrap;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
-
 .item[data-tooltip]::after {
   content: '';
   bottom: calc(100% + 4px);
@@ -100,17 +126,14 @@
   border-right: 5px solid transparent;
   border-top: 5px solid rgba(20, 20, 24, 0.96);
 }
-
 .item[data-tooltip]:hover::before,
 .item[data-tooltip]:focus-visible::before,
 .item[data-tooltip]:hover::after,
 .item[data-tooltip]:focus-visible::after {
   opacity: 1;
   transform: translate(-50%, 0);
-  /* Delay only on the show — hide stays instant so it feels responsive. */
   transition-delay: 300ms;
 }
-
 @media (prefers-reduced-motion: reduce) {
   .item[data-tooltip]::before,
   .item[data-tooltip]::after {
@@ -122,21 +145,19 @@
 .itemDisabled {
   opacity: 0.4;
   cursor: not-allowed !important;
-  pointer-events: none; /* defensive — disabled also blocks clicks */
+  pointer-events: none;
 }
 .itemDisabled:hover {
   transform: none;
   color: inherit;
 }
 
-/* Standardized icon footprint — bumped 20→22 for more presence,
-   same dimensions across every slot (including center crown) so
-   the bar reads as a single, well-aligned set. */
+/* Standardized icon footprint — 22x22 across every slot so the bar
+ * reads as a single well-aligned set. */
 .item svg { width: 22px; height: 22px; }
 
 .label { display: none; }
 
-/* Inline hint after a label — used to say "(desabilitado temporariamente)". */
 .labelHint {
   font-size: 10.5px;
   font-weight: 400;
@@ -144,18 +165,56 @@
   margin-left: 4px;
 }
 
+/* Active-state dot. Absolutely positioned BELOW the icon so its
+ * presence never changes the item's height — flipping itemActive
+ * on/off used to push the icon up/down by ~3.5px and look like a
+ * twitch on every tab switch. Now the icon stays perfectly still
+ * and only the lilac dot fades in. */
 .dot {
-  width: 4px; height: 4px;
+  position: absolute;
+  /* Just below the icon row, inside the bar. */
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  /* Active indicator dot — matches the new lilac-pink active icon
-     color so the two cues stay aligned. */
   background: #d946ef;
   box-shadow: 0 0 6px rgba(217, 70, 239, 0.55);
-  display: none;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  pointer-events: none;
 }
-.itemActive .dot { display: block; }
+.itemActive .dot { opacity: 1; }
 
-/* Icon wrapper for badge positioning. Matches .item svg footprint. */
+/* Play tile — wraps the music/play icon in a rounded-square so it
+ * reads as the "primary play action" amid the stroke-only icons of
+ * the bar. Slight border + faint fill; brightens on hover. Stays
+ * the same overall footprint as a 22x22 icon to keep the row
+ * vertical rhythm aligned. */
+.playTile {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  transition: border-color 150ms, background 150ms, transform 150ms;
+}
+.playTile svg {
+  width: 14px;
+  height: 14px;
+  /* Optical centering — the play triangle leans right, so nudge
+   * left by 1px so it looks centered inside the tile. */
+  transform: translateX(1px);
+}
+.item:hover .playTile {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* Icon wrapper for badge positioning. */
 .iconWrap {
   position: relative;
   width: 22px;
@@ -188,8 +247,6 @@
   border: 1.5px solid rgba(0,0,0,0.6);
 }
 
-/* Center action — Superfãs/Ranking. No background plate; the icon
-   stands alone like the other nav items, just slightly larger. */
 .itemCenter {
   width: 36px; height: 36px;
   background: transparent !important;
@@ -212,11 +269,10 @@
 .itemCenter .label,
 .itemCenter .dot { display: none; }
 
-/* ── Responsive ── */
 @media (max-width: 480px) {
-  .nav { padding: 10px 0 18px; }
+  .nav { padding: 8px 0 16px; }
   .inner {
-    width: calc(100% - 32px);     /* ocupa quase a largura da tela */
+    width: calc(100% - 32px);
     max-width: 320px;
   }
 }

@@ -18,7 +18,6 @@ interface BottomNavProps {
 
 export default function BottomNav({
   onSuperfansOpen,
-  onProfileOpen,
   onSuperchatOpen,
   onPlaylistOpen,
 }: BottomNavProps = {}) {
@@ -47,6 +46,16 @@ export default function BottomNav({
       ? 'Centralizar no meu local'
       : 'Compartilhar localização';
 
+  // The right-most slot now opens the Notifications panel that
+  // already lives in the TopBar. We can't grab a ref to that bell
+  // from here (it manages its own open state), so we dispatch a
+  // window-level CustomEvent the bell subscribes to. Keeps the two
+  // surfaces decoupled while sharing a single panel impl.
+  const openNotifications = () => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('app:open-notifications'));
+  };
+
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.inner}>
@@ -70,14 +79,14 @@ export default function BottomNav({
               strokeWidth="1.6"
             />
           </svg>
-          <div className={styles.dot} aria-hidden="true" />
+          <span className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Mapa</span>
         </button>
 
         {/* Músicas — opens the PlaylistModal with the catalog of
-            registered tracks. Icon is a stroked play triangle so
-            it sits in the same visual family as the other outline
-            icons in the bar (map, chat, profile). */}
+            registered tracks. Icon is wrapped in a rounded-square
+            tile so it stands out as the "primary play" action vs
+            the other stroke-only icons. */}
         <button
           type="button"
           className={styles.item}
@@ -85,16 +94,18 @@ export default function BottomNav({
           aria-label="Abrir lista de músicas"
           data-tooltip="Músicas"
         >
-          <svg viewBox="0 0 22 22" fill="none">
-            <path
-              d="M7 4.5v13l11-6.5z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className={styles.dot} aria-hidden="true" />
+          <span className={styles.playTile} aria-hidden="true">
+            <svg viewBox="0 0 22 22" fill="none">
+              <path
+                d="M7 4.5v13l11-6.5z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <span className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Músicas</span>
         </button>
 
@@ -134,28 +145,38 @@ export default function BottomNav({
               strokeLinejoin="round"
             />
           </svg>
-          <div className={styles.dot} aria-hidden="true" />
+          <span className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Chat</span>
         </button>
 
-        {/* Profile */}
+        {/* Notifications — replaces the previous Profile slot.
+            Bell icon dispatches a window-level CustomEvent the
+            TopBar bell listens to, so both surfaces drive the
+            same panel implementation. */}
         <button
-          className={`${styles.item} ${pathname === '/app/profile' ? styles.itemActive : ''}`}
-          onClick={onProfileOpen}
-          aria-label="Perfil"
-          data-tooltip="Perfil"
+          type="button"
+          className={styles.item}
+          onClick={openNotifications}
+          aria-label="Notificações"
+          data-tooltip="Notificações"
         >
           <svg viewBox="0 0 22 22" fill="none">
-            <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
             <path
-              d="M4 19c0-3.5 3-6 7-6s7 2.5 7 6"
+              d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9 18a2 2 0 0 0 4 0"
               stroke="currentColor"
               strokeWidth="1.6"
               strokeLinecap="round"
             />
           </svg>
-          <div className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Perfil</span>
+          <span className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>Notificações</span>
         </button>
       </div>
     </nav>

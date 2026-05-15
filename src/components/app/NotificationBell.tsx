@@ -155,6 +155,18 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
 
+  // External-open hook. The BottomNav's right-most slot now is a
+  // notifications icon — it fires this CustomEvent so the same
+  // panel surfaces from both places without coupling the two
+  // components directly. Any other surface that wants to open
+  // the panel can dispatch the same event.
+  useEffect(() => {
+    const onExternalOpen = () => setOpen(true);
+    window.addEventListener('app:open-notifications', onExternalOpen);
+    return () =>
+      window.removeEventListener('app:open-notifications', onExternalOpen);
+  }, []);
+
   return (
     <div className={styles.wrap} ref={dropRef}>
       <button

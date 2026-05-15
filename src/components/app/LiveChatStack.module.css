@@ -3,15 +3,43 @@
   right: 18px;
   top: 50%;
   transform: translateY(-50%);
-  /* Bumped above the edge vignette (.vignette z=1), the feed minimized
-     gradient (z=16), and any future page-edge overlay so the dock
-     never gets visually muted by a backdrop element. */
-  z-index: 100;
+  /* The right edge of the viewport sits inside the dark band of
+     .vignette (Globe.module.css), so even at z-index 100 the chat
+     avatars felt "opaque" — the surrounding wash dragged their
+     perceived contrast down.
+
+     Two defenses below:
+       1. Bump z-index well beyond any future overlay (200).
+       2. Render a soft luminous halo behind the avatar column via
+          a ::before pseudo. The halo cancels the vignette's
+          darkness specifically in the avatar area so each photo
+          reads as crisp regardless of what's underneath. */
+  z-index: 200;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   pointer-events: auto;
+  /* Own stacking context — keeps the halo and avatars layered
+     predictably even when other absolute-positioned elements join
+     the page. */
+  isolation: isolate;
+}
+.dock::before {
+  content: '';
+  position: absolute;
+  /* Wider than the dock so the halo bleeds slightly off the edges
+     instead of clipping. */
+  inset: -8px -28px;
+  background: radial-gradient(
+    ellipse 60% 90% at 50% 50%,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.25) 55%,
+    transparent 85%
+  );
+  filter: blur(12px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .label {
@@ -91,10 +119,13 @@
   filter: saturate(0.55) brightness(0.88);
 }
 
-/* Group avatars use a softer rounded-square so they read distinctly
-   from the circular DM avatars at a glance. */
+/* Group avatars used to use a rounded-square (12px) so they read
+   distinctly from circular DM avatars. Product feedback flipped
+   that decision — fully round on both keeps the stack visually
+   uniform and lets the contextual badge / member icon overlay
+   carry the "this is a group" signal instead. */
 .avatarGroup {
-  border-radius: 12px !important;
+  border-radius: 50% !important;
 }
 
 /* ── Presence dot ──────────────────────────────────────────────

@@ -54,6 +54,19 @@
   font-weight: 700;
   color: rgba(245,245,247,0.92);
   letter-spacing: -0.01em;
+  /* Inline-flex so the verified checkmark sits flush next to the
+   * display name without breaking baseline alignment. */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Verified check (blue badge) right after the display name. */
+.verifiedBadge {
+  flex-shrink: 0;
+  /* Optical nudge — the blue circle reads slightly low against the
+   * uppercase name baseline. */
+  transform: translateY(-0.5px);
 }
 
 .time {

@@ -2,8 +2,14 @@
 .box {
   position: fixed;
   top: 42px;
+  /* Mirror NowPlaying.module.css positioning so the Fanverse box
+   * and the player share the same left column AND the same width.
+   *   - left:  68px  → identical gutter from screen edge
+   *   - width: 296px → matches .playerHorizontal / .playerExpanded
+   * Both values move together if the column ever migrates to a CSS
+   * variable. */
   left: 68px;
-  width: 310px;
+  width: 296px;
   z-index: 15;
   display: flex;
   flex-direction: column;

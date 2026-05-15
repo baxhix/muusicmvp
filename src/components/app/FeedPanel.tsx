@@ -173,6 +173,16 @@ export default function FeedPanel() {
   const [minimized, setMinimized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Idle-scroll state: after 3s of no user interaction inside the
+  // expanded feed, the column starts drifting downward slowly +
+  // a "Novas publicações" banner fades in at the top. Any wheel /
+  // touch / mouse / scroll event resets the timer and stops the
+  // drift. Minimized state has its own chunked scroller (see the
+  // effect further down) so we skip this when collapsed.
+  const [autoScrolling, setAutoScrolling] = useState(false);
+  const lastActivityRef = useRef<number>(Date.now());
+  const isAutoScrollingRef = useRef<boolean>(false);
+
   // Admin-CMS posts. Rendered at the top of the feed when present —
   // a flat list above the mock content so the team's real posts
   // lead. Falls back to just the mock content while loading or if
@@ -185,7 +195,7 @@ export default function FeedPanel() {
       .filter((m): m is MediaPostData => m !== null);
   }, [adminPosts]);
 
-  /* Auto-scroll quando minimizado */
+  /* Auto-scroll quando minimizado (jumping chunks every 3s). */
   useEffect(() => {
     if (!minimized) return;
 
@@ -204,6 +214,71 @@ export default function FeedPanel() {
     return () => clearInterval(interval);
   }, [minimized]);
 
+  /* Auto-scroll quando EXPANDIDO + usuário inativo por 3s.
+   *
+   * Different from the minimized loop above: this one drifts the
+   * feed downward slowly (≈18px/s) so the user sees fresh posts
+   * roll into view passively, and surfaces a "Novas publicações"
+   * banner up top. Any wheel / touch / mouse activity inside the
+   * scroll container resets the idle timer and stops the drift.
+   *
+   * Skipped while minimized (different UX) and while a comments
+   * panel is open inside a post (the user is reading — don't yank
+   * the page out from under them). */
+  useEffect(() => {
+    if (minimized) return;
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const markActive = () => {
+      // Ignore scroll events caused by OUR programmatic scrollBy —
+      // they'd otherwise reset the idle timer in a tight loop and
+      // the feed would never drift.
+      if (isAutoScrollingRef.current) return;
+      lastActivityRef.current = Date.now();
+      setAutoScrolling(false);
+    };
+
+    el.addEventListener('scroll',     markActive, { passive: true });
+    el.addEventListener('wheel',      markActive, { passive: true });
+    el.addEventListener('touchstart', markActive, { passive: true });
+    el.addEventListener('touchmove',  markActive, { passive: true });
+    el.addEventListener('mousemove',  markActive);
+    el.addEventListener('keydown',    markActive);
+
+    const tick = setInterval(() => {
+      const idleMs = Date.now() - lastActivityRef.current;
+      if (idleMs < 3000) return; // user still active
+      const target = scrollRef.current;
+      if (!target) return;
+
+      const max = target.scrollHeight - target.clientHeight;
+      if (max <= 0) return; // nothing to scroll
+
+      // Drift ~1.4px per 80ms tick → ~17.5px/s, slow + readable.
+      isAutoScrollingRef.current = true;
+      const next = target.scrollTop + 1.4;
+      target.scrollTop = next >= max ? 0 : next;
+      // Release the flag on the next microtask so the scroll
+      // event the assignment fires doesn't get treated as
+      // user activity.
+      requestAnimationFrame(() => {
+        isAutoScrollingRef.current = false;
+      });
+      setAutoScrolling(true);
+    }, 80);
+
+    return () => {
+      el.removeEventListener('scroll',     markActive);
+      el.removeEventListener('wheel',      markActive);
+      el.removeEventListener('touchstart', markActive);
+      el.removeEventListener('touchmove',  markActive);
+      el.removeEventListener('mousemove',  markActive);
+      el.removeEventListener('keydown',    markActive);
+      clearInterval(tick);
+    };
+  }, [minimized]);
+
   return (
     <>
     {minimized && <div className={styles.minimizedGradient} />}
@@ -219,6 +294,16 @@ export default function FeedPanel() {
         <div className={styles.liveDot} />
         <span className={styles.title}>Feed</span>
       </div>
+
+      {/* Idle "Novas publicações" banner — only fades in while the
+          user has been inactive ≥3s AND the feed is expanded.
+          Pointer-events disabled so it doesn't block clicks on the
+          stories rail underneath. */}
+      {!minimized && autoScrolling && (
+        <div className={styles.idleBanner} aria-hidden="true">
+          <span>Novas publicações</span>
+        </div>
+      )}
 
       {/* Scroll */}
       <div className={styles.scroll} ref={scrollRef}>

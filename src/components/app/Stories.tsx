@@ -282,7 +282,10 @@ export default function Stories() {
                   />
                 </span>
               </span>
-              <span className={styles.storyName}>{story.user}</span>
+              {/* Story names removed — every story belongs to the same
+                  creator (Central Ana Castela), so repeating the label
+                  under each ring was visual noise. The aria-label on
+                  the button still carries the name for screen readers. */}
             </button>
           );
         })}

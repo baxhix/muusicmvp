@@ -5,8 +5,23 @@
 
 .panel {
   position: fixed;
-  top: calc(22vh - 10px);
-  bottom: 20px;
+  /* Sit ABOVE the BottomNav instead of overlapping it.
+   *
+   * BottomNav heights (BottomNav.module.css):
+   *   .nav   padding-bottom: 22px
+   *   .inner padding 5px + content ~32px → ~42px tall
+   *   total visible footprint: ~64px from the screen bottom
+   *
+   * +14px breathing room → bottom: 78px lands the panel just above
+   * the bar with a comfortable gap.
+   *
+   * `top: auto` + `max-height` let the panel size to its content
+   * rather than stretching to fill the screen — the previous
+   * top:22vh + bottom:20px combo created a big empty band between
+   * the last button and the bottom edge when content was short. */
+  top: auto;
+  bottom: 78px;
+  max-height: calc(100vh - 140px);
   left: 50%;
   width: 520px;
   margin-left: -260px;
@@ -288,11 +303,13 @@
 }
 .fanRow:hover { background: rgba(255,255,255,0.035); }
 
-/* Highlight the row that corresponds to the logged-in user */
+/* Highlight the row that corresponds to the logged-in user.
+ * The 2px green left stripe was removed per product feedback —
+ * the subtle accent-tinted background alone communicates "this
+ * is you" without the screaming sidebar that competed with the
+ * rank number for attention. */
 .fanRowMe {
   background: rgba(61, 219, 116, 0.05);
-  border-left: 2px solid var(--accent, #3ddb74);
-  padding-left: 8px;
 }
 .fanRowMe:hover { background: rgba(61, 219, 116, 0.08); }
 
