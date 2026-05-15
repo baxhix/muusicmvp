@@ -90,7 +90,6 @@ export default function PollPost({ data }: { data: PollPostData }) {
           </div>
           <div className={styles.time}>{data.time}</div>
         </div>
-        <span className={styles.kindChip} aria-hidden="true">Enquete</span>
       </div>
 
       {/* Question / prompt. */}
@@ -154,18 +153,29 @@ export default function PollPost({ data }: { data: PollPostData }) {
 
       {/* Reward footer — only when a reward is configured. Stays
           visible even after the vote so the user sees what they
-          earned. */}
+          earned. The amount is rendered inside a <strong> so the
+          number reads as the primary signal; surrounding copy is
+          quieter gray. No background — per product feedback the
+          chip was reading as a separate widget. */}
       {data.reward && data.reward > 0 && (
-        <div className={styles.reward} aria-live="polite">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.3 21.4 12 18 5.7 21.4 7 14.4 2 9.5 8.9 8.6 12 2" />
-          </svg>
-          <span>
-            {votedId
-              ? `Você ganhou ${data.reward.toLocaleString('pt-BR')} Fanpoints!`
-              : `Votando, você ganha ${data.reward.toLocaleString('pt-BR')} Fanpoints`}
-          </span>
-        </div>
+        <p className={styles.reward} aria-live="polite">
+          {votedId ? (
+            <>
+              Você ganhou{' '}
+              <strong className={styles.rewardAmount}>
+                {data.reward.toLocaleString('pt-BR')} Fanpoints
+              </strong>
+              !
+            </>
+          ) : (
+            <>
+              Votando, você ganha{' '}
+              <strong className={styles.rewardAmount}>
+                {data.reward.toLocaleString('pt-BR')} Fanpoints
+              </strong>
+            </>
+          )}
+        </p>
       )}
     </div>
   );

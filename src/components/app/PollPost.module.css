@@ -71,21 +71,6 @@
   font-family: var(--mono);
 }
 
-/* Kind chip — labels the card as an Enquete in case users skim
- * past the visual cue. Subtle, lowercase, tucked to the right. */
-.kindChip {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(168, 85, 247, 0.85);
-  background: rgba(168, 85, 247, 0.08);
-  border: 1px solid rgba(168, 85, 247, 0.22);
-  padding: 3px 8px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
 /* ── Question / prompt ── */
 .question {
   margin: 0 14px 12px;
@@ -108,6 +93,11 @@
   flex-direction: column;
   gap: 8px;
   transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* `align-items: stretch` (the grid default on `.grid`) ensures
+   * both option cells share the same height. Combined with the
+   * `min-height` on `.optionLabel` below, the "Votar" buttons end
+   * up at identical vertical positions across the two columns
+   * regardless of how long each look name is. */
 }
 .optionChosen {
   /* Slight scale-up + soft outer ring on the chosen option after
@@ -171,65 +161,87 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Caption / CTA row beneath the photo. */
+/* Caption / CTA row beneath the photo. Flex column with the
+ * button pushed to the bottom via `margin-top: auto` so it sits
+ * flush with the bottom of the option cell regardless of how long
+ * the label is. */
 .optionFooter {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 0 4px;
+  flex: 1; /* stretches to fill remaining vertical space in .option */
 }
+/* Label gets a stable height across both options so the buttons
+ * underneath end up at exactly the same Y position. line-clamp
+ * caps anything longer than 2 lines with an ellipsis. Weight back
+ * down to 400 (regular) per product feedback. */
 .optionLabel {
   font-size: 12.5px;
-  font-weight: 600;
-  color: rgba(245, 245, 247, 0.88);
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.82);
   letter-spacing: -0.005em;
   line-height: 1.3;
+  min-height: calc(2 * 1.3em);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
+/* Discrete vote CTA — neutral white tints, no purple accent. The
+ * button stretches the full footer width and is pushed to the
+ * bottom via `margin-top: auto` so it survives label-length
+ * variance between the two options. */
 .voteBtn {
   align-self: stretch;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 700;
+  margin-top: auto;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
   letter-spacing: 0.01em;
-  color: #F5F5F7;
-  background: rgba(168, 85, 247, 0.18);
-  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: rgba(245, 245, 247, 0.78);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
 }
 .voteBtn:hover {
-  background: rgba(168, 85, 247, 0.28);
-  border-color: rgba(168, 85, 247, 0.6);
-  transform: translateY(-1px);
-}
-.voteBtn:active {
-  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #F5F5F7;
 }
 .voteCount {
+  align-self: stretch;
+  margin-top: auto;
+  padding: 7px 12px;
   font-size: 11.5px;
   font-weight: 600;
-  color: rgba(245, 245, 247, 0.55);
+  color: rgba(245, 245, 247, 0.5);
   letter-spacing: 0.005em;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
-/* ── Reward footer ── */
+/* ── Reward line ──
+ * Inline text, no chip. The amount itself (e.g. "250 Fanpoints")
+ * is wrapped in <strong class="rewardAmount"> so it reads as the
+ * primary signal — white + 700 — while the surrounding "Votando,
+ * você ganha" / "Você ganhou" copy sits quieter in muted gray. */
 .reward {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 10px 14px 14px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.20);
-  color: #f59e0b;
+  margin: 12px 14px 14px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.55);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: -0.005em;
+  line-height: 1.4;
 }
-.reward svg {
-  flex-shrink: 0;
+.rewardAmount {
+  color: #FFFFFF;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }

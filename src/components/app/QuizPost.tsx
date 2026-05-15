@@ -77,7 +77,6 @@ export default function QuizPost({ data }: { data: QuizPostData }) {
           </div>
           <div className={styles.time}>{data.time}</div>
         </div>
-        <span className={styles.kindChip} aria-hidden="true">Quiz</span>
       </div>
 
       {/* Question */}

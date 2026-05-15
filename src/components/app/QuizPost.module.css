@@ -77,19 +77,6 @@
   color: rgba(245,245,247,0.4);
   font-family: var(--mono);
 }
-.kindChip {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(125, 211, 252, 0.85);
-  background: rgba(125, 211, 252, 0.08);
-  border: 1px solid rgba(125, 211, 252, 0.22);
-  padding: 3px 8px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
 /* ── Question / options ── */
 .question {
   margin: 0 14px 12px;

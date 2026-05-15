@@ -53,14 +53,14 @@ const POLL_LOOK: PollPostData = {
   options: [
     {
       id: 'look-1',
-      label: 'Look 1 — Country chique',
+      label: 'Country chique',
       imageSrc: '/feed/ana-castela-3.png',
       imageAlt: 'Ana Castela em close com chapéu, look country chique',
       votes: 2418,
     },
     {
       id: 'look-2',
-      label: 'Look 2 — Boiadeira moderna',
+      label: 'Boiadeira moderna',
       imageSrc: '/feed/ana-castela-1.png',
       imageAlt: 'Ana Castela cantando com microfone de glitter',
       votes: 3072,
