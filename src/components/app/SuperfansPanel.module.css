@@ -5,23 +5,25 @@
 
 .panel {
   position: fixed;
-  /* Sit ABOVE the BottomNav instead of overlapping it.
+  /* Sit ABOVE the BottomNav with breathing room equal to the
+   * navbar's own bottom gap (visual symmetry — navbar feels
+   * "framed" by equal spacing above and below).
    *
    * BottomNav heights (BottomNav.module.css):
-   *   .nav   padding-bottom: 22px
-   *   .inner padding 5px + content ~32px → ~42px tall
-   *   total visible footprint: ~64px from the screen bottom
+   *   .nav padding-bottom:  24px   → gap from pill to screen
+   *   .inner padding 8+8 + ~22px icon + 3px border × 2 → ~52px pill
+   *   pill top edge: 24 + 52 = 76px from the screen bottom
    *
-   * +14px breathing room → bottom: 78px lands the panel just above
-   * the bar with a comfortable gap.
+   * + the navbar's own gap (24px) → panel bottom at 100px from the
+   * screen edge. Lines the panel up symmetrically with the navbar.
    *
    * `top: auto` + `max-height` let the panel size to its content
    * rather than stretching to fill the screen — the previous
    * top:22vh + bottom:20px combo created a big empty band between
    * the last button and the bottom edge when content was short. */
   top: auto;
-  bottom: 78px;
-  max-height: calc(100vh - 140px);
+  bottom: 100px;
+  max-height: calc(100vh - 160px);
   left: 50%;
   width: 520px;
   margin-left: -260px;
