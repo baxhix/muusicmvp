@@ -185,7 +185,7 @@ export default function PlaylistModal({
             <input
               type="search"
               className={styles.searchInput}
-              placeholder="Buscar música ou artista..."
+              placeholder="Buscar música ou artista…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
