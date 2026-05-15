@@ -16,40 +16,33 @@ import { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
 import {
   IconPlus,
-  IconCheck,
-  IconKey,
   IconLink,
+  IconCheck,
   IconTrash,
-  IconDownload,
 } from '@/components/icons';
 import { teamService } from '@/services/team';
-import { integrationsService } from '@/services/integrations';
-import { apiKeysService } from '@/services/apiKeys';
-import { billingService, workspaceService } from '@/services/billing';
+import { workspaceService } from '@/services/billing';
 import { siteTagsService } from '@/services/siteTags';
 import type {
-  ApiKey,
-  BillingInvoice,
-  BillingPlan,
-  Integration,
   SiteTag,
   SiteTagKind,
   TeamMember,
   TeamRole,
   WorkspaceSettings,
 } from '@/types';
-import { formatBRL, formatDate, formatRelative } from '@/lib/format';
+import { formatDate, formatRelative } from '@/lib/format';
 import styles from './page.module.css';
 
-type SettingsTab = 'general' | 'team' | 'integrations' | 'tags' | 'billing' | 'apiKeys';
+// Scope trimmed to the three sections the team actively maintains.
+// Integrações / Faturamento / API Keys lived as placeholders and
+// were not bringing operational value — removed to keep the surface
+// focused on what's used day-to-day.
+type SettingsTab = 'general' | 'team' | 'tags';
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: 'general',      label: 'Geral' },
-  { id: 'team',         label: 'Equipe' },
-  { id: 'integrations', label: 'Integrações' },
-  { id: 'tags',         label: 'Tags' },
-  { id: 'billing',      label: 'Faturamento' },
-  { id: 'apiKeys',      label: 'API Keys' },
+  { id: 'general', label: 'Geral' },
+  { id: 'team',    label: 'Usuários' },
+  { id: 'tags',    label: 'Tags' },
 ];
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -63,25 +56,6 @@ const ROLE_TONE: Record<TeamRole, BadgeTone> = {
   admin:     'info',
   moderator: 'warning',
   readonly:  'neutral',
-};
-
-const CATEGORY_LABEL: Record<Integration['category'], string> = {
-  music:     'Música',
-  payments:  'Pagamentos',
-  maps:      'Mapas',
-  analytics: 'Analytics',
-  comms:     'Comunicação',
-};
-
-const INVOICE_STATUS_LABEL: Record<BillingInvoice['status'], string> = {
-  paid:    'Pago',
-  pending: 'Pendente',
-  failed:  'Falhou',
-};
-const INVOICE_STATUS_TONE: Record<BillingInvoice['status'], BadgeTone> = {
-  paid:    'success',
-  pending: 'warning',
-  failed:  'danger',
 };
 
 /* ============================================================
@@ -107,12 +81,9 @@ export default function SettingsPage() {
       />
 
       <div className={styles.body}>
-        {tab === 'general'      && <GeneralTab />}
-        {tab === 'team'         && <TeamTab />}
-        {tab === 'integrations' && <IntegrationsTab />}
-        {tab === 'tags'         && <TagsTab />}
-        {tab === 'billing'      && <BillingTab />}
-        {tab === 'apiKeys'      && <ApiKeysTab />}
+        {tab === 'general' && <GeneralTab />}
+        {tab === 'team'    && <TeamTab />}
+        {tab === 'tags'    && <TagsTab />}
       </div>
     </>
   );
@@ -371,82 +342,6 @@ function TeamTab() {
         destructive
       />
     </>
-  );
-}
-
-/* ============================================================
-   Tab: Integrações
-   ============================================================ */
-
-function IntegrationsTab() {
-  const [integrations, setIntegrations] = useState<Integration[] | null>(null);
-  const { push } = useToast();
-
-  useEffect(() => {
-    integrationsService.list().then(setIntegrations);
-  }, []);
-
-  function toggle(int: Integration) {
-    if (!integrations) return;
-    const next = integrations.map((i) =>
-      i.id === int.id
-        ? {
-            ...i,
-            connected: !i.connected,
-            connectedAt: !i.connected ? new Date().toISOString() : undefined,
-          }
-        : i
-    );
-    setIntegrations(next);
-    push({
-      type: int.connected ? 'warning' : 'success',
-      title: int.connected ? `${int.name} desconectado` : `${int.name} conectado`,
-      description: int.connected
-        ? 'O fluxo dependente desta integração foi pausado.'
-        : 'Os eventos começarão a sincronizar nos próximos minutos.',
-    });
-  }
-
-  return (
-    <Card>
-      <CardHeader
-        title="Integrações"
-        description="Serviços conectados ao Fanverse — habilite ou pause individualmente."
-      />
-      <div className={styles.integrationsGrid}>
-        {(integrations ?? []).map((int) => (
-          <div key={int.id} className={styles.integration}>
-            <div className={styles.intHead}>
-              <div>
-                <div className={styles.intName}>{int.name}</div>
-                <div className={styles.intCategory}>{CATEGORY_LABEL[int.category]}</div>
-              </div>
-              <span className={styles.intLogo}>{int.name.slice(0, 1).toUpperCase()}</span>
-            </div>
-            <div className={styles.intDescription}>{int.description}</div>
-            <div className={styles.intFooter}>
-              {int.connected ? (
-                <Badge tone="success" size="sm" dot>
-                  Conectado
-                </Badge>
-              ) : (
-                <Badge tone="neutral" size="sm">
-                  Desconectado
-                </Badge>
-              )}
-              <Button
-                variant={int.connected ? 'outline' : 'primary'}
-                size="sm"
-                leadingIcon={<IconLink size={13} />}
-                onClick={() => toggle(int)}
-              >
-                {int.connected ? 'Desconectar' : 'Conectar'}
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
   );
 }
 
@@ -738,273 +633,3 @@ function TagCard({ entry, row, onChange }: TagCardProps) {
   );
 }
 
-/* ============================================================
-   Tab: Faturamento
-   ============================================================ */
-
-function BillingTab() {
-  const [plan, setPlan] = useState<BillingPlan | null>(null);
-  const [invoices, setInvoices] = useState<BillingInvoice[] | null>(null);
-
-  useEffect(() => {
-    billingService.plan().then(setPlan);
-    billingService.invoices().then(setInvoices);
-  }, []);
-
-  const invoiceColumns: Column<BillingInvoice>[] = [
-    {
-      id: 'number',
-      header: 'Fatura',
-      sortKey: (i) => i.number,
-      cell: (i) => <span className={styles.invoiceCell}>{i.number}</span>,
-      width: 180,
-    },
-    {
-      id: 'date',
-      header: 'Data',
-      sortKey: (i) => i.date,
-      cell: (i) => <span className={styles.invoiceMute}>{formatDate(i.date)}</span>,
-      width: 140,
-    },
-    {
-      id: 'amount',
-      header: 'Valor',
-      sortKey: (i) => i.amount,
-      align: 'right',
-      cell: (i) => <span className={styles.invoiceCell}>{formatBRL(i.amount)}</span>,
-      width: 130,
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      sortKey: (i) => i.status,
-      cell: (i) => (
-        <Badge tone={INVOICE_STATUS_TONE[i.status]} size="sm" dot>
-          {INVOICE_STATUS_LABEL[i.status]}
-        </Badge>
-      ),
-      width: 110,
-    },
-    {
-      id: 'download',
-      header: '',
-      align: 'right',
-      cell: () => (
-        <Button variant="ghost" size="sm" iconOnly aria-label="Baixar fatura" title="Baixar fatura">
-          <IconDownload size={14} />
-        </Button>
-      ),
-    },
-  ];
-
-  return (
-    <>
-      <Card>
-        <CardHeader title="Plano atual" description="Ciclo de cobrança e método de pagamento." />
-        <div className={styles.planHero}>
-          <div className={styles.planMain}>
-            <span className={styles.planLabel}>Plano</span>
-            <span className={styles.planName}>
-              {plan?.name ?? '—'}
-              {plan && (
-                <span className={styles.planPrice}>
-                  · {formatBRL(plan.monthlyBRL)} / mês
-                </span>
-              )}
-            </span>
-            <span className={styles.planSeats}>
-              {plan ? `${plan.seatsUsed} de ${plan.seats} assentos em uso` : '—'}
-            </span>
-            <span className={styles.planNext}>
-              {plan && (
-                <>
-                  Próxima cobrança em <b>{formatDate(plan.nextChargeAt)}</b>
-                </>
-              )}
-            </span>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <Button variant="primary" size="sm">Mudar plano</Button>
-              <Button variant="ghost" size="sm">Cancelar assinatura</Button>
-            </div>
-          </div>
-
-          <div className={styles.paymentBox}>
-            <span className={styles.planLabel}>Método de pagamento</span>
-            {plan ? (
-              <>
-                <span className={styles.paymentBrand}>
-                  {plan.paymentMethod.brand} •••• {plan.paymentMethod.last4}
-                </span>
-                <span className={styles.paymentMeta}>
-                  Validade {plan.paymentMethod.expiresAt}
-                </span>
-                <Button variant="outline" size="sm" style={{ marginTop: 8 }}>
-                  Atualizar cartão
-                </Button>
-              </>
-            ) : (
-              <span className={styles.paymentMeta}>—</span>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <CardHeader
-          title="Histórico de faturas"
-          description="Faturas emitidas nos últimos 6 meses."
-        />
-        <Table<BillingInvoice>
-          columns={invoiceColumns}
-          data={invoices ?? []}
-          rowId={(i) => i.id}
-          pageSize={10}
-          loading={invoices === null}
-        />
-      </Card>
-    </>
-  );
-}
-
-/* ============================================================
-   Tab: API Keys
-   ============================================================ */
-
-function ApiKeysTab() {
-  const [keys, setKeys] = useState<ApiKey[] | null>(null);
-  const [pendingRevoke, setPendingRevoke] = useState<ApiKey | null>(null);
-  const { push } = useToast();
-
-  useEffect(() => {
-    apiKeysService.list().then(setKeys);
-  }, []);
-
-  const columns: Column<ApiKey>[] = [
-    {
-      id: 'label',
-      header: 'Chave',
-      sortKey: (k) => k.label,
-      cell: (k) => (
-        <div className={styles.keyCell}>
-          <span className={styles.keyLabel}>{k.label}</span>
-          <span className={styles.keyPrefix}>{k.prefix}••••••</span>
-        </div>
-      ),
-    },
-    {
-      id: 'scopes',
-      header: 'Escopos',
-      cell: (k) => (
-        <div className={styles.keyScopes}>
-          {k.scopes.slice(0, 3).map((s) => (
-            <Badge key={s} tone="neutral" size="sm">
-              {s}
-            </Badge>
-          ))}
-          {k.scopes.length > 3 && (
-            <Badge tone="neutral" size="sm">
-              +{k.scopes.length - 3}
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: 'createdBy',
-      header: 'Criado por',
-      sortKey: (k) => k.createdBy,
-      cell: (k) => <span className={styles.memberMute}>{k.createdBy}</span>,
-      width: 160,
-    },
-    {
-      id: 'createdAt',
-      header: 'Criada em',
-      sortKey: (k) => k.createdAt,
-      cell: (k) => <span className={styles.memberMute}>{formatDate(k.createdAt)}</span>,
-      width: 140,
-    },
-    {
-      id: 'lastUsedAt',
-      header: 'Último uso',
-      sortKey: (k) => k.lastUsedAt ?? '',
-      cell: (k) => (
-        <span className={styles.memberMute}>
-          {k.lastUsedAt ? formatRelative(k.lastUsedAt) : 'nunca'}
-        </span>
-      ),
-      width: 140,
-    },
-    {
-      id: 'actions',
-      header: 'Ação',
-      align: 'right',
-      cell: (k) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Button
-            variant="dangerGhost"
-            size="sm"
-            iconOnly
-            aria-label={`Revogar ${k.label}`}
-            title="Revogar"
-            onClick={() => setPendingRevoke(k)}
-          >
-            <IconTrash size={14} />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <>
-      <Card>
-        <CardHeader
-          title="API Keys"
-          description="Tokens de acesso à API. Revogue imediatamente se houver suspeita de comprometimento."
-          actions={
-            <Button
-              variant="primary"
-              size="sm"
-              leadingIcon={<IconKey size={14} />}
-              onClick={() =>
-                push({
-                  type: 'info',
-                  title: 'Geração indisponível',
-                  description: 'O fluxo de geração precisa do backend conectado.',
-                })
-              }
-            >
-              Gerar nova key
-            </Button>
-          }
-        />
-        <Table<ApiKey>
-          columns={columns}
-          data={keys ?? []}
-          rowId={(k) => k.id}
-          pageSize={10}
-          loading={keys === null}
-        />
-      </Card>
-
-      <ConfirmDialog
-        open={pendingRevoke !== null}
-        onClose={() => setPendingRevoke(null)}
-        onConfirm={() => {
-          if (!pendingRevoke || !keys) return;
-          setKeys(keys.filter((k) => k.id !== pendingRevoke.id));
-          push({
-            type: 'error',
-            title: 'API key revogada',
-            description: `${pendingRevoke.label} não pode mais ser usada.`,
-          });
-          setPendingRevoke(null);
-        }}
-        title={pendingRevoke ? `Revogar ${pendingRevoke.label}?` : ''}
-        description="Qualquer requisição usando essa chave passa a falhar imediatamente. Esta ação é permanente."
-        confirmLabel="Revogar key"
-        destructive
-      />
-    </>
-  );
-}

@@ -248,7 +248,8 @@ export type ApiFeedPostType =
   | 'story'
   | 'poll'
   | 'sponsored'
-  | 'broadcast';
+  | 'broadcast'
+  | 'audio';
 
 export type ApiFeedPostStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 

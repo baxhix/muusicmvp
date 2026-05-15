@@ -106,6 +106,13 @@
       "when": 1778900000000,
       "tag": "0015_drop_algorithm_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1778920000000,
+      "tag": "0016_feed_audio_type",
+      "breakpoints": true
     }
   ]
 }

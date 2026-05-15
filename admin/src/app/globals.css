@@ -186,6 +186,19 @@
 
 html {
   background: var(--bg);
+  /* Reserve the scrollbar gutter even when content fits inside the
+   * viewport. Without this, pages whose content is exactly viewport-
+   * tall don't render a scrollbar while taller pages do — the
+   * difference is ~10px of horizontal width, which shows up as the
+   * "tables tremem entre navegações" visual: every nav jump reflows
+   * the layout horizontally because the available width changes by
+   * one scrollbar-width.
+   *
+   * `stable both-edges` keeps the gutter present on both sides so
+   * the body stays horizontally centered regardless of scroll
+   * state. `overflow-y: scroll` on the body below is a fallback for
+   * browsers that don't support scrollbar-gutter (Safari < 16). */
+  scrollbar-gutter: stable both-edges;
 }
 
 html, body {
@@ -200,6 +213,10 @@ body {
   font-size: 14px;
   line-height: 1.5;
   background: var(--bg);
+  /* Fallback for browsers without scrollbar-gutter support (Safari
+   * < 16). Always reserve scrollbar space so navigations don't
+   * jiggle horizontally. */
+  overflow-y: scroll;
 }
 
 a { color: inherit; text-decoration: none; }

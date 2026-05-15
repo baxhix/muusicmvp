@@ -255,17 +255,37 @@ export default function TracksPage() {
                 value={draft.url}
                 onChange={(e) => setDraft({ ...draft, url: e.target.value })}
                 leadingIcon={<IconLink size={14} />}
+                // Tone the wrapper through a data-state attribute so
+                // CSS can color the border:
+                //   - data-state="valid"   → green outline
+                //   - data-state="invalid" → red outline
+                // Avoids shifting the grid row when feedback appears.
+                data-state={
+                  draft.url
+                    ? previewId
+                      ? 'valid'
+                      : 'invalid'
+                    : undefined
+                }
               />
-              {draft.url && !previewId && (
-                <span className={styles.formError}>
-                  URL inválida — verifique o link.
-                </span>
-              )}
-              {previewId && (
-                <span className={styles.formSuccess}>
-                  ID detectado: {previewId}
-                </span>
-              )}
+              {/* Reserved feedback slot. Always rendered (even when
+                  empty) so its presence never reflows the form grid.
+                  Without this, the "ID detectado" / error line was
+                  pushing the row layout and misaligning the URL
+                  input against Title/Artist. */}
+              <span
+                className={styles.formFeedback}
+                role={draft.url && !previewId ? 'alert' : undefined}
+              >
+                {draft.url && !previewId && (
+                  <span className={styles.formError}>URL inválida — verifique o link.</span>
+                )}
+                {previewId && (
+                  <span className={styles.formSuccess}>
+                    URL válida · ID {previewId}
+                  </span>
+                )}
+              </span>
             </div>
             <div className={styles.formField}>
               <label className={styles.formLabel} htmlFor="track-title">

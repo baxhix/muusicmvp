@@ -13,6 +13,7 @@ import {
   IconLogout,
   IconMusic,
   IconTrendingUp,
+  IconCode,
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -38,7 +39,8 @@ const PRIMARY_NAV: NavItem[] = [
 ];
 
 const SECONDARY_NAV: NavItem[] = [
-  { href: '/settings', label: 'Configurações', icon: IconSettings },
+  { href: '/settings',    label: 'Configurações', icon: IconSettings },
+  { href: '/desenvolvedor', label: 'Desenvolvedor',  icon: IconCode },
 ];
 
 export default function Sidebar({ open = false }: { open?: boolean }) {

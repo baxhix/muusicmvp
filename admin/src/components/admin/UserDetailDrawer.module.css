@@ -9,15 +9,20 @@
   gap: 2px;
   min-width: 0;
 }
+/* Match Drawer.title size — UserDetailDrawer renders a custom
+ * node (avatar + name + location) into the title slot, so the
+ * Drawer's own .title class doesn't reach the name text.
+ * Mirror the bumped size here so headers look consistent across
+ * every drawer in the admin. */
 .headerName {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.01em;
-  line-height: 1.25;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 .headerLocation {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-mute);
 }
 

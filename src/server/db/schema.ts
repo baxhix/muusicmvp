@@ -246,7 +246,7 @@ export const feedPosts = pgTable(
     }),
     // CMS-only fields ──
     type: text('type', {
-      enum: ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast'],
+      enum: ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio'],
     }),
     status: text('status', {
       enum: ['published', 'scheduled', 'draft', 'inactive'],

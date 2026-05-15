@@ -377,3 +377,11 @@ export const IconLoader = (p: IconProps) => (
     <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
   </svg>
 );
+
+// Code brackets — used by the Desenvolvedor nav entry.
+export const IconCode = (p: IconProps) => (
+  <svg {...base(p)}>
+    <polyline points="16 18 22 12 16 6" />
+    <polyline points="8 6 2 12 8 18" />
+  </svg>
+);

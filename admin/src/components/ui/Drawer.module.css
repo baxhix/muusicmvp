@@ -37,19 +37,28 @@
   background: var(--surface);
 }
 
+/* Drawer title — bumped from 15px → 19px so headings like
+ * "Nova publicação", "Editar regra", "Atividades de João"
+ * read as proper screen titles, not field labels. Letter-spacing
+ * tightened slightly to match the new size's optical weight.
+ *
+ * Anything that composes a custom node into the Drawer's title
+ * slot (e.g. UserDetailDrawer with avatar + name) inherits this
+ * size automatically because the new value sits on .title which
+ * is the wrapper class around whatever the consumer passes. */
 .title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.01em;
-  line-height: 1.3;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
 }
 
 .description {
-  margin-top: 4px;
-  font-size: 12.5px;
+  margin-top: 6px;
+  font-size: 13px;
   color: var(--text-mute);
-  max-width: 380px;
+  max-width: 480px;
   line-height: 1.5;
 }
 

@@ -24,7 +24,7 @@ export const runtime = 'nodejs';
  *   Returns the hydrated row so the listing can prepend it
  *   optimistically.
  */
-const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast'] as const;
+const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio'] as const;
 const FEED_STATUSES = ['published', 'scheduled', 'draft', 'inactive'] as const;
 
 const listQuerySchema = z.object({

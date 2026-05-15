@@ -77,7 +77,8 @@ export type FeedItemType =
   | 'story'
   | 'poll'
   | 'sponsored'
-  | 'broadcast';
+  | 'broadcast'
+  | 'audio';
 
 export type FeedItemStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 

@@ -9,7 +9,7 @@ import {
 
 export const runtime = 'nodejs';
 
-const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast'] as const;
+const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio'] as const;
 
 /** Mirror of the createSchema's media descriptor. Kept inline (vs
  *  imported) because the two routes are deliberately independent

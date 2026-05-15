@@ -17,13 +17,24 @@
   gap: 12px;
 }
 
-/* Universe-card grid. Shrunk from minmax(320px, 1fr) → 240px so 3-4
- * cards fit on a typical 1100-1400px admin workspace and the new
- * compact card has room to breathe. */
+/* Universe-card grid. Two passes of shrinking:
+ *   - First pass cut the cards' HEIGHT (~40% via 16/9 cover +
+ *     tighter typography).
+ *   - This pass caps the WIDTH so the cards stop stretching to fill
+ *     huge tracks on wide admin screens. minmax(220px → 280px) keeps
+ *     each card compact and lets 4-5 fit on a 1400px workspace.
+ *
+ *   `grid-template-columns: repeat(auto-fill, minmax(220px, 280px))`
+ *   would be the strict reading, but `auto-fit` + an explicit max
+ *   via the second arg works the same when there's enough content
+ *   to fill the row. The .universeGrid then justifies itself to the
+ *   start so leftover space sits to the right, not stretched into
+ *   the last card. */
 .universeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
   gap: 12px;
+  justify-content: start;
 }
 
 /* ── Single universe card (compact variant) ────────────────

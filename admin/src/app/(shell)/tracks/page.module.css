@@ -42,16 +42,46 @@
   margin-top: 4px;
 }
 
-.formError {
-  font-size: 12px;
-  color: #dc2626;
+/* Feedback slot sits below the URL input. Always rendered (even
+ * with no children) so its presence never causes the parent grid
+ * row to grow / shrink when feedback appears. Without the reserved
+ * height, typing into the URL field shifted the URL column UP
+ * relative to Title/Artist (the grid uses align-items: end). */
+.formFeedback {
+  display: block;
+  min-height: 18px;
   margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.formError {
+  color: #dc2626;
 }
 
 .formSuccess {
-  font-size: 12px;
   color: #16a34a;
-  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Tint the URL input's border through its wrapper's data-state.
+ * The Input component renders <span class="wrapper"><input/></span>;
+ * we color the wrapper border by reading the data-state we set
+ * client-side. Falls back gracefully when the attribute is absent.
+ *
+ * NOTE: relies on the Input component preserving unknown DOM
+ * attributes (data-*) on its outer wrapper. If a future refactor
+ * drops that passthrough, switch to a className modifier instead. */
+.formField [data-state="valid"] {
+  --input-border: #16a34a;
+}
+.formField [data-state="valid"] :where(input, textarea) {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
+}
+.formField [data-state="invalid"] :where(input, textarea) {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
 }
 
 /* ── Table cells ─────────────────────────────────────── */

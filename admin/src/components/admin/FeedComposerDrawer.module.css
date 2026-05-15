@@ -17,20 +17,25 @@
   gap: 10px;
 }
 
+/* Section title: bumped from 11px → 13px so "Tipo de post",
+ * "Mídia", etc. read as proper headings rather than fine-print
+ * eyebrows. Letter-spacing relaxed to match the new size. */
 .sectionTitle {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--text-mute);
+  color: var(--text);
 }
 
 /* Inline hint below a section title — used by the Story expiry
- * field to explain the 24h default in muted tone. */
+ * field to explain the 24h default in muted tone. Bumped one notch
+ * to keep visual hierarchy with the larger title. */
 .sectionHint {
-  font-size: 11.5px;
+  font-size: 12.5px;
   color: var(--text-mute);
-  margin-top: -4px;
+  margin-top: -2px;
+  line-height: 1.4;
 }
 
 /* Inline error pill rendered when a per-field validation fails
@@ -40,31 +45,35 @@
   color: var(--danger, #c0392b);
 }
 
-/* Type selector — segmented pills. "Imagem" is the only one enabled
-   today; the rest stay visible but disabled so the team can SEE
-   what's coming without bumping into 404s. */
+/* Type selector — text-only segmented pills. Icons were removed
+ * per product feedback (label + hint scan clearer at this size).
+ *
+ * Hints are constrained to 1 line via white-space: nowrap +
+ * ellipsis so every pill renders at the same height regardless of
+ * copy length — none of the 7 types should overflow the
+ * minmax(140px) track, but the guard keeps the grid steady if a
+ * future hint runs long. */
 .typeRow {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
 }
 .typeOption {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  font-size: 12.5px;
-  font-weight: 500;
   letter-spacing: -0.005em;
   transition: border-color var(--dur-fast) var(--ease-out),
               background var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
   text-align: left;
+  min-width: 0;
 }
 .typeOption:hover:not(:disabled) {
   border-color: var(--brand);
@@ -79,31 +88,27 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
-.typeIcon {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  color: var(--text-mute);
-}
-.typeOptionActive .typeIcon {
-  background: var(--brand);
-  color: #fff;
-}
 .typeMeta {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  flex: 1;
+  gap: 3px;
   min-width: 0;
 }
-.typeName { font-size: 12.5px; font-weight: 600; }
+.typeName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
 .typeHint {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--text-mute);
   letter-spacing: -0.005em;
+  /* Same height per pill — single line, ellipsis on overflow. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 /* Publish mode selector (Publicar agora / Agendar / Rascunho). */

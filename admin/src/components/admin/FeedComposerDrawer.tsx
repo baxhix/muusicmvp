@@ -7,15 +7,7 @@ import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Switch from '@/components/ui/Switch';
 import { useToast } from '@/components/ui/Toast';
-import {
-  IconImage,
-  IconVideo,
-  IconStar,
-  IconFeed,
-  IconCalendar,
-  IconCheckCircle,
-  IconEye,
-} from '@/components/icons';
+import { IconCalendar, IconCheckCircle } from '@/components/icons';
 import { feedService } from '@/services/feed';
 import type {
   FeedItem,
@@ -55,19 +47,31 @@ const DEFAULT_STORY_TTL_MS = 24 * 60 * 60 * 1000;
  * the active mode (Publicar / Agendar / Salvar rascunho).
  */
 
+/**
+ * Catalog of post types exposed in the composer.
+ *
+ * Icons were removed per product feedback — the label + hint
+ * combination is enough at this size, and the icons cluttered the
+ * 3-column grid without adding scanning value. The pill is now
+ * pure typography.
+ *
+ * Hint strings are kept roughly the same length (~3-4 words) so
+ * every option's pill renders at the same visual weight. Don't
+ * stretch them past ~30 chars.
+ */
 const TYPE_OPTIONS: Array<{
   value: FeedItemType;
   label: string;
   hint: string;
   enabled: boolean;
-  icon: (size: number) => React.ReactNode;
 }> = [
-  { value: 'image',     label: 'Imagem',     hint: 'Uma ou várias imagens',          enabled: true,  icon: (s) => <IconImage size={s} /> },
-  { value: 'video',     label: 'Vídeo',      hint: 'Clipe até 100 MB',                 enabled: true,  icon: (s) => <IconVideo size={s} /> },
-  { value: 'story',     label: 'Story',      hint: 'Conteúdo efêmero (24h padrão)',    enabled: true,  icon: (s) => <IconFeed size={s} /> },
-  { value: 'poll',      label: 'Enquete',    hint: 'Em breve',                          enabled: false, icon: (s) => <IconCheckCircle size={s} /> },
-  { value: 'sponsored', label: 'Patrocinado', hint: 'Em breve',                          enabled: false, icon: (s) => <IconStar size={s} /> },
-  { value: 'broadcast', label: 'Transmissão',hint: 'Em breve',                          enabled: false, icon: (s) => <IconEye size={s} /> },
+  { value: 'image',     label: 'Imagem',      hint: 'Uma ou várias imagens',   enabled: true  },
+  { value: 'video',     label: 'Vídeo',       hint: 'Clipe único até 100 MB',  enabled: true  },
+  { value: 'audio',     label: 'Áudio',       hint: 'Faixa ou álbum em áudio', enabled: true  },
+  { value: 'story',     label: 'Story',       hint: 'Conteúdo efêmero por 24h', enabled: true  },
+  { value: 'poll',      label: 'Enquete',     hint: 'Em breve',                  enabled: false },
+  { value: 'sponsored', label: 'Patrocinado', hint: 'Em breve',                  enabled: false },
+  { value: 'broadcast', label: 'Transmissão', hint: 'Em breve',                  enabled: false },
 ];
 
 type Mode = 'publish' | 'schedule' | 'draft';
@@ -265,7 +269,6 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
                 title={opt.enabled ? opt.label : `${opt.label} — disponível em breve`}
                 aria-pressed={type === opt.value}
               >
-                <span className={styles.typeIcon}>{opt.icon(14)}</span>
                 <span className={styles.typeMeta}>
                   <span className={styles.typeName}>{opt.label}</span>
                   <span className={styles.typeHint}>{opt.hint}</span>

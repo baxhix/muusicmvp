@@ -49,7 +49,8 @@ export type FeedType =
   | 'story'
   | 'poll'
   | 'sponsored'
-  | 'broadcast';
+  | 'broadcast'
+  | 'audio';
 export type FeedStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 
 export interface FeedMediaItem {
