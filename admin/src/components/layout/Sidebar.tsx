@@ -13,7 +13,6 @@ import {
   IconLogout,
   IconMusic,
   IconTrendingUp,
-  IconAlgorithm,
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -28,15 +27,14 @@ interface NavItem {
 }
 
 const PRIMARY_NAV: NavItem[] = [
-  { href: '/dashboard',  label: 'Dashboard',   icon: IconDashboard },
+  { href: '/dashboard',  label: 'Dashboard',  icon: IconDashboard },
   { href: '/engagement', label: 'Engajamento', icon: IconTrendingUp },
-  { href: '/fanverse',   label: 'Fanverse',    icon: IconStar },
-  { href: '/feed',       label: 'Feed',        icon: IconFeed },
-  { href: '/algoritmo',  label: 'Algoritmo',   icon: IconAlgorithm },
-  { href: '/users',      label: 'Usuários',    icon: IconUsers },
-  { href: '/tracks',     label: 'Músicas',     icon: IconMusic },
-  { href: '/moderation', label: 'Moderação',   icon: IconShield, badge: 12 },
-  { href: '/superfans',  label: 'Superfãs',    icon: IconStar },
+  { href: '/fanverse',   label: 'Fanverse',   icon: IconStar },
+  { href: '/feed',       label: 'Feed',       icon: IconFeed },
+  { href: '/users',      label: 'Usuários',   icon: IconUsers },
+  { href: '/tracks',     label: 'Músicas',    icon: IconMusic },
+  { href: '/moderation', label: 'Moderação',  icon: IconShield, badge: 12 },
+  { href: '/superfans',  label: 'Superfãs',   icon: IconStar },
 ];
 
 const SECONDARY_NAV: NavItem[] = [
