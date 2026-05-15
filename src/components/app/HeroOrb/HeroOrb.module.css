@@ -1,0 +1,63 @@
+/* HeroOrb — wrapper styling.
+ *
+ * At 70x70 the additive-blended particles produce a tight bright
+ * core but the visual reads as more "premium" when the canvas is
+ * surrounded by a soft outer glow that bleeds into the surface
+ * below. We render that as a radial gradient on a pseudo-element
+ * BEHIND the canvas so it doesn't interfere with the WebGL
+ * compositing. The gradient pulses with a very slow keyframe to
+ * match the in-shader breathing pulse.
+ *
+ * Pointer-events stay enabled on .wrap so future hover affordances
+ * (tooltip, click handler) can hook in without restructuring. */
+
+.wrap {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  /* Stacking context so the ::before halo doesn't escape behind
+   * other absolutely-positioned page elements. */
+  isolation: isolate;
+}
+
+/* Soft ambient halo behind the canvas. Sits outside the canvas
+ * footprint by ~40% so it feels like the orb is breathing into
+ * the surrounding surface. */
+.wrap::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(236, 72, 153, 0.22) 0%,
+    rgba(147, 51, 234, 0.18) 35%,
+    rgba(251, 146, 60, 0.08) 60%,
+    transparent 80%
+  );
+  filter: blur(8px);
+  animation: heroOrbBreath 5.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes heroOrbBreath {
+  0%   { opacity: 0.65; transform: scale(0.96); }
+  100% { opacity: 1.00; transform: scale(1.04); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrap::before {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
+.canvas {
+  display: block;
+  /* Browsers default to selecting the canvas pixels on double-click.
+   * The orb is decorative — opt the canvas out of text selection so
+   * a user dragging across the top bar doesn't blue-flash it. */
+  user-select: none;
+  -webkit-user-drag: none;
+}

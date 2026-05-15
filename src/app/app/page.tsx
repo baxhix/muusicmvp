@@ -26,6 +26,7 @@ import EditProfileModal from '@/components/app/EditProfileModal';
 import DeleteAccountModal from '@/components/app/DeleteAccountModal';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
+import HeroOrb from '@/components/app/HeroOrb/HeroOrb';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
@@ -311,6 +312,12 @@ export default function AppPage() {
               onClick={() => setShowSuperchat(true)}
               unreadCount={superchat?.unreadCount ?? 0}
             />
+            {/* Decorative particle orb — sits where the bell icon
+                used to be visible. Premium ambient signal that the
+                platform is "alive" even when there are no
+                notifications to surface. Purely visual; pointer
+                events stay on for future hover affordances. */}
+            <HeroOrb size={70} />
             {/* NotificationBell stays mounted (its panel + event
                 listener are needed) but renders without the trigger
                 glyph. The visible entry point now lives in the
