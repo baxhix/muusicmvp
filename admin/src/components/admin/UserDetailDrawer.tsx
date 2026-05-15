@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
@@ -11,6 +12,7 @@ import {
   IconMessage,
   IconCalendar,
   IconMusic,
+  IconEye,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
@@ -39,9 +41,16 @@ export default function UserDetailDrawer({
   onBan,
   onBlock,
 }: UserDetailDrawerProps) {
+  const router = useRouter();
+
   if (!user) {
     return <Drawer open={open} onClose={onClose}>{null}</Drawer>;
   }
+
+  const goToActivities = () => {
+    onClose();
+    router.push(`/users/${user.id}/activities`);
+  };
 
   const isBanned    = user.status === 'banned';
   const isSuspended = user.status === 'suspended';
@@ -111,6 +120,14 @@ export default function UserDetailDrawer({
         </div>
 
         <div className={styles.actions}>
+          <Button
+            variant="primary"
+            size="md"
+            leadingIcon={<IconEye size={14} />}
+            onClick={goToActivities}
+          >
+            Ver atividades completas
+          </Button>
           <Button
             variant="outline"
             size="md"

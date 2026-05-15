@@ -244,6 +244,68 @@ export interface Superfan {
   segment: 'vip' | 'rising' | 'loyal' | 'new';
 }
 
+/* ── User Activity Log (compliance) ──────────────────────────
+ *
+ * One event per row in /admin/users/:id/activities. Designed for
+ * compliance review (LGPD, audit trails, moderation history) — so
+ * each row carries channel + IP + user-agent + result and the
+ * category lets the operator filter to the slice they care about.
+ *
+ * The shape is intentionally broader than the actual production
+ * `user_activities` table (which today only tracks stream / login
+ * / chat_started). The extra categories are mocked client-side
+ * for users who don't have real events yet; when the backend
+ * grows to record auth / moderation / settings / compliance
+ * events, the same shape just gets returned by /api/admin/users/:id/activities.
+ */
+export type UserActivityCategory =
+  | 'auth'
+  | 'session'
+  | 'profile'
+  | 'content'
+  | 'streaming'
+  | 'moderation'
+  | 'settings'
+  | 'compliance';
+
+export type UserActivityResult = 'success' | 'failure' | 'pending';
+
+export interface UserActivityEvent {
+  id: ID;
+  userId: ID;
+  category: UserActivityCategory;
+  /** Stable machine code, e.g. 'login_success', 'post_created',
+   *  'account_suspended'. Used for grouping + CSV export. */
+  action: string;
+  /** Human-readable description (pt-BR) shown in the table. */
+  description: string;
+  timestamp: ISODate;
+  result: UserActivityResult;
+  ip?: string;
+  userAgent?: string;
+  channel?: 'web' | 'ios' | 'android' | 'api';
+  city?: string;
+  country?: string;
+  /** Pointer to the object the action touched. Rendered as an
+   *  inline pill in the table. */
+  relatedEntity?: {
+    type: 'post' | 'comment' | 'message' | 'user' | 'track' | 'conversation' | 'report';
+    id: ID;
+    label?: string;
+  };
+  /** Free-form diff or notes (e.g. "city: São Paulo → Rio de Janeiro").
+   *  Rendered in the expanded row. */
+  metadata?: Record<string, string | number | boolean | null>;
+  /** Who performed the action when it wasn't the user themselves
+   *  (e.g. moderator banning the account). Null on user-self
+   *  actions. */
+  actor?: {
+    id: ID;
+    name: string;
+    role: 'self' | 'moderator' | 'system';
+  };
+}
+
 /* ── Activity (recent log on dashboard) ───────────────────── */
 
 export type ActivityType =
