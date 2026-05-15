@@ -123,6 +123,13 @@
   right: auto;
   transform: translateX(-50%);
   width: min(480px, calc(100vw - 32px));
+  /* Fixed height (not just max-height) so the panel always
+   * occupies the same footprint as SuperfansPanel + PlaylistModal
+   * regardless of how many notifications are in the list — when
+   * the list is short the card no longer "shrinks" to feel
+   * smaller than the sibling modals. The `overflow-y: auto` on
+   * `.panel` keeps the list scrollable when it overflows. */
+  height: calc(100vh - 160px);
   max-height: calc(100vh - 160px);
   /* legacy top-right anchor kept here as a doc trail —
      uncomment to revert to a dropdown:

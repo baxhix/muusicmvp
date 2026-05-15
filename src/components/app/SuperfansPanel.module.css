@@ -435,7 +435,10 @@
 .trendDown { color: #F87171; }
 .trendSame { color: rgba(245,245,247,0.55); }
 
-/* ── "Ver mais" button (após o sexto colocado) ── */
+/* ── "Ver mais" button (após o sexto colocado) ──
+ * Standardized pattern shared with PlaylistModal.viewMoreBtn —
+ * fully pill-shaped (border-radius: 999px), borderless, font 14/
+ * 400 regular per product feedback. Keep both in sync. */
 
 .seeMoreBtn {
   display: inline-flex;
@@ -447,10 +450,10 @@
   padding: 10px 14px;
   background: rgba(255, 255, 255, 0.025);
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   color: rgba(245,245,247,0.55);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   font-family: inherit;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease;

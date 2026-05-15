@@ -391,9 +391,11 @@
  * its preview slice (top 7) and the user hasn't expanded yet.
  *
  * Standardized "Ver mais" pattern across the /app modals (Playlist,
- * Superfãs, Notificações): borderless, subtle background tint that
- * brightens on hover. Keep this in sync with .seeMoreBtn in
- * SuperfansPanel.module.css — both should look identical. */
+ * Superfãs, Notificações): pill-shaped (border-radius: 999px),
+ * borderless, subtle background tint that brightens on hover.
+ * Font 14 / 400 (regular) per product feedback. Keep this in
+ * sync with .seeMoreBtn in SuperfansPanel.module.css — both
+ * should look identical. */
 .viewMoreBtn {
   display: inline-flex;
   align-items: center;
@@ -403,10 +405,10 @@
   padding: 10px 18px;
   background: rgba(255, 255, 255, 0.025);
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   color: rgba(245, 245, 247, 0.55);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   font-family: inherit;
   letter-spacing: 0.005em;
   cursor: pointer;
