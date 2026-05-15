@@ -116,6 +116,9 @@ function relativeTime(iso: string): string {
 
 function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
   if (!p.media || p.media.length === 0) return null;
+  // Stories surface in their own rail (see useAdminStories below),
+  // never in the main feed.
+  if (p.type === 'story') return null;
   const user = p.author?.name || 'Central Ana Castela';
   const avatar = p.author?.avatarUrl || '/central-anacastela.png';
   const time = relativeTime(p.publishedAt ?? p.createdAt);
@@ -129,6 +132,23 @@ function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
     dbId: p.id,
     description: p.description ?? undefined,
   };
+
+  // Video post — first media item with kind='video' is the canonical
+  // clip; its poster (if set) becomes the thumbnail. Falls back to
+  // image rendering when admin saved a 'video' type post without
+  // ever uploading a clip (shouldn't happen due to server-side
+  // validation, but defensive).
+  if (p.type === 'video') {
+    const video = p.media.find((m) => m.kind === 'video');
+    if (video) {
+      return {
+        ...base,
+        type: 'video' as const,
+        src: video.url,
+        poster: video.poster ?? undefined,
+      };
+    }
+  }
 
   if (p.media.length === 1) {
     return {

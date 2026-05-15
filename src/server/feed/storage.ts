@@ -33,6 +33,26 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/gif': 'gif',
 };
 
+// Videos live under the same `uploads/feed/` volume but with their
+// own MIME whitelist + much bigger size cap. Modern phones produce
+// 4K clips that blow past 50 MB even with 10s of recording, so the
+// ceiling is 100 MB. The two whitelists DON'T overlap, so the
+// route-level helper can pick which one to apply.
+const ALLOWED_VIDEO_MIME = new Set([
+  'video/mp4',
+  'video/webm',
+  'video/quicktime', // .mov
+  'video/ogg',
+]);
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
+
+const VIDEO_EXT_BY_MIME: Record<string, string> = {
+  'video/mp4':         'mp4',
+  'video/webm':        'webm',
+  'video/quicktime':   'mov',
+  'video/ogg':         'ogv',
+};
+
 export type FeedUploadError =
   | 'no_file'
   | 'unsupported_type'
@@ -84,6 +104,43 @@ export async function saveFeedImage(
   return { url: `/api/feed/images/${filename}`, filename };
 }
 
+/**
+ * Same shape as `saveFeedImage` but for video files. Lives under
+ * the same uploads/feed/ directory and is served by a sibling
+ * /api/feed/videos/[filename] route. Keeping the two helpers
+ * separate (instead of overloading saveFeedImage) means each one
+ * can evolve its own validation rules without surprising callers.
+ */
+export async function saveFeedVideo(
+  ownerId: string,
+  file: File,
+): Promise<SaveFeedImageResult> {
+  if (!file || file.size === 0) {
+    throw new Error('no_file' satisfies FeedUploadError);
+  }
+  if (file.size > MAX_VIDEO_BYTES) {
+    throw new Error('too_large' satisfies FeedUploadError);
+  }
+  if (!ALLOWED_VIDEO_MIME.has(file.type)) {
+    throw new Error('unsupported_type' satisfies FeedUploadError);
+  }
+
+  const ext = VIDEO_EXT_BY_MIME[file.type];
+  const filename = `${ownerId}.${randomBytes(8).toString('hex')}.${ext}`;
+
+  await ensureDir();
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  try {
+    await fs.writeFile(path.join(FEED_DIR, filename), buffer);
+  } catch (err) {
+    console.error('feed video write failed:', err);
+    throw new Error('write_failed' satisfies FeedUploadError);
+  }
+
+  return { url: `/api/feed/videos/${filename}`, filename };
+}
+
 /** Delete a single uploaded image by filename (best-effort). */
 export async function deleteFeedImage(filename: string): Promise<void> {
   const p = resolveFeedImagePath(filename);
@@ -103,6 +160,14 @@ export function resolveFeedImagePath(filename: string): string | null {
   return path.join(FEED_DIR, filename);
 }
 
+/** Same as resolveFeedImagePath but for the video file extensions. */
+export function resolveFeedVideoPath(filename: string): string | null {
+  if (!/^[0-9a-f-]{36}\.[0-9a-f]{8,16}\.(mp4|webm|mov|ogv)$/i.test(filename)) {
+    return null;
+  }
+  return path.join(FEED_DIR, filename);
+}
+
 export function contentTypeOf(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase();
   switch (ext) {
@@ -115,6 +180,14 @@ export function contentTypeOf(filename: string): string {
       return 'image/webp';
     case 'gif':
       return 'image/gif';
+    case 'mp4':
+      return 'video/mp4';
+    case 'webm':
+      return 'video/webm';
+    case 'mov':
+      return 'video/quicktime';
+    case 'ogv':
+      return 'video/ogg';
     default:
       return 'application/octet-stream';
   }

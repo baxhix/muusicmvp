@@ -84,6 +84,13 @@ export type FeedItemStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 export interface FeedMediaItem {
   url: string;
   alt?: string | null;
+  /** 'video' on uploaded clips; absent (or 'image') for stills.
+   *  Used by the renderer to pick `<video>` vs `<img>` and by the
+   *  admin to badge each tile. */
+  kind?: 'image' | 'video';
+  /** Optional poster (thumbnail) for video items. URL points to an
+   *  image stored via the regular image upload pipeline. */
+  poster?: string | null;
 }
 
 export interface FeedItem {
@@ -97,6 +104,9 @@ export interface FeedItem {
   scheduledAt: string | null;
   /** ISO timestamp — when last (or first) published. Null otherwise. */
   publishedAt: string | null;
+  /** ISO timestamp — when the post drops from the public feed.
+   *  Null for permanent posts; non-null for stories (default 24h). */
+  expiresAt: string | null;
   /** Soft-hide toggle independent of lifecycle status. */
   isActive: boolean;
   createdAt: string;
@@ -119,6 +129,10 @@ export interface FeedItemInput {
   description?: string | null;
   media?: FeedMediaItem[];
   scheduledAt?: string | null;
+  /** When set, marks the story's drop-from-feed cutoff. Server
+   *  fills now+24h when undefined on type='story'. Pass null to
+   *  override that and make the story never expire. */
+  expiresAt?: string | null;
   isActive?: boolean;
   action?: FeedItemAction;
 }

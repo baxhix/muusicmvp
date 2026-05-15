@@ -258,6 +258,10 @@ export const feedPosts = pgTable(
     media: jsonb('media'),
     scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    /** Ephemeral cutoff for stories. NULL on permanent posts;
+     *  set on stories to drop them from the public feed after the
+     *  window passes (default 24h, override-able by the composer). */
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -267,6 +271,7 @@ export const feedPosts = pgTable(
     index('feed_posts_status_published_idx').on(t.status, t.publishedAt),
     index('feed_posts_status_scheduled_idx').on(t.status, t.scheduledAt),
     index('feed_posts_status_updated_idx').on(t.status, t.updatedAt),
+    index('feed_posts_expires_at_idx').on(t.expiresAt),
   ],
 );
 

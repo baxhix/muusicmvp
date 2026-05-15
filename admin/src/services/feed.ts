@@ -95,4 +95,32 @@ export const feedService = {
     }
     return res.json();
   },
+
+  /**
+   * Sibling of `uploadImage` but for videos. Hits a separate route
+   * (`/upload-video`) so the server can apply its own MIME and
+   * size validation — videos cap at 100 MB and accept mp4/webm/mov/
+   * ogv.
+   */
+  uploadVideo: async (file: File): Promise<{ url: string; filename: string }> => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${base}/api/admin/feed/upload-video`, {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      let code = 'upload_failed';
+      try {
+        const body = await res.json();
+        if (typeof body?.error === 'string') code = body.error;
+      } catch {
+        /* ignore */
+      }
+      throw new Error(code);
+    }
+    return res.json();
+  },
 };

@@ -2,8 +2,10 @@ import {
   and,
   desc,
   eq,
+  gt,
   ilike,
   isNotNull,
+  isNull,
   lte,
   or,
   sql,
@@ -53,6 +55,13 @@ export type FeedStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 export interface FeedMediaItem {
   url: string;
   alt?: string | null;
+  /** 'video' on uploaded clips; absent (or 'image') for stills. Used
+   *  by the public renderer to pick `<video>` vs `<img>` and by the
+   *  admin to badge each tile. */
+  kind?: 'image' | 'video';
+  /** Optional poster (thumbnail) for video items. URL points to an
+   *  image stored via the regular image upload pipeline. */
+  poster?: string | null;
 }
 
 export interface HydratedAdminFeedPost {
@@ -64,6 +73,8 @@ export interface HydratedAdminFeedPost {
   media: FeedMediaItem[];
   scheduledAt: string | null;
   publishedAt: string | null;
+  /** Ephemeral cutoff used by stories. Null for permanent posts. */
+  expiresAt: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -84,6 +95,10 @@ export interface FeedPostInput {
   media?: FeedMediaItem[];
   /** ISO timestamp. Required when status='scheduled'. */
   scheduledAt?: string | null;
+  /** ISO timestamp — when the post should drop from the public feed.
+   *  Composer fills it with now+24h for story posts. Null for
+   *  permanent content. */
+  expiresAt?: string | null;
   isActive?: boolean;
   /**
    * Lifecycle directive. The state machine resolves the actual
@@ -100,13 +115,20 @@ export interface FeedPostInput {
 function asMedia(value: unknown): FeedMediaItem[] {
   if (!Array.isArray(value)) return [];
   return value
-    .filter((v): v is { url: string; alt?: string | null } =>
+    .filter((v): v is Record<string, unknown> =>
       typeof v === 'object' && v !== null && typeof (v as { url?: unknown }).url === 'string',
     )
-    .map((v) => ({
-      url: v.url,
-      alt: typeof v.alt === 'string' ? v.alt : null,
-    }));
+    .map((v) => {
+      const kindRaw = v.kind;
+      const kind: 'image' | 'video' | undefined =
+        kindRaw === 'video' || kindRaw === 'image' ? kindRaw : undefined;
+      return {
+        url: v.url as string,
+        alt: typeof v.alt === 'string' ? v.alt : null,
+        kind,
+        poster: typeof v.poster === 'string' ? v.poster : null,
+      };
+    });
 }
 
 function hydrate(row: FeedPost & {
@@ -123,6 +145,7 @@ function hydrate(row: FeedPost & {
     media: asMedia(row.media),
     scheduledAt: row.scheduledAt ? row.scheduledAt.toISOString() : null,
     publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
+    expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
     isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -150,6 +173,7 @@ function selectWithAuthor() {
       media: feedPosts.media,
       scheduledAt: feedPosts.scheduledAt,
       publishedAt: feedPosts.publishedAt,
+      expiresAt: feedPosts.expiresAt,
       isActive: feedPosts.isActive,
       createdAt: feedPosts.createdAt,
       updatedAt: feedPosts.updatedAt,
@@ -166,6 +190,38 @@ function selectWithAuthor() {
  * three stored fields. Stays here, not in the route, so future
  * callers (a cron job, a bulk action) hit the same rules.
  */
+/**
+ * Resolve the `expires_at` value for a post.
+ *
+ *   - Type = 'story':
+ *       - admin passed an explicit date → use it (validated client-side
+ *         for future-only by the date input).
+ *       - admin passed null / undefined → default to now + 24h.
+ *   - Any other type:
+ *       - admin passed a date → respected (rare; e.g. a campaign-bound
+ *         sponsored post).
+ *       - undefined → null (no expiry).
+ *       - null → null (explicit clear).
+ */
+function resolveExpiresAt(
+  type: FeedType | undefined,
+  raw: string | null | undefined,
+): Date | null {
+  if (type === 'story') {
+    if (raw === null) return null; // explicit "never expire" override
+    if (raw === undefined) {
+      return new Date(Date.now() + 24 * 60 * 60 * 1000);
+    }
+    const dt = new Date(raw);
+    if (Number.isNaN(dt.getTime())) throw new Error('invalid_expires_date');
+    return dt;
+  }
+  if (raw === undefined || raw === null) return null;
+  const dt = new Date(raw);
+  if (Number.isNaN(dt.getTime())) throw new Error('invalid_expires_date');
+  return dt;
+}
+
 function applyAction(
   action: FeedPostInput['action'],
   scheduledAt: string | null | undefined,
@@ -196,8 +252,17 @@ export async function createFeedPost(
 ): Promise<HydratedAdminFeedPost> {
   if (!input.type) input.type = 'image';
   const media = input.media ?? [];
+  // Per-type media validation — keeps the rule colocated with the
+  // type assignment so adding a new format is one place to touch.
   if (input.type === 'image' && media.length === 0) {
     throw new Error('image_required');
+  }
+  if (input.type === 'video') {
+    const video = media.find((m) => m.kind === 'video');
+    if (!video) throw new Error('video_required');
+  }
+  if (input.type === 'story' && media.length === 0) {
+    throw new Error('story_media_required');
   }
   if (input.description && input.description.length > 2200) {
     throw new Error('description_too_long');
@@ -207,6 +272,7 @@ export async function createFeedPost(
   }
 
   const resolved = applyAction(input.action ?? 'draft', input.scheduledAt ?? null);
+  const expiresAt = resolveExpiresAt(input.type, input.expiresAt);
 
   const [row] = await db
     .insert(feedPosts)
@@ -219,6 +285,7 @@ export async function createFeedPost(
       media,
       scheduledAt: resolved.scheduledAt,
       publishedAt: resolved.publishedAt,
+      expiresAt,
       isActive: input.isActive ?? true,
     })
     .returning({ id: feedPosts.id });
@@ -251,6 +318,14 @@ export async function updateFeedPost(
   if (input.description !== undefined) patch.description = input.description;
   if (input.media !== undefined) patch.media = input.media;
   if (input.isActive !== undefined) patch.isActive = input.isActive;
+  if (input.expiresAt !== undefined) {
+    patch.expiresAt = input.expiresAt
+      ? new Date(input.expiresAt)
+      : null;
+    if (patch.expiresAt && Number.isNaN((patch.expiresAt as Date).getTime())) {
+      throw new Error('invalid_expires_date');
+    }
+  }
 
   if (input.action) {
     const resolved = applyAction(input.action, input.scheduledAt ?? null);
@@ -391,11 +466,10 @@ export async function listAdminFeedPosts(
  * client can show "Central Ana Castela" + avatar alongside the post.
  */
 export async function listPublicFeedPosts(
-  limit = 30,
-  offset = 0,
+  args: { limit?: number; offset?: number; type?: FeedType } = {},
 ): Promise<HydratedAdminFeedPost[]> {
-  const safeLimit = Math.min(Math.max(limit, 1), 100);
-  const safeOffset = Math.max(offset, 0);
+  const safeLimit = Math.min(Math.max(args.limit ?? 30, 1), 100);
+  const safeOffset = Math.max(args.offset ?? 0, 0);
 
   const rows = await selectWithAuthor()
     .where(
@@ -404,6 +478,13 @@ export async function listPublicFeedPosts(
         eq(feedPosts.isActive, true),
         isNotNull(feedPosts.publishedAt),
         lte(feedPosts.publishedAt, new Date()),
+        // Drop ephemeral content whose window has passed. NULL = never
+        // expires (all non-story posts default to this).
+        or(
+          isNull(feedPosts.expiresAt),
+          gt(feedPosts.expiresAt, new Date()),
+        ),
+        args.type ? eq(feedPosts.type, args.type) : undefined,
       ),
     )
     .orderBy(desc(feedPosts.publishedAt))

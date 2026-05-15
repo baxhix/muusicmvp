@@ -255,6 +255,12 @@ export type ApiFeedPostStatus = 'published' | 'scheduled' | 'draft' | 'inactive'
 export interface ApiFeedMediaItem {
   url: string;
   alt?: string | null;
+  /** 'video' on uploaded clips; absent or 'image' for stills. The
+   *  public renderer keys off this to pick <video> vs <img>. */
+  kind?: 'image' | 'video';
+  /** Optional poster (thumbnail) for video items. Falls back to the
+   *  video's first frame in the browser when absent. */
+  poster?: string | null;
 }
 
 /**
@@ -276,6 +282,9 @@ export interface ApiFeedPost {
   media: ApiFeedMediaItem[];
   scheduledAt: string | null;
   publishedAt: string | null;
+  /** ISO timestamp — when the post drops from the public feed.
+   *  Null for permanent posts; set on stories. */
+  expiresAt: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

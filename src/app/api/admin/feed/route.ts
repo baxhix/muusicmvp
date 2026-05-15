@@ -35,15 +35,29 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
+/** Single media descriptor accepted by the composer. The `kind`
+ *  field distinguishes images from videos and `poster` is the
+ *  video thumbnail (uploaded through the same /upload route as
+ *  images). Kept loose at the type level — server-side
+ *  validation in createFeedPost enforces "must have video item
+ *  when type=video" etc. */
+const mediaItemSchema = z.object({
+  url:    z.string().min(1).max(500),
+  alt:    z.string().max(300).nullish(),
+  kind:   z.enum(['image', 'video']).optional(),
+  poster: z.string().min(1).max(500).nullish(),
+});
+
 const createSchema = z.object({
   type: z.enum(FEED_TYPES).optional(),
   title: z.string().max(200).nullish(),
   description: z.string().max(2200).nullish(),
-  media: z
-    .array(z.object({ url: z.string().min(1).max(500), alt: z.string().max(300).nullish() }))
-    .max(20)
-    .optional(),
+  media: z.array(mediaItemSchema).max(20).optional(),
   scheduledAt: z.string().datetime().nullish(),
+  /** ISO timestamp. Stories auto-default to now+24h server-side
+   *  when this is left undefined; pass null to override that and
+   *  make the story never expire. */
+  expiresAt: z.string().datetime().nullish(),
   isActive: z.boolean().optional(),
   action: z.enum(['publish', 'schedule', 'draft']).optional(),
 });
@@ -107,6 +121,7 @@ export async function POST(req: Request) {
       description: parsed.data.description ?? null,
       media: parsed.data.media ?? [],
       scheduledAt: parsed.data.scheduledAt ?? null,
+      expiresAt: parsed.data.expiresAt,
       isActive: parsed.data.isActive,
       action: parsed.data.action,
     });
@@ -115,11 +130,14 @@ export async function POST(req: Request) {
     const code = err instanceof Error ? err.message : 'create_failed';
     const status =
       code === 'image_required' ||
+      code === 'video_required' ||
+      code === 'story_media_required' ||
       code === 'description_too_long' ||
       code === 'title_too_long' ||
       code === 'invalid_schedule_date' ||
       code === 'schedule_requires_date' ||
-      code === 'schedule_in_past'
+      code === 'schedule_in_past' ||
+      code === 'invalid_expires_date'
         ? 400
         : 500;
     if (status === 500) console.error('createFeedPost failed:', err);

@@ -25,6 +25,21 @@
   color: var(--text-mute);
 }
 
+/* Inline hint below a section title — used by the Story expiry
+ * field to explain the 24h default in muted tone. */
+.sectionHint {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  margin-top: -4px;
+}
+
+/* Inline error pill rendered when a per-field validation fails
+ * (e.g. story expires_at in the past). */
+.fieldError {
+  font-size: 12px;
+  color: var(--danger, #c0392b);
+}
+
 /* Type selector — segmented pills. "Imagem" is the only one enabled
    today; the rest stay visible but disabled so the team can SEE
    what's coming without bumping into 404s. */

@@ -1,0 +1,202 @@
+/* Single-video uploader. Sibling of FeedImageUploader — same
+ * drop-zone aesthetic + same theme tokens so the composer drawer
+ * feels uniform regardless of post type. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dropZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 18px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-mute);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.dropZone:hover,
+.dropZoneActive {
+  border-color: var(--brand);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.dropTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.dropHint {
+  font-size: 11.5px;
+  color: var(--text-mute);
+}
+
+.fileInput { display: none; }
+
+.uploading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-mute);
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--brand);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Loaded video card ──────────────────────────────────────── */
+
+.videoCard {
+  position: relative;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.videoPreview {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  background: #000;
+}
+.remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.remove:hover { background: rgba(0, 0, 0, 0.8); }
+.remove:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.videoMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--border-soft);
+}
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--brand-soft, var(--surface-2));
+  color: var(--brand, var(--text));
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.replace {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.replace:hover { background: var(--surface-hover); }
+.replace:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Poster row ─────────────────────────────────────────────── */
+
+.posterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+.posterLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-right: auto;
+}
+.posterTile {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+}
+.posterImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.removeSmall {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.removeSmall:hover { background: rgba(0, 0, 0, 0.9); }
+.removeSmall:disabled { opacity: 0.4; cursor: not-allowed; }
+.removeSmall svg { width: 11px; height: 11px; }
+.posterPicker {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.posterPicker:hover { background: var(--surface-hover); }
+.posterPicker:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error {
+  font-size: 12px;
+  color: var(--danger, #c0392b);
+  padding: 6px 2px 0;
+}

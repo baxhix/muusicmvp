@@ -27,7 +27,12 @@ type BasePost = {
 };
 
 export type ImagePostData    = BasePost & { type: 'image';  src: string; alt?: string };
-export type VideoPostData    = BasePost & { type: 'video';  poster: string; src?: string };
+// poster is now optional: admin-uploaded videos may not have a
+// custom thumbnail. When omitted, the browser shows the first
+// frame on its own (with `preload="metadata"`) which is fine
+// for short clips and any video that doesn't open on a blank
+// frame.
+export type VideoPostData    = BasePost & { type: 'video';  poster?: string; src?: string };
 export type CarouselPostData = BasePost & {
   type: 'carousel';
   /** Ordered list of slides — first one is shown by default. */

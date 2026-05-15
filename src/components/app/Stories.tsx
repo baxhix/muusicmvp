@@ -1,15 +1,39 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useAdminStories } from '@/hooks/useAdminStories';
+import type { ApiFeedPost } from '@/lib/api/types';
 import styles from './Stories.module.css';
 
 export interface Story {
   id: string;
   user: string;
   avatar: string;
+  /** First/lead media url shown on the ring + as initial slide in
+   *  the viewer. */
   img: string;
   seen: boolean;
+  /** Full slide list for admin-authored stories. The mock content
+   *  has a single slide; admin posts may have up to 10 (one per
+   *  uploaded image). */
+  slides?: { url: string; alt?: string | null }[];
+}
+
+/** Adapt an admin post (type='story') to the Story shape consumed
+ *  by the rail + viewer. */
+function adminStoryToStory(p: ApiFeedPost): Story | null {
+  if (!p.media || p.media.length === 0) return null;
+  const author = p.author?.name || 'Central Ana Castela';
+  const avatar = p.author?.avatarUrl || '/central-anacastela.png';
+  return {
+    id: `admin-${p.id}`,
+    user: author,
+    avatar,
+    img: p.media[0].url,
+    seen: false,
+    slides: p.media.map((m) => ({ url: m.url, alt: m.alt })),
+  };
 }
 
 const STORIES: Story[] = [
@@ -70,20 +94,52 @@ function Viewer({
   onSeen: (id: string) => void;
 }) {
   const [idx, setIdx]       = useState(startIdx);
+  /** Slide cursor WITHIN the current story. Admin-authored stories
+   *  can have multiple slides (one per uploaded image); mock
+   *  stories have a single slide. */
+  const [slideIdx, setSlideIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const DURATION = 5000; // ms per story
+  const DURATION = 5000; // ms per slide
   const TICK = 50;
 
   const story = stories[idx];
+  const slideCount = Math.max(1, story.slides?.length ?? 1);
+  const currentSlideUrl = story.slides?.[slideIdx]?.url ?? story.img;
 
   const goNext = () => {
-    if (idx < stories.length - 1) { setIdx(i => i + 1); setProgress(0); }
-    else onClose();
+    // Advance within story first; only roll over to the next story
+    // when we exhaust the current slide list.
+    if (slideIdx < slideCount - 1) {
+      setSlideIdx((s) => s + 1);
+      setProgress(0);
+      return;
+    }
+    if (idx < stories.length - 1) {
+      setIdx((i) => i + 1);
+      setSlideIdx(0);
+      setProgress(0);
+    } else {
+      onClose();
+    }
   };
   const goPrev = () => {
-    if (idx > 0) { setIdx(i => i - 1); setProgress(0); }
+    if (slideIdx > 0) {
+      setSlideIdx((s) => s - 1);
+      setProgress(0);
+      return;
+    }
+    if (idx > 0) {
+      setIdx((i) => i - 1);
+      setSlideIdx(0);
+      setProgress(0);
+    }
   };
+
+  // Reset slide cursor whenever we move to a new story.
+  useEffect(() => {
+    setSlideIdx(0);
+  }, [idx]);
 
   useEffect(() => {
     onSeen(story.id);
@@ -97,7 +153,7 @@ function Viewer({
     }, TICK);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx]);
+  }, [idx, slideIdx]);
 
   // Close on Escape
   useEffect(() => {
@@ -110,16 +166,26 @@ function Viewer({
     <div className={styles.viewerOverlay} onClick={onClose}>
       <div className={styles.viewerCard} onClick={e => e.stopPropagation()}>
 
-        {/* Progress bars */}
+        {/* Progress bars. Each STORY gets its own row that
+         *  subdivides into one bar per SLIDE — single-slide stories
+         *  still render exactly one bar so the mock content is
+         *  unchanged. */}
         <div className={styles.progressRow}>
-          {stories.map((s, i) => (
-            <div key={s.id} className={styles.progressTrack}>
-              <div
-                className={styles.progressFill}
-                style={{ width: i < idx ? '100%' : i === idx ? `${progress}%` : '0%' }}
-              />
-            </div>
-          ))}
+          {stories.flatMap((s, storyI) => {
+            const segments = Math.max(1, s.slides?.length ?? 1);
+            return Array.from({ length: segments }).map((_, segI) => {
+              const before = storyI < idx || (storyI === idx && segI < slideIdx);
+              const current = storyI === idx && segI === slideIdx;
+              return (
+                <div key={`${s.id}:${segI}`} className={styles.progressTrack}>
+                  <div
+                    className={styles.progressFill}
+                    style={{ width: before ? '100%' : current ? `${progress}%` : '0%' }}
+                  />
+                </div>
+              );
+            });
+          })}
         </div>
 
         {/* Header */}
@@ -137,9 +203,10 @@ function Viewer({
           </button>
         </div>
 
-        {/* Story image */}
+        {/* Story slide. For multi-slide admin stories, the source
+         *  follows the slide cursor. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={story.img} alt={story.user} className={styles.viewerImg} />
+        <img src={currentSlideUrl} alt={story.user} className={styles.viewerImg} />
 
         {/* Tap zones */}
         <button className={styles.tapLeft}  onClick={goPrev} aria-label="Anterior" />
@@ -152,7 +219,34 @@ function Viewer({
 
 /* ── Main component ──────────────────────────────────────── */
 export default function Stories() {
+  // Admin-authored stories lead the rail; mock content trails so
+  // the rail never looks empty before the API resolves.
+  const { stories: adminPosts } = useAdminStories();
+  const adminStories = useMemo<Story[]>(
+    () =>
+      adminPosts
+        .map(adminStoryToStory)
+        .filter((s): s is Story => s !== null),
+    [adminPosts],
+  );
+
+  // Merge admin → mock once on each adminStories change. We keep
+  // local `seen` state so the user's clicks stick even while the
+  // admin list re-fetches.
   const [stories, setStories] = useState<Story[]>(STORIES);
+  useEffect(() => {
+    setStories((prev) => {
+      // Preserve seen flags from the previous merge for items whose
+      // id still exists.
+      const seenById = new Map(prev.map((s) => [s.id, s.seen]));
+      const merged = [
+        ...adminStories.map((s) => ({ ...s, seen: seenById.get(s.id) ?? false })),
+        ...STORIES.map((s) => ({ ...s, seen: seenById.get(s.id) ?? s.seen })),
+      ];
+      return merged;
+    });
+  }, [adminStories]);
+
   const [viewerIdx, setViewerIdx] = useState<number | null>(null);
 
   const openViewer = (idx: number) => setViewerIdx(idx);

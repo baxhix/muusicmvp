@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -25,8 +25,15 @@ import type {
   FeedMediaItem,
 } from '@/types';
 import FeedImageUploader from './FeedImageUploader';
+import FeedVideoUploader from './FeedVideoUploader';
 import FeedScheduler from './FeedScheduler';
 import styles from './FeedComposerDrawer.module.css';
+
+/** 24h in ms — default story window applied client-side when the
+ *  admin doesn't pick a custom expiry. The server also defaults
+ *  here when expiresAt is undefined; the client value just keeps
+ *  the date picker pre-filled so the admin can adjust if needed. */
+const DEFAULT_STORY_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Drawer for creating + editing publications.
@@ -56,11 +63,11 @@ const TYPE_OPTIONS: Array<{
   icon: (size: number) => React.ReactNode;
 }> = [
   { value: 'image',     label: 'Imagem',     hint: 'Uma ou várias imagens',          enabled: true,  icon: (s) => <IconImage size={s} /> },
-  { value: 'video',     label: 'Vídeo',      hint: 'Em breve',                        enabled: false, icon: (s) => <IconVideo size={s} /> },
-  { value: 'story',     label: 'Story',      hint: 'Em breve',                        enabled: false, icon: (s) => <IconFeed size={s} /> },
-  { value: 'poll',      label: 'Enquete',    hint: 'Em breve',                        enabled: false, icon: (s) => <IconCheckCircle size={s} /> },
-  { value: 'sponsored', label: 'Patrocinado', hint: 'Em breve',                        enabled: false, icon: (s) => <IconStar size={s} /> },
-  { value: 'broadcast', label: 'Transmissão',hint: 'Em breve',                        enabled: false, icon: (s) => <IconEye size={s} /> },
+  { value: 'video',     label: 'Vídeo',      hint: 'Clipe até 100 MB',                 enabled: true,  icon: (s) => <IconVideo size={s} /> },
+  { value: 'story',     label: 'Story',      hint: 'Conteúdo efêmero (24h padrão)',    enabled: true,  icon: (s) => <IconFeed size={s} /> },
+  { value: 'poll',      label: 'Enquete',    hint: 'Em breve',                          enabled: false, icon: (s) => <IconCheckCircle size={s} /> },
+  { value: 'sponsored', label: 'Patrocinado', hint: 'Em breve',                          enabled: false, icon: (s) => <IconStar size={s} /> },
+  { value: 'broadcast', label: 'Transmissão',hint: 'Em breve',                          enabled: false, icon: (s) => <IconEye size={s} /> },
 ];
 
 type Mode = 'publish' | 'schedule' | 'draft';
@@ -91,6 +98,10 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
   const [media, setMedia] = useState<FeedMediaItem[]>([]);
   const [mode, setMode] = useState<Mode>('publish');
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+  /** Only meaningful when type='story'. Hydrated from the post on
+   *  edit; defaulted to now+24h on first selection of story type
+   *  for create. */
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,8 +114,37 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
     setMedia(post?.media ?? []);
     setMode(inferMode(post));
     setScheduledAt(post?.scheduledAt ?? null);
+    setExpiresAt(post?.expiresAt ?? null);
     setIsActive(post?.isActive ?? true);
   }, [open, post]);
+
+  // Pre-fill expiresAt when the admin flips to type='story' on a
+  // brand-new post that doesn't already have one. Editing an
+  // existing post preserves its current value.
+  useEffect(() => {
+    if (type !== 'story') return;
+    if (expiresAt) return;
+    setExpiresAt(new Date(Date.now() + DEFAULT_STORY_TTL_MS).toISOString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
+  // Wipe media when the admin switches between image-shape and
+  // video-shape types. Stories use the image uploader (multi-slide
+  // image story), videos use the single-file uploader; mixing the
+  // two during one session would leave dead items in the media
+  // array. Only fires when the underlying SHAPE changes, not just
+  // visual category, so stories ↔ images keep their uploaded
+  // pictures.
+  const prevTypeRef = useRef<FeedItemType>('image');
+  useEffect(() => {
+    if (!open) return;
+    const prev = prevTypeRef.current;
+    prevTypeRef.current = type;
+    if (prev === type) return;
+    const prevIsVideo = prev === 'video';
+    const nextIsVideo = type === 'video';
+    if (prevIsVideo !== nextIsVideo) setMedia([]);
+  }, [open, type]);
 
   const action: FeedItemAction = mode;
 
@@ -117,9 +157,16 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
   const blocking = useMemo(() => {
     if (!description.trim()) return 'description';
     if (type === 'image' && media.length === 0) return 'media';
+    if (type === 'video' && !media.some((m) => m.kind === 'video')) return 'media';
+    if (type === 'story' && media.length === 0) return 'media';
     if (mode === 'schedule' && (!scheduledAt || scheduleInPast)) return 'schedule';
+    if (type === 'story' && expiresAt) {
+      // Reject stories whose cutoff is in the past — the post would
+      // be invisible the moment it's created.
+      if (new Date(expiresAt).getTime() <= Date.now()) return 'expires';
+    }
     return null;
-  }, [description, type, media, mode, scheduledAt, scheduleInPast]);
+  }, [description, type, media, mode, scheduledAt, scheduleInPast, expiresAt]);
 
   const submitLabel =
     mode === 'publish' ? (isEdit ? 'Salvar e publicar' : 'Publicar agora')
@@ -135,6 +182,10 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
       description: description.trim(),
       media,
       scheduledAt: mode === 'schedule' ? scheduledAt : null,
+      // Only stories carry an expiry today. For other types we pass
+      // null to explicitly clear any value left over from a
+      // previous edit where the post was a story.
+      expiresAt: type === 'story' ? expiresAt : null,
       isActive,
       action,
     };
@@ -227,14 +278,50 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
         {/* ── Mídia ────────────────────────────────────── */}
         <div className={styles.section}>
           <span className={styles.sectionTitle}>
-            Mídia {type === 'image' ? '*' : ''}
+            Mídia {type === 'image' || type === 'video' || type === 'story' ? '*' : ''}
           </span>
-          <FeedImageUploader
-            value={media}
-            onChange={setMedia}
-            disabled={submitting}
-          />
+          {type === 'video' ? (
+            <FeedVideoUploader
+              value={media}
+              onChange={setMedia}
+              disabled={submitting}
+            />
+          ) : (
+            // Images + stories share the multi-slide uploader.
+            // For stories each item is one "slide" of the sequence.
+            <FeedImageUploader
+              value={media}
+              onChange={setMedia}
+              disabled={submitting}
+              // Stories typically have 1-10 slides; cap at 10 to
+              // keep the player UX coherent.
+              max={type === 'story' ? 10 : 12}
+            />
+          )}
         </div>
+
+        {/* ── Expiração (apenas Story) ──────────────────── */}
+        {type === 'story' && (
+          <div className={styles.section}>
+            <span className={styles.sectionTitle}>
+              Expiração <span style={{ color: 'var(--text-mute)', fontWeight: 400 }}>(stories)</span>
+            </span>
+            <span className={styles.sectionHint}>
+              Stories somem do feed depois desse momento. Padrão: 24h
+              após a publicação.
+            </span>
+            <FeedScheduler
+              value={expiresAt}
+              onChange={setExpiresAt}
+              disabled={submitting}
+            />
+            {blocking === 'expires' && (
+              <span className={styles.fieldError}>
+                A expiração precisa ser uma data futura.
+              </span>
+            )}
+          </div>
+        )}
 
         {/* ── Texto ────────────────────────────────────── */}
         <div className={styles.section}>
@@ -324,11 +411,14 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
 function humanError(code: string): string {
   switch (code) {
     case 'image_required':        return 'Adicione pelo menos uma imagem.';
+    case 'video_required':        return 'Envie um vídeo para publicar.';
+    case 'story_media_required':  return 'Adicione pelo menos um slide ao story.';
     case 'description_too_long':  return 'A descrição passou de 2.200 caracteres.';
     case 'title_too_long':        return 'O título passou de 200 caracteres.';
     case 'schedule_in_past':      return 'A data de agendamento já passou.';
     case 'schedule_requires_date':return 'Informe uma data + horário para agendar.';
     case 'invalid_schedule_date': return 'Data de agendamento inválida.';
+    case 'invalid_expires_date':  return 'Data de expiração inválida.';
     case 'post_not_found':        return 'Publicação não encontrada.';
     default:                      return 'Tente novamente em instantes.';
   }
