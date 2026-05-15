@@ -346,25 +346,33 @@
  * opacity. No display:none toggling — the transition stays smooth.
  * Click handler is unaffected: tapping the avatar opens the
  * profile regardless of which mode the badge is in. */
-/* Compact badge: force EXACT square geometry (36×36) so the circular
-   shape can't render anything but a perfect circle. Flex auto-sizing
-   was occasionally giving the container uneven width vs height (the
-   absolutely-positioned chip, the box-shadow ring, sub-pixel rounding,
-   etc.), and any unevenness with a heavy border-radius reads as an
-   oval. Using min/max width + min/max height + aspect-ratio together
-   means every browser arrives at the same square box, and the
-   explicit `border-radius: 50%` overrides the inherited 40px so the
-   circle survives sub-pixel rounding during zoom transitions. */
+/* Compact badge: collapse the dark wrapper entirely per product
+   feedback — the circular avatar reads as itself, no black ring
+   around it. The badge no longer paints a background, border, or
+   shadow in compact mode (those rules come from `.userBadge` /
+   `.liveUserBadge` defaults); the only visible element is the
+   avatar img + the equalizer chip floating off its bottom-right
+   corner.
+   The avatarWrap inside is the actual 28×28 footprint we paint;
+   that's what the equalizer's absolute positioning anchors to.
+   `border-radius: 50%` is kept so the (transparent) box still
+   defines a circular hit area, in case any future hover effect
+   draws into it. */
 .badgeCompact {
   gap: 0;
-  padding: 4px;
-  min-width: 36px;
-  max-width: 36px;
-  min-height: 36px;
-  max-height: 36px;
+  padding: 0;
+  min-width: 28px;
+  max-width: 28px;
+  min-height: 28px;
+  max-height: 28px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   box-sizing: border-box;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   justify-content: center;
   align-items: center;
   /* The chip needs to extend beyond the badge edge — explicit
