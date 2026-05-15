@@ -85,6 +85,13 @@
   width: 380px;
   max-height: 60vh;
   overflow-y: auto;
+  /* Flex column so children stack predictably AND the "Ver mais"
+   * CTA at the bottom can self-center with `align-self: center`
+   * (mirrors the .body layout that PlaylistModal uses for the
+   * same trick). Previous block layout left `margin: 8px auto`
+   * unable to center an inline-flex button. */
+  display: flex;
+  flex-direction: column;
   /* Surface aligned with SuperfansPanel / PlaylistModal — same
    * dark gradient + heavier drop shadow + larger radius. Border
    * removed (the drop shadow + top highlight already separate it
@@ -135,14 +142,18 @@
      uncomment to revert to a dropdown:
        top: 64px; right: 16px; */
 
-  /* Override the default `pop` keyframes (defined on .panel) so
-   * the rise preserves translateX(-50%). Mirrors PlaylistModal's
-   * rise vibe — slides up from below the bottom edge. */
-  animation: notif-rise 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Rise animation aligned 1:1 with PlaylistModal.panelEntering
+   * (520ms, translateY(60vh) → 0, scale 0.97 → 1) so opening the
+   * notif panel feels like the sibling modals. `both` fill mode
+   * holds the final state after the animation ends. translateX
+   * is carried in both keyframes so horizontal centering survives
+   * the rise (otherwise the keyframe transform would overwrite
+   * the resting translateX(-50%) and drop the card off-center). */
+  animation: notif-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes notif-rise {
-  from { opacity: 0; transform: translateX(-50%) translateY(36px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+  from { opacity: 0; transform: translateX(-50%) translateY(60vh) scale(0.97); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);    }
 }
 @media (prefers-reduced-motion: reduce) {
   .panelFixed { animation: none; }
@@ -164,6 +175,7 @@
   padding: 22px 18px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
+  flex-shrink: 0;
 }
 .headTitle {
   font-size: 22px;
@@ -223,8 +235,13 @@
 .item:last-child { border-bottom: none; }
 .item:hover { background: rgba(255, 255, 255, 0.04); }
 
+/* Unread items used to carry a faint green tint
+ * (rgba(61, 219, 116, 0.04)); per product feedback that color
+ * differentiation was retired so every notification card sits on
+ * the same background. The read-state opacity dim is kept so
+ * already-seen items still visually recede a little. */
 .itemUnread {
-  background: rgba(61, 219, 116, 0.04);
+  /* intentionally empty — no background differentiation */
 }
 .itemRead { opacity: 0.6; }
 
