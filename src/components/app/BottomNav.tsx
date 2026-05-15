@@ -78,10 +78,15 @@ export default function BottomNav({
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.inner}>
-        {/* Mapa */}
+        {/* Mapa — active when we're on /app AND no singleton overlay
+            is currently open. The other nav icons light their dots
+            for the overlay that owns them (crown→superfans,
+            play→playlist, chat→superchat, bell→notifications);
+            the Map dot is the "resting" indicator that shows when
+            none of those surfaces are taking over. */}
         <button
           type="button"
-          className={`${styles.item} ${pathname === '/app' ? styles.itemActive : ''}`}
+          className={`${styles.item} ${pathname === '/app' && activeOverlay === null ? styles.itemActive : ''}`}
           onClick={handleMapClick}
           disabled={locating}
           aria-label={mapTooltip}
