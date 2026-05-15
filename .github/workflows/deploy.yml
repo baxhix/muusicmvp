@@ -138,7 +138,22 @@ jobs:
             docker compose pull web socket admin
             docker compose up -d --no-build web socket admin
 
-            # Prune dangling images from older deploys, but keep
-            # anything < 24h in case of fast rollback. Best-effort
-            # — never fail the workflow on prune errors.
-            docker image prune -f --filter "until=24h" || true
+            # ── Post-deploy cleanup ────────────────────────────────
+            # We watched the VPS fill from 0% → 94% over ~80 deploys
+            # because the prior `until=24h` filter only caught
+            # DANGLING images. The actual culprits were:
+            #   1. Tagged-but-unreferenced images (ghcr.io/...@sha)
+            #      from previous deploys lingering forever.
+            #   2. Build cache layers accumulating any time someone
+            #      ran `docker compose build` manually for debug.
+            #
+            # The pruning order matters: containers first (so the
+            # image prune is allowed to delete more), then images,
+            # then the build cache. Each is best-effort — a single
+            # failed prune step never breaks the deploy.
+            docker container prune -f || true
+            # -a: include tagged images. Containers are already
+            # recreated above, so the only "in use" images are the
+            # exact tags we just pulled. Everything else is safe.
+            docker image prune -af || true
+            docker builder prune -af || true
