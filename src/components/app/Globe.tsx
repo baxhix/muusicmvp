@@ -33,6 +33,13 @@ export default function Globe() {
     let userLocationMarker: mapboxgl.Marker | null = null;
     /** Live presence markers keyed by user.id (so diff updates are O(1)) */
     const liveUserMarkers = new Map<string, mapboxgl.Marker>();
+    /** Users the current viewer has "waved at" via the heart button on
+     *  the expanded badge. Kept in a Set here (not React state) so the
+     *  liked-state survives the imperative innerHTML rewrites that
+     *  happen when a user's track changes — without persistence the
+     *  red heart would flip back to gray on every refresh of the
+     *  marker markup. */
+    const likedUsers = new Set<string>();
 
     map.on('style.load', () => {
       map.setFog({
@@ -503,6 +510,29 @@ export default function Globe() {
             styles.liveUserAvatar,
             !!safeTitle,
           );
+          // Heart "like / wave" affordance — appears in the
+          // expanded badge state (on hover). Gray at rest, red
+          // after click (.liked). State is read from the
+          // `likedUsers` Set above so the color survives badge
+          // innerHTML rewrites. The actual click logic lives on
+          // the wrapper's delegated click listener below
+          // (it intercepts the heart before the wrapper-level
+          // "open profile" handler fires).
+          const liked = likedUsers.has(u.id);
+          const heartHtml = `
+            <button
+              type="button"
+              class="${styles.likeBtn} ${liked ? styles.liked : ''}"
+              aria-label="${liked ? 'Você acenou' : 'Acenar para esse usuário'}"
+              aria-pressed="${liked ? 'true' : 'false'}"
+              data-user-id="${u.id}"
+              data-user-name="${safeName}"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+            </button>
+          `;
           const html = `
             <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName} (online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
               ${avatarHtml}
@@ -510,6 +540,7 @@ export default function Globe() {
                 <span class="${styles.liveUserName}">${safeName}${audioBarsHtml}</span>
                 ${songInnerHtml ? `<div class="${styles.liveUserSong}"><span class="${styles.userBadgeSongInner}">${songInnerHtml}</span></div>` : ''}
               </div>
+              ${heartHtml}
             </div>
           `;
 
@@ -537,11 +568,59 @@ export default function Globe() {
             wrapper.innerHTML = html;
             // Click → flyTo this user's spot
             wrapper.style.cursor = 'pointer';
-            // Click on a live presence pin: fly the camera there
-            // AND open this user's ProfilePanel. Both happen — the
-            // flyTo gives the spatial confirmation, the panel gives
-            // the social context (avatar, fanpoints, message/wave).
-            wrapper.addEventListener('click', () => {
+            // Click on a live presence pin handles two cases:
+            //  (a) heart button — toggle the liked state, fire
+            //      `app:user-waved` so the rest of the app can
+            //      surface a "you waved at X" toast / send a
+            //      backend notification. stopPropagation keeps the
+            //      profile from opening on the same click.
+            //  (b) anywhere else — fly camera + open ProfilePanel
+            //      (the original behaviour).
+            // Delegation is intentional: the badge's innerHTML is
+            // regenerated whenever the user's track changes, so
+            // attaching the click directly to the heart would be
+            // lost on every refresh. The wrapper itself isn't
+            // recreated, so this listener survives.
+            wrapper.addEventListener('click', (e) => {
+              const target = e.target as HTMLElement;
+              const heartBtn = target.closest<HTMLButtonElement>(
+                `.${styles.likeBtn}`,
+              );
+              if (heartBtn) {
+                e.stopPropagation();
+                const userId = heartBtn.dataset.userId ?? u.id;
+                const userName = heartBtn.dataset.userName ?? safeName;
+                const wasLiked = likedUsers.has(userId);
+                if (wasLiked) {
+                  likedUsers.delete(userId);
+                } else {
+                  likedUsers.add(userId);
+                }
+                // Update the heart's visual state without rebuilding
+                // the entire badge — just toggle the class + flip
+                // the SVG fill so the transition is instant.
+                heartBtn.classList.toggle(styles.liked);
+                heartBtn.setAttribute(
+                  'aria-pressed',
+                  wasLiked ? 'false' : 'true',
+                );
+                heartBtn.setAttribute(
+                  'aria-label',
+                  wasLiked ? 'Acenar para esse usuário' : 'Você acenou',
+                );
+                const svg = heartBtn.querySelector('svg');
+                if (svg) {
+                  svg.setAttribute('fill', wasLiked ? 'none' : 'currentColor');
+                }
+                if (!wasLiked && typeof window !== 'undefined') {
+                  window.dispatchEvent(
+                    new CustomEvent('app:user-waved', {
+                      detail: { userId, name: userName },
+                    }),
+                  );
+                }
+                return;
+              }
               map.flyTo({ center: [u.lng, u.lat], zoom: 11, duration: 1400 });
               globeStore.openUserProfile(u.id);
             });

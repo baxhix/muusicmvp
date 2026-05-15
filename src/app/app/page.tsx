@@ -29,7 +29,10 @@ import EditProfileModal from '@/components/app/EditProfileModal';
 import DeleteAccountModal from '@/components/app/DeleteAccountModal';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
-import HeroOrb from '@/components/app/HeroOrb/HeroOrb';
+// HeroOrb retired entirely per product feedback. The component
+// + its shader files stay in src/components/app/HeroOrb/ in case
+// the team wants to revisit a hero animation later, but it's not
+// rendered anywhere in /app anymore.
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
@@ -193,6 +196,23 @@ export default function AppPage() {
     };
     window.addEventListener('app:feed-state-change', handler);
     return () => window.removeEventListener('app:feed-state-change', handler);
+  }, []);
+
+  // Heart waves dispatched from the expanded user marker on the
+  // Globe. When the dedicated `/api/wave` endpoint ships, route
+  // the POST here so the receiver actually gets a notification on
+  // their NotificationBell. For now we just log — matching the
+  // existing ProfilePanel "Acenar" stub. The visual ack (heart
+  // turning red) is handled inside Globe.tsx.
+  useEffect(() => {
+    const onUserWaved = (e: Event) => {
+      const detail = (e as CustomEvent<{ userId: string; name: string }>).detail;
+      if (!detail) return;
+      // TODO: POST /api/wave { targetUserId: detail.userId }
+      console.log(`wave (from map heart) → ${detail.userId} (${detail.name})`);
+    };
+    window.addEventListener('app:user-waved', onUserWaved);
+    return () => window.removeEventListener('app:user-waved', onUserWaved);
   }, []);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -394,20 +414,15 @@ export default function AppPage() {
           {/* Top center row: filter pills + Superchat CTA + notifications
               side-by-side. Ranking (Superfãs) is reachable via the
               BottomNav crown icon — no longer duplicated up here. */}
-          <div className={styles.topBar}>
-            {/* FilterTabs ("Todos / Fãs próximos / Mesmo gosto")
-                ocultado per product feedback — espaço do topo
-                fica reservado para o HeroOrb. Superchat trigger
-                migrou pro slot `.superchatTriggerSlot` no canto
-                top-right (alinhado com a borda direita do Feed),
-                renderizado mais abaixo. */}
-            {/* Decorative particle orb — sits where the bell icon
-                used to be visible. Premium ambient signal that the
-                platform is "alive" even when there are no
-                notifications to surface. Purely visual; pointer
-                events stay on for future hover affordances. */}
-            <HeroOrb size={120} />
-          </div>
+          {/* topBar wrapper retained for layout consistency even
+              though its only remaining child (HeroOrb) was retired
+              per product feedback. Kept empty so any future
+              hero/decorative element can drop back into the same
+              centered slot without restructuring. FilterTabs and
+              the Superchat trigger have moved out long ago —
+              respectively into the hidden-default state and the
+              dedicated `.superchatTriggerSlot` at top-right. */}
+          <div className={styles.topBar} aria-hidden="true" />
 
           {/* NotificationBell stays mounted (its panel + event
               listener are needed) but renders without the trigger

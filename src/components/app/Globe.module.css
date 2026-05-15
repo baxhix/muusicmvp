@@ -701,3 +701,58 @@
 @media (prefers-reduced-motion: reduce) {
   .audioBars > span { animation: none; transform: scaleY(0.7); }
 }
+
+/* ── Heart "wave" affordance on expanded liveUserBadge ──
+ * Sits on the right edge of the expanded badge (after .liveUserInfo).
+ * Cinza por padrão; depois do clique vira vermelho (.liked). O hover
+ * já intensifica um pouco a cor cinza pra dar feedback antes do
+ * commit. Hidden in compact mode (badge collapsed to avatar only)
+ * — fades back in along with .liveUserInfo when the badge expands. */
+.likeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  margin-left: 2px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.45);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.likeBtn:hover {
+  color: rgba(245, 245, 247, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+.likeBtn:active {
+  transform: scale(0.92);
+}
+/* Red filled heart after the user has acted. The fill="currentColor"
+ * is set inline on the SVG when liked, so the path renders solid in
+ * the same red as the stroke. */
+.likeBtn.liked {
+  color: #f43f5e;
+}
+.likeBtn.liked:hover {
+  background: rgba(244, 63, 94, 0.10);
+}
+
+/* Compact mode: heart fades out alongside the .liveUserInfo block.
+ * Hover (or focus) brings both back together. */
+.badgeCompact .likeBtn {
+  opacity: 0;
+  pointer-events: none;
+}
+.badgeCompact:hover .likeBtn,
+.badgeCompact:focus-within .likeBtn {
+  opacity: 1;
+  pointer-events: auto;
+}
