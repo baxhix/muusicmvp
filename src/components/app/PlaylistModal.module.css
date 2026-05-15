@@ -47,9 +47,16 @@
   background:
     radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
     linear-gradient(180deg,
-      rgba(11,11,13,0.96) 0%,
-      rgba(5,5,7,0.96) 50%,
-      rgba(2,2,3,0.97) 100%);
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 35%,
+      rgba(2,2,3,0.76) 65%,
+      rgba(2,2,3,0.80) 100%);
+  /* Translucent fill + heavy backdrop blur per product feedback —
+   * the panel now lets the globe behind it bleed through softly,
+   * matching the CommunityPanel / SuperfansPanel envelope. The
+   * previous near-opaque alpha (0.96+) hid the blur entirely. */
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   /* Border removed per product feedback — drop shadow + top
    * highlight inset still separate the panel from the backdrop. */
   border: none;
@@ -95,12 +102,16 @@
   flex-shrink: 0;
 }
 .title {
-  font-size: 22px;
+  /* Title size unified with Comunidade / Feed / Chat headers per
+   * product feedback (was 22px / -0.022em / line-height 1.1). The
+   * three "bottom modals" (Playlist / Superfãs / Notificações)
+   * now wear the same 16px treatment as the right-column panels. */
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.022em;
+  letter-spacing: -0.01em;
   color: #F5F5F7;
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
   text-align: center;
 }
 .closeBtn {

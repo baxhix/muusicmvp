@@ -114,12 +114,16 @@
 .title {
   flex: 1;
   min-width: 0;
-  font-size: 22px;
+  /* 16/700/-0.01em/line-height 1.2 — unified with Comunidade /
+   * Feed / Chat headers per product feedback (was 22px). Keeps
+   * the bottom modals visually consistent with the right-column
+   * panel family. */
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.022em;
+  letter-spacing: -0.01em;
   color: #F5F5F7;
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
   text-align: center;
 }
 

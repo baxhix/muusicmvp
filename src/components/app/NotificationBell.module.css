@@ -92,23 +92,26 @@
    * unable to center an inline-flex button. */
   display: flex;
   flex-direction: column;
-  /* Surface aligned with SuperfansPanel / PlaylistModal — same
-   * dark gradient + heavier drop shadow + larger radius. Border
-   * removed (the drop shadow + top highlight already separate it
-   * from the backdrop). */
+  /* Surface aligned with SuperfansPanel / PlaylistModal /
+   * CommunityPanel — same dark gradient (lower alphas so the
+   * blur shows through), same heavy 40px backdrop-filter with a
+   * touch of brightness+saturate, same drop shadow + larger
+   * radius. Border removed (the drop shadow + top highlight
+   * already separate it from the backdrop). */
   background:
     radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
     linear-gradient(180deg,
-      rgba(11,11,13,0.96) 0%,
-      rgba(5,5,7,0.96) 50%,
-      rgba(2,2,3,0.97) 100%);
+      rgba(11,11,13,0.78) 0%,
+      rgba(5,5,7,0.74) 35%,
+      rgba(2,2,3,0.76) 65%,
+      rgba(2,2,3,0.80) 100%);
   border: none;
   border-radius: 20px;
   box-shadow:
     0 40px 100px -10px rgba(0,0,0,0.85),
     0 1px 0 rgba(255,255,255,0.05) inset;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   animation: pop 0.15s ease;
   z-index: 60;
   pointer-events: auto;
@@ -130,13 +133,12 @@
   right: auto;
   transform: translateX(-50%);
   width: min(480px, calc(100vw - 32px));
-  /* Fixed height (not just max-height) so the panel always
-   * occupies the same footprint as SuperfansPanel + PlaylistModal
-   * regardless of how many notifications are in the list — when
-   * the list is short the card no longer "shrinks" to feel
-   * smaller than the sibling modals. The `overflow-y: auto` on
-   * `.panel` keeps the list scrollable when it overflows. */
-  height: calc(100vh - 160px);
+  /* Per product feedback Notificações now matches Superfãs
+   * exactly: max-height caps the panel at the same slot, but the
+   * fixed `height` was retired so the card shrinks to its content
+   * when there are few notifications (the same way Superfãs
+   * shrinks when the ranking list is short). The "Ver mais"
+   * preview slice keeps the resting card visually predictable. */
   max-height: calc(100vh - 160px);
   /* legacy top-right anchor kept here as a doc trail —
      uncomment to revert to a dropdown:
@@ -178,12 +180,16 @@
   flex-shrink: 0;
 }
 .headTitle {
-  font-size: 22px;
+  /* Unified with Comunidade / Feed / Chat headers per product
+   * feedback (was 22px / -0.022em / line-height 1.1). All three
+   * bottom modals (Playlist / Superfãs / Notificações) now share
+   * the right-column panel family's 16px treatment. */
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.022em;
+  letter-spacing: -0.01em;
   color: #F5F5F7;
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
   text-align: center;
 }
 .markAll {
