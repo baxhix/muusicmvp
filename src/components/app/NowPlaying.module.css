@@ -14,20 +14,12 @@
      Chat dock keeps its 18px right gap (asymmetric: dock is a
      slim 44px column, doesn't need as much breathing room). */
   left: 42px;
-  /* Match ArtistBox surface treatment so the two cards in the left
-   * column read as a visually paired set: same dark gradient fill,
-   * same deep drop shadow + hairline highlight insets. The pill's
-   * radial gradient bloom is preserved on top for the player-only
-   * "active" feel. */
-  background:
-    radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.018) 0%, transparent 65%),
-    linear-gradient(160deg,
-      rgba(6,6,14,0.96) 0%,
-      rgba(4,4,10,0.94) 35%,
-      rgba(8,6,18,0.95) 65%,
-      rgba(4,4,12,0.97) 100%);
-  backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
-  -webkit-backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  /* Solid black surface per product feedback — the previous
+   * gradient + backdrop blur read as a dark purple that didn't
+   * match the rest of the dark-mode chrome. Keeping the deep drop
+   * shadow + hairline highlight insets so the pill still floats
+   * with the same depth ArtistBox uses. */
+  background: #000;
   border-radius: 999px;
   /* Same shadow stack as ArtistBox so the player floats with the
    * same depth — heavy drop + faint outline + top highlight. */

@@ -264,6 +264,17 @@ export default function FeedPanel() {
     };
   }, [minimized]);
 
+  // External toggle hook — the right-rail chat dock dispatches an
+  // `app:toggle-feed` CustomEvent so a click on the Feed shortcut
+  // flips the panel between expanded / minimized without coupling
+  // the two components directly. Mirrors the
+  // `app:open-notifications` pattern in NotificationBell.
+  useEffect(() => {
+    const onToggle = () => setMinimized((m) => !m);
+    window.addEventListener('app:toggle-feed', onToggle);
+    return () => window.removeEventListener('app:toggle-feed', onToggle);
+  }, []);
+
   return (
     <>
     {minimized && <div className={styles.minimizedGradient} />}

@@ -57,6 +57,37 @@
   gap: 6px;
 }
 
+/* Items past the resting-visible slice are collapsed to zero
+ * height + faded out so the right-edge column stays compact most
+ * of the time. The dock hover state (.dock:hover .itemHidden)
+ * smoothly grows them back into the stack. We keep them in the DOM
+ * (rather than render-gating them) so a click target survives even
+ * during the unfold animation. */
+.itemHidden {
+  /* The base .item is 44px high; collapse to 0 + clip so the
+   * neighbouring gap doesn't survive either. */
+  height: 0;
+  width: 44px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transform: scale(0.7);
+  transition:
+    height 220ms cubic-bezier(0.16,1,0.3,1),
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.16,1,0.3,1);
+}
+.dock:hover .itemHidden,
+.dock:focus-within .itemHidden {
+  height: 44px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+/* When the gap collapses to 0 the parent's row-gap still adds 6px,
+ * so stack-gap is offset against the .item height instead. The
+ * hidden rows ride along with that gap automatically. */
+
 /* Base size bumped from 38 → 44 (~+15%) so each avatar reads as a
    first-class affordance, not an afterthought. Hover scales another
    ~25% on top so the size jump is unmistakable when the user is
@@ -265,6 +296,49 @@
   width: 14px;
   height: 14px;
   display: block;
+}
+
+/* Shared style for the auxiliary dock shortcuts (Feed, Comunidade)
+ * that live below the hamburger trigger. Same circular footprint
+ * as .addBtn but with a solid (not dashed) border so they read as
+ * "fixed actions" rather than the "open list" affordance. */
+.dockShortcut {
+  width: 38px;
+  height: 38px;
+  margin-top: 2px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s, transform 0.15s, background 0.15s;
+}
+.dockShortcut:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #F5F5F7;
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(1.06);
+}
+.dockShortcut svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.dockShortcutDisabled {
+  /* Forum placeholder — visible but inert until the surface ships. */
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.dockShortcutDisabled:hover {
+  /* Cancel the hover lift on the disabled placeholder. */
+  border-color: rgba(255, 255, 255, 0.10);
+  color: rgba(245, 245, 247, 0.65);
+  background: rgba(0, 0, 0, 0.5);
+  transform: none;
 }
 
 
