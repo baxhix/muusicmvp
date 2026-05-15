@@ -1,37 +1,28 @@
 /**
- * GLSL shaders for the HeroOrb particle sphere.
+ * GLSL shaders for the HeroOrb line-network sphere.
  *
  * Kept in a separate module so the React component stays focused on
  * Three.js plumbing. Both shaders are GLSL ES 1.00 (WebGL 1 baseline)
  * so they run anywhere modern browsers do.
  *
- * Vertex shader
- * -------------
- *   - Inputs : `position` (base point on a unit sphere — spherical
- *              fibonacci layout precomputed in JS), `aSeed` (random
- *              [0,1) per particle, drives color + pulse phase),
- *              `aSize` (per-particle base size variation).
- *   - Uniforms: time, speed, mouse, intensity, devicePixelRatio.
- *   - Output : varying `vSeed` (passed to fragment for color mix)
- *              and `vGlow` (pulse phase brightness).
- *   - Algorithm:
- *       1. Compute layered 3D simplex noise displacement along the
- *          radial axis — the sphere becomes a living blob.
- *       2. Per-particle pulse via sin(time + seed) gives ethereal
- *          breathing.
- *       3. Subtle XZ wobble per particle (asymmetric rotation).
- *       4. Mouse parallax — small XY shift of each point.
- *       5. gl_PointSize scales with depth + pulse so foreground
- *          particles render bigger than background ones.
+ * Geometry topology
+ * -----------------
+ * We render a `THREE.LineSegments` mesh: each pair of vertices in
+ * the position buffer becomes one line segment. The base positions
+ * sit on a unit sphere (the orb's resting form); the vertex shader
+ * applies the same layered simplex-noise displacement to each
+ * vertex, which means CONNECTED vertices stay connected as the
+ * orb morphs (both endpoints of a segment get the same noise
+ * because they share basePos values along their chord).
  *
- * Fragment shader
- * ---------------
- *   - Renders each point sprite as a soft radial glow (no texture)
- *     using gl_PointCoord — fully procedural.
- *   - Color is a 3-stop palette interpolated from `vSeed`:
- *     purple → magenta → orange.
- *   - Additive blending + a `core² + halo` alpha curve creates the
- *     premium soft glow when particles overlap.
+ * Color movement
+ * --------------
+ * Each line carries a unique `aLineId` attribute. The fragment
+ * shader feeds that id (plus uTime) into a fract() cycle that
+ * drives where the line samples the 3-color palette. Result: every
+ * line cycles through purple → magenta → orange independently, on
+ * a long enough loop that the swarm always shows a balanced
+ * distribution of colors.
  */
 
 export const VERTEX_SHADER = /* glsl */ `
@@ -39,16 +30,13 @@ export const VERTEX_SHADER = /* glsl */ `
   uniform float uSpeed;
   uniform vec2  uMouse;
   uniform float uIntensity;
-  uniform float uPixelRatio;
 
-  attribute float aSeed;
-  attribute float aSize;
+  attribute float aLineId;
 
-  varying float vSeed;
-  varying float vGlow;
+  varying float vLineId;
+  varying float vNoise;
 
-  // -- Ashima 3D simplex noise. Standard reference (Ashima Arts,
-  // -- Stefan Gustavson). Inlined so the shader is self-contained.
+  // -- Ashima 3D simplex noise.
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
@@ -111,84 +99,71 @@ export const VERTEX_SHADER = /* glsl */ `
   }
 
   void main() {
-    vSeed = aSeed;
+    vLineId = aLineId;
     float t = uTime * uSpeed;
 
     vec3 basePos = position;
     vec3 normal  = normalize(basePos);
 
-    // Layered noise displacement along the radial axis. Two octaves
-    // at different frequencies + opposing time drift = soft organic
-    // morphing without any single sine becoming visible.
+    // Layered noise displacement. Same algorithm as the original
+    // particle orb so connected endpoints displace identically and
+    // segments don't tear apart as the sphere morphs.
     float n1 = snoise(basePos * 1.6 + vec3(t * 0.25));
     float n2 = snoise(basePos * 3.0 - vec3(t * 0.40));
     float disp = (n1 * 0.7 + n2 * 0.3) * 0.22 * uIntensity;
     vec3 pos = basePos + normal * disp;
 
-    // Per-particle pulse (used by both this stage for gl_PointSize
-    // and the fragment for brightness).
-    float pulse = 0.5 + 0.5 * sin(t * 1.8 + aSeed * 6.2831);
-    vGlow = 0.55 + 0.55 * pulse;
+    // Pass noise sample to the fragment so brightness can ride the
+    // morph (lines passing through "high-pressure" zones glow more).
+    vNoise = n1;
 
-    // Slight per-particle wobble — breaks the otherwise uniform
-    // group rotation that lives on the parent THREE.Points object.
-    float wobble = sin(t * 0.6 + aSeed * 3.0) * 0.04;
+    // Tiny per-vertex wobble — both endpoints of a segment share
+    // basePos so they stay together, but the resulting visible
+    // motion of the segment is slightly off-axis from the bulk
+    // rotation.
+    float wobble = sin(t * 0.5 + dot(basePos, vec3(1.7, 2.3, 1.1))) * 0.04;
     float cw = cos(wobble), sw = sin(wobble);
     pos.xz = mat2(cw, -sw, sw, cw) * pos.xz;
 
-    // Mouse parallax — small whole-body offset, not per-particle
-    // chaos. The parent transform doesn't get a mouse hook because
-    // we want the parallax to feel like the SCENE is shifting, not
-    // the sphere center.
+    // Mouse parallax.
     pos.xy += uMouse * 0.06;
 
-    vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
-    gl_Position = projectionMatrix * mvPos;
-
-    // Depth-attenuated point size, scaled by DPR so it stays sharp
-    // on retina displays.
-    float depthAtten = 1.0 / max(-mvPos.z, 0.1);
-    gl_PointSize = aSize * (2.6 + 2.0 * pulse) * uPixelRatio * depthAtten;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
 `;
 
 export const FRAGMENT_SHADER = /* glsl */ `
   precision mediump float;
 
-  uniform vec3 uColorA;
-  uniform vec3 uColorB;
-  uniform vec3 uColorC;
+  uniform float uTime;
+  uniform vec3  uColorA;  // purple
+  uniform vec3  uColorB;  // magenta
+  uniform vec3  uColorC;  // orange
 
-  varying float vSeed;
-  varying float vGlow;
+  varying float vLineId;
+  varying float vNoise;
 
   void main() {
-    // gl_PointCoord is [0, 1] within the sprite quad. Center it.
-    vec2 c = gl_PointCoord - 0.5;
-    float d = length(c);
-    if (d > 0.5) discard;
+    // Per-line dynamic color: each line samples the palette at a
+    // moving offset (fract loops 0→1 → 0→1...). LineId stagger
+    // ensures the swarm always shows all three colors at once.
+    float phase = fract(vLineId * 0.0173 + uTime * 0.07);
 
-    // Two stacked falloffs: bright core + soft halo. The halo gives
-    // overlapping particles the additive bloom we want.
-    float core = smoothstep(0.5, 0.05, d);
-    float halo = smoothstep(0.5, 0.20, d);
-    float alpha = core * core * 0.95 + halo * 0.22;
-
-    // Three-stop color ramp keyed off seed. Split at 0.42 so the
-    // purple→magenta range gets a bit more population than the
-    // hotter magenta→orange range (premium tone, not arcade).
     vec3 col;
-    if (vSeed < 0.42) {
-      col = mix(uColorA, uColorB, vSeed / 0.42);
+    if (phase < 0.42) {
+      col = mix(uColorA, uColorB, phase / 0.42);
     } else {
-      col = mix(uColorB, uColorC, (vSeed - 0.42) / 0.58);
+      col = mix(uColorB, uColorC, (phase - 0.42) / 0.58);
     }
 
-    // Pulse brightness scales the emissive output. Additive blending
-    // does the rest; output is intentionally > 1.0 so overlapping
-    // particles saturate to a near-white core in the middle.
-    col *= vGlow * 1.6;
+    // Brightness rides the noise — lines passing through "valleys"
+    // of the deformation field glow stronger. Adds the "energy
+    // pulse" effect across the structure.
+    float glow = 1.1 + 0.6 * vNoise;
+    col *= max(glow, 0.35);
 
-    gl_FragColor = vec4(col, alpha);
+    // Alpha — kept slightly translucent so where two lines cross
+    // additive blending bleeds them together into a brighter knot.
+    gl_FragColor = vec4(col, 0.85);
   }
 `;

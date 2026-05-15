@@ -20,38 +20,86 @@
   isolation: isolate;
 }
 
-/* Soft ambient halo behind the canvas. Pulled in to roughly the
- * canvas footprint (inset: -18%, was -40%) so the bleed is now a
- * narrow rim of color rather than a soft glow flooding the
- * surrounding surface. Alphas trimmed ~50% so it whispers behind
- * the particles rather than competing with them. */
+/* Soft ambient halo behind the canvas. Two stacked pseudo-elements:
+ *
+ *   ::before — the radial gradient itself, slightly enlarged from
+ *              the previous "whisper" tuning and now with a slow
+ *              hue-rotate cycling colors across the spectrum so
+ *              the surface around the orb feels alive.
+ *   ::after  — a second rotating gradient layer using a conic
+ *              cycle that drifts behind the first, adding the
+ *              angular color movement the user asked for.
+ *
+ * Both layers respect prefers-reduced-motion (animations zeroed
+ * below). */
 .wrap::before {
   content: '';
   position: absolute;
-  inset: -18%;
+  /* Slightly larger than the previous -18% rim so the glow bleeds
+   * a touch into the surrounding surface, but still tight enough
+   * to feel like a halo, not a flood. */
+  inset: -28%;
   z-index: -1;
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(236, 72, 153, 0.12) 0%,
-    rgba(147, 51, 234, 0.09) 35%,
-    rgba(251, 146, 60, 0.04) 60%,
-    transparent 80%
+    rgba(236, 72, 153, 0.20) 0%,
+    rgba(147, 51, 234, 0.14) 35%,
+    rgba(251, 146, 60, 0.07) 60%,
+    transparent 82%
   );
-  filter: blur(4px);
-  animation: heroOrbBreath 5.5s ease-in-out infinite alternate;
+  filter: blur(6px);
+  /* Two overlapping animations: opacity/scale breath + a slow hue
+   * rotation that drifts the magenta/purple/orange relationship
+   * through the spectrum on a long cycle. */
+  animation:
+    heroOrbBreath 5.5s ease-in-out infinite alternate,
+    heroOrbHueDrift 14s linear infinite;
   pointer-events: none;
 }
 
+/* Second layer — a conic gradient that ROTATES so the color spots
+ * sweep around the orb perimeter. Lower opacity than ::before so it
+ * reads as motion underneath the main halo, not a second halo. */
+.wrap::after {
+  content: '';
+  position: absolute;
+  inset: -28%;
+  z-index: -2;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(236, 72, 153, 0.18),
+    rgba(251, 146, 60, 0.10),
+    rgba(147, 51, 234, 0.16),
+    rgba(236, 72, 153, 0.18)
+  );
+  filter: blur(10px);
+  animation: heroOrbConicSpin 9s linear infinite;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
 @keyframes heroOrbBreath {
-  0%   { opacity: 0.55; transform: scale(0.97); }
-  100% { opacity: 0.85; transform: scale(1.02); }
+  0%   { opacity: 0.6; transform: scale(0.97); }
+  100% { opacity: 0.9; transform: scale(1.03); }
+}
+
+@keyframes heroOrbHueDrift {
+  0%   { filter: blur(6px) hue-rotate(0deg);   }
+  100% { filter: blur(6px) hue-rotate(360deg); }
+}
+
+@keyframes heroOrbConicSpin {
+  0%   { transform: rotate(0deg);   }
+  100% { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wrap::before {
+  .wrap::before,
+  .wrap::after {
     animation: none;
-    opacity: 0.8;
+    opacity: 0.65;
   }
 }
 
