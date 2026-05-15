@@ -34,6 +34,25 @@
   .topBar { top: 16px; gap: 6px; }
 }
 
+/* Superchat trigger slot — fixed at the top-right edge, aligned
+ * with the FeedPanel's right-column slot (right: 104px) so the
+ * pill reads as the action header for that area of the app. Lives
+ * outside `.topBar` because that wrapper is centered horizontally
+ * and now only hosts the HeroOrb decoration. */
+.superchatTriggerSlot {
+  position: fixed;
+  top: 42px;
+  right: 104px;
+  z-index: 50;
+  pointer-events: auto;
+}
+@media (max-width: 768px) {
+  /* On mobile the Feed becomes a bottom-sheet, so the right-104 alignment
+   * no longer carries meaning — dock the trigger to the top-right corner
+   * with the standard 16px gutter the topBar uses. */
+  .superchatTriggerSlot { top: 16px; right: 16px; }
+}
+
 .backBtn {
   position: fixed;
   top: 54px; left: 20px;

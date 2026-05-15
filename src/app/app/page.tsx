@@ -397,11 +397,10 @@ export default function AppPage() {
           <div className={styles.topBar}>
             {/* FilterTabs ("Todos / Fãs próximos / Mesmo gosto")
                 ocultado per product feedback — espaço do topo
-                fica reservado para Superchat + HeroOrb. */}
-            <SuperchatTrigger
-              onClick={() => setShowSuperchat(true)}
-              unreadCount={superchat?.unreadCount ?? 0}
-            />
+                fica reservado para o HeroOrb. Superchat trigger
+                migrou pro slot `.superchatTriggerSlot` no canto
+                top-right (alinhado com a borda direita do Feed),
+                renderizado mais abaixo. */}
             {/* Decorative particle orb — sits where the bell icon
                 used to be visible. Premium ambient signal that the
                 platform is "alive" even when there are no
@@ -448,6 +447,18 @@ export default function AppPage() {
           /* Drives the active-dot under each nav icon — lights the
              slot matching whichever singleton overlay is open. */
           activeOverlay={activeOverlay}
+        />
+      </div>
+
+      {/* Superchat entry point — top-right slot, anchored to the
+          Feed's right-column edge so the trigger reads as the
+          action header for that area of the app. Used to live
+          inside the centered topBar above; moved here per product
+          feedback ("acima do box do feed"). */}
+      <div className={styles.superchatTriggerSlot}>
+        <SuperchatTrigger
+          onClick={() => setShowSuperchat(true)}
+          unreadCount={superchat?.unreadCount ?? 0}
         />
       </div>
 
