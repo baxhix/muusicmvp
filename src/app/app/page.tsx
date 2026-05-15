@@ -114,13 +114,28 @@ export default function AppPage() {
    *  be open at a time — opening any of them auto-closes whichever
    *  is currently open. Notifications is included here too even
    *  though the component manages its own visible state, because
-   *  we pass `open` + `onOpenChange` as a controlled prop. */
-  type ActiveOverlay = null | 'superfans' | 'playlist' | 'superchat' | 'notifications';
+   *  we pass `open` + `onOpenChange` as a controlled prop.
+   *
+   *  'chat' opens the full ConversationsSidebar in the right slot
+   *  (same geometry as FeedPanel). Because both occupy the same
+   *  real estate, opening Chat also dispatches `app:close-feed`
+   *  to minimize the Feed, and clicking the dock's Feed shortcut
+   *  fires `app:toggle-feed` which we listen to below to clear
+   *  activeOverlay — so the two are effectively mutually
+   *  exclusive without lifting the Feed's internal state. */
+  type ActiveOverlay =
+    | null
+    | 'superfans'
+    | 'playlist'
+    | 'superchat'
+    | 'notifications'
+    | 'chat';
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
   const showSuperfans     = activeOverlay === 'superfans';
   const showPlaylist      = activeOverlay === 'playlist';
   const showSuperchat     = activeOverlay === 'superchat';
   const showNotifications = activeOverlay === 'notifications';
+  const showChat          = activeOverlay === 'chat';
 
   // Per-overlay setShow helpers — preserve the boolean shape the
   // existing call sites use. Setting true swaps to that overlay
@@ -139,6 +154,18 @@ export default function AppPage() {
     if (v) setActiveOverlay('superchat');
     else setActiveOverlay((curr) => (curr === 'superchat' ? null : curr));
   };
+  const setShowChat = (v: boolean) => {
+    if (v) {
+      setActiveOverlay('chat');
+      // Chat + Feed share the right slot — opening Chat collapses
+      // the Feed so they don't both bid for the same real estate.
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app:close-feed'));
+      }
+    } else {
+      setActiveOverlay((curr) => (curr === 'chat' ? null : curr));
+    }
+  };
 
   // Listen for the BottomNav's notification trigger — routes
   // through the same coordinator so opening notifications closes
@@ -147,6 +174,19 @@ export default function AppPage() {
     const onOpenNotif = () => setActiveOverlay('notifications');
     window.addEventListener('app:open-notifications', onOpenNotif);
     return () => window.removeEventListener('app:open-notifications', onOpenNotif);
+  }, []);
+
+  // When the dock's Feed shortcut fires `app:toggle-feed`, the Feed
+  // takes over the right slot — so we clear the activeOverlay (which
+  // closes Chat if it was open). Notifications/Superfã/Playlist are
+  // anchored elsewhere, but Chat would visually fight for the same
+  // space, so this is the easy way to keep them mutually exclusive
+  // without lifting Feed's internal `minimized` state up here.
+  useEffect(() => {
+    const onToggleFeed = () =>
+      setActiveOverlay((curr) => (curr === 'chat' ? null : curr));
+    window.addEventListener('app:toggle-feed', onToggleFeed);
+    return () => window.removeEventListener('app:toggle-feed', onToggleFeed);
   }, []);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -167,7 +207,9 @@ export default function AppPage() {
   // Full-list conversations drawer — opens from the dock's "ver
   // tudo" overflow trigger. The dock itself only shows the latest
   // few DMs so the user can reach the rest without scrolling.
-  const [showConversationsSidebar, setShowConversationsSidebar] = useState(false);
+  // ConversationsSidebar visibility is now part of the activeOverlay
+  // singleton above (showChat / setShowChat) — kept the local name
+  // out to avoid two sources of truth for the same UI slot.
   const [songIdx, setSongIdx] = useState(0);
 
   // Asks for browser geolocation on first authenticated load (per session).
@@ -429,24 +471,25 @@ export default function AppPage() {
         activeId={chat.activeId}
         onlineUserIds={onlineUserIds}
         onOpen={chat.open}
-        // The "+" trigger on the dock now opens the full conversations
-        // drawer; the drawer carries the search + its own "+" that
-        // pops the UserPicker for actually starting a new chat.
-        onAddClick={() => setShowConversationsSidebar(true)}
+        // The hamburger trigger on the dock now opens the Chat panel
+        // (same singleton slot as the Feed). The drawer carries the
+        // search + its own "+" that pops the UserPicker for actually
+        // starting a new chat.
+        onAddClick={() => setShowChat(true)}
       />
       <ConversationsSidebar
-        open={showConversationsSidebar}
+        open={showChat}
         conversations={chat.conversations}
         activeId={chat.activeId}
         onlineUserIds={onlineUserIds}
-        onClose={() => setShowConversationsSidebar(false)}
+        onClose={() => setShowChat(false)}
         onOpenConversation={chat.open}
         onNewConversation={() => {
-          setShowConversationsSidebar(false);
+          setShowChat(false);
           setShowUserPicker(true);
         }}
         onNewGroup={() => {
-          setShowConversationsSidebar(false);
+          setShowChat(false);
           setShowGroupPicker(true);
         }}
       />

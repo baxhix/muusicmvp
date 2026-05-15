@@ -269,10 +269,19 @@ export default function FeedPanel() {
   // flips the panel between expanded / minimized without coupling
   // the two components directly. Mirrors the
   // `app:open-notifications` pattern in NotificationBell.
+  //
+  // We also listen to `app:close-feed`: page.tsx fires it when
+  // opening the Chat panel (Chat + Feed share the right slot, so
+  // Chat opening means Feed needs to collapse out of the way).
   useEffect(() => {
     const onToggle = () => setMinimized((m) => !m);
+    const onForceClose = () => setMinimized(true);
     window.addEventListener('app:toggle-feed', onToggle);
-    return () => window.removeEventListener('app:toggle-feed', onToggle);
+    window.addEventListener('app:close-feed', onForceClose);
+    return () => {
+      window.removeEventListener('app:toggle-feed', onToggle);
+      window.removeEventListener('app:close-feed', onForceClose);
+    };
   }, []);
 
   return (

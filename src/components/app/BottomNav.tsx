@@ -10,13 +10,19 @@ import styles from './BottomNav.module.css';
  *  Mirrors the `ActiveOverlay` union in app/page.tsx — kept as a
  *  loose string union here so BottomNav stays decoupled from the
  *  page's local types. The active-dot under each icon lights up
- *  for the matching value. */
+ *  for the matching value.
+ *
+ *  'chat' is included so the type aligns with the page's union,
+ *  but no nav icon currently maps to it (the chat panel opens
+ *  from the right-rail dock, not from BottomNav). When the chat
+ *  is the active overlay no dot lights up here. */
 export type BottomNavActiveOverlay =
   | null
   | 'superfans'
   | 'playlist'
   | 'superchat'
-  | 'notifications';
+  | 'notifications'
+  | 'chat';
 
 interface BottomNavProps {
   onSuperfansOpen?: () => void;
