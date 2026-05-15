@@ -39,11 +39,14 @@
       rgba(2,2,3,0.84) 100%);
   backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.06);
+  /* Border removed per product feedback — the dark gradient fill +
+   * the heavy drop shadow already separate the panel from the
+   * backdrop. The faint 1px outline was making the card look
+   * "framed" against the dark globe surface. */
+  border: none;
   border-radius: 20px;
   box-shadow:
     0 40px 100px -10px rgba(0,0,0,0.85),
-    0 0 0 1px rgba(255,255,255,0.02) inset,
     0 1px 0 rgba(255,255,255,0.05) inset;
   pointer-events: auto;
   overflow: hidden;
