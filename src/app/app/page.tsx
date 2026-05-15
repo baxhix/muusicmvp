@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import TopBar from '@/components/app/TopBar';
-import FilterTabs from '@/components/app/FilterTabs';
+// FilterTabs no longer rendered in /app's topBar — kept the file in
+// the codebase for potential re-introduction without an extra round
+// of cleanup.
 import LiveChatStack from '@/components/app/LiveChatStack';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import ConversationsSidebar from '@/components/app/ConversationsSidebar';
@@ -312,7 +314,9 @@ export default function AppPage() {
               side-by-side. Ranking (Superfãs) is reachable via the
               BottomNav crown icon — no longer duplicated up here. */}
           <div className={styles.topBar}>
-            <FilterTabs />
+            {/* FilterTabs ("Todos / Fãs próximos / Mesmo gosto")
+                ocultado per product feedback — espaço do topo
+                fica reservado para Superchat + HeroOrb. */}
             <SuperchatTrigger
               onClick={() => setShowSuperchat(true)}
               unreadCount={superchat?.unreadCount ?? 0}

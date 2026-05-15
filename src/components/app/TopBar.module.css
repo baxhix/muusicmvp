@@ -32,14 +32,19 @@
   gap: 2px;
 }
 
+/* Smaller font now that this slot renders a "Olá, <first name>!"
+ * greeting (set in TopBar.tsx) instead of the full display name.
+ * The greeting is conversational filler, not identity — should
+ * read as a soft accent next to the avatar, not as the loudest
+ * thing in the top bar. */
 .userName {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: rgba(245,245,247,0.92);
-  letter-spacing: -0.01em;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245,245,247,0.80);
+  letter-spacing: -0.005em;
   line-height: 1;
 }
 

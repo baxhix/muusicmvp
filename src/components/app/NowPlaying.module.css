@@ -9,10 +9,11 @@
 .player {
   position: fixed;
   bottom: 24px;
-  /* Aligned to the ArtistBox column at top-left (which sits at
-     left: 68px). Keeps the player + Fanverse card vertically
+  /* Aligned to the ArtistBox column at top-left. left:18 matches
+     the chat dock's right:18 so the page has symmetric gutters on
+     both sides. Keeps the player + Fanverse card vertically
      stacked on the same axis instead of floating mid-screen. */
-  left: 68px;
+  left: 18px;
   background:
     radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.018) 0%, transparent 65%),
     linear-gradient(160deg,

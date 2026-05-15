@@ -19,6 +19,22 @@ function displayName(user: { name: string | null; email: string } | null): strin
   return user.email.split('@')[0];
 }
 
+/** Friendly greeting label: "Olá, <first name>!". Falls back through
+ *  the same chain as displayName but uses only the FIRST token of the
+ *  full name (so "Marcelo De Mari" becomes "Marcelo"). Renders next
+ *  to the avatar in the top-right of the app shell. */
+function greetingLabel(user: { name: string | null; email: string } | null): string {
+  if (!user) return 'Olá!';
+  const source =
+    user.name && user.name.trim() ? user.name : user.email.split('@')[0];
+  const firstToken = source.trim().split(/\s+/)[0];
+  if (!firstToken) return 'Olá!';
+  // Capitalize first letter so email-derived labels (e.g. "marcelo")
+  // render as "Marcelo" without changing the user's stored data.
+  const pretty = firstToken.charAt(0).toUpperCase() + firstToken.slice(1);
+  return `Olá, ${pretty}!`;
+}
+
 /* ── Helpers / shared subcomponents ─────────────────────────────────────── */
 
 function DrawerChevron() {
@@ -209,6 +225,11 @@ interface TopBarProps {
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
   const { user, logout } = useAuth();
   const userLabel = displayName(user);
+  // Greeting variant used next to the avatar trigger.
+  // The drawer header below keeps the full displayName so identity
+  // info isn't lost — only the always-visible trigger is the
+  // shorter friendlier greeting.
+  const greeting = greetingLabel(user);
   const userEmail = user?.email ?? '';
   const userAvatar = user?.avatarUrl ?? '/ana-beatriz-avatar.png';
 
@@ -307,7 +328,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         aria-label="Menu do usuário"
       >
         <div className={styles.userInfo}>
-          <span className={styles.userName}>{userLabel}</span>
+          <span className={styles.userName}>{greeting}</span>
         </div>
         <div className={`${styles.avatar} ${online ? styles.avatarOnline : ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

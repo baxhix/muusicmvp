@@ -4,11 +4,12 @@
   top: 42px;
   /* Mirror NowPlaying.module.css positioning so the Fanverse box
    * and the player share the same left column AND the same width.
-   *   - left:  68px  → identical gutter from screen edge
+   *   - left:  18px  → matches the chat dock's right:18px so the
+   *                    left + right gutters are symmetric.
    *   - width: 296px → matches .playerHorizontal / .playerExpanded
    * Both values move together if the column ever migrates to a CSS
    * variable. */
-  left: 68px;
+  left: 18px;
   width: 296px;
   z-index: 15;
   display: flex;
