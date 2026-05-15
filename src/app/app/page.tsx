@@ -406,7 +406,7 @@ export default function AppPage() {
                 platform is "alive" even when there are no
                 notifications to surface. Purely visual; pointer
                 events stay on for future hover affordances. */}
-            <HeroOrb size={70} />
+            <HeroOrb size={120} />
             {/* NotificationBell stays mounted (its panel + event
                 listener are needed) but renders without the trigger
                 glyph. The visible entry point now lives in the

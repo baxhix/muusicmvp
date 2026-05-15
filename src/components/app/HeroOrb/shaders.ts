@@ -172,18 +172,25 @@ export const FRAGMENT_SHADER = /* glsl */ `
     // crests read as discrete "pulses" traveling along the
     // ribbon rather than a uniform glow.
     float wave = sin((vT * 6.2831 + vPathSeed * 9.4248) - t * 3.5);
-    float flow = pow(0.5 + 0.5 * wave, 2.4);
+    float flow = pow(0.5 + 0.5 * wave, 2.0);
 
     // Noise also modulates brightness so the wave brightens more
     // in deformation hotspots — gives the impression of energy
     // flowing through the active morph zones.
-    float brightness = 0.35 + 1.1 * flow + 0.35 * vNoise;
+    //
+    // Bumped from (0.35 + 1.1*flow + 0.35*vNoise) so the curves
+    // glow harder against the dark backdrop — the previous values
+    // read as a faint smudge at the topBar's render size, and the
+    // reference image we're chasing is far more luminous. Capped
+    // softly via the alpha + additive blending so the bright
+    // hotspots still bleach to white at curve intersections.
+    float brightness = 0.55 + 1.6 * flow + 0.45 * vNoise;
 
-    col *= max(brightness, 0.25);
+    col *= max(brightness, 0.4);
 
-    // Alpha — slight translucency so overlapping ribbons saturate
+    // Alpha — high but not opaque so overlapping ribbons saturate
     // through additive blending to a near-white core where they
     // cross.
-    gl_FragColor = vec4(col, 0.88);
+    gl_FragColor = vec4(col, 0.95);
   }
 `;

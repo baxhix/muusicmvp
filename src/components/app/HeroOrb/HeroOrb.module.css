@@ -35,23 +35,24 @@
 .wrap::before {
   content: '';
   position: absolute;
-  /* Slightly larger than the previous -18% rim so the glow bleeds
-   * a touch into the surrounding surface, but still tight enough
-   * to feel like a halo, not a flood. */
-  inset: -28%;
+  /* Larger halo footprint per product feedback — the reference orb
+   * carries a heavy outer glow that bleeds into the surrounding
+   * dark surface. -40% gives the halo more room to fade out. */
+  inset: -40%;
   z-index: -1;
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(236, 72, 153, 0.20) 0%,
-    rgba(147, 51, 234, 0.14) 35%,
-    rgba(251, 146, 60, 0.07) 60%,
-    transparent 82%
+    rgba(244, 63, 94,  0.55) 0%,   /* rose-500 hot core */
+    rgba(236, 72, 153, 0.42) 22%,  /* pink-500 inner shell */
+    rgba(168, 85, 247, 0.28) 50%,  /* violet-500 outer */
+    rgba(124, 58, 237, 0.10) 75%,  /* violet-600 fade */
+    transparent 90%
   );
-  filter: blur(6px);
+  filter: blur(10px);
   /* Two overlapping animations: opacity/scale breath + a slow hue
-   * rotation that drifts the magenta/purple/orange relationship
-   * through the spectrum on a long cycle. */
+   * rotation that keeps the pink/violet relationship moving on a
+   * long cycle. */
   animation:
     heroOrbBreath 5.5s ease-in-out infinite alternate,
     heroOrbHueDrift 14s linear infinite;
@@ -64,25 +65,26 @@
 .wrap::after {
   content: '';
   position: absolute;
-  inset: -28%;
+  inset: -40%;
   z-index: -2;
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    rgba(236, 72, 153, 0.18),
-    rgba(251, 146, 60, 0.10),
-    rgba(147, 51, 234, 0.16),
-    rgba(236, 72, 153, 0.18)
+    rgba(244, 63, 94,  0.32),
+    rgba(168, 85, 247, 0.22),
+    rgba(236, 72, 153, 0.30),
+    rgba(124, 58, 237, 0.22),
+    rgba(244, 63, 94,  0.32)
   );
-  filter: blur(10px);
+  filter: blur(16px);
   animation: heroOrbConicSpin 9s linear infinite;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 @keyframes heroOrbBreath {
-  0%   { opacity: 0.6; transform: scale(0.97); }
-  100% { opacity: 0.9; transform: scale(1.03); }
+  0%   { opacity: 0.75; transform: scale(0.97); }
+  100% { opacity: 1;    transform: scale(1.05); }
 }
 
 @keyframes heroOrbHueDrift {

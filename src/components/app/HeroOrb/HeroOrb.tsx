@@ -72,14 +72,23 @@ interface HeroOrbProps {
 }
 
 const DEFAULTS = {
-  size: 70,
-  curveCount: 11,
-  verticesPerCurve: 80,
+  size: 120,
+  // Denser tangle (was 11/80) so the wireframe-sphere outline reads
+  // clearly at the larger default size. Each extra curve is ~80
+  // line segments — the bigger Three.js draw still fits inside one
+  // additive-blended LineSegments call, so the perf cost is small.
+  curveCount: 16,
+  verticesPerCurve: 96,
   speed: 1,
+  // Magenta-dominant palette per product feedback (the reference
+  // is a hot pink + violet plasma orb — the previous orange accent
+  // pulled the look too far toward sunset, away from the brief).
+  // Three stops still cycle through the curve color phase but they
+  // all sit in the pink/violet range now.
   colors: {
-    primary:   '#9333ea', // violet-600
-    secondary: '#ec4899', // pink-500
-    accent:    '#fb923c', // orange-400
+    primary:   '#a855f7', // violet-500 — base tangle hue
+    secondary: '#ec4899', // pink-500 — mid color
+    accent:    '#f43f5e', // rose-500 — the bright glowing red on the rim
   },
   enableMouseInteraction: true,
 };
