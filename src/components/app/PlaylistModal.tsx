@@ -164,9 +164,22 @@ export default function PlaylistModal({
           {/* Campo de busca com autocomplete */}
           <div className={styles.searchWrap}>
             <span className={styles.searchIcon} aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              {/* Magnifier glyph aligned with the chat search icon
+                  (ConversationsSidebar) — same 16×16 viewBox + 1.8
+                  stroke + circle/handle proportions so the two
+                  search fields look identical. */}
+              <svg
+                viewBox="0 0 16 16"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="7" cy="7" r="5" />
+                <path d="M14 14l-3-3" />
               </svg>
             </span>
             <input

@@ -165,9 +165,21 @@ export default function UserPicker(props: Props) {
         )}
 
         <div className={styles.searchRow}>
-          <svg className={styles.searchIcon} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+          {/* Magnifier glyph aligned with the chat search icon —
+              same viewBox / stroke width / circle + handle paths
+              so the two fields look identical. */}
+          <svg
+            className={styles.searchIcon}
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="7" cy="7" r="5" />
-            <path d="M14 14l-3.5-3.5" />
+            <path d="M14 14l-3-3" />
           </svg>
           <input
             ref={inputRef}

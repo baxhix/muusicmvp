@@ -59,6 +59,11 @@
 }
 .closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
 
+/* Standardized search field — recipe lifted verbatim from
+ * ConversationsSidebar (the chat sidebar's search) per product
+ * feedback: chat is the absolute standard for search inputs
+ * across the platform. Pill radius, soft white fill, 13px text,
+ * 14×14 icon at left:12, white focus border. */
 .searchRow {
   position: relative;
   margin: 12px 14px 8px;
@@ -67,27 +72,26 @@
   position: absolute;
   left: 12px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(calc(-50% + 1px));
   width: 14px;
   height: 14px;
-  color: rgba(245, 245, 247, 0.5);
+  color: rgba(245, 245, 247, 0.45);
   pointer-events: none;
 }
 .searchField {
   width: 100%;
-  padding: 10px 14px 10px 34px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 9px 12px 9px 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   color: #f5f5f7;
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.14s ease, background 0.14s ease;
 }
 .searchField:focus {
-  /* White focus ring across all /app inputs (no more accent tint). */
   border-color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
 }
 .searchField::placeholder { color: rgba(245, 245, 247, 0.4); }
 

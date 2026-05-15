@@ -154,7 +154,14 @@
   border-radius: 2px;
 }
 
-/* ── Campo de busca ─────────────────────── */
+/* ── Campo de busca ───────────────────────
+ * Standardized search input — recipe lifted verbatim from
+ * ConversationsSidebar (the chat sidebar's search) per product
+ * feedback: chat is the absolute standard for search inputs
+ * across the platform. Pill radius, soft white fill, 13px text,
+ * 14×14 icon at left:12. The only deviation is the right padding
+ * (38 instead of 32) so the trailing .searchClear "×" button has
+ * room — Playlist supports a clear button that chat doesn't. */
 .searchWrap {
   position: relative;
   margin: 0 12px 10px;
@@ -163,35 +170,31 @@
   position: absolute;
   top: 50%;
   left: 12px;
-  transform: translateY(-50%);
-  color: rgba(245,245,247,0.45);
+  transform: translateY(calc(-50% + 1px));
+  color: rgba(245, 245, 247, 0.45);
   pointer-events: none;
   display: grid;
   place-items: center;
 }
-.searchIcon svg { width: 16px; height: 16px; }
+.searchIcon svg { width: 14px; height: 14px; }
 .searchInput {
   width: 100%;
-  padding: 11px 38px 11px 38px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 6px;
-  color: #F5F5F7;
-  font-size: 14px;
+  padding: 9px 38px 9px 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  color: #f5f5f7;
+  font-size: 13px;
   font-family: inherit;
   outline: none;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition: border-color 0.14s ease, background 0.14s ease;
   -webkit-appearance: none;
   appearance: none;
 }
-.searchInput::placeholder { color: rgba(245,245,247,0.45); }
-.searchInput:hover {
-  border-color: rgba(255,255,255,0.16);
-}
+.searchInput::placeholder { color: rgba(245, 245, 247, 0.4); }
 .searchInput:focus {
-  /* White focus ring across all /app inputs (no more accent tint). */
   border-color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.07);
 }
 /* Some o "x" nativo dos navegadores */
 .searchInput::-webkit-search-cancel-button {
