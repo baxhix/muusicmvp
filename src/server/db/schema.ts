@@ -11,6 +11,7 @@ import {
   index,
   unique,
 } from 'drizzle-orm/pg-core';
+import { desc } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -509,6 +510,85 @@ export const siteTags = pgTable('site_tags', {
   }),
 });
 
+/**
+ * Algorithm rules — admin-managed IF/THEN behaviour catalog.
+ *
+ * Each row encodes a single platform behaviour:
+ *   "when <trigger_event> matches <trigger_config>, dispatch
+ *    <action_kind> with <action_config>".
+ *
+ * Phase 1 (this release) is CMS-only: the rules persist, get
+ * listed in /admin/algoritmo, and serve as living documentation.
+ * The /app-side engine that consumes these rules is a follow-up.
+ *
+ * The enum values are double-locked: CHECK constraints in the SQL
+ * migration + the `enum` typing here ensure neither side can
+ * silently accept an unknown trigger or action.
+ */
+export const algorithmRules = pgTable(
+  'algorithm_rules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    description: text('description').notNull(),
+
+    triggerEvent: text('trigger_event', {
+      enum: [
+        'session_started',
+        'idle_in_screen',
+        'feed_scroll_streak',
+        'track_completed',
+        'track_skipped',
+        'time_in_app_minutes',
+        'consecutive_inactive_days',
+      ],
+    }).notNull(),
+    triggerConfig: jsonb('trigger_config')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    actionKind: text('action_kind', {
+      enum: [
+        'show_toast',
+        'nudge_to_screen',
+        'inject_recommendation',
+        'show_modal',
+      ],
+    }).notNull(),
+    actionConfig: jsonb('action_config')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+
+    /** Documentation fields surfaced in the admin list + filters. */
+    serviceName: text('service_name'),
+    targetObject: text('target_object'),
+    tags: jsonb('tags').$type<string[]>().notNull().default([]),
+    documentationUrl: text('documentation_url'),
+
+    /** Lifecycle controls. `enabled` flips on/off; the others
+     *  bound how aggressively the engine fires this rule when
+     *  Phase 2 ships. */
+    enabled: boolean('enabled').notNull().default(false),
+    priority: integer('priority').notNull().default(100),
+    cooldownSeconds: integer('cooldown_seconds').notNull().default(0),
+    maxPerSession: integer('max_per_session').notNull().default(0),
+
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('algorithm_rules_enabled_idx').on(t.enabled),
+    index('algorithm_rules_trigger_event_idx').on(t.triggerEvent),
+    index('algorithm_rules_service_name_idx').on(t.serviceName),
+    index('algorithm_rules_updated_at_idx').on(desc(t.updatedAt)),
+  ],
+);
+
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
 export type SiteTag = typeof siteTags.$inferSelect;
@@ -519,3 +599,5 @@ export type FeedComment = typeof feedComments.$inferSelect;
 export type NewFeedComment = typeof feedComments.$inferInsert;
 export type FeedCommentReaction = typeof feedCommentReactions.$inferSelect;
 export type NewFeedCommentReaction = typeof feedCommentReactions.$inferInsert;
+export type AlgorithmRule = typeof algorithmRules.$inferSelect;
+export type NewAlgorithmRule = typeof algorithmRules.$inferInsert;

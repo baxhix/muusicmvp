@@ -377,3 +377,20 @@ export const IconLoader = (p: IconProps) => (
     <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
   </svg>
 );
+
+// Brain / circuit hybrid — used by the Algoritmo nav entry. Two
+// hemispheres + crossing connector lines + circuit nodes.
+export const IconAlgorithm = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3" />
+    <path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3" />
+    <path d="M9 4v16" />
+    <path d="M15 4v16" />
+    <circle cx="9" cy="9" r="0.8" />
+    <circle cx="15" cy="9" r="0.8" />
+    <circle cx="9" cy="15" r="0.8" />
+    <circle cx="15" cy="15" r="0.8" />
+    <path d="M9 9h6" />
+    <path d="M9 15h6" />
+  </svg>
+);
