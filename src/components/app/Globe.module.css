@@ -403,6 +403,17 @@
   max-height: 56px;
   aspect-ratio: auto;
   justify-content: flex-start;
+  /* Restore the dark pill envelope on hover. The resting state
+   * collapses to a bare circular avatar (no wrapper); hover
+   * grows the pill back so the username + song row are readable
+   * against a consistent dark background — same visual language
+   * as the non-compact `.userBadge`. These !important values
+   * cancel the `transparent` defaults declared on `.badgeCompact`
+   * above. */
+  background: rgba(0, 0, 0, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
 }
 .badgeCompact:hover .userBadgeInfo,
 .badgeCompact:hover .liveUserInfo {
