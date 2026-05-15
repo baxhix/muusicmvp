@@ -13,6 +13,11 @@ import type { ApiNotification } from '@/lib/api/types';
 import styles from './NotificationBell.module.css';
 
 const PULSE_MS = 900;
+/** How many notifications fit inside the panel's resting footprint
+ *  before the "Ver mais" CTA kicks in. Mirrors the PREVIEW_COUNT
+ *  pattern in PlaylistModal so both panels truncate the same way:
+ *  show the first N, hide the rest under a single Ver mais click. */
+const PREVIEW_COUNT = 7;
 
 function timeAgo(iso: string): string {
   const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -189,6 +194,17 @@ export default function NotificationBell({
   const [pulse, setPulse] = useState(false);
   const lastUnreadRef = useRef(unreadCount);
   const dropRef = useRef<HTMLDivElement>(null);
+  // Toggle for the "Ver mais" reveal. Default false so each time
+  // the panel opens it starts collapsed; the close-reset effect
+  // below flips it back ~360ms after `open` becomes false (the
+  // ~exit-animation window).
+  const [showAllNotifs, setShowAllNotifs] = useState(false);
+  useEffect(() => {
+    if (!open) {
+      const t = setTimeout(() => setShowAllNotifs(false), 360);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
 
   // Pulse when unread count grows
   useEffect(() => {
@@ -262,35 +278,65 @@ export default function NotificationBell({
           {notifications.length === 0 ? (
             <div className={styles.empty}>Sem novidades por enquanto.</div>
           ) : (
-            <ul className={styles.list}>
-              {notifications.slice(0, 30).map((n) => {
-                const avatar =
-                  n.sourceUser?.avatarUrl ??
-                  (n.sourceUser?.id ? `https://i.pravatar.cc/72?u=${n.sourceUser.id}` : null);
-                return (
-                  <li
-                    key={n.id}
-                    className={`${styles.item} ${n.readAt ? styles.itemRead : styles.itemUnread}`}
-                    onClick={() => !n.readAt && markRead(n.id)}
-                  >
-                    {avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={avatar}
-                        alt=""
-                        className={styles.itemAvatar}
-                      />
-                    ) : (
-                      <span className={styles.itemAvatarPlaceholder} aria-hidden="true" />
-                    )}
-                    <div className={styles.itemBody}>
-                      <div className={styles.itemText}>{describe(n)}</div>
-                      <div className={styles.itemMeta}>{timeAgo(n.createdAt)}</div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            (() => {
+              // Visible slice — capped at PREVIEW_COUNT until the
+              // user clicks "Ver mais" (same pattern as the
+              // PlaylistModal). Anything past the cap is hidden by
+              // truncating the array rather than relying on the
+              // panel's overflow, so the modal footprint stays
+              // visually predictable.
+              const visible = showAllNotifs
+                ? notifications
+                : notifications.slice(0, PREVIEW_COUNT);
+              const hiddenCount = notifications.length - visible.length;
+              return (
+                <>
+                  <ul className={styles.list}>
+                    {visible.map((n) => {
+                      const avatar =
+                        n.sourceUser?.avatarUrl ??
+                        (n.sourceUser?.id
+                          ? `https://i.pravatar.cc/72?u=${n.sourceUser.id}`
+                          : null);
+                      return (
+                        <li
+                          key={n.id}
+                          className={`${styles.item} ${n.readAt ? styles.itemRead : styles.itemUnread}`}
+                          onClick={() => !n.readAt && markRead(n.id)}
+                        >
+                          {avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={avatar}
+                              alt=""
+                              className={styles.itemAvatar}
+                            />
+                          ) : (
+                            <span
+                              className={styles.itemAvatarPlaceholder}
+                              aria-hidden="true"
+                            />
+                          )}
+                          <div className={styles.itemBody}>
+                            <div className={styles.itemText}>{describe(n)}</div>
+                            <div className={styles.itemMeta}>{timeAgo(n.createdAt)}</div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {hiddenCount > 0 && (
+                    <button
+                      type="button"
+                      className={styles.viewMoreBtn}
+                      onClick={() => setShowAllNotifs(true)}
+                    >
+                      Ver mais ({hiddenCount})
+                    </button>
+                  )}
+                </>
+              );
+            })()
           )}
         </div>
       )}

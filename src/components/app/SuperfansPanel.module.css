@@ -463,28 +463,31 @@
 .trendDown { color: #F87171; }
 .trendSame { color: rgba(245,245,247,0.55); }
 
-/* ── "Ver mais" button (após o sexto colocado) ──
- * Standardized pattern shared with PlaylistModal.viewMoreBtn —
- * fully pill-shaped (border-radius: 999px), borderless, font 14/
- * 400 regular per product feedback. Keep both in sync. */
+/* ── "Ver mais" button — standardized across /app modals ──
+ * Exactly mirrors PlaylistModal.viewMoreBtn (the canonical
+ * spec): inline-flex hugging its own width (not full-width as
+ * before), centered via `align-self: center` + auto margin, font
+ * 14/400 regular, fully pill-shaped. NotificationBell carries the
+ * same rule. Keep all three in sync. */
 
 .seeMoreBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  width: calc(100% - 8px);
-  margin: 8px 4px;
-  padding: 10px 14px;
+  margin: 8px auto 14px;
+  padding: 10px 18px;
   background: rgba(255, 255, 255, 0.025);
   border: none;
   border-radius: 999px;
-  color: rgba(245,245,247,0.55);
+  color: rgba(245, 245, 247, 0.55);
   font-size: 14px;
   font-weight: 400;
   font-family: inherit;
+  letter-spacing: 0.005em;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease;
+  align-self: center;
 }
 .seeMoreBtn:hover {
   background: rgba(255, 255, 255, 0.05);

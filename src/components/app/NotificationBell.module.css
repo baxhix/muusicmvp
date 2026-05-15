@@ -269,6 +269,36 @@
   color: rgba(245, 245, 247, 0.5);
 }
 
+/* "Ver mais" CTA — standardized across the /app modal family.
+ * Identical rule to PlaylistModal.viewMoreBtn + SuperfansPanel
+ * .seeMoreBtn (kept in three files for module scoping; if any
+ * value drifts in one, update the other two together).
+ * Shows up after the first PREVIEW_COUNT notifications so the
+ * panel can hide the overflow without scrolling. */
+.viewMoreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 8px auto 14px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.025);
+  border: none;
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+  align-self: center;
+}
+.viewMoreBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #F5F5F7;
+}
+
 /* Mobile: dropdown panel takes the viewport, anchored from the trigger. */
 @media (max-width: 480px) {
   .panel {
