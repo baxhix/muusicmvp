@@ -5,6 +5,9 @@ import Stories from './Stories';
 import AudioPost from './AudioPost';
 import ActivityCard, { type ActivityCardData } from './ActivityCard';
 import MediaPost, { type MediaPostData } from './MediaPost';
+import PollPost, { type PollPostData } from './PollPost';
+import QuizPost, { type QuizPostData } from './QuizPost';
+import FeedCelebration from './FeedCelebration';
 import { useAdminFeedPosts } from '@/hooks/useAdminFeedPosts';
 import type { ApiFeedPost } from '@/lib/api/types';
 import styles from './FeedPanel.module.css';
@@ -35,6 +38,52 @@ const ACTIVITIES: ActivityCardData[] = [
     preview: 'Vi que você vai no Villa Country hoje? Tenho um par de ingressos sobrando…',
   },
 ];
+
+/* ── Poll / Quiz mock data ───────────────────────────────
+ * Backend doesn't store polls or quizzes yet — these are inlined
+ * so the new card variants surface in the feed. When real
+ * endpoints ship, the components will take server payloads in the
+ * same shape (PollPostData / QuizPostData) and the inline
+ * fixtures go away. */
+const POLL_LOOK: PollPostData = {
+  user: 'Central Ana Castela',
+  avatar: '/central-anacastela.png',
+  time: '5min',
+  question: 'Qual look a Ana deve usar no próximo show? Vote no seu favorito.',
+  options: [
+    {
+      id: 'look-1',
+      label: 'Look 1 — Country chique',
+      imageSrc: '/feed/ana-castela-3.png',
+      imageAlt: 'Ana Castela em close com chapéu, look country chique',
+      votes: 2418,
+    },
+    {
+      id: 'look-2',
+      label: 'Look 2 — Boiadeira moderna',
+      imageSrc: '/feed/ana-castela-1.png',
+      imageAlt: 'Ana Castela cantando com microfone de glitter',
+      votes: 3072,
+    },
+  ],
+  reward: 250,
+};
+
+const QUIZ_PRIMEIRO_HIT: QuizPostData = {
+  user: 'Central Ana Castela',
+  avatar: '/central-anacastela.png',
+  time: '32min',
+  question:
+    'Qual foi a música que estourou a Ana Castela como a "Boiadeira" do sertanejo?',
+  options: [
+    { id: 'a', label: 'Pipoco' },
+    { id: 'b', label: 'Boiadeira' },
+    { id: 'c', label: 'Solteiro Forçado' },
+    { id: 'd', label: 'Nosso Quadro' },
+  ],
+  correctId: 'b',
+  reward: 500,
+};
 
 /* ── Media posts data ───────────────────────────────────── */
 const MEDIA: MediaPostData[] = [
@@ -321,7 +370,12 @@ export default function FeedPanel() {
           <MediaPost key={m.dbId} data={m} />
         ))}
 
+        {/* Engagement formats — Enquete + Quiz — slotted near the
+            top of the feed so they catch the eye before the longer
+            media stream. */}
+        <PollPost data={POLL_LOOK} />
         <MediaPost data={MEDIA[0]} />
+        <QuizPost data={QUIZ_PRIMEIRO_HIT} />
         <ActivityCard data={ACTIVITIES[1]} />
         <MediaPost data={MEDIA[1]} />
         <ActivityCard data={ACTIVITIES[2]} />
@@ -341,6 +395,12 @@ export default function FeedPanel() {
         <MediaPost data={MEDIA[0]} />
         <ActivityCard data={ACTIVITIES[1]} />
       </div>
+
+      {/* Scoped celebration overlay — covers the panel and fires
+          confetti when the QuizPost dispatches `app:feed-celebrate`.
+          Sits AFTER the scroll in DOM order so it stacks above
+          (z-index handled in its own module). */}
+      <FeedCelebration />
     </div>
     </>
   );

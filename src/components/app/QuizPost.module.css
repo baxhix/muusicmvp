@@ -1,0 +1,253 @@
+/* ── QUIZ POST ──
+ * One question, four options, one "Resolver" CTA. Mirrors the
+ * MediaPost / PollPost card envelope so the feed reads as a
+ * unified stream. On a correct answer the post itself glows
+ * green (.cardWin) and the FeedPanel runs its scoped celebration
+ * overlay. */
+
+.card {
+  margin: 16px 14px 0;
+  border-radius: 16px;
+  background: linear-gradient(145deg,
+    rgba(10,7,20,0.88) 0%,
+    rgba(7,5,14,0.85) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow:
+    0 0 0 1px rgba(168,85,247,0.15),
+    0 8px 32px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 360ms ease, border-color 360ms ease;
+}
+/* Top glow edge — purple/pink matches the rest of the feed cards. */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(168,85,247,0.6) 40%,
+    rgba(236,72,153,0.4) 70%,
+    transparent 100%);
+}
+/* Winning glow — the card softly outlines in green when the
+ * viewer picks correctly. Subtle so it doesn't compete with the
+ * feed-wide celebration overlay. */
+.cardWin {
+  border-color: rgba(61, 219, 116, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(61, 219, 116, 0.18),
+    0 10px 38px -6px rgba(61, 219, 116, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ── Header — matches MediaPost. ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px 10px;
+}
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.meta { flex: 1; min-width: 0; }
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(245,245,247,0.92);
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.verifiedBadge {
+  flex-shrink: 0;
+  transform: translateY(-0.5px);
+}
+.time {
+  font-size: 12px;
+  color: rgba(245,245,247,0.4);
+  font-family: var(--mono);
+}
+.kindChip {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(125, 211, 252, 0.85);
+  background: rgba(125, 211, 252, 0.08);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  padding: 3px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* ── Question / options ── */
+.question {
+  margin: 0 14px 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.92);
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px;
+}
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  color: rgba(245, 245, 247, 0.9);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
+}
+.option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+.option:disabled {
+  cursor: default;
+}
+.bullet {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+
+/* Picked-before-solve — neutral purple highlight. */
+.optionPicked {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #F5F5F7;
+}
+.optionPicked .bullet {
+  border-color: rgba(168, 85, 247, 0.7);
+  background: rgba(168, 85, 247, 0.5);
+}
+
+/* Post-solve states. */
+.optionCorrect {
+  background: rgba(61, 219, 116, 0.12);
+  border-color: rgba(61, 219, 116, 0.45);
+  color: #F5F5F7;
+}
+.optionCorrect .bullet {
+  border-color: rgba(61, 219, 116, 0.7);
+  background: rgba(61, 219, 116, 0.6);
+}
+.optionWrong {
+  background: rgba(248, 113, 113, 0.10);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: rgba(245, 245, 247, 0.7);
+}
+.optionWrong .bullet {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(248, 113, 113, 0.45);
+}
+
+.optionLabel {
+  flex: 1;
+  min-width: 0;
+}
+.checkIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.optionCorrect .checkIcon { color: #3DDB74; }
+.optionWrong .checkIcon  { color: #f87171; }
+
+/* ── Footer — Resolver CTA / result message ── */
+.footer {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.solveBtn {
+  align-self: stretch;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #F5F5F7;
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.25) 0%,
+    rgba(168, 85, 247, 0.18) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease, opacity 0.14s ease;
+}
+.solveBtn:hover:not(:disabled) {
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.35) 0%,
+    rgba(168, 85, 247, 0.25) 100%);
+  border-color: rgba(168, 85, 247, 0.7);
+  transform: translateY(-1px);
+}
+.solveBtn:active:not(:disabled) { transform: translateY(0); }
+.solveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.resultRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.resultWin {
+  background: rgba(61, 219, 116, 0.10);
+  border: 1px solid rgba(61, 219, 116, 0.30);
+  color: #3DDB74;
+}
+.resultLose {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  color: #f87171;
+}
+.rewardChip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}

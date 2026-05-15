@@ -1,0 +1,94 @@
+/* ── Feed-scoped celebration overlay ──
+ *
+ * Absolutely positioned inside the FeedPanel `.panel`. Covers the
+ * entire feed envelope when active so the confetti + congrats
+ * headline read as a single dramatic moment, then fades back to
+ * nothing. The wrapper has pointer-events: none so the user keeps
+ * scrolling the feed even mid-celebration (the rest of the panel
+ * stays interactive).
+ */
+.root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: background 280ms ease, opacity 280ms ease, visibility 0s linear 280ms;
+}
+.rootActive {
+  opacity: 1;
+  visibility: visible;
+  background: rgba(0, 0, 0, 0.42);
+  transition: background 280ms ease, opacity 280ms ease, visibility 0s linear 0s;
+}
+.rootExiting {
+  background: transparent;
+  opacity: 0;
+  transition: background 400ms ease-out, opacity 400ms ease-out;
+}
+
+/* Canvas covers the whole overlay — particles render in screen
+ * coords inside this canvas, scoped by canvas-confetti's
+ * `create(canvas, {...})` factory in the TS file. */
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Congrats text — borrowed from AchievementCelebration but tuned
+ * a bit smaller because we're inside a 398px panel rather than the
+ * full viewport. */
+.message {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 24px;
+  max-width: 320px;
+  animation: feed-celebrate-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rootExiting .message {
+  animation: feed-celebrate-out 380ms ease-out both;
+}
+.headline {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #F5F5F7;
+  line-height: 1.15;
+}
+.sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: -0.005em;
+}
+.sub em {
+  font-style: normal;
+  font-weight: 700;
+  background: linear-gradient(135deg, #5dffa1 0%, #3DDB74 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes feed-celebrate-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@keyframes feed-celebrate-out {
+  from { opacity: 1; transform: scale(1);    }
+  to   { opacity: 0; transform: scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message { animation: none; }
+}

@@ -95,6 +95,14 @@ export interface EventPayloadMap {
   feed_post_video_played:       { post_id?: string; post_key?: string };
   feed_post_video_muted:        { post_id?: string; post_key?: string; muted: boolean };
   feed_post_shared:             { post_id?: string; post_key?: string; channel?: string };
+  /** Poll / Enquete vote — fired when the viewer commits a vote
+   *  on a PollPost card. Backend storage doesn't exist yet, so the
+   *  event is currently the only paper trail. */
+  feed_poll_vote:               { poll_question: string; option_id: string; option_label: string };
+  /** Quiz card solved — fired once per card per session when the
+   *  viewer clicks "Resolver". `correct` indicates whether the
+   *  picked option matched the answer. */
+  feed_quiz_solved:             { quiz_question: string; picked_id: string; correct: boolean };
 
   // ── COMMENTS ──────────────────────────────────────────────────
   comment_created:           { post_id: string; comment_id: string; body_length: number; mention_count: number };
@@ -213,6 +221,8 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   feed_post_video_played:      { category: 'feed', importance: 'medium', description: 'Vídeo do feed começou a tocar.', trigger: 'Botão de play do MediaPost.' },
   feed_post_video_muted:       { category: 'feed', importance: 'low', description: 'Estado de mute do vídeo alternado.', trigger: 'Botão de áudio do MediaPost.' },
   feed_post_shared:            { category: 'feed', importance: 'high', description: 'Compartilhamento de post para fora do app.', trigger: 'Ação de share / cópia de link.', ga4: true },
+  feed_poll_vote:              { category: 'feed', importance: 'high', description: 'Voto em uma enquete (PollPost) do feed.', trigger: 'Botão "Votar" clicado em uma opção.', ga4: true },
+  feed_quiz_solved:            { category: 'feed', importance: 'high', description: 'Quiz do feed respondido (acertou ou errou).', trigger: 'Botão "Resolver" do QuizPost clicado com uma opção selecionada.', ga4: true },
 
   // Comments
   comment_created:          { category: 'comment', importance: 'critical', description: 'Comentário de primeiro nível criado.', trigger: 'POST /api/feed/posts/:postKey/comments aceito.', ga4: true },
