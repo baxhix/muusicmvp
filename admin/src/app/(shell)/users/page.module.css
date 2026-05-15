@@ -66,6 +66,52 @@
   text-overflow: ellipsis;
 }
 
+/* ── Moderation flag (blocked / banned) ─────────────────────
+ *
+ * Visual hooks for rows whose user is suspended OR banned. Two
+ * cues per row so the eye catches them even at scan speed:
+ *   1) red outline ring on the avatar
+ *   2) red pill chip under the email saying Bloqueado / Banido
+ *
+ * Banned uses a slightly stronger ring + dashed pattern so the
+ * two states are distinguishable even when the chip text is
+ * truncated on narrow screens.
+ *
+ * Banned rows also get a subtle red wash on the name+email column
+ * (`.cellUserFlagged`) so the name itself reads as "this account
+ * is in moderation". Wash, not full row tint, because the existing
+ * Status / Superfã / Actions cells already carry their own visual
+ * meaning we don't want to recolor.
+ */
+.cellUserFlagged .cellUserName {
+  color: var(--danger, #c0392b);
+}
+.cellUserFlagged .cellUserEmail {
+  color: color-mix(in srgb, var(--danger, #c0392b) 65%, var(--text-mute));
+}
+
+.avatarBlocked {
+  outline: 2px solid var(--danger, #c0392b);
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+.avatarBanned {
+  outline: 2px dashed var(--danger, #c0392b);
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+
+/* Pill rendered through the shared Badge component with
+ * tone="danger". Just a tiny margin tweak so it doesn't feel
+ * cramped right under the email line. */
+.moderationBadge {
+  margin-top: 2px;
+  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 9.5px;
+}
+
 /* ── Cell: Cidade-Estado ─────────────────────── */
 .cellLocation {
   font-size: 13px;

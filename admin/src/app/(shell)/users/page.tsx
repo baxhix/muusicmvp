@@ -201,15 +201,37 @@ export default function UsersPage() {
       id: 'user',
       header: 'Usuário',
       sortKey: (u) => u.name,
-      cell: (u) => (
-        <div className={styles.cellUser}>
-          <Avatar name={u.name} src={u.avatar} size="md" />
-          <div className={styles.cellUserText}>
-            <span className={styles.cellUserName}>{u.name}</span>
-            <span className={styles.cellUserEmail}>{u.email}</span>
+      cell: (u) => {
+        // Surface blocked / banned status loud and early so an
+        // operator scrolling the list spots offenders without
+        // having to read the actions column. Ring on the avatar +
+        // pill chip under the email = two visual hooks per row.
+        const isBanned    = u.status === 'banned';
+        const isSuspended = u.status === 'suspended';
+        const isFlagged   = isBanned || isSuspended;
+        return (
+          <div className={cn(styles.cellUser, isFlagged && styles.cellUserFlagged)}>
+            <Avatar
+              name={u.name}
+              src={u.avatar}
+              size="md"
+              className={cn(
+                isBanned    && styles.avatarBanned,
+                isSuspended && styles.avatarBlocked,
+              )}
+            />
+            <div className={styles.cellUserText}>
+              <span className={styles.cellUserName}>{u.name}</span>
+              <span className={styles.cellUserEmail}>{u.email}</span>
+              {isFlagged && (
+                <Badge tone="danger" size="sm" className={styles.moderationBadge}>
+                  {isBanned ? 'Banido' : 'Bloqueado'}
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       id: 'location',

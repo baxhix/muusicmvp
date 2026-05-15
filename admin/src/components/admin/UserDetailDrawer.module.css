@@ -21,6 +21,37 @@
   color: var(--text-mute);
 }
 
+/* ── Moderation flag (blocked / banned) ─────────────────────
+ *
+ * Mirrors the treatment used in the users list cell so an operator
+ * who clicks through to the detail drawer keeps the same visual
+ * anchor: red ring on the avatar + "Banido"/"Bloqueado" pill under
+ * the location line + red name color.
+ */
+.headerInnerFlagged .headerName {
+  color: var(--danger, #c0392b);
+}
+.headerInnerFlagged .headerLocation {
+  color: color-mix(in srgb, var(--danger, #c0392b) 65%, var(--text-mute));
+}
+.avatarBlocked {
+  outline: 2px solid var(--danger, #c0392b);
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+.avatarBanned {
+  outline: 2px dashed var(--danger, #c0392b);
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+.moderationBadge {
+  margin-top: 4px;
+  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 9.5px;
+}
+
 .section {
   display: flex;
   flex-direction: column;

@@ -3,6 +3,7 @@
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
+import Badge from '@/components/ui/Badge';
 import {
   IconBan,
   IconShield,
@@ -11,6 +12,7 @@ import {
   IconCalendar,
   IconMusic,
 } from '@/components/icons';
+import { cn } from '@/lib/utils';
 import type { User } from '@/types';
 import { formatDateTime } from '@/lib/format';
 import styles from './UserDetailDrawer.module.css';
@@ -41,18 +43,35 @@ export default function UserDetailDrawer({
     return <Drawer open={open} onClose={onClose}>{null}</Drawer>;
   }
 
+  const isBanned    = user.status === 'banned';
+  const isSuspended = user.status === 'suspended';
+  const isFlagged   = isBanned || isSuspended;
+
   return (
     <Drawer
       open={open}
       onClose={onClose}
       title={
-        <div className={styles.headerInner}>
-          <Avatar name={user.name} src={user.avatar} size="lg" />
+        <div className={cn(styles.headerInner, isFlagged && styles.headerInnerFlagged)}>
+          <Avatar
+            name={user.name}
+            src={user.avatar}
+            size="lg"
+            className={cn(
+              isBanned    && styles.avatarBanned,
+              isSuspended && styles.avatarBlocked,
+            )}
+          />
           <div className={styles.headerText}>
             <span className={styles.headerName}>{user.name}</span>
             <span className={styles.headerLocation}>
               {user.city}-{user.state}
             </span>
+            {isFlagged && (
+              <Badge tone="danger" size="sm" className={styles.moderationBadge}>
+                {isBanned ? 'Banido' : 'Bloqueado'}
+              </Badge>
+            )}
           </div>
         </div>
       }
