@@ -1,22 +1,31 @@
 /* ── Per-route fade-in ──
  *
  * Subtle opacity transition on every route entrance. The animation
- * is intentionally NOT using transform (translateY, scale, etc.)
- * because the routes' content includes `position: fixed` panels
- * (ConversationsSidebar, CommunityPanel, etc.) — and a transform
- * on an ancestor creates a new containing block, breaking the
- * `position: fixed` viewport-relative behavior for the duration
- * of the animation. Pure opacity keeps the panels anchored.
+ * is intentionally NOT using transform because the routes contain
+ * `position: fixed` panels — a transform on an ancestor creates a
+ * new containing block and breaks the viewport-relative anchoring.
  *
- * The wrapper itself is sized to fill its parent so its presence
- * doesn't affect the parent's layout. Children continue to use
- * their own positioning (mostly position:fixed which is unaffected
- * by the wrapper's box).
+ * CRITICAL: `pointer-events: none` on the wrapper.
+ *
+ * The wrapper sits inside `.mapLayer`, whose parent rule sets
+ * `.mapLayer > * { pointer-events: auto }`. Without this override,
+ * the full-width/height transition box would intercept every touch
+ * over the map area — making the Globe completely unreachable on
+ * mobile (Mapbox would never receive pan/zoom gestures).
+ *
+ * Children of the wrapper (the actual route content — panels,
+ * map decorations, etc.) keep their own pointer-events: auto, so
+ * they're still tappable. Only the empty wrapper itself is
+ * transparent to input.
  */
 .transition {
   width: 100%;
   height: 100%;
+  pointer-events: none;
   animation: app-route-in 220ms ease both;
+}
+.transition > * {
+  pointer-events: auto;
 }
 
 @keyframes app-route-in {

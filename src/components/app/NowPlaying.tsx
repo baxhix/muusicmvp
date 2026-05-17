@@ -77,13 +77,24 @@ export default function NowPlaying({
   onOpenPlaylist,
   onDismiss,
 }: NowPlayingProps) {
-  // Default to the compact `mini` state — Spotify-style pill that
-  // shows cover + title + play without competing with the map for
-  // bottom-left screen real estate. The user can cycle up to
-  // horizontal → expanded → video by clicking the pill (see
-  // handleClick below). Was 'video' previously; product feedback
-  // asked for a slim resting state so the globe stays readable.
-  const [size, setSize] = useState<PlayerSize>('mini');
+  // Default size is responsive:
+  //   - Mobile (≤768px) → `mini` (slim Spotify-style pill so the
+  //     map stays readable on the small viewport)
+  //   - Desktop (>768px) → `video` (the original behaviour, with
+  //     the YouTube embed visible)
+  //
+  // SSR-safe: initial state is the desktop default since the
+  // server doesn't know the viewport. After hydration, the
+  // useEffect below flips to 'mini' if the user is actually on
+  // mobile. Hydration mismatch is avoided because the mobile
+  // flip happens AFTER the first paint.
+  const [size, setSize] = useState<PlayerSize>('video');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      setSize('mini');
+    }
+  }, []);
   const expanded = size === 'expanded';
   const isHorizontal = size === 'horizontal';
   const isMini = size === 'mini';
