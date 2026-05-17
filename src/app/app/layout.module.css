@@ -120,12 +120,10 @@
   pointer-events: auto;
 }
 @media (max-width: 768px) {
-  .superchatTriggerSlot { top: 16px; right: 16px; }
-}
-@media (max-width: 480px) {
-  /* Drop z-index below full-screen route panels (z:60) so opening
-   * a panel covers the trigger gracefully — no manual hide. */
-  .superchatTriggerSlot { z-index: 15; }
+  /* Temporarily hidden on mobile per product feedback — the
+   * top-right corner real estate is reserved for the Fanverse
+   * pill + (when re-enabled later) the user avatar. */
+  .superchatTriggerSlot { display: none; }
 }
 
 /* ── Back-to-landing link ── */

@@ -299,15 +299,18 @@
     border-radius: 16px;
   }
   .panelMinimized {
-    transform: translateY(calc(100% - 56px)); /* só header visível */
+    /* Push fully off-screen on mobile — no peeking header. The
+     * Feed slot in the BottomNav is the only way back to the feed
+     * panel; product feedback wanted a clean map when on /app. */
+    transform: translateY(120%);
+    pointer-events: none;
   }
   .minimizedGradient { display: none; }
 }
 @media (max-width: 480px) {
   /* Small mobile: full-screen feed with the BottomNav still visible.
-   * The minimized variant collapses to a thin handle sitting just
-   * above the nav — tap to reopen. Matches the iOS "drawer" pattern
-   * used by Apple Maps and Apple Music. */
+   * Minimized state pushes fully out of the viewport so the map
+   * stays unobstructed. Tap the BottomNav Feed slot to reopen. */
   .panel {
     top: 0;
     bottom: 76px;
@@ -319,9 +322,7 @@
     z-index: 30;
   }
   .panelMinimized {
-    /* Pull almost entirely out of the viewport — just the header
-     * (~52px) peeks above the BottomNav so the user can re-engage. */
-    transform: translateY(calc(100% - 52px));
+    transform: translateY(120%);
   }
 }
 

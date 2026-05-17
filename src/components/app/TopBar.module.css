@@ -549,14 +549,18 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .userMenu { top: 16px; right: 12px; gap: 6px; }
-  .userInfo { display: none; }      /* só avatar em mobile */
-  .avatar { width: 44px; height: 44px; }
-  .drawer { width: 300px; }
-}
-@media (max-width: 480px) {
-  .avatar { width: 40px; height: 40px; }
-  .onlineDot { width: 11px; height: 11px; }
+  /* Temporarily hidden on mobile per product feedback — the
+   * top-right slot is reserved for other affordances until the
+   * design is finalised. To bring back: remove this `display:
+   * none` and restore the original geometry below (kept as a
+   * comment for the revert). */
+  .userMenu { display: none; }
+  /* Original mobile geometry for reference:
+   * .userMenu { top: 16px; right: 12px; gap: 6px; }
+   * .userInfo { display: none; }
+   * .avatar { width: 44px; height: 44px; }
+   * .drawer { width: 300px; }
+   */
 }
 
 /* ============================================================

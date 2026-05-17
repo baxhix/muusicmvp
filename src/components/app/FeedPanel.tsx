@@ -228,10 +228,21 @@ function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
 
 /* ── Main component ──────────────────────────────────────── */
 export default function FeedPanel() {
-  // Feed lands expanded by default — was `true` (minimized), but the
-  // expanded layout is now the resting view we want users to see first.
-  // The header is still a toggle, so power users can collapse manually.
+  // Feed lands expanded by default on DESKTOP — that's the resting
+  // view we want users to see first. On MOBILE we land minimized
+  // (off-screen) so the map gets the full viewport at first load;
+  // the user taps the Feed slot in the BottomNav to bring the
+  // panel up.
+  //
+  // SSR-safe: initial state is the desktop default; the mobile
+  // flip happens in the useEffect below after hydration.
   const [minimized, setMinimized] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      setMinimized(true);
+    }
+  }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Idle-scroll state: after 3s of no user interaction inside the

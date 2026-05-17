@@ -699,13 +699,15 @@
 }
 
 @media (max-width: 768px) {
-  /* Tablet — pill stays visible but tighter so it doesn't crowd
-   * the TopBar avatar at right:14. */
-  .box { width: 220px; left: 12px; top: 38px; }
+  /* Mobile — compact pill stays visible at the top so the user
+   * always sees their Fanpoints + entry to the Fanverse dropdown
+   * without scrolling or hunting for it. */
+  .box { width: 220px; left: 12px; top: 14px; }
   .compactName { font-size: 11.5px; }
 }
 @media (max-width: 480px) {
-  /* Phone — hide entirely; the BottomNav + map alone need the
-   * scarce top-of-screen real estate. */
-  .box { display: none; }
+  /* Phone — slightly tighter pill to share the header row cleanly
+   * with the right-side affordances. Stays visible (fixed at top)
+   * per product feedback. */
+  .box { width: calc(100% - 24px); max-width: 240px; left: 12px; top: 12px; }
 }
