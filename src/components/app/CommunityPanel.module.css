@@ -199,6 +199,21 @@
     border-radius: 16px;
   }
 }
+@media (max-width: 480px) {
+  /* Same rationale as Conversations / Superchat — full-screen
+   * takeover so the topics list + composer have actual breathing
+   * room instead of fighting the keyboard for a 60vh sliver. */
+  .panel {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    z-index: 60;
+  }
+}
 
 /* ─────────────────────────────────────────────────────────────
  * Communities view styles — list, detail, topic.

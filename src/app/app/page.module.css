@@ -128,6 +128,13 @@
    * with the standard 16px gutter the topBar uses. */
   .superchatTriggerSlot { top: 16px; right: 16px; }
 }
+@media (max-width: 480px) {
+  /* Small mobile: drop the SuperchatTrigger z-index below the
+   * full-screen panels (which are z:60). The trigger stays
+   * tappable on the basemap but is gracefully covered when any
+   * panel takes over the viewport — no manual hide logic needed. */
+  .superchatTriggerSlot { z-index: 15; }
+}
 
 .backBtn {
   position: fixed;

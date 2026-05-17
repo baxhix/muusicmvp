@@ -12,10 +12,12 @@ import styles from './BottomNav.module.css';
  *  page's local types. The active-dot under each icon lights up
  *  for the matching value.
  *
- *  'chat' and 'community' are included so the type aligns with
- *  the page's union, but no nav icon maps to them (both panels
- *  open from the right-rail dock, not from BottomNav). When
- *  either is the active overlay no dot lights up here. */
+ *  After the mobile refactor every primary surface (chat, feed,
+ *  community) has a dedicated slot here, so the union grew to
+ *  cover them. Secondary overlays (superfans / playlist /
+ *  superchat / notifications) light no dot in this row — they
+ *  open from the TopBar cluster on the right side of the screen.
+ */
 export type BottomNavActiveOverlay =
   | null
   | 'superfans'
@@ -23,28 +25,40 @@ export type BottomNavActiveOverlay =
   | 'superchat'
   | 'notifications'
   | 'chat'
-  | 'community';
+  | 'community'
+  | 'feed'
+  | 'profile';
 
 interface BottomNavProps {
-  onSuperfansOpen?: () => void;
   onProfileOpen?: () => void;
-  /** Open the global Superchat panel (wired in page.tsx). */
-  onSuperchatOpen?: () => void;
-  /** Open the playlist modal (catalog of registered tracks). Wired
-   *  in page.tsx to setShowPlaylist(true). */
-  onPlaylistOpen?: () => void;
+  /** Toggle / open the conversations sidebar (DMs + group). */
+  onChatOpen?: () => void;
+  /** Toggle / open the communities forum panel. */
+  onCommunityOpen?: () => void;
+  /** Open the feed panel — fires `app:toggle-feed` since the
+   *  FeedPanel owns its own minimized/open state internally. */
+  onFeedToggle?: () => void;
   /** Which overlay is currently open — drives the active-dot under
    *  the matching nav icon so the user always knows which modal is
    *  on screen. Null when no overlay is open (only the map slot may
    *  still light up via pathname). */
   activeOverlay?: BottomNavActiveOverlay;
+  /** True when the FeedPanel is in its open (non-minimized) state.
+   *  Drives the Feed slot's active-dot independently of `activeOverlay`
+   *  because the feed is a non-modal bottom-sheet, not a singleton. */
+  feedOpen?: boolean;
+  /** Unread DM count — drives the red badge on the Chat slot. */
+  chatUnreadCount?: number;
 }
 
 export default function BottomNav({
-  onSuperfansOpen,
-  onSuperchatOpen,
-  onPlaylistOpen,
+  onProfileOpen,
+  onChatOpen,
+  onCommunityOpen,
+  onFeedToggle,
   activeOverlay = null,
+  feedOpen = false,
+  chatUnreadCount = 0,
 }: BottomNavProps = {}) {
   const pathname = usePathname();
 
@@ -67,26 +81,15 @@ export default function BottomNav({
       ? 'Centralizar no meu local'
       : 'Compartilhar localização';
 
-  // Open notifications by dispatching a window-level CustomEvent the
-  // (now hidden) NotificationBell listens to. Keeps the trigger and
-  // the panel decoupled.
-  const openNotifications = () => {
-    if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent('app:open-notifications'));
-  };
+  const onMap = pathname === '/app' && activeOverlay === null && !feedOpen;
 
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
       <div className={styles.inner}>
-        {/* Mapa — active when we're on /app AND no singleton overlay
-            is currently open. The other nav icons light their dots
-            for the overlay that owns them (crown→superfans,
-            play→playlist, chat→superchat, bell→notifications);
-            the Map dot is the "resting" indicator that shows when
-            none of those surfaces are taking over. */}
+        {/* Mapa — active when no other surface is taking over. */}
         <button
           type="button"
-          className={`${styles.item} ${pathname === '/app' && activeOverlay === null ? styles.itemActive : ''}`}
+          className={`${styles.item} ${onMap ? styles.itemActive : ''}`}
           onClick={handleMapClick}
           disabled={locating}
           aria-label={mapTooltip}
@@ -104,102 +107,100 @@ export default function BottomNav({
           <span className={styles.label}>Mapa</span>
         </button>
 
-        {/* Músicas (Play) — back to plain stroke icon, no tile
-            wrapper. Same stroke weight + same white color as every
-            other nav item so the row reads as a uniform set. */}
+        {/* Feed — toggles the bottom-sheet via the `app:toggle-feed`
+            CustomEvent the FeedPanel listens to. Active-dot lights
+            up while the panel is in its open (non-minimized) state. */}
         <button
           type="button"
-          className={`${styles.item} ${activeOverlay === 'playlist' ? styles.itemActive : ''}`}
-          onClick={onPlaylistOpen}
-          aria-label="Abrir lista de músicas"
-          data-tooltip="Músicas"
+          className={`${styles.item} ${feedOpen ? styles.itemActive : ''}`}
+          onClick={onFeedToggle}
+          aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
+          data-tooltip={feedOpen ? 'Fechar feed' : 'Feed'}
+        >
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="4" y="4" width="14" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M7.5 9h7M7.5 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <span className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>Feed</span>
+        </button>
+
+        {/* Chat — opens ConversationsSidebar. The unread-count
+            badge sits at the top-right of the icon when > 0. */}
+        <button
+          type="button"
+          className={`${styles.item} ${styles.itemCenter} ${activeOverlay === 'chat' ? styles.itemActive : ''}`}
+          onClick={onChatOpen}
+          aria-label="Abrir conversas"
+          data-tooltip="Chat"
+        >
+          <span className={styles.iconWrap}>
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M21 12a8 8 0 1 1-3.5-6.6L21 4l-1.2 3.5A7.96 7.96 0 0 1 21 12z"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {chatUnreadCount > 0 && (
+              <span className={styles.unreadBadge}>
+                {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+              </span>
+            )}
+          </span>
+          <span className={styles.dot} aria-hidden="true" />
+        </button>
+
+        {/* Comunidade — opens CommunityPanel. */}
+        <button
+          type="button"
+          className={`${styles.item} ${activeOverlay === 'community' ? styles.itemActive : ''}`}
+          onClick={onCommunityOpen}
+          aria-label="Abrir comunidades"
+          data-tooltip="Comunidade"
         >
           <svg viewBox="0 0 22 22" fill="none">
             <path
-              d="M7 4.5v13l11-6.5z"
+              d="M4 7a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H9l-3 2.5V13H6a2 2 0 0 1-2-2z"
               stroke="currentColor"
               strokeWidth="1.6"
-              strokeLinejoin="round"
               strokeLinecap="round"
+              strokeLinejoin="round"
             />
-          </svg>
-          <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Músicas</span>
-        </button>
-
-        {/* Center crown — Superfãs */}
-        <button
-          className={`${styles.item} ${styles.itemCenter} ${activeOverlay === 'superfans' ? styles.itemActive : ''}`}
-          onClick={onSuperfansOpen}
-          aria-label="Superfãs"
-          data-tooltip="Superfãs"
-        >
-          <svg viewBox="0 0 24 24" fill="none">
             <path
-              d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+              d="M12 14a2 2 0 0 0 2 2h2l2 1.5V16a2 2 0 0 0 2-2v-3"
               stroke="currentColor"
               strokeWidth="1.6"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
-          {/* Active-dot — shown when SuperfansPanel is open. Hidden
-              by default via `.itemCenter .dot` so it doesn't sit
-              under the crown; the `.itemCenter.itemActive .dot`
-              override below brings it back when this slot owns the
-              active overlay. */}
           <span className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>Comunidade</span>
         </button>
 
-        {/* Superchat */}
+        {/* Perfil — opens ProfilePanel. The avatar (or fallback
+            icon) reads as the "me" affordance. */}
         <button
           type="button"
-          className={`${styles.item} ${activeOverlay === 'superchat' ? styles.itemActive : ''}`}
-          onClick={onSuperchatOpen}
-          aria-label="Abrir Superchat"
-          data-tooltip="Superchat"
-        >
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Chat</span>
-        </button>
-
-        {/* Notificações — single source. The top-bar bell trigger
-            was removed; the panel is rendered hidden and surfaces
-            here via the 'app:open-notifications' CustomEvent. */}
-        <button
-          type="button"
-          className={`${styles.item} ${activeOverlay === 'notifications' ? styles.itemActive : ''}`}
-          onClick={openNotifications}
-          aria-label="Notificações"
-          data-tooltip="Notificações"
+          className={`${styles.item} ${activeOverlay === 'profile' ? styles.itemActive : ''}`}
+          onClick={onProfileOpen}
+          aria-label="Abrir perfil"
+          data-tooltip="Perfil"
         >
           <svg viewBox="0 0 22 22" fill="none">
+            <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
             <path
-              d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M9 18a2 2 0 0 0 4 0"
+              d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
               stroke="currentColor"
               strokeWidth="1.6"
               strokeLinecap="round"
             />
           </svg>
           <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Notificações</span>
+          <span className={styles.label}>Perfil</span>
         </button>
       </div>
     </nav>

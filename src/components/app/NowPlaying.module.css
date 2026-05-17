@@ -500,15 +500,50 @@
   }
 }
 @media (max-width: 480px) {
+  /* Mini-bar mode — Spotify-style edge-to-edge strip sitting just
+   * above the BottomNav. We bring the player full-width (left/right
+   * 8px gutter) and cap it at 60px tall; the audio-bars wave and
+   * the skip-prev/skip-next get hidden so just the cover + title +
+   * play/pause survive — the affordances the user actually wants
+   * at thumb-reach distance.
+   *
+   * The 76px bottom offset reserves room for the BottomNav (~64px
+   * tall + 12px of glow padding). No transform on hover — the
+   * mini-bar is a low-key resting affordance, not a floating chip. */
+  .player {
+    bottom: 76px;
+    left: 8px;
+    right: 8px;
+    width: auto !important;
+    max-width: none !important;
+    border-radius: 14px;
+    padding: 6px 12px 6px 6px;
+    gap: 10px;
+    transform: none;
+  }
+  .player:hover { transform: none; }
   .playerHorizontal,
   .playerExpanded {
     width: auto;
-    max-width: calc(100% - 24px);
-    padding: 9px 12px 9px 9px;
+    max-width: none;
+    padding: 6px 12px 6px 6px;
+    border-radius: 14px;
   }
+  /* Hide skip-prev / skip-next and the audio-bars wave — only the
+   * cover, the track title, and the play/pause survive at this
+   * width. */
   .playerHorizontal .miniNext,
-  .playerHorizontal .miniPrev { display: none; }   /* só play/pause em telas bem pequenas */
-  .playerHorizontal .wave { display: none; }
+  .playerHorizontal .miniPrev,
+  .playerHorizontal .wave,
+  .playerExpanded .miniNext,
+  .playerExpanded .miniPrev,
+  .playerExpanded .wave { display: none; }
+  /* Truncate long titles instead of wrapping — the mini-bar lives
+   * on one line. */
+  .title,
+  .artist {
+    max-width: calc(100vw - 160px);
+  }
 }
 
 /* ── Spotify integration ── */

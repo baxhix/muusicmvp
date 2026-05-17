@@ -303,6 +303,27 @@
   }
   .minimizedGradient { display: none; }
 }
+@media (max-width: 480px) {
+  /* Small mobile: full-screen feed with the BottomNav still visible.
+   * The minimized variant collapses to a thin handle sitting just
+   * above the nav — tap to reopen. Matches the iOS "drawer" pattern
+   * used by Apple Maps and Apple Music. */
+  .panel {
+    top: 0;
+    bottom: 76px;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    z-index: 30;
+  }
+  .panelMinimized {
+    /* Pull almost entirely out of the viewport — just the header
+     * (~52px) peeks above the BottomNav so the user can re-engage. */
+    transform: translateY(calc(100% - 52px));
+  }
+}
 
 /* Idle-mode banner — Instagram-style "new posts" notice that
  * floats over the first post(s) in the scroll area.

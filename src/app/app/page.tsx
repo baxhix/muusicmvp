@@ -145,7 +145,8 @@ export default function AppPage() {
     | 'superchat'
     | 'notifications'
     | 'chat'
-    | 'community';
+    | 'community'
+    | 'profile';
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
   const showSuperfans     = activeOverlay === 'superfans';
   const showPlaylist      = activeOverlay === 'playlist';
@@ -542,61 +543,58 @@ export default function AppPage() {
           {/* Top center row: filter pills + Superchat CTA + notifications
               side-by-side. Ranking (Superfãs) is reachable via the
               BottomNav crown icon — no longer duplicated up here. */}
-          {/* topBar now hosts the chat / feed / comunidade
-              action shortcuts as a single horizontal row, fixed
-              and centered on the page per product feedback. The
-              shortcuts used to live at the bottom of the
-              right-side LiveChatStack column; they were pulled
-              out so the right rail can stay focused on the 3
-              latest conversation avatars alone (no hover-reveal
-              for the next 4). */}
+          {/* topBar now hosts the SECONDARY action shortcuts —
+              Notificações, Playlist (Músicas) and Superfãs
+              (Ranking) — as a vertical column on the right rail.
+              The PRIMARY surfaces (Mapa / Feed / Chat / Comunidade
+              / Perfil) live in the BottomNav below, so the right
+              rail can stay focused on the actions that don't fit
+              the 5-slot mobile-first nav. SuperchatTrigger has
+              its own dedicated slot a few pixels above this row
+              (see `superchatTriggerSlot` further down). */}
           <div className={styles.topBar}>
             <button
               type="button"
-              className={`${styles.shortcutBtn} ${showChat ? styles.shortcutBtnActive : ''}`}
-              onClick={() => setShowChat(!showChat)}
-              aria-label={showChat ? 'Fechar lista de conversas' : 'Abrir lista de conversas'}
-              aria-pressed={showChat}
-              title={showChat ? 'Fechar conversas' : 'Conversas'}
-            >
-              {/* Speech-bubble icon (1:1 / DMs). Matches the icon
-                  the dock shortcut used to render. */}
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 4h10a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 13 12H7l-3 2.5V12H3a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 3 4z" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.shortcutBtn} ${feedOpen ? styles.shortcutBtnActive : ''}`}
+              className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('app:toggle-feed'));
+                  window.dispatchEvent(new CustomEvent('app:open-notifications'));
                 }
               }}
-              aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
-              aria-pressed={feedOpen}
-              title={feedOpen ? 'Fechar feed' : 'Feed'}
+              aria-label="Notificações"
+              aria-pressed={showNotifications}
+              title="Notificações"
             >
-              {/* Feed/list icon — short post + meta line. */}
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="10" height="10" rx="2" />
-                <path d="M5.5 7h5M5.5 10h3" />
+              <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z" />
+                <path d="M9 18a2 2 0 0 0 4 0" />
               </svg>
             </button>
 
             <button
               type="button"
-              className={`${styles.shortcutBtn} ${showCommunity ? styles.shortcutBtnActive : ''}`}
-              onClick={() => setShowCommunity(!showCommunity)}
-              aria-label={showCommunity ? 'Fechar comunidade' : 'Abrir comunidade'}
-              aria-pressed={showCommunity}
-              title={showCommunity ? 'Fechar comunidade' : 'Comunidade'}
+              className={`${styles.shortcutBtn} ${showPlaylist ? styles.shortcutBtnActive : ''}`}
+              onClick={() => setShowPlaylist(!showPlaylist)}
+              aria-label="Músicas"
+              aria-pressed={showPlaylist}
+              title="Músicas"
             >
-              {/* Chat-bubble cluster icon — multi-thread discussion. */}
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H7l-2 2v-2H5a2 2 0 0 1-2-2z" />
-                <path d="M9 11a2 2 0 0 0 2 2h1l1 1v-1a2 2 0 0 0 2-2v-2" />
+              <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 4.5v13l11-6.5z" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.shortcutBtn} ${showSuperfans ? styles.shortcutBtnActive : ''}`}
+              onClick={() => setShowSuperfans(!showSuperfans)}
+              aria-label="Superfãs"
+              aria-pressed={showSuperfans}
+              title="Superfãs (Ranking)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z" />
+                <path d="M6.5 21h11" />
               </svg>
             </button>
           </div>
@@ -637,17 +635,30 @@ export default function AppPage() {
         </div>
 
         <BottomNav
-          /* Music icon → PlaylistModal (registered track catalog).
-             Crown icon → SuperfansPanel (Ranking).
-             Chat icon  → Superchat panel.
-             Profile icon → ProfilePanel. */
-          onPlaylistOpen={() => setShowPlaylist(true)}
-          onSuperfansOpen={() => setShowSuperfans(true)}
+          /* Mobile-first primary navigation:
+             Mapa | Feed | Chat | Comunidade | Perfil. Every
+             primary surface gets its own slot — no overlap with
+             the top-right secondary cluster (notif / playlist /
+             superfans / superchat) and no redundancy with the
+             ConversationsSidebar / CommunityPanel trigger areas. */
+          onChatOpen={() => setShowChat(!showChat)}
+          onCommunityOpen={() => setShowCommunity(!showCommunity)}
+          onFeedToggle={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('app:toggle-feed'));
+            }
+          }}
           onProfileOpen={() => setShowProfile(true)}
-          onSuperchatOpen={() => setShowSuperchat(true)}
-          /* Drives the active-dot under each nav icon — lights the
-             slot matching whichever singleton overlay is open. */
-          activeOverlay={activeOverlay}
+          activeOverlay={
+            showProfile && !viewingUserId ? 'profile' : activeOverlay
+          }
+          feedOpen={feedOpen}
+          /* Sum of DM unread counts across all conversations. The
+             total drives the red badge on the Chat slot. */
+          chatUnreadCount={chat.conversations.reduce(
+            (sum, c) => sum + (c.type === 'dm' ? c.unreadCount : 0),
+            0,
+          )}
         />
       </div>
 
