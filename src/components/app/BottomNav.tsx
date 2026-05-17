@@ -50,6 +50,20 @@ export default function BottomNav() {
     if (pathname !== path) router.prefetch(path);
   };
 
+  /**
+   * Toggle-style navigation — tapping a slot while already on its
+   * target route routes back to `/app` (closing the surface).
+   * `prefix` is checked with `startsWith` so `/app/u/[id]` still
+   * resolves the Perfil slot back to /app on a second tap.
+   */
+  const toggleNav = (path: string, prefix = path) => {
+    if (pathname === path || pathname.startsWith(prefix + '/')) {
+      router.push('/app');
+    } else {
+      router.push(path);
+    }
+  };
+
   const handleMapClick = () => {
     // If we're not on /app, go there first. Otherwise center the
     // map on the user (or ask for location if we don't have it).
@@ -140,11 +154,11 @@ export default function BottomNav() {
         <button
           type="button"
           className={`${styles.item} ${styles.itemCenter} ${onChat ? styles.itemActive : ''}`}
-          onClick={() => router.push('/app/chat')}
+          onClick={() => toggleNav('/app/chat')}
           onPointerEnter={() => prefetch('/app/chat')}
           onFocus={() => prefetch('/app/chat')}
-          aria-label="Abrir conversas"
-          data-tooltip="Chat"
+          aria-label={onChat ? 'Fechar conversas' : 'Abrir conversas'}
+          data-tooltip={onChat ? 'Fechar' : 'Chat'}
         >
           <span className={styles.iconWrap}>
             {/* Speech-bubble icon — rounded rectangle with the tail
@@ -176,11 +190,11 @@ export default function BottomNav() {
         <button
           type="button"
           className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
-          onClick={() => router.push('/app/comunidades')}
+          onClick={() => toggleNav('/app/comunidades')}
           onPointerEnter={() => prefetch('/app/comunidades')}
           onFocus={() => prefetch('/app/comunidades')}
-          aria-label="Abrir comunidades"
-          data-tooltip="Comunidade"
+          aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
+          data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
         >
           <svg viewBox="0 0 24 24" fill="none">
             <circle
@@ -220,11 +234,17 @@ export default function BottomNav() {
         <button
           type="button"
           className={`${styles.item} ${onProfile ? styles.itemActive : ''}`}
-          onClick={() => router.push('/app/perfil')}
+          onClick={() => {
+            // Profile slot covers both /app/perfil (own) and
+            // /app/u/[id] (other user). Either active → close
+            // back to /app on tap; otherwise open own profile.
+            if (onProfile) router.push('/app');
+            else router.push('/app/perfil');
+          }}
           onPointerEnter={() => prefetch('/app/perfil')}
           onFocus={() => prefetch('/app/perfil')}
-          aria-label="Abrir perfil"
-          data-tooltip="Perfil"
+          aria-label={onProfile ? 'Fechar perfil' : 'Abrir perfil'}
+          data-tooltip={onProfile ? 'Fechar' : 'Perfil'}
         >
           <svg viewBox="0 0 22 22" fill="none">
             <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />

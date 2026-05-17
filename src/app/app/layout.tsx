@@ -7,6 +7,7 @@ import { AppShellProvider, useAppShell } from '@/lib/app/AppShellContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
+import ArtistBox from '@/components/app/ArtistBox';
 import NowPlaying from '@/components/app/NowPlaying';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
@@ -195,6 +196,13 @@ function Shell({ children }: { children: React.ReactNode }) {
 
         <BottomNav />
       </div>
+
+      {/* ArtistBox (Fanverse identity + missions panel) — persistent
+       *  across every /app/* route so the Fanpoints + entry to the
+       *  benefits drawer stay visible while the user is on chat,
+       *  comunidades, perfil, etc. Hidden on phones (≤480px); see
+       *  ArtistBox.module.css for the responsive ladder. */}
+      <ArtistBox />
 
       {/* Superchat trigger — top-right floater, persistent. */}
       <div className={styles.superchatTriggerSlot}>

@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 
 import LiveChatStack from '@/components/app/LiveChatStack';
-import ArtistBox from '@/components/app/ArtistBox';
 import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
@@ -54,9 +53,8 @@ export default function AppPage() {
       {/* Onboarding overlay — shows on first visit until dismissed. */}
       <Onboarding />
 
-      {/* Artist identity box — fixed top-left card showing the
-          current Fanverse + the user's daily missions panel. */}
-      <ArtistBox />
+      {/* ArtistBox moved to /app/layout.tsx so the Fanverse pill
+          stays visible while the user is on chat/comunidades/etc. */}
 
       {/* Avatar dock for the latest 3 conversations — hidden at
           ≤600px (mobile uses the BottomNav Chat slot instead). */}
