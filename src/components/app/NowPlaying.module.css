@@ -44,21 +44,36 @@
 }
 .player:hover { transform: translateY(-2px); }
 
-/* ── MINI (estado mais reduzido) ── */
-/* width: auto + fit-content garante que a caixa termine logo após o play */
+/* ── MINI (estado padrão — pill Spotify-style) ──
+ *
+ * Cover (~38px circle) + truncated title + play button. Width is
+ * capped at 220px so the pill never blocks the bottom-left corner
+ * of the map. Title truncates with an ellipsis if the song name
+ * is long; the user can click anywhere in the pill body to grow
+ * it to horizontal/expanded/video for full info.
+ */
 .playerMini {
   width: auto;
+  max-width: 220px;
   padding: 6px 12px 6px 6px;
   gap: 10px;
 }
-/* Botão play/pause um pouco maior no mini */
+.playerMini .title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
 .playerMini .miniPlay {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 .playerMini .miniPlay svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 /* ── HORIZONTAL (pill padrão com info + controles) ── */

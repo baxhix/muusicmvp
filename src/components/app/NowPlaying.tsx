@@ -71,7 +71,13 @@ export default function NowPlaying({
   onSongIdxChange,
   onOpenPlaylist,
 }: NowPlayingProps) {
-  const [size, setSize] = useState<PlayerSize>('video');
+  // Default to the compact `mini` state — Spotify-style pill that
+  // shows cover + title + play without competing with the map for
+  // bottom-left screen real estate. The user can cycle up to
+  // horizontal → expanded → video by clicking the pill (see
+  // handleClick below). Was 'video' previously; product feedback
+  // asked for a slim resting state so the globe stays readable.
+  const [size, setSize] = useState<PlayerSize>('mini');
   const expanded = size === 'expanded';
   const isHorizontal = size === 'horizontal';
   const isMini = size === 'mini';
@@ -215,30 +221,31 @@ export default function NowPlaying({
     ? { title: spotifyTrack.title, artist: spotifyTrack.artist, img: spotifyTrack.img }
     : SONGS[songIdx];
 
-  // ⚠️ Cycle disabled — player is locked to 'video' for now. The
-  // mini/horizontal/expanded variants will come back in a future
-  // iteration; to re-enable, restore the body below and the
-  // onClick wiring on the player root. Kept as a stub so the
-  // import/types stay live and the diff to revert is minimal.
-  //
-  // const handleClick = useCallback((e: React.MouseEvent) => {
-  //   if (embed) return;
-  //   if ((e.target as HTMLElement).closest('button, iframe, .video-shell')) return;
-  //   setSize(curr => {
-  //     const next: PlayerSize =
-  //       curr === 'mini' ? 'horizontal' :
-  //       curr === 'horizontal' ? 'expanded' :
-  //       curr === 'expanded' ? 'video' :
-  //       'mini';
-  //     onExpandChange?.(next === 'expanded' || next === 'video');
-  //     onSizeChange?.(next);
-  //     return next;
-  //   });
-  // }, [embed, onExpandChange, onSizeChange]);
-  // The setter is still referenced by future code paths (and React
-  // would warn about an unused useState destructure) — touch it
-  // here to keep things tidy without changing behavior.
-  void setSize;
+  // Player size cycle — tap the pill anywhere outside the inner
+  // controls to grow it. mini → horizontal → expanded → video →
+  // mini. Buttons / iframe / video shell clicks bubble up but the
+  // closest() check above skips the cycle so play/pause/skip are
+  // unaffected.
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (embed) return;
+      if ((e.target as HTMLElement).closest('button, iframe, .video-shell')) return;
+      setSize((curr) => {
+        const next: PlayerSize =
+          curr === 'mini'
+            ? 'horizontal'
+            : curr === 'horizontal'
+              ? 'expanded'
+              : curr === 'expanded'
+                ? 'video'
+                : 'mini';
+        onExpandChange?.(next === 'expanded' || next === 'video');
+        onSizeChange?.(next);
+        return next;
+      });
+    },
+    [embed, onExpandChange, onSizeChange],
+  );
 
   return (
     <div
@@ -250,8 +257,7 @@ export default function NowPlaying({
         !embed && expanded ? styles.playerExpanded : '',
         !embed && isVideo ? styles.playerVideo : '',
       ].filter(Boolean).join(' ')}
-      /* onClick={handleClick} — disabled while player is locked to
-         'video' (see commented handleClick above). */
+      onClick={handleClick}
       role="region"
       aria-label="Tocando agora"
     >
@@ -341,10 +347,12 @@ export default function NowPlaying({
         )}
       </div>
 
-      {/* Info — escondida no estado mini (mas sempre visível no embed/video) */}
-      {(!isMini || embed) && (
-        <div key={`info-${useSpotifyData ? song.title : songIdx}`} className={styles.info}>
-          <div className={styles.title}>{song.title}</div>
+      {/* Info — title always visible. Artist + Spotify connect
+       *  affordances only appear once the player grows beyond mini
+       *  (so the compact pill stays Spotify-mini-bar slim). */}
+      <div key={`info-${useSpotifyData ? song.title : songIdx}`} className={styles.info}>
+        <div className={styles.title}>{song.title}</div>
+        {(!isMini || embed) && (
           <div className={styles.artist}>
             {song.artist}
             {!embed && (
@@ -366,8 +374,8 @@ export default function NowPlaying({
               )
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Estado MINI — só play/pause (wave foi pra capa) */}
       {isMini && !embed && (

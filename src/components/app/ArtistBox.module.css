@@ -1,25 +1,22 @@
-/* ── ARTIST BOX ── */
+/* ── FANVERSE PILL (compact, header-anchored) ──
+ *
+ * Anchored to the top-left at `top:42px; left:14px` so it sits on
+ * the same horizontal axis as the TopBar avatar (right:14px). In
+ * resting state the box is just a slim pill — small artist photo
+ * + name + Fanpoints + chevron — that frees up most of the map
+ * for the user to explore. Click the pill to expand the dropdown
+ * below, which reveals the full content (wallet row + discount
+ * badge + missions + progress + footer).
+ *
+ * The dropdown sits BELOW the pill in normal flow; the `.box`
+ * container is overflow:hidden + transitions max-height on the
+ * `.dropdown` so the open/close animation is contained.
+ */
 .box {
   position: fixed;
   top: 42px;
-  /* Mirror NowPlaying.module.css positioning so the Fanverse box
-   * and the player share the same left column AND the same width.
-   *   - left:  42px  → wider gutter from the screen edge so the
-   *                    left column feels "framed" rather than
-   *                    flush. (Right side keeps its 18px chat dock
-   *                    gap — asymmetric on purpose; the chat dock
-   *                    is a slimmer 44px column that doesn't need
-   *                    as much breathing room as the wide cards.)
-   *   - width: 320px → matches .playerVideo (the default player
-   *                    state); also wider than .playerHorizontal
-   *                    (296px) so the box doesn't appear narrower
-   *                    than the player when both are docked. Per
-   *                    product feedback the two cards should read
-   *                    as the SAME width.
-   * Both values move together if the column ever migrates to a CSS
-   * variable. */
-  left: 42px;
-  width: 320px;
+  left: 14px;
+  width: 280px;
   z-index: 15;
   display: flex;
   flex-direction: column;
@@ -32,13 +29,97 @@
   backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
   -webkit-backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
   border: none;
-  border-radius: 20px;
+  border-radius: 14px;
   box-shadow:
-    0 32px 80px rgba(0,0,0,0.7),
+    0 18px 48px rgba(0,0,0,0.55),
     0 0 0 0.5px rgba(255,255,255,0.04) inset,
     0 1px 0 rgba(255,255,255,0.08) inset;
   pointer-events: auto;
   overflow: hidden;
+  transition: border-radius 0.2s ease;
+}
+.boxOpen {
+  border-radius: 14px 14px 18px 18px;
+}
+
+/* ── Compact bar — always visible ── */
+.compactBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 6px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+  height: 40px;
+  flex-shrink: 0;
+  transition: background 0.14s ease;
+}
+.compactBar:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.compactPhoto {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.compactName {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compactFanpoints {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  flex-shrink: 0;
+}
+.compactFanpoints svg {
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+.compactChevron {
+  width: 14px;
+  height: 14px;
+  color: rgba(245, 245, 247, 0.55);
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+.compactChevronOpen {
+  transform: rotate(180deg);
+  color: rgba(245, 245, 247, 0.85);
+}
+
+/* ── Dropdown body — collapsed by default ── */
+.dropdown {
+  display: flex;
+  flex-direction: column;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.boxOpen .dropdown {
+  /* Generous enough to fit the full content + footer comfortably
+   * across viewport sizes. The wrapper hides overflow so any extra
+   * space is harmless. */
+  max-height: 560px;
 }
 
 /* ── Artist header row ── */
@@ -549,8 +630,16 @@
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  .box { max-width: 320px; }
+  .box { width: 260px; }
 }
 @media (max-width: 768px) {
-  .box { display: none; }    /* esconde o card do artista em mobile */
+  /* Tablet/small desktop — pill stays visible but tighter so it
+   * doesn't crowd the TopBar avatar at right:14. */
+  .box { width: 220px; left: 12px; top: 38px; }
+  .compactName { font-size: 11.5px; }
+}
+@media (max-width: 480px) {
+  /* Phone — hide entirely; the BottomNav + map alone need the
+   * scarce top-of-screen real estate. */
+  .box { display: none; }
 }

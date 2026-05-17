@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import {
@@ -56,8 +56,11 @@ function sumEarnedXp(
 
 export default function ArtistBox() {
   const [open, setOpen] = useState(false);
+  // contentRef is retained because the inner missions list still
+  // references it via ref (legacy — kept so the layout doesn't
+  // collapse to 0 if the missions container is queried for
+  // scrollHeight by any future feature like auto-scroll).
   const contentRef = useRef<HTMLDivElement>(null);
-  const [contentH, setContentH] = useState(0);
 
   // Logged-in user's current Fanpoints balance — fetched live via
   // useUserProfile so it stays accurate when the user earns/spends
@@ -82,16 +85,64 @@ export default function ArtistBox() {
   const progress  = Math.round((completed / TOTAL) * 100);
   const fpEarned  = sumEarnedXp(MISSION_META, doneById);
 
-  // Remeasure the collapsible height whenever the missions change
-  // (e.g. a flip from not-done to done changes the rendered marker).
-  useEffect(() => {
-    if (contentRef.current) setContentH(contentRef.current.scrollHeight);
-  }, [doneById]);
-
   return (
-    <div className={styles.box}>
+    <div className={`${styles.box} ${open ? styles.boxOpen : ''}`}>
 
-      {/* Artist header — always visible */}
+      {/* Compact header pill — always visible. Pinned to the
+       *  top-left so it shares the same horizontal axis as the
+       *  TopBar avatar on the right. Click anywhere on it to
+       *  toggle the dropdown below. */}
+      <button
+        type="button"
+        className={styles.compactBar}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/ana-castela-box.jpg"
+          alt=""
+          className={styles.compactPhoto}
+        />
+        <span className={styles.compactName}>Ana Castela</span>
+        <span className={styles.compactFanpoints}>
+          <svg
+            viewBox="0 0 24 24"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.3 21.4 12 18 5.7 21.4 7 14.4 2 9.5 8.9 8.6 12 2" />
+          </svg>
+          {fanpoints.toLocaleString('pt-BR')}
+        </span>
+        <svg
+          className={`${styles.compactChevron} ${open ? styles.compactChevronOpen : ''}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 9l7 7 7-7" />
+        </svg>
+      </button>
+
+      {/* Drop-down body — collapsed by default, animates open via
+       *  the .boxOpen modifier on the wrapper above. Hosts the
+       *  full content the box used to render: full artist header,
+       *  wallet row, discount badge, missions, progress, footer. */}
+      <div className={styles.dropdown}>
+
+      {/* Artist header — full, shown only inside the dropdown */}
       <div className={styles.header}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/ana-castela-box.jpg" alt="Ana Castela" className={styles.photo} />
@@ -166,18 +217,13 @@ export default function ArtistBox() {
         </span>
       </a>
 
-      {/* ── Collapsible content ── */}
-      <div
-        className={styles.content}
-        style={{ maxHeight: open ? `${contentH}px` : '0px' }}
-      >
+      {/* Missions list — the dropdown wrapper above already
+       *  collapses/expands the whole body, so we don't need the
+       *  inner maxHeight clipper anymore. Mission rows are always
+       *  laid out when the dropdown is open. */}
+      <div className={styles.content}>
         <div ref={contentRef}>
-
           <div className={styles.divider} />
-
-          {/* Missions list — done/not-done driven by the server.
-              Click is a no-op now since check state is computed
-              from real activity (used to toggle local state). */}
           <div className={styles.missionsList}>
             {MISSION_META.map((m) => {
               const isDone = doneById[m.id] ?? false;
@@ -200,12 +246,8 @@ export default function ArtistBox() {
               );
             })}
           </div>
-
         </div>
       </div>
-
-      {/* Gradient mask — visible when collapsed */}
-      {!open && <div className={styles.contentMask} />}
 
       {/* Progress bar — always visible */}
       <div className={styles.progressWrap}>
@@ -218,7 +260,7 @@ export default function ArtistBox() {
         </div>
       </div>
 
-      {/* ── Always-visible footer ── */}
+      {/* Dropdown footer — closes the dropdown (toggle). */}
       <div className={styles.footer} onClick={() => setOpen(o => !o)}>
         <div className={styles.footerRow}>
           <span className={styles.missionsTitle}>Missões do Dia</span>
@@ -235,6 +277,7 @@ export default function ArtistBox() {
         </div>
       </div>
 
+      </div>  {/* /dropdown */}
     </div>
   );
 }
