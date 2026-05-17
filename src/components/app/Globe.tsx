@@ -155,6 +155,9 @@ export default function Globe() {
       });
 
       // Hard orange dot — the "bolinha" the spec asks for.
+      // No stroke per design feedback — the soft amber halo behind
+      // it already separates the dot from the basemap; a white ring
+      // around such small circles reads as visual noise.
       map.addLayer({
         id: 'ana-shows-dot',
         type: 'circle',
@@ -168,8 +171,7 @@ export default function Globe() {
             14, 9,
           ],
           'circle-color': '#f97316', // orange-500
-          'circle-stroke-color': 'rgba(255, 255, 255, 0.9)',
-          'circle-stroke-width': 1.4,
+          'circle-stroke-width': 0,
           'circle-opacity': 1,
         },
       });
