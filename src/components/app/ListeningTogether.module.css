@@ -164,8 +164,45 @@
   color: rgba(245,245,247,0.45);
 }
 
-/* ── Responsive ── */
+/* ── Responsive ──
+ *
+ * Mobile: the "ouvindo juntos" row stays visible. Anchored
+ * `bottom: 140px` so it sits cleanly above:
+ *   - the NowPlaying mini-bar (bottom:76px + ~52px height)
+ *   - and the BottomNav pill (~88px from bottom edge)
+ *
+ * Avatars shrink to 28px + tighter overlap so the 7-avatar row
+ * + counter copy fits even on a 320px screen without wrapping.
+ * The fade-in / fade-out animation stays identical to desktop.
+ */
 @media (max-width: 768px) {
-  /* Esconde a barra de "ouvindo juntos" em mobile pra liberar viewport */
-  .root { display: none !important; }
+  .root {
+    bottom: 140px;
+    max-width: calc(100vw - 16px);
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-width: 1.5px;
+  }
+  .wrap {
+    margin-left: -8px;
+  }
+  .tooltip {
+    padding: 5px 8px;
+  }
+  .tooltipName { font-size: 12px; }
+  .tooltipCity { font-size: 10px; }
+  .liveCount {
+    margin-left: 8px;
+  }
+  .liveCountNum,
+  .liveCountLabel {
+    font-size: 10.5px;
+  }
+}
+@media (max-width: 380px) {
+  /* Smallest phones (320–380px) — drop the trailing descriptor
+   * so the avatar row + "+455 ouvindo" still fits comfortably. */
+  .liveCountLabel { display: none; }
 }
