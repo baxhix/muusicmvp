@@ -776,16 +776,22 @@ export default function Globe() {
         wrapper.className = styles.anaCheckInWrap;
         wrapper.style.cursor = 'pointer';
         // Pulse ring + circular avatar with the hot-pink "Ana ring"
-        // + a violet pill badge stacked on two lines:
-        //   line 1 — "Ana fez check-in em" (light weight, smaller)
-        //   line 2 — "<City>-<UF>"          (bold, larger)
-        // The wrapper itself is the click target, so the whole pin
-        // is tappable — not just the avatar.
+        // + a small violet map-pin chip overlaid on the avatar's
+        // bottom-right corner (signals "she's somewhere on the
+        // map"). The "Ana fez check-in em <City>" pill stays hidden
+        // by default — appears only on hover/focus per the latest
+        // spec; the avatar + map-pin pair is the resting visual.
         wrapper.innerHTML = `
           <span class="${styles.anaPulse}" aria-hidden="true"></span>
           <span class="${styles.anaPulseB}" aria-hidden="true"></span>
           <div class="${styles.anaAvatarRing}" role="img" aria-label="Ana Castela fez check-in em ${safeCity}-${safeState}">
             <img src="/ana-castela.png" alt="" class="${styles.anaAvatar}" />
+            <span class="${styles.anaMapBadge}" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 14s5-4.5 5-9a5 5 0 0 0-10 0c0 4.5 5 9 5 9z" />
+                <circle cx="8" cy="5" r="1.8" />
+              </svg>
+            </span>
           </div>
           <div class="${styles.anaBadge}">
             <span class="${styles.anaBadgeDot}" aria-hidden="true"></span>
@@ -799,14 +805,6 @@ export default function Globe() {
         wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           globeStore.openAnaCheckIn(payload);
-          // Once the user has opened the check-in, collapse the pin
-          // to "avatar-only" mode for the rest of its lifetime —
-          // the badge text reappears on hover. Stops the same banner
-          // from nagging after the user has already seen the
-          // content. The class persists through the linger window
-          // and is naturally lost when the next spawn rebuilds the
-          // marker DOM.
-          wrapper.classList.add(styles.anaCheckInOpened);
           track('ana_checkin_pin_clicked', {
             checkin_id: payload.id,
             city: payload.city,

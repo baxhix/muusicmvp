@@ -852,18 +852,47 @@
   display: block;
 }
 
+/* Small violet map-pin chip overlaid on the avatar's bottom-right
+ * corner. Signals "she's somewhere on the map" while the wrapper
+ * is at rest. The map glyph color matches the badge text. The
+ * dark outer ring matches the panel background so the chip reads
+ * as a "lifted" element on top of the avatar. */
+.anaMapBadge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg,
+      rgba(124, 58, 237, 0.96) 0%,
+      rgba(91, 33, 182, 0.96) 100%);
+  border: 2px solid rgba(11, 11, 13, 0.95);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow:
+    0 4px 10px -2px rgba(91, 33, 182, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+.anaMapBadge svg {
+  width: 11px;
+  height: 11px;
+}
+
 /* Two-line pill badge: line 1 in lighter weight ("Ana fez
- * check-in em"), line 2 bold ("<City>-<UF>"). Color shifts to a
- * deep violet so the badge contrasts the pink avatar instead of
- * blending into it — same lilac accent the rest of the app uses
- * (#a855f7). Triangle pointer underneath the avatar matches.
- * Width is constrained so a long city name wraps to a second
- * physical line within line 2 instead of stretching the pin
- * across the map. */
+ * check-in em"), line 2 bold ("<City>-<UF>"). Hidden by default
+ * — the resting visual is just the avatar + the map-pin chip
+ * above. Pops in on hover/focus of the wrapper (and on touch
+ * via :focus-within when the pin is tapped). Color stays deep
+ * violet so the badge contrasts the pink avatar. */
 .anaBadge {
   position: relative;
-  margin-top: 8px;
-  padding: 6px 12px 6px 10px;
+  margin-top: 0;
+  padding: 0 12px 0 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -878,7 +907,28 @@
   box-shadow:
     0 6px 14px -4px rgba(91, 33, 182, 0.55),
     0 0 0 1px rgba(255, 255, 255, 0.10) inset;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  opacity: 0;
+  transform: translateY(-4px) scale(0.96);
+  pointer-events: none;
+  max-height: 0;
+  overflow: hidden;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    max-height 0.22s ease,
+    margin-top 0.18s ease,
+    padding-top 0.18s ease,
+    padding-bottom 0.18s ease;
+}
+.anaCheckInWrap:hover .anaBadge,
+.anaCheckInWrap:focus-within .anaBadge {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  max-height: 80px;
+  margin-top: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 .anaBadgeText {
   display: flex;
@@ -932,30 +982,9 @@
   50%      { opacity: 0.5; transform: scale(0.78);}
 }
 
-/* Once the user has tapped the pin and seen the modal, collapse
- * the badge so only the avatar stays visible — the badge sits in
- * the DOM but is hidden (height 0 + opacity 0) so the layout
- * doesn't shift when it pops back on hover. */
-.anaCheckInOpened .anaBadge {
-  opacity: 0;
-  transform: translateY(-4px) scale(0.96);
-  pointer-events: none;
-  max-height: 0;
-  margin-top: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  overflow: hidden;
-}
-.anaCheckInOpened:hover .anaBadge,
-.anaCheckInOpened:focus-within .anaBadge {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-  max-height: 80px;
-  margin-top: 8px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
+/* (No more `.anaCheckInOpened` modifier — the badge is hidden by
+ * default and revealed by :hover / :focus-within on the wrapper.
+ * The old "collapse after click" rule is unnecessary now.) */
 
 /* ============================================================
    ANA CASTELA — UPCOMING SHOW PINS
