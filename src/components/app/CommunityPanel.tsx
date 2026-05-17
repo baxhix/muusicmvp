@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import type {
   ApiCommunityCard,
+  ApiCommunityCommentReactionResult,
   ApiCommunityDetail,
   ApiCommunityMember,
+  ApiCommunityMemberPreview,
   ApiCommunityTopic,
   ApiCommunityTopicComment,
 } from '@/lib/api/types';
@@ -22,20 +24,22 @@ import styles from './CommunityPanel.module.css';
  * Three views, navigable in-place:
  *
  *   1. 'list'   — searchable list of communities, with "Bombando"
- *                 trending badges + Participar/Sair CTA per card.
- *                 Users with ≥10k Fanpoints get a "Nova comunidade"
- *                 CTA pinned to the header.
+ *                 trending badges + a three-dot kebab menu per card
+ *                 holding "Editar nome" (creator only) / Sair /
+ *                 Denunciar. The "Nova comunidade" CTA pins to the
+ *                 footer for users with ≥10k Fanpoints.
  *
- *   2. 'detail' — single community: header card with image/name/
- *                 member count + a "Ver participantes" affordance
- *                 (member-only), then the topics list with its
- *                 own search field. Members get a "Novo tópico"
- *                 CTA. The creator gets a "Apagar comunidade" kebab
- *                 action.
+ *   2. 'detail' — single community: header with creator avatar +
+ *                 description + member avatar stack ("X membros /
+ *                 Ver todos"), kebab menu (Editar nome / Sair /
+ *                 Denunciar) in the title bar, then the topics list
+ *                 with its own search. The "Novo tópico" CTA pins
+ *                 to the footer for members.
  *
- *   3. 'topic'  — single topic forum: title + author + body +
- *                 inline comments + comment composer. The composer
- *                 is locked behind community membership.
+ *   3. 'topic'  — single topic forum: the topic title becomes the
+ *                 panel header (no inline title card), author meta
+ *                 above the body, comments with ❤️ reactions and
+ *                 inline reply threading.
  *
  * The panel exposes the standard `open` + `onClose` props; the
  * page's activeOverlay coordinator owns those. Internal view
@@ -69,9 +73,7 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
   const [view, setView] = useState<View>({ kind: 'list' });
 
   // Reset to the list view ~360ms after the panel closes so
-  // re-opening always starts at the top of the flow. The 360ms
-  // matches the panel's exit animation so the previous view
-  // stays painted while the slide-down plays.
+  // re-opening always starts at the top of the flow.
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => setView({ kind: 'list' }), 360);
@@ -107,6 +109,7 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
           slug={view.slug}
           onBack={() => setView({ kind: 'list' })}
           onOpenTopic={(topicId) => setView({ kind: 'topic', slug: view.slug, topicId })}
+          onLeftCommunity={() => setView({ kind: 'list' })}
           onClose={onClose}
         />
       )}
@@ -128,10 +131,13 @@ function HeaderBar({
   title,
   onBack,
   onClose,
+  trailing,
 }: {
   title: string;
   onBack?: () => void;
   onClose: () => void;
+  /** Optional trailing slot (kebab menu, etc.) shown left of the close button. */
+  trailing?: React.ReactNode;
 }) {
   return (
     <header className={styles.header}>
@@ -148,6 +154,7 @@ function HeaderBar({
         </button>
       )}
       <h2 className={styles.title}>{title}</h2>
+      {trailing}
       <button
         type="button"
         className={styles.closeBtn}
@@ -159,6 +166,95 @@ function HeaderBar({
         </svg>
       </button>
     </header>
+  );
+}
+
+/* ── Reusable kebab menu ─────────────────────────────────────── */
+
+type KebabAction = {
+  /** Unique key per menu instance. */
+  key: string;
+  label: string;
+  onClick: () => void;
+  /** Render in red — for destructive / "report" intent. */
+  destructive?: boolean;
+};
+
+function KebabMenu({
+  actions,
+  label = 'Mais ações',
+}: {
+  actions: KebabAction[];
+  label?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // Click-outside close. Pointer events so it works on touch too.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    // Defer one tick so the click that opened the menu doesn't
+    // immediately close it via the outside-click handler.
+    const t = setTimeout(() => {
+      document.addEventListener('pointerdown', onDown);
+      document.addEventListener('keydown', onKey);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  if (actions.length === 0) return null;
+
+  return (
+    <div className={styles.kebabRoot} ref={rootRef}>
+      <button
+        type="button"
+        className={styles.kebabBtn}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={label}
+      >
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <circle cx="8" cy="3" r="1.4" />
+          <circle cx="8" cy="8" r="1.4" />
+          <circle cx="8" cy="13" r="1.4" />
+        </svg>
+      </button>
+      {open && (
+        <div className={styles.kebabMenu} role="menu">
+          {actions.map((a) => (
+            <button
+              key={a.key}
+              type="button"
+              role="menuitem"
+              className={`${styles.kebabItem} ${a.destructive ? styles.kebabItemDanger : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                a.onClick();
+              }}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -177,28 +273,44 @@ function CommunityListView({
 
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<ApiCommunityCard | null>(null);
   const { items, loading, refresh } = useCommunities({
     enabled: true,
     search: query,
   });
 
-  // Toggle join — fired from the per-card CTA. Refreshes the list
-  // on settle so memberCount + isMember reflect the new state.
-  const onToggleJoin = useCallback(
+  const onLeave = useCallback(
     async (card: ApiCommunityCard) => {
       try {
-        if (card.isMember) {
-          await api.post(`/api/communities/${card.slug}/leave`);
-        } else {
-          await api.post(`/api/communities/${card.slug}/join`);
-        }
+        await api.post(`/api/communities/${card.slug}/leave`);
         await refresh();
       } catch (err) {
-        console.error('toggle join failed:', err);
+        if (err instanceof ApiError && err.status === 400) {
+          alert('O criador da comunidade não pode sair. Apague a comunidade.');
+        } else {
+          console.error('leave failed:', err);
+        }
       }
     },
     [refresh],
   );
+
+  const onJoin = useCallback(
+    async (card: ApiCommunityCard) => {
+      try {
+        await api.post(`/api/communities/${card.slug}/join`);
+        await refresh();
+      } catch (err) {
+        console.error('join failed:', err);
+      }
+    },
+    [refresh],
+  );
+
+  const onReport = useCallback((card: ApiCommunityCard) => {
+    // No reporting backend for communities yet — just acknowledge.
+    alert(`Comunidade "${card.name}" reportada. Obrigado!`);
+  }, []);
 
   return (
     <>
@@ -229,22 +341,6 @@ function CommunityListView({
           />
         </div>
 
-        {canCreate && (
-          <button
-            type="button"
-            className={styles.primaryCta}
-            onClick={() => setCreateOpen(true)}
-          >
-            + Nova comunidade
-          </button>
-        )}
-        {!canCreate && profile?.fanpoints !== undefined && (
-          <p className={styles.gateNote}>
-            Acumule {CREATE_FP_THRESHOLD.toLocaleString('pt-BR')} Fanpoints
-            para criar a sua própria comunidade.
-          </p>
-        )}
-
         {loading && items.length === 0 ? (
           <div className={styles.emptyState}>Carregando…</div>
         ) : items.length === 0 ? (
@@ -253,51 +349,93 @@ function CommunityListView({
           </div>
         ) : (
           <ul className={styles.cardList}>
-            {items.map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  className={styles.communityCard}
-                  onClick={() => onOpenCommunity(c.slug)}
-                >
-                  {c.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.imageUrl} alt="" className={styles.cardThumb} />
-                  ) : (
-                    <span className={styles.cardThumbPlaceholder} aria-hidden="true" />
-                  )}
-                  <div className={styles.cardBody}>
-                    <div className={styles.cardTitleRow}>
-                      <span className={styles.cardTitle}>{c.name}</span>
-                      {c.isTrending && (
-                        <span className={styles.trendingBadge} aria-label="Comunidade bombando">
-                          🔥 Bombando
-                        </span>
+            {items.map((c) => {
+              const isCreator = c.creatorId === user?.id;
+              const actions: KebabAction[] = [];
+              if (isCreator) {
+                actions.push({
+                  key: 'edit',
+                  label: 'Editar nome',
+                  onClick: () => setRenameTarget(c),
+                });
+              }
+              if (c.isMember && !isCreator) {
+                actions.push({
+                  key: 'leave',
+                  label: 'Sair',
+                  onClick: () => void onLeave(c),
+                });
+              }
+              if (!c.isMember) {
+                actions.push({
+                  key: 'join',
+                  label: 'Participar',
+                  onClick: () => void onJoin(c),
+                });
+              }
+              actions.push({
+                key: 'report',
+                label: 'Denunciar',
+                onClick: () => onReport(c),
+                destructive: true,
+              });
+
+              return (
+                <li key={c.id}>
+                  <div className={styles.communityCard}>
+                    <button
+                      type="button"
+                      className={styles.cardOpenBtn}
+                      onClick={() => onOpenCommunity(c.slug)}
+                    >
+                      {c.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.imageUrl} alt="" className={styles.cardThumb} />
+                      ) : (
+                        <span className={styles.cardThumbPlaceholder} aria-hidden="true" />
                       )}
-                    </div>
-                    <span className={styles.cardMeta}>
-                      {c.memberCount.toLocaleString('pt-BR')} {c.memberCount === 1 ? 'membro' : 'membros'}
-                      {' · '}
-                      {c.topicCount.toLocaleString('pt-BR')} {c.topicCount === 1 ? 'tópico' : 'tópicos'}
-                    </span>
+                      <div className={styles.cardBody}>
+                        <div className={styles.cardTitleRow}>
+                          <span className={styles.cardTitle}>{c.name}</span>
+                          {c.isTrending && (
+                            <span className={styles.trendingBadge} aria-label="Comunidade bombando">
+                              🔥 Bombando
+                            </span>
+                          )}
+                        </div>
+                        <span className={styles.cardMeta}>
+                          {c.memberCount.toLocaleString('pt-BR')} {c.memberCount === 1 ? 'membro' : 'membros'}
+                          {' · '}
+                          {c.topicCount.toLocaleString('pt-BR')} {c.topicCount === 1 ? 'tópico' : 'tópicos'}
+                        </span>
+                      </div>
+                    </button>
+                    <KebabMenu actions={actions} />
                   </div>
-                  <button
-                    type="button"
-                    className={`${styles.joinPill} ${c.isMember ? styles.joinPillJoined : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void onToggleJoin(c);
-                    }}
-                    aria-label={c.isMember ? 'Sair da comunidade' : 'Participar da comunidade'}
-                  >
-                    {c.isMember ? 'Saiu' : 'Participar'}
-                  </button>
-                </button>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
+
+      {/* Footer: smaller "Nova comunidade" CTA pinned below the list. */}
+      <footer className={styles.footer}>
+        {canCreate ? (
+          <button
+            type="button"
+            className={styles.footerCta}
+            onClick={() => setCreateOpen(true)}
+          >
+            + Nova comunidade
+          </button>
+        ) : profile?.fanpoints !== undefined ? (
+          <p className={styles.gateNote}>
+            Acumule {CREATE_FP_THRESHOLD.toLocaleString('pt-BR')} Fanpoints
+            para criar a sua própria comunidade.
+          </p>
+        ) : null}
+      </footer>
 
       {createOpen && (
         <CreateCommunityModal
@@ -306,6 +444,18 @@ function CommunityListView({
             setCreateOpen(false);
             void refresh();
             onOpenCommunity(slug);
+          }}
+        />
+      )}
+
+      {renameTarget && (
+        <RenameCommunityModal
+          slug={renameTarget.slug}
+          initialName={renameTarget.name}
+          onClose={() => setRenameTarget(null)}
+          onSaved={() => {
+            setRenameTarget(null);
+            void refresh();
           }}
         />
       )}
@@ -319,11 +469,13 @@ function CommunityDetailView({
   slug,
   onBack,
   onOpenTopic,
+  onLeftCommunity,
   onClose,
 }: {
   slug: string;
   onBack: () => void;
   onOpenTopic: (topicId: string) => void;
+  onLeftCommunity: () => void;
   onClose: () => void;
 }) {
   const [community, setCommunity] = useState<ApiCommunityDetail | null>(null);
@@ -332,6 +484,7 @@ function CommunityDetailView({
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -355,19 +508,34 @@ function CommunityDetailView({
     void refresh();
   }, [refresh]);
 
-  const onToggleJoin = useCallback(async () => {
-    if (!community) return;
+  const onJoin = useCallback(async () => {
     try {
-      if (community.isMember) {
-        await api.post(`/api/communities/${slug}/leave`);
-      } else {
-        await api.post(`/api/communities/${slug}/join`);
-      }
+      await api.post(`/api/communities/${slug}/join`);
       await refresh();
     } catch (err) {
-      console.error('toggle join failed:', err);
+      console.error('join failed:', err);
     }
-  }, [community, slug, refresh]);
+  }, [slug, refresh]);
+
+  const onLeave = useCallback(async () => {
+    try {
+      await api.post(`/api/communities/${slug}/leave`);
+      // Go back to the list — leaving the detail of a community
+      // you just left feels weird (the "Novo tópico" CTA flips off).
+      onLeftCommunity();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 400) {
+        alert('O criador da comunidade não pode sair. Apague a comunidade.');
+      } else {
+        console.error('leave failed:', err);
+      }
+    }
+  }, [slug, onLeftCommunity]);
+
+  const onReport = useCallback(() => {
+    if (!community) return;
+    alert(`Comunidade "${community.name}" reportada. Obrigado!`);
+  }, [community]);
 
   if (!community) {
     return (
@@ -380,46 +548,83 @@ function CommunityDetailView({
     );
   }
 
+  // Kebab actions for the detail header. Editar shows only for the
+  // creator; Sair only for non-creator members; Denunciar always.
+  const headerActions: KebabAction[] = [];
+  if (community.isCreator) {
+    headerActions.push({
+      key: 'edit',
+      label: 'Editar nome',
+      onClick: () => setRenameOpen(true),
+    });
+  }
+  if (community.isMember && !community.isCreator) {
+    headerActions.push({
+      key: 'leave',
+      label: 'Sair',
+      onClick: () => void onLeave(),
+    });
+  }
+  headerActions.push({
+    key: 'report',
+    label: 'Denunciar',
+    onClick: () => onReport(),
+    destructive: true,
+  });
+
   return (
     <>
-      <HeaderBar title={community.name} onBack={onBack} onClose={onClose} />
+      <HeaderBar
+        title={community.name}
+        onBack={onBack}
+        onClose={onClose}
+        trailing={<KebabMenu actions={headerActions} />}
+      />
 
       <div className={styles.body}>
-        <div className={styles.communityHeaderCard}>
-          {community.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={community.imageUrl} alt="" className={styles.detailThumb} />
-          ) : (
-            <span className={styles.detailThumbPlaceholder} aria-hidden="true" />
-          )}
-          <div className={styles.detailMeta}>
-            <p className={styles.detailMetaLine}>
-              {community.memberCount.toLocaleString('pt-BR')} {community.memberCount === 1 ? 'membro' : 'membros'}
-              {community.isTrending && <span className={styles.trendingInline}> · 🔥 Bombando</span>}
-            </p>
-            {community.description && (
-              <p className={styles.detailDescription}>{community.description}</p>
-            )}
-            <div className={styles.detailActions}>
-              <button
-                type="button"
-                className={`${styles.joinPill} ${community.isMember ? styles.joinPillJoined : ''}`}
-                onClick={onToggleJoin}
-              >
-                {community.isMember ? 'Sair' : 'Participar'}
-              </button>
-              {community.isMember && (
-                <button
-                  type="button"
-                  className={styles.ghostPill}
-                  onClick={() => setShowMembers(true)}
-                >
-                  Ver participantes
-                </button>
+        {/* Compact community summary — creator mini avatar + meta +
+            description + member avatar stack + Participar CTA when
+            the viewer hasn't joined yet. No big thumbnail. */}
+        <section className={styles.communitySummary}>
+          {community.creator && (
+            <div className={styles.creatorRow}>
+              {community.creator.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={community.creator.avatarUrl}
+                  alt=""
+                  className={styles.creatorAvatar}
+                />
+              ) : (
+                <span className={styles.creatorAvatarPlaceholder} aria-hidden="true" />
               )}
+              <span className={styles.creatorLine}>
+                por <strong>{community.creator.name ?? 'Anônimo'}</strong>
+                {community.isTrending && <span className={styles.trendingInline}> · 🔥 Bombando</span>}
+              </span>
             </div>
-          </div>
-        </div>
+          )}
+
+          {community.description && (
+            <p className={styles.detailDescription}>{community.description}</p>
+          )}
+
+          <MembersStack
+            previews={community.memberPreviews}
+            memberCount={community.memberCount}
+            onViewAll={() => setShowMembers(true)}
+          />
+
+          {!community.isMember && (
+            <button
+              type="button"
+              className={styles.joinPill}
+              onClick={onJoin}
+            >
+              Participar
+            </button>
+          )}
+        </section>
 
         <div className={styles.searchRow}>
           <svg
@@ -444,16 +649,6 @@ function CommunityDetailView({
             autoComplete="off"
           />
         </div>
-
-        {community.isMember && (
-          <button
-            type="button"
-            className={styles.primaryCta}
-            onClick={() => setCreateOpen(true)}
-          >
-            + Novo tópico
-          </button>
-        )}
 
         {topics.length === 0 ? (
           <div className={styles.emptyState}>
@@ -480,6 +675,19 @@ function CommunityDetailView({
         )}
       </div>
 
+      {/* Footer: smaller "Novo tópico" CTA below the topics list. */}
+      {community.isMember && (
+        <footer className={styles.footer}>
+          <button
+            type="button"
+            className={styles.footerCta}
+            onClick={() => setCreateOpen(true)}
+          >
+            + Novo tópico
+          </button>
+        </footer>
+      )}
+
       {createOpen && (
         <CreateTopicModal
           slug={slug}
@@ -495,7 +703,73 @@ function CommunityDetailView({
       {showMembers && (
         <MembersModal slug={slug} onClose={() => setShowMembers(false)} />
       )}
+
+      {renameOpen && (
+        <RenameCommunityModal
+          slug={slug}
+          initialName={community.name}
+          onClose={() => setRenameOpen(false)}
+          onSaved={() => {
+            setRenameOpen(false);
+            void refresh();
+          }}
+        />
+      )}
     </>
+  );
+}
+
+/** 5-avatar stack with a "+N" chip and "X membros · Ver todos" CTA. */
+function MembersStack({
+  previews,
+  memberCount,
+  onViewAll,
+}: {
+  previews: ApiCommunityMemberPreview[];
+  memberCount: number;
+  onViewAll: () => void;
+}) {
+  const shown = previews.slice(0, 5);
+  const overflow = Math.max(memberCount - shown.length, 0);
+  return (
+    <button
+      type="button"
+      className={styles.membersStackRow}
+      onClick={onViewAll}
+      aria-label="Ver todos os participantes"
+    >
+      <div className={styles.membersStack}>
+        {shown.map((m) =>
+          m.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={m.id}
+              src={m.avatarUrl}
+              alt=""
+              className={styles.membersStackAvatar}
+            />
+          ) : (
+            <span
+              key={m.id}
+              className={`${styles.membersStackAvatar} ${styles.membersStackAvatarFallback}`}
+              aria-hidden="true"
+            >
+              {(m.name ?? '?').slice(0, 1).toUpperCase()}
+            </span>
+          ),
+        )}
+        {overflow > 0 && (
+          <span className={styles.membersStackMore} aria-hidden="true">
+            +{overflow}
+          </span>
+        )}
+      </div>
+      <span className={styles.membersStackLabel}>
+        {memberCount.toLocaleString('pt-BR')} {memberCount === 1 ? 'membro' : 'membros'}
+        <span className={styles.membersStackDot}>·</span>
+        <span className={styles.membersStackLink}>Ver todos</span>
+      </span>
+    </button>
   );
 }
 
@@ -519,6 +793,10 @@ function TopicDetailView({
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  /** Top-level comment being replied to. Null = posting top-level. */
+  const [replyTarget, setReplyTarget] = useState<ApiCommunityTopicComment | null>(
+    null,
+  );
 
   const refreshComments = useCallback(async () => {
     try {
@@ -564,8 +842,15 @@ function TopicDetailView({
     if (!body || submitting) return;
     setSubmitting(true);
     try {
-      await api.post(`/api/communities/${slug}/topics/${topicId}/comments`, { body });
+      await api.post(
+        `/api/communities/${slug}/topics/${topicId}/comments`,
+        {
+          body,
+          parentCommentId: replyTarget?.id ?? null,
+        },
+      );
       setDraft('');
+      setReplyTarget(null);
       await refreshComments();
     } catch (err) {
       console.error('comment submit failed:', err);
@@ -577,55 +862,116 @@ function TopicDetailView({
     }
   };
 
+  // Optimistic ❤️ toggle — flips the local cache immediately and
+  // reconciles with the server response.
+  const onToggleReaction = useCallback(
+    async (commentId: string) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                reactions: {
+                  count: c.reactions.mine
+                    ? Math.max(c.reactions.count - 1, 0)
+                    : c.reactions.count + 1,
+                  mine: !c.reactions.mine,
+                },
+              }
+            : c,
+        ),
+      );
+      try {
+        const res = await api.post<ApiCommunityCommentReactionResult>(
+          `/api/communities/${slug}/topics/${topicId}/comments/${commentId}/reactions`,
+          {},
+        );
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? { ...c, reactions: { count: res.count, mine: res.mine } }
+              : c,
+          ),
+        );
+      } catch (err) {
+        console.error('reaction toggle failed:', err);
+        // Rollback on error.
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? {
+                  ...c,
+                  reactions: {
+                    count: c.reactions.mine
+                      ? Math.max(c.reactions.count - 1, 0)
+                      : c.reactions.count + 1,
+                    mine: !c.reactions.mine,
+                  },
+                }
+              : c,
+          ),
+        );
+      }
+    },
+    [slug, topicId],
+  );
+
+  // Group replies under their parent so the renderer can do
+  // 1 level of inline nesting. Anything malformed (orphan parent_id)
+  // falls back to top-level so it still shows.
+  const topLevel = comments.filter((c) => !c.parentCommentId);
+  const repliesByParent = new Map<string, ApiCommunityTopicComment[]>();
+  for (const c of comments) {
+    if (c.parentCommentId) {
+      const arr = repliesByParent.get(c.parentCommentId) ?? [];
+      arr.push(c);
+      repliesByParent.set(c.parentCommentId, arr);
+    }
+  }
+
   return (
     <>
-      <HeaderBar title="Tópico" onBack={onBack} onClose={onClose} />
+      {/* The topic title IS the header now — no inline title card. */}
+      <HeaderBar
+        title={topic?.title ?? 'Tópico'}
+        onBack={onBack}
+        onClose={onClose}
+      />
 
       <div className={styles.body}>
         {loading || !topic ? (
           <div className={styles.emptyState}>Carregando…</div>
         ) : (
           <>
-            <article className={styles.topicHero}>
-              <h3 className={styles.topicHeroTitle}>{topic.title}</h3>
-              <div className={styles.topicHeroMeta}>
-                {topic.authorAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={topic.authorAvatar} alt="" className={styles.topicHeroAvatar} />
-                ) : (
-                  <span className={styles.topicHeroAvatarPlaceholder} aria-hidden="true" />
-                )}
-                <span className={styles.topicHeroAuthor}>
-                  {topic.authorName ?? 'Anônimo'}
-                </span>
-                <span className={styles.topicHeroDot} aria-hidden="true">·</span>
-                <span className={styles.topicHeroTime}>{relativeTime(topic.createdAt)}</span>
-              </div>
-              {topic.body && <p className={styles.topicHeroBody}>{topic.body}</p>}
-            </article>
+            {/* Author meta + body, no card surrounding. */}
+            <div className={styles.topicMetaRow}>
+              {topic.authorAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={topic.authorAvatar} alt="" className={styles.topicHeroAvatar} />
+              ) : (
+                <span className={styles.topicHeroAvatarPlaceholder} aria-hidden="true" />
+              )}
+              <span className={styles.topicHeroAuthor}>
+                {topic.authorName ?? 'Anônimo'}
+              </span>
+              <span className={styles.topicHeroDot} aria-hidden="true">·</span>
+              <span className={styles.topicHeroTime}>{relativeTime(topic.createdAt)}</span>
+            </div>
+            {topic.body && <p className={styles.topicHeroBody}>{topic.body}</p>}
 
             <ul className={styles.commentList}>
-              {comments.length === 0 ? (
+              {topLevel.length === 0 ? (
                 <li className={styles.emptyComments}>Seja o primeiro a comentar.</li>
               ) : (
-                comments.map((c) => (
-                  <li key={c.id} className={styles.commentRow}>
-                    {c.author.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.author.avatarUrl} alt="" className={styles.commentAvatar} />
-                    ) : (
-                      <span className={styles.commentAvatarPlaceholder} aria-hidden="true" />
-                    )}
-                    <div className={styles.commentBody}>
-                      <span className={styles.commentAuthor}>
-                        {c.author.name ?? 'Anônimo'}
-                      </span>
-                      <span className={styles.commentTime}>{relativeTime(c.createdAt)}</span>
-                      <p className={styles.commentText}>
-                        {c.deletedAt ? 'Comentário removido.' : c.body}
-                      </p>
-                    </div>
-                  </li>
+                topLevel.map((c) => (
+                  <CommentRow
+                    key={c.id}
+                    comment={c}
+                    replies={repliesByParent.get(c.id) ?? []}
+                    canInteract={!!community?.isMember && !!user}
+                    onReply={() => setReplyTarget(c)}
+                    onToggleReaction={onToggleReaction}
+                  />
                 ))
               )}
             </ul>
@@ -635,28 +981,146 @@ function TopicDetailView({
 
       {community?.isMember && user && !loading && topic && (
         <form className={styles.composer} onSubmit={handleSubmit}>
-          <input
-            className={styles.composerField}
-            type="text"
-            placeholder="Comentar…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            disabled={submitting}
-            maxLength={2000}
-          />
-          <button
-            type="submit"
-            className={styles.composerSubmit}
-            disabled={!draft.trim() || submitting}
-            aria-label="Enviar comentário"
-          >
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M14 8L2 2l3 6-3 6 12-6z" />
-            </svg>
-          </button>
+          {replyTarget && (
+            <div className={styles.replyBanner}>
+              <span>
+                Respondendo a <strong>{replyTarget.author.name ?? 'Anônimo'}</strong>
+              </span>
+              <button
+                type="button"
+                className={styles.replyCancel}
+                onClick={() => setReplyTarget(null)}
+                aria-label="Cancelar resposta"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          <div className={styles.composerInputRow}>
+            <input
+              className={styles.composerField}
+              type="text"
+              placeholder={replyTarget ? 'Sua resposta…' : 'Comentar…'}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              disabled={submitting}
+              maxLength={2000}
+            />
+            <button
+              type="submit"
+              className={styles.composerSubmit}
+              disabled={!draft.trim() || submitting}
+              aria-label="Enviar comentário"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14 8L2 2l3 6-3 6 12-6z" />
+              </svg>
+            </button>
+          </div>
         </form>
       )}
     </>
+  );
+}
+
+/** One comment row + its inline reply thread. */
+function CommentRow({
+  comment,
+  replies,
+  canInteract,
+  onReply,
+  onToggleReaction,
+}: {
+  comment: ApiCommunityTopicComment;
+  replies: ApiCommunityTopicComment[];
+  canInteract: boolean;
+  onReply: () => void;
+  onToggleReaction: (commentId: string) => void;
+}) {
+  return (
+    <li className={styles.commentRow}>
+      {comment.author.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={comment.author.avatarUrl} alt="" className={styles.commentAvatar} />
+      ) : (
+        <span className={styles.commentAvatarPlaceholder} aria-hidden="true" />
+      )}
+      <div className={styles.commentBody}>
+        <div className={styles.commentHead}>
+          <span className={styles.commentAuthor}>
+            {comment.author.name ?? 'Anônimo'}
+          </span>
+          <span className={styles.commentTime}>{relativeTime(comment.createdAt)}</span>
+        </div>
+        <p className={styles.commentText}>
+          {comment.deletedAt ? 'Comentário removido.' : comment.body}
+        </p>
+        {!comment.deletedAt && (
+          <div className={styles.commentActions}>
+            <button
+              type="button"
+              className={`${styles.reactionBtn} ${comment.reactions.mine ? styles.reactionBtnActive : ''}`}
+              onClick={() => canInteract && onToggleReaction(comment.id)}
+              disabled={!canInteract}
+              aria-label={comment.reactions.mine ? 'Remover curtida' : 'Curtir'}
+            >
+              <span aria-hidden="true">{comment.reactions.mine ? '❤️' : '🤍'}</span>
+              {comment.reactions.count > 0 && (
+                <span className={styles.reactionCount}>{comment.reactions.count}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              className={styles.replyBtn}
+              onClick={onReply}
+              disabled={!canInteract}
+            >
+              Responder
+            </button>
+          </div>
+        )}
+
+        {replies.length > 0 && (
+          <ul className={styles.replyList}>
+            {replies.map((r) => (
+              <li key={r.id} className={styles.replyRow}>
+                {r.author.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={r.author.avatarUrl} alt="" className={styles.replyAvatar} />
+                ) : (
+                  <span className={styles.replyAvatarPlaceholder} aria-hidden="true" />
+                )}
+                <div className={styles.replyBody}>
+                  <div className={styles.commentHead}>
+                    <span className={styles.commentAuthor}>{r.author.name ?? 'Anônimo'}</span>
+                    <span className={styles.commentTime}>{relativeTime(r.createdAt)}</span>
+                  </div>
+                  <p className={styles.commentText}>
+                    {r.deletedAt ? 'Comentário removido.' : r.body}
+                  </p>
+                  {!r.deletedAt && (
+                    <div className={styles.commentActions}>
+                      <button
+                        type="button"
+                        className={`${styles.reactionBtn} ${r.reactions.mine ? styles.reactionBtnActive : ''}`}
+                        onClick={() => canInteract && onToggleReaction(r.id)}
+                        disabled={!canInteract}
+                        aria-label={r.reactions.mine ? 'Remover curtida' : 'Curtir'}
+                      >
+                        <span aria-hidden="true">{r.reactions.mine ? '❤️' : '🤍'}</span>
+                        {r.reactions.count > 0 && (
+                          <span className={styles.reactionCount}>{r.reactions.count}</span>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </li>
   );
 }
 
@@ -753,6 +1217,84 @@ function CreateCommunityModal({
           </button>
           <button type="submit" className={styles.modalSubmit} disabled={!name.trim() || submitting}>
             {submitting ? 'Criando…' : 'Criar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function RenameCommunityModal({
+  slug,
+  initialName,
+  onClose,
+  onSaved,
+}: {
+  slug: string;
+  initialName: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.patch(`/api/communities/${slug}`, { name: name.trim() });
+      onSaved();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const body = err.body as { error?: string } | null;
+        setError(body?.error ?? `HTTP ${err.status}`);
+      } else {
+        setError('network_error');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className={styles.modalBackdrop} onClick={onClose}>
+      <form
+        className={styles.modal}
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className={styles.modalTitle}>Editar nome</h3>
+        <label className={styles.modalField}>
+          <span>Nome</span>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+            required
+            autoFocus
+          />
+        </label>
+        {error && (
+          <p className={styles.modalError}>
+            {error === 'forbidden'
+              ? 'Apenas o criador pode editar.'
+              : `Erro: ${error}`}
+          </p>
+        )}
+        <div className={styles.modalActions}>
+          <button type="button" className={styles.modalCancel} onClick={onClose} disabled={submitting}>
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className={styles.modalSubmit}
+            disabled={!name.trim() || submitting || name.trim() === initialName}
+          >
+            {submitting ? 'Salvando…' : 'Salvar'}
           </button>
         </div>
       </form>

@@ -29,10 +29,13 @@ export async function GET(
   _req: Request,
   ctx: { params: Promise<{ slug: string; topicId: string }> },
 ) {
-  await getCurrentUser();
+  const viewer = await getCurrentUser();
   const { topicId } = await ctx.params;
   try {
-    const page = await listTopicComments({ topicId });
+    const page = await listTopicComments({
+      topicId,
+      viewerId: viewer?.id ?? null,
+    });
     return NextResponse.json(page);
   } catch (err) {
     console.error('GET topic comments failed:', err);

@@ -280,32 +280,51 @@
   text-align: center;
 }
 
-/* ── Community card (list view) ── */
+/* ── Community card (list view) ──
+ *
+ * Borderless, transparent surface — feels more like a list row.
+ * The card itself is a flex wrapper around two children: a big
+ * clickable region (`.cardOpenBtn`) that drills into the community
+ * and the trailing kebab menu (`.kebabRoot`). The hover state
+ * lives on the inner button so hovering the kebab doesn't tint
+ * the whole row. */
 .cardList {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 .communityCard {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 4px;
+  padding: 6px;
+  background: transparent;
+  border: none;
   border-radius: 12px;
+  transition: background 0.14s ease;
+}
+.cardOpenBtn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: background 0.14s ease, border-color 0.14s ease;
+  color: inherit;
+  transition: background 0.14s ease;
 }
-.communityCard:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
+.cardOpenBtn:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 .cardThumb {
   width: 48px;
@@ -840,4 +859,404 @@
   color: rgba(245, 158, 11, 0.85);
   font-weight: 700;
   font-size: 11px;
+}
+
+/* ── Footer (Nova comunidade / Novo tópico CTA) ──
+ *
+ * Pins below the scrolling body so the create CTA stays visible
+ * even when the list grows. Smaller pill than the old top-of-panel
+ * CTA so it doesn't compete with the search row.
+ */
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, transparent 0%, rgba(2,2,3,0.22) 100%);
+  flex-shrink: 0;
+}
+.footerCta {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #F5F5F7;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
+}
+.footerCta:hover {
+  background: rgba(168, 85, 247, 0.28);
+  border-color: rgba(168, 85, 247, 0.65);
+  transform: translateY(-1px);
+}
+.footerCta:active { transform: translateY(0); }
+
+/* ── Kebab menu (three-dot)
+ *
+ * Used on each community card (list view) and in the community
+ * detail header. Anchored to its trigger via `position: relative`.
+ */
+.kebabRoot {
+  position: relative;
+  flex-shrink: 0;
+}
+.kebabBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.kebabBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #F5F5F7;
+}
+.kebabBtn svg {
+  width: 14px;
+  height: 14px;
+}
+.kebabMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background:
+    linear-gradient(180deg,
+      rgba(20,20,24,0.96) 0%,
+      rgba(12,12,15,0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  z-index: 30;
+  animation: kebabIn 120ms ease both;
+}
+@keyframes kebabIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kebabItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: rgba(245, 245, 247, 0.85);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.kebabItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #F5F5F7;
+}
+.kebabItemDanger {
+  color: rgba(248, 113, 113, 0.85);
+}
+.kebabItemDanger:hover {
+  background: rgba(248, 113, 113, 0.10);
+  color: #fca5a5;
+}
+
+/* ── Community detail: compact summary (no thumbnail) ──
+ *
+ * Replaces the old `.communityHeaderCard` block. The image is gone;
+ * the header content is just creator avatar + meta + description +
+ * member avatar stack. Sits on a transparent surface so the panel
+ * background reads through.
+ */
+.communitySummary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 4px 6px;
+}
+.creatorRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.creatorAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.creatorAvatarPlaceholder {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  flex-shrink: 0;
+}
+.creatorLine {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.65);
+  letter-spacing: -0.005em;
+}
+.creatorLine strong {
+  color: rgba(245, 245, 247, 0.9);
+  font-weight: 600;
+}
+
+/* ── Member avatar stack ("X membros / Ver todos") ── */
+.membersStackRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.14s ease;
+}
+.membersStackRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.membersStack {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.membersStackAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(11, 11, 13, 0.95);
+  margin-left: -8px;
+  flex-shrink: 0;
+}
+.membersStackAvatar:first-child {
+  margin-left: 0;
+}
+.membersStackAvatarFallback {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.28) 0%, rgba(217, 70, 239, 0.28) 100%);
+  color: #F5F5F7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.membersStackMore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.75);
+  font-size: 10px;
+  font-weight: 700;
+  border: 2px solid rgba(11, 11, 13, 0.95);
+  margin-left: -8px;
+  letter-spacing: 0;
+}
+.membersStackLabel {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.7);
+  letter-spacing: -0.005em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.membersStackDot {
+  color: rgba(245, 245, 247, 0.35);
+}
+.membersStackLink {
+  color: rgba(168, 85, 247, 0.95);
+  font-weight: 600;
+}
+.membersStackRow:hover .membersStackLink {
+  color: #d8b4fe;
+}
+
+/* ── Comment actions row (reaction + reply) ── */
+.commentHead {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.commentActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  align-items: center;
+}
+.reactionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.7);
+  font-size: 11.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.reactionBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
+.reactionBtn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.reactionBtnActive {
+  background: rgba(244, 63, 94, 0.10);
+  border-color: rgba(244, 63, 94, 0.35);
+  color: #fda4af;
+}
+.reactionBtnActive:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.55);
+  color: #fecdd3;
+}
+.reactionCount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.replyBtn {
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.55);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 4px;
+  transition: color 0.14s ease;
+}
+.replyBtn:hover:not(:disabled) {
+  color: #F5F5F7;
+}
+.replyBtn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ── Reply thread (1 level of indentation) ── */
+.replyList {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0 0 0 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.replyRow {
+  display: flex;
+  gap: 8px;
+  padding-left: 8px;
+}
+.replyAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.replyAvatarPlaceholder {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  flex-shrink: 0;
+}
+.replyBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Topic meta row (replaces topicHero card) ── */
+.topicMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+}
+
+/* ── Reply banner in composer ── */
+.replyBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  background: rgba(168, 85, 247, 0.10);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.85);
+}
+.replyBanner strong {
+  color: #F5F5F7;
+  font-weight: 700;
+}
+.replyCancel {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.replyCancel:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #F5F5F7;
+}
+.composerInputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Composer is a column now: optional reply banner stacked above
+ * the input row. */
+.composer {
+  flex-direction: column;
+  align-items: stretch;
 }

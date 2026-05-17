@@ -381,8 +381,18 @@ export interface ApiCommunityCard {
   isTrending: boolean;
 }
 
+export interface ApiCommunityMemberPreview {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 export interface ApiCommunityDetail extends ApiCommunityCard {
   isCreator: boolean;
+  /** Up to 5 most-recent members for the avatar-stack preview. */
+  memberPreviews: ApiCommunityMemberPreview[];
+  /** Creator mini avatar — drives the "by …" badge in the header. */
+  creator: ApiCommunityMemberPreview | null;
 }
 
 export interface ApiCommunityMember {
@@ -421,5 +431,19 @@ export interface ApiCommunityTopicComment {
     email: string | null;
     avatarUrl: string | null;
   };
+  /** Aggregated ❤️ reactions. `mine` reflects the viewer's state. */
+  reactions: {
+    count: number;
+    mine: boolean;
+  };
+  /** Replies count. Null for replies themselves (threads stay flat). */
+  replyCount: number | null;
+}
+
+/** Result of POSTing a reaction toggle on a topic comment. */
+export interface ApiCommunityCommentReactionResult {
+  action: 'added' | 'removed';
+  count: number;
+  mine: boolean;
 }
 

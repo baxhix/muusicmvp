@@ -666,6 +666,36 @@ export const communityTopicComments = pgTable(
   ],
 );
 
+/**
+ * Reactions on a topic comment. Mirrors `feed_comment_reactions` —
+ * one row per (comment, user, emoji). MVP UI only fires ❤️ but the
+ * schema is emoji-agnostic so we can add 😂 🔥 etc. without churn.
+ */
+export const communityTopicCommentReactions = pgTable(
+  'community_topic_comment_reactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    commentId: uuid('comment_id')
+      .notNull()
+      .references(() => communityTopicComments.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    emoji: text('emoji').notNull().default('❤️'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique('community_topic_comment_reactions_unique').on(
+      t.commentId,
+      t.userId,
+      t.emoji,
+    ),
+    index('community_topic_comment_reactions_comment_idx').on(t.commentId),
+  ],
+);
+
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
 export type SiteTag = typeof siteTags.$inferSelect;
@@ -684,3 +714,7 @@ export type CommunityTopic = typeof communityTopics.$inferSelect;
 export type NewCommunityTopic = typeof communityTopics.$inferInsert;
 export type CommunityTopicComment = typeof communityTopicComments.$inferSelect;
 export type NewCommunityTopicComment = typeof communityTopicComments.$inferInsert;
+export type CommunityTopicCommentReaction =
+  typeof communityTopicCommentReactions.$inferSelect;
+export type NewCommunityTopicCommentReaction =
+  typeof communityTopicCommentReactions.$inferInsert;

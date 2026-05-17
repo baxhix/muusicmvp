@@ -1,8 +1,19 @@
-import { and, desc, eq, gt, ilike, isNull, lt, or, sql } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { db } from '../db';
 import {
   communities,
   communityMembers,
+  communityTopicCommentReactions,
   communityTopicComments,
   communityTopics,
   users,
@@ -137,8 +148,22 @@ export async function listCommunities(args: {
   return { items };
 }
 
+export interface ApiCommunityMemberPreview {
+  id: string;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 export interface ApiCommunityDetail extends ApiCommunityCard {
   isCreator: boolean;
+  /**
+   * Up to 5 most-recent members for the avatar-stack preview in
+   * the community detail header. The full roster is on
+   * `/api/communities/:slug/members` (member-only).
+   */
+  memberPreviews: ApiCommunityMemberPreview[];
+  /** Creator's name + avatar for the "by …" mini avatar in the header. */
+  creator: ApiCommunityMemberPreview | null;
 }
 
 /** Single community by slug. Includes the viewer's role flags. */
@@ -172,6 +197,29 @@ export async function getCommunityBySlug(
     Date.now() - TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000,
   );
 
+  // Member previews — 5 most-recent for the avatar stack. Public:
+  // anyone visiting the community page sees who's in it (matches
+  // the open-by-default forum convention).
+  const previewRows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      avatarUrl: users.avatarUrl,
+    })
+    .from(communityMembers)
+    .innerJoin(users, eq(users.id, communityMembers.userId))
+    .where(eq(communityMembers.communityId, row.id))
+    .orderBy(desc(communityMembers.joinedAt))
+    .limit(5);
+
+  // Creator mini-avatar. Resolved separately so it's stable even
+  // if the creator dropped out of the latest-5 preview window.
+  const [creatorRow] = await db
+    .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+    .from(users)
+    .where(eq(users.id, row.creatorId))
+    .limit(1);
+
   return {
     id: row.id,
     slug: row.slug,
@@ -188,6 +236,14 @@ export async function getCommunityBySlug(
       row.lastActivityAt > trendingThreshold &&
       row.memberCount >= TRENDING_MIN_MEMBERS,
     isCreator: viewerId === row.creatorId,
+    memberPreviews: previewRows,
+    creator: creatorRow
+      ? {
+          id: creatorRow.id,
+          name: creatorRow.name,
+          avatarUrl: creatorRow.avatarUrl,
+        }
+      : null,
   };
 }
 
@@ -271,6 +327,49 @@ export async function deleteCommunity(args: {
   if (row.creatorId !== args.viewerId) throw new Error('forbidden');
 
   await db.delete(communities).where(eq(communities.id, row.id));
+}
+
+/**
+ * Update a community's name (and optionally description/imageUrl).
+ * Creator-only — same authorization rule as deleteCommunity. The
+ * slug stays fixed once the community exists so existing links keep
+ * resolving even after a rename.
+ *
+ * Throws:
+ *   'not_found' — no community with the given slug
+ *   'forbidden' — caller is not the creator
+ *   'name_empty' / 'name_too_long' — basic input validation
+ */
+export async function updateCommunity(args: {
+  slug: string;
+  viewerId: string;
+  name?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+}): Promise<void> {
+  const [row] = await db
+    .select({ id: communities.id, creatorId: communities.creatorId })
+    .from(communities)
+    .where(eq(communities.slug, args.slug))
+    .limit(1);
+  if (!row) throw new Error('not_found');
+  if (row.creatorId !== args.viewerId) throw new Error('forbidden');
+
+  const patch: Record<string, unknown> = { updatedAt: new Date() };
+  if (typeof args.name === 'string') {
+    const name = args.name.trim();
+    if (!name) throw new Error('name_empty');
+    if (name.length > 80) throw new Error('name_too_long');
+    patch.name = name;
+  }
+  if (args.description !== undefined) {
+    patch.description = args.description?.trim() || null;
+  }
+  if (args.imageUrl !== undefined) {
+    patch.imageUrl = args.imageUrl?.trim() || null;
+  }
+
+  await db.update(communities).set(patch).where(eq(communities.id, row.id));
 }
 
 /**
@@ -623,13 +722,21 @@ export interface ApiCommunityTopicComment {
     email: string | null;
     avatarUrl: string | null;
   };
+  /** Aggregated ❤️ reactions. `mine` reflects the viewer's state. */
+  reactions: {
+    count: number;
+    mine: boolean;
+  };
+  /** Replies count. Null for replies themselves (threads stay flat). */
+  replyCount: number | null;
 }
 
 export async function listTopicComments(args: {
   topicId: string;
+  viewerId?: string | null;
   limit?: number;
 }): Promise<{ items: ApiCommunityTopicComment[] }> {
-  const limit = Math.min(Math.max(args.limit ?? 50, 1), 200);
+  const limit = Math.min(Math.max(args.limit ?? 200, 1), 500);
 
   const rows = await db
     .select({
@@ -650,6 +757,13 @@ export async function listTopicComments(args: {
     .orderBy(communityTopicComments.createdAt)
     .limit(limit);
 
+  const ids = rows.map((r) => r.id);
+  const reactionAgg = await aggregateCommentReactions(
+    ids,
+    args.viewerId ?? null,
+  );
+  const replyAgg = await aggregateReplyCounts(ids);
+
   const items: ApiCommunityTopicComment[] = rows.map((r) => ({
     id: r.id,
     topicId: r.topicId,
@@ -663,9 +777,144 @@ export async function listTopicComments(args: {
       email: r.authorEmail,
       avatarUrl: r.authorAvatar,
     },
+    reactions: reactionAgg.get(r.id) ?? { count: 0, mine: false },
+    // Replies are flat → only top-level comments expose a reply count.
+    replyCount: r.parentCommentId === null ? (replyAgg.get(r.id) ?? 0) : null,
   }));
 
   return { items };
+}
+
+/**
+ * Toggle a ❤️ reaction on a topic comment. Same pattern as the feed
+ * comment toggle in `src/server/feed/comments.ts` — single emoji per
+ * (user, comment) so the call is idempotent.
+ */
+export async function toggleTopicCommentReaction(args: {
+  commentId: string;
+  userId: string;
+  emoji?: string;
+}): Promise<{ action: 'added' | 'removed'; count: number; mine: boolean }> {
+  const emoji = (args.emoji ?? '❤️').trim();
+  if (!emoji) throw new Error('invalid_emoji');
+  if (emoji.length > 32) throw new Error('emoji_too_long');
+
+  const [target] = await db
+    .select({
+      id: communityTopicComments.id,
+      deletedAt: communityTopicComments.deletedAt,
+    })
+    .from(communityTopicComments)
+    .where(eq(communityTopicComments.id, args.commentId))
+    .limit(1);
+  if (!target) throw new Error('comment_not_found');
+  if (target.deletedAt) throw new Error('comment_deleted');
+
+  const deleted = await db
+    .delete(communityTopicCommentReactions)
+    .where(
+      and(
+        eq(communityTopicCommentReactions.commentId, args.commentId),
+        eq(communityTopicCommentReactions.userId, args.userId),
+        eq(communityTopicCommentReactions.emoji, emoji),
+      ),
+    )
+    .returning({ id: communityTopicCommentReactions.id });
+
+  const action: 'added' | 'removed' = deleted.length > 0 ? 'removed' : 'added';
+
+  if (action === 'added') {
+    await db
+      .insert(communityTopicCommentReactions)
+      .values({ commentId: args.commentId, userId: args.userId, emoji })
+      .onConflictDoNothing({
+        target: [
+          communityTopicCommentReactions.commentId,
+          communityTopicCommentReactions.userId,
+          communityTopicCommentReactions.emoji,
+        ],
+      });
+  }
+
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(communityTopicCommentReactions)
+    .where(
+      and(
+        eq(communityTopicCommentReactions.commentId, args.commentId),
+        eq(communityTopicCommentReactions.emoji, emoji),
+      ),
+    );
+
+  return {
+    action,
+    count: row?.count ?? 0,
+    mine: action === 'added',
+  };
+}
+
+async function aggregateCommentReactions(
+  commentIds: string[],
+  viewerId: string | null,
+): Promise<Map<string, { count: number; mine: boolean }>> {
+  const out = new Map<string, { count: number; mine: boolean }>();
+  if (commentIds.length === 0) return out;
+
+  const counts = await db
+    .select({
+      commentId: communityTopicCommentReactions.commentId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(communityTopicCommentReactions)
+    .where(inArray(communityTopicCommentReactions.commentId, commentIds))
+    .groupBy(communityTopicCommentReactions.commentId);
+
+  for (const row of counts) {
+    out.set(row.commentId, { count: row.count, mine: false });
+  }
+
+  if (viewerId) {
+    const mine = await db
+      .select({ commentId: communityTopicCommentReactions.commentId })
+      .from(communityTopicCommentReactions)
+      .where(
+        and(
+          inArray(communityTopicCommentReactions.commentId, commentIds),
+          eq(communityTopicCommentReactions.userId, viewerId),
+        ),
+      );
+    for (const m of mine) {
+      const existing = out.get(m.commentId);
+      if (existing) existing.mine = true;
+      else out.set(m.commentId, { count: 0, mine: true });
+    }
+  }
+
+  for (const id of commentIds) {
+    if (!out.has(id)) out.set(id, { count: 0, mine: false });
+  }
+  return out;
+}
+
+async function aggregateReplyCounts(
+  parentIds: string[],
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (parentIds.length === 0) return out;
+
+  const rows = await db
+    .select({
+      parentCommentId: communityTopicComments.parentCommentId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(communityTopicComments)
+    .where(inArray(communityTopicComments.parentCommentId, parentIds))
+    .groupBy(communityTopicComments.parentCommentId);
+
+  for (const r of rows) {
+    if (r.parentCommentId) out.set(r.parentCommentId, r.count);
+  }
+  return out;
 }
 
 export async function createTopicComment(args: {
