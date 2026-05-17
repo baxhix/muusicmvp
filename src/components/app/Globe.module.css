@@ -852,39 +852,61 @@
   display: block;
 }
 
-/* Pill badge "Ana fez check-in em <city>-<state>". Sits below
- * the avatar with a small triangular pointer (via the ::before
- * pseudo) aimed up at the avatar. */
+/* Two-line pill badge: line 1 in lighter weight ("Ana fez
+ * check-in em"), line 2 bold ("<City>-<UF>"). Color shifts to a
+ * deep violet so the badge contrasts the pink avatar instead of
+ * blending into it — same lilac accent the rest of the app uses
+ * (#a855f7). Triangle pointer underneath the avatar matches.
+ * Width is constrained so a long city name wraps to a second
+ * physical line within line 2 instead of stretching the pin
+ * across the map. */
 .anaBadge {
   position: relative;
   margin-top: 8px;
-  padding: 5px 10px 5px 8px;
+  padding: 6px 12px 6px 10px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  max-width: 200px;
   background:
     linear-gradient(180deg,
-      rgba(236, 72, 153, 0.95) 0%,
-      rgba(217, 70, 239, 0.95) 100%);
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
+      rgba(124, 58, 237, 0.96) 0%,
+      rgba(91, 33, 182, 0.96) 100%);
+  border-radius: 14px;
+  letter-spacing: -0.005em;
+  color: #f5f3ff;
+  box-shadow:
+    0 6px 14px -4px rgba(91, 33, 182, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.10) inset;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.anaBadgeText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+}
+.anaBadgeLine1 {
+  font-size: 9.5px;
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.anaBadgeLine2 {
+  font-size: 12.5px;
+  font-weight: 700;
   letter-spacing: -0.005em;
   color: #ffffff;
-  white-space: nowrap;
-  box-shadow:
-    0 6px 14px -4px rgba(236, 72, 153, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
-  /* Keep the marker pickable on the badge too — same wrapper
-   * click target, no need to bubble. */
-}
-.anaBadge strong {
-  font-weight: 700;
-  margin-left: 2px;
+  /* Allow long compound names ("Foz do Iguaçu-PR") to wrap inside
+   * the pill instead of pushing the marker off-screen. */
+  white-space: normal;
+  word-break: break-word;
 }
 .anaBadge::before {
   /* Tiny triangle pointer towards the avatar — anchored at the
-   * top-center of the pill. */
+   * top-center of the pill. Matches the violet base so the
+   * pointer reads as one piece with the badge. */
   content: '';
   position: absolute;
   top: -4px;
@@ -892,7 +914,7 @@
   transform: translateX(-50%) rotate(45deg);
   width: 8px;
   height: 8px;
-  background: rgba(236, 72, 153, 0.95);
+  background: rgba(124, 58, 237, 0.96);
   border-radius: 1px;
 }
 .anaBadgeDot {
@@ -903,8 +925,34 @@
   background: #ffffff;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
   animation: anaBadgeDotBlink 1.6s ease-in-out infinite;
+  flex-shrink: 0;
 }
 @keyframes anaBadgeDotBlink {
   0%, 100% { opacity: 1;   transform: scale(1);   }
   50%      { opacity: 0.5; transform: scale(0.78);}
+}
+
+/* Once the user has tapped the pin and seen the modal, collapse
+ * the badge so only the avatar stays visible — the badge sits in
+ * the DOM but is hidden (height 0 + opacity 0) so the layout
+ * doesn't shift when it pops back on hover. */
+.anaCheckInOpened .anaBadge {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.96);
+  pointer-events: none;
+  max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+.anaCheckInOpened:hover .anaBadge,
+.anaCheckInOpened:focus-within .anaBadge {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  max-height: 80px;
+  margin-top: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }

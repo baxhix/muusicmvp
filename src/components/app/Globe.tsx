@@ -687,9 +687,11 @@ export default function Globe() {
         wrapper.className = styles.anaCheckInWrap;
         wrapper.style.cursor = 'pointer';
         // Pulse ring + circular avatar with the hot-pink "Ana ring"
-        // + a violet pill badge "Ana fez check-in em …". The
-        // wrapper itself is the click target, so the whole pin is
-        // tappable — not just the avatar.
+        // + a violet pill badge stacked on two lines:
+        //   line 1 — "Ana fez check-in em" (light weight, smaller)
+        //   line 2 — "<City>-<UF>"          (bold, larger)
+        // The wrapper itself is the click target, so the whole pin
+        // is tappable — not just the avatar.
         wrapper.innerHTML = `
           <span class="${styles.anaPulse}" aria-hidden="true"></span>
           <span class="${styles.anaPulseB}" aria-hidden="true"></span>
@@ -698,13 +700,24 @@ export default function Globe() {
           </div>
           <div class="${styles.anaBadge}">
             <span class="${styles.anaBadgeDot}" aria-hidden="true"></span>
-            Ana fez check-in em <strong>${safeCity}-${safeState}</strong>
+            <span class="${styles.anaBadgeText}">
+              <span class="${styles.anaBadgeLine1}">Ana fez check-in em</span>
+              <strong class="${styles.anaBadgeLine2}">${safeCity}-${safeState}</strong>
+            </span>
           </div>
         `;
 
         wrapper.addEventListener('click', (e) => {
           e.stopPropagation();
           globeStore.openAnaCheckIn(payload);
+          // Once the user has opened the check-in, collapse the pin
+          // to "avatar-only" mode for the rest of its lifetime —
+          // the badge text reappears on hover. Stops the same banner
+          // from nagging after the user has already seen the
+          // content. The class persists through the linger window
+          // and is naturally lost when the next spawn rebuilds the
+          // marker DOM.
+          wrapper.classList.add(styles.anaCheckInOpened);
           track('ana_checkin_pin_clicked', {
             checkin_id: payload.id,
             city: payload.city,
