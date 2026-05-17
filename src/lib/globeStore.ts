@@ -56,12 +56,35 @@ export interface AnaCheckInPayload {
   startedAt: string;
 }
 
+/**
+ * One upcoming Ana show — a calendar entry that drops a small
+ * pin on the globe with the date chip baked into the marker. The
+ * pin is click-only: the user taps it to reveal a popover with
+ * the venue / city / "Ingressos" CTA. The CTA itself has no real
+ * link yet (the spec calls for a "sem ação" button) — when ticket
+ * partners ship, `ticketUrl` carries the URL the CTA opens.
+ */
+export interface AnaShow {
+  id: string;
+  /** ISO date (YYYY-MM-DD). */
+  date: string;
+  /** Long venue name shown inside the popover. */
+  venue: string;
+  city: string;
+  state: string;
+  lng: number;
+  lat: number;
+  /** Future-proofing — CTA stays inert until this is set. */
+  ticketUrl?: string | null;
+}
+
 type SetUserLocationFn = (payload: UserLocationPayload | null) => void;
 type SetLiveUsersFn = (users: LiveMapUser[]) => void;
 type SetTotalRegisteredFn = (total: number) => void;
 type OpenUserProfileFn = (userId: string) => void;
 type SetAnaCheckInFn = (payload: AnaCheckInPayload | null) => void;
 type OpenAnaCheckInFn = (payload: AnaCheckInPayload) => void;
+type SetAnaShowsFn = (shows: AnaShow[]) => void;
 
 let _flyTo: FlyToFn | null = null;
 let _setUserLocation: SetUserLocationFn | null = null;
@@ -73,6 +96,8 @@ let _openUserProfile: OpenUserProfileFn | null = null;
 let _setAnaCheckIn: SetAnaCheckInFn | null = null;
 let _anaCheckInBuffer: AnaCheckInPayload | null = null;
 let _openAnaCheckIn: OpenAnaCheckInFn | null = null;
+let _setAnaShows: SetAnaShowsFn | null = null;
+let _anaShowsBuffer: AnaShow[] | null = null;
 
 export const globeStore = {
   register: (fn: FlyToFn) => { _flyTo = fn; },
@@ -159,4 +184,27 @@ export const globeStore = {
    */
   registerOpenAnaCheckIn: (fn: OpenAnaCheckInFn) => { _openAnaCheckIn = fn; },
   openAnaCheckIn: (payload: AnaCheckInPayload) => { _openAnaCheckIn?.(payload); },
+
+  /**
+   * Upcoming Ana shows — a list of date-pinned markers. Setting an
+   * empty array clears every show pin. Buffered the same way as
+   * the other registries so the page can publish before Globe's
+   * map load fires.
+   *
+   * The popover that opens when a pin is tapped lives INSIDE the
+   * marker DOM (no React modal), so the page doesn't need an
+   * `openAnaShow` symmetry like check-ins have. The shows are
+   * read-only marker UI today.
+   */
+  registerAnaShows: (fn: SetAnaShowsFn) => {
+    _setAnaShows = fn;
+    if (_anaShowsBuffer) {
+      fn(_anaShowsBuffer);
+      _anaShowsBuffer = null;
+    }
+  },
+  setAnaShows: (shows: AnaShow[]) => {
+    if (_setAnaShows) _setAnaShows(shows);
+    else _anaShowsBuffer = shows;
+  },
 };

@@ -37,6 +37,7 @@ import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
 import { ANA_CHECKINS } from '@/data/anaCheckIns';
+import { ANA_SHOWS } from '@/data/anaShows';
 import type { AnaCheckInPayload } from '@/lib/globeStore';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
@@ -334,6 +335,15 @@ export default function AppPage() {
       setViewingUserId(userId);
       setShowProfile(true);
     });
+  }, []);
+
+  // Publish the static list of upcoming Ana shows once on mount.
+  // Each one becomes a small date-chip pin on the globe; the
+  // Globe owns the click-to-reveal popover entirely. When the
+  // shows move from `src/data/anaShows.ts` to a real backend
+  // feed, swap this useEffect for the matching fetch.
+  useEffect(() => {
+    globeStore.setAnaShows(ANA_SHOWS);
   }, []);
 
   /* ── Ana Castela check-in scheduler ─────────────────────────

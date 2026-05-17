@@ -171,6 +171,15 @@ export interface EventPayloadMap {
    *  engaging; `checkin_id` ties the click back to a specific
    *  spawn (useful when we A/B test cadences or media bundles). */
   ana_checkin_pin_clicked: { checkin_id: string; city: string; state: string };
+  /** Fired when the user opens a "próximo show" pin's info card on
+   *  the globe (any of the dated agenda markers). `show_id` ties
+   *  the open back to a specific entry in `ANA_SHOWS`. */
+  ana_show_pin_clicked: { show_id: string; city: string; venue: string };
+  /** Fired when the user clicks the "Ingressos" CTA inside the
+   *  open show popover. Today the button is inert (no link); the
+   *  event is the only signal for product to gauge ticket intent
+   *  before partnering. */
+  ana_show_tickets_clicked: { show_id: string; venue: string };
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────
   notification_received:   { kind: string };
@@ -291,6 +300,8 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   user_unwaved:       { category: 'social', importance: 'low', description: 'Aceno desfeito.', trigger: 'Botão de coração clicado para o estado "unliked".' },
   points_awarded:     { category: 'social', importance: 'high', description: 'Recompensa de engajamento (like, comentário, send, chat iniciado, 3 streams).', trigger: 'Helper awardPoints() em src/lib/rewards.ts.', ga4: true },
   ana_checkin_pin_clicked: { category: 'feed', importance: 'high', description: 'Pin de check-in da Ana clicado no globo.', trigger: 'Clique no marker rosa ancorado em uma cidade.', ga4: true },
+  ana_show_pin_clicked:     { category: 'feed', importance: 'high', description: 'Pin de próximo show da Ana aberto no globo.', trigger: 'Clique no chip com a data sobre uma cidade da agenda.', ga4: true },
+  ana_show_tickets_clicked: { category: 'feed', importance: 'high', description: 'Botão "Ingressos" clicado no card de show da Ana (inert até parceiro de bilhetagem).', trigger: 'Clique no CTA dentro do popover do pin de show.', ga4: true },
   creator_followed:   { category: 'social', importance: 'high', description: 'Usuário começou a seguir um perfil.', trigger: 'CTA "Seguir" ativado.', ga4: true },
   creator_unfollowed: { category: 'social', importance: 'low', description: 'Usuário deixou de seguir um perfil.', trigger: 'CTA "Seguindo" desfeito.' },
   content_shared:     { category: 'social', importance: 'high', description: 'Conteúdo compartilhado para fora do app.', trigger: 'navigator.share() ou copy-link.', ga4: true },
