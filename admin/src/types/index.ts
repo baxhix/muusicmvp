@@ -498,3 +498,70 @@ export interface WorkspaceSettings {
   timezone: string;
   description?: string;
 }
+
+/* ── Communities (forum CMS) ──────────────────────────────────
+ *
+ * Shapes the admin Communities surface consumes. These mirror the
+ * server interfaces in src/server/communities/admin.ts; the backend
+ * is the source of truth, the types here only narrow what the
+ * admin UI uses for rendering.
+ */
+
+export interface AdminCommunity {
+  id: ID;
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  creatorId: ID | null;
+  creatorName: string | null;
+  creatorEmail: string | null;
+  creatorAvatar: string | null;
+  memberCount: number;
+  topicCount: number;
+  /** Sum of non-deleted comments across all topics in this community. */
+  commentCount: number;
+  lastActivityAt: ISODate;
+  createdAt: ISODate;
+  updatedAt: ISODate;
+}
+
+export interface AdminCommunityMember {
+  userId: ID;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  joinedAt: ISODate;
+  isCreator: boolean;
+}
+
+export interface AdminCommunityTopic {
+  id: ID;
+  communityId: ID;
+  title: string;
+  body: string | null;
+  authorId: ID | null;
+  authorName: string | null;
+  authorEmail: string | null;
+  authorAvatar: string | null;
+  commentCount: number;
+  deletedAt: ISODate | null;
+  createdAt: ISODate;
+  updatedAt: ISODate;
+}
+
+export interface AdminCommunityTopicComment {
+  id: ID;
+  topicId: ID;
+  parentCommentId: ID | null;
+  body: string;
+  deletedAt: ISODate | null;
+  createdAt: ISODate;
+  author: {
+    id: ID | null;
+    name: string | null;
+    email: string | null;
+    avatarUrl: string | null;
+  };
+  reactionCount: number;
+}
