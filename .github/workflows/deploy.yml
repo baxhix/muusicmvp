@@ -102,6 +102,15 @@ jobs:
       # the value is visible in logs. nc confirms the TCP/22 path
       # before we even invoke appleboy/ssh-action, narrowing where
       # any future failures come from (network vs. SSH auth).
+      #
+      # Retry loop: GitHub Actions runner IPs rotate constantly and
+      # occasionally land in Hostinger's panel-firewall / fail2ban
+      # blocklist for unrelated reasons. We try 3 times with 20s
+      # between attempts — typically enough for the firewall to
+      # cycle its tarpit, or for the runner to release its socket
+      # and the kernel-level conntrack to fall out. Without this,
+      # one bad-luck IP forces a manual `gh run rerun` for a deploy
+      # that would otherwise have worked seconds later.
       - name: Verify host reachability
         run: |
           HOST="${{ vars.DEPLOY_HOST }}"
@@ -109,12 +118,26 @@ jobs:
             echo "::error::vars.DEPLOY_HOST is empty — add a Repository Variable named DEPLOY_HOST in Settings → Secrets and variables → Actions → Variables"
             exit 1
           fi
-          echo "Dialing $HOST:22 from runner $(curl -s ifconfig.me)…"
-          nc -vz -w 5 "$HOST" 22 || {
-            echo "::error::TCP connection to $HOST:22 timed out from this runner. Likely cause: host-side firewall (Hostinger panel firewall, ufw, or fail2ban) blocking the runner's IP."
-            exit 1
-          }
+          RUNNER_IP=$(curl -s ifconfig.me)
+          for attempt in 1 2 3; do
+            echo "[attempt ${attempt}/3] Dialing $HOST:22 from runner ${RUNNER_IP}…"
+            if nc -vz -w 5 "$HOST" 22; then
+              echo "✓ TCP reachable on attempt ${attempt}."
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Timeout — sleeping 20s before retry."
+              sleep 20
+            fi
+          done
+          echo "::error::TCP connection to $HOST:22 timed out 3× in a row from runner ${RUNNER_IP}. Likely cause: host-side firewall (Hostinger panel firewall, ufw, or fail2ban) blocking the runner's IP. Try \`gh run rerun ${{ github.run_id }} --failed\` — reruns pick up a fresh runner IP."
+          exit 1
 
+      # appleboy/ssh-action retries its own connect attempts via the
+      # `command_timeout` + the action's built-in `retry`-style flags.
+      # Belt-and-suspenders against the same flake: if the preflight
+      # passed but the actual SSH handshake stalls, we still get 3
+      # tries before failing the job.
       - name: SSH deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -123,6 +146,8 @@ jobs:
           key:      ${{ secrets.DEPLOY_SSH_KEY }}
           port:     22
           script_stop: true
+          command_timeout: 10m
+          timeout: 60s
           script: |
             set -euo pipefail
             cd /opt/muusic
