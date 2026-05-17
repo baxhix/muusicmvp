@@ -269,9 +269,16 @@ export default function Stories() {
                 style={{ width: size + 8, height: size + 8 }}
               >
                 <span className={styles.ringInner} style={{ width: size + 2, height: size + 2 }}>
+                  {/* Rail thumbnail uses the story's content image
+                      (e.g. /stories/ana-1.png) per product feedback —
+                      previously rendered `story.avatar` which was the
+                      uniform central-anacastela.png for every entry,
+                      so all three rings looked identical. Showing the
+                      actual story image gives each preview its own
+                      visual identity. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={story.avatar}
+                    src={story.img}
                     alt={story.user}
                     className={styles.avatar}
                     style={{ width: size, height: size }}
