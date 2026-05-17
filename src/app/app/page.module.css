@@ -15,28 +15,27 @@
 }
 .mapLayer > * { pointer-events: auto; }
 
-/* Chat / feed / comunidade action shortcuts — now a vertical
- * column on the right rail per product feedback (moved out of
- * the top-center horizontal row). Sits just ABOVE the
- * LiveChatStack avatars dock so the two groups read as one
- * unified right-side column without overlap.
+/* Chat / feed / comunidade action shortcuts — vertical column on
+ * the right rail, positioned BELOW the LiveChatStack avatars per
+ * product feedback. The previous layout had the icons above the
+ * avatars; flipping it places the most-recent chat previews at
+ * eye-level and pushes the meta-navigation actions further down.
  *
  * Geometry:
- *   - `right: 18px` matches the dock's right offset so both
- *     groups share the same vertical axis.
- *   - `bottom: calc(50% + 88px)` anchors the BOTTOM edge of this
- *     pill above the dock. 88px = half the dock's resting
- *     height (3 × 44px avatars + 2 × 6px margins ≈ 144px, half
- *     = 72px) + 16px breathing gap between the two groups.
- *     Re-tune the 88px constant if the dock's row count or item
- *     size ever changes.
- *   - No `transform: translateY` needed — the bottom-anchored
- *     positioning + flex-column grows the icons upward from the
- *     anchored bottom edge. */
+ *   - `right: 18px` matches the avatars dock so both groups share
+ *     the same vertical axis.
+ *   - `top: 50%` + `transform: translateY(8px)` anchors the icons'
+ *     TOP edge 8px below the viewport vertical center. The
+ *     avatars dock (LiveChatStack `.dock`) anchors at the same
+ *     top: 50% but translated UP by 100% of its height + 8px,
+ *     so its bottom edge ends 8px above center. Combined the
+ *     two groups present as one stack with a 16px gap between
+ *     them. */
 .topBar {
   position: fixed;
   right: 18px;
-  bottom: calc(50% + 88px);
+  top: 50%;
+  transform: translateY(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -47,11 +46,12 @@
 
 @media (max-width: 768px) {
   /* On mobile the dock hides itself entirely (see LiveChatStack
-   * `.dock` media query), so the icons here can drop their
-   * "above the dock" offset and just hug the right edge. */
+   * `.dock` media query), so the icons here drop the "below the
+   * avatars" offset and hug the right edge vertically centered
+   * on their own. */
   .topBar {
     right: 16px;
-    bottom: calc(50% + 16px);
+    transform: translateY(-50%);
   }
 }
 

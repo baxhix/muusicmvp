@@ -12,10 +12,13 @@ export default function AudioPost() {
     <div className={styles.card}>
       <div className={styles.inner}>
 
-        {/* Avatar */}
+        {/* Avatar — /public/ana-castela.png per product feedback.
+            The previous src was a Spotify-CDN URL; switching to the
+            local file means AudioPost ships with the build (no
+            third-party dependency for the preview thumbnail). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa"
+          src="/ana-castela.png"
           alt="Ana Castela"
           className={styles.avatar}
         />

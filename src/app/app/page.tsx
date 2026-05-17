@@ -37,6 +37,8 @@ import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
+import MilestoneNotification from '@/components/app/MilestoneNotification';
+import { useFanpointMilestones } from '@/hooks/useFanpointMilestones';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 
@@ -67,6 +69,11 @@ export default function AppPage() {
   const { universeId, hydrated: universeHydrated } = useUniverse();
   const router = useRouter();
   const chat = useChatLiveWithFakes();
+  // Watches the viewer's Fanpoints balance for 100-multiple
+  // crossings and dispatches `app:milestone-fp` so the
+  // MilestoneNotification banner can pop. Hook is sealed —
+  // returns nothing; the rendering is fully driven by the event.
+  useFanpointMilestones();
 
   // Universe gate: once the localStorage read has resolved and the
   // user is authenticated, redirect to the selection screen if they
@@ -791,6 +798,13 @@ export default function AppPage() {
           component firing the helper gets the toast without
           re-wiring. */}
       <PointsToast />
+
+      {/* Top-center milestone banner — fires when the viewer's
+          Fanpoints balance crosses any 100-multiple. Sibling to
+          PointsToast but rendered at the TOP edge so the round-
+          number celebration reads as the bigger moment. The
+          useFanpointMilestones hook above is what drives it. */}
+      <MilestoneNotification />
 
       {/* Self-celebration when the logged-in user crosses a point
           milestone — confetti + centered congrats line, ~7s. */}
