@@ -756,3 +756,155 @@
   opacity: 1;
   pointer-events: auto;
 }
+
+/* ============================================================
+   ANA CASTELA CHECK-IN PIN
+   ============================================================
+   Singleton marker that lights up whenever Ana "checks in" to a
+   city. The wrapper anchors at `bottom`, so the avatar + label
+   sit ABOVE the lat/lng point and the user reads the geographic
+   placement off the bottom-center of the avatar. Two staggered
+   pink rings pulse continuously to telegraph "live event".
+   Hover pops the avatar a few pixels — same affordance as the
+   live-user badge so the interaction language stays consistent.
+   ------------------------------------------------------------ */
+.anaCheckInWrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Place the marker so the avatar tip sits on the city. The label
+   * extends downward and is the closest thing to the geographic
+   * point — same anchoring logic as the iOS Maps "drop pin". */
+  transform: translateY(-8px);
+  z-index: 4;
+  cursor: pointer;
+}
+
+/* Two staggered radial pulses behind the avatar. The B variant
+ * is offset half a cycle so the user always sees a wave in
+ * progress, never a static gap. */
+.anaPulse,
+.anaPulseB {
+  position: absolute;
+  left: 50%;
+  /* Avatar height is 56px + ring 4px; aim the pulse origin at the
+   * avatar's center so the rings emanate from the face. */
+  top: 26px;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  margin-top: -28px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(236, 72, 153, 0.55) 0%,
+    rgba(236, 72, 153, 0.25) 45%,
+    transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+  animation: anaCheckInPulse 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+.anaPulseB {
+  animation-delay: 1.3s;
+}
+@keyframes anaCheckInPulse {
+  0%   { transform: scale(0.6);  opacity: 0.65; }
+  60%  { transform: scale(2.6);  opacity: 0;    }
+  100% { transform: scale(2.6);  opacity: 0;    }
+}
+
+/* Circular avatar with a hot-pink ring + soft outer glow. The
+ * ring uses a CSS conic-gradient so it reads as a fan halo, not
+ * a flat border. */
+.anaAvatarRing {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  padding: 3px;
+  background:
+    conic-gradient(from 0deg,
+      #ec4899 0deg,
+      #f472b6 90deg,
+      #fb7185 180deg,
+      #ec4899 270deg,
+      #ec4899 360deg);
+  box-shadow:
+    0 8px 24px -8px rgba(236, 72, 153, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.anaCheckInWrap:hover .anaAvatarRing {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 14px 32px -8px rgba(236, 72, 153, 0.72),
+    0 4px 10px rgba(0, 0, 0, 0.45);
+}
+.anaAvatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0b0b0d;
+  display: block;
+}
+
+/* Pill badge "Ana fez check-in em <city>-<state>". Sits below
+ * the avatar with a small triangular pointer (via the ::before
+ * pseudo) aimed up at the avatar. */
+.anaBadge {
+  position: relative;
+  margin-top: 8px;
+  padding: 5px 10px 5px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background:
+    linear-gradient(180deg,
+      rgba(236, 72, 153, 0.95) 0%,
+      rgba(217, 70, 239, 0.95) 100%);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #ffffff;
+  white-space: nowrap;
+  box-shadow:
+    0 6px 14px -4px rgba(236, 72, 153, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  /* Keep the marker pickable on the badge too — same wrapper
+   * click target, no need to bubble. */
+}
+.anaBadge strong {
+  font-weight: 700;
+  margin-left: 2px;
+}
+.anaBadge::before {
+  /* Tiny triangle pointer towards the avatar — anchored at the
+   * top-center of the pill. */
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: rgba(236, 72, 153, 0.95);
+  border-radius: 1px;
+}
+.anaBadgeDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
+  animation: anaBadgeDotBlink 1.6s ease-in-out infinite;
+}
+@keyframes anaBadgeDotBlink {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%      { opacity: 0.5; transform: scale(0.78);}
+}

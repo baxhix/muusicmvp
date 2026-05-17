@@ -164,6 +164,14 @@ export interface EventPayloadMap {
   content_shared:      { content_type: 'post' | 'track' | 'profile'; channel: string };
   invite_sent:         { channel: string };
 
+  // ── ANA CASTELA CHECK-IN ──────────────────────────────────────
+  /** Fired when the user clicks the Ana check-in pin on the
+   *  globe — opens the AnaCheckInPanel modal. `city` + `state`
+   *  let funnel reports segment which check-ins are most
+   *  engaging; `checkin_id` ties the click back to a specific
+   *  spawn (useful when we A/B test cadences or media bundles). */
+  ana_checkin_pin_clicked: { checkin_id: string; city: string; state: string };
+
   // ── NOTIFICATIONS ─────────────────────────────────────────────
   notification_received:   { kind: string };
   notification_opened:     { kind: string; notification_id: string };
@@ -282,6 +290,7 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   user_waved:         { category: 'social', importance: 'high', description: 'Aceno (heart) enviado via marker no globo ou painel de perfil.', trigger: 'Botão de coração clicado para o estado "liked".', ga4: true },
   user_unwaved:       { category: 'social', importance: 'low', description: 'Aceno desfeito.', trigger: 'Botão de coração clicado para o estado "unliked".' },
   points_awarded:     { category: 'social', importance: 'high', description: 'Recompensa de engajamento (like, comentário, send, chat iniciado, 3 streams).', trigger: 'Helper awardPoints() em src/lib/rewards.ts.', ga4: true },
+  ana_checkin_pin_clicked: { category: 'feed', importance: 'high', description: 'Pin de check-in da Ana clicado no globo.', trigger: 'Clique no marker rosa ancorado em uma cidade.', ga4: true },
   creator_followed:   { category: 'social', importance: 'high', description: 'Usuário começou a seguir um perfil.', trigger: 'CTA "Seguir" ativado.', ga4: true },
   creator_unfollowed: { category: 'social', importance: 'low', description: 'Usuário deixou de seguir um perfil.', trigger: 'CTA "Seguindo" desfeito.' },
   content_shared:     { category: 'social', importance: 'high', description: 'Conteúdo compartilhado para fora do app.', trigger: 'navigator.share() ou copy-link.', ga4: true },

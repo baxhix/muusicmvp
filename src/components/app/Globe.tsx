@@ -34,6 +34,11 @@ export default function Globe() {
     let userLocationMarker: mapboxgl.Marker | null = null;
     /** Live presence markers keyed by user.id (so diff updates are O(1)) */
     const liveUserMarkers = new Map<string, mapboxgl.Marker>();
+    /** Ana Castela check-in pin (singleton). Closed over by the cleanup
+     *  function below via a getter ref so the inner handler in
+     *  `registerAnaCheckIn` can still rotate its local `anaMarker`
+     *  variable. */
+    const anaMarkerRef: { current: mapboxgl.Marker | null } = { current: null };
     /** Users the current viewer has "waved at" via the heart button on
      *  the expanded badge. Kept in a Set here (not React state) so the
      *  liked-state survives the imperative innerHTML rewrites that
@@ -659,6 +664,62 @@ export default function Globe() {
         }
       });
 
+      // ── Ana Castela check-in pin ──────────────────────────────
+      //
+      // Singleton marker: the page publishes at most one check-in at
+      // a time via globeStore.setAnaCheckIn(payload). We rebuild the
+      // pin from scratch whenever the payload changes (cheap — a
+      // single DOM node) and remove it entirely on `null`. The pin
+      // owns its own click handler that hands the payload back to
+      // the page through globeStore.openAnaCheckIn so the modal can
+      // open without React touching imperative map state.
+      globeStore.registerAnaCheckIn((payload) => {
+        if (anaMarkerRef.current) {
+          anaMarkerRef.current.remove();
+          anaMarkerRef.current = null;
+        }
+        if (!payload) return;
+
+        const safeCity = payload.city.replace(/[<>&"']/g, '');
+        const safeState = payload.state.replace(/[<>&"']/g, '');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = styles.anaCheckInWrap;
+        wrapper.style.cursor = 'pointer';
+        // Pulse ring + circular avatar with the hot-pink "Ana ring"
+        // + a violet pill badge "Ana fez check-in em …". The
+        // wrapper itself is the click target, so the whole pin is
+        // tappable — not just the avatar.
+        wrapper.innerHTML = `
+          <span class="${styles.anaPulse}" aria-hidden="true"></span>
+          <span class="${styles.anaPulseB}" aria-hidden="true"></span>
+          <div class="${styles.anaAvatarRing}" role="img" aria-label="Ana Castela fez check-in em ${safeCity}-${safeState}">
+            <img src="/ana-castela.png" alt="" class="${styles.anaAvatar}" />
+          </div>
+          <div class="${styles.anaBadge}">
+            <span class="${styles.anaBadgeDot}" aria-hidden="true"></span>
+            Ana fez check-in em <strong>${safeCity}-${safeState}</strong>
+          </div>
+        `;
+
+        wrapper.addEventListener('click', (e) => {
+          e.stopPropagation();
+          globeStore.openAnaCheckIn(payload);
+          track('ana_checkin_pin_clicked', {
+            checkin_id: payload.id,
+            city: payload.city,
+            state: payload.state,
+          });
+        });
+
+        anaMarkerRef.current = new mapboxgl.Marker({
+          element: wrapper,
+          anchor: 'bottom',
+        })
+          .setLngLat([payload.lng, payload.lat])
+          .addTo(map);
+      });
+
       globeStore.register((center, zoom) => {
         userInteracting = true;
         cancelAnimationFrame(rafId);
@@ -704,6 +765,10 @@ export default function Globe() {
       if (userLocationMarker) userLocationMarker.remove();
       liveUserMarkers.forEach((m) => m.remove());
       liveUserMarkers.clear();
+      if (anaMarkerRef.current) {
+        anaMarkerRef.current.remove();
+        anaMarkerRef.current = null;
+      }
       map.remove();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

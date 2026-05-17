@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import TopBar from '@/components/app/TopBar';
 // FilterTabs no longer rendered in /app's topBar — kept the file in
@@ -35,6 +35,9 @@ import NotificationBell from '@/components/app/NotificationBell';
 // rendered anywhere in /app anymore.
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
+import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
+import { ANA_CHECKINS } from '@/data/anaCheckIns';
+import type { AnaCheckInPayload } from '@/lib/globeStore';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
@@ -246,6 +249,24 @@ export default function AppPage() {
   // out to avoid two sources of truth for the same UI slot.
   const [songIdx, setSongIdx] = useState(0);
 
+  /* ── Ana Castela check-in simulation ─────────────────────────
+   *
+   * Every CHECKIN_INTERVAL_MS the scheduler picks the next city
+   * from ANA_CHECKINS (round-robin) and publishes it to the
+   * globe via globeStore.setAnaCheckIn(payload). The pin stays
+   * on the map until either:
+   *   (a) the user opens + closes the modal — then it lingers
+   *       for CHECKIN_LINGER_MS and auto-clears.
+   *   (b) the next interval ticks and replaces it.
+   *
+   * `nextIndex` is held in a ref so the round-robin cursor
+   * survives re-renders without forcing an effect retrigger.
+   * The first check-in spawns 4 seconds after mount — a tiny
+   * delay so the page has a chance to settle before the
+   * attention-grabbing pin lands. */
+  const [anaModalPayload, setAnaModalPayload] =
+    useState<AnaCheckInPayload | null>(null);
+
   // Asks for browser geolocation on first authenticated load (per session).
   // Server snaps to city centroid + per-user jitter; exact GPS isn't stored.
   useLocationSync();
@@ -314,6 +335,95 @@ export default function AppPage() {
       setShowProfile(true);
     });
   }, []);
+
+  /* ── Ana Castela check-in scheduler ─────────────────────────
+   *
+   * Cadence + linger constants live here so the simulation can
+   * be tuned in one place. When the real backend lands, this
+   * scheduler is what gets replaced by a websocket subscription
+   * pushing the payloads from the server.
+   *
+   *   CHECKIN_INTERVAL_MS — 2 min between new check-ins
+   *   CHECKIN_INITIAL_DELAY_MS — first pin appears after this
+   *   CHECKIN_LINGER_MS — how long the pin stays after the user
+   *                      closes the modal (then auto-clears)
+   */
+  const CHECKIN_INTERVAL_MS = 2 * 60 * 1000;
+  const CHECKIN_INITIAL_DELAY_MS = 4 * 1000;
+  const CHECKIN_LINGER_MS = 60 * 1000;
+
+  // Round-robin cursor + a ref for the auto-clear timer so we
+  // can cancel it if the user re-opens the same check-in within
+  // the linger window.
+  const anaCursorRef = useRef(0);
+  const anaLingerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (ANA_CHECKINS.length === 0) return;
+
+    /** Build a payload from the cursor position + stamp `id` and
+     *  `startedAt`. The id encodes the slot index so reopens
+     *  during the same tick are stable. */
+    const spawn = () => {
+      const idx = anaCursorRef.current % ANA_CHECKINS.length;
+      const template = ANA_CHECKINS[idx];
+      anaCursorRef.current += 1;
+      const payload: AnaCheckInPayload = {
+        id: `ana-${idx}-${Date.now()}`,
+        city: template.city,
+        state: template.state,
+        lng: template.lng,
+        lat: template.lat,
+        caption: template.caption ?? null,
+        media: template.media,
+        startedAt: new Date().toISOString(),
+      };
+      // Spawning a new check-in cancels any pending linger from
+      // the previous one — the new pin takes the slot immediately.
+      if (anaLingerRef.current) {
+        clearTimeout(anaLingerRef.current);
+        anaLingerRef.current = null;
+      }
+      globeStore.setAnaCheckIn(payload);
+    };
+
+    const initTimer = setTimeout(spawn, CHECKIN_INITIAL_DELAY_MS);
+    const interval = setInterval(spawn, CHECKIN_INTERVAL_MS);
+    return () => {
+      clearTimeout(initTimer);
+      clearInterval(interval);
+      if (anaLingerRef.current) clearTimeout(anaLingerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Wire pin-click on the globe → open the AnaCheckIn modal.
+  useEffect(() => {
+    globeStore.registerOpenAnaCheckIn((payload) => {
+      setAnaModalPayload(payload);
+      // If the user reopens during a linger window, cancel the
+      // auto-clear — they're clearly still engaged with this pin.
+      if (anaLingerRef.current) {
+        clearTimeout(anaLingerRef.current);
+        anaLingerRef.current = null;
+      }
+    });
+  }, []);
+
+  /**
+   * Close handler for the AnaCheckInPanel modal. Closes the
+   * panel immediately and starts the 60s linger timer; when it
+   * fires we clear the pin from the globe AND drop the cached
+   * payload from state.
+   */
+  const handleAnaCheckInClose = () => {
+    setAnaModalPayload(null);
+    if (anaLingerRef.current) clearTimeout(anaLingerRef.current);
+    anaLingerRef.current = setTimeout(() => {
+      globeStore.setAnaCheckIn(null);
+      anaLingerRef.current = null;
+    }, CHECKIN_LINGER_MS);
+  };
 
   // Fetch the full profile (identity + fanpoints + streams + now-playing)
   // for whichever user the panel is showing. We fetch own AND other —
@@ -781,6 +891,14 @@ export default function AppPage() {
         onMarkRead={() => {
           if (superchat) void chat.markRead(superchat.id);
         }}
+      />
+
+      {/* Ana Castela check-in modal — opens when the user taps the
+       *  rotating check-in pin on the globe. Driven by globeStore
+       *  via the scheduler effect above. */}
+      <AnaCheckInPanel
+        payload={anaModalPayload}
+        onClose={handleAnaCheckInClose}
       />
       {/* Ranking (SuperfansPanel) opens via the BottomNav crown icon
           — the inline RankingButton that used to sit in the topBar

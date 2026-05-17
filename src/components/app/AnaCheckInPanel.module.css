@@ -1,0 +1,234 @@
+/* ── Ana Castela check-in modal ──
+ *
+ * Sits at z=300 so it covers chat / feed / community panels. The
+ * backdrop is a soft black tint with a heavy blur — same recipe
+ * as the feed comments modal — so the focus snaps to the media
+ * stage. The modal itself is a centered card with a fixed max
+ * width so giant photos don't blow out the viewport on desktop.
+ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: anaBackdropIn 220ms ease both;
+}
+@keyframes anaBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  position: relative;
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(14, 14, 16, 0.96) 0%,
+      rgba(8, 8, 11, 0.96) 50%,
+      rgba(4, 4, 6, 0.97) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 50px 110px -20px rgba(0, 0, 0, 0.9);
+  animation: anaModalIn 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes anaModalIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1);       }
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(236,72,153,0.10) 0%, transparent 100%);
+}
+.headerAvatarWrap {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(from 0deg, #ec4899, #f472b6, #fb7185, #ec4899);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.headerAvatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #0b0b0d;
+}
+.headerPulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236,72,153,0.45) 0%, transparent 70%);
+  animation: anaHeaderPulse 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes anaHeaderPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1);   }
+  50%      { opacity: 0;   transform: scale(1.5); }
+}
+.headerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.headerTitle {
+  font-size: 13.5px;
+  color: #F5F5F7;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+.headerTitle strong {
+  font-weight: 700;
+  color: #fdf2f8;
+}
+.headerTime {
+  font-size: 11px;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.005em;
+}
+.closeBtn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #F5F5F7;
+}
+
+/* ── Media stage ── */
+.mediaStage {
+  position: relative;
+  background: #050507;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  max-height: 60vh;
+  overflow: hidden;
+}
+.media {
+  width: 100%;
+  height: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #000;
+  display: block;
+}
+.mediaEmpty {
+  padding: 60px 20px;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.45);
+}
+
+/* Carousel arrows — only visible while hovering or always on
+ * touch (no hover state). */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #F5F5F7;
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.14s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.arrow:hover {
+  background: rgba(0, 0, 0, 0.75);
+  transform: translateY(-50%) scale(1.06);
+}
+.arrowLeft  { left: 10px;  }
+.arrowRight { right: 10px; }
+
+/* ── Footer (caption + dots) ── */
+.footer {
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.caption {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.85);
+  letter-spacing: -0.005em;
+  white-space: pre-wrap;
+}
+.dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.14s ease;
+}
+.dot:hover {
+  background: rgba(255, 255, 255, 0.36);
+}
+.dotActive {
+  background: #ec4899;
+  transform: scale(1.18);
+}
+.dotActive:hover {
+  background: #f472b6;
+}
+
+@media (max-width: 600px) {
+  .modal {
+    border-radius: 16px;
+  }
+  .mediaStage {
+    min-height: 240px;
+  }
+}
