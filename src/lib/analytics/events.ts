@@ -142,6 +142,15 @@ export interface EventPayloadMap {
   search_result_clicked:   { query_length: number; result_type: string; position: number };
 
   // ── SOCIAL ────────────────────────────────────────────────────
+  /** Heart "aceno" sent from the expanded user marker on the
+   *  Globe map. Fires when the viewer toggles the heart ON. The
+   *  backend POST /api/wave endpoint will land in a follow-up;
+   *  the event is the only paper trail until then. */
+  user_waved:          { target_user_id: string; target_user_name?: string; source: 'globe_marker' | 'profile_panel' };
+  /** Symmetric un-wave — when the viewer toggles the same heart
+   *  OFF. Low importance; useful for distinguishing "changed mind"
+   *  from "engaged" in funnel reports. */
+  user_unwaved:        { target_user_id: string; source: 'globe_marker' | 'profile_panel' };
   creator_followed:    { creator_user_id: string };
   creator_unfollowed:  { creator_user_id: string };
   content_shared:      { content_type: 'post' | 'track' | 'profile'; channel: string };
@@ -262,6 +271,8 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   search_result_clicked: { category: 'search', importance: 'high', description: 'Usuário clicou em um resultado.', trigger: 'Item da lista de resultados ativado.' },
 
   // Social
+  user_waved:         { category: 'social', importance: 'high', description: 'Aceno (heart) enviado via marker no globo ou painel de perfil.', trigger: 'Botão de coração clicado para o estado "liked".', ga4: true },
+  user_unwaved:       { category: 'social', importance: 'low', description: 'Aceno desfeito.', trigger: 'Botão de coração clicado para o estado "unliked".' },
   creator_followed:   { category: 'social', importance: 'high', description: 'Usuário começou a seguir um perfil.', trigger: 'CTA "Seguir" ativado.', ga4: true },
   creator_unfollowed: { category: 'social', importance: 'low', description: 'Usuário deixou de seguir um perfil.', trigger: 'CTA "Seguindo" desfeito.' },
   content_shared:     { category: 'social', importance: 'high', description: 'Conteúdo compartilhado para fora do app.', trigger: 'navigator.share() ou copy-link.', ga4: true },

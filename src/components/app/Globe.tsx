@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
+import { track } from '@/lib/analytics';
 import styles from './Globe.module.css';
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
@@ -612,12 +613,28 @@ export default function Globe() {
                 if (svg) {
                   svg.setAttribute('fill', wasLiked ? 'none' : 'currentColor');
                 }
-                if (!wasLiked && typeof window !== 'undefined') {
-                  window.dispatchEvent(
-                    new CustomEvent('app:user-waved', {
-                      detail: { userId, name: userName },
-                    }),
-                  );
+                // Telemetry — fire user_waved on the on-toggle and
+                // user_unwaved on the off-toggle. `source` lets us
+                // segment heart actions coming from the map vs the
+                // ProfilePanel when that surface also wires waves in.
+                if (wasLiked) {
+                  track('user_unwaved', {
+                    target_user_id: userId,
+                    source: 'globe_marker',
+                  });
+                } else {
+                  track('user_waved', {
+                    target_user_id: userId,
+                    target_user_name: userName,
+                    source: 'globe_marker',
+                  });
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(
+                      new CustomEvent('app:user-waved', {
+                        detail: { userId, name: userName },
+                      }),
+                    );
+                  }
                 }
                 return;
               }
