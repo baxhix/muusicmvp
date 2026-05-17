@@ -308,14 +308,26 @@ jobs:
             # Build the list of services that actually need a
             # pull + restart. `force_all` (manual workflow_dispatch)
             # bypasses the filter and recreates everything.
+            #
+            # NOTE: use `if`/`fi` per check rather than `[…] && …`.
+            # With `set -e`, a failed `[ ]` test (e.g. CHANGED_SOCKET
+            # is "false" when only web changed) returns exit 1, which
+            # propagates and aborts the entire script even though
+            # the LOGIC of the check is "skip this service".
             SERVICES=""
             if [ "${FORCE_ALL:-}" = "true" ]; then
               SERVICES="web socket admin"
               echo "Force-all deploy: pulling + restarting ALL services."
             else
-              [ "${CHANGED_WEB:-}" = "true" ]    && SERVICES="$SERVICES web"
-              [ "${CHANGED_SOCKET:-}" = "true" ] && SERVICES="$SERVICES socket"
-              [ "${CHANGED_ADMIN:-}" = "true" ]  && SERVICES="$SERVICES admin"
+              if [ "${CHANGED_WEB:-}" = "true" ]; then
+                SERVICES="$SERVICES web"
+              fi
+              if [ "${CHANGED_SOCKET:-}" = "true" ]; then
+                SERVICES="$SERVICES socket"
+              fi
+              if [ "${CHANGED_ADMIN:-}" = "true" ]; then
+                SERVICES="$SERVICES admin"
+              fi
             fi
 
             if [ -z "$SERVICES" ]; then
