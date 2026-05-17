@@ -54,39 +54,70 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  /* Vertical spacing handled per-item via `margin-top` (not flex
+   * `gap`) per product feedback: previously the parent's row-gap
+   * still allocated 6px BETWEEN every pair of children even when
+   * a child collapsed to height: 0, leaving a phantom column of
+   * empty slots waiting to be filled on hover. Switching to
+   * margins means hidden items can opt out of the spacing too,
+   * so the resting dock sits tight to the action shortcuts below. */
+  gap: 0;
+}
+
+/* All visible items get 6px breathing room above them (matches the
+ * original `gap`). The first child has no margin so the dock
+ * doesn't get an extra pixel at the top. */
+.item {
+  margin-top: 6px;
+}
+.item:first-child {
+  margin-top: 0;
 }
 
 /* Items past the resting-visible slice are collapsed to zero
- * height + faded out so the right-edge column stays compact most
- * of the time. The dock hover state (.dock:hover .itemHidden)
- * smoothly grows them back into the stack. We keep them in the DOM
- * (rather than render-gating them) so a click target survives even
- * during the unfold animation. */
+ * height AND zero margin-top so they contribute nothing to the
+ * dock's vertical footprint at rest. On hover (or keyboard
+ * focus-within) they grow back to 44px + restore the 6px gap.
+ * Kept in the DOM rather than render-gated so the click target
+ * survives the unfold animation. */
 .itemHidden {
-  /* The base .item is 44px high; collapse to 0 + clip so the
-   * neighbouring gap doesn't survive either. */
   height: 0;
   width: 44px;
+  margin-top: 0;
   opacity: 0;
   pointer-events: none;
   overflow: hidden;
   transform: scale(0.7);
   transition:
     height 220ms cubic-bezier(0.16,1,0.3,1),
+    margin-top 220ms cubic-bezier(0.16,1,0.3,1),
     opacity 180ms ease,
     transform 220ms cubic-bezier(0.16,1,0.3,1);
 }
 .dock:hover .itemHidden,
 .dock:focus-within .itemHidden {
   height: 44px;
+  margin-top: 6px;
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);
 }
-/* When the gap collapses to 0 the parent's row-gap still adds 6px,
- * so stack-gap is offset against the .item height instead. The
- * hidden rows ride along with that gap automatically. */
+
+/* Whole-dock "alive" effect — every visible item (avatars + the
+ * chat/feed/community shortcuts) shifts a touch to the left when
+ * the user hovers anywhere on the dock, so the stack reads as
+ * one body moving together rather than the unfolding rows being
+ * the only thing animating. Items being directly hovered are
+ * excluded via :not(:hover) so the existing per-item scale-up
+ * still wins on the row the cursor is actually over. */
+.dock:hover .item:not(.itemHidden):not(:hover):not(.itemActive),
+.dock:hover .addBtn:not(:hover):not(.dockShortcutActive),
+.dock:hover .dockShortcut:not(:hover):not(.dockShortcutActive),
+.dock:focus-within .item:not(.itemHidden):not(:hover):not(.itemActive),
+.dock:focus-within .addBtn:not(:hover):not(.dockShortcutActive),
+.dock:focus-within .dockShortcut:not(:hover):not(.dockShortcutActive) {
+  transform: translateX(-2px);
+}
 
 /* Base size bumped from 38 → 44 (~+15%) so each avatar reads as a
    first-class affordance, not an afterthought. Hover scales another
