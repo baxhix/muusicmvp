@@ -1,73 +1,51 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { useLocationSync } from '@/hooks/useLocationSync';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useAppShell } from '@/lib/app/AppShellContext';
 import { globeStore } from '@/lib/globeStore';
 import styles from './BottomNav.module.css';
 
-/** Which of the singleton overlays is currently open in /app.
- *  Mirrors the `ActiveOverlay` union in app/page.tsx — kept as a
- *  loose string union here so BottomNav stays decoupled from the
- *  page's local types. The active-dot under each icon lights up
- *  for the matching value.
+/**
+ * Bottom navigation — mounted inside `/app/layout.tsx` so it
+ * persists across every sibling route (chat / comunidades /
+ * superchat / ranking / perfil / u/[id]).
  *
- *  After the mobile refactor every primary surface (chat, feed,
- *  community) has a dedicated slot here, so the union grew to
- *  cover them. Secondary overlays (superfans / playlist /
- *  superchat / notifications) light no dot in this row — they
- *  open from the TopBar cluster on the right side of the screen.
+ * Phase 2 of the route refactor: each primary surface is now a
+ * dedicated route. The nav navigates via `router.push` instead
+ * of toggling `activeOverlay` on a singleton modal coordinator.
+ * Two consequences:
+ *
+ *   1. Active-state lights up from `pathname` (URL is the truth)
+ *      — opening Chat now changes the URL to /app/chat, the
+ *      back button works, the route is deep-linkable.
+ *
+ *   2. Feed is the only nav slot still backed by a non-routed
+ *      surface (it's a bottom-sheet over the map). It continues
+ *      to fire the `app:toggle-feed` CustomEvent; its active
+ *      state is read from `useAppShell().feedOpen` which the
+ *      provider mirrors from the panel's own events.
+ *
+ * Unread DM count comes from the same provider so the red badge
+ * stays accurate even when the user is on a non-chat route.
  */
-export type BottomNavActiveOverlay =
-  | null
-  | 'superfans'
-  | 'playlist'
-  | 'superchat'
-  | 'notifications'
-  | 'chat'
-  | 'community'
-  | 'feed'
-  | 'profile';
-
-interface BottomNavProps {
-  onProfileOpen?: () => void;
-  /** Toggle / open the conversations sidebar (DMs + group). */
-  onChatOpen?: () => void;
-  /** Toggle / open the communities forum panel. */
-  onCommunityOpen?: () => void;
-  /** Open the feed panel — fires `app:toggle-feed` since the
-   *  FeedPanel owns its own minimized/open state internally. */
-  onFeedToggle?: () => void;
-  /** Which overlay is currently open — drives the active-dot under
-   *  the matching nav icon so the user always knows which modal is
-   *  on screen. Null when no overlay is open (only the map slot may
-   *  still light up via pathname). */
-  activeOverlay?: BottomNavActiveOverlay;
-  /** True when the FeedPanel is in its open (non-minimized) state.
-   *  Drives the Feed slot's active-dot independently of `activeOverlay`
-   *  because the feed is a non-modal bottom-sheet, not a singleton. */
-  feedOpen?: boolean;
-  /** Unread DM count — drives the red badge on the Chat slot. */
-  chatUnreadCount?: number;
-}
-
-export default function BottomNav({
-  onProfileOpen,
-  onChatOpen,
-  onCommunityOpen,
-  onFeedToggle,
-  activeOverlay = null,
-  feedOpen = false,
-  chatUnreadCount = 0,
-}: BottomNavProps = {}) {
+export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { feedOpen, chatUnreadCount, locationSync } = useAppShell();
 
   const { user } = useAuth();
-  const { status, request } = useLocationSync();
+  const { status, request } = locationSync;
   const hasCoords = user?.lat != null && user?.lng != null;
   const locating = status === 'requesting';
 
   const handleMapClick = () => {
+    // If we're not on /app, go there first. Otherwise center the
+    // map on the user (or ask for location if we don't have it).
+    if (pathname !== '/app') {
+      router.push('/app');
+      return;
+    }
     if (hasCoords && user) {
       globeStore.flyTo([user.lng as number, user.lat as number], 11);
     } else {
@@ -77,11 +55,20 @@ export default function BottomNav({
 
   const mapTooltip = locating
     ? 'Localizando…'
-    : hasCoords
-      ? 'Centralizar no meu local'
-      : 'Compartilhar localização';
+    : pathname !== '/app'
+      ? 'Voltar pro mapa'
+      : hasCoords
+        ? 'Centralizar no meu local'
+        : 'Compartilhar localização';
 
-  const onMap = pathname === '/app' && activeOverlay === null && !feedOpen;
+  // Active-state derivation — URL is the source of truth for
+  // routed surfaces; the map slot only lights up when we're on
+  // `/app` AND no overlay (e.g. Feed) is intercepting it.
+  const onMap = pathname === '/app' && !feedOpen;
+  const onChat = pathname.startsWith('/app/chat');
+  const onCommunity = pathname.startsWith('/app/comunidades');
+  const onProfile =
+    pathname.startsWith('/app/perfil') || pathname.startsWith('/app/u/');
 
   return (
     <nav className={styles.nav} aria-label="Navegação principal">
@@ -108,12 +95,22 @@ export default function BottomNav({
         </button>
 
         {/* Feed — toggles the bottom-sheet via the `app:toggle-feed`
-            CustomEvent the FeedPanel listens to. Active-dot lights
-            up while the panel is in its open (non-minimized) state. */}
+            CustomEvent the FeedPanel listens to. Feed is a non-modal
+            drawer that overlays the map, so it stays an in-page
+            surface rather than a route. */}
         <button
           type="button"
           className={`${styles.item} ${feedOpen ? styles.itemActive : ''}`}
-          onClick={onFeedToggle}
+          onClick={() => {
+            // If we're not on the map, drop back to /app first so
+            // the FeedPanel actually exists in the tree to toggle.
+            if (pathname !== '/app') {
+              router.push('/app');
+            }
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('app:toggle-feed'));
+            }
+          }}
           aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
           data-tooltip={feedOpen ? 'Fechar feed' : 'Feed'}
         >
@@ -125,12 +122,12 @@ export default function BottomNav({
           <span className={styles.label}>Feed</span>
         </button>
 
-        {/* Chat — opens ConversationsSidebar. The unread-count
+        {/* Chat — opens ConversationsSidebar route. The unread-count
             badge sits at the top-right of the icon when > 0. */}
         <button
           type="button"
-          className={`${styles.item} ${styles.itemCenter} ${activeOverlay === 'chat' ? styles.itemActive : ''}`}
-          onClick={onChatOpen}
+          className={`${styles.item} ${styles.itemCenter} ${onChat ? styles.itemActive : ''}`}
+          onClick={() => router.push('/app/chat')}
           aria-label="Abrir conversas"
           data-tooltip="Chat"
         >
@@ -153,11 +150,11 @@ export default function BottomNav({
           <span className={styles.dot} aria-hidden="true" />
         </button>
 
-        {/* Comunidade — opens CommunityPanel. */}
+        {/* Comunidade — opens CommunityPanel route. */}
         <button
           type="button"
-          className={`${styles.item} ${activeOverlay === 'community' ? styles.itemActive : ''}`}
-          onClick={onCommunityOpen}
+          className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
+          onClick={() => router.push('/app/comunidades')}
           aria-label="Abrir comunidades"
           data-tooltip="Comunidade"
         >
@@ -181,12 +178,13 @@ export default function BottomNav({
           <span className={styles.label}>Comunidade</span>
         </button>
 
-        {/* Perfil — opens ProfilePanel. The avatar (or fallback
-            icon) reads as the "me" affordance. */}
+        {/* Perfil — opens ProfilePanel route (own profile). The
+            `/app/u/[id]` variant is reached from globe pin clicks
+            and from contact rows inside other panels. */}
         <button
           type="button"
-          className={`${styles.item} ${activeOverlay === 'profile' ? styles.itemActive : ''}`}
-          onClick={onProfileOpen}
+          className={`${styles.item} ${onProfile ? styles.itemActive : ''}`}
+          onClick={() => router.push('/app/perfil')}
           aria-label="Abrir perfil"
           data-tooltip="Perfil"
         >

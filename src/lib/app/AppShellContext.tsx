@@ -12,6 +12,12 @@ import {
   type SetStateAction,
 } from 'react';
 import { useChatLiveWithFakes } from '@/hooks/useChatLiveWithFakes';
+import { useLiveUsers } from '@/hooks/useLiveUsers';
+import { useLocationSync } from '@/hooks/useLocationSync';
+import {
+  FAKE_ANA_USER_ID,
+  FAKE_CENTRAL_USER_ID,
+} from '@/lib/fakeAna';
 
 /**
  * App-shell context — the seam between the persistent layout
@@ -52,10 +58,24 @@ export type ActiveOverlay =
   | 'profile';
 
 type ChatLive = ReturnType<typeof useChatLiveWithFakes>;
+type LiveUsers = ReturnType<typeof useLiveUsers>;
+type LocationSync = ReturnType<typeof useLocationSync>;
 
 interface AppShellValue {
   /** Live chat state (conversations, messages, typing, send, etc.). */
   chat: ChatLive;
+  /** Online users + total registered count. Single subscription
+   *  for the whole shell — Globe pushes to its source, panels
+   *  read from it, no duplicated polling. */
+  liveUsers: LiveUsers['users'];
+  totalRegistered: LiveUsers['totalRegistered'];
+  /** Stable Set of currently-online user ids (live presence +
+   *  fake Ana/Central). Used by ConversationsSidebar to paint the
+   *  green presence dot on contact rows. */
+  onlineUserIds: Set<string>;
+  /** Geolocation sync — fired once at shell mount, exposed for
+   *  the BottomNav's "centralizar no meu local" button. */
+  locationSync: LocationSync;
   /** Which singleton overlay is currently open. */
   activeOverlay: ActiveOverlay;
   /** Raw setter — accepts both direct values and the React-style
@@ -93,7 +113,23 @@ const AppShellContext = createContext<AppShellValue | null>(null);
  */
 export function AppShellProvider({ children }: { children: ReactNode }) {
   const chat = useChatLiveWithFakes();
+  const live = useLiveUsers();
+  const locationSync = useLocationSync();
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
+
+  // Online ids — fake Ana/Central are always online (VIPs), real
+  // online users come from the live subscription. Stable Set
+  // identity by joining ids so consumers' memo'd deps work.
+  const onlineUserIds = useMemo(
+    () =>
+      new Set<string>([
+        ...live.users.map((u) => u.id),
+        FAKE_ANA_USER_ID,
+        FAKE_CENTRAL_USER_ID,
+      ]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [live.users.map((u) => u.id).join('|')],
+  );
 
   // ── Helper setters — boolean-flavoured shims that preserve
   // the call shape the previous page.tsx used. They live in the
@@ -163,6 +199,10 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const value: AppShellValue = useMemo(
     () => ({
       chat,
+      liveUsers: live.users,
+      totalRegistered: live.totalRegistered,
+      onlineUserIds,
+      locationSync,
       activeOverlay,
       setActiveOverlay,
       setShowSuperfans,
@@ -175,6 +215,10 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     }),
     [
       chat,
+      live.users,
+      live.totalRegistered,
+      onlineUserIds,
+      locationSync,
       activeOverlay,
       setShowSuperfans,
       setShowPlaylist,

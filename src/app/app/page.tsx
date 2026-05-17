@@ -9,24 +9,14 @@ import TopBar from '@/components/app/TopBar';
 // the codebase for potential re-introduction without an extra round
 // of cleanup.
 import LiveChatStack from '@/components/app/LiveChatStack';
-import LiveChatPanel from '@/components/app/LiveChatPanel';
-import ConversationsSidebar from '@/components/app/ConversationsSidebar';
-import CommunityPanel from '@/components/app/CommunityPanel';
-import GroupMembersPanel from '@/components/app/GroupMembersPanel';
 import ArtistBox from '@/components/app/ArtistBox';
-import UserPicker from '@/components/app/UserPicker';
 import NowPlaying from '@/components/app/NowPlaying';
 import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
-import BottomNav from '@/components/app/BottomNav';
 import FeedPanel from '@/components/app/FeedPanel';
-import ProfilePanel, { type ProfileUser } from '@/components/app/ProfilePanel';
-import SuperfansPanel from '@/components/app/SuperfansPanel';
 // SideBar removed from this screen — logo strip is no longer rendered.
 import Onboarding from '@/components/app/Onboarding';
 // LocateButton removed from this screen — geo prompt is no longer rendered.
-import EditProfileModal from '@/components/app/EditProfileModal';
-import DeleteAccountModal from '@/components/app/DeleteAccountModal';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
 // HeroOrb retired entirely per product feedback. The component
@@ -34,7 +24,6 @@ import NotificationBell from '@/components/app/NotificationBell';
 // the team wants to revisit a hero animation later, but it's not
 // rendered anywhere in /app anymore.
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
-import SuperchatPanel from '@/components/app/SuperchatPanel';
 import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
 import { ANA_CHECKINS } from '@/data/anaCheckIns';
 import { ANA_SHOWS } from '@/data/anaShows';
@@ -47,19 +36,9 @@ import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 
 import { useAppShell } from '@/lib/app/AppShellContext';
-import {
-  FAKE_ANA_CONVERSATION_ID,
-  FAKE_ANA_NOW_PLAYING,
-  FAKE_ANA_USER_ID,
-  FAKE_CENTRAL_CONVERSATION_ID,
-  FAKE_CENTRAL_NOW_PLAYING,
-  FAKE_CENTRAL_USER_ID,
-} from '@/lib/fakeAna';
-import { useLocationSync } from '@/hooks/useLocationSync';
-import { useLiveUsers } from '@/hooks/useLiveUsers';
+import { FAKE_ANA_USER_ID, FAKE_CENTRAL_USER_ID } from '@/lib/fakeAna';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUniverse } from '@/lib/universe/UniverseContext';
 import { globeStore } from '@/lib/globeStore';
 import { useRouter } from 'next/navigation';
@@ -97,24 +76,11 @@ export default function AppPage() {
       router.replace('/app/select');
     }
   }, [universeHydrated, authUser, universeId, router]);
-  const { users: liveUsers, totalRegistered } = useLiveUsers();
-  // Stable Set of currently-online user ids, passed to LiveChatStack
-  // so each avatar can render a green/gray presence dot. Memoized so
-  // the child doesn't see a new reference on every render — only
-  // when the actual roster changes (by ids list).
-  const onlineUserIds = useMemo(
-    // Both fake contacts (Ana + Central) always read as online — VIP
-    // affordances, otherwise their dashes would misleadingly look
-    // gray when they're constantly active.
-    () =>
-      new Set([
-        ...liveUsers.map((u) => u.id),
-        FAKE_ANA_USER_ID,
-        FAKE_CENTRAL_USER_ID,
-      ]),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [liveUsers.map((u) => u.id).join('|')],
-  );
+  // Live presence + onlineUserIds + total registered come from the
+  // shell provider (Phase 2 hoist) so the websocket subscription
+  // isn't duplicated by every sibling route. LiveChatStack still
+  // wants the Set form for the green-dot indicator.
+  const { liveUsers, totalRegistered, onlineUserIds } = shell;
   const [playerExpanded, setPlayerExpanded] = useState(false);
   // Default to `horizontal` so the player + ArtistBox share the
   // same 296px column width at left:68. Mini collapses the player
@@ -122,46 +88,18 @@ export default function AppPage() {
   // mismatched at rest; horizontal is also the more informative
   // resting state (track title + artist + transport visible).
   const [playerSize, setPlayerSize] = useState<'mini' | 'horizontal' | 'expanded' | 'video'>('horizontal');
-  const [showProfile, setShowProfile] = useState(false);
-  /**
-   * Which user the profile panel currently displays. `null` means
-   * "the logged-in user" — that's the default whenever the panel is
-   * opened via the navbar/topbar. Set to another id when the user
-   * clicks a presence pin on the globe; the ProfilePanel then renders
-   * that user's data (fetched via useUserProfile below) with the
-   * other-user button set (Acenar / Enviar mensagem).
-   */
-  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
-  /** Singleton overlay coordinator. Only one of these surfaces can
-   *  be open at a time — opening any of them auto-closes whichever
-   *  is currently open. Notifications is included here too even
-   *  though the component manages its own visible state, because
-   *  we pass `open` + `onOpenChange` as a controlled prop.
-   *
-   *  'chat' and 'community' both open in the right column slot
-   *  (same geometry as FeedPanel). Per product feedback they sit
-   *  ABOVE the Feed via z-index — the Feed stays mounted in the
-   *  background and is simply covered while one of them is open.
-   *  Singleton-only-among-overlays still applies, so opening Chat
-   *  closes Community and vice-versa. */
-  // Active overlay coordinator — lifted to AppShellProvider.
-  // Boolean shims live in the provider too, so the call sites
-  // here use them directly without re-creating the state machine.
-  const {
-    activeOverlay,
-    setActiveOverlay,
-    setShowSuperfans,
-    setShowPlaylist,
-    setShowSuperchat,
-    setShowChat,
-    setShowCommunity,
-  } = shell;
-  const showSuperfans     = activeOverlay === 'superfans';
+  // Profile UI is now a route — `/app/perfil` (own) + `/app/u/[id]`
+  // (other). The Globe's pin-click handler below routes to the
+  // matching path instead of toggling local state. Phase 2.
+  // Only modals remaining as singleton-overlay coordinated state:
+  //   - Notifications (NotificationBell controlled component)
+  //   - Playlist (PlaylistModal)
+  // All other surfaces (chat / community / superchat / ranking /
+  // profile) are routes now — opening them is `router.push`, the
+  // active-overlay slot stays null for those.
+  const { activeOverlay, setActiveOverlay, setShowPlaylist } = shell;
   const showPlaylist      = activeOverlay === 'playlist';
-  const showSuperchat     = activeOverlay === 'superchat';
   const showNotifications = activeOverlay === 'notifications';
-  const showChat          = activeOverlay === 'chat';
-  const showCommunity     = activeOverlay === 'community';
 
   // FeedPanel's open/min state — lifted to AppShellProvider, which
   // listens to `app:feed-state-change` and exposes the boolean here.
@@ -186,27 +124,10 @@ export default function AppPage() {
     return () => window.removeEventListener('app:user-waved', onUserWaved);
   }, []);
 
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [showUserPicker, setShowUserPicker] = useState(false);
-  // Separate from showUserPicker because the UserPicker renders in
-  // a different mode (with name field + multi-select + Create CTA).
-  // Both pickers share the same modal component, just keyed by which
-  // flag is true.
-  const [showGroupPicker, setShowGroupPicker] = useState(false);
-  // Members roster for the currently-active group. Driven by the
-  // kebab "Ver membros" item; closed via X or after the user leaves.
-  const [showGroupMembers, setShowGroupMembers] = useState(false);
-  // When the kebab "Adicionar membro" trigger is fired we open the
-  // SingleProps UserPicker variant. Reuses the same modal that
-  // starts DMs; on pick we POST /members instead of openDmWith.
-  const [addingMemberToGroup, setAddingMemberToGroup] = useState<string | null>(null);
-  // Full-list conversations drawer — opens from the dock's "ver
-  // tudo" overflow trigger. The dock itself only shows the latest
-  // few DMs so the user can reach the rest without scrolling.
-  // ConversationsSidebar visibility is now part of the activeOverlay
-  // singleton above (showChat / setShowChat) — kept the local name
-  // out to avoid two sources of truth for the same UI slot.
+  // Chat-related sub-modals (UserPicker, GroupMembersPanel) +
+  // EditProfileModal / DeleteAccountModal were moved into their
+  // respective route pages (/app/chat, /app/perfil). page.tsx
+  // now owns just the map-local state.
   const [songIdx, setSongIdx] = useState(0);
 
   /* ── Ana Castela check-in simulation ─────────────────────────
@@ -227,9 +148,9 @@ export default function AppPage() {
   const [anaModalPayload, setAnaModalPayload] =
     useState<AnaCheckInPayload | null>(null);
 
-  // Asks for browser geolocation on first authenticated load (per session).
-  // Server snaps to city centroid + per-user jitter; exact GPS isn't stored.
-  useLocationSync();
+  // Geolocation sync now fires once inside the AppShellProvider.
+  // No-op here intentionally — kept this comment block as a
+  // pointer for future maintainers grepping for the old call.
 
   // Current track of the logged-in player — drives the audio-bars indicator
   // on the "Você" badge. Source of truth is `songIdx` controlled here and
@@ -288,13 +209,16 @@ export default function AppPage() {
     globeStore.setTotalRegistered(totalRegistered);
   }, [totalRegistered]);
 
-  // Wire pin-click on the globe → open that user's profile.
+  // Wire pin-click on the globe → route to that user's profile.
+  // Profile is a dedicated route now (Phase 2), so we navigate
+  // instead of toggling a local modal. The handler captures
+  // `router` in the effect's closure — it stays stable from
+  // useRouter() so we don't need to add it as a dep.
   useEffect(() => {
     globeStore.registerOpenUserProfile((userId) => {
-      setViewingUserId(userId);
-      setShowProfile(true);
+      router.push(`/app/u/${userId}`);
     });
-  }, []);
+  }, [router]);
 
   // Publish the static list of upcoming Ana shows once on mount.
   // Each one becomes a small date-chip pin on the globe; the
@@ -394,86 +318,10 @@ export default function AppPage() {
     }, CHECKIN_LINGER_MS);
   };
 
-  // Fetch the full profile (identity + fanpoints + streams + now-playing)
-  // for whichever user the panel is showing. We fetch own AND other —
-  // both routes through the same endpoint so the same data shape feeds
-  // both the own-profile and other-user-profile renders.
-  const profileTargetId =
-    viewingUserId ?? (showProfile ? authUser?.id ?? null : null);
-  const { profile: viewingProfile } = useUserProfile(profileTargetId);
-
-  // Build the ProfileUser shape consumed by ProfilePanel. When the
-  // remote profile has loaded, we use its values (fanpoints, streams,
-  // city, etc.); otherwise we fall back to the local auth record so the
-  // first paint isn't empty. The flag `isOwnProfile` is derived from
-  // whether viewingUserId points at the logged-in user.
-  const isOwnProfile =
-    viewingUserId === null || viewingUserId === (authUser?.id ?? '__never__');
-  const displayedUser: ProfileUser = viewingProfile
-    ? {
-        id: viewingProfile.id,
-        name:
-          viewingProfile.name?.trim() ||
-          viewingProfile.email?.split('@')[0] ||
-          'Anônimo',
-        city: viewingProfile.city ?? '—',
-        state: viewingProfile.countryCode ?? '',
-        streams: viewingProfile.streams,
-        fanpoints: viewingProfile.fanpoints,
-        img:
-          viewingProfile.avatarUrl ??
-          `https://i.pravatar.cc/72?u=${viewingProfile.id}`,
-        isOnline: viewingProfile.isOnline,
-        nowPlaying: viewingProfile.nowPlaying
-          ? {
-              title: viewingProfile.nowPlaying.title,
-              artist: viewingProfile.nowPlaying.artist,
-            }
-          : undefined,
-      }
-    : {
-        id: authUser?.id ?? 'me',
-        name: authUser?.name ?? authUser?.email?.split('@')[0] ?? 'Você',
-        city: authUser?.city ?? '—',
-        state: authUser?.countryCode ?? '',
-        streams: 0,
-        fanpoints: 0,
-        img:
-          authUser?.avatarUrl ??
-          `https://i.pravatar.cc/72?u=${authUser?.id ?? 'me'}`,
-        isOnline: true,
-        nowPlaying: undefined,
-      };
-
-  const activeConversation =
-    chat.conversations.find((c) => c.id === chat.activeId) ?? null;
-
-  // Pull the live now-playing for the OTHER user in the active DM —
-  // drives the "now playing" line in the chat panel header. When the
-  // user is offline or hasn't been seen with a track, this is null;
-  // LiveChatPanel falls back to a deterministic mock for that case.
-  // SPECIAL CASES: the fake Ana + Central conversations always show
-  // their featured tracks regardless of presence.
-  const activeOtherNowPlaying = (() => {
-    if (activeConversation?.id === FAKE_ANA_CONVERSATION_ID) {
-      return FAKE_ANA_NOW_PLAYING;
-    }
-    if (activeConversation?.id === FAKE_CENTRAL_CONVERSATION_ID) {
-      return FAKE_CENTRAL_NOW_PLAYING;
-    }
-    const otherId = activeConversation?.otherUser?.id;
-    if (!otherId) return null;
-    const liveOther = liveUsers.find((u) => u.id === otherId);
-    if (!liveOther?.nowPlaying) return null;
-    return {
-      title: liveOther.nowPlaying.title,
-      artist: liveOther.nowPlaying.artist,
-    };
-  })();
-
   // Superchat lives in the same conversation list as DMs (type='group').
-  // Pluck it so the trigger pill can show its unread count badge and the
-  // panel can call markRead through useChatLive.
+  // Pluck it so the trigger pill (top-right) can show its unread badge.
+  // The full Superchat surface is /app/superchat (route), so we don't
+  // need to thread the conversation any further than this.
   const superchat = chat.conversations.find((c) => c.type === 'group') ?? null;
 
   return (
@@ -490,9 +338,12 @@ export default function AppPage() {
       {/* App Shell */}
       <div className={styles.shell}>
         <TopBar
-          onProfileOpen={() => setShowProfile(true)}
-          onEditProfileOpen={() => setShowEditProfile(true)}
-          onDeleteAccountOpen={() => setShowDeleteAccount(true)}
+          onProfileOpen={() => router.push('/app/perfil')}
+          /* Edit + delete modals now live inside /app/perfil; the
+             topbar avatar just routes there and lets the user
+             initiate them from the panel. */
+          onEditProfileOpen={() => router.push('/app/perfil')}
+          onDeleteAccountOpen={() => router.push('/app/perfil')}
         />
         {/* <StatusToggle /> */}
 
@@ -544,10 +395,9 @@ export default function AppPage() {
 
             <button
               type="button"
-              className={`${styles.shortcutBtn} ${showSuperfans ? styles.shortcutBtnActive : ''}`}
-              onClick={() => setShowSuperfans(!showSuperfans)}
+              className={styles.shortcutBtn}
+              onClick={() => router.push('/app/ranking')}
               aria-label="Superfãs"
-              aria-pressed={showSuperfans}
               title="Superfãs (Ranking)"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -591,29 +441,9 @@ export default function AppPage() {
               are owned by <Globe /> via globeStore.setLiveUsers. */}
           <FloatingUsers />
         </div>
-
-        <BottomNav
-          /* Mobile-first primary navigation:
-             Mapa | Feed | Chat | Comunidade | Perfil. Every
-             primary surface gets its own slot — no overlap with
-             the top-right secondary cluster (notif / playlist /
-             superfans / superchat) and no redundancy with the
-             ConversationsSidebar / CommunityPanel trigger areas. */
-          onChatOpen={() => setShowChat(!showChat)}
-          onCommunityOpen={() => setShowCommunity(!showCommunity)}
-          onFeedToggle={() => {
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('app:toggle-feed'));
-            }
-          }}
-          onProfileOpen={() => setShowProfile(true)}
-          activeOverlay={
-            showProfile && !viewingUserId ? 'profile' : activeOverlay
-          }
-          feedOpen={feedOpen}
-          /* Memoized DM-only unread sum from AppShellProvider. */
-          chatUnreadCount={shell.chatUnreadCount}
-        />
+        {/* BottomNav now lives in /app/layout.tsx so it persists
+            across every sibling route (Phase 2). page.tsx is just
+            the map landing — no nav rendering here anymore. */}
       </div>
 
       {/* Superchat entry point — top-right slot, anchored to the
@@ -623,7 +453,7 @@ export default function AppPage() {
           feedback ("acima do box do feed"). */}
       <div className={styles.superchatTriggerSlot}>
         <SuperchatTrigger
-          onClick={() => setShowSuperchat(true)}
+          onClick={() => router.push('/app/superchat')}
           unreadCount={superchat?.unreadCount ?? 0}
         />
       </div>
@@ -659,213 +489,23 @@ export default function AppPage() {
         onlineUserIds={onlineUserIds}
         onOpen={chat.open}
       />
-      <ConversationsSidebar
-        open={showChat}
-        conversations={chat.conversations}
-        activeId={chat.activeId}
-        onlineUserIds={onlineUserIds}
-        onClose={() => setShowChat(false)}
-        onOpenConversation={chat.open}
-        onNewConversation={() => {
-          setShowChat(false);
-          setShowUserPicker(true);
-        }}
-        onNewGroup={() => {
-          setShowChat(false);
-          setShowGroupPicker(true);
-        }}
-      />
-      {/* Comunidade / Fórum — placeholder shell rendered in the same
-          right-column slot. Opens via the dock's "Comunidade"
-          shortcut (CustomEvent `app:open-community`). Actual forum
-          functionality ships in a follow-up. */}
-      <CommunityPanel
-        open={showCommunity}
-        onClose={() => setShowCommunity(false)}
-      />
-      <LiveChatPanel
-        conversation={activeConversation}
-        messages={chat.messages}
-        loading={chat.loadingMessages}
-        otherNowPlaying={activeOtherNowPlaying}
-        onClose={chat.close}
-        onSend={chat.send}
-        onReact={chat.react}
-        onOpenMembers={() => setShowGroupMembers(true)}
-        onLeaveGroup={async () => {
-          // Direct call — confirm + DELETE the caller's membership.
-          // After success, close the chat panel so the user lands
-          // back on the map / feed.
-          if (!activeConversation || !authUser) return;
-          if (!window.confirm('Sair desse grupo? Você não receberá mais mensagens dele.')) return;
-          try {
-            const res = await fetch(
-              `/api/conversations/${activeConversation.id}/members/${authUser.id}`,
-              { method: 'DELETE', credentials: 'include' },
-            );
-            if (!res.ok) {
-              window.alert('Não foi possível sair do grupo.');
-              return;
-            }
-            chat.close();
-          } catch (err) {
-            console.error('leave group failed:', err);
-          }
-        }}
-      />
-
-      {/* Members roster — opened from the kebab "Ver membros" entry
-          when the active conversation is a group. */}
-      <GroupMembersPanel
-        open={showGroupMembers && activeConversation?.type === 'group'}
-        conversationId={activeConversation?.type === 'group' ? activeConversation.id : null}
-        currentUserId={authUser?.id ?? ''}
-        myRole={activeConversation?.myRole ?? null}
-        onClose={() => setShowGroupMembers(false)}
-        onAddMember={() => {
-          if (!activeConversation) return;
-          setAddingMemberToGroup(activeConversation.id);
-        }}
-        onLeft={() => {
-          // After the user leaves: close everything + refresh list
-          setShowGroupMembers(false);
-          chat.close();
-          void chat.refreshConversations();
-        }}
-        onImageUpdated={() => {
-          // Pull a fresh conversations list so the dock + sidebar +
-          // chat header pick up the new imageUrl. The members panel
-          // itself doesn't need a refresh since the image isn't in
-          // its payload.
-          void chat.refreshConversations();
-        }}
-      />
-      <UserPicker
-        open={showUserPicker}
-        onClose={() => setShowUserPicker(false)}
-        onPick={(uid) => chat.openDmWith(uid)}
-      />
-      <UserPicker
-        open={showGroupPicker}
-        mode="group"
-        onClose={() => setShowGroupPicker(false)}
-        onCreateGroup={async ({ name, memberIds }) => {
-          await chat.createGroup({ name, memberIds });
-          setShowGroupPicker(false);
-        }}
-      />
-
-      {/* "Adicionar membro" — single-pick UserPicker that POSTs to
-          /api/conversations/:id/members. Open only while
-          addingMemberToGroup carries the active conversation id. */}
-      <UserPicker
-        open={addingMemberToGroup !== null}
-        onClose={() => setAddingMemberToGroup(null)}
-        onPick={async (uid) => {
-          const convId = addingMemberToGroup;
-          if (!convId) return;
-          try {
-            const res = await fetch(
-              `/api/conversations/${convId}/members`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ userId: uid }),
-              },
-            );
-            if (!res.ok) {
-              const data = (await res.json().catch(() => ({}))) as { error?: string };
-              window.alert(
-                data.error === 'user_not_found'
-                  ? 'Usuário não encontrado.'
-                  : 'Não foi possível adicionar o membro.',
-              );
-              return;
-            }
-            // Refresh the conversations list so the dock/sidebar
-            // pick up the new memberCount + any related metadata.
-            // The members panel itself re-fetches on open via its
-            // useEffect; toggle to force a fresh fetch.
-            setAddingMemberToGroup(null);
-            setShowGroupMembers(false);
-            setTimeout(() => setShowGroupMembers(true), 30);
-            void chat.refreshConversations();
-          } catch (err) {
-            console.error('add member failed:', err);
-          }
-        }}
-      />
+      {/* ConversationsSidebar, CommunityPanel, LiveChatPanel,
+       *  GroupMembersPanel, UserPicker, SuperchatPanel,
+       *  SuperfansPanel, ProfilePanel, EditProfileModal +
+       *  DeleteAccountModal all moved into their dedicated routes
+       *  (Phase 2). Page.tsx just renders the map landing now. */}
       <ListeningTogether playerExpanded={playerExpanded} playerSize={playerSize} />
 
-      {showProfile
-        ? <ProfilePanel
-            user={displayedUser}
-            isOwnProfile={isOwnProfile}
-            onClose={() => {
-              setShowProfile(false);
-              // Reset to "own" so the next navbar open lands on the
-              // logged user, not the last-viewed other user.
-              setViewingUserId(null);
-            }}
-            onEditProfile={() => setShowEditProfile(true)}
-            onOpenMessages={() => setShowSuperchat(true)}
-            onSendMessage={(uid) => {
-              setShowProfile(false);
-              setViewingUserId(null);
-              chat.openDmWith(uid);
-            }}
-            onWave={(uid, label) => {
-              // For now, only client-side acknowledgment — backend
-              // event will land in a follow-up. The toast lives on
-              // the chat thread surface so the user sees it without
-              // an additional UI primitive.
-              console.log(`wave → ${uid} (${label})`);
-            }}
-            onReport={(uid, label) => {
-              console.log(`report → ${uid} (${label})`);
-            }}
-          />
-        : <FeedPanel />
-      }
-
-      <SuperfansPanel
-        open={showSuperfans}
-        onClose={() => setShowSuperfans(false)}
-      />
-
-      <EditProfileModal
-        open={showEditProfile}
-        onClose={() => setShowEditProfile(false)}
-      />
-
-      <DeleteAccountModal
-        open={showDeleteAccount}
-        onClose={() => setShowDeleteAccount(false)}
-        userName="Ana Beatriz"
-      />
+      {/* Map landing's "right column" — the feed panel sits over
+       *  the globe as a bottom-sheet. Other routes own their own
+       *  content; nothing else renders here. */}
+      <FeedPanel />
 
       <PlaylistModal
         open={showPlaylist}
         onClose={() => setShowPlaylist(false)}
         currentIdx={songIdx}
         onSelect={setSongIdx}
-      />
-
-      {/* LocateButton (bottom-left geolocation pill) removed per
-          product feedback — it competed with the player for the
-          bottom-left corner and most users now share location at
-          onboarding. Re-add via this same spot if it comes back. */}
-
-      {/* NotificationBell + SuperchatTrigger are rendered inline inside the
-          topBar so they don't overlap the username at the top-right. The
-          SuperchatPanel that they open stays here so it overlays everything. */}
-      <SuperchatPanel
-        open={showSuperchat}
-        onClose={() => setShowSuperchat(false)}
-        onMarkRead={() => {
-          if (superchat) void chat.markRead(superchat.id);
-        }}
       />
 
       {/* Ana Castela check-in modal — opens when the user taps the
