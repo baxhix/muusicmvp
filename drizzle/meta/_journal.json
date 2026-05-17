@@ -120,6 +120,13 @@
       "when": 1778940000000,
       "tag": "0017_reward_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1778960000000,
+      "tag": "0018_communities",
+      "breakpoints": true
     }
   ]
 }

@@ -363,3 +363,63 @@ export interface ApiActivityItem {
   trackArtist: string | null;
   conversationSlug: string | null;
 }
+
+/* ── Communities (forum) ───────────────────────────────────── */
+
+export interface ApiCommunityCard {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  creatorId: string;
+  memberCount: number;
+  topicCount: number;
+  lastActivityAt: string;
+  createdAt: string;
+  isMember: boolean;
+  isTrending: boolean;
+}
+
+export interface ApiCommunityDetail extends ApiCommunityCard {
+  isCreator: boolean;
+}
+
+export interface ApiCommunityMember {
+  userId: string;
+  name: string | null;
+  email: string;
+  avatarUrl: string | null;
+  joinedAt: string;
+  isCreator: boolean;
+}
+
+export interface ApiCommunityTopic {
+  id: string;
+  communityId: string;
+  title: string;
+  body: string | null;
+  authorId: string | null;
+  authorName: string | null;
+  authorEmail: string | null;
+  authorAvatar: string | null;
+  commentCount: number;
+  createdAt: string;
+  deletedAt: string | null;
+}
+
+export interface ApiCommunityTopicComment {
+  id: string;
+  topicId: string;
+  parentCommentId: string | null;
+  body: string;
+  createdAt: string;
+  deletedAt: string | null;
+  author: {
+    id: string | null;
+    name: string | null;
+    email: string | null;
+    avatarUrl: string | null;
+  };
+}
+

@@ -10,6 +10,7 @@ import {
   primaryKey,
   index,
   unique,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
@@ -535,6 +536,136 @@ export const siteTags = pgTable('site_tags', {
   }),
 });
 
+/* ── Communities (foruns) ────────────────────────────────────────
+ *
+ * User-created communities. Anyone with ≥10k Fanpoints can spawn
+ * one; the membership and topics live on dedicated tables below.
+ *
+ * `slug` is the URL-friendly key the frontend routes off — unique
+ * across all communities. `memberCount` + `topicCount` are
+ * denormalized counters maintained by the server queries so the
+ * list view can sort by "trending" without aggregating on every
+ * request. `lastActivityAt` ticks every time a topic / comment
+ * is created, which the trending sort also uses.
+ */
+export const communities = pgTable(
+  'communities',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: text('slug').notNull().unique(),
+    name: text('name').notNull(),
+    description: text('description'),
+    imageUrl: text('image_url'),
+    creatorId: uuid('creator_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'set null' }),
+    memberCount: integer('member_count').notNull().default(1),
+    topicCount: integer('topic_count').notNull().default(0),
+    /** Last topic or comment activity — drives the "Bombando" sort. */
+    lastActivityAt: timestamp('last_activity_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('communities_creator_idx').on(t.creatorId),
+    index('communities_activity_idx').on(t.lastActivityAt),
+  ],
+);
+
+/* ── Community membership ─────────────────────────────────────── */
+export const communityMembers = pgTable(
+  'community_members',
+  {
+    communityId: uuid('community_id')
+      .notNull()
+      .references(() => communities.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    joinedAt: timestamp('joined_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.communityId, t.userId] }),
+    index('community_members_user_idx').on(t.userId),
+  ],
+);
+
+/* ── Topics ──────────────────────────────────────────────────────
+ *
+ * A topic is a thread inside a community. The body is optional —
+ * the title alone is enough to bootstrap a thread, like Reddit's
+ * "ask a question" pattern. Comments live on a separate table
+ * (community_topic_comments) and follow the same shape feed
+ * comments use, so the frontend CommentsPanel pattern is
+ * portable. `commentCount` is denormalized for list rendering. */
+export const communityTopics = pgTable(
+  'community_topics',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    communityId: uuid('community_id')
+      .notNull()
+      .references(() => communities.id, { onDelete: 'cascade' }),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'set null' }),
+    title: text('title').notNull(),
+    body: text('body'),
+    commentCount: integer('comment_count').notNull().default(0),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('community_topics_community_idx').on(t.communityId, t.createdAt),
+    index('community_topics_author_idx').on(t.authorId),
+  ],
+);
+
+/* ── Topic comments ──────────────────────────────────────────────
+ *
+ * Comments + replies on a topic. Same shape as `feedComments`
+ * (parent_comment_id self-reference for one level of nesting,
+ * soft-delete via deletedAt) so the frontend can reuse the
+ * existing CommentItem / CommentInput primitives with just a
+ * different API base URL. */
+export const communityTopicComments = pgTable(
+  'community_topic_comments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    topicId: uuid('topic_id')
+      .notNull()
+      .references(() => communityTopics.id, { onDelete: 'cascade' }),
+    parentCommentId: uuid('parent_comment_id').references(
+      (): AnyPgColumn => communityTopicComments.id,
+      { onDelete: 'cascade' },
+    ),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'set null' }),
+    body: text('body').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('community_topic_comments_topic_idx').on(t.topicId, t.createdAt),
+    index('community_topic_comments_parent_idx').on(t.parentCommentId),
+  ],
+);
+
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
 export type SiteTag = typeof siteTags.$inferSelect;
@@ -545,3 +676,11 @@ export type FeedComment = typeof feedComments.$inferSelect;
 export type NewFeedComment = typeof feedComments.$inferInsert;
 export type FeedCommentReaction = typeof feedCommentReactions.$inferSelect;
 export type NewFeedCommentReaction = typeof feedCommentReactions.$inferInsert;
+export type Community = typeof communities.$inferSelect;
+export type NewCommunity = typeof communities.$inferInsert;
+export type CommunityMember = typeof communityMembers.$inferSelect;
+export type NewCommunityMember = typeof communityMembers.$inferInsert;
+export type CommunityTopic = typeof communityTopics.$inferSelect;
+export type NewCommunityTopic = typeof communityTopics.$inferInsert;
+export type CommunityTopicComment = typeof communityTopicComments.$inferSelect;
+export type NewCommunityTopicComment = typeof communityTopicComments.$inferInsert;
