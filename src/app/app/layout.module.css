@@ -1,0 +1,166 @@
+/* ── Persistent shell geometry — owned by /app/layout.tsx ──
+ *
+ * All the truly app-level positioning rules live here so they
+ * apply uniformly to every `/app/*` route (map, chat, comunidades,
+ * etc). Page-specific decorations stay in their own modules.
+ *
+ * Phase 3 of the route refactor: these rules used to live in
+ * `page.module.css` because page.tsx hosted the whole shell.
+ * After the refactor, page.tsx is just the map content and the
+ * shell mounts the persistent UI.
+ */
+
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.shell > * { pointer-events: auto; }
+
+.mapLayer {
+  flex: 1;
+  position: relative;
+  pointer-events: none;
+}
+.mapLayer > * { pointer-events: auto; }
+
+/* ── Right-rail action cluster ──
+ *
+ * The 3-button column at right:18px hosts Notificações / Músicas /
+ * Superfãs — the SECONDARY actions that don't fit the 5-slot
+ * BottomNav. Each button opens its surface (route or modal) and
+ * lights the same lilac active-ring when its target is active.
+ *
+ * Geometry:
+ *   - `right: 18px` matches the avatars dock so the two columns
+ *     share the same vertical axis.
+ *   - `top: 50%` + `transform: translateY(8px)` anchors the icons'
+ *     TOP edge 8px below the viewport vertical center.
+ */
+.topBar {
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .topBar {
+    right: 16px;
+    transform: translateY(-50%);
+  }
+}
+
+/* Action shortcut button — circular pill, neutral white tints,
+ * lilac accent ring when its target overlay is open. */
+.shortcutBtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  font-family: inherit;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.shortcutBtn:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #F5F5F7;
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+.shortcutBtn:active {
+  transform: translateY(0) scale(0.96);
+}
+.shortcutBtn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.shortcutBtnActive,
+.shortcutBtnActive:hover {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #F5F5F7;
+  box-shadow: 0 0 14px -2px rgba(168, 85, 247, 0.45);
+}
+
+/* ── Superchat trigger slot ──
+ *
+ * Top-right floating button. The Ana-branded trigger pops out of
+ * the standard right-rail cluster so it visually anchors the
+ * Superchat as a marquee surface, not just another action. */
+.superchatTriggerSlot {
+  position: fixed;
+  top: 42px;
+  right: 104px;
+  z-index: 50;
+  pointer-events: auto;
+}
+@media (max-width: 768px) {
+  .superchatTriggerSlot { top: 16px; right: 16px; }
+}
+@media (max-width: 480px) {
+  /* Drop z-index below full-screen route panels (z:60) so opening
+   * a panel covers the trigger gracefully — no manual hide. */
+  .superchatTriggerSlot { z-index: 15; }
+}
+
+/* ── Back-to-landing link ── */
+.backBtn {
+  position: fixed;
+  top: 54px;
+  left: 20px;
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: grid;
+  place-items: center;
+  color: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.backBtn svg { display: none; }
+
+/* ── Globe placeholder ──
+ *
+ * Painted while the Globe is unmounted or still bootstrapping its
+ * Mapbox style. The basemap's resting dark color (~#0a0a0e) is
+ * close enough that the fade-in feels intentional, not flash-of-
+ * blank-canvas. Position matches the Globe's own positioning
+ * (fixed inset 0, z:0) so it sits BENEATH everything else.
+ */
+.globePlaceholder {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 50%, #0c1228 0%, #050614 75%, #000003 100%);
+  pointer-events: none;
+}

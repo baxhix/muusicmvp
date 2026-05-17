@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type ReactNode,
@@ -14,10 +15,20 @@ import {
 import { useChatLiveWithFakes } from '@/hooks/useChatLiveWithFakes';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { useLocationSync } from '@/hooks/useLocationSync';
+import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import {
   FAKE_ANA_USER_ID,
   FAKE_CENTRAL_USER_ID,
 } from '@/lib/fakeAna';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { useUniverse } from '@/lib/universe/UniverseContext';
+import { useRouter } from 'next/navigation';
+import {
+  globeStore,
+  type AnaCheckInPayload,
+} from '@/lib/globeStore';
+import { ANA_CHECKINS } from '@/data/anaCheckIns';
+import { ANA_SHOWS } from '@/data/anaShows';
 
 /**
  * App-shell context — the seam between the persistent layout
@@ -101,9 +112,35 @@ interface AppShellValue {
    *  from `chat.conversations` so consumers don't have to redo
    *  the reduce themselves. */
   chatUnreadCount: number;
+  /** Index into the registered tracks catalog — current song the
+   *  user is playing. Persistent across routes so the NowPlaying
+   *  mini-bar in the shell layout can keep playing while the user
+   *  reads chat / community / etc. */
+  songIdx: number;
+  setSongIdx: Dispatch<SetStateAction<number>>;
+  /** Player visual states — driven by NowPlaying, read by
+   *  ListeningTogether (which positions itself based on the
+   *  player's current footprint to avoid overlap). */
+  playerExpanded: boolean;
+  setPlayerExpanded: Dispatch<SetStateAction<boolean>>;
+  playerSize: 'mini' | 'horizontal' | 'expanded' | 'video';
+  setPlayerSize: Dispatch<SetStateAction<'mini' | 'horizontal' | 'expanded' | 'video'>>;
+  /** Ana check-in modal payload — non-null while the modal is
+   *  open. Setting null closes it AND starts the 60s linger
+   *  before the pin auto-clears from the globe. */
+  anaModalPayload: AnaCheckInPayload | null;
+  /** Close the Ana check-in modal (with the linger timer). */
+  closeAnaCheckIn: () => void;
 }
 
 const AppShellContext = createContext<AppShellValue | null>(null);
+
+/** Ana check-in scheduling constants — module-scoped so the
+ *  useEffect/useCallback hooks below don't need them in their
+ *  dependency arrays. */
+const CHECKIN_INTERVAL_MS = 2 * 60 * 1000;
+const CHECKIN_INITIAL_DELAY_MS = 4 * 1000;
+const CHECKIN_LINGER_MS = 60 * 1000;
 
 /**
  * Provider — mounted by /app/layout.tsx. Owns the heavy state
@@ -115,7 +152,36 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const chat = useChatLiveWithFakes();
   const live = useLiveUsers();
   const locationSync = useLocationSync();
+  const { user: authUser } = useAuth();
+  const { universeId, hydrated: universeHydrated } = useUniverse();
+  const router = useRouter();
+  const { tracks: catalog } = useTracksCatalog();
+
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
+
+  // ── Player state — persistent across routes so the NowPlaying
+  // mini-bar keeps playing while the user is on chat/community/etc.
+  // The actual <NowPlaying> component is mounted by the shell layout.
+  const [songIdx, setSongIdx] = useState(0);
+  const [playerExpanded, setPlayerExpanded] = useState(false);
+  // Horizontal is the default — same width as ArtistBox + most
+  // informative resting state (title + artist + transport).
+  const [playerSize, setPlayerSize] = useState<
+    'mini' | 'horizontal' | 'expanded' | 'video'
+  >('horizontal');
+  const currentTrack = catalog[songIdx] ?? null;
+
+  // ── Universe gate — redirect to /app/select if the user hasn't
+  // picked a universe yet. Lives here so EVERY /app/* route is
+  // gated, not just /app (the map). Hydrated check prevents the
+  // first-render bounce before localStorage is read.
+  useEffect(() => {
+    if (!universeHydrated) return;
+    if (!authUser) return;
+    if (!universeId) {
+      router.replace('/app/select');
+    }
+  }, [universeHydrated, authUser, universeId, router]);
 
   // Online ids — fake Ana/Central are always online (VIPs), real
   // online users come from the live subscription. Stable Set
@@ -196,6 +262,140 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('app:open-notifications', onOpenNotif);
   }, []);
 
+  // ── Globe pushers ─────────────────────────────────────────────
+  // These run regardless of which route the user is on. If Globe
+  // is unmounted (mobile non-map routes), globeStore.setX buffers
+  // and replays on the next mount — see globeStore.ts. Net effect:
+  // the map is always up-to-date the moment it's visible.
+
+  // Logged-in user pin (the "Você" badge on the globe).
+  useEffect(() => {
+    if (authUser?.lat != null && authUser?.lng != null) {
+      globeStore.setUserLocation({
+        coords: { lat: authUser.lat, lng: authUser.lng },
+        avatarUrl: authUser.avatarUrl,
+        name: 'Você',
+        trackTitle: currentTrack?.title ?? null,
+        trackArtist: currentTrack?.artist ?? null,
+      });
+    } else {
+      globeStore.setUserLocation(null);
+    }
+  }, [
+    authUser?.lat,
+    authUser?.lng,
+    authUser?.avatarUrl,
+    currentTrack?.title,
+    currentTrack?.artist,
+  ]);
+
+  // Other online users — filter self, map to the live-presence shape.
+  useEffect(() => {
+    const mapped = live.users
+      .filter((u) => u.lat != null && u.lng != null && u.id !== authUser?.id)
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        avatarUrl: u.avatarUrl,
+        lat: u.lat as number,
+        lng: u.lng as number,
+        trackTitle: u.nowPlaying?.title ?? null,
+        trackArtist: u.nowPlaying?.artist ?? null,
+      }));
+    globeStore.setLiveUsers(mapped);
+  }, [live.users, authUser?.id]);
+
+  // Ambient Paraná dots — head-count of registered users.
+  useEffect(() => {
+    globeStore.setTotalRegistered(live.totalRegistered);
+  }, [live.totalRegistered]);
+
+  // Globe pin → route to user profile. The pin lives in Globe.tsx;
+  // it calls globeStore.openUserProfile(userId) which lands here.
+  useEffect(() => {
+    globeStore.registerOpenUserProfile((userId) => {
+      router.push(`/app/u/${userId}`);
+    });
+  }, [router]);
+
+  // Static list of upcoming Ana shows — published once. Globe
+  // draws them as orange dots + zoom-gated labels.
+  useEffect(() => {
+    globeStore.setAnaShows(ANA_SHOWS);
+  }, []);
+
+  // ── Ana Castela check-in scheduler ────────────────────────────
+  // Round-robin through the preset cities every 2 minutes. The
+  // first pin spawns 4s after mount so the page has a beat to
+  // settle. The scheduler runs at the shell level so check-ins
+  // continue to rotate even when the user is on a non-map route
+  // — when they navigate back to /app, the latest pin is already
+  // in place on the globe.
+  //
+  // Constants live at module scope (see CHECKIN_*_MS above) so
+  // they don't trip react-hooks/exhaustive-deps inside the
+  // useCallback that consumes CHECKIN_LINGER_MS.
+  const anaCursorRef = useRef(0);
+  const anaLingerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [anaModalPayload, setAnaModalPayload] =
+    useState<AnaCheckInPayload | null>(null);
+
+  useEffect(() => {
+    if (ANA_CHECKINS.length === 0) return;
+    const spawn = () => {
+      const idx = anaCursorRef.current % ANA_CHECKINS.length;
+      const template = ANA_CHECKINS[idx];
+      anaCursorRef.current += 1;
+      const payload: AnaCheckInPayload = {
+        id: `ana-${idx}-${Date.now()}`,
+        city: template.city,
+        state: template.state,
+        lng: template.lng,
+        lat: template.lat,
+        caption: template.caption ?? null,
+        media: template.media,
+        startedAt: new Date().toISOString(),
+      };
+      // Spawning a new check-in cancels any pending linger from
+      // the previous one — the new pin takes the slot immediately.
+      if (anaLingerRef.current) {
+        clearTimeout(anaLingerRef.current);
+        anaLingerRef.current = null;
+      }
+      globeStore.setAnaCheckIn(payload);
+    };
+    const initTimer = setTimeout(spawn, CHECKIN_INITIAL_DELAY_MS);
+    const interval = setInterval(spawn, CHECKIN_INTERVAL_MS);
+    return () => {
+      clearTimeout(initTimer);
+      clearInterval(interval);
+      if (anaLingerRef.current) clearTimeout(anaLingerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Globe pin click → open AnaCheckIn modal. The handler also
+  // cancels any in-flight linger from a previous close, so reopens
+  // during the 60s grace stay sticky.
+  useEffect(() => {
+    globeStore.registerOpenAnaCheckIn((payload) => {
+      setAnaModalPayload(payload);
+      if (anaLingerRef.current) {
+        clearTimeout(anaLingerRef.current);
+        anaLingerRef.current = null;
+      }
+    });
+  }, []);
+
+  const closeAnaCheckIn = useCallback(() => {
+    setAnaModalPayload(null);
+    if (anaLingerRef.current) clearTimeout(anaLingerRef.current);
+    anaLingerRef.current = setTimeout(() => {
+      globeStore.setAnaCheckIn(null);
+      anaLingerRef.current = null;
+    }, CHECKIN_LINGER_MS);
+  }, []);
+
   const value: AppShellValue = useMemo(
     () => ({
       chat,
@@ -212,6 +412,14 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setShowCommunity,
       feedOpen,
       chatUnreadCount,
+      songIdx,
+      setSongIdx,
+      playerExpanded,
+      setPlayerExpanded,
+      playerSize,
+      setPlayerSize,
+      anaModalPayload,
+      closeAnaCheckIn,
     }),
     [
       chat,
@@ -227,6 +435,11 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setShowCommunity,
       feedOpen,
       chatUnreadCount,
+      songIdx,
+      playerExpanded,
+      playerSize,
+      anaModalPayload,
+      closeAnaCheckIn,
     ],
   );
 

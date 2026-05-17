@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
+import { loadGlobeCamera, saveGlobeCamera } from '@/lib/globeCamera';
 import { track } from '@/lib/analytics';
 import styles from './Globe.module.css';
 
@@ -18,17 +19,45 @@ export default function Globe() {
 
     mapboxgl.accessToken = TOKEN;
 
+    // Camera state persistence — restore the user's last view so
+    // navigating between /app routes (which unmounts Globe on
+    // mobile) feels seamless. First visit + corrupted storage fall
+    // through to the globe-view defaults.
+    const persisted = loadGlobeCamera();
+    const initialZoom = persisted?.zoom ?? 1.8;
+    const initialCenter: [number, number] = persisted
+      ? [persisted.lng, persisted.lat]
+      : [15, 20];
+    const initialBearing = persisted?.bearing ?? 0;
+    const initialPitch = persisted?.pitch ?? 0;
+
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       projection: 'globe' as never,
-      zoom: 1.8,
-      center: [15, 20],
+      zoom: initialZoom,
+      center: initialCenter,
+      bearing: initialBearing,
+      pitch: initialPitch,
       // Limites de zoom: máximo 14 = vista de ruas com labels (street level)
       maxZoom: 14,
       minZoom: 1.5,
       interactive: true,
       attributionControl: false,
+    });
+
+    // Persist on every settle. `moveend` fires after pan/zoom/
+    // rotate stops — captures the final state without spamming
+    // localStorage during animations.
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      saveGlobeCamera({
+        lng: center.lng,
+        lat: center.lat,
+        zoom: map.getZoom(),
+        bearing: map.getBearing(),
+        pitch: map.getPitch(),
+      });
     });
 
     let userLocationMarker: mapboxgl.Marker | null = null;
