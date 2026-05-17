@@ -47,7 +47,12 @@ function adminStoryToStory(p: ApiFeedPost): Story | null {
  * /public/central-anacastela.png we already serve elsewhere.
  *
  * To swap any of these previews: drop a new file at the same path
- * (public/stories/ana-{1..5}.png) — no code change needed. */
+ * (public/stories/ana-{1..3}.png) — no code change needed.
+ *
+ * Slimmed from 5 → 3 entries per product feedback: only the
+ * ana-1 / ana-2 / ana-3 previews surface in the rail now. The
+ * ana-4.png + ana-5.png files stay in /public so re-adding entries
+ * is trivial if the team wants to expand the rail again. */
 const STORIES: Story[] = [
   {
     id: 's1',
@@ -69,20 +74,6 @@ const STORIES: Story[] = [
     avatar: '/central-anacastela.png',
     img: '/stories/ana-3.png',
     seen: false,
-  },
-  {
-    id: 's4',
-    user: 'Ana Castela',
-    avatar: '/central-anacastela.png',
-    img: '/stories/ana-4.png',
-    seen: true,
-  },
-  {
-    id: 's5',
-    user: 'Ana Castela',
-    avatar: '/central-anacastela.png',
-    img: '/stories/ana-5.png',
-    seen: true,
   },
 ];
 

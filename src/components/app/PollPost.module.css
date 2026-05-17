@@ -225,12 +225,13 @@
 }
 
 /* ── Reward line ──
+ * Centered right below the Votar buttons per product feedback.
  * Inline text, no chip. The amount itself (e.g. "250 Fanpoints")
  * is wrapped in <strong class="rewardAmount"> so it reads as the
  * primary signal — white + 700 — while the surrounding "Votando,
  * você ganha" / "Você ganhou" copy sits quieter in muted gray. */
 .reward {
-  margin: 12px 14px 14px;
+  margin: 12px 14px 8px;
   padding: 0;
   background: transparent;
   border: none;
@@ -239,9 +240,52 @@
   font-weight: 400;
   letter-spacing: -0.005em;
   line-height: 1.4;
+  text-align: center;
 }
 .rewardAmount {
   color: #FFFFFF;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Action footer (chapéu / comment / send) ──
+ * Recipe lifted from MediaPost.actions so the Enquete carries
+ * the same engagement icons in the same layout. Keep this block
+ * in sync with MediaPost.module.css `.actions` / `.btn` /
+ * `.btnHat` / `.btnLiked` — a visual update there should flow
+ * here too. */
+.actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 32px;
+  padding: 6px 18px 18px;
+}
+.btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: rgba(245, 245, 247, 0.5);
+  font-size: 11px;
+  font-family: var(--sans);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color 0.15s ease,
+    transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.btn:hover {
+  color: rgba(245, 245, 247, 0.95);
+  transform: scale(1.12);
+}
+.btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+/* O chapéu (heart) tem viewBox largo (570×315), precisa de mais
+   largura para aparecer no mesmo tamanho visual dos outros ícones. */
+.btnHat svg { width: 38px; height: 22px; }
+.btnLiked {
+  color: #f59e0b !important;
+}
+.spacer { display: none; }
