@@ -15,27 +15,44 @@
 }
 .mapLayer > * { pointer-events: auto; }
 
-/* Top center row that hosts the chat / feed / comunidade action
- * shortcuts as a horizontal trio, fixed and centered on the page.
- * Used to share the slot with FilterTabs + Superchat trigger +
- * HeroOrb (all moved elsewhere or retired); now the only thing
- * here is the shortcut bar, which is exactly what the dock used
- * to host on its right-edge column. */
+/* Chat / feed / comunidade action shortcuts — now a vertical
+ * column on the right rail per product feedback (moved out of
+ * the top-center horizontal row). Sits just ABOVE the
+ * LiveChatStack avatars dock so the two groups read as one
+ * unified right-side column without overlap.
+ *
+ * Geometry:
+ *   - `right: 18px` matches the dock's right offset so both
+ *     groups share the same vertical axis.
+ *   - `bottom: calc(50% + 88px)` anchors the BOTTOM edge of this
+ *     pill above the dock. 88px = half the dock's resting
+ *     height (3 × 44px avatars + 2 × 6px margins ≈ 144px, half
+ *     = 72px) + 16px breathing gap between the two groups.
+ *     Re-tune the 88px constant if the dock's row count or item
+ *     size ever changes.
+ *   - No `transform: translateY` needed — the bottom-anchored
+ *     positioning + flex-column grows the icons upward from the
+ *     anchored bottom edge. */
 .topBar {
   position: fixed;
-  top: 42px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 18px;
+  bottom: calc(50% + 88px);
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
   z-index: 50;
   pointer-events: auto;
-  max-width: calc(100vw - 32px);
 }
 
 @media (max-width: 768px) {
-  .topBar { top: 16px; gap: 8px; }
+  /* On mobile the dock hides itself entirely (see LiveChatStack
+   * `.dock` media query), so the icons here can drop their
+   * "above the dock" offset and just hug the right edge. */
+  .topBar {
+    right: 16px;
+    bottom: calc(50% + 16px);
+  }
 }
 
 /* Action shortcut button — circular pill, neutral white tints,
