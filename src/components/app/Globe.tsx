@@ -39,14 +39,12 @@ export default function Globe() {
      *  `registerAnaCheckIn` can still rotate its local `anaMarker`
      *  variable. */
     const anaMarkerRef: { current: mapboxgl.Marker | null } = { current: null };
-    /** Upcoming Ana shows — agenda pins keyed by show id. Survives
-     *  publish cycles (diffed on each setAnaShows call) and is
-     *  cleared in full on component unmount. */
-    const anaShowMarkers = new Map<string, mapboxgl.Marker>();
-    /** Tracks which show's popover is currently open. Click on any
-     *  pin closes the previous one; click outside any popover (on
-     *  the map background) closes whichever is open. */
-    const anaShowOpenRef: { current: HTMLElement | null } = { current: null };
+    /** Active Mapbox Popup for the show info card. Singleton — one
+     *  card at a time. Cleared automatically when the user closes
+     *  the popup (× or click outside). */
+    const anaShowPopupRef: { current: mapboxgl.Popup | null } = {
+      current: null,
+    };
     /** Users the current viewer has "waved at" via the heart button on
      *  the expanded badge. Kept in a Set here (not React state) so the
      *  liked-state survives the imperative innerHTML rewrites that
@@ -119,6 +117,87 @@ export default function Globe() {
           'circle-opacity': 0.95,
           'circle-stroke-color': 'rgba(0,0,0,0.55)',
           'circle-stroke-width': 0.5,
+        },
+      });
+
+      // ── Ana shows: native circle + symbol layers ──────────────────
+      //
+      // The shows agenda is now drawn AS PART OF THE MAP: a soft
+      // amber halo, a hard orange dot, and a zoom-gated "Show DD/MM"
+      // label. This replaces the old HTML chip markers — the points
+      // are now locked to lng/lat the same way streets and labels
+      // are, so they don't feel like overlays drifting over the map.
+      //
+      // The feature collection is populated by registerAnaShows
+      // below. Empty at first; the page publishes after mount.
+      map.addSource('ana-shows', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      // Soft amber glow behind each dot.
+      map.addLayer({
+        id: 'ana-shows-glow',
+        type: 'circle',
+        source: 'ana-shows',
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 7,
+            5, 10,
+            9, 14,
+            14, 18,
+          ],
+          'circle-color': '#fbbf24',
+          'circle-blur': 1.2,
+          'circle-opacity': 0.45,
+        },
+      });
+
+      // Hard orange dot — the "bolinha" the spec asks for.
+      map.addLayer({
+        id: 'ana-shows-dot',
+        type: 'circle',
+        source: 'ana-shows',
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 4,
+            5, 5.5,
+            9, 7,
+            14, 9,
+          ],
+          'circle-color': '#f97316', // orange-500
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.9)',
+          'circle-stroke-width': 1.4,
+          'circle-opacity': 1,
+        },
+      });
+
+      // "Show DD/MM" label — invisible until the user zooms in
+      // enough that the dot's city is identifiable (zoom ≥ 8). The
+      // halo keeps the text legible against any basemap color.
+      map.addLayer({
+        id: 'ana-shows-label',
+        type: 'symbol',
+        source: 'ana-shows',
+        layout: {
+          'text-field': ['concat', 'Show dia ', ['get', 'dateChip']],
+          'text-size': 12,
+          'text-offset': [0, 1.4],
+          'text-anchor': 'top',
+          'text-allow-overlap': true,
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        },
+        paint: {
+          'text-color': '#fde68a',
+          'text-halo-color': 'rgba(0,0,0,0.85)',
+          'text-halo-width': 1.4,
+          'text-opacity': [
+            'interpolate', ['linear'], ['zoom'],
+            6.5, 0,
+            8, 1,
+          ],
         },
       });
     });
@@ -743,142 +822,173 @@ export default function Globe() {
 
       // ── Ana Castela upcoming shows ────────────────────────────
       //
-      // Each show is a small date-chip pin anchored on its city.
-      // The marker wrapper carries BOTH the always-visible pin AND
-      // the click-revealed popover with venue / date / "Ingressos"
-      // CTA. CSS gates the popover behind a `.anaShowOpen` class on
-      // the wrapper; the click handler toggles it.
+      // Pins are drawn as native Mapbox circle + symbol layers (set
+      // up inside `style.load` above). This handler just feeds the
+      // GeoJSON source. Each feature carries the precomputed `dateChip`
+      // ("DD/MM") used by the symbol layer's `text-field` and the
+      // `fullDate` (long-form "02 de julho de 2026") used by the
+      // click-opened popover.
       //
-      // Only one popover is open at a time — clicking another pin
-      // closes the previous. Clicking on the map background also
-      // closes whatever's open (via the `click` handler on the map
-      // below — see the closeAnaShow helper).
-      const closeAnaShow = () => {
-        if (anaShowOpenRef.current) {
-          anaShowOpenRef.current.classList.remove(styles.anaShowOpen);
-          anaShowOpenRef.current = null;
-        }
-      };
-
-      // Map background click closes any open show card. We don't
-      // want the same click to fall through to a marker (Mapbox
-      // already stops propagation on marker clicks).
-      map.on('click', () => {
-        closeAnaShow();
-      });
-
+      // Sanitization isn't needed inside `properties` because we
+      // pass them through Mapbox's feature interface — values are
+      // never injected into HTML except the popup builder below,
+      // which sanitizes there.
       globeStore.registerAnaShows((shows) => {
-        const nextIds = new Set(shows.map((s) => s.id));
-        // Drop pins whose show id is no longer in the list.
-        for (const [id, marker] of anaShowMarkers) {
-          if (!nextIds.has(id)) {
-            marker.remove();
-            anaShowMarkers.delete(id);
-          }
-        }
-
-        for (const show of shows) {
-          if (anaShowMarkers.has(show.id)) continue; // already drawn
-
+        const features: GeoJSON.Feature[] = shows.map((show) => {
           const dateObj = new Date(show.date + 'T12:00:00');
           const dd = String(dateObj.getDate()).padStart(2, '0');
           const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-          const chipLabel = `${dd}/${mm}`;
-          // Long format for the popover — "02 de julho de 2026".
+          const dateChip = `${dd}/${mm}`;
           const fullDate = new Intl.DateTimeFormat('pt-BR', {
             day: '2-digit',
             month: 'long',
             year: 'numeric',
           }).format(dateObj);
+          return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [show.lng, show.lat] },
+            properties: {
+              id: show.id,
+              venue: show.venue,
+              city: show.city,
+              state: show.state,
+              dateChip,
+              fullDate,
+            },
+          };
+        });
 
-          const safeVenue = show.venue.replace(/[<>&"']/g, '');
-          const safeCity = show.city.replace(/[<>&"']/g, '');
-          const safeState = show.state.replace(/[<>&"']/g, '');
+        const apply = () => {
+          const src = map.getSource('ana-shows');
+          if (!src) return false;
+          (src as mapboxgl.GeoJSONSource).setData({
+            type: 'FeatureCollection',
+            features,
+          });
+          return true;
+        };
+        // If the style hasn't loaded yet (race on first publish),
+        // retry once when it does. Same pattern parana-fans uses.
+        if (!apply()) {
+          map.once('style.load', () => {
+            apply();
+          });
+        }
+      });
 
-          const wrapper = document.createElement('div');
-          wrapper.className = styles.anaShowWrap;
-          wrapper.innerHTML = `
+      // ── Show pin → info card popup ────────────────────────────
+      //
+      // Click on the orange dot opens a Mapbox Popup anchored to
+      // the city with venue / city / date / Ingressos. closeOnClick
+      // closes the popup when the user taps anywhere else on the
+      // map — same gesture the Mapbox geocoder uses.
+      //
+      // The Ingressos button is intentionally inert per spec: it
+      // only fires telemetry. When a ticket partner ships, swap
+      // the no-op for a `window.open(show.ticketUrl)`.
+      const buildShowPopupHtml = (props: {
+        id: string;
+        venue: string;
+        city: string;
+        state: string;
+        fullDate: string;
+      }): string => {
+        const safeVenue = (props.venue ?? '').replace(/[<>&"']/g, '');
+        const safeCity = (props.city ?? '').replace(/[<>&"']/g, '');
+        const safeState = (props.state ?? '').replace(/[<>&"']/g, '');
+        const safeDate = (props.fullDate ?? '').replace(/[<>&"']/g, '');
+        const safeId = (props.id ?? '').replace(/[<>&"']/g, '');
+        return `
+          <div class="${styles.anaShowPopupBody}">
+            <h3 class="${styles.anaShowCardVenue}">${safeVenue}</h3>
+            <span class="${styles.anaShowCardCity}">${safeCity}-${safeState}</span>
+            <span class="${styles.anaShowCardDate}">${safeDate}</span>
             <button
               type="button"
-              class="${styles.anaShowPin}"
-              aria-label="Show da Ana em ${safeCity}-${safeState} no dia ${chipLabel}"
-              data-action="open"
+              class="${styles.anaShowCardCta}"
+              data-show-id="${safeId}"
+              data-venue="${safeVenue}"
             >
-              <span class="${styles.anaShowPinDate}">${chipLabel}</span>
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1a1 1 0 0 0 0 2v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9a1 1 0 0 0 0-2V6z" />
+                <path d="M6 5v6" />
+              </svg>
+              Ingressos
             </button>
-            <div class="${styles.anaShowCard}" role="dialog" aria-modal="false">
-              <button
-                type="button"
-                class="${styles.anaShowClose}"
-                aria-label="Fechar"
-                data-action="close"
-              >
-                <svg viewBox="0 0 10 10" width="10" height="10" fill="none" aria-hidden="true">
-                  <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                </svg>
-              </button>
-              <span class="${styles.anaShowCardKicker}">Próximo show</span>
-              <h3 class="${styles.anaShowCardVenue}">${safeVenue}</h3>
-              <span class="${styles.anaShowCardCity}">${safeCity}-${safeState}</span>
-              <span class="${styles.anaShowCardDate}">${fullDate}</span>
-              <button
-                type="button"
-                class="${styles.anaShowCardCta}"
-                data-action="tickets"
-              >
-                <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M2 6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1a1 1 0 0 0 0 2v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9a1 1 0 0 0 0-2V6z" />
-                  <path d="M6 5v6" />
-                </svg>
-                Ingressos
-              </button>
-            </div>
-          `;
+          </div>
+        `;
+      };
 
-          // Delegated click handler — three actions land on the
-          // same listener (open / close / tickets), discriminated
-          // by the data-action attribute on the closest button.
-          wrapper.addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
-            const btn = target.closest<HTMLButtonElement>('button[data-action]');
-            if (!btn) return;
-            e.stopPropagation();
-            const action = btn.dataset.action;
+      map.on('click', 'ana-shows-dot', (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        const props = feature.properties as {
+          id: string;
+          venue: string;
+          city: string;
+          state: string;
+          fullDate: string;
+        };
+        const coords = (feature.geometry as GeoJSON.Point).coordinates.slice(
+          0,
+          2,
+        ) as [number, number];
 
-            if (action === 'open') {
-              // Toggle: tapping the same pin twice closes the card.
-              if (anaShowOpenRef.current === wrapper) {
-                closeAnaShow();
-                return;
-              }
-              closeAnaShow();
-              wrapper.classList.add(styles.anaShowOpen);
-              anaShowOpenRef.current = wrapper;
-              track('ana_show_pin_clicked', {
-                show_id: show.id,
-                city: show.city,
-                venue: show.venue,
-              });
-            } else if (action === 'close') {
-              closeAnaShow();
-            } else if (action === 'tickets') {
-              track('ana_show_tickets_clicked', {
-                show_id: show.id,
-                venue: show.venue,
-              });
-              // CTA stays inert per spec until a ticket partner is
-              // wired. When that lands, open `show.ticketUrl` here.
-            }
-          });
-
-          const marker = new mapboxgl.Marker({
-            element: wrapper,
-            anchor: 'bottom',
-          })
-            .setLngLat([show.lng, show.lat])
-            .addTo(map);
-          anaShowMarkers.set(show.id, marker);
+        if (anaShowPopupRef.current) {
+          anaShowPopupRef.current.remove();
+          anaShowPopupRef.current = null;
         }
+
+        const popup = new mapboxgl.Popup({
+          closeButton: true,
+          closeOnClick: true,
+          offset: 14,
+          className: styles.anaShowPopup,
+          maxWidth: '260px',
+        })
+          .setLngLat(coords)
+          .setHTML(buildShowPopupHtml(props))
+          .addTo(map);
+
+        // Delegated listener for the Ingressos button. The popup
+        // element only exists after `addTo`, so we grab it now.
+        // Mapbox types model `getElement()` as possibly undefined
+        // (pre-attach), but after `addTo(map)` it's always defined.
+        const popupEl = popup.getElement();
+        popupEl?.addEventListener('click', (ev) => {
+          const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>(
+            '[data-show-id]',
+          );
+          if (!btn) return;
+          ev.stopPropagation();
+          track('ana_show_tickets_clicked', {
+            show_id: btn.dataset.showId ?? '',
+            venue: btn.dataset.venue ?? '',
+          });
+          // CTA intentionally inert — placeholder for ticketUrl wiring.
+        });
+
+        popup.on('close', () => {
+          if (anaShowPopupRef.current === popup) {
+            anaShowPopupRef.current = null;
+          }
+        });
+
+        anaShowPopupRef.current = popup;
+
+        track('ana_show_pin_clicked', {
+          show_id: props.id,
+          city: props.city,
+          venue: props.venue,
+        });
+      });
+
+      // Pointer cursor while hovering an orange dot.
+      map.on('mouseenter', 'ana-shows-dot', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'ana-shows-dot', () => {
+        map.getCanvas().style.cursor = '';
       });
 
       globeStore.register((center, zoom) => {
@@ -930,9 +1040,12 @@ export default function Globe() {
         anaMarkerRef.current.remove();
         anaMarkerRef.current = null;
       }
-      anaShowMarkers.forEach((m) => m.remove());
-      anaShowMarkers.clear();
-      anaShowOpenRef.current = null;
+      if (anaShowPopupRef.current) {
+        anaShowPopupRef.current.remove();
+        anaShowPopupRef.current = null;
+      }
+      // The orange dots + label are part of the map style, so
+      // `map.remove()` below tears them down automatically.
       map.remove();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
