@@ -15,8 +15,12 @@
 }
 .mapLayer > * { pointer-events: auto; }
 
-/* Top center row that holds FilterTabs + RankingButton side-by-side.
-   Centered as a single block so both pills feel like one control surface. */
+/* Top center row that hosts the chat / feed / comunidade action
+ * shortcuts as a horizontal trio, fixed and centered on the page.
+ * Used to share the slot with FilterTabs + Superchat trigger +
+ * HeroOrb (all moved elsewhere or retired); now the only thing
+ * here is the shortcut bar, which is exactly what the dock used
+ * to host on its right-edge column. */
 .topBar {
   position: fixed;
   top: 42px;
@@ -24,14 +28,69 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   z-index: 50;
   pointer-events: auto;
   max-width: calc(100vw - 32px);
 }
 
 @media (max-width: 768px) {
-  .topBar { top: 16px; gap: 6px; }
+  .topBar { top: 16px; gap: 8px; }
+}
+
+/* Action shortcut button — circular pill, neutral white tints,
+ * lilac accent ring when its target overlay is open. Visual recipe
+ * mirrors the dock-shortcut style the icons had when they lived
+ * inside the right-side LiveChatStack column. The `.active`
+ * modifier reuses the same lilac (#a855f7 family) used elsewhere
+ * as the platform's accent — matches BottomNav's active-dot tone. */
+.shortcutBtn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  font-family: inherit;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.shortcutBtn:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #F5F5F7;
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+.shortcutBtn:active {
+  transform: translateY(0) scale(0.96);
+}
+.shortcutBtn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* Active-state ring — applied whenever the shortcut's target
+ * overlay is open (chat panel / feed expanded / comunidade panel).
+ * Same lilac (#a855f7) accent used across BottomNav's active dot
+ * and the previous dock-shortcut active style. */
+.shortcutBtnActive,
+.shortcutBtnActive:hover {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #F5F5F7;
+  box-shadow: 0 0 14px -2px rgba(168, 85, 247, 0.45);
 }
 
 /* Superchat trigger slot — fixed at the top-right edge, aligned

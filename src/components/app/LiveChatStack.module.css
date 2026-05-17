@@ -74,50 +74,14 @@
   margin-top: 0;
 }
 
-/* Items past the resting-visible slice are collapsed to zero
- * height AND zero margin-top so they contribute nothing to the
- * dock's vertical footprint at rest. On hover (or keyboard
- * focus-within) they grow back to 44px + restore the 6px gap.
- * Kept in the DOM rather than render-gated so the click target
- * survives the unfold animation. */
-.itemHidden {
-  height: 0;
-  width: 44px;
-  margin-top: 0;
-  opacity: 0;
-  pointer-events: none;
-  overflow: hidden;
-  transform: scale(0.7);
-  transition:
-    height 220ms cubic-bezier(0.16,1,0.3,1),
-    margin-top 220ms cubic-bezier(0.16,1,0.3,1),
-    opacity 180ms ease,
-    transform 220ms cubic-bezier(0.16,1,0.3,1);
-}
-.dock:hover .itemHidden,
-.dock:focus-within .itemHidden {
-  height: 44px;
-  margin-top: 6px;
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1);
-}
-
-/* Whole-dock "alive" effect — every visible item (avatars + the
- * chat/feed/community shortcuts) shifts a touch to the left when
- * the user hovers anywhere on the dock, so the stack reads as
- * one body moving together rather than the unfolding rows being
- * the only thing animating. Items being directly hovered are
- * excluded via :not(:hover) so the existing per-item scale-up
- * still wins on the row the cursor is actually over. */
-.dock:hover .item:not(.itemHidden):not(:hover):not(.itemActive),
-.dock:hover .addBtn:not(:hover):not(.dockShortcutActive),
-.dock:hover .dockShortcut:not(:hover):not(.dockShortcutActive),
-.dock:focus-within .item:not(.itemHidden):not(:hover):not(.itemActive),
-.dock:focus-within .addBtn:not(:hover):not(.dockShortcutActive),
-.dock:focus-within .dockShortcut:not(:hover):not(.dockShortcutActive) {
-  transform: translateX(-2px);
-}
+/* Hidden-row hover-reveal + the whole-dock "alive" cascade were
+ * retired together with the dock's chat/feed/comunidade
+ * shortcuts (those moved up to the page's centered topBar). The
+ * dock is now a strict 3-avatar column with no extra rows to
+ * unfold, so the .itemHidden + .dock:hover :not(:hover)
+ * machinery has no role here anymore. Kept commented out
+ * briefly in case a future "show more" affordance lands; if not,
+ * delete in the next sweep. */
 
 /* Base size bumped from 38 → 44 (~+15%) so each avatar reads as a
    first-class affordance, not an afterthought. Hover scales another
@@ -303,89 +267,12 @@
   line-height: 1.3;
 }
 
-.addBtn {
-  width: 38px;
-  height: 38px;
-  margin-top: 4px;
-  padding: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
-  color: rgba(245, 245, 247, 0.6);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.15s, color 0.15s, transform 0.15s;
-}
-.addBtn:hover {
-  border-color: var(--accent, #3ddb74);
-  color: var(--accent, #3ddb74);
-  transform: scale(1.06);
-}
-.addBtn svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-}
-
-/* Shared style for the auxiliary dock shortcuts (Feed, Comunidade)
- * that live below the hamburger trigger. Same circular footprint
- * as .addBtn but with a solid (not dashed) border so they read as
- * "fixed actions" rather than the "open list" affordance. */
-.dockShortcut {
-  width: 38px;
-  height: 38px;
-  margin-top: 2px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
-  color: rgba(245, 245, 247, 0.65);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.15s, color 0.15s, transform 0.15s, background 0.15s;
-}
-.dockShortcut:hover {
-  border-color: rgba(255, 255, 255, 0.32);
-  color: #F5F5F7;
-  background: rgba(255, 255, 255, 0.06);
-  transform: scale(1.06);
-}
-.dockShortcut svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-}
-.dockShortcutDisabled {
-  /* Forum placeholder — visible but inert until the surface ships. */
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.dockShortcutDisabled:hover {
-  /* Cancel the hover lift on the disabled placeholder. */
-  border-color: rgba(255, 255, 255, 0.10);
-  color: rgba(245, 245, 247, 0.65);
-  background: rgba(0, 0, 0, 0.5);
-  transform: none;
-}
-
-/* Active-state outline — applied to ANY dock shortcut (Chat
- * hamburger, Feed, Comunidade) when its panel is currently open.
- * The lilac ring + tint mirror the BottomNav active-dot accent so
- * users see a consistent "this is the surface you're looking at"
- * cue across both navigation surfaces. */
-.dockShortcutActive,
-.dockShortcutActive:hover,
-.addBtn.dockShortcutActive,
-.addBtn.dockShortcutActive:hover {
-  background: rgba(168, 85, 247, 0.18);
-  border-color: rgba(168, 85, 247, 0.55);
-  color: #F5F5F7;
-  box-shadow: 0 0 14px -2px rgba(168, 85, 247, 0.45);
-}
+/* Dock-shortcut rules retired together with the buttons they
+ * used to style — the hamburger / Chat trigger (.addBtn), the
+ * Feed + Comunidade shortcuts (.dockShortcut[, .dockShortcutActive,
+ * .dockShortcutDisabled]) all moved to the centered topBar in
+ * page.module.css as .shortcutBtn[, .shortcutBtnActive]. Nothing
+ * left to render here besides the avatars. */
 
 
 /* Hide on small mobile to free space (chat opens via UserPicker only) */

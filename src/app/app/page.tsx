@@ -414,15 +414,64 @@ export default function AppPage() {
           {/* Top center row: filter pills + Superchat CTA + notifications
               side-by-side. Ranking (Superfãs) is reachable via the
               BottomNav crown icon — no longer duplicated up here. */}
-          {/* topBar wrapper retained for layout consistency even
-              though its only remaining child (HeroOrb) was retired
-              per product feedback. Kept empty so any future
-              hero/decorative element can drop back into the same
-              centered slot without restructuring. FilterTabs and
-              the Superchat trigger have moved out long ago —
-              respectively into the hidden-default state and the
-              dedicated `.superchatTriggerSlot` at top-right. */}
-          <div className={styles.topBar} aria-hidden="true" />
+          {/* topBar now hosts the chat / feed / comunidade
+              action shortcuts as a single horizontal row, fixed
+              and centered on the page per product feedback. The
+              shortcuts used to live at the bottom of the
+              right-side LiveChatStack column; they were pulled
+              out so the right rail can stay focused on the 3
+              latest conversation avatars alone (no hover-reveal
+              for the next 4). */}
+          <div className={styles.topBar}>
+            <button
+              type="button"
+              className={`${styles.shortcutBtn} ${showChat ? styles.shortcutBtnActive : ''}`}
+              onClick={() => setShowChat(!showChat)}
+              aria-label={showChat ? 'Fechar lista de conversas' : 'Abrir lista de conversas'}
+              aria-pressed={showChat}
+              title={showChat ? 'Fechar conversas' : 'Conversas'}
+            >
+              {/* Speech-bubble icon (1:1 / DMs). Matches the icon
+                  the dock shortcut used to render. */}
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 4h10a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 13 12H7l-3 2.5V12H3a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 3 4z" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.shortcutBtn} ${feedOpen ? styles.shortcutBtnActive : ''}`}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('app:toggle-feed'));
+                }
+              }}
+              aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
+              aria-pressed={feedOpen}
+              title={feedOpen ? 'Fechar feed' : 'Feed'}
+            >
+              {/* Feed/list icon — short post + meta line. */}
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="10" height="10" rx="2" />
+                <path d="M5.5 7h5M5.5 10h3" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className={`${styles.shortcutBtn} ${showCommunity ? styles.shortcutBtnActive : ''}`}
+              onClick={() => setShowCommunity(!showCommunity)}
+              aria-label={showCommunity ? 'Fechar comunidade' : 'Abrir comunidade'}
+              aria-pressed={showCommunity}
+              title={showCommunity ? 'Fechar comunidade' : 'Comunidade'}
+            >
+              {/* Chat-bubble cluster icon — multi-thread discussion. */}
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H7l-2 2v-2H5a2 2 0 0 1-2-2z" />
+                <path d="M9 11a2 2 0 0 0 2 2h1l1 1v-1a2 2 0 0 0 2-2v-2" />
+              </svg>
+            </button>
+          </div>
 
           {/* NotificationBell stays mounted (its panel + event
               listener are needed) but renders without the trigger
@@ -508,21 +557,14 @@ export default function AppPage() {
       <ArtistBox />
 
       <LiveChatStack
+        /* The chat / feed / comunidade shortcuts that used to live
+           inside this dock moved to the centered topBar above.
+           The dock is now strictly a vertical column of the 3
+           latest conversation avatars. */
         conversations={chat.conversations}
         activeId={chat.activeId}
         onlineUserIds={onlineUserIds}
         onOpen={chat.open}
-        /* Chat hamburger and Comunidade dock shortcuts are TOGGLES
-           — a second click on the same icon collapses the panel.
-           Inter-panel switching is still handled by the
-           activeOverlay singleton (setShowChat / setShowCommunity
-           wrappers already clear other slots when they set
-           'chat' / 'community'). */
-        onAddClick={() => setShowChat(!showChat)}
-        chatOpen={showChat}
-        onCommunityToggle={() => setShowCommunity(!showCommunity)}
-        communityOpen={showCommunity}
-        feedOpen={feedOpen}
       />
       <ConversationsSidebar
         open={showChat}
