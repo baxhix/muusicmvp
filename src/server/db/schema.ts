@@ -420,12 +420,38 @@ export const userActivities = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    /* `kind` extended (migration 0010) with the four new reward
+     * kinds for the engagement-points spec:
+     *   post_liked      — heart on a feed post (chapéu)
+     *   comment_posted  — top-level comment or reply created
+     *   post_shared     — share/send arrow on a feed post
+     *   three_streams   — bonus awarded every time the user's
+     *                     stream count hits a multiple of 3
+     * `stream` (the existing per-track award) is now worth 0
+     * points server-side so it just keeps the ledger row for
+     * counting purposes; the 10-pt reward comes via
+     * `three_streams`. */
     kind: text('kind', {
-      enum: ['stream', 'login', 'chat_started'],
+      enum: [
+        'stream',
+        'login',
+        'chat_started',
+        'post_liked',
+        'comment_posted',
+        'post_shared',
+        'three_streams',
+      ],
     }).notNull(),
     points: integer('points').notNull(),
     trackId: uuid('track_id').references(() => tracks.id, { onDelete: 'set null' }),
     conversationId: uuid('conversation_id').references(() => conversations.id, {
+      onDelete: 'set null',
+    }),
+    /** Optional pointer to the feed post that triggered this row.
+     *  Lets us audit "who liked / shared / commented this post"
+     *  without a separate junction table. NULL for activity kinds
+     *  unrelated to feed posts (stream, login, chat_started, etc.). */
+    postId: uuid('post_id').references(() => feedPosts.id, {
       onDelete: 'set null',
     }),
     createdAt: timestamp('created_at', { withTimezone: true })

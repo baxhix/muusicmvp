@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { track } from '@/lib/analytics';
+import { awardPoints } from '@/lib/rewards';
 import VerifiedBadge from './VerifiedBadge';
 import styles from './PollPost.module.css';
 
@@ -240,7 +241,25 @@ export default function PollPost({ data }: { data: PollPostData }) {
         <button
           type="button"
           className={`${styles.btn} ${styles.btnHat} ${liked ? styles.btnLiked : ''}`}
-          onClick={() => setLiked((v) => !v)}
+          onClick={() => {
+            setLiked((prev) => {
+              const next = !prev;
+              if (next) {
+                // Polls don't have a dedicated like endpoint yet, so
+                // we fire the helper without an apiPath — the toast
+                // + analytics happen, but the FP ledger stays
+                // unaffected until a /api/feed/polls/:id/like route
+                // ships. Local state remains the source of truth
+                // for the heart fill in the meantime.
+                void awardPoints('like', {
+                  analyticsContext: {
+                    poll_question: data.question,
+                  },
+                });
+              }
+              return next;
+            });
+          }}
           aria-label={liked ? 'Descurtir enquete' : 'Curtir enquete'}
           aria-pressed={liked}
         >

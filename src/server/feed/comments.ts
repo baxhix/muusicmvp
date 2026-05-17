@@ -7,6 +7,7 @@ import {
   notifications,
   users,
 } from '../db/schema';
+import { recordActivity } from '../activities/queries';
 
 /**
  * Feed comments + reactions server module.
@@ -158,7 +159,7 @@ export async function createComment(args: {
   if (!trimmed) throw new Error('empty_body');
   if (trimmed.length > 2000) throw new Error('body_too_long');
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     // If replying, look up the parent so we can (a) verify it lives
     // under the same post and (b) know who to notify.
     let parentAuthorId: string | null = null;
@@ -238,6 +239,17 @@ export async function createComment(args: {
 
     return { id: row.id };
   });
+
+  // Engagement reward — fire-and-forget so a failure here never
+  // breaks the comment commit. Migration 0017 gave us the
+  // `comment_posted` kind worth +10 FP; the activity row also
+  // carries the postId so admin tooling can audit which post
+  // drew the comment without joining feedComments.
+  void recordActivity(args.authorId, 'comment_posted', {
+    postId: args.postId,
+  });
+
+  return result;
 }
 
 /**

@@ -5,6 +5,7 @@ import {
   notifications,
   nowPlaying,
   tracks,
+  userActivities,
   users,
   type Track,
 } from '../db/schema';
@@ -70,9 +71,38 @@ export async function recordListeningTick(
 
     // Each new stream is worth points. Await so the caller can fan
     // out achievement events when this tick crosses a milestone.
+    // (As of migration 0017 `stream` is worth 0 FP — the actual
+    // reward arrives via the `three_streams` bonus inserted just
+    // below.)
     const result = await recordActivity(userId, 'stream', { trackId });
     crossedMilestones = result.crossedMilestones;
     newTotal = result.newTotal;
+
+    // Engagement-rewards rule: every 3rd sequential stream awards
+    // +10 FP via a separate `three_streams` activity row. We just
+    // inserted the new `stream`, so the latest count is whatever
+    // the ledger currently shows for kind='stream'. When the
+    // count hits a multiple of 3, append the bonus row + roll its
+    // milestones into the same return payload (so the realtime
+    // handler still fires a single celebration burst on the
+    // bonus tick instead of two separate ones).
+    const streamCountRow = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(userActivities)
+      .where(
+        and(
+          eq(userActivities.userId, userId),
+          eq(userActivities.kind, 'stream'),
+        ),
+      );
+    const streamCount = streamCountRow[0]?.count ?? 0;
+    if (streamCount > 0 && streamCount % 3 === 0) {
+      const bonus = await recordActivity(userId, 'three_streams', { trackId });
+      // The bonus's own milestones (if any) take over since they
+      // reflect the up-to-date total after BOTH inserts.
+      crossedMilestones = bonus.crossedMilestones;
+      newTotal = bonus.newTotal;
+    }
   } else {
     // Same track: update duration on the currently-open row.
     await db

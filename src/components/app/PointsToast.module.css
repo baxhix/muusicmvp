@@ -1,0 +1,95 @@
+/* PointsToast — ephemeral "+N Fanpoints" pill stack docked just
+ * above the BottomNav. Sibling to SameTrackToast / ListeningTogether
+ * in the same bottom-center band, just a touch higher so it can
+ * coexist with them without overlap. */
+.root {
+  position: fixed;
+  /* Above SameTrackToast (84px) but below ListeningTogether (152px)
+   * so a points award reads as the most "transient" of the three
+   * surfaces — a brief celebration that doesn't compete with the
+   * other ambient state. */
+  bottom: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+
+/* Each pill — amber star + "+N Fanpoints" + a quieter label
+ * describing what triggered the award (curtida / comentário / etc.). */
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: linear-gradient(160deg,
+    rgba(6, 6, 14, 0.96) 0%,
+    rgba(4, 4, 10, 0.96) 100%);
+  backdrop-filter: blur(28px) brightness(0.85) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) brightness(0.85) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.7),
+    0 0 18px -4px rgba(245, 158, 11, 0.30);
+  pointer-events: auto;
+  max-width: min(360px, calc(100vw - 32px));
+  font-size: 12.5px;
+  color: rgba(245, 245, 247, 0.7);
+  white-space: nowrap;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.amount {
+  color: #FFFFFF;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  color: rgba(245, 245, 247, 0.55);
+  font-weight: 400;
+  text-transform: lowercase;
+}
+
+/* Enter — rise from below + scale up with a slight overshoot
+ * (curve borrowed from SameTrackToast for consistency). */
+@keyframes pointsToastIn {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.92); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+@keyframes pointsToastOut {
+  0%   { opacity: 1; transform: translateY(0)    scale(1);    }
+  100% { opacity: 0; transform: translateY(14px) scale(0.94); }
+}
+.toastEnter {
+  animation: pointsToastIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.toastExit {
+  animation: pointsToastOut 0.36s cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toastEnter,
+  .toastExit { animation-duration: 0.001s; }
+}
+
+/* Mobile: drop a bit lower since the player rises above the nav
+ * on small viewports. Keep room for the SameTrackToast at 156. */
+@media (max-width: 768px) {
+  .root { bottom: 220px; }
+}

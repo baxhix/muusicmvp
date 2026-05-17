@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { track } from '@/lib/analytics';
+import { awardPoints } from '@/lib/rewards';
 import CommentsPanel from './CommentsPanel';
 import VerifiedBadge from './VerifiedBadge';
 import styles from './MediaPost.module.css';
@@ -295,6 +296,17 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
                   post_key: postKey,
                   creator_name: data.user,
                 });
+                // Engagement reward (+5 FP) — only on the toggle TO
+                // liked. Untoggling doesn't refund or fire negative
+                // points; the activity row stays as-is in the
+                // ledger. POSTs to the like endpoint fire-and-forget
+                // so the chapéu UX stays instant.
+                if (next) {
+                  void awardPoints('like', {
+                    apiPath: `/api/feed/posts/${encodeURIComponent(postKey)}/like`,
+                    analyticsContext: { post_id: data.dbId, post_key: postKey },
+                  });
+                }
               }}
               aria-label="Like"
             >
@@ -319,7 +331,20 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
 
         <div className={styles.spacer} />
 
-        <button className={styles.btn} aria-label="Enviar mensagem">
+        <button
+          className={styles.btn}
+          onClick={() => {
+            // Engagement reward (+15 FP) for share. No share-sheet
+            // UX yet; the click just records the activity + fires
+            // the toast. When the actual share affordance ships,
+            // call awardPoints once the recipient is picked.
+            void awardPoints('send', {
+              apiPath: `/api/feed/posts/${encodeURIComponent(postKey)}/share`,
+              analyticsContext: { post_id: data.dbId, post_key: postKey },
+            });
+          }}
+          aria-label="Enviar mensagem"
+        >
           <SendIcon />
           <span style={{ visibility: 'hidden', fontSize: '11px' }}>0</span>
         </button>

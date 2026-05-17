@@ -151,6 +151,14 @@ export interface EventPayloadMap {
    *  OFF. Low importance; useful for distinguishing "changed mind"
    *  from "engaged" in funnel reports. */
   user_unwaved:        { target_user_id: string; source: 'globe_marker' | 'profile_panel' };
+  /** Generic engagement reward fired by `awardPoints()` (src/lib/
+   *  rewards.ts). One event per reward — `rule` is the user-facing
+   *  bucket (like / comment / send / chat_started / three_streams)
+   *  and `amount` is the Fanpoint delta. Extra context fields
+   *  (post_id, conversation_id, etc.) pass through via the catch-
+   *  all so downstream tooling can attribute the reward back to
+   *  the originating object without re-querying. */
+  points_awarded:      { rule: 'like' | 'comment' | 'send' | 'chat_started' | 'three_streams'; amount: number; [key: string]: unknown };
   creator_followed:    { creator_user_id: string };
   creator_unfollowed:  { creator_user_id: string };
   content_shared:      { content_type: 'post' | 'track' | 'profile'; channel: string };
@@ -273,6 +281,7 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   // Social
   user_waved:         { category: 'social', importance: 'high', description: 'Aceno (heart) enviado via marker no globo ou painel de perfil.', trigger: 'Botão de coração clicado para o estado "liked".', ga4: true },
   user_unwaved:       { category: 'social', importance: 'low', description: 'Aceno desfeito.', trigger: 'Botão de coração clicado para o estado "unliked".' },
+  points_awarded:     { category: 'social', importance: 'high', description: 'Recompensa de engajamento (like, comentário, send, chat iniciado, 3 streams).', trigger: 'Helper awardPoints() em src/lib/rewards.ts.', ga4: true },
   creator_followed:   { category: 'social', importance: 'high', description: 'Usuário começou a seguir um perfil.', trigger: 'CTA "Seguir" ativado.', ga4: true },
   creator_unfollowed: { category: 'social', importance: 'low', description: 'Usuário deixou de seguir um perfil.', trigger: 'CTA "Seguindo" desfeito.' },
   content_shared:     { category: 'social', importance: 'high', description: 'Conteúdo compartilhado para fora do app.', trigger: 'navigator.share() ou copy-link.', ga4: true },

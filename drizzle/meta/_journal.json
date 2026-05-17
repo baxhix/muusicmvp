@@ -113,6 +113,13 @@
       "when": 1778920000000,
       "tag": "0016_feed_audio_type",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778940000000,
+      "tag": "0017_reward_kinds",
+      "breakpoints": true
     }
   ]
 }

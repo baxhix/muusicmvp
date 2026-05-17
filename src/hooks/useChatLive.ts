@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { track } from '@/lib/analytics';
+import { awardPoints } from '@/lib/rewards';
 import type {
   ApiConversationSummary,
   ApiMessage,
@@ -324,7 +325,17 @@ export function useChatLive(): UseChatLiveResult {
           '/api/conversations',
           { otherUserId },
         );
-        if (res.created) await loadList();
+        if (res.created) {
+          await loadList();
+          // Engagement reward (+3 FP) — server already inserted the
+          // `chat_started` activity row inside POST /api/conversations
+          // (see server/chat/dm.ts). This is the client-side toast +
+          // analytics for the first-time DM creation. `created: false`
+          // means the conversation already existed, so no award.
+          void awardPoints('chat_started', {
+            analyticsContext: { conversation_id: res.id },
+          });
+        }
         open(res.id);
       } catch (err) {
         console.error('openDmWith failed:', err);

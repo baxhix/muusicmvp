@@ -36,6 +36,7 @@ import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperchatPanel from '@/components/app/SuperchatPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
+import PointsToast from '@/components/app/PointsToast';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 
@@ -782,6 +783,14 @@ export default function AppPage() {
           driven by socket `notify:new` events of kind 'same_track'. Each
           toast holds 6s, then fades out. */}
       <SameTrackToast />
+
+      {/* "+N Fanpoints" toast — listens for the `app:points-awarded`
+          event that awardPoints() (src/lib/rewards.ts) dispatches
+          on every engagement reward (like, comment, send, chat
+          iniciado, 3 streams). Mounted once globally so any nested
+          component firing the helper gets the toast without
+          re-wiring. */}
+      <PointsToast />
 
       {/* Self-celebration when the logged-in user crosses a point
           milestone — confetti + centered congrats line, ~7s. */}

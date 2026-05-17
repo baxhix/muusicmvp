@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { track } from '@/lib/analytics';
+import { awardPoints } from '@/lib/rewards';
 import type {
   ApiFeedComment,
   ApiFeedCommentsPage,
@@ -160,6 +161,13 @@ export default function CommentsPanel({
           comment_id: res.id,
           body_length: body.length,
           mention_count: countMentions(body),
+        });
+        // Engagement reward (+10 FP). Server-side `createComment`
+        // already inserts the activity row via recordActivity, so
+        // this call skips `apiPath` — its only job here is the
+        // points-awarded toast + analytics on the client.
+        void awardPoints('comment', {
+          analyticsContext: { post_id: res.postId, comment_id: res.id },
         });
         // Optimistic prepend.
         const optimistic: ApiFeedComment = {

@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import { track } from '@/lib/analytics';
+import { awardPoints } from '@/lib/rewards';
 import type { ApiFeedComment, ApiFeedCommentReactionResult } from '@/lib/api/types';
 import CommentInput from './CommentInput';
 import styles from './CommentsPanel.module.css';
@@ -191,6 +192,17 @@ export default function CommentItem({
           comment_id: id,
           body_length: body.length,
           mention_count: countMentions(body),
+        });
+        // Engagement reward (+10 FP) — server-side createComment
+        // already inserted the ledger row, this just shows the
+        // toast + analytics on the client. Replies count as
+        // comments for reward purposes (same +10).
+        void awardPoints('comment', {
+          analyticsContext: {
+            post_id: comment.postId,
+            comment_id: id,
+            parent_comment_id: comment.id,
+          },
         });
         const optimistic: ApiFeedComment = {
           id,

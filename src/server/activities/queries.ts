@@ -2,12 +2,41 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { userActivities } from '../db/schema';
 
-export type ActivityKind = 'stream' | 'login' | 'chat_started';
+export type ActivityKind =
+  | 'stream'
+  | 'login'
+  | 'chat_started'
+  | 'post_liked'
+  | 'comment_posted'
+  | 'post_shared'
+  | 'three_streams';
 
+/**
+ * Per-action Fanpoint awards. Product spec for the engagement
+ * rewards loop:
+ *
+ *   • Like (heart on a feed post)         → +5
+ *   • Comment (top-level OR reply)        → +10
+ *   • Send (share arrow on a feed post)   → +15
+ *   • Chat iniciado (first DM created)    → +3   (was 200 → MVP rebalance)
+ *   • Cada 3 streams sequenciais          → +10 (awarded as a separate
+ *                                                 `three_streams` row)
+ *
+ * `stream` itself is now worth 0 — we still insert a ledger row
+ * per track change so the stream count is auditable, but the
+ * reward comes from the `three_streams` milestone that gets
+ * appended every third stream. Historical `stream` rows keep
+ * their original 100-pt value (the column stores points at insert
+ * time), so users with existing ledgers don't lose anything.
+ */
 export const POINTS: Record<ActivityKind, number> = {
-  stream: 100,
+  stream: 0,
   login: 50,
-  chat_started: 200,
+  chat_started: 3,
+  post_liked: 5,
+  comment_posted: 10,
+  post_shared: 15,
+  three_streams: 10,
 };
 
 /**
@@ -22,7 +51,7 @@ export const POINTS: Record<ActivityKind, number> = {
 export async function recordActivity(
   userId: string,
   kind: ActivityKind,
-  ctx: { trackId?: string; conversationId?: string } = {},
+  ctx: { trackId?: string; conversationId?: string; postId?: string } = {},
 ): Promise<{ crossedMilestones: number[]; newTotal: number }> {
   try {
     await db.insert(userActivities).values({
@@ -31,6 +60,7 @@ export async function recordActivity(
       points: POINTS[kind],
       trackId: ctx.trackId ?? null,
       conversationId: ctx.conversationId ?? null,
+      postId: ctx.postId ?? null,
     });
     // After persistence, derive the user's running total and figure
     // out which milestones (if any) the activity just unlocked. Pre-
