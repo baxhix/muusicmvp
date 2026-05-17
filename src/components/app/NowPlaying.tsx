@@ -61,6 +61,11 @@ interface NowPlayingProps {
   onSongIdxChange?: (idx: number) => void;
   /** Callback pra abrir o modal da playlist */
   onOpenPlaylist?: () => void;
+  /** Fired when the user drags the player horizontally past the
+   *  dismiss threshold (default 80px). Wired by the shell layout
+   *  to flip `playerHidden` in the AppShellProvider — the player
+   *  unmounts and a small restore pill takes its place. */
+  onDismiss?: () => void;
 }
 
 export default function NowPlaying({
@@ -70,6 +75,7 @@ export default function NowPlaying({
   songIdx: songIdxProp,
   onSongIdxChange,
   onOpenPlaylist,
+  onDismiss,
 }: NowPlayingProps) {
   // Default to the compact `mini` state — Spotify-style pill that
   // shows cover + title + play without competing with the map for
@@ -221,31 +227,122 @@ export default function NowPlaying({
     ? { title: spotifyTrack.title, artist: spotifyTrack.artist, img: spotifyTrack.img }
     : SONGS[songIdx];
 
-  // Player size cycle — tap the pill anywhere outside the inner
-  // controls to grow it. mini → horizontal → expanded → video →
-  // mini. Buttons / iframe / video shell clicks bubble up but the
-  // closest() check above skips the cycle so play/pause/skip are
-  // unaffected.
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
+  // ── Click + drag-to-dismiss ──
+  //
+  // The player root is both clickable (taps cycle size:
+  // mini → horizontal → expanded → video → mini) AND draggable
+  // (horizontal swipe past the dismiss threshold hides the
+  // player via `onDismiss`). We unify the two gestures in a
+  // single pointer-event-based state machine so they never
+  // race each other.
+  //
+  // Rules:
+  //   - movement under 5px → tap (cycle size)
+  //   - horizontal movement over 80px → dismiss
+  //   - vertical movement or in-between → snap back
+  //   - clicks inside <button>/iframe/.video-shell ignored
+  //     (play, prev/next, video iframe own their own gestures)
+  const CLICK_THRESHOLD_PX = 5;
+  const DISMISS_THRESHOLD_PX = 80;
+  const dragStartRef = useRef<{
+    x: number;
+    y: number;
+    onControl: boolean;
+  } | null>(null);
+  const [dragX, setDragX] = useState(0);
+  // Separate "finger is down + moving" from "drag delta is non-zero":
+  //   - During active drag → no CSS transition (1:1 finger tracking).
+  //   - On release → transition kicks in so snap-back / dismiss
+  //     animate smoothly to their target.
+  const [isPointerDown, setIsPointerDown] = useState(false);
+
+  const cycleSize = useCallback(() => {
+    setSize((curr) => {
+      const next: PlayerSize =
+        curr === 'mini'
+          ? 'horizontal'
+          : curr === 'horizontal'
+            ? 'expanded'
+            : curr === 'expanded'
+              ? 'video'
+              : 'mini';
+      onExpandChange?.(next === 'expanded' || next === 'video');
+      onSizeChange?.(next);
+      return next;
+    });
+  }, [onExpandChange, onSizeChange]);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
       if (embed) return;
-      if ((e.target as HTMLElement).closest('button, iframe, .video-shell')) return;
-      setSize((curr) => {
-        const next: PlayerSize =
-          curr === 'mini'
-            ? 'horizontal'
-            : curr === 'horizontal'
-              ? 'expanded'
-              : curr === 'expanded'
-                ? 'video'
-                : 'mini';
-        onExpandChange?.(next === 'expanded' || next === 'video');
-        onSizeChange?.(next);
-        return next;
-      });
+      const target = e.target as HTMLElement;
+      const onControl = !!target.closest('button, iframe, .video-shell');
+      dragStartRef.current = { x: e.clientX, y: e.clientY, onControl };
+      setIsPointerDown(true);
+      // Capture so subsequent move/up events fire on this element
+      // even if the pointer wanders off (e.g. a fast swipe leaves
+      // the player's box before release).
+      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
     },
-    [embed, onExpandChange, onSizeChange],
+    [embed],
   );
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const start = dragStartRef.current;
+    if (!start || start.onControl) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    // Only enter "drag mode" once horizontal motion exceeds
+    // vertical (otherwise the gesture is a scroll attempt, not
+    // a dismiss). Above CLICK_THRESHOLD_PX so we're past the
+    // click no-op window.
+    if (Math.abs(dx) > CLICK_THRESHOLD_PX && Math.abs(dx) > Math.abs(dy)) {
+      setDragX(dx);
+    }
+  }, []);
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const start = dragStartRef.current;
+      if (!start) return;
+      dragStartRef.current = null;
+      setIsPointerDown(false);
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      const horizontal = Math.abs(dx);
+      const vertical = Math.abs(dy);
+
+      // 1) Click — no real motion, no inner control.
+      if (horizontal < CLICK_THRESHOLD_PX && vertical < CLICK_THRESHOLD_PX) {
+        if (!start.onControl) cycleSize();
+        return;
+      }
+      // 2) Dismiss — clear horizontal swipe past threshold.
+      if (horizontal > DISMISS_THRESHOLD_PX && horizontal > vertical) {
+        // Animate the rest of the way out before unmounting.
+        const dir = dx < 0 ? -1 : 1;
+        setDragX(dir * 400);
+        // Tiny delay so the slide-out paints before the parent
+        // removes the player from the tree.
+        setTimeout(() => {
+          setDragX(0);
+          onDismiss?.();
+        }, 180);
+        return;
+      }
+      // 3) Snap back — anything else (vertical scroll attempt,
+      //    too short a horizontal drag). Setting dragX=0 with
+      //    isPointerDown=false enables the snap-back transition.
+      setDragX(0);
+    },
+    [cycleSize, onDismiss],
+  );
+
+  const handlePointerCancel = useCallback(() => {
+    dragStartRef.current = null;
+    setIsPointerDown(false);
+    setDragX(0);
+  }, []);
 
   return (
     <div
@@ -257,7 +354,27 @@ export default function NowPlaying({
         !embed && expanded ? styles.playerExpanded : '',
         !embed && isVideo ? styles.playerVideo : '',
       ].filter(Boolean).join(' ')}
-      onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      style={
+        embed
+          ? undefined
+          : {
+              transform: dragX ? `translate3d(${dragX}px, 0, 0)` : undefined,
+              // While the finger is down we want 1:1 finger tracking
+              // (no transition). On release the transition kicks in
+              // so snap-back AND slide-out-to-dismiss are smooth.
+              transition: isPointerDown
+                ? 'none'
+                : 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease',
+              opacity: Math.abs(dragX) > 200 ? 0 : 1,
+              // Allow vertical scroll gestures to fall through; we
+              // only consume horizontal motion.
+              touchAction: 'pan-y',
+            }
+      }
       role="region"
       aria-label="Tocando agora"
     >

@@ -77,6 +77,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     setSongIdx,
     setPlayerExpanded,
     setPlayerSize,
+    playerHidden,
+    setPlayerHidden,
     anaModalPayload,
     closeAnaCheckIn,
   } = useAppShell();
@@ -203,14 +205,34 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* NowPlaying mini-bar — persists across every route so the
-       *  user can keep playing while reading chat / comunidade. */}
-      <NowPlaying
-        onExpandChange={setPlayerExpanded}
-        onSizeChange={setPlayerSize}
-        songIdx={songIdx}
-        onSongIdxChange={setSongIdx}
-        onOpenPlaylist={() => setShowPlaylist(true)}
-      />
+       *  user can keep playing while reading chat / comunidade.
+       *  When the user drag-dismisses the bar, we swap it for a
+       *  tiny restore pill so the player can be brought back with
+       *  a single tap. The dismissed preference persists in
+       *  localStorage via the provider. */}
+      {!playerHidden ? (
+        <NowPlaying
+          onExpandChange={setPlayerExpanded}
+          onSizeChange={setPlayerSize}
+          songIdx={songIdx}
+          onSongIdxChange={setSongIdx}
+          onOpenPlaylist={() => setShowPlaylist(true)}
+          onDismiss={() => setPlayerHidden(true)}
+        />
+      ) : (
+        <button
+          type="button"
+          className={styles.playerRestorePill}
+          onClick={() => setPlayerHidden(false)}
+          aria-label="Mostrar player"
+          title="Mostrar player"
+        >
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M6 3v8.5a2.5 2.5 0 1 1-1.6-2.3" />
+            <path d="M6 3l7-1.5v8.5a2.5 2.5 0 1 1-1.6-2.3" />
+          </svg>
+        </button>
+      )}
 
       <PlaylistModal
         open={showPlaylist}

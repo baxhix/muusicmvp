@@ -62,6 +62,38 @@
 .compactBar:hover {
   background: rgba(255, 255, 255, 0.04);
 }
+
+/* Pulse fires for ~1.5s whenever the user earns Fanpoints
+ * (driven by `app:points-awarded` CustomEvent). Same amber
+ * accent the Fanpoints value already uses, drawn as an inset
+ * + outset box-shadow so the pill ring glows briefly without
+ * shifting layout. */
+.compactBarPulsing {
+  animation: fanverseBarPulse 1.5s ease-out 1 both;
+}
+@keyframes fanverseBarPulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(251, 191, 36, 0.45),
+      0 0 0 1px rgba(251, 191, 36, 0.55) inset;
+    background: rgba(251, 191, 36, 0.10);
+  }
+  60% {
+    box-shadow:
+      0 0 0 8px rgba(251, 191, 36, 0),
+      0 0 0 1px rgba(251, 191, 36, 0.30) inset;
+    background: rgba(251, 191, 36, 0.05);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(251, 191, 36, 0),
+      0 0 0 1px rgba(251, 191, 36, 0) inset;
+    background: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .compactBarPulsing { animation: none; }
+}
 .compactPhoto {
   width: 28px;
   height: 28px;

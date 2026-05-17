@@ -125,6 +125,12 @@ interface AppShellValue {
   setPlayerExpanded: Dispatch<SetStateAction<boolean>>;
   playerSize: 'mini' | 'horizontal' | 'expanded' | 'video';
   setPlayerSize: Dispatch<SetStateAction<'mini' | 'horizontal' | 'expanded' | 'video'>>;
+  /** Whether the user has explicitly dismissed the NowPlaying
+   *  mini-bar (drag-to-hide). Persisted to localStorage so the
+   *  preference survives reloads. When true, NowPlaying renders
+   *  a small restore-pill instead of the full bar. */
+  playerHidden: boolean;
+  setPlayerHidden: Dispatch<SetStateAction<boolean>>;
   /** Ana check-in modal payload — non-null while the modal is
    *  open. Setting null closes it AND starts the 60s linger
    *  before the pin auto-clears from the globe. */
@@ -169,6 +175,32 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const [playerSize, setPlayerSize] = useState<
     'mini' | 'horizontal' | 'expanded' | 'video'
   >('horizontal');
+  // Player hidden state — the user can drag the mini bar off
+  // screen to free up the bottom-left corner. Persisted to
+  // localStorage so the choice sticks across reloads. SSR-safe:
+  // initial state is `false`; the persisted value is read in an
+  // effect after hydration so the server HTML always matches.
+  const [playerHidden, setPlayerHidden] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem('muusic.playerHidden.v1');
+      if (raw === 'true') setPlayerHidden(true);
+    } catch {
+      // Quota / private mode — silent fallback.
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        'muusic.playerHidden.v1',
+        playerHidden ? 'true' : 'false',
+      );
+    } catch {
+      // Quota / private mode — silent fallback.
+    }
+  }, [playerHidden]);
   const currentTrack = catalog[songIdx] ?? null;
 
   // ── Universe gate — redirect to /app/select if the user hasn't
@@ -418,6 +450,8 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setPlayerExpanded,
       playerSize,
       setPlayerSize,
+      playerHidden,
+      setPlayerHidden,
       anaModalPayload,
       closeAnaCheckIn,
     }),
@@ -438,6 +472,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       songIdx,
       playerExpanded,
       playerSize,
+      playerHidden,
       anaModalPayload,
       closeAnaCheckIn,
     ],

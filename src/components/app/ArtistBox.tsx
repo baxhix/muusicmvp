@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import {
@@ -85,6 +85,30 @@ export default function ArtistBox() {
   const progress  = Math.round((completed / TOTAL) * 100);
   const fpEarned  = sumEarnedXp(MISSION_META, doneById);
 
+  // ── Pulse the chevron when the user earns Fanpoints ──
+  //
+  // The `app:points-awarded` CustomEvent fires anywhere
+  // `awardPoints()` runs (likes, comments, sends, chat starts,
+  // every-3-streams). The PointsToast hooks the same event to
+  // surface a "+10 FP" toast; we add a complementary affordance
+  // here — a brief glow on the chevron — so the user knows where
+  // the new total went, even if they missed the toast. ~1.5s,
+  // then auto-cleared so the pulse is single-shot, not nagging.
+  const [pulsing, setPulsing] = useState(false);
+  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const onAwarded = () => {
+      setPulsing(true);
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+      pulseTimerRef.current = setTimeout(() => setPulsing(false), 1500);
+    };
+    window.addEventListener('app:points-awarded', onAwarded);
+    return () => {
+      window.removeEventListener('app:points-awarded', onAwarded);
+      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
+    };
+  }, []);
+
   return (
     <div className={`${styles.box} ${open ? styles.boxOpen : ''}`}>
 
@@ -94,7 +118,7 @@ export default function ArtistBox() {
        *  toggle the dropdown below. */}
       <button
         type="button"
-        className={styles.compactBar}
+        className={`${styles.compactBar} ${pulsing ? styles.compactBarPulsing : ''}`}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}

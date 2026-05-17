@@ -148,6 +148,67 @@
 }
 .backBtn svg { display: none; }
 
+/* ── NowPlaying restore pill ──
+ *
+ * Shown in place of the NowPlaying mini-bar when the user has
+ * drag-dismissed the player. A single circular tap target with a
+ * music-note glyph that brings the bar back. Positioned at the
+ * same anchor the mini-bar lived in so the gesture feels like a
+ * reversible toggle. Persistent across routes (rendered in the
+ * shell layout) just like the player itself.
+ */
+.playerRestorePill {
+  position: fixed;
+  bottom: 24px;
+  left: 42px;
+  z-index: 22;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 247, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.6);
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: playerRestorePillIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.playerRestorePill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #F5F5F7;
+  transform: translateY(-2px);
+}
+.playerRestorePill:active {
+  transform: translateY(0) scale(0.96);
+}
+.playerRestorePill svg {
+  width: 16px;
+  height: 16px;
+}
+@keyframes playerRestorePillIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+@media (max-width: 768px) {
+  /* Match the mobile NowPlaying offset (bottom:76px above the
+   * BottomNav). Left also snaps to the 8px gutter. */
+  .playerRestorePill {
+    bottom: 76px;
+    left: 12px;
+  }
+}
+
 /* ── Globe placeholder ──
  *
  * Painted while the Globe is unmounted or still bootstrapping its
