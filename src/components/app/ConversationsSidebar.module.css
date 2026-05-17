@@ -350,14 +350,14 @@
   }
 }
 @media (max-width: 480px) {
-  /* Small mobile: full-screen takeover. The bottom-sheet 60vh
-   * variant left too little room for the actual conversation list
-   * + composer once the BottomNav (~76px) and IM keyboard ate the
-   * lower half. Now the panel covers the whole viewport edge to
-   * edge; the close button in the panel header is the way back. */
+  /* Small mobile: near full-screen — `bottom: 76px` leaves the
+   * BottomNav (z:70) visible underneath the panel so the user
+   * can switch surfaces without closing first. The composer stays
+   * comfortably above the IM keyboard since the panel doesn't
+   * push all the way to the viewport bottom. */
   .panel {
     top: 0;
-    bottom: 0;
+    bottom: 76px;
     left: 0;
     right: 0;
     width: auto;

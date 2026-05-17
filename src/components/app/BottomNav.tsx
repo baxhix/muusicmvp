@@ -39,6 +39,17 @@ export default function BottomNav() {
   const hasCoords = user?.lat != null && user?.lng != null;
   const locating = status === 'requesting';
 
+  /**
+   * Lightweight prefetch helper — called on pointerenter / focus
+   * of each routed slot so the chunk for the target route is
+   * already in flight by the time the user clicks. Next.js's
+   * `<Link>` does this automatically; we're on `<button>` here,
+   * so the hint is manual. No-op when already on that route.
+   */
+  const prefetch = (path: string) => {
+    if (pathname !== path) router.prefetch(path);
+  };
+
   const handleMapClick = () => {
     // If we're not on /app, go there first. Otherwise center the
     // map on the user (or ask for location if we don't have it).
@@ -78,6 +89,8 @@ export default function BottomNav() {
           type="button"
           className={`${styles.item} ${onMap ? styles.itemActive : ''}`}
           onClick={handleMapClick}
+          onPointerEnter={() => prefetch('/app')}
+          onFocus={() => prefetch('/app')}
           disabled={locating}
           aria-label={mapTooltip}
           data-tooltip={mapTooltip}
@@ -128,6 +141,8 @@ export default function BottomNav() {
           type="button"
           className={`${styles.item} ${styles.itemCenter} ${onChat ? styles.itemActive : ''}`}
           onClick={() => router.push('/app/chat')}
+          onPointerEnter={() => prefetch('/app/chat')}
+          onFocus={() => prefetch('/app/chat')}
           aria-label="Abrir conversas"
           data-tooltip="Chat"
         >
@@ -155,6 +170,8 @@ export default function BottomNav() {
           type="button"
           className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
           onClick={() => router.push('/app/comunidades')}
+          onPointerEnter={() => prefetch('/app/comunidades')}
+          onFocus={() => prefetch('/app/comunidades')}
           aria-label="Abrir comunidades"
           data-tooltip="Comunidade"
         >
@@ -185,6 +202,8 @@ export default function BottomNav() {
           type="button"
           className={`${styles.item} ${onProfile ? styles.itemActive : ''}`}
           onClick={() => router.push('/app/perfil')}
+          onPointerEnter={() => prefetch('/app/perfil')}
+          onFocus={() => prefetch('/app/perfil')}
           aria-label="Abrir perfil"
           data-tooltip="Perfil"
         >

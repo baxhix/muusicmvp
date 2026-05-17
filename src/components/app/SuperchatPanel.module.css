@@ -686,12 +686,12 @@
   }
 }
 @media (max-width: 480px) {
-  /* Small mobile: full-screen — the superchat composer + message
-   * stream need full vertical room, and the floating "bottom-sheet
-   * at 60vh" cropped the composer the moment the keyboard came up. */
+  /* Small mobile: near full-screen. `bottom: 76px` leaves the
+   * BottomNav (z:70) reachable so the user can switch surfaces
+   * mid-conversation without closing the superchat first. */
   .panel {
     top: 0;
-    bottom: 0;
+    bottom: 76px;
     left: 0;
     right: 0;
     width: auto;

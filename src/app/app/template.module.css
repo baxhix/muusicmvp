@@ -1,0 +1,31 @@
+/* ── Per-route fade-in ──
+ *
+ * Subtle opacity transition on every route entrance. The animation
+ * is intentionally NOT using transform (translateY, scale, etc.)
+ * because the routes' content includes `position: fixed` panels
+ * (ConversationsSidebar, CommunityPanel, etc.) — and a transform
+ * on an ancestor creates a new containing block, breaking the
+ * `position: fixed` viewport-relative behavior for the duration
+ * of the animation. Pure opacity keeps the panels anchored.
+ *
+ * The wrapper itself is sized to fill its parent so its presence
+ * doesn't affect the parent's layout. Children continue to use
+ * their own positioning (mostly position:fixed which is unaffected
+ * by the wrapper's box).
+ */
+.transition {
+  width: 100%;
+  height: 100%;
+  animation: app-route-in 220ms ease both;
+}
+
+@keyframes app-route-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transition {
+    animation: none;
+  }
+}

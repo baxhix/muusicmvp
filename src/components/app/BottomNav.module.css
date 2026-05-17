@@ -1,9 +1,23 @@
 .nav {
-  /* `.nav` hosts the ::before glow that lives BEHIND the pill.
-   * position:relative gives the pseudo a stacking context to
-   * anchor against; overflow stays unset so the blurred glow
-   * can spill out beyond the nav's bounding box. */
-  position: relative;
+  /* Anchored to the bottom of the viewport so the nav stays put
+   * regardless of what the .shell flex layout does with its other
+   * children. Before Phase 3 the BottomNav was a flex item that
+   * relied on .mapLayer (flex:1) to push it down; after the
+   * refactor .mapLayer's content is all position:fixed which can
+   * leave the flex container without any in-flow space to
+   * distribute. Fixed positioning sidesteps that fragility.
+   *
+   * `pointer-events: none` on the wrapper + `pointer-events: auto`
+   * on the pill keeps the surrounding glow non-blocking so taps
+   * outside the pill go through to the basemap. */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* Above the full-screen route panels (z:60) so the nav stays
+   * tappable on every route. Panels' mobile breakpoint leaves a
+   * 76px gap at the bottom so they don't sit under the pill. */
+  z-index: 70;
   display: flex;
   justify-content: center;
   padding: 12px 0 24px;

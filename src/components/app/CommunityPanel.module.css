@@ -200,12 +200,13 @@
   }
 }
 @media (max-width: 480px) {
-  /* Same rationale as Conversations / Superchat — full-screen
+  /* Same rationale as Conversations / Superchat — near full-screen
    * takeover so the topics list + composer have actual breathing
-   * room instead of fighting the keyboard for a 60vh sliver. */
+   * room. `bottom: 76px` leaves the BottomNav (z:70) visible so
+   * the user can switch surfaces without closing first. */
   .panel {
     top: 0;
-    bottom: 0;
+    bottom: 76px;
     left: 0;
     right: 0;
     width: auto;
