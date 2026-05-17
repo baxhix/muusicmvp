@@ -46,7 +46,7 @@ import { useFanpointMilestones } from '@/hooks/useFanpointMilestones';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 
-import { useChatLiveWithFakes } from '@/hooks/useChatLiveWithFakes';
+import { useAppShell } from '@/lib/app/AppShellContext';
 import {
   FAKE_ANA_CONVERSATION_ID,
   FAKE_ANA_NOW_PLAYING,
@@ -72,7 +72,13 @@ export default function AppPage() {
   const { user: authUser } = useAuth();
   const { universeId, hydrated: universeHydrated } = useUniverse();
   const router = useRouter();
-  const chat = useChatLiveWithFakes();
+  // Chat realtime + activeOverlay coordinator + feedOpen mirror
+  // are now hosted by /app/layout.tsx via AppShellProvider so the
+  // state survives navigations between sibling routes (Phase 1 of
+  // the routing refactor). The local API surface stays identical
+  // — this hook just returns the same shape page.tsx used to own.
+  const shell = useAppShell();
+  const chat = shell.chat;
   // Watches the viewer's Fanpoints balance for 100-multiple
   // crossings and dispatches `app:milestone-fp` so the
   // MilestoneNotification banner can pop. Hook is sealed —
@@ -138,16 +144,18 @@ export default function AppPage() {
    *  background and is simply covered while one of them is open.
    *  Singleton-only-among-overlays still applies, so opening Chat
    *  closes Community and vice-versa. */
-  type ActiveOverlay =
-    | null
-    | 'superfans'
-    | 'playlist'
-    | 'superchat'
-    | 'notifications'
-    | 'chat'
-    | 'community'
-    | 'profile';
-  const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
+  // Active overlay coordinator — lifted to AppShellProvider.
+  // Boolean shims live in the provider too, so the call sites
+  // here use them directly without re-creating the state machine.
+  const {
+    activeOverlay,
+    setActiveOverlay,
+    setShowSuperfans,
+    setShowPlaylist,
+    setShowSuperchat,
+    setShowChat,
+    setShowCommunity,
+  } = shell;
   const showSuperfans     = activeOverlay === 'superfans';
   const showPlaylist      = activeOverlay === 'playlist';
   const showSuperchat     = activeOverlay === 'superchat';
@@ -155,61 +163,11 @@ export default function AppPage() {
   const showChat          = activeOverlay === 'chat';
   const showCommunity     = activeOverlay === 'community';
 
-  // Per-overlay setShow helpers — preserve the boolean shape the
-  // existing call sites use. Setting true swaps to that overlay
-  // (closing any other); setting false only clears the state if
-  // THIS overlay is the active one (so closing Playlist while
-  // Notifications is open doesn't bounce Notifications shut).
-  const setShowSuperfans = (v: boolean) => {
-    if (v) setActiveOverlay('superfans');
-    else setActiveOverlay((curr) => (curr === 'superfans' ? null : curr));
-  };
-  const setShowPlaylist = (v: boolean) => {
-    if (v) setActiveOverlay('playlist');
-    else setActiveOverlay((curr) => (curr === 'playlist' ? null : curr));
-  };
-  const setShowSuperchat = (v: boolean) => {
-    if (v) setActiveOverlay('superchat');
-    else setActiveOverlay((curr) => (curr === 'superchat' ? null : curr));
-  };
-  const setShowChat = (v: boolean) => {
-    if (v) setActiveOverlay('chat');
-    else setActiveOverlay((curr) => (curr === 'chat' ? null : curr));
-  };
-  const setShowCommunity = (v: boolean) => {
-    if (v) setActiveOverlay('community');
-    else setActiveOverlay((curr) => (curr === 'community' ? null : curr));
-  };
-
-  // Listen for the BottomNav's notification trigger — routes
-  // through the same coordinator so opening notifications closes
-  // any other open overlay. (Comunidade no longer needs a listener
-  // here: the dock shortcut now toggles through the
-  // `onCommunityToggle` prop on LiveChatStack instead of firing a
-  // CustomEvent, so the parent owns the open/closed state directly.)
-  useEffect(() => {
-    const onOpenNotif = () => setActiveOverlay('notifications');
-    window.addEventListener('app:open-notifications', onOpenNotif);
-    return () => window.removeEventListener('app:open-notifications', onOpenNotif);
-  }, []);
-
-  // Mirror of FeedPanel's internal `minimized` flag, kept here so
-  // the right-rail dock can paint the Feed shortcut's active state
-  // in sync. The Feed dispatches `app:feed-state-change` whenever
-  // its open/closed state flips (header click or `app:toggle-feed`
-  // shortcut); we just listen and copy. Default `true` matches the
-  // Feed's "lands expanded" default.
-  const [feedOpen, setFeedOpen] = useState(true);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ open: boolean }>).detail;
-      if (detail && typeof detail.open === 'boolean') {
-        setFeedOpen(detail.open);
-      }
-    };
-    window.addEventListener('app:feed-state-change', handler);
-    return () => window.removeEventListener('app:feed-state-change', handler);
-  }, []);
+  // FeedPanel's open/min state — lifted to AppShellProvider, which
+  // listens to `app:feed-state-change` and exposes the boolean here.
+  // The shortcut buttons + BottomNav read it via the destructured
+  // `feedOpen` below.
+  const { feedOpen } = shell;
 
   // Heart waves dispatched from the expanded user marker on the
   // Globe. When the dedicated `/api/wave` endpoint ships, route
@@ -653,12 +611,8 @@ export default function AppPage() {
             showProfile && !viewingUserId ? 'profile' : activeOverlay
           }
           feedOpen={feedOpen}
-          /* Sum of DM unread counts across all conversations. The
-             total drives the red badge on the Chat slot. */
-          chatUnreadCount={chat.conversations.reduce(
-            (sum, c) => sum + (c.type === 'dm' ? c.unreadCount : 0),
-            0,
-          )}
+          /* Memoized DM-only unread sum from AppShellProvider. */
+          chatUnreadCount={shell.chatUnreadCount}
         />
       </div>
 
