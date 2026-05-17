@@ -3,13 +3,27 @@ name: Deploy
 on:
   push:
     branches: [main]
-  workflow_dispatch: # allow manual reruns / emergency rebuilds
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: 'Rebuild + redeploy ALL services regardless of changes'
+        type: boolean
+        default: false
 
 # Required so the workflow can push to GitHub Container Registry.
 # `packages: write` is the key bit — `GITHUB_TOKEN` gets that scope.
 permissions:
   contents: read
   packages: write
+
+# Cancel any in-progress run on the same branch when a new push
+# lands. Saves wasted minutes when commits land in quick
+# succession — only the most recent push gets a full build +
+# deploy. Feature branches each get their own concurrency group
+# so they don't trample each other.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -19,83 +33,214 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
-  # 1. Build all three service images in parallel + push to GHCR.
-  #    Heavy layer caching via type=gha so subsequent runs reuse:
-  #    npm install, Next.js .next/cache, drizzle install, etc.
+  # 1. Detect which services have changed code so we only rebuild
+  #    what actually needs rebuilding. Per-service path filters tell
+  #    the build jobs below whether to run or skip.
+  #
+  #    `dorny/paths-filter` diffs the push range (or workflow_run
+  #    base) and emits one boolean output per filter group. Outputs
+  #    are consumed by the build-* and deploy jobs via `needs.changes`.
   # ──────────────────────────────────────────────────────────────────
-  build:
-    name: Build & push ${{ matrix.service }}
+  changes:
+    name: Detect changed services
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - service: web
-            dockerfile: Dockerfile.web
-            context: .
-          - service: socket
-            dockerfile: Dockerfile.socket
-            context: .
-          - service: admin
-            dockerfile: admin/Dockerfile
-            context: ./admin
-
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      socket: ${{ steps.filter.outputs.socket }}
+      admin: ${{ steps.filter.outputs.admin }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Compute service filters
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          # Inclusive of all source + asset paths that compile into
+          # the matching image. When in doubt, list the path under
+          # both filters that could be affected — false positives
+          # (a redundant rebuild) are cheaper than false negatives
+          # (a deploy missing changes).
+          filters: |
+            web:
+              - 'src/**'
+              - 'public/**'
+              - 'drizzle/**'
+              - 'scripts/migrate.mjs'
+              - 'scripts/entrypoint.sh'
+              - 'next.config.*'
+              - 'tsconfig.json'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'Dockerfile.web'
+              - 'docker-compose.yml'
+            socket:
+              # Socket reuses src/server/*, src/lib/*, src/hooks/*
+              # via shared imports. UI-only changes in
+              # src/components/** or src/app/** do NOT need a
+              # socket rebuild — they're excluded by listing only
+              # the server-side trees.
+              - 'src/server/**'
+              - 'src/lib/**'
+              - 'src/hooks/**'
+              - 'drizzle/**'
+              - 'tsconfig.json'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'Dockerfile.socket'
+              - 'docker-compose.yml'
+            admin:
+              - 'admin/**'
+              - 'docker-compose.yml'
+
+  # ──────────────────────────────────────────────────────────────────
+  # 2. Build jobs — one per service. Each runs only when its filter
+  #    fired (or when workflow_dispatch was invoked with force_all).
+  #    Heavy layer caching via type=gha so subsequent runs reuse:
+  #    npm install, Next.js .next/cache, drizzle install, etc.
+  # ──────────────────────────────────────────────────────────────────
+  build-web:
+    name: Build & push web
+    needs: changes
+    if: |
+      needs.changes.outputs.web == 'true' ||
+      (github.event_name == 'workflow_dispatch' && inputs.force_all)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Compute the image name in lowercase — GHCR rejects mixed case.
-      # The output `image` is referenced by the next step.
       - name: Normalize image name
         id: img
         run: |
           owner_lc=$(echo "${{ env.IMAGE_OWNER }}" | tr '[:upper:]' '[:lower:]')
-          echo "image=${{ env.REGISTRY }}/${owner_lc}/muusicmvp-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
-
+          echo "image=${{ env.REGISTRY }}/${owner_lc}/muusicmvp-web" >> "$GITHUB_OUTPUT"
       - name: Build & push image
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: .
+          file: Dockerfile.web
           push: true
           tags: |
             ${{ steps.img.outputs.image }}:latest
             ${{ steps.img.outputs.image }}:sha-${{ github.sha }}
-          # All build args passed to every image — Dockerfiles that
-          # don't declare a matching `ARG` just ignore them (with a
-          # harmless warning), so we don't need per-service plumbing.
-          # `secrets.*` / `vars.*` are only allowed in `steps` blocks
-          # (NOT inside matrix.include — that's a GitHub Actions
-          # parser restriction, which is why this lives here.
           build-args: |
             NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
             NEXT_PUBLIC_API_BASE_URL=${{ vars.APP_URL }}
-          # GitHub-hosted layer cache. `scope` is per-service so
-          # the web build doesn't trash the socket cache.
-          cache-from: type=gha,scope=${{ matrix.service }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+  build-socket:
+    name: Build & push socket
+    needs: changes
+    if: |
+      needs.changes.outputs.socket == 'true' ||
+      (github.event_name == 'workflow_dispatch' && inputs.force_all)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Normalize image name
+        id: img
+        run: |
+          owner_lc=$(echo "${{ env.IMAGE_OWNER }}" | tr '[:upper:]' '[:lower:]')
+          echo "image=${{ env.REGISTRY }}/${owner_lc}/muusicmvp-socket" >> "$GITHUB_OUTPUT"
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.socket
+          push: true
+          tags: |
+            ${{ steps.img.outputs.image }}:latest
+            ${{ steps.img.outputs.image }}:sha-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.APP_URL }}
+          cache-from: type=gha,scope=socket
+          cache-to: type=gha,mode=max,scope=socket
+
+  build-admin:
+    name: Build & push admin
+    needs: changes
+    if: |
+      needs.changes.outputs.admin == 'true' ||
+      (github.event_name == 'workflow_dispatch' && inputs.force_all)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Normalize image name
+        id: img
+        run: |
+          owner_lc=$(echo "${{ env.IMAGE_OWNER }}" | tr '[:upper:]' '[:lower:]')
+          echo "image=${{ env.REGISTRY }}/${owner_lc}/muusicmvp-admin" >> "$GITHUB_OUTPUT"
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./admin
+          file: admin/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.img.outputs.image }}:latest
+            ${{ steps.img.outputs.image }}:sha-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.APP_URL }}
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,mode=max,scope=admin
 
   # ──────────────────────────────────────────────────────────────────
-  # 2. SSH into the VPS, pull the new images, restart the affected
-  #    containers. Only runs once ALL three image builds succeed.
+  # 3. Deploy — SSH into the VPS, pull the new images, restart the
+  #    affected containers. ONLY the services that were rebuilt
+  #    above are pulled/restarted; unchanged services keep their
+  #    running containers untouched.
+  #
+  #    Runs even if some build jobs were skipped (no changes for
+  #    that service). The `always()` + per-job result checks ensure
+  #    the deploy fails only on actual build failures, never on
+  #    intentional skips.
   # ──────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to VPS
-    needs: build
+    needs: [changes, build-web, build-socket, build-admin]
     runs-on: ubuntu-latest
-    # Skip the deploy on workflow_dispatch from a fork or rerun
-    # without intent — gated by branch name as a basic safety belt.
-    if: github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.result == 'success' &&
+      (needs.build-web.result == 'success' || needs.build-web.result == 'skipped') &&
+      (needs.build-socket.result == 'success' || needs.build-socket.result == 'skipped') &&
+      (needs.build-admin.result == 'success' || needs.build-admin.result == 'skipped') &&
+      (
+        needs.changes.outputs.web == 'true' ||
+        needs.changes.outputs.socket == 'true' ||
+        needs.changes.outputs.admin == 'true' ||
+        (github.event_name == 'workflow_dispatch' && inputs.force_all)
+      )
 
     steps:
       # Debug-friendly preflight — host is in vars (not secrets) so
@@ -108,9 +253,7 @@ jobs:
       # blocklist for unrelated reasons. We try 3 times with 20s
       # between attempts — typically enough for the firewall to
       # cycle its tarpit, or for the runner to release its socket
-      # and the kernel-level conntrack to fall out. Without this,
-      # one bad-luck IP forces a manual `gh run rerun` for a deploy
-      # that would otherwise have worked seconds later.
+      # and the kernel-level conntrack to fall out.
       - name: Verify host reachability
         run: |
           HOST="${{ vars.DEPLOY_HOST }}"
@@ -134,12 +277,15 @@ jobs:
           exit 1
 
       # appleboy/ssh-action retries its own connect attempts via the
-      # `command_timeout` + the action's built-in `retry`-style flags.
-      # Belt-and-suspenders against the same flake: if the preflight
-      # passed but the actual SSH handshake stalls, we still get 3
-      # tries before failing the job.
+      # `command_timeout` + the action's built-in flags. Belt-and-
+      # suspenders against the same firewall flake.
       - name: SSH deploy
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          CHANGED_WEB: ${{ needs.changes.outputs.web }}
+          CHANGED_SOCKET: ${{ needs.changes.outputs.socket }}
+          CHANGED_ADMIN: ${{ needs.changes.outputs.admin }}
+          FORCE_ALL: ${{ (github.event_name == 'workflow_dispatch' && inputs.force_all) || '' }}
         with:
           host:     ${{ vars.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -148,37 +294,48 @@ jobs:
           script_stop: true
           command_timeout: 10m
           timeout: 60s
+          # The CHANGED_* + FORCE_ALL env vars need to be explicitly
+          # forwarded to the remote shell. Without `envs:` they don't
+          # cross the SSH boundary even though they're set on the step.
+          envs: CHANGED_WEB,CHANGED_SOCKET,CHANGED_ADMIN,FORCE_ALL
           script: |
             set -euo pipefail
             cd /opt/muusic
 
-            # git pull keeps docker-compose.yml + any non-image
-            # tracked files (e.g. drizzle migrations the runner
-            # image already has baked in, but they're useful for
-            # local psql access) in sync with main.
+            # Keep docker-compose.yml + non-image files in sync.
             git pull --ff-only
 
-            # Pull the fresh images and recreate ONLY the services
-            # that come from the build — leave postgres untouched.
-            docker compose pull web socket admin
-            docker compose up -d --no-build web socket admin
+            # Build the list of services that actually need a
+            # pull + restart. `force_all` (manual workflow_dispatch)
+            # bypasses the filter and recreates everything.
+            SERVICES=""
+            if [ "${FORCE_ALL:-}" = "true" ]; then
+              SERVICES="web socket admin"
+              echo "Force-all deploy: pulling + restarting ALL services."
+            else
+              [ "${CHANGED_WEB:-}" = "true" ]    && SERVICES="$SERVICES web"
+              [ "${CHANGED_SOCKET:-}" = "true" ] && SERVICES="$SERVICES socket"
+              [ "${CHANGED_ADMIN:-}" = "true" ]  && SERVICES="$SERVICES admin"
+            fi
+
+            if [ -z "$SERVICES" ]; then
+              echo "No services changed — skipping pull/restart."
+              exit 0
+            fi
+
+            echo "Pulling + restarting:$SERVICES"
+            docker compose pull $SERVICES
+            docker compose up -d --no-build $SERVICES
 
             # ── Post-deploy cleanup ────────────────────────────────
-            # We watched the VPS fill from 0% → 94% over ~80 deploys
-            # because the prior `until=24h` filter only caught
-            # DANGLING images. The actual culprits were:
-            #   1. Tagged-but-unreferenced images (ghcr.io/...@sha)
-            #      from previous deploys lingering forever.
-            #   2. Build cache layers accumulating any time someone
-            #      ran `docker compose build` manually for debug.
-            #
-            # The pruning order matters: containers first (so the
-            # image prune is allowed to delete more), then images,
-            # then the build cache. Each is best-effort — a single
-            # failed prune step never breaks the deploy.
+            # Always run — keeps disk healthy regardless of which
+            # services were touched. Order matters:
+            #   1. Containers first (so image prune is allowed to
+            #      delete now-unreferenced layers).
+            #   2. Images (-a so tagged-but-unreferenced go too).
+            #   3. Build cache (doesn't accumulate on the VPS
+            #      anymore now that we build in CI, but cheap to
+            #      run as a belt-and-suspenders).
             docker container prune -f || true
-            # -a: include tagged images. Containers are already
-            # recreated above, so the only "in use" images are the
-            # exact tags we just pulled. Everything else is safe.
             docker image prune -af || true
             docker builder prune -af || true

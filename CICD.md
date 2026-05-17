@@ -1,8 +1,8 @@
 # CI/CD setup (GitHub Actions → GHCR → VPS)
 
-One-time setup for the automated deploy pipeline. After this, every push to `main` builds the three service images (`web`, `socket`, `admin`) in GitHub Actions and rolls them out on the production VPS via SSH.
+One-time setup for the automated deploy pipeline. After this, every push to `main` builds **only the services whose code actually changed** and rolls them out on the production VPS via SSH.
 
-A typical deploy goes from ~3 minutes (VPS-side build) to **~30-60 seconds** (just `docker compose pull && up -d`).
+A typical chat-only commit goes from ~5 minutes (full triple-image rebuild) to **~1-2 minutes** (just the `web` image + a partial deploy).
 
 ---
 
@@ -12,18 +12,30 @@ A typical deploy goes from ~3 minutes (VPS-side build) to **~30-60 seconds** (ju
 git push main
     ↓
 .github/workflows/deploy.yml runs
-    ├─ build  ┐
-    │  web    ┤  in parallel — builds each Dockerfile,
-    │  socket ┤  pushes to ghcr.io/<owner>/muusicmvp-<service>:latest + :sha-XXX
-    │  admin  ┘  layer cache lives in GitHub Actions cache
-    └─ deploy
-       └─ SSH into VPS → git pull → docker compose pull → up -d
+    ├─ changes  (dorny/paths-filter)
+    │   → outputs.web / .socket / .admin = "true" | "false"
+    │
+    ├─ build-web     (only if changes.web == 'true')
+    ├─ build-socket  (only if changes.socket == 'true')   ← parallel, conditional
+    ├─ build-admin   (only if changes.admin == 'true')
+    │
+    └─ deploy  (only if ≥1 service changed)
+       └─ SSH into VPS → git pull → pull + restart ONLY changed services
 ```
+
+**Path filters** (live in `deploy.yml`'s `changes` job):
+- `web` rebuilds when `src/**`, `public/**`, `drizzle/**`, `next.config.*`, `package.json`, `Dockerfile.web`, `docker-compose.yml` changes.
+- `socket` rebuilds when `src/server/**`, `src/lib/**`, `src/hooks/**`, `drizzle/**`, `package.json`, `Dockerfile.socket`, `docker-compose.yml` changes. UI-only changes in `src/components/**` or `src/app/**` do NOT trigger a socket rebuild.
+- `admin` rebuilds when `admin/**` or `docker-compose.yml` changes.
+
+**Concurrency control**: pushing N commits in quick succession cancels in-progress runs and only deploys the latest — no more wasted CI minutes on stale commits.
+
+**Manual full rebuild**: trigger `workflow_dispatch` from the GitHub Actions UI and check `force_all` → rebuilds + redeploys all three services regardless of filters.
 
 The VPS only needs to:
 1. Run `git pull` so `docker-compose.yml` stays current
-2. Run `docker compose pull` to fetch the freshly-built images
-3. Run `docker compose up -d` to swap containers
+2. Run `docker compose pull <changed-services>` to fetch only freshly-built images
+3. Run `docker compose up -d --no-build <changed-services>` to swap only affected containers
 
 No Node, no npm, no Next.js build on the VPS.
 
