@@ -1403,6 +1403,17 @@ export default function Globe() {
       visualViewport?.removeEventListener('resize', scheduleResize);
       window.removeEventListener('orientationchange', scheduleResize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // CRITICAL: null out every globeStore callback the Globe owns
+      // BEFORE `map.remove()` below. Otherwise an in-flight socket
+      // update (presence change, Ana check-in, etc.) landing during
+      // the mobile unmount-remount gap would invoke the OLD closures,
+      // which hold a reference to the now-destroyed `map`. Mapbox's
+      // Marker.addTo(map) calls `map.getCanvasContainer()` internally;
+      // on a destroyed map that returns undefined, so `.appendChild`
+      // throws `undefined is not an object`. Nulling the callbacks
+      // shunts incoming updates into the buffer slot where they wait
+      // for the next Globe instance to register and replay them.
+      globeStore.unregisterMapCallbacks();
       if (userLocationMarker) userLocationMarker.remove();
       liveUserMarkers.forEach((m) => m.remove());
       liveUserMarkers.clear();

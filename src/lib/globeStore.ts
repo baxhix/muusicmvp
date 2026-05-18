@@ -269,4 +269,35 @@ export const globeStore = {
    */
   registerOpenAnaFlight: (fn: OpenAnaFlightFn) => { _openAnaFlight = fn; },
   openAnaFlight: (payload: AnaFlightPayload) => { _openAnaFlight?.(payload); },
+
+  /**
+   * Globe cleanup — null out every callback the Globe component
+   * itself registered, leaving the PAGE-owned handlers
+   * (openUserProfile, openAnaCheckIn, openAnaFlight, all registered
+   * by AppShellContext) untouched.
+   *
+   * Why this matters: on mobile, Globe is unmounted whenever the
+   * user navigates from /app to a deeper route (/app/perfil,
+   * /app/chat, etc.). The useEffect cleanup runs, `map.remove()`
+   * destroys the WebGL canvas, but the callbacks below still hold
+   * closures over the now-dead `map`. If a presence update lands
+   * via the socket during the unmount-remount gap, the OLD
+   * `_setLiveUsers` fires, tries to `new Marker(...).addTo(deadMap)`,
+   * and Mapbox's `getCanvasContainer().appendChild` blows up with
+   * `undefined is not an object` because `getCanvasContainer()`
+   * returns undefined on a destroyed map.
+   *
+   * Nulling the callbacks means the next `setLiveUsers` (etc.) hits
+   * the buffer fallback baked into the setters above — when Globe
+   * remounts and re-registers, it picks up the buffered payload and
+   * paints it on the fresh map. No data loss, no crash. */
+  unregisterMapCallbacks: () => {
+    _flyTo = null;
+    _setUserLocation = null;
+    _setLiveUsers = null;
+    _setTotalRegistered = null;
+    _setAnaCheckIn = null;
+    _setAnaShows = null;
+    _setAnaFlight = null;
+  },
 };
