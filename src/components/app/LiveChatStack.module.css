@@ -308,13 +308,13 @@
   .label {
     display: none;
   }
-  /* Mobile avatars +15% vs the previous 36px → 42px so the dock
-   * reads as a first-class affordance on phones too. The cluster
-   * below now sits at top:65% (instead of 50%), leaving extra
-   * vertical room for the larger dock without collisions. */
+  /* Mobile avatars bumped another ~10% (42 → 46px) per product
+   * feedback. Cluster moved to the top-right header on mobile,
+   * so the dock now has the right rail middle-area to itself
+   * and the larger avatars have plenty of room. */
   .item {
-    width: 42px;
-    height: 42px;
+    width: 46px;
+    height: 46px;
   }
   .item:hover {
     transform: scale(1.18) translateX(-2px);

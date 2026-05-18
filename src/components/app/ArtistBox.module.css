@@ -699,13 +699,15 @@
 }
 
 @media (max-width: 768px) {
-  /* Mobile — full-width pill spanning the header. Bigger artist
-   * photo + roomier padding so the bar reads as a real "Fanverse
-   * card" instead of a tiny chip. */
+  /* Mobile — pill is the LEFT half of the fixed header. The
+   * right edge stops 108px from the viewport edge so it doesn't
+   * crowd the Notificações + Coroa buttons docked at the top-
+   * right corner (each 38px + 8px gap + 14px right margin). */
   .box {
-    width: calc(100% - 24px);
+    width: auto;
     max-width: none;
     left: 12px;
+    right: 108px;
     top: 12px;
     border-radius: 16px;
   }

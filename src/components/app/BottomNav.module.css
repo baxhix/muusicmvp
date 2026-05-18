@@ -296,6 +296,22 @@
   bottom: -4px;
 }
 
+@media (max-width: 768px) {
+  /* Bigger icons on mobile so the navbar reads as a confident
+   * primary affordance — was 22px which felt small relative to
+   * the thumb-target sizes on phones. */
+  .item svg,
+  .itemCenter svg,
+  .iconWrap svg {
+    width: 28px;
+    height: 28px;
+  }
+  .iconWrap {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 @media (max-width: 480px) {
   .nav { padding: 10px 0 18px; }
   .nav::before {

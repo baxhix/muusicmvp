@@ -54,13 +54,32 @@
 }
 
 @media (max-width: 768px) {
-  /* Mobile — shift the cluster to ~65% of the viewport height
-   * so it sits below the vertical center, leaving more breathing
-   * room for the LiveChatStack dock above center. */
+  /* Mobile — the cluster moves UP to the top-right corner and
+   * lays out HORIZONTALLY as the right side of the fixed header.
+   * The Fanverse pill occupies the left side of the same header
+   * row (top:12 left:12 right:112).
+   *
+   * Playlist (the middle button) hides on mobile — it's still
+   * reachable via the NowPlaying mini-bar's chevron / cover
+   * tap, which opens the same PlaylistModal. The two remaining
+   * buttons (Notificações + Coroa/Superfãs) live in the header. */
   .topBar {
-    right: 16px;
-    top: 65%;
-    transform: translateY(-50%);
+    top: 14px;
+    right: 14px;
+    transform: none;
+    flex-direction: row;
+    gap: 8px;
+  }
+  /* Hide the playlist (Músicas) button — 2nd child in topBar.
+   * Notificações (1st) + Superfãs/Coroa (3rd) remain. */
+  .topBar > button:nth-child(2) {
+    display: none;
+  }
+  /* Slightly tighter circular buttons in the header so the row
+   * doesn't crowd the Fanverse pill on narrow phones. */
+  .shortcutBtn {
+    width: 38px;
+    height: 38px;
   }
 }
 
