@@ -1,11 +1,10 @@
 /* ============================================================
- * SUPERLIVE TRIGGER — prominent broadcast card on /app home
+ * SUPERLIVE TRIGGER — horizontal broadcast pill on /app home
  *
- * Tall card at the top center of the home view that surfaces
- * the AO VIVO state plus an "Entrar na live" CTA. Sits ABOVE
- * the home header (which keeps its own slot at top:12 on the
- * left) so the Live promotion is the first thing the eye
- * lands on when the surface opens.
+ * One-row layout: [LIVE badge] · [avatar] · [name + viewer
+ * count] · [Entrar →]. The pill is wide enough to read as a
+ * promo banner but short enough to keep the map underneath
+ * visible. Centered horizontally at the top of /app.
  *
  * Only mounts when the `superlive` brainstorm flag is on
  * (see SuperliveTrigger.tsx).
@@ -13,24 +12,23 @@
 
 .card {
   position: fixed;
-  /* Above the home header — `top: 16` puts the card on the
-   * same horizontal axis as the right-rail cluster (top:21)
-   * while staying ABOVE the ArtistBox pill (which sits at
-   * top:12 on the left of the screen). The card is centered
-   * horizontally and narrower than the ArtistBox's right edge
-   * (100px gap from the right edge of viewport) so the two
-   * surfaces never overlap on tablet-class widths. */
+  /* `top: 16` puts the pill on the same axis as the right-rail
+   * cluster (top:21) and just above the home-header strip.
+   * Centered horizontally; widths are clamped so it never
+   * crowds the ArtistBox on the left (right edge 100px on
+   * mobile, 280px on desktop) or the cluster on the right. */
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: min(320px, calc(100vw - 240px));
-  padding: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: auto;
+  max-width: calc(100vw - 240px);
+  padding: 6px 6px 6px 12px;
   border: none;
-  border-radius: 18px;
+  border-radius: 999px;
   background:
     linear-gradient(135deg, rgba(239, 68, 68, 0.96) 0%, rgba(236, 72, 153, 0.96) 60%, rgba(168, 85, 247, 0.96) 100%);
   color: #ffffff;
@@ -61,7 +59,7 @@
 .pulse {
   position: absolute;
   inset: 0;
-  border-radius: 18px;
+  border-radius: 999px;
   background: rgba(239, 68, 68, 0.4);
   z-index: -1;
   animation: superlive-card-pulse 2.2s ease-out infinite;
@@ -69,24 +67,17 @@
 }
 @keyframes superlive-card-pulse {
   0%   { opacity: 0.55; transform: scale(1); }
-  100% { opacity: 0;    transform: scale(1.22); }
+  100% { opacity: 0;    transform: scale(1.18); }
 }
 
-/* ── Top row — LIVE pill + avatar + identity ──────────── */
-.topRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 2px 4px;
-}
-
+/* ── LIVE pill ────────────────────────────────────────── */
 .liveBadge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 8px 3px 7px;
+  padding: 4px 8px 4px 7px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.32);
+  background: rgba(0, 0, 0, 0.34);
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
@@ -105,9 +96,10 @@
   50%      { opacity: 0.35; }
 }
 
+/* ── Avatar + identity ─────────────────────────────────── */
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, 0.85);
@@ -118,15 +110,15 @@
 .identity {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  flex: 1;
+  line-height: 1.1;
 }
 .name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -134,55 +126,60 @@
 .viewers {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 10.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.82);
   letter-spacing: 0.005em;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── CTA row — "Entrar na live" pill button ───────────── */
+/* ── "Entrar" pill on the right ───────────────────────── */
 .cta {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.22);
+  gap: 4px;
+  padding: 7px 12px 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.24);
   color: #ffffff;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 800;
-  letter-spacing: 0.005em;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
-  transition: background 0.15s ease;
+  letter-spacing: 0.01em;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22) inset;
+  margin-left: 6px;
+  transition: background 0.15s ease, transform 0.12s ease;
+  flex-shrink: 0;
 }
 .card:hover .cta {
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.34);
 }
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 600px) {
   .card {
     /* On phones the home header still occupies the left side
-     * at top:12, so the card slips below it instead of trying
-     * to share the same horizontal row. Width clamps so the
-     * surface stays narrow enough to read as a CTA, not a
-     * banner. */
+     * at top:12, so the pill slips below it on a separate
+     * row. Wide enough to fit all four elements at the
+     * compressed 12px font sizes; the viewer-count number
+     * trims to "k" so the row never wraps. */
     top: 78px;
-    width: min(280px, calc(100vw - 32px));
-    border-radius: 16px;
-    padding: 9px;
+    max-width: calc(100vw - 32px);
+    padding: 5px 5px 5px 10px;
+    gap: 8px;
   }
   .avatar {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
   .name {
-    font-size: 13px;
+    font-size: 12px;
+  }
+  .viewers {
+    font-size: 10px;
   }
   .cta {
-    padding: 9px 12px;
-    font-size: 13px;
+    padding: 6px 10px 6px 12px;
+    font-size: 12px;
   }
 }

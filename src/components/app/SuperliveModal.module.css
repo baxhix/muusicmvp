@@ -83,14 +83,15 @@
 
 .videoStage {
   /* Portrait 9:16 — matches the way fans actually shoot live
-   * streams from their phones. The stage sizes ITSELF off the
-   * 60vh max-height rather than the modal width so it never
-   * dominates the surface vertically; the chat below stays
-   * comfortable on every viewport. */
+   * streams from their phones. Stage SIZES itself off the
+   * 42vh clamp rather than the modal width so the chat below
+   * gets the rest of the panel height. Was 60vh; product
+   * feedback wanted the comments area to dominate more, so
+   * the video shrank ~30%. */
   position: relative;
   align-self: center;
   width: auto;
-  height: clamp(360px, 60vh, 520px);
+  height: clamp(260px, 42vh, 380px);
   aspect-ratio: 9 / 16;
   background: #000;
   flex-shrink: 0;
@@ -447,10 +448,9 @@
     padding: 0;
   }
   /* Mobile keeps the portrait phone-style aspect; the height
-   * clamp adapts to small / tall phones so the chat below
-   * still gets at least 40% of the viewport. */
+   * clamp shrunk so the chat keeps ≥55% of the viewport. */
   .videoStage {
-    height: clamp(320px, 55vh, 480px);
+    height: clamp(220px, 38vh, 320px);
     margin: 10px auto 0;
   }
   .creatorAvatar {
