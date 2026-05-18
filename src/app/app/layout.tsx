@@ -14,6 +14,7 @@ import NowPlaying from '@/components/app/NowPlaying';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
+import SuperfansPanel from '@/components/app/SuperfansPanel';
 import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
@@ -99,6 +100,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   const showGlobe = pathname === '/app' || !isMobile;
   const showPlaylist = activeOverlay === 'playlist';
   const showNotifications = activeOverlay === 'notifications';
+  // Superfãs as a layer-on-top overlay (same shape as Playlist /
+  // Notificações). Mobile keeps the route-based /app/ranking flow
+  // for deep-linking + the BottomNav crown — only show as overlay
+  // when we're NOT already sitting on that route, otherwise the
+  // panel would double-mount with two instances competing.
+  const showSuperfans =
+    activeOverlay === 'superfans' && !pathname.startsWith('/app/ranking');
   const superchat = chat.conversations.find((c) => c.type === 'group') ?? null;
 
   // Chat detail = a specific conversation is open inside /app/chat.
@@ -198,9 +206,20 @@ function Shell({ children }: { children: React.ReactNode }) {
 
             <button
               type="button"
-              className={styles.shortcutBtn}
-              onClick={() => router.push('/app/ranking')}
+              className={`${styles.shortcutBtn} ${showSuperfans ? styles.shortcutBtnActive : ''}`}
+              onClick={() => {
+                // Open Superfãs as a layered overlay so the Feed (or
+                // any other panel mounted via /app/page.tsx) stays
+                // visible behind it — matches the Notif / Playlist
+                // pattern. Toggle off if already open. On mobile this
+                // cluster is hidden entirely; the BottomNav crown
+                // still uses the route-based /app/ranking flow.
+                setActiveOverlay((curr) =>
+                  curr === 'superfans' ? null : 'superfans',
+                );
+              }}
               aria-label="Superfãs"
+              aria-pressed={showSuperfans}
               title="Superfãs (Ranking)"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -314,6 +333,24 @@ function Shell({ children }: { children: React.ReactNode }) {
         currentIdx={songIdx}
         onSelect={setSongIdx}
       />
+
+      {/* Superfãs as a layered overlay — desktop right-rail uses
+       *  this path instead of router.push('/app/ranking') so the
+       *  Feed (and anything else on /app/page.tsx) stays mounted
+       *  underneath. The route version is still available for
+       *  mobile BottomNav + deep links; we guard the overlay
+       *  against double-mounting via `showSuperfans` excluding the
+       *  /app/ranking pathname. */}
+      {showSuperfans && (
+        <SuperfansPanel
+          open
+          onClose={() =>
+            setActiveOverlay((curr) =>
+              curr === 'superfans' ? null : curr,
+            )
+          }
+        />
+      )}
 
       {/* Ana check-in modal — opens when the user clicks a pin on
        *  the globe. State + scheduler live in AppShellProvider. */}
