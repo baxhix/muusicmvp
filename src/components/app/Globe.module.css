@@ -649,26 +649,36 @@
    * With ~20 markers visible at city zoom, the compound cost
    * was dominant in GPU thermal contribution. Drop the blur,
    * bump background opacity 0.88 → 0.92 to compensate for the
-   * slightly less-frosted look. */
-  .userBadge,
-  .liveUserBadge {
+   * slightly less-frosted look.
+   *
+   * `:not(.badgeCompact)` is CRITICAL — without that guard the
+   * mobile background override leaks into compact-mode badges
+   * (which are supposed to render as ONLY the avatar circle,
+   * with `background: transparent !important` from `.badgeCompact`).
+   * The bug surfaced as "a black circle near the user marker":
+   * the compact wrapper was painting an opaque black square /
+   * circle behind every avatar instead of disappearing. */
+  .userBadge:not(.badgeCompact),
+  .liveUserBadge:not(.badgeCompact) {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     background: rgba(0, 0, 0, 0.92) !important;
   }
-  /* The 80+ simultaneous audio-bar `scaleY` animations (~20
-   * markers × 4 bars) were tiny in pixel terms — 2.5px wide,
-   * barely perceptible on a phone screen at marker scale —
-   * but each animation owns its own compositor layer running
-   * 60Hz. Freeze them at a fixed equalizer-pose height so the
-   * "music is playing" cue stays visible without the constant
-   * GPU work. Same trim applied to compact-mode equalizer
-   * chip. */
-  .audioBars > span,
-  .compactBar {
+  /* Audio-bar animations on mobile — drop the entire chip in
+   * compact mode (the small equalizer dot beside the avatar at
+   * low zoom). Per product feedback the frozen-but-still-
+   * visible chip read as a useless "static animation badge";
+   * hiding it removes the visual noise AND skips its compositor
+   * layers entirely. The `.audioBars` inside the EXPANDED badge
+   * still freeze (no longer animate) but stay visible so the
+   * "music is playing" cue persists on the expanded pill. */
+  .audioBars > span {
     animation: none !important;
     transform: scaleY(0.7);
     opacity: 0.85;
+  }
+  .compactBarsBadge {
+    display: none !important;
   }
   /* The Você marker's halo runs an infinite 2.2s pulse that
    * scales a 16px circle to 5× (~80px area paint per frame).
