@@ -167,67 +167,80 @@ function Shell({ children }: { children: React.ReactNode }) {
         {showMobileRouteHeader && <MobileRouteHeader />}
 
         <div className={styles.mapLayer}>
-          {/* Right-rail secondary actions cluster — persistent
-           *  affordances for the surfaces that don't fit the
-           *  5-slot BottomNav. Hidden on mobile when a chat
-           *  detail is open OR when we're on a subpage (each
-           *  subpage has its own MobileRouteHeader). */}
-          {!hideShellChrome && !hideMobileHeader && <div className={styles.topBar}>
-            <button
-              type="button"
-              className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('app:open-notifications'));
-                }
-              }}
-              aria-label="Notificações"
-              aria-pressed={showNotifications}
-              title="Notificações"
-            >
-              <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z" />
-                <path d="M9 18a2 2 0 0 0 4 0" />
-              </svg>
-            </button>
+          {/* Right-rail cluster — content diverges by viewport.
+           *
+           * Desktop: Chat + Playlist. Notificações + Superfãs got
+           *   promoted out of here into the BottomNav per product
+           *   feedback ("Mapa, Feed, Superfã, Comunidade e
+           *   Notificações"), so the cluster keeps only the
+           *   surfaces still without a navbar slot.
+           *
+           * Mobile: only Notificações stays. The mobile navbar's
+           *   5 slots are full (Mapa / Feed / Superfã / Chat /
+           *   Hamburger), and the hamburger menu hosts
+           *   Comunidades + Minha Conta + Configurações — bell
+           *   sits up here so it's reachable in one tap. */}
+          {!hideShellChrome && !hideMobileHeader && (
+            <div className={styles.topBar}>
+              {isMobile ? (
+                <button
+                  type="button"
+                  className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
+                  onClick={() => {
+                    setActiveOverlay((curr) =>
+                      curr === 'notifications' ? null : 'notifications',
+                    );
+                  }}
+                  aria-label="Notificações"
+                  aria-pressed={showNotifications}
+                  title="Notificações"
+                >
+                  <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z" />
+                    <path d="M9 18a2 2 0 0 0 4 0" />
+                  </svg>
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
+                    onClick={() => {
+                      // Toggle the chat surface: tap once opens the
+                      // ConversationsSidebar route, tap again returns
+                      // to the map. Mirrors the right-rail "toggle"
+                      // shape of the other entries in this cluster.
+                      if (pathname.startsWith('/app/chat')) {
+                        router.push('/app');
+                      } else {
+                        router.push('/app/chat');
+                      }
+                    }}
+                    aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
+                    aria-pressed={pathname.startsWith('/app/chat')}
+                    title="Conversas"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z" />
+                    </svg>
+                  </button>
 
-            <button
-              type="button"
-              className={`${styles.shortcutBtn} ${showPlaylist ? styles.shortcutBtnActive : ''}`}
-              onClick={() => setShowPlaylist(!showPlaylist)}
-              aria-label="Músicas"
-              aria-pressed={showPlaylist}
-              title="Músicas"
-            >
-              <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M7 4.5v13l11-6.5z" />
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.shortcutBtn} ${showSuperfans ? styles.shortcutBtnActive : ''}`}
-              onClick={() => {
-                // Open Superfãs as a layered overlay so the Feed (or
-                // any other panel mounted via /app/page.tsx) stays
-                // visible behind it — matches the Notif / Playlist
-                // pattern. Toggle off if already open. On mobile this
-                // cluster is hidden entirely; the BottomNav crown
-                // still uses the route-based /app/ranking flow.
-                setActiveOverlay((curr) =>
-                  curr === 'superfans' ? null : 'superfans',
-                );
-              }}
-              aria-label="Superfãs"
-              aria-pressed={showSuperfans}
-              title="Superfãs (Ranking)"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z" />
-                <path d="M6.5 21h11" />
-              </svg>
-            </button>
-          </div>}
+                  <button
+                    type="button"
+                    className={`${styles.shortcutBtn} ${showPlaylist ? styles.shortcutBtnActive : ''}`}
+                    onClick={() => setShowPlaylist(!showPlaylist)}
+                    aria-label="Músicas"
+                    aria-pressed={showPlaylist}
+                    title="Músicas"
+                  >
+                    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M7 4.5v13l11-6.5z" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {/* NotificationBell — controlled, hidden trigger. The
            *  visible affordance is the bell button in the right

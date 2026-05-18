@@ -59,23 +59,16 @@
    * The Fanverse pill occupies the left side of the same header
    * row (top:12 left:12 right:112).
    *
-   * Only NOTIFICAÇÕES survives on the mobile header now:
-   *   - Playlist (2nd) hides — still reachable via the NowPlaying
-   *     mini-bar's cover/chevron tap.
-   *   - Superfãs / Crown (3rd) hides — it lives in the center of
-   *     the BottomNav now (took the Chat slot's place per product
-   *     feedback). Keeping it here too was a double-affordance. */
+   * Mobile cluster contains exactly ONE button (Notificações) —
+   * the layout branches on isMobile and renders only the bell
+   * here. The desktop Chat + Playlist buttons live in a sibling
+   * <> branch, so there's no need to nth-child-hide them anymore. */
   .topBar {
     top: 14px;
     right: 14px;
     transform: none;
     flex-direction: row;
     gap: 8px;
-  }
-  /* Hide everything except Notificações (1st child). */
-  .topBar > button:nth-child(2),
-  .topBar > button:nth-child(3) {
-    display: none;
   }
   /* Slightly tighter circular buttons in the header so the row
    * doesn't crowd the Fanverse pill on narrow phones. */

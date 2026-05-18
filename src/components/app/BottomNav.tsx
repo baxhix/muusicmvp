@@ -34,7 +34,13 @@ import styles from './BottomNav.module.css';
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { feedOpen, chatUnreadCount, locationSync } = useAppShell();
+  const {
+    feedOpen,
+    chatUnreadCount,
+    locationSync,
+    activeOverlay,
+    setActiveOverlay,
+  } = useAppShell();
   const isMobile = useIsMobile();
 
   const { user } = useAuth();
@@ -199,73 +205,58 @@ export default function BottomNav() {
           <span className={styles.label}>Feed</span>
         </button>
 
-        {/* Center slot — diverges by viewport.
+        {/* Center slot — Superfã crown on BOTH viewports.
          *
-         * Desktop: Chat (opens ConversationsSidebar route). The
-         *   dock + right-rail expose Superfã in the cluster, so
-         *   the center stays the most-used conversation surface.
+         * Mobile: routes to /app/ranking (toggleNav back to /app
+         *   on re-tap).
+         * Desktop: toggles the layered `superfans` overlay so the
+         *   Feed (and anything else mounted on /app/page.tsx)
+         *   stays visible behind the leaderboard — same shape as
+         *   Notificações + Playlist.
          *
-         * Mobile: Superfã (crown) — routes to /app/ranking. The
-         *   dock on the right and the hamburger's "Conversas"
-         *   item already cover the chat list, and product feedback
-         *   wanted the crown to be the visual focal point of the
-         *   navbar. */}
-        {isMobile ? (
-          <button
-            type="button"
-            className={`${styles.item} ${styles.itemCenter} ${pathname.startsWith('/app/ranking') ? styles.itemActive : ''}`}
-            onClick={() => toggleNav('/app/ranking')}
-            onPointerEnter={() => prefetch('/app/ranking')}
-            onFocus={() => prefetch('/app/ranking')}
-            aria-label={pathname.startsWith('/app/ranking') ? 'Fechar Superfãs' : 'Superfãs'}
-            data-tooltip={pathname.startsWith('/app/ranking') ? 'Fechar' : 'Superfãs'}
-          >
-            <span className={styles.iconWrap}>
-              <svg viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-                <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </span>
-            <span className={styles.dot} aria-hidden="true" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={`${styles.item} ${styles.itemCenter} ${onChat ? styles.itemActive : ''}`}
-            onClick={() => toggleNav('/app/chat')}
-            onPointerEnter={() => prefetch('/app/chat')}
-            onFocus={() => prefetch('/app/chat')}
-            aria-label={onChat ? 'Fechar conversas' : 'Abrir conversas'}
-            data-tooltip={onChat ? 'Fechar' : 'Chat'}
-          >
-            <span className={styles.iconWrap}>
-              {/* Speech-bubble icon — rounded rectangle with the tail
-               *  pointing down-left (the standard chat affordance). The
-               *  previous message-circle SVG had its winding direction
-               *  flipped, which made the tail point up. */}
-              <svg viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {chatUnreadCount > 0 && (
-                <span className={styles.unreadBadge}>
-                  {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                </span>
-              )}
-            </span>
-            <span className={styles.dot} aria-hidden="true" />
-          </button>
-        )}
+         * Chat displaced from this slot is reachable via the dock
+         * (3 latest on the right rail) and the new chat button in
+         * the right-rail cluster (desktop) / hamburger menu
+         * (mobile). The `itemActive` source is derived per-mode:
+         * pathname on mobile, the overlay flag on desktop. */}
+        {(() => {
+          const superfansActive = isMobile
+            ? pathname.startsWith('/app/ranking')
+            : activeOverlay === 'superfans';
+          return (
+            <button
+              type="button"
+              className={`${styles.item} ${styles.itemCenter} ${superfansActive ? styles.itemActive : ''}`}
+              onClick={() => {
+                if (isMobile) {
+                  toggleNav('/app/ranking');
+                } else {
+                  setActiveOverlay((curr) =>
+                    curr === 'superfans' ? null : 'superfans',
+                  );
+                }
+              }}
+              onPointerEnter={() => isMobile && prefetch('/app/ranking')}
+              onFocus={() => isMobile && prefetch('/app/ranking')}
+              aria-label={superfansActive ? 'Fechar Superfãs' : 'Superfãs'}
+              aria-pressed={!isMobile ? superfansActive : undefined}
+              data-tooltip={superfansActive ? 'Fechar' : 'Superfãs'}
+            >
+              <span className={styles.iconWrap}>
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </span>
+              <span className={styles.dot} aria-hidden="true" />
+            </button>
+          );
+        })()}
 
         {/* 4th slot — diverges by viewport.
          *
@@ -466,32 +457,50 @@ export default function BottomNav() {
             )}
           </div>
         ) : (
+          /* Desktop 5th slot = Notificações. The Perfil slot was
+           * promoted out of the navbar per product feedback —
+           * profile access is still one click away via the TopBar
+           * avatar menu (which calls `onProfileOpen` to route to
+           * /app/perfil). The Notificações button toggles the
+           * `notifications` overlay just like the right-rail entry
+           * used to; the NotificationBell component listens to
+           * `activeOverlay` from AppShellContext, so toggling here
+           * lights up the same dropdown. */
           <button
             type="button"
-            className={`${styles.item} ${onProfile ? styles.itemActive : ''}`}
+            className={`${styles.item} ${activeOverlay === 'notifications' ? styles.itemActive : ''}`}
             onClick={() => {
-              // Profile slot covers both /app/perfil (own) and
-              // /app/u/[id] (other user). Either active → close
-              // back to /app on tap; otherwise open own profile.
-              if (onProfile) router.push('/app');
-              else router.push('/app/perfil');
+              setActiveOverlay((curr) =>
+                curr === 'notifications' ? null : 'notifications',
+              );
             }}
-            onPointerEnter={() => prefetch('/app/perfil')}
-            onFocus={() => prefetch('/app/perfil')}
-            aria-label={onProfile ? 'Fechar perfil' : 'Abrir perfil'}
-            data-tooltip={onProfile ? 'Fechar' : 'Perfil'}
+            aria-label={
+              activeOverlay === 'notifications'
+                ? 'Fechar notificações'
+                : 'Abrir notificações'
+            }
+            aria-pressed={activeOverlay === 'notifications'}
+            data-tooltip={
+              activeOverlay === 'notifications' ? 'Fechar' : 'Notificações'
+            }
           >
             <svg viewBox="0 0 22 22" fill="none">
-              <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
               <path
-                d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
+                d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M9 18a2 2 0 0 0 4 0"
                 stroke="currentColor"
                 strokeWidth="1.6"
                 strokeLinecap="round"
               />
             </svg>
             <span className={styles.dot} aria-hidden="true" />
-            <span className={styles.label}>Perfil</span>
+            <span className={styles.label}>Notificações</span>
           </button>
         )}
       </div>
