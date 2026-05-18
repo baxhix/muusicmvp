@@ -62,22 +62,28 @@
 }
 
 @media (max-width: 768px) {
-  /* Mobile — the cluster moves UP to the top-right corner and
-   * lays out HORIZONTALLY as the right side of the fixed header.
+  /* Mobile — the cluster sits in the RIGHT side of the Fanpoints
+   * info bar (the lower band of MobileHomeChrome, y:68–104), on
+   * the same horizontal axis as the Fanpoints chip on the left.
+   * Per product feedback the chat icon was sitting too high in
+   * the 68px header band; moving it down into the info bar row
+   * balances the Fanpoints chip on the left and reads as a
+   * single info row with a left chip + right action.
    *
-   * Buttons are icon-only (no circle background / border) per
-   * product feedback so they sit inline with the blurred black
-   * home-header strip on the left. The 38×38 footprint keeps
-   * the tap target comfortable for thumb use without dominating
-   * the surface — the 44×44 we tried earlier combined with the
-   * 68px header read as "zoomed".
+   * Vertical alignment math:
+   *   MobileHomeChrome info bar: y:68 → y:104, center at y:86.
+   *   Icon button is 40×40 → center placed at 86 means
+   *     top = 86 - 20 = 66.
+   *   The icon's bottom edge (66 + 40 = 106) sits 2px past the
+   *     chrome's bottom (y:104) — visually inconsequential and
+   *     keeps the icon fully visible.
    *
-   * `top: 12` vertically centers a 44px tap target inside the
-   * 68px MobileHomeChrome header band (y:0–68): midpoint y:34,
-   * button center = 12 + 22 = 34. */
+   * Horizontal alignment: `right: 18px` matches the info bar's
+   * own `padding: 0 18px` so the icon's right edge lines up
+   * with the Fanpoints chip's left edge column. */
   .topBar {
-    top: 12px;
-    right: 12px;
+    top: 66px;
+    right: 18px;
     transform: none;
     flex-direction: row;
     gap: 4px;

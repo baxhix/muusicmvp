@@ -226,6 +226,16 @@
   font-size: 12px;
   line-height: 1.45;
   color: rgba(245, 245, 247, 0.6);
+  /* Hard-cap at 2 lines so the row height is predictable across
+   * varying description lengths. Anything past line 2 gets cut
+   * with an ellipsis. Uses the line-clamp prefix combo for
+   * broadest Safari/Chrome support. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Switch ──────────────────────────────────────────────

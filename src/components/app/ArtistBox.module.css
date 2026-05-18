@@ -17,7 +17,20 @@
   top: 42px;
   left: 14px;
   width: 280px;
-  z-index: 15;
+  /* z-index bumped 15 → 60 so the box paints ABOVE the `.shell`
+   * stacking context (z:55, in app/app/layout.module.css). The
+   * ArtistBox is rendered as a SIBLING of `.shell` in the DOM
+   * tree, so the previous z:15 placed it BELOW everything inside
+   * `.shell` — including `.mapLayer`, which inherits
+   * `pointer-events: auto` from the higher-specificity rule
+   * `.shell > * { pointer-events: auto }`. The invisible
+   * `.mapLayer` was eating every click intended for the
+   * ArtistBox header pill (and therefore the chevron toggle).
+   * Bumping above 55 lifts the box out of the trap so clicks
+   * hit it again. 60 keeps us below BottomNav (z:70) and
+   * modals like LiveChatPanel (z:250) which should still cover
+   * the ArtistBox when opened. */
+  z-index: 60;
   display: flex;
   flex-direction: column;
   background:
