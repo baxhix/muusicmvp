@@ -282,7 +282,40 @@
  * left to render here besides the avatars. */
 
 
-/* Hide on small mobile to free space (chat opens via UserPicker only) */
+/* ── Mobile ──
+ *
+ * Dock stays visible on mobile per product feedback: the 3
+ * latest conversation avatars sit in the right-rail column,
+ * directly above the secondary-actions cluster (notif /
+ * playlist / superfans). Slightly tighter geometry so the two
+ * groups share the column without bumping the BottomNav.
+ *
+ *   - Avatars 44px → 36px so 3 avatars + cluster fit comfortably
+ *     on the smallest viewport (~568px tall).
+ *   - "Chat" header label hides — the avatars are self-evident.
+ *   - Halo trimmed so it doesn't bleed past the column edge.
+ */
 @media (max-width: 600px) {
-  .dock { display: none; }
+  .dock {
+    right: 14px;
+    /* Sit slightly further above center so the gap with the
+     * cluster below stays consistent with desktop. */
+    transform: translateY(calc(-100% - 12px));
+  }
+  .dock::before {
+    inset: -6px -18px;
+  }
+  .label {
+    display: none;
+  }
+  .item {
+    width: 36px;
+    height: 36px;
+  }
+  .item:hover {
+    transform: scale(1.18) translateX(-2px);
+  }
+  .itemActive {
+    transform: scale(1.10) translateX(-2px);
+  }
 }

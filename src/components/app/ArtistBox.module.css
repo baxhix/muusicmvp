@@ -699,15 +699,39 @@
 }
 
 @media (max-width: 768px) {
-  /* Mobile — compact pill stays visible at the top so the user
-   * always sees their Fanpoints + entry to the Fanverse dropdown
-   * without scrolling or hunting for it. */
-  .box { width: 220px; left: 12px; top: 14px; }
-  .compactName { font-size: 11.5px; }
-}
-@media (max-width: 480px) {
-  /* Phone — slightly tighter pill to share the header row cleanly
-   * with the right-side affordances. Stays visible (fixed at top)
-   * per product feedback. */
-  .box { width: calc(100% - 24px); max-width: 240px; left: 12px; top: 12px; }
+  /* Mobile — full-width pill spanning the header. Bigger artist
+   * photo + roomier padding so the bar reads as a real "Fanverse
+   * card" instead of a tiny chip. */
+  .box {
+    width: calc(100% - 24px);
+    max-width: none;
+    left: 12px;
+    top: 12px;
+    border-radius: 16px;
+  }
+  .compactBar {
+    height: 56px;
+    padding: 8px 12px 8px 8px;
+    gap: 12px;
+  }
+  .compactPhoto {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+  .compactName {
+    font-size: 13px;
+  }
+  .compactFanpoints {
+    font-size: 12.5px;
+    gap: 5px;
+  }
+  .compactFanpoints svg {
+    width: 14px;
+    height: 14px;
+  }
+  .compactChevron {
+    width: 16px;
+    height: 16px;
+  }
 }
