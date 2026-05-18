@@ -99,6 +99,22 @@ export default function BottomNav() {
   };
 
   const handleMapClick = () => {
+    // Feed is a bottom-sheet overlay over /app. If it's open, the
+    // user is technically already on /app but the map is hidden
+    // by the sheet — tapping the Map slot should mean "give me
+    // the map back", which requires closing the Feed first.
+    // Previously this branch did nothing in that state because
+    // pathname === '/app' AND hasCoords passed, so we just flew
+    // the camera under an invisible map.
+    if (feedOpen) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app:toggle-feed'));
+      }
+      // Don't fall through to flyTo / route push — the user's
+      // intent was "show the map", not also re-center. The next
+      // tap on Map (when feed is already closed) handles centering.
+      return;
+    }
     // If we're not on /app, go there first. Otherwise center the
     // map on the user (or ask for location if we don't have it).
     if (pathname !== '/app') {
@@ -183,39 +199,73 @@ export default function BottomNav() {
           <span className={styles.label}>Feed</span>
         </button>
 
-        {/* Chat — opens ConversationsSidebar route. The unread-count
-            badge sits at the top-right of the icon when > 0. */}
-        <button
-          type="button"
-          className={`${styles.item} ${styles.itemCenter} ${onChat ? styles.itemActive : ''}`}
-          onClick={() => toggleNav('/app/chat')}
-          onPointerEnter={() => prefetch('/app/chat')}
-          onFocus={() => prefetch('/app/chat')}
-          aria-label={onChat ? 'Fechar conversas' : 'Abrir conversas'}
-          data-tooltip={onChat ? 'Fechar' : 'Chat'}
-        >
-          <span className={styles.iconWrap}>
-            {/* Speech-bubble icon — rounded rectangle with the tail
-             *  pointing down-left (the standard chat affordance). The
-             *  previous message-circle SVG had its winding direction
-             *  flipped, which made the tail point up. */}
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {chatUnreadCount > 0 && (
-              <span className={styles.unreadBadge}>
-                {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-              </span>
-            )}
-          </span>
-          <span className={styles.dot} aria-hidden="true" />
-        </button>
+        {/* Center slot — diverges by viewport.
+         *
+         * Desktop: Chat (opens ConversationsSidebar route). The
+         *   dock + right-rail expose Superfã in the cluster, so
+         *   the center stays the most-used conversation surface.
+         *
+         * Mobile: Superfã (crown) — routes to /app/ranking. The
+         *   dock on the right and the hamburger's "Conversas"
+         *   item already cover the chat list, and product feedback
+         *   wanted the crown to be the visual focal point of the
+         *   navbar. */}
+        {isMobile ? (
+          <button
+            type="button"
+            className={`${styles.item} ${styles.itemCenter} ${pathname.startsWith('/app/ranking') ? styles.itemActive : ''}`}
+            onClick={() => toggleNav('/app/ranking')}
+            onPointerEnter={() => prefetch('/app/ranking')}
+            onFocus={() => prefetch('/app/ranking')}
+            aria-label={pathname.startsWith('/app/ranking') ? 'Fechar Superfãs' : 'Superfãs'}
+            data-tooltip={pathname.startsWith('/app/ranking') ? 'Fechar' : 'Superfãs'}
+          >
+            <span className={styles.iconWrap}>
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className={styles.dot} aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`${styles.item} ${styles.itemCenter} ${onChat ? styles.itemActive : ''}`}
+            onClick={() => toggleNav('/app/chat')}
+            onPointerEnter={() => prefetch('/app/chat')}
+            onFocus={() => prefetch('/app/chat')}
+            aria-label={onChat ? 'Fechar conversas' : 'Abrir conversas'}
+            data-tooltip={onChat ? 'Fechar' : 'Chat'}
+          >
+            <span className={styles.iconWrap}>
+              {/* Speech-bubble icon — rounded rectangle with the tail
+               *  pointing down-left (the standard chat affordance). The
+               *  previous message-circle SVG had its winding direction
+               *  flipped, which made the tail point up. */}
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {chatUnreadCount > 0 && (
+                <span className={styles.unreadBadge}>
+                  {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                </span>
+              )}
+            </span>
+            <span className={styles.dot} aria-hidden="true" />
+          </button>
+        )}
 
         {/* Comunidade — opens CommunityPanel route. Standard users
             icon (group of three silhouettes) — the previous two-
@@ -296,25 +346,35 @@ export default function BottomNav() {
 
             {moreOpen && (
               <div className={styles.moreMenu} role="menu">
+                {/* Conversas — Chat moved off the navbar center on
+                 *  mobile (the crown takes that slot), so this is
+                 *  now the canonical entry to the full conversation
+                 *  list from the bottom rail. The dock avatars on
+                 *  the right still cover the 3 most recent threads. */}
                 <button
                   type="button"
                   role="menuitem"
                   className={styles.moreItem}
                   onClick={() => {
                     setMoreOpen(false);
-                    router.push('/app/ranking');
+                    router.push('/app/chat');
                   }}
                 >
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
-                      d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+                      d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z"
                       stroke="currentColor"
                       strokeWidth="1.6"
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                     />
-                    <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                   </svg>
-                  Superfã
+                  Conversas
+                  {chatUnreadCount > 0 && (
+                    <span className={styles.moreItemBadge} aria-hidden="true">
+                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   type="button"

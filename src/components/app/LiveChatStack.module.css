@@ -335,4 +335,24 @@
   .itemActive {
     transform: scale(1.10) translateX(-2px);
   }
+
+  /* Unread badge on the dock avatar — the "2 mensagens" pill in
+   * the user's spec. Bumped significantly on mobile so the
+   * unread cue reads from a glance: dimensions roughly +40%,
+   * font weight maxed out, and a brighter red so it pops over
+   * the avatar's photo regardless of skin tone / background.
+   * Also nudged slightly further from the avatar edge so the
+   * border doesn't clip into the verified check in the same
+   * corner. */
+  .unreadBadge {
+    top: -5px;
+    right: -5px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 900;
+    border-width: 2px;
+  }
 }
