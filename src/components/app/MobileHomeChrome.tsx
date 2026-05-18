@@ -36,12 +36,17 @@ export default function MobileHomeChrome() {
   return (
     <div className={styles.chrome} aria-hidden="false">
       <div className={styles.headerBg} aria-hidden="true" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo-ana.png"
-        alt="Ana Castela"
-        className={styles.logo}
-      />
+      <div className={styles.brand} aria-hidden="false">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-ana.png"
+          alt="Ana Castela"
+          className={styles.logo}
+        />
+        <span className={styles.brandLabel} aria-label="Fanverse">
+          FANVERSE
+        </span>
+      </div>
       {/* (divider removed — header band and info bar are one
        *  continuous surface now per product feedback.) */}
       <div
@@ -68,10 +73,10 @@ export default function MobileHomeChrome() {
           </span>
           <span className={styles.fanpointsLabel}>Fanpoints</span>
         </span>
-        <span className={styles.infoTextAux} aria-hidden="true">
-          <span className={styles.infoDot} />
-          24,8k online
-        </span>
+        {/* (Online-count chip removed per product feedback —
+         *  the info bar is reserved for the Fanpoints chip
+         *  now; the right slot is intentionally empty until a
+         *  new info source plugs in.) */}
       </div>
     </div>
   );

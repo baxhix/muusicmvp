@@ -93,13 +93,13 @@
    *
    * 44×44 footprint keeps the tap target comfortable. */
   .shortcutBtn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border: none !important;
     background: transparent !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    color: #f5f5f7;
+    color: #ffffff;
     box-shadow: none !important;
   }
   .shortcutBtn:hover,
@@ -114,22 +114,26 @@
     background: transparent !important;
     opacity: 0.6;
   }
-  /* Icons grew 32 → 36 per product feedback. 36px inside a
-   * 44×44 button leaves only a 4px halo — the icon is the
-   * affordance, the button is just the hit slop. */
+  /* Icons trimmed back to 26px per product feedback — 36 was
+   * dominating the header surface. Pure white color for max
+   * legibility against the lilac/pink ambient wash. */
   .shortcutBtn svg {
-    width: 36px !important;
-    height: 36px !important;
+    width: 26px !important;
+    height: 26px !important;
+    color: #ffffff !important;
   }
-  /* Active overlay state — color tint reads via the icon
-   * alone (white-on-white-tint instead of a background pill).
-   * No circle, no border, no chrome. */
+  /* Active overlay state — soft lilac tint on the icon itself
+   * so the open state reads without a background pill. White
+   * everywhere else, lilac when the overlay is on. */
   .shortcutBtnActive,
   .shortcutBtnActive:hover {
     background: transparent !important;
     border: none !important;
-    color: #c084fc !important;
     box-shadow: none !important;
+  }
+  .shortcutBtnActive svg,
+  .shortcutBtnActive:hover svg {
+    color: #d8b4fe !important;
   }
   /* Unread pill scaled to track the new 20px icon. */
   .shortcutBtnBadge {
