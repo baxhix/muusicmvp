@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import {
+  BRAINSTORM_OWNER_EMAIL,
   FLAG_DESCRIPTORS,
   useBrainstormFlags,
 } from '@/lib/brainstormFlags';
 import { useAuth } from '@/lib/auth/AuthContext';
 import styles from './BrainstormPanel.module.css';
-
-/** Email of the only user allowed to see the Brainstorm
- *  lightbulb. Brainstorm features are work-in-progress UI for
- *  internal review; gating the trigger by email keeps client /
- *  general users from seeing the lab toggles. */
-const BRAINSTORM_OWNER_EMAIL = 'demari.lets@gmail.com';
 
 /**
  * "Brainstorm" lightbulb trigger + toggle panel.
