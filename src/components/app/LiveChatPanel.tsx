@@ -363,6 +363,22 @@ export default function LiveChatPanel({
       aria-label={`Chat com ${headerName}`}
     >
       <div className={styles.header}>
+        {/* Back arrow — visible on mobile only (CSS-gated via
+         *  the panel's media query). Anchors on the LEFT of the
+         *  header so the layout reads as a standard mobile chat
+         *  screen. Tapping clears chat.activeId via onClose, which
+         *  returns the user to the conversations sidebar. */}
+        <button
+          className={styles.backBtn}
+          onClick={onClose}
+          aria-label="Voltar para conversas"
+          type="button"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
         {avatar && (
           <span className={styles.headerAvatarWrap}>
             {/* eslint-disable-next-line @next/next/no-img-element */}

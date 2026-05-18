@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { globeStore } from '@/lib/globeStore';
 import styles from './BottomNav.module.css';
 
@@ -33,11 +35,43 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { feedOpen, chatUnreadCount, locationSync } = useAppShell();
+  const isMobile = useIsMobile();
 
   const { user } = useAuth();
   const { status, request } = locationSync;
   const hasCoords = user?.lat != null && user?.lng != null;
   const locating = status === 'requesting';
+
+  // Mobile-only "more" popover — replaces the Perfil slot on phones
+  // with a hamburger that surfaces Superfã / Minha Conta /
+  // Configurações in a small floating sheet anchored above the
+  // nav. Click-outside + Escape close it. Desktop keeps the
+  // direct Perfil link since the right-rail already exposes
+  // Superfãs and the cluster has room for a single-purpose slot.
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (moreRef.current?.contains(e.target as Node)) return;
+      setMoreOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
+  // Close the popover whenever the route changes (e.g. user picks
+  // an item) — otherwise a stale sheet would linger over the next
+  // surface until they tap outside.
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
 
   /**
    * Lightweight prefetch helper — called on pointerenter / focus
@@ -228,36 +262,136 @@ export default function BottomNav() {
           <span className={styles.label}>Comunidade</span>
         </button>
 
-        {/* Perfil — opens ProfilePanel route (own profile). The
-            `/app/u/[id]` variant is reached from globe pin clicks
-            and from contact rows inside other panels. */}
-        <button
-          type="button"
-          className={`${styles.item} ${onProfile ? styles.itemActive : ''}`}
-          onClick={() => {
-            // Profile slot covers both /app/perfil (own) and
-            // /app/u/[id] (other user). Either active → close
-            // back to /app on tap; otherwise open own profile.
-            if (onProfile) router.push('/app');
-            else router.push('/app/perfil');
-          }}
-          onPointerEnter={() => prefetch('/app/perfil')}
-          onFocus={() => prefetch('/app/perfil')}
-          aria-label={onProfile ? 'Fechar perfil' : 'Abrir perfil'}
-          data-tooltip={onProfile ? 'Fechar' : 'Perfil'}
-        >
-          <svg viewBox="0 0 22 22" fill="none">
-            <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
-            <path
-              d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Perfil</span>
-        </button>
+        {/* Profile slot — diverges by viewport.
+         *
+         * Desktop: direct Perfil link. The `/app/u/[id]` variant
+         *   (other-user profile reached from globe pins / contact
+         *   rows) also resolves to this slot via `onProfile`.
+         *
+         * Mobile: hamburger toggling a popover with Superfã /
+         *   Minha Conta / Configurações. The popover anchors above
+         *   the nav and dismisses on outside-click, Escape, or
+         *   route change. */}
+        {isMobile ? (
+          <div className={styles.moreWrap} ref={moreRef}>
+            <button
+              type="button"
+              className={`${styles.item} ${moreOpen ? styles.itemActive : ''}`}
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-label={moreOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+              data-tooltip={moreOpen ? 'Fechar' : 'Menu'}
+            >
+              <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                <path
+                  d="M4 6.5h14M4 11h14M4 15.5h14"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className={styles.dot} aria-hidden="true" />
+            </button>
+
+            {moreOpen && (
+              <div className={styles.moreMenu} role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    router.push('/app/ranking');
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                  Superfã
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    router.push('/app/perfil');
+                  }}
+                >
+                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  Minha Conta
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    // No dedicated /app/configuracoes route yet —
+                    // ProfilePanel hosts the editable account + the
+                    // destructive actions today. Re-aim here when
+                    // the settings route lands.
+                    router.push('/app/perfil');
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M19.4 13.5a1.7 1.7 0 0 1 .3 1.8l-.4 1a1.7 1.7 0 0 1-2.2.9l-.7-.3a1.7 1.7 0 0 0-1.9.4l-.4.4a1.7 1.7 0 0 0-.4 1.9l.3.7a1.7 1.7 0 0 1-.9 2.2l-1 .4a1.7 1.7 0 0 1-1.8-.3l-.6-.5a1.7 1.7 0 0 0-2 0l-.6.5a1.7 1.7 0 0 1-1.8.3l-1-.4a1.7 1.7 0 0 1-.9-2.2l.3-.7a1.7 1.7 0 0 0-.4-1.9l-.4-.4a1.7 1.7 0 0 0-1.9-.4l-.7.3a1.7 1.7 0 0 1-2.2-.9l-.4-1a1.7 1.7 0 0 1 .3-1.8l.5-.6a1.7 1.7 0 0 0 0-2l-.5-.6A1.7 1.7 0 0 1 2.4 8.7l.4-1a1.7 1.7 0 0 1 2.2-.9l.7.3a1.7 1.7 0 0 0 1.9-.4l.4-.4a1.7 1.7 0 0 0 .4-1.9l-.3-.7a1.7 1.7 0 0 1 .9-2.2l1-.4a1.7 1.7 0 0 1 1.8.3l.6.5a1.7 1.7 0 0 0 2 0l.6-.5a1.7 1.7 0 0 1 1.8-.3l1 .4a1.7 1.7 0 0 1 .9 2.2l-.3.7a1.7 1.7 0 0 0 .4 1.9l.4.4a1.7 1.7 0 0 0 1.9.4l.7-.3a1.7 1.7 0 0 1 2.2.9l.4 1a1.7 1.7 0 0 1-.3 1.8l-.5.6a1.7 1.7 0 0 0 0 2l.5.6z"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Configurações
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={`${styles.item} ${onProfile ? styles.itemActive : ''}`}
+            onClick={() => {
+              // Profile slot covers both /app/perfil (own) and
+              // /app/u/[id] (other user). Either active → close
+              // back to /app on tap; otherwise open own profile.
+              if (onProfile) router.push('/app');
+              else router.push('/app/perfil');
+            }}
+            onPointerEnter={() => prefetch('/app/perfil')}
+            onFocus={() => prefetch('/app/perfil')}
+            aria-label={onProfile ? 'Fechar perfil' : 'Abrir perfil'}
+            data-tooltip={onProfile ? 'Fechar' : 'Perfil'}
+          >
+            <svg viewBox="0 0 22 22" fill="none">
+              <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+              <path
+                d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className={styles.dot} aria-hidden="true" />
+            <span className={styles.label}>Perfil</span>
+          </button>
+        )}
       </div>
     </nav>
   );

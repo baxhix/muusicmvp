@@ -98,6 +98,17 @@ function Shell({ children }: { children: React.ReactNode }) {
   const showNotifications = activeOverlay === 'notifications';
   const superchat = chat.conversations.find((c) => c.type === 'group') ?? null;
 
+  // Chat detail = a specific conversation is open inside /app/chat.
+  // When true on mobile, we hide the BottomNav + persistent header
+  // chrome (ArtistBox pill, right-rail action cluster, Superchat
+  // floater, NowPlaying / restore pill) so the LiveChatPanel can
+  // take the full viewport and the on-screen keyboard never has to
+  // fight the navbar for the input row. Desktop ignores this — the
+  // chat panel is a 420px side rail there, nothing to hide.
+  const chatDetailOpen =
+    pathname.startsWith('/app/chat') && chat.activeId !== null;
+  const hideShellChrome = chatDetailOpen && isMobile;
+
   return (
     <>
       {/* Globe — under everything, conditional. Placeholder painted
@@ -116,17 +127,21 @@ function Shell({ children }: { children: React.ReactNode }) {
       {/* App shell (TopBar + map layer + BottomNav). Routes render
        *  inside `.mapLayer` via {children}. */}
       <div className={styles.shell}>
-        <TopBar
-          onProfileOpen={() => router.push('/app/perfil')}
-          onEditProfileOpen={() => router.push('/app/perfil')}
-          onDeleteAccountOpen={() => router.push('/app/perfil')}
-        />
+        {!hideShellChrome && (
+          <TopBar
+            onProfileOpen={() => router.push('/app/perfil')}
+            onEditProfileOpen={() => router.push('/app/perfil')}
+            onDeleteAccountOpen={() => router.push('/app/perfil')}
+          />
+        )}
 
         <div className={styles.mapLayer}>
           {/* Right-rail secondary actions cluster — persistent
            *  affordances for the surfaces that don't fit the
-           *  5-slot BottomNav. */}
-          <div className={styles.topBar}>
+           *  5-slot BottomNav. Hidden on mobile when a chat
+           *  detail is open so it doesn't compete with the
+           *  conversation surface. */}
+          {!hideShellChrome && <div className={styles.topBar}>
             <button
               type="button"
               className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
@@ -170,7 +185,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                 <path d="M6.5 21h11" />
               </svg>
             </button>
-          </div>
+          </div>}
 
           {/* NotificationBell — controlled, hidden trigger. The
            *  visible affordance is the bell button in the right
@@ -194,40 +209,37 @@ function Shell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
 
-        <BottomNav />
+        {!hideShellChrome && <BottomNav />}
       </div>
 
       {/* ArtistBox (Fanverse identity + missions panel) — persistent
        *  across every /app/* route so the Fanpoints + entry to the
        *  benefits drawer stay visible while the user is on chat,
        *  comunidades, perfil, etc. Hidden on phones (≤480px); see
-       *  ArtistBox.module.css for the responsive ladder. */}
-      <ArtistBox />
+       *  ArtistBox.module.css for the responsive ladder. Also
+       *  hidden on mobile when a chat detail is open so the
+       *  conversation owns the whole viewport. */}
+      {!hideShellChrome && <ArtistBox />}
 
       {/* Superchat trigger — top-right floater, persistent. */}
-      <div className={styles.superchatTriggerSlot}>
-        <SuperchatTrigger
-          onClick={() => router.push('/app/superchat')}
-          unreadCount={superchat?.unreadCount ?? 0}
-        />
-      </div>
+      {!hideShellChrome && (
+        <div className={styles.superchatTriggerSlot}>
+          <SuperchatTrigger
+            onClick={() => router.push('/app/superchat')}
+            unreadCount={superchat?.unreadCount ?? 0}
+          />
+        </div>
+      )}
 
       {/* NowPlaying mini-bar — persists across every route so the
        *  user can keep playing while reading chat / comunidade.
        *  When the user drag-dismisses the bar, we swap it for a
        *  tiny restore pill so the player can be brought back with
        *  a single tap. The dismissed preference persists in
-       *  localStorage via the provider. */}
-      {!playerHidden ? (
-        <NowPlaying
-          onExpandChange={setPlayerExpanded}
-          onSizeChange={setPlayerSize}
-          songIdx={songIdx}
-          onSongIdxChange={setSongIdx}
-          onOpenPlaylist={() => setShowPlaylist(true)}
-          onDismiss={() => setPlayerHidden(true)}
-        />
-      ) : (
+       *  localStorage via the provider. Both modes hide on mobile
+       *  when a chat detail is open — the player would otherwise
+       *  sit on top of the typing area. */}
+      {!hideShellChrome && (playerHidden ? (
         <button
           type="button"
           className={styles.playerRestorePill}
@@ -240,7 +252,16 @@ function Shell({ children }: { children: React.ReactNode }) {
             <path d="M6 3l7-1.5v8.5a2.5 2.5 0 1 1-1.6-2.3" />
           </svg>
         </button>
-      )}
+      ) : (
+        <NowPlaying
+          onExpandChange={setPlayerExpanded}
+          onSizeChange={setPlayerSize}
+          songIdx={songIdx}
+          onSongIdxChange={setSongIdx}
+          onOpenPlaylist={() => setShowPlaylist(true)}
+          onDismiss={() => setPlayerHidden(true)}
+        />
+      ))}
 
       <PlaylistModal
         open={showPlaylist}

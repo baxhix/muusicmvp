@@ -211,6 +211,30 @@
 }
 .closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
 
+/* Back arrow — only visible on mobile. Desktop already has the
+ * × on the right; the back-to-list affordance is mobile-specific
+ * because the conversations sidebar is hidden under the chat
+ * panel there (panel goes full-viewport) and there'd otherwise
+ * be no obvious way to return to the list. */
+.backBtn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #f5f5f7;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  margin-right: 2px;
+  transition: background 0.15s;
+}
+.backBtn:hover { background: rgba(255, 255, 255, 0.08); }
+.backBtn:active { background: rgba(255, 255, 255, 0.14); }
+
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -552,3 +576,41 @@
 .sendBtn svg { width: 14px; height: 14px; }
 .sendBtn:hover:not(:disabled) { transform: scale(1.08); }
 .sendBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Mobile ──
+ *
+ * The conversation owns the entire viewport on phones so the
+ * keyboard never has to fight the persistent BottomNav / header
+ * chrome (which the layout already hides via `hideShellChrome`).
+ *
+ *   - Panel goes from a 420px right rail to a full-screen sheet.
+ *   - The back arrow flips to `display: inline-flex` and the ×
+ *     hides; tapping back clears chat.activeId and the user
+ *     lands back on the conversations sidebar.
+ *   - Header avatar shrinks slightly so the row fits the back
+ *     arrow + name + kebab without crowding.
+ */
+@media (max-width: 768px) {
+  .panel {
+    width: 100vw;
+    right: -100vw;
+    border-left: none;
+    box-shadow: none;
+  }
+  .panelOpen { right: 0; }
+
+  .backBtn { display: inline-flex; }
+  .closeBtn { display: none; }
+
+  .header {
+    padding: 14px 14px 12px;
+    gap: 10px;
+  }
+  .headerAvatar {
+    width: 44px;
+    height: 44px;
+  }
+  .headerName {
+    font-size: 15px;
+  }
+}
