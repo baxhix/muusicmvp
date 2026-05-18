@@ -779,6 +779,14 @@
   transform: translateY(-8px);
   z-index: 4;
   cursor: pointer;
+  /* Lock the wrapper to the avatar's footprint so the hidden
+   * `.anaBadge` (which keeps its ~200px width even at max-height:0
+   * because the text content lives inside an inline-flex) can't
+   * widen the click target past the visible avatar. The badge
+   * itself is now absolutely positioned (see below) so it floats
+   * below the avatar on hover without participating in wrapper
+   * sizing. Was: clickable bounding box ~200×60; now ~60×60. */
+  width: 60px;
 }
 
 /* Two staggered radial pulses behind the avatar. The B variant
@@ -890,13 +898,27 @@
  * via :focus-within when the pin is tapped). Color stays deep
  * violet so the badge contrasts the pink avatar. */
 .anaBadge {
-  position: relative;
-  margin-top: 0;
-  padding: 0 12px 0 10px;
+  /* Absolutely positioned BELOW the avatar so the badge doesn't
+   * participate in the wrapper's box-sizing. Was `position:
+   * relative` with `max-height: 0` — the 0 height collapsed the
+   * vertical space but the badge's inline-flex content kept its
+   * ~200px width, which extended the wrapper's bounding box and
+   * inflated the marker's click target to ~200×60.
+   *
+   * `left: 50%` + `translateX(-50%)` keeps the badge horizontally
+   * centered under the avatar regardless of its content width.
+   * The combined translate in the transform also runs the
+   * hover-in animation (slight Y nudge + scale). */
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: 6px;
+  padding: 6px 12px 6px 10px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   max-width: 200px;
+  white-space: nowrap;
   background:
     linear-gradient(180deg,
       rgba(124, 58, 237, 0.96) 0%,
@@ -908,27 +930,17 @@
     0 6px 14px -4px rgba(91, 33, 182, 0.55),
     0 0 0 1px rgba(255, 255, 255, 0.10) inset;
   opacity: 0;
-  transform: translateY(-4px) scale(0.96);
+  transform: translate(-50%, -4px) scale(0.96);
   pointer-events: none;
-  max-height: 0;
-  overflow: hidden;
   transition:
     opacity 0.18s ease,
-    transform 0.18s ease,
-    max-height 0.22s ease,
-    margin-top 0.18s ease,
-    padding-top 0.18s ease,
-    padding-bottom 0.18s ease;
+    transform 0.18s ease;
 }
 .anaCheckInWrap:hover .anaBadge,
 .anaCheckInWrap:focus-within .anaBadge {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translate(-50%, 0) scale(1);
   pointer-events: auto;
-  max-height: 80px;
-  margin-top: 8px;
-  padding-top: 6px;
-  padding-bottom: 6px;
 }
 .anaBadgeText {
   display: flex;
