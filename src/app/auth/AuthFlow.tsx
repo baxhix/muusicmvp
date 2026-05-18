@@ -55,10 +55,10 @@ export default function AuthFlow() {
           <>
             <div className={styles.brand}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon-muusic.svg" alt="muusic" className={styles.logo} />
+              <img src="/fanverse-logo.svg" alt="Fanverse" className={styles.logo} />
             </div>
 
-            <h1 className={styles.title}>Entrar no muusic</h1>
+            <h1 className={styles.title}>Entrar no Fanverse</h1>
             <p className={styles.subtitle}>
               Digita seu e-mail. A gente te manda um link mágico — sem senha.
             </p>
