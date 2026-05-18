@@ -310,9 +310,22 @@
   /* Hide the "Feed" title text on mobile per product feedback —
    * the bottom-nav Feed slot is already lit when this panel is
    * active, so labelling the surface a second time at the top of
-   * the panel was redundant. The live-status dot stays so users
-   * still get the "fresh content" cue. */
+   * the panel was redundant.
+   *
+   * Per product feedback the pulsing green liveDot is also gone
+   * on mobile — it reads as "noise" when the panel already
+   * communicates a live feed through its content. */
   .title { display: none; }
+  .liveDot { display: none; }
+  /* Taller header / drag area at the top of the mobile feed
+   * panel. Was `padding: 20px 20px 14px` (effective height
+   * ~38px with the dot+title row), now `28px 20px 22px`
+   * (effective ~50px) — gives the user more room to grab the
+   * top edge to minimize and creates a quieter cap at the top
+   * of the panel since the dot + title are both hidden now. */
+  .header {
+    padding: 28px 20px 22px;
+  }
 }
 @media (max-width: 480px) {
   /* Small mobile: full-screen feed with the BottomNav still visible.

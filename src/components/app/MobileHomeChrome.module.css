@@ -101,9 +101,11 @@
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));
-  /* Negative bottom margin pulls the wordmark up into the
-   * logo's natural padding area so the two visually touch. */
-  margin-bottom: -4px;
+  /* More aggressive negative bottom margin (-4 → -10) pulls the
+   * FANVERSE wordmark UP into the logo's natural padding so the
+   * two visually touch / overlap slightly. Per product feedback
+   * the previous gap still felt too loose. */
+  margin-bottom: -10px;
 }
 .brandLabel {
   /* Smaller wordmark (8 → 6.5px) per product feedback. The

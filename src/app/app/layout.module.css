@@ -62,24 +62,27 @@
 }
 
 @media (max-width: 768px) {
-  /* Mobile — the cluster sits in the RIGHT side of the Fanpoints
-   * info bar, which now lives at the TOP of MobileHomeChrome
-   * (y:6 → y:42, per the latest chrome layout where the info bar
-   * moved up to make room for the bigger lowered logo below).
-   * The chat icon shares the same horizontal axis as the
-   * Fanpoints chip on the left so the top row reads as a single
-   * info strip: chip on the left, action on the right.
+  /* Mobile — the cluster sits on the SAME horizontal axis as
+   * the Ana Castela logo in the lower half of the chrome card
+   * (per latest product feedback: "icone de mensagem alinhado
+   * horizontalmente do logo, ou seja mais abaixo"). Fanpoints
+   * chip stays alone at the top of the chrome (y:6-42); the
+   * message icon drops to the brand-row level.
    *
    * Vertical alignment math:
-   *   MobileHomeChrome info bar: y:6 → y:42, center at y:24.
-   *   Icon button is 40×40 → center placed at 24 means
-   *     top = 24 - 20 = 4.
+   *   MobileHomeChrome height = 116px.
+   *   Logo height = 68px, brand anchored bottom: 8.
+   *   Logo y range: chrome.top + (116 - 8 - 68) to (116 - 8)
+   *               = chrome.top + 40 to chrome.top + 108.
+   *   Logo center y = chrome.top + 74.
+   *   Icon button is 40×40 → center placed at 74 means
+   *     top = 74 - 20 = 54.
    *
-   * Horizontal alignment: `right: 18px` matches the info bar's
-   * own `padding-left: 18px` so the icon and the Fanpoints chip
-   * frame the row with symmetric outer margins. */
+   * Horizontal alignment: `right: 18px` keeps the icon's right
+   * edge on the same outer margin the Fanpoints chip uses on
+   * the left. */
   .topBar {
-    top: 4px;
+    top: 54px;
     right: 18px;
     transform: none;
     flex-direction: row;
@@ -138,13 +141,17 @@
   .shortcutBtnActive:hover svg {
     color: #d8b4fe !important;
   }
-  /* Unread pill scaled to track the new 20px icon. */
+  /* Unread pill — slightly bigger per product feedback so the
+   * count reads more confidently at thumb distance. Was
+   * 18×18 / 10.5px; bumped to 22×22 / 12px. */
   .shortcutBtnBadge {
-    min-width: 18px;
-    height: 18px;
-    font-size: 10.5px;
-    top: -2px;
-    right: -2px;
+    min-width: 22px;
+    height: 22px;
+    font-size: 12px;
+    top: -3px;
+    right: -3px;
+    padding: 0 6px;
+    border-radius: 11px;
   }
 }
 
@@ -197,15 +204,19 @@
 }
 .shortcutBtnBadge {
   position: absolute;
+  /* Slightly bigger across the board per product feedback —
+   * was 18×18 / 10.5px, now 22×22 / 12px. Desktop and mobile
+   * use roughly the same scale now; the mobile @media above
+   * keeps a slightly tighter top/right offset. */
   top: -3px;
   right: -3px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
   background: #ef4444;
   color: #ffffff;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 800;
   display: inline-flex;
   align-items: center;
