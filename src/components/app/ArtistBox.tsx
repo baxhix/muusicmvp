@@ -131,6 +131,10 @@ export default function ArtistBox() {
         />
         <span className={styles.compactName}>Ana Castela</span>
         <span className={styles.compactFanpoints}>
+          {/* Crown icon — Fanverse points indicator. Was a 5-point
+           *  star; product feedback wanted a crown to align with
+           *  the "Superfã" identity. The peaks-to-baseline path
+           *  reads as a crown at any size from 12-24px. */}
           <svg
             viewBox="0 0 24 24"
             width="12"
@@ -142,7 +146,7 @@ export default function ArtistBox() {
             strokeLinejoin="round"
             aria-hidden="true"
           >
-            <polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.3 21.4 12 18 5.7 21.4 7 14.4 2 9.5 8.9 8.6 12 2" />
+            <path d="M2.5 19h19l-1.5-9-5 3.5L12 6l-3 7.5L4 10l-1.5 9z" />
           </svg>
           {fanpoints.toLocaleString('pt-BR')}
         </span>

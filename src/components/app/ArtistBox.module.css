@@ -699,52 +699,74 @@
 }
 
 @media (max-width: 768px) {
-  /* Mobile — pill is the LEFT half of the fixed header. The
-   * right edge clears the Notificações + Chat (Send) cluster
-   * docked at the top-right: 2 buttons × 38px + 8px gap +
-   * 14px right margin + 10px breathing buffer = 108px.
+  /* Mobile — pill is the LEFT half of the fixed header.
    *
-   * Height bumped to match the internal MobileRouteHeader (68px)
-   * so the home header reads as the same "shelf" as Conversas,
-   * Superfãs, Comunidades, etc. Background swapped to a more
-   * translucent gradient so the backdrop-blur (already declared
-   * at 40px on .box) actually paints through — the previous
-   * 96%-opaque fill was hiding the blur. */
+   * Visual: pure black with light transparency + a heavy blur
+   * so the home header reads as the same "frosted shelf" as
+   * the internal MobileRouteHeader (which uses the same
+   * formula). Was a tinted gradient that fought the blur.
+   *
+   * Width: left:12, right:108 leaves room for the
+   * Notificações + Chat cluster docked at the top-right
+   * (2 × 44px icon-only buttons + 12px gap + 14px right + 8
+   * buffer). */
   .box {
     width: auto;
     max-width: none;
     left: 12px;
-    right: 108px;
+    /* Cluster sits at right:12 with 2 × 44px icons + 4px gap =
+     * 92px wide → cluster left edge at right:104. The pill's
+     * right edge stops at 112 for an 8px breathing gap. */
+    right: 112px;
     top: 12px;
     border-radius: 16px;
-    background:
-      linear-gradient(180deg,
-        rgba(11, 11, 13, 0.62) 0%,
-        rgba(5, 5, 7, 0.58) 100%);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(28px) saturate(1.2);
+    -webkit-backdrop-filter: blur(28px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
+  /* Compact bar — slimmer content per product feedback. Per the
+   * earlier "zoom" complaint the previous photo+name made the
+   * surface feel oversized; with both hidden the bar collapses
+   * to a crown + Fanpoints chip + chevron, which reads as a
+   * tight identity strip instead of a heavy header card. */
   .compactBar {
     height: 68px;
-    padding: 10px 14px 10px 10px;
-    gap: 14px;
+    padding: 0 14px;
+    gap: 10px;
+    justify-content: flex-start;
   }
+  /* Hide the artist photo + display name on mobile per product
+   * feedback — the crown + Fanpoints chip carry the Fanverse
+   * identity on its own and the photo / name belong to the
+   * desktop "Fanverse card" treatment. */
   .compactPhoto {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+    display: none;
   }
   .compactName {
-    font-size: 14px;
+    display: none;
   }
+  /* Crown + Fanpoints chip — yellow icon, white number. Centered
+   * by the bar's flex-start alignment with a single 10px gap so
+   * the elements read as one item, not two columns. */
   .compactFanpoints {
-    font-size: 13px;
-    gap: 5px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    gap: 8px;
+    flex: 1;
   }
   .compactFanpoints svg {
-    width: 14px;
-    height: 14px;
+    width: 22px;
+    height: 22px;
+    color: #fbbf24;
+    /* Soft yellow glow so the crown pops against the blurred
+     * black background without needing a heavy stroke. */
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
   }
   .compactChevron {
     width: 16px;
     height: 16px;
+    color: rgba(245, 245, 247, 0.55);
   }
 }
