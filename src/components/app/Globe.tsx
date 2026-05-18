@@ -60,6 +60,68 @@ export default function Globe() {
       });
     });
 
+    // ── Container size sync ─────────────────────────────────────
+    // Mapbox sizes its WebGL canvas based on the container's
+    // dimensions at initialization, then keeps it pinned to that
+    // size until `map.resize()` is called. Mapbox's built-in
+    // `trackResize` only listens to `window.resize` — which doesn't
+    // fire for:
+    //   - iOS Safari's address-bar collapse/expand (the layout
+    //     viewport stays put while the VISUAL viewport changes)
+    //   - in-page layout shifts (route changes, keyboard open,
+    //     a sibling sheet pushing the map's box)
+    //   - Android orientation changes that the browser delivers
+    //     as a layout reflow before any window.resize event
+    // The symptom users see is "half the map disappears" — the
+    // WebGL canvas stayed at its old smaller dimensions, the
+    // background bleeds through wherever the canvas no longer
+    // reaches, and the tile imagery just stops at a hard edge.
+    //
+    // The fix is two listeners, both throttled to one rAF tick so
+    // a rapid-fire burst of resize events (iOS rubber-band scroll
+    // fires resize many times per second) only triggers one
+    // `map.resize()` per frame:
+    //   1. ResizeObserver on the container catches every layout-
+    //      driven dimension change.
+    //   2. visualViewport.resize catches iOS's address-bar dance
+    //      where #1 doesn't fire because the layout viewport
+    //      didn't change.
+    //   3. orientationchange runs both belt-and-suspenders for
+    //      Android, where some browsers settle dimensions
+    //      mid-orientation-change without firing window.resize.
+    //   4. visibilitychange handles the case where the tab was
+    //      backgrounded (Mapbox throttles rendering when hidden,
+    //      and the container box may have changed while we were
+    //      paused — a resize on visibility-restore re-syncs).
+    let resizeRafId = 0;
+    const scheduleResize = () => {
+      if (resizeRafId) return;
+      resizeRafId = requestAnimationFrame(() => {
+        resizeRafId = 0;
+        map.resize();
+      });
+    };
+    const resizeObserver = new ResizeObserver(scheduleResize);
+    resizeObserver.observe(containerRef.current);
+    const visualViewport =
+      typeof window !== 'undefined' ? window.visualViewport : null;
+    visualViewport?.addEventListener('resize', scheduleResize);
+    window.addEventListener('orientationchange', scheduleResize);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Tab became visible: re-snap canvas size in case the
+        // container changed while we were backgrounded, and reset
+        // the inactivity clock so the idle-spin doesn't kick in
+        // the same frame the user comes back. handleActivity is
+        // safe before the rotate loop is defined because it only
+        // resets state + the inactivity timer — it doesn't touch
+        // `rafId` directly.
+        scheduleResize();
+        handleActivity();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     let userLocationMarker: mapboxgl.Marker | null = null;
     /** Live presence markers keyed by user.id (so diff updates are O(1)) */
     const liveUserMarkers = new Map<string, mapboxgl.Marker>();
@@ -414,10 +476,34 @@ export default function Globe() {
     let resumeTimer: ReturnType<typeof setTimeout> | null = null;
     let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
 
+    /**
+     * Idle-spin RAF. Self-suspending: when there's no work to do
+     * (rotation disabled by recent activity, zoomed past the lock
+     * threshold, or actively flying via flyTo), the loop stops
+     * scheduling new frames instead of running 60×/sec just to
+     * fail the condition. The loop is re-armed by `startRotation`
+     * when the inactivity timer expires.
+     *
+     * The previous version requested a new frame every callback
+     * unconditionally — even when rotation was off (the default,
+     * since the spin only activates after 6s of inactivity). That
+     * meant 60 useless callbacks per second on EVERY device,
+     * burning battery for nothing on mobile and keeping the JS
+     * thread from idling on desktop.
+     */
     const rotate = () => {
-      if (rotationEnabled && !userInteracting && map.getZoom() < ROTATION_LOCK_ZOOM) {
-        map.setCenter([map.getCenter().lng + 0.04, map.getCenter().lat]);
+      if (!rotationEnabled || userInteracting || map.getZoom() >= ROTATION_LOCK_ZOOM) {
+        rafId = 0;
+        return;
       }
+      map.setCenter([map.getCenter().lng + 0.04, map.getCenter().lat]);
+      rafId = requestAnimationFrame(rotate);
+    };
+
+    /** Idempotent "kick the loop awake" helper. No-op when the RAF
+     *  is already pending. */
+    const startRotation = () => {
+      if (rafId) return;
       rafId = requestAnimationFrame(rotate);
     };
 
@@ -428,6 +514,7 @@ export default function Globe() {
       inactivityTimer = setTimeout(() => {
         rotationEnabled = true;
         inactivityTimer = null;
+        startRotation();
       }, INACTIVITY_DELAY_MS);
     };
 
@@ -629,7 +716,19 @@ export default function Globe() {
     };
 
     map.on('load', () => {
-      rafId = requestAnimationFrame(rotate);
+      // Belt-and-suspenders resize on first paint. React commits
+      // the container DOM, then Mapbox initializes — but on slow
+      // devices the container's final layout (after fonts/CSS
+      // settle) can be a few px different from what Mapbox
+      // captured on construction. This single `resize()` snaps
+      // the canvas to whatever the container actually is at the
+      // moment `load` fires, and is cheap because the canvas is
+      // already sized roughly correctly.
+      map.resize();
+      // Kick the idle-spin loop. It self-suspends immediately if
+      // rotation isn't enabled yet (default for the first 6s), so
+      // this is a cheap probe — not a 60×/s burner.
+      startRotation();
 
       // Handler de localização do user logado — renderiza um badge no mesmo
       // estilo do liveUserBadge (avatar + nome + música), ancorado em
@@ -1284,7 +1383,7 @@ export default function Globe() {
           });
           setTimeout(() => {
             userInteracting = false;
-            rafId = requestAnimationFrame(rotate);
+            startRotation();
           }, 3600);
         }, 6500);
       });
@@ -1297,6 +1396,13 @@ export default function Globe() {
       ACTIVITY_EVENTS.forEach((ev) => {
         document.removeEventListener(ev, handleActivity);
       });
+      // Tear down the resize plumbing added above so a re-mount
+      // doesn't leak listeners on top of fresh ones.
+      if (resizeRafId) cancelAnimationFrame(resizeRafId);
+      resizeObserver.disconnect();
+      visualViewport?.removeEventListener('resize', scheduleResize);
+      window.removeEventListener('orientationchange', scheduleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (userLocationMarker) userLocationMarker.remove();
       liveUserMarkers.forEach((m) => m.remove());
       liveUserMarkers.clear();

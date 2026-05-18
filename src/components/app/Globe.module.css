@@ -393,34 +393,46 @@
     margin 220ms cubic-bezier(0.22, 1, 0.36, 1);
   margin: 0;
 }
-.badgeCompact:hover {
-  gap: 7px;
-  padding: 6px 11px 6px 7px;
-  /* Hover undoes the lock so the badge expands to its real width. */
-  min-width: 0;
-  max-width: 260px;
-  min-height: 0;
-  max-height: 56px;
-  aspect-ratio: auto;
-  justify-content: flex-start;
-  /* Restore the dark pill envelope on hover. The resting state
-   * collapses to a bare circular avatar (no wrapper); hover
-   * grows the pill back so the username + song row are readable
-   * against a consistent dark background — same visual language
-   * as the non-compact `.userBadge`. These !important values
-   * cancel the `transparent` defaults declared on `.badgeCompact`
-   * above. */
-  background: rgba(0, 0, 0, 0.88) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(18px) !important;
-  -webkit-backdrop-filter: blur(18px) !important;
-}
-.badgeCompact:hover .userBadgeInfo,
-.badgeCompact:hover .liveUserInfo {
-  max-width: 200px;
-  max-height: 56px;
-  opacity: 1;
-  pointer-events: auto;
+/* The expand-on-hover behaviour is GATED on `@media (hover: hover)`
+ * so it only fires on devices with a real pointer (desktop with a
+ * mouse). On touch devices (mobile / tablet), the browser
+ * synthesizes a brief `:hover` on tap — combined with the compact
+ * hover animation racing itself (max-width / max-height transition
+ * smoothly while min-width / min-height / aspect-ratio snap
+ * instantly), the result was a momentarily stretched, distorted
+ * shape during the tap-to-open gesture. With the rules gated, the
+ * pin stays as a clean circle on touch and the click handler
+ * (independent of CSS) opens the profile normally. */
+@media (hover: hover) and (pointer: fine) {
+  .badgeCompact:hover {
+    gap: 7px;
+    padding: 6px 11px 6px 7px;
+    /* Hover undoes the lock so the badge expands to its real width. */
+    min-width: 0;
+    max-width: 260px;
+    min-height: 0;
+    max-height: 56px;
+    aspect-ratio: auto;
+    justify-content: flex-start;
+    /* Restore the dark pill envelope on hover. The resting state
+     * collapses to a bare circular avatar (no wrapper); hover
+     * grows the pill back so the username + song row are readable
+     * against a consistent dark background — same visual language
+     * as the non-compact `.userBadge`. These !important values
+     * cancel the `transparent` defaults declared on `.badgeCompact`
+     * above. */
+    background: rgba(0, 0, 0, 0.88) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+  }
+  .badgeCompact:hover .userBadgeInfo,
+  .badgeCompact:hover .liveUserInfo {
+    max-width: 200px;
+    max-height: 56px;
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 /* "Listening" indicator shown ONLY in compact mode (and only when a
@@ -476,12 +488,50 @@
 .badgeCompact .compactBarsBadge {
   display: inline-flex;
 }
-.badgeCompact:hover .compactBarsBadge {
-  display: none;
+/* Hide the equalizer chip ONLY when the badge actually expands on
+ * hover (gated to real pointers — see the `@media (hover: hover)`
+ * block above). On touch the badge stays collapsed, so the chip
+ * stays visible. */
+@media (hover: hover) and (pointer: fine) {
+  .badgeCompact:hover .compactBarsBadge {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .compactBar { animation: none; transform: scaleY(0.85); opacity: 0.9; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * INTER-MARKER HOVER LIFT
+ *
+ * At low zoom (compact mode), neighboring user markers cluster
+ * tightly. When you hover marker A, its badge expands from 28×28
+ * to ~192×56 — but the expanded box now overlaps neighbor B's
+ * compact circle. Mapbox renders markers as independent siblings
+ * (each with its own `transform: translate3d`) and doesn't set a
+ * z-index, so DOM order wins — B (often later in the list) ends
+ * up painting on top of A's expanded area. The cursor "hits" B
+ * instead of A's pill, A un-hovers and shrinks back, the cursor
+ * is now over A's small circle again, A expands again, B covers
+ * it, etc. The whole thing oscillates several times a second —
+ * the "tremor" the user reported.
+ *
+ * The fix: lift the hovered marker's z-index to a high value via
+ * the parent selector `:has()`. This way the marker whose inner
+ * badge is hovered always paints above its siblings, so its
+ * expanded box can't be obscured by neighbors. When the cursor
+ * leaves, z-index resets and Mapbox's natural depth-sort takes
+ * back over. `:has()` is baseline in modern browsers (Chrome 105+,
+ * Safari 15.4+, Firefox 121+); older browsers fall back to the
+ * pre-fix behaviour, which is no worse than before.
+ *
+ * `pointer-events: none` on `.userLocationMarker` / `.liveUserWrap`
+ * doesn't affect z-index — only the badges inside catch the
+ * pointer, so :hover fires reliably on the inner element. */
+:global(.mapboxgl-marker):has(.liveUserBadge:hover),
+:global(.mapboxgl-marker):has(.userBadge:hover) {
+  z-index: 100;
 }
 
 /* Anchor for the compact audio-bars chip — same dimensions as the
@@ -746,15 +796,24 @@
 }
 
 /* Compact mode: heart fades out alongside the .liveUserInfo block.
- * Hover (or focus) brings both back together. */
+ * Hover (real pointer only) or focus-within brings both back
+ * together. Touch users reach the wave from the profile panel
+ * (tap-to-open) instead of via the heart on the compact pin —
+ * keeping the heart hover-gated avoids the distorted intermediate
+ * shape that the tap-synthesized hover used to trigger. */
 .badgeCompact .likeBtn {
   opacity: 0;
   pointer-events: none;
 }
-.badgeCompact:hover .likeBtn,
 .badgeCompact:focus-within .likeBtn {
   opacity: 1;
   pointer-events: auto;
+}
+@media (hover: hover) and (pointer: fine) {
+  .badgeCompact:hover .likeBtn {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 /* ============================================================
@@ -1026,9 +1085,18 @@
     linear-gradient(180deg,
       rgba(15, 15, 18, 0.97) 0%,
       rgba(8, 8, 11, 0.97) 100%);
-  border: 1px solid rgba(249, 115, 22, 0.25);
+  /* No outer amber border — product wanted the card to feel like
+   * a floating chip on the map, not a framed box. Depth comes from
+   * the drop shadow + the inner highlight inset alone. */
+  border: none;
   border-radius: 14px;
   color: #f5f5f7;
+  /* Force Inter — Mapbox GL's CSS resets font-family on the popup
+   * root to `'Open Sans','Helvetica Neue',Arial,sans-serif`, which
+   * blocks our `body { font-family: var(--sans) }` from reaching
+   * the popup text. Without this override the venue / city / date
+   * render in Helvetica on macOS. */
+  font-family: var(--sans);
   box-shadow:
     0 18px 40px -10px rgba(0, 0, 0, 0.78),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
