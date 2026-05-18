@@ -37,7 +37,6 @@ export default function BottomNav() {
   const {
     feedOpen,
     setFeedOpen,
-    chatUnreadCount,
     locationSync,
     activeOverlay,
     setActiveOverlay,
@@ -142,7 +141,6 @@ export default function BottomNav() {
   // routed surfaces; the map slot only lights up when we're on
   // `/app` AND no overlay (e.g. Feed) is intercepting it.
   const onMap = pathname === '/app' && !feedOpen;
-  const onChat = pathname.startsWith('/app/chat');
   const onCommunity = pathname.startsWith('/app/comunidades');
   const onProfile =
     pathname.startsWith('/app/perfil') || pathname.startsWith('/app/u/');
@@ -258,61 +256,28 @@ export default function BottomNav() {
           );
         })()}
 
-        {/* 4th slot — diverges by viewport.
+        {/* 4th slot — Comunidade across BOTH viewports.
          *
-         * Desktop: Comunidade (opens CommunityPanel route). The
-         *   center already exposes Chat, so the 4th slot rounds
-         *   out the primary set.
+         * Per product feedback, Chat is no longer in the mobile
+         * navbar — Comunidade takes the slot on phones too. Chat
+         * stays reachable on mobile via the floating right-rail
+         * Send icon (in app/app/layout.tsx, aligned with the
+         * Fanpoints chip in the home header). The hamburger menu
+         * also still surfaces it.
          *
-         * Mobile: Chat. Product feedback wants Chat visible in
-         *   the navbar (most-used surface day-to-day) and
-         *   Comunidades demoted into the hamburger — communities
-         *   is more of a "destination" you head to on purpose,
-         *   chat is an inbox you check constantly. The
-         *   chatUnreadCount badge rides along on this slot when
-         *   greater than zero. */}
-        {isMobile ? (
-          <button
-            type="button"
-            className={`${styles.item} ${onChat ? styles.itemActive : ''}`}
-            onClick={() => toggleNav('/app/chat')}
-            onPointerEnter={() => prefetch('/app/chat')}
-            onFocus={() => prefetch('/app/chat')}
-            aria-label={onChat ? 'Fechar conversas' : 'Abrir conversas'}
-            data-tooltip={onChat ? 'Fechar' : 'Chat'}
-          >
-            <span className={styles.iconWrap}>
-              {/* Paper-airplane (Send) icon — Instagram-DM affordance.
-               *  Replaces the speech-bubble glyph across every Chat
-               *  entry point so the visual reads consistently with
-               *  modern social-app DM conventions. */}
-              <svg viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {chatUnreadCount > 0 && (
-                <span className={styles.unreadBadge}>
-                  {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                </span>
-              )}
-            </span>
-            <span className={styles.dot} aria-hidden="true" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
-            onClick={() => toggleNav('/app/comunidades')}
-            onPointerEnter={() => prefetch('/app/comunidades')}
-            onFocus={() => prefetch('/app/comunidades')}
-            aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
-            data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
-          >
+         * Desktop label is shown via `.label`; mobile hides
+         * `.label` globally so only the icon renders there. */}
+        <button
+          type="button"
+          className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
+          onClick={() => toggleNav('/app/comunidades')}
+          onPointerEnter={() => prefetch('/app/comunidades')}
+          onFocus={() => prefetch('/app/comunidades')}
+          aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
+          aria-pressed={!isMobile ? onCommunity : undefined}
+          data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
+        >
+          <span className={styles.iconWrap}>
             <svg viewBox="0 0 24 24" fill="none">
               <circle
                 cx="9"
@@ -341,10 +306,10 @@ export default function BottomNav() {
                 strokeLinecap="round"
               />
             </svg>
-            <span className={styles.dot} aria-hidden="true" />
-            <span className={styles.label}>Comunidade</span>
-          </button>
-        )}
+          </span>
+          <span className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>Comunidade</span>
+        </button>
 
         {/* Profile slot — diverges by viewport.
          *

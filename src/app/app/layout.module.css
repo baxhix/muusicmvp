@@ -63,26 +63,23 @@
 
 @media (max-width: 768px) {
   /* Mobile — the cluster sits in the RIGHT side of the Fanpoints
-   * info bar (the lower band of MobileHomeChrome, y:68–104), on
-   * the same horizontal axis as the Fanpoints chip on the left.
-   * Per product feedback the chat icon was sitting too high in
-   * the 68px header band; moving it down into the info bar row
-   * balances the Fanpoints chip on the left and reads as a
-   * single info row with a left chip + right action.
+   * info bar, which now lives at the TOP of MobileHomeChrome
+   * (y:6 → y:42, per the latest chrome layout where the info bar
+   * moved up to make room for the bigger lowered logo below).
+   * The chat icon shares the same horizontal axis as the
+   * Fanpoints chip on the left so the top row reads as a single
+   * info strip: chip on the left, action on the right.
    *
    * Vertical alignment math:
-   *   MobileHomeChrome info bar: y:68 → y:104, center at y:86.
-   *   Icon button is 40×40 → center placed at 86 means
-   *     top = 86 - 20 = 66.
-   *   The icon's bottom edge (66 + 40 = 106) sits 2px past the
-   *     chrome's bottom (y:104) — visually inconsequential and
-   *     keeps the icon fully visible.
+   *   MobileHomeChrome info bar: y:6 → y:42, center at y:24.
+   *   Icon button is 40×40 → center placed at 24 means
+   *     top = 24 - 20 = 4.
    *
    * Horizontal alignment: `right: 18px` matches the info bar's
-   * own `padding: 0 18px` so the icon's right edge lines up
-   * with the Fanpoints chip's left edge column. */
+   * own `padding-left: 18px` so the icon and the Fanpoints chip
+   * frame the row with symmetric outer margins. */
   .topBar {
-    top: 66px;
+    top: 4px;
     right: 18px;
     transform: none;
     flex-direction: row;

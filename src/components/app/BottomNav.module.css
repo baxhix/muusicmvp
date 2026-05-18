@@ -392,32 +392,43 @@
     width: calc(100% - 32px);
     max-width: 320px;
   }
+  /* Menu tracks .inner's responsive width exactly: same calc +
+   * same max so the two surfaces always have identical outer
+   * widths on phone viewports. Vertical bottom drops 100 → 94
+   * because the .nav padding-bottom shrinks 24 → 18 here too,
+   * keeping the 20px visual gap above the pill consistent. */
+  .moreMenu {
+    width: calc(100% - 32px);
+    max-width: 320px;
+    bottom: 94px;
+  }
 }
 
 /* ── Mobile "more" popover (replaces Perfil slot) ──
  *
- * The wrapper hosts the trigger + the floating sheet. The trigger
- * lives in the navbar's grid; the sheet escapes via absolute
- * positioning. The sheet opens UPWARD (no room below the nav)
- * and is intentionally sized + skinned to match the navbar pill
- * exactly — same width (280px), same gradient, blur, border, so
- * the menu reads as an extension of the navbar surface rather
- * than a foreign popover floating above it.
+ * The sheet is sized + skinned to match the navbar pill EXACTLY
+ * at every breakpoint so the menu reads as an extension of the
+ * navbar surface rather than a foreign popover floating above
+ * it. The previous absolute-positioned-from-.moreWrap approach
+ * matched on desktop (where .inner is a fixed 280px) but broke
+ * on mobile where .inner uses `calc(100% - 32px)` (max 320px)
+ * and the menu's fixed 280px width was visibly narrower than
+ * the navbar.
  *
- * Alignment math (with box-sizing: border-box, set globally):
- *   - Navbar inner is 280px wide (the OUTER box), centered
- *     horizontally. Has `padding: 8px 10px` + `border: 3px`.
- *   - The hamburger sits in column 5 of a 5-col grid inside the
- *     pill.
- *   - `.moreWrap` is the hamburger's grid cell. Its right edge =
- *     inner.content_right = inner.outer_right − 13px (border 3 +
- *     padding-right 10).
- *   - To make the menu's right edge land on the inner's OUTER
- *     right edge, offset by `right: -13px` (cancel both border
- *     and padding). Width 280 then extends leftward to land on
- *     the inner's outer-left edge too — exact outer-to-outer
- *     alignment with the navbar pill.
- *   - Vertical: see the .moreMenu rule itself for the 31px math.
+ * Switching to `position: fixed` anchors the menu directly to
+ * the viewport — so the width can match `.inner`'s own
+ * (responsive) computation, and the centered transform lines
+ * the menu up dead-center with the navbar pill regardless of
+ * viewport size.
+ *
+ * Vertical position math (per breakpoint):
+ *   .nav has `padding-bottom: 24px` (desktop) / `18px` (mobile).
+ *   .inner outer height ≈ 56px (34px button + 16px pill padding
+ *     + 6px border). The pill's OUTER TOP edge sits at
+ *     (padding-bottom + 56) from viewport.bottom. Adding the
+ *     20px visual gap target gives the menu's bottom value.
+ *     Desktop: 24 + 56 + 20 = 100px.
+ *     Mobile:  18 + 56 + 20 = 94px.
  */
 .moreWrap {
   position: relative;
@@ -426,21 +437,18 @@
   justify-content: center;
 }
 .moreMenu {
-  position: absolute;
-  /* Vertical offset math (box-sizing: border-box, set globally):
-   *   .inner outer top → .moreWrap top = 11px (inner border 3 +
-   *   inner padding-top 8). To get a 20px VISUAL gap between the
-   *   menu's bottom edge and the navbar pill's OUTER top edge,
-   *   we need `bottom = .moreWrap.top - 31px`, so `calc(100% + 31px)`.
-   *   (20px target visual gap + 11px inset = 31px.) */
-  bottom: calc(100% + 31px);
-  /* Horizontal alignment math:
-   *   .moreWrap.right = .inner.outer_right − 13px (border 3 +
-   *   padding-right 10). To put menu.right exactly on the navbar
-   *   pill's outer right edge: `right = -13px`. Combined with
-   *   `width: 280px`, the menu's left edge also lands on the
-   *   pill's outer left edge — outer-to-outer alignment, exact. */
-  right: -13px;
+  position: fixed;
+  /* Desktop default: pill bottom-padding 24 + pill height 56 +
+   * 20px gap = 100px from viewport bottom. */
+  bottom: 100px;
+  /* Centered horizontally — transform translateX(-50%) is also
+   * the rest position of the keyframes below, which preserves
+   * the horizontal center while animating opacity + translateY. */
+  left: 50%;
+  transform: translateX(-50%);
+  /* Desktop default: matches .inner's fixed 280px width. The
+   * mobile @media block below overrides for the responsive
+   * `calc(100% - 32px)` rule .inner follows there. */
   width: 280px;
   /* Match the navbar inner's material exactly so the menu feels
    * like the same surface stretched vertically: identical dark
@@ -469,9 +477,14 @@
   z-index: 80;
   animation: moreMenuIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* Keyframe transforms must INCLUDE `translateX(-50%)` — that's
+ * the horizontal centering applied via the rest transform on
+ * .moreMenu. If the keyframes only animate translateY, the
+ * browser blends in only translateY for the keyframe duration,
+ * leaving the menu uncentered while animating. */
 @keyframes moreMenuIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.985); }
-  to   { opacity: 1; transform: translateY(0)   scale(1);     }
+  from { opacity: 0; transform: translate(-50%, 8px) scale(0.985); }
+  to   { opacity: 1; transform: translate(-50%, 0)   scale(1);     }
 }
 .moreItem {
   display: flex;

@@ -21,6 +21,14 @@
   top: 0;
   left: 0;
   right: 0;
+  /* Explicit height so child bands can be anchored absolutely
+   * with predictable positions. Was implicit (sum of 68 + 36 =
+   * 104px); per product feedback the logo grew +20% and dropped
+   * into the lower portion of the chrome while the Fanpoints
+   * chip + message icon climbed to the top — needs a slightly
+   * taller envelope (116px) to fit the rearranged stack without
+   * clipping the logo. */
+  height: 116px;
   z-index: 5;
   pointer-events: none;
   /* Lilac+pink ambient wash over a translucent dark base — was
@@ -55,20 +63,27 @@
   overflow: hidden;
 }
 
-/* Header band — just a layout spacer now (no own background).
- * Reserves 68px at the top of the chrome for the logo + the
- * right-rail Notif/Send cluster to sit inside. */
+/* Header band — invisible spacer. With the new layout (info bar
+ * at the TOP, logo at the BOTTOM), `.headerBg` no longer reserves
+ * the band for the logo and isn't needed for spacing anymore.
+ * Kept as a 0-height marker so removing the JSX node isn't
+ * required and so any future re-use of the slot has a hook. */
 .headerBg {
-  height: 68px;
+  height: 0;
 }
 
-/* Brand column — logo on top, "FANVERSE" wordmark immediately
- * below it. Gap shrunk 2 → -2 (negative) so the wordmark
- * tucks right under the logo's baseline, reading as a unified
- * brand mark rather than two stacked items. */
+/* Brand column — logo + "FANVERSE" wordmark. Dropped INTO the
+ * lower half of the chrome card so the Fanpoints chip + message
+ * icon can ride at the top. The logo also got +21% (56 → 68) so
+ * it has more visual presence in the new lower position.
+ *
+ * Anchored from the BOTTOM of the chrome (instead of the top)
+ * because the new layout puts the logo at the bottom — bottom
+ * anchoring makes the logo's distance from the chrome's lower
+ * edge predictable regardless of small height variations. */
 .brand {
   position: absolute;
-  top: 2px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -79,11 +94,10 @@
   z-index: 1;
 }
 .logo {
-  /* Bumped 48 → 56 per product feedback. Native aspect yields
-   * ~100px wide; right-rail cluster only carries the Send icon
-   * now (Notif removed), so there's plenty of horizontal room
-   * on every supported viewport. */
-  height: 56px;
+  /* Bumped 56 → 68 (+21%) per product feedback so the logo
+   * dominates the lower part of the chrome card and the
+   * brand identity reads clearly at thumb-distance. */
+  height: 68px;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));
@@ -105,30 +119,41 @@
 
 /* Small-phone fallback (<360px). Logo trimmed slightly so the
  * lockup still has comfortable horizontal margins on narrow
- * viewports; wordmark scales down proportionally. */
+ * viewports; wordmark scales down proportionally. Brand still
+ * bottom-anchored (matches the default rule). */
 @media (max-width: 360px) {
-  .brand {
-    top: 4px;
-  }
   .logo {
-    height: 50px;
+    height: 60px;
   }
   .brandLabel {
     font-size: 6px;
   }
 }
 
-/* Info bar — sits in the lower part of the chrome card.
- * No background of its own; inherits the chrome gradient.
- * `pointer-events: auto` lets the (future) interactive content
- * inside receive taps even though the parent chrome is
- * `pointer-events: none`. */
+/* Info bar — moved to the TOP of the chrome card per product
+ * feedback (was at the bottom). Fanpoints chip on the left,
+ * right side intentionally clear so the floating right-rail
+ * Send icon (positioned via app/app/layout.module.css) sits
+ * on the same horizontal axis on the right.
+ *
+ * Absolutely positioned now so the brand row underneath can
+ * occupy the rest of the chrome without layout-pushing this
+ * row out of place. `pointer-events: auto` lets the (future)
+ * interactive content inside receive taps even though the
+ * parent chrome is `pointer-events: none`. */
 .infoBar {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  /* padding-right reserves room for the floating message icon
+   * (~44px wide tap target at right:18px) so the Fanpoints
+   * chip never sits underneath it. */
+  padding: 0 60px 0 18px;
   pointer-events: auto;
 }
 
