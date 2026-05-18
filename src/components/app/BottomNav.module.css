@@ -99,7 +99,18 @@
 
 .inner {
   /* Sits ABOVE the glow. No internal shimmer anymore — the only
-   * lilac effect is the radial blur behind the pill. */
+   * lilac effect is the radial blur behind the pill.
+   *
+   * Layout: a 5-column GRID instead of flex `space-around`. Each
+   * slot gets exactly 1fr of the pill's interior width and the
+   * item is centered inside its column via `justify-items`. This
+   * guarantees the visual centers of all five icons sit on an
+   * evenly-divided horizontal axis regardless of each item's
+   * intrinsic width (the center crown is 36×36, regular items
+   * have 6×8 padding around a 22–28px icon, the mobile hamburger
+   * lives inside a popover wrapper) — flex space-around was
+   * distributing GAPS equally, leaving the icon centers
+   * slightly off-axis because the wrappers had different widths. */
   position: relative;
   z-index: 1;
   width: 280px;
@@ -115,11 +126,22 @@
    * original height: 8/10 → resting bar height back to its old
    * value. */
   padding: 8px 10px;
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  justify-items: center;
   align-items: center;
   pointer-events: auto;
 }
+
+/* Each direct child of .inner sits in a 1fr column. The cell
+ * does the horizontal centering via `justify-items: center` on
+ * the grid, so items keep their own intrinsic width + internal
+ * flex-column layout (icon stacked above the active-state dot).
+ *
+ * `.moreWrap` (the mobile hamburger anchor) is also a direct
+ * child and gets the same column, so the menu button lines up
+ * with the others. Its absolutely-positioned popover sheet
+ * escapes the cell naturally because it's positioned. */
 
 .item {
   position: relative;
