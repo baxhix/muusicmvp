@@ -34,6 +34,37 @@
   -webkit-backdrop-filter: blur(28px) saturate(1.2);
 }
 
+/* Ana Castela logo — centered in the header band. The source
+ * PNG is 8000×4500 (16:9-ish), so a 32px height yields a
+ * 56-57px width — narrow enough to clear the right-rail
+ * cluster (which ends 104px from the right) and the (hidden)
+ * ArtistBox slot on the left at every viewport width we
+ * support. `pointer-events: none` keeps the logo from eating
+ * taps that should reach the map underneath. */
+.logo {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 32px;
+  width: auto;
+  /* Drop shadow lifts the logo subtly off the solid black band
+   * so the curves keep edge contrast even when the user is
+   * looking at it peripherally. */
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* On very narrow phones (< 360px) leave a touch more side
+ * margin so the logo never collides with the cluster on the
+ * right or the device-edge curvature on the left. */
+@media (max-width: 360px) {
+  .logo {
+    height: 28px;
+  }
+}
+
 /* 1px gray hairline between the header and the info bar. The
  * line is the entire visual separation cue — keep it subtle
  * but visible against the dark surface above and below. */

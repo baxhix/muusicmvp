@@ -36,6 +36,12 @@ export default function MobileHomeChrome() {
   return (
     <div className={styles.chrome} aria-hidden="false">
       <div className={styles.headerBg} aria-hidden="true" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-ana.png"
+        alt="Ana Castela"
+        className={styles.logo}
+      />
       <div className={styles.divider} aria-hidden="true" />
       <div
         className={styles.infoBar}
