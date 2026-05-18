@@ -267,50 +267,89 @@ export default function BottomNav() {
           </button>
         )}
 
-        {/* Comunidade — opens CommunityPanel route. Standard users
-            icon (group of three silhouettes) — the previous two-
-            speech-bubble glyph was getting clipped at the bottom-
-            right edge of its 22x22 viewBox. */}
-        <button
-          type="button"
-          className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
-          onClick={() => toggleNav('/app/comunidades')}
-          onPointerEnter={() => prefetch('/app/comunidades')}
-          onFocus={() => prefetch('/app/comunidades')}
-          aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
-          data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
-        >
-          <svg viewBox="0 0 24 24" fill="none">
-            <circle
-              cx="9"
-              cy="8"
-              r="3.5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-            />
-            <path
-              d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="17"
-              cy="9.5"
-              r="2.5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-            />
-            <path
-              d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Comunidade</span>
-        </button>
+        {/* 4th slot — diverges by viewport.
+         *
+         * Desktop: Comunidade (opens CommunityPanel route). The
+         *   center already exposes Chat, so the 4th slot rounds
+         *   out the primary set.
+         *
+         * Mobile: Chat. Product feedback wants Chat visible in
+         *   the navbar (most-used surface day-to-day) and
+         *   Comunidades demoted into the hamburger — communities
+         *   is more of a "destination" you head to on purpose,
+         *   chat is an inbox you check constantly. The
+         *   chatUnreadCount badge rides along on this slot when
+         *   greater than zero. */}
+        {isMobile ? (
+          <button
+            type="button"
+            className={`${styles.item} ${onChat ? styles.itemActive : ''}`}
+            onClick={() => toggleNav('/app/chat')}
+            onPointerEnter={() => prefetch('/app/chat')}
+            onFocus={() => prefetch('/app/chat')}
+            aria-label={onChat ? 'Fechar conversas' : 'Abrir conversas'}
+            data-tooltip={onChat ? 'Fechar' : 'Chat'}
+          >
+            <span className={styles.iconWrap}>
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {chatUnreadCount > 0 && (
+                <span className={styles.unreadBadge}>
+                  {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                </span>
+              )}
+            </span>
+            <span className={styles.dot} aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
+            onClick={() => toggleNav('/app/comunidades')}
+            onPointerEnter={() => prefetch('/app/comunidades')}
+            onFocus={() => prefetch('/app/comunidades')}
+            aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
+            data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle
+                cx="9"
+                cy="8"
+                r="3.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+              <path
+                d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="17"
+                cy="9.5"
+                r="2.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+              <path
+                d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className={styles.dot} aria-hidden="true" />
+            <span className={styles.label}>Comunidade</span>
+          </button>
+        )}
 
         {/* Profile slot — diverges by viewport.
          *
@@ -346,35 +385,38 @@ export default function BottomNav() {
 
             {moreOpen && (
               <div className={styles.moreMenu} role="menu">
-                {/* Conversas — Chat moved off the navbar center on
-                 *  mobile (the crown takes that slot), so this is
-                 *  now the canonical entry to the full conversation
-                 *  list from the bottom rail. The dock avatars on
-                 *  the right still cover the 3 most recent threads. */}
+                {/* Comunidades — demoted from the navbar's 4th slot
+                 *  on mobile (Chat takes that slot now). Communities
+                 *  is more of a destination users head to on purpose,
+                 *  so it lives one tap deeper than the inbox-style
+                 *  Chat. The standard users glyph mirrors the icon
+                 *  that used to sit on the navbar. */}
                 <button
                   type="button"
                   role="menuitem"
                   className={styles.moreItem}
                   onClick={() => {
                     setMoreOpen(false);
-                    router.push('/app/chat');
+                    router.push('/app/comunidades');
                   }}
                 >
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
                     <path
-                      d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z"
+                      d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5"
                       stroke="currentColor"
                       strokeWidth="1.6"
                       strokeLinecap="round"
-                      strokeLinejoin="round"
+                    />
+                    <circle cx="17" cy="9.5" r="2.5" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
                     />
                   </svg>
-                  Conversas
-                  {chatUnreadCount > 0 && (
-                    <span className={styles.moreItemBadge} aria-hidden="true">
-                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                    </span>
-                  )}
+                  Comunidades
                 </button>
                 <button
                   type="button"
