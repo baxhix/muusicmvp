@@ -13,6 +13,14 @@ import { UNIVERSES, getUniverse, type UniverseConfig } from './universes';
 
 const STORAGE_KEY = 'muusic:universe';
 
+/** Universe a fresh visitor lands on when nothing has been
+ *  persisted yet. The Ana Castela / Countrybeat picker page
+ *  was retired per product feedback, so we just auto-select
+ *  Ana Castela on first visit — users who want to "trocar
+ *  universo" later still have the (commented-out) entry-point
+ *  in the TopBar drawer to surface again. */
+const DEFAULT_UNIVERSE_ID = 'ana-castela';
+
 interface UniverseContextValue {
   /** Currently selected universe id, or null until the user picks. */
   universeId: string | null;
@@ -31,19 +39,28 @@ interface UniverseContextValue {
 const UniverseContext = createContext<UniverseContextValue | null>(null);
 
 export function UniverseProvider({ children }: { children: ReactNode }) {
+  // SSR-safe initial state: stays `null` for the first render so
+  // the server HTML doesn't claim an artist before hydration.
+  // The effect below snaps to the persisted value (or
+  // DEFAULT_UNIVERSE_ID) after mount.
   const [universeId, setUniverseId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // Read persisted choice once after mount (localStorage is client-only,
-  // so SSR can't see it — we wait for client hydration then read).
+  // Read persisted choice once after mount; fall back to the
+  // default universe when nothing is stored so users never see
+  // an empty / unconfigured shell. (The /app/select picker page
+  // was retired per product feedback — this default is how the
+  // app now skips it.)
   useEffect(() => {
+    let initial = DEFAULT_UNIVERSE_ID;
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored && UNIVERSES[stored]) setUniverseId(stored);
+      if (stored && UNIVERSES[stored]) initial = stored;
     } catch {
-      // localStorage can throw in some private-mode scenarios — ignore;
-      // we'll just behave as if no universe is selected yet.
+      // localStorage can throw in some private-mode scenarios.
+      // Fall through with the default.
     }
+    setUniverseId(initial);
     setHydrated(true);
   }, []);
 

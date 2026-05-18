@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
-import Onboarding from '@/components/app/Onboarding';
 import BrainstormPanel from '@/components/app/BrainstormPanel';
 import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
@@ -53,8 +52,9 @@ export default function AppPage() {
 
   return (
     <>
-      {/* Onboarding overlay — shows on first visit until dismissed. */}
-      <Onboarding />
+      {/* (Onboarding overlay retired per product feedback —
+          first visit lands directly on the map without a
+          modal sequence.) */}
 
       {/* Mobile-only solid header background + gray divider +
           info bar below. Sits behind the ArtistBox pill + the

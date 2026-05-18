@@ -21,7 +21,6 @@ import {
   FAKE_CENTRAL_USER_ID,
 } from '@/lib/fakeAna';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { useUniverse } from '@/lib/universe/UniverseContext';
 import { useRouter } from 'next/navigation';
 import {
   globeStore,
@@ -174,7 +173,11 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const live = useLiveUsers();
   const locationSync = useLocationSync();
   const { user: authUser } = useAuth();
-  const { universeId, hydrated: universeHydrated } = useUniverse();
+  // Universe context is left available via the provider for any
+  // future use, but the gate that redirected to /app/select on
+  // first visit is gone — new visitors auto-land on the Ana
+  // Castela default. See `lib/universe/UniverseContext` for the
+  // defaulting logic.
   const router = useRouter();
   const { tracks: catalog } = useTracksCatalog();
   // Brainstorm flags — read here so the flight scheduler below
@@ -223,17 +226,8 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   }, [playerHidden]);
   const currentTrack = catalog[songIdx] ?? null;
 
-  // ── Universe gate — redirect to /app/select if the user hasn't
-  // picked a universe yet. Lives here so EVERY /app/* route is
-  // gated, not just /app (the map). Hydrated check prevents the
-  // first-render bounce before localStorage is read.
-  useEffect(() => {
-    if (!universeHydrated) return;
-    if (!authUser) return;
-    if (!universeId) {
-      router.replace('/app/select');
-    }
-  }, [universeHydrated, authUser, universeId, router]);
+  // (Universe gate retired — see DEFAULT_UNIVERSE_ID in
+  // `lib/universe/UniverseContext` for the auto-select.)
 
   // Online ids — fake Ana/Central are always online (VIPs), real
   // online users come from the live subscription. Stable Set

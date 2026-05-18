@@ -39,11 +39,9 @@ import styles from './layout.module.css';
  * Routes (children) just render their content inside `.mapLayer`
  * — typically a position:fixed panel that overlays the basemap.
  *
- * `/app/select` is the one exception: it's a pre-app gate that
- * doesn't need any of this. The early-return below sends select
- * back as a plain pass-through so the AppShellProvider's chat
- * websocket + globe + persistent UI don't spin up during a 5-
- * second universe pick.
+ * (The /app/select pre-app gate that used to bypass this shell
+ * was retired alongside the universe-picker page; new visitors
+ * auto-land on the Ana Castela default — see UniverseContext.)
  */
 
 const Globe = dynamic(() => import('@/components/app/Globe'), { ssr: false });
@@ -53,9 +51,6 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  if (pathname === '/app/select') return <>{children}</>;
-
   return (
     <AppShellProvider>
       <Shell>{children}</Shell>
