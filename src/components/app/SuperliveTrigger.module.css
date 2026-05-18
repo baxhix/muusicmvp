@@ -1,74 +1,113 @@
 /* ============================================================
- * SUPERLIVE TRIGGER — floating "AO VIVO" pill on /app home
+ * SUPERLIVE TRIGGER — prominent broadcast card on /app home
  *
- * Anchored just below the home header (which is 68px tall at
- * top:12 → bottom edge at y:80). The pill sits at y:96 so
- * there's a clean 16px gap between the two. Centered
- * horizontally so it reads as the marquee element on the
- * surface — a live show happening right now is intentionally
- * loud chrome.
+ * Tall card at the top center of the home view that surfaces
+ * the AO VIVO state plus an "Entrar na live" CTA. Sits ABOVE
+ * the home header (which keeps its own slot at top:12 on the
+ * left) so the Live promotion is the first thing the eye
+ * lands on when the surface opens.
  *
  * Only mounts when the `superlive` brainstorm flag is on
  * (see SuperliveTrigger.tsx).
  * ============================================================ */
 
-.pill {
+.card {
   position: fixed;
-  /* Sits below the 56px home header (which lives at top:12 →
-   * bottom edge at 68) with a 16px breathing gap. */
-  top: 84px;
+  /* Above the home header — `top: 16` puts the card on the
+   * same horizontal axis as the right-rail cluster (top:21)
+   * while staying ABOVE the ArtistBox pill (which sits at
+   * top:12 on the left of the screen). The card is centered
+   * horizontally and narrower than the ArtistBox's right edge
+   * (100px gap from the right edge of viewport) so the two
+   * surfaces never overlap on tablet-class widths. */
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 14px 6px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, calc(100vw - 240px));
+  padding: 10px;
   border: none;
-  border-radius: 999px;
+  border-radius: 18px;
   background:
-    linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(236, 72, 153, 0.95) 100%);
+    linear-gradient(135deg, rgba(239, 68, 68, 0.96) 0%, rgba(236, 72, 153, 0.96) 60%, rgba(168, 85, 247, 0.96) 100%);
   color: #ffffff;
   cursor: pointer;
   font-family: inherit;
-  box-shadow:
-    0 8px 24px -6px rgba(239, 68, 68, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
-  /* The pulse ring lives behind via ::before — give the pill its
-   * own stacking context so the ring sits at z:-1 within it. */
+  text-align: left;
+  /* Pulse ring lives BEHIND via ::before — own stacking context
+   * so z:-1 stays inside the card. */
   isolation: isolate;
+  box-shadow:
+    0 14px 36px -8px rgba(239, 68, 68, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.pill:hover {
+.card:hover {
   transform: translateX(-50%) translateY(-1px);
   box-shadow:
-    0 12px 30px -6px rgba(239, 68, 68, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+    0 18px 40px -8px rgba(239, 68, 68, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.22) inset;
 }
-.pill:active {
-  transform: translateX(-50%) scale(0.97);
+.card:active {
+  transform: translateX(-50%) scale(0.98);
 }
 
-/* Soft outward pulse ring — telegraphs "live, ongoing" without
- * being noisy. Kept behind everything else in the pill so taps
- * land on the button content, not the ring. */
+/* Outward pulse ring — telegraphs "live, ongoing" without
+ * competing with the card's content. Kept behind everything
+ * in the card stacking context. */
 .pulse {
   position: absolute;
   inset: 0;
-  border-radius: 999px;
+  border-radius: 18px;
   background: rgba(239, 68, 68, 0.4);
   z-index: -1;
-  animation: superlive-pill-pulse 1.8s ease-out infinite;
+  animation: superlive-card-pulse 2.2s ease-out infinite;
   pointer-events: none;
 }
-@keyframes superlive-pill-pulse {
-  0%   { opacity: 0.6; transform: scale(1); }
-  100% { opacity: 0;   transform: scale(1.35); }
+@keyframes superlive-card-pulse {
+  0%   { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0;    transform: scale(1.22); }
+}
+
+/* ── Top row — LIVE pill + avatar + identity ──────────── */
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 4px;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  flex-shrink: 0;
+}
+.liveDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: superlive-card-livedot 1.2s ease-in-out infinite;
+}
+@keyframes superlive-card-livedot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
 }
 
 .avatar {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, 0.85);
@@ -76,69 +115,74 @@
   flex-shrink: 0;
 }
 
-.text {
+.identity {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.05;
-  gap: 1px;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
-.live {
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.viewers {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-.liveDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #ffffff;
-  animation: superlive-pill-livedot 1.2s ease-in-out infinite;
-}
-@keyframes superlive-pill-livedot {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.35; }
-}
-
-.name {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: -0.005em;
-}
-
-.viewers {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.005em;
-  font-variant-numeric: tabular-nums;
-  padding: 2px 8px;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 999px;
-  margin-left: 4px;
 }
 
-/* Mobile — pill lives just below the home header which on small
- * phones is at top:12 with the same 68px height. Same y position
- * as desktop; size is already comfortable at the smallest
- * viewport (Pixel-class). */
-@media (max-width: 480px) {
-  .pill {
-    top: 80px;
-    padding: 5px 12px 5px 5px;
-    gap: 8px;
+/* ── CTA row — "Entrar na live" pill button ───────────── */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.005em;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+  transition: background 0.15s ease;
+}
+.card:hover .cta {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 600px) {
+  .card {
+    /* On phones the home header still occupies the left side
+     * at top:12, so the card slips below it instead of trying
+     * to share the same horizontal row. Width clamps so the
+     * surface stays narrow enough to read as a CTA, not a
+     * banner. */
+    top: 78px;
+    width: min(280px, calc(100vw - 32px));
+    border-radius: 16px;
+    padding: 9px;
   }
   .avatar {
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
   }
   .name {
-    font-size: 11px;
+    font-size: 13px;
   }
-  .viewers {
-    font-size: 10.5px;
-    padding: 2px 7px;
+  .cta {
+    padding: 9px 12px;
+    font-size: 13px;
   }
 }

@@ -82,12 +82,27 @@
 /* ── Video stage ─────────────────────────────────────────── */
 
 .videoStage {
+  /* Portrait 9:16 — matches the way fans actually shoot live
+   * streams from their phones. The stage sizes ITSELF off the
+   * 60vh max-height rather than the modal width so it never
+   * dominates the surface vertically; the chat below stays
+   * comfortable on every viewport. */
   position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 11;
+  align-self: center;
+  width: auto;
+  height: clamp(360px, 60vh, 520px);
+  aspect-ratio: 9 / 16;
   background: #000;
   flex-shrink: 0;
   overflow: hidden;
+  margin: 14px auto 0;
+  border-radius: 22px;
+  /* Subtle phone-frame look — a soft inset highlight + drop
+   * shadow that lifts the video off the modal background so
+   * the surface reads as "her phone, her camera". */
+  box-shadow:
+    0 14px 40px -8px rgba(0, 0, 0, 0.85),
+    0 0 0 2px rgba(255, 255, 255, 0.06) inset;
 }
 .video {
   width: 100%;
@@ -431,8 +446,12 @@
   .scrim {
     padding: 0;
   }
+  /* Mobile keeps the portrait phone-style aspect; the height
+   * clamp adapts to small / tall phones so the chat below
+   * still gets at least 40% of the viewport. */
   .videoStage {
-    aspect-ratio: 16 / 10;
+    height: clamp(320px, 55vh, 480px);
+    margin: 10px auto 0;
   }
   .creatorAvatar {
     width: 34px;
