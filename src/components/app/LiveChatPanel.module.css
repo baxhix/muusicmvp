@@ -594,15 +594,23 @@
   .panel {
     width: 100vw;
     right: -100vw;
-    /* `100dvh` (dynamic viewport height) is the visible viewport
-     * with the browser chrome subtracted — the standard `100vh`
-     * on iOS Safari includes the address bar area, which pushed
-     * `.inputArea` (the message composer) BELOW the actual
-     * visible region. Falling back to 100vh first for older
-     * browsers; modern Safari / Chrome / Firefox all honor dvh
-     * and override. */
+    /* Height comes from one of three sources in priority order:
+     *   1. `--chat-visual-h` — written by JS from
+     *      `window.visualViewport.height`. This is the only value
+     *      that ACTUALLY shrinks when the on-screen keyboard
+     *      opens; iOS Safari's layout viewport (which `position:
+     *      fixed` is anchored to) stays at full screen height.
+     *   2. `100dvh` — dynamic viewport height. Excludes browser
+     *      chrome (address bar) but NOT the keyboard.
+     *   3. `100vh` — last-resort fallback for older browsers.
+     *
+     * `--chat-visual-top` mirrors `visualViewport.offsetTop`, so
+     * when iOS Safari slides the URL bar up the panel follows.
+     * Without it the header would clip off the visible area. */
+    top: var(--chat-visual-top, 0px);
     height: 100vh;
     height: 100dvh;
+    height: var(--chat-visual-h, 100dvh);
     border-left: none;
     box-shadow: none;
   }
@@ -611,9 +619,20 @@
   .backBtn { display: inline-flex; }
   .closeBtn { display: none; }
 
+  /* Header pinned to the top of the panel even when the messages
+   * area is scrolled mid-conversation. `sticky` keeps the header
+   * inside the flex flow (so it doesn't double up over a separate
+   * fixed bar) while still locking to the visible top edge.
+   * `z-index: 2` keeps it above bubble-row hover artifacts. */
   .header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     padding: 14px 14px 12px;
     gap: 10px;
+    background: rgba(11, 11, 13, 0.97);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
   .headerAvatar {
     width: 44px;

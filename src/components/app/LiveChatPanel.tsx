@@ -161,6 +161,53 @@ export default function LiveChatPanel({
 
   const isOpen = conversation !== null;
 
+  // ── Visual-viewport tracking (mobile keyboard fix) ──
+  //
+  // On iOS Safari, `position: fixed` elements use the LAYOUT
+  // viewport, not the visual viewport. When the keyboard opens,
+  // the layout viewport stays at full screen height, so our
+  // `height: 100dvh` panel keeps its bottom edge BELOW the
+  // keyboard — the composer is invisible behind it.
+  //
+  // The fix: subscribe to `window.visualViewport` and write the
+  // current visible height into a CSS variable on the panel.
+  // The CSS uses `var(--chat-visual-h, 100dvh)` so older browsers
+  // without VisualViewport (or desktop where it always equals the
+  // window) fall back to the dynamic viewport unit as before.
+  //
+  // Tracking the top offset too (visualViewport.offsetTop) keeps
+  // the panel anchored to the visible region when the URL bar
+  // collapses — otherwise the panel would drift 50-ish pixels up
+  // and clip the header off-screen.
+  const [vv, setVv] = useState<{ h: number | null; top: number }>({
+    h: null,
+    top: 0,
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const update = () => {
+      const v = window.visualViewport!;
+      setVv({ h: v.height, top: v.offsetTop });
+    };
+    update();
+    window.visualViewport.addEventListener('resize', update);
+    window.visualViewport.addEventListener('scroll', update);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('scroll', update);
+    };
+  }, []);
+  // Inline style only carries the height/top when we have a real
+  // visual-viewport reading AND the panel is open — desktop and
+  // the closed state keep the panel as the CSS spec'd it.
+  const panelInlineStyle =
+    vv.h !== null && isOpen
+      ? ({
+          ['--chat-visual-h' as string]: `${vv.h}px`,
+          ['--chat-visual-top' as string]: `${vv.top}px`,
+        } as React.CSSProperties)
+      : undefined;
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
@@ -359,6 +406,7 @@ export default function LiveChatPanel({
   return (
     <div
       className={`${styles.panel} ${isOpen ? styles.panelOpen : ''}`}
+      style={panelInlineStyle}
       role="dialog"
       aria-label={`Chat com ${headerName}`}
     >
