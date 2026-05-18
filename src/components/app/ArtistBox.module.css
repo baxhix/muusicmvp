@@ -710,28 +710,12 @@
    * Notificações + Chat cluster docked at the top-right
    * (2 × 44px icon-only buttons + 12px gap + 14px right + 8
    * buffer). */
+  /* ArtistBox is HIDDEN on mobile — its Fanpoints chip moved
+   * into the MobileHomeChrome info bar (below the gray
+   * divider) per product feedback. Desktop still gets the
+   * full Fanverse card treatment. */
   .box {
-    width: auto;
-    max-width: none;
-    left: 12px;
-    /* Cluster sits at right:12 with 2 × 38px icons + 4px gap =
-     * 80px wide → cluster left edge at right:92. The pill's
-     * right edge stops at 100 for an 8px breathing gap.
-     *
-     * Background + border stripped on mobile per product
-     * feedback — the new MobileHomeChrome wrapper (in
-     * /app/page.tsx) paints a full-width solid black bar
-     * behind both the ArtistBox content and the right-rail
-     * cluster, so the floating elements ride on top with
-     * transparent surfaces of their own. */
-    right: 100px;
-    top: 12px;
-    border-radius: 0;
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: none;
-    box-shadow: none;
+    display: none;
   }
   /* Compact bar — slimmer content per product feedback. Height
    * pinned to 56 (matches the internal MobileRouteHeader after

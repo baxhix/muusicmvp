@@ -39,8 +39,17 @@ function hashFloats(seed: string, count: number): number[] {
 /** ApiOnlineUser → FloatingUser shape with deterministic screen position. */
 function projectToFloating(u: ApiOnlineUser): FloatingUser {
   const [x, y, dur, del] = hashFloats(u.id, 4);
-  // Keep away from screen edges so the badge doesn't clip
-  const left = `${10 + x * 76}%`;
+  // Keep away from screen edges so the badge doesn't clip.
+  //
+  // Horizontal range was 10–86% (x * 76). The right ~18% of the
+  // viewport is occupied by the LiveChatStack dock (3 avatars at
+  // right:14 on mobile, right:18 on desktop) — floating users
+  // landing there would sit exactly behind the message previews
+  // and the chat dock would obscure them on hover. Pulled the
+  // upper bound down to 68% so floating users always have a
+  // visible gap between them and the right-rail dock; lower
+  // bound nudged to 8% for symmetry with the new max.
+  const left = `${8 + x * 60}%`;
   const top = `${12 + y * 64}%`;
   return {
     id: u.id,

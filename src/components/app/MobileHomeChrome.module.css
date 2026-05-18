@@ -42,10 +42,11 @@
   background: rgba(255, 255, 255, 0.10);
 }
 
-/* Info bar — secondary chrome strip. Reserved for whatever
- * "outras informações" the team decides to surface here (now-
- * playing, fan-count, event countdown, etc.). The current
- * copy is a placeholder that demonstrates the slot shape. */
+/* Info bar — secondary chrome strip. Holds the Fanpoints chip
+ * (crown + number) on the left as the primary identity slot,
+ * with secondary live state (online count) on the right.
+ * ArtistBox's compactFanpoints chip moved here on mobile; the
+ * desktop card treatment still lives in ArtistBox.module.css. */
 .infoBar {
   height: 36px;
   display: flex;
@@ -55,16 +56,41 @@
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  pointer-events: auto;
 }
-.infoTextMain {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(245, 245, 247, 0.85);
+
+/* Fanpoints chip — yellow crown + tabular number + "Fanpoints"
+ * label. Matches the previous ArtistBox compactFanpoints look
+ * (yellow icon with soft glow, white number) so users who
+ * remember the chip on the header find it in the same visual
+ * style on the info bar. */
+.fanpointsChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
   letter-spacing: 0.005em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
 }
+.fanpointsChip svg {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.45));
+  flex-shrink: 0;
+}
+.fanpointsValue {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+.fanpointsLabel {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.55);
+  text-transform: uppercase;
+}
+
 .infoTextAux {
   display: inline-flex;
   align-items: center;

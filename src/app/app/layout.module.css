@@ -72,45 +72,59 @@
    * the surface — the 44×44 we tried earlier combined with the
    * 68px header read as "zoomed".
    *
-   * `top: 21` vertically centers a 38px tap target within the
-   * 56px pill band that starts at top:12: midpoint = 12 + 28 =
-   * 40, button center = 21 + 19 = 40. */
+   * `top: 12` vertically centers a 44px tap target inside the
+   * 68px MobileHomeChrome header band (y:0–68): midpoint y:34,
+   * button center = 12 + 22 = 34. */
   .topBar {
-    top: 21px;
+    top: 12px;
     right: 12px;
     transform: none;
     flex-direction: row;
     gap: 4px;
   }
+  /* Right-rail buttons on mobile — ICON ONLY. No border, no
+   * background-circle, no chrome of any kind in any state.
+   * `!important` here because the desktop base rule sets a
+   * `border: 1px solid` that was leaking through `:hover` /
+   * `.shortcutBtnActive` (each has its own selector) when those
+   * states added their own border-color without explicitly
+   * resetting `border-width`. The user has flagged the leftover
+   * circle border multiple rounds — pinning it shut at every
+   * state stops the regression for good. */
   .shortcutBtn {
-    width: 38px;
-    height: 38px;
-    border: none;
-    background: transparent;
+    width: 44px;
+    height: 44px;
+    border: none !important;
+    background: transparent !important;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     color: #f5f5f7;
+    box-shadow: none !important;
   }
   .shortcutBtn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: transparent;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: none !important;
     transform: none;
+    box-shadow: none !important;
   }
   .shortcutBtn:active {
-    background: rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.10) !important;
   }
+  /* Icons grew 20 → 26 per product feedback — they need to
+   * read at a glance even at thumb-distance, and the wider
+   * 44×44 tap target absorbs the larger glyph cleanly. */
   .shortcutBtn svg {
-    width: 20px;
-    height: 20px;
+    width: 26px;
+    height: 26px;
   }
-  /* Active overlay state — color tint stays but no border ring
-   * since the button has no border to color. */
+  /* Active overlay state — color tint reads via the icon and a
+   * faint background wash, NEVER a border ring. */
   .shortcutBtnActive,
   .shortcutBtnActive:hover {
-    background: rgba(168, 85, 247, 0.18);
-    border-color: transparent;
+    background: rgba(168, 85, 247, 0.18) !important;
+    border: none !important;
     color: #ffffff;
-    box-shadow: none;
+    box-shadow: none !important;
   }
   /* Unread pill scaled to track the new 20px icon. */
   .shortcutBtnBadge {
