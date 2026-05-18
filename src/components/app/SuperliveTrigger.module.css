@@ -158,12 +158,13 @@
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 600px) {
   .card {
-    /* On phones the home header still occupies the left side
-     * at top:12, so the pill slips below it on a separate
-     * row. Wide enough to fit all four elements at the
+    /* Mobile home chrome occupies y:0 → 68 (header band) +
+     * 1px divider + y:69 → 105 (info bar) = 105px total.
+     * The live pill slips below that with a 16px gap, at
+     * y:121. Wide enough to fit all four elements at the
      * compressed 12px font sizes; the viewer-count number
      * trims to "k" so the row never wraps. */
-    top: 78px;
+    top: 121px;
     max-width: calc(100vw - 32px);
     padding: 5px 5px 5px 10px;
     gap: 8px;

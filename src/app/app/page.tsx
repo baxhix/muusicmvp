@@ -8,6 +8,7 @@ import FeedPanel from '@/components/app/FeedPanel';
 import Onboarding from '@/components/app/Onboarding';
 import BrainstormPanel from '@/components/app/BrainstormPanel';
 import SuperliveTrigger from '@/components/app/SuperliveTrigger';
+import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 
 import { useAppShell } from '@/lib/app/AppShellContext';
 
@@ -53,6 +54,14 @@ export default function AppPage() {
     <>
       {/* Onboarding overlay — shows on first visit until dismissed. */}
       <Onboarding />
+
+      {/* Mobile-only solid header background + gray divider +
+          info bar below. Sits behind the ArtistBox pill + the
+          right-rail cluster so the floating elements share one
+          continuous surface and the strip beneath the divider
+          holds whatever "outras informações" the team plugs in
+          next. Unmounts on desktop and on every non-home route. */}
+      <MobileHomeChrome />
 
       {/* ArtistBox and LiveChatStack moved to /app/layout.tsx so
           the Fanverse pill AND the 3-latest chat dock stay visible

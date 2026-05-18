@@ -1,0 +1,85 @@
+/* ============================================================
+ * MOBILE HOME CHROME — solid header bg + gray divider + info bar
+ *
+ * Three stacked strips that anchor the top of /app on mobile.
+ * Sits BELOW the floating ArtistBox + right-rail cluster
+ * (z:5 here vs z:15 / z:50 on those elements) so its surface
+ * paints UNDER their content. The ArtistBox and cluster lost
+ * their own backgrounds on mobile (see ArtistBox.module.css /
+ * layout.module.css) and now ride on top of this single shared
+ * background instead.
+ *
+ * Anchored at top:0 full-width so the iOS status bar sits
+ * directly above without a visible gap.
+ * ============================================================ */
+
+.chrome {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Solid black band that backs the ArtistBox + cluster. Height
+ * 68 = 12 top offset + 56 home-header height. */
+.headerBg {
+  height: 68px;
+  background: rgba(0, 0, 0, 0.92);
+  /* Heavy blur on the band itself so any map / globe pixels
+   * peeking from the edges read as part of the surface, not
+   * the basemap. */
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+}
+
+/* 1px gray hairline between the header and the info bar. The
+ * line is the entire visual separation cue — keep it subtle
+ * but visible against the dark surface above and below. */
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+/* Info bar — secondary chrome strip. Reserved for whatever
+ * "outras informações" the team decides to surface here (now-
+ * playing, fan-count, event countdown, etc.). The current
+ * copy is a placeholder that demonstrates the slot shape. */
+.infoBar {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+.infoTextMain {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.85);
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.infoTextAux {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.005em;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.infoDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+}
