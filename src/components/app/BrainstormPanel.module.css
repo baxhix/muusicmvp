@@ -1,11 +1,11 @@
 /* ============================================================
  * BRAINSTORM PANEL — experimental feature toggles
  *
- * Floating lightbulb trigger at the bottom-left corner of /app
- * + a centered toggle sheet that opens on click. Visually a
- * "lab notebook" tone — warm amber accent so the surface
- * reads as DIFFERENT from the Ana / chat / feed chrome (which
- * all live in the pink ↔ lilac family).
+ * Floating lightbulb trigger vertically centered on the LEFT
+ * rail of /app + a centered toggle sheet that opens on click.
+ * Visually a "lab notebook" tone — warm amber accent so the
+ * surface reads as DIFFERENT from the Ana / chat / feed
+ * chrome (which all live in the pink ↔ lilac family).
  *
  * Only mounts on the home route — see BrainstormPanel.tsx's
  * own placement inside `/app/page.tsx`.
@@ -13,11 +13,18 @@
 
 .trigger {
   position: fixed;
-  bottom: 96px;
+  /* Vertically centered on the left rail. `top: 50%` +
+   * translateY(-50%) hangs the trigger off the midline so it
+   * pairs visually with the LiveChatStack dock that sits at the
+   * same vertical position on the right rail — both surfaces
+   * are persistent "labs" affordances and reading them on a
+   * common Y axis makes the home view feel intentional. */
+  top: 50%;
   left: 18px;
+  transform: translateY(-50%);
   /* Above the BottomNav (z:70) but below the chat panel /
    * modals so opening a thread / Playlist doesn't get blocked
-   * by a stray lightbulb in the bottom-left corner. */
+   * by a stray lightbulb on the left rail. */
   z-index: 60;
   width: 40px;
   height: 40px;
@@ -43,10 +50,15 @@
   border-color: rgba(251, 191, 36, 0.55);
   color: #fde68a;
   background: rgba(251, 191, 36, 0.10);
-  transform: translateY(-1px);
+  /* Preserve the vertical-center translation while adding a
+   * small upward nudge on hover. Without the `-50%` half of the
+   * compound transform, the trigger would slide DOWN to its
+   * natural top:50% anchor (which is the screen midline at the
+   * element's TOP edge, not its center). */
+  transform: translateY(calc(-50% - 1px));
 }
 .trigger:active {
-  transform: translateY(0) scale(0.96);
+  transform: translateY(-50%) scale(0.96);
 }
 .trigger svg {
   width: 18px;
@@ -288,12 +300,11 @@
 }
 
 @media (max-width: 600px) {
-  /* On mobile the trigger floats just above the BottomNav.
-   * Same y position as desktop — the navbar isn't taller on
-   * mobile, so the 96px lift clears it cleanly. */
+  /* Trigger stays vertically centered on the left rail at
+   * every viewport — only the horizontal offset tightens on
+   * mobile so the bulb hugs closer to the screen edge. */
   .trigger {
-    bottom: 92px;
-    left: 14px;
+    left: 12px;
   }
   .panel {
     padding: 22px 18px 18px;
