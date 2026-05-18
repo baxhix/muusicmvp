@@ -446,14 +446,26 @@ export default function BottomNav() {
                     router.push('/app/perfil');
                   }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M19.4 13.5a1.7 1.7 0 0 1 .3 1.8l-.4 1a1.7 1.7 0 0 1-2.2.9l-.7-.3a1.7 1.7 0 0 0-1.9.4l-.4.4a1.7 1.7 0 0 0-.4 1.9l.3.7a1.7 1.7 0 0 1-.9 2.2l-1 .4a1.7 1.7 0 0 1-1.8-.3l-.6-.5a1.7 1.7 0 0 0-2 0l-.6.5a1.7 1.7 0 0 1-1.8.3l-1-.4a1.7 1.7 0 0 1-.9-2.2l.3-.7a1.7 1.7 0 0 0-.4-1.9l-.4-.4a1.7 1.7 0 0 0-1.9-.4l-.7.3a1.7 1.7 0 0 1-2.2-.9l-.4-1a1.7 1.7 0 0 1 .3-1.8l.5-.6a1.7 1.7 0 0 0 0-2l-.5-.6A1.7 1.7 0 0 1 2.4 8.7l.4-1a1.7 1.7 0 0 1 2.2-.9l.7.3a1.7 1.7 0 0 0 1.9-.4l.4-.4a1.7 1.7 0 0 0 .4-1.9l-.3-.7a1.7 1.7 0 0 1 .9-2.2l1-.4a1.7 1.7 0 0 1 1.8.3l.6.5a1.7 1.7 0 0 0 2 0l.6-.5a1.7 1.7 0 0 1 1.8-.3l1 .4a1.7 1.7 0 0 1 .9 2.2l-.3.7a1.7 1.7 0 0 0 .4 1.9l.4.4a1.7 1.7 0 0 0 1.9.4l.7-.3a1.7 1.7 0 0 1 2.2.9l.4 1a1.7 1.7 0 0 1-.3 1.8l-.5.6a1.7 1.7 0 0 0 0 2l.5.6z"
-                      stroke="currentColor"
-                      strokeWidth="1.2"
-                      strokeLinejoin="round"
-                    />
+                  {/* Simple 8-prong gear: 4 straight strokes from
+                    * center radiating out (rotated 0°/45°/90°/135°)
+                    * + a central circle. The previous gear was a
+                    * single ~200-segment Bézier path approximating
+                    * a cog outline, which iOS Safari sometimes
+                    * rasterized as a tangled-looking blob (the
+                    * "broken" appearance the user reported). This
+                    * version is 8 line segments + 1 circle — there's
+                    * nothing left to render wrong. */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
                   </svg>
                   Configurações
                 </button>

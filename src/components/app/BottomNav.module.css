@@ -396,11 +396,24 @@
 
 /* ── Mobile "more" popover (replaces Perfil slot) ──
  *
- * The wrapper just hosts the trigger + the floating sheet; it
- * keeps the trigger participating in the nav's `space-around`
- * flex distribution while letting the menu escape the pill via
- * absolute positioning. The sheet opens UPWARD because there's
- * no room below the nav. */
+ * The wrapper hosts the trigger + the floating sheet. The trigger
+ * lives in the navbar's grid; the sheet escapes via absolute
+ * positioning. The sheet opens UPWARD (no room below the nav)
+ * and is intentionally sized + skinned to match the navbar pill
+ * exactly — same width (280px), same gradient, blur, border, so
+ * the menu reads as an extension of the navbar surface rather
+ * than a foreign popover floating above it.
+ *
+ * Alignment math:
+ *   - Navbar inner is 280px wide, centered horizontally.
+ *   - The hamburger sits in column 5 of a 5-col grid inside the
+ *     pill, with `padding: 8px 10px` on `.inner`.
+ *   - `.moreWrap` is the hamburger's grid cell. Its right edge
+ *     is at (column 5's right edge) = inner-right - 10px.
+ *   - To make the menu's right edge land on the inner's outer
+ *     right edge, offset the menu by `right: -10px` to undo the
+ *     padding. Width 280 extends leftward to mirror the inner.
+ */
 .moreWrap {
   position: relative;
   display: inline-flex;
@@ -410,50 +423,79 @@
 .moreMenu {
   position: absolute;
   bottom: calc(100% + 12px);
-  right: 0;
-  min-width: 200px;
-  padding: 6px;
-  background: linear-gradient(180deg, rgba(18, 18, 22, 0.98), rgba(10, 10, 12, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  /* See alignment math in the .moreMenu comment block above. */
+  right: -10px;
+  width: 280px;
+  /* Match the navbar inner's material exactly so the menu feels
+   * like the same surface stretched vertically: identical dark
+   * gradient, identical blur/saturate, identical hairline border. */
+  background: linear-gradient(160deg,
+    rgba(11, 11, 13, 0.78) 0%,
+    rgba(5, 5, 7, 0.74) 50%,
+    rgba(2, 2, 3, 0.76) 100%);
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  /* Softer radius than the pill (999px) since this is a vertical
+   * stack — full pill would only round the top + bottom and look
+   * out of proportion. 24px reads as "same family, different
+   * orientation" with the pill. */
+  border-radius: 24px;
+  padding: 10px;
+  /* Native flex gap separates the items by a fixed 4px in addition
+   * to each row's own vertical padding — gives noticeable breathing
+   * room between rows compared to the previous tightly-stacked
+   * version. */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   z-index: 80;
-  animation: moreMenuIn 0.14s ease-out;
+  animation: moreMenuIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes moreMenuIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);     }
 }
 .moreItem {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   width: 100%;
-  padding: 10px 12px;
+  /* Roomier rows: 14px vertical and 16px horizontal puts ~24px of
+   * visible space between each item's text baselines (counting the
+   * 4px gap above) — the prior 10/12 was cramped against the
+   * larger icons + new menu surface. */
+  padding: 14px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 14px;
   background: transparent;
-  color: rgba(245, 245, 247, 0.95);
+  color: rgba(245, 245, 247, 0.92);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 500;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.008em;
   text-align: left;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
 }
 .moreItem:hover,
 .moreItem:active {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
 }
+.moreItem:active {
+  transform: scale(0.99);
+}
 .moreItem svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  color: rgba(245, 245, 247, 0.75);
+  color: rgba(245, 245, 247, 0.78);
+}
+.moreItem:hover svg,
+.moreItem:active svg {
+  color: #ffffff;
 }
 
 /* Unread-count pill next to the "Conversas" item — sits on the
