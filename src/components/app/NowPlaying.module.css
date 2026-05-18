@@ -497,9 +497,19 @@
 .ctrlPlay:hover { background: #e0e0e2; }
 .ctrlPlay svg { width: 17px; height: 17px; }
 
-/* ── Responsive ── */
+/* ── Responsive ──
+ *
+ * IMPORTANT: every mobile rule that touches positioning is scoped
+ * with `:not(.playerEmbed)` so the EMBEDDED instance (rendered
+ * inline inside ProfilePanel via `<NowPlaying embed />`) keeps its
+ * `position: relative; bottom:auto; left:auto;` from `.playerEmbed`.
+ * Without this guard, the mobile `.player { bottom: 156px; left: 8px }`
+ * rules cascade onto the embedded player too — and since `position`
+ * stays `relative` (set by `.playerEmbed`), those offsets shift the
+ * embed UP by 156px and across by 8px, slamming it into the avatar
+ * above it in the perfil panel. */
 @media (max-width: 768px) {
-  .player {
+  .player:not(.playerEmbed) {
     /* Sit above the "ouvindo juntos" row (which lands at
      * bottom: 100px + ~32px height = 132 from bottom), with a
      * comfortable 24px gap. The previous 96px crowded the row
@@ -526,7 +536,7 @@
    * skip-prev / skip-next get hidden so just cover + title +
    * play/pause survive — the affordances the user actually
    * wants at thumb-reach distance. */
-  .player {
+  .player:not(.playerEmbed) {
     bottom: 156px;
     left: 8px;
     right: 8px;
@@ -537,7 +547,7 @@
     gap: 10px;
     transform: none;
   }
-  .player:hover { transform: none; }
+  .player:not(.playerEmbed):hover { transform: none; }
   .playerHorizontal,
   .playerExpanded {
     width: auto;

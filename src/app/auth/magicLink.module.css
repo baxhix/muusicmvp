@@ -16,11 +16,13 @@
   max-width: 420px;
   padding: 32px 28px;
   background: linear-gradient(180deg, rgba(15, 15, 18, 0.96), rgba(8, 8, 11, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  /* No outer border — product wanted the card to feel like it
+   * floats on the gradient backdrop, not framed. Inner highlight
+   * inset from the box-shadow was also dropped so the edge is
+   * fully soft. The drop-shadow alone carries the depth. */
+  border: none;
   border-radius: 16px;
-  box-shadow:
-    0 24px 60px -10px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }

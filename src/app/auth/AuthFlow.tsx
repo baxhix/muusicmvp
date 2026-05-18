@@ -60,7 +60,9 @@ export default function AuthFlow() {
 
             <h1 className={styles.title}>Entrar no Fanverse</h1>
             <p className={styles.subtitle}>
-              Digita seu e-mail. A gente te manda um link mágico — sem senha.
+              Digita seu e-mail.
+              <br />
+              A gente te manda um link mágico — sem senha.
             </p>
 
             <form onSubmit={onSubmit} className={styles.form} noValidate>
