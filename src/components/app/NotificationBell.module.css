@@ -117,6 +117,25 @@
   pointer-events: auto;
 }
 
+/* Scrim — full-viewport dim layer rendered behind the panel
+ * in `hideTrigger` (mobile / right-rail) mode. Sits below the
+ * panel (z:60) but above the home chrome (z:5) and right-rail
+ * cluster (z:50), so the list reads against a clean dark
+ * backdrop and tapping outside the panel closes it. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: notif-scrim-in 160ms ease both;
+}
+@keyframes notif-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* Triggerless-mode panel positioning.
  *
  * Aligned with SuperfansPanel + PlaylistModal so opening any of

@@ -260,6 +260,20 @@ export default function NotificationBell({
         </button>
       )}
 
+      {/* Scrim — only rendered in `hideTrigger` mode (i.e. the
+       *  mobile / right-rail entry point). Darkens the rest of
+       *  the surface so the notifications list reads against a
+       *  clean backdrop instead of the busy basemap. Tapping
+       *  the scrim closes the panel — same gesture every other
+       *  modal in /app uses. */}
+      {open && hideTrigger && (
+        <div
+          className={styles.scrim}
+          onClick={() => setOpen(false)}
+          role="presentation"
+          aria-hidden="true"
+        />
+      )}
       {open && (
         <div
           className={`${styles.panel} ${hideTrigger ? styles.panelFixed : ''}`}

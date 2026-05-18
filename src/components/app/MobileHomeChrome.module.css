@@ -35,20 +35,19 @@
 }
 
 /* Ana Castela logo — centered in the header band. Source PNG
- * is 8000×4500 (16:9-ish). Height bumped 32→42 (+30% per
- * product feedback); native aspect ratio yields ~75px width,
- * which still clears the right-rail cluster (left edge ~104px
- * from the right) and the (hidden) ArtistBox slot on the left
- * at every viewport width we support. `top: 13` keeps the
- * logo symmetric within the 68px band: (68-42)/2 = 13.
- * `pointer-events: none` keeps the logo from eating taps that
- * should reach the map underneath. */
+ * is 8000×4500 (16:9-ish). Height bumped 42→50 (+20% per
+ * product feedback, cumulative ~+56% from the original 32px);
+ * native aspect ratio yields ~89px width, which still clears
+ * the right-rail cluster (left edge ~104px from the right) and
+ * the hidden ArtistBox slot on the left at every viewport
+ * width we support. `top: 9` keeps the logo symmetric within
+ * the 68px band: (68-50)/2 = 9. */
 .logo {
   position: absolute;
-  top: 13px;
+  top: 9px;
   left: 50%;
   transform: translateX(-50%);
-  height: 42px;
+  height: 50px;
   width: auto;
   /* Drop shadow lifts the logo subtly off the solid black band
    * so the curves keep edge contrast even when the user is
@@ -60,12 +59,12 @@
 
 /* On very narrow phones (< 360px) drop back to a smaller logo
  * so it never collides with the cluster on the right or the
- * device-edge curvature on the left. `top: 16` keeps the 36px
- * logo vertically centered in the 68px band. */
+ * device-edge curvature on the left. `top: 12` keeps the
+ * 44px logo vertically centered in the 68px band. */
 @media (max-width: 360px) {
   .logo {
-    top: 16px;
-    height: 36px;
+    top: 12px;
+    height: 44px;
   }
 }
 
@@ -113,17 +112,24 @@
   flex-shrink: 0;
 }
 .fanpointsValue {
-  font-size: 14px;
+  /* Trimmed 14 → 12 per product feedback so the chip reads as
+   * a quiet status line, not a headline. The crown still
+   * carries the visual weight on the left. */
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
 }
 .fanpointsLabel {
-  font-size: 11.5px;
+  /* "fanpoints" in lowercase per product feedback. Was uppercase
+   * "FANPOINTS" — the all-caps treatment was reading louder
+   * than the number itself. Slightly smaller font keeps the
+   * label visually subordinate to the value. */
+  font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: rgba(245, 245, 247, 0.55);
-  text-transform: uppercase;
+  text-transform: lowercase;
 }
 
 .infoTextAux {

@@ -110,12 +110,14 @@
   .shortcutBtn:active {
     background: rgba(255, 255, 255, 0.10) !important;
   }
-  /* Icons grew 20 → 26 per product feedback — they need to
-   * read at a glance even at thumb-distance, and the wider
-   * 44×44 tap target absorbs the larger glyph cleanly. */
+  /* Icons grew 26 → 32 per product feedback so the Notif and
+   * Send glyphs read confidently at thumb-distance. 32px
+   * inside a 44×44 tap target leaves a 6px halo around each
+   * glyph — enough breathing room without making the icon
+   * dominate the tap target visually. */
   .shortcutBtn svg {
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
   }
   /* Active overlay state — color tint reads via the icon and a
    * faint background wash, NEVER a border ring. */
