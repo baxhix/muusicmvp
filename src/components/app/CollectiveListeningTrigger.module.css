@@ -13,14 +13,13 @@
 .pill {
   position: fixed;
   /* Desktop — anchored next to the Superchat trigger on the
-   * top-right (Superchat lives at top:42 right:104 via
-   * `.superchatTriggerSlot`). Audição pill's right edge stops
-   * at `right: 160` so there's a comfortable 56px gap between
-   * its right edge and Superchat's left edge regardless of
-   * Audição's intrinsic width. Mobile keeps the centered
-   * layout (see the @media block below). */
+   * top-right. Superchat's button is ~190px wide (icon + "Entre
+   * no Superchat!" label + padding) and lives at right:104, so
+   * its LEFT edge sits at right:294. `right: 320` puts the
+   * Audição pill's right edge 26px to the left of Superchat's
+   * left edge — comfortable visual breathing without overlap. */
   top: 42px;
-  right: 160px;
+  right: 320px;
   z-index: 60;
   display: inline-flex;
   align-items: center;
@@ -86,6 +85,20 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
+
+/* Narrow desktops / large tablets (769–1024px). Both
+ * Superchat and the Audição pill are visible (the right-rail
+ * cluster doesn't unmount until <769) but there's no longer
+ * enough horizontal room to fit them on the same row — the
+ * Audição pill stacks directly BELOW Superchat instead, sharing
+ * its right anchor. */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .pill {
+    top: 88px;
+    right: 104px;
+  }
+}
+
 @media (max-width: 600px) {
   /* Mobile home — Superchat slot is hidden, so the pill goes
    * back to being centered horizontally below the Superlive

@@ -226,9 +226,10 @@
   margin-top: 4px;
   padding: 4px 10px;
   border-radius: 999px;
-  /* Fire-toned viewer chip — amber border + faint orange wash. */
+  /* Fire-toned viewer chip — soft orange tint, no border per
+   * product feedback. The fill alone carries the cue. */
   background: rgba(249, 115, 22, 0.14);
-  border: 1px solid rgba(249, 115, 22, 0.40);
+  border: none;
   color: rgba(245, 245, 247, 0.85);
   font-size: 11px;
   font-weight: 600;
@@ -243,7 +244,9 @@
   margin-top: 12px;
   padding: 10px 14px 12px;
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(249, 115, 22, 0.18);
+  /* Border dropped per product feedback — the dark fill alone
+   * separates the player row from the warm stage glow above. */
+  border: none;
   border-radius: 14px;
   display: flex;
   flex-direction: column;
