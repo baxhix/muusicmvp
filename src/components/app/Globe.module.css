@@ -635,6 +635,69 @@
 }
 
 /* ============================================================
+ * MOBILE PERFORMANCE OVERRIDES
+ *
+ * Aggressive trims for phones — the previous configuration was
+ * driving measurable thermal load on iOS / Android during normal
+ * use, especially with 15+ live-user markers visible. Each fix
+ * below targets a specific hot path the profiler highlighted.
+ * ============================================================ */
+@media (max-width: 768px) {
+  /* backdrop-filter is the heaviest CSS property the markers
+   * carry — every blur(18px) pass forces a GPU framebuffer
+   * read + Gaussian blur + composite per marker per frame.
+   * With ~20 markers visible at city zoom, the compound cost
+   * was dominant in GPU thermal contribution. Drop the blur,
+   * bump background opacity 0.88 → 0.92 to compensate for the
+   * slightly less-frosted look. */
+  .userBadge,
+  .liveUserBadge {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(0, 0, 0, 0.92) !important;
+  }
+  /* The 80+ simultaneous audio-bar `scaleY` animations (~20
+   * markers × 4 bars) were tiny in pixel terms — 2.5px wide,
+   * barely perceptible on a phone screen at marker scale —
+   * but each animation owns its own compositor layer running
+   * 60Hz. Freeze them at a fixed equalizer-pose height so the
+   * "music is playing" cue stays visible without the constant
+   * GPU work. Same trim applied to compact-mode equalizer
+   * chip. */
+  .audioBars > span,
+  .compactBar {
+    animation: none !important;
+    transform: scaleY(0.7);
+    opacity: 0.85;
+  }
+  /* The Você marker's halo runs an infinite 2.2s pulse that
+   * scales a 16px circle to 5× (~80px area paint per frame).
+   * The ciano avatar ring already marks the pin as the user's
+   * own; drop the halo on mobile. */
+  .userLocationPulse {
+    animation: none;
+    opacity: 0;
+  }
+  /* Cluster ring pulse is decorative — stop on mobile. */
+  .clusterRing {
+    animation: none;
+    opacity: 0;
+  }
+  /* Ana check-in pin's pulsing rings + flight halo also run
+   * forever even when the camera is parked far away. The pin's
+   * identity is already carried by its avatar + color; pause
+   * the decorative pulse animations on mobile. */
+  .anaPulse,
+  .anaPulseB {
+    animation: none !important;
+    opacity: 0;
+  }
+  .anaFlightWrap::before {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
    LIVE PRESENCE — outros usuários online com localização.
    Mesmo modelo visual do FloatingUsers e do badge "Você",
    mas com borda neutra (branca translúcida) — o "Você" é ciano.

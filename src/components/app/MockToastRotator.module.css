@@ -44,20 +44,32 @@
 .toast {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 14px 8px 8px;
+  gap: 12px;
+  padding: 10px 18px 10px 10px;
   background: linear-gradient(160deg,
     rgba(6, 6, 14, 0.96) 0%,
     rgba(4, 4, 10, 0.96) 100%);
   backdrop-filter: blur(28px) brightness(0.85) saturate(1.4);
   -webkit-backdrop-filter: blur(28px) brightness(0.85) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  /* Pill stays soft-rounded but not full 999px because the
+   * notification now reliably renders TWO lines of text and a
+   * fully-round pill on a taller surface reads as awkward. */
+  border-radius: 22px;
   box-shadow:
     0 12px 32px -8px rgba(0, 0, 0, 0.7),
     0 0 18px -4px rgba(61, 219, 116, 0.18);
   pointer-events: auto;
-  max-width: min(420px, calc(100vw - 32px));
+  /* Wider envelope (was 420 → now 520) so the second line of
+   * text fits comfortably without truncation across all five
+   * notification types. Still clamped to the viewport minus 32
+   * gutter so mobile keeps a comfortable margin. */
+  width: min(520px, calc(100vw - 32px));
+  /* Two-line minimum so every notification (regardless of body
+   * length) renders with the same visual height. The .info
+   * column inside dictates the actual lines; this min-height
+   * just locks the chip's external footprint. */
+  min-height: 56px;
 }
 
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -77,11 +89,15 @@
   flex-shrink: 0;
 }
 
-/* Stacked avatars — used by listening_together to convey "many
- * people without naming any single one". Three 24px avatars
- * overlap by 10px each so the stack reads as a tight cluster.
- * Total footprint ≈ 48px wide, matches the single 36px avatar
- * + a little extra for visual weight. */
+/* Stacked avatars — used by listening_together. Five 30px
+ * avatars overlap by 14px each so the stack reads as a tight
+ * cluster of "many people". Each avatar slides+fades in one
+ * after the other with a staggered delay (the cascade animation
+ * the previous ListeningTogether had) so the row feels alive
+ * as it lands.
+ *
+ * Total footprint ≈ 30 + 4*16 = 94px wide. Sized large enough
+ * to feel like a small group portrait rather than a tiny chip. */
 .avatarStack {
   display: inline-flex;
   align-items: center;
@@ -89,15 +105,37 @@
   padding-left: 4px;
 }
 .avatarStackItem {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid rgba(20, 20, 24, 0.95);
-  margin-left: -10px;
+  border: 2px solid rgba(20, 20, 24, 0.96);
+  margin-left: -14px;
   background: #0b0b0d;
+  /* Cascade-in animation per item. Each subsequent avatar's
+   * delay is set via `--avatar-i` (an inline custom property
+   * fed from React) so the reveal feels staggered like the
+   * previous ListeningTogether cascade. */
+  animation: avatarCascadeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--avatar-i, 0) * 140ms);
+  /* Promote each avatar to its own compositor layer so the
+   * cascade animation runs on the GPU compositor without
+   * triggering paint on the rest of the chip. */
+  transform: translateZ(0);
 }
 .avatarStackItem:first-child { margin-left: 0; }
+
+@keyframes avatarCascadeIn {
+  0%   { opacity: 0; transform: translate3d(-10px, 0, 0) scale(0.6); }
+  60%  { opacity: 1; transform: translate3d(0, 0, 0)      scale(1.06); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0)      scale(1);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatarStackItem {
+    animation: none;
+  }
+}
 
 /* Glyph slot — used by top_track and top_20. Same outer
  * dimensions as the avatar so the row aligns regardless of
@@ -121,13 +159,18 @@
 .info {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
+  /* `flex: 1` lets the info column claim ALL the remaining
+   * horizontal space inside the wider 520px chip so longer text
+   * can wrap to two lines without overflowing into the right
+   * padding. */
+  flex: 1;
 }
 
 .text {
-  font-size: 12px;
-  color: rgba(245, 245, 247, 0.65);
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.7);
   line-height: 1.3;
 }
 .strong {
@@ -136,8 +179,8 @@
 }
 
 .track {
-  font-size: 11.5px;
-  color: rgba(245, 245, 247, 0.55);
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.58);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -145,10 +188,19 @@
 }
 
 .trackLabel {
+  /* Two-line wrap with clean truncation after the second line.
+   * Previously was nowrap+ellipsis which hard-clipped the
+   * second line to a single line — per product feedback every
+   * notification should reliably render with two lines of
+   * content, not be capped at one. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 320px;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .waveEmoji {

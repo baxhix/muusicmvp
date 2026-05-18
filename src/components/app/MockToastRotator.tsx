@@ -133,29 +133,34 @@ export default function MockToastRotator() {
 
 function ToastBody({ toast }: { toast: MockToast }) {
   switch (toast.kind) {
-    case 'listening_together':
+    case 'listening_together': {
+      // Cascade reveal: each subsequent avatar staggers in by
+      // 140ms (driven by `--avatar-i` in CSS) so the stack lands
+      // one-by-one — the same "users surgindo um por cima do
+      // outro" animation the previous ListeningTogether had.
+      // Sliced to 5 avatars from the mock pool; same pool the
+      // single-avatar notifications use so the visual reads as a
+      // coherent system.
+      const cascadeAvatars = [
+        MOCK_USERS[0],
+        MOCK_USERS[2],
+        MOCK_USERS[4],
+        MOCK_USERS[1],
+        MOCK_USERS[3],
+      ];
       return (
         <>
-          {/* 3 stacked mini-avatars convey "many people" without
-            * needing a real avatar source. Same image set the
-            * other notifications use so the visual reads as a
-            * coherent system. */}
           <div className={styles.avatarStack} aria-hidden="true">
-            <img
-              src={MOCK_USERS[0].avatar}
-              alt=""
-              className={styles.avatarStackItem}
-            />
-            <img
-              src={MOCK_USERS[2].avatar}
-              alt=""
-              className={styles.avatarStackItem}
-            />
-            <img
-              src={MOCK_USERS[4].avatar}
-              alt=""
-              className={styles.avatarStackItem}
-            />
+            {cascadeAvatars.map((u, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={u.name}
+                src={u.avatar}
+                alt=""
+                className={styles.avatarStackItem}
+                style={{ ['--avatar-i' as string]: i } as React.CSSProperties}
+              />
+            ))}
           </div>
           <div className={styles.info}>
             <span className={styles.text}>
@@ -171,11 +176,14 @@ function ToastBody({ toast }: { toast: MockToast }) {
                 <span />
                 <span />
               </span>
-              <span className={styles.trackLabel}>ao mesmo tempo, agora</span>
+              <span className={styles.trackLabel}>
+                A mesma música está tocando agora pelo mundo
+              </span>
             </span>
           </div>
         </>
       );
+    }
 
     case 'message_sent':
       return (

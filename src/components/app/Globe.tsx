@@ -31,6 +31,14 @@ export default function Globe() {
     const initialBearing = persisted?.bearing ?? 0;
     const initialPitch = persisted?.pitch ?? 0;
 
+    // Mobile viewport detection — used downstream to gate the
+    // heavier Mapbox options and ambient effects that drove
+    // measurable thermal load on phones. Conservative bound:
+    // anything at or below 768px gets the trimmed config.
+    const isMobileViewport =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 768px)').matches;
+
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
@@ -44,6 +52,22 @@ export default function Globe() {
       minZoom: 1.5,
       interactive: true,
       attributionControl: false,
+      // ── Mobile-tuned perf knobs ──
+      // `fadeDuration: 0` on mobile skips the 300ms cross-fade
+      // every tile + label transition triggers. With globe
+      // projection that fade compounds across many simultaneous
+      // tile updates during a pinch-zoom; the GPU work was
+      // measurable in the thermal profile. Desktop keeps the
+      // default 300ms because the fade feels nicer there.
+      fadeDuration: isMobileViewport ? 0 : 300,
+      // `maxTileCacheSize` capped on mobile so the tile cache
+      // doesn't balloon under memory pressure on phones with
+      // limited RAM. Desktop gets the Mapbox default (auto).
+      maxTileCacheSize: isMobileViewport ? 24 : undefined,
+      // `antialias: false` is the Mapbox default but stating it
+      // explicit makes the perf intent obvious for future
+      // maintainers reading this config block.
+      antialias: false,
     });
 
     // Persist on every settle. `moveend` fires after pan/zoom/
@@ -510,10 +534,18 @@ export default function Globe() {
       rafId = requestAnimationFrame(rotate);
     };
 
-    /** Marca atividade do usuário: desliga rotação e re-arma timer de 6s. */
+    /** Marca atividade do usuário: desliga rotação e re-arma timer de 6s.
+     *
+     *  On mobile we skip the re-arm entirely. The ambient
+     *  rotation is a desktop-only flourish — running a 60Hz
+     *  RAF that updates the camera every frame on a phone
+     *  drove continuous CPU + GPU work for an effect the
+     *  small viewport doesn't really showcase. No timer
+     *  scheduled = no rotation = idle map stays idle. */
     const handleActivity = () => {
       rotationEnabled = false;
       if (inactivityTimer) clearTimeout(inactivityTimer);
+      if (isMobileViewport) return;
       inactivityTimer = setTimeout(() => {
         rotationEnabled = true;
         inactivityTimer = null;
@@ -787,7 +819,20 @@ export default function Globe() {
     // `move` fires for pan, zoom, AND rotate — superset of `zoom`,
     // so this single listener covers every camera change that would
     // shift marker screen positions.
-    map.on('move', scheduleCollisionRefresh);
+    //
+    // On mobile we hook `moveend` only. Running the O(N²) collision
+    // check at 60Hz during a touch pan was a measurable thermal
+    // contributor on phones; deferring it until the gesture ends
+    // brings the work down to one pass per gesture, at the cost of
+    // a very brief visual lag where a marker may stay expanded for
+    // a frame longer than ideal mid-pan. Desktop keeps the live
+    // update because mouse-driven moves are short bursts that
+    // benefit from immediate re-layout.
+    if (isMobileViewport) {
+      map.on('moveend', scheduleCollisionRefresh);
+    } else {
+      map.on('move', scheduleCollisionRefresh);
+    }
 
     /**
      * Measure the song-row's inner text vs its container width. When
