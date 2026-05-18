@@ -237,51 +237,149 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Simulated player ───────────────────────────────────── */
+/* ── Simulated player ───────────────────────────────────────
+ *
+ * Mirrors the home NowPlaying mini-bar look — circular album
+ * art with a wave-bar overlay + track title + artist + circular
+ * play button. Adds a progress bar with time labels below the
+ * row (the home mini bar doesn't carry one; spec asked to keep
+ * it here because the audição has a defined start/end). Fire
+ * palette is reserved for the progress fill so the play button
+ * and identity row keep a quieter, more familiar look.
+ */
 .player {
   width: 100%;
   max-width: 320px;
   margin-top: 12px;
   padding: 10px 14px 12px;
   background: rgba(0, 0, 0, 0.35);
-  /* Border dropped per product feedback — the dark fill alone
-   * separates the player row from the warm stage glow above. */
   border: none;
   border-radius: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.playerHead {
+
+.playerMain {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.playerTrackNum {
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: rgba(249, 115, 22, 0.95);
-  padding: 2px 6px;
-  background: rgba(249, 115, 22, 0.12);
-  border-radius: 4px;
+
+/* Album art — circular, with the wave-bar overlay sitting on
+ * top while the track is "playing". 38px keeps it visually
+ * peer-level with the home mini-bar's cover. */
+.playerArt {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.playerArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Wave overlay — 4 animated bars on top of the art, exactly
+ * like the home NowPlaying mini-bar. Reusing the same heights
+ * + delays + 0.55s alternating timing so the two players feel
+ * like the same affordance. The dim black wash behind it lifts
+ * the bars off the cover regardless of art color. */
+.playerWave {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.playerWave span {
+  width: 2.5px;
+  border-radius: 2px;
+  background: #ffffff;
+  transform-origin: center;
+  animation: collective-player-wave 0.55s ease-in-out infinite alternate;
+}
+.playerWave span:nth-child(1) { height: 6px;  animation-delay: 0s;    }
+.playerWave span:nth-child(2) { height: 12px; animation-delay: 0.12s; }
+.playerWave span:nth-child(3) { height: 9px;  animation-delay: 0.24s; }
+.playerWave span:nth-child(4) { height: 14px; animation-delay: 0.06s; }
+@keyframes collective-player-wave {
+  from { transform: scaleY(0.6); }
+  to   { transform: scaleY(1);   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playerWave span { animation: none; opacity: 0.85; }
+}
+
+/* Title + artist column — matches the home mini-bar info
+ * stack. Title 12px/700, artist 12px regular at low alpha. */
+.playerInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
 }
 .playerTrackName {
-  flex: 1;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.005em;
-  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.playerTime {
-  font-size: 11px;
+.playerArtist {
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
-  letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* Play / pause circle — same 30px footprint + grey wash bg as
+ * the home `.miniPlay`. Stays neutral so it doesn't fight the
+ * fire-colored progress bar below. */
+.playerPlay {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.playerPlay:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.06);
+}
+.playerPlay:active {
+  transform: scale(0.94);
+}
+.playerPlay svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Progress bar (the extra the home mini-bar doesn't have).
+ * Fire gradient on the fill so the audição's identity carries
+ * through, plus a soft pulse so the chip stays alive without
+ * needing JS state to advance the playhead. */
 .playerProgress {
   height: 4px;
   border-radius: 2px;
@@ -295,10 +393,6 @@
   top: 0;
   bottom: 0;
   width: 38%;
-  /* Fire gradient on the fill — amber → orange → red so the
-   * bar reads as a flame even at this small size. Subtle pulse
-   * animation makes the chip feel alive without needing JS
-   * state to advance the playhead. */
   background: linear-gradient(
     90deg,
     #fbbf24 0%,
@@ -309,8 +403,20 @@
   animation: collective-player-pulse 2.2s ease-in-out infinite;
 }
 @keyframes collective-player-pulse {
-  0%, 100% { opacity: 1;    box-shadow: 0 0 8px rgba(249, 115, 22, 0.55); }
+  0%, 100% { opacity: 1;    box-shadow: 0 0 8px  rgba(249, 115, 22, 0.55); }
   50%      { opacity: 0.85; box-shadow: 0 0 14px rgba(249, 115, 22, 0.75); }
+}
+
+/* Time labels under the progress bar — small monospace
+ * counters at the row edges. */
+.playerTimes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: rgba(245, 245, 247, 0.55);
 }
 
 /* ── Chat stream ─────────────────────────────────────────── */

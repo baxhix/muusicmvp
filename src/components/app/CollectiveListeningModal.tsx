@@ -225,20 +225,54 @@ export default function CollectiveListeningModal({ open, onClose }: Props) {
           </div>
 
           {/* ── Simulated player row ─────────────────────
-           * Shows the track Ana is currently spinning, a
-           * progress bar that animates from 0→100 over the
-           * track duration (CSS-only, no JS sync needed),
-           * and the current/total times. The track + times
-           * are static for the demo; swap in real state when
-           * the audio player wires up. */}
+           * Matches the home NowPlaying mini-bar visual:
+           * circular cover with wave-bar overlay + track
+           * title + artist + circular play button. Adds a
+           * progress bar below the row (the home mini bar
+           * doesn't have one). All static / demo state — swap
+           * in real audio + playhead when the audio player
+           * wires up. */}
           <div className={styles.player}>
-            <div className={styles.playerHead}>
-              <span className={styles.playerTrackNum}>03</span>
-              <span className={styles.playerTrackName}>Pipoco</span>
-              <span className={styles.playerTime}>01:25 / 03:42</span>
+            <div className={styles.playerMain}>
+              <div className={styles.playerArt}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/single.png"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <div className={styles.playerWave} aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </div>
+              <div className={styles.playerInfo}>
+                <span className={styles.playerTrackName}>Pipoco</span>
+                <span className={styles.playerArtist}>Ana Castela</span>
+              </div>
+              <button
+                type="button"
+                className={styles.playerPlay}
+                aria-label="Pausar reprodução"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Demo: shows pause glyph (we assume the live
+                 *  audition is "playing" right now). Swap with
+                 *  toggleable state when the audio wires up. */}
+                <svg viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <rect x="3" y="2" width="2.8" height="10" rx="1" fill="currentColor" />
+                  <rect x="8.2" y="2" width="2.8" height="10" rx="1" fill="currentColor" />
+                </svg>
+              </button>
             </div>
             <div className={styles.playerProgress}>
               <div className={styles.playerProgressFill} />
+            </div>
+            <div className={styles.playerTimes}>
+              <span>01:25</span>
+              <span>03:42</span>
             </div>
           </div>
         </div>
