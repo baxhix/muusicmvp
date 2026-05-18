@@ -381,16 +381,91 @@ function CarouselMedia({
   index: number;
   onChange: (next: number) => void;
 }) {
+  // Swipe gesture state. `dragX` is the live horizontal offset
+  // (px) the finger has dragged the track since `pointerdown`;
+  // it's applied as an inline `translateX(... + dragX px)` on top
+  // of the index-based transform so the track follows the finger
+  // in real time. `isDragging` lets us disable the CSS transition
+  // during the drag — the snap (to the next slide OR back to the
+  // current one) needs the transition re-enabled on release.
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   if (items.length === 0) return null;
   const safeIndex = Math.min(Math.max(index, 0), items.length - 1);
   const atStart = safeIndex === 0;
   const atEnd = safeIndex === items.length - 1;
 
+  // Pointer events unify mouse + touch + pen so this gesture
+  // works on every input mode without separate handlers. The
+  // <img> children have `draggable={false}` AND `pointer-events:
+  // none` (in CSS) so dragging never gets hijacked by the native
+  // image-drag affordance — the gesture lives on the parent.
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (items.length <= 1) return;
+    startXRef.current = e.clientX;
+    setIsDragging(true);
+    // Capture the pointer so we still receive move/up events even
+    // if the finger leaves the carousel bounds mid-drag.
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (startXRef.current === null) return;
+    const dx = e.clientX - startXRef.current;
+    // Edge rubber-band — past the first / last slide there's
+    // nothing to reveal, so resist the drag (35% follow ratio)
+    // instead of fully tracking. Same feel as iOS Photos.
+    let bounded = dx;
+    if ((atStart && dx > 0) || (atEnd && dx < 0)) {
+      bounded = dx * 0.35;
+    }
+    setDragX(bounded);
+  };
+  const onPointerEnd = () => {
+    if (startXRef.current === null) {
+      setIsDragging(false);
+      return;
+    }
+    const width = containerRef.current?.clientWidth ?? 1;
+    // 25% of the carousel width is the commit threshold — past it
+    // we advance/retreat one slide; under it we snap back to the
+    // current slide. Felt-right value from iOS Photos / Instagram.
+    const threshold = width * 0.25;
+    if (dragX < -threshold && !atEnd) {
+      onChange(safeIndex + 1);
+    } else if (dragX > threshold && !atStart) {
+      onChange(safeIndex - 1);
+    }
+    setDragX(0);
+    setIsDragging(false);
+    startXRef.current = null;
+  };
+
   return (
-    <div className={styles.carousel}>
+    <div
+      ref={containerRef}
+      className={styles.carousel}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+      // `pan-y` lets the browser keep handling vertical scrolling
+      // natively while we claim horizontal pan for the swipe — no
+      // accidental scroll-and-swipe conflict.
+      style={{ touchAction: 'pan-y' }}
+    >
       <div
         className={styles.carouselTrack}
-        style={{ transform: `translateX(-${safeIndex * 100}%)` }}
+        style={{
+          transform: `translateX(calc(${-safeIndex * 100}% + ${dragX}px))`,
+          // Kill the CSS transition during the drag so the track
+          // follows the finger 1:1. Releasing flips back to the
+          // module's own `transition: transform 320ms` and the
+          // track snaps to the new / current slide.
+          transition: isDragging ? 'none' : undefined,
+        }}
       >
         {items.map((slide, i) => (
           // eslint-disable-next-line @next/next/no-img-element

@@ -205,11 +205,12 @@
    * room. `bottom: 76px` leaves the BottomNav (z:70) visible so
    * the user can switch surfaces without closing first.
    *
-   * `top: 52px` slides the panel below the MobileRouteHeader so
+   * `top: 68px` slides the panel below the MobileRouteHeader so
    * the back-arrow + title bar (mounted by /app/layout.tsx) sits
-   * on top without overlapping the topic list. */
+   * on top without overlapping the topic list. (Header height
+   * bumped 52→68 per product feedback.) */
   .panel {
-    top: 52px;
+    top: 68px;
     bottom: 76px;
     left: 0;
     right: 0;

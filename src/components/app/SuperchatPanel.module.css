@@ -690,11 +690,12 @@
    * BottomNav (z:70) reachable so the user can switch surfaces
    * mid-conversation without closing the superchat first.
    *
-   * `top: 52px` slides the panel below the MobileRouteHeader so
+   * `top: 68px` slides the panel below the MobileRouteHeader so
    * the back-arrow / title bar (mounted by /app/layout.tsx) sits
-   * on top without overlapping the messages or composer. */
+   * on top without overlapping the messages or composer.
+   * (Header height bumped 52→68 per product feedback.) */
   .panel {
-    top: 52px;
+    top: 68px;
     bottom: 76px;
     left: 0;
     right: 0;

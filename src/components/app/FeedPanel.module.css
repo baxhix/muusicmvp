@@ -306,6 +306,13 @@
     pointer-events: none;
   }
   .minimizedGradient { display: none; }
+
+  /* Hide the "Feed" title text on mobile per product feedback —
+   * the bottom-nav Feed slot is already lit when this panel is
+   * active, so labelling the surface a second time at the top of
+   * the panel was redundant. The live-status dot stays so users
+   * still get the "fresh content" cue. */
+  .title { display: none; }
 }
 @media (max-width: 480px) {
   /* Small mobile: full-screen feed with the BottomNav still visible.

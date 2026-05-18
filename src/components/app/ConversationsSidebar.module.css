@@ -356,11 +356,12 @@
    * comfortably above the IM keyboard since the panel doesn't
    * push all the way to the viewport bottom.
    *
-   * `top: 52px` slides the conversation list below the
+   * `top: 68px` slides the conversation list below the
    * MobileRouteHeader (back arrow + "Conversas") that the layout
-   * mounts on every non-home /app route. */
+   * mounts on every non-home /app route. (Header height bumped
+   * 52→68 per product feedback.) */
   .panel {
-    top: 52px;
+    top: 68px;
     bottom: 76px;
     left: 0;
     right: 0;

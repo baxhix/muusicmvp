@@ -515,19 +515,13 @@
 @media (max-width: 768px) {
   .header { display: none; }
   /* Anchor the card explicitly to top + bottom on mobile so the
-   * MobileRouteHeader (52px tall at top:0) and the BottomNav
+   * MobileRouteHeader (68px tall at top:0) and the BottomNav
    * (76px pill + 24px gap) carve out a guaranteed safe band for
-   * the panel to live in. Switching from `bottom:100px + max-
-   * height` to `top + bottom` is what fixes the overlap the user
-   * was seeing: when the rendered leaderboard was tall enough,
-   * the panel was being sized to its content from the bottom up
-   * and creeping under the route header. Now its TOP edge is a
-   * hard 64px from the viewport top regardless of content
-   * height, and the inner `.list` scrolls if there's more to
-   * show. `top: auto` is reset because the desktop rule sets
-   * `top: auto` and the cascade would carry that through. */
+   * the panel to live in. `top: 80` = header height (68) + a 12px
+   * breathing gap below it. (Header height bumped 52→68 per
+   * product feedback; this rule rides along.) */
   .panel {
-    top: 64px;
+    top: 80px;
     bottom: 100px;
     max-height: none;
     height: auto;
