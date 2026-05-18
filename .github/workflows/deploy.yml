@@ -298,26 +298,24 @@ jobs:
           # forwarded to the remote shell. Without `envs:` they don't
           # cross the SSH boundary even though they're set on the step.
           envs: CHANGED_WEB,CHANGED_SOCKET,CHANGED_ADMIN,FORCE_ALL
+          # Intentionally NO `set -e` — drone-ssh + bash strict mode
+          # was silently aborting the script with no diagnostic
+          # output (seemingly right after `git pull`). Each command
+          # below explicitly checks its own exit status and bails
+          # with a clear message. `script_stop: true` on the
+          # appleboy action covers the "stop on first error" need.
           script: |
-            set -euo pipefail
-            cd /opt/muusic
-
-            # Keep docker-compose.yml + non-image files in sync.
-            git pull --ff-only
+            cd /opt/muusic || { echo "::error::cd /opt/muusic failed"; exit 1; }
+            echo "=> git pull"
+            git pull --ff-only || { echo "::error::git pull failed"; exit 1; }
 
             # Build the list of services that actually need a
             # pull + restart. `force_all` (manual workflow_dispatch)
             # bypasses the filter and recreates everything.
-            #
-            # NOTE: use `if`/`fi` per check rather than `[…] && …`.
-            # With `set -e`, a failed `[ ]` test (e.g. CHANGED_SOCKET
-            # is "false" when only web changed) returns exit 1, which
-            # propagates and aborts the entire script even though
-            # the LOGIC of the check is "skip this service".
             SERVICES=""
             if [ "${FORCE_ALL:-}" = "true" ]; then
               SERVICES="web socket admin"
-              echo "Force-all deploy: pulling + restarting ALL services."
+              echo "=> force-all deploy: rebuild + restart everything"
             else
               if [ "${CHANGED_WEB:-}" = "true" ]; then
                 SERVICES="$SERVICES web"
@@ -329,25 +327,21 @@ jobs:
                 SERVICES="$SERVICES admin"
               fi
             fi
+            # Strip leading whitespace.
+            SERVICES="$(echo $SERVICES | xargs)"
 
             if [ -z "$SERVICES" ]; then
-              echo "No services changed — skipping pull/restart."
+              echo "=> no services changed - skipping pull/restart"
               exit 0
             fi
 
-            echo "Pulling + restarting:$SERVICES"
-            docker compose pull $SERVICES
-            docker compose up -d --no-build $SERVICES
+            echo "=> pulling + restarting: $SERVICES"
+            docker compose pull $SERVICES || { echo "::error::docker compose pull failed"; exit 1; }
+            docker compose up -d --no-build $SERVICES || { echo "::error::docker compose up failed"; exit 1; }
 
-            # ── Post-deploy cleanup ────────────────────────────────
-            # Always run — keeps disk healthy regardless of which
-            # services were touched. Order matters:
-            #   1. Containers first (so image prune is allowed to
-            #      delete now-unreferenced layers).
-            #   2. Images (-a so tagged-but-unreferenced go too).
-            #   3. Build cache (doesn't accumulate on the VPS
-            #      anymore now that we build in CI, but cheap to
-            #      run as a belt-and-suspenders).
+            echo "=> post-deploy cleanup"
             docker container prune -f || true
             docker image prune -af || true
             docker builder prune -af || true
+
+            echo "=> deploy done"
