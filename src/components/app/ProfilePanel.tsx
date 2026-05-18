@@ -33,8 +33,6 @@ interface Props {
   onOpenMessages?: () => void;
   /** Other-profile only: starts/jumps to a DM with the displayed user. */
   onSendMessage?: (userId: string, label: string) => void;
-  /** Other-profile only: send a "wave" (poke) to the displayed user. */
-  onWave?: (userId: string, label: string) => void;
   /** Other-profile only: report this user. */
   onReport?: (userId: string, label: string) => void;
 }
@@ -194,7 +192,6 @@ export default function ProfilePanel({
   onEditProfile,
   onOpenMessages,
   onSendMessage,
-  onWave,
   onReport,
 }: Props) {
   const [tab, setTab] = useState<TabId>('historico');
@@ -295,8 +292,12 @@ export default function ProfilePanel({
 
         {/* ── Botões de ação ──────────────────────────────
             Own profile:  [ Editar perfil ] [ Minhas mensagens ]
-            Other profile: [ Acenar       ] [ Enviar mensagem  ] [ ⋯ → Denunciar ]
-            The "⋯" menu only renders for other profiles. */}
+            Other profile: [ Enviar mensagem  ] [ ⋯ → Denunciar ]
+            The "Acenar" CTA was removed per product feedback —
+            waves still happen on the map marker (heart icon next to
+            the live-user pin), so the action is reachable, just not
+            duplicated inside the profile panel. The "⋯" menu only
+            renders for other profiles. */}
         <div className={styles.actionsRow}>
           {isOwnProfile ? (
             <>
@@ -304,7 +305,16 @@ export default function ProfilePanel({
                 type="button"
                 className={styles.actionBtn}
                 onClick={() => {
-                  onClose?.();
+                  // NOTE: do NOT call `onClose?.()` here. The
+                  // perfil page wires onClose to
+                  // `router.push('/app')`, which unmounts the
+                  // page that owns the modal's `showEditProfile`
+                  // state. If both fire, the modal flashes for one
+                  // frame (or doesn't render at all) before the
+                  // page unmounts and takes the modal with it.
+                  // We want the user to stay on /app/perfil so
+                  // the modal can open AND stay open until they
+                  // close it themselves.
                   onEditProfile?.();
                 }}
               >
@@ -314,7 +324,13 @@ export default function ProfilePanel({
                 type="button"
                 className={styles.actionBtn}
                 onClick={() => {
-                  onClose?.();
+                  // onOpenMessages already navigates to
+                  // /app/superchat. The earlier `onClose?.()` call
+                  // here was a redundant router.push('/app')
+                  // that Next.js superseded with the second push
+                  // — harmless on this path but kept simple now
+                  // that the symmetric "Editar perfil" handler
+                  // dropped it for the bug fix above.
                   onOpenMessages?.();
                 }}
                 aria-label="Minhas mensagens"
@@ -328,19 +344,6 @@ export default function ProfilePanel({
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className={styles.actionBtn}
-                onClick={() => onWave?.(user.id, user.name)}
-                aria-label={`Acenar para ${user.name}`}
-              >
-                Acenar
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-                     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 12s2-4 9-4 9 4 9 4-2 4-9 4-9-4-9-4z" />
-                  <path d="M10 9l2 3 2-3" />
-                </svg>
-              </button>
               <button
                 type="button"
                 className={styles.actionBtn}

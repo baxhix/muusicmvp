@@ -7,6 +7,7 @@ import {
   type AnimationEvent,
   type ChangeEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { api, ApiError } from '@/lib/api/client';
 import styles from './EditProfileModal.module.css';
@@ -190,7 +191,15 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
   const displayAvatar =
     avatarUrl ?? (user ? PLACEHOLDER_AVATAR(user.id) : '/ana-castela-box.jpg');
 
-  return (
+  // The whole `/app/*` shell lives inside `.shell` (position:fixed,
+  // z-index:55) which traps every descendant in its stacking context.
+  // Without a portal, the modal's z:135 collapses to z:55 from the
+  // document's perspective — and floating siblings outside the shell
+  // (LiveChatStack .dock z:200, BottomNav, etc.) paint over it, so
+  // clicking "Editar perfil" looked like nothing happened. Portaling
+  // to <body> escapes the trap so the modal stacks above everything
+  // else as intended.
+  const content = (
     <>
       <div
         className={`${styles.backdrop} ${isOut ? styles.backdropOut : ''}`}
@@ -362,4 +371,11 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
       </aside>
     </>
   );
+
+  // Guard for SSR — even though this file is 'use client', the
+  // first render runs on the server when a parent renders it with
+  // open=false. In that case `phase === 'idle'` already short-
+  // circuits above, so this branch only fires on the client.
+  if (typeof document === 'undefined') return null;
+  return createPortal(content, document.body);
 }

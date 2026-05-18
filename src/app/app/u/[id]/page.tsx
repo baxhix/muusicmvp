@@ -35,10 +35,6 @@ export default function UserProfilePage() {
         chat.openDmWith(uid);
         router.push('/app/chat');
       }}
-      onWave={(uid, label) => {
-        // Placeholder until POST /api/wave ships.
-        console.log(`wave → ${uid} (${label})`);
-      }}
       onReport={(uid, label) => {
         console.log(`report → ${uid} (${label})`);
       }}

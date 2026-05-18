@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type AnimationEvent } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './DeleteAccountModal.module.css';
 
 interface DeleteAccountModalProps {
@@ -58,7 +59,11 @@ export default function DeleteAccountModal({
     confirmName.trim().toLowerCase() === requiredName.toLowerCase() &&
     requiredName.length > 0;
 
-  return (
+  // Portal to <body> so the modal escapes `.shell`'s stacking
+  // context (z-index:55 trap) — see EditProfileModal for the full
+  // reasoning. Without this, floating siblings outside `.shell`
+  // paint over the modal.
+  const content = (
     <>
       <div
         className={`${styles.backdrop} ${isOut ? styles.backdropOut : ''}`}
@@ -128,4 +133,7 @@ export default function DeleteAccountModal({
       </aside>
     </>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(content, document.body);
 }
