@@ -209,11 +209,20 @@ export default function CollectiveListeningModal({ open, onClose }: Props) {
             <span className={styles.vinylHole} aria-hidden="true" />
           </div>
           <div className={styles.stageOverlay}>
-            <h2 className={styles.albumTitle}>Let&apos;s Go Rodeo</h2>
-            <span className={styles.albumArtist}>
-              Ana Castela
-              <VerifiedBadge size={12} />
-            </span>
+            {/* Single combined line: "Ana Castela ✓ · Let's Go Rodeo".
+              * Used to be two separate elements stacked (h2 album +
+              * span artist) which ate vertical space; per product
+              * feedback they read better fused into one row, with
+              * the artist in bright white + the album in a slightly
+              * muted weight after the separator. */}
+            <h2 className={styles.albumLine}>
+              <span className={styles.albumLineArtist}>
+                Ana Castela
+                <VerifiedBadge size={12} />
+              </span>
+              <span className={styles.albumLineSep} aria-hidden="true">·</span>
+              <span className={styles.albumLineAlbum}>Let&apos;s Go Rodeo</span>
+            </h2>
             <span className={styles.viewers}>
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
                 <path d="M9 18V5l12-2v13" />

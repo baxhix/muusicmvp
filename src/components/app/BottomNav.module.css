@@ -404,15 +404,20 @@
  * the menu reads as an extension of the navbar surface rather
  * than a foreign popover floating above it.
  *
- * Alignment math:
- *   - Navbar inner is 280px wide, centered horizontally.
+ * Alignment math (with box-sizing: border-box, set globally):
+ *   - Navbar inner is 280px wide (the OUTER box), centered
+ *     horizontally. Has `padding: 8px 10px` + `border: 3px`.
  *   - The hamburger sits in column 5 of a 5-col grid inside the
- *     pill, with `padding: 8px 10px` on `.inner`.
- *   - `.moreWrap` is the hamburger's grid cell. Its right edge
- *     is at (column 5's right edge) = inner-right - 10px.
- *   - To make the menu's right edge land on the inner's outer
- *     right edge, offset the menu by `right: -10px` to undo the
- *     padding. Width 280 extends leftward to mirror the inner.
+ *     pill.
+ *   - `.moreWrap` is the hamburger's grid cell. Its right edge =
+ *     inner.content_right = inner.outer_right − 13px (border 3 +
+ *     padding-right 10).
+ *   - To make the menu's right edge land on the inner's OUTER
+ *     right edge, offset by `right: -13px` (cancel both border
+ *     and padding). Width 280 then extends leftward to land on
+ *     the inner's outer-left edge too — exact outer-to-outer
+ *     alignment with the navbar pill.
+ *   - Vertical: see the .moreMenu rule itself for the 31px math.
  */
 .moreWrap {
   position: relative;
@@ -422,9 +427,20 @@
 }
 .moreMenu {
   position: absolute;
-  bottom: calc(100% + 12px);
-  /* See alignment math in the .moreMenu comment block above. */
-  right: -10px;
+  /* Vertical offset math (box-sizing: border-box, set globally):
+   *   .inner outer top → .moreWrap top = 11px (inner border 3 +
+   *   inner padding-top 8). To get a 20px VISUAL gap between the
+   *   menu's bottom edge and the navbar pill's OUTER top edge,
+   *   we need `bottom = .moreWrap.top - 31px`, so `calc(100% + 31px)`.
+   *   (20px target visual gap + 11px inset = 31px.) */
+  bottom: calc(100% + 31px);
+  /* Horizontal alignment math:
+   *   .moreWrap.right = .inner.outer_right − 13px (border 3 +
+   *   padding-right 10). To put menu.right exactly on the navbar
+   *   pill's outer right edge: `right = -13px`. Combined with
+   *   `width: 280px`, the menu's left edge also lands on the
+   *   pill's outer left edge — outer-to-outer alignment, exact. */
+  right: -13px;
   width: 280px;
   /* Match the navbar inner's material exactly so the menu feels
    * like the same surface stretched vertically: identical dark

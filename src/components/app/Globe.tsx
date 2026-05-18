@@ -230,13 +230,22 @@ export default function Globe() {
         },
       });
 
-      // ── Ana shows: native circle + symbol layers ──────────────────
+      // ── Ana shows: calendar-chip pins ─────────────────────────
       //
-      // The shows agenda is now drawn AS PART OF THE MAP: a soft
-      // amber halo, a hard orange dot, and a zoom-gated "Show DD/MM"
-      // label. This replaces the old HTML chip markers — the points
-      // are now locked to lng/lat the same way streets and labels
-      // are, so they don't feel like overlays drifting over the map.
+      // Each show is rendered as a "date chip" the user reads at a
+      // glance:
+      //   - Soft amber halo behind for a warm event vibe.
+      //   - Big orange circle that's now sized to hold the day
+      //     number inside (was a tiny 5-9px dot).
+      //   - White DAY number centered inside the circle.
+      //   - White MONTH abbreviation (e.g. "MAI") sitting just
+      //     below the circle.
+      //
+      // This replaces the previous "small orange dot + 'Show dia
+      // 16/05' footnote label below". The old visualization read
+      // as a generic data point + caption; the new chip reads as a
+      // calendar marker for an event, distinct from every other
+      // pin on the map without needing a custom icon asset.
       //
       // The feature collection is populated by registerAnaShows
       // below. Empty at first; the page publishes after mount.
@@ -245,7 +254,9 @@ export default function Globe() {
         data: { type: 'FeatureCollection', features: [] },
       });
 
-      // Soft amber glow behind each dot.
+      // Soft amber glow behind the chip — sized to bleed past the
+      // chip edge so the show always reads as "warm" against the
+      // dark basemap.
       map.addLayer({
         id: 'ana-shows-glow',
         type: 'circle',
@@ -253,21 +264,22 @@ export default function Globe() {
         paint: {
           'circle-radius': [
             'interpolate', ['linear'], ['zoom'],
-            1, 7,
-            5, 10,
-            9, 14,
-            14, 18,
+            1, 14,
+            5, 20,
+            9, 26,
+            14, 32,
           ],
           'circle-color': '#fbbf24',
-          'circle-blur': 1.2,
+          'circle-blur': 1.0,
           'circle-opacity': 0.45,
         },
       });
 
-      // Hard orange dot — the "bolinha" the spec asks for.
-      // No stroke per design feedback — the soft amber halo behind
-      // it already separates the dot from the basemap; a white ring
-      // around such small circles reads as visual noise.
+      // Chip body — big orange circle that hosts the day number.
+      // Bumped from radius 4-9 (a tiny dot) to 11-20 so the day
+      // number fits comfortably inside at every zoom level. White
+      // stroke at the chip border bumps the contrast against the
+      // amber halo so the chip reads as its own shape.
       map.addLayer({
         id: 'ana-shows-dot',
         type: 'circle',
@@ -275,40 +287,72 @@ export default function Globe() {
         paint: {
           'circle-radius': [
             'interpolate', ['linear'], ['zoom'],
-            1, 4,
-            5, 5.5,
-            9, 7,
-            14, 9,
+            1, 11,
+            5, 14,
+            9, 17,
+            14, 20,
           ],
           'circle-color': '#f97316', // orange-500
-          'circle-stroke-width': 0,
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.85)',
+          'circle-stroke-width': 1.4,
           'circle-opacity': 1,
         },
       });
 
-      // "Show DD/MM" label — invisible until the user zooms in
-      // enough that the dot's city is identifiable (zoom ≥ 8). The
-      // halo keeps the text legible against any basemap color.
+      // Day number painted INSIDE the chip. White, bold, slightly
+      // tabular so two-digit days don't shift the optical center.
+      // Sized to match the chip radius — at the smallest zoom the
+      // chip is r=11 (diameter 22) and the number is 13px tall, a
+      // tight but readable fit.
       map.addLayer({
-        id: 'ana-shows-label',
+        id: 'ana-shows-day',
         type: 'symbol',
         source: 'ana-shows',
         layout: {
-          'text-field': ['concat', 'Show dia ', ['get', 'dateChip']],
-          'text-size': 12,
-          'text-offset': [0, 1.4],
+          'text-field': ['get', 'day'],
+          'text-size': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 13,
+            5, 15,
+            9, 17,
+            14, 20,
+          ],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': 'rgba(0, 0, 0, 0.55)',
+          'text-halo-width': 0.4,
+        },
+      });
+
+      // Month abbreviation (e.g. "MAI") underneath the chip. Stays
+      // hidden until zoom ≥ 5 because below that the chips cluster
+      // visually and the extra label adds noise. Cream tone so it
+      // doesn't compete with the high-contrast white day number.
+      map.addLayer({
+        id: 'ana-shows-month',
+        type: 'symbol',
+        source: 'ana-shows',
+        layout: {
+          'text-field': ['get', 'monthShort'],
+          'text-size': 10.5,
+          'text-offset': [0, 2.2],
           'text-anchor': 'top',
+          'text-letter-spacing': 0.12,
           'text-allow-overlap': true,
           'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
         },
         paint: {
           'text-color': '#fde68a',
-          'text-halo-color': 'rgba(0,0,0,0.85)',
-          'text-halo-width': 1.4,
+          'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+          'text-halo-width': 1.2,
           'text-opacity': [
             'interpolate', ['linear'], ['zoom'],
-            6.5, 0,
-            8, 1,
+            4.5, 0,
+            6, 1,
           ],
         },
       });
@@ -1211,6 +1255,18 @@ export default function Globe() {
           const dd = String(dateObj.getDate()).padStart(2, '0');
           const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
           const dateChip = `${dd}/${mm}`;
+          // Per-pin "calendar chip" data: big day number sits
+          // INSIDE the dot, 3-letter month abbreviation sits below
+          // it. Replaces the old "Show dia 16/05" footnote label
+          // with something that reads as a calendar marker at a
+          // glance, no extra zoom needed.
+          const day = String(dateObj.getDate()); // no leading zero — "9" not "09"
+          const monthShort = new Intl.DateTimeFormat('pt-BR', {
+            month: 'short',
+          })
+            .format(dateObj)
+            .replace('.', '')
+            .toUpperCase();
           const fullDate = new Intl.DateTimeFormat('pt-BR', {
             day: '2-digit',
             month: 'long',
@@ -1225,6 +1281,8 @@ export default function Globe() {
               city: show.city,
               state: show.state,
               dateChip,
+              day,
+              monthShort,
               fullDate,
             },
           };
