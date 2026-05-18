@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Placeholder de perfil">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e1e22"/>
+      <stop offset="100%" stop-color="#0f0f12"/>
+    </linearGradient>
+    <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9b9bA5"/>
+      <stop offset="100%" stop-color="#6f6f78"/>
+    </linearGradient>
+  </defs>
+  <!-- Circle background: dark gradient that reads cleanly against
+       both light and dark surrounding surfaces. -->
+  <circle cx="32" cy="32" r="32" fill="url(#bg)"/>
+  <!-- Silhouette: standard "anonymous user" head + shoulders.
+       The shoulders curve up so when the SVG is clipped to a
+       circle (as it is in every avatar slot we use), the body
+       reaches the bottom edge cleanly without a flat band. -->
+  <circle cx="32" cy="26" r="10" fill="url(#fg)"/>
+  <path d="M12 60c0-10 9-17 20-17s20 7 20 17v4H12z" fill="url(#fg)"/>
+</svg>

@@ -210,7 +210,12 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
   const { user, logout } = useAuth();
   const userLabel = displayName(user);
   const userEmail = user?.email ?? '';
-  const userAvatar = user?.avatarUrl ?? '/ana-beatriz-avatar.png';
+  // Generic placeholder silhouette for brand-new users who
+  // haven't uploaded a profile photo yet. The previous fallback
+  // was an actual person's photo (/ana-beatriz-avatar.png),
+  // which made new accounts look like they belonged to someone
+  // else; the placeholder is a neutral SVG silhouette in /public.
+  const userAvatar = user?.avatarUrl ?? '/avatar-placeholder.svg';
 
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SubScreen>(null);
