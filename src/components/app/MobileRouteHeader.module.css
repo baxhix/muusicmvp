@@ -21,14 +21,14 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Header was 52px — bumped to 68px per product feedback so the
-   * back arrow / title row has more breathing room and the route
-   * chrome reads as a confident primary bar rather than a thin
-   * accent stripe. Panels mounted below (Superfãs, Comunidades,
-   * Conversas, Perfil) are anchored from `top: 52` in their
-   * mobile @media rules — those updates ride along in this
-   * commit so the content keeps a 12px gap below the bar. */
-  height: 68px;
+  /* Header height pinned to 56px — the previous 68px combined
+   * with bigger icons made the whole top of the mobile UI look
+   * "zoomed" against the rest of the layout. 56 is the sweet
+   * spot: enough vertical breathing room for a 16px title +
+   * 44px tap target without overpowering the surface. Panels
+   * anchored below (Superfãs, Comunidades, Conversas, Perfil)
+   * use `top: 56` in their mobile @media rules. */
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -81,7 +81,7 @@
 .title {
   flex: 1;
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #f5f5f7;
   letter-spacing: -0.01em;

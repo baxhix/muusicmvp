@@ -695,7 +695,7 @@
    * on top without overlapping the messages or composer.
    * (Header height bumped 52→68 per product feedback.) */
   .panel {
-    top: 68px;
+    top: 56px;
     bottom: 76px;
     left: 0;
     right: 0;

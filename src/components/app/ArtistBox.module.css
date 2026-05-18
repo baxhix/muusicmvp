@@ -714,10 +714,10 @@
     width: auto;
     max-width: none;
     left: 12px;
-    /* Cluster sits at right:12 with 2 × 44px icons + 4px gap =
-     * 92px wide → cluster left edge at right:104. The pill's
-     * right edge stops at 112 for an 8px breathing gap. */
-    right: 112px;
+    /* Cluster sits at right:12 with 2 × 38px icons + 4px gap =
+     * 80px wide → cluster left edge at right:92. The pill's
+     * right edge stops at 100 for an 8px breathing gap. */
+    right: 100px;
     top: 12px;
     border-radius: 16px;
     background: rgba(0, 0, 0, 0.45);
@@ -725,13 +725,13 @@
     -webkit-backdrop-filter: blur(28px) saturate(1.2);
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
-  /* Compact bar — slimmer content per product feedback. Per the
-   * earlier "zoom" complaint the previous photo+name made the
-   * surface feel oversized; with both hidden the bar collapses
-   * to a crown + Fanpoints chip + chevron, which reads as a
-   * tight identity strip instead of a heavy header card. */
+  /* Compact bar — slimmer content per product feedback. Height
+   * pinned to 56 (matches the internal MobileRouteHeader after
+   * that bar shrank too) so the home view's top strip doesn't
+   * overwhelm the surface. The previous 68px reading "zoomed"
+   * combined with the bigger right-rail icons. */
   .compactBar {
-    height: 68px;
+    height: 56px;
     padding: 0 14px;
     gap: 10px;
     justify-content: flex-start;
@@ -746,27 +746,27 @@
   .compactName {
     display: none;
   }
-  /* Crown + Fanpoints chip — yellow icon, white number. Centered
-   * by the bar's flex-start alignment with a single 10px gap so
-   * the elements read as one item, not two columns. */
+  /* Crown + Fanpoints chip — yellow icon, white number. Sizes
+   * trimmed alongside the bar height so the chip doesn't
+   * overpower the new 56px surface. */
   .compactFanpoints {
     color: #ffffff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    gap: 8px;
+    gap: 7px;
     flex: 1;
   }
   .compactFanpoints svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     color: #fbbf24;
     /* Soft yellow glow so the crown pops against the blurred
      * black background without needing a heavy stroke. */
-    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
+    filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.45));
   }
   .compactChevron {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: rgba(245, 245, 247, 0.55);
   }
 }

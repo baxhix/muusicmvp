@@ -521,7 +521,7 @@
    * breathing gap below it. (Header height bumped 52→68 per
    * product feedback; this rule rides along.) */
   .panel {
-    top: 80px;
+    top: 68px;
     bottom: 100px;
     max-height: none;
     height: auto;

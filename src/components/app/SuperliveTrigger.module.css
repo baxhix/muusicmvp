@@ -14,7 +14,9 @@
 
 .pill {
   position: fixed;
-  top: 96px;
+  /* Sits below the 56px home header (which lives at top:12 →
+   * bottom edge at 68) with a 16px breathing gap. */
+  top: 84px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
@@ -124,7 +126,7 @@
  * viewport (Pixel-class). */
 @media (max-width: 480px) {
   .pill {
-    top: 92px;
+    top: 80px;
     padding: 5px 12px 5px 5px;
     gap: 8px;
   }

@@ -65,26 +65,26 @@
   /* Mobile — the cluster moves UP to the top-right corner and
    * lays out HORIZONTALLY as the right side of the fixed header.
    *
-   * Buttons are now icon-only (no circle background / border)
-   * per product feedback — they sit inline with the blurred
-   * black home-header strip on the left, so a second
-   * background layer would just compete with it. The 44×44
-   * footprint keeps the tap target comfortable while the
-   * visible glyph fills more of it.
+   * Buttons are icon-only (no circle background / border) per
+   * product feedback so they sit inline with the blurred black
+   * home-header strip on the left. The 38×38 footprint keeps
+   * the tap target comfortable for thumb use without dominating
+   * the surface — the 44×44 we tried earlier combined with the
+   * 68px header read as "zoomed".
    *
-   * `top: 24` vertically centers a 44px tap target within the
-   * 68px pill band that starts at top:12: midpoint = 12 + 34 =
-   * 46, button center = 24 + 22 = 46. */
+   * `top: 21` vertically centers a 38px tap target within the
+   * 56px pill band that starts at top:12: midpoint = 12 + 28 =
+   * 40, button center = 21 + 19 = 40. */
   .topBar {
-    top: 24px;
+    top: 21px;
     right: 12px;
     transform: none;
     flex-direction: row;
     gap: 4px;
   }
   .shortcutBtn {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
     border: none;
     background: transparent;
     backdrop-filter: none;
@@ -100,8 +100,8 @@
     background: rgba(255, 255, 255, 0.10);
   }
   .shortcutBtn svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
   /* Active overlay state — color tint stays but no border ring
    * since the button has no border to color. */
@@ -112,11 +112,11 @@
     color: #ffffff;
     box-shadow: none;
   }
-  /* Unread pill scales up slightly to track the bigger icon. */
+  /* Unread pill scaled to track the new 20px icon. */
   .shortcutBtnBadge {
-    min-width: 20px;
-    height: 20px;
-    font-size: 11.5px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10.5px;
     top: -2px;
     right: -2px;
   }

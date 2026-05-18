@@ -30,22 +30,24 @@ export const metadata: Metadata = {
 };
 
 /**
- * Viewport meta. `interactive-widget: resizes-content` tells iOS
- * Safari 16.4+ and modern Chrome / Edge to SHRINK the layout
- * viewport when the on-screen keyboard appears — that means
- * `100dvh` / `100vh` start reflecting the visible area instead of
- * staying pinned to the full screen and hiding the chat composer
- * behind the keyboard.
+ * Viewport meta. Plain `device-width` + `initial-scale: 1` so
+ * iOS Safari renders at the device's natural CSS pixel ratio
+ * without any custom widget layout hints.
  *
- * The VisualViewport-API JS in LiveChatPanel is still the
- * authoritative path (older browsers / Android Chrome 107-);
- * this meta gives newer browsers a CSS-only resize so we don't
- * race the first frame after focus.
+ * We DELIBERATELY don't set `interactive-widget: resizes-content`
+ * here — earlier iOS builds were applying the layout-resize
+ * behavior even outside of keyboard focus, which inflated the
+ * apparent size of every fixed-position element on the mobile
+ * home view. The LiveChatPanel composer keyboard handling
+ * doesn't need this meta anyway; it has a dedicated
+ * `window.visualViewport.resize` subscription that writes
+ * `--chat-visual-h` / `--chat-visual-top` CSS vars onto the
+ * panel element while open, which works across every browser
+ * we care about (iOS 16.4+, modern Chromium, Firefox).
  */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  interactiveWidget: 'resizes-content',
 };
 
 /**
