@@ -77,6 +77,15 @@
   max-width: min(520px, calc(100vw - 32px));
 }
 
+/* Fully-rounded pill modifier — applied to the waved + top_track
+ * notification types per product feedback. The base `.toast`
+ * keeps the softer 22px radius; this modifier overrides to the
+ * full 999px so the chip reads as a self-contained pill at
+ * whatever height the content lands. */
+.toastPill {
+  border-radius: 999px;
+}
+
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .toastExit  { animation: mockToastOut 0.38s cubic-bezier(0.55, 0, 1, 0.45) both; }
 

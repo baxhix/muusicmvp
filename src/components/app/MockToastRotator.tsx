@@ -121,11 +121,16 @@ export default function MockToastRotator() {
 
   const current = ROTATION[idx];
   const exiting = phase === 'exit';
+  // Pill-shaped (full 999px radius) for the two notification
+  // types the product explicitly called out — waved and
+  // top_track. Other types keep the softer 22px radius the
+  // default `.toast` rule applies.
+  const pillShape = current.kind === 'waved' || current.kind === 'top_track';
 
   return (
     <div className={styles.root} aria-live="polite">
       <div
-        className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter}`}
+        className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter} ${pillShape ? styles.toastPill : ''}`}
         role="status"
       >
         <ToastBody toast={current} />
@@ -192,28 +197,13 @@ function ToastBody({ toast }: { toast: MockToast }) {
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={toast.user.avatar} alt="" className={styles.avatar} />
-          <div className={styles.info}>
+          {/* Single-line variant per product feedback: the
+            * "Toque pra abrir o chat" CTA row was removed,
+            * leaving just the actor + action sentence. */}
+          <div className={`${styles.info} ${styles.infoSingleLine}`}>
             <span className={styles.text}>
               <strong className={styles.strong}>{toast.user.name}</strong>{' '}
               enviou uma mensagem
-            </span>
-            <span className={styles.track}>
-              <svg
-                viewBox="0 0 24 24"
-                width="11"
-                height="11"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" />
-              </svg>
-              <span className={styles.trackLabel}>
-                Toque pra abrir o chat
-              </span>
             </span>
           </div>
         </>
@@ -310,16 +300,15 @@ function ToastBody({ toast }: { toast: MockToast }) {
             <span className={styles.confettiPiece} />
             <span className={styles.confettiPiece} />
           </span>
-          <div className={styles.info}>
+          {/* Single-line variant per product feedback: the
+            * "Continue ouvindo pra subir" subtitle was removed,
+            * leaving just the ranking line + the festive crown
+            * + confetti glyph. */}
+          <div className={`${styles.info} ${styles.infoSingleLine}`}>
             <span className={styles.text}>
               Você está no{' '}
               <strong className={styles.strong}>TOP {toast.rank}</strong> de
               fãs
-            </span>
-            <span className={styles.track}>
-              <span className={styles.trackLabel}>
-                Continue ouvindo pra subir
-              </span>
             </span>
           </div>
         </>
