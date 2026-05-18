@@ -142,24 +142,19 @@
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
+/* Header — slimmed down per product feedback. The "Brainstorm"
+ * kicker + subtitle helper text were removed; the row now
+ * holds the centered title and the close X only. `position:
+ * relative` + the X anchored top-right via absolute so the
+ * title stays optically centered (flex layout would push the
+ * title off-axis whenever the X is on the right). */
 .header {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
   margin-bottom: 18px;
-}
-.headerText {
-  flex: 1;
-  min-width: 0;
-}
-.kicker {
-  display: inline-flex;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(251, 191, 36, 0.95);
-  margin-bottom: 4px;
 }
 .title {
   margin: 0;
@@ -168,16 +163,15 @@
   letter-spacing: -0.018em;
   color: #ffffff;
   line-height: 1.15;
-}
-.subtitle {
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: rgba(245, 245, 247, 0.6);
+  text-align: center;
 }
 
 .closeBtn {
-  flex-shrink: 0;
+  /* Anchored absolutely to the top-right of the header so the
+   * centered title stays optically centered. */
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 30px;
   height: 30px;
   display: inline-flex;
@@ -287,17 +281,8 @@
   box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.35);
 }
 
-/* ── Footer note ─────────────────────────────────────────── */
-.footnote {
-  margin: 18px 0 0;
-  padding: 10px 12px;
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: rgba(245, 245, 247, 0.55);
-  background: rgba(251, 191, 36, 0.06);
-  border: 1px solid rgba(251, 191, 36, 0.12);
-  border-radius: 10px;
-}
+/* (Footer note removed per product feedback — the panel ends
+ * at the toggle list now.) */
 
 @media (max-width: 600px) {
   /* Trigger stays vertically centered on the left rail at

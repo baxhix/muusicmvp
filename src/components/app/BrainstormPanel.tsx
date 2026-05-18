@@ -5,28 +5,39 @@ import {
   FLAG_DESCRIPTORS,
   useBrainstormFlags,
 } from '@/lib/brainstormFlags';
+import { useAuth } from '@/lib/auth/AuthContext';
 import styles from './BrainstormPanel.module.css';
+
+/** Email of the only user allowed to see the Brainstorm
+ *  lightbulb. Brainstorm features are work-in-progress UI for
+ *  internal review; gating the trigger by email keeps client /
+ *  general users from seeing the lab toggles. */
+const BRAINSTORM_OWNER_EMAIL = 'demari.lets@gmail.com';
 
 /**
  * "Brainstorm" lightbulb trigger + toggle panel.
  *
- * Lives at the bottom-left corner of /app (home only). The
- * lightbulb button opens a small floating sheet listing every
- * registered experimental feature; each row carries a switch
- * the team / client can flip live to preview the feature.
+ * Lives mid-left rail of /app home and ONLY mounts when the
+ * authenticated user matches `BRAINSTORM_OWNER_EMAIL` — every
+ * other viewer sees nothing. The lightbulb opens a small
+ * floating sheet listing every registered experimental feature;
+ * each row carries a switch that flips a flag in localStorage
+ * via `lib/brainstormFlags`.
  *
- * Flags persist via `lib/brainstormFlags` (localStorage) so the
- * preference sticks across page reloads. CustomEvent broadcast
- * inside `writeBrainstormFlags` propagates the flip to other
- * consumers (e.g. the AnaFlight scheduler in AppShellProvider).
- *
- * The whole surface unmounts on non-home routes — the floating
- * trigger would compete with too much chrome on subpages, and
- * the experimental features are all home-anchored anyway.
+ * The whole surface unmounts on non-home routes anyway (mounted
+ * inside `/app/page.tsx`), so the gate fires before any flag
+ * read or render work happens.
  */
 export default function BrainstormPanel() {
   const [open, setOpen] = useState(false);
   const { flags, setFlag } = useBrainstormFlags();
+  const { user } = useAuth();
+
+  // Gate: only the brainstorm owner sees this surface. Email
+  // compared case-insensitively + trimmed so capitalization
+  // variants don't leak through.
+  const isOwner =
+    user?.email?.trim().toLowerCase() === BRAINSTORM_OWNER_EMAIL;
 
   // Dismiss on Escape so the sheet feels like the other floating
   // surfaces (PlaylistModal, kebab menus). Click-outside closes
@@ -45,6 +56,10 @@ export default function BrainstormPanel() {
   // team can see at a glance that something experimental is
   // mounted on the surface.
   const activeCount = Object.values(flags).filter(Boolean).length;
+
+  // Email gate — only the brainstorm owner sees the lightbulb
+  // and the toggle panel. Everyone else gets nothing.
+  if (!isOwner) return null;
 
   return (
     <>
@@ -101,15 +116,12 @@ export default function BrainstormPanel() {
             aria-modal="false"
             aria-label="Brainstorm — features experimentais"
           >
+            {/* Header trimmed per product feedback — only the
+             *  centered "Features em teste" title + the close X
+             *  remain. Kicker ("Brainstorm") and the subtitle
+             *  helper text were removed. */}
             <header className={styles.header}>
-              <div className={styles.headerText}>
-                <span className={styles.kicker}>Brainstorm</span>
-                <h2 className={styles.title}>Features em teste</h2>
-                <p className={styles.subtitle}>
-                  Ligue ou desligue cada ideia para validar com o cliente.
-                  As escolhas ficam salvas neste navegador.
-                </p>
-              </div>
+              <h2 className={styles.title}>Features em teste</h2>
               <button
                 type="button"
                 className={styles.closeBtn}
@@ -153,11 +165,8 @@ export default function BrainstormPanel() {
                 );
               })}
             </ul>
-
-            <p className={styles.footnote}>
-              Estas funcionalidades estão em fase de avaliação e podem
-              mudar antes do release final.
-            </p>
+            {/* (Footnote disclaimer removed per product feedback —
+             *  the panel is now just the title + toggle list.) */}
           </div>
         </div>
       )}
