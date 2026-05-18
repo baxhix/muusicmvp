@@ -12,12 +12,15 @@
 
 .pill {
   position: fixed;
-  /* Below the SuperliveTrigger at top:16 (~48px tall pill +
-   * 8px gap) so the two Fire Arena / Live CTAs read as a
-   * vertical pair on desktop. */
-  top: 78px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Desktop — anchored next to the Superchat trigger on the
+   * top-right (Superchat lives at top:42 right:104 via
+   * `.superchatTriggerSlot`). Audição pill's right edge stops
+   * at `right: 160` so there's a comfortable 56px gap between
+   * its right edge and Superchat's left edge regardless of
+   * Audição's intrinsic width. Mobile keeps the centered
+   * layout (see the @media block below). */
+  top: 42px;
+  right: 160px;
   z-index: 60;
   display: inline-flex;
   align-items: center;
@@ -36,14 +39,14 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 .pill:hover {
-  transform: translateX(-50%) translateY(-1px);
+  transform: translateY(-1px);
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
     0 14px 32px -10px rgba(0, 0, 0, 0.9),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 .pill:active {
-  transform: translateX(-50%) scale(0.98);
+  transform: scale(0.98);
 }
 
 .cover {
@@ -84,14 +87,24 @@
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 600px) {
-  /* Mobile home — SuperliveTrigger sits at top:121 (below the
-   * MobileHomeChrome info bar). The Fire Arena pill follows
-   * 8px below the Superlive pill (top:121 + ~48px height + 8
-   * gap = 177). */
+  /* Mobile home — Superchat slot is hidden, so the pill goes
+   * back to being centered horizontally below the Superlive
+   * trigger. SuperliveTrigger sits at top:121 (below the
+   * MobileHomeChrome info bar); the Fire Arena pill follows
+   * 8px below it (top:121 + ~48px height + 8 gap = 177). */
   .pill {
     top: 177px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
     padding: 5px 14px 5px 5px;
     gap: 9px;
+  }
+  .pill:hover {
+    transform: translateX(-50%) translateY(-1px);
+  }
+  .pill:active {
+    transform: translateX(-50%) scale(0.98);
   }
   .cover {
     width: 32px;

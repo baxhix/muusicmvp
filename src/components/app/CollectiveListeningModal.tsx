@@ -189,25 +189,26 @@ export default function CollectiveListeningModal({ open, onClose }: Props) {
 
         {/* ── Album stage ─────────────────────────────────── */}
         <div className={styles.stage}>
-          {/* Spinning vinyl record. Concentric ring effect via
-           *  radial-gradient color stops on the CSS side — see
-           *  CollectiveListeningModal.module.css `.vinyl`. */}
-          <div className={styles.vinyl} aria-hidden="true">
-            <span className={styles.vinylHole} />
+          {/* Record wrapper — fixed-size square that anchors both
+           *  the spinning vinyl AND the static album cover. The
+           *  cover used to live as a SIBLING of .vinyl in .stage,
+           *  which meant top:50% measured from .stage's height
+           *  (variable, included the overlay text) — the cover
+           *  drifted off the vinyl's center. With the wrapper,
+           *  both children are positioned relative to the same
+           *  200×200 box, so the cover sits dead center while the
+           *  vinyl spins around it. */}
+          <div className={styles.record}>
+            <div className={styles.vinyl} aria-hidden="true" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/single.png"
+              alt="Capa do álbum Let's Go Rodeo"
+              className={styles.albumCover}
+            />
+            <span className={styles.vinylHole} aria-hidden="true" />
           </div>
-          {/* Album cover — placeholder image from /public. Swap
-           *  to the real "Let's Go Rodeo" art when available. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/single.png"
-            alt="Capa do álbum Let's Go Rodeo"
-            className={styles.albumCover}
-          />
           <div className={styles.stageOverlay}>
-            <span className={styles.kicker}>
-              <span className={styles.kickerDot} aria-hidden="true" />
-              FIRE ARENA · AUDIÇÃO COLETIVA
-            </span>
             <h2 className={styles.albumTitle}>Let&apos;s Go Rodeo</h2>
             <span className={styles.albumArtist}>
               Ana Castela
@@ -221,6 +222,24 @@ export default function CollectiveListeningModal({ open, onClose }: Props) {
               </svg>
               {viewers.toLocaleString('pt-BR')} ouvindo juntos
             </span>
+          </div>
+
+          {/* ── Simulated player row ─────────────────────
+           * Shows the track Ana is currently spinning, a
+           * progress bar that animates from 0→100 over the
+           * track duration (CSS-only, no JS sync needed),
+           * and the current/total times. The track + times
+           * are static for the demo; swap in real state when
+           * the audio player wires up. */}
+          <div className={styles.player}>
+            <div className={styles.playerHead}>
+              <span className={styles.playerTrackNum}>03</span>
+              <span className={styles.playerTrackName}>Pipoco</span>
+              <span className={styles.playerTime}>01:25 / 03:42</span>
+            </div>
+            <div className={styles.playerProgress}>
+              <div className={styles.playerProgressFill} />
+            </div>
           </div>
         </div>
 

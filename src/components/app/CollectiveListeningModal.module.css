@@ -34,8 +34,14 @@
   height: min(720px, calc(100vh - 32px));
   display: flex;
   flex-direction: column;
+  /* Fire palette — amber / orange / red ambient wash over the
+   * dark base. Stronger color at the top where the album stage
+   * sits, fading to neutral dark toward the chat. The single
+   * top-down radial gradient gives the surface a "warm light
+   * from above" feel that matches the spinning-record visual. */
   background:
-    radial-gradient(120% 50% at 50% 0%, rgba(168, 85, 247, 0.18) 0%, transparent 65%),
+    radial-gradient(120% 55% at 50% 0%, rgba(249, 115, 22, 0.22) 0%, transparent 65%),
+    radial-gradient(80% 40% at 50% 0%, rgba(239, 68, 68, 0.18) 0%, transparent 60%),
     linear-gradient(180deg,
       rgba(11, 11, 13, 0.97) 0%,
       rgba(5, 5, 7, 0.97) 50%,
@@ -46,7 +52,7 @@
   border-radius: 22px;
   box-shadow:
     0 40px 100px -12px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(168, 85, 247, 0.12) inset;
+    0 0 0 1px rgba(249, 115, 22, 0.14) inset;
   color: #f5f5f7;
   overflow: hidden;
   animation: collective-panel-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -82,30 +88,43 @@
 
 .stage {
   /* Stage takes a fixed slice of the panel so the chat below
-   * gets the rest of the height. Keep tight enough that the
-   * fake chat dominates (matches the user-requested "less
-   * stage, more comments" feel from the Superlive iteration). */
+   * gets the rest of the height. Bottom wash flipped from
+   * purple to ember/red so the warm fire palette flows from
+   * the panel-top color above all the way through the stage. */
   position: relative;
   flex-shrink: 0;
-  padding: 28px 20px 20px;
+  padding: 28px 20px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   background:
-    radial-gradient(80% 60% at 50% 100%, rgba(91, 33, 182, 0.20) 0%, transparent 70%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+    radial-gradient(80% 60% at 50% 100%, rgba(220, 38, 38, 0.18) 0%, transparent 72%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 100%);
 }
 
-/* Spinning vinyl record — drawn entirely in CSS via stacked
- * radial gradients so we don't ship a PNG/SVG vinyl asset.
- * The concentric "grooves" are alternating dark stripes that
- * read as the record surface; a slow continuous rotation
- * sells the "is playing" affordance. */
-.vinyl {
+/* Record container — fixed 200×200 box that anchors both the
+ * spinning vinyl AND the static album cover at the same
+ * relative origin. Without this wrapper the cover was a
+ * sibling of .vinyl in .stage, positioned at top:50% relative
+ * to the stage's variable height (overlay text below grew the
+ * container) and the cover drifted off the vinyl's actual
+ * geometric center. */
+.record {
   position: relative;
   width: 200px;
   height: 200px;
+}
+
+/* Spinning vinyl record — drawn entirely in CSS via stacked
+ * radial gradients (concentric "grooves") so we don't ship a
+ * PNG/SVG vinyl asset. Fills the .record wrapper completely
+ * via inset:0; the album cover + spindle hole are siblings
+ * inside the same wrapper, NOT children of .vinyl, so they
+ * don't rotate with it. */
+.vinyl {
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   background:
     radial-gradient(
@@ -132,6 +151,8 @@
   animation: collective-vinyl-spin 4.5s linear infinite;
 }
 .vinylHole {
+  /* Anchored to the wrapper (.record) so it stays at the
+   * geometric center while the vinyl behind it rotates. */
   position: absolute;
   top: 50%;
   left: 50%;
@@ -140,7 +161,8 @@
   margin: -4px 0 0 -4px;
   border-radius: 50%;
   background: #050505;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10);
+  z-index: 2;
 }
 @keyframes collective-vinyl-spin {
   from { transform: rotate(0deg); }
@@ -152,8 +174,9 @@
 
 /* Album cover overlaid on the vinyl center — sits at half the
  * record's diameter so the surrounding grooves stay visible
- * and the rotation reads through the exposed ring. Doesn't
- * rotate itself so the cover stays readable. */
+ * and the rotation reads through the exposed ring. Anchored
+ * to the .record wrapper (NOT inside .vinyl) so it stays
+ * dead-center while the vinyl spins around it. */
 .albumCover {
   position: absolute;
   top: 50%;
@@ -163,6 +186,7 @@
   margin: -55px 0 0 -55px;
   border-radius: 50%;
   object-fit: cover;
+  z-index: 1;
   box-shadow:
     0 0 0 4px #060608,
     0 4px 14px rgba(0, 0, 0, 0.6);
@@ -178,28 +202,6 @@
   align-items: center;
   gap: 4px;
   text-align: center;
-}
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  color: rgba(168, 85, 247, 0.95);
-  text-transform: uppercase;
-}
-.kickerDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #a855f7;
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.7);
-  animation: collective-kicker-pulse 1.6s ease-in-out infinite;
-}
-@keyframes collective-kicker-pulse {
-  0%, 100% { opacity: 1;    transform: scale(1);    }
-  50%      { opacity: 0.45; transform: scale(0.85); }
 }
 .albumTitle {
   margin: 0;
@@ -224,13 +226,88 @@
   margin-top: 4px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(168, 85, 247, 0.16);
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  /* Fire-toned viewer chip — amber border + faint orange wash. */
+  background: rgba(249, 115, 22, 0.14);
+  border: 1px solid rgba(249, 115, 22, 0.40);
   color: rgba(245, 245, 247, 0.85);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.005em;
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Simulated player ───────────────────────────────────── */
+.player {
+  width: 100%;
+  max-width: 320px;
+  margin-top: 12px;
+  padding: 10px 14px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(249, 115, 22, 0.18);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.playerHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.playerTrackNum {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: rgba(249, 115, 22, 0.95);
+  padding: 2px 6px;
+  background: rgba(249, 115, 22, 0.12);
+  border-radius: 4px;
+}
+.playerTrackName {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.005em;
+  text-align: left;
+}
+.playerTime {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.playerProgress {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+}
+.playerProgressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 38%;
+  /* Fire gradient on the fill — amber → orange → red so the
+   * bar reads as a flame even at this small size. Subtle pulse
+   * animation makes the chip feel alive without needing JS
+   * state to advance the playhead. */
+  background: linear-gradient(
+    90deg,
+    #fbbf24 0%,
+    #f97316 55%,
+    #dc2626 100%
+  );
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.55);
+  animation: collective-player-pulse 2.2s ease-in-out infinite;
+}
+@keyframes collective-player-pulse {
+  0%, 100% { opacity: 1;    box-shadow: 0 0 8px rgba(249, 115, 22, 0.55); }
+  50%      { opacity: 0.85; box-shadow: 0 0 14px rgba(249, 115, 22, 0.75); }
 }
 
 /* ── Chat stream ─────────────────────────────────────────── */
@@ -274,8 +351,10 @@
   border-color: rgba(34, 197, 94, 0.30);
 }
 .chatLineSuperfan {
-  background: rgba(168, 85, 247, 0.10);
-  border-color: rgba(168, 85, 247, 0.30);
+  /* Fire-toned tint for superfan rows so the chat color story
+   * stays consistent with the rest of the surface. */
+  background: rgba(249, 115, 22, 0.10);
+  border-color: rgba(249, 115, 22, 0.30);
 }
 
 .chatAvatar {
@@ -319,8 +398,8 @@
   color: #86efac;
 }
 .chatLineSuperfan .chatTierBadge {
-  background: rgba(168, 85, 247, 0.28);
-  color: #d8b4fe;
+  background: rgba(249, 115, 22, 0.28);
+  color: #fed7aa;
 }
 .chatMessage {
   font-size: 13.5px;
@@ -355,7 +434,7 @@
   transition: border-color 0.14s ease, background 0.14s ease;
 }
 .composerField:focus {
-  border-color: rgba(168, 85, 247, 0.55);
+  border-color: rgba(249, 115, 22, 0.55);
   background: rgba(255, 255, 255, 0.07);
 }
 .composerField::placeholder {
@@ -370,11 +449,13 @@
   justify-content: center;
   border: none;
   border-radius: 50%;
+  /* Fire-gradient send button — amber → orange → red so the
+   * action color matches the rest of the modal palette. */
   background:
-    linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+    linear-gradient(135deg, #fbbf24 0%, #f97316 55%, #dc2626 100%);
   color: #ffffff;
   cursor: pointer;
-  box-shadow: 0 4px 12px -4px rgba(168, 85, 247, 0.55);
+  box-shadow: 0 4px 12px -4px rgba(249, 115, 22, 0.55);
   transition: transform 0.12s ease, opacity 0.15s ease;
 }
 .composerSend:hover:not(:disabled) {
@@ -401,7 +482,7 @@
   .stage {
     padding: 24px 18px 16px;
   }
-  .vinyl {
+  .record {
     width: 180px;
     height: 180px;
   }
@@ -412,5 +493,8 @@
   }
   .albumTitle {
     font-size: 17px;
+  }
+  .player {
+    max-width: 280px;
   }
 }
