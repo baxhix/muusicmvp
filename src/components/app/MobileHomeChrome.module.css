@@ -22,16 +22,37 @@
   pointer-events: none;
 }
 
-/* Solid black band that backs the ArtistBox + cluster. Height
- * 68 = 12 top offset + 56 home-header height. */
+/* Header background — soft lilac → pink gradient over a dark
+ * base so the band reads "premium / live" against the rest of
+ * the surface without losing legibility for the white logo +
+ * icons riding on top. Two radial color washes layered above
+ * a black linear gradient:
+ *   - Pink wash (~rose-500) bloomed from the top-right
+ *   - Lilac wash (~purple-500) bloomed from the bottom-left
+ * Both alphas kept under 0.35 so the surface stays elegant
+ * rather than candy-colored. Heavy backdrop blur smooths
+ * everything together; the info bar below intentionally
+ * stays neutral black to preserve a clear visual hierarchy. */
 .headerBg {
   height: 68px;
-  background: rgba(0, 0, 0, 0.92);
-  /* Heavy blur on the band itself so any map / globe pixels
-   * peeking from the edges read as part of the surface, not
-   * the basemap. */
-  backdrop-filter: blur(28px) saturate(1.2);
-  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+  background:
+    radial-gradient(
+      120% 90% at 100% 0%,
+      rgba(236, 72, 153, 0.30) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      110% 90% at 0% 100%,
+      rgba(168, 85, 247, 0.32) 0%,
+      transparent 65%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(11, 11, 13, 0.94) 0%,
+      rgba(6, 6, 9, 0.96) 100%
+    );
+  backdrop-filter: blur(28px) saturate(1.25);
+  -webkit-backdrop-filter: blur(28px) saturate(1.25);
 }
 
 /* Ana Castela logo — centered in the header band. Source PNG
