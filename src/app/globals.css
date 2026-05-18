@@ -196,3 +196,25 @@ button { font-family: inherit; cursor: pointer; }
   0%   { box-shadow: 0 0 0 0 rgba(125,211,252,0.5); }
   100% { box-shadow: 0 0 0 100px rgba(125,211,252,0); }
 }
+
+/* ── Mobile input zoom guard ──────────────────────────────────
+ *
+ * iOS Safari auto-zooms the layout viewport whenever a focused
+ * <input>/<textarea> has a computed font-size BELOW 16px. The
+ * zoom shifts every visible element to the right (or pushes
+ * them off-screen entirely), so floating affordances like the
+ * chat composer's send button slide past the viewport edge and
+ * become unreachable. The user reported exactly this in the
+ * LiveChatPanel composer; that surface has its own scoped fix,
+ * but the same trap exists for every search field / modal input
+ * in the app. This rule pins the minimum interactive font-size
+ * to 16px across the board on phones — `max(16px, 1em)` honors
+ * any component that already declared a LARGER size while
+ * raising any 13/14px declarations up to the safe threshold. */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+}
