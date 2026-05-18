@@ -36,6 +36,7 @@ export default function BottomNav() {
   const router = useRouter();
   const {
     feedOpen,
+    setFeedOpen,
     chatUnreadCount,
     locationSync,
     activeOverlay,
@@ -109,13 +110,8 @@ export default function BottomNav() {
     // user is technically already on /app but the map is hidden
     // by the sheet — tapping the Map slot should mean "give me
     // the map back", which requires closing the Feed first.
-    // Previously this branch did nothing in that state because
-    // pathname === '/app' AND hasCoords passed, so we just flew
-    // the camera under an invisible map.
     if (feedOpen) {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('app:toggle-feed'));
-      }
+      setFeedOpen(false);
       // Don't fall through to flyTo / route push — the user's
       // intent was "show the map", not also re-center. The next
       // tap on Map (when feed is already closed) handles centering.
@@ -177,21 +173,25 @@ export default function BottomNav() {
           <span className={styles.label}>Mapa</span>
         </button>
 
-        {/* Feed — toggles the bottom-sheet via the `app:toggle-feed`
-            CustomEvent the FeedPanel listens to. Feed is a non-modal
-            drawer that overlays the map, so it stays an in-page
-            surface rather than a route. */}
+        {/* Feed — toggles the bottom-sheet directly via the shell's
+            `feedOpen` state. The state survives the navigation gap
+            so opening Feed from a non-/app route lands the user on
+            /app WITH the panel expanded; previously we dispatched
+            an `app:toggle-feed` CustomEvent that FeedPanel had to
+            already be mounted to receive, which silently dropped
+            the intent when crossing a route boundary. */}
         <button
           type="button"
           className={`${styles.item} ${feedOpen ? styles.itemActive : ''}`}
           onClick={() => {
-            // If we're not on the map, drop back to /app first so
-            // the FeedPanel actually exists in the tree to toggle.
+            // Open the feed unconditionally — the navbar Feed slot
+            // is "show me the feed", not "toggle". Closing happens
+            // via the panel header's tap-to-minimize.
+            setFeedOpen(true);
+            // If we're not on /app, route there so FeedPanel actually
+            // mounts and reads the now-true `feedOpen` flag.
             if (pathname !== '/app') {
               router.push('/app');
-            }
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('app:toggle-feed'));
             }
           }}
           aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}

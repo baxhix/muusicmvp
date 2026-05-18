@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useAppShell } from '@/lib/app/AppShellContext';
 import Stories from './Stories';
 import AudioPost from './AudioPost';
 import ActivityCard, { type ActivityCardData } from './ActivityCard';
@@ -228,21 +229,25 @@ function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
 
 /* ── Main component ──────────────────────────────────────── */
 export default function FeedPanel() {
-  // Feed lands expanded by default on DESKTOP — that's the resting
-  // view we want users to see first. On MOBILE we land minimized
-  // (off-screen) so the map gets the full viewport at first load;
-  // the user taps the Feed slot in the BottomNav to bring the
-  // panel up.
+  // Feed open-state lives in AppShellContext now (was a local
+  // `minimized` flag here). The shell owns it so the state
+  // survives navigation — if the user is on /app/ranking and
+  // taps the Feed slot, BottomNav can flip `feedOpen=true`
+  // BEFORE the router push, and this freshly-mounted panel
+  // lands expanded instead of dropping the intent.
   //
-  // SSR-safe: initial state is the desktop default; the mobile
-  // flip happens in the useEffect below after hydration.
-  const [minimized, setMinimized] = useState(false);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.matchMedia('(max-width: 768px)').matches) {
-      setMinimized(true);
+  // `minimized` is just the inverse used by the existing CSS
+  // class / scroll auto-jump logic — kept as a local alias so
+  // the rest of this file doesn't need to be rewritten.
+  const { feedOpen, setFeedOpen } = useAppShell();
+  const minimized = !feedOpen;
+  const setMinimized = (next: boolean | ((m: boolean) => boolean)) => {
+    if (typeof next === 'function') {
+      setFeedOpen((curr) => !next(!curr));
+    } else {
+      setFeedOpen(!next);
     }
-  }, []);
+  };
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Idle-scroll state: after 3s of no user interaction inside the
@@ -330,36 +335,15 @@ export default function FeedPanel() {
     };
   }, [minimized]);
 
-  // External toggle hook — the right-rail chat dock dispatches an
-  // `app:toggle-feed` CustomEvent so a click on the Feed shortcut
-  // flips the panel between expanded / minimized without coupling
-  // the two components directly. Mirrors the
-  // `app:open-notifications` pattern in NotificationBell.
-  //
-  // Chat / Comunidade no longer force the Feed to minimize when
-  // they open — they layer on top via z-index instead. The Feed
-  // stays mounted underneath and reappears as soon as the overlay
-  // closes (no extra coordination needed).
-  useEffect(() => {
-    const onToggle = () => setMinimized((m) => !m);
-    window.addEventListener('app:toggle-feed', onToggle);
-    return () => window.removeEventListener('app:toggle-feed', onToggle);
-  }, []);
-
-  // Broadcast the panel's open/closed state so external surfaces
-  // (the right-rail dock's Feed shortcut) can paint their active
-  // state in sync. Fires whenever `minimized` flips, regardless of
-  // whether the change came from the header click, the dock
-  // shortcut, or any future trigger. Subscribers read
-  // `detail.open` (true = expanded, false = minimized).
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.dispatchEvent(
-      new CustomEvent('app:feed-state-change', {
-        detail: { open: !minimized },
-      }),
-    );
-  }, [minimized]);
+  // External toggles + broadcasts used to flow through
+  // `app:toggle-feed` and `app:feed-state-change` CustomEvents
+  // bridging this component and BottomNav / TopBar shortcuts.
+  // That pattern broke when navigation crossed a route boundary
+  // (events fired while FeedPanel was unmounted got silently
+  // dropped). Both directions now flow through `feedOpen` in
+  // AppShellContext: external surfaces call `setFeedOpen()`
+  // directly, and reading `feedOpen` here keeps this panel in
+  // sync. No event plumbing required.
 
   return (
     <>

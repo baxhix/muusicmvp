@@ -102,11 +102,17 @@ interface AppShellValue {
   setShowSuperchat: (v: boolean) => void;
   setShowChat: (v: boolean) => void;
   setShowCommunity: (v: boolean) => void;
-  /** Mirror of FeedPanel's internal `minimized` flag. The Feed is
-   *  a non-modal bottom-sheet so it lives outside `activeOverlay`,
-   *  but the BottomNav / TopBar shortcuts still need to read its
-   *  open-state to drive their active-rings. */
+  /** Source-of-truth for whether the Feed bottom-sheet is open.
+   *  Lives in the shell provider (not inside FeedPanel) so the
+   *  state survives navigation — if the user is on /app/ranking
+   *  and clicks the Feed slot, BottomNav can flip `feedOpen` to
+   *  true BEFORE the router push, and the freshly-mounted
+   *  FeedPanel on /app reads that intent and lands expanded.
+   *  Previously the toggle was an event (`app:toggle-feed`) that
+   *  FeedPanel had to be already mounted to receive — the gap
+   *  between dispatch and re-mount silently dropped the intent. */
   feedOpen: boolean;
+  setFeedOpen: Dispatch<SetStateAction<boolean>>;
   /** Total non-read DMs across all conversations — drives the
    *  red badge on the Chat slot of the BottomNav. Computed live
    *  from `chat.conversations` so consumers don't have to redo
@@ -255,20 +261,19 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ── Feed open mirror ──────────────────────────────────────────
-  // FeedPanel emits `app:feed-state-change` on its own toggles;
-  // we listen here and replay the same boolean to anyone who
-  // needs to know (BottomNav, TopBar shortcut). Default true =
-  // matches FeedPanel's `useState(true)` initial value.
+  // Feed open-state is now owned HERE (was inside FeedPanel as a
+  // local `minimized` flag). FeedPanel reads `feedOpen` from this
+  // provider and BottomNav can flip it directly, so the intent
+  // survives the navigation gap between routes — see the docstring
+  // on `setFeedOpen` above. Default true = expanded on desktop;
+  // the effect below collapses it on initial mobile load so the
+  // map gets the full viewport on first paint.
   const [feedOpen, setFeedOpen] = useState(true);
   useEffect(() => {
-    const onState = (e: Event) => {
-      const ce = e as CustomEvent<{ open: boolean }>;
-      if (typeof ce.detail?.open === 'boolean') {
-        setFeedOpen(ce.detail.open);
-      }
-    };
-    window.addEventListener('app:feed-state-change', onState);
-    return () => window.removeEventListener('app:feed-state-change', onState);
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      setFeedOpen(false);
+    }
   }, []);
 
   // ── Unread aggregation ────────────────────────────────────────
@@ -443,6 +448,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setShowChat,
       setShowCommunity,
       feedOpen,
+      setFeedOpen,
       chatUnreadCount,
       songIdx,
       setSongIdx,

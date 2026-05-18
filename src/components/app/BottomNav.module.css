@@ -151,28 +151,35 @@
   gap: 0;
   background: none;
   border: none;
-  /* All icons render in pure white, uniform stroke weight. The
-   * previous mute color (var(--ink-mute)) made resting icons look
-   * inconsistent next to the active one — flat white reads as a
-   * single coherent set. */
-  color: #ffffff;
+  /* Color-based active/inactive across ALL viewports per product
+   * feedback: inactive icons are muted gray, the actively-routed
+   * slot is pure white. Was previously opacity-dim on desktop
+   * (color: #fff at opacity 0.78) and color-only on mobile —
+   * unified to the color approach everywhere so the active state
+   * reads identically on phone and desktop. */
+  color: rgba(245, 245, 247, 0.45);
   cursor: pointer;
   font-family: var(--sans);
-  transition: color 0.15s, transform 0.15s, opacity 0.15s;
+  transition: color 0.15s, transform 0.15s;
   /* Original padding restored — height back to where it was. */
   padding: 6px 8px;
   border-radius: var(--r-md);
   min-width: unset;
   text-decoration: none;
-  /* Faint resting opacity so hover/active still has somewhere to
-   * lift to without changing color. */
-  opacity: 0.78;
 }
 .item:hover {
-  opacity: 1;
+  /* Slight color lift on hover lets the user feel the target
+   * without changing the active/inactive binary. */
+  color: rgba(245, 245, 247, 0.75);
   transform: translateY(-1px);
 }
-.itemActive { opacity: 1; }
+.itemActive {
+  color: #ffffff;
+}
+.itemActive:hover {
+  /* Active items stay pure white through hover — no flicker. */
+  color: #ffffff;
+}
 
 /* ── Tooltips (unchanged behaviour) ──────────────────────────── */
 .item[data-tooltip]::before,
@@ -304,24 +311,21 @@
 .itemCenter {
   width: 36px; height: 36px;
   background: transparent !important;
-  /* Color was `#ffffff !important` here, which beat the mobile
-   * inactive-gray override and forced the center crown to ALWAYS
-   * read as active. Removed the !important so the mobile rule
-   * below can win for the inactive state. Desktop still gets
-   * white because `.item { color: #ffffff }` (the parent rule)
-   * applies to `.itemCenter` too via the shared `.item` class. */
-  color: #ffffff;
-  opacity: 0.85;
+  /* No color/opacity here — `.item` (the shared parent class on
+   * the same button) provides the gray-inactive / white-active
+   * binary for both regular items and the center crown.
+   * Previously this rule forced the center to `color: #ffffff`
+   * unconditionally, which made the crown read as active forever
+   * even when the user was on a different route. */
   min-width: auto;
   padding: 0;
   flex-direction: row;
   gap: 0;
   display: grid;
   place-items: center;
-  transition: opacity 0.15s, transform 0.15s !important;
+  transition: color 0.15s, transform 0.15s !important;
 }
 .itemCenter:hover {
-  opacity: 1;
   transform: scale(1.07) !important;
   box-shadow: none !important;
 }
@@ -351,46 +355,26 @@
     width: 28px;
     height: 28px;
   }
-  /* Mobile uses COLOR (not opacity) to distinguish active vs
-   * inactive — inactive items are muted gray, the active slot
-   * (whichever route is currently mounted) lights up in pure
-   * white. `!important` on BOTH branches keeps the binary
-   * crisp: even when a state like `.itemDisabled` (Feed off) or
-   * a stuck `:hover` after a tap tries to slide a higher-
-   * specificity rule in, the gray ↔ white split survives. */
-  .item,
-  .itemCenter {
-    color: rgba(245, 245, 247, 0.45) !important;
-    opacity: 1 !important;
-  }
-  .item.itemActive,
-  .itemCenter.itemActive {
-    color: #ffffff !important;
-    opacity: 1 !important;
-  }
+  /* The base `.item` / `.itemActive` rules now own the
+   * gray-inactive / white-active binary across every viewport.
+   * Mobile no longer needs a separate color override here. */
+}
 
-  /* Touch devices: kill `:hover` lifts entirely. iOS/Android
-   * sticky-hover keeps the LAST tapped icon at hover-state
-   * (lifted + brighter) until the user taps somewhere else,
-   * which produced the "icons go white and don't go back to
-   * gray" behavior the user reported. `(hover: none)` matches
-   * inputs that can't truly hover — pointer-only touchscreens. */
-  @media (hover: none) {
-    .item:hover,
-    .itemCenter:hover {
-      opacity: 1 !important;
-      transform: none !important;
-      /* Reassert the inactive color so a sticky :hover state
-       * doesn't override the inactive gray. The :hover selector
-       * specificity is the same as `.item`, so without
-       * !important here a pseudo-class win on cascade order
-       * could leak. */
-      color: rgba(245, 245, 247, 0.45) !important;
-    }
-    .item.itemActive:hover,
-    .itemCenter.itemActive:hover {
-      color: #ffffff !important;
-    }
+/* Touch devices: kill `:hover` lifts entirely so sticky-hover
+ * doesn't trap an icon at the hover-state (slightly brighter)
+ * until the user taps somewhere else. Lives at the top level
+ * (not inside the mobile @media) because `(hover: none)` is
+ * the right signal for "no real pointer hover" — covers touch
+ * laptops too. */
+@media (hover: none) {
+  .item:hover,
+  .itemCenter:hover {
+    transform: none;
+    color: rgba(245, 245, 247, 0.45);
+  }
+  .item.itemActive:hover,
+  .itemCenter.itemActive:hover {
+    color: #ffffff;
   }
 }
 
