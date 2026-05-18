@@ -166,27 +166,28 @@
 
 /* ── Responsive ──
  *
- * Mobile: the "ouvindo juntos" row stays visible. Anchored
- * `bottom: 140px` so it sits cleanly above:
- *   - the NowPlaying mini-bar (bottom:76px + ~52px height)
- *   - and the BottomNav pill (~88px from bottom edge)
+ * Mobile: "ouvindo juntos" row sits JUST above the navbar
+ * (`bottom: 100px`, ~12px gap above the ~88px BottomNav). The
+ * NowPlaying mini-bar lives higher up so this row hugs the nav
+ * — fewer floating layers competing for the bottom-of-screen
+ * attention.
  *
- * Avatars shrink to 28px + tighter overlap so the 7-avatar row
- * + counter copy fits even on a 320px screen without wrapping.
- * The fade-in / fade-out animation stays identical to desktop.
+ * 6 avatars × 32px (up from 7 × 28px) + tighter overlap so the
+ * row stays a single line on every common phone size without
+ * the trailing descriptor being clipped.
  */
 @media (max-width: 768px) {
   .root {
-    bottom: 140px;
+    bottom: 100px;
     max-width: calc(100vw - 16px);
   }
   .avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-width: 1.5px;
   }
   .wrap {
-    margin-left: -8px;
+    margin-left: -9px;
   }
   .tooltip {
     padding: 5px 8px;
@@ -198,7 +199,7 @@
   }
   .liveCountNum,
   .liveCountLabel {
-    font-size: 10.5px;
+    font-size: 11px;
   }
 }
 @media (max-width: 380px) {

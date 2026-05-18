@@ -11,11 +11,10 @@ const LISTENERS = [
   { id: 'l4', name: 'Ana C.',      city: 'Curitiba',       center: [-49.2654, -25.4284] as [number, number], zoom: 10, img: 'https://i.pravatar.cc/72?img=56' },
   { id: 'l5', name: 'Thiago F.',   city: 'Salvador',       center: [-38.5108, -12.9714] as [number, number], zoom: 10, img: 'https://i.pravatar.cc/72?img=8'  },
   { id: 'l6', name: 'Paula G.',    city: 'Recife',         center: [-34.8813,  -8.0539] as [number, number], zoom: 10, img: 'https://i.pravatar.cc/72?img=44' },
-  { id: 'l7', name: 'Diego V.',    city: 'Porto Alegre',   center: [-51.2177, -30.0277] as [number, number], zoom: 10, img: 'https://i.pravatar.cc/72?img=15' },
 ];
 
 // Non-linear delays (ms) between each avatar appearing — 3s / 1s / 4s pattern
-const STEP_MS  = [3000, 1000, 4000, 3000, 1000, 4000, 3000];
+const STEP_MS  = [3000, 1000, 4000, 3000, 1000, 4000];
 const HOLD_MS  = 4000; // how long all 7 stay visible
 const EXIT_MS  = 500;  // duration of exit animation cycle
 

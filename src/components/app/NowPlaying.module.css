@@ -500,7 +500,11 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .player {
-    bottom: 96px;       /* acima da BottomNav */
+    /* Sit above the "ouvindo juntos" row (which lands at
+     * bottom: 100px + ~32px height = 132 from bottom), with a
+     * comfortable 24px gap. The previous 96px crowded the row
+     * directly above the navbar. */
+    bottom: 156px;
     left: 12px;
   }
   .playerHorizontal,
@@ -515,18 +519,15 @@
   }
 }
 @media (max-width: 480px) {
-  /* Mini-bar mode — Spotify-style edge-to-edge strip sitting just
-   * above the BottomNav. We bring the player full-width (left/right
-   * 8px gutter) and cap it at 60px tall; the audio-bars wave and
-   * the skip-prev/skip-next get hidden so just the cover + title +
-   * play/pause survive — the affordances the user actually wants
-   * at thumb-reach distance.
-   *
-   * The 76px bottom offset reserves room for the BottomNav (~64px
-   * tall + 12px of glow padding). No transform on hover — the
-   * mini-bar is a low-key resting affordance, not a floating chip. */
+  /* Mini-bar mode — Spotify-style edge-to-edge strip. The 156px
+   * bottom offset clears both the BottomNav (~88px) AND the
+   * "ouvindo juntos" row at bottom:100px (~32px tall) with a
+   * comfortable 24px breathing gap. The audio-bars wave and the
+   * skip-prev / skip-next get hidden so just cover + title +
+   * play/pause survive — the affordances the user actually
+   * wants at thumb-reach distance. */
   .player {
-    bottom: 76px;
+    bottom: 156px;
     left: 8px;
     right: 8px;
     width: auto !important;

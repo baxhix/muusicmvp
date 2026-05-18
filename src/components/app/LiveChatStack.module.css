@@ -303,14 +303,18 @@
     transform: translateY(calc(-100% - 12px));
   }
   .dock::before {
-    inset: -6px -18px;
+    inset: -6px -20px;
   }
   .label {
     display: none;
   }
+  /* Mobile avatars +15% vs the previous 36px → 42px so the dock
+   * reads as a first-class affordance on phones too. The cluster
+   * below now sits at top:65% (instead of 50%), leaving extra
+   * vertical room for the larger dock without collisions. */
   .item {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
   }
   .item:hover {
     transform: scale(1.18) translateX(-2px);

@@ -54,8 +54,12 @@
 }
 
 @media (max-width: 768px) {
+  /* Mobile — shift the cluster to ~65% of the viewport height
+   * so it sits below the vertical center, leaving more breathing
+   * room for the LiveChatStack dock above center. */
   .topBar {
     right: 16px;
+    top: 65%;
     transform: translateY(-50%);
   }
 }
@@ -199,10 +203,10 @@
   to   { opacity: 1; transform: scale(1);   }
 }
 @media (max-width: 768px) {
-  /* Match the mobile NowPlaying offset (bottom:76px above the
-   * BottomNav). Left also snaps to the 8px gutter. */
+  /* Match the mobile NowPlaying offset (now bottom:156px so the
+   * pill sits above the "ouvindo juntos" row too). */
   .playerRestorePill {
-    bottom: 76px;
+    bottom: 156px;
     left: 12px;
   }
 }
