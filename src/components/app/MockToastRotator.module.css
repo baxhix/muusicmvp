@@ -255,10 +255,16 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  /* `flex: 1` lets the info column claim ALL the remaining
-   * horizontal space inside the chip so longer text can wrap
-   * to two lines without overflowing into the right padding. */
-  flex: 1;
+  /* `flex: 0 1 auto` (the default) — basis is the column's
+   * INTRINSIC content width so the parent toast can size itself
+   * to fit, while `flex-shrink: 1` + `min-width: 0` still let
+   * the column collapse + ellipsise its children when the
+   * toast hits its max-width cap. The previous `flex: 1`
+   * (shorthand for `1 1 0%`) collapsed the basis to zero,
+   * which prevented the parent inline-flex from growing to
+   * fit short content — so the toast didn't size correctly
+   * to its body. */
+  flex: 0 1 auto;
 }
 
 /* Single-line info variant — used by the waved notification
@@ -273,6 +279,15 @@
   font-size: 13px;
   color: rgba(245, 245, 247, 0.7);
   line-height: 1.3;
+  /* Title row is single-line: if the natural text width exceeds
+   * the toast's max-width it truncates with an ellipsis rather
+   * than wrapping. The notification is meant to be 2 LINES TOTAL
+   * (title row + subtitle row); each individual row stays on a
+   * single line. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .strong {
   color: #ffffff;
@@ -286,22 +301,22 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  /* Subtitle row also stays on one line; the inner .trackLabel
+   * carries the ellipsis when it overflows. */
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .trackLabel {
-  /* Two-line wrap with clean truncation after the second line.
-   * Previously was nowrap+ellipsis which hard-clipped the
-   * second line to a single line — per product feedback every
-   * notification should reliably render with two lines of
-   * content, not be capped at one. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+  /* Single-line ellipsis. Two-row notifications cap at 2 lines
+   * TOTAL (one in .text above + one here); long bodies truncate
+   * rather than wrapping into a third line, which is what
+   * happened with the previous `-webkit-line-clamp: 2` rule. */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.3;
-  word-break: break-word;
+  min-width: 0;
 }
 
 .waveEmoji {
