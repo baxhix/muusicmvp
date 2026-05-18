@@ -700,34 +700,43 @@
 
 @media (max-width: 768px) {
   /* Mobile — pill is the LEFT half of the fixed header. The
-   * right edge stops 64px from the viewport edge to clear the
-   * single Notificações button (38px + 14px right margin + a
-   * 12px breathing gap). The Coroa/Superfãs button used to live
-   * here too — it's now in the BottomNav center, so the pill
-   * picks up the extra real estate. */
+   * right edge clears the Notificações + Chat (Send) cluster
+   * docked at the top-right: 2 buttons × 38px + 8px gap +
+   * 14px right margin + 10px breathing buffer = 108px.
+   *
+   * Height bumped to match the internal MobileRouteHeader (68px)
+   * so the home header reads as the same "shelf" as Conversas,
+   * Superfãs, Comunidades, etc. Background swapped to a more
+   * translucent gradient so the backdrop-blur (already declared
+   * at 40px on .box) actually paints through — the previous
+   * 96%-opaque fill was hiding the blur. */
   .box {
     width: auto;
     max-width: none;
     left: 12px;
-    right: 64px;
+    right: 108px;
     top: 12px;
     border-radius: 16px;
+    background:
+      linear-gradient(180deg,
+        rgba(11, 11, 13, 0.62) 0%,
+        rgba(5, 5, 7, 0.58) 100%);
   }
   .compactBar {
-    height: 56px;
-    padding: 8px 12px 8px 8px;
-    gap: 12px;
+    height: 68px;
+    padding: 10px 14px 10px 10px;
+    gap: 14px;
   }
   .compactPhoto {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
   }
   .compactName {
-    font-size: 13px;
+    font-size: 14px;
   }
   .compactFanpoints {
-    font-size: 12.5px;
+    font-size: 13px;
     gap: 5px;
   }
   .compactFanpoints svg {

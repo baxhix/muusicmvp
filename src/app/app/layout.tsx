@@ -74,6 +74,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const {
     chat,
+    chatUnreadCount,
     onlineUserIds,
     activeOverlay,
     setActiveOverlay,
@@ -183,23 +184,55 @@ function Shell({ children }: { children: React.ReactNode }) {
           {!hideShellChrome && !hideMobileHeader && (
             <div className={styles.topBar}>
               {isMobile ? (
-                <button
-                  type="button"
-                  className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
-                  onClick={() => {
-                    setActiveOverlay((curr) =>
-                      curr === 'notifications' ? null : 'notifications',
-                    );
-                  }}
-                  aria-label="Notificações"
-                  aria-pressed={showNotifications}
-                  title="Notificações"
-                >
-                  <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z" />
-                    <path d="M9 18a2 2 0 0 0 4 0" />
-                  </svg>
-                </button>
+                /* Mobile cluster — Notificações + Chat. Per product
+                 *  feedback Chat lives at the TOP-RIGHT corner (the
+                 *  rightmost slot in this flex row), with the bell
+                 *  sitting immediately to its left. Flex row order
+                 *  matches DOM order, so render Notif first then
+                 *  Chat. Chat unread count rides along as a red
+                 *  pill on the icon. */
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
+                    onClick={() => {
+                      setActiveOverlay((curr) =>
+                        curr === 'notifications' ? null : 'notifications',
+                      );
+                    }}
+                    aria-label="Notificações"
+                    aria-pressed={showNotifications}
+                    title="Notificações"
+                  >
+                    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z" />
+                      <path d="M9 18a2 2 0 0 0 4 0" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
+                    onClick={() => {
+                      if (pathname.startsWith('/app/chat')) {
+                        router.push('/app');
+                      } else {
+                        router.push('/app/chat');
+                      }
+                    }}
+                    aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
+                    aria-pressed={pathname.startsWith('/app/chat')}
+                    title="Conversas"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
+                    </svg>
+                    {chatUnreadCount > 0 && (
+                      <span className={styles.shortcutBtnBadge} aria-hidden="true">
+                        {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                      </span>
+                    )}
+                  </button>
+                </>
               ) : (
                 <>
                   <button
@@ -220,8 +253,12 @@ function Shell({ children }: { children: React.ReactNode }) {
                     aria-pressed={pathname.startsWith('/app/chat')}
                     title="Conversas"
                   >
+                    {/* Paper-airplane (Send) glyph — Instagram-DM
+                     *  pattern. Outline-stroke at the same 1.7 weight
+                     *  as the surrounding right-rail icons so the
+                     *  whole cluster reads as one icon set. */}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-4 3v-3H6a2 2 0 0 1-2-2V5z" />
+                      <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
                     </svg>
                   </button>
 

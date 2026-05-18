@@ -65,14 +65,20 @@
   /* Mobile — the cluster moves UP to the top-right corner and
    * lays out HORIZONTALLY as the right side of the fixed header.
    * The Fanverse pill occupies the left side of the same header
-   * row (top:12 left:12 right:112).
+   * row (top:12 left:12 right:108, height:68 after the bump that
+   * matched it to the internal MobileRouteHeader).
    *
-   * Mobile cluster contains exactly ONE button (Notificações) —
-   * the layout branches on isMobile and renders only the bell
-   * here. The desktop Chat + Playlist buttons live in a sibling
-   * <> branch, so there's no need to nth-child-hide them anymore. */
+   * `top: 27` vertically centers a 38px button within the 68px
+   * pill band that starts at top:12: midpoint = 12 + 34 = 46,
+   * button center = 27 + 19 = 46. The two header halves now
+   * read as one shelf instead of a tall pill with floating
+   * buttons next to it.
+   *
+   * Cluster has TWO buttons on mobile: Notificações (1st) and
+   * Chat/Send (2nd, anchored to the rightmost slot per product
+   * feedback). */
   .topBar {
-    top: 14px;
+    top: 27px;
     right: 14px;
     transform: none;
     flex-direction: row;
@@ -123,6 +129,34 @@
   width: 16px;
   height: 16px;
   display: block;
+}
+
+/* Unread pill on the right-rail Chat (Send) button — matches the
+ * visual language of the BottomNav unread badge so the cue is
+ * consistent across both surfaces. Anchored to the top-right of
+ * the circular button with a small overhang so the count never
+ * sits inside the icon's letterforms. */
+.shortcutBtn {
+  position: relative;
+}
+.shortcutBtnBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1.5px solid rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }
 
 .shortcutBtnActive,
