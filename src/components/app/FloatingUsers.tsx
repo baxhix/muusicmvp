@@ -21,13 +21,22 @@ interface FloatingUser {
   zoom?: number;
 }
 
-/** Stable hash → 0..1 floats. Same user always lands on same screen position. */
-function hashFloats(seed: string, count: number): number[] {
+/** Stable 32-bit FNV-1a hash. Used to give each user id a deterministic
+ *  numeric rank and to derive jitter / animation offsets. */
+function stableHash(seed: string): number {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
+  return h >>> 0;
+}
+
+/** Extract up to 4 derived `[0, 1)` floats from a base hash without
+ *  re-hashing the seed string each time. Used for the secondary
+ *  jitter + float-animation params. */
+function derivedFloats(hash: number, count: number): number[] {
+  let h = hash;
   const out: number[] = [];
   for (let i = 0; i < count; i++) {
     h = Math.imul(h ^ (h >>> 13), 16777619);
@@ -36,35 +45,83 @@ function hashFloats(seed: string, count: number): number[] {
   return out;
 }
 
-/** ApiOnlineUser → FloatingUser shape with deterministic screen position. */
-function projectToFloating(u: ApiOnlineUser): FloatingUser {
-  const [x, y, dur, del] = hashFloats(u.id, 4);
-  // Keep away from screen edges so the badge doesn't clip.
-  //
-  // Horizontal range was 10–86% (x * 76). The right ~18% of the
-  // viewport is occupied by the LiveChatStack dock (3 avatars at
-  // right:14 on mobile, right:18 on desktop) — floating users
-  // landing there would sit exactly behind the message previews
-  // and the chat dock would obscure them on hover. Pulled the
-  // upper bound down to 68% so floating users always have a
-  // visible gap between them and the right-rail dock; lower
-  // bound nudged to 8% for symmetry with the new max.
-  const left = `${8 + x * 60}%`;
-  const top = `${12 + y * 64}%`;
-  return {
-    id: u.id,
-    name: u.name ?? 'Anônimo',
-    city: [u.city, u.country].filter(Boolean).join(', ') || '—',
-    song: u.nowPlaying?.title ?? null,
-    artist: u.nowPlaying?.artist ?? null,
-    img: u.avatarUrl ?? `https://i.pravatar.cc/72?u=${u.id}`,
-    left,
-    top,
-    floatDuration: 3.5 + dur * 1.8,
-    floatDelay: -del * 4,
-    center: u.lng != null && u.lat != null ? [u.lng, u.lat] : undefined,
-    zoom: 10,
-  };
+/**
+ * Distribute every visible online user into a stratified grid that
+ * spans the safe area (left 8–68%, top 12–76%). Each user lands in
+ * its OWN cell — no two users can hash into adjacent positions at
+ * the same rim of the viewport, which was the source of the
+ * "dois cards juntos no canto direito" complaint with the previous
+ * per-user pure-hash projection.
+ *
+ * Algorithm:
+ *   1. Stable-hash every user id.
+ *   2. Sort by hash → deterministic order that mixes user ids
+ *      evenly across the index space (no "all early ids land
+ *      in the first cells").
+ *   3. Compute a grid size from N. Bias toward more rows than
+ *      columns on the visible area so badge widths (≈ 35-45%
+ *      on mobile) don't have to share a row at narrow widths.
+ *   4. Walk the sorted list, assigning each user to its row+col.
+ *   5. Within the cell, jitter ±30% of cell dimensions from
+ *      derived hash bits so positions feel organic, not gridded.
+ *
+ * The horizontal range remains 8-68% (60% of viewport width)
+ * because the LiveChatStack dock sits at right ≈14-18px with
+ * ~44px avatars stacked — anything past 68% would hide behind
+ * it. Vertical range is 12-76% (64% of height) for the same
+ * top/bottom safe-area reasoning. */
+function distributeFloatingUsers(users: ApiOnlineUser[]): FloatingUser[] {
+  if (users.length === 0) return [];
+
+  const hashed = users.map((u) => ({ user: u, hash: stableHash(u.id) }));
+  // Stable order independent of fetch order.
+  hashed.sort((a, b) => a.hash - b.hash);
+
+  const N = hashed.length;
+  // Grid: bias rows > cols so each user has more horizontal
+  // breathing room (mobile badges are wider than they are tall).
+  // sqrt(N * heightRatio/widthRatio) for cols, ceil(N/cols) for rows.
+  // Visible area ratio: 60% / 64% ≈ 0.94 — roughly square, so the
+  // grid is close to sqrt(N) × sqrt(N) with a +1 row bias.
+  const cols = Math.max(2, Math.ceil(Math.sqrt(N * 0.85)));
+  const rows = Math.ceil(N / cols);
+
+  return hashed.map(({ user, hash }, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    // Cell center in [0, 1).
+    const xCenter = (col + 0.5) / cols;
+    const yCenter = (row + 0.5) / rows;
+
+    // ±30% of cell-size jitter, deterministic from hash bits.
+    const jitterX = (((hash & 0xff) / 255) - 0.5) * 0.6 / cols;
+    const jitterY = ((((hash >>> 8) & 0xff) / 255) - 0.5) * 0.6 / rows;
+
+    // Map cell-space [0, 1) → visible area [8, 68)% × [12, 76)%.
+    const xPct = (xCenter + jitterX) * 60 + 8;
+    const yPct = (yCenter + jitterY) * 64 + 12;
+
+    // Float animation params (duration / delay) keep their existing
+    // hash-derived behaviour so the visual breathing is identical
+    // to before — only the static position changed.
+    const [, , dur, del] = derivedFloats(hash, 4);
+
+    return {
+      id: user.id,
+      name: user.name ?? 'Anônimo',
+      city: [user.city, user.country].filter(Boolean).join(', ') || '—',
+      song: user.nowPlaying?.title ?? null,
+      artist: user.nowPlaying?.artist ?? null,
+      img: user.avatarUrl ?? `https://i.pravatar.cc/72?u=${user.id}`,
+      left: `${xPct}%`,
+      top: `${yPct}%`,
+      floatDuration: 3.5 + dur * 1.8,
+      floatDelay: -del * 4,
+      center: user.lng != null && user.lat != null ? [user.lng, user.lat] : undefined,
+      zoom: 10,
+    };
+  });
 }
 
 /**
@@ -82,7 +139,7 @@ export default function FloatingUsers() {
   const { users: liveUsers } = useLiveUsers();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const pool = useMemo(() => liveUsers.map(projectToFloating), [liveUsers]);
+  const pool = useMemo(() => distributeFloatingUsers(liveUsers), [liveUsers]);
 
   return (
     <>
