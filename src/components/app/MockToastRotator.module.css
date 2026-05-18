@@ -49,7 +49,7 @@
 }
 
 .toast {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 12px;
   padding: 10px 18px 10px 10px;
@@ -59,24 +59,22 @@
   backdrop-filter: blur(28px) brightness(0.85) saturate(1.4);
   -webkit-backdrop-filter: blur(28px) brightness(0.85) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  /* Pill stays soft-rounded but not full 999px because the
-   * notification now reliably renders TWO lines of text and a
-   * fully-round pill on a taller surface reads as awkward. */
   border-radius: 22px;
   box-shadow:
     0 12px 32px -8px rgba(0, 0, 0, 0.7),
     0 0 18px -4px rgba(61, 219, 116, 0.18);
   pointer-events: auto;
-  /* Wider envelope (was 420 → now 520) so the second line of
-   * text fits comfortably without truncation across all five
-   * notification types. Still clamped to the viewport minus 32
-   * gutter so mobile keeps a comfortable margin. */
-  width: min(520px, calc(100vw - 32px));
-  /* Two-line minimum so every notification (regardless of body
-   * length) renders with the same visual height. The .info
-   * column inside dictates the actual lines; this min-height
-   * just locks the chip's external footprint. */
-  min-height: 56px;
+  /* Responsive width per product feedback: the box sizes to
+   * its content via `width: auto` + `inline-flex` so each
+   * notification type ends up exactly as wide as it needs to
+   * be (no trailing whitespace), then `max-width` clamps long
+   * variants so they still fit comfortably on mobile.
+   *
+   * The parent `.root` already centers horizontally via
+   * `left: 50%; transform: translateX(-50%)`, so the chip
+   * remains centered on the page regardless of its width. */
+  width: auto;
+  max-width: min(520px, calc(100vw - 32px));
 }
 
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -157,6 +155,95 @@
   background: rgba(255, 255, 255, 0.06);
   border: 1.5px solid rgba(255, 255, 255, 0.12);
   color: rgba(245, 245, 247, 0.9);
+  /* `position: relative` makes the slot the anchor for the
+   * absolutely-positioned `.confettiPiece` particles below. */
+  position: relative;
+  /* Don't clip the confetti spans that fly outside the slot's
+   * round footprint. */
+  overflow: visible;
+}
+
+/* Festive variant — tints the crown gold and lights up the
+ * confetti animation around it. Applied via the
+ * `.glyphFestive` modifier on the top_20 row. */
+.glyphFestive {
+  background: linear-gradient(180deg,
+    rgba(251, 191, 36, 0.20) 0%,
+    rgba(245, 158, 11, 0.10) 100%);
+  border-color: rgba(251, 191, 36, 0.50);
+  color: #fbbf24;
+  box-shadow: 0 0 14px -2px rgba(251, 191, 36, 0.45);
+}
+
+/* Confetti particles — 8 small squares that burst outward
+ * from the glyph center in a staggered cycle. Each particle
+ * is colored individually via :nth-child rules; each gets a
+ * unique end-position via the same nth-child mechanism. The
+ * particles cycle on a 2.4s loop so the celebration keeps
+ * pulsing as long as the toast is visible. */
+.confettiPiece {
+  position: absolute;
+  /* Centered at the glyph's middle, then animated outward.
+   * Sized small so the burst reads as confetti, not balls. */
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 1px;
+  pointer-events: none;
+  opacity: 0;
+  animation: mockToastConfetti 2.4s ease-out infinite;
+}
+
+/* Directions + colors per particle. 8 directions × varied
+ * colors = a festive multi-color burst. The `--tx` / `--ty`
+ * vars feed the end-translate in the keyframe. */
+.confettiPiece:nth-child(1) { --tx:  22px; --ty: -18px; background: #fbbf24; animation-delay: 0.0s; }
+.confettiPiece:nth-child(2) { --tx:  26px; --ty:   2px; background: #f97316; animation-delay: 0.2s; }
+.confettiPiece:nth-child(3) { --tx:  20px; --ty:  18px; background: #ef4444; animation-delay: 0.4s; }
+.confettiPiece:nth-child(4) { --tx:   0px; --ty:  24px; background: #ec4899; animation-delay: 0.6s; }
+.confettiPiece:nth-child(5) { --tx: -22px; --ty:  18px; background: #a78bfa; animation-delay: 0.1s; }
+.confettiPiece:nth-child(6) { --tx: -26px; --ty:   2px; background: #38bdf8; animation-delay: 0.3s; }
+.confettiPiece:nth-child(7) { --tx: -20px; --ty: -18px; background: #34d399; animation-delay: 0.5s; }
+.confettiPiece:nth-child(8) { --tx:   0px; --ty: -24px; background: #fde047; animation-delay: 0.7s; }
+
+@keyframes mockToastConfetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translate3d(
+      calc(var(--tx) * 0.3),
+      calc(var(--ty) * 0.3),
+      0
+    ) scale(1) rotate(60deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translate3d(
+      var(--tx),
+      var(--ty),
+      0
+    ) scale(0.85) rotate(220deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(
+      calc(var(--tx) * 1.2),
+      calc(var(--ty) * 1.2 + 6px),
+      0
+    ) scale(0.5) rotate(320deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confettiPiece {
+    animation: none;
+    opacity: 0;
+  }
 }
 .glyph svg {
   width: 18px;
@@ -169,10 +256,17 @@
   gap: 2px;
   min-width: 0;
   /* `flex: 1` lets the info column claim ALL the remaining
-   * horizontal space inside the wider 520px chip so longer text
-   * can wrap to two lines without overflowing into the right
-   * padding. */
+   * horizontal space inside the chip so longer text can wrap
+   * to two lines without overflowing into the right padding. */
   flex: 1;
+}
+
+/* Single-line info variant — used by the waved notification
+ * where the row is just one sentence + emoji. Strips the
+ * column layout so the row sits centered with the avatar. */
+.infoSingleLine {
+  flex-direction: row;
+  align-items: center;
 }
 
 .text {
@@ -214,6 +308,28 @@
   font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
+}
+
+/* Inline waving-hand for the single-line waved variant. Sits
+ * right after the text without its own line. Small waggle
+ * animation gives it a tiny "waving" cue without occupying
+ * extra layout space. */
+.waveEmojiInline {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 4px;
+  transform-origin: 70% 70%;
+  animation: mockToastWave 1.6s ease-in-out infinite;
+}
+@keyframes mockToastWave {
+  0%, 60%, 100% { transform: rotate(0deg);   }
+  15%           { transform: rotate(-15deg); }
+  30%           { transform: rotate(12deg);  }
+  45%           { transform: rotate(-8deg);  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .waveEmojiInline { animation: none; }
 }
 
 /* Same audio-bars motif SameTrackToast uses. Green pulse keeps

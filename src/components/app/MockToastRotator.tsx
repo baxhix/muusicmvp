@@ -46,7 +46,10 @@ const MOCK_USERS: MockUser[] = [
 const MOCK_TRACKS = [
   { title: 'Pipoco', artist: 'Ana Castela' },
   { title: 'Boiadeira', artist: 'Ana Castela' },
-  { title: "Lets Go Rodeo", artist: 'Ana Castela' },
+  // "Lets Go Rodeo" was previously listed as a track here, but
+  // it's the ALBUM name, not a song — replaced with another
+  // Ana Castela single per product feedback.
+  { title: 'Solteiro Forçado', artist: 'Ana Castela' },
 ];
 
 type MockToast =
@@ -138,15 +141,14 @@ function ToastBody({ toast }: { toast: MockToast }) {
       // 140ms (driven by `--avatar-i` in CSS) so the stack lands
       // one-by-one — the same "users surgindo um por cima do
       // outro" animation the previous ListeningTogether had.
-      // Sliced to 5 avatars from the mock pool; same pool the
-      // single-avatar notifications use so the visual reads as a
-      // coherent system.
+      // 4 avatars per product feedback (was 5); the descriptive
+      // subtitle was removed too, leaving just the headline and
+      // the animated audio bars beside it.
       const cascadeAvatars = [
         MOCK_USERS[0],
         MOCK_USERS[2],
         MOCK_USERS[4],
         MOCK_USERS[1],
-        MOCK_USERS[3],
       ];
       return (
         <>
@@ -169,16 +171,16 @@ function ToastBody({ toast }: { toast: MockToast }) {
               </strong>{' '}
               ouvindo com você
             </span>
-            <span className={styles.track}>
-              <span className={styles.audioBars} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-              <span className={styles.trackLabel}>
-                A mesma música está tocando agora pelo mundo
-              </span>
+            {/* Audio-bars only — the previous "A mesma música
+              * está tocando agora pelo mundo" subtitle was
+              * dropped per product feedback. The animated
+              * equalizer carries the "music is playing" cue
+              * on its own. */}
+            <span className={styles.audioBars} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
             </span>
           </div>
         </>
@@ -222,16 +224,17 @@ function ToastBody({ toast }: { toast: MockToast }) {
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={toast.user.avatar} alt="" className={styles.avatar} />
-          <div className={styles.info}>
+          <div className={`${styles.info} ${styles.infoSingleLine}`}>
+            {/* Single-line variant per product feedback: just the
+              * actor + "acenou para você" + a waving-hand emoji.
+              * The previous CTA ("Mande um aceno de volta") was
+              * removed to keep the row minimal. */}
             <span className={styles.text}>
               <strong className={styles.strong}>{toast.user.name}</strong>{' '}
-              acenou pra você
-            </span>
-            <span className={styles.track}>
-              <span className={styles.waveEmoji} aria-hidden="true">
+              acenou para você{' '}
+              <span className={styles.waveEmojiInline} aria-hidden="true">
                 👋
               </span>
-              <span className={styles.trackLabel}>Mande um aceno de volta</span>
             </span>
           </div>
         </>
@@ -240,22 +243,19 @@ function ToastBody({ toast }: { toast: MockToast }) {
     case 'top_track':
       return (
         <>
-          {/* Music-themed glyph stands in for the avatar slot —
-            * keeps the row geometry consistent across types. */}
-          <span className={styles.glyph} aria-hidden="true">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </span>
+          {/* Album cover stands in for the avatar slot per
+            * product feedback — the Ana Castela / "Let's Go
+            * Rodeo" cover from /single.png lives in the same
+            * outer dimensions as the user-avatar slot so row
+            * geometry stays consistent across notification
+            * types. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/single.png"
+            alt=""
+            className={styles.avatar}
+            aria-hidden="true"
+          />
           <div className={styles.info}>
             <span className={styles.text}>
               <strong className={styles.strong}>{toast.track.title}</strong>{' '}
@@ -279,8 +279,14 @@ function ToastBody({ toast }: { toast: MockToast }) {
         <>
           {/* Crown glyph signals ranking — same icon family used
             * in the Fanpoints surface so the visual language ties
-            * back to the existing rewards loop. */}
-          <span className={styles.glyph} aria-hidden="true">
+            * back to the existing rewards loop. Wrapped in a
+            * `.glyphFestive` container that paints CSS-only
+            * confetti particles around the crown — 8 small dots
+            * popping outward in a celebration burst keyframe. */}
+          <span
+            className={`${styles.glyph} ${styles.glyphFestive}`}
+            aria-hidden="true"
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -291,6 +297,18 @@ function ToastBody({ toast }: { toast: MockToast }) {
             >
               <path d="M2.5 19h19l-1.5-9-5 3.5L12 6l-3 7.5L4 10l-1.5 9z" />
             </svg>
+            {/* Confetti particles — 8 spans positioned around
+              * the glyph via :nth-child rules in CSS. Each
+              * particle has its own delay so the burst feels
+              * staggered. */}
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
+            <span className={styles.confettiPiece} />
           </span>
           <div className={styles.info}>
             <span className={styles.text}>
