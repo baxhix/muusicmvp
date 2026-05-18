@@ -1,0 +1,336 @@
+/* ============================================================
+ * ANA FLIGHT PANEL — Tour Portugal modal
+ *
+ * Opens when the user taps Ana's airplane marker on the globe.
+ * Visually mirrors the AnaCheckInPanel + PlaylistModal so the
+ * three "tap a thing on the globe / shell" surfaces feel like
+ * one design system: dark gradient + 40px backdrop blur, hot-
+ * pink accents that match the pulse ring on the check-in pin.
+ *
+ * Layered z above the persistent shell (.shell at z:55) but
+ * below the AnaCheckInPanel (z:300) — fans should be able to
+ * stack a check-in modal on top of the flight modal if they
+ * happen to overlap, which is unlikely but cheap to honor.
+ * ============================================================ */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: ana-flight-scrim-in 180ms ease both;
+}
+@keyframes ana-flight-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(236, 72, 153, 0.16) 0%, transparent 70%),
+    linear-gradient(180deg,
+      rgba(11, 11, 13, 0.97) 0%,
+      rgba(5, 5, 7, 0.96) 50%,
+      rgba(2, 2, 3, 0.97) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 22px;
+  box-shadow:
+    0 40px 100px -12px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(236, 72, 153, 0.1) inset;
+  color: #f5f5f7;
+  padding: 28px 24px 24px;
+  animation: ana-flight-panel-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes ana-flight-panel-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.85);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* ── Hero — avatar + title ─────────────────────────────────── */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  /* Hot-pink ring mirrors the check-in pin's avatar ring so the
+   * two Ana surfaces visually rhyme. */
+  border: 2px solid rgba(236, 72, 153, 0.85);
+  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+  flex-shrink: 0;
+}
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(236, 72, 153, 0.95);
+}
+.kickerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ec4899;
+  box-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
+  animation: ana-flight-kicker-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ana-flight-kicker-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.85); }
+}
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  line-height: 1.1;
+}
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+/* ── Route bar — Londrina ▶ Lisboa with plane glyph ───────── */
+.route {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.routeEnd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.05;
+}
+.routeEndRight {
+  text-align: right;
+}
+.routeCity {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f5f5f7;
+}
+.routeState {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(245, 245, 247, 0.5);
+  text-transform: uppercase;
+}
+
+.routeBar {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+.routeBarTrack {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.routeBarFill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 1.5px;
+  /* Matches the on-globe traveled line color so the modal bar
+   * reads as the same data viz, scaled down. */
+  background: linear-gradient(90deg, #ec4899 0%, #f472b6 100%);
+  box-shadow: 0 0 8px rgba(236, 72, 153, 0.6);
+  transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.routeBarPlane {
+  position: absolute;
+  top: 50%;
+  /* `left` is set inline via the progress percentage. The
+   * translate centers the icon on that point AND nudges it
+   * 1px up so the nose visually rests on the line. */
+  transform: translate(-50%, calc(-50% - 1px)) rotate(45deg);
+  width: 18px;
+  height: 18px;
+  color: #ec4899;
+  filter: drop-shadow(0 2px 6px rgba(236, 72, 153, 0.55));
+  transition: left 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.routeBarPlane svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Message form ─────────────────────────────────────────── */
+.formLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.7);
+  margin-bottom: 8px;
+}
+.field {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.field:focus {
+  border-color: rgba(236, 72, 153, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+}
+.field::placeholder {
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.formFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+.counter {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+.sendBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+  color: #ffffff;
+  border: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 6px 16px -4px rgba(236, 72, 153, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.sendBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 22px -6px rgba(236, 72, 153, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+}
+.sendBtn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+.sendBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Sent confirmation ────────────────────────────────────── */
+.sentState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 12px 8px;
+  color: #f5f5f7;
+}
+.sentState svg {
+  color: #34d399;
+  filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.45));
+}
+.sentText {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.85);
+  text-align: center;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: 24px 18px 20px;
+    border-radius: 18px;
+  }
+  .avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .title {
+    font-size: 19px;
+  }
+  .route {
+    gap: 10px;
+  }
+}

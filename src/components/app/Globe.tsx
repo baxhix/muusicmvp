@@ -68,6 +68,25 @@ export default function Globe() {
      *  `registerAnaCheckIn` can still rotate its local `anaMarker`
      *  variable. */
     const anaMarkerRef: { current: mapboxgl.Marker | null } = { current: null };
+
+    /** Ana flight (Tour Portugal) airplane marker — singleton.
+     *  Lives as a DOM Marker because it needs a click handler +
+     *  a rotation transform that follows the great-circle bearing.
+     *  The line layers underneath are native Mapbox layers — only
+     *  the plane glyph needs to escape into DOM. */
+    const anaFlightMarkerRef: { current: mapboxgl.Marker | null } = {
+      current: null,
+    };
+    const anaFlightGlyphRef: { current: HTMLDivElement | null } = {
+      current: null,
+    };
+    /** Latest payload kept in a ref so the marker's click handler
+     *  always sees the freshest progress / position when fired —
+     *  the handler is wired once at marker creation, so without a
+     *  ref it would close over a stale snapshot. */
+    const anaFlightLatestRef: {
+      current: import('@/lib/globeStore').AnaFlightPayload | null;
+    } = { current: null };
     /** Active Mapbox Popup for the show info card. Singleton — one
      *  card at a time. Cleared automatically when the user closes
      *  the popup (× or click outside). */
@@ -229,6 +248,83 @@ export default function Globe() {
             6.5, 0,
             8, 1,
           ],
+        },
+      });
+
+      // ── Ana Tour Portugal flight — line + airplane ──────────
+      //
+      // Two GeoJSON sources, two line layers — the "traveled"
+      // portion (Londrina → current position, hot pink) and the
+      // "remaining" portion (current position → Lisboa, neutral
+      // gray). The airplane itself rides on top as a DOM Marker
+      // (created later inside registerAnaFlight) so it can carry
+      // a click handler and a CSS rotation transform.
+      //
+      // Both sources start empty; the scheduler in the shell
+      // provider publishes the first payload right after mount.
+      map.addSource('ana-flight-traveled', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addSource('ana-flight-remaining', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+
+      // Remaining (gray, dashed) — drawn first so the traveled
+      // line paints over it where they share a vertex.
+      map.addLayer({
+        id: 'ana-flight-remaining-line',
+        type: 'line',
+        source: 'ana-flight-remaining',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': 'rgba(180, 180, 195, 0.55)',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 1.4,
+            5, 1.8,
+            10, 2.4,
+          ],
+          'line-dasharray': [3, 3],
+        },
+      });
+
+      // Traveled (pink, solid + glow). Two stacked layers — a
+      // wider, blurred underlay for the halo + the crisp line on
+      // top. Mirrors the "Ana ring" pink that the check-in pin
+      // uses, so the whole Ana-overlay system reads as one piece.
+      map.addLayer({
+        id: 'ana-flight-traveled-glow',
+        type: 'line',
+        source: 'ana-flight-traveled',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#ec4899',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 6,
+            5, 8,
+            10, 11,
+          ],
+          'line-opacity': 0.35,
+          'line-blur': 4,
+        },
+      });
+      map.addLayer({
+        id: 'ana-flight-traveled-line',
+        type: 'line',
+        source: 'ana-flight-traveled',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#f472b6',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            1, 2.2,
+            5, 2.8,
+            10, 3.4,
+          ],
+          'line-opacity': 1,
         },
       });
     });
@@ -905,6 +1001,140 @@ export default function Globe() {
         }
       });
 
+      // ── Ana Tour Portugal flight ──────────────────────────────
+      //
+      // The shell provider publishes a fresh payload every minute.
+      // Each tick we:
+      //   1. Update both line sources (traveled + remaining)
+      //   2. Reposition + re-rotate the airplane DOM marker, creating
+      //      it once if it doesn't exist yet.
+      //
+      // Passing `null` removes the marker entirely — used when the
+      // tour ends (no caller does this today, but the path is wired
+      // so the future "end of tour" flag can clear the overlay).
+      globeStore.registerAnaFlight((payload) => {
+        anaFlightLatestRef.current = payload;
+
+        const applyLineData = (): boolean => {
+          const traveledSrc = map.getSource('ana-flight-traveled') as
+            | mapboxgl.GeoJSONSource
+            | undefined;
+          const remainingSrc = map.getSource('ana-flight-remaining') as
+            | mapboxgl.GeoJSONSource
+            | undefined;
+          if (!traveledSrc || !remainingSrc) return false;
+          if (!payload) {
+            traveledSrc.setData({ type: 'FeatureCollection', features: [] });
+            remainingSrc.setData({ type: 'FeatureCollection', features: [] });
+            return true;
+          }
+          traveledSrc.setData({
+            type: 'FeatureCollection',
+            features: payload.traveledPath.length >= 2 ? [{
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: payload.traveledPath.map((p) => [p[0], p[1]] as [number, number]),
+              },
+              properties: {},
+            }] : [],
+          });
+          remainingSrc.setData({
+            type: 'FeatureCollection',
+            features: payload.remainingPath.length >= 2 ? [{
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: payload.remainingPath.map((p) => [p[0], p[1]] as [number, number]),
+              },
+              properties: {},
+            }] : [],
+          });
+          return true;
+        };
+
+        // Apply now, or wait for style.load if we beat the
+        // map ready signal. Same retry pattern as registerAnaShows.
+        if (!applyLineData()) {
+          map.once('style.load', () => {
+            applyLineData();
+          });
+        }
+
+        // Null payload → tear down the airplane marker too.
+        if (!payload) {
+          if (anaFlightMarkerRef.current) {
+            anaFlightMarkerRef.current.remove();
+            anaFlightMarkerRef.current = null;
+            anaFlightGlyphRef.current = null;
+          }
+          return;
+        }
+
+        // Create or reuse the marker. The wrapper holds a
+        // rotatable inner div so the click target stays
+        // axis-aligned (no skewed hit box) while the airplane
+        // SVG itself rotates to follow the bearing.
+        if (!anaFlightMarkerRef.current) {
+          const wrapper = document.createElement('div');
+          wrapper.className = styles.anaFlightWrap;
+          wrapper.style.cursor = 'pointer';
+          wrapper.innerHTML = `
+            <div class="${styles.anaFlightGlyph}" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z"
+                  fill="currentColor"
+                  stroke="rgba(255, 255, 255, 0.9)"
+                  stroke-width="0.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <span class="${styles.anaFlightLabel}" aria-hidden="true">
+              Tour Portugal
+            </span>
+          `;
+          wrapper.setAttribute('role', 'button');
+          wrapper.setAttribute('aria-label', 'Ana Castela em voo — Tour Portugal');
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const latest = anaFlightLatestRef.current;
+            if (!latest) return;
+            globeStore.openAnaFlight(latest);
+            track('ana_flight_pin_clicked', {
+              progress: Math.round(latest.progress * 100),
+              arrived: latest.arrived,
+            });
+          });
+          anaFlightGlyphRef.current = wrapper.querySelector(
+            `.${styles.anaFlightGlyph}`,
+          ) as HTMLDivElement | null;
+          anaFlightMarkerRef.current = new mapboxgl.Marker({
+            element: wrapper,
+            anchor: 'center',
+          })
+            .setLngLat([payload.position.lng, payload.position.lat])
+            .addTo(map);
+        } else {
+          // Reuse existing marker — just move + rotate.
+          anaFlightMarkerRef.current.setLngLat([
+            payload.position.lng,
+            payload.position.lat,
+          ]);
+        }
+
+        // Rotate the inner glyph to point along the bearing. The
+        // SVG nose points up-right at 45° in its native orientation,
+        // so we offset by -45 so a bearing of 0° (north) puts the
+        // nose pointing straight up. After that, +bearing rotates
+        // clockwise as compass bearings do.
+        if (anaFlightGlyphRef.current) {
+          anaFlightGlyphRef.current.style.transform = `rotate(${payload.bearingDeg - 45}deg)`;
+        }
+      });
+
       // ── Show pin → info card popup ────────────────────────────
       //
       // Click on the orange dot opens a Mapbox Popup anchored to
@@ -1068,6 +1298,11 @@ export default function Globe() {
       if (anaMarkerRef.current) {
         anaMarkerRef.current.remove();
         anaMarkerRef.current = null;
+      }
+      if (anaFlightMarkerRef.current) {
+        anaFlightMarkerRef.current.remove();
+        anaFlightMarkerRef.current = null;
+        anaFlightGlyphRef.current = null;
       }
       if (anaShowPopupRef.current) {
         anaShowPopupRef.current.remove();

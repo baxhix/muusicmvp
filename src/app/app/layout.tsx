@@ -16,6 +16,7 @@ import NotificationBell from '@/components/app/NotificationBell';
 import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperfansPanel from '@/components/app/SuperfansPanel';
 import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
+import AnaFlightPanel from '@/components/app/AnaFlightPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
@@ -87,6 +88,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     setPlayerHidden,
     anaModalPayload,
     closeAnaCheckIn,
+    anaFlightModalPayload,
+    closeAnaFlight,
   } = useAppShell();
   // Watches the viewer's Fanpoints balance for 100-multiple
   // crossings and dispatches `app:milestone-fp` so the
@@ -407,6 +410,16 @@ function Shell({ children }: { children: React.ReactNode }) {
       <AnaCheckInPanel
         payload={anaModalPayload}
         onClose={closeAnaCheckIn}
+      />
+
+      {/* Tour Portugal flight modal — opens when the user clicks
+       *  the airplane marker on the great-circle path. The flight
+       *  state is published every minute by AppShellProvider so the
+       *  modal's progress bar + hours-remaining stay live while
+       *  open. */}
+      <AnaFlightPanel
+        payload={anaFlightModalPayload}
+        onClose={closeAnaFlight}
       />
 
       {/* Persistent toasts — render at the shell level so rewards,

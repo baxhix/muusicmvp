@@ -1129,3 +1129,111 @@
 .anaShowCardCta:active {
   background: rgba(249, 115, 22, 0.16);
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * ANA TOUR PORTUGAL — airplane marker
+ *
+ * Rides on top of the two flight line layers (traveled hot-pink
+ * + remaining gray, both native Mapbox line layers — see
+ * style.load in Globe.tsx). The marker itself is a DOM element
+ * so it can carry a click handler that opens AnaFlightPanel, a
+ * rotation transform that follows the great-circle bearing, and
+ * a hover-reveal "Tour Portugal" label.
+ *
+ * Anchor is "center" on the Marker constructor — the wrapper's
+ * intrinsic size is the click target, the rotated glyph inside
+ * is the visual.
+ * ───────────────────────────────────────────────────────────── */
+.anaFlightWrap {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+/* Soft pink halo behind the airplane so it pops against any
+ * basemap color — pulses gently to telegraph "live event"
+ * without competing with the Ana check-in pin's louder pulse. */
+.anaFlightWrap::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(236, 72, 153, 0.55) 0%,
+    rgba(236, 72, 153, 0.22) 45%,
+    transparent 75%
+  );
+  filter: blur(6px);
+  pointer-events: none;
+  animation: ana-flight-halo-pulse 3.2s ease-in-out infinite;
+}
+@keyframes ana-flight-halo-pulse {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* The actual airplane glyph — its `transform: rotate(...)` is
+ * set inline by Globe.tsx to match the current bearing. The
+ * native SVG points up-right (~45°), and the Globe code offsets
+ * by -45° so a bearing of 0° = nose straight north. */
+.anaFlightGlyph {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  color: #ec4899;
+  filter: drop-shadow(0 2px 6px rgba(236, 72, 153, 0.6));
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.anaFlightGlyph svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* "Tour Portugal" label that appears below the marker on hover.
+ * Hidden by default; same reveal pattern as the check-in pin's
+ * "fez check-in em..." badge so the language stays consistent. */
+.anaFlightLabel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translate(-50%, -4px) scale(0.96);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg,
+      rgba(236, 72, 153, 0.96) 0%,
+      rgba(217, 70, 239, 0.96) 100%);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow:
+    0 6px 14px -4px rgba(236, 72, 153, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.anaFlightWrap:hover .anaFlightLabel,
+.anaFlightWrap:focus-within .anaFlightLabel {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+/* Hover-active state — the airplane glyph receives a soft scale
+ * lift without disturbing the bearing rotation (the lift is an
+ * `outer` scale via `.anaFlightWrap:hover .anaFlightGlyph`, and
+ * the rotation lives in inline style on the same element — they
+ * compose via the order: rotate first, scale after). */
+.anaFlightWrap:hover .anaFlightGlyph {
+  filter: drop-shadow(0 4px 10px rgba(236, 72, 153, 0.7));
+}

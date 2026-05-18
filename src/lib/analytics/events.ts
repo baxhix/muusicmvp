@@ -180,6 +180,13 @@ export interface EventPayloadMap {
    *  event is the only signal for product to gauge ticket intent
    *  before partnering. */
   ana_show_tickets_clicked: { show_id: string; venue: string };
+  /** Fired when the user taps Ana's airplane marker on the globe
+   *  (Tour Portugal flight from Londrina → Lisboa). `progress`
+   *  (0–100) records how far along the great-circle path the
+   *  plane was at click time so engagement reports can correlate
+   *  taps with phase-of-flight; `arrived` flags taps that happen
+   *  AFTER the 8h journey completes (plane parked at Lisbon). */
+  ana_flight_pin_clicked: { progress: number; arrived: boolean };
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────
   notification_received:   { kind: string };
@@ -302,6 +309,7 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   ana_checkin_pin_clicked: { category: 'feed', importance: 'high', description: 'Pin de check-in da Ana clicado no globo.', trigger: 'Clique no marker rosa ancorado em uma cidade.', ga4: true },
   ana_show_pin_clicked:     { category: 'feed', importance: 'high', description: 'Pin de próximo show da Ana aberto no globo.', trigger: 'Clique no chip com a data sobre uma cidade da agenda.', ga4: true },
   ana_show_tickets_clicked: { category: 'feed', importance: 'high', description: 'Botão "Ingressos" clicado no card de show da Ana (inert até parceiro de bilhetagem).', trigger: 'Clique no CTA dentro do popover do pin de show.', ga4: true },
+  ana_flight_pin_clicked:   { category: 'feed', importance: 'high', description: 'Marker do avião da Tour Portugal clicado no globo.', trigger: 'Clique no ícone de avião que percorre a linha Londrina → Lisboa.', ga4: true },
   creator_followed:   { category: 'social', importance: 'high', description: 'Usuário começou a seguir um perfil.', trigger: 'CTA "Seguir" ativado.', ga4: true },
   creator_unfollowed: { category: 'social', importance: 'low', description: 'Usuário deixou de seguir um perfil.', trigger: 'CTA "Seguindo" desfeito.' },
   content_shared:     { category: 'social', importance: 'high', description: 'Conteúdo compartilhado para fora do app.', trigger: 'navigator.share() ou copy-link.', ga4: true },

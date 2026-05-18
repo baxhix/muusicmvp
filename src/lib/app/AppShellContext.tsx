@@ -26,8 +26,10 @@ import { useRouter } from 'next/navigation';
 import {
   globeStore,
   type AnaCheckInPayload,
+  type AnaFlightPayload,
 } from '@/lib/globeStore';
 import { ANA_CHECKINS } from '@/data/anaCheckIns';
+import { getFlightState } from '@/lib/anaFlight';
 import { ANA_SHOWS } from '@/data/anaShows';
 
 /**
@@ -141,6 +143,12 @@ interface AppShellValue {
    *  open. Setting null closes it AND starts the 60s linger
    *  before the pin auto-clears from the globe. */
   anaModalPayload: AnaCheckInPayload | null;
+  /** Payload for the Tour Portugal flight modal — non-null while
+   *  the user has tapped the airplane marker on the globe. Carries
+   *  the current progress / position / hours-remaining so the
+   *  panel can render the live state without recomputing it. */
+  anaFlightModalPayload: AnaFlightPayload | null;
+  closeAnaFlight: () => void;
   /** Close the Ana check-in modal (with the linger timer). */
   closeAnaCheckIn: () => void;
 }
@@ -433,6 +441,63 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     }, CHECKIN_LINGER_MS);
   }, []);
 
+  // ── Ana Tour Portugal flight ────────────────────────────────
+  //
+  // Wall-clock-driven animation of Ana's plane from Londrina →
+  // Lisboa. The full 8h journey + 4h post-arrival pause forms a
+  // 12h cycle that loops perpetually (see `getFlightState`), so
+  // every viewer sees a plane somewhere on the path no matter
+  // when they open the app.
+  //
+  // We tick the payload to globeStore every 60s — the user spec
+  // says "hourly is enough", but a 60s tick keeps the line +
+  // marker visually current to the minute (great-circle progress
+  // per minute is barely a single pixel on screen, so this is
+  // basically free) AND ensures the hours-remaining counter in
+  // the open modal stays alive without its own timer.
+  const [anaFlightModalPayload, setAnaFlightModalPayload] =
+    useState<AnaFlightPayload | null>(null);
+  const anaFlightModalPayloadRef = useRef<AnaFlightPayload | null>(null);
+  anaFlightModalPayloadRef.current = anaFlightModalPayload;
+  useEffect(() => {
+    const publish = () => {
+      const s = getFlightState();
+      const payload: AnaFlightPayload = {
+        progress: s.progress,
+        arrived: s.arrived,
+        position: { lng: s.position.lng, lat: s.position.lat },
+        bearingDeg: s.bearingDeg,
+        traveledPath: s.traveledPath,
+        remainingPath: s.remainingPath,
+        hoursRemaining: s.hoursRemaining,
+      };
+      globeStore.setAnaFlight(payload);
+      // If the modal is currently open, keep its label in sync
+      // with the latest progress / hours-remaining without
+      // requiring the user to close + reopen.
+      if (anaFlightModalPayloadRef.current) {
+        setAnaFlightModalPayload(payload);
+      }
+    };
+    publish();
+    const id = setInterval(publish, 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Globe airplane click → open the Tour Portugal panel. No
+  // linger / scheduler interplay here (unlike check-ins) — the
+  // flight is persistent, so closing the panel just drops the
+  // modal without affecting the marker.
+  useEffect(() => {
+    globeStore.registerOpenAnaFlight((payload) => {
+      setAnaFlightModalPayload(payload);
+    });
+  }, []);
+
+  const closeAnaFlight = useCallback(() => {
+    setAnaFlightModalPayload(null);
+  }, []);
+
   const value: AppShellValue = useMemo(
     () => ({
       chat,
@@ -460,6 +525,8 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setPlayerHidden,
       anaModalPayload,
       closeAnaCheckIn,
+      anaFlightModalPayload,
+      closeAnaFlight,
     }),
     [
       chat,
@@ -480,6 +547,8 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       playerSize,
       playerHidden,
       anaModalPayload,
+      anaFlightModalPayload,
+      closeAnaFlight,
       closeAnaCheckIn,
     ],
   );

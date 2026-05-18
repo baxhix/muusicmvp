@@ -78,6 +78,32 @@ export interface AnaShow {
   ticketUrl?: string | null;
 }
 
+/**
+ * Tour Portugal — Ana's transatlantic flight from Londrina (BR)
+ * to Lisbon (PT). The payload carries enough geometry for the
+ * Globe to paint the two line segments + the airplane marker
+ * without needing to recompute great-circle math itself; the
+ * spherical interpolation lives in `lib/anaFlight.ts`.
+ */
+export interface AnaFlightPayload {
+  /** 0–1 progress along the path. */
+  progress: number;
+  /** True once the plane has reached Lisbon. */
+  arrived: boolean;
+  /** Plane's current lng/lat. */
+  position: { lng: number; lat: number };
+  /** Compass bearing in degrees (0=N) — used to rotate the
+   *  airplane SVG so its nose follows the path. */
+  bearingDeg: number;
+  /** Pre-sampled great-circle polyline as [lng, lat] pairs. The
+   *  source-of-truth for the line layers; the two segments below
+   *  are slices of this array. */
+  traveledPath: ReadonlyArray<readonly [number, number]>;
+  remainingPath: ReadonlyArray<readonly [number, number]>;
+  /** Hours left until Lisbon — rendered in the modal label. */
+  hoursRemaining: number;
+}
+
 type SetUserLocationFn = (payload: UserLocationPayload | null) => void;
 type SetLiveUsersFn = (users: LiveMapUser[]) => void;
 type SetTotalRegisteredFn = (total: number) => void;
@@ -85,6 +111,8 @@ type OpenUserProfileFn = (userId: string) => void;
 type SetAnaCheckInFn = (payload: AnaCheckInPayload | null) => void;
 type OpenAnaCheckInFn = (payload: AnaCheckInPayload) => void;
 type SetAnaShowsFn = (shows: AnaShow[]) => void;
+type SetAnaFlightFn = (payload: AnaFlightPayload | null) => void;
+type OpenAnaFlightFn = (payload: AnaFlightPayload) => void;
 
 let _flyTo: FlyToFn | null = null;
 let _setUserLocation: SetUserLocationFn | null = null;
@@ -98,6 +126,9 @@ let _anaCheckInBuffer: AnaCheckInPayload | null = null;
 let _openAnaCheckIn: OpenAnaCheckInFn | null = null;
 let _setAnaShows: SetAnaShowsFn | null = null;
 let _anaShowsBuffer: AnaShow[] | null = null;
+let _setAnaFlight: SetAnaFlightFn | null = null;
+let _anaFlightBuffer: AnaFlightPayload | null = null;
+let _openAnaFlight: OpenAnaFlightFn | null = null;
 
 export const globeStore = {
   register: (fn: FlyToFn) => { _flyTo = fn; },
@@ -207,4 +238,35 @@ export const globeStore = {
     if (_setAnaShows) _setAnaShows(shows);
     else _anaShowsBuffer = shows;
   },
+
+  /**
+   * Ana Castela Tour Portugal flight lifecycle.
+   *
+   *   setAnaFlight(payload) → Globe paints (or updates) the two
+   *                            line segments + airplane marker.
+   *   setAnaFlight(null)    → Globe removes the flight overlay
+   *                            entirely (used when the tour ends).
+   *
+   * Buffered like the other registries so the scheduler in the
+   * shell provider can publish before Globe's map load completes.
+   */
+  registerAnaFlight: (fn: SetAnaFlightFn) => {
+    _setAnaFlight = fn;
+    if (_anaFlightBuffer) {
+      fn(_anaFlightBuffer);
+      _anaFlightBuffer = null;
+    }
+  },
+  setAnaFlight: (payload: AnaFlightPayload | null) => {
+    if (_setAnaFlight) _setAnaFlight(payload);
+    else _anaFlightBuffer = payload;
+  },
+
+  /**
+   * Globe → page handoff when the airplane marker is tapped. The
+   * page registers a handler that opens the AnaFlightPanel modal
+   * ("Tour Portugal" + message input).
+   */
+  registerOpenAnaFlight: (fn: OpenAnaFlightFn) => { _openAnaFlight = fn; },
+  openAnaFlight: (payload: AnaFlightPayload) => { _openAnaFlight?.(payload); },
 };
