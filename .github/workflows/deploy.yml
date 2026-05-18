@@ -291,7 +291,13 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key:      ${{ secrets.DEPLOY_SSH_KEY }}
           port:     22
-          script_stop: true
+          # script_stop: false — we do our own error gating with
+          # explicit `|| { echo ::error; exit 1; }` wrappers in the
+          # script below. With script_stop:true, drone-ssh injects
+          # bash strict mode behaviour that aborts the script on
+          # the first `[ ... ]` test that returns non-zero (even
+          # inside an `if` block), with no diagnostic output.
+          script_stop: false
           command_timeout: 10m
           timeout: 60s
           # The CHANGED_* + FORCE_ALL env vars need to be explicitly
