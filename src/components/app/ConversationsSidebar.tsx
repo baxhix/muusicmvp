@@ -183,8 +183,20 @@ export default function ConversationsSidebar({
                 type="button"
                 className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
                 onClick={() => {
+                  // Pick the conversation — DO NOT also fire onClose
+                  // here. `onClose` is wired by the parent to
+                  // `router.push('/app')` (close the whole chat
+                  // surface), which routed the user back to the
+                  // map between selecting a thread and the
+                  // LiveChatPanel sliding in. The result was a
+                  // disorienting "list → home flash → detail"
+                  // sequence the user reported as an anomaly.
+                  //
+                  // The detail panel's own back arrow (mobile) and
+                  // × button (desktop) handle dismissal; the
+                  // sidebar's onClose is now reserved strictly for
+                  // the explicit close button at the top.
                   onOpenConversation(c.id);
-                  onClose();
                 }}
               >
                 <span className={styles.avatarWrap}>

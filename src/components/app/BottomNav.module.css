@@ -282,7 +282,13 @@
 .itemCenter {
   width: 36px; height: 36px;
   background: transparent !important;
-  color: #ffffff !important;
+  /* Color was `#ffffff !important` here, which beat the mobile
+   * inactive-gray override and forced the center crown to ALWAYS
+   * read as active. Removed the !important so the mobile rule
+   * below can win for the inactive state. Desktop still gets
+   * white because `.item { color: #ffffff }` (the parent rule)
+   * applies to `.itemCenter` too via the shared `.item` class. */
+  color: #ffffff;
   opacity: 0.85;
   min-width: auto;
   padding: 0;
@@ -326,22 +332,43 @@
   /* Mobile uses COLOR (not opacity) to distinguish active vs
    * inactive — inactive items are muted gray, the active slot
    * (whichever route is currently mounted) lights up in pure
-   * white. On desktop the opacity-based dim still applies; on
-   * mobile, opacity is pinned to 1 across the board and the
-   * difference reads purely through hue so the active item
-   * really stands out at thumb-glance distance.
-   *
-   * Applies to .itemCenter too (the crown) — when SuperfansPanel
-   * is open it gets .itemActive, which flips it to white. */
+   * white. `!important` on BOTH branches keeps the binary
+   * crisp: even when a state like `.itemDisabled` (Feed off) or
+   * a stuck `:hover` after a tap tries to slide a higher-
+   * specificity rule in, the gray ↔ white split survives. */
   .item,
   .itemCenter {
-    color: rgba(245, 245, 247, 0.45);
-    opacity: 1;
+    color: rgba(245, 245, 247, 0.45) !important;
+    opacity: 1 !important;
   }
   .item.itemActive,
   .itemCenter.itemActive {
     color: #ffffff !important;
-    opacity: 1;
+    opacity: 1 !important;
+  }
+
+  /* Touch devices: kill `:hover` lifts entirely. iOS/Android
+   * sticky-hover keeps the LAST tapped icon at hover-state
+   * (lifted + brighter) until the user taps somewhere else,
+   * which produced the "icons go white and don't go back to
+   * gray" behavior the user reported. `(hover: none)` matches
+   * inputs that can't truly hover — pointer-only touchscreens. */
+  @media (hover: none) {
+    .item:hover,
+    .itemCenter:hover {
+      opacity: 1 !important;
+      transform: none !important;
+      /* Reassert the inactive color so a sticky :hover state
+       * doesn't override the inactive gray. The :hover selector
+       * specificity is the same as `.item`, so without
+       * !important here a pseudo-class win on cascade order
+       * could leak. */
+      color: rgba(245, 245, 247, 0.45) !important;
+    }
+    .item.itemActive:hover,
+    .itemCenter.itemActive:hover {
+      color: #ffffff !important;
+    }
   }
 }
 
