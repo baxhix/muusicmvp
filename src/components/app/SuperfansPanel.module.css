@@ -514,12 +514,22 @@
  * mobile; the card otherwise keeps its centered card layout. */
 @media (max-width: 768px) {
   .header { display: none; }
-  /* Make sure the card sits BELOW the MobileRouteHeader (52px tall
-   * at top:0). The panel is centered vertically via bottom:100px +
-   * max-height; on smaller phones (height ≤ ~720px) the rise
-   * keyframe was bringing the top edge dangerously close to the
-   * route header. Lock max-height so the card never collides. */
+  /* Anchor the card explicitly to top + bottom on mobile so the
+   * MobileRouteHeader (52px tall at top:0) and the BottomNav
+   * (76px pill + 24px gap) carve out a guaranteed safe band for
+   * the panel to live in. Switching from `bottom:100px + max-
+   * height` to `top + bottom` is what fixes the overlap the user
+   * was seeing: when the rendered leaderboard was tall enough,
+   * the panel was being sized to its content from the bottom up
+   * and creeping under the route header. Now its TOP edge is a
+   * hard 64px from the viewport top regardless of content
+   * height, and the inner `.list` scrolls if there's more to
+   * show. `top: auto` is reset because the desktop rule sets
+   * `top: auto` and the cascade would carry that through. */
   .panel {
-    max-height: calc(100vh - 220px);
+    top: 64px;
+    bottom: 100px;
+    max-height: none;
+    height: auto;
   }
 }

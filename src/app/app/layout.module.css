@@ -59,10 +59,12 @@
    * The Fanverse pill occupies the left side of the same header
    * row (top:12 left:12 right:112).
    *
-   * Playlist (the middle button) hides on mobile — it's still
-   * reachable via the NowPlaying mini-bar's chevron / cover
-   * tap, which opens the same PlaylistModal. The two remaining
-   * buttons (Notificações + Coroa/Superfãs) live in the header. */
+   * Only NOTIFICAÇÕES survives on the mobile header now:
+   *   - Playlist (2nd) hides — still reachable via the NowPlaying
+   *     mini-bar's cover/chevron tap.
+   *   - Superfãs / Crown (3rd) hides — it lives in the center of
+   *     the BottomNav now (took the Chat slot's place per product
+   *     feedback). Keeping it here too was a double-affordance. */
   .topBar {
     top: 14px;
     right: 14px;
@@ -70,9 +72,9 @@
     flex-direction: row;
     gap: 8px;
   }
-  /* Hide the playlist (Músicas) button — 2nd child in topBar.
-   * Notificações (1st) + Superfãs/Coroa (3rd) remain. */
-  .topBar > button:nth-child(2) {
+  /* Hide everything except Notificações (1st child). */
+  .topBar > button:nth-child(2),
+  .topBar > button:nth-child(3) {
     display: none;
   }
   /* Slightly tighter circular buttons in the header so the row

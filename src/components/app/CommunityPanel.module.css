@@ -227,6 +227,24 @@
  * both 768 and 480 to keep the rule centralized. */
 @media (max-width: 768px) {
   .header { display: none; }
+
+  /* Align body content with the MobileRouteHeader back arrow.
+   * The back arrow's icon left edge sits at ~16px from the
+   * viewport (bar padding 6 + 22px icon centered in a 44px
+   * button → icon offset 11). The search input border already
+   * starts at 16px (body padding-left). The community list rows
+   * were indented further by .communityCard / .cardOpenBtn
+   * padding, which put the thumbnails at x=30 — visually offset
+   * from both the arrow and the input. Zero those indents on
+   * mobile so the thumb left edge lines up at 16px too. */
+  .communityCard {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .cardOpenBtn {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────

@@ -254,15 +254,15 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* NowPlaying mini-bar — persists across every route so the
-       *  user can keep playing while reading chat / comunidade.
-       *  When the user drag-dismisses the bar, we swap it for a
-       *  tiny restore pill so the player can be brought back with
-       *  a single tap. The dismissed preference persists in
-       *  localStorage via the provider. Both modes hide on mobile
-       *  when a chat detail is open — the player would otherwise
-       *  sit on top of the typing area. */}
-      {!hideShellChrome && (playerHidden ? (
+      {/* NowPlaying mini-bar — on desktop it persists across every
+       *  route so the user can keep playing while reading chat /
+       *  comunidade. On mobile per product feedback the player
+       *  lives ONLY on home (/app); every subpage has its own
+       *  surface to focus on (chat composer, leaderboard, etc.)
+       *  and a docked player there competes with their content +
+       *  the BottomNav gradient scrim. When dismissed, the restore
+       *  pill follows the same visibility rule. */}
+      {!hideShellChrome && !hideMobileHeader && (playerHidden ? (
         <button
           type="button"
           className={styles.playerRestorePill}

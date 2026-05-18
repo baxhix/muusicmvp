@@ -700,14 +700,16 @@
 
 @media (max-width: 768px) {
   /* Mobile — pill is the LEFT half of the fixed header. The
-   * right edge stops 108px from the viewport edge so it doesn't
-   * crowd the Notificações + Coroa buttons docked at the top-
-   * right corner (each 38px + 8px gap + 14px right margin). */
+   * right edge stops 64px from the viewport edge to clear the
+   * single Notificações button (38px + 14px right margin + a
+   * 12px breathing gap). The Coroa/Superfãs button used to live
+   * here too — it's now in the BottomNav center, so the pill
+   * picks up the extra real estate. */
   .box {
     width: auto;
     max-width: none;
     left: 12px;
-    right: 108px;
+    right: 64px;
     top: 12px;
     border-radius: 16px;
   }

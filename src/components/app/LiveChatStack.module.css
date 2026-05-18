@@ -308,9 +308,13 @@
 @media (max-width: 600px) {
   .dock {
     right: 14px;
-    /* Sit slightly further above center so the gap with the
-     * cluster below stays consistent with desktop. */
-    transform: translateY(calc(-100% - 12px));
+    /* On mobile the right-rail action cluster is gone (only the
+     * Notificações button stays, and it's docked to the top-right
+     * header), so the avatar stack has the whole middle of the
+     * right rail to itself. Centering it on the viewport's
+     * vertical midline (top:50% + translateY(-50%)) — its own
+     * mass is what should be centered, not its bottom edge. */
+    transform: translateY(-50%);
   }
   .dock::before {
     inset: -6px -20px;
