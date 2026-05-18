@@ -688,9 +688,13 @@
 @media (max-width: 480px) {
   /* Small mobile: near full-screen. `bottom: 76px` leaves the
    * BottomNav (z:70) reachable so the user can switch surfaces
-   * mid-conversation without closing the superchat first. */
+   * mid-conversation without closing the superchat first.
+   *
+   * `top: 52px` slides the panel below the MobileRouteHeader so
+   * the back-arrow / title bar (mounted by /app/layout.tsx) sits
+   * on top without overlapping the messages or composer. */
   .panel {
-    top: 0;
+    top: 52px;
     bottom: 76px;
     left: 0;
     right: 0;
@@ -699,4 +703,11 @@
     border-radius: 0;
     z-index: 60;
   }
+}
+
+/* ── Mobile (≤768px) — hide internal header ──
+ * MobileRouteHeader (in layout) replaces this panel's title bar
+ * across every mobile breakpoint. */
+@media (max-width: 768px) {
+  .header { display: none; }
 }

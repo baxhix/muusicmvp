@@ -699,3 +699,13 @@
   text-align: center;
   line-height: 1.2;
 }
+
+/* ── Mobile (≤768px) ──
+ * The shell-level MobileRouteHeader (in /app/layout.tsx) carries
+ * the back arrow + centered title across every non-home route.
+ * Hide this panel's internal header so the mobile chrome is the
+ * single source of truth and the profile content slides directly
+ * under the route bar without a duplicate band. */
+@media (max-width: 768px) {
+  .header { display: none; }
+}

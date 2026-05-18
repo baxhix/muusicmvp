@@ -354,9 +354,13 @@
    * BottomNav (z:70) visible underneath the panel so the user
    * can switch surfaces without closing first. The composer stays
    * comfortably above the IM keyboard since the panel doesn't
-   * push all the way to the viewport bottom. */
+   * push all the way to the viewport bottom.
+   *
+   * `top: 52px` slides the conversation list below the
+   * MobileRouteHeader (back arrow + "Conversas") that the layout
+   * mounts on every non-home /app route. */
   .panel {
-    top: 0;
+    top: 52px;
     bottom: 76px;
     left: 0;
     right: 0;
@@ -365,4 +369,12 @@
     border-radius: 0;
     z-index: 60;
   }
+}
+
+/* ── Mobile (≤768px) — hide internal header ──
+ * MobileRouteHeader (in /app/layout.tsx) renders the "Conversas"
+ * title + back arrow + drag-to-dismiss; the internal sidebar
+ * header would be a redundant second band. */
+@media (max-width: 768px) {
+  .header { display: none; }
 }

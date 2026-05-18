@@ -1,0 +1,113 @@
+/* ── Mobile route header ─────────────────────────────────────
+ *
+ * Fixed top bar shown on every non-home /app route on mobile.
+ * Sits ABOVE every panel (z:90 — higher than the panels at z:60
+ * but below the BottomNav glow at z:70+). Each panel's own
+ * internal header is hidden on mobile via a co-located media
+ * query so this bar is the single source of header chrome.
+ *
+ * Total height ~52px so the panel content padding pairs with
+ * `top: 52px` on `.panel` mobile rules.
+ *
+ * The whole bar is touch-draggable downward — the parent
+ * applies `transform: translateY(...)` inline as the finger
+ * moves, and a snap-back transition runs when the finger lifts
+ * below the dismiss threshold. Above threshold we route to /app
+ * BEFORE the snap-back, so the bar appears to slide off-screen
+ * naturally as the next render replaces it.
+ */
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  background: linear-gradient(180deg, rgba(11, 11, 13, 0.95), rgba(5, 5, 7, 0.92));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 90;
+  touch-action: pan-y;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Snap-back transition only fires when the inline transform is
+   * reset to translateY(0); during the drag the inline style
+   * overrides and updates per-frame, so the transition is
+   * effectively pinned to the release moment. */
+}
+
+/* Desktop: never visible. The layout already gates render on
+ * isMobile, but this guard keeps a stray mount from breaking
+ * layouts if the gate is removed later. */
+@media (min-width: 769px) {
+  .bar { display: none; }
+}
+
+/* Back arrow — large tap target on the left. Matches the visual
+ * weight of the bottom-nav icons so the two affordances feel
+ * like a set. */
+.backBtn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #f5f5f7;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.backBtn:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  text-align: center;
+  /* Inline-flex on the parent + flex:1 here puts the title in the
+   * exact middle between the back button and the trailing spacer
+   * (both 44px), so the title reads centered without absolute
+   * positioning quirks (and inherits the drag gesture cleanly). */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mirrors the back-button footprint on the right so the title is
+ * visually centered. Hidden from a11y trees — it's purely a
+ * layout shim. */
+.spacer {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+/* Tiny pull handle at the bottom edge — visual hint that the
+ * bar can be dragged down. Centered horizontally, decorative
+ * only (the actual gesture is bound to the whole bar). */
+.dragHandle {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}

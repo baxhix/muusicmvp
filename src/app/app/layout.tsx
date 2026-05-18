@@ -8,6 +8,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
 import ArtistBox from '@/components/app/ArtistBox';
+import MobileRouteHeader from '@/components/app/MobileRouteHeader';
 import NowPlaying from '@/components/app/NowPlaying';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
@@ -109,6 +110,20 @@ function Shell({ children }: { children: React.ReactNode }) {
     pathname.startsWith('/app/chat') && chat.activeId !== null;
   const hideShellChrome = chatDetailOpen && isMobile;
 
+  // Home = /app. Every other route is a "subpage" that, on mobile,
+  // gets the MobileRouteHeader (back arrow + centered title + drag-
+  // down) and HIDES the persistent Fanverse header chrome (ArtistBox
+  // pill, right-rail action cluster, SuperchatTrigger). Per product
+  // feedback the header should "ficar apenas na home" on mobile —
+  // subpages already have their own back / title, so the persistent
+  // chrome would just compete with that.
+  const onHome = pathname === '/app';
+  const hideMobileHeader = isMobile && !onHome;
+  // Mobile route header — shown on every non-home /app route, but
+  // NOT when chat detail is open (LiveChatPanel takes the whole
+  // viewport there and has its own back arrow).
+  const showMobileRouteHeader = isMobile && !onHome && !chatDetailOpen;
+
   return (
     <>
       {/* Globe — under everything, conditional. Placeholder painted
@@ -135,13 +150,19 @@ function Shell({ children }: { children: React.ReactNode }) {
           />
         )}
 
+        {/* Mobile route header — back arrow + centered title +
+         *  drag-down → /app. Shows on every non-home /app route
+         *  on mobile; hidden on home, on desktop, and while a
+         *  chat detail is open (LiveChatPanel has its own). */}
+        {showMobileRouteHeader && <MobileRouteHeader />}
+
         <div className={styles.mapLayer}>
           {/* Right-rail secondary actions cluster — persistent
            *  affordances for the surfaces that don't fit the
            *  5-slot BottomNav. Hidden on mobile when a chat
-           *  detail is open so it doesn't compete with the
-           *  conversation surface. */}
-          {!hideShellChrome && <div className={styles.topBar}>
+           *  detail is open OR when we're on a subpage (each
+           *  subpage has its own MobileRouteHeader). */}
+          {!hideShellChrome && !hideMobileHeader && <div className={styles.topBar}>
             <button
               type="button"
               className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
@@ -212,17 +233,19 @@ function Shell({ children }: { children: React.ReactNode }) {
         {!hideShellChrome && <BottomNav />}
       </div>
 
-      {/* ArtistBox (Fanverse identity + missions panel) — persistent
-       *  across every /app/* route so the Fanpoints + entry to the
-       *  benefits drawer stay visible while the user is on chat,
-       *  comunidades, perfil, etc. Hidden on phones (≤480px); see
-       *  ArtistBox.module.css for the responsive ladder. Also
-       *  hidden on mobile when a chat detail is open so the
-       *  conversation owns the whole viewport. */}
-      {!hideShellChrome && <ArtistBox />}
+      {/* ArtistBox (Fanverse identity + missions panel) — on
+       *  desktop it stays persistent across every /app/* route so
+       *  the Fanpoints + entry to the benefits drawer stay visible
+       *  on chat, comunidades, perfil, etc. On mobile per product
+       *  feedback it lives ONLY on home (/app) — subpages have the
+       *  MobileRouteHeader instead. Also always hidden when a chat
+       *  detail is open. */}
+      {!hideShellChrome && !hideMobileHeader && <ArtistBox />}
 
-      {/* Superchat trigger — top-right floater, persistent. */}
-      {!hideShellChrome && (
+      {/* Superchat trigger — top-right floater, persistent on
+       *  desktop. Hidden on mobile entirely when not on home,
+       *  same rationale as the ArtistBox pill. */}
+      {!hideShellChrome && !hideMobileHeader && (
         <div className={styles.superchatTriggerSlot}>
           <SuperchatTrigger
             onClick={() => router.push('/app/superchat')}

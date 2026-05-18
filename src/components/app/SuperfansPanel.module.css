@@ -504,3 +504,22 @@
  * fits any viewport ≥ 32px wide. The previous breakpoint
  * (520px desktop + calc(100%-32) mobile) was retired together
  * with the fixed-width desktop layout. */
+
+/* ── Mobile (≤768px) ──
+ *
+ * The shell-level `MobileRouteHeader` (mounted in /app/layout.tsx)
+ * provides the back arrow + centered title + drag-down-to-dismiss
+ * affordance on every non-home /app route, so the panel's own
+ * internal header would be a redundant second band. Hide it on
+ * mobile; the card otherwise keeps its centered card layout. */
+@media (max-width: 768px) {
+  .header { display: none; }
+  /* Make sure the card sits BELOW the MobileRouteHeader (52px tall
+   * at top:0). The panel is centered vertically via bottom:100px +
+   * max-height; on smaller phones (height ≤ ~720px) the rise
+   * keyframe was bringing the top edge dangerously close to the
+   * route header. Lock max-height so the card never collides. */
+  .panel {
+    max-height: calc(100vh - 220px);
+  }
+}

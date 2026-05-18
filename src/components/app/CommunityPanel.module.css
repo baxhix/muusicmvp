@@ -203,9 +203,13 @@
   /* Same rationale as Conversations / Superchat — near full-screen
    * takeover so the topics list + composer have actual breathing
    * room. `bottom: 76px` leaves the BottomNav (z:70) visible so
-   * the user can switch surfaces without closing first. */
+   * the user can switch surfaces without closing first.
+   *
+   * `top: 52px` slides the panel below the MobileRouteHeader so
+   * the back-arrow + title bar (mounted by /app/layout.tsx) sits
+   * on top without overlapping the topic list. */
   .panel {
-    top: 0;
+    top: 52px;
     bottom: 76px;
     left: 0;
     right: 0;
@@ -214,6 +218,15 @@
     border-radius: 0;
     z-index: 60;
   }
+}
+
+/* ── Mobile (≤768px) — hide internal header ──
+ * MobileRouteHeader (in layout) replaces this panel's title bar
+ * across every mobile breakpoint. Keep the @media 480px panel
+ * override above for the geometry, but hide `.header` here for
+ * both 768 and 480 to keep the rule centralized. */
+@media (max-width: 768px) {
+  .header { display: none; }
 }
 
 /* ─────────────────────────────────────────────────────────────
