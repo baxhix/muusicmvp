@@ -65,9 +65,17 @@ export default function LiveChatStack({
             ? (c.name ?? 'Grupo')
             : (u?.name ?? 'Conversa');
           const seedId = isGroup ? c.id : (u?.id ?? c.id);
-          const img = isGroup
-            ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
-            : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
+          // Global Superchat group surfaces in the dock with the
+          // Ana Castela cowboy-hat icon. See ConversationsSidebar
+          // for the matching identification + rationale; both
+          // surfaces detect by name because the API doesn't
+          // currently expose the conversation slug.
+          const isSuperchat = isGroup && c.name === 'Superchat';
+          const img = isSuperchat
+            ? '/icon-chapeu-ac.svg'
+            : isGroup
+              ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
+              : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
           const isActive = activeId === c.id;
           const preview = c.lastMessage?.body;
           // Groups have no presence concept — always "active" visually

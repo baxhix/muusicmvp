@@ -386,9 +386,16 @@ export default function LiveChatPanel({
     ? (conversation?.name ?? 'Grupo')
     : (other?.name ?? 'Conversa');
   const seedId = isGroup ? (conversation?.id ?? 'unknown') : (other?.id ?? 'unknown');
-  const avatar = isGroup
-    ? (conversation?.imageUrl ?? `https://i.pravatar.cc/96?u=${seedId}`)
-    : (other?.avatarUrl ?? (other ? `https://i.pravatar.cc/72?u=${other.id}` : null));
+  // Superchat (global group) renders with the cowboy-hat icon so
+  // the panel header matches the chat list + dock visual. Same
+  // detection rationale as in ConversationsSidebar — match by
+  // name because the API doesn't currently expose the slug.
+  const isSuperchat = isGroup && conversation?.name === 'Superchat';
+  const avatar = isSuperchat
+    ? '/icon-chapeu-ac.svg'
+    : isGroup
+      ? (conversation?.imageUrl ?? `https://i.pravatar.cc/96?u=${seedId}`)
+      : (other?.avatarUrl ?? (other ? `https://i.pravatar.cc/72?u=${other.id}` : null));
   const isVerified = !isGroup && !!other?.verified;
   // Resolve the now-playing line: real data from the parent if the
   // user is online and listening to something, else a deterministic

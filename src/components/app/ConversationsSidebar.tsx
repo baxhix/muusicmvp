@@ -162,9 +162,19 @@ export default function ConversationsSidebar({
             const displayName = isGroup
               ? (c.name ?? 'Grupo')
               : (u?.name ?? 'Anônimo');
-            const img = isGroup
-              ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
-              : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
+            // The global Superchat group surfaces in this list as
+            // a regular `type: 'group'` row. Per product feedback
+            // its avatar should be the Ana Castela cowboy-hat
+            // icon (icon-chapeu-ac.svg) rather than the
+            // pravatar-seeded fallback. Detection is by name
+            // because the API's ApiConversationSummary doesn't
+            // currently expose the `slug` field the DB carries.
+            const isSuperchat = isGroup && c.name === 'Superchat';
+            const img = isSuperchat
+              ? '/icon-chapeu-ac.svg'
+              : isGroup
+                ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
+                : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
             // Groups have no presence concept — always rendered as
             // "active" so they don't get the offline grayscale.
             const isOnline = isGroup
@@ -206,6 +216,12 @@ export default function ConversationsSidebar({
                     alt=""
                     className={`${styles.avatar} ${isOnline ? styles.avatarOnline : styles.avatarOffline} ${isGroup ? styles.avatarGroup : ''}`}
                     onError={(e) => {
+                      // Skip the pravatar fallback for the
+                      // Superchat row — we want the hat icon to
+                      // stay even if the SVG had a transient
+                      // load hiccup (or if a future deploy moves
+                      // the asset path).
+                      if (isSuperchat) return;
                       const img = e.currentTarget;
                       const fb = `https://i.pravatar.cc/72?u=${seedId}`;
                       if (img.src !== fb) img.src = fb;
