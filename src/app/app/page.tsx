@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import ListeningTogether from '@/components/app/ListeningTogether';
+import MockToastRotator from '@/components/app/MockToastRotator';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
 import BrainstormPanel from '@/components/app/BrainstormPanel';
@@ -10,7 +10,6 @@ import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 
-import { useAppShell } from '@/lib/app/AppShellContext';
 
 /**
  * Map landing — `/app`.
@@ -32,8 +31,6 @@ import { useAppShell } from '@/lib/app/AppShellContext';
  * markers in place).
  */
 export default function AppPage() {
-  const shell = useAppShell();
-
   // Hello-world listener for the heart "aceno" event the Globe
   // dispatches when a user toggles the heart on a presence pin.
   // Kept here (vs. provider) because the real backend call will
@@ -75,13 +72,13 @@ export default function AppPage() {
           roster. */}
       <FloatingUsers />
 
-      {/* "Pessoas ouvindo o mesmo" pill — positions itself based
-          on the persistent player's current footprint, hence the
-          playerExpanded + playerSize props from shell context. */}
-      <ListeningTogether
-        playerExpanded={shell.playerExpanded}
-        playerSize={shell.playerSize}
-      />
+      {/* Rotating mock notification pills above the navbar. Cycles
+          through "+455 ouvindo com você", incoming messages,
+          waves, top-played track callouts, and TOP-N ranking
+          announcements. Visual envelope matches SameTrackToast /
+          PointsToast so the rotator's pills feel like real
+          notifications. */}
+      <MockToastRotator />
 
       {/* Feed bottom-sheet — drawer that overlays the right column
           of the map. Toggle via the BottomNav Feed slot or the

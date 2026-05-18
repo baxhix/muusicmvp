@@ -85,6 +85,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     closeAnaCheckIn,
     anaFlightModalPayload,
     closeAnaFlight,
+    feedOpen,
   } = useAppShell();
   // Watches the viewer's Fanpoints balance for 100-multiple
   // crossings and dispatches `app:milestone-fp` so the
@@ -178,8 +179,15 @@ function Shell({ children }: { children: React.ReactNode }) {
            *   Notificações button was removed from this cluster
            *   per product feedback; notifications surface through
            *   the BottomNav's red unread badge on the chat slot
-           *   instead. */}
-          {!hideShellChrome && !hideMobileHeader && (
+           *   instead.
+           *
+           * The cluster is also hidden when the Feed drawer is
+           * open (mobile + desktop) — per product feedback the
+           * message icon competes visually with the feed content,
+           * and reaching chat while reading the feed isn't a
+           * common path. Closing the feed brings the cluster
+           * back automatically. */}
+          {!hideShellChrome && !hideMobileHeader && !feedOpen && (
             <div className={styles.topBar}>
               {isMobile ? (
                 <button
