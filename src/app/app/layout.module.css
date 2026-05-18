@@ -13,7 +13,15 @@
 .shell {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  /* Stacks ABOVE the floating siblings that sit at the top-right
+   * corner (SuperchatTrigger z:50) so the LiveChatPanel — which
+   * lives inside this stacking context at z:250 — can actually
+   * cover them when a conversation is open. Was z:10; the panel
+   * was painting at z:10 from the document's perspective and the
+   * Superchat button + user avatar peeked through. Kept below
+   * every modal layer (PlaylistModal z:130, AnaCheckInPanel z:300)
+   * so those continue to overlay the chat surface as intended. */
+  z-index: 55;
   display: flex;
   flex-direction: column;
   pointer-events: none;
