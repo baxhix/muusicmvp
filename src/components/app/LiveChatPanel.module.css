@@ -197,27 +197,21 @@
 .kebabItemDanger { color: #f87171; }
 .kebabItemDanger:hover { background: rgba(248, 113, 113, 0.12); color: #fca5a5; }
 
+/* × close — hidden everywhere now that the back arrow covers
+ * both "voltar à lista" and "fechar conversa". Kept in the CSS
+ * for the JSX node that still renders it (the markup will be
+ * cleaned up in a later pass); display: none keeps it out of
+ * layout + tab order on every viewport. */
 .closeBtn {
-  width: 26px; height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  color: rgba(245, 245, 247, 0.7);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
-
-/* Back arrow — only visible on mobile. Desktop already has the
- * × on the right; the back-to-list affordance is mobile-specific
- * because the conversations sidebar is hidden under the chat
- * panel there (panel goes full-viewport) and there'd otherwise
- * be no obvious way to return to the list. */
-.backBtn {
   display: none;
+}
+
+/* Back arrow — visible on every viewport now. Anchors at the
+ * LEFT of the header so the row reads like a standard chat
+ * screen (desktop or mobile). Tapping clears chat.activeId via
+ * onClose, returning the user to the conversations sidebar. */
+.backBtn {
+  display: inline-flex;
   width: 36px;
   height: 36px;
   align-items: center;
@@ -616,8 +610,8 @@
   }
   .panelOpen { right: 0; }
 
-  .backBtn { display: inline-flex; }
-  .closeBtn { display: none; }
+  /* (backBtn / closeBtn visibility moved to the base rules —
+   * the back arrow is now visible across every viewport.) */
 
   /* Header pinned to the top of the panel even when the messages
    * area is scrolled mid-conversation. `sticky` keeps the header
