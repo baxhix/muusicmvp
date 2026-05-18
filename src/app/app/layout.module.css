@@ -82,7 +82,13 @@
    * edge on the same outer margin the Fanpoints chip uses on
    * the left. */
   .topBar {
-    top: 54px;
+    /* Lifted 54 → 46 per product feedback ("posicione 8 px
+     * mais para cima ... o icone de mensagem"). Stays roughly
+     * on the logo's vertical band (logo center sits at
+     * chrome.top + 74, icon button center now at 66 ≈ 8px
+     * above the logo center — still on the same horizontal
+     * strip but slightly raised). */
+    top: 46px;
     right: 18px;
     transform: none;
     flex-direction: row;

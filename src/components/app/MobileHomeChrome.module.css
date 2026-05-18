@@ -83,7 +83,12 @@
  * edge predictable regardless of small height variations. */
 .brand {
   position: absolute;
-  bottom: 8px;
+  /* Lifted 8 → 16 per product feedback ("posicione 8 px mais
+   * para cima o logotipo"). Brand still bottom-anchored so the
+   * spacing scales predictably; the extra 8px of margin gives
+   * the logo a comfortable buffer above the chrome's lower
+   * rounded edge. */
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;

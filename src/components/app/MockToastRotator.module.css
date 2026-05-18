@@ -9,9 +9,17 @@
 
 .root {
   position: fixed;
-  /* Sits right above the navbar pill — same `bottom: 84` token
-   * SameTrackToast uses, so the two toast stacks share a y-axis. */
-  bottom: 84px;
+  /* Toast bottom edge sits 24px above the navbar pill's outer
+   * top. The pill is ~56px tall and the .nav block has a 24px
+   * padding-bottom, so the pill's outer top is at 80px from the
+   * viewport bottom; adding 24px of gap puts this rule at 104.
+   *
+   * Per product feedback ("Posicione as notificações 24 px
+   * acima da navbar"); replaces the previous 84/156 values
+   * that were tuned to clear the mobile NowPlaying player —
+   * the new spec is "always 24px above the pill" regardless
+   * of what else floats nearby. */
+  bottom: 104px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
@@ -24,10 +32,9 @@
 
 @media (max-width: 768px) {
   .root {
-    /* Mobile NowPlaying floats above the navbar; lift the toast
-     * a bit so it clears both. Mirrors SameTrackToast's mobile
-     * override exactly. */
-    bottom: 156px;
+    /* Mobile pill geometry: .nav padding-bottom 18 + pill
+     * height ~56 + 24 gap = 98px from viewport bottom. */
+    bottom: 98px;
   }
 }
 
