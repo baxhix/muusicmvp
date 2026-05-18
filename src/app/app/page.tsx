@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
-import LiveChatStack from '@/components/app/LiveChatStack';
 import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
@@ -32,7 +30,6 @@ import { useAppShell } from '@/lib/app/AppShellContext';
  */
 export default function AppPage() {
   const shell = useAppShell();
-  const router = useRouter();
 
   // Hello-world listener for the heart "aceno" event the Globe
   // dispatches when a user toggles the heart on a presence pin.
@@ -55,25 +52,10 @@ export default function AppPage() {
       {/* Onboarding overlay — shows on first visit until dismissed. */}
       <Onboarding />
 
-      {/* ArtistBox moved to /app/layout.tsx so the Fanverse pill
-          stays visible while the user is on chat/comunidades/etc. */}
-
-      {/* Avatar dock for the latest 3 conversations. Clicking an
-          avatar both selects the conversation (chat.open) AND
-          routes to /app/chat so the LiveChatPanel — which is only
-          mounted under that route — actually appears. Previously
-          we only flipped the activeId, which silently set the
-          state but left the user on the empty map with nothing
-          to show. */}
-      <LiveChatStack
-        conversations={shell.chat.conversations}
-        activeId={shell.chat.activeId}
-        onlineUserIds={shell.onlineUserIds}
-        onOpen={(conversationId) => {
-          shell.chat.open(conversationId);
-          router.push('/app/chat');
-        }}
-      />
+      {/* ArtistBox and LiveChatStack moved to /app/layout.tsx so
+          the Fanverse pill AND the 3-latest chat dock stay visible
+          while the user is on chat / comunidades / superfãs /
+          perfil. */}
 
       {/* Deterministic screen-positioned avatars of every online
           user — these are NOT geo-anchored, the lat/lng markers

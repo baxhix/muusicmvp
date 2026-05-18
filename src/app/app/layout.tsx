@@ -8,6 +8,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
 import ArtistBox from '@/components/app/ArtistBox';
+import LiveChatStack from '@/components/app/LiveChatStack';
 import MobileRouteHeader from '@/components/app/MobileRouteHeader';
 import NowPlaying from '@/components/app/NowPlaying';
 import PlaylistModal from '@/components/app/PlaylistModal';
@@ -72,6 +73,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const {
     chat,
+    onlineUserIds,
     activeOverlay,
     setActiveOverlay,
     setShowPlaylist,
@@ -241,6 +243,26 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  MobileRouteHeader instead. Also always hidden when a chat
        *  detail is open. */}
       {!hideShellChrome && !hideMobileHeader && <ArtistBox />}
+
+      {/* Avatar dock for the latest 3 conversations. Lives in the
+       *  layout (not on /app's page.tsx) so the dock stays visible
+       *  when the user routes to Superfãs, Comunidades, Perfil,
+       *  etc. — clicking the crown used to unmount the dock and
+       *  effectively hide the user's recent chats. On mobile the
+       *  dock is gated to home only (subpages take the full screen
+       *  and the right rail is gone). The chat-detail-open path
+       *  hides it too because LiveChatPanel covers the dock there. */}
+      {!hideShellChrome && !hideMobileHeader && (
+        <LiveChatStack
+          conversations={chat.conversations}
+          activeId={chat.activeId}
+          onlineUserIds={onlineUserIds}
+          onOpen={(conversationId) => {
+            chat.open(conversationId);
+            router.push('/app/chat');
+          }}
+        />
+      )}
 
       {/* Superchat trigger — top-right floater, persistent on
        *  desktop. Hidden on mobile entirely when not on home,
