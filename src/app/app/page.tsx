@@ -6,6 +6,7 @@ import ListeningTogether from '@/components/app/ListeningTogether';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
 import Onboarding from '@/components/app/Onboarding';
+import BrainstormPanel from '@/components/app/BrainstormPanel';
 
 import { useAppShell } from '@/lib/app/AppShellContext';
 
@@ -75,6 +76,14 @@ export default function AppPage() {
           of the map. Toggle via the BottomNav Feed slot or the
           `app:toggle-feed` CustomEvent. */}
       <FeedPanel />
+
+      {/* Brainstorm — lightbulb trigger + toggle sheet for any
+          experimental feature we want to preview without
+          committing to. Mounted on /app only because every flag
+          in the current registry decorates this surface (e.g.
+          Tour Portugal lives on the globe); subpages have no
+          experimental UI today. */}
+      <BrainstormPanel />
     </>
   );
 }

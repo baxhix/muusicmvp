@@ -30,6 +30,7 @@ import {
 } from '@/lib/globeStore';
 import { ANA_CHECKINS } from '@/data/anaCheckIns';
 import { getFlightState } from '@/lib/anaFlight';
+import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { ANA_SHOWS } from '@/data/anaShows';
 
 /**
@@ -176,6 +177,11 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const { universeId, hydrated: universeHydrated } = useUniverse();
   const router = useRouter();
   const { tracks: catalog } = useTracksCatalog();
+  // Brainstorm flags — read here so the flight scheduler below
+  // can gate publication on `anaFlight`. Subscribers re-render
+  // when the toggle flips, so flipping the flag in the panel
+  // immediately tears down (or rebuilds) the on-globe overlay.
+  const { flags: brainstormFlags } = useBrainstormFlags();
 
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
 
@@ -459,7 +465,18 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     useState<AnaFlightPayload | null>(null);
   const anaFlightModalPayloadRef = useRef<AnaFlightPayload | null>(null);
   anaFlightModalPayloadRef.current = anaFlightModalPayload;
+  const anaFlightEnabled = brainstormFlags.anaFlight;
   useEffect(() => {
+    // Brainstorm flag gate — when the experimental Tour Portugal
+    // feature is disabled, tear down the overlay (clear globe
+    // markers, drop any open modal) and bail out before
+    // scheduling the tick. Flipping the flag back on re-mounts
+    // the scheduler via the [anaFlightEnabled] dep below.
+    if (!anaFlightEnabled) {
+      globeStore.setAnaFlight(null);
+      setAnaFlightModalPayload(null);
+      return;
+    }
     const publish = () => {
       const s = getFlightState();
       const payload: AnaFlightPayload = {
@@ -482,7 +499,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     publish();
     const id = setInterval(publish, 60 * 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [anaFlightEnabled]);
 
   // Globe airplane click → open the Tour Portugal panel. No
   // linger / scheduler interplay here (unlike check-ins) — the
