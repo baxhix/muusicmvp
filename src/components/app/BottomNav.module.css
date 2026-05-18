@@ -310,6 +310,26 @@
     width: 28px;
     height: 28px;
   }
+  /* Mobile uses COLOR (not opacity) to distinguish active vs
+   * inactive — inactive items are muted gray, the active slot
+   * (whichever route is currently mounted) lights up in pure
+   * white. On desktop the opacity-based dim still applies; on
+   * mobile, opacity is pinned to 1 across the board and the
+   * difference reads purely through hue so the active item
+   * really stands out at thumb-glance distance.
+   *
+   * Applies to .itemCenter too (the crown) — when SuperfansPanel
+   * is open it gets .itemActive, which flips it to white. */
+  .item,
+  .itemCenter {
+    color: rgba(245, 245, 247, 0.45);
+    opacity: 1;
+  }
+  .item.itemActive,
+  .itemCenter.itemActive {
+    color: #ffffff !important;
+    opacity: 1;
+  }
 }
 
 @media (max-width: 480px) {

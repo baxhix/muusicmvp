@@ -61,6 +61,16 @@
 .list {
   display: flex;
   flex-direction: column;
+  /* Avatars centered on a single vertical axis. The parent .dock
+   * also sets `align-items: center`, but that only governs DIRECT
+   * children — `.list` itself is the only direct child, and the
+   * `.item` avatars live one level deeper. Without this rule the
+   * items default to flex `align-items: stretch` and end up
+   * left-aligned within the column (their widths are explicit, so
+   * stretch becomes a no-op and they fall back to the cross-axis
+   * start), making the stack look slightly off-center especially
+   * after the hover/active translateX nudges. */
+  align-items: center;
   /* Vertical spacing handled per-item via `margin-top` (not flex
    * `gap`) per product feedback: previously the parent's row-gap
    * still allocated 6px BETWEEN every pair of children even when
