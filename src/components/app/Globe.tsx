@@ -633,33 +633,158 @@ export default function Globe() {
 
     map.on('zoom', reapplyMarkerOffsets);
 
-    // ── Compact badge mode at low zoom ─────────────────────────────
-    // When the camera is pulled back beyond COMPACT_ZOOM_THRESHOLD,
-    // every presence badge (Você + live) collapses to "avatar only"
-    // with a tiny audio-bars chip overlay. On hover any badge still
-    // expands to the full row via CSS — no JS needed for the
-    // interaction itself. Zoom-in past the threshold de-compacts
-    // every badge at once.
+    // ── Compact badge mode — collision-driven ──────────────────────
+    // Every presence badge (Você + live users) starts as an expanded
+    // pill (avatar + name + song row). When two badges' EXPANDED
+    // screen-space bounding boxes would overlap, the lower-priority
+    // marker collapses to compact mode (28×28 avatar circle only,
+    // with the equalizer chip), so the user still sees the person is
+    // there but the surface stops being a wall of overlapping text.
+    //
+    // Priority order:
+    //   1. Você (own marker) always wins — it represents the user
+    //      themselves and should never collapse just because someone
+    //      else is nearby.
+    //   2. Among other users, the topmost-on-screen marker wins. The
+    //      "winner" is the marker rendered higher up — visually it
+    //      already reads as foreground in a top-down layout, so
+    //      leaving it expanded matches stacking intuition.
+    //
+    // Below COMPACT_ZOOM_THRESHOLD (globe-view), we skip detection
+    // and just force every badge compact. At that zoom every pair
+    // would collide anyway, and the cheaper unconditional path
+    // matters because globe-view is where the marker count is
+    // highest.
+    //
+    // Rectangle dimensions are conservative caps that match the CSS
+    // upper bounds — actual badges may be narrower (truncated song
+    // name) but the cap is what determines collision worst-case.
     const COMPACT_ZOOM_THRESHOLD = 4;
-    const isCompactZoom = () => map.getZoom() <= COMPACT_ZOOM_THRESHOLD;
+    const COMPACT_SIZE_PX = 28;
+    const EXPANDED_WIDTH_PX = 200;
+    const EXPANDED_HEIGHT_PX = 56;
+    // The badge sits 6px ABOVE the marker anchor (`transform:
+    // translate(-50%, calc(-100% - 6px))` in the .userBadge /
+    // .liveUserBadge CSS rules).
+    const BADGE_ANCHOR_OFFSET_PX = 6;
 
-    const applyCompactClass = (root: HTMLElement | null | undefined) => {
-      if (!root) return;
+    interface ScreenRect { x1: number; y1: number; x2: number; y2: number }
+    const rectsOverlap = (a: ScreenRect, b: ScreenRect): boolean =>
+      !(a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2);
+
+    /**
+     * Compute the screen-space bounding box for a marker rendered
+     * either compact (28×28) or expanded (200×56), accounting for
+     * the marker's own offset (the cluster-fan offset applied via
+     * `marker.setOffset` for de-overlap of clustered users at the
+     * same coords).
+     */
+    const getBadgeScreenRect = (
+      marker: mapboxgl.Marker,
+      compact: boolean,
+    ): ScreenRect => {
+      const ll = marker.getLngLat();
+      const offset = marker.getOffset();
+      const p = map.project([ll.lng, ll.lat]);
+      const cx = p.x + offset.x;
+      const cy = p.y + offset.y;
+      const w = compact ? COMPACT_SIZE_PX : EXPANDED_WIDTH_PX;
+      const h = compact ? COMPACT_SIZE_PX : EXPANDED_HEIGHT_PX;
+      return {
+        x1: cx - w / 2,
+        y1: cy - BADGE_ANCHOR_OFFSET_PX - h,
+        x2: cx + w / 2,
+        y2: cy - BADGE_ANCHOR_OFFSET_PX,
+      };
+    };
+
+    /** Toggle the badgeCompact class on a marker's inner badge, AND
+     *  mirror the state to a data-attr on the wrapper element. The
+     *  data-attr is the source of truth a marker's innerHTML rewrite
+     *  reads from to re-apply the class without flashing the expanded
+     *  layout for one frame between rewrite and the next refresh. */
+    const setMarkerCompact = (root: HTMLElement, compact: boolean) => {
       const badge = root.querySelector<HTMLElement>(
         '.' + styles.userBadge + ', .' + styles.liveUserBadge,
       );
-      if (!badge) return;
-      badge.classList.toggle(styles.badgeCompact, isCompactZoom());
+      if (badge) badge.classList.toggle(styles.badgeCompact, compact);
+      root.dataset.compact = compact ? 'true' : 'false';
     };
 
-    const reapplyCompactState = () => {
-      if (userLocationMarker) applyCompactClass(userLocationMarker.getElement());
-      for (const [, marker] of liveUserMarkers) {
-        applyCompactClass(marker.getElement());
+    /** Synchronous re-application of the last-known compact state for
+     *  a freshly-rewritten marker wrapper. Reads `dataset.compact`
+     *  (which we wrote on the prior refresh) and sets the class on
+     *  the new inner badge. Called right after each `el.innerHTML =
+     *  ...` so the markup rewrite doesn't paint an expanded layout
+     *  for one frame before the next collision refresh runs. */
+    const restoreCompactFromDataset = (root: HTMLElement) => {
+      const compact = root.dataset.compact === 'true';
+      const badge = root.querySelector<HTMLElement>(
+        '.' + styles.userBadge + ', .' + styles.liveUserBadge,
+      );
+      if (badge) badge.classList.toggle(styles.badgeCompact, compact);
+    };
+
+    /** Walk every marker, decide compact-vs-expanded by greedy
+     *  collision check, and apply the resulting class. */
+    const refreshCollisionState = () => {
+      const zoom = map.getZoom();
+
+      interface Entry { marker: mapboxgl.Marker; isOwn: boolean }
+      const entries: Entry[] = [];
+      if (userLocationMarker) {
+        entries.push({ marker: userLocationMarker, isOwn: true });
+      }
+      for (const [, m] of liveUserMarkers) {
+        entries.push({ marker: m, isOwn: false });
+      }
+
+      // Globe view: skip the O(N²) check, force-compact everything.
+      if (zoom <= COMPACT_ZOOM_THRESHOLD) {
+        for (const e of entries) setMarkerCompact(e.marker.getElement(), true);
+        return;
+      }
+
+      // Sort: own marker first, then by ascending screen-Y (topmost
+      // marker wins overlaps below it).
+      entries.sort((a, b) => {
+        if (a.isOwn !== b.isOwn) return a.isOwn ? -1 : 1;
+        const ay = getBadgeScreenRect(a.marker, false).y1;
+        const by = getBadgeScreenRect(b.marker, false).y1;
+        return ay - by;
+      });
+
+      const expandedRects: ScreenRect[] = [];
+      for (const e of entries) {
+        const r = getBadgeScreenRect(e.marker, false);
+        let collides = false;
+        for (const other of expandedRects) {
+          if (rectsOverlap(r, other)) {
+            collides = true;
+            break;
+          }
+        }
+        setMarkerCompact(e.marker.getElement(), collides);
+        if (!collides) expandedRects.push(r);
       }
     };
 
-    map.on('zoom', reapplyCompactState);
+    /** rAF-throttled wrapper: a single map pan can fire dozens of
+     *  `move` events; coalescing them to one refresh per frame keeps
+     *  the O(N²) check off the hot path. */
+    let collisionRafId = 0;
+    const scheduleCollisionRefresh = () => {
+      if (collisionRafId) return;
+      collisionRafId = requestAnimationFrame(() => {
+        collisionRafId = 0;
+        refreshCollisionState();
+      });
+    };
+
+    // `move` fires for pan, zoom, AND rotate — superset of `zoom`,
+    // so this single listener covers every camera change that would
+    // shift marker screen positions.
+    map.on('move', scheduleCollisionRefresh);
 
     /**
      * Measure the song-row's inner text vs its container width. When
@@ -779,10 +904,12 @@ export default function Globe() {
         userLocationMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([coords.lng, coords.lat])
           .addTo(map);
-        // Apply the current compact state immediately so a fresh
-        // marker at globe-zoom shows up collapsed instead of flashing
-        // expanded for a frame.
-        applyCompactClass(el);
+        // Synchronous initial state: Você is always priority so it
+        // defaults to EXPANDED. The refresh below confirms (or, if
+        // someone's right on top of us at globe zoom, the refresh
+        // ends up forcing compact anyway).
+        setMarkerCompact(el, false);
+        scheduleCollisionRefresh();
         // Measure after mount so scrollWidth/clientWidth reflect the
         // real laid-out element. requestAnimationFrame buys a frame
         // for layout to settle.
@@ -798,13 +925,19 @@ export default function Globe() {
       globeStore.registerLiveUsers((users) => {
         const nextIds = new Set(users.map((u) => u.id));
 
-        // Remove markers for users that disappeared.
+        // Remove markers for users that disappeared. A removal opens
+        // up screen real estate that a neighboring compact marker
+        // can now reclaim — schedule a refresh after the removals
+        // run so the survivors expand if room permits.
+        let didRemove = false;
         for (const [id, marker] of liveUserMarkers) {
           if (!nextIds.has(id)) {
             marker.remove();
             liveUserMarkers.delete(id);
+            didRemove = true;
           }
         }
+        if (didRemove) scheduleCollisionRefresh();
 
         for (const u of users) {
           // Sanitize before innerHTML.
@@ -871,9 +1004,17 @@ export default function Globe() {
             if (el.innerHTML !== html) {
               el.innerHTML = html;
               // The new innerHTML doesn't carry the compact class —
-              // re-apply it based on the current zoom so a track-change
-              // re-render doesn't flash the expanded layout.
-              applyCompactClass(el);
+              // restore it from the wrapper's data-compact attr
+              // (set by setMarkerCompact on the prior refresh) so
+              // the rewrite doesn't flash the expanded layout for
+              // one frame before the next collision refresh lands.
+              restoreCompactFromDataset(el);
+              // Marker contents changed (track switch) but its
+              // position didn't — still re-schedule a collision
+              // pass in case the new song-row width changes the
+              // collision picture in some edge case, AND so any
+              // peer markers added between refreshes get picked up.
+              scheduleCollisionRefresh();
               if (songInnerHtml) {
                 requestAnimationFrame(() =>
                   activateMarquee(el, styles.userBadgeSongInner),
@@ -967,7 +1108,14 @@ export default function Globe() {
               .setLngLat([u.lng, u.lat])
               .addTo(map);
             liveUserMarkers.set(u.id, marker);
-            applyCompactClass(wrapper);
+            // Synchronous initial state: start COMPACT so the first
+            // frame doesn't flash a wall of overlapping expanded
+            // pills (worst-case visual). The refresh below promotes
+            // this marker to expanded if it has room — much better
+            // UX than "all big pills, then collapse" since small
+            // avatars never visually clash.
+            setMarkerCompact(wrapper, true);
+            scheduleCollisionRefresh();
             if (songInnerHtml) {
               requestAnimationFrame(() =>
                 activateMarquee(wrapper, styles.userBadgeSongInner),
@@ -1399,6 +1547,7 @@ export default function Globe() {
       // Tear down the resize plumbing added above so a re-mount
       // doesn't leak listeners on top of fresh ones.
       if (resizeRafId) cancelAnimationFrame(resizeRafId);
+      if (collisionRafId) cancelAnimationFrame(collisionRafId);
       resizeObserver.disconnect();
       visualViewport?.removeEventListener('resize', scheduleResize);
       window.removeEventListener('orientationchange', scheduleResize);
