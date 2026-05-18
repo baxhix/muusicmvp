@@ -24,7 +24,7 @@ import { useEffect, useState } from 'react';
  * ============================================================ */
 
 /** All known experimental-feature keys. */
-export type BrainstormFlagKey = 'anaFlight';
+export type BrainstormFlagKey = 'anaFlight' | 'superlive';
 
 export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
 
@@ -35,6 +35,7 @@ export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
  *  to land on /app. */
 const DEFAULTS: BrainstormFlags = {
   anaFlight: true,
+  superlive: true,
 };
 
 /**
@@ -55,6 +56,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Tour Portugal (Ana voando)',
     description:
       'Linha animada de Londrina até Lisboa com um avião percorrendo o caminho em tempo real. Toque no avião para mandar mensagem.',
+  },
+  {
+    key: 'superlive',
+    title: 'Superlive ao vivo',
+    description:
+      'Pílula "AO VIVO" no topo da home que abre um modal com a transmissão da Ana e o chat dos fãs em tempo real.',
   },
 ];
 

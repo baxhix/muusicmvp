@@ -7,6 +7,7 @@ import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
 import Onboarding from '@/components/app/Onboarding';
 import BrainstormPanel from '@/components/app/BrainstormPanel';
+import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 
 import { useAppShell } from '@/lib/app/AppShellContext';
 
@@ -84,6 +85,12 @@ export default function AppPage() {
           Tour Portugal lives on the globe); subpages have no
           experimental UI today. */}
       <BrainstormPanel />
+
+      {/* Superlive (brainstorm-gated) — floating "AO VIVO" pill
+          + modal with the simulated transmission + fake fan
+          chat. Self-gates on `flags.superlive` and unmounts
+          entirely when the toggle is off. */}
+      <SuperliveTrigger />
     </>
   );
 }

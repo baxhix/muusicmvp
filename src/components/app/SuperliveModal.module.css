@@ -1,0 +1,444 @@
+/* ============================================================
+ * SUPERLIVE MODAL — brainstorm feature
+ *
+ * Centered modal with the Ana broadcast on top and the live
+ * fan chat below. Uses the same dark-gradient + heavy-blur
+ * formula as AnaCheckInPanel / AnaFlightPanel so the three
+ * "tap an Ana surface" modals feel like one design system.
+ *
+ * z above the persistent shell (z:55) but below AnaCheckInPanel
+ * (z:300) — the latter is more contextually urgent (real-time
+ * check-in pin) and should layer on top if both somehow open
+ * together.
+ * ============================================================ */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: superlive-scrim-in 180ms ease both;
+}
+@keyframes superlive-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel {
+  position: relative;
+  width: min(480px, 100%);
+  height: min(720px, calc(100vh - 32px));
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(180deg,
+      rgba(11, 11, 13, 0.97) 0%,
+      rgba(5, 5, 7, 0.97) 50%,
+      rgba(2, 2, 3, 0.98) 100%);
+  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 22px;
+  box-shadow:
+    0 40px 100px -12px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(236, 72, 153, 0.1) inset;
+  color: #f5f5f7;
+  overflow: hidden;
+  animation: superlive-panel-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes superlive-panel-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.closeBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* ── Video stage ─────────────────────────────────────────── */
+
+.videoStage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  background: #000;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Soft top + bottom scrims so the overlay chrome stays legible
+ * regardless of the video frame underneath. */
+.videoStage::before,
+.videoStage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 70px;
+  pointer-events: none;
+  z-index: 1;
+}
+.videoStage::before {
+  top: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 100%);
+}
+.videoStage::after {
+  bottom: 0;
+  height: 90px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+}
+
+.videoOverlayTop {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 2;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.95);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  box-shadow: 0 4px 12px -2px rgba(239, 68, 68, 0.55);
+}
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: superlive-live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes superlive-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.7); }
+}
+
+.viewers {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  font-variant-numeric: tabular-nums;
+}
+
+.videoOverlayBottom {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 2;
+}
+
+.creator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.creatorAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(236, 72, 153, 0.85);
+  flex-shrink: 0;
+  background: #0b0b0d;
+}
+.creatorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.creatorName {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.creatorSub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.85);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.muteBtn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.muteBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* ── Chat stream ─────────────────────────────────────────── */
+
+.chatStream {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Mask the very top so new messages fade in instead of
+   * popping into a hard edge. */
+  mask-image: linear-gradient(180deg, transparent 0, #000 24px);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 24px);
+}
+.chatStream::-webkit-scrollbar {
+  width: 4px;
+}
+.chatStream::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+.chatLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  animation: superlive-chatline-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes superlive-chatline-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.chatLineMod {
+  background: rgba(34, 197, 94, 0.10);
+  border-color: rgba(34, 197, 94, 0.30);
+}
+.chatLineSuperfan {
+  background: rgba(236, 72, 153, 0.08);
+  border-color: rgba(236, 72, 153, 0.25);
+}
+
+.chatAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #0b0b0d;
+  /* Hairline ring helps light-toned avatars separate from the
+   * chat row background — same trick the dock avatars use. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.chatBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.25;
+}
+.chatName {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.85);
+  letter-spacing: -0.005em;
+}
+.chatTierBadge {
+  display: inline-flex;
+  padding: 0 5px;
+  height: 14px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  align-items: center;
+}
+.chatLineMod .chatTierBadge {
+  background: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+.chatLineSuperfan .chatTierBadge {
+  background: rgba(236, 72, 153, 0.25);
+  color: #f9a8d4;
+}
+.chatMessage {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #f5f5f7;
+  word-break: break-word;
+  letter-spacing: -0.005em;
+}
+
+/* ── Composer ────────────────────────────────────────────── */
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+.composerField {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.composerField:focus {
+  border-color: rgba(236, 72, 153, 0.55);
+  background: rgba(255, 255, 255, 0.07);
+}
+.composerField::placeholder {
+  color: rgba(245, 245, 247, 0.4);
+}
+
+.composerHeart {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(248, 113, 113, 0.95);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.composerHeart:hover {
+  background: rgba(248, 113, 113, 0.16);
+  transform: scale(1.08);
+}
+.composerHeart:active {
+  transform: scale(0.94);
+}
+
+.composerSend {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background:
+    linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.55);
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+.composerSend:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+.composerSend:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.composerSend:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .panel {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  .scrim {
+    padding: 0;
+  }
+  .videoStage {
+    aspect-ratio: 16 / 10;
+  }
+  .creatorAvatar {
+    width: 34px;
+    height: 34px;
+  }
+  .creatorName {
+    font-size: 13.5px;
+  }
+}
