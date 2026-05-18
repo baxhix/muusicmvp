@@ -174,63 +174,37 @@ function Shell({ children }: { children: React.ReactNode }) {
            *   Notificações"), so the cluster keeps only the
            *   surfaces still without a navbar slot.
            *
-           * Mobile: only Notificações stays. The mobile navbar's
-           *   5 slots are full (Mapa / Feed / Superfã / Chat /
-           *   Hamburger), and the hamburger menu hosts
-           *   Comunidades + Minha Conta + Configurações — bell
-           *   sits up here so it's reachable in one tap. */}
+           * Mobile: only the Chat / Send icon stays. The
+           *   Notificações button was removed from this cluster
+           *   per product feedback; notifications surface through
+           *   the BottomNav's red unread badge on the chat slot
+           *   instead. */}
           {!hideShellChrome && !hideMobileHeader && (
             <div className={styles.topBar}>
               {isMobile ? (
-                /* Mobile cluster — Notificações + Chat. Per product
-                 *  feedback Chat lives at the TOP-RIGHT corner (the
-                 *  rightmost slot in this flex row), with the bell
-                 *  sitting immediately to its left. Flex row order
-                 *  matches DOM order, so render Notif first then
-                 *  Chat. Chat unread count rides along as a red
-                 *  pill on the icon. */
-                <>
-                  <button
-                    type="button"
-                    className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
-                    onClick={() => {
-                      setActiveOverlay((curr) =>
-                        curr === 'notifications' ? null : 'notifications',
-                      );
-                    }}
-                    aria-label="Notificações"
-                    aria-pressed={showNotifications}
-                    title="Notificações"
-                  >
-                    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z" />
-                      <path d="M9 18a2 2 0 0 0 4 0" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
-                    onClick={() => {
-                      if (pathname.startsWith('/app/chat')) {
-                        router.push('/app');
-                      } else {
-                        router.push('/app/chat');
-                      }
-                    }}
-                    aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
-                    aria-pressed={pathname.startsWith('/app/chat')}
-                    title="Conversas"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
-                    </svg>
-                    {chatUnreadCount > 0 && (
-                      <span className={styles.shortcutBtnBadge} aria-hidden="true">
-                        {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                      </span>
-                    )}
-                  </button>
-                </>
+                <button
+                  type="button"
+                  className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
+                  onClick={() => {
+                    if (pathname.startsWith('/app/chat')) {
+                      router.push('/app');
+                    } else {
+                      router.push('/app/chat');
+                    }
+                  }}
+                  aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
+                  aria-pressed={pathname.startsWith('/app/chat')}
+                  title="Conversas"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
+                  </svg>
+                  {chatUnreadCount > 0 && (
+                    <span className={styles.shortcutBtnBadge} aria-hidden="true">
+                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                    </span>
+                  )}
+                </button>
               ) : (
                 <>
                   <button

@@ -114,12 +114,12 @@
     background: transparent !important;
     opacity: 0.6;
   }
-  /* Icons trimmed back to 26px per product feedback — 36 was
-   * dominating the header surface. Pure white color for max
-   * legibility against the lilac/pink ambient wash. */
+  /* Icons trimmed further to 20px per product feedback. Pure
+   * white color for max legibility against the lilac/pink
+   * ambient wash. */
   .shortcutBtn svg {
-    width: 26px !important;
-    height: 26px !important;
+    width: 20px !important;
+    height: 20px !important;
     color: #ffffff !important;
   }
   /* Active overlay state — soft lilac tint on the icon itself

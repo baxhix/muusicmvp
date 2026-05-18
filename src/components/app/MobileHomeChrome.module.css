@@ -62,56 +62,59 @@
   height: 68px;
 }
 
-/* Brand column — logo on top, "FANVERSE" wordmark below.
- * Centered horizontally in the 68px header band. The column
- * gap is tight (2px) and the wordmark is small (8px) so the
- * stacked unit reads as a single brand-lockup, not two
- * separate elements. */
+/* Brand column — logo on top, "FANVERSE" wordmark immediately
+ * below it. Gap shrunk 2 → -2 (negative) so the wordmark
+ * tucks right under the logo's baseline, reading as a unified
+ * brand mark rather than two stacked items. */
 .brand {
   position: absolute;
-  top: 4px;
+  top: 2px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   pointer-events: none;
   z-index: 1;
 }
 .logo {
-  /* Trimmed 58 → 48 to make room for the "FANVERSE" wordmark
-   * underneath while keeping the whole lockup inside the 68px
-   * band. Native aspect yields ~85px wide, still clears the
-   * right-rail cluster on every supported viewport. */
-  height: 48px;
+  /* Bumped 48 → 56 per product feedback. Native aspect yields
+   * ~100px wide; right-rail cluster only carries the Send icon
+   * now (Notif removed), so there's plenty of horizontal room
+   * on every supported viewport. */
+  height: 56px;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));
+  /* Negative bottom margin pulls the wordmark up into the
+   * logo's natural padding area so the two visually touch. */
+  margin-bottom: -4px;
 }
 .brandLabel {
-  /* Small all-caps wordmark below the artist logo. Letter-
-   * spacing gives the word a deliberate "stamp" feel; reduced
-   * alpha keeps it visually subordinate to the logo above. */
-  font-size: 8px;
+  /* Smaller wordmark (8 → 6.5px) per product feedback. The
+   * letter-spacing keeps the text legible even at this size;
+   * lower alpha keeps it visually subordinate to the logo. */
+  font-size: 6.5px;
   font-weight: 800;
-  letter-spacing: 0.22em;
-  color: rgba(245, 245, 247, 0.62);
+  letter-spacing: 0.24em;
+  color: rgba(245, 245, 247, 0.55);
   text-transform: uppercase;
   line-height: 1;
 }
 
-/* Small-phone fallback (<360px). Slightly smaller logo +
- * brand label so the lockup keeps comfortable margins. */
+/* Small-phone fallback (<360px). Logo trimmed slightly so the
+ * lockup still has comfortable horizontal margins on narrow
+ * viewports; wordmark scales down proportionally. */
 @media (max-width: 360px) {
   .brand {
-    top: 6px;
+    top: 4px;
   }
   .logo {
-    height: 42px;
+    height: 50px;
   }
   .brandLabel {
-    font-size: 7.5px;
+    font-size: 6px;
   }
 }
 
