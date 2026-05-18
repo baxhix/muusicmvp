@@ -1079,15 +1079,20 @@ export default function Globe() {
           const wrapper = document.createElement('div');
           wrapper.className = styles.anaFlightWrap;
           wrapper.style.cursor = 'pointer';
+          // Airplane silhouette — top-down view, nose UP at native
+          // orientation. Two paths: solid pink fill for the body
+          // and a thin white outline that lifts the plane against
+          // any basemap color. Replaces the paper-airplane (Send)
+          // glyph used in v1 — that one read as "DM/message" more
+          // than "in-flight aircraft" once paired with a route line.
           wrapper.innerHTML = `
             <div class="${styles.anaFlightGlyph}" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none">
                 <path
-                  d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z"
+                  d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
                   fill="currentColor"
-                  stroke="rgba(255, 255, 255, 0.9)"
-                  stroke-width="0.9"
-                  stroke-linecap="round"
+                  stroke="rgba(255, 255, 255, 0.92)"
+                  stroke-width="0.8"
                   stroke-linejoin="round"
                 />
               </svg>
@@ -1126,12 +1131,12 @@ export default function Globe() {
         }
 
         // Rotate the inner glyph to point along the bearing. The
-        // SVG nose points up-right at 45° in its native orientation,
-        // so we offset by -45 so a bearing of 0° (north) puts the
-        // nose pointing straight up. After that, +bearing rotates
-        // clockwise as compass bearings do.
+        // new airplane SVG points UP at its native orientation, so
+        // no offset is needed — a bearing of 0° (north) keeps the
+        // nose pointing straight up, and +bearing rotates clockwise
+        // as compass bearings do.
         if (anaFlightGlyphRef.current) {
-          anaFlightGlyphRef.current.style.transform = `rotate(${payload.bearingDeg - 45}deg)`;
+          anaFlightGlyphRef.current.style.transform = `rotate(${payload.bearingDeg}deg)`;
         }
       });
 

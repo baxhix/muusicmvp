@@ -204,10 +204,13 @@
 .routeBarPlane {
   position: absolute;
   top: 50%;
-  /* `left` is set inline via the progress percentage. The
-   * translate centers the icon on that point AND nudges it
-   * 1px up so the nose visually rests on the line. */
-  transform: translate(-50%, calc(-50% - 1px)) rotate(45deg);
+  /* `left` is set inline via the progress percentage. The new
+   * airplane SVG points UP at its native orientation; the route
+   * bar runs horizontally L→R, so a 90° clockwise rotation
+   * points the nose along the line of travel toward Lisboa.
+   * The translate centers the icon on the progress point AND
+   * nudges it 1px up so the body visually rests on the line. */
+  transform: translate(-50%, calc(-50% - 1px)) rotate(90deg);
   width: 18px;
   height: 18px;
   color: #ec4899;
