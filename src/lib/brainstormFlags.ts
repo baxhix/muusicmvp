@@ -24,7 +24,7 @@ import { useEffect, useState } from 'react';
  * ============================================================ */
 
 /** All known experimental-feature keys. */
-export type BrainstormFlagKey = 'anaFlight' | 'superlive';
+export type BrainstormFlagKey = 'anaFlight' | 'superlive' | 'collectiveListening';
 
 export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
 
@@ -36,6 +36,7 @@ export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
 const DEFAULTS: BrainstormFlags = {
   anaFlight: true,
   superlive: true,
+  collectiveListening: true,
 };
 
 /**
@@ -62,6 +63,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Superlive ao vivo',
     description:
       'Pílula "AO VIVO" no topo da home que abre um modal com a transmissão da Ana e o chat dos fãs em tempo real.',
+  },
+  {
+    key: 'collectiveListening',
+    title: 'Audição coletiva (Fire Arena)',
+    description:
+      'Botão da Fire Arena que abre uma sessão de escuta colaborativa do álbum "Let\'s Go Rodeo" — vinil girando, capa do álbum e chat dos fãs comentando em tempo real.',
   },
 ];
 

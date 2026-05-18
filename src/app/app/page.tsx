@@ -8,6 +8,7 @@ import FeedPanel from '@/components/app/FeedPanel';
 import Onboarding from '@/components/app/Onboarding';
 import BrainstormPanel from '@/components/app/BrainstormPanel';
 import SuperliveTrigger from '@/components/app/SuperliveTrigger';
+import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 
 import { useAppShell } from '@/lib/app/AppShellContext';
@@ -100,6 +101,13 @@ export default function AppPage() {
           chat. Self-gates on `flags.superlive` and unmounts
           entirely when the toggle is off. */}
       <SuperliveTrigger />
+
+      {/* Fire Arena · Audição coletiva (brainstorm-gated) —
+          black pill below the Superlive trigger that opens a
+          collaborative listening session for "Let's Go Rodeo"
+          with a spinning vinyl + fake fan chat. Self-gates on
+          `flags.collectiveListening`. */}
+      <CollectiveListeningTrigger />
     </>
   );
 }
