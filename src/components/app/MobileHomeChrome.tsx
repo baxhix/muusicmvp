@@ -42,7 +42,8 @@ export default function MobileHomeChrome() {
         alt="Ana Castela"
         className={styles.logo}
       />
-      <div className={styles.divider} aria-hidden="true" />
+      {/* (divider removed — header band and info bar are one
+       *  continuous surface now per product feedback.) */}
       <div
         className={styles.infoBar}
         role="status"

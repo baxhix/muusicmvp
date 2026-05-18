@@ -82,50 +82,53 @@
     flex-direction: row;
     gap: 4px;
   }
-  /* Right-rail buttons on mobile — ICON ONLY. No border, no
-   * background-circle, no chrome of any kind in any state.
-   * `!important` here because the desktop base rule sets a
-   * `border: 1px solid` that was leaking through `:hover` /
-   * `.shortcutBtnActive` (each has its own selector) when those
-   * states added their own border-color without explicitly
-   * resetting `border-width`. The user has flagged the leftover
-   * circle border multiple rounds — pinning it shut at every
-   * state stops the regression for good. */
+  /* Right-rail buttons on mobile — strict ICON ONLY, with NO
+   * background circle in ANY state (rest, hover, active, or
+   * overlay-open). The desktop base rule sets a `border` and
+   * a `background`, and earlier rounds added a `:hover` wash
+   * that still painted a faint circle behind the icon —
+   * everything's nuked here with !important so the icon
+   * floats free over the chrome strip below. Touch feedback
+   * is an `opacity` dip rather than a background change.
+   *
+   * 44×44 footprint keeps the tap target comfortable. */
   .shortcutBtn {
     width: 44px;
     height: 44px;
     border: none !important;
     background: transparent !important;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     color: #f5f5f7;
     box-shadow: none !important;
   }
-  .shortcutBtn:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
+  .shortcutBtn:hover,
+  .shortcutBtn:focus,
+  .shortcutBtn:focus-visible {
+    background: transparent !important;
     border: none !important;
     transform: none;
     box-shadow: none !important;
   }
   .shortcutBtn:active {
-    background: rgba(255, 255, 255, 0.10) !important;
+    background: transparent !important;
+    opacity: 0.6;
   }
-  /* Icons grew 26 → 32 per product feedback so the Notif and
-   * Send glyphs read confidently at thumb-distance. 32px
-   * inside a 44×44 tap target leaves a 6px halo around each
-   * glyph — enough breathing room without making the icon
-   * dominate the tap target visually. */
+  /* Icons grew 32 → 36 per product feedback. 36px inside a
+   * 44×44 button leaves only a 4px halo — the icon is the
+   * affordance, the button is just the hit slop. */
   .shortcutBtn svg {
-    width: 32px;
-    height: 32px;
+    width: 36px !important;
+    height: 36px !important;
   }
-  /* Active overlay state — color tint reads via the icon and a
-   * faint background wash, NEVER a border ring. */
+  /* Active overlay state — color tint reads via the icon
+   * alone (white-on-white-tint instead of a background pill).
+   * No circle, no border, no chrome. */
   .shortcutBtnActive,
   .shortcutBtnActive:hover {
-    background: rgba(168, 85, 247, 0.18) !important;
+    background: transparent !important;
     border: none !important;
-    color: #ffffff;
+    color: #c084fc !important;
     box-shadow: none !important;
   }
   /* Unread pill scaled to track the new 20px icon. */

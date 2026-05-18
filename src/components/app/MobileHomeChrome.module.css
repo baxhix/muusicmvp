@@ -1,16 +1,19 @@
 /* ============================================================
- * MOBILE HOME CHROME — solid header bg + gray divider + info bar
+ * MOBILE HOME CHROME — single rounded card at the top of /app
  *
- * Three stacked strips that anchor the top of /app on mobile.
- * Sits BELOW the floating ArtistBox + right-rail cluster
- * (z:5 here vs z:15 / z:50 on those elements) so its surface
- * paints UNDER their content. The ArtistBox and cluster lost
- * their own backgrounds on mobile (see ArtistBox.module.css /
- * layout.module.css) and now ride on top of this single shared
- * background instead.
+ * Header band + info bar fused into ONE continuous surface
+ * (no divider line between them) with the bottom corners
+ * rounded at 28px so the chrome hangs from the top of the
+ * screen like a card. Soft lilac → pink gradient over a
+ * slightly-transparent dark base lets the basemap show
+ * through subtly without losing legibility for the logo +
+ * icons + Fanpoints chip riding on top.
  *
- * Anchored at top:0 full-width so the iOS status bar sits
- * directly above without a visible gap.
+ * Single `.chrome` element paints the surface; the inner
+ * `.headerBg` and `.infoBar` are layout spacers that align
+ * children to the right vertical bands. The whole card sits
+ * at z:5 so the right-rail Notif/Send cluster (z:50) and
+ * any open modal still paint above it.
  * ============================================================ */
 
 .chrome {
@@ -20,105 +23,89 @@
   right: 0;
   z-index: 5;
   pointer-events: none;
-}
-
-/* Header background — soft lilac → pink gradient over a dark
- * base so the band reads "premium / live" against the rest of
- * the surface without losing legibility for the white logo +
- * icons riding on top. Two radial color washes layered above
- * a black linear gradient:
- *   - Pink wash (~rose-500) bloomed from the top-right
- *   - Lilac wash (~purple-500) bloomed from the bottom-left
- * Both alphas kept under 0.35 so the surface stays elegant
- * rather than candy-colored. Heavy backdrop blur smooths
- * everything together; the info bar below intentionally
- * stays neutral black to preserve a clear visual hierarchy. */
-.headerBg {
-  height: 68px;
+  /* Lilac+pink ambient wash over a translucent dark base — was
+   * two separately-painted stripes; combined here so there's
+   * no visual seam between the logo row and the info row. */
   background:
     radial-gradient(
-      120% 90% at 100% 0%,
+      120% 80% at 100% 0%,
       rgba(236, 72, 153, 0.30) 0%,
       transparent 60%
     ),
     radial-gradient(
-      110% 90% at 0% 100%,
+      110% 80% at 0% 100%,
       rgba(168, 85, 247, 0.32) 0%,
       transparent 65%
     ),
     linear-gradient(
       180deg,
-      rgba(11, 11, 13, 0.94) 0%,
-      rgba(6, 6, 9, 0.96) 100%
+      rgba(11, 11, 13, 0.82) 0%,
+      rgba(6, 6, 9, 0.80) 100%
     );
   backdrop-filter: blur(28px) saturate(1.25);
   -webkit-backdrop-filter: blur(28px) saturate(1.25);
+  /* Bottom-only border radius — the card hangs from the top
+   * edge of the viewport and curves into the map below. */
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+  /* Clip children that would otherwise poke past the rounded
+   * bottom corners (none today, but future content might). */
+  overflow: hidden;
 }
 
-/* Ana Castela logo — centered in the header band. Source PNG
- * is 8000×4500 (16:9-ish). Height bumped 42→50 (+20% per
- * product feedback, cumulative ~+56% from the original 32px);
- * native aspect ratio yields ~89px width, which still clears
- * the right-rail cluster (left edge ~104px from the right) and
- * the hidden ArtistBox slot on the left at every viewport
- * width we support. `top: 9` keeps the logo symmetric within
- * the 68px band: (68-50)/2 = 9. */
+/* Header band — just a layout spacer now (no own background).
+ * Reserves 68px at the top of the chrome for the logo + the
+ * right-rail Notif/Send cluster to sit inside. */
+.headerBg {
+  height: 68px;
+}
+
+/* Ana Castela logo — centered in the header band. Height
+ * bumped 50 → 58 per product feedback (cumulative ~+80% from
+ * the original 32px); native aspect ratio yields ~103px width,
+ * which still clears the right-rail cluster (left edge ~104px
+ * from the right) and the hidden ArtistBox slot on the left.
+ * `top: 5` keeps the bigger logo symmetric within the 68px
+ * band: (68-58)/2 = 5. */
 .logo {
   position: absolute;
-  top: 9px;
+  top: 5px;
   left: 50%;
   transform: translateX(-50%);
-  height: 50px;
+  height: 58px;
   width: auto;
-  /* Drop shadow lifts the logo subtly off the solid black band
-   * so the curves keep edge contrast even when the user is
-   * looking at it peripherally. */
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));
   pointer-events: none;
   z-index: 1;
 }
 
-/* On very narrow phones (< 360px) drop back to a smaller logo
- * so it never collides with the cluster on the right or the
- * device-edge curvature on the left. `top: 12` keeps the
- * 44px logo vertically centered in the 68px band. */
+/* Small-phone fallback (<360px). Bump 44→52 to match the
+ * cumulative growth pattern; `top: 8` keeps it centered. */
 @media (max-width: 360px) {
   .logo {
-    top: 12px;
-    height: 44px;
+    top: 8px;
+    height: 52px;
   }
 }
 
-/* 1px gray hairline between the header and the info bar. The
- * line is the entire visual separation cue — keep it subtle
- * but visible against the dark surface above and below. */
-.divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.10);
-}
-
-/* Info bar — secondary chrome strip. Holds the Fanpoints chip
- * (crown + number) on the left as the primary identity slot,
- * with secondary live state (online count) on the right.
- * ArtistBox's compactFanpoints chip moved here on mobile; the
- * desktop card treatment still lives in ArtistBox.module.css. */
+/* Info bar — sits in the lower part of the chrome card.
+ * No background of its own; inherits the chrome gradient.
+ * `pointer-events: auto` lets the (future) interactive content
+ * inside receive taps even though the parent chrome is
+ * `pointer-events: none`. */
 .infoBar {
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  background: rgba(0, 0, 0, 0.86);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  padding: 0 18px;
   pointer-events: auto;
 }
 
-/* Fanpoints chip — yellow crown + tabular number + "Fanpoints"
- * label. Matches the previous ArtistBox compactFanpoints look
- * (yellow icon with soft glow, white number) so users who
- * remember the chip on the header find it in the same visual
- * style on the info bar. */
+/* Fanpoints chip — crown + tabular number + "Fanpoints" label
+ * in mixed case. Crown is white per product feedback (was
+ * amber), so it reads as a quiet identity strip rather than a
+ * loud reward chip. */
 .fanpointsChip {
   display: inline-flex;
   align-items: center;
@@ -128,29 +115,24 @@
   min-width: 0;
 }
 .fanpointsChip svg {
-  color: #fbbf24;
-  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.45));
+  color: #ffffff;
   flex-shrink: 0;
 }
 .fanpointsValue {
-  /* Trimmed 14 → 12 per product feedback so the chip reads as
-   * a quiet status line, not a headline. The crown still
-   * carries the visual weight on the left. */
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
 }
 .fanpointsLabel {
-  /* "fanpoints" in lowercase per product feedback. Was uppercase
-   * "FANPOINTS" — the all-caps treatment was reading louder
-   * than the number itself. Slightly smaller font keeps the
-   * label visually subordinate to the value. */
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: rgba(245, 245, 247, 0.55);
-  text-transform: lowercase;
+  /* "Fanpoints" with the capital F intact — was lowercased
+   * via text-transform; reverting to natural case per product
+   * feedback. */
+  text-transform: none;
 }
 
 .infoTextAux {
