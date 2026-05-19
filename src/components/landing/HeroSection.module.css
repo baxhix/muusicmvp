@@ -244,15 +244,15 @@
   justify-content: flex-start;
   text-align: center;
   gap: 20px;
-  /* Top padding restored to the original clamp(100px, 16vh,
-   * 160px) per product feedback "O headline deve permanecer
-   * mais pra baixo como estava". The previous round trimmed
-   * this to push the LOGO up, but that also pulled the
-   * headline up with it. The logo is now absolutely positioned
-   * above this padding band (see `.heroLogo` below) so the
-   * headline can stay at its original vertical anchor while
-   * the logo still rides near the viewport's top edge. */
-  padding: clamp(100px, 16vh, 160px) 40px 0;
+  /* Top padding bumped another step per product feedback
+   * "Posicione ainda mais pra baixo o headline e o cta":
+   * clamp(100px, 16vh, 160px) → clamp(150px, 24vh, 240px).
+   * The headline now sits roughly a quarter of the viewport
+   * down from the section's top edge, instead of a sixth.
+   * The logo above stays put (it's absolutely positioned at
+   * `top: clamp(24px, 3vh, 48px)`, decoupled from this
+   * padding). */
+  padding: clamp(150px, 24vh, 240px) 40px 0;
   flex-shrink: 0;
 }
 
@@ -374,7 +374,13 @@
 /* ── Hero CTAs ── */
 .heroCta {
   position: absolute;
-  top: calc(64vh + 32px);
+  /* Pushed further down the viewport per product feedback
+   * "Posicione ainda mais pra baixo o headline e o cta":
+   * `top` went from calc(64vh + 32px) → calc(78vh + 24px),
+   * roughly 14vh lower so the button breathes against the
+   * bottom edge of the fold instead of sitting near the
+   * middle of the viewport. */
+  top: calc(78vh + 24px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 25;
