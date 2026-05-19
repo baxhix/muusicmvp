@@ -42,16 +42,17 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${scrolled ? styles['header--scrolled'] : ''}`}>
       <div className={styles.inner}>
-        {/* Brand placeholder stays as the CSS circle-and-dot mark;
-            the "Fanverse" wordmark next to it was removed per
-            product feedback ("Remova a palavra Fanverse ao lado
-            do logo na landing page muusic.live") so the header
-            reads as pure mark. The wordmark identity still
-            surfaces inside the Hero section via the real SVG
-            logo below. */}
-        <Link href="/" className={styles.brand} aria-label="Fanverse">
-          <span className={styles.brandMark} aria-hidden="true" />
-        </Link>
+        {/* Both the wordmark AND the CSS circle-and-dot
+            placeholder were removed per product feedback
+            ("Remova o circulo que tem no canto superior
+            esquerdo"). The Fanverse identity is now carried
+            entirely by the real SVG logo inside the Hero
+            section below. The `Link` element is still rendered
+            so the upper-left area stays a clickable
+            "back-to-root" target with an aria-label, but it
+            paints nothing visible. */}
+        <Link href="/" className={styles.brand} aria-label="Fanverse" />
+
 
         {/* Nav links + "Baixar o App" CTA are gated under
             MINIMAL_LANDING so the header reads as just the

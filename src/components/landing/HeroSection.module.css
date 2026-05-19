@@ -244,20 +244,28 @@
   justify-content: flex-start;
   text-align: center;
   gap: 20px;
-  padding: clamp(100px, 16vh, 160px) 40px 0;
+  /* Top padding trimmed clamp(100px, 16vh, 160px) → clamp(36px,
+   * 6vh, 68px) per product feedback "deixe o logotipo... mais
+   * pra cima". The Fanverse mark below now lands much closer
+   * to the viewport's top edge while the headline still has
+   * comfortable breathing room above the fold. */
+  padding: clamp(36px, 6vh, 68px) 40px 0;
   flex-shrink: 0;
 }
 
 /* Fanverse SVG brand mark in the hero — sits between the
- * top of `.copy` and the rotating headline. Sized 64–88px
- * tall via clamp so it scales with viewport height: small
- * laptops get a tighter mark, big screens get a fuller
- * presence. Soft drop-shadow makes the purple→pink gradient
- * pop off the dark galaxy backdrop. Per product feedback "O
- * logotipo Fanverse... apenas na Hero Section da landing
- * page". */
+ * top of `.copy` and the rotating headline.
+ *
+ * Sized down clamp(64px, 8vh, 88px) → clamp(48px, 6vh, 64px)
+ * (~27% smaller at the upper bound) per product feedback
+ * "deixe o logotipo menor". Width is `auto` so the SVG's
+ * intrinsic 120×108 aspect (~1.11:1) drives the rendered
+ * width.
+ *
+ * Soft drop-shadow makes the purple→pink gradient pop off the
+ * dark galaxy backdrop. */
 .heroLogo {
-  height: clamp(64px, 8vh, 88px);
+  height: clamp(48px, 6vh, 64px);
   width: auto;
   display: block;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
