@@ -13,7 +13,7 @@ function actorLabel(a: SocialAchievement): string {
 }
 
 function actorAvatar(a: SocialAchievement): string {
-  return a.userAvatarUrl ?? `https://i.pravatar.cc/72?u=${a.userId}`;
+  return a.userAvatarUrl ?? '/avatar-placeholder.svg';
 }
 
 function formatPoints(points: number): string {

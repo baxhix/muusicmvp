@@ -54,7 +54,7 @@ function displayName(r: ApiRankingRow): string {
 }
 
 function avatarSrc(r: ApiRankingRow): string {
-  return r.avatarUrl ?? `https://i.pravatar.cc/96?u=${r.userId}`;
+  return r.avatarUrl ?? '/avatar-placeholder.svg';
 }
 
 function rowToSuperfan(r: ApiRankingRow, rank: number): Superfan {
@@ -270,7 +270,7 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
       }),
       fanpoints: 0,
       level: 1,
-      img: authUser.avatarUrl ?? `https://i.pravatar.cc/96?u=${authUser.id}`,
+      img: authUser.avatarUrl ?? '/avatar-placeholder.svg',
       city: authUser.city ?? '—',
       trend: 'same',
       nextLevelAt: nextLevelAtFor(2),

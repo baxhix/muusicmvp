@@ -23,7 +23,7 @@ function displayName(p: ApiSuperchatParticipant): string {
 }
 
 function avatarSrc(p: ApiSuperchatParticipant): string {
-  return p.avatarUrl ?? `https://i.pravatar.cc/72?u=${p.id}`;
+  return p.avatarUrl ?? '/avatar-placeholder.svg';
 }
 
 export default function ParticipantsModal({ open, onClose }: Props) {

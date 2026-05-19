@@ -98,7 +98,7 @@ export default function MentionAutocomplete({
   return (
     <div className={styles.popover} role="listbox" aria-label="Mencionar">
       {filtered.map((m, i) => {
-        const img = m.avatarUrl ?? `https://i.pravatar.cc/40?u=${m.id}`;
+        const img = m.avatarUrl ?? '/avatar-placeholder.svg';
         const display = m.name ?? m.email.split('@')[0] ?? 'Anônimo';
         return (
           <button

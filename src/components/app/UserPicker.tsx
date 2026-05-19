@@ -206,7 +206,7 @@ export default function UserPicker(props: Props) {
             </div>
           ) : (
             items.slice(0, 50).map((u) => {
-              const img = u.avatarUrl ?? `https://i.pravatar.cc/72?u=${u.id}`;
+              const img = u.avatarUrl ?? '/avatar-placeholder.svg';
               const isSelected = selectedIds.includes(u.id);
               return (
                 <button

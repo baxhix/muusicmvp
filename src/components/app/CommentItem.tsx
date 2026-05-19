@@ -237,7 +237,7 @@ export default function CommentItem({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className={styles.avatar}
-        src={comment.author.avatarUrl ?? `https://i.pravatar.cc/96?u=${comment.author.id}`}
+        src={comment.author.avatarUrl ?? '/avatar-placeholder.svg'}
         alt={comment.author.name ?? comment.author.email}
       />
       <div className={styles.body}>

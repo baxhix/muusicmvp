@@ -394,8 +394,8 @@ export default function LiveChatPanel({
   const avatar = isSuperchat
     ? '/icon-chapeu-ac.svg'
     : isGroup
-      ? (conversation?.imageUrl ?? `https://i.pravatar.cc/96?u=${seedId}`)
-      : (other?.avatarUrl ?? (other ? `https://i.pravatar.cc/72?u=${other.id}` : null));
+      ? (conversation?.imageUrl ?? '/avatar-placeholder.svg')
+      : (other?.avatarUrl ?? (other ? '/avatar-placeholder.svg' : null));
   const isVerified = !isGroup && !!other?.verified;
   // Resolve the now-playing line: real data from the parent if the
   // user is online and listening to something, else a deterministic
@@ -442,12 +442,13 @@ export default function LiveChatPanel({
               alt={headerName}
               className={`${styles.headerAvatar} ${isGroup ? styles.headerAvatarGroup : ''}`}
               onError={(e) => {
-                // 404? Fall back to deterministic pravatar so the chat
-                // header doesn't render with a broken-image icon. Same
+                // 404? Fall back to the silhouette so the chat
+                // header never paints a broken-image icon. Same
                 // resilience pattern as the dock + sidebar.
                 const img = e.currentTarget;
-                const fb = `https://i.pravatar.cc/96?u=${seedId}`;
-                if (img.src !== fb) img.src = fb;
+                const fb = '/avatar-placeholder.svg';
+                if (img.src.endsWith(fb)) return;
+                img.src = fb;
               }}
             />
             {isVerified && (

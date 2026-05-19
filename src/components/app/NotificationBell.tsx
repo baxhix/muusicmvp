@@ -321,9 +321,7 @@ export default function NotificationBell({
                     {visible.map((n) => {
                       const avatar =
                         n.sourceUser?.avatarUrl ??
-                        (n.sourceUser?.id
-                          ? `https://i.pravatar.cc/72?u=${n.sourceUser.id}`
-                          : null);
+                        (n.sourceUser ? '/avatar-placeholder.svg' : null);
                       return (
                         <li
                           key={n.id}

@@ -1056,7 +1056,14 @@ export default function Globe() {
           const safeName = (u.name ?? 'Anônimo').replace(/[<>&"']/g, '');
           const safeAvatar = (u.avatarUrl ?? '').replace(/["<>]/g, '');
           const safeTitle = (u.trackTitle ?? '').replace(/[<>&"']/g, '');
-          const avatarSrc = safeAvatar || `https://i.pravatar.cc/72?u=${u.id}`;
+          // Other users without an uploaded avatar fall back to
+          // the generic silhouette — same treatment as the "Você"
+          // pin a few lines above (line 938). Avoids painting a
+          // stranger's pravatar.cc photo on a real user's marker,
+          // which is what the user's bug report
+          // ("caio.coelho@paralogy.com fez login e foi utilizado
+          // uma foto padrão no sistema") was about.
+          const avatarSrc = safeAvatar || '/avatar-placeholder.svg';
           const songInnerHtml = buildSongInnerHtml(u.trackTitle, u.trackArtist);
 
           const audioBarsHtml = `

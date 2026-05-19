@@ -42,9 +42,7 @@ export function useDisplayedProfile(targetUserId: string | null): {
         state: viewingProfile.countryCode ?? '',
         streams: viewingProfile.streams,
         fanpoints: viewingProfile.fanpoints,
-        img:
-          viewingProfile.avatarUrl ??
-          `https://i.pravatar.cc/72?u=${viewingProfile.id}`,
+        img: viewingProfile.avatarUrl ?? '/avatar-placeholder.svg',
         isOnline: viewingProfile.isOnline,
         nowPlaying: viewingProfile.nowPlaying
           ? {
@@ -60,9 +58,7 @@ export function useDisplayedProfile(targetUserId: string | null): {
         state: authUser?.countryCode ?? '',
         streams: 0,
         fanpoints: 0,
-        img:
-          authUser?.avatarUrl ??
-          `https://i.pravatar.cc/72?u=${authUser?.id ?? 'me'}`,
+        img: authUser?.avatarUrl ?? '/avatar-placeholder.svg',
         isOnline: true,
         nowPlaying: undefined,
       };

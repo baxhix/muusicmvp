@@ -82,8 +82,8 @@ export default function LiveChatStack({
           const img = isSuperchat
             ? '/icon-chapeu-ac.svg'
             : isGroup
-              ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
-              : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
+              ? (c.imageUrl ?? '/avatar-placeholder.svg')
+              : (u?.avatarUrl ?? '/avatar-placeholder.svg');
           const isActive = activeId === c.id;
           const preview = c.lastMessage?.body;
           // Groups have no presence concept — always "active" visually
@@ -116,11 +116,13 @@ export default function LiveChatStack({
                 alt={displayName}
                 className={`${styles.avatar} ${isOnline ? '' : styles.avatarOffline} ${isGroup ? styles.avatarGroup : ''}`}
                 onError={(e) => {
-                  // Avatar 404? Fall back to a deterministic pravatar so
-                  // the dock never shows a broken-image icon.
+                  // Avatar 404? Fall back to the silhouette so the dock
+                  // never shows a broken-image icon (and never paints a
+                  // random stranger's pravatar.cc photo on a real user).
                   const img = e.currentTarget;
-                  const fb = `https://i.pravatar.cc/72?u=${seedId}`;
-                  if (img.src !== fb) img.src = fb;
+                  const fb = '/avatar-placeholder.svg';
+                  if (img.src.endsWith(fb)) return;
+                  img.src = fb;
                 }}
               />
 

@@ -35,7 +35,7 @@ function senderLabel(m: ApiMessage): string {
 }
 
 function senderAvatarUrl(m: ApiMessage): string {
-  return m.senderAvatarUrl ?? `https://i.pravatar.cc/72?u=${m.senderId}`;
+  return m.senderAvatarUrl ?? '/avatar-placeholder.svg';
 }
 
 /**
@@ -169,7 +169,7 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 key={p.id}
-                src={p.avatarUrl ?? `https://i.pravatar.cc/72?u=${p.id}`}
+                src={p.avatarUrl ?? '/avatar-placeholder.svg'}
                 alt={p.name ?? ''}
                 className={styles.participantsAvatar}
                 style={{ ['--i' as string]: i } as React.CSSProperties}

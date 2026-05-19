@@ -258,7 +258,7 @@ export default function GroupMembersPanel({
         ) : (
           members.map((m) => {
             const isMe = m.id === currentUserId;
-            const img = m.avatarUrl ?? `https://i.pravatar.cc/72?u=${m.id}`;
+            const img = m.avatarUrl ?? '/avatar-placeholder.svg';
             const canKickThis =
               canManage &&
               !isMe &&

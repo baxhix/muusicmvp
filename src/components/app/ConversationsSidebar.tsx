@@ -165,16 +165,20 @@ export default function ConversationsSidebar({
             // The global Superchat group surfaces in this list as
             // a regular `type: 'group'` row. Per product feedback
             // its avatar should be the Ana Castela cowboy-hat
-            // icon (icon-chapeu-ac.svg) rather than the
-            // pravatar-seeded fallback. Detection is by name
-            // because the API's ApiConversationSummary doesn't
-            // currently expose the `slug` field the DB carries.
+            // icon (icon-chapeu-ac.svg). Real DMs / groups
+            // without an uploaded image fall back to the generic
+            // silhouette (`/avatar-placeholder.svg`) per product
+            // feedback "fez login e foi utilizado uma foto padrão
+            // no sistema e não foi utilizado o avatar genérico" —
+            // previous round used a deterministic pravatar.cc
+            // photo which painted a random stranger's face on
+            // every row whose user/group hadn't uploaded media.
             const isSuperchat = isGroup && c.name === 'Superchat';
             const img = isSuperchat
               ? '/icon-chapeu-ac.svg'
               : isGroup
-                ? (c.imageUrl ?? `https://i.pravatar.cc/72?u=${seedId}`)
-                : (u?.avatarUrl ?? `https://i.pravatar.cc/72?u=${seedId}`);
+                ? (c.imageUrl ?? '/avatar-placeholder.svg')
+                : (u?.avatarUrl ?? '/avatar-placeholder.svg');
             // Groups have no presence concept — always rendered as
             // "active" so they don't get the offline grayscale.
             const isOnline = isGroup
@@ -216,15 +220,16 @@ export default function ConversationsSidebar({
                     alt=""
                     className={`${styles.avatar} ${isOnline ? styles.avatarOnline : styles.avatarOffline} ${isGroup ? styles.avatarGroup : ''}`}
                     onError={(e) => {
-                      // Skip the pravatar fallback for the
+                      // Skip the silhouette fallback for the
                       // Superchat row — we want the hat icon to
                       // stay even if the SVG had a transient
                       // load hiccup (or if a future deploy moves
                       // the asset path).
                       if (isSuperchat) return;
                       const img = e.currentTarget;
-                      const fb = `https://i.pravatar.cc/72?u=${seedId}`;
-                      if (img.src !== fb) img.src = fb;
+                      const fb = '/avatar-placeholder.svg';
+                      if (img.src.endsWith(fb)) return;
+                      img.src = fb;
                     }}
                   />
                   {/* Status dash only for DMs — groups don't have a

@@ -115,7 +115,7 @@ function distributeFloatingUsers(users: ApiOnlineUser[]): FloatingUser[] {
       city: [user.city, user.country].filter(Boolean).join(', ') || '—',
       song: user.nowPlaying?.title ?? null,
       artist: user.nowPlaying?.artist ?? null,
-      img: user.avatarUrl ?? `https://i.pravatar.cc/72?u=${user.id}`,
+      img: user.avatarUrl ?? '/avatar-placeholder.svg',
       left: `${xPct}%`,
       top: `${yPct}%`,
       floatDuration: 3.5 + dur * 1.8,

@@ -85,7 +85,7 @@ export default function ChatStack({ users, onUserClick }: Props) {
         {users.map((user, idx) => {
           const status     = user.status ?? (user.online ? 'online' : 'offline');
           const scale      = listExpanded ? dockScale(idx, hovered) : 1;
-          const imgSrc     = user.img ?? `https://i.pravatar.cc/72?img=${idx + 10}`;
+          const imgSrc     = user.img ?? '/avatar-placeholder.svg';
           const count      = counts[idx];
           const hasPreview = preview?.idx === idx;
 

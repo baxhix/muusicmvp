@@ -15,7 +15,7 @@ function sourceLabel(t: SameTrackToastPayload): string {
 }
 
 function avatarSrc(t: SameTrackToastPayload): string {
-  return t.sourceAvatarUrl ?? `https://i.pravatar.cc/72?u=${t.sourceUserId}`;
+  return t.sourceAvatarUrl ?? '/avatar-placeholder.svg';
 }
 
 /**
