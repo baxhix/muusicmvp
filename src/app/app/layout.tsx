@@ -13,7 +13,6 @@ import MobileRouteHeader from '@/components/app/MobileRouteHeader';
 import NowPlaying from '@/components/app/NowPlaying';
 import PlaylistModal from '@/components/app/PlaylistModal';
 import NotificationBell from '@/components/app/NotificationBell';
-import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import SuperfansPanel from '@/components/app/SuperfansPanel';
 import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
 import AnaFlightPanel from '@/components/app/AnaFlightPanel';
@@ -109,7 +108,6 @@ function Shell({ children }: { children: React.ReactNode }) {
   // panel would double-mount with two instances competing.
   const showSuperfans =
     activeOverlay === 'superfans' && !pathname.startsWith('/app/ranking');
-  const superchat = chat.conversations.find((c) => c.type === 'group') ?? null;
 
   // Chat detail = a specific conversation is open inside /app/chat.
   // When true on mobile, we hide the BottomNav + persistent header
@@ -316,17 +314,12 @@ function Shell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Superchat trigger — top-right floater, persistent on
-       *  desktop. Hidden on mobile entirely when not on home,
-       *  same rationale as the ArtistBox pill. */}
-      {!hideShellChrome && !hideMobileHeader && (
-        <div className={styles.superchatTriggerSlot}>
-          <SuperchatTrigger
-            onClick={() => router.push('/app/superchat')}
-            unreadCount={superchat?.unreadCount ?? 0}
-          />
-        </div>
-      )}
+      {/* SuperchatTrigger pill (top-right floater) was removed
+       *  per product feedback "Remova o botão Entre no Superchat
+       *  e inclua esse link dentro do menu ao abrir clicando na
+       *  imagem lateral do usuário". The Superchat link now lives
+       *  inside the TopBar's user-avatar drawer menu — see the
+       *  Superchat / "Entre no Superchat" entry in TopBar.tsx. */}
 
       {/* NowPlaying mini-bar — on desktop it persists across every
        *  route so the user can keep playing while reading chat /

@@ -38,7 +38,7 @@ function BackArrow() {
 }
 
 /** Ícones lineares discretos para os itens do drawer */
-function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' }) {
+function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' }) {
   const props = {
     viewBox: '0 0 24 24',
     fill: 'none' as const,
@@ -68,6 +68,22 @@ function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'ma
       return (
         <svg {...props}>
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      );
+    case 'superchat':
+      // Play-triangle glyph — same shape used in the removed
+      // top-right SuperchatTrigger pill, so the Superchat
+      // identity reads consistently wherever the link surfaces.
+      // Filled to differentiate from the outline-style chat
+      // bubble used for the disabled "Mensagens" item below.
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+          className={styles.drawerItemIcon}
+        >
+          <path d="M7 4.5v15l12-7.5z" />
         </svg>
       );
     case 'map':
@@ -457,6 +473,29 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                         </a>
                       </div>
                   */}
+
+                  {/* Superchat link — moved IN here per product
+                      feedback ("Remova o botão Entre no Superchat
+                      e inclua esse link dentro do menu ao abrir
+                      clicando na imagem lateral do usuário"). The
+                      separate top-right SuperchatTrigger pill that
+                      used to live at .superchatTriggerSlot is gone;
+                      this menu entry is the new entry point. The
+                      play-triangle icon matches the glyph from the
+                      removed pill so the Superchat visual identity
+                      stays consistent across the app. */}
+                  <div className={styles.drawerSection}>
+                    <span className={styles.drawerEyebrow}>Fanverse</span>
+                    <Link
+                      href="/app/superchat"
+                      className={styles.drawerItem}
+                      onClick={() => setOpen(false)}
+                    >
+                      <DrawerItemIcon name="superchat" />
+                      <span>Entre no Superchat</span>
+                      <DrawerChevron />
+                    </Link>
+                  </div>
 
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Conta</span>
