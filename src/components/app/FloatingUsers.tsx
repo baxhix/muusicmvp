@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
+import { track } from '@/lib/analytics';
+import { getSocket } from '@/lib/socket/client';
 import type { ApiOnlineUser } from '@/lib/api/types';
 import styles from './FloatingUsers.module.css';
 
@@ -135,11 +137,100 @@ function distributeFloatingUsers(users: ApiOnlineUser[]): FloatingUser[] {
  * coords — that one moves with the map. This component complements it
  * by keeping a visible roster on the screen at a glance.
  */
+/** Six-particle deterministic-jitter spread for the heart burst.
+ *  Built statically so each render doesn't re-randomize and React's
+ *  reconciler can skip re-creating identical elements. */
+const HEART_BURST_PARTICLES = Array.from({ length: 6 }, (_, i) => ({
+  // Even-but-not-uniform horizontal spread (-22 to +22px).
+  x: (i - 2.5) * 8.5,
+  // Stagger the rise so the cluster reads as a soft pulse.
+  delay: i * 45,
+  // Slight scale variation so the cluster doesn't read as a grid.
+  scale: 0.85 + (i % 3) * 0.15,
+}));
+
 export default function FloatingUsers() {
   const { users: liveUsers } = useLiveUsers();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  // Tracks which user(s) currently have a hearts burst painting
+  // over their floating badge — set on heart click, auto-cleared
+  // after the longest particle finishes.
+  const [burstingIds, setBurstingIds] = useState<Set<string>>(() => new Set());
+  // Tracks which users the viewer has already waved at this
+  // session, so a second click un-waves instead of double-firing.
+  const [likedIds, setLikedIds] = useState<Set<string>>(() => new Set());
 
   const pool = useMemo(() => distributeFloatingUsers(liveUsers), [liveUsers]);
+
+  /**
+   * Heart click on a floating user — mirrors the Globe Mapbox
+   * marker flow per product feedback "Deixe o coração visível em
+   * todos os boxes de usuários que tem, seja no mapa ou
+   * flutuante":
+   *   - Track the wave (or un-wave on second click).
+   *   - Dispatch the in-app `app:user-waved` custom event so the
+   *     rest of the client (toasts, telemetry hooks) reacts.
+   *   - Emit `wave:send` over the socket so the SERVER inserts
+   *     the notification row + pushes `notify:new` to the
+   *     recipient's personal room (the receiver's HeartsCascade
+   *     overlay fires from `useNotificationsLive`).
+   *   - Spawn a local hearts burst over THIS badge as the
+   *     sender's visual confirmation.
+   *
+   * `stopPropagation` keeps the wrapper-level click (which can
+   * flyTo the user's lat/lng on the globe) from also firing.
+   */
+  const handleWave = (
+    user: FloatingUser,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    e.stopPropagation();
+    const wasLiked = likedIds.has(user.id);
+
+    if (wasLiked) {
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(user.id);
+        return next;
+      });
+      track('user_unwaved', {
+        target_user_id: user.id,
+        source: 'floating_user',
+      });
+      return;
+    }
+
+    setLikedIds((prev) => new Set(prev).add(user.id));
+    setBurstingIds((prev) => new Set(prev).add(user.id));
+    window.setTimeout(() => {
+      setBurstingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(user.id);
+        return next;
+      });
+    }, 1800);
+
+    track('user_waved', {
+      target_user_id: user.id,
+      target_user_name: user.name,
+      source: 'floating_user',
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('app:user-waved', {
+          detail: { userId: user.id, name: user.name },
+        }),
+      );
+    }
+
+    try {
+      const s = getSocket();
+      s.emit('wave:send', { targetUserId: user.id });
+    } catch (err) {
+      console.error('wave:send emit failed:', err);
+    }
+  };
 
   return (
     <>
@@ -170,7 +261,73 @@ export default function FloatingUsers() {
                   <span className={styles.song}>online</span>
                 )}
               </div>
+              {/* Always-visible heart — wave affordance per
+                  product feedback "Deixe o coração visível em
+                  todos os boxes de usuários que tem, seja no
+                  mapa ou flutuante". Sits at the right edge of
+                  the badge; the click is stopPropagation'd so
+                  the badge's own flyTo handler doesn't fire on
+                  the same tap. */}
+              <button
+                type="button"
+                className={`${styles.likeBtn} ${likedIds.has(user.id) ? styles.liked : ''}`}
+                onClick={(e) => handleWave(user, e)}
+                aria-label={
+                  likedIds.has(user.id)
+                    ? `Você acenou para ${user.name}`
+                    : `Acenar para ${user.name}`
+                }
+                aria-pressed={likedIds.has(user.id)}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill={likedIds.has(user.id) ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </button>
             </div>
+
+            {/* Local hearts-burst overlay anchored on this badge.
+                Mirrors the Globe Mapbox marker burst so both
+                surfaces feel like a single interaction language.
+                Each particle reads CSS custom properties for its
+                horizontal jitter / delay / scale so a static
+                set of 6 elements still reads as organic. */}
+            {burstingIds.has(user.id) && (
+              <div className={styles.heartsBurst} aria-hidden="true">
+                {HEART_BURST_PARTICLES.map((p, i) => (
+                  <div
+                    key={i}
+                    className={styles.heartParticle}
+                    style={
+                      {
+                        ['--fh-x' as string]: `${p.x}px`,
+                        ['--fh-scale' as string]: `${p.scale}`,
+                        animationDelay: `${p.delay}ms`,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="#ef4444"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z" />
+                    </svg>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {isHovered && (
               <div className={styles.preview}>

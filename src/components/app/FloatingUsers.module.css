@@ -205,3 +205,115 @@
   color: rgba(245,245,247,0.55);
   white-space: nowrap;
 }
+
+/* ── Heart "wave" button on every floating badge ──
+ *
+ * Per product feedback "Deixe o coração visível em todos os
+ * boxes de usuários que tem, seja no mapa ou flutuante" — the
+ * heart now lives directly on the always-visible badge, not
+ * only inside the hover preview (which is `pointer-events:
+ * none` and can't catch clicks anyway). Visual + interaction
+ * language matches the Globe Mapbox marker heart: gray at
+ * rest, red after click, same SVG path. */
+.likeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.likeBtn:hover {
+  color: rgba(245, 245, 247, 0.95);
+  background: rgba(255, 255, 255, 0.07);
+}
+.likeBtn:active {
+  transform: scale(0.92);
+}
+.likeBtn.liked {
+  color: #f43f5e;
+}
+.likeBtn.liked:hover {
+  background: rgba(244, 63, 94, 0.10);
+}
+
+/* ── Local hearts burst over a floating user badge ──
+ *
+ * Painted only while the sender's heart click is on the wire.
+ * Six small particles rise from the badge's geometric center
+ * with deterministic horizontal jitter + staggered animation
+ * delays so the cluster reads as a soft pulse rather than a
+ * metronome. Container is pointer-events: none so a fresh
+ * click can always re-trigger via the heart button below it. */
+.heartsBurst {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+.heartParticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  animation: floating-heart-rise 1400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 2px 5px rgba(239, 68, 68, 0.55));
+}
+.heartParticle svg {
+  display: block;
+}
+
+@keyframes floating-heart-rise {
+  0% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--fh-x, 0px)), -50%)
+      scale(calc(var(--fh-scale, 1) * 0.5));
+  }
+  22% {
+    opacity: 1;
+    transform:
+      translate(calc(-50% + var(--fh-x, 0px)), calc(-50% - 14px))
+      scale(var(--fh-scale, 1));
+  }
+  78% {
+    opacity: 0.85;
+    transform:
+      translate(calc(-50% + var(--fh-x, 0px)), calc(-50% - 56px))
+      scale(var(--fh-scale, 1));
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--fh-x, 0px)), calc(-50% - 84px))
+      scale(calc(var(--fh-scale, 1) * 1.1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Static fade — no upward rise — for motion-sensitive
+   * users. The heart still confirms "wave sent" visually. */
+  .heartParticle {
+    animation: floating-heart-fade 900ms ease-out forwards;
+  }
+  @keyframes floating-heart-fade {
+    0%   { opacity: 0; transform: translate(-50%, -50%); }
+    25%  { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -50%); }
+  }
+}

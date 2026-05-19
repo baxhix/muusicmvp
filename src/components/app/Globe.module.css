@@ -868,25 +868,56 @@
   background: rgba(244, 63, 94, 0.10);
 }
 
-/* Compact mode: heart fades out alongside the .liveUserInfo block.
- * Hover (real pointer only) or focus-within brings both back
- * together. Touch users reach the wave from the profile panel
- * (tap-to-open) instead of via the heart on the compact pin —
- * keeping the heart hover-gated avoids the distorted intermediate
- * shape that the tap-synthesized hover used to trigger. */
+/* Heart stays visible in compact mode per product feedback
+ * "Deixe o coração visível em todos os boxes de usuários que
+ * tem, seja no mapa ou flutuante". The previous round hid the
+ * heart on compact pins (opacity: 0 + pointer-events: none)
+ * and revealed it on hover / focus-within — that meant touch
+ * users on the zoomed-out globe had no obvious way to wave
+ * without first tapping into the profile. Now the heart paints
+ * on every state of the badge, including the bare-avatar
+ * compact mode, and the click handler picks it up from any
+ * input source.
+ *
+ * The earlier comment worried about a "distorted intermediate
+ * shape" from tap-synthesized hover — that turned out to be
+ * about the badge dimensions, not the heart itself. The heart
+ * sits OUTSIDE the badge's collapsed envelope via absolute
+ * positioning (see below in .badgeCompact .likeBtn override),
+ * so it stays a clean circle regardless of the wrapper's
+ * shrink animation. */
 .badgeCompact .likeBtn {
-  opacity: 0;
-  pointer-events: none;
-}
-.badgeCompact:focus-within .likeBtn {
   opacity: 1;
   pointer-events: auto;
+  /* In compact mode the badge collapses to a 28×28 bare avatar
+   * (background transparent, no pill envelope). The heart sits
+   * just off the avatar's bottom-right corner — outside the
+   * collapsed wrapper's hit area so it's tappable as its own
+   * affordance and never participates in the wrapper's
+   * shrink-on-tap animation. */
+  position: absolute;
+  bottom: -6px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
+  margin-left: 0;
+  /* Solid pill envelope so the heart pops against any avatar
+   * background. Border ring matches the badge's expanded
+   * envelope for visual continuity. */
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.55);
+  /* Sit above the compact bars chip (z:auto) and any sibling
+   * marker decorations so taps reliably reach this button. */
+  z-index: 2;
 }
-@media (hover: hover) and (pointer: fine) {
-  .badgeCompact:hover .likeBtn {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.badgeCompact .likeBtn svg {
+  /* The expanded badge sizes the SVG to fit the 26px button at
+   * 14×14. Compact uses a 22px button — shrink the glyph one
+   * step so it stays visually balanced inside the smaller
+   * circle. */
+  width: 12px;
+  height: 12px;
 }
 
 /* ── Heart-burst overlay on a RECEIVING marker ──

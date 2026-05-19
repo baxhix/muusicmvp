@@ -146,11 +146,11 @@ export interface EventPayloadMap {
    *  Globe map. Fires when the viewer toggles the heart ON. The
    *  backend POST /api/wave endpoint will land in a follow-up;
    *  the event is the only paper trail until then. */
-  user_waved:          { target_user_id: string; target_user_name?: string; source: 'globe_marker' | 'profile_panel' };
+  user_waved:          { target_user_id: string; target_user_name?: string; source: 'globe_marker' | 'profile_panel' | 'floating_user' };
   /** Symmetric un-wave — when the viewer toggles the same heart
    *  OFF. Low importance; useful for distinguishing "changed mind"
    *  from "engaged" in funnel reports. */
-  user_unwaved:        { target_user_id: string; source: 'globe_marker' | 'profile_panel' };
+  user_unwaved:        { target_user_id: string; source: 'globe_marker' | 'profile_panel' | 'floating_user' };
   /** Generic engagement reward fired by `awardPoints()` (src/lib/
    *  rewards.ts). One event per reward — `rule` is the user-facing
    *  bucket (like / comment / send / chat_started / three_streams)
