@@ -112,14 +112,36 @@
   pointer-events: none;
   border-radius: inherit;
   border: 1px solid transparent;
+  /* Color band STARTS at the curves and runs across the bottom.
+   * Per product feedback: "iniciando pelas curvas e não todo
+   * header. As laterais retas não deve ter ou deve ser preto".
+   *
+   * Stop layout (percentages along the chrome's full width):
+   *   - 0-5%   transparent — the 1px vertical side edge at x≈0
+   *            stays invisible; the dark chrome surroundings
+   *            read this region as "black" against the lit
+   *            map below.
+   *   - 5-14%  transparent → lilac fade — picks up right as
+   *            the bottom-left curve sweeps in from the side.
+   *   - 14-50% lilac → pink ramp across the left half of the
+   *            bottom edge.
+   *   - 50-86% pink → lilac symmetric ramp across the right.
+   *   - 86-95% lilac → transparent fade — releases at the
+   *            bottom-right curve.
+   *   - 95-100% transparent — right-side vertical edge.
+   * The 5%/95% transparent caps are tight enough that the
+   * gradient REACHES the curve area; the previous 22%/78%
+   * caps were too wide and left the curves themselves
+   * transparent.
+   */
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    transparent 22%,
-    rgba(168, 85, 247, 0.55) 36%,
+    transparent 5%,
+    rgba(168, 85, 247, 0.55) 14%,
     rgba(236, 72, 153, 0.80) 50%,
-    rgba(168, 85, 247, 0.55) 64%,
-    transparent 78%,
+    rgba(168, 85, 247, 0.55) 86%,
+    transparent 95%,
     transparent 100%
   );
   background-origin: border-box;
