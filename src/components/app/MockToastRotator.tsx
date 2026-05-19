@@ -326,20 +326,25 @@ function ToastBody({ toast }: { toast: MockToast }) {
     case 'ana_message':
       return (
         <>
-          {/* Ana Castela direct message — uses her brand portrait
-            * in the avatar slot so the row reads as "from the
-            * artist herself" instead of a generic user message. */}
+          {/* Direct-from-the-artist DM notification per product
+            * feedback. Avatar is the personal Ana Castela
+            * headshot (/ana-castela.png), distinct from the
+            * Central de Fãs brand portrait used by the
+            * new_publication case so the two notification
+            * types read as different surfaces. Strong name
+            * shows the full "Ana Castela" instead of just
+            * "Ana" — more recognizable across the platform. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/central-anacastela.png"
+            src="/ana-castela.png"
             alt=""
             className={styles.avatar}
             aria-hidden="true"
           />
           <div className={`${styles.info} ${styles.infoSingleLine}`}>
             <span className={styles.text}>
-              <strong className={styles.strong}>Ana</strong> te mandou uma
-              mensagem
+              <strong className={styles.strong}>Ana Castela</strong> te
+              mandou uma mensagem
             </span>
           </div>
         </>
