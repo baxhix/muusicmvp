@@ -21,45 +21,51 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Explicit height so child bands can be anchored absolutely
-   * with predictable positions. Was implicit (sum of 68 + 36 =
-   * 104px); per product feedback the logo grew +20% and dropped
-   * into the lower portion of the chrome while the Fanpoints
-   * chip + message icon climbed to the top — needs a slightly
-   * taller envelope (116px) to fit the rearranged stack without
-   * clipping the logo. */
   height: 116px;
   z-index: 5;
   pointer-events: none;
-  /* Lilac+pink ambient wash over a translucent dark base — was
-   * two separately-painted stripes; combined here so there's
-   * no visual seam between the logo row and the info row. */
+  /* Frosted-glass header per product feedback: the chrome
+   * should obviously reveal the map shifting underneath as
+   * the user pans/zooms. Previous configuration was too
+   * opaque (`rgba(11,11,13,0.84)` over the dark gradient
+   * base) — the map was barely visible through. New values:
+   *   - Dark gradient base alpha dropped 0.84/0.82 → 0.30/0.24
+   *     so the underlying tiles + markers come through.
+   *   - Pink + lilac radial accents kept (they tint the
+   *     frosted layer with brand color), but pulled back
+   *     slightly so they don't dominate the now-visible map.
+   *   - backdrop-filter blur bumped 28 → 36 for a more
+   *     pronounced "frosted glass" look, saturation 1.25 → 1.6
+   *     so the map colors that bleed through stay vibrant
+   *     instead of muddying into the dark wash.
+   * Text contrast for the logo + Fanpoints chip + message
+   * icon stays acceptable because every text/icon element on
+   * top of this chrome carries its own drop-shadow / pure
+   * white fill. */
   background:
     radial-gradient(
       120% 80% at 100% 0%,
-      rgba(236, 72, 153, 0.26) 0%,
+      rgba(236, 72, 153, 0.20) 0%,
       transparent 60%
     ),
-    /* Lilac wash dialed back 0.32 → 0.20 per product feedback —
-     * the purple was reading too loud against the pink. */
     radial-gradient(
       110% 80% at 0% 100%,
-      rgba(168, 85, 247, 0.20) 0%,
+      rgba(168, 85, 247, 0.16) 0%,
       transparent 65%
     ),
     linear-gradient(
       180deg,
-      rgba(11, 11, 13, 0.84) 0%,
-      rgba(6, 6, 9, 0.82) 100%
+      rgba(11, 11, 13, 0.30) 0%,
+      rgba(6, 6, 9, 0.24) 100%
     );
-  backdrop-filter: blur(28px) saturate(1.25);
-  -webkit-backdrop-filter: blur(28px) saturate(1.25);
-  /* Bottom-only border radius — the card hangs from the top
-   * edge of the viewport and curves into the map below. */
+  backdrop-filter: blur(36px) saturate(1.6);
+  -webkit-backdrop-filter: blur(36px) saturate(1.6);
+  /* Hairline bottom border defines the card's rounded edge
+   * now that the chrome is mostly transparent — without this
+   * the edge would dissolve into the map. */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom-left-radius: 28px;
   border-bottom-right-radius: 28px;
-  /* Clip children that would otherwise poke past the rounded
-   * bottom corners (none today, but future content might). */
   overflow: hidden;
 }
 
