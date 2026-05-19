@@ -82,26 +82,29 @@
   border-bottom-left-radius: 40px;
   border-bottom-right-radius: 40px;
   overflow: hidden;
+  /* Subtle drop shadow under the chrome so the card visibly
+   * floats above the map below. 24px blur with a downward
+   * offset, -6 spread to keep the shadow tight under the
+   * bottom curve. Low alpha (0.35) keeps the cue gentle —
+   * the user said "leve sombra". */
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.35);
 }
 
-/* Gradient stroke that follows the chrome's full visible
- * perimeter — left edge, around the bottom-left rounded
- * corner, across the bottom, around the bottom-right rounded
- * corner, up the right edge. Per product feedback "o traço
- * deve ocupar as bordas também e não ficar apenas embaixo".
+/* Gradient stroke concentrated on the BOTTOM CURVE only — per
+ * product feedback "a borda não precisa pegar todo o header
+ * apenas uma parte da dobra e ir esmaecendo com o preto".
  *
- * Technique: `background-clip: border-box` + the
- * `mask-composite: exclude` trick. Two stacked masks — one
- * filling the content-box, one filling the entire box —
- * combined via XOR/exclude leave only the 1px border ring
- * visible. The gradient paints across the whole box but only
- * the ring shows through. `border-radius: inherit` makes the
- * ring follow the chrome's bottom corner curves.
+ * The mask-composite ring still paints around the whole
+ * perimeter, but the gradient itself is transparent at the
+ * sides (0-22% and 78-100% on the x axis) and only colors the
+ * middle band (28-72%) — the portion of the border that runs
+ * across the bottom + into the two bottom corner curves. The
+ * side segments of the ring receive transparent paint and
+ * effectively disappear, leaving only the curve highlighted.
  *
- * The top edge sits at y:0 of the viewport (the chrome is
- * `position: fixed; top: 0`), so the 1px ring along the top
- * is effectively invisible against the status bar / screen
- * edge — only the side + bottom segments read as "the stroke". */
+ * The visible band fades from transparent → lilac → pink →
+ * lilac → transparent so both ends ease into the dark
+ * surrounding chrome without a hard cutoff. */
 .chrome::after {
   content: '';
   position: absolute;
@@ -111,9 +114,13 @@
   border: 1px solid transparent;
   background-image: linear-gradient(
     90deg,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(236, 72, 153, 0.75) 50%,
-    rgba(168, 85, 247, 0.55) 100%
+    transparent 0%,
+    transparent 22%,
+    rgba(168, 85, 247, 0.55) 36%,
+    rgba(236, 72, 153, 0.80) 50%,
+    rgba(168, 85, 247, 0.55) 64%,
+    transparent 78%,
+    transparent 100%
   );
   background-origin: border-box;
   background-clip: border-box;
