@@ -19,6 +19,7 @@ import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
 import AnaFlightPanel from '@/components/app/AnaFlightPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
+import HeartsCascade from '@/components/app/HeartsCascade';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
@@ -408,6 +409,11 @@ function Shell({ children }: { children: React.ReactNode }) {
       <MilestoneNotification />
       <AchievementCelebration />
       <SocialAchievementToast />
+      {/* Falling hearts overlay — fires on `app:hearts-cascade`
+       *  events. Today the only emitter is the MockToastRotator's
+       *  "waved" notification; any other surface that wants the
+       *  hearts effect can dispatch the same event. */}
+      <HeartsCascade />
     </>
   );
 }

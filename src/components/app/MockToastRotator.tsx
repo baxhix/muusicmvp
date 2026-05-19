@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import confetti from 'canvas-confetti';
 import styles from './MockToastRotator.module.css';
 
 /* ============================================================
@@ -94,6 +95,41 @@ const ENTER_MS = 420;
 
 type Phase = 'enter' | 'hold' | 'exit' | 'gap';
 
+/** Brand-palette confetti colors shared with FeedCelebration so
+ *  the rank-up burst feels like the same family as the quiz-win
+ *  celebration the user explicitly compared it to. */
+const CONFETTI_COLORS = [
+  '#4F46E5',
+  '#7C3AED',
+  '#0284C7',
+  '#0F766E',
+  '#15803D',
+  '#D97706',
+  '#DC2626',
+  '#DB2777',
+  '#3DDB74',
+];
+
+/** Fire the same three-origin confetti burst FeedCelebration uses
+ *  when the user solves a quiz correctly. Difference: this burst
+ *  uses canvas-confetti's GLOBAL canvas (no scoping), so the
+ *  particles cover the full viewport — appropriate for a toast
+ *  that lives outside the feed envelope. */
+function fireRankConfetti() {
+  const defaults = {
+    spread: 70,
+    ticks: 200,
+    gravity: 0.9,
+    decay: 0.94,
+    startVelocity: 32,
+    colors: CONFETTI_COLORS,
+    disableForReducedMotion: true,
+  };
+  confetti({ ...defaults, particleCount: 50, origin: { x: 0.2, y: 0.7 } });
+  confetti({ ...defaults, particleCount: 80, origin: { x: 0.5, y: 0.65 } });
+  confetti({ ...defaults, particleCount: 50, origin: { x: 0.8, y: 0.7 } });
+}
+
 export default function MockToastRotator() {
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('enter');
@@ -114,6 +150,28 @@ export default function MockToastRotator() {
     }
     return () => clearTimeout(t);
   }, [phase]);
+
+  // Side-effects bound to specific notification types as they
+  // enter the screen. Each runs ONCE per toast appearance via
+  // the `phase === 'enter'` gate; the toast then proceeds through
+  // its normal hold/exit phases.
+  useEffect(() => {
+    if (phase !== 'enter') return;
+    const current = ROTATION[idx];
+    if (current.kind === 'top_20') {
+      // Rank-up festive moment — same canvas-confetti recipe the
+      // quiz-win uses (see FeedCelebration), just unscoped to the
+      // viewport since this toast lives outside the feed.
+      fireRankConfetti();
+    } else if (current.kind === 'waved') {
+      // Falling hearts cascade — fires the global overlay (mounted
+      // in app/app/layout.tsx) that renders ~14 heart emojis
+      // dropping from the top. Subtle engagement cue per product
+      // feedback ("uma animação com o emoji de coração caindo
+      // por toda a tela, várias em cascata").
+      window.dispatchEvent(new CustomEvent('app:hearts-cascade'));
+    }
+  }, [phase, idx]);
 
   // During the gap, the pill is fully off-screen — render nothing
   // so even the empty container can't intercept pointer events.

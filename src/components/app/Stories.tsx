@@ -250,17 +250,44 @@ export default function Stories() {
   const markSeen = (id: string) =>
     setStories(prev => prev.map(s => s.id === id ? { ...s, seen: true } : s));
 
+  // Render-time duplication: with only 3 mock stories the rail
+  // doesn't overflow the panel width on most viewports — so the
+  // horizontal scroll affordance never lights up. Per product
+  // feedback we duplicate the merged story list a few times in
+  // the RENDER (not in the source state) so the rail comfortably
+  // overflows and the touch-scroll experience is exercisable.
+  // Click handlers map back to the original `stories[idx]` via
+  // the `originalIdx` annotation below, so opening a duplicate
+  // ring still shows the right content.
+  const RAIL_REPEAT = 3;
+  const railEntries = useMemo(() => {
+    const out: Array<Story & { _key: string; _originalIdx: number; _isFirst: boolean }> = [];
+    for (let r = 0; r < RAIL_REPEAT; r++) {
+      stories.forEach((s, idx) => {
+        out.push({
+          ...s,
+          _key: `${s.id}-r${r}`,
+          _originalIdx: idx,
+          // Only the very first ring in the rail (first occurrence
+          // of the first story) gets the bigger 96px treatment.
+          _isFirst: r === 0 && idx === 0,
+        });
+      });
+    }
+    return out;
+  }, [stories]);
+
   return (
     <>
       <div className={styles.root}>
-        {stories.map((story, idx) => {
-          const isFirst = idx === 0;
+        {railEntries.map((story) => {
+          const isFirst = story._isFirst;
           const size = isFirst ? 96 : 76;
           return (
             <button
-              key={story.id}
+              key={story._key}
               className={`${styles.storyBtn} ${isFirst ? styles.storyBtnFirst : ''}`}
-              onClick={() => openViewer(idx)}
+              onClick={() => openViewer(story._originalIdx)}
               aria-label={`Story de ${story.user}`}
             >
               {/* Gradient ring */}
