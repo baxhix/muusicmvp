@@ -59,10 +59,16 @@
   flex-shrink: 0;
 }
 .meta { flex: 1; min-width: 0; }
+/* ── Typography standard ──
+ * Primary information: pure-white #ffffff + bold (700).
+ * Secondary text: muted gray + regular weight (400-500).
+ * State-tinted backgrounds (green / red / amber) carry the
+ * semantic cue WITHOUT colouring the text — the text stays
+ * white bold per the standard. */
 .name {
   font-size: 14px;
   font-weight: 700;
-  color: rgba(245,245,247,0.92);
+  color: #ffffff;
   letter-spacing: -0.01em;
   display: inline-flex;
   align-items: center;
@@ -74,15 +80,19 @@
 }
 .time {
   font-size: 12px;
-  color: rgba(245,245,247,0.4);
-  font-family: var(--mono);
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
+  /* Dropped `font-family: var(--mono)` — secondary text should
+   * inherit the regular sans family per the typography
+   * standard, not call attention to itself with monospace. */
+  font-family: inherit;
 }
 /* ── Question / options ── */
 .question {
   margin: 0 14px 12px;
   font-size: 14.5px;
-  font-weight: 600;
-  color: rgba(245, 245, 247, 0.92);
+  font-weight: 700;
+  color: #ffffff;
   letter-spacing: -0.005em;
   line-height: 1.4;
 }
@@ -102,7 +112,9 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  color: rgba(245, 245, 247, 0.9);
+  /* Option labels are secondary content — slightly muted
+   * gray with regular weight, per the typography standard. */
+  color: rgba(245, 245, 247, 0.75);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -142,8 +154,13 @@
 /* Post-solve states. */
 .optionCorrect {
   background: rgba(61, 219, 116, 0.12);
-  border-color: rgba(61, 219, 116, 0.45);
-  color: #F5F5F7;
+  /* Border removed per product feedback ("remova a borda ...
+   * da opção selecionada"). The green background tint still
+   * carries the "this is the correct one" cue without an
+   * outline. */
+  border-color: transparent;
+  color: #ffffff;
+  font-weight: 700;
 }
 .optionCorrect .bullet {
   border-color: rgba(61, 219, 116, 0.7);
@@ -217,24 +234,37 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.005em;
+  /* Text is white bold per the typography standard; the
+   * win / lose modifier below only paints the background
+   * tint, so the state cue stays via colour without
+   * recolouring the text away from the standard. */
+  color: #ffffff;
 }
 .resultWin {
-  background: rgba(61, 219, 116, 0.10);
-  border: 1px solid rgba(61, 219, 116, 0.30);
-  color: #3DDB74;
+  background: rgba(61, 219, 116, 0.12);
+  /* Border removed per product feedback ("remova a borda do
+   * box de quando a pessoa acertou"). The green background
+   * tint alone carries the "you won" cue. */
+  border: none;
 }
 .resultLose {
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(248, 113, 113, 0.10);
+  /* Lose state still carries an outline so the negative
+   * cue reads with the same weight as before; the user
+   * only asked to drop the border from the WIN state. */
   border: 1px solid rgba(248, 113, 113, 0.24);
-  color: #f87171;
 }
 .rewardChip {
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(245, 158, 11, 0.14);
-  border: 1px solid rgba(245, 158, 11, 0.32);
-  color: #f59e0b;
-  font-size: 11px;
+  background: rgba(245, 158, 11, 0.16);
+  /* Border removed per product feedback ("remova a borda ...
+   * do +500 Fanpoints"). The amber background tint signals
+   * "reward" on its own; text is white bold per the
+   * typography standard. */
+  border: none;
+  color: #ffffff;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.01em;
 }

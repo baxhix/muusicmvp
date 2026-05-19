@@ -21,7 +21,14 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 116px;
+  /* Height 116 → 124 per product feedback ("aumente 8px apenas
+   * altura do header, mantenha todos os elementos onde estão,
+   * aumente somente a altura para baixo"). The infoBar inside
+   * is top-anchored (`top: 6`) so it stays put automatically;
+   * the brand row is bottom-anchored and gets its `bottom`
+   * value bumped +8 below to compensate for the chrome's new
+   * lower edge, so its absolute screen position is preserved. */
+  height: 124px;
   z-index: 5;
   pointer-events: none;
   /* Frosted-glass header per product feedback: the chrome
@@ -62,10 +69,13 @@
     );
   backdrop-filter: blur(36px) saturate(1.6);
   -webkit-backdrop-filter: blur(36px) saturate(1.6);
-  /* Hairline bottom border defines the card's rounded edge
-   * now that the chrome is mostly transparent — without this
-   * the edge would dissolve into the map. */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* Bottom border tinted rose-lilac for visual accent per
+   * product feedback ("adicione um rosa lilás na borda que já
+   * existe para dar certo destaque"). Color pulled from the
+   * Fanverse pink/lilac family used elsewhere in the brand;
+   * alpha 0.45 makes the line clearly visible against the
+   * translucent chrome without becoming a heavy banner. */
+  border-bottom: 1px solid rgba(217, 70, 239, 0.45);
   /* Bumped 28 → 40 per product feedback ("aumente 12px do
    * border radius das duas bordas inferiores"). Reads as a
    * more pronounced card-hangs-from-the-top curve. */
@@ -94,12 +104,13 @@
  * edge predictable regardless of small height variations. */
 .brand {
   position: absolute;
-  /* Lifted 8 → 16 per product feedback ("posicione 8 px mais
-   * para cima o logotipo"). Brand still bottom-anchored so the
-   * spacing scales predictably; the extra 8px of margin gives
-   * the logo a comfortable buffer above the chrome's lower
-   * rounded edge. */
-  bottom: 16px;
+  /* Bottom value 16 → 24 to compensate for the chrome height
+   * growing 116 → 124. Bottom-anchored elements move when
+   * their container's bottom edge shifts; +8px on `bottom`
+   * keeps the brand row at exactly the same absolute screen
+   * position as before, with the extra 8px of new chrome
+   * height appearing UNDERNEATH it. */
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
