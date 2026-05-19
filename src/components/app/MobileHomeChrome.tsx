@@ -80,8 +80,15 @@ export default function MobileHomeChrome() {
             alt=""
             className={styles.greetingAvatar}
           />
-          <span className={styles.greetingLabel}>Olá,</span>
-          <span className={styles.greetingName}>{firstName}!</span>
+          {/* "Olá, X" wrapped in a single inline-flow span — the
+            * `.greetingBtn` flex gap only separates the AVATAR
+            * from the text now, not "Olá," from the name. Inside
+            * the wrapper a literal space character produces the
+            * natural word-space between label and name. */}
+          <span className={styles.greetingText}>
+            <span className={styles.greetingLabel}>Olá,</span>{' '}
+            <span className={styles.greetingName}>{firstName}!</span>
+          </span>
         </button>
         {/* Fanpoints chip on the RIGHT — now a clickable button
           * that routes to the Superfãs / Ranking surface. */}

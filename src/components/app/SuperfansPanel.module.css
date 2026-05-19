@@ -398,7 +398,15 @@
   border-radius: 14px;
   background: transparent;
   border: none;
-  margin: 0 2px;
+  /* Vertical breathing room between consecutive rows per
+   * product feedback. Stacks on top of the parent `.list`'s
+   * own `gap: 2px` (so effective spacing = 2 + 10 = 12px) —
+   * only the benefits list inherits this margin; the ranking
+   * tab still uses its tight default. */
+  margin: 0 2px 10px;
+}
+.benefitRow:last-child {
+  margin-bottom: 0;
 }
 .benefitUnlocked {
   /* Subtle lilac wash + matching colored icon, no outline. */

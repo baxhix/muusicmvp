@@ -69,19 +69,44 @@
     );
   backdrop-filter: blur(36px) saturate(1.6);
   -webkit-backdrop-filter: blur(36px) saturate(1.6);
-  /* Bottom border tinted rose-lilac for visual accent per
-   * product feedback ("adicione um rosa lilás na borda que já
-   * existe para dar certo destaque"). Color pulled from the
-   * Fanverse pink/lilac family used elsewhere in the brand;
-   * alpha 0.45 makes the line clearly visible against the
-   * translucent chrome without becoming a heavy banner. */
-  border-bottom: 1px solid rgba(217, 70, 239, 0.45);
+  /* Bottom border is now drawn by the `.chrome::after`
+   * pseudo-element below — it carries a horizontal lilac →
+   * pink → lilac gradient with transparent fades at the corners
+   * so the line follows the rounded edge cleanly. The CSS
+   * `border-bottom` property can't host a gradient, hence the
+   * pseudo. */
+  border-bottom: none;
   /* Bumped 28 → 40 per product feedback ("aumente 12px do
    * border radius das duas bordas inferiores"). Reads as a
    * more pronounced card-hangs-from-the-top curve. */
   border-bottom-left-radius: 40px;
   border-bottom-right-radius: 40px;
   overflow: hidden;
+}
+
+/* Gradient bottom edge — lilac → pink → lilac with transparent
+ * fades at both ends per product feedback ("adicione um tom de
+ * rosa para dar diferenciação"). Pink is the hottest stop in
+ * the middle so it carries the "differentiation accent" the
+ * brief asks for, surrounded by the same lilac the rest of the
+ * brand uses. The fades hide where the strip would otherwise
+ * cross the 40px rounded corners. */
+.chrome::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(168, 85, 247, 0.45) 14%,
+    rgba(236, 72, 153, 0.70) 50%,
+    rgba(168, 85, 247, 0.45) 86%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 /* Header band — invisible spacer. With the new layout (info bar
@@ -216,13 +241,26 @@
   opacity: 0.6;
 }
 .greetingAvatar {
-  width: 24px;
-  height: 24px;
+  /* Bumped 24 → 28 (+17%) per product feedback ("aumente
+   * levemente o tamanho do avatar"). Still a comfortable
+   * miniature next to the greeting copy. */
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   background: #0b0b0d;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
+}
+/* Wrapper span around "Olá," + first name. Inline flow so the
+ * literal space between the two child spans renders as a natural
+ * word-space — replaces the previous 8px flex gap from
+ * `.greetingBtn` which was wider than a regular text space. */
+.greetingText {
+  display: inline-flex;
+  align-items: baseline;
+  /* No `gap` — the literal ` ` character between the spans is
+   * the only separator. */
 }
 .greetingLabel {
   font-size: 10.5px;
