@@ -350,13 +350,13 @@ export default function FeedPanel() {
     {minimized && <div className={styles.minimizedGradient} />}
     <div className={`${styles.panel} ${minimized ? styles.panelMinimized : ''}`}>
 
-      {/* Header — centered Ana Castela logo per product feedback.
-          Acts as the click target to toggle minimized/expanded
-          like before. The legacy `.liveDot` + `.title "Feed"`
-          combo was already hidden on mobile via the existing
-          @media block; on desktop they sit alongside the logo
-          (logo centered, dot + title remain at their original
-          left position). */}
+      {/* Header — `.liveDot` + `.title "Feed"` on desktop. On
+          mobile both are hidden by the existing @media block,
+          leaving a minimal drag area. The previous addition of
+          a second Ana Castela logo here was removed per product
+          feedback ("Dá a impressão que no feed tem dois
+          headers") — the MobileHomeChrome above the panel
+          already carries the brand identity. */}
       <div
         className={styles.header}
         onClick={() => setMinimized(m => !m)}
@@ -365,18 +365,11 @@ export default function FeedPanel() {
       >
         <div className={styles.liveDot} />
         <span className={styles.title}>Feed</span>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo-ana.png"
-          alt="Ana Castela"
-          className={styles.headerLogo}
-        />
 
-        {/* Idle banner moved INSIDE the header so it can use
-            `top: 100%` to glue itself to the header bottom edge
-            — eliminates the small gap the previous absolute
-            positioning at `top: 56px` left between header
-            bottom and banner top across viewports. */}
+        {/* Idle banner glued to the header's bottom edge via
+            `top: 100%` on the absolutely-positioned banner —
+            the header serves as its containing block (it has
+            `position: relative`). */}
         {!minimized && showIdleBanner && (
           <div className={styles.idleBanner} aria-hidden="true">
             <span>Novas publicações</span>

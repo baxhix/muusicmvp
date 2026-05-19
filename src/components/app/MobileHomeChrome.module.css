@@ -21,14 +21,12 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Height 116 → 124 per product feedback ("aumente 8px apenas
-   * altura do header, mantenha todos os elementos onde estão,
-   * aumente somente a altura para baixo"). The infoBar inside
-   * is top-anchored (`top: 6`) so it stays put automatically;
-   * the brand row is bottom-anchored and gets its `bottom`
-   * value bumped +8 below to compensate for the chrome's new
-   * lower edge, so its absolute screen position is preserved. */
-  height: 124px;
+  /* Height 124 → 140 to accommodate the bigger 84px logo
+   * without overlapping the top info bar (greeting + Fanpoints
+   * chip). Brand row is bottom-anchored so the +16px growth
+   * happens entirely BELOW the existing layout — info bar
+   * (top: 6) stays put automatically. */
+  height: 140px;
   z-index: 5;
   pointer-events: none;
   /* Frosted-glass header per product feedback: the chrome
@@ -198,10 +196,11 @@
   z-index: 1;
 }
 .logo {
-  /* Bumped 56 → 68 (+21%) per product feedback so the logo
-   * dominates the lower part of the chrome card and the
-   * brand identity reads clearly at thumb-distance. */
-  height: 68px;
+  /* Bumped 68 → 84 (+24%) per product feedback. Now that the
+   * feed panel's duplicate logo was removed, this is the
+   * single brand-identity surface across the app — the bigger
+   * size makes it dominate the header band clearly. */
+  height: 84px;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));

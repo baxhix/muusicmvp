@@ -127,20 +127,10 @@
   position: relative;
 }
 
-/* Ana Castela logo — surfaced inside the feed header on
- * MOBILE only. Desktop keeps the legacy liveDot + "Feed"
- * title pair; on mobile both of those were already hidden,
- * so the logo fills the otherwise-empty header band. Mobile
- * @media block below makes it visible + centers it via auto
- * margins (the header is a flex row, so margin auto on a
- * single visible child centers it). */
-.headerLogo {
-  display: none;
-  width: auto;
-  height: 32px;
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
-  flex-shrink: 0;
-}
+/* `.headerLogo` was removed per product feedback — the
+ * MobileHomeChrome above the feed panel already carries the
+ * Ana Castela brand identity, so a second logo inside the
+ * feed header read as "two headers" stacked. */
 .header:hover .liveDot {
   box-shadow: 0 0 14px rgba(61,219,116,0.9);
 }
@@ -344,15 +334,6 @@
    * of the panel since the dot + title are both hidden now. */
   .header {
     padding: 28px 20px 22px;
-    /* Center the logo horizontally — with dot + title hidden,
-     * the only header child left is `.headerLogo`, so
-     * justify-content centers it. */
-    justify-content: center;
-  }
-  /* Show the Ana Castela logo on mobile only. Centered via the
-   * header's `justify-content: center` above. */
-  .headerLogo {
-    display: block;
   }
 }
 @media (max-width: 480px) {

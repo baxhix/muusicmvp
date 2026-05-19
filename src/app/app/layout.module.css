@@ -82,16 +82,12 @@
    * edge on the same outer margin the Fanpoints chip uses on
    * the left. */
   .topBar {
-    /* Dropped 46 → 54 per product feedback ("posicione
-     * levemente mais abaixo o ícone de mensagens"). Now lands
-     * exactly on the logo's vertical center (logo center at
-     * chrome.top + 74, icon button center at 74 → top = 74-20
-     * = 54). The Fanpoints chip moved to the right edge of
-     * the info bar in the same product round, so there's no
-     * longer a horizontal collision with the icon to worry
-     * about — the icon sits cleanly BELOW the info bar (info
-     * bar y range 6→42, icon y range 54→94). */
-    top: 54px;
+    /* Re-aligned with the new logo position after the chrome
+     * grew 124 → 140 + logo grew 68 → 84 (commit removing
+     * the duplicate logo from the feed panel). Logo center
+     * now sits at chrome.top + ~78; centering a 40×40 button
+     * on that means top = 78 − 20 ≈ 58. */
+    top: 58px;
     right: 18px;
     transform: none;
     flex-direction: row;
