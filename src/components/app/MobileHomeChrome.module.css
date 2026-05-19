@@ -179,15 +179,23 @@
  * edge predictable regardless of small height variations. */
 .brand {
   position: absolute;
-  /* Bottom value 16 → 24 to compensate for the chrome height
-   * growing 116 → 124. Bottom-anchored elements move when
-   * their container's bottom edge shifts; +8px on `bottom`
-   * keeps the brand row at exactly the same absolute screen
-   * position as before, with the extra 8px of new chrome
-   * height appearing UNDERNEATH it. */
-  bottom: 24px;
+  /* Brand is now centered both vertically AND horizontally
+   * inside the chrome card per product feedback ("centralize
+   * vertical e horizontalmente no header"). The previous
+   * bottom-anchored layout (bottom: 24) read as
+   * "second-tier element below the info bar"; centering the
+   * brand makes the logo the primary visual anchor of the
+   * card, which is the spec.
+   *
+   * Anchor math: top:50% + translate(-50%, -50%) puts the
+   * brand's geometric center at the chrome's geometric
+   * center. With the info bar at top:6 (height 36 → covers
+   * y:6-42) and the chrome at 133px, the chrome center sits
+   * at y:66.5 — comfortably below the info bar, so the
+   * larger logo doesn't overlap the greeting / Fanpoints. */
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -196,10 +204,23 @@
   z-index: 1;
 }
 .logo {
-  /* Trimmed 84 → 76 (-10%) per product feedback. Still the
-   * dominant brand element in the chrome card — just slightly
-   * less aggressive after the chrome itself also shrank 5%. */
-  height: 76px;
+  /* Bumped 76 → 90 (+18%) — paired with the brand row's new
+   * exact-center anchor so the logo becomes the dominant
+   * visual element of the chrome card.
+   *
+   * Layout math (chrome 133px tall, brand stack ~86.5px tall):
+   *   - Brand wrapper center at y:66.5 (chrome midline).
+   *   - Logo top y:23.25, logo center y:68.25, logo visual
+   *     bottom y:113.25.
+   *   - Wordmark sits underneath via the -10 margin-bottom
+   *     overlap, bottom edge at y:109.75.
+   *
+   * The logo's bounding box overlaps the info bar band
+   * (y:6-42) by ~19px, but the brand mark itself is centered
+   * inside the PNG's transparent padding so the visible art
+   * doesn't visually collide with the greeting / Fanpoints
+   * chip at the left and right edges of that band. */
+  height: 90px;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));

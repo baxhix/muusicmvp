@@ -63,34 +63,29 @@
 
 @media (max-width: 768px) {
   /* Mobile — the cluster sits on the SAME horizontal axis as
-   * the Ana Castela logo in the lower half of the chrome card
-   * (per latest product feedback: "icone de mensagem alinhado
-   * horizontalmente do logo, ou seja mais abaixo"). Fanpoints
-   * chip stays alone at the top of the chrome (y:6-42); the
-   * message icon drops to the brand-row level.
+   * the Ana Castela logo in the chrome card (per product
+   * feedback: "icone de mensagem alinhado horizontalmente do
+   * logo"). Fanpoints chip stays alone in the info-bar band at
+   * the top of the chrome (y:6-42); the chat icon sits next to
+   * the centered logo.
    *
-   * Vertical alignment math:
-   *   MobileHomeChrome height = 116px.
-   *   Logo height = 68px, brand anchored bottom: 8.
-   *   Logo y range: chrome.top + (116 - 8 - 68) to (116 - 8)
-   *               = chrome.top + 40 to chrome.top + 108.
-   *   Logo center y = chrome.top + 74.
-   *   Icon button is 40×40 → center placed at 74 means
-   *     top = 74 - 20 = 54.
+   * Re-aligned after the chrome's brand row moved from
+   * bottom-anchored to exact-center (top:50% + translate(-50%,
+   * -50%)) per product feedback ("centralize vertical e
+   * horizontalmente no header"):
+   *   - Chrome height = 133, midline y:66.5.
+   *   - Brand wrapper (logo 90 + wordmark 6.5 − 10 overlap)
+   *     ≈ 86.5px tall, centered around the midline.
+   *   - Logo top y:23.25, logo center y:68.25, logo visual
+   *     bottom y:113.25.
+   *   - 40×40 chat button centered on logo center → top = 68.25
+   *     − 20 ≈ 48.
    *
    * Horizontal alignment: `right: 18px` keeps the icon's right
    * edge on the same outer margin the Fanpoints chip uses on
    * the left. */
   .topBar {
-    /* Re-aligned after chrome 140 → 133 + logo 84 → 76.
-     *   - Brand stack (logo 76 + wordmark ~6.5 − 10 margin
-     *     overlap) ≈ 72.5px tall.
-     *   - Brand bottom: 24 from chrome bottom → brand top at
-     *     chrome.top + (133 − 24 − 72.5) = +36.5.
-     *   - Logo center: 36.5 + 38 = ~74.5 from chrome top.
-     *   - 40×40 chat button centered on that → top = 74.5 − 20
-     *     ≈ 55. */
-    top: 55px;
+    top: 48px;
     right: 18px;
     transform: none;
     flex-direction: row;

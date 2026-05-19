@@ -352,12 +352,12 @@ export default function FeedPanel() {
 
       {/* Header — `.liveDot` + `.title "Feed"` on desktop. On
           mobile both are hidden by the existing @media block,
-          leaving the Ana Castela logo (sized down to fit the
-          feed's compact header) as the only visible element,
-          centered. The chrome above keeps the big 84px logo;
-          this one is intentionally smaller so the two read as
-          a brand HIERARCHY (big primary up top, small secondary
-          inside the feed) instead of two duplicate headers. */}
+          leaving a minimal drag area. The small Ana Castela
+          logo that briefly lived here was removed again per
+          product feedback "deixe apenas a maior" — the chrome
+          above the feed already carries the (now bigger)
+          single brand-identity logo, so a second one inside
+          this header was reading as "two stacked headers". */}
       <div
         className={styles.header}
         onClick={() => setMinimized(m => !m)}
@@ -366,12 +366,6 @@ export default function FeedPanel() {
       >
         <div className={styles.liveDot} />
         <span className={styles.title}>Feed</span>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo-ana.png"
-          alt="Ana Castela"
-          className={styles.headerLogo}
-        />
 
         {/* Idle banner glued to the header's bottom edge via
             `top: 100%` on the absolutely-positioned banner —
