@@ -14,11 +14,19 @@ const HeroGlobe = dynamic(() => import('./HeroGlobe'), { ssr: false });
  *  together to restore the full hero. */
 const MINIMAL_LANDING = true;
 
+/** Rotating headline phrases.
+ *
+ *  `\n` characters split the phrase into multiple lines — the
+ *  `.headline` rule in HeroSection.module.css carries
+ *  `white-space: pre-line` so those newlines render as real
+ *  line breaks. The typing effect slices character-by-character
+ *  including the newline, so each phrase reveals naturally line
+ *  by line.
+ */
 const PHRASES = [
-  'O universo dos superfãs.',
-  'Descubra quem ouve o que você ouve.',
-  'Sua tribo, em qualquer tela.',
-  'Música une o mundo.',
+  'O Universo\ndos Superfãs\né aqui',
+  'Você nunca\nouviu música sozinho.',
+  'A mesma música.\nO mesmo sentimento.\nEm tempo real.',
 ];
 
 const GLOBE_USERS = [
