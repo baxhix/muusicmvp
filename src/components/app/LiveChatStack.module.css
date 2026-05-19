@@ -356,6 +356,22 @@
      * vertical midline (top:50% + translateY(-50%)) — its own
      * mass is what should be centered, not its bottom edge. */
     transform: translateY(-50%);
+    /* Mobile-only z-index drop (desktop stays at 200 — see the
+     * base rule's comment about beating the basemap vignette).
+     * Modal envelopes use z:130 (backdrop) + z:135 (panel)
+     * across EditProfileModal / DeleteAccountModal / PlaylistModal,
+     * and per product feedback "No mobile, ao abrir um modal,
+     * ele deve ficar por cima dos avatares que ficam fixos na
+     * home" the modal needs to win that overlap.
+     *
+     * z:90 keeps the dock above ambient chrome on mobile (Globe
+     * vignette z:1, FeedPanel z:15, BottomNav z:70, the player
+     * z:71) but below every modal envelope (z:130+) so opening a
+     * modal naturally covers the avatar dock. The luminous halo
+     * pseudo at z:-1 inside the dock continues to read against
+     * the basemap underneath without depending on a global high
+     * stack position. */
+    z-index: 90;
   }
   .dock::before {
     inset: -6px -20px;

@@ -46,22 +46,19 @@
   pointer-events: auto;
   overflow: hidden;
 }
-.panel::before,
+/* The `.panel::before` top-fade gradient was retired per
+ * product feedback "Remova o gradient superior que tem no feed".
+ * The header's own bottom border (rgba(255,255,255,0.06)) already
+ * separates the title row from the scrolling content below;
+ * the extra darken-on-the-first-post gradient read as visual
+ * noise rather than depth. Only `.panel::after` (the bottom
+ * fade above the footer / "Novo tópico" CTA) remains. */
 .panel::after {
   content: '';
   position: absolute;
   left: 0; right: 0;
   pointer-events: none;
   z-index: 2;
-}
-.panel::before {
-  top: 56px;
-  height: 32px;
-  background: linear-gradient(to bottom,
-    rgba(5,5,7,0.6) 0%,
-    transparent 100%);
-}
-.panel::after {
   bottom: 0;
   height: 72px;
   background: linear-gradient(to top,
