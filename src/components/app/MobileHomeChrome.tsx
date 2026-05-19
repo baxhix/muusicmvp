@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -27,15 +28,16 @@ import styles from './MobileHomeChrome.module.css';
  */
 export default function MobileHomeChrome() {
   const isMobile = useIsMobile();
+  const router = useRouter();
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
-  // First name only, used in the "Olá, X" greeting on the left
-  // side of the info bar. `name` is "First Last" in our seed;
-  // splitting on whitespace and taking [0] gives the first
-  // token. Fallback "fã" when the auth state hasn't resolved
-  // yet so the greeting line still reads naturally.
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? 'fã';
+  // Avatar source — uses the auth user's uploaded avatar if any,
+  // otherwise falls back to the generic placeholder we ship at
+  // /public/avatar-placeholder.svg. Same fallback the rest of
+  // the app uses for new accounts.
+  const avatarSrc = user?.avatarUrl ?? '/avatar-placeholder.svg';
 
   if (!isMobile) return null;
 
@@ -58,19 +60,37 @@ export default function MobileHomeChrome() {
         role="status"
         aria-label={`Olá, ${firstName}. Você tem ${fanpoints.toLocaleString('pt-BR')} Fanpoints`}
       >
-        {/* Greeting — gray "Olá," + white bold first name on the
-          * LEFT side of the info bar. Mirrors the typography of
-          * the Fanpoints chip on the right so the two reads as
-          * a balanced pair. */}
-        <span className={styles.greeting}>
+        {/* Greeting row on the LEFT — now a clickable button that
+          * routes to the settings / profile surface. Carries a
+          * profile-photo miniature (24×24, same size as the
+          * listening_together stack avatars) + the "Olá, X!"
+          * greeting. The dedicated /app/configuracoes route
+          * doesn't exist yet so the click goes to /app/perfil,
+          * matching the BottomNav hamburger's "Configurações"
+          * entry. */}
+        <button
+          type="button"
+          className={styles.greetingBtn}
+          onClick={() => router.push('/app/perfil')}
+          aria-label={`Olá, ${firstName} — abrir configurações`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatarSrc}
+            alt=""
+            className={styles.greetingAvatar}
+          />
           <span className={styles.greetingLabel}>Olá,</span>
-          <span className={styles.greetingName}>{firstName}</span>
-        </span>
-        {/* Fanpoints chip — moved to the RIGHT side per product
-          * feedback. `.infoBar` uses `justify-content:
-          * space-between`, so the first child (greeting) lands
-          * on the left and this one on the right naturally. */}
-        <span className={styles.fanpointsChip}>
+          <span className={styles.greetingName}>{firstName}!</span>
+        </button>
+        {/* Fanpoints chip on the RIGHT — now a clickable button
+          * that routes to the Superfãs / Ranking surface. */}
+        <button
+          type="button"
+          className={styles.fanpointsChip}
+          onClick={() => router.push('/app/ranking')}
+          aria-label={`Você tem ${fanpoints.toLocaleString('pt-BR')} Fanpoints — abrir Superfãs`}
+        >
           <svg
             viewBox="0 0 24 24"
             width="20"
@@ -88,7 +108,7 @@ export default function MobileHomeChrome() {
             {fanpoints.toLocaleString('pt-BR')}
           </span>
           <span className={styles.fanpointsLabel}>Fanpoints</span>
-        </span>
+        </button>
       </div>
     </div>
   );

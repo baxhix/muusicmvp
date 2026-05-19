@@ -189,21 +189,40 @@
   pointer-events: auto;
 }
 
-/* Greeting — "Olá, <FirstName>" on the LEFT side of the info
- * bar. Typography mirrors the Fanpoints chip on the right so
- * the two reads as a matched pair:
- *   - "Olá," in the same muted-gray small caps the Fanpoints
- *     LABEL uses (`.fanpointsLabel` below).
- *   - First name in the same bright-white 12px/700 tabular
- *     style the Fanpoints VALUE uses (`.fanpointsValue` below).
- */
-.greeting {
+/* Greeting button on the LEFT — clickable, routes to settings.
+ * Now carries a small profile-photo miniature (24×24, matching
+ * the listening_together stack avatar size per product
+ * feedback) + the gray "Olá," + white-bold first name + "!".
+ * Button reset: no background / border / padding except the
+ * intrinsic gaps + tap target. */
+.greetingBtn {
   display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  color: #ffffff;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 6px 4px 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   letter-spacing: 0.005em;
   min-width: 0;
+  /* Slight tap-feedback affordance without changing the visual
+   * envelope. */
+  transition: opacity 0.14s ease;
+}
+.greetingBtn:active {
+  opacity: 0.6;
+}
+.greetingAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #0b0b0d;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
 }
 .greetingLabel {
   font-size: 10.5px;
@@ -229,6 +248,19 @@
   color: #ffffff;
   letter-spacing: 0.005em;
   min-width: 0;
+  /* Button reset — the element is a clickable <button> now that
+   * routes to the Superfãs / Ranking surface. No background /
+   * border / padding so it visually matches the previous span. */
+  background: none;
+  border: none;
+  padding: 4px 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  transition: opacity 0.14s ease;
+}
+.fanpointsChip:active {
+  opacity: 0.6;
 }
 .fanpointsChip svg {
   color: #ffffff;

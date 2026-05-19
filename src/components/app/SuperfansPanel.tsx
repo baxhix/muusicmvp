@@ -72,6 +72,64 @@ function rowToSuperfan(r: ApiRankingRow, rank: number): Superfan {
 
 const formatPoints = (n: number) => n.toLocaleString('pt-BR');
 
+/* ── Benefits catalog (mock) ──
+ *
+ * Hard-coded benefits the user "owns" as they cross point
+ * thresholds. Surfaced under the new "Meus benefícios" tab; the
+ * ones the current user has unlocked render as enabled rows
+ * with a green checkmark, the rest stay locked + grayed with a
+ * lock icon and a "X pontos pra desbloquear" sub-line.
+ *
+ * Replace this hard-coded list with the live benefits API
+ * response when the backend grows one. */
+interface Benefit {
+  id: string;
+  title: string;
+  description: string;
+  /** Minimum Fanpoints the user needs to unlock this benefit. */
+  threshold: number;
+}
+const BENEFITS: Benefit[] = [
+  {
+    id: 'b1',
+    title: 'Superchat global',
+    description: 'Converse no Superchat com toda a comunidade Fanverse',
+    threshold: 0,
+  },
+  {
+    id: 'b2',
+    title: 'Comunidades exclusivas',
+    description: 'Acesso aos grupos Boiadeiros e Fãs do Forró',
+    threshold: 500,
+  },
+  {
+    id: 'b3',
+    title: '15% OFF na Loja da Boiadeira',
+    description: 'Cupom aplicado automaticamente no checkout',
+    threshold: 1000,
+  },
+  {
+    id: 'b4',
+    title: 'Mensagem direta para Ana',
+    description: 'Envie 1 mensagem por mês com prioridade na inbox',
+    threshold: 2500,
+  },
+  {
+    id: 'b5',
+    title: 'Skin dourada de avatar',
+    description: 'Anel dourado no seu avatar em todas as superfícies',
+    threshold: 5000,
+  },
+  {
+    id: 'b6',
+    title: 'Convites VIP para shows',
+    description: 'Pré-venda exclusiva de ingressos antes do público geral',
+    threshold: 10000,
+  },
+];
+
+type Tab = 'ranking' | 'benefits';
+
 export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
   const { user: authUser } = useAuth();
   const { ranking, loading, error } = useRanking(open);
@@ -79,6 +137,9 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
   // Phase: 'idle' = unmounted; 'in' = rise; 'open' = idle visible; 'out' = fall.
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [showAll, setShowAll] = useState(false);
+  /** Active tab. Defaults to ranking — the panel's primary
+   *  function — with the benefits tab as a secondary view. */
+  const [tab, setTab] = useState<Tab>('ranking');
 
   useEffect(() => {
     if (open) {
@@ -146,11 +207,26 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
   const isIn = phase === 'in';
   const isOut = phase === 'out';
 
-  // Recompute nextLevelAt from the actual current level (level^2 * 100 is the
-  // boundary into NEXT level; if user is already at level L, target = L+1 boundary).
-  const meNextLevelAt = me ? nextLevelAtFor(me.level + 1) : 100;
+  // Top-10 distance — replaces the previous "level X / Y to next
+  // level" line per product feedback. We compute it from the
+  // current ranking: the rank-10 fan's point total is the
+  // threshold to enter the top 10. If the user is already in
+  // the top 10 (or the ranking is shorter than 10), the copy
+  // shifts to a celebratory variant instead of a number.
+  const top10Threshold =
+    fans.length >= 10 ? fans[9].fanpoints : null;
+  const meInTop10 = me ? me.rank <= 10 : false;
+  const pointsToTop10 =
+    me && top10Threshold !== null
+      ? Math.max(0, top10Threshold + 1 - me.fanpoints)
+      : 0;
+  // Progress bar fill ratio also pinned to top-10 progress now
+  // (was: progress toward next level). Capped at 100%; when the
+  // user is already in top 10 we show a full bar.
   const meProgressPct = me
-    ? Math.min(100, Math.max(0, Math.round((me.fanpoints / meNextLevelAt) * 100)))
+    ? meInTop10 || top10Threshold === null
+      ? 100
+      : Math.min(100, Math.max(0, Math.round((me.fanpoints / Math.max(1, top10Threshold)) * 100)))
     : 0;
 
   return (
@@ -190,22 +266,9 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
             <div className={styles.meInfo}>
               <span className={styles.meName}>{me.name}</span>
               <span className={styles.meCity}>{me.city}</span>
-              {/* "Meus benefícios" CTA pinned next to the name — only
-                  inside the user's row at the top of the panel, per
-                  product feedback. Same pill treatment as the
-                  ArtistBox wallet-row button so users feel a
-                  consistent perks affordance across surfaces.
-                  Routed to a no-op for now; when the dedicated
-                  benefits surface ships, wire the click there. */}
-              <button
-                type="button"
-                className={styles.meBenefitsBtn}
-                onClick={() => {
-                  // TODO: open the benefits surface when it exists.
-                }}
-              >
-                Meus benefícios
-              </button>
+              {/* The "Meus benefícios" CTA that used to sit here
+                  was promoted to a top-level tab next to "Ranking"
+                  (see the .tabs row below) per product feedback. */}
             </div>
             <div className={styles.mePoints}>
               <span className={styles.mePointsNum}>{formatPoints(me.fanpoints)}</span>
@@ -220,11 +283,21 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
                 style={{ width: `${meProgressPct}%` }}
               />
             </div>
+            {/* Single label that replaces the previous
+                "Nível N / X para nível N+1" pair per product
+                feedback. Shows the distance in points to enter
+                the top 10, or a "you're already in" line when
+                the user has crossed that threshold. */}
             <div className={styles.meProgressLabel}>
-              <span>Nível {me.level}</span>
-              <span>
-                {formatPoints(Math.max(0, meNextLevelAt - me.fanpoints))} para nível {me.level + 1}
-              </span>
+              {meInTop10 ? (
+                <span>Você está no Top 10!</span>
+              ) : top10Threshold === null ? (
+                <span>Continue ouvindo pra entrar no ranking</span>
+              ) : (
+                <span>
+                  {formatPoints(pointsToTop10)} pontos para entrar no top 10
+                </span>
+              )}
             </div>
           </div>
         </section>
@@ -232,13 +305,92 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
 
       <div className={styles.divider} />
 
-      <div className={styles.listHeader}>
-        <span className={styles.listEyebrow}>Ranking global</span>
-        <span className={styles.listMeta}>
-          {loading ? 'Atualizando…' : 'Atualizado agora'}
-        </span>
+      {/* Tabs — Ranking (default) and Meus benefícios. Both share
+          the same outer envelope; only the body below switches. */}
+      <div className={styles.tabs} role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'ranking'}
+          className={`${styles.tab} ${tab === 'ranking' ? styles.tabActive : ''}`}
+          onClick={() => setTab('ranking')}
+        >
+          Ranking
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'benefits'}
+          className={`${styles.tab} ${tab === 'benefits' ? styles.tabActive : ''}`}
+          onClick={() => setTab('benefits')}
+        >
+          Meus benefícios
+        </button>
       </div>
 
+      {/* Body — switches between Ranking and Benefits based on
+          the active tab. Both branches share the same `.list`
+          container so the surrounding chrome (padding,
+          scrolling) stays consistent. */}
+      {tab === 'benefits' ? (
+        <div className={styles.list}>
+          {BENEFITS.map((b) => {
+            const unlocked = (me?.fanpoints ?? 0) >= b.threshold;
+            const missing = Math.max(
+              0,
+              b.threshold - (me?.fanpoints ?? 0),
+            );
+            return (
+              <div
+                key={b.id}
+                className={`${styles.benefitRow} ${
+                  unlocked ? styles.benefitUnlocked : styles.benefitLocked
+                }`}
+              >
+                <span
+                  className={styles.benefitIcon}
+                  aria-hidden="true"
+                >
+                  {unlocked ? (
+                    /* Checkmark — green, signals "you have this". */
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 12l5 5 9-11" />
+                    </svg>
+                  ) : (
+                    /* Lock — gray, signals "needs more points". */
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="4" y="11" width="16" height="10" rx="2" />
+                      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                    </svg>
+                  )}
+                </span>
+                <div className={styles.benefitInfo}>
+                  <span className={styles.benefitTitle}>{b.title}</span>
+                  <span className={styles.benefitDesc}>
+                    {unlocked
+                      ? b.description
+                      : `Faltam ${formatPoints(missing)} pontos para desbloquear`}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <div className={styles.list}>
         {error ? (
           <div className={styles.emptyState}>
@@ -296,6 +448,7 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
           </button>
         )}
       </div>
+      )}
     </aside>
   );
 }
