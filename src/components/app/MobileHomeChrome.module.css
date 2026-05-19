@@ -204,23 +204,23 @@
   z-index: 1;
 }
 .logo {
-  /* Bumped 76 → 90 (+18%) — paired with the brand row's new
-   * exact-center anchor so the logo becomes the dominant
-   * visual element of the chrome card.
+  /* Trimmed 90 → 81 (-10%) per the latest product feedback
+   * "diminua mais 10% o tamanho do logotipo na home do
+   * mobile". Brand-wrapper centering anchor stays at exact
+   * center so the smaller logo just contracts symmetrically
+   * around the chrome midline.
    *
-   * Layout math (chrome 133px tall, brand stack ~86.5px tall):
+   * Layout math (chrome 133px tall, brand stack ~77.5px tall):
    *   - Brand wrapper center at y:66.5 (chrome midline).
-   *   - Logo top y:23.25, logo center y:68.25, logo visual
-   *     bottom y:113.25.
+   *   - Logo top y:27.75, logo center y:68.25, logo visual
+   *     bottom y:108.75.
    *   - Wordmark sits underneath via the -10 margin-bottom
-   *     overlap, bottom edge at y:109.75.
+   *     overlap, bottom edge at y:105.25.
    *
-   * The logo's bounding box overlaps the info bar band
-   * (y:6-42) by ~19px, but the brand mark itself is centered
-   * inside the PNG's transparent padding so the visible art
-   * doesn't visually collide with the greeting / Fanpoints
-   * chip at the left and right edges of that band. */
-  height: 90px;
+   * Logo CENTER y stays at 68.25 (centering is invariant
+   * under shrink), so the right-rail chat-icon alignment in
+   * `app/layout.module.css` doesn't need to move. */
+  height: 81px;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));

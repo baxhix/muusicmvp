@@ -350,14 +350,17 @@ export default function FeedPanel() {
     {minimized && <div className={styles.minimizedGradient} />}
     <div className={`${styles.panel} ${minimized ? styles.panelMinimized : ''}`}>
 
-      {/* Header — `.liveDot` + `.title "Feed"` on desktop. On
-          mobile both are hidden by the existing @media block,
-          leaving a minimal drag area. The small Ana Castela
-          logo that briefly lived here was removed again per
-          product feedback "deixe apenas a maior" — the chrome
-          above the feed already carries the (now bigger)
-          single brand-identity logo, so a second one inside
-          this header was reading as "two stacked headers". */}
+      {/* Header — `.liveDot` + `.title "Feed"` flow on the left
+          (desktop only; both are hidden by the @media block on
+          mobile), and the Ana Castela logo sits ABSOLUTELY
+          CENTERED across the header on both surfaces per
+          product feedback ("Inclua o logotipo da Ana Castela
+          no header do feed, centralizado"). Because the logo
+          is absolutely positioned, it doesn't push the left-
+          flow content around — on mobile (where the dot+title
+          are hidden) the logo stands alone in the center; on
+          desktop the dot+title share the row with the logo
+          floating above them at center. */}
       <div
         className={styles.header}
         onClick={() => setMinimized(m => !m)}
@@ -366,6 +369,12 @@ export default function FeedPanel() {
       >
         <div className={styles.liveDot} />
         <span className={styles.title}>Feed</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-ana.png"
+          alt="Ana Castela"
+          className={styles.headerLogo}
+        />
 
         {/* Idle banner glued to the header's bottom edge via
             `top: 100%` on the absolutely-positioned banner —

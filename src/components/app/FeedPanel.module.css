@@ -127,10 +127,40 @@
   position: relative;
 }
 
-/* `.headerLogo` removed again per the latest product
- * feedback — the chrome above the feed carries the single
- * brand logo; a second one inside the feed header was
- * reading as two stacked headers. */
+/* Ana Castela logo INSIDE the feed header, re-added per
+ * product feedback "Inclua o logotipo da Ana Castela no
+ * header do feed, centralizado". This time the rule is
+ * SHARED across desktop + mobile (the previous round only
+ * showed it on mobile and got flagged as "two layers" with
+ * the chrome above).
+ *
+ * Centering via absolute positioning: takes the logo out of
+ * the flex flow so the dot+title pair on the left don't get
+ * pushed around. `transform: translate(-50%, -50%)` pins the
+ * logo's geometric center to the header's geometric center.
+ * The logo is sized DOWN against the chrome's 81px brand
+ * logo so the chrome reads as the dominant identity and the
+ * feed header logo reads as a secondary surface label.
+ *
+ *   height: 26px → ~3× smaller than the chrome logo, leaves
+ *   plenty of room on either side for the dot+title on
+ *   desktop without visually overlapping them. */
+.headerLogo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 26px;
+  width: auto;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  /* Sit above the dot+title and below the idle banner. The
+   * idle banner uses z:6 on this same containing block, so a
+   * lower index keeps the banner above the logo when it
+   * surfaces. */
+  z-index: 2;
+}
 .header:hover .liveDot {
   box-shadow: 0 0 14px rgba(61,219,116,0.9);
 }
