@@ -120,7 +120,13 @@
     rgba(2,2,3,0.76) 100%);
   backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  border: 3px solid rgba(255,255,255,0.12);
+  /* The neutral white-tint border was replaced by a gradient
+   * stroke painted in `.inner::after` below — matches the
+   * MobileHomeChrome header so the two pills feel like the
+   * same brand surface. The 3px transparent border is kept
+   * here so the box-sizing accounting (and the previous
+   * spacing math throughout) doesn't shift. */
+  border: 3px solid transparent;
   border-radius: 999px;
   /* Restored padding from the previous tightening — matches the
    * original height: 8/10 → resting bar height back to its old
@@ -131,6 +137,43 @@
   justify-items: center;
   align-items: center;
   pointer-events: auto;
+  /* Provide a containing block for the absolutely-positioned
+   * `.inner::after` gradient-ring pseudo declared below. The
+   * pill is already `position: relative`-ish via its grid
+   * layout, but explicitly stating `position` makes the
+   * absolute anchor unambiguous. */
+  position: relative;
+}
+
+/* Gradient stroke around the navbar pill — same lilac → pink →
+ * lilac mask-composite ring used by the mobile home header so
+ * both surfaces share one brand identity. `mask-composite:
+ * exclude` clips the gradient to the 3px border-box ring; the
+ * pill's `border-radius: 999px` makes the ring follow the
+ * full pill outline. */
+.inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 3px solid transparent;
+  background-image: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.55) 0%,
+    rgba(236, 72, 153, 0.75) 50%,
+    rgba(168, 85, 247, 0.55) 100%
+  );
+  background-origin: border-box;
+  background-clip: border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 
 /* Each direct child of .inner sits in a 1fr column. The cell

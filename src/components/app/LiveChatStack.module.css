@@ -140,6 +140,11 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: transform 200ms ease-out, background 200ms ease;
+  /* Match the avatar `.item`s spacing — 6px breathing room
+   * above so the dock reads as a uniform column of touch
+   * targets instead of the chat icon hugging the last avatar
+   * with no gap. */
+  margin-top: 6px;
 }
 .viewAllBtn svg {
   width: 20px;

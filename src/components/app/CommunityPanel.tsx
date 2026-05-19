@@ -408,6 +408,19 @@ function CommunityListView({
                           {' · '}
                           {c.topicCount.toLocaleString('pt-BR')} {c.topicCount === 1 ? 'tópico' : 'tópicos'}
                         </span>
+                        {/* Secondary chip row — surfaces additional
+                          * "this community is bumping" signals per
+                          * product feedback. Today only fires for
+                          * trending communities; future signals
+                          * (newcomer surge, region-of-day, etc.)
+                          * just append to this row. */}
+                        {c.isTrending && (
+                          <div className={styles.cardChipsRow}>
+                            <span className={styles.cardChip}>
+                              Mais ativa hoje
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </button>
                     <KebabMenu actions={actions} />
@@ -419,23 +432,39 @@ function CommunityListView({
         )}
       </div>
 
-      {/* Footer: smaller "Nova comunidade" CTA pinned below the list. */}
-      <footer className={styles.footer}>
-        {canCreate ? (
-          <button
-            type="button"
-            className={styles.footerCta}
-            onClick={() => setCreateOpen(true)}
+      {/* Floating action button — circular "+" pinned to the
+        * bottom-right corner of the panel. Replaces the older
+        * full-width "Nova comunidade" footer CTA per product
+        * feedback. The gating note (when the user doesn't have
+        * enough points) stays in the footer position so users
+        * know WHY the FAB isn't available. */}
+      {canCreate ? (
+        <button
+          type="button"
+          className={styles.fab}
+          onClick={() => setCreateOpen(true)}
+          aria-label="Nova comunidade"
+          title="Nova comunidade"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            aria-hidden="true"
           >
-            + Nova comunidade
-          </button>
-        ) : profile?.fanpoints !== undefined ? (
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      ) : profile?.fanpoints !== undefined ? (
+        <footer className={styles.footer}>
           <p className={styles.gateNote}>
             Acumule {CREATE_FP_THRESHOLD.toLocaleString('pt-BR')} Fanpoints
             para criar a sua própria comunidade.
           </p>
-        ) : null}
-      </footer>
+        </footer>
+      ) : null}
 
       {createOpen && (
         <CreateCommunityModal
