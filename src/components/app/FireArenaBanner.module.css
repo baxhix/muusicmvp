@@ -1,124 +1,128 @@
 /* ============================================================
  * FIRE ARENA BANNER — desktop-only launch promo
  *
- * Pinned to the top of the viewport at full width. Black
- * surface, no borders per spec. Spotify-style album-cover-
- * forward layout: square art on the left, title + byline +
- * countdown on the right.
+ * Discrete floating promo pill that sits ABOVE the map at the
+ * top-center of the desktop viewport. Per product feedback
+ * "Deixe mais discreto e flutuante o banner de presave. Ele
+ * deve ficar por cima do mapa e flutuante; Deve ter o tamanho
+ * de 440x80px" the banner stopped being a full-width pinned
+ * header and became a 440×80 floating card.
+ *
+ * Layout (left → right):
+ *   - 60×60 cover art (album-cover-forward, Spotify-style)
+ *   - Info column: title row + launch date row
+ *   - Countdown chip with the 4 time units
  * ============================================================ */
 
 .banner {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 140px;
+  /* Centered at the top of the viewport with a 16px breathing
+   * gap so the banner reads as floating rather than welded to
+   * the screen edge. */
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  height: 80px;
   z-index: 60;
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 0 32px;
-  background: #0a0a0e;
+  gap: 12px;
+  padding: 0 14px;
+  /* Discrete dark frosted-glass surface — semi-transparent so
+   * the map below shows through subtly, hairline border to
+   * separate it from the dark basemap, soft drop shadow to
+   * sell the floating-card illusion. */
+  background: rgba(10, 10, 14, 0.86);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.65);
   pointer-events: auto;
   overflow: hidden;
 }
 
 /* ── Cover art ──
- * 120×120 square, slightly rounded so the art sits cleanly on
- * the black surface without competing with the title text. */
+ * 60×60 square, slightly rounded so the art sits cleanly on
+ * the floating card. */
 .cover {
-  width: 120px;
-  height: 120px;
-  border-radius: 8px;
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
 }
 
 /* ── Info column ──
- * Stacks: title row + byline row + countdown row. */
+ * Stacks title row + launch date row. */
 .info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   min-width: 0;
 }
 
 /* ── Title ──
- * Big bold white "Fire Arena" with the flaming-heart emoji
- * floated to the right of the title text. Letter-spacing
- * tight to match the Spotify-style banner feel. */
+ * Bold white "Fire Arena" with the flaming-heart emoji to its
+ * right. Sized to fit the new 80px-tall banner without
+ * crowding the launch date below. */
 .title {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  font-size: 48px;
+  gap: 8px;
+  font-size: 17px;
   font-weight: 800;
-  letter-spacing: -0.022em;
+  letter-spacing: -0.012em;
   color: #ffffff;
   line-height: 1;
 }
 .emoji {
-  font-size: 36px;
+  font-size: 15px;
   line-height: 1;
   flex-shrink: 0;
 }
 
-/* ── Byline (artist + launch date) ── */
+/* ── Byline (launch date) ──
+ * Single gray line below the title. The artist name + bullet
+ * separator + avatar were removed per product feedback
+ * ("Remova Ana Castela·"); only the launch-date sentence
+ * remains. */
 .byline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  font-size: 11px;
+  font-weight: 400;
   color: rgba(245, 245, 247, 0.62);
   letter-spacing: -0.005em;
-}
-.bylineAvatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-.bylineName {
-  /* White bold for the primary info (artist name). */
-  color: #ffffff;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-.bylineSep {
-  color: rgba(245, 245, 247, 0.35);
-}
-.bylineLaunch {
-  /* Gray regular for secondary text (launch date copy). */
-  color: rgba(245, 245, 247, 0.62);
-  font-weight: 400;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Countdown ──
- * Inset chip-style row with the four time units. Quiet inset
- * surface (rgba 0.04 on the banner's black) frames the
- * numbers without competing with the title text above. */
+ * Compact chip with the four time units packed against the
+ * right edge of the banner. Quiet inset surface so the
+ * numbers don't compete with the title. */
 .countdown {
   display: inline-flex;
   align-items: center;
-  gap: 18px;
-  padding: 8px 18px;
+  gap: 6px;
+  padding: 5px 10px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  width: fit-content;
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 .unit {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 36px;
+  gap: 1px;
+  min-width: 22px;
 }
 .unitValue {
-  font-size: 22px;
+  font-size: 13px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
@@ -126,44 +130,48 @@
   line-height: 1;
 }
 .unitLabel {
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 8px;
+  font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: capitalize;
+  line-height: 1;
 }
 .countdownSep {
-  color: rgba(245, 245, 247, 0.18);
-  font-size: 18px;
+  color: rgba(245, 245, 247, 0.16);
+  font-size: 11px;
   line-height: 1;
   user-select: none;
 }
 
 /* ── Tablet trim ──
- * Below 1024px the banner content gets tighter so the
- * title + countdown still fit alongside the cover. */
+ * Below 1024px the banner shrinks slightly so it still has
+ * comfortable margins next to the chat dock / right-rail. */
 @media (max-width: 1024px) {
   .banner {
-    height: 124px;
-    padding: 0 22px;
-    gap: 20px;
+    width: 400px;
+    gap: 10px;
+    padding: 0 12px;
   }
   .cover {
-    width: 104px;
-    height: 104px;
+    width: 56px;
+    height: 56px;
   }
   .title {
-    font-size: 38px;
-    gap: 10px;
+    font-size: 16px;
+    gap: 6px;
   }
   .emoji {
-    font-size: 30px;
+    font-size: 14px;
   }
   .countdown {
-    gap: 14px;
-    padding: 6px 14px;
+    gap: 5px;
+    padding: 4px 8px;
   }
   .unitValue {
-    font-size: 20px;
+    font-size: 12px;
+  }
+  .unit {
+    min-width: 20px;
   }
 }

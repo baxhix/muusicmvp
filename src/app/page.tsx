@@ -7,6 +7,19 @@ import FeaturesSection from '@/components/landing/FeatureRow';
 import Footer from '@/components/landing/Footer';
 import styles from './page.module.css';
 
+/** Minimal landing toggle — when `true` the page collapses to
+ *  just the logo (in the Header) + headline (in the Hero) +
+ *  one enter button. Per product feedback ("depois da Hero
+ *  section, oculte todo o conteúdo. Vamos deixar apenas o
+ *  Headline, logo e um botão de entrar"). Flip to `false` to
+ *  restore the full Features + LivePulse + Vision + Footer
+ *  flow. The same flag is mirrored inside HeroSection and
+ *  Header so the three files toggle together.
+ *
+ *  The unused locals below (LivePulseSection + LIVE_CARDS)
+ *  are kept intact for the restore path. */
+const MINIMAL_LANDING = true;
+
 const LIVE_CARDS = [
   { num: '5.434', text: 'pessoas online agora.' },
   { pre: 'Ana Castela', text: 'bombando no Brasil.' },
@@ -79,21 +92,28 @@ export default function LandingPage() {
     <div className={styles.page} data-page="landing">
       <Header />
       <HeroSection />
-      <FeaturesSection />
 
-      <LivePulseSection />
+      {/* Everything BELOW the hero is gated by MINIMAL_LANDING so
+          flipping the flag restores the full marketing flow. */}
+      {!MINIMAL_LANDING && (
+        <>
+          <FeaturesSection />
 
-      {/* Vision */}
-      <section className={styles.section}>
-        <div className={styles.vision}>
-          <p className={styles.visionQuote}>
-            Música é a única língua que cada um entende{' '}
-            <em>à sua maneira</em> — e ainda assim, nos une todos.
-          </p>
-        </div>
-      </section>
+          <LivePulseSection />
 
-      <Footer />
+          {/* Vision */}
+          <section className={styles.section}>
+            <div className={styles.vision}>
+              <p className={styles.visionQuote}>
+                Música é a única língua que cada um entende{' '}
+                <em>à sua maneira</em> — e ainda assim, nos une todos.
+              </p>
+            </div>
+          </section>
+
+          <Footer />
+        </>
+      )}
     </div>
   );
 }

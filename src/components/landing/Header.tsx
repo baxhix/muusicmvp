@@ -10,6 +10,12 @@ const LANGUAGES = [
   { code: 'ES', label: 'Español',   lang: 'es' },
 ];
 
+/** Mirror of the flag in `src/app/page.tsx`. When `true` the
+ *  header collapses to just the brand/logo — the nav links,
+ *  "Baixar o App" CTA, and the language picker are gated off.
+ *  Flip both flags together to restore the full header. */
+const MINIMAL_LANDING = true;
+
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -41,52 +47,59 @@ export default function Header() {
           <span>Fanverse</span>
         </Link>
 
-        <nav className={styles.nav}>
-          <div className={styles.navLinks}>
-            <a href="#features">Nosso Universo</a>
-            <a href="#artists">Para Artistas</a>
-            <a href="#blog">Blog</a>
-          </div>
-          <Link href="/app" className={styles.btnPrimary}>
-            Baixar o App
-          </Link>
-        </nav>
+        {/* Nav links + "Baixar o App" CTA are gated under
+            MINIMAL_LANDING so the header reads as just the
+            logo in the simplified landing. */}
+        {!MINIMAL_LANDING && (
+          <nav className={styles.nav}>
+            <div className={styles.navLinks}>
+              <a href="#features">Nosso Universo</a>
+              <a href="#artists">Para Artistas</a>
+              <a href="#blog">Blog</a>
+            </div>
+            <Link href="/app" className={styles.btnPrimary}>
+              Baixar o App
+            </Link>
+          </nav>
+        )}
       </div>
 
-      {/* Language Picker */}
-      <div
-        ref={pickerRef}
-        className={`${styles.langPicker} ${langOpen ? styles.langPickerOpen : ''}`}
-      >
-        <button
-          className={styles.langTrigger}
-          onClick={() => setLangOpen((v) => !v)}
-          aria-haspopup="listbox"
-          aria-expanded={langOpen}
+      {/* Language Picker — also gated under MINIMAL_LANDING. */}
+      {!MINIMAL_LANDING && (
+        <div
+          ref={pickerRef}
+          className={`${styles.langPicker} ${langOpen ? styles.langPickerOpen : ''}`}
         >
-          <span>{activeLang}</span>
-          <svg className={styles.langChevron} viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 4.5L6 8L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        <ul className={styles.langDropdown} role="listbox">
-          {LANGUAGES.map((l) => (
-            <li
-              key={l.lang}
-              role="option"
-              aria-selected={activeLang === l.code}
-              className={`${styles.langOption} ${activeLang === l.code ? styles.langOptionActive : ''}`}
-              onClick={() => { setActiveLang(l.code); setLangOpen(false); }}
-            >
-              <span className={styles.langOptLabel}>{l.label}</span>
-              <span className={styles.langOptCode}>{l.code}</span>
-              <svg className={styles.langCheck} viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </li>
-          ))}
-        </ul>
-      </div>
+          <button
+            className={styles.langTrigger}
+            onClick={() => setLangOpen((v) => !v)}
+            aria-haspopup="listbox"
+            aria-expanded={langOpen}
+          >
+            <span>{activeLang}</span>
+            <svg className={styles.langChevron} viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 4.5L6 8L10 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <ul className={styles.langDropdown} role="listbox">
+            {LANGUAGES.map((l) => (
+              <li
+                key={l.lang}
+                role="option"
+                aria-selected={activeLang === l.code}
+                className={`${styles.langOption} ${activeLang === l.code ? styles.langOptionActive : ''}`}
+                onClick={() => { setActiveLang(l.code); setLangOpen(false); }}
+              >
+                <span className={styles.langOptLabel}>{l.label}</span>
+                <span className={styles.langOptCode}>{l.code}</span>
+                <svg className={styles.langCheck} viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </header>
   );
 }

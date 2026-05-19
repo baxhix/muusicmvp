@@ -83,19 +83,14 @@ export default function FireArenaBanner() {
           </span>
         </h2>
 
+        {/* Byline trimmed to ONLY the launch date per product
+            feedback ("Remova Ana Castela·"). The artist avatar +
+            name + bullet separator that used to lead this line
+            are gone — the cover art on the left already carries
+            the visual brand cue, so a second identity strip was
+            redundant. */}
         <div className={styles.byline}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/ana-castela.png"
-            alt=""
-            className={styles.bylineAvatar}
-            aria-hidden="true"
-          />
-          <span className={styles.bylineName}>Ana Castela</span>
-          <span className={styles.bylineSep} aria-hidden="true">·</span>
-          <span className={styles.bylineLaunch}>
-            Lançamento em 28 de maio de 2026
-          </span>
+          Lançamento em 28 de maio de 2026
         </div>
 
         <div
@@ -104,13 +99,17 @@ export default function FireArenaBanner() {
           aria-live="off"
           aria-label={`Faltam ${countdown.days} dias, ${countdown.hours} horas, ${countdown.minutes} minutos`}
         >
+          {/* Labels abbreviated (Dias / Hrs / Min / Seg) so the
+              four units fit comfortably inside the compact 80px
+              banner. Full words still go to the aria-label
+              above for assistive tech. */}
           <CountdownUnit value={countdown.days} label="Dias" />
           <span className={styles.countdownSep} aria-hidden="true">|</span>
-          <CountdownUnit value={pad(countdown.hours)} label="Horas" />
+          <CountdownUnit value={pad(countdown.hours)} label="Hrs" />
           <span className={styles.countdownSep} aria-hidden="true">|</span>
-          <CountdownUnit value={pad(countdown.minutes)} label="Minutos" />
+          <CountdownUnit value={pad(countdown.minutes)} label="Min" />
           <span className={styles.countdownSep} aria-hidden="true">|</span>
-          <CountdownUnit value={pad(countdown.seconds)} label="Segundos" />
+          <CountdownUnit value={pad(countdown.seconds)} label="Seg" />
         </div>
       </div>
     </div>

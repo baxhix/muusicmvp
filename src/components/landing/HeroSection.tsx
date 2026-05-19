@@ -7,6 +7,13 @@ import styles from './HeroSection.module.css';
 
 const HeroGlobe = dynamic(() => import('./HeroGlobe'), { ssr: false });
 
+/** Mirror of the flag in `src/app/page.tsx`. When `true` the
+ *  hero shows only the rotating headline + a single enter CTA;
+ *  the subtitle, globe stage, mini player, and the secondary
+ *  "Já sou da tribo" CTA are gated off. Flip both flags
+ *  together to restore the full hero. */
+const MINIMAL_LANDING = true;
+
 const PHRASES = [
   'O universo dos superfãs.',
   'Descubra quem ouve o que você ouve.',
@@ -92,9 +99,16 @@ export default function HeroSection() {
         </h1>
       </div>
 
-      <p className={styles.sub}>Descubra o que o mundo está ouvindo, em tempo real.</p>
+      {/* Subtitle hidden under MINIMAL_LANDING — only the
+          rotating headline + the single enter CTA below remain
+          visible in the simplified landing. */}
+      {!MINIMAL_LANDING && (
+        <p className={styles.sub}>Descubra o que o mundo está ouvindo, em tempo real.</p>
+      )}
 
-      {/* Hero CTAs */}
+      {/* Hero CTAs — in MINIMAL_LANDING mode only the primary
+          "Entrar no Fanverse" button renders. The secondary
+          "Já sou da tribo" ghost button is gated off. */}
       <div className={styles.heroCta}>
         <Link href="/auth?mode=signup" className={styles.heroCtaPrimary}>
           Entrar no Fanverse
@@ -102,83 +116,91 @@ export default function HeroSection() {
             <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </Link>
-        <Link href="/auth?mode=login" className={styles.heroCtaGhost}>
-          Já sou da tribo
-        </Link>
+        {!MINIMAL_LANDING && (
+          <Link href="/auth?mode=login" className={styles.heroCtaGhost}>
+            Já sou da tribo
+          </Link>
+        )}
       </div>
 
-      {/* Globe stage */}
-      <div className={styles.globeStage} aria-label="Mapa global de fãs em tempo real">
-        <div id="hero-globe-container" className={styles.globeContainer}>
-          <HeroGlobe />
-        </div>
-
-        {/* Globe frame tags */}
-        <div className={styles.globeFrame} aria-hidden="true">
-          <span className={`${styles.globeTag} ${styles.globeTagTL}`}>Live · Global</span>
-          <span className={`${styles.globeTag} ${styles.globeTagBR}`}>2.4M fans online</span>
-        </div>
-
-        {/* Connected users */}
-        {GLOBE_USERS.map((u, i) => (
-          <div
-            key={i}
-            className={`${styles.globeUser} ${u.alignRight ? styles.globeUserRight : ''}`}
-            style={u.style as React.CSSProperties}
-          >
-            <div className={styles.globeUserAvatar} style={{ background: u.bg }}>
-              <span className={styles.globeUserInitials}>{u.initials}</span>
+      {/* Globe stage + connected users + mini player — the
+          immersive demo cluster below the headline. All gated
+          off in MINIMAL_LANDING per product feedback. */}
+      {!MINIMAL_LANDING && (
+        <>
+          <div className={styles.globeStage} aria-label="Mapa global de fãs em tempo real">
+            <div id="hero-globe-container" className={styles.globeContainer}>
+              <HeroGlobe />
             </div>
-            <div className={styles.globeUserBadge}>
-              <div className={styles.globeUserInfoRow}>
-                <span className={styles.globeUserName}>{u.name}</span>
-                <span className={styles.globeUserCity}>· {u.city}</span>
-              </div>
-              <div className={styles.globeUserSongRow}>
-                <span className={styles.globeUserAudio} aria-hidden="true">
-                  <span /><span /><span />
-                </span>
-                <span className={styles.globeUserSong}>{u.song}</span>
-                <span className={styles.globeUserDotSep}>·</span>
-                <span className={styles.globeUserArtist}>{u.artist}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
-      {/* Mini player */}
-      <div className={styles.miniPlayer} role="region" aria-label="Mini Player">
-        <div className={styles.mpTop}>
-          <div className={styles.mpArt} aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className={styles.mpCover}
-              src="https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa"
-              alt="Olha Onde Eu Tô - Ana Castela"
-            />
-          </div>
-          <div className={styles.mpMeta}>
-            <span className={styles.mpTitle}>Olha Onde Eu Tô</span>
-            <span className={styles.mpArtist}>
-              <span className={styles.mpArtistDot} aria-hidden="true" />
-              Ana Castela
-            </span>
-          </div>
-        </div>
-        <div className={styles.mpProgress}>
-          <span className={styles.mpTime}>0:42</span>
-          <div className={styles.mpBar} role="slider" aria-label="Progresso" aria-valuenow={20} aria-valuemin={0} aria-valuemax={100}>
-            <div className={styles.mpBarFill} style={{ width: '20%' }} />
-          </div>
-          <span className={`${styles.mpTime} ${styles.mpTimeEnd}`}>3:24</span>
-          <div className={styles.mpWave} aria-hidden="true">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className={styles.mpWaveBar} />
+            {/* Globe frame tags */}
+            <div className={styles.globeFrame} aria-hidden="true">
+              <span className={`${styles.globeTag} ${styles.globeTagTL}`}>Live · Global</span>
+              <span className={`${styles.globeTag} ${styles.globeTagBR}`}>2.4M fans online</span>
+            </div>
+
+            {/* Connected users */}
+            {GLOBE_USERS.map((u, i) => (
+              <div
+                key={i}
+                className={`${styles.globeUser} ${u.alignRight ? styles.globeUserRight : ''}`}
+                style={u.style as React.CSSProperties}
+              >
+                <div className={styles.globeUserAvatar} style={{ background: u.bg }}>
+                  <span className={styles.globeUserInitials}>{u.initials}</span>
+                </div>
+                <div className={styles.globeUserBadge}>
+                  <div className={styles.globeUserInfoRow}>
+                    <span className={styles.globeUserName}>{u.name}</span>
+                    <span className={styles.globeUserCity}>· {u.city}</span>
+                  </div>
+                  <div className={styles.globeUserSongRow}>
+                    <span className={styles.globeUserAudio} aria-hidden="true">
+                      <span /><span /><span />
+                    </span>
+                    <span className={styles.globeUserSong}>{u.song}</span>
+                    <span className={styles.globeUserDotSep}>·</span>
+                    <span className={styles.globeUserArtist}>{u.artist}</span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      </div>
+
+          {/* Mini player */}
+          <div className={styles.miniPlayer} role="region" aria-label="Mini Player">
+            <div className={styles.mpTop}>
+              <div className={styles.mpArt} aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className={styles.mpCover}
+                  src="https://i.scdn.co/image/ab67616d0000b273148cc2bf987ec2f4964d49fa"
+                  alt="Olha Onde Eu Tô - Ana Castela"
+                />
+              </div>
+              <div className={styles.mpMeta}>
+                <span className={styles.mpTitle}>Olha Onde Eu Tô</span>
+                <span className={styles.mpArtist}>
+                  <span className={styles.mpArtistDot} aria-hidden="true" />
+                  Ana Castela
+                </span>
+              </div>
+            </div>
+            <div className={styles.mpProgress}>
+              <span className={styles.mpTime}>0:42</span>
+              <div className={styles.mpBar} role="slider" aria-label="Progresso" aria-valuenow={20} aria-valuemin={0} aria-valuemax={100}>
+                <div className={styles.mpBarFill} style={{ width: '20%' }} />
+              </div>
+              <span className={`${styles.mpTime} ${styles.mpTimeEnd}`}>3:24</span>
+              <div className={styles.mpWave} aria-hidden="true">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className={styles.mpWaveBar} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
     </section>
   );
