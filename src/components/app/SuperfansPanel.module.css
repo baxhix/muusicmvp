@@ -378,48 +378,61 @@
 
 /* ── Benefits tab — rows ──
  *
- * One row per perk in the BENEFITS catalog. Unlocked rows pop
- * with a green checkmark icon + white title; locked rows fade
- * to gray with a lock icon and a "faltam X pontos" subtitle.
- * Same visual envelope as `.fanRow` so the two tab bodies feel
- * like the same kind of list. */
+ * One row per perk in the BENEFITS catalog. Per product feedback
+ * the green tint + outline that used to mark unlocked perks were
+ * dropped in favor of a subtle lilac wash, matching the brand
+ * accent the navbar glow + ArtistBox already use. No borders
+ * anywhere — the row separation comes from the surface tint +
+ * the inherent vertical gap from the .list container.
+ *
+ * Each benefit row carries a CONTEXTUAL icon (see BenefitIcon in
+ * SuperfansPanel.tsx) — chat balloon, users group, percent tag,
+ * paper-airplane, crown, ticket. The icon SVG inherits the row
+ * color via `currentColor` so the locked-vs-unlocked tint cascade
+ * just works. */
 .benefitRow {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: none;
   margin: 0 2px;
 }
 .benefitUnlocked {
-  background: rgba(61, 219, 116, 0.08);
-  border-color: rgba(61, 219, 116, 0.18);
+  /* Subtle lilac wash + matching colored icon, no outline. */
+  background: rgba(168, 85, 247, 0.10);
 }
 .benefitLocked {
-  /* Locked is the default chrome; explicit class kept for
-   * symmetry with .benefitUnlocked and future overrides. */
+  /* Lock-state rows are not tinted — let the surface stay quiet
+   * so the unlocked rows dominate the visual hierarchy. The
+   * dimmed title + faded icon below carry the "not yet" cue. */
+  background: transparent;
 }
 .benefitIcon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.85);
 }
 .benefitIcon svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 .benefitUnlocked .benefitIcon {
-  background: rgba(61, 219, 116, 0.20);
-  color: #3ddb74;
+  /* Lilac brand color picks up the row's accent — same family
+   * as `.solveBtn` and the BottomNav glow. */
+  background: rgba(168, 85, 247, 0.22);
+  color: #c4b5fd;
 }
 .benefitLocked .benefitIcon {
-  color: rgba(245, 245, 247, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.42);
 }
 .benefitInfo {
   flex: 1;
@@ -435,9 +448,7 @@
   color: #ffffff;
 }
 .benefitLocked .benefitTitle {
-  /* Slight desaturation for locked perks so the eye reads
-   * "available later" rather than "current reward". */
-  color: rgba(245, 245, 247, 0.62);
+  color: rgba(245, 245, 247, 0.55);
   font-weight: 600;
 }
 .benefitDesc {
@@ -449,6 +460,18 @@
 }
 .benefitLocked .benefitDesc {
   color: rgba(245, 245, 247, 0.42);
+}
+
+/* Section header between the unlocked rows and the "próximos
+ * níveis" preview — small uppercase eyebrow that separates the
+ * two groups visually without a heavy divider line. */
+.benefitsSectionTitle {
+  margin: 14px 6px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.45);
 }
 
 .fanRow {

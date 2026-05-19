@@ -75,19 +75,30 @@ const formatPoints = (n: number) => n.toLocaleString('pt-BR');
 /* ── Benefits catalog (mock) ──
  *
  * Hard-coded benefits the user "owns" as they cross point
- * thresholds. Surfaced under the new "Meus benefícios" tab; the
- * ones the current user has unlocked render as enabled rows
- * with a green checkmark, the rest stay locked + grayed with a
- * lock icon and a "X pontos pra desbloquear" sub-line.
+ * thresholds. Surfaced under the "Meus benefícios" tab; each
+ * benefit ships with its own contextual icon (chat balloon for
+ * Superchat, users-group for community access, percent-tag for
+ * the store discount, paper-airplane for direct messages,
+ * crown for the gold skin, ticket for VIP show invites) so the
+ * row reads at a glance even before you scan the title text.
  *
  * Replace this hard-coded list with the live benefits API
  * response when the backend grows one. */
+type BenefitIconKind =
+  | 'chat'
+  | 'community'
+  | 'discount'
+  | 'send'
+  | 'crown'
+  | 'ticket';
+
 interface Benefit {
   id: string;
   title: string;
   description: string;
   /** Minimum Fanpoints the user needs to unlock this benefit. */
   threshold: number;
+  icon: BenefitIconKind;
 }
 const BENEFITS: Benefit[] = [
   {
@@ -95,38 +106,102 @@ const BENEFITS: Benefit[] = [
     title: 'Superchat global',
     description: 'Converse no Superchat com toda a comunidade Fanverse',
     threshold: 0,
+    icon: 'chat',
   },
   {
     id: 'b2',
     title: 'Comunidades exclusivas',
     description: 'Acesso aos grupos Boiadeiros e Fãs do Forró',
     threshold: 500,
+    icon: 'community',
   },
   {
     id: 'b3',
     title: '15% OFF na Loja da Boiadeira',
     description: 'Cupom aplicado automaticamente no checkout',
     threshold: 1000,
+    icon: 'discount',
   },
   {
     id: 'b4',
     title: 'Mensagem direta para Ana',
     description: 'Envie 1 mensagem por mês com prioridade na inbox',
     threshold: 2500,
+    icon: 'send',
   },
   {
     id: 'b5',
     title: 'Skin dourada de avatar',
     description: 'Anel dourado no seu avatar em todas as superfícies',
     threshold: 5000,
+    icon: 'crown',
   },
   {
     id: 'b6',
     title: 'Convites VIP para shows',
     description: 'Pré-venda exclusiva de ingressos antes do público geral',
     threshold: 10000,
+    icon: 'ticket',
   },
 ];
+
+/** Renders the contextual SVG for each benefit. Centralized here
+ *  so the JSX inside the benefits list stays focused on layout
+ *  rather than icon path data. */
+function BenefitIcon({ kind }: { kind: BenefitIconKind }) {
+  const common = {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor' as const,
+    strokeWidth: 1.7,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+  };
+  switch (kind) {
+    case 'chat':
+      return (
+        <svg {...common}>
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" />
+        </svg>
+      );
+    case 'community':
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3.5" />
+          <path d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5" />
+          <circle cx="17" cy="9.5" r="2.5" />
+          <path d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4" />
+        </svg>
+      );
+    case 'discount':
+      return (
+        <svg {...common}>
+          <path d="M20.6 13.3l-7.3 7.3a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.7z" />
+          <circle cx="7.5" cy="7.5" r="1.4" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case 'send':
+      return (
+        <svg {...common}>
+          <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
+        </svg>
+      );
+    case 'crown':
+      return (
+        <svg {...common}>
+          <path d="M2.5 19h19l-1.5-9-5 3.5L12 6l-3 7.5L4 10l-1.5 9z" />
+        </svg>
+      );
+    case 'ticket':
+      return (
+        <svg {...common} strokeWidth={1.8}>
+          <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z" />
+          <path d="M9 5v14" />
+        </svg>
+      );
+  }
+}
 
 type Tab = 'ranking' | 'benefits';
 
@@ -331,65 +406,64 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
       {/* Body — switches between Ranking and Benefits based on
           the active tab. Both branches share the same `.list`
           container so the surrounding chrome (padding,
-          scrolling) stays consistent. */}
+          scrolling) stays consistent.
+          Benefits view splits the catalog by threshold:
+            - Unlocked perks at the top (rendered with a subtle
+              lilac tint via the .benefitUnlocked modifier).
+            - "Próximos níveis" section below listing the perks
+              the user hasn't earned yet, with the points-to-
+              unlock subtitle in place of the description. */}
       {tab === 'benefits' ? (
-        <div className={styles.list}>
-          {BENEFITS.map((b) => {
-            const unlocked = (me?.fanpoints ?? 0) >= b.threshold;
-            const missing = Math.max(
-              0,
-              b.threshold - (me?.fanpoints ?? 0),
-            );
-            return (
-              <div
-                key={b.id}
-                className={`${styles.benefitRow} ${
-                  unlocked ? styles.benefitUnlocked : styles.benefitLocked
-                }`}
-              >
-                <span
-                  className={styles.benefitIcon}
-                  aria-hidden="true"
+        (() => {
+          const mePts = me?.fanpoints ?? 0;
+          const unlocked = BENEFITS.filter((b) => mePts >= b.threshold);
+          const locked = BENEFITS.filter((b) => mePts < b.threshold);
+          return (
+            <div className={styles.list}>
+              {unlocked.map((b) => (
+                <div
+                  key={b.id}
+                  className={`${styles.benefitRow} ${styles.benefitUnlocked}`}
                 >
-                  {unlocked ? (
-                    /* Checkmark — green, signals "you have this". */
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M5 12l5 5 9-11" />
-                    </svg>
-                  ) : (
-                    /* Lock — gray, signals "needs more points". */
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect x="4" y="11" width="16" height="10" rx="2" />
-                      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                    </svg>
-                  )}
-                </span>
-                <div className={styles.benefitInfo}>
-                  <span className={styles.benefitTitle}>{b.title}</span>
-                  <span className={styles.benefitDesc}>
-                    {unlocked
-                      ? b.description
-                      : `Faltam ${formatPoints(missing)} pontos para desbloquear`}
+                  <span className={styles.benefitIcon} aria-hidden="true">
+                    <BenefitIcon kind={b.icon} />
                   </span>
+                  <div className={styles.benefitInfo}>
+                    <span className={styles.benefitTitle}>{b.title}</span>
+                    <span className={styles.benefitDesc}>{b.description}</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              ))}
+
+              {locked.length > 0 && (
+                <>
+                  <h3 className={styles.benefitsSectionTitle}>
+                    Próximos níveis
+                  </h3>
+                  {locked.map((b) => {
+                    const missing = Math.max(0, b.threshold - mePts);
+                    return (
+                      <div
+                        key={b.id}
+                        className={`${styles.benefitRow} ${styles.benefitLocked}`}
+                      >
+                        <span className={styles.benefitIcon} aria-hidden="true">
+                          <BenefitIcon kind={b.icon} />
+                        </span>
+                        <div className={styles.benefitInfo}>
+                          <span className={styles.benefitTitle}>{b.title}</span>
+                          <span className={styles.benefitDesc}>
+                            Faltam {formatPoints(missing)} pontos para desbloquear
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          );
+        })()
       ) : (
       <div className={styles.list}>
         {error ? (
