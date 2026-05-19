@@ -141,14 +141,15 @@ function ToastBody({ toast }: { toast: MockToast }) {
       // 140ms (driven by `--avatar-i` in CSS) so the stack lands
       // one-by-one — the same "users surgindo um por cima do
       // outro" animation the previous ListeningTogether had.
-      // 4 avatars per product feedback (was 5); the descriptive
-      // subtitle was removed too, leaving just the headline and
-      // the animated audio bars beside it.
+      // 3 avatars per product feedback (was 4 → reduced by 1 so
+      // the audio-bar animation comfortably fits inline on the
+      // same row as the text). Avatars are sized smaller than
+      // the standardized 36px avatar slot (24px each) to make
+      // room for the row to stay single-line.
       const cascadeAvatars = [
         MOCK_USERS[0],
         MOCK_USERS[2],
         MOCK_USERS[4],
-        MOCK_USERS[1],
       ];
       return (
         <>
@@ -171,11 +172,6 @@ function ToastBody({ toast }: { toast: MockToast }) {
               </strong>{' '}
               ouvindo com você
             </span>
-            {/* Audio-bars only — the previous "A mesma música
-              * está tocando agora pelo mundo" subtitle was
-              * dropped per product feedback. The animated
-              * equalizer carries the "music is playing" cue
-              * on its own. */}
             <span className={styles.audioBars} aria-hidden="true">
               <span />
               <span />
@@ -228,12 +224,7 @@ function ToastBody({ toast }: { toast: MockToast }) {
     case 'top_track':
       return (
         <>
-          {/* Album cover stands in for the avatar slot per
-            * product feedback — the Ana Castela / "Let's Go
-            * Rodeo" cover from /single.png lives in the same
-            * outer dimensions as the user-avatar slot so row
-            * geometry stays consistent across notification
-            * types. */}
+          {/* Album cover in the standardized 36px avatar slot. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/single.png"
@@ -241,19 +232,22 @@ function ToastBody({ toast }: { toast: MockToast }) {
             className={styles.avatar}
             aria-hidden="true"
           />
+          {/* Single-line layout to match every other notification
+            * type. The artist-name subtitle was dropped — it was
+            * always "Ana Castela" in this mock pool anyway, and
+            * keeping the line meant the row was taller than the
+            * standardized height. Audio bars sit inline next to
+            * the text. */}
           <div className={styles.info}>
             <span className={styles.text}>
               <strong className={styles.strong}>{toast.track.title}</strong>{' '}
               é a sua mais ouvida
             </span>
-            <span className={styles.track}>
-              <span className={styles.audioBars} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-              <span className={styles.trackLabel}>{toast.track.artist}</span>
+            <span className={styles.audioBars} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
             </span>
           </div>
         </>
