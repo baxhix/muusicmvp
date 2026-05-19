@@ -32,7 +32,28 @@
   align-items: center;
   gap: 10px;
   pointer-events: auto;
-  z-index: 22;
+  /* Bumped 22 → 71 per product feedback ("deixe o bloco do
+   * player por cima do gradiente da parte de baixo. Isso está
+   * impedindo o click").
+   *
+   * Why: NowPlaying and BottomNav both render inside the shell's
+   * z:55 stacking context. BottomNav lives at z:70 with a
+   * FULL-WIDTH bottom gradient (vignette behind the centered
+   * pill) and the pill itself (`.inner`, z:1 within `.nav`,
+   * `pointer-events: auto`) is anchored bottom-center. When the
+   * player widens into its horizontal / expanded layouts it
+   * extends rightward from left:42 toward the viewport center —
+   * at desktop widths under ~1284px that expansion reaches into
+   * the BottomNav pill's horizontal range, and the pill (sitting
+   * above the player) intercepted clicks meant for the player's
+   * right side.
+   *
+   * Bumping to z:71 puts the player above BottomNav in this
+   * stacking context. The player is anchored bottom-left and the
+   * pill is anchored bottom-center, so the player only "wins"
+   * the overlap zone where it actually paints — everywhere else
+   * the BottomNav pill remains tappable. */
+  z-index: 71;
   cursor: pointer;
   flex-wrap: nowrap;
   overflow: hidden;

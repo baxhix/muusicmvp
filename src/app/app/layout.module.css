@@ -289,7 +289,14 @@
   position: fixed;
   bottom: 24px;
   left: 42px;
-  z-index: 22;
+  /* Bumped 22 → 71 alongside the NowPlaying player itself so
+   * the restore button doesn't fall under the BottomNav pill
+   * either — same overlap-with-centered-pill issue described
+   * in NowPlaying.module.css. The two surfaces toggle each
+   * other (player visible ↔ restore pill visible) and share
+   * the same bottom-left anchor, so they must share the same
+   * z budget. */
+  z-index: 71;
   width: 38px;
   height: 38px;
   border-radius: 50%;
