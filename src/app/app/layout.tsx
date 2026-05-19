@@ -311,6 +311,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             chat.open(conversationId);
             router.push('/app/chat');
           }}
+          onOpenAll={() => router.push('/app/chat')}
         />
       )}
 

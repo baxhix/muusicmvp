@@ -117,6 +117,42 @@
 }
 .item:hover { transform: scale(1.28) translateX(-4px); }
 
+/* "View all conversations" chip — sits BELOW the 3 most-recent
+ * avatars on MOBILE only (hidden on desktop where the topBar's
+ * Chat icon already covers this entry point). Same circular
+ * footprint as the avatars so the column reads as one
+ * continuous strip. Filled translucent surface so it visually
+ * differentiates from the photo avatars above without breaking
+ * the rhythm. */
+.viewAllBtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(245, 245, 247, 0.92);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 200ms ease-out, background 200ms ease;
+}
+.viewAllBtn svg {
+  width: 20px;
+  height: 20px;
+}
+.viewAllBtn:hover {
+  transform: scale(1.18) translateX(-3px);
+  background: rgba(255, 255, 255, 0.10);
+}
+.viewAllBtn:active {
+  transform: scale(1) translateX(0);
+}
+
 .itemActive { transform: scale(1.18) translateX(-4px); }
 .itemActive::after {
   content: '';
@@ -335,6 +371,17 @@
   }
   .item:hover {
     transform: scale(1.18) translateX(-2px);
+  }
+  /* Reveal the "view all" button on mobile, sized to match the
+   * mobile avatar footprint (53px) so the column stays uniform. */
+  .viewAllBtn {
+    display: inline-flex;
+    width: 53px;
+    height: 53px;
+  }
+  .viewAllBtn svg {
+    width: 24px;
+    height: 24px;
   }
   .itemActive {
     transform: scale(1.10) translateX(-2px);

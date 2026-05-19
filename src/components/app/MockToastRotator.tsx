@@ -58,27 +58,39 @@ type MockToast =
   | { kind: 'message_sent'; user: MockUser }
   | { kind: 'waved'; user: MockUser }
   | { kind: 'top_track'; track: { title: string; artist: string } }
-  | { kind: 'top_20'; rank: number };
+  | { kind: 'top_20'; rank: number }
+  /** Direct message from Ana Castela — brand-style notification
+   *  surfaced with her own avatar instead of a random pravatar. */
+  | { kind: 'ana_message' }
+  /** New publication from the "Central de Fãs" account — brand-
+   *  level feed announcement, also uses Ana's central portrait. */
+  | { kind: 'new_publication' };
 
 /**
  * Pre-baked rotation order. Each tick advances by one; the array
  * wraps so the same sequence repeats. The `+455` listening pill
  * is interleaved between the other types per product feedback
- * ("intercale ... com outras notificações").
+ * ("intercale ... com outras notificações"). New brand-level
+ * types (ana_message, new_publication) are sprinkled in so they
+ * surface alongside the user-level ones at a comfortable cadence.
  */
 const ROTATION: MockToast[] = [
   { kind: 'listening_together', count: 455 },
+  { kind: 'ana_message' },
   { kind: 'message_sent', user: MOCK_USERS[0] },
   { kind: 'waved', user: MOCK_USERS[2] },
   { kind: 'listening_together', count: 482 },
+  { kind: 'new_publication' },
   { kind: 'top_track', track: MOCK_TRACKS[0] },
   { kind: 'message_sent', user: MOCK_USERS[1] },
   { kind: 'top_20', rank: 18 },
   { kind: 'listening_together', count: 471 },
+  { kind: 'ana_message' },
   { kind: 'waved', user: MOCK_USERS[4] },
   { kind: 'top_track', track: MOCK_TRACKS[1] },
   { kind: 'message_sent', user: MOCK_USERS[3] },
   { kind: 'listening_together', count: 493 },
+  { kind: 'new_publication' },
   { kind: 'top_20', rank: 12 },
   { kind: 'waved', user: MOCK_USERS[5] },
   { kind: 'top_track', track: MOCK_TRACKS[2] },
@@ -306,6 +318,50 @@ function ToastBody({ toast }: { toast: MockToast }) {
               <span />
               <span />
               <span />
+            </span>
+          </div>
+        </>
+      );
+
+    case 'ana_message':
+      return (
+        <>
+          {/* Ana Castela direct message — uses her brand portrait
+            * in the avatar slot so the row reads as "from the
+            * artist herself" instead of a generic user message. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/central-anacastela.png"
+            alt=""
+            className={styles.avatar}
+            aria-hidden="true"
+          />
+          <div className={`${styles.info} ${styles.infoSingleLine}`}>
+            <span className={styles.text}>
+              <strong className={styles.strong}>Ana</strong> te mandou uma
+              mensagem
+            </span>
+          </div>
+        </>
+      );
+
+    case 'new_publication':
+      return (
+        <>
+          {/* New publication from the Central de Fãs account —
+            * same Ana portrait the ana_message case uses since the
+            * Central is the brand-level publisher for her hub. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/central-anacastela.png"
+            alt=""
+            className={styles.avatar}
+            aria-hidden="true"
+          />
+          <div className={`${styles.info} ${styles.infoSingleLine}`}>
+            <span className={styles.text}>
+              <strong className={styles.strong}>Central de Fãs</strong> fez
+              uma nova publicação
             </span>
           </div>
         </>

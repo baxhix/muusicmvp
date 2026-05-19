@@ -14,6 +14,13 @@ interface Props {
    */
   onlineUserIds?: ReadonlySet<string>;
   onOpen: (conversationId: string) => void;
+  /**
+   * Mobile-only: opens the full conversations list. Rendered as a
+   * "view all" chat icon BELOW the 3 most-recent avatars so the
+   * user has a quick path to every other thread from the home
+   * surface without going through the route shortcuts.
+   */
+  onOpenAll?: () => void;
 }
 
 /** The dock now renders ONLY the 3 most recent conversations per
@@ -36,6 +43,7 @@ export default function LiveChatStack({
   activeId,
   onlineUserIds,
   onOpen,
+  onOpenAll,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -149,6 +157,33 @@ export default function LiveChatStack({
             </button>
           );
         })}
+
+        {/* "View all conversations" affordance — sits BELOW the 3
+            most-recent avatars per product feedback. Visible only
+            on mobile (CSS @media) since on desktop the route
+            shortcut + topBar Chat icon already cover this entry
+            point. Same circular footprint as the avatars so the
+            column reads as one continuous strip. */}
+        {onOpenAll && (
+          <button
+            type="button"
+            className={styles.viewAllBtn}
+            onClick={onOpenAll}
+            aria-label="Ver todas as conversas"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -43,7 +43,11 @@ interface HeartParticle {
   emoji: string;
 }
 
-const HEART_EMOJIS = ['❤️', '💖', '💗', '💞', '💕', '👋'];
+/* Only solid red hearts per product feedback — the previous
+ * pool mixed pink hearts (💖💗💞💕) and the waving-hand emoji
+ * (👋). Reduced to two red-family variants so the cascade
+ * still feels alive without leaving the red palette. */
+const HEART_EMOJIS = ['❤️', '❣️'];
 const PARTICLES_PER_BATCH = 14;
 const CLEANUP_BUFFER_MS = 200;
 
