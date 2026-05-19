@@ -51,9 +51,18 @@ export default function MobileHomeChrome() {
           alt="Ana Castela"
           className={styles.logo}
         />
-        <span className={styles.brandLabel} aria-label="Fanverse">
-          FANVERSE
-        </span>
+        {/* Fanverse SVG brand mark — upgraded from the previous
+            small "FANVERSE" text wordmark per product feedback
+            ("Insira o logotipo Fanverse, que tem quando o usuário
+            insere o email, na home"). Same asset that the auth
+            email-entry surface uses, sized down here so it stays
+            secondary to the Ana Castela logo above. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/fanverse-logo.svg"
+          alt="Fanverse"
+          className={styles.brandLogo}
+        />
       </div>
       <div
         className={styles.infoBar}
