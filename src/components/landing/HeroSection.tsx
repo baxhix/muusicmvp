@@ -91,6 +91,19 @@ export default function HeroSection() {
 
   return (
     <section className={styles.hero}>
+      {/* Cosmos layer — extra star points + subtle pulses
+          stacked on top of the existing `.hero::before` (nebula
+          drift) and `.hero::after` (resting star field). Three
+          separate animated layers (the div itself + ::before +
+          ::after) give the universe a denser feel than the
+          single resting star layer could on its own, per
+          product feedback "Aplique um efeito de gradient se
+          movendo e simule um universo, com estrelas ou pequenos
+          pontos piscando de forma sutil e gradativa. Para
+          simular um Universo mesmo". `aria-hidden` because the
+          element is purely decorative. */}
+      <div className={styles.cosmos} aria-hidden="true" />
+
       {/* Headline block — Fanverse SVG brand mark sits above the
           rotating headline per product feedback "O logotipo
           Fanverse não deve ficar na home do mobile, apenas na

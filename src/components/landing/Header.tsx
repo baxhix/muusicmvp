@@ -42,14 +42,15 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${scrolled ? styles['header--scrolled'] : ''}`}>
       <div className={styles.inner}>
-        {/* Header keeps the original CSS circle-and-dot mark per
-            product feedback ("apenas na Hero Section da landing
-            page") — the actual Fanverse SVG brand mark now
-            surfaces only in `HeroSection.tsx` below this header,
-            not up here. */}
-        <Link href="/" className={styles.brand}>
+        {/* Brand placeholder stays as the CSS circle-and-dot mark;
+            the "Fanverse" wordmark next to it was removed per
+            product feedback ("Remova a palavra Fanverse ao lado
+            do logo na landing page muusic.live") so the header
+            reads as pure mark. The wordmark identity still
+            surfaces inside the Hero section via the real SVG
+            logo below. */}
+        <Link href="/" className={styles.brand} aria-label="Fanverse">
           <span className={styles.brandMark} aria-hidden="true" />
-          <span>Fanverse</span>
         </Link>
 
         {/* Nav links + "Baixar o App" CTA are gated under
