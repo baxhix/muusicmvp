@@ -121,16 +121,11 @@ export default function MockToastRotator() {
 
   const current = ROTATION[idx];
   const exiting = phase === 'exit';
-  // Pill-shaped (full 999px radius) for the two notification
-  // types the product explicitly called out — waved and
-  // top_track. Other types keep the softer 22px radius the
-  // default `.toast` rule applies.
-  const pillShape = current.kind === 'waved' || current.kind === 'top_track';
 
   return (
     <div className={styles.root} aria-live="polite">
       <div
-        className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter} ${pillShape ? styles.toastPill : ''}`}
+        className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter}`}
         role="status"
       >
         <ToastBody toast={current} />
