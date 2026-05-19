@@ -20,6 +20,7 @@ import AnaFlightPanel from '@/components/app/AnaFlightPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
 import HeartsCascade from '@/components/app/HeartsCascade';
+import FireArenaBanner from '@/components/app/FireArenaBanner';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
@@ -415,6 +416,11 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  "waved" notification; any other surface that wants the
        *  hearts effect can dispatch the same event. */}
       <HeartsCascade />
+      {/* Fire Arena launch countdown banner — desktop-only,
+       *  pinned to the top of the viewport. Component itself
+       *  early-returns null on mobile via the useIsMobile
+       *  hook, so the mount here is unconditional. */}
+      <FireArenaBanner />
     </>
   );
 }
