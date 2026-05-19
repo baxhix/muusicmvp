@@ -21,12 +21,10 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Height 124 → 140 to accommodate the bigger 84px logo
-   * without overlapping the top info bar (greeting + Fanpoints
-   * chip). Brand row is bottom-anchored so the +16px growth
-   * happens entirely BELOW the existing layout — info bar
-   * (top: 6) stays put automatically. */
-  height: 140px;
+  /* Height 140 → 133 (-5%) per the latest trim. Brand row is
+   * bottom-anchored so the height reduction comes off the
+   * BOTTOM of the chrome — info bar (top: 6) stays put. */
+  height: 133px;
   z-index: 5;
   pointer-events: none;
   /* Frosted-glass header per product feedback: the chrome
@@ -198,11 +196,10 @@
   z-index: 1;
 }
 .logo {
-  /* Bumped 68 → 84 (+24%) per product feedback. Now that the
-   * feed panel's duplicate logo was removed, this is the
-   * single brand-identity surface across the app — the bigger
-   * size makes it dominate the header band clearly. */
-  height: 84px;
+  /* Trimmed 84 → 76 (-10%) per product feedback. Still the
+   * dominant brand element in the chrome card — just slightly
+   * less aggressive after the chrome itself also shrank 5%. */
+  height: 76px;
   width: auto;
   display: block;
   filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.6));
@@ -294,26 +291,25 @@
   opacity: 0.6;
 }
 .greetingAvatar {
-  /* Bumped 24 → 28 (+17%) per product feedback ("aumente
-   * levemente o tamanho do avatar"). Still a comfortable
-   * miniature next to the greeting copy. */
-  width: 28px;
-  height: 28px;
+  /* Bumped 28 → 34 (+21%) per product feedback ("aumente 20%
+   * o tamanho da imagem de avatar"). */
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   background: #0b0b0d;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
 }
-/* Wrapper span around "Olá," + first name. Inline flow so the
- * literal space between the two child spans renders as a natural
- * word-space — replaces the previous 8px flex gap from
- * `.greetingBtn` which was wider than a regular text space. */
+/* Wrapper span around "Olá," + first name. Switched from
+ * `inline-flex` to `inline-block` per product feedback ("insira
+ * um espaço entre a ',' e o nome do usuário"). In `inline-flex`
+ * browsers were collapsing the literal ` ` character between
+ * the two child spans down to zero width — `inline-block`
+ * preserves natural inline-flow whitespace so a real word-space
+ * sits between "Olá," and the first name. */
 .greetingText {
-  display: inline-flex;
-  align-items: baseline;
-  /* No `gap` — the literal ` ` character between the spans is
-   * the only separator. */
+  display: inline-block;
 }
 .greetingLabel {
   font-size: 10.5px;

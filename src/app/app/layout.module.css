@@ -82,12 +82,15 @@
    * edge on the same outer margin the Fanpoints chip uses on
    * the left. */
   .topBar {
-    /* Re-aligned with the new logo position after the chrome
-     * grew 124 → 140 + logo grew 68 → 84 (commit removing
-     * the duplicate logo from the feed panel). Logo center
-     * now sits at chrome.top + ~78; centering a 40×40 button
-     * on that means top = 78 − 20 ≈ 58. */
-    top: 58px;
+    /* Re-aligned after chrome 140 → 133 + logo 84 → 76.
+     *   - Brand stack (logo 76 + wordmark ~6.5 − 10 margin
+     *     overlap) ≈ 72.5px tall.
+     *   - Brand bottom: 24 from chrome bottom → brand top at
+     *     chrome.top + (133 − 24 − 72.5) = +36.5.
+     *   - Logo center: 36.5 + 38 = ~74.5 from chrome top.
+     *   - 40×40 chat button centered on that → top = 74.5 − 20
+     *     ≈ 55. */
+    top: 55px;
     right: 18px;
     transform: none;
     flex-direction: row;
