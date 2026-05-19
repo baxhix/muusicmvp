@@ -211,13 +211,22 @@ function Shell({ children }: { children: React.ReactNode }) {
            *   the BottomNav's red unread badge on the chat slot
            *   instead.
            *
-           * The cluster is also hidden when the Feed drawer is
-           * open (mobile + desktop) — per product feedback the
-           * message icon competes visually with the feed content,
-           * and reaching chat while reading the feed isn't a
-           * common path. Closing the feed brings the cluster
-           * back automatically. */}
-          {!hideShellChrome && !hideMobileHeader && !feedOpen && (
+           * Feed-open behaviour diverges by viewport per the
+           * latest product feedback "No desktop, quando eu
+           * estiver com o feed ativo, mostre os ícones de Chat
+           * e playlist abaixo dos avatares":
+           *   - Mobile + feedOpen → HIDE (the feed takes the
+           *     whole viewport, so reaching chat / playlist while
+           *     reading the feed isn't a common path).
+           *   - Desktop + feedOpen → SHOW (the feed is a 398px
+           *     right-side panel that doesn't cover the right
+           *     rail; keeping the cluster visible below the
+           *     LiveChatStack avatars preserves quick access
+           *     while reading the feed). Vertical anchoring
+           *     (`top: 50%; translateY(8px)`) already places the
+           *     cluster directly under the avatars dock — no CSS
+           *     change needed, only the visibility gate. */}
+          {!hideShellChrome && !hideMobileHeader && (!feedOpen || !isMobile) && (
             <div className={styles.topBar}>
               {isMobile ? (
                 <button

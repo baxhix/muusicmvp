@@ -1155,6 +1155,20 @@ export default function Globe() {
                         detail: { userId, name: userName },
                       }),
                     );
+                    // Fire the global hearts cascade overlay per
+                    // product feedback "ao clicar neles, deve ser
+                    // acionada a festividade de corações de quem
+                    // receber os corações". The cascade plays on
+                    // the sender's screen as a visual confirmation
+                    // that hearts went out to the targeted user;
+                    // in a real-time backend wired build this same
+                    // event would also be pushed to the receiver's
+                    // client so the celebration mirrors there. */
+                    window.dispatchEvent(
+                      new CustomEvent('app:hearts-cascade', {
+                        detail: { targetUserId: userId, name: userName },
+                      }),
+                    );
                   }
                 }
                 return;
