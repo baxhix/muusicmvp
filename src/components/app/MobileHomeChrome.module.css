@@ -84,29 +84,47 @@
   overflow: hidden;
 }
 
-/* Gradient bottom edge — lilac → pink → lilac with transparent
- * fades at both ends per product feedback ("adicione um tom de
- * rosa para dar diferenciação"). Pink is the hottest stop in
- * the middle so it carries the "differentiation accent" the
- * brief asks for, surrounded by the same lilac the rest of the
- * brand uses. The fades hide where the strip would otherwise
- * cross the 40px rounded corners. */
+/* Gradient stroke that follows the chrome's full visible
+ * perimeter — left edge, around the bottom-left rounded
+ * corner, across the bottom, around the bottom-right rounded
+ * corner, up the right edge. Per product feedback "o traço
+ * deve ocupar as bordas também e não ficar apenas embaixo".
+ *
+ * Technique: `background-clip: border-box` + the
+ * `mask-composite: exclude` trick. Two stacked masks — one
+ * filling the content-box, one filling the entire box —
+ * combined via XOR/exclude leave only the 1px border ring
+ * visible. The gradient paints across the whole box but only
+ * the ring shows through. `border-radius: inherit` makes the
+ * ring follow the chrome's bottom corner curves.
+ *
+ * The top edge sits at y:0 of the viewport (the chrome is
+ * `position: fixed; top: 0`), so the 1px ring along the top
+ * is effectively invisible against the status bar / screen
+ * edge — only the side + bottom segments read as "the stroke". */
 .chrome::after {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(168, 85, 247, 0.45) 14%,
-    rgba(236, 72, 153, 0.70) 50%,
-    rgba(168, 85, 247, 0.45) 86%,
-    transparent 100%
-  );
+  inset: 0;
   pointer-events: none;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background-image: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.55) 0%,
+    rgba(236, 72, 153, 0.75) 50%,
+    rgba(168, 85, 247, 0.55) 100%
+  );
+  background-origin: border-box;
+  background-clip: border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 
 /* Header band — invisible spacer. With the new layout (info bar
