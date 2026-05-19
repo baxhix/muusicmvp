@@ -26,37 +26,39 @@
   pointer-events: none;
   /* Frosted-glass header per product feedback: the chrome
    * should obviously reveal the map shifting underneath as
-   * the user pans/zooms. Previous configuration was too
-   * opaque (`rgba(11,11,13,0.84)` over the dark gradient
-   * base) — the map was barely visible through. New values:
-   *   - Dark gradient base alpha dropped 0.84/0.82 → 0.30/0.24
-   *     so the underlying tiles + markers come through.
-   *   - Pink + lilac radial accents kept (they tint the
-   *     frosted layer with brand color), but pulled back
-   *     slightly so they don't dominate the now-visible map.
-   *   - backdrop-filter blur bumped 28 → 36 for a more
-   *     pronounced "frosted glass" look, saturation 1.25 → 1.6
-   *     so the map colors that bleed through stay vibrant
-   *     instead of muddying into the dark wash.
-   * Text contrast for the logo + Fanpoints chip + message
-   * icon stays acceptable because every text/icon element on
-   * top of this chrome carries its own drop-shadow / pure
-   * white fill. */
+   * the user pans/zooms. Map shows through the now-translucent
+   * dark base layer (alpha ~0.25) + a strong backdrop-blur.
+   *
+   * Per product feedback "tons suaves de preto" the pink +
+   * lilac brand accents were dropped in favor of subtle
+   * grayscale variations between the corners. The two
+   * radial gradients now carry only soft dark-gray tints
+   * — slightly cooler in the bottom-left corner, slightly
+   * lighter in the top-right — giving the surface depth
+   * without introducing any chromatic accent that would
+   * compete with the map underneath. */
   background:
+    /* Top-right corner: a touch of lifted gray to mimic a
+     * gentle light source coming from that direction. */
     radial-gradient(
       120% 80% at 100% 0%,
-      rgba(236, 72, 153, 0.20) 0%,
+      rgba(38, 38, 44, 0.20) 0%,
       transparent 60%
     ),
+    /* Bottom-left corner: a touch of deepening that
+     * grounds the surface. */
     radial-gradient(
       110% 80% at 0% 100%,
-      rgba(168, 85, 247, 0.16) 0%,
+      rgba(0, 0, 0, 0.22) 0%,
       transparent 65%
     ),
+    /* Vertical base — translucent top to slightly darker
+     * bottom. Same alpha range as before so the map keeps
+     * the same "show-through" amount. */
     linear-gradient(
       180deg,
-      rgba(11, 11, 13, 0.30) 0%,
-      rgba(6, 6, 9, 0.24) 100%
+      rgba(14, 14, 18, 0.30) 0%,
+      rgba(6, 6, 9, 0.26) 100%
     );
   backdrop-filter: blur(36px) saturate(1.6);
   -webkit-backdrop-filter: blur(36px) saturate(1.6);
