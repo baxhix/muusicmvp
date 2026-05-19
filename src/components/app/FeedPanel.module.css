@@ -127,32 +127,35 @@
   position: relative;
 }
 
-/* Ana Castela logo INSIDE the feed header, re-added per
- * product feedback "Inclua o logotipo da Ana Castela no
- * header do feed, centralizado". This time the rule is
- * SHARED across desktop + mobile (the previous round only
- * showed it on mobile and got flagged as "two layers" with
- * the chrome above).
+/* Ana Castela logo INSIDE the feed header — MOBILE ONLY per
+ * product feedback ("O logo do feed é só no mobile. Remova
+ * do desktop."). On desktop the existing dot + "Feed" title
+ * on the left already identify the surface, and the chrome
+ * card above the viewport carries the brand logo; a second
+ * one inside the feed header read as redundant. On mobile
+ * the dot + title are both hidden by the @media block below,
+ * so the logo steps in as the surface identifier.
  *
  * Centering via absolute positioning: takes the logo out of
- * the flex flow so the dot+title pair on the left don't get
- * pushed around. `transform: translate(-50%, -50%)` pins the
- * logo's geometric center to the header's geometric center.
- * The logo is sized DOWN against the chrome's 81px brand
- * logo so the chrome reads as the dominant identity and the
- * feed header logo reads as a secondary surface label.
+ * the flex flow so the dot+title pair on the left (desktop
+ * surface where they ARE rendered) wouldn't get pushed
+ * around if the rule ever leaked back in. `transform:
+ * translate(-50%, -50%)` pins the logo's geometric center to
+ * the header's geometric center on mobile.
  *
- *   height: 26px → ~3× smaller than the chrome logo, leaves
- *   plenty of room on either side for the dot+title on
- *   desktop without visually overlapping them. */
+ *   height: 26px → leaves comfortable margins inside the
+ *   mobile feed header (~50px tall after the mobile padding
+ *   override below). */
 .headerLogo {
+  /* Hidden by default — only the mobile @media block below
+   * flips this to `block`. */
+  display: none;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   height: 26px;
   width: auto;
-  display: block;
   pointer-events: none;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
   /* Sit above the dot+title and below the idle banner. The
@@ -356,6 +359,12 @@
    * communicates a live feed through its content. */
   .title { display: none; }
   .liveDot { display: none; }
+  /* Ana Castela logo flips ON in the mobile feed header — the
+   * desktop dot+title pair are hidden above, so the logo steps
+   * in as the surface identifier. Hidden by default on desktop
+   * per product feedback "O logo do feed é só no mobile.
+   * Remova do desktop." */
+  .headerLogo { display: block; }
   /* Taller header / drag area at the top of the mobile feed
    * panel. Was `padding: 20px 20px 14px` (effective height
    * ~38px with the dot+title row), now `28px 20px 22px`
