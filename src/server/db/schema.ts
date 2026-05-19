@@ -355,6 +355,11 @@ export const notifications = pgTable(
         'comment_reaction',
         'comment_reply',
         'comment_mention',
+        // User waved a heart at another user from their map marker.
+        // sourceUserId = sender, userId = recipient. No extra refs
+        // (no track/conversation/etc.) — the payload is just
+        // "<source> waved at you".
+        'waved',
       ],
     }).notNull(),
     sourceUserId: uuid('source_user_id').references(() => users.id, { onDelete: 'cascade' }),

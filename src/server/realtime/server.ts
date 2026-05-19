@@ -6,6 +6,7 @@ import { authenticateSocket } from './auth';
 import { registerChatHandlers } from './handlers/chat';
 import { registerListeningHandlers } from './handlers/listening';
 import { registerPresenceHandlers } from './handlers/presence';
+import { registerWaveHandlers } from './handlers/waves';
 import type { AppServer } from './types';
 
 const PORT = parseInt(process.env.SOCKET_PORT ?? '3002', 10);
@@ -43,6 +44,7 @@ io.on('connection', (socket) => {
   registerChatHandlers(io, socket);
   registerListeningHandlers(io, socket);
   registerPresenceHandlers(io, socket);
+  registerWaveHandlers(io, socket);
 });
 
 httpServer.listen(PORT, () => {

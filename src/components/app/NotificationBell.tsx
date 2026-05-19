@@ -127,6 +127,18 @@ function describe(n: ApiNotification): ReactNode {
         </Fragment>
       );
     }
+    case 'waved': {
+      // Heart wave received from another user's map marker.
+      // Pairs with the global `app:hearts-cascade` overlay
+      // that fires when this notification arrives via socket
+      // (see useNotificationsLive) — the bell entry is the
+      // persistent record alongside the transient celebration.
+      return (
+        <Fragment>
+          <Strong>{sourceLabel(n)}</Strong> acenou com um coração para você
+        </Fragment>
+      );
+    }
     default:
       return 'Notificação';
   }

@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { loadGlobeCamera, saveGlobeCamera } from '@/lib/globeCamera';
 import { track } from '@/lib/analytics';
+import { getSocket } from '@/lib/socket/client';
 import styles from './Globe.module.css';
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
@@ -1206,20 +1207,31 @@ export default function Globe() {
                     );
                   }
                   // Hearts celebration emanates from the RECEIVING
-                  // marker, not the sender's full viewport — per
-                  // product feedback "Ao clicar no coração que tem
-                  // no avatar, quem deve receber a chuva de
-                  // corações é o outro usuário, não o logado. é
-                  // como se fosse um aceno". The previous round
-                  // fired the global `app:hearts-cascade` event
-                  // here, which played the falling-hearts overlay
-                  // across the SENDER's whole screen — wrong
-                  // semantics for a one-way wave. Now we spawn a
-                  // local hearts burst anchored to the recipient's
-                  // marker DOM so the visual confirmation reads
-                  // as "hearts arriving at that user" instead of
-                  // "the sender is getting showered".
+                  // marker on the sender's map (visual confirmation
+                  // that the wave landed) — see Globe.module.css
+                  // `.markerHeartsBurst` for the animation.
                   spawnHeartsAtMarker(wrapper);
+
+                  // Push the wave through the socket so the SERVER
+                  // can insert the `notifications` row + emit
+                  // `notify:new` to the recipient's personal room.
+                  // That's the leg the receiver was missing —
+                  // before this, the heart only updated the
+                  // sender's local DOM + telemetry, so the
+                  // recipient never saw a notification or fired
+                  // their own hearts cascade. Per product feedback
+                  // "Estou com dois usuários online e as
+                  // notificações de coração só aparecem para o
+                  // usuário que fez, o que recebeu não chegou".
+                  // Fire-and-forget — the server handler ACKs but
+                  // the UX doesn't depend on the ack (the local
+                  // burst above is already on screen).
+                  try {
+                    const s = getSocket();
+                    s.emit('wave:send', { targetUserId: userId });
+                  } catch (err) {
+                    console.error('wave:send emit failed:', err);
+                  }
                 }
                 return;
               }

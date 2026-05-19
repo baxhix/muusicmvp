@@ -68,7 +68,22 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
 
   useEffect(() => {
     if (!socket) return;
-    const onNew = () => load();
+    // The realtime layer pokes the client with a small payload
+    // including the notification `kind` so we can react beyond
+    // just refetching the list. Today the one kind that gets a
+    // viewport-level visual is `'waved'` — fire the global
+    // `app:hearts-cascade` event so the HeartsCascade overlay
+    // celebrates the RECEIVER (per product feedback "Estou com
+    // dois usuários online e as notificações de coração só
+    // aparecem para o usuário que fez, o que recebeu não
+    // chegou"). Other kinds (same_track, message, mention, etc.)
+    // continue with just the refetch.
+    const onNew = (payload?: { kind?: string }) => {
+      load();
+      if (payload?.kind === 'waved' && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app:hearts-cascade'));
+      }
+    };
     socket.on('notify:new', onNew);
     return () => {
       socket.off('notify:new', onNew);

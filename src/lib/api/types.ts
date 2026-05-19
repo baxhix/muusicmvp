@@ -175,7 +175,12 @@ export interface ApiNotification {
     | 'group_added'
     | 'comment_reaction'
     | 'comment_reply'
-    | 'comment_mention';
+    | 'comment_mention'
+    // User waved a heart at another user from the map. The
+    // notification row has sourceUserId set to the sender; the
+    // recipient (this notification's userId) is who gets the
+    // hearts cascade on receipt.
+    | 'waved';
   sourceUserId: string | null;
   trackId: string | null;
   artist: string | null;
