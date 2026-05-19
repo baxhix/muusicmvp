@@ -113,35 +113,36 @@
   border-radius: inherit;
   border: 1px solid transparent;
   /* Color band STARTS at the curves and runs across the bottom.
-   * Per product feedback: "iniciando pelas curvas e não todo
-   * header. As laterais retas não deve ter ou deve ser preto".
+   * Per product feedback iterations:
+   *   - "iniciando pelas curvas e não todo header" → caps
+   *     close enough that the colored stops reach the bottom
+   *     curve sweep.
+   *   - "As laterais retas não deve ter ou deve ser preto" →
+   *     the 1-2% outer caps keep the vertical side edges
+   *     invisible (dark chrome surroundings read as "black").
+   *   - "Aumente 20% a área onde o gradiente está ocupando" →
+   *     full-color stops widened from 14/86 → 8/92, and the
+   *     outer caps tightened from 5/95 → 2/98. The colored
+   *     band is now ~17-20% wider than the previous tuning
+   *     while the side-edge invisibility constraint stays
+   *     intact.
    *
-   * Stop layout (percentages along the chrome's full width):
-   *   - 0-5%   transparent — the 1px vertical side edge at x≈0
-   *            stays invisible; the dark chrome surroundings
-   *            read this region as "black" against the lit
-   *            map below.
-   *   - 5-14%  transparent → lilac fade — picks up right as
-   *            the bottom-left curve sweeps in from the side.
-   *   - 14-50% lilac → pink ramp across the left half of the
-   *            bottom edge.
-   *   - 50-86% pink → lilac symmetric ramp across the right.
-   *   - 86-95% lilac → transparent fade — releases at the
-   *            bottom-right curve.
-   *   - 95-100% transparent — right-side vertical edge.
-   * The 5%/95% transparent caps are tight enough that the
-   * gradient REACHES the curve area; the previous 22%/78%
-   * caps were too wide and left the curves themselves
-   * transparent.
-   */
+   * Stop layout (percentages across the chrome's full width):
+   *   - 0-2%   transparent (side-edge cap — invisible)
+   *   - 2-8%   transparent → lilac fade-in (covers more of
+   *            the curve sweep than the previous 5-14% range)
+   *   - 8-50%  lilac → pink ramp across the left half
+   *   - 50-92% pink → lilac symmetric ramp across the right
+   *   - 92-98% lilac → transparent fade-out
+   *   - 98-100% transparent (right side-edge cap) */
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    transparent 5%,
-    rgba(168, 85, 247, 0.55) 14%,
+    transparent 2%,
+    rgba(168, 85, 247, 0.55) 8%,
     rgba(236, 72, 153, 0.80) 50%,
-    rgba(168, 85, 247, 0.55) 86%,
-    transparent 95%,
+    rgba(168, 85, 247, 0.55) 92%,
+    transparent 98%,
     transparent 100%
   );
   background-origin: border-box;
