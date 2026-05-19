@@ -416,7 +416,7 @@ function ToastBody({ toast }: { toast: MockToast }) {
             <span className={styles.text}>
               Você está no{' '}
               <strong className={styles.strong}>TOP {toast.rank}</strong> de
-              fãs
+              Superfãs!
             </span>
           </div>
         </>

@@ -40,6 +40,7 @@ export default function BottomNav() {
     locationSync,
     activeOverlay,
     setActiveOverlay,
+    setShowPlaylist,
   } = useAppShell();
   const isMobile = useIsMobile();
 
@@ -377,6 +378,42 @@ export default function BottomNav() {
                     />
                   </svg>
                   Comunidades
+                </button>
+                {/* Playlist — opens the PlaylistModal (videos /
+                  * tracks the user can scrub through). The
+                  * shortcut already exists on the desktop
+                  * right-rail; per product feedback the mobile
+                  * hamburger now surfaces it too so users on
+                  * phones don't have to round-trip through the
+                  * NowPlaying mini-bar to reach the queue. */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    setShowPlaylist(true);
+                  }}
+                >
+                  {/* Music-note + bullet-list combo signals
+                    * "playlist of media". Two notes on the left
+                    * with a small queue indicator on the right. */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 5h11M3 10h11M3 15h7" />
+                    <path d="M17 6v9" />
+                    <circle cx="15.5" cy="16.5" r="1.6" fill="currentColor" stroke="none" />
+                    <circle cx="20.5" cy="14.5" r="1.6" fill="currentColor" stroke="none" />
+                    <path d="M17 6l4-1" />
+                  </svg>
+                  Playlist
                 </button>
                 <button
                   type="button"
