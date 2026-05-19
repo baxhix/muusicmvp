@@ -230,42 +230,32 @@
    * the previous gap still felt too loose. */
   margin-bottom: -10px;
 }
-.brandLogo {
-  /* Fanverse SVG brand mark sitting under the Ana Castela
-   * logo. Replaces the previous small "FANVERSE" text
-   * wordmark per product feedback ("Insira o logotipo
-   * Fanverse, que tem quando o usuário insere o email, na
-   * home").
-   *
-   * Sizing: 22px tall keeps the stripey-F brand mark clearly
-   * recognizable (vs the 18px first pass which felt too
-   * small against the 81px Ana logo above). Width is `auto`
-   * so the SVG's intrinsic 120×108 aspect ratio (≈1.11:1)
-   * drives the rendered width to ~24px. Brand-stack vertical
-   * math (logo 81 − 10 margin overlap + mark 22 = 93px) still
-   * fits the centered brand wrapper inside the 133px chrome
-   * card with comfortable clearance top + bottom.
-   *
-   * Opacity matches the auth-page treatment (0.95) so the
-   * gradient (#662483 → #D60B52) reads slightly softened
-   * against the chrome's dark surface — same brand-mark
-   * weight users already saw on the email-entry step. */
-  height: 22px;
-  width: auto;
-  display: block;
-  opacity: 0.95;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+.brandLabel {
+  /* Reverted from the Fanverse SVG brand mark back to the
+   * small "FANVERSE" text wordmark per product feedback "O
+   * logotipo Fanverse não deve ficar na home do mobile,
+   * apenas na Hero Section da landing page. Remova o
+   * logotipo e volte a palavra pequena Fanverse". The
+   * letter-spacing keeps the text legible at 6.5px; the
+   * lower alpha keeps it visually subordinate to the
+   * dominant Ana Castela logo above. */
+  font-size: 6.5px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  color: rgba(245, 245, 247, 0.55);
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 /* Small-phone fallback (<360px). Logo trimmed slightly so the
  * lockup still has comfortable horizontal margins on narrow
- * viewports; brand mark scales down proportionally. */
+ * viewports; wordmark scales down proportionally. */
 @media (max-width: 360px) {
   .logo {
     height: 60px;
   }
-  .brandLogo {
-    height: 18px;
+  .brandLabel {
+    font-size: 6px;
   }
 }
 

@@ -91,8 +91,19 @@ export default function HeroSection() {
 
   return (
     <section className={styles.hero}>
-      {/* Headline block */}
+      {/* Headline block — Fanverse SVG brand mark sits above the
+          rotating headline per product feedback "O logotipo
+          Fanverse não deve ficar na home do mobile, apenas na
+          Hero Section da landing page". The mark is the same
+          asset used on the auth email-entry surface so the brand
+          identity reads continuous across landing → auth. */}
       <div className={styles.copy}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/fanverse-logo.svg"
+          alt="Fanverse"
+          className={styles.heroLogo}
+        />
         <h1 className={styles.headline} aria-live="polite">
           <span>{displayText}</span>
           <span className={styles.cursor} aria-hidden="true" />

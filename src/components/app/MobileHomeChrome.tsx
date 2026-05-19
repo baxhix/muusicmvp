@@ -61,18 +61,16 @@ export default function MobileHomeChrome() {
           alt="Ana Castela"
           className={styles.logo}
         />
-        {/* Fanverse SVG brand mark — upgraded from the previous
-            small "FANVERSE" text wordmark per product feedback
-            ("Insira o logotipo Fanverse, que tem quando o usuário
-            insere o email, na home"). Same asset that the auth
-            email-entry surface uses, sized down here so it stays
-            secondary to the Ana Castela logo above. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/fanverse-logo.svg"
-          alt="Fanverse"
-          className={styles.brandLogo}
-        />
+        {/* Reverted to the small "FANVERSE" text wordmark per
+            product feedback "O logotipo Fanverse não deve ficar
+            na home do mobile, apenas na Hero Section da landing
+            page. Remova o logotipo e volte a palavra pequena
+            Fanverse". The Fanverse SVG brand mark that briefly
+            lived here now appears only on the landing-page
+            HeroSection. */}
+        <span className={styles.brandLabel} aria-label="Fanverse">
+          FANVERSE
+        </span>
       </div>
       <div
         className={styles.infoBar}

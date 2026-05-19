@@ -91,6 +91,35 @@
   flex-shrink: 0;
 }
 
+/* Fanverse SVG brand mark in the hero — sits between the
+ * top of `.copy` and the rotating headline. Sized 64–88px
+ * tall via clamp so it scales with viewport height: small
+ * laptops get a tighter mark, big screens get a fuller
+ * presence. Soft drop-shadow makes the purple→pink gradient
+ * pop off the dark galaxy backdrop. Per product feedback "O
+ * logotipo Fanverse... apenas na Hero Section da landing
+ * page". */
+.heroLogo {
+  height: clamp(64px, 8vh, 88px);
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
+  opacity: 0;
+  animation: hero-logo-fadein 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+}
+
+@keyframes hero-logo-fadein {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroLogo {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;

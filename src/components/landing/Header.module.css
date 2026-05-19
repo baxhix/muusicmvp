@@ -41,19 +41,28 @@
   z-index: 2;
 }
 
-/* `.brandMark` is now the actual Fanverse SVG logo
- * (/fanverse-logo.svg) — see Header.tsx. The CSS circle-and-dot
- * placeholder that used to live here was retired per product
- * feedback "Coloque o logo do Fanverse na home, ainda está o
- * padrão". Size kept at 26px tall so the existing brand-row
- * lockup (mark + "Fanverse" wordmark + 12px gap) stays visually
- * balanced. `width: auto` lets the SVG's 120×108 viewBox drive
- * the rendered width (~28px). */
+/* CSS circle-and-dot placeholder — reverted from the Fanverse
+ * SVG brand mark per product feedback "apenas na Hero Section
+ * da landing page". The actual SVG now lives in
+ * `HeroSection.tsx`; the header stays with this neutral
+ * placeholder + the "Fanverse" wordmark next to it. */
 .brandMark {
+  width: 26px;
   height: 26px;
-  width: auto;
-  display: block;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), transparent 60%);
+}
+
+.brandMark::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 5px; height: 5px;
+  background: var(--ink);
+  border-radius: 50%;
 }
 
 /* ── Nav ── */
