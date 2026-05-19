@@ -13,6 +13,12 @@ interface UseNowPlayingReturn extends NowPlayingState {
   toggle: () => void;
   collapse: () => void;
   togglePlay: () => void;
+  /** Idempotent setters — handy for callers that need to force a
+   *  specific play state (e.g. "user just picked a track from the
+   *  playlist modal, start it playing") without having to consult
+   *  `isPlaying` first. */
+  play: () => void;
+  pause: () => void;
   progressPercent: string;
   formattedCurrent: string;
   formattedTotal: string;
@@ -46,6 +52,8 @@ export function useNowPlaying(initialSecs = 64, totalSecs = 204): UseNowPlayingR
   const toggle = useCallback(() => setIsExpanded((v) => !v), []);
   const collapse = useCallback(() => setIsExpanded(false), []);
   const togglePlay = useCallback(() => setIsPlaying((v) => !v), []);
+  const play = useCallback(() => setIsPlaying(true), []);
+  const pause = useCallback(() => setIsPlaying(false), []);
 
   const progressPercent = ((progressSecs / totalSecs) * 100).toFixed(1) + '%';
   const formattedCurrent = formatTime(progressSecs);
@@ -59,6 +67,8 @@ export function useNowPlaying(initialSecs = 64, totalSecs = 204): UseNowPlayingR
     toggle,
     collapse,
     togglePlay,
+    play,
+    pause,
     progressPercent,
     formattedCurrent,
     formattedTotal,

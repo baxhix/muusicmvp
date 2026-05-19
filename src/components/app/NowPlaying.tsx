@@ -127,7 +127,7 @@ export default function NowPlaying({
     },
     [songIdx, onSongIdxChange]
   );
-  const { isPlaying, togglePlay, progressPercent, formattedCurrent, formattedTotal, progressSecs } =
+  const { isPlaying, togglePlay, play, progressPercent, formattedCurrent, formattedTotal, progressSecs } =
     useNowPlaying(64, 204);
 
   // Reports listening activity to the realtime server. Server upserts
@@ -172,6 +172,95 @@ export default function NowPlaying({
   const goPrev = useCallback(() => {
     setSongIdx((i) => (i - 1 + SONGS.length) % SONGS.length);
   }, [SONGS.length, setSongIdx]);
+
+  /**
+   * Wrapper around the local play/pause toggle that ALSO drives
+   * the YouTube iframe in video mode. Without this the toggle
+   * only flipped the icon — the embedded video kept playing
+   * (or stayed paused) regardless of what the button said.
+   *
+   * Uses the YouTube IFrame Player API postMessage protocol:
+   *   { event: 'command', func: 'playVideo' | 'pauseVideo' }
+   *
+   * Mini / horizontal / expanded modes have no iframe — the
+   * toggle stays a UI-only state flip there.
+   */
+  const togglePlayWithIframe = useCallback(() => {
+    const nowPlaying = !isPlaying; // value AFTER the toggle below
+    togglePlay();
+    if (isVideo && videoStarted && typeof window !== 'undefined') {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({
+          event: 'command',
+          func: nowPlaying ? 'playVideo' : 'pauseVideo',
+          args: [],
+        }),
+        '*',
+      );
+    }
+  }, [isPlaying, togglePlay, isVideo, videoStarted]);
+
+  // ── Auto-play on track switch ──
+  //
+  // Per product feedback "Os controles do player tipo vídeo
+  // parecem não estar funcionando, principalmente os botões de
+  // lista de musicas próximo e anterior. Ao escolher a musica,
+  // já vem pode iniciar com o play para não ter que clicar duas
+  // vezes."
+  //
+  // Whenever songIdx changes — from a prev/next button, from the
+  // playlist modal's track-picker, or from the auto-rotation
+  // interval — we want the player to land already PLAYING the
+  // new track. Before this effect:
+  //   - Mini / horizontal: `isPlaying` kept its old value, so
+  //     the play/pause icon never updated to reflect that the
+  //     new track was "active" (selecting a song felt inert).
+  //   - Video: the previous round changed the iframe `key` so
+  //     the embed unmounted + remounted with autoplay=1 in the
+  //     src, which usually works — but Chrome's autoplay policy
+  //     occasionally suppresses the second-onwards iframe load
+  //     when the gesture trail is borderline. The postMessage
+  //     fallback below ensures `playVideo` fires explicitly via
+  //     the YouTube IFrame API as soon as the new iframe has
+  //     loaded, so the new track always actually plays.
+  //
+  // `prevSongIdxRef` skips the FIRST mount so the player's
+  // initial render doesn't accidentally jam the iframe with an
+  // extra play command before videoStarted is true.
+  const prevSongIdxRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (prevSongIdxRef.current === null) {
+      prevSongIdxRef.current = songIdx;
+      return;
+    }
+    if (prevSongIdxRef.current === songIdx) return;
+    prevSongIdxRef.current = songIdx;
+
+    // Flip the visual "playing" flag so the play/pause button
+    // shows the pause glyph immediately + the wave bars start
+    // animating, even on mini/horizontal mode where no iframe
+    // is mounted.
+    play();
+
+    // In video mode, the iframe is gated on videoStarted. Auto-
+    // flip the flag so the new track's embed renders without
+    // forcing the user to click the poster a second time.
+    if (isVideo && !videoStarted) setVideoStarted(true);
+
+    // Explicit playVideo via the YouTube IFrame Player API as a
+    // belt-and-suspenders against autoplay-policy quirks after a
+    // key-swap remount. Slight delay lets the new embed boot
+    // before the message lands.
+    if (isVideo && typeof window !== 'undefined') {
+      const id = window.setTimeout(() => {
+        iframeRef.current?.contentWindow?.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+          '*',
+        );
+      }, 380);
+      return () => window.clearTimeout(id);
+    }
+  }, [songIdx, isVideo, videoStarted, play]);
 
   // ── Continuous autoplay ────────────────────────────────────────
   // After the user manually starts the first video (browser autoplay
@@ -510,7 +599,7 @@ export default function NowPlaying({
         <div className={styles.miniControls}>
           <button
             className={styles.miniPlay}
-            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+            onClick={(e) => { e.stopPropagation(); togglePlayWithIframe(); }}
             aria-label={isPlaying ? 'Pausar' : 'Play'}
           >
             {isPlaying ? (
@@ -549,7 +638,7 @@ export default function NowPlaying({
 
           <button
             className={styles.miniPlay}
-            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+            onClick={(e) => { e.stopPropagation(); togglePlayWithIframe(); }}
             aria-label={isPlaying ? 'Pausar' : 'Play'}
           >
             {isPlaying ? (
@@ -612,7 +701,7 @@ export default function NowPlaying({
           </button>
           <button
             className={`${styles.ctrlBtn} ${styles.ctrlPlay}`}
-            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+            onClick={(e) => { e.stopPropagation(); togglePlayWithIframe(); }}
             aria-label={isPlaying ? 'Pausar' : 'Play'}
           >
             {isPlaying ? (
