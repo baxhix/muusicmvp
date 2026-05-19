@@ -1,6 +1,21 @@
 .page {
   overflow-x: hidden;
-  background: #08080A;
+  /* No opaque background here — the HeroSection's `.hero::before`
+   * (nebula drift), `.hero::after` (resting stars), and the new
+   * `.cosmos` overlay all paint via `position: fixed; z-index: -1`.
+   *
+   * Per CSS painting order, stacking contexts with negative z paint
+   * BEFORE in-flow non-positioned blocks. If `.page` carries its own
+   * opaque background, that background lands AFTER the universe
+   * layers and covers them entirely — which is exactly what was
+   * happening (the landing showed solid black with no stars / drift
+   * per the user's screenshot of muusic.live).
+   *
+   * `html { background: #000 }` (globals.css) covers the rest of the
+   * canvas, including anywhere the hero pseudos don't paint (e.g.
+   * the live / vision / footer sections when MINIMAL_LANDING is
+   * flipped back to false). The minimal-landing path is hero-only,
+   * so the hero's own backdrop fills the viewport. */
 }
 
 /* Vision section */
