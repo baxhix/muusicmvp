@@ -42,8 +42,21 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${scrolled ? styles['header--scrolled'] : ''}`}>
       <div className={styles.inner}>
+        {/* Real Fanverse SVG brand mark replaces the previous
+            CSS circle-and-dot placeholder per product feedback
+            "Coloque o logo do Fanverse na home, ainda está o
+            padrão". Same asset that the auth email-entry step
+            and the in-app mobile chrome use, so the brand
+            identity reads consistently across landing → auth →
+            home. */}
         <Link href="/" className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fanverse-logo.svg"
+            alt=""
+            className={styles.brandMark}
+            aria-hidden="true"
+          />
           <span>Fanverse</span>
         </Link>
 

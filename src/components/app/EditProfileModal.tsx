@@ -36,7 +36,16 @@ function Toggle({
   );
 }
 
-const PLACEHOLDER_AVATAR = (id: string) => `https://i.pravatar.cc/96?u=${id}`;
+/** Generic silhouette used while a user hasn't uploaded their
+ *  own avatar yet. Previous code seeded a deterministic
+ *  pravatar.cc photo here, which meant brand-new accounts saw a
+ *  RANDOM stranger's face on the Edit Profile modal until they
+ *  uploaded their own — per product feedback "Quando um novo
+ *  usuário for cadastrado, deixe sem foto alguma no avatar, use
+ *  o ícone padrão. Não utilize outras imagens de outros usuários
+ *  mocados". The silhouette SVG ships in /public alongside the
+ *  rest of the brand assets. */
+const PLACEHOLDER_AVATAR = '/avatar-placeholder.svg';
 
 export default function EditProfileModal({ open, onClose }: EditProfileModalProps) {
   const { user, refresh } = useAuth();
@@ -188,8 +197,7 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
     }
   };
 
-  const displayAvatar =
-    avatarUrl ?? (user ? PLACEHOLDER_AVATAR(user.id) : '/ana-castela-box.jpg');
+  const displayAvatar = avatarUrl ?? PLACEHOLDER_AVATAR;
 
   // The whole `/app/*` shell lives inside `.shell` (position:fixed,
   // z-index:55) which traps every descendant in its stacking context.

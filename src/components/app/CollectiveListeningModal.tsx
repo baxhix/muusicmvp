@@ -156,7 +156,7 @@ export default function CollectiveListeningModal({ open, onClose }: Props) {
       id: counterRef.current,
       fan: {
         name: 'Você',
-        avatar: 'https://i.pravatar.cc/64?u=me-collective',
+        avatar: '/avatar-placeholder.svg',
         tier: 'superfan',
       },
       body,

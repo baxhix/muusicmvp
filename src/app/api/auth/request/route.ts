@@ -44,10 +44,25 @@ export async function POST(req: Request) {
   const returnTo = sanitizeReturnTo(parsed.returnTo);
 
   // Upsert: create user if first sign-in, otherwise reuse.
+  //
+  // For brand-new accounts we seed `name` with the email's local
+  // part (the segment before `@`) so the user has a sensible
+  // display string from the very first time they appear in the
+  // app, instead of `null` (which would force every reader to
+  // fall back to email-prefix derivation client-side and risked
+  // leaking the full email into greetings before the user picks
+  // a real display name). Per product feedback "Para o nome, use
+  // as primeiros caracteres do email". `email` is already
+  // validated + lowercased by the zod schema above, so we know
+  // `.split('@')[0]` is a non-empty alphanumeric local part.
+  // `avatarUrl` is left at the schema's NULL default — every
+  // consumer falls back to `/avatar-placeholder.svg`, no random
+  // mock photos are pulled in.
   const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const defaultName = email.split('@')[0];
   const user =
     existing[0] ??
-    (await db.insert(users).values({ email }).returning())[0];
+    (await db.insert(users).values({ email, name: defaultName }).returning())[0];
 
   const { raw, hash } = generateToken();
   await db.insert(tokens).values({

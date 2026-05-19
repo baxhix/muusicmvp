@@ -193,7 +193,7 @@ export default function SuperliveModal({ open, onClose }: Props) {
       // class hook below.
       fan: {
         name: 'Você',
-        avatar: 'https://i.pravatar.cc/64?u=me-superlive',
+        avatar: '/avatar-placeholder.svg',
         tier: 'superfan',
       },
       body,
@@ -355,7 +355,7 @@ export default function SuperliveModal({ open, onClose }: Props) {
                 id: counterRef.current,
                 fan: {
                   name: 'Você',
-                  avatar: 'https://i.pravatar.cc/64?u=me-superlive',
+                  avatar: '/avatar-placeholder.svg',
                   tier: 'superfan',
                 },
                 body: '❤️❤️❤️',

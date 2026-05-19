@@ -73,7 +73,7 @@ export default function CommentInput({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className={styles.inputAvatar}
-        src={currentUserAvatar ?? 'https://i.pravatar.cc/96?img=12'}
+        src={currentUserAvatar ?? '/avatar-placeholder.svg'}
         alt=""
       />
       <textarea

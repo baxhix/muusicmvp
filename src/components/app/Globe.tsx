@@ -927,7 +927,13 @@ export default function Globe() {
         const safeName   = (name ?? 'Você').replace(/[<>&"']/g, '');
         const safeAvatar = (avatarUrl ?? '').replace(/["<>]/g, '');
         const safeTitle  = (trackTitle ?? '').replace(/[<>&"']/g, '');
-        const avatarSrc  = safeAvatar || 'https://i.pravatar.cc/72?u=me';
+        // Empty avatarUrl on the "Você" map marker now falls back
+        // to the generic silhouette instead of a deterministic
+        // pravatar.cc photo — brand-new users no longer see a
+        // random stranger's face pinned to their own location on
+        // the globe. Per product feedback "Quando um novo usuário
+        // for cadastrado, deixe sem foto alguma no avatar".
+        const avatarSrc  = safeAvatar || '/avatar-placeholder.svg';
         const songInnerHtml = buildSongInnerHtml(trackTitle, trackArtist);
 
         const audioBarsHtml = `

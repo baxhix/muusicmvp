@@ -32,7 +32,17 @@ export default function MobileHomeChrome() {
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
-  const firstName = user?.name?.trim().split(/\s+/)[0] ?? 'fã';
+  // Display-name fallback chain: persisted `user.name` (server
+  // now seeds this from email local part at signup) → email local
+  // part for any legacy account that predates that seeding step →
+  // generic "fã". Per product feedback ("Para o nome, use as
+  // primeiros caracteres do email") brand-new accounts greet the
+  // user by their email prefix instead of a generic "fã" or any
+  // mock display name.
+  const firstName =
+    user?.name?.trim().split(/\s+/)[0] ||
+    user?.email?.split('@')[0] ||
+    'fã';
   // Avatar source — uses the auth user's uploaded avatar if any,
   // otherwise falls back to the generic placeholder we ship at
   // /public/avatar-placeholder.svg. Same fallback the rest of
