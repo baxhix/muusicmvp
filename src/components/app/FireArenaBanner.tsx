@@ -75,6 +75,11 @@ export default function FireArenaBanner() {
         className={styles.cover}
       />
 
+      {/* Info column — title + launch date. Countdown moved out
+          of this column per product feedback ("coloque a contagem
+          regressiva na frente e não embaixo do texto") so the
+          numbers sit BESIDE the text instead of stacking below
+          it. */}
       <div className={styles.info}>
         <h2 className={styles.title}>
           Fire Arena
@@ -92,25 +97,25 @@ export default function FireArenaBanner() {
         <div className={styles.byline}>
           Lançamento em 28 de maio de 2026
         </div>
+      </div>
 
-        <div
-          className={styles.countdown}
-          role="timer"
-          aria-live="off"
-          aria-label={`Faltam ${countdown.days} dias, ${countdown.hours} horas, ${countdown.minutes} minutos`}
-        >
-          {/* Labels abbreviated (Dias / Hrs / Min / Seg) so the
-              four units fit comfortably inside the compact 80px
-              banner. Full words still go to the aria-label
-              above for assistive tech. */}
-          <CountdownUnit value={countdown.days} label="Dias" />
-          <span className={styles.countdownSep} aria-hidden="true">|</span>
-          <CountdownUnit value={pad(countdown.hours)} label="Hrs" />
-          <span className={styles.countdownSep} aria-hidden="true">|</span>
-          <CountdownUnit value={pad(countdown.minutes)} label="Min" />
-          <span className={styles.countdownSep} aria-hidden="true">|</span>
-          <CountdownUnit value={pad(countdown.seconds)} label="Seg" />
-        </div>
+      <div
+        className={styles.countdown}
+        role="timer"
+        aria-live="off"
+        aria-label={`Faltam ${countdown.days} dias, ${countdown.hours} horas, ${countdown.minutes} minutos`}
+      >
+        {/* Labels abbreviated (Dias / Hrs / Min / Seg) so the
+            four units fit comfortably inside the compact 80px
+            banner. Full words still go to the aria-label
+            above for assistive tech. */}
+        <CountdownUnit value={countdown.days} label="Dias" />
+        <span className={styles.countdownSep} aria-hidden="true">|</span>
+        <CountdownUnit value={pad(countdown.hours)} label="Hrs" />
+        <span className={styles.countdownSep} aria-hidden="true">|</span>
+        <CountdownUnit value={pad(countdown.minutes)} label="Min" />
+        <span className={styles.countdownSep} aria-hidden="true">|</span>
+        <CountdownUnit value={pad(countdown.seconds)} label="Seg" />
       </div>
     </div>
   );

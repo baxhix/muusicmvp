@@ -16,10 +16,12 @@
 
 .banner {
   position: fixed;
-  /* Centered at the top of the viewport with a 16px breathing
-   * gap so the banner reads as floating rather than welded to
-   * the screen edge. */
-  top: 16px;
+  /* Dropped 16 → 32 per product feedback ("Posicione o banner
+   * um pouco mais abaixo") so the banner sits a touch lower
+   * from the top edge of the viewport — clears the OS chrome
+   * on macOS Chrome's URL bar and reads as a more deliberately
+   * placed card. */
+  top: 32px;
   left: 50%;
   transform: translateX(-50%);
   width: 440px;
@@ -30,13 +32,14 @@
   gap: 12px;
   padding: 0 14px;
   /* Discrete dark frosted-glass surface — semi-transparent so
-   * the map below shows through subtly, hairline border to
-   * separate it from the dark basemap, soft drop shadow to
-   * sell the floating-card illusion. */
+   * the map below shows through subtly, soft drop shadow to
+   * sell the floating-card illusion. Border removed per product
+   * feedback ("Remova a borda do box") — the shadow alone is
+   * enough separation from the basemap. */
   background: rgba(10, 10, 14, 0.86);
   backdrop-filter: blur(18px) saturate(1.4);
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 14px;
   box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.65);
   pointer-events: auto;
@@ -55,7 +58,11 @@
 }
 
 /* ── Info column ──
- * Stacks title row + launch date row. */
+ * Stacks title row + launch date row only. The countdown
+ * moved OUT of this column per product feedback ("coloque a
+ * contagem regressiva na frente e não embaixo do texto") and
+ * is now a sibling element of `.info` in the banner row,
+ * sitting to the right of the text. */
 .info {
   flex: 1;
   display: flex;
@@ -91,7 +98,9 @@
  * ("Remova Ana Castela·"); only the launch-date sentence
  * remains. */
 .byline {
-  font-size: 11px;
+  /* Bumped 11 → 12 per product feedback ("aumente a fonte, de
+   * 11 para 12"). */
+  font-size: 12px;
   font-weight: 400;
   color: rgba(245, 245, 247, 0.62);
   letter-spacing: -0.005em;
@@ -118,11 +127,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  min-width: 22px;
+  gap: 2px;
+  /* Slightly wider min-width (22 → 26) so the bumped label
+   * fonts (Dias / Hrs / Min / Seg) still fit cleanly inside
+   * each unit cell. */
+  min-width: 26px;
 }
 .unitValue {
-  font-size: 13px;
+  /* Bumped 13 → 14 per product feedback ("de 13 para 14"). */
+  font-size: 14px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
@@ -130,7 +143,8 @@
   line-height: 1;
 }
 .unitLabel {
-  font-size: 8px;
+  /* Bumped 8 → 10 per product feedback ("de 8 para 10"). */
+  font-size: 10px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
   letter-spacing: 0.04em;
@@ -146,7 +160,9 @@
 
 /* ── Tablet trim ──
  * Below 1024px the banner shrinks slightly so it still has
- * comfortable margins next to the chat dock / right-rail. */
+ * comfortable margins next to the chat dock / right-rail.
+ * Unit sizes shrink proportionally one step from desktop
+ * (value 14 → 13, label 10 → 9). */
 @media (max-width: 1024px) {
   .banner {
     width: 400px;
@@ -164,14 +180,20 @@
   .emoji {
     font-size: 14px;
   }
+  .byline {
+    font-size: 11px;
+  }
   .countdown {
     gap: 5px;
     padding: 4px 8px;
   }
   .unitValue {
-    font-size: 12px;
+    font-size: 13px;
+  }
+  .unitLabel {
+    font-size: 9px;
   }
   .unit {
-    min-width: 20px;
+    min-width: 24px;
   }
 }
