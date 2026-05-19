@@ -350,7 +350,13 @@ export default function FeedPanel() {
     {minimized && <div className={styles.minimizedGradient} />}
     <div className={`${styles.panel} ${minimized ? styles.panelMinimized : ''}`}>
 
-      {/* Header */}
+      {/* Header — centered Ana Castela logo per product feedback.
+          Acts as the click target to toggle minimized/expanded
+          like before. The legacy `.liveDot` + `.title "Feed"`
+          combo was already hidden on mobile via the existing
+          @media block; on desktop they sit alongside the logo
+          (logo centered, dot + title remain at their original
+          left position). */}
       <div
         className={styles.header}
         onClick={() => setMinimized(m => !m)}
@@ -359,17 +365,24 @@ export default function FeedPanel() {
       >
         <div className={styles.liveDot} />
         <span className={styles.title}>Feed</span>
-      </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-ana.png"
+          alt="Ana Castela"
+          className={styles.headerLogo}
+        />
 
-      {/* Idle "Novas publicações" banner — only fades in while the
-          user has been inactive ≥3s AND the feed is expanded.
-          Pointer-events disabled so it doesn't block clicks on the
-          stories rail underneath. */}
-      {!minimized && showIdleBanner && (
-        <div className={styles.idleBanner} aria-hidden="true">
-          <span>Novas publicações</span>
-        </div>
-      )}
+        {/* Idle banner moved INSIDE the header so it can use
+            `top: 100%` to glue itself to the header bottom edge
+            — eliminates the small gap the previous absolute
+            positioning at `top: 56px` left between header
+            bottom and banner top across viewports. */}
+        {!minimized && showIdleBanner && (
+          <div className={styles.idleBanner} aria-hidden="true">
+            <span>Novas publicações</span>
+          </div>
+        )}
+      </div>
 
       {/* Scroll */}
       <div className={styles.scroll} ref={scrollRef}>

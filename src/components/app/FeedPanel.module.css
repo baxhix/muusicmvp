@@ -121,6 +121,25 @@
   flex-shrink: 0;
   cursor: pointer;
   user-select: none;
+  /* Anchor for `.idleBanner` below — the banner now lives
+   * INSIDE the header and uses `top: 100%` to glue itself to
+   * the header's lower edge. */
+  position: relative;
+}
+
+/* Ana Castela logo — surfaced inside the feed header on
+ * MOBILE only. Desktop keeps the legacy liveDot + "Feed"
+ * title pair; on mobile both of those were already hidden,
+ * so the logo fills the otherwise-empty header band. Mobile
+ * @media block below makes it visible + centers it via auto
+ * margins (the header is a flex row, so margin auto on a
+ * single visible child centers it). */
+.headerLogo {
+  display: none;
+  width: auto;
+  height: 32px;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
+  flex-shrink: 0;
 }
 .header:hover .liveDot {
   box-shadow: 0 0 14px rgba(61,219,116,0.9);
@@ -325,6 +344,15 @@
    * of the panel since the dot + title are both hidden now. */
   .header {
     padding: 28px 20px 22px;
+    /* Center the logo horizontally — with dot + title hidden,
+     * the only header child left is `.headerLogo`, so
+     * justify-content centers it. */
+    justify-content: center;
+  }
+  /* Show the Ana Castela logo on mobile only. Centered via the
+   * header's `justify-content: center` above. */
+  .headerLogo {
+    display: block;
   }
 }
 @media (max-width: 480px) {
@@ -364,7 +392,12 @@
  *     panel's own border-radius doesn't apply here. */
 .idleBanner {
   position: absolute;
-  top: 56px;
+  /* `top: 100%` glues the banner to the bottom edge of the
+   * .header (which is now its containing block via
+   * `position: relative`). The previous `top: 56px` was a
+   * hardcoded approximation that left a small gap on some
+   * viewports and overlapped the header on others. */
+  top: 100%;
   left: 0;
   right: 0;
   z-index: 6;
@@ -382,38 +415,43 @@
   animation: feedIdleBannerIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .idleBanner > span {
-  /* Pill-style chip — small uppercase annotation against the
-   * darkened backdrop. Border removed per product feedback; the
-   * pill now relies on the translucent fill + backdrop blur alone.
-   * Inline-flex + gap host the spinner before the text. */
+  /* Pill restyled to carry the brand identity per product
+   * feedback — was a neutral translucent white chip; now a
+   * lilac → pink gradient pill so the "new posts incoming"
+   * cue reads as on-brand engagement rather than generic
+   * status text. */
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 9.5px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-  padding: 4px 11px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.92) 0%,
+    rgba(236, 72, 153, 0.92) 100%
+  );
+  box-shadow:
+    0 4px 14px -2px rgba(168, 85, 247, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
 }
 
 /* Loading spinner before the text — communicates "fetching new
- * content" while the banner is visible. Standard CSS-only ring
- * spinner: partial-color border on a tiny circle, rotating
- * indefinitely. Sized to the cap-height of the 9.5px text so it
- * reads as a peer character, not an attached decoration. */
+ * content" while the banner is visible. Matches the new
+ * gradient pill: white arc against a translucent rim so the
+ * ring stays legible against the lilac → pink fill. */
 .idleBanner > span::before {
   content: '';
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border: 1.6px solid rgba(255, 255, 255, 0.35);
   border-top-color: #ffffff;
   animation: idleBannerSpin 0.75s linear infinite;
   flex-shrink: 0;
