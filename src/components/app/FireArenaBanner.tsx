@@ -94,8 +94,12 @@ export default function FireArenaBanner() {
             are gone — the cover art on the left already carries
             the visual brand cue, so a second identity strip was
             redundant. */}
+        {/* Short date format ("28/5") per product feedback — the
+            previous "28 de maio de 2026" sentence used most of the
+            byline row width and left no room for the countdown chip
+            to grow. */}
         <div className={styles.byline}>
-          Lançamento em 28 de maio de 2026
+          Lançamento em 28/5
         </div>
       </div>
 

@@ -119,21 +119,31 @@
 /* ── Countdown ──
  * Compact chip with the four time units packed against the
  * right edge of the banner. Quiet inset surface so the
- * numbers don't compete with the title. */
+ * numbers don't compete with the title.
+ *
+ * Box bumped slightly per product feedback ("aumente o tamanho
+ * do box que envolve os números"): vertical padding 5 → 9,
+ * horizontal padding 10 → 14, gap between units 6 → 10,
+ * border-radius 8 → 10. Reads as a more deliberate chip
+ * instead of a tight band. */
 .countdown {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 10px;
+  padding: 9px 14px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 8px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 .unit {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  /* Gap bumped 2 → 5 per product feedback ("aumente levemente
+   * os espaçamentos do número e a legenda") — small but
+   * visible separation between the big tabular number above
+   * and the gray label below. */
+  gap: 5px;
   /* Widened 26 → 30 so the 12px labels ("Dias" is the widest
    * at ~26px) fit comfortably inside each unit cell. */
   min-width: 30px;
