@@ -20,15 +20,15 @@
 .heart {
   position: absolute;
   top: -10vh;
-  /* `left` is set inline per particle. translateX(-50%) re-
-   * centers the emoji on its anchor x so the visual feels
-   * "dropped from this column". */
+  /* `left` + `width` + `height` are set inline per particle.
+   * translateX(-50%) re-centers each heart on its anchor x so
+   * the visual feels "dropped from this column".
+   * Drop shadow shifted from pink → soft red to match the
+   * heart's solid fill. */
   transform: translate3d(-50%, 0, 0) rotate(0deg);
-  /* Tiny initial scale that grows to 1.0 at the start so the
-   * entry feels organic instead of just appearing mid-air. */
   opacity: 0;
-  line-height: 1;
-  filter: drop-shadow(0 4px 14px rgba(236, 72, 153, 0.35));
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.35));
   animation-name: heartsCascadeFall;
   animation-timing-function: cubic-bezier(0.32, 0.22, 0.5, 1);
   animation-iteration-count: 1;

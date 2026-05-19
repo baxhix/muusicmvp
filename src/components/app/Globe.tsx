@@ -279,7 +279,11 @@ export default function Globe() {
       // The SVG is rendered at 64×64 inside Mapbox; symbol
       // layer's `icon-size` below scales it down to fit the
       // black circle's interior.
-      const ticketSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M9 5v14"/></svg>`;
+      // Stroke color is `#b0b0b0` (a slight gray) per product
+      // feedback — was pure white, but the user wanted the
+      // ticket icon "levemente cinza" to read as quieter
+      // against the show pin's now-translucent circle below.
+      const ticketSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#b0b0b0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M9 5v14"/></svg>`;
       const ticketImg = new Image(64, 64);
       ticketImg.onload = () => {
         // hasImage check guards against the re-registration that
@@ -297,6 +301,10 @@ export default function Globe() {
       // chip still reads as a distinct shape even without a
       // stroke. Radius scaled by zoom so the ticket icon inside
       // stays readable from globe-view to street.
+      // Opacity 1 → 0.4 (60% transparency) per product feedback —
+      // the show pins now sit more subtly on the basemap; the
+      // amber halo behind + the slight-gray ticket icon inside
+      // keep them identifiable without dominating the surface.
       map.addLayer({
         id: 'ana-shows-dot',
         type: 'circle',
@@ -311,7 +319,7 @@ export default function Globe() {
           ],
           'circle-color': '#000000',
           'circle-stroke-width': 0,
-          'circle-opacity': 1,
+          'circle-opacity': 0.4,
         },
       });
 

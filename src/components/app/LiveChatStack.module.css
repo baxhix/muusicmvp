@@ -377,16 +377,19 @@
   .item:hover {
     transform: scale(1.18) translateX(-2px);
   }
-  /* Reveal the "view all" button on mobile, sized to match the
-   * mobile avatar footprint (53px) so the column stays uniform. */
+  /* Reveal the "view all" button on mobile. Sized -35% from the
+   * previous 53px footprint (53 × 0.65 ≈ 34) per product
+   * feedback — the icon now reads as a quieter, smaller
+   * follow-on to the chat-preview avatars above instead of a
+   * peer-sized button. */
   .viewAllBtn {
     display: inline-flex;
-    width: 53px;
-    height: 53px;
+    width: 34px;
+    height: 34px;
   }
   .viewAllBtn svg {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
   }
   .itemActive {
     transform: scale(1.10) translateX(-2px);

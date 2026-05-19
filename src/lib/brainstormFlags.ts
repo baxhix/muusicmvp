@@ -147,7 +147,16 @@ export function useBrainstormFlags(): {
   const isOwner =
     user?.email?.trim().toLowerCase() === BRAINSTORM_OWNER_EMAIL;
 
-  const [flags, setFlags] = useState<BrainstormFlags>(() => ({ ...DEFAULTS }));
+  /* Initial render uses ALL_OFF for EVERYONE — was `DEFAULTS`
+   * which leaks brainstorm features to non-owners (including
+   * brand-new signups) for the first frame before the
+   * useEffect snaps to the right value. With ALL_OFF as the
+   * SSR / first-paint state, brainstorm features are simply
+   * invisible to non-owners from the very first render. The
+   * owner takes a one-frame delay before their persisted
+   * flags hydrate — an acceptable trade-off compared with
+   * the prior visible flash on every other account. */
+  const [flags, setFlags] = useState<BrainstormFlags>(() => ({ ...ALL_OFF }));
 
   useEffect(() => {
     // Non-owner — force every brainstorm flag off and skip the

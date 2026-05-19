@@ -29,7 +29,7 @@ interface HeartParticle {
   id: string;
   /** Horizontal position as a viewport percentage (5-95). */
   xPercent: number;
-  /** Pixel size of the heart emoji. */
+  /** Pixel size of the heart. */
   size: number;
   /** Delay before this heart starts falling (ms). */
   delay: number;
@@ -37,37 +37,29 @@ interface HeartParticle {
   duration: number;
   /** Drift rotation degrees during the fall. */
   drift: number;
-  /** Emoji to render. We mix hearts with a hand-wave so the
-   *  cascade reads as a wave-and-like response rather than
-   *  pure romantic hearts. */
-  emoji: string;
 }
 
-/* Only solid red hearts per product feedback — the previous
- * pool mixed pink hearts (💖💗💞💕) and the waving-hand emoji
- * (👋). Reduced to two red-family variants so the cascade
- * still feels alive without leaving the red palette. */
-const HEART_EMOJIS = ['❤️', '❣️'];
-const PARTICLES_PER_BATCH = 14;
+/* Hearts are now rendered as a single FLAT SVG shape filled
+ * with one brand-red color (#ef4444) per product feedback —
+ * the previous mix of emoji variants picked up the system
+ * font's glossy / multi-tone rendering which conflicted with
+ * the "flat single-color" brief.
+ *
+ * Batch count cut roughly in half (14 → 8) so the cascade
+ * feels lighter and more elegant rather than a downpour. */
+const PARTICLES_PER_BATCH = 8;
 const CLEANUP_BUFFER_MS = 200;
 
-/** Pseudo-random per-batch. We use Math.random() since the
- *  values are display-only (no determinism needed). */
 function buildBatch(batchId: number): HeartParticle[] {
   const out: HeartParticle[] = [];
   for (let i = 0; i < PARTICLES_PER_BATCH; i++) {
     out.push({
       id: `${batchId}-${i}`,
-      // Spread across the viewport with safe margins so hearts
-      // don't dribble down the very edge.
-      xPercent: 5 + Math.random() * 90,
-      size: 22 + Math.random() * 18, // 22-40px
-      delay: Math.random() * 1600, // staggered launch up to 1.6s
-      duration: 2800 + Math.random() * 1400, // 2.8-4.2s fall
-      drift: -28 + Math.random() * 56, // ±28deg rotation drift
-      emoji:
-        HEART_EMOJIS[Math.floor(Math.random() * HEART_EMOJIS.length)] ??
-        '❤️',
+      xPercent: 8 + Math.random() * 84,
+      size: 24 + Math.random() * 14, // 24-38px
+      delay: Math.random() * 1400,
+      duration: 2800 + Math.random() * 1200, // 2.8-4.0s
+      drift: -22 + Math.random() * 44, // ±22deg drift
     });
   }
   return out;
@@ -106,21 +98,31 @@ export default function HeartsCascade() {
     <div className={styles.root} aria-hidden="true">
       {batches.flatMap((batch) =>
         batch.particles.map((p) => (
-          <span
+          <svg
             key={p.id}
+            viewBox="0 0 24 24"
             className={styles.heart}
             style={
               {
                 left: `${p.xPercent}%`,
-                fontSize: `${p.size}px`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
                 animationDelay: `${p.delay}ms`,
                 animationDuration: `${p.duration}ms`,
                 ['--heart-drift' as string]: `${p.drift}deg`,
               } as React.CSSProperties
             }
+            aria-hidden="true"
           >
-            {p.emoji}
-          </span>
+            {/* Flat solid heart shape — single-color fill so the
+              * cascade reads as a clean graphic motif instead of
+              * relying on the system font's glossy emoji
+              * rendering. */}
+            <path
+              d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z"
+              fill="#ef4444"
+            />
+          </svg>
         )),
       )}
     </div>
