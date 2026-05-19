@@ -423,6 +423,25 @@ function CommunityListView({
                         )}
                       </div>
                     </button>
+                    {/* Discreet "Entrar" button per product feedback
+                        ("Inclua o botão Entrar junto no cards de
+                        lista de comunidades discretamente,
+                        seguindo a ID atual"). Sibling of
+                        `cardOpenBtn` so it has its own click target
+                        (nesting <button> inside <button> is invalid
+                        HTML). Only renders for non-members; once
+                        the viewer joins it disappears and the
+                        kebab carries the "Sair" action instead. */}
+                    {!c.isMember && (
+                      <button
+                        type="button"
+                        className={styles.cardJoinPill}
+                        onClick={() => void onJoin(c)}
+                        aria-label={`Entrar na comunidade ${c.name}`}
+                      >
+                        Entrar
+                      </button>
+                    )}
                     <KebabMenu actions={actions} />
                   </div>
                 </li>
@@ -611,29 +630,19 @@ function CommunityDetailView({
       />
 
       <div className={styles.body}>
-        {/* Compact community summary — creator mini avatar + meta +
-            description + member avatar stack + Participar CTA when
-            the viewer hasn't joined yet. No big thumbnail. */}
+        {/* Compact community summary — description + member avatar
+            stack + Participar CTA when the viewer hasn't joined yet.
+            The "por <Creator>" line that used to lead this section
+            was removed per product feedback ("Avatar + por marcelo
+            De Mari. Deixe apenas a linha de baixo: avatar + 1
+            membro + ver todos") — the bottom MembersStack already
+            carries an avatar strip + member count + "Ver todos", so
+            the creator strip above was redundant.
+            The 🔥 Bombando badge that used to ride inline on the
+            creator line was dropped too — the LIST card already
+            shows the trending pill, so the detail view doesn't need
+            to re-state it. */}
         <section className={styles.communitySummary}>
-          {community.creator && (
-            <div className={styles.creatorRow}>
-              {community.creator.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={community.creator.avatarUrl}
-                  alt=""
-                  className={styles.creatorAvatar}
-                />
-              ) : (
-                <span className={styles.creatorAvatarPlaceholder} aria-hidden="true" />
-              )}
-              <span className={styles.creatorLine}>
-                por <strong>{community.creator.name ?? 'Anônimo'}</strong>
-                {community.isTrending && <span className={styles.trendingInline}> · 🔥 Bombando</span>}
-              </span>
-            </div>
-          )}
-
           {community.description && (
             <p className={styles.detailDescription}>{community.description}</p>
           )}
@@ -655,29 +664,38 @@ function CommunityDetailView({
           )}
         </section>
 
-        <div className={styles.searchRow}>
-          <svg
-            className={styles.searchIcon}
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="7" cy="7" r="5" />
-            <path d="M14 14l-3-3" />
-          </svg>
-          <input
-            type="search"
-            className={styles.searchField}
-            placeholder="Buscar tópico…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-          />
-        </div>
+        {/* Search bar hidden when the community has nothing to
+            search (zero topics + no active query) per product
+            feedback ("Remova a busca quando não houver tópicos").
+            Once the user types into the field, `query` becomes
+            non-empty and the search input stays visible even if
+            the server returns no matches — that way the user can
+            still see + clear what they typed. */}
+        {(topics.length > 0 || query !== '') && (
+          <div className={styles.searchRow}>
+            <svg
+              className={styles.searchIcon}
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="7" cy="7" r="5" />
+              <path d="M14 14l-3-3" />
+            </svg>
+            <input
+              type="search"
+              className={styles.searchField}
+              placeholder="Buscar tópico…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+        )}
 
         {topics.length === 0 ? (
           <div className={styles.emptyState}>

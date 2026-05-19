@@ -474,6 +474,46 @@
   letter-spacing: -0.005em;
 }
 
+/* Discreet "Entrar" pill INSIDE the community list cards —
+ * per product feedback "Inclua o botão Entrar junto no cards
+ * de lista de comunidades discretamente, seguindo a ID
+ * atual". Same lilac palette as the louder `.joinPill` used
+ * in the detail view, but smaller padding + slightly lower
+ * alpha on the bg/border + smaller font, so the button reads
+ * as a quiet secondary action on a card row instead of the
+ * primary CTA of a whole screen.
+ *
+ * Sibling of `.cardOpenBtn` inside `.communityCard` (a flex
+ * row) — sits between the card body and the kebab menu on
+ * the right edge. `flex-shrink: 0` keeps it from getting
+ * squeezed when the title text is long. */
+.cardJoinPill {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  white-space: nowrap;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+}
+.cardJoinPill:hover {
+  background: rgba(168, 85, 247, 0.24);
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #F5F5F7;
+}
+.cardJoinPill:active {
+  background: rgba(168, 85, 247, 0.32);
+}
+
 /* Join pill — switches between violet "Participar" and a quiet
  * neutral "Saiu" once the viewer is a member. */
 .joinPill {
