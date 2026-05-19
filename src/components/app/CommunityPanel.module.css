@@ -1009,9 +1009,15 @@
   border: none;
   color: #ffffff;
   cursor: pointer;
+  /* Shadow split into two casts: a tight DARK drop for depth
+   * on low-end Android displays (which render the previous
+   * lilac glow as a light fuzzy halo) + a much smaller lilac
+   * brand tint at lower alpha for the iOS-style soft glow.
+   * Removed the `inset rgba(255,255,255,0.06)` highlight —
+   * it was reading as a gray ring on Samsung. */
   box-shadow:
-    0 12px 28px -6px rgba(168, 85, 247, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    0 8px 18px -6px rgba(0, 0, 0, 0.65),
+    0 4px 12px -4px rgba(168, 85, 247, 0.35);
   transition: background 0.14s ease, transform 0.14s ease,
               box-shadow 0.14s ease;
   z-index: 10;
@@ -1025,9 +1031,13 @@
     rgba(168, 85, 247, 0.95) 0%,
     rgba(168, 85, 247, 0.82) 100%);
   transform: translateY(-2px);
+  /* Same dual-cast strategy as the resting state — dark drop
+   * leads the depth cue, lilac glow plays a quieter
+   * supporting role. Inset white highlight dropped to keep
+   * the silhouette clean on Samsung. */
   box-shadow:
-    0 18px 36px -8px rgba(168, 85, 247, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 12px 24px -6px rgba(0, 0, 0, 0.7),
+    0 6px 16px -4px rgba(168, 85, 247, 0.45);
 }
 .fab:active {
   transform: translateY(0) scale(0.96);

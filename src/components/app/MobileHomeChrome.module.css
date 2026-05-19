@@ -80,12 +80,14 @@
   border-bottom-left-radius: 40px;
   border-bottom-right-radius: 40px;
   overflow: hidden;
-  /* Subtle drop shadow under the chrome so the card visibly
-   * floats above the map below. 24px blur with a downward
-   * offset, -6 spread to keep the shadow tight under the
-   * bottom curve. Low alpha (0.35) keeps the cue gentle —
-   * the user said "leve sombra". */
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.35);
+  /* Drop shadow under the chrome — alpha bumped 0.35 → 0.6
+   * and blur tightened 24 → 18 per product feedback after
+   * Samsung budget devices rendered the previous low-alpha
+   * + large-blur shadow as a gray/white halo instead of a
+   * dark cast. Higher alpha + tighter blur keeps the shadow
+   * unambiguously DARK on low-end Android displays without
+   * looking heavy on iPhone. */
+  box-shadow: 0 8px 18px -4px rgba(0, 0, 0, 0.6);
 }
 
 /* Gradient stroke concentrated on the BOTTOM CURVE only — per
