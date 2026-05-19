@@ -896,6 +896,55 @@ export default function Globe() {
       }
     };
 
+    /**
+     * Heart-burst overlay anchored to a recipient's marker.
+     *
+     * Per product feedback "Ao clicar no coração que tem no
+     * avatar, quem deve receber a chuva de corações é o outro
+     * usuário, não o logado. é como se fosse um aceno" — the
+     * celebration emanates FROM the targeted user's marker on
+     * the map (representing what the receiver would experience)
+     * rather than playing the global `app:hearts-cascade`
+     * overlay across the sender's whole viewport.
+     *
+     * Spawns 6 small filled hearts as children of the marker
+     * wrapper, each with a random horizontal jitter (±20px)
+     * and a staggered animation delay so the cluster reads as
+     * a soft pulse rising from the avatar. Each particle runs
+     * a single keyframe (`marker-heart-rise` in
+     * Globe.module.css) that translates upward + fades out
+     * over ~1.4s. The container is removed from the DOM after
+     * 1.8s so a fresh click can spawn a clean burst without
+     * accumulating stale nodes.
+     */
+    const spawnHeartsAtMarker = (markerEl: HTMLElement) => {
+      if (typeof document === 'undefined') return;
+      const burst = document.createElement('div');
+      burst.className = styles.markerHeartsBurst;
+      burst.setAttribute('aria-hidden', 'true');
+      const COUNT = 6;
+      for (let i = 0; i < COUNT; i++) {
+        const heart = document.createElement('div');
+        heart.className = styles.markerHeart;
+        const x = (Math.random() - 0.5) * 40;            // ±20px lateral spread
+        const delay = Math.random() * 220;               // 0-220ms stagger
+        const scale = 0.85 + Math.random() * 0.4;        // 0.85-1.25 size variation
+        heart.style.setProperty('--mh-x', `${x}px`);
+        heart.style.setProperty('--mh-scale', `${scale}`);
+        heart.style.animationDelay = `${delay}ms`;
+        heart.innerHTML =
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="#ef4444" aria-hidden="true">' +
+          '<path d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z" />' +
+          '</svg>';
+        burst.appendChild(heart);
+      }
+      markerEl.appendChild(burst);
+      // 220ms max stagger + 1400ms keyframe + 180ms cleanup buffer.
+      window.setTimeout(() => {
+        burst.remove();
+      }, 1800);
+    };
+
     map.on('load', () => {
       // Belt-and-suspenders resize on first paint. React commits
       // the container DOM, then Mapbox initializes — but on slow
@@ -1155,21 +1204,22 @@ export default function Globe() {
                         detail: { userId, name: userName },
                       }),
                     );
-                    // Fire the global hearts cascade overlay per
-                    // product feedback "ao clicar neles, deve ser
-                    // acionada a festividade de corações de quem
-                    // receber os corações". The cascade plays on
-                    // the sender's screen as a visual confirmation
-                    // that hearts went out to the targeted user;
-                    // in a real-time backend wired build this same
-                    // event would also be pushed to the receiver's
-                    // client so the celebration mirrors there. */
-                    window.dispatchEvent(
-                      new CustomEvent('app:hearts-cascade', {
-                        detail: { targetUserId: userId, name: userName },
-                      }),
-                    );
                   }
+                  // Hearts celebration emanates from the RECEIVING
+                  // marker, not the sender's full viewport — per
+                  // product feedback "Ao clicar no coração que tem
+                  // no avatar, quem deve receber a chuva de
+                  // corações é o outro usuário, não o logado. é
+                  // como se fosse um aceno". The previous round
+                  // fired the global `app:hearts-cascade` event
+                  // here, which played the falling-hearts overlay
+                  // across the SENDER's whole screen — wrong
+                  // semantics for a one-way wave. Now we spawn a
+                  // local hearts burst anchored to the recipient's
+                  // marker DOM so the visual confirmation reads
+                  // as "hearts arriving at that user" instead of
+                  // "the sender is getting showered".
+                  spawnHeartsAtMarker(wrapper);
                 }
                 return;
               }

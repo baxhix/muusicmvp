@@ -889,6 +889,88 @@
   }
 }
 
+/* ── Heart-burst overlay on a RECEIVING marker ──
+ *
+ * Spawned by `spawnHeartsAtMarker()` in Globe.tsx whenever a
+ * viewer waves at someone else's pin (heart click). Six small
+ * filled hearts rise from the wrapper's geometric center +
+ * fade out over ~1.4s, with random ±20px lateral jitter +
+ * staggered animation delays so the cluster reads as a soft
+ * pulse rather than a metronome.
+ *
+ * Per product feedback "Ao clicar no coração que tem no
+ * avatar, quem deve receber a chuva de corações é o outro
+ * usuário, não o logado. é como se fosse um aceno" — the
+ * burst lives on the RECEIVING marker, not the sender's
+ * viewport overlay (the previous attempt fired the global
+ * `app:hearts-cascade` event, which played hearts across the
+ * sender's whole screen — wrong recipient).
+ *
+ * Container is absolutely positioned and pointer-events:none
+ * so it never blocks the heart button (a fresh click can
+ * always re-trigger). Container z-index sits above the badge
+ * + chip so hearts paint cleanly above the avatar art. */
+.markerHeartsBurst {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+.markerHeart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  animation: marker-heart-rise 1400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 2px 5px rgba(239, 68, 68, 0.55));
+}
+.markerHeart svg {
+  display: block;
+}
+
+@keyframes marker-heart-rise {
+  0% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--mh-x, 0px)), -50%)
+      scale(calc(var(--mh-scale, 1) * 0.45));
+  }
+  20% {
+    opacity: 1;
+    transform:
+      translate(calc(-50% + var(--mh-x, 0px)), calc(-50% - 12px))
+      scale(var(--mh-scale, 1));
+  }
+  75% {
+    opacity: 0.9;
+    transform:
+      translate(calc(-50% + var(--mh-x, 0px)), calc(-50% - 52px))
+      scale(var(--mh-scale, 1));
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--mh-x, 0px)), calc(-50% - 80px))
+      scale(calc(var(--mh-scale, 1) * 1.1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Static one-shot burst — show the hearts briefly without
+   * the upward rise animation. */
+  .markerHeart {
+    animation: marker-heart-fade 900ms ease-out forwards;
+  }
+  @keyframes marker-heart-fade {
+    0%   { opacity: 0; }
+    20%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}
+
 /* ============================================================
    ANA CASTELA CHECK-IN PIN
    ============================================================
