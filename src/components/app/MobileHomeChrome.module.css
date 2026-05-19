@@ -135,14 +135,18 @@
    *   - 50-92% pink → lilac symmetric ramp across the right
    *   - 92-98% lilac → transparent fade-out
    *   - 98-100% transparent (right side-edge cap) */
+  /* +15% more gradient area per the latest spec — full-color
+   * lilac stops shifted from 8/92 → 2/98, and the inner
+   * transparent caps dropped. Only the 0% and 100% transparent
+   * sentinels remain so the very-edge 1px vertical lines stay
+   * invisible. Full-color span went from 84% wide (8→92) to
+   * 96% wide (2→98), a ~14.3% increase. */
   background-image: linear-gradient(
     90deg,
     transparent 0%,
-    transparent 2%,
-    rgba(168, 85, 247, 0.55) 8%,
+    rgba(168, 85, 247, 0.55) 2%,
     rgba(236, 72, 153, 0.80) 50%,
-    rgba(168, 85, 247, 0.55) 92%,
-    transparent 98%,
+    rgba(168, 85, 247, 0.55) 98%,
     transparent 100%
   );
   background-origin: border-box;
