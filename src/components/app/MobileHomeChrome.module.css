@@ -66,8 +66,11 @@
    * now that the chrome is mostly transparent — without this
    * the edge would dissolve into the map. */
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom-left-radius: 28px;
-  border-bottom-right-radius: 28px;
+  /* Bumped 28 → 40 per product feedback ("aumente 12px do
+   * border radius das duas bordas inferiores"). Reads as a
+   * more pronounced card-hangs-from-the-top curve. */
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
   overflow: hidden;
 }
 
@@ -165,11 +168,43 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* padding-right reserves room for the floating message icon
-   * (~44px wide tap target at right:18px) so the Fanpoints
-   * chip never sits underneath it. */
-  padding: 0 60px 0 18px;
+  /* Symmetric 18px padding now that the floating chat icon
+   * sits BELOW the info bar (at top:54) rather than next to
+   * the Fanpoints chip. The previous 60px right reserve was
+   * for the icon's old top:4 alignment; with the icon dropped
+   * to the logo row, the Fanpoints chip can hug the
+   * right-edge cleanly. */
+  padding: 0 18px;
   pointer-events: auto;
+}
+
+/* Greeting — "Olá, <FirstName>" on the LEFT side of the info
+ * bar. Typography mirrors the Fanpoints chip on the right so
+ * the two reads as a matched pair:
+ *   - "Olá," in the same muted-gray small caps the Fanpoints
+ *     LABEL uses (`.fanpointsLabel` below).
+ *   - First name in the same bright-white 12px/700 tabular
+ *     style the Fanpoints VALUE uses (`.fanpointsValue` below).
+ */
+.greeting {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: #ffffff;
+  letter-spacing: 0.005em;
+  min-width: 0;
+}
+.greetingLabel {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.02em;
+}
+.greetingName {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #ffffff;
 }
 
 /* Fanpoints chip — crown + tabular number + "Fanpoints" label

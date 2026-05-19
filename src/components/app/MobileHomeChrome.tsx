@@ -30,6 +30,12 @@ export default function MobileHomeChrome() {
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
+  // First name only, used in the "Olá, X" greeting on the left
+  // side of the info bar. `name` is "First Last" in our seed;
+  // splitting on whitespace and taking [0] gives the first
+  // token. Fallback "fã" when the auth state hasn't resolved
+  // yet so the greeting line still reads naturally.
+  const firstName = user?.name?.trim().split(/\s+/)[0] ?? 'fã';
 
   if (!isMobile) return null;
 
@@ -47,13 +53,23 @@ export default function MobileHomeChrome() {
           FANVERSE
         </span>
       </div>
-      {/* (divider removed — header band and info bar are one
-       *  continuous surface now per product feedback.) */}
       <div
         className={styles.infoBar}
         role="status"
-        aria-label={`Você tem ${fanpoints.toLocaleString('pt-BR')} Fanpoints`}
+        aria-label={`Olá, ${firstName}. Você tem ${fanpoints.toLocaleString('pt-BR')} Fanpoints`}
       >
+        {/* Greeting — gray "Olá," + white bold first name on the
+          * LEFT side of the info bar. Mirrors the typography of
+          * the Fanpoints chip on the right so the two reads as
+          * a balanced pair. */}
+        <span className={styles.greeting}>
+          <span className={styles.greetingLabel}>Olá,</span>
+          <span className={styles.greetingName}>{firstName}</span>
+        </span>
+        {/* Fanpoints chip — moved to the RIGHT side per product
+          * feedback. `.infoBar` uses `justify-content:
+          * space-between`, so the first child (greeting) lands
+          * on the left and this one on the right naturally. */}
         <span className={styles.fanpointsChip}>
           <svg
             viewBox="0 0 24 24"
@@ -73,10 +89,6 @@ export default function MobileHomeChrome() {
           </span>
           <span className={styles.fanpointsLabel}>Fanpoints</span>
         </span>
-        {/* (Online-count chip removed per product feedback —
-         *  the info bar is reserved for the Fanpoints chip
-         *  now; the right slot is intentionally empty until a
-         *  new info source plugs in.) */}
       </div>
     </div>
   );
