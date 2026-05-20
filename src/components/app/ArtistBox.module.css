@@ -374,7 +374,12 @@
 .fanpointsInlineValue {
   font-size: 12.5px;
   font-weight: 700;
-  color: #fbbf24;
+  /* White per product feedback "A palavra 53.853 deve ser na
+   * cor branca no Box Fanverse". The crown glyph next to it
+   * keeps the amber accent on its own; isolating the color
+   * cue on the icon lets the number read as the primary value
+   * without competing with it. */
+  color: #ffffff;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
 }
