@@ -230,23 +230,16 @@ export default function ArtistBox() {
         </svg>
       </button>
 
-      {/* Drop-down body — collapsed by default, animates open via
-       *  the .boxOpen modifier on the wrapper above. Hosts the
-       *  full content the box used to render: full artist header,
-       *  wallet row, discount badge, missions, progress, footer. */}
-      <div className={styles.dropdown}>
-
-      {/* Artist header — photo + name lockup + Fanpoints chip
-          (with crown icon) replacing the previous "Membro desde"
-          line per product feedback:
-            - "Remova o texto 'Membro desde Maio de 2026' e
-              coloque o '53.743 Fanpoints' e substitua a estrela
-              pela coroa."
-            - "Aumente 30% o tamanho da imagem da Ana Castela"
-              (photo bumped 48→62px via CSS).
-          The walletRow that used to host Fanpoints + the "Meus
-          benefícios" button is gone — Fanpoints surface here,
-          the benefits link was retired entirely. */}
+      {/* Artist header + discount badge — both ALWAYS visible
+       *  per product feedback "A versão retraída do box
+       *  Fanverse Ana Castela deve ser até o fim do badge de
+       *  15% off e não ficar apenas uma linha". Previously
+       *  these lived INSIDE `.dropdown` so they collapsed
+       *  alongside the missions list; now they're siblings of
+       *  `.dropdown` (and of the `.compactBar` pill that's
+       *  desktop-hidden), guaranteeing the collapsed view
+       *  always shows photo + name + Fanpoints + the discount
+       *  pill before any toggle. */}
       <div className={styles.header}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/ana-castela-box.jpg" alt="Ana Castela" className={styles.photo} />
@@ -256,10 +249,6 @@ export default function ArtistBox() {
             <span className={styles.name}>Ana Castela</span>
           </div>
           <div className={styles.fanpointsInline}>
-            {/* Crown glyph (was a 5-point star) per product
-                feedback "substitua a estrela pela coroa". Stroked
-                outline reads as a quiet metadata cue; the value
-                next to it carries the real visual weight. */}
             <span className={styles.fanpointsInlineIcon} aria-hidden="true">
               <svg
                 viewBox="0 0 24 24"
@@ -280,15 +269,31 @@ export default function ArtistBox() {
             <span className={styles.fanpointsInlineLabel}>Fanpoints</span>
           </div>
         </div>
+        {/* Toggle chevron — lives here now that the header is
+            always visible. Same chevron + rotate-on-open pattern
+            the (now redundant) compactBar used. */}
+        <button
+          type="button"
+          className={`${styles.headerToggle} ${pulsing ? styles.headerTogglePulsing : ''}`}
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
+        >
+          <svg
+            className={`${styles.headerToggleChevron} ${open ? styles.headerToggleChevronOpen : ''}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 9l7 7 7-7" />
+          </svg>
+        </button>
       </div>
 
-      {/* Earned-discount badge — now reads as a status pill with
-          the store name itself as an inline link per product
-          feedback "Inclua no texto 'Ativado' no texto '15% OFF
-          na Loja da Boiadeira'; as palavras Loja da Boiadeira
-          deve ser um link". The outer container is no longer a
-          link; only "Loja da Boiadeira" inside is clickable to
-          the store. */}
       <div className={styles.discountBadge}>
         <span className={styles.discountIcon} aria-hidden="true">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -308,6 +313,13 @@ export default function ArtistBox() {
           </a>
         </span>
       </div>
+
+      {/* Drop-down body — collapsed by default, animates open via
+       *  the .boxOpen modifier on the wrapper above. Now hosts
+       *  ONLY the missions list + progress + footer. The artist
+       *  header + discount badge moved above this wrapper so
+       *  they stay visible in the collapsed state. */}
+      <div className={styles.dropdown}>
 
       {/* Missions list — the dropdown wrapper above already
        *  collapses/expands the whole body, so we don't need the

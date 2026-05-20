@@ -140,9 +140,12 @@
  * translate(-50%, -50%)` pins the logo's geometric center to
  * the header's geometric center on mobile.
  *
- *   height: 26px → leaves comfortable margins inside the
- *   mobile feed header (~50px tall after the mobile padding
- *   override below). */
+ *   height: 39px → bumped 50% (26 → 39) per product feedback
+ *   "No mobile, aumente 50% o tamanho do logotipo que está no
+ *   header no feed". The mobile feed header is taller after
+ *   the mobile @media padding override (~76px), so the larger
+ *   logo still sits comfortably with breathing margin on top
+ *   and bottom. */
 .headerLogo {
   /* Hidden by default — only the mobile @media block below
    * flips this to `block`. */
@@ -151,7 +154,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  height: 26px;
+  height: 39px;
   width: auto;
   pointer-events: none;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));

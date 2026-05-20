@@ -167,12 +167,55 @@
   max-height: 560px;
 }
 
-/* ── Artist header row ── */
+/* ── Artist header row — always visible ──
+ *
+ * Per product feedback "A versão retraída do box Fanverse Ana
+ * Castela deve ser até o fim do badge de 15% off e não ficar
+ * apenas uma linha" the header was lifted OUT of the
+ * `.dropdown` (which collapses) and into the box directly,
+ * paired with the discount badge below it. Together they form
+ * the "always visible" upper region of the box; the dropdown
+ * below only wraps the missions list / progress / footer. */
 .header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px 16px 8px;
+}
+
+/* Toggle chevron — sits at the right edge of the header row.
+ * Inherits its pulse keyframe from the same source the old
+ * .compactBar used so the chevron still highlights briefly
+ * whenever the user earns Fanpoints. */
+.headerToggle {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.headerToggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F5F5F7;
+}
+.headerToggleChevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.18s ease;
+}
+.headerToggleChevronOpen {
+  transform: rotate(180deg);
+}
+.headerTogglePulsing {
+  animation: fanverseBarPulse 1.5s ease-out 1 both;
 }
 
 /* Artist photo — bumped 30% (48 → 62px) per product
@@ -828,28 +871,13 @@
       0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
       0 1px 0 rgba(255, 255, 255, 0.08) inset;
   }
-  /* The compactBar (the slim always-visible toggle pill that
-   * mobile uses) was hidden on desktop entirely + the dropdown
-   * was force-pinned open with `max-height: none`. The footer
-   * chevron's onClick still flipped `open`, but the
-   * always-open CSS swallowed the collapse so the arrow felt
-   * inert — per product feedback "No box Fanverse, faça a seta
-   * de retrair e expandir o box funcionar".
-   *
-   * Now:
-   *   - The dropdown uses the SAME max-height transition the
-   *     mobile pill uses (defined on `.dropdown` above), so the
-   *     footer chevron + the compactBar chevron both collapse
-   *     the box for real.
-   *   - The compactBar shows on desktop only when the box is
-   *     COLLAPSED — when expanded, the dropdown's internal
-   *     header carries the artist identity instead, so there's
-   *     no name/avatar duplication. */
+  /* compactBar (the slim 40px pill that mobile uses) is hidden
+   * entirely on desktop — the .header above this @media block
+   * now serves as the always-visible identity surface, with
+   * the discount badge below it. The .dropdown collapses the
+   * missions / progress / footer when closed. */
   .compactBar {
     display: none;
-  }
-  .box:not(.boxOpen) .compactBar {
-    display: flex;
   }
 }
 
