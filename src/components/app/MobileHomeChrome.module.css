@@ -88,21 +88,29 @@
   box-shadow: 0 8px 18px -4px rgba(0, 0, 0, 0.6);
 }
 
-/* Gradient stroke concentrated on the BOTTOM CURVE only — per
- * product feedback "a borda não precisa pegar todo o header
- * apenas uma parte da dobra e ir esmaecendo com o preto".
+/* Gradient stroke restricted to the BOTTOM EDGE + bottom
+ * corner curves per product feedback "No mobile, a parte de
+ * cima da borda do header, não deve ter ser com o gradient
+ * lilás/rosa. Somente na parte de baixo pegando parte das
+ * bordas arredondadas."
  *
- * The mask-composite ring still paints around the whole
- * perimeter, but the gradient itself is transparent at the
- * sides (0-22% and 78-100% on the x axis) and only colors the
- * middle band (28-72%) — the portion of the border that runs
- * across the bottom + into the two bottom corner curves. The
- * side segments of the ring receive transparent paint and
- * effectively disappear, leaving only the curve highlighted.
- *
- * The visible band fades from transparent → lilac → pink →
- * lilac → transparent so both ends ease into the dark
- * surrounding chrome without a hard cutoff. */
+ * How it works:
+ *   - The `mask: ... content-box, ...; mask-composite: exclude`
+ *     trick still extracts the border RING (everything between
+ *     content-box and border-box). That's what gives the
+ *     perimeter stroke its 1px thickness.
+ *   - The `background-image` (horizontal lilac→pink→lilac) is
+ *     now CONFINED to the bottom 33% of the pseudo's box via
+ *     `background-size: 100% 33%` + `background-position: 0
+ *     100%`. Everywhere above that band, the background is
+ *     transparent — so when the mask's ring sweeps across the
+ *     TOP edge and the upper portions of the side edges, it
+ *     samples transparent pixels and paints nothing.
+ *   - 33% of a 133px chrome ≈ 44px, which comfortably
+ *     encompasses the full sweep of the 40px bottom-corner
+ *     curves. Net visible: bottom horizontal line + both
+ *     bottom curves, fading naturally into the dark surface
+ *     above as the ring exits the colored band. */
 .chrome::after {
   content: '';
   position: absolute;
@@ -110,35 +118,6 @@
   pointer-events: none;
   border-radius: inherit;
   border: 1px solid transparent;
-  /* Color band STARTS at the curves and runs across the bottom.
-   * Per product feedback iterations:
-   *   - "iniciando pelas curvas e não todo header" → caps
-   *     close enough that the colored stops reach the bottom
-   *     curve sweep.
-   *   - "As laterais retas não deve ter ou deve ser preto" →
-   *     the 1-2% outer caps keep the vertical side edges
-   *     invisible (dark chrome surroundings read as "black").
-   *   - "Aumente 20% a área onde o gradiente está ocupando" →
-   *     full-color stops widened from 14/86 → 8/92, and the
-   *     outer caps tightened from 5/95 → 2/98. The colored
-   *     band is now ~17-20% wider than the previous tuning
-   *     while the side-edge invisibility constraint stays
-   *     intact.
-   *
-   * Stop layout (percentages across the chrome's full width):
-   *   - 0-2%   transparent (side-edge cap — invisible)
-   *   - 2-8%   transparent → lilac fade-in (covers more of
-   *            the curve sweep than the previous 5-14% range)
-   *   - 8-50%  lilac → pink ramp across the left half
-   *   - 50-92% pink → lilac symmetric ramp across the right
-   *   - 92-98% lilac → transparent fade-out
-   *   - 98-100% transparent (right side-edge cap) */
-  /* +15% more gradient area per the latest spec — full-color
-   * lilac stops shifted from 8/92 → 2/98, and the inner
-   * transparent caps dropped. Only the 0% and 100% transparent
-   * sentinels remain so the very-edge 1px vertical lines stay
-   * invisible. Full-color span went from 84% wide (8→92) to
-   * 96% wide (2→98), a ~14.3% increase. */
   background-image: linear-gradient(
     90deg,
     transparent 0%,
@@ -147,6 +126,13 @@
     rgba(168, 85, 247, 0.55) 98%,
     transparent 100%
   );
+  /* Confine the colored band to the BOTTOM 33% of the pseudo,
+   * anchored at the bottom edge. The rest of the pseudo's
+   * background stays transparent so the masked ring above this
+   * band paints nothing. */
+  background-position: 0 100%;
+  background-size: 100% 33%;
+  background-repeat: no-repeat;
   background-origin: border-box;
   background-clip: border-box;
   -webkit-mask:
@@ -187,13 +173,16 @@
    * brand makes the logo the primary visual anchor of the
    * card, which is the spec.
    *
-   * Anchor math: top:50% + translate(-50%, -50%) puts the
-   * brand's geometric center at the chrome's geometric
-   * center. With the info bar at top:6 (height 36 → covers
-   * y:6-42) and the chrome at 133px, the chrome center sits
-   * at y:66.5 — comfortably below the info bar, so the
-   * larger logo doesn't overlap the greeting / Fanpoints. */
-  top: 50%;
+   * Anchor math: top:50% + 6px + translate(-50%, -50%) puts
+   * the brand's geometric center at chrome.midline + 6px down.
+   * The +6px nudge was added per product feedback "No mobile,
+   * posicione 6px mais abaixo o logotipo da Ana Castela" so
+   * the brand sits a touch closer to the bottom curve, giving
+   * the info bar above it more visual breathing room. With
+   * the info bar at top:6 (height 36 → covers y:6-42) and the
+   * chrome at 133px, the chrome center sits at y:66.5; after
+   * the nudge the brand center lands at y:72.5. */
+  top: calc(50% + 6px);
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;

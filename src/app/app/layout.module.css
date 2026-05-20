@@ -70,22 +70,23 @@
    * the centered logo.
    *
    * Re-aligned after the chrome's brand row moved from
-   * bottom-anchored to exact-center (top:50% + translate(-50%,
-   * -50%)) per product feedback ("centralize vertical e
-   * horizontalmente no header"):
-   *   - Chrome height = 133, midline y:66.5.
-   *   - Brand wrapper (logo 90 + wordmark 6.5 − 10 overlap)
-   *     ≈ 86.5px tall, centered around the midline.
-   *   - Logo top y:23.25, logo center y:68.25, logo visual
-   *     bottom y:113.25.
-   *   - 40×40 chat button centered on logo center → top = 68.25
-   *     − 20 ≈ 48.
+   * bottom-anchored to exact-center (top:50% + 6px nudge +
+   * translate(-50%, -50%)) per product feedback ("centralize
+   * vertical e horizontalmente no header" + "No mobile,
+   * posicione 6px mais abaixo o logotipo da Ana Castela e o
+   * ícone de mensagem"):
+   *   - Chrome height = 133, midline y:66.5, +6px nudge.
+   *   - Brand wrapper (logo 81 + wordmark 6.5 − 10 overlap)
+   *     ≈ 77.5px tall, centered around y:72.5.
+   *   - Logo center now y:74.25 (was y:68.25).
+   *   - 40×40 chat button centered on logo center → top =
+   *     74.25 − 20 ≈ 54 (was 48).
    *
    * Horizontal alignment: `right: 18px` keeps the icon's right
    * edge on the same outer margin the Fanpoints chip uses on
    * the left. */
   .topBar {
-    top: 48px;
+    top: 54px;
     right: 18px;
     transform: none;
     flex-direction: row;
