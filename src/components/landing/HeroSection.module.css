@@ -1,6 +1,11 @@
 .hero {
   position: relative;
+  /* `100dvh` (dynamic viewport height) acompanha a área visível
+   * real do mobile — encolhe quando a barra do navegador aparece
+   * e cresce quando ela some. Browsers antigos caem no fallback
+   * 100vh do declare anterior, então mantemos ambos. */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,23 +43,32 @@
 .hero::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -8%;
   z-index: -1;
   pointer-events: none;
+  /* Tom mais preto per product feedback "deixe os gradientes em
+   * movimento e em um tom mais preto":
+   *   - Opacidades dos radial-gradients coloridos cortadas em
+   *     ~45-55% (ex.: 0.16 → 0.08; 0.18 → 0.09). O fundo central
+   *     já é #040406 → #000, e com os coloridos atenuados o
+   *     overall reading agora é "preto profundo com hints de
+   *     azul/cobre" em vez de "azul-acinzentado escuro".
+   *   - O linear-gradient de banda diagonal também foi atenuado
+   *     na mesma proporção. */
   background:
     linear-gradient(148deg,
       transparent 10%,
-      rgba(0,40,100,0.09) 35%,
-      rgba(0,70,140,0.13) 50%,
-      rgba(0,40,100,0.09) 65%,
+      rgba(0,40,100,0.045) 35%,
+      rgba(0,70,140,0.065) 50%,
+      rgba(0,40,100,0.045) 65%,
       transparent 90%
     ),
-    radial-gradient(ellipse 58% 48% at 8% 20%,   rgba(0,130,170,0.16) 0%, transparent 65%),
-    radial-gradient(ellipse 52% 44% at 90% 80%,  rgba(140,80,0,0.13) 0%, transparent 65%),
-    radial-gradient(ellipse 38% 28% at 50% 6%,   rgba(0,30,120,0.18) 0%, transparent 72%),
-    radial-gradient(ellipse 34% 52% at 95% 42%,  rgba(0,100,180,0.10) 0%, transparent 68%),
-    radial-gradient(ellipse 46% 36% at 10% 90%,  rgba(0,40,160,0.12) 0%, transparent 66%),
-    radial-gradient(ellipse 160% 130% at 50% 50%, #040406 0%, #020203 60%, #000000 100%);
+    radial-gradient(ellipse 58% 48% at 8% 20%,   rgba(0,130,170,0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 52% 44% at 90% 80%,  rgba(140,80,0,0.065) 0%, transparent 65%),
+    radial-gradient(ellipse 38% 28% at 50% 6%,   rgba(0,30,120,0.09) 0%, transparent 72%),
+    radial-gradient(ellipse 34% 52% at 95% 42%,  rgba(0,100,180,0.05) 0%, transparent 68%),
+    radial-gradient(ellipse 46% 36% at 10% 90%,  rgba(0,40,160,0.06) 0%, transparent 66%),
+    radial-gradient(ellipse 160% 130% at 50% 50%, #020204 0%, #010102 60%, #000000 100%);
   background-size:
     130% 130%,
     130% 130%,
@@ -64,13 +78,19 @@
     130% 130%,
     100% 100%;
   will-change: transform;
-  animation: nebula-drift 90s ease-in-out infinite alternate;
+  /* Mais movimento per feedback "deixe os gradientes em
+   * movimento": amplitude ±4% (era ±1.5%) e período 48s (era
+   * 90s) — quase o dobro de cadência. Continua acelerado por
+   * GPU (translate3d em layer composto), então o custo por
+   * frame não muda. O inset: -8% acima dá folga pra translates
+   * maiores sem revelar borda dura. */
+  animation: nebula-drift 48s ease-in-out infinite alternate;
 }
 
 @keyframes nebula-drift {
-  0%   { transform: translate3d(0%, 0%, 0); }
-  50%  { transform: translate3d(-1.5%, -0.5%, 0); }
-  100% { transform: translate3d(1.5%, 0.5%, 0); }
+  0%   { transform: translate3d(-4%, -2%, 0); }
+  50%  { transform: translate3d(2%,  3%, 0); }
+  100% { transform: translate3d(4%,  -2%, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -692,4 +712,36 @@
     position: fixed;
   }
   .sub { white-space: normal; max-width: 88vw; font-size: 15px; }
+
+  /* Botão "Entrar no Fanverse" ancorado pelo bottom no mobile per
+   * product feedback "que o botão se ajuste dentro da tela sem
+   * precisar scrollar". O `top: calc(78vh + 24px)` da regra base
+   * funciona em telas altas (iPhone 13+), mas em devices com
+   * viewport curto + browser chrome visível o botão escapava da
+   * área útil exigindo scroll. Com bottom-anchoring + dvh + safe
+   * area inset o botão sempre encosta perto da borda inferior,
+   * dentro da fold em qualquer altura. */
+  .heroCta {
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  }
+
+  /* Padding-top do bloco de copy comprimido no mobile pra que a
+   * headline também caiba sem brigar com o CTA ancorado abaixo.
+   * Mantém o headline ~22% pra baixo do topo (era ~24vh), o que
+   * dá ~ 2 linhas de respiro entre logo e título mesmo em
+   * viewports curtos. */
+  .copy {
+    height: calc(100dvh - 120px);
+    padding: clamp(110px, 18dvh, 180px) 24px 0;
+    gap: 14px;
+  }
+
+  /* Headline ligeiramente menor no mobile pra evitar que o
+   * "pre-line" estoure a largura em 3+ linhas em viewports
+   * estreitos (375px e abaixo). Mantém a hierarquia mas devolve
+   * ~16% de altura ao layout. */
+  .headline {
+    font-size: clamp(34px, 9vw, 52px);
+  }
 }
