@@ -79,6 +79,13 @@
   gap: 4px;
   margin-top: 0;
   max-height: 0;
+  /* Cap WIDTH to 0 at rest too — otherwise the hidden music
+   * row's natural content width still expands the `.info`
+   * flex column and the badge ends up wider than the visible
+   * (name + song) content. Per product feedback "Ajuste a
+   * largura dos badges de usuário flutuando para terminar até
+   * onde tem o conteúdo respeitando o padding do box." */
+  max-width: 0;
   opacity: 0;
   overflow: hidden;
   /* Transition the size + visibility together so the reveal
@@ -87,6 +94,7 @@
    * of materializing inside it. */
   transition:
     max-height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    max-width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
     opacity 0.18s ease,
     margin-top 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -98,6 +106,11 @@
    * value keeps the transition smooth without re-measuring
    * on different content lengths. */
   max-height: 80px;
+  /* Width cap that gives the music row enough horizontal
+   * room for the title + a chunk of artist. The marquee
+   * scrolls when content exceeds the inner `.musicTrack`
+   * max-width below. */
+  max-width: 240px;
   opacity: 1;
   margin-top: 6px;
 }
@@ -126,6 +139,83 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Music row — mirrors `liveUserBadge`'s song treatment ──
+ *
+ * Per product feedback "No hover, ele se adequa ao mesmo
+ * estilo do box de usuário fixo no mapa, com o movimento e
+ * estilo da formatação do nome da musica e artista." The
+ * hover-expanded music row now uses the same container +
+ * inner-span pattern Globe.tsx uses for `.liveUserSong` +
+ * `.userBadgeSongInner`, with the same `marquee-pingpong`
+ * keyframe scrolling the title + artist when the text
+ * overflows. The keyframe + custom properties are set on the
+ * inner span; FloatingUserBadge measures overflow on mount
+ * via useLayoutEffect and writes `--marquee-distance` +
+ * `--marquee-duration` inline. */
+.musicRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: -0.005em;
+  min-width: 0;
+}
+
+.musicTrack {
+  max-width: 180px;
+  overflow: hidden;
+  /* `position: relative` so the inner span's transform paints
+   * relative to this container instead of bleeding up to the
+   * badge wrapper. */
+  position: relative;
+  min-width: 0;
+}
+
+.musicInner {
+  display: inline-block;
+  white-space: nowrap;
+  /* Default rest state — no scroll. Inline custom-property
+   * overrides switch these to real values when the
+   * measurement detects overflow. */
+  --marquee-distance: 0px;
+  --marquee-duration: 6s;
+}
+
+.musicInnerMarquee {
+  animation: floating-marquee-pingpong var(--marquee-duration) ease-in-out infinite alternate;
+}
+
+@keyframes floating-marquee-pingpong {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-1 * var(--marquee-distance))); }
+}
+
+/* Title / artist typography — copies the visual identity from
+ * Globe.module.css `.trackTitle` + `.trackArtist` so the
+ * floating badge's hover state reads as the same surface as
+ * the live-user pin on the map. */
+.trackTitle {
+  font-weight: 600;
+  color: #F5F5F7;
+  letter-spacing: -0.005em;
+}
+.trackArtist {
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Reduced-motion users see a static (ellipsis-clipped)
+   * version of the music row — no marquee scroll. The
+   * container's overflow: hidden + the inner being
+   * inline-block + nowrap means long text just clips at the
+   * container's right edge. */
+  .musicInnerMarquee {
+    animation: none;
+  }
 }
 
 /* Phase classes — applied to .wrapper */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { track } from '@/lib/analytics';
@@ -268,159 +268,218 @@ export default function FloatingUsers() {
 
   return (
     <>
-      {pool.map((user) => {
-        return (
-          <div
-            key={user.id}
-            className={`${styles.wrapper} ${user.center ? styles.wrapperClickable : ''}`}
-            style={{
-              left: user.left,
-              top: user.top,
-              ['--float-dur' as string]: `${user.floatDuration}s`,
-              ['--float-del' as string]: `${user.floatDelay}s`,
-            } as React.CSSProperties}
-            onClick={() => user.center && globeStore.flyTo(user.center, user.zoom ?? 10)}
-          >
-            <div className={`${styles.badge} ${styles.visible}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={user.img} alt={user.name} className={styles.avatar} />
-              <div className={styles.info}>
-                <span className={styles.name}>{user.name}</span>
-                {user.song ? (
-                  <span className={styles.song}>{user.song}</span>
-                ) : (
-                  <span className={styles.song}>online</span>
-                )}
-                {/* Hover-expanded detail rows — city + full
-                    artist info. Lives INSIDE the badge so the
-                    whole pill stays as a single element when it
-                    expands, per product feedback "refaça para
-                    que seja um único elemento apenas adicionando
-                    as informações de Cidade e info completas
-                    do nome da música e Artista". CSS controls
-                    the collapse via max-height + opacity, driven
-                    by `.wrapper:hover` so no React state is
-                    needed to toggle these. */}
-                <div className={styles.expandedDetails} aria-hidden="true">
-                  <div className={styles.detailRow}>
-                    <svg
-                      className={styles.detailIcon}
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 1a3.5 3.5 0 00-3.5 3.5C2.5 7.5 6 11 6 11s3.5-3.5 3.5-6.5A3.5 3.5 0 006 1z" />
-                      <circle cx="6" cy="4.5" r="1" />
-                    </svg>
-                    <span className={styles.detailText}>
-                      {user.city}
-                    </span>
-                  </div>
-                  {user.song && (
-                    <div className={styles.detailRow}>
-                      <svg
-                        className={styles.detailIcon}
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M9 1v7" />
-                        <path d="M5 3v7" />
-                        <circle cx="3.5" cy="10" r="1.5" />
-                        <circle cx="7.5" cy="8" r="1.5" />
-                        <path d="M5 3l4-2" />
-                      </svg>
-                      <span className={styles.detailText}>
-                        {user.song}
-                        {user.artist ? ` · ${user.artist}` : ''}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* Always-visible heart — wave affordance per
-                  product feedback "Deixe o coração visível em
-                  todos os boxes de usuários que tem, seja no
-                  mapa ou flutuante". Sits at the right edge of
-                  the badge; the click is stopPropagation'd so
-                  the badge's own flyTo handler doesn't fire on
-                  the same tap. */}
-              <button
-                type="button"
-                className={`${styles.likeBtn} ${likedIds.has(user.id) ? styles.liked : ''}`}
-                onClick={(e) => handleWave(user, e)}
-                aria-label={
-                  likedIds.has(user.id)
-                    ? `Você acenou para ${user.name}`
-                    : `Acenar para ${user.name}`
-                }
-                aria-pressed={likedIds.has(user.id)}
+      {pool.map((user) => (
+        <FloatingUserBadge
+          key={user.id}
+          user={user}
+          isLiked={likedIds.has(user.id)}
+          isBursting={burstingIds.has(user.id)}
+          onWave={handleWave}
+        />
+      ))}
+    </>
+  );
+}
+
+/* ============================================================
+ * FloatingUserBadge — single badge instance
+ *
+ * Owns the music-row marquee measurement via its own refs so
+ * each badge can independently decide whether its song/artist
+ * line needs to scroll. Per product feedback "No hover, ele se
+ * adequa ao mesmo estilo do box de usuário fixo no mapa, com o
+ * movimento e estilo da formatação do nome da musica e
+ * artista" — the hover-expanded music row mirrors the Globe
+ * `liveUserBadge` song treatment: container with `max-width`
+ * + `overflow: hidden`, inner span with `display: inline-block`
+ * + `white-space: nowrap`, and a CSS-variable-driven
+ * `marquee-pingpong` keyframe when content overflows.
+ * ============================================================ */
+
+interface FloatingUserBadgeProps {
+  user: FloatingUser;
+  isLiked: boolean;
+  isBursting: boolean;
+  onWave: (user: FloatingUser, e: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+function FloatingUserBadge({
+  user,
+  isLiked,
+  isBursting,
+  onWave,
+}: FloatingUserBadgeProps) {
+  const musicContainerRef = useRef<HTMLDivElement>(null);
+  const musicInnerRef = useRef<HTMLSpanElement>(null);
+  const [marqueeDistance, setMarqueeDistance] = useState(0);
+
+  // Measure the music row's overflow whenever song or artist
+  // changes. Uses `useLayoutEffect` so the measurement runs
+  // synchronously before paint — avoids the marquee class
+  // briefly appearing while we re-measure. The expanded row is
+  // hidden via max-height: 0 in CSS, but the inner element
+  // still has layout, so `getBoundingClientRect` returns the
+  // real natural width.
+  useLayoutEffect(() => {
+    const container = musicContainerRef.current;
+    const inner = musicInnerRef.current;
+    if (!container || !inner || !user.song) {
+      setMarqueeDistance(0);
+      return;
+    }
+    const containerWidth = container.clientWidth;
+    const innerWidth = inner.scrollWidth;
+    const overflow = innerWidth - containerWidth;
+    setMarqueeDistance(overflow > 4 ? overflow : 0);
+  }, [user.song, user.artist]);
+
+  const marqueeStyle = marqueeDistance > 0
+    ? ({
+        ['--marquee-distance' as string]: `${marqueeDistance}px`,
+        ['--marquee-duration' as string]: `${Math.max(4, Math.min(8, marqueeDistance / 30))}s`,
+      } as React.CSSProperties)
+    : undefined;
+
+  return (
+    <div
+      className={`${styles.wrapper} ${user.center ? styles.wrapperClickable : ''}`}
+      style={{
+        left: user.left,
+        top: user.top,
+        ['--float-dur' as string]: `${user.floatDuration}s`,
+        ['--float-del' as string]: `${user.floatDelay}s`,
+      } as React.CSSProperties}
+      onClick={() => user.center && globeStore.flyTo(user.center, user.zoom ?? 10)}
+    >
+      <div className={`${styles.badge} ${styles.visible}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={user.img} alt={user.name} className={styles.avatar} />
+        <div className={styles.info}>
+          <span className={styles.name}>{user.name}</span>
+          {user.song ? (
+            <span className={styles.song}>{user.song}</span>
+          ) : (
+            <span className={styles.song}>online</span>
+          )}
+
+          {/* Hover-expanded detail rows. CSS-only collapse via
+              max-height + opacity on `.wrapper:hover`. */}
+          <div className={styles.expandedDetails} aria-hidden="true">
+            {/* City row — simple icon + text. */}
+            <div className={styles.detailRow}>
+              <svg
+                className={styles.detailIcon}
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  width="13"
-                  height="13"
-                  fill={likedIds.has(user.id) ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </button>
+                <path d="M6 1a3.5 3.5 0 00-3.5 3.5C2.5 7.5 6 11 6 11s3.5-3.5 3.5-6.5A3.5 3.5 0 006 1z" />
+                <circle cx="6" cy="4.5" r="1" />
+              </svg>
+              <span className={styles.detailText}>{user.city}</span>
             </div>
 
-            {/* Local hearts-burst overlay anchored on this badge.
-                Mirrors the Globe Mapbox marker burst so both
-                surfaces feel like a single interaction language.
-                Each particle reads CSS custom properties for its
-                horizontal jitter / delay / scale so a static
-                set of 6 elements still reads as organic. */}
-            {burstingIds.has(user.id) && (
-              <div className={styles.heartsBurst} aria-hidden="true">
-                {HEART_BURST_PARTICLES.map((p, i) => (
-                  <div
-                    key={i}
-                    className={styles.heartParticle}
-                    style={
-                      {
-                        ['--fh-x' as string]: `${p.x}px`,
-                        ['--fh-scale' as string]: `${p.scale}`,
-                        animationDelay: `${p.delay}ms`,
-                      } as React.CSSProperties
-                    }
+            {/* Music row — mirrors the liveUserBadge song
+                treatment. Container has fixed max-width +
+                overflow: hidden; the inner span is
+                inline-block + nowrap so it can overflow with
+                a marquee scroll when too long. Title is
+                semibold/white, " — Artist" is regular gray. */}
+            {user.song && (
+              <div className={styles.musicRow}>
+                <svg
+                  className={styles.detailIcon}
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 1v7" />
+                  <path d="M5 3v7" />
+                  <circle cx="3.5" cy="10" r="1.5" />
+                  <circle cx="7.5" cy="8" r="1.5" />
+                  <path d="M5 3l4-2" />
+                </svg>
+                <div className={styles.musicTrack} ref={musicContainerRef}>
+                  <span
+                    ref={musicInnerRef}
+                    className={`${styles.musicInner} ${marqueeDistance > 0 ? styles.musicInnerMarquee : ''}`}
+                    style={marqueeStyle}
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="#ef4444"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z" />
-                    </svg>
-                  </div>
-                ))}
+                    <span className={styles.trackTitle}>{user.song}</span>
+                    {user.artist && (
+                      <span className={styles.trackArtist}> — {user.artist}</span>
+                    )}
+                  </span>
+                </div>
               </div>
             )}
-
-            {/* The separate hover-preview card that used to
-                render here was retired — its content (city +
-                song + artist) now lives inline inside the
-                badge above via `.expandedDetails`, so the
-                whole element is a single pill that morphs on
-                hover. */}
           </div>
-        );
-      })}
-    </>
+        </div>
+
+        {/* Heart — always visible. */}
+        <button
+          type="button"
+          className={`${styles.likeBtn} ${isLiked ? styles.liked : ''}`}
+          onClick={(e) => onWave(user, e)}
+          aria-label={
+            isLiked
+              ? `Você acenou para ${user.name}`
+              : `Acenar para ${user.name}`
+          }
+          aria-pressed={isLiked}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="13"
+            height="13"
+            fill={isLiked ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Local hearts-burst overlay anchored on this badge.
+          Mirrors the Globe Mapbox marker burst so both
+          surfaces feel like a single interaction language. */}
+      {isBursting && (
+        <div className={styles.heartsBurst} aria-hidden="true">
+          {HEART_BURST_PARTICLES.map((p, i) => (
+            <div
+              key={i}
+              className={styles.heartParticle}
+              style={
+                {
+                  ['--fh-x' as string]: `${p.x}px`,
+                  ['--fh-scale' as string]: `${p.scale}`,
+                  animationDelay: `${p.delay}ms`,
+                } as React.CSSProperties
+              }
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="#ef4444"
+                aria-hidden="true"
+              >
+                <path d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z" />
+              </svg>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
