@@ -345,6 +345,23 @@ export default function BottomNav() {
             </button>
 
             {moreOpen && (
+              <>
+                {/* Full-screen blurred backdrop behind the menu
+                 *  per product feedback "No mobile, aplique o
+                 *  efeito de blur no background no box que abre
+                 *  após clicar no menu hamburguer". Sits below
+                 *  the menu (z:79 vs menu z:80) but above the
+                 *  rest of the app chrome so everything visible
+                 *  while the menu is open softens out. Click
+                 *  anywhere on the backdrop closes the menu —
+                 *  same affordance the existing outside-click
+                 *  listener already provides, just made tappable
+                 *  edge-to-edge. */}
+                <div
+                  className={styles.moreBackdrop}
+                  aria-hidden="true"
+                  onClick={() => setMoreOpen(false)}
+                />
               <div className={styles.moreMenu} role="menu">
                 {/* Comunidades — demoted from the navbar's 4th slot
                  *  on mobile (Chat takes that slot now). Communities
@@ -448,15 +465,16 @@ export default function BottomNav() {
                     router.push('/app/perfil');
                   }}
                 >
-                  {/* Simple 8-prong gear: 4 straight strokes from
-                    * center radiating out (rotated 0°/45°/90°/135°)
-                    * + a central circle. The previous gear was a
-                    * single ~200-segment Bézier path approximating
-                    * a cog outline, which iOS Safari sometimes
-                    * rasterized as a tangled-looking blob (the
-                    * "broken" appearance the user reported). This
-                    * version is 8 line segments + 1 circle — there's
-                    * nothing left to render wrong. */}
+                  {/* Sliders icon — three horizontal tracks each
+                    * carrying a filled knob at a different x
+                    * position. Replaces the 8-prong gear per
+                    * product feedback "mude o ícone de
+                    * configurações". The sliders glyph reads
+                    * as "preferences / tune" which fits the
+                    * Configurações destination better than the
+                    * traditional cog, AND it's a tiny path set
+                    * (3 lines + 3 circles) so iOS Safari has
+                    * nothing complex to rasterize. */}
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -466,12 +484,17 @@ export default function BottomNav() {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+                    <line x1="4" y1="7" x2="20" y2="7" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="17" x2="20" y2="17" />
+                    <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
                   </svg>
                   Configurações
                 </button>
               </div>
+              </>
             )}
           </div>
         ) : (

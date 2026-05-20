@@ -479,6 +479,32 @@
   align-items: center;
   justify-content: center;
 }
+/* Full-screen blurred backdrop behind the hamburger popup —
+ * paints the rest of the app soft + dark so the focused menu
+ * reads as the only interactive layer. Per product feedback
+ * "No mobile, aplique o efeito de blur no background no box
+ * que abre após clicar no menu hamburguer".
+ *
+ * z-index 79 puts it just BELOW `.moreMenu` (z:80) so the
+ * menu paints crisply over the blur. Click anywhere closes
+ * the menu via the inline onClick handler in the JSX (the
+ * existing global outside-click listener doesn't fire here
+ * because the backdrop sits INSIDE the `.moreWrap` ref). */
+.moreBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  z-index: 79;
+  pointer-events: auto;
+  animation: moreBackdropIn 0.18s ease-out;
+}
+@keyframes moreBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .moreMenu {
   position: fixed;
   /* Desktop default: pill bottom-padding 24 + pill height 56 +
