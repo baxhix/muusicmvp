@@ -70,10 +70,24 @@
   overflow: hidden;
   background: var(--surface-2);
 }
+/* Per product feedback "Ao cadastrar um vídeo no admin, ele
+ * deve aparecer inteiro, sem uma limitação de espaço.
+ * Atualmente está cortando uma parte em cima e em baixo." —
+ * the previous `max-height: 360px` cap was clipping tall
+ * portrait videos (the admin panel's drawer is narrow, so a
+ * 9:16 clip naturally renders ~568px tall when scaled to the
+ * column width, which the 360 cap was chopping).
+ *
+ * Removed the height cap entirely so the preview always shows
+ * the FULL video at its natural aspect ratio. `height: auto`
+ * + `object-fit: contain` are belt-and-suspenders so the
+ * <video> renders without any cropping or stretching even if
+ * a future ancestor adds its own height constraints. */
 .videoPreview {
   display: block;
   width: 100%;
-  max-height: 360px;
+  height: auto;
+  object-fit: contain;
   background: #000;
 }
 .remove {

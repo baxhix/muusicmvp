@@ -197,20 +197,40 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Video wrapper ── */
+/* ── Video wrapper ──
+ *
+ * Per product feedback "Ao cadastrar um vídeo no admin, ele
+ * deve aparecer inteiro, sem uma limitação de espaço.
+ * Atualmente está cortando uma parte em cima e em baixo." —
+ * the previous combo of `aspect-ratio: 9 / 16` (portrait
+ * container) + `object-fit: cover` on `.video` was cropping
+ * landscape + square videos top + bottom to fit the slot.
+ *
+ * Two changes:
+ *   - Dropped the fixed portrait `aspect-ratio` so the wrapper
+ *     adapts to whatever the source video's intrinsic shape is.
+ *     Posts now stretch as tall as the video needs (with the
+ *     same max-height ceiling below for very tall portraits).
+ *   - `.video { object-fit: contain }` so the full video frame
+ *     paints, letterboxed against the black `.videoWrap`
+ *     background if needed instead of being clipped.
+ *
+ * Max-height stays as a soft cap so extreme aspect ratios
+ * (e.g. a 9:21 phone clip) don't blow the feed slot vertical
+ * past readable bounds. */
 .videoWrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 9 / 16;
-  max-height: 420px;
+  max-height: 540px;
   background: #000;
   overflow: hidden;
 }
 
 .video {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: 540px;
+  object-fit: contain;
   display: block;
 }
 
