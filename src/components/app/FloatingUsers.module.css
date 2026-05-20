@@ -35,125 +35,96 @@
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 40px;
   padding: 6px 11px 6px 7px;
-  transition: border-color 0.15s, background 0.15s;
+  /* Cap the width so a long song title + artist combo doesn't
+   * blow the pill out across the viewport when the badge
+   * expands on hover. */
+  max-width: 280px;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    border-radius 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .wrapper:hover .badge {
   background: rgba(6,6,8,0.92);
   border-color: rgba(255,255,255,0.07);
+  /* Expanded state — anchor the avatar to the top-left so it
+   * stays where it was instead of floating into the visual
+   * middle of the now-taller content stack. Soften the pill
+   * shape to a card-radius since the 40px pill clip looks odd
+   * on a multi-line element. Slightly more vertical padding
+   * to give the extra rows breathing room. */
+  align-items: flex-start;
+  border-radius: 18px;
+  padding: 8px 12px 9px 7px;
 }
 
-/* ── Hover preview card ── */
-@keyframes previewIn {
-  from { opacity: 0; transform: translateY(6px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0)   scale(1);    }
-}
-
-.preview {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 200px;
-  background: linear-gradient(160deg,
-    rgba(8,8,18,0.97) 0%,
-    rgba(5,5,13,0.96) 100%);
-  backdrop-filter: blur(36px) brightness(0.72) saturate(1.4);
-  -webkit-backdrop-filter: blur(36px) brightness(0.72) saturate(1.4);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 11px 12px;
-  z-index: 50;
-  pointer-events: none;
-  animation: previewIn 0.2s cubic-bezier(0.16,1,0.3,1) both;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.04) inset;
-}
-
-.previewTop {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-
-.previewAvatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1.5px solid rgba(255,255,255,0.12);
-}
-
-.previewMeta {
+/* ── Inline hover-expanded details ──
+ *
+ * Replaces the separate floating preview card per product
+ * feedback "refaça para que seja um único elemento apenas
+ * adicionando as informações de Cidade e info completas do
+ * nome da música e Artista".
+ *
+ * Lives INSIDE `.info` (the badge's text column) so the whole
+ * pill grows in height when hovered — the badge stays a
+ * single element instead of spawning a second card below.
+ * Collapsed by default via `max-height: 0` + `opacity: 0`;
+ * `.wrapper:hover` reveals it with a smooth height + opacity
+ * transition. */
+.expandedDetails {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 0;
+  gap: 4px;
+  margin-top: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  /* Transition the size + visibility together so the reveal
+   * reads as one motion. `margin-top` also animates so the
+   * rows visually push down from the song line above instead
+   * of materializing inside it. */
+  transition:
+    max-height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease,
+    margin-top 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.previewNameRow {
-  display: flex;
+.wrapper:hover .expandedDetails {
+  /* Roomy ceiling — fits 2 rows + the inter-row gap. We don't
+   * need a perfectly snug cap because the `overflow: hidden`
+   * still clips anything taller, and a slightly oversized
+   * value keeps the transition smooth without re-measuring
+   * on different content lengths. */
+  max-height: 80px;
+  opacity: 1;
+  margin-top: 6px;
+}
+
+.detailRow {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.previewName {
-  font-size: 14px;
-  font-weight: 700;
-  color: #F5F5F7;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.previewCity {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   font-size: 12px;
-  color: rgba(245,245,247,0.55);
-  white-space: nowrap;
-}
-.previewCity svg { width: 12px; height: 12px; flex-shrink: 0; }
-
-.previewDivider {
-  height: 1px;
-  background: rgba(255,255,255,0.06);
-  margin: 9px 0 8px;
-}
-
-.previewSongRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.previewMusicIcon {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-  color: var(--accent);
-  opacity: 0.8;
-}
-
-.previewSongInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: -0.005em;
+  /* `min-width: 0` is a flex-child safety against the badge
+   * refusing to shrink when the song + artist string is long. */
   min-width: 0;
 }
 
-.previewSongTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: #F5F5F7;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.detailIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: rgba(245, 245, 247, 0.55);
 }
 
-.previewArtist {
-  font-size: 12px;
-  color: rgba(245,245,247,0.55);
+.detailText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

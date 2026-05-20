@@ -151,7 +151,6 @@ const HEART_BURST_PARTICLES = Array.from({ length: 6 }, (_, i) => ({
 
 export default function FloatingUsers() {
   const { users: liveUsers } = useLiveUsers();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   // Tracks which user(s) currently have a hearts burst painting
   // over their floating badge — set on heart click, auto-cleared
   // after the longest particle finishes.
@@ -235,7 +234,6 @@ export default function FloatingUsers() {
   return (
     <>
       {pool.map((user) => {
-        const isHovered = hoveredId === user.id;
         return (
           <div
             key={user.id}
@@ -246,8 +244,6 @@ export default function FloatingUsers() {
               ['--float-dur' as string]: `${user.floatDuration}s`,
               ['--float-del' as string]: `${user.floatDelay}s`,
             } as React.CSSProperties}
-            onMouseEnter={() => setHoveredId(user.id)}
-            onMouseLeave={() => setHoveredId(null)}
             onClick={() => user.center && globeStore.flyTo(user.center, user.zoom ?? 10)}
           >
             <div className={`${styles.badge} ${styles.visible}`}>
@@ -260,6 +256,58 @@ export default function FloatingUsers() {
                 ) : (
                   <span className={styles.song}>online</span>
                 )}
+                {/* Hover-expanded detail rows — city + full
+                    artist info. Lives INSIDE the badge so the
+                    whole pill stays as a single element when it
+                    expands, per product feedback "refaça para
+                    que seja um único elemento apenas adicionando
+                    as informações de Cidade e info completas
+                    do nome da música e Artista". CSS controls
+                    the collapse via max-height + opacity, driven
+                    by `.wrapper:hover` so no React state is
+                    needed to toggle these. */}
+                <div className={styles.expandedDetails} aria-hidden="true">
+                  <div className={styles.detailRow}>
+                    <svg
+                      className={styles.detailIcon}
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 1a3.5 3.5 0 00-3.5 3.5C2.5 7.5 6 11 6 11s3.5-3.5 3.5-6.5A3.5 3.5 0 006 1z" />
+                      <circle cx="6" cy="4.5" r="1" />
+                    </svg>
+                    <span className={styles.detailText}>
+                      {user.city}
+                    </span>
+                  </div>
+                  {user.song && (
+                    <div className={styles.detailRow}>
+                      <svg
+                        className={styles.detailIcon}
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M9 1v7" />
+                        <path d="M5 3v7" />
+                        <circle cx="3.5" cy="10" r="1.5" />
+                        <circle cx="7.5" cy="8" r="1.5" />
+                        <path d="M5 3l4-2" />
+                      </svg>
+                      <span className={styles.detailText}>
+                        {user.song}
+                        {user.artist ? ` · ${user.artist}` : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Always-visible heart — wave affordance per
                   product feedback "Deixe o coração visível em
@@ -329,44 +377,12 @@ export default function FloatingUsers() {
               </div>
             )}
 
-            {isHovered && (
-              <div className={styles.preview}>
-                <div className={styles.previewTop}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={user.img} alt={user.name} className={styles.previewAvatar} />
-                  <div className={styles.previewMeta}>
-                    <div className={styles.previewNameRow}>
-                      <span className={styles.previewName}>{user.name}</span>
-                    </div>
-                    <span className={styles.previewCity}>
-                      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 1a3.5 3.5 0 00-3.5 3.5C2.5 7.5 6 11 6 11s3.5-3.5 3.5-6.5A3.5 3.5 0 006 1z" />
-                        <circle cx="6" cy="4.5" r="1" />
-                      </svg>
-                      {user.city}
-                    </span>
-                  </div>
-                </div>
-                {user.song && (
-                  <>
-                    <div className={styles.previewDivider} />
-                    <div className={styles.previewSongRow}>
-                      <svg className={styles.previewMusicIcon} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 1v7" />
-                        <path d="M5 3v7" />
-                        <circle cx="3.5" cy="10" r="1.5" />
-                        <circle cx="7.5" cy="8" r="1.5" />
-                        <path d="M5 3l4-2" />
-                      </svg>
-                      <div className={styles.previewSongInfo}>
-                        <span className={styles.previewSongTitle}>{user.song}</span>
-                        <span className={styles.previewArtist}>{user.artist ?? ''}</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            {/* The separate hover-preview card that used to
+                render here was retired — its content (city +
+                song + artist) now lives inline inside the
+                badge above via `.expandedDetails`, so the
+                whole element is a single pill that morphs on
+                hover. */}
           </div>
         );
       })}
