@@ -11,17 +11,30 @@
 
 /* Galaxy backdrop — drifting nebula effect per product
  * feedback "Aplique um efeito de gradient se movendo e simule
- * um universo". The layers themselves stay; what's new is:
- *   - `background-size: 130% 130%` on every layer so each
- *     gradient image is slightly bigger than the viewport.
- *     This gives `background-position` enough room to slide
- *     the gradients without revealing hard edges.
- *   - `animation: nebula-drift` slowly cycles each layer's
- *     position over 90s so the nebula appears to gently
- *     breathe + flow across the screen — slow enough that the
- *     motion reads as ambient rather than distracting. The
- *     final radial-gradient (the deep-space vignette) stays
- *     anchored at 50/50 so the dark center never drifts. */
+ * um universo".
+ *
+ * Implementation note (PERF): originally animated
+ * `background-position` on each of the 6 colored radial-gradient
+ * layers. Animating background-position on multi-layer
+ * radial-gradient backgrounds is paint-expensive — each frame
+ * recomputes every gradient's stop coordinates and re-paints the
+ * pseudo (no GPU compositing involved). On low-end mobile this
+ * dropped frames during scroll.
+ *
+ * Now: the pseudo's background is static (no background-position
+ * animation), and the gentle drift is driven by `transform:
+ * translate3d` on the pseudo itself. All 6 layers move together
+ * as a single GPU-composited layer — same visual intent (slow,
+ * ambient flow), basically free for the GPU to draw each frame.
+ *
+ * Layer sizes still get `background-size: 130% 130%` so the
+ * larger box has buffer at every edge — the 1.5% translation
+ * never reveals a hard gradient edge.
+ *
+ * `will-change: transform` hints the browser to promote the
+ * pseudo to its own compositing layer up front so the first
+ * animation step doesn't trigger a layer re-creation.
+ */
 .hero::before {
   content: '';
   position: fixed;
@@ -50,45 +63,20 @@
     130% 130%,
     130% 130%,
     100% 100%;
+  will-change: transform;
   animation: nebula-drift 90s ease-in-out infinite alternate;
 }
 
 @keyframes nebula-drift {
-  0%   {
-    background-position:
-      0% 0%,
-      0% 0%,
-      0% 0%,
-      0% 0%,
-      0% 0%,
-      0% 0%,
-      50% 50%;
-  }
-  50%  {
-    background-position:
-      8% -4%,
-      -6% 5%,
-      4% -7%,
-      -3% 8%,
-      6% 3%,
-      -5% -4%,
-      50% 50%;
-  }
-  100% {
-    background-position:
-      -6% 8%,
-      9% -4%,
-      -5% 6%,
-      8% -5%,
-      -7% 4%,
-      4% 9%,
-      50% 50%;
-  }
+  0%   { transform: translate3d(0%, 0%, 0); }
+  50%  { transform: translate3d(-1.5%, -0.5%, 0); }
+  100% { transform: translate3d(1.5%, 0.5%, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero::before {
     animation: none;
+    will-change: auto;
   }
 }
 

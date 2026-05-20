@@ -138,6 +138,34 @@
 }
 .closeBtn:active { transform: translateY(-50%) scale(0.94); }
 
+/* Seta de voltar — espelha o .closeBtn (mesmo formato, estados e
+ * tamanho) só que ancorada à esquerda. Aparece apenas dentro do
+ * detalhe de um álbum, em substituição visual ao tab strip que fica
+ * escondido nessa profundidade. */
+.backBtn {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  color: rgba(245,245,247,0.6);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
+  flex-shrink: 0;
+}
+.backBtn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #F5F5F7;
+  border-color: rgba(255,255,255,0.10);
+}
+.backBtn:active { transform: translateY(-50%) scale(0.94); }
+
 /* ── Body ───────────────────────────────── */
 .body {
   flex: 1;
@@ -153,6 +181,41 @@
   background: rgba(255,255,255,0.07);
   border-radius: 2px;
 }
+
+/* ── Tabs Recentes / Álbuns ───────────────
+ * Pill strip espelhando o `FilterTabs` da home: fundo translúcido
+ * dentro de uma cápsula, e o ativo vira "branco-sólido / texto
+ * preto". Mantém o mesmo vocabulário visual (pílula, 12px, peso
+ * 600) pra não inventar nada novo. */
+.tabs {
+  display: inline-flex;
+  align-self: center;
+  gap: 6px;
+  margin: 0 auto 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 999px;
+  padding: 4px;
+}
+.tab {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(245,245,247,0.55);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 160ms ease, color 160ms ease;
+}
+.tab:hover { color: #F5F5F7; }
+.tabActive {
+  background: #FFFFFF;
+  color: #000000;
+}
+.tabActive:hover { color: #000000; }
 
 /* ── Campo de busca ───────────────────────
  * Standardized search input — recipe lifted verbatim from
@@ -250,6 +313,111 @@
 .emptyState span {
   font-size: 12px;
   color: rgba(245,245,247,0.55);
+}
+
+/* ── Grid de álbuns (tab Álbuns) ──────────
+ * 2 colunas, capa quadrada + nome embaixo. Reaproveita o canto
+ * arredondado + sombra do `.thumbWrap` da lista em uma escala
+ * maior, sem inventar superfície nova. */
+.albumGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.albumCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.albumCard:hover {
+  background: rgba(255,255,255,0.04);
+}
+.albumCard:active { transform: scale(0.985); }
+.albumCardCover {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.55);
+  background: rgba(255,255,255,0.04);
+}
+.albumCardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.albumCardName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #F5F5F7;
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ── Cabeçalho do álbum aberto ────────────
+ * Capa maior + eyebrow "Álbum" + nome, posicionado abaixo do
+ * subtitle de contagem. Não inventa cores nem tipografia novas —
+ * reutiliza os tokens da lista. */
+.albumHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 12px 12px;
+}
+.albumHeaderCover {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.55);
+  background: rgba(255,255,255,0.04);
+}
+.albumHeaderImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.albumHeaderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.albumHeaderEyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245,245,247,0.45);
+}
+.albumHeaderName {
+  font-size: 16px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Lista ──────────────────────────────── */

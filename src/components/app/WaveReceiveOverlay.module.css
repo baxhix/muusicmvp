@@ -38,15 +38,21 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
-/* Discreet single-line message per product feedback "deixe
- * mais discreto, com a fonte 16px, em uma linha apenas e
- * adicione a imagem do usuário". The previous treatment
- * sized the copy clamp(20px, 3vw, 28px) and let it wrap
- * across up to 540px — it dominated the receiver's screen.
- * Now it sits as a compact inline-flex row: avatar + name +
- * "enviou corações para você", all on one line, 16px, with
- * a soft drop-shadow so the white text still reads cleanly
- * over whatever's underneath the dim. */
+/* Discreet message per product feedback "deixe mais discreto,
+ * com a fonte 16px, em uma linha apenas e adicione a imagem do
+ * usuário" (desktop) + "No mobile, o texto de notificação de
+ * corações não está responsivo. O texto deve ser em duas linhas
+ * e centralizado" (mobile).
+ *
+ * Desktop: inline-flex row with two children — `.messageHeader`
+ * (avatar + name) and `.messageTail` ("enviou corações para
+ * você"). Both sit on the same line so the message reads as a
+ * single discreet sentence.
+ *
+ * Mobile (≤480px): the same two children stack into a centered
+ * column. Line 1 = avatar + name. Line 2 = action text. This
+ * keeps the notification from clipping or overflowing on narrow
+ * screens while preserving the identity/action visual hierarchy. */
 .message {
   position: relative;
   z-index: 1;
@@ -63,6 +69,25 @@
   color: #ffffff;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
   animation: waveMessageIn 320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+/* Identity group — avatar + sender name. Inline-flex so the
+ * avatar and the link sit on the same horizontal axis with a
+ * comfortable gap. Used on both desktop and mobile (mobile just
+ * lifts it onto its own row via the parent's column layout). */
+.messageHeader {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Action tail — "enviou corações para você". A plain inline
+ * span on desktop (rides next to `.messageHeader` in the row).
+ * On mobile it becomes the second centered line under the
+ * identity row. */
+.messageTail {
+  display: inline;
 }
 
 /* Sender avatar — small circular thumbnail in front of the
@@ -117,6 +142,34 @@
 @keyframes waveMessageIn {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* ── Mobile (≤480px) — two centered lines ──
+ *
+ * Per product feedback "No mobile, o texto de notificação de
+ * corações não está responsivo. O texto deve ser em duas linhas
+ * e centralizado." The desktop single-line layout overflows or
+ * gets ellipsized on a phone-width viewport when the sender's
+ * name is medium-length. Switching `.message` to a column +
+ * centering both children gives us exactly the two-line layout
+ * the spec asks for: avatar + name on line 1, action text on
+ * line 2, both centered. */
+@media (max-width: 480px) {
+  .message {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    /* Drop nowrap so the action tail can wrap if a translation
+     * ever runs longer than the viewport. The default content
+     * ("enviou corações para você") still fits on a single
+     * line at 16px on any reasonable phone width. */
+    white-space: normal;
+    padding: 14px 16px;
+  }
+  .messageTail {
+    display: block;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -375,18 +375,41 @@ function FloatingUserBadgeImpl({
       <div className={`${styles.badge} ${styles.visible}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={user.img} alt={user.name} className={styles.avatar} />
-        <div className={styles.info}>
+        <div className={`${styles.info} ${user.song ? styles.infoHasMusic : ''}`}>
           <span className={styles.name}>{user.name}</span>
-          {user.song ? (
-            <span className={styles.song}>{user.song}</span>
-          ) : (
-            <span className={styles.song}>online</span>
+
+          {/* ── Subtitle slot ─────────────────────────────────────
+           * When the user is playing something, the marquee row
+           * (.musicRow) takes the subtitle slot in REST state —
+           * matching the fixed Mapbox-marker badge so both
+           * surfaces read as the same visual language. The
+           * static `.song` line is only used as the "online"
+           * fallback when there's no track. */}
+          {!user.song && <span className={styles.song}>online</span>}
+
+          {user.song && (
+            <div className={styles.musicRow}>
+              <div className={styles.musicTrack} ref={musicContainerRef}>
+                <span
+                  ref={musicInnerRef}
+                  className={`${styles.musicInner} ${marqueeDistance > 0 ? styles.musicInnerMarquee : ''}`}
+                  style={marqueeStyle}
+                >
+                  <span className={styles.trackTitle}>{user.song}</span>
+                  {user.artist && (
+                    <span className={styles.trackArtist}> — {user.artist}</span>
+                  )}
+                </span>
+              </div>
+            </div>
           )}
 
-          {/* Hover-expanded detail rows. CSS-only collapse via
-              max-height + opacity on `.wrapper:hover`. */}
+          {/* Hover-expanded detail rows — now just the city row.
+              The music row used to live here too, but was lifted
+              into the subtitle slot above to remove redundancy
+              with `.song`. CSS-only collapse via max-height +
+              opacity on `.wrapper:hover`. */}
           <div className={styles.expandedDetails} aria-hidden="true">
-            {/* City row — simple icon + text. */}
             <div className={styles.detailRow}>
               <svg
                 className={styles.detailIcon}
@@ -402,44 +425,6 @@ function FloatingUserBadgeImpl({
               </svg>
               <span className={styles.detailText}>{user.city}</span>
             </div>
-
-            {/* Music row — mirrors the liveUserBadge song
-                treatment. Container has fixed max-width +
-                overflow: hidden; the inner span is
-                inline-block + nowrap so it can overflow with
-                a marquee scroll when too long. Title is
-                semibold/white, " — Artist" is regular gray. */}
-            {user.song && (
-              <div className={styles.musicRow}>
-                <svg
-                  className={styles.detailIcon}
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M9 1v7" />
-                  <path d="M5 3v7" />
-                  <circle cx="3.5" cy="10" r="1.5" />
-                  <circle cx="7.5" cy="8" r="1.5" />
-                  <path d="M5 3l4-2" />
-                </svg>
-                <div className={styles.musicTrack} ref={musicContainerRef}>
-                  <span
-                    ref={musicInnerRef}
-                    className={`${styles.musicInner} ${marqueeDistance > 0 ? styles.musicInnerMarquee : ''}`}
-                    style={marqueeStyle}
-                  >
-                    <span className={styles.trackTitle}>{user.song}</span>
-                    {user.artist && (
-                      <span className={styles.trackArtist}> — {user.artist}</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

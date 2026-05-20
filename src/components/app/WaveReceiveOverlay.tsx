@@ -79,50 +79,59 @@ export default function WaveReceiveOverlay() {
       onClick={() => setWave(null)}
     >
       <div className={styles.backdrop} aria-hidden="true" />
+      {/* Two semantic groups so we can stack them on mobile:
+       *   1) `.messageHeader` — avatar + sender name (identity)
+       *   2) `.messageTail`   — "enviou corações para você" (action)
+       * Desktop keeps both in a single inline-flex row (one line).
+       * Mobile switches `.message` to column + centered so the
+       * notification reads as two centered lines without clipping
+       * or horizontal overflow on narrow screens. */}
       <div className={styles.message}>
-        {/* Avatar in front of the name per product feedback
-            "adicione a imagem do usuário". Falls back to the
-            generic silhouette placeholder when the realtime
-            payload didn't include an avatarUrl (e.g., the sender
-            never uploaded a photo). The image clicks-through to
-            the sender's profile alongside the name. */}
-        {wave.sourceUserId ? (
-          <Link
-            href={`/app/u/${wave.sourceUserId}`}
-            className={styles.senderAvatarLink}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Abrir perfil de ${wave.sourceName}`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className={styles.messageHeader}>
+          {/* Avatar in front of the name per product feedback
+              "adicione a imagem do usuário". Falls back to the
+              generic silhouette placeholder when the realtime
+              payload didn't include an avatarUrl (e.g., the sender
+              never uploaded a photo). The image clicks-through to
+              the sender's profile alongside the name. */}
+          {wave.sourceUserId ? (
+            <Link
+              href={`/app/u/${wave.sourceUserId}`}
+              className={styles.senderAvatarLink}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Abrir perfil de ${wave.sourceName}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={wave.sourceAvatarUrl ?? '/avatar-placeholder.svg'}
+                alt=""
+                className={styles.senderAvatar}
+              />
+            </Link>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={wave.sourceAvatarUrl ?? '/avatar-placeholder.svg'}
               alt=""
               className={styles.senderAvatar}
             />
-          </Link>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={wave.sourceAvatarUrl ?? '/avatar-placeholder.svg'}
-            alt=""
-            className={styles.senderAvatar}
-          />
-        )}
-        {wave.sourceUserId ? (
-          <Link
-            href={`/app/u/${wave.sourceUserId}`}
-            className={styles.senderLink}
-            // Stop propagation so the Link click navigates without
-            // also firing the backdrop's onClick dismiss handler.
-            // The route change unmounts this overlay naturally.
-            onClick={(e) => e.stopPropagation()}
-          >
-            {wave.sourceName}
-          </Link>
-        ) : (
-          <span className={styles.senderLink}>{wave.sourceName}</span>
-        )}{' '}
-        enviou corações para você
+          )}
+          {wave.sourceUserId ? (
+            <Link
+              href={`/app/u/${wave.sourceUserId}`}
+              className={styles.senderLink}
+              // Stop propagation so the Link click navigates without
+              // also firing the backdrop's onClick dismiss handler.
+              // The route change unmounts this overlay naturally.
+              onClick={(e) => e.stopPropagation()}
+            >
+              {wave.sourceName}
+            </Link>
+          ) : (
+            <span className={styles.senderLink}>{wave.sourceName}</span>
+          )}
+        </div>
+        <span className={styles.messageTail}>enviou corações para você</span>
       </div>
     </div>
   );

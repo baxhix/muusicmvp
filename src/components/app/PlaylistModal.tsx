@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
+import { ANA_ALBUMS, type AnaAlbum } from '@/data/anaAlbums';
 import styles from './PlaylistModal.module.css';
 
 /** Normaliza string pra busca: minúsculas + sem acentos */
@@ -21,6 +22,8 @@ interface PlaylistModalProps {
   onSelect: (idx: number) => void;
 }
 
+type TabId = 'recentes' | 'albums';
+
 export default function PlaylistModal({
   open,
   onClose,
@@ -30,6 +33,8 @@ export default function PlaylistModal({
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [query, setQuery] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
+  const [tab, setTab] = useState<TabId>('recentes');
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   /** Truncate the list to a small "above the fold" set by default;
    *  user expands via the "Ver mais" CTA below. Reset on close so
    *  reopening the modal starts at 7 again. */
@@ -48,13 +53,16 @@ export default function PlaylistModal({
     [catalog],
   );
 
-  // Limpa a busca ao fechar
+  // Reseta estados ao fechar — incluindo o tab e o álbum selecionado
+  // pra que reabrir comece sempre em "Recentes" no nível raiz.
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => {
         setQuery('');
         setHighlightIdx(0);
         setShowAll(false);
+        setTab('recentes');
+        setSelectedAlbumId(null);
       }, 360);
       return () => clearTimeout(t);
     }
@@ -81,11 +89,74 @@ export default function PlaylistModal({
     if (phase === 'out' && e.animationName.includes('playlist-fall')) setPhase('idle');
   };
 
-  // ESC fecha; setas navegam; Enter seleciona
+  // Álbum atualmente aberto (se houver). Resolve a referência pelo id
+  // — undefined se nenhum álbum aberto ou se o id ficou stale.
+  const selectedAlbum: AnaAlbum | undefined = useMemo(
+    () => ANA_ALBUMS.find((a) => a.id === selectedAlbumId),
+    [selectedAlbumId],
+  );
+
+  // Base de músicas que alimenta a lista visível:
+  //   - busca preenchida → SEMPRE catálogo inteiro (engloba todos
+  //     resultados, ignorando tab/álbum, per pedido do produto).
+  //   - tab "Recentes"  → catálogo inteiro.
+  //   - álbum aberto    → só as faixas do álbum (resolvidas pelo
+  //     youtubeId contra o catálogo; faixas que não existem no
+  //     catálogo são naturalmente descartadas).
+  //   - tab "Álbuns" sem busca e sem álbum aberto → renderiza o grid
+  //     de álbuns, não a lista; o array `tracksBase` fica vazio.
+  const tracksBase = useMemo(() => {
+    if (query) return SONGS;
+    if (selectedAlbum) {
+      const byId = new Map(SONGS.map((s) => [s.youtubeId, s]));
+      return selectedAlbum.trackYoutubeIds
+        .map((id) => byId.get(id))
+        .filter((s): s is (typeof SONGS)[number] => Boolean(s));
+    }
+    if (tab === 'recentes') return SONGS;
+    return [];
+  }, [SONGS, query, selectedAlbum, tab]);
+
+  // Filtragem por título + artista (sem acentos / case-insensitive).
+  // Cada item carrega `originalIdx` apontando para o índice no
+  // catálogo do player — é o número que o `onSelect` espera.
+  const filtered = useMemo(() => {
+    const q = normalize(query.trim());
+    const enriched = tracksBase.map((s) => ({
+      ...s,
+      originalIdx: SONGS.findIndex((c) => c.youtubeId === s.youtubeId),
+    }));
+    if (!q) return enriched;
+    return enriched.filter((s) => {
+      const haystack = normalize(`${s.title} ${s.artist}`);
+      return haystack.includes(q);
+    });
+  }, [tracksBase, SONGS, query]);
+  const filteredCount = filtered.length;
+  // Visible slice — capped at PREVIEW_COUNT until the user clicks
+  // "Ver mais" (or types a search, which auto-expands).
+  const visible = showAll ? filtered : filtered.slice(0, PREVIEW_COUNT);
+  const hiddenCount = filteredCount - visible.length;
+
+  // Reset highlight quando a query / tab / álbum mudam.
+  useEffect(() => { setHighlightIdx(0); }, [query, tab, selectedAlbumId]);
+
+  // ESC fecha; setas navegam; Enter seleciona. Só ativa a navegação
+  // por teclado quando a lista de músicas está visível (não no grid
+  // de álbuns).
+  const listVisible = filtered.length > 0;
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Escape') {
+        if (selectedAlbumId) {
+          setSelectedAlbumId(null);
+          return;
+        }
+        onClose();
+        return;
+      }
+      if (!listVisible) return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setHighlightIdx((i) => Math.min(i + 1, filteredCount - 1));
@@ -94,7 +165,7 @@ export default function PlaylistModal({
         setHighlightIdx((i) => Math.max(i - 1, 0));
       } else if (e.key === 'Enter') {
         const item = filtered[highlightIdx];
-        if (item) {
+        if (item && item.originalIdx >= 0) {
           onSelect(item.originalIdx);
           onClose();
         }
@@ -103,33 +174,40 @@ export default function PlaylistModal({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, onClose, highlightIdx, query]);
-
-  // Filtragem por título + artista (sem acentos / case-insensitive).
-  // Depende de SONGS pra recomputar quando o catálogo é atualizado
-  // pelo hook (admin adicionou uma faixa nova, por exemplo).
-  const filtered = useMemo(() => {
-    const q = normalize(query.trim());
-    const all = SONGS.map((s, i) => ({ ...s, originalIdx: i }));
-    if (!q) return all;
-    return all.filter((s) => {
-      const haystack = normalize(`${s.title} ${s.artist}`);
-      return haystack.includes(q);
-    });
-  }, [query, SONGS]);
-  const filteredCount = filtered.length;
-  // Visible slice — capped at PREVIEW_COUNT until the user clicks
-  // "Ver mais" (or types a search, which auto-expands).
-  const visible = showAll ? filtered : filtered.slice(0, PREVIEW_COUNT);
-  const hiddenCount = filteredCount - visible.length;
-
-  // Reset highlight quando a query muda
-  useEffect(() => { setHighlightIdx(0); }, [query]);
+  }, [open, onClose, highlightIdx, query, listVisible, selectedAlbumId]);
 
   if (phase === 'idle') return null;
 
   const isIn = phase === 'in';
   const isOut = phase === 'out';
+
+  // Grid de álbuns aparece quando: tab=Álbuns + sem álbum aberto +
+  // sem busca ativa. Qualquer busca cai pra lista unificada de
+  // resultados (englobando catálogo inteiro).
+  const showAlbumGrid =
+    tab === 'albums' && !selectedAlbumId && !query;
+
+  // Header dinâmico: dentro do detalhe de álbum mostramos seta de
+  // voltar à esquerda em vez do título centralizado.
+  const headerTitle = selectedAlbum ? selectedAlbum.name : 'Playlist';
+
+  // Subtitle do corpo:
+  //   - busca ativa → "X resultados de Y"
+  //   - álbum aberto → contagem do álbum
+  //   - tab Recentes → contagem total do catálogo
+  //   - tab Álbuns sem álbum aberto → contagem de álbuns
+  const subtitleText = (() => {
+    if (query) {
+      return `${filteredCount} resultado${filteredCount === 1 ? '' : 's'} de ${SONGS.length}`;
+    }
+    if (selectedAlbum) {
+      return `${filteredCount} faixa${filteredCount === 1 ? '' : 's'} · clique pra tocar`;
+    }
+    if (tab === 'albums') {
+      return `${ANA_ALBUMS.length} álbuns · escolha pra ver as faixas`;
+    }
+    return `${SONGS.length} faixas · clique pra tocar`;
+  })();
 
   return (
     <>
@@ -147,7 +225,19 @@ export default function PlaylistModal({
         aria-label="Playlist"
       >
         <header className={styles.header}>
-          <h2 className={styles.title}>Playlist</h2>
+          {selectedAlbumId && (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => setSelectedAlbumId(null)}
+              aria-label="Voltar para a lista de álbuns"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+          <h2 className={styles.title}>{headerTitle}</h2>
           <button
             type="button"
             className={styles.closeBtn}
@@ -161,6 +251,32 @@ export default function PlaylistModal({
         </header>
 
         <div className={styles.body}>
+          {/* Tabs Recentes / Álbuns — escondidos quando dentro de um
+              álbum, porque a seta de voltar no header já navega o
+              contexto e o tab não faria sentido ali. */}
+          {!selectedAlbumId && (
+            <div className={styles.tabs} role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === 'recentes'}
+                className={`${styles.tab} ${tab === 'recentes' ? styles.tabActive : ''}`}
+                onClick={() => setTab('recentes')}
+              >
+                Recentes
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === 'albums'}
+                className={`${styles.tab} ${tab === 'albums' ? styles.tabActive : ''}`}
+                onClick={() => setTab('albums')}
+              >
+                Álbuns
+              </button>
+            </div>
+          )}
+
           {/* Campo de busca com autocomplete */}
           <div className={styles.searchWrap}>
             <span className={styles.searchIcon} aria-hidden="true">
@@ -215,16 +331,54 @@ export default function PlaylistModal({
             )}
           </div>
 
-          <p className={styles.subtitle}>
-            {query
-              ? `${filteredCount} resultado${filteredCount === 1 ? '' : 's'} de ${SONGS.length}`
-              : `${SONGS.length} faixas · clique pra tocar`}
-          </p>
+          <p className={styles.subtitle}>{subtitleText}</p>
 
-          {filteredCount === 0 ? (
+          {/* Cabeçalho do álbum aberto — capa grande + nome — fica
+              dentro do body, logo abaixo do subtitle. Reaproveita a
+              estética dos `.thumbWrap` da lista (canto arredondado +
+              sombra) só que num tamanho maior. */}
+          {selectedAlbum && (
+            <div className={styles.albumHeader}>
+              <div className={styles.albumHeaderCover}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={selectedAlbum.cover} alt="" className={styles.albumHeaderImg} />
+              </div>
+              <div className={styles.albumHeaderInfo}>
+                <span className={styles.albumHeaderEyebrow}>Álbum</span>
+                <span className={styles.albumHeaderName}>{selectedAlbum.name}</span>
+              </div>
+            </div>
+          )}
+
+          {showAlbumGrid ? (
+            <ul className={styles.albumGrid}>
+              {ANA_ALBUMS.map((album) => (
+                <li key={album.id}>
+                  <button
+                    type="button"
+                    className={styles.albumCard}
+                    onClick={() => setSelectedAlbumId(album.id)}
+                    aria-label={`Abrir álbum ${album.name}`}
+                  >
+                    <div className={styles.albumCardCover}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={album.cover} alt="" className={styles.albumCardImg} />
+                    </div>
+                    <span className={styles.albumCardName}>{album.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : filteredCount === 0 ? (
             <div className={styles.emptyState}>
               <p>Nenhuma faixa encontrada</p>
-              <span>Tente outro termo</span>
+              <span>
+                {query
+                  ? 'Tente outro termo'
+                  : selectedAlbum
+                  ? 'Esse álbum ainda não tem faixas no catálogo'
+                  : 'O catálogo está vazio'}
+              </span>
             </div>
           ) : (
             <ul id="playlist-suggestions" className={styles.list} role="listbox">
@@ -288,7 +442,7 @@ export default function PlaylistModal({
               })}
             </ul>
           )}
-          {hiddenCount > 0 && (
+          {hiddenCount > 0 && !showAlbumGrid && (
             <button
               type="button"
               className={styles.viewMoreBtn}

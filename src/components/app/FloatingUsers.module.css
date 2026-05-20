@@ -141,19 +141,20 @@
   white-space: nowrap;
 }
 
-/* ── Music row — mirrors `liveUserBadge`'s song treatment ──
+/* ── Music row — visible at rest (when track is playing) ──
  *
- * Per product feedback "No hover, ele se adequa ao mesmo
- * estilo do box de usuário fixo no mapa, com o movimento e
- * estilo da formatação do nome da musica e artista." The
- * hover-expanded music row now uses the same container +
- * inner-span pattern Globe.tsx uses for `.liveUserSong` +
- * `.userBadgeSongInner`, with the same `marquee-pingpong`
- * keyframe scrolling the title + artist when the text
- * overflows. The keyframe + custom properties are set on the
- * inner span; FloatingUserBadge measures overflow on mount
- * via useLayoutEffect and writes `--marquee-distance` +
- * `--marquee-duration` inline. */
+ * Per product feedback "deixe o box de usuário flutuante no
+ * mesmo estilo que o box de usuário fixo" the marquee row now
+ * occupies the subtitle slot in the REST state, mirroring the
+ * fixed Mapbox-marker badge (Globe.tsx `.liveUserSong` /
+ * `.userBadgeSongInner`). The static `.song` line is no longer
+ * rendered when a track is playing — `.musicRow` takes its
+ * place — so the badge height stays the same as before (one
+ * subtitle line under the name) while the title + artist
+ * always scroll. `max-width` on `.musicTrack` below keeps the
+ * pill from growing with long titles — the marquee handles
+ * overflow per product feedback "mantenha o tamanho atual, uma
+ * vez que estarão em movimentos". */
 .musicRow {
   display: inline-flex;
   align-items: center;
@@ -265,6 +266,10 @@
   font-size: 12px;
   color: rgba(245,245,247,0.55);
   white-space: nowrap;
+  /* Now only renders as the "online" fallback (no track
+   * playing) — the marquee `.musicRow` takes the subtitle slot
+   * whenever there's a song. No hover-collapse needed since the
+   * two are mutually exclusive at the JSX level. */
 }
 
 /* ── Heart "wave" button on every floating badge ──

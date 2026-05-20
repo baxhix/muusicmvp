@@ -347,6 +347,13 @@
     width: auto;
     height: 60vh;
     border-radius: 16px;
+    /* ── Mobile blur reduction (perf) ──
+     * 40px backdrop blur over the moving map is the heaviest
+     * single GPU op on mobile chat. 18px reads visually identical
+     * with the dark gradient layered on top and saves the
+     * compositor a significant per-frame cost. */
+    backdrop-filter: blur(18px) brightness(0.72) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) brightness(0.72) saturate(1.4);
   }
 }
 @media (max-width: 480px) {

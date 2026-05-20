@@ -183,12 +183,15 @@
   padding: 14px 16px 8px;
 }
 
-/* Toggle chevron — sits at the right edge of the header row.
- * Inherits its pulse keyframe from the same source the old
- * .compactBar used so the chevron still highlights briefly
- * whenever the user earns Fanpoints. */
+/* Toggle chevron — now leads the discount row (sits IN FRONT
+ * of the 15% off coupon) per product feedback "a seta a frente
+ * do cupom de 15% off". Was previously anchored to the right
+ * edge of the header via `margin-left: auto`; that's been
+ * dropped now that `.discountRow` owns the layout and the
+ * chevron is the row's first child. Inherits its pulse keyframe
+ * from the same source the old .compactBar used so the chevron
+ * still highlights briefly whenever the user earns Fanpoints. */
 .headerToggle {
-  margin-left: auto;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -231,18 +234,16 @@
   display: block;
 }
 
-/* Text group — stretched to the header's cross-axis height
- * (which is set by the 62px artist photo) + space-between
- * justification so the children flow with the nameLine at the
- * TOP and the Fanpoints chip at the BOTTOM, aligned with the
- * photo's lower edge. Per product feedback "Alinhe as palavras
- * 53.873 Fanpoints pela parte inferior." */
+/* Text group — flows top-down with the Fanpoints chip sitting
+ * IMMEDIATELY under the name per product feedback "deixe o
+ * número de fanpoints logo abaixo do nome". The earlier
+ * `align-self: stretch` + `justify-content: space-between`
+ * pushed the chip to the photo's lower edge; that's been
+ * retired so name and Fanpoints read as a tight stacked pair. */
 .info {
-  align-self: stretch;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 2px;
+  gap: 0;
   min-width: 0;
 }
 
@@ -369,7 +370,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-top: 3px;
+  margin-top: 0;
   font-family: var(--sans);
   white-space: nowrap;
 }
@@ -510,11 +511,26 @@
  * wallet row was retired and the URL moved here). Unlocked
  * padlock icon up front announces "you've earned this"; the
  * percent is white-bold, the store-name copy stays muted gray. */
+/* Discount row — flex container that hosts the chevron toggle
+ * (left) + the 15% OFF coupon pill (right) on the same line.
+ * Per product feedback "a seta a frente do cupom de 15% off"
+ * the chevron leads the row; the coupon sits immediately after
+ * it. Outer margins live here now (the old `.discountBadge`
+ * carried them when it was a direct child of `.box`). */
+.discountRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 16px 12px;
+}
+
 .discountBadge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin: 0 16px 12px;
+  /* Margins now live on `.discountRow`. Keep `width: fit-content`
+   * so the pill still hugs its content — the row container
+   * controls horizontal flow. */
   padding: 6px 12px;
   border-radius: 999px;
   background: rgba(168, 85, 247, 0.14);

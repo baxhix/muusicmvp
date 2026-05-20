@@ -374,6 +374,17 @@
   .header {
     padding: 28px 20px 22px;
   }
+  /* ── Mobile blur reduction (perf) ──
+   * The full-bleed mobile panel sits over a moving map; a 40px
+   * backdrop-filter blur becomes very GPU-expensive when the
+   * map is also compositing tile updates. Cutting the radius to
+   * 18px on mobile drops compositing cost dramatically while
+   * the background gradient + brightness/saturate keep the
+   * "frosted dark" look intact. */
+  .panel {
+    backdrop-filter: blur(18px) brightness(0.72) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) brightness(0.72) saturate(1.4);
+  }
 }
 @media (max-width: 480px) {
   /* Small mobile: full-screen feed with the BottomNav still visible.

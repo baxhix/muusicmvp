@@ -197,6 +197,13 @@
     width: auto;
     height: 60vh;
     border-radius: 16px;
+    /* ── Mobile blur reduction (perf) ──
+     * Drop the backdrop blur radius from 40px → 18px on mobile.
+     * Visually similar with the dark gradient + brightness/saturate
+     * already on the surface; meaningfully cheaper on the GPU when
+     * the map under the panel is also compositing. */
+    backdrop-filter: blur(18px) brightness(0.72) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) brightness(0.72) saturate(1.4);
   }
 }
 @media (max-width: 480px) {

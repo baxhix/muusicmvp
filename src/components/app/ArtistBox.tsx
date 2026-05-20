@@ -248,6 +248,11 @@ export default function ArtistBox() {
             <span className={styles.label}>Fanverse</span>
             <span className={styles.name}>Ana Castela</span>
           </div>
+          {/* Fanpoints sits IMMEDIATELY below the name per product
+              feedback "deixe o número de fanpoints logo abaixo do
+              nome". The earlier bottom-alignment (justify-content:
+              space-between on `.info`) was retired — the row now
+              flows naturally under the name with a tight gap. */}
           <div className={styles.fanpointsInline}>
             <span className={styles.fanpointsInlineIcon} aria-hidden="true">
               <svg
@@ -269,9 +274,20 @@ export default function ArtistBox() {
             <span className={styles.fanpointsInlineLabel}>Fanpoints</span>
           </div>
         </div>
-        {/* Toggle chevron — lives here now that the header is
-            always visible. Same chevron + rotate-on-open pattern
-            the (now redundant) compactBar used. */}
+        {/* Chevron moved OUT of the header row per product
+            feedback "a seta a frente do cupom de 15% off" — it
+            now leads the discount-badge row below this header
+            instead of sitting alone in the top-right corner. */}
+      </div>
+
+      {/* Discount row — chevron toggle lives at the LEFT (in
+       *  front of the coupon pill) per product feedback "a seta
+       *  a frente do cupom de 15% off". The expand/collapse
+       *  control thereby reads as the entry point into the
+       *  collapsible content below, and the header row becomes
+       *  cleaner (just photo + name + fanpoints, no trailing
+       *  affordance). */}
+      <div className={styles.discountRow}>
         <button
           type="button"
           className={`${styles.headerToggle} ${pulsing ? styles.headerTogglePulsing : ''}`}
@@ -292,26 +308,25 @@ export default function ArtistBox() {
             <path d="M5 9l7 7 7-7" />
           </svg>
         </button>
-      </div>
-
-      <div className={styles.discountBadge}>
-        <span className={styles.discountIcon} aria-hidden="true">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="7.5" width="10" height="6.5" rx="1.4" />
-            <path d="M5.2 7.5V5.2a2.8 2.8 0 0 1 5.4-1" />
-          </svg>
-        </span>
-        <span className={styles.discountText}>
-          <strong>15% OFF</strong> Ativado na{' '}
-          <a
-            className={styles.discountStoreLink}
-            href={STORE_URL}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Loja da Boiadeira
-          </a>
-        </span>
+        <div className={styles.discountBadge}>
+          <span className={styles.discountIcon} aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="7.5" width="10" height="6.5" rx="1.4" />
+              <path d="M5.2 7.5V5.2a2.8 2.8 0 0 1 5.4-1" />
+            </svg>
+          </span>
+          <span className={styles.discountText}>
+            <strong>15% OFF</strong> Ativado na{' '}
+            <a
+              className={styles.discountStoreLink}
+              href={STORE_URL}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Loja da Boiadeira
+            </a>
+          </span>
+        </div>
       </div>
 
       {/* Drop-down body — collapsed by default, animates open via
