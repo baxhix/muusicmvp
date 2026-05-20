@@ -176,12 +176,20 @@ export default function MockToastRotator() {
       // viewport since this toast lives outside the feed.
       fireRankConfetti();
     } else if (current.kind === 'waved') {
-      // Falling hearts cascade — fires the global overlay (mounted
-      // in app/app/layout.tsx) that renders ~14 heart emojis
-      // dropping from the top. Subtle engagement cue per product
-      // feedback ("uma animação com o emoji de coração caindo
-      // por toda a tela, várias em cascata").
-      window.dispatchEvent(new CustomEvent('app:hearts-cascade'));
+      // Falling 👋 cascade — fires the global overlay (mounted
+      // in app/app/layout.tsx) with `icon: 'hand'` in the
+      // detail so HeartsCascade swaps the flat red heart SVG
+      // for a 👋 emoji glyph on each particle. Per product
+      // feedback "Nas notificação mocada que determinado
+      // usuário Acenou, use os emojis em cascata da mão e não
+      // de coração." Real socket-driven wave-send events
+      // (handled in `useNotificationsLive`) still default to
+      // the heart cascade for the receiver's love confirmation.
+      window.dispatchEvent(
+        new CustomEvent('app:hearts-cascade', {
+          detail: { icon: 'hand' },
+        }),
+      );
     }
   }, [phase, idx]);
 

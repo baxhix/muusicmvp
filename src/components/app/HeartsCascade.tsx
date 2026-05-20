@@ -4,34 +4,38 @@ import { useEffect, useState } from 'react';
 import styles from './HeartsCascade.module.css';
 
 /* ============================================================
- * HEARTS CASCADE — elegant falling-hearts overlay
+ * HEARTS CASCADE — falling-emoji overlay
  *
  * Mounted at the layout level. Listens for `app:hearts-cascade`
- * and renders ~14 heart emojis at randomized horizontal
+ * and renders ~8 emoji particles at randomized horizontal
  * positions falling from the top of the viewport with staggered
  * delays + slight rotation drift. Each batch auto-cleans after
  * its animation completes.
  *
- * Used by the MockToastRotator when the "waved" notification
- * fires — gives the wave / like action a subtle, engagement-
- * focused celebratory cue without a heavy modal celebration
- * surface. Multiple bursts can overlap (each batch tracked by
- * a unique id so cleanup doesn't clobber a fresh cascade).
+ * The event accepts an optional `detail.icon` field:
+ *   - 'heart' (default) → flat red SVG heart, used by real
+ *     wave-send events arriving via `useNotificationsLive`.
+ *   - 'hand'           → 👋 emoji glyph, used by the
+ *     MockToastRotator's "waved" rotation slot per product
+ *     feedback "Nas notificação mocada que determinado usuário
+ *     Acenou, use os emojis em cascata da mão e não de
+ *     coração."
  *
- * No canvas-confetti dependency — pure DOM + CSS keyframes so
- * the look is precisely the "falling hearts" the spec asks for
- * (canvas-confetti's heart shape would render as small
- * particles, less recognizable on mobile).
+ * Multiple bursts can overlap and CAN have different icons —
+ * each batch carries its own `icon` choice so a heart cascade
+ * + a hand cascade can coexist on screen.
  * ============================================================ */
 
-interface HeartParticle {
+type CascadeIcon = 'heart' | 'hand';
+
+interface CascadeParticle {
   /** Unique id used as React key — combines batch id + index. */
   id: string;
   /** Horizontal position as a viewport percentage (5-95). */
   xPercent: number;
-  /** Pixel size of the heart. */
+  /** Pixel size of the particle. */
   size: number;
-  /** Delay before this heart starts falling (ms). */
+  /** Delay before this particle starts falling (ms). */
   delay: number;
   /** Total duration of the fall (ms). */
   duration: number;
@@ -39,19 +43,17 @@ interface HeartParticle {
   drift: number;
 }
 
-/* Hearts are now rendered as a single FLAT SVG shape filled
- * with one brand-red color (#ef4444) per product feedback —
- * the previous mix of emoji variants picked up the system
- * font's glossy / multi-tone rendering which conflicted with
- * the "flat single-color" brief.
- *
- * Batch count cut roughly in half (14 → 8) so the cascade
- * feels lighter and more elegant rather than a downpour. */
+interface Batch {
+  id: number;
+  icon: CascadeIcon;
+  particles: CascadeParticle[];
+}
+
 const PARTICLES_PER_BATCH = 8;
 const CLEANUP_BUFFER_MS = 200;
 
-function buildBatch(batchId: number): HeartParticle[] {
-  const out: HeartParticle[] = [];
+function buildBatch(batchId: number): CascadeParticle[] {
+  const out: CascadeParticle[] = [];
   for (let i = 0; i < PARTICLES_PER_BATCH; i++) {
     out.push({
       id: `${batchId}-${i}`,
@@ -65,20 +67,19 @@ function buildBatch(batchId: number): HeartParticle[] {
   return out;
 }
 
-interface Batch {
-  id: number;
-  particles: HeartParticle[];
-}
-
 export default function HeartsCascade() {
   const [batches, setBatches] = useState<Batch[]>([]);
 
   useEffect(() => {
     let nextBatchId = 1;
-    const handler = () => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ icon?: CascadeIcon } | undefined>)
+        .detail;
+      const icon: CascadeIcon = detail?.icon === 'hand' ? 'hand' : 'heart';
+
       const id = nextBatchId++;
       const particles = buildBatch(id);
-      setBatches((prev) => [...prev, { id, particles }]);
+      setBatches((prev) => [...prev, { id, icon, particles }]);
 
       // Worst-case lifetime: max(delay + duration) across the
       // batch + a small buffer. Conservative — use the upper
@@ -97,33 +98,56 @@ export default function HeartsCascade() {
   return (
     <div className={styles.root} aria-hidden="true">
       {batches.flatMap((batch) =>
-        batch.particles.map((p) => (
-          <svg
-            key={p.id}
-            viewBox="0 0 24 24"
-            className={styles.heart}
-            style={
-              {
-                left: `${p.xPercent}%`,
-                width: `${p.size}px`,
-                height: `${p.size}px`,
-                animationDelay: `${p.delay}ms`,
-                animationDuration: `${p.duration}ms`,
-                ['--heart-drift' as string]: `${p.drift}deg`,
-              } as React.CSSProperties
-            }
-            aria-hidden="true"
-          >
-            {/* Flat solid heart shape — single-color fill so the
-              * cascade reads as a clean graphic motif instead of
-              * relying on the system font's glossy emoji
-              * rendering. */}
-            <path
-              d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z"
-              fill="#ef4444"
-            />
-          </svg>
-        )),
+        batch.particles.map((p) => {
+          const style = {
+            left: `${p.xPercent}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            animationDelay: `${p.delay}ms`,
+            animationDuration: `${p.duration}ms`,
+            ['--heart-drift' as string]: `${p.drift}deg`,
+          } as React.CSSProperties;
+
+          if (batch.icon === 'hand') {
+            // 👋 rendered as a text glyph in a span — the
+            // emoji's native font rendering carries the wave
+            // affordance better than any SVG path approximation.
+            // Font-size matches the particle's pixel size so the
+            // glyph fills the same box the heart SVG would.
+            return (
+              <span
+                key={p.id}
+                className={`${styles.particle} ${styles.handGlyph}`}
+                style={{
+                  ...style,
+                  fontSize: `${p.size}px`,
+                  lineHeight: 1,
+                }}
+                aria-hidden="true"
+              >
+                👋
+              </span>
+            );
+          }
+
+          // Default — flat solid heart SVG. Single-color fill so
+          // the cascade reads as a clean graphic motif instead of
+          // relying on the system font's glossy emoji rendering.
+          return (
+            <svg
+              key={p.id}
+              viewBox="0 0 24 24"
+              className={`${styles.particle} ${styles.heart}`}
+              style={style}
+              aria-hidden="true"
+            >
+              <path
+                d="M12 21s-7-4.35-9.5-9.5C1 8 3.5 4.5 7 4.5c2 0 3.5 1.2 5 3 1.5-1.8 3-3 5-3 3.5 0 6 3.5 4.5 7-2.5 5.15-9.5 9.5-9.5 9.5z"
+                fill="#ef4444"
+              />
+            </svg>
+          );
+        }),
       )}
     </div>
   );

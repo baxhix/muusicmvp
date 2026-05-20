@@ -1,12 +1,22 @@
 /* ============================================================
- * HEARTS CASCADE — falling hearts overlay
+ * HEARTS CASCADE — falling-emoji overlay
  *
  * Pinned to the viewport, sits above everything else (z:9000
  * so it floats over modals + the chat panel too — the overlay
  * is decorative + pointer-events:none so it can't intercept
- * any taps). Each `.heart` particle animates via its own keyframe
- * with inline-CSS-vars feeding delay, duration, x position, and
- * the rotation drift.
+ * any taps). Each `.particle` animates via its own keyframe
+ * with inline-CSS-vars feeding delay, duration, x position,
+ * and the rotation drift.
+ *
+ * Particles can be one of two glyphs (chosen per batch via the
+ * event's `detail.icon`):
+ *   - `.heart` — flat red SVG heart (default).
+ *   - `.handGlyph` — 👋 emoji char, used by the MockToastRotator
+ *     when faking a "waved" notification per product feedback.
+ *
+ * The shared `.particle` rule carries the fall animation +
+ * positioning math; the per-glyph rules layer their own
+ * drop-shadow tint on top so each variant feels intentional.
  * ============================================================ */
 
 .root {
@@ -17,18 +27,15 @@
   overflow: hidden;
 }
 
-.heart {
+.particle {
   position: absolute;
   top: -10vh;
   /* `left` + `width` + `height` are set inline per particle.
-   * translateX(-50%) re-centers each heart on its anchor x so
-   * the visual feels "dropped from this column".
-   * Drop shadow shifted from pink → soft red to match the
-   * heart's solid fill. */
+   * translateX(-50%) re-centers each particle on its anchor x
+   * so the visual feels "dropped from this column". */
   transform: translate3d(-50%, 0, 0) rotate(0deg);
   opacity: 0;
   display: block;
-  filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.35));
   animation-name: heartsCascadeFall;
   animation-timing-function: cubic-bezier(0.32, 0.22, 0.5, 1);
   animation-iteration-count: 1;
@@ -36,12 +43,32 @@
   will-change: transform, opacity;
 }
 
+/* Heart glyph — keeps the soft-red drop-shadow that always
+ * paired with the flat #ef4444 fill on the SVG path. */
+.heart {
+  filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.35));
+}
+
+/* Hand glyph — softer warm-yellow drop-shadow so the 👋
+ * emoji's natural skin-tone rendering still pops off a dark
+ * background without competing with the cascading hearts'
+ * red glow. */
+.handGlyph {
+  filter: drop-shadow(0 4px 12px rgba(255, 200, 120, 0.32));
+  /* Native emoji rendering — system font carries the wave's
+   * skin-tone colors. Centering the glyph via text-align +
+   * line-height: 1 (set inline) keeps it visually in the same
+   * 24-38px box the heart SVG would occupy. */
+  text-align: center;
+  user-select: none;
+}
+
 @keyframes heartsCascadeFall {
   0% {
     opacity: 0;
     transform: translate3d(-50%, 0, 0) scale(0.5) rotate(0deg);
   }
-  /* Quick pop-in so the heart appears mid-fall instead of
+  /* Quick pop-in so the particle appears mid-fall instead of
    * abrupt mid-screen materialization. */
   6% {
     opacity: 0.95;
@@ -62,7 +89,7 @@
    * the .root still renders but with opacity 0 + no animation,
    * so the visual is a no-op while still respecting the event
    * lifecycle. */
-  .heart {
+  .particle {
     animation: none;
     opacity: 0;
   }
