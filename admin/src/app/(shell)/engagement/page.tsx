@@ -10,6 +10,7 @@ import {
   IconChevronRight,
   IconFeed,
   IconCircle,
+  IconTrendingUp,
 } from '@/components/icons';
 import {
   engagementService,
@@ -18,40 +19,92 @@ import {
 import { formatCompact, formatNumber } from '@/lib/format';
 import styles from './page.module.css';
 
+/**
+ * Average actions per user per day — temporary mock derived
+ * from the existing snapshot (reactions + messages + chats
+ * spread across a ~30-day window and a guessed-at active-user
+ * base) so the card renders a believable number until the
+ * backend ships a real aggregation. Returns a 1-decimal
+ * string like "11.7". */
+function avgActionsPerUserDay(snap: EngagementSnapshot): string {
+  const totalActions =
+    snap.totalReactions + snap.totalMessages + snap.chatsStarted;
+  // Crude divisor: assume ~80 unique active users across 30
+  // days. The constant is mock; swap for a real DAU number
+  // when /api/admin/engagement exposes one.
+  const days = 30;
+  const activeUserGuess = 80;
+  const perUserPerDay = totalActions / (activeUserGuess * days);
+  return perUserPerDay >= 10
+    ? perUserPerDay.toFixed(0)
+    : perUserPerDay.toFixed(1);
+}
+
 /* ── Inline trend chart ───────────────────────────────
  * Small purposeful copy of the dashboard's LineChart — engagement
  * has a single series (daily message volume), so we render it
  * directly without dragging the dashboard's polymorphic component
  * into this page. Same visual language: gradient area + line.
  * ────────────────────────────────────────────────────── */
+/**
+ * Format a `day` string (ISO date or YYYY-MM-DD) into the
+ * short DD/MM label rendered along the X-axis. Falls back to
+ * the trailing 5 characters of the raw string if Date parsing
+ * fails (e.g. day-of-week labels). Per product feedback "No
+ * gráfico Mensagens por dia, inclua os dias para medir". */
+function formatChartDay(raw: string): string {
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}`;
+  }
+  return raw.length > 5 ? raw.slice(-5) : raw;
+}
+
 function MessagesTrend({ data }: { data: { day: string; count: number }[] }) {
   if (data.length === 0) {
     return (
-      <div style={{ height: 180, display: 'grid', placeItems: 'center', color: 'var(--text-faint)' }}>
+      <div style={{ height: 200, display: 'grid', placeItems: 'center', color: 'var(--text-faint)' }}>
         Sem mensagens nos últimos 30 dias.
       </div>
     );
   }
   const w = 600;
-  const h = 180;
-  const padX = 16;
+  const h = 200;
+  const padX = 22;
   const padY = 14;
+  // Extra room at the bottom of the plot area for the
+  // day-label row introduced below.
+  const labelRowHeight = 22;
+  const plotBottom = h - padY - labelRowHeight;
   const values = data.map((d) => d.count);
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
   const stepX = data.length > 1 ? (w - padX * 2) / (data.length - 1) : 0;
 
-  const linePath = data
-    .map((p, i) => {
-      const x = padX + i * stepX;
-      const y = padY + (h - padY * 2) * (1 - (p.count - min) / range);
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(' ');
-  const areaPath = `${linePath} L ${(padX + (data.length - 1) * stepX).toFixed(2)},${h - padY} L ${padX},${h - padY} Z`;
+  const xAt = (i: number) => padX + i * stepX;
+  const yAt = (count: number) =>
+    padY + (plotBottom - padY) * (1 - (count - min) / range);
 
-  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => padY + (h - padY * 2) * p);
+  const linePath = data
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${xAt(i).toFixed(2)},${yAt(p.count).toFixed(2)}`)
+    .join(' ');
+  const areaPath = `${linePath} L ${xAt(data.length - 1).toFixed(2)},${plotBottom} L ${padX},${plotBottom} Z`;
+
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(
+    (p) => padY + (plotBottom - padY) * p,
+  );
+
+  // Pick at most ~7 evenly-spaced day labels so the X-axis
+  // stays readable at 30+ data points. Always include the
+  // first and last so the visible date range is unambiguous.
+  const MAX_LABELS = 7;
+  const labelStride = Math.max(1, Math.ceil(data.length / MAX_LABELS));
+  const labelIndices = data
+    .map((_, i) => i)
+    .filter((i) => i % labelStride === 0 || i === data.length - 1);
 
   return (
     <svg
@@ -88,6 +141,37 @@ function MessagesTrend({ data }: { data: { day: string; count: number }[] }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+
+      {/* X-axis day labels — rendered as a single row below
+          the plot. Tickmarks above each label give a subtle
+          alignment cue without crowding the chart. Per
+          product feedback "inclua os dias para medir". */}
+      {labelIndices.map((i) => {
+        const x = xAt(i);
+        return (
+          <g key={`xlabel-${i}`}>
+            <line
+              x1={x}
+              x2={x}
+              y1={plotBottom}
+              y2={plotBottom + 4}
+              stroke="var(--border-soft)"
+              strokeWidth="1"
+            />
+            <text
+              x={x}
+              y={plotBottom + 16}
+              textAnchor="middle"
+              fontSize="10"
+              fontFamily="var(--font-sans, system-ui)"
+              fill="var(--text-faint)"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
+              {formatChartDay(data[i].day)}
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -135,23 +219,69 @@ export default function EngagementPage() {
               icon={<IconFeed size={14} />}
               trendLabel="DMs + Superchat combinados"
             />
+            {/* Renamed "Reações no Superchat" → "Reações
+                enviadas" per product feedback. Same underlying
+                metric (toggles in message_reactions), just
+                framed from the actor's perspective so the
+                card reads consistently with the other
+                action-based labels in this row. */}
             <StatCard
-              label="Reações no Superchat"
+              label="Reações enviadas"
               value={snap ? formatCompact(snap.totalReactions) : '—'}
               icon={<IconHeart size={14} />}
               trendLabel="Toggles em message_reactions"
             />
+            {/* Renamed "Conversas iniciadas" → "Novas
+                conversas" per product feedback. Maps to the
+                same activity ledger row (kind = chat_started),
+                but the new copy distinguishes it from the
+                "Conversas recorrentes iniciadas" card below
+                (re-engagement with an existing thread). */}
             <StatCard
-              label="Conversas iniciadas"
+              label="Novas conversas"
               value={snap ? formatNumber(snap.chatsStarted) : '—'}
               icon={<IconFeed size={14} />}
               trendLabel="Atividades kind = chat_started"
+            />
+            {/* Recurring chats — derived from the existing
+                chatsStarted counter (~38%) until the backend
+                ships a real `chats_resumed` event. Mocked
+                proportion is deterministic so the value
+                doesn't jitter between reloads with the same
+                snapshot. Per product feedback "Crie um box
+                de Conversas recorrentes iniciadas". */}
+            <StatCard
+              label="Conversas recorrentes iniciadas"
+              value={snap ? formatNumber(Math.round(snap.chatsStarted * 0.38)) : '—'}
+              icon={<IconFeed size={14} />}
+              trendLabel="Retomada de threads existentes (mock)"
             />
             <StatCard
               label="Participantes do Superchat"
               value={snap ? formatNumber(snap.superchatParticipants) : '—'}
               icon={<IconUsers size={14} />}
               trendLabel="Usuários joinados na sala global"
+            />
+            {/* Avg actions / user / day — derived from the
+                summed reactions + messages + chats. Tagged as
+                mock until activity-volume aggregation lands on
+                the backend. */}
+            <StatCard
+              label="Média de ações por usuário por dia"
+              value={snap ? avgActionsPerUserDay(snap) : '—'}
+              icon={<IconTrendingUp size={14} />}
+              trendLabel="Reações + mensagens + chats (mock)"
+            />
+            {/* Avg session length — hardcoded mock until the
+                client-side session timer events are wired.
+                Carries an explicit "mock" hint so the
+                operator knows not to read the number as
+                measured. */}
+            <StatCard
+              label="Tempo médio de sessão"
+              value="7m 32s"
+              icon={<IconTrendingUp size={14} />}
+              trendLabel="Sessão completa (mock)"
             />
           </div>
 
