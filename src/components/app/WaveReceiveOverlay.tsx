@@ -36,6 +36,7 @@ import styles from './WaveReceiveOverlay.module.css';
 interface WavePayload {
   sourceUserId: string | null;
   sourceName: string | null;
+  sourceAvatarUrl: string | null;
 }
 
 const OVERLAY_TTL_MS = 3500;
@@ -56,6 +57,7 @@ export default function WaveReceiveOverlay() {
       setWave({
         sourceUserId: detail.sourceUserId,
         sourceName: detail.sourceName,
+        sourceAvatarUrl: detail.sourceAvatarUrl,
       });
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => setWave(null), OVERLAY_TTL_MS);
@@ -78,6 +80,34 @@ export default function WaveReceiveOverlay() {
     >
       <div className={styles.backdrop} aria-hidden="true" />
       <div className={styles.message}>
+        {/* Avatar in front of the name per product feedback
+            "adicione a imagem do usuário". Falls back to the
+            generic silhouette placeholder when the realtime
+            payload didn't include an avatarUrl (e.g., the sender
+            never uploaded a photo). The image clicks-through to
+            the sender's profile alongside the name. */}
+        {wave.sourceUserId ? (
+          <Link
+            href={`/app/u/${wave.sourceUserId}`}
+            className={styles.senderAvatarLink}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Abrir perfil de ${wave.sourceName}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={wave.sourceAvatarUrl ?? '/avatar-placeholder.svg'}
+              alt=""
+              className={styles.senderAvatar}
+            />
+          </Link>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={wave.sourceAvatarUrl ?? '/avatar-placeholder.svg'}
+            alt=""
+            className={styles.senderAvatar}
+          />
+        )}
         {wave.sourceUserId ? (
           <Link
             href={`/app/u/${wave.sourceUserId}`}

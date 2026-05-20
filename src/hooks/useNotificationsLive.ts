@@ -90,6 +90,7 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
       kind?: string;
       sourceUserId?: string;
       sourceName?: string;
+      sourceAvatarUrl?: string;
     }) => {
       load();
       if (payload?.kind === 'waved' && typeof window !== 'undefined') {
@@ -98,6 +99,7 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
             detail: {
               sourceUserId: payload.sourceUserId ?? null,
               sourceName: payload.sourceName ?? null,
+              sourceAvatarUrl: payload.sourceAvatarUrl ?? null,
             },
           }),
         );
