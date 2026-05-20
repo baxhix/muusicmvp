@@ -114,6 +114,27 @@ type SetAnaShowsFn = (shows: AnaShow[]) => void;
 type SetAnaFlightFn = (payload: AnaFlightPayload | null) => void;
 type OpenAnaFlightFn = (payload: AnaFlightPayload) => void;
 
+/**
+ * Visible user-id tracking — wired so the Floating user badges
+ * (FloatingUsers) and the Mapbox marker badges (Globe) never
+ * paint the same user twice on screen. Globe publishes the set
+ * of user ids whose lat/lng currently fall inside the map's
+ * viewport bounds; FloatingUsers subscribes and filters its
+ * pool to render only the COMPLEMENT (i.e., off-screen users).
+ * Per product feedback:
+ *   - "Nunca deixar os dois formatos visíveis: flutuante e
+ *     fixo no mapa. Sempre ou um ou outro."
+ *   - "Mostre o flutuante somente quando o fixo estiver fora
+ *     do alcance de visão do usuário."
+ *
+ * Implementation is a tiny observable — listeners get the
+ * latest snapshot synchronously on subscribe AND on every
+ * change, so the FloatingUsers component can react without
+ * needing useSyncExternalStore plumbing. */
+type VisibleUsersListener = (ids: ReadonlySet<string>) => void;
+const _visibleUsersListeners = new Set<VisibleUsersListener>();
+let _visibleUserIds: ReadonlySet<string> = new Set();
+
 let _flyTo: FlyToFn | null = null;
 let _setUserLocation: SetUserLocationFn | null = null;
 let _setLiveUsers: SetLiveUsersFn | null = null;
@@ -271,6 +292,30 @@ export const globeStore = {
   openAnaFlight: (payload: AnaFlightPayload) => { _openAnaFlight?.(payload); },
 
   /**
+   * Publish the set of user ids currently visible (inside the
+   * map viewport bounds) so FloatingUsers can hide the floating
+   * counterpart for those users. Globe calls this on `move`
+   * events + whenever the live-users payload changes. The set
+   * is compared shallow via Object.is in subscribers; create a
+   * fresh Set each call (we don't mutate the existing one). */
+  setVisibleUserIds: (ids: ReadonlySet<string>) => {
+    _visibleUserIds = ids;
+    for (const fn of _visibleUsersListeners) fn(ids);
+  },
+
+  /**
+   * Subscribe to visibleUserIds changes. Fires once immediately
+   * with the current snapshot, then on every subsequent update.
+   * Returns an unsubscribe function. */
+  subscribeVisibleUserIds: (fn: VisibleUsersListener): (() => void) => {
+    _visibleUsersListeners.add(fn);
+    fn(_visibleUserIds);
+    return () => {
+      _visibleUsersListeners.delete(fn);
+    };
+  },
+
+  /**
    * Globe cleanup — null out every callback the Globe component
    * itself registered, leaving the PAGE-owned handlers
    * (openUserProfile, openAnaCheckIn, openAnaFlight, all registered
@@ -299,5 +344,12 @@ export const globeStore = {
     _setAnaCheckIn = null;
     _setAnaShows = null;
     _setAnaFlight = null;
+    // Reset the visible-user set so FloatingUsers stops filtering
+    // anything when the map unmounts (mobile route changes). When
+    // Globe remounts, its first `move` event repopulates this.
+    if (_visibleUserIds.size > 0) {
+      _visibleUserIds = new Set();
+      for (const fn of _visibleUsersListeners) fn(_visibleUserIds);
+    }
   },
 };

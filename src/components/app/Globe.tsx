@@ -150,6 +150,53 @@ export default function Globe() {
     let userLocationMarker: mapboxgl.Marker | null = null;
     /** Live presence markers keyed by user.id (so diff updates are O(1)) */
     const liveUserMarkers = new Map<string, mapboxgl.Marker>();
+
+    /**
+     * Snapshot of the latest live-users payload so the visibility
+     * publisher (below) can recompute on map moves without
+     * re-subscribing to `useLiveUsers`. Updated inside the
+     * `registerLiveUsers` callback every time the page pushes a
+     * fresh batch.
+     */
+    let lastLiveUsers: ReadonlyArray<{
+      id: string;
+      lng: number;
+      lat: number;
+    }> = [];
+
+    /**
+     * Publish the set of user ids that currently fall inside the
+     * map's viewport bounds. Drives the FloatingUsers component
+     * to HIDE its bubbles for those users — they're already
+     * represented as fixed Mapbox markers on the map. Per
+     * product feedback "Nunca deixar os dois formatos visíveis:
+     * flutuante e fixo no mapa. Sempre ou um ou outro. Mostre o
+     * flutuante somente quando o fixo estiver fora do alcance
+     * de visão do usuário."
+     *
+     * Called on every `move` + `moveend` event (cheap — N users
+     * × bounds.contains() is microseconds even with 100+ pins)
+     * AND whenever the live-users list itself changes (a new
+     * user coming online inside the viewport should immediately
+     * suppress their floating counterpart).
+     */
+    const publishVisibleUserIds = () => {
+      const bounds = map.getBounds();
+      if (!bounds) {
+        globeStore.setVisibleUserIds(new Set());
+        return;
+      }
+      const visible = new Set<string>();
+      for (const u of lastLiveUsers) {
+        if (bounds.contains([u.lng, u.lat])) {
+          visible.add(u.id);
+        }
+      }
+      globeStore.setVisibleUserIds(visible);
+    };
+
+    map.on('move', publishVisibleUserIds);
+    map.on('moveend', publishVisibleUserIds);
     /** Ana Castela check-in pin (singleton). Closed over by the cleanup
      *  function below via a getter ref so the inner handler in
      *  `registerAnaCheckIn` can still rotate its local `anaMarker`
@@ -1035,6 +1082,14 @@ export default function Globe() {
       // keyed by user.id. The list of users is pushed from AppPage via
       // globeStore.setLiveUsers whenever /api/users/online refreshes.
       globeStore.registerLiveUsers((users) => {
+        // Snapshot for the visibility publisher — recomputed on
+        // every move event, but ALSO needs to refresh when the
+        // live-users list itself changes (new user coming online
+        // inside the current viewport should suppress their
+        // floating counterpart on the very next paint).
+        lastLiveUsers = users.map((u) => ({ id: u.id, lng: u.lng, lat: u.lat }));
+        publishVisibleUserIds();
+
         const nextIds = new Set(users.map((u) => u.id));
 
         // Remove markers for users that disappeared. A removal opens

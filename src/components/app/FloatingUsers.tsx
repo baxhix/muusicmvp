@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { track } from '@/lib/analytics';
@@ -159,7 +159,42 @@ export default function FloatingUsers() {
   // session, so a second click un-waves instead of double-firing.
   const [likedIds, setLikedIds] = useState<Set<string>>(() => new Set());
 
-  const pool = useMemo(() => distributeFloatingUsers(liveUsers), [liveUsers]);
+  // Visible-on-map set, published by Globe whenever the viewport
+  // moves or the live-users list refreshes. Users whose lat/lng
+  // is inside `map.getBounds()` end up in this set, and we
+  // filter them OUT of the floating pool — they're already
+  // represented as fixed Mapbox markers, so showing the floating
+  // counterpart would double-paint them.
+  //
+  // Per product feedback "Nunca deixar os dois formatos
+  // visíveis: flutuante e fixo no mapa. Sempre ou um ou outro.
+  // Mostre o flutuante somente quando o fixo estiver fora do
+  // alcance de visão do usuário."
+  //
+  // When Globe is unmounted (mobile routes that drop the map)
+  // `globeStore.unregisterMapCallbacks` resets the set to empty,
+  // so floating badges show for everyone again until Globe
+  // remounts.
+  const [visibleOnMap, setVisibleOnMap] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  useEffect(() => {
+    const unsub = globeStore.subscribeVisibleUserIds((ids) => {
+      setVisibleOnMap(ids);
+    });
+    return unsub;
+  }, []);
+
+  // Floating pool = online users whose lat/lng is OUTSIDE the
+  // current map viewport (or who have no coords at all, in which
+  // case they can't appear on the map and stay floating forever).
+  // The deterministic distribution math runs over this filtered
+  // subset so positions reflow as the viewport changes.
+  const offMapUsers = useMemo(
+    () => liveUsers.filter((u) => !visibleOnMap.has(u.id)),
+    [liveUsers, visibleOnMap],
+  );
+  const pool = useMemo(() => distributeFloatingUsers(offMapUsers), [offMapUsers]);
 
   /**
    * Heart click on a floating user — mirrors the Globe Mapbox
