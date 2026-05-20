@@ -78,10 +78,29 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
     // aparecem para o usuário que fez, o que recebeu não
     // chegou"). Other kinds (same_track, message, mention, etc.)
     // continue with just the refetch.
-    const onNew = (payload?: { kind?: string }) => {
+    //
+    // The payload also carries the sender's id + display name so
+    // the `WaveReceiveOverlay` mounted at the layout level can
+    // render a "[sender] enviou corações para você" message with
+    // a clickable link to /app/u/<sourceUserId>. Per product
+    // feedback "a tela do usuário que receber, além dos corações
+    // caindo, deverá ficar com uma camada preta com transparência
+    // leve e a mensagem centralizada".
+    const onNew = (payload?: {
+      kind?: string;
+      sourceUserId?: string;
+      sourceName?: string;
+    }) => {
       load();
       if (payload?.kind === 'waved' && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('app:hearts-cascade'));
+        window.dispatchEvent(
+          new CustomEvent('app:hearts-cascade', {
+            detail: {
+              sourceUserId: payload.sourceUserId ?? null,
+              sourceName: payload.sourceName ?? null,
+            },
+          }),
+        );
       }
     };
     socket.on('notify:new', onNew);

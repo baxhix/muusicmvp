@@ -1,0 +1,89 @@
+/* ============================================================
+ * WAVE RECEIVE OVERLAY
+ *
+ * Black semi-transparent screen dim + centered message that
+ * announces an incoming wave to the receiver. Sits above the
+ * map / chrome / panels (z:300+) but below modals so a wave
+ * arriving while a modal is open doesn't kidnap focus from
+ * the modal's input.
+ *
+ * Tapping anywhere on the backdrop dismisses early; the
+ * username link inside stops propagation so the Link click
+ * routes to the sender's profile cleanly.
+ * ============================================================ */
+
+.root {
+  position: fixed;
+  inset: 0;
+  /* Sit above HeartsCascade (z:600 in HeartsCascade.module.css)
+   * is NOT the goal — the falling hearts should paint OVER this
+   * overlay so they read as a celebration on top of the dim
+   * curtain. Bumping just above the chrome / panels (z:100s) is
+   * enough; HeartsCascade lives further up the stack so it
+   * naturally lands on top of the dim. */
+  z-index: 220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: waveOverlayIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.message {
+  position: relative;
+  z-index: 1;
+  max-width: min(80vw, 540px);
+  padding: 28px 32px;
+  text-align: center;
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: #ffffff;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.55);
+  animation: waveMessageIn 320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+.senderLink {
+  /* Lilac highlight matches the brand accent used on the
+   * Fanverse box's gradient stroke + community-card chips so
+   * the username pops as the interactive token in the
+   * sentence. Underline removed at rest (the color + weight
+   * already mark the link) and added on hover for affordance. */
+  color: #c084fc;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.senderLink:hover,
+.senderLink:focus-visible {
+  color: #e9d5ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@keyframes waveOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes waveMessageIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .message {
+    animation: none;
+  }
+}

@@ -20,6 +20,7 @@ import AnaFlightPanel from '@/components/app/AnaFlightPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
 import HeartsCascade from '@/components/app/HeartsCascade';
+import WaveReceiveOverlay from '@/components/app/WaveReceiveOverlay';
 import FireArenaBanner from '@/components/app/FireArenaBanner';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
@@ -452,10 +453,21 @@ function Shell({ children }: { children: React.ReactNode }) {
       <AchievementCelebration />
       <SocialAchievementToast />
       {/* Falling hearts overlay — fires on `app:hearts-cascade`
-       *  events. Today the only emitter is the MockToastRotator's
-       *  "waved" notification; any other surface that wants the
-       *  hearts effect can dispatch the same event. */}
+       *  events. Emitters today: the MockToastRotator's "waved"
+       *  notification (detail-less) AND `useNotificationsLive`
+       *  on incoming `notify:new` with `kind: 'waved'` (carries
+       *  the sender's id + name in the detail). */}
       <HeartsCascade />
+      {/* Companion overlay to HeartsCascade — paints a soft
+       *  black dim + a centered "<sender> enviou corações para
+       *  você" message with the sender's name as a clickable
+       *  Link to `/app/u/[id]`. Only renders when the cascade
+       *  event carries a sourceName (i.e., a real socket-driven
+       *  wave from another user), so the mock rotator's
+       *  detail-less bursts don't trigger it. Per product
+       *  feedback "a tela do usuário que receber, além dos
+       *  corações caindo, deverá ficar com uma camada preta". */}
+      <WaveReceiveOverlay />
       {/* Fire Arena launch countdown banner — desktop-only,
        *  pinned to the top of the viewport. Component itself
        *  early-returns null on mobile via the useIsMobile
