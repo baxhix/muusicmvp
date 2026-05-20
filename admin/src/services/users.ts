@@ -1,5 +1,5 @@
 import { api } from './api';
-import type { User } from '@/types';
+import type { User, UserActivityEvent } from '@/types';
 
 /**
  * Users service. `list()` calls the real backend at /api/admin/users —
@@ -22,4 +22,17 @@ export const usersService = {
   suspend: (id: string) => api.post<User>(`/users/${id}/suspend`),
   ban:     (id: string) => api.post<User>(`/users/${id}/ban`),
   reactivate: (id: string) => api.post<User>(`/users/${id}/reactivate`),
+  /**
+   * Real audit feed for a single user. Backed by
+   * `/api/admin/users/:id/activities` on the muusic backend
+   * (see src/app/api/admin/users/[id]/activities/route.ts) —
+   * pipes the `user_activities` ledger through a mapper that
+   * shapes each row into `UserActivityEvent`. Music plays
+   * (kind=`stream`) show up here as `category: 'streaming',
+   * action: 'track_played'` rows so the audit doubles as a
+   * listening log. Per product feedback "salve no admin junto
+   * das atividades do usuário".
+   */
+  activities: (id: string) =>
+    api.get<{ events: UserActivityEvent[] }>(`/api/admin/users/${id}/activities`),
 };

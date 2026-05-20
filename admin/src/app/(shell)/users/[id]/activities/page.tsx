@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
@@ -32,6 +32,7 @@ import {
   generateUserActivities,
   summarizeActivities,
 } from '@/data/mock/userActivities';
+import { usersService } from '@/services/users';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type {
@@ -114,12 +115,49 @@ export default function UserActivitiesPage() {
     [params.id],
   );
 
-  // Generate the full event list once for this user — sorting +
-  // filtering happen client-side over this base array.
-  const allEvents = useMemo<UserActivityEvent[]>(
-    () => (user ? generateUserActivities({ user, count: 200, daysBack: 90 }) : []),
-    [user],
-  );
+  // Live audit feed — `usersService.activities()` hits the real
+  // `/api/admin/users/:id/activities` endpoint when the admin is
+  // pointed at a backend (NEXT_PUBLIC_API_BASE_URL set), and the
+  // service throws otherwise. We fall back to the deterministic
+  // mock generator on any failure so the page stays usable for
+  // designers running the admin standalone OR before the API is
+  // reachable, AND we surface the real events the moment the
+  // backend responds. Per product feedback "No perfil de cada
+  // usuário, inclua o registro de músicas que ele reproduziu na
+  // plataforma e salve no admin junto das atividades do usuário."
+  const [allEvents, setAllEvents] = useState<UserActivityEvent[]>([]);
+  useEffect(() => {
+    if (!user) {
+      setAllEvents([]);
+      return;
+    }
+    let cancelled = false;
+    // Optimistic mock first so the table is never empty while the
+    // network call is in flight.
+    const seeded = generateUserActivities({
+      user,
+      count: 200,
+      daysBack: 90,
+    });
+    setAllEvents(seeded);
+    usersService
+      .activities(user.id)
+      .then((res) => {
+        if (cancelled) return;
+        if (res && Array.isArray(res.events) && res.events.length > 0) {
+          setAllEvents(res.events);
+        }
+      })
+      .catch((err) => {
+        // Real endpoint isn't reachable yet (or returned an
+        // error). Keep the mock so the audit table stays
+        // populated for the team viewing this page.
+        console.warn('admin activities fetch failed, using mock:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const summary = useMemo(() => summarizeActivities(allEvents), [allEvents]);
 
