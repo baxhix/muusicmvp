@@ -219,30 +219,42 @@
   font-feature-settings: 'tnum' 1;
 }
 
-/* ── Insights tab cards ──────────────────────────────────── */
-
+/* ── Insights tab — vertical list ─────────────────────────
+ *
+ * Per product feedback "Em Dashboard/Insights deixe em lista
+ * e não boxes separados por dia e remova o comportamento de
+ * hover com a borda." Each entry is now a stacked row in a
+ * single-column list, separated by a hairline divider rather
+ * than its own card-style border. No hover effect — the
+ * insights are passive reading material, not interactive
+ * cards. The tone dot on the leading edge still carries the
+ * positive / attention / neutral cue.
+ */
 .insightsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
 }
 
 .insightCard {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  transition: border-color var(--dur-fast) var(--ease-out);
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: baseline;
+  gap: 10px 12px;
+  padding: 14px 4px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
 }
-.insightCard:hover { border-color: var(--border); }
+.insightCard + .insightCard {
+  /* Hairline divider between consecutive rows so the list
+   * stays scannable without each row needing its own border. */
+  border-top: 1px solid var(--border-soft);
+}
 
+/* Title + dot land in the same flex line via `display: contents`
+ * — the parent grid takes over the row's columns. */
 .insightTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: contents;
 }
 
 .insightDot {
@@ -251,6 +263,8 @@
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--text-faint);
+  align-self: center;
+  margin-top: 2px;
 }
 .insightDot-positive  { background: #3ddb74; }
 .insightDot-attention { background: #fbbf24; }
@@ -262,7 +276,8 @@
   font-weight: 600;
   color: var(--text);
   letter-spacing: -0.005em;
-  line-height: 1.25;
+  line-height: 1.35;
+  grid-column: 2;
 }
 
 .insightMetric {
@@ -272,18 +287,18 @@
   letter-spacing: 0.01em;
   color: var(--text-soft);
   font-variant-numeric: tabular-nums;
+  grid-column: 3;
+  align-self: center;
+  white-space: nowrap;
 }
 
 .insightBody {
-  margin: 0;
+  margin: 4px 0 0;
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--text-mute);
+  grid-column: 2 / -1;
 }
 
-/* Subtle accent borders per tone for the whole card — picks
- * up the same color as the dot but at very low alpha so the
- * card still feels neutral overall. */
-.insight-positive  { border-color: rgba(61, 219, 116, 0.25); }
-.insight-attention { border-color: rgba(251, 191, 36, 0.30); }
-.insight-neutral   { border-color: var(--border-soft); }
+/* Per-tone border accents from the old card layout are gone;
+ * the leading dot color is the only tone cue now. */
