@@ -2,16 +2,37 @@
 
 import { useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeader } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import Tabs from '@/components/ui/Tabs';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   IconSearch,
   IconKey,
   IconChevronRight,
+  IconCode,
 } from '@/components/icons';
+import TagsManager from '@/components/admin/TagsManager';
 import styles from './page.module.css';
+
+/**
+ * Estrutura tabada per product feedback "adicione tabs na aba de
+ * Desenvolvedor também e leve o item de Tags para lá e crie uma
+ * para o swagger":
+ *   - Endpoints — catálogo manual de REST + Socket.IO (conteúdo
+ *     original da página, abaixo)
+ *   - Tags     — tags de rastreamento, movido do Configurações
+ *   - Swagger  — referência OpenAPI/Swagger (stub por enquanto)
+ */
+type DevTab = 'endpoints' | 'tags' | 'swagger';
+
+const DEV_TABS: { id: DevTab; label: string }[] = [
+  { id: 'endpoints', label: 'Endpoints' },
+  { id: 'tags',      label: 'Tags' },
+  { id: 'swagger',   label: 'Swagger' },
+];
 
 /**
  * Developer reference — catalog of the platform's REST + Socket
@@ -350,6 +371,35 @@ const AUTH_LABEL: Record<EndpointAuth, string> = {
 };
 
 export default function DesenvolvedorPage() {
+  const [tab, setTab] = useState<DevTab>('endpoints');
+
+  return (
+    <div className={styles.page}>
+      <PageHeader
+        title="Desenvolvedor"
+        description="Referência técnica do Fanverse: endpoints REST/Socket, tags de rastreamento e documentação OpenAPI."
+        tabs={
+          <Tabs<DevTab>
+            variant="bordered"
+            items={DEV_TABS}
+            value={tab}
+            onChange={setTab}
+          />
+        }
+      />
+
+      {tab === 'endpoints' && <EndpointsTab />}
+      {tab === 'tags'      && <TagsManager />}
+      {tab === 'swagger'   && <SwaggerTab />}
+    </div>
+  );
+}
+
+/* ============================================================
+   Tab: Endpoints (conteúdo original da página)
+   ============================================================ */
+
+function EndpointsTab() {
   const [search, setSearch] = useState('');
   const [area, setArea] = useState<EndpointArea | 'all'>('all');
   const [status, setStatus] = useState<EndpointStatus | 'all'>('all');
@@ -383,12 +433,7 @@ export default function DesenvolvedorPage() {
   }, [filtered]);
 
   return (
-    <div className={styles.page}>
-      <PageHeader
-        title="Desenvolvedor"
-        description="Catálogo das APIs e eventos em tempo real da plataforma — referência para times de mobile e integrações."
-      />
-
+    <>
       {/* ── Filtros ──────────────────────────────────────── */}
       <Card className={styles.filters}>
         <Input
@@ -493,6 +538,26 @@ export default function DesenvolvedorPage() {
           </Card>
         ))
       )}
-    </div>
+    </>
+  );
+}
+
+/* ============================================================
+   Tab: Swagger / OpenAPI
+   ============================================================ */
+
+function SwaggerTab() {
+  return (
+    <Card>
+      <CardHeader
+        title="Swagger / OpenAPI"
+        description="Spec autogerado a partir dos route handlers. A versão completa, navegável e com 'try it out', vai aparecer aqui assim que a geração de spec for ativada no pipeline."
+      />
+      <EmptyState
+        icon={<IconCode size={20} />}
+        title="Spec OpenAPI em construção"
+        description="Hoje o catálogo de Endpoints (tab ao lado) é a fonte de verdade — escrito à mão. Quando o gerador de OpenAPI cair no build, esta aba carregará o Swagger UI apontando para /openapi.json com schemas, exemplos e botão de execução."
+      />
+    </Card>
   );
 }
