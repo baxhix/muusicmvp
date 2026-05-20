@@ -218,3 +218,72 @@
   color: var(--text);
   font-feature-settings: 'tnum' 1;
 }
+
+/* ── Insights tab cards ──────────────────────────────────── */
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.insightCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.insightCard:hover { border-color: var(--border); }
+
+.insightTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insightDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-faint);
+}
+.insightDot-positive  { background: #3ddb74; }
+.insightDot-attention { background: #fbbf24; }
+.insightDot-neutral   { background: var(--text-faint); }
+
+.insightTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+}
+
+.insightMetric {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.insightBody {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-mute);
+}
+
+/* Subtle accent borders per tone for the whole card — picks
+ * up the same color as the dot but at very low alpha so the
+ * card still feels neutral overall. */
+.insight-positive  { border-color: rgba(61, 219, 116, 0.25); }
+.insight-attention { border-color: rgba(251, 191, 36, 0.30); }
+.insight-neutral   { border-color: var(--border-soft); }

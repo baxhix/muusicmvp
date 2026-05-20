@@ -31,17 +31,20 @@ interface NavItem {
   badge?: number;
 }
 
+/* Order locked by product feedback:
+ *   Dashboard → Engajamento → Moderação → Superfãs → Usuários
+ *   → Feed → Comunidade → Músicas → Convites → Fanverse */
 const PRIMARY_NAV: NavItem[] = [
-  { href: '/dashboard',  label: 'Dashboard',  icon: IconDashboard },
-  { href: '/engagement', label: 'Engajamento', icon: IconTrendingUp },
-  { href: '/fanverse',   label: 'Fanverse',   icon: IconStar },
-  { href: '/feed',       label: 'Feed',       icon: IconFeed },
-  { href: '/comunidades', label: 'Comunidades', icon: IconMessage },
-  { href: '/users',      label: 'Usuários',   icon: IconUsers },
-  { href: '/convites',   label: 'Convites',   icon: IconTicket },
-  { href: '/tracks',     label: 'Músicas',    icon: IconMusic },
-  { href: '/moderation', label: 'Moderação',  icon: IconShield, badge: 12 },
-  { href: '/superfans',  label: 'Superfãs',   icon: IconStar },
+  { href: '/dashboard',   label: 'Dashboard',   icon: IconDashboard },
+  { href: '/engagement',  label: 'Engajamento', icon: IconTrendingUp },
+  { href: '/moderation',  label: 'Moderação',   icon: IconShield, badge: 12 },
+  { href: '/superfans',   label: 'Superfãs',    icon: IconStar },
+  { href: '/users',       label: 'Usuários',    icon: IconUsers },
+  { href: '/feed',        label: 'Feed',        icon: IconFeed },
+  { href: '/comunidades', label: 'Comunidade',  icon: IconMessage },
+  { href: '/tracks',      label: 'Músicas',     icon: IconMusic },
+  { href: '/convites',    label: 'Convites',    icon: IconTicket },
+  { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
 ];
 
 const SECONDARY_NAV: NavItem[] = [
@@ -163,7 +166,18 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
     >
       <div className={styles.brand}>
         <Link href="/dashboard" className={styles.brandLink} title="Fanverse Admin">
-          <span className={styles.brandLogo}>F</span>
+          {/* Actual Fanverse SVG brand mark — same purple→pink
+              stripey-F asset the main app + auth surfaces use,
+              so the visual identity reads consistently across
+              the platform. Per product feedback "inclua o
+              logotipo Fanverse no painel admin também". */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fanverse-logo.svg"
+            alt=""
+            className={styles.brandLogo}
+            aria-hidden="true"
+          />
           <span className={styles.brandName}>
             Fanverse
             <span className={styles.brandTag}>Admin</span>

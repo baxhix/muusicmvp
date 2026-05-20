@@ -26,6 +26,16 @@ import styles from './page.module.css';
 
 type Period = '7d' | '30d' | '90d';
 
+/** Top-of-page tab selector per product feedback ("Dentro
+ *  de dashboard, inclua uma tab, semelhante à configurações
+ *  com os items Dados e Insights"). */
+type DashTab = 'dados' | 'insights';
+
+const DASH_TABS: { id: DashTab; label: string }[] = [
+  { id: 'dados',    label: 'Dados' },
+  { id: 'insights', label: 'Insights' },
+];
+
 const KPI_ICON: Record<string, React.ReactNode> = {
   mau:        <IconUsers size={14} />,
   signups:    <IconUsers size={14} />,
@@ -221,6 +231,7 @@ function Donut({ data }: { data: { label: string; value: number; color: string }
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<Period>('30d');
+  const [dashTab, setDashTab] = useState<DashTab>('dados');
   const [kpis, setKpis] = useState<Kpi[] | null>(null);
   const [growth, setGrowth] = useState<ChartSeries[] | null>(null);
   const [postsByType, setPostsByType] = useState<{ label: string; value: number }[] | null>(null);
@@ -292,9 +303,22 @@ export default function DashboardPage() {
             </Button>
           </>
         }
+        tabs={
+          <Tabs<DashTab>
+            variant="bordered"
+            items={DASH_TABS}
+            value={dashTab}
+            onChange={setDashTab}
+          />
+        }
       />
 
       <div className={styles.body}>
+        {dashTab === 'insights' && (
+          <InsightsTab />
+        )}
+        {dashTab === 'dados' && (
+          <>
         {/* KPI grid */}
         <div className={styles.kpiGrid}>
           {(kpis ?? Array(6).fill(null)).map((k, i) =>
@@ -487,7 +511,110 @@ export default function DashboardPage() {
             </div>
           </CardBody>
         </Card>
+          </>
+        )}
       </div>
+    </>
+  );
+}
+
+/* ============================================================
+ * Insights tab
+ *
+ * Qualitative read of the platform's state — short narrative
+ * cards a product owner / community lead can scan in 30s to
+ * understand "what's working, what's noisy, what needs
+ * attention". Numbers are mock today; when the real backend
+ * surfaces aggregated trend deltas + sentiment scoring, swap
+ * each card's source. Kept simple on purpose — the Dados tab
+ * already shows the raw KPIs / charts; Insights is the
+ * editorialized layer above them.
+ * ============================================================ */
+
+interface InsightCard {
+  id: string;
+  tone: 'positive' | 'attention' | 'neutral';
+  title: string;
+  body: string;
+  metric?: string;
+}
+
+const INSIGHT_CARDS: InsightCard[] = [
+  {
+    id: 'engagement-up',
+    tone: 'positive',
+    title: 'Engajamento subindo entre superfãs',
+    metric: '+18% likes/comentários nesta semana',
+    body:
+      'Os posts marcados como "Fanverse" estão acumulando 2.3× mais reações do que feed orgânico. A janela ideal pra publicar continua sendo 19h-21h em SP/RJ.',
+  },
+  {
+    id: 'community-noise',
+    tone: 'attention',
+    title: 'Picos de moderação em Comunidades',
+    metric: '12 denúncias abertas (high)',
+    body:
+      'A comunidade "Boiadeira Forever" concentra 7 das 12 denúncias da semana. Recomenda-se revisar regras + considerar moderador convidado pra cobrir o turno noturno.',
+  },
+  {
+    id: 'streams-growth',
+    tone: 'positive',
+    title: 'Streams completos crescendo',
+    metric: '94% taxa de conclusão (>75% da faixa)',
+    body:
+      'A maioria das sessões termina o vídeo até o fim — sinal forte de que o ranqueamento de "próxima música" está alinhado ao gosto. Mantenha o algoritmo atual.',
+  },
+  {
+    id: 'inactive-cohort',
+    tone: 'attention',
+    title: 'Coorte inativa nos últimos 14 dias',
+    metric: '~340 contas sem stream desde 6/maio',
+    body:
+      'Recomenda-se um pulso de re-engajamento (push + e-mail) usando o gatilho "Sua tribo curtiu X" — esse copy historicamente recupera 22% da coorte.',
+  },
+  {
+    id: 'sentiment-feed',
+    tone: 'neutral',
+    title: 'Sentimento nos comentários do feed',
+    metric: '78% positivo · 17% neutro · 5% negativo',
+    body:
+      'Distribuição saudável. Os 5% negativos concentram-se em posts patrocinados — possível indicativo de que o user-base prefere conteúdo orgânico.',
+  },
+  {
+    id: 'growth-pacing',
+    tone: 'neutral',
+    title: 'Ritmo de novos cadastros',
+    metric: '~62/dia (média 7d)',
+    body:
+      'Pacing estável. Aquisições via link de convite (Convites) responderam por 41% do total da semana — manter o programa ativo no próximo ciclo.',
+  },
+];
+
+function InsightsTab() {
+  return (
+    <>
+      <Card>
+        <CardHeader
+          title="Insights da semana"
+          description="Leitura qualitativa do que está acontecendo na plataforma. Use junto com a aba Dados para contexto numérico."
+        />
+        <CardBody>
+          <div className={styles.insightsGrid}>
+            {INSIGHT_CARDS.map((c) => (
+              <article key={c.id} className={`${styles.insightCard} ${styles[`insight-${c.tone}`] ?? ''}`}>
+                <div className={styles.insightTitleRow}>
+                  <span className={`${styles.insightDot} ${styles[`insightDot-${c.tone}`] ?? ''}`} aria-hidden="true" />
+                  <h4 className={styles.insightTitle}>{c.title}</h4>
+                </div>
+                {c.metric && (
+                  <p className={styles.insightMetric}>{c.metric}</p>
+                )}
+                <p className={styles.insightBody}>{c.body}</p>
+              </article>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
     </>
   );
 }

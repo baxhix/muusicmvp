@@ -70,18 +70,17 @@
   color: inherit;
 }
 
+/* Brand mark — now renders the real Fanverse SVG asset
+ * (`/fanverse-logo.svg`) per product feedback "inclua o
+ * logotipo Fanverse no painel admin também". The previous
+ * "F" placeholder swatch is gone; the SVG carries its own
+ * purple→pink gradient so we just size + space it. */
 .brandLogo {
   width: 24px;
   height: 24px;
-  display: grid;
-  place-items: center;
-  background: var(--text);
-  color: var(--bg);
-  border-radius: var(--r-sm);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: -0.04em;
+  display: block;
   flex-shrink: 0;
+  object-fit: contain;
 }
 
 .brandName {
@@ -155,14 +154,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  /* Padding bumped 7 → 9 vertical to read as roomier rows
-   * even when the gap between siblings stays modest. */
   padding: 9px 10px;
   border-radius: var(--r-sm);
-  /* Rest state painted at `--text-mute` (was --text-soft) per
-   * product feedback "os itens que não estão ativos, deixe
-   * mais cinza". */
-  color: var(--text-mute);
+  /* Both states (active + inactive) now paint white text per
+   * product feedback "mude a cor para de ativos/inativos para
+   * branco". Inactive rows sit at a muted-alpha white so the
+   * row still reads as quieter than the focused one; the
+   * active row goes full opacity. */
+  color: rgba(255, 255, 255, 0.55);
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
@@ -175,27 +174,18 @@
 
 .item:hover {
   background: var(--surface-hover);
-  color: var(--text);
+  color: #ffffff;
 }
 
-/* Active item — brand-tinted background + a left accent
- * stripe so the current section pops against the now-muted
- * inactive rows. The stripe is painted with a ::before pseudo
- * (4px wide, full row height) so it doesn't disturb the
- * row's normal flex flow. */
+/* Active item — neutral surface tint background only. Per
+ * product feedback "remova o traço na lateral verde" the old
+ * 3px brand-green `::before` accent stripe is gone, and the
+ * background swapped from `var(--brand-soft)` (green tint)
+ * to `var(--surface-hover)` so the highlighted row reads as
+ * a quiet white-on-dark emphasis instead of a brand splash. */
 .itemActive {
-  background: var(--brand-soft);
-  color: var(--text);
-}
-.itemActive::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--brand);
+  background: var(--surface-hover);
+  color: #ffffff;
 }
 
 .itemIcon {
@@ -204,13 +194,13 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  /* Icons drop one step further to --text-faint at rest so
-   * inactive rows look genuinely quiet. */
-  color: var(--text-faint);
+  /* Icons match the text-color treatment — muted white at
+   * rest, solid white when the row is active or hovered. */
+  color: rgba(255, 255, 255, 0.45);
   transition: color var(--dur-fast) var(--ease-out);
 }
-.itemActive .itemIcon { color: var(--brand); }
-.item:hover .itemIcon { color: var(--text); }
+.itemActive .itemIcon { color: #ffffff; }
+.item:hover .itemIcon { color: #ffffff; }
 
 .itemLabel {
   flex: 1;
@@ -327,13 +317,6 @@
   justify-content: center;
   padding: 9px 0;
   gap: 0;
-}
-.sidebarCollapsed .itemActive::before {
-  /* Stripe drops to 2px in collapsed mode so the narrower
-   * column doesn't feel crowded. */
-  width: 2px;
-  top: 8px;
-  bottom: 8px;
 }
 .sidebarCollapsed .profile {
   justify-content: center;
