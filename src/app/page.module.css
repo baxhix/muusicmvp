@@ -32,8 +32,10 @@
   color: var(--ink);
 }
 .visionQuote em {
+  /* Italic stripped per product feedback "Nenhuma área deve
+   * ter o itálico." Serif family + accent color stay so the
+   * emphasized phrase still reads as distinct typography. */
   font-family: var(--serif);
-  font-style: italic;
   color: var(--accent);
 }
 
@@ -141,8 +143,9 @@
 }
 
 .liveCardNum {
+  /* Italic dropped per product feedback "Nenhuma área deve ter
+   * o itálico." Serif family stays for the typographic accent. */
   font-family: var(--serif);
-  font-style: italic;
   font-size: clamp(72px, 11vw, 140px);
   font-weight: 400;
   color: var(--accent);
@@ -154,8 +157,8 @@
   font-weight: 300;
   letter-spacing: -0.02em;
   color: var(--ink);
+  /* Italic dropped per product feedback. */
   font-family: var(--serif);
-  font-style: italic;
 }
 .liveCardText {
   font-size: clamp(20px, 2.2vw, 30px);

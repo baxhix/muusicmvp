@@ -283,7 +283,11 @@
   letter-spacing: -0.005em;
 }
 .textDeleted {
-  font-style: italic;
+  /* Italic dropped per product feedback "No componente de
+   * comentários do feed, comunidade e todo o ambiente que
+   * houver o estilo itálico em algum texto, remova." The
+   * lowered alpha (0.32) is the sole cue now that a comment
+   * has been removed — visually quiet, no slant. */
   color: rgba(245, 245, 247, 0.32);
 }
 

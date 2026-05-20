@@ -121,8 +121,9 @@
   line-height: 1.05;
 }
 .downloadTitle em {
+  /* Italic dropped per product feedback "Nenhuma área deve
+   * ter o itálico." Serif family still flags the brand word. */
   font-family: var(--serif);
-  font-style: italic;
 }
 .downloadSub {
   font-size: 16px;

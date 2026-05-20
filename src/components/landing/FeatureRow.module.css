@@ -132,8 +132,10 @@
 }
 
 .title em {
+  /* Italic stripped per product feedback "Nenhuma área deve
+   * ter o itálico." Serif family + muted color still
+   * differentiate the emphasized phrase from the rest. */
   font-family: var(--serif);
-  font-style: italic;
   display: inline-block;
   color: var(--ink-mute);
   letter-spacing: -0.01em;

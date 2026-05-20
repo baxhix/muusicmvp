@@ -73,6 +73,22 @@ body {
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 
+/* Italic stripped globally per product feedback "No
+ * componente de comentários do feed, comunidade e todo o
+ * ambiente que houver o estilo itálico em algum texto,
+ * remova. Nenhuma área deve ter o itálico." The browser's
+ * default UA stylesheet renders <em>, <i>, <cite>, <var>,
+ * <address>, and <dfn> as italic — neutralising them here
+ * keeps the codebase free of accidental slants even when
+ * markup leans on those semantic tags. CSS-module rules
+ * across the app that previously paired `.foo em` with
+ * `font-style: italic` were already updated to omit the
+ * slant; this rule is a belt-and-suspenders for any future
+ * markup that defaults via the cascade. */
+em, i, cite, var, address, dfn {
+  font-style: normal;
+}
+
 ::selection {
   background: var(--accent);
   color: var(--bg);

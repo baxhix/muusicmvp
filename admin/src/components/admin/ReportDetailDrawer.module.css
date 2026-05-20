@@ -99,8 +99,9 @@
   line-height: 1.55;
 }
 .descriptionEmpty {
+  /* Italic dropped per product feedback "Nenhuma área deve
+   * ter o itálico." */
   color: var(--text-faint);
-  font-style: italic;
 }
 
 .targetCard {

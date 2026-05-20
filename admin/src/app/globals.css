@@ -223,6 +223,19 @@ a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; background: none; border: 0; color: inherit; }
 input, textarea, select { font-family: inherit; color: inherit; }
 
+/* Italic stripped globally per product feedback "Nenhuma
+ * área deve ter o itálico." Neutralises the UA defaults for
+ * <em>, <i>, and the other semantic italic tags so the
+ * admin shell + every drawer / panel below never picks up
+ * an accidental slant from raw markup. CSS-module rules
+ * that previously paired specific classes with `font-style:
+ * italic` (community topic comments, ReportDetailDrawer's
+ * empty description, etc.) were already updated to omit
+ * the slant; this rule covers any future markup. */
+em, i, cite, var, address, dfn {
+  font-style: normal;
+}
+
 ::selection {
   background: var(--accent);
   color: var(--accent-fg);
