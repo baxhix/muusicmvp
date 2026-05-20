@@ -1,0 +1,250 @@
+/* ============================================================
+ * FEED POST INSIGHTS DRAWER
+ *
+ * Two-section layout: quantitative metric cards up top, then
+ * a moderator-facing comments list below with inline actions.
+ * Spacing tokens match the rest of the admin UI so the drawer
+ * sits visually with the existing surfaces.
+ * ============================================================ */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 8px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* ── Quantitative cards ─────────────────────────────────── */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.statCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.statIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 4px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-soft);
+}
+
+.statValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+/* Small "mock" tag in the top-right corner of cards whose
+ * values are seeded from an id hash rather than coming from
+ * a real analytics endpoint. Sets honest expectations for
+ * the moderator. */
+.statHint {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ── Qualitative comments ────────────────────────────────── */
+
+.commentsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.commentsSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.summaryPill,
+.summaryPillMute,
+.summaryPillWarn {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+.summaryPill {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--text);
+}
+.summaryPillMute {
+  background: var(--surface-2);
+  border-color: var(--border-soft);
+  color: var(--text-mute);
+}
+.summaryPillWarn {
+  background: rgba(251, 191, 36, 0.10);
+  border-color: rgba(251, 191, 36, 0.30);
+  color: #fbbf24;
+}
+
+.emptyState {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-mute);
+  font-size: 13px;
+}
+
+.commentList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commentRow {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+
+.commentRow:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.commentBody {
+  min-width: 0;
+}
+
+.commentMeta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.commentAuthor {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.commentDate {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* Status chips inside the meta row — same envelope as the
+ * summary pills above but smaller / tighter. */
+.commentTag,
+.commentTagMute {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+}
+.commentTag {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.30);
+  color: #fbbf24;
+}
+.commentTagMute {
+  background: var(--surface-2);
+  border-color: var(--border-soft);
+  color: var(--text-mute);
+}
+
+.commentText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  word-break: break-word;
+}
+
+/* Modifier classes for moderation states. Apply visual cues
+ * without rewriting the row markup. */
+.commentDeleted {
+  opacity: 0.55;
+}
+.commentDeleted .commentText {
+  color: var(--text-faint);
+}
+.commentHidden:not(.commentDeleted) .commentText {
+  color: var(--text-mute);
+}
+.commentFlagged:not(.commentDeleted) {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.commentActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}

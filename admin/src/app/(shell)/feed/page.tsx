@@ -23,10 +23,12 @@ import {
   IconTrash,
   IconFeed,
   IconCheckCircle,
+  IconTrendingUp,
 } from '@/components/icons';
 import FeedStatusBadge from '@/components/admin/FeedStatusBadge';
 import FeedComposerDrawer from '@/components/admin/FeedComposerDrawer';
 import FeedLightbox from '@/components/admin/FeedLightbox';
+import FeedPostInsightsDrawer from '@/components/admin/FeedPostInsightsDrawer';
 import { feedService } from '@/services/feed';
 import { resolveAssetUrl } from '@/lib/utils';
 import type {
@@ -125,6 +127,11 @@ export default function AdminFeedPage() {
     media: FeedMediaItem[];
     index: number;
   } | null>(null);
+
+  // Insights drawer — opened from the per-row analytics icon.
+  // Stores the focused post; null = closed. Per product
+  // feedback "Inclua um ícone na lista de análise de dados".
+  const [insightsPost, setInsightsPost] = useState<FeedItem | null>(null);
 
   const refetch = useCallback(async () => {
     try {
@@ -374,6 +381,24 @@ export default function AdminFeedPage() {
                 <IconEye size={14} />
               </Button>
             )}
+            {/* Insights / análise de dados — per product feedback
+                "Inclua um ícone na lista de análise de dados
+                para mostrar os dados envolvendo o engajamento
+                daquele post como likes, comentários, impressões
+                (esse pode ser mocado). Não só quantitativo, mas
+                qualitativo também. Pois o moderador poderá gerir
+                os comentários através dessa tela." Opens
+                `FeedPostInsightsDrawer` for the focused row. */}
+            <Button
+              variant="ghost"
+              size="sm"
+              iconOnly
+              aria-label="Insights"
+              title="Insights e moderação de comentários"
+              onClick={() => setInsightsPost(p)}
+            >
+              <IconTrendingUp size={14} />
+            </Button>
             {p.status !== 'published' && (
               <Button
                 variant="ghost"
@@ -507,6 +532,18 @@ export default function AdminFeedPage() {
         index={lightbox?.index ?? 0}
         onIndexChange={(i) => setLightbox((lb) => (lb ? { ...lb, index: i } : lb))}
         onClose={() => setLightbox(null)}
+      />
+
+      {/* Insights + moderation drawer — opened from the per-row
+          analytics icon. Quantitative metrics use real fields
+          where the FeedItem supplies them and fall back to
+          deterministic seeded numbers; comments are mock today
+          (see FeedPostInsightsDrawer.tsx for the migration
+          path to the real endpoint). */}
+      <FeedPostInsightsDrawer
+        post={insightsPost}
+        open={insightsPost !== null}
+        onClose={() => setInsightsPost(null)}
       />
 
       <ConfirmDialog
