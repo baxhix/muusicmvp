@@ -695,15 +695,28 @@
       0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
       0 1px 0 rgba(255, 255, 255, 0.08) inset;
   }
+  /* The compactBar (the slim always-visible toggle pill that
+   * mobile uses) was hidden on desktop entirely + the dropdown
+   * was force-pinned open with `max-height: none`. The footer
+   * chevron's onClick still flipped `open`, but the
+   * always-open CSS swallowed the collapse so the arrow felt
+   * inert — per product feedback "No box Fanverse, faça a seta
+   * de retrair e expandir o box funcionar".
+   *
+   * Now:
+   *   - The dropdown uses the SAME max-height transition the
+   *     mobile pill uses (defined on `.dropdown` above), so the
+   *     footer chevron + the compactBar chevron both collapse
+   *     the box for real.
+   *   - The compactBar shows on desktop only when the box is
+   *     COLLAPSED — when expanded, the dropdown's internal
+   *     header carries the artist identity instead, so there's
+   *     no name/avatar duplication. */
   .compactBar {
     display: none;
   }
-  /* Force the dropdown body permanently open + remove the
-   * max-height transition so it never collapses on desktop. */
-  .dropdown {
-    max-height: none;
-    overflow: visible;
-    transition: none;
+  .box:not(.boxOpen) .compactBar {
+    display: flex;
   }
 }
 

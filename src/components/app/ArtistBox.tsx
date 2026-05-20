@@ -55,7 +55,17 @@ function sumEarnedXp(
 }
 
 export default function ArtistBox() {
-  const [open, setOpen] = useState(false);
+  // Default to OPEN on desktop so the box still reads as the
+  // permanently-visible "Fanverse card" it always was — but the
+  // toggle now genuinely flips the dropdown closed (see the
+  // updated CSS below: the desktop `max-height: none` override
+  // is gone, so the .boxOpen / max-height transition runs on
+  // every viewport).
+  //
+  // On mobile the box is `display: none` entirely (per the
+  // existing @media block), so this initial value is a no-op
+  // there.
+  const [open, setOpen] = useState(true);
   // contentRef is retained because the inner missions list still
   // references it via ref (legacy — kept so the layout doesn't
   // collapse to 0 if the missions container is queried for
