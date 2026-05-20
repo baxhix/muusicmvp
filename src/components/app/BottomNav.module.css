@@ -123,10 +123,11 @@
   /* The neutral white-tint border was replaced by a gradient
    * stroke painted in `.inner::after` below — matches the
    * MobileHomeChrome header so the two pills feel like the
-   * same brand surface. The 3px transparent border is kept
-   * here so the box-sizing accounting (and the previous
-   * spacing math throughout) doesn't shift. */
-  border: 3px solid transparent;
+   * same brand surface. Borda enxugada pra 2px per product
+   * feedback "diminua para 2px a espessura da borda da navbar
+   * com gradient". O transparent aqui mantém o box-sizing
+   * coerente com o pseudo do gradiente. */
+  border: 2px solid transparent;
   border-radius: 999px;
   /* Restored padding from the previous tightening — matches the
    * original height: 8/10 → resting bar height back to its old
@@ -157,7 +158,7 @@
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   background-image: linear-gradient(
     90deg,
     rgba(168, 85, 247, 0.55) 0%,

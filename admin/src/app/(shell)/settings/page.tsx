@@ -33,16 +33,26 @@ import type {
 import { formatDate, formatRelative } from '@/lib/format';
 import styles from './page.module.css';
 
-// Scope trimmed to the three sections the team actively maintains.
-// Integrações / Faturamento / API Keys lived as placeholders and
-// were not bringing operational value — removed to keep the surface
-// focused on what's used day-to-day.
-type SettingsTab = 'general' | 'team' | 'tags';
+// Scope ampliado per product feedback "em configurações adicione
+// mais essas tabs: Registro de regras, Notificações, Fanpoints".
+// Os três novos entram como stubs (Card + descrição) — preenchem o
+// shell e ficam prontos pra ganhar conteúdo quando o backend
+// correspondente cair.
+type SettingsTab =
+  | 'general'
+  | 'team'
+  | 'tags'
+  | 'rules'
+  | 'notifications'
+  | 'fanpoints';
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: 'general', label: 'Geral' },
-  { id: 'team',    label: 'Usuários' },
-  { id: 'tags',    label: 'Tags' },
+  { id: 'general',       label: 'Geral' },
+  { id: 'team',          label: 'Usuários' },
+  { id: 'tags',          label: 'Tags' },
+  { id: 'rules',         label: 'Registro de regras' },
+  { id: 'notifications', label: 'Notificações' },
+  { id: 'fanpoints',     label: 'Fanpoints' },
 ];
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -81,11 +91,75 @@ export default function SettingsPage() {
       />
 
       <div className={styles.body}>
-        {tab === 'general' && <GeneralTab />}
-        {tab === 'team'    && <TeamTab />}
-        {tab === 'tags'    && <TagsTab />}
+        {tab === 'general'       && <GeneralTab />}
+        {tab === 'team'          && <TeamTab />}
+        {tab === 'tags'          && <TagsTab />}
+        {tab === 'rules'         && <RulesTab />}
+        {tab === 'notifications' && <NotificationsTab />}
+        {tab === 'fanpoints'     && <FanpointsTab />}
       </div>
     </>
+  );
+}
+
+/* ============================================================
+   Stub tabs — placeholders pros 3 novos tabs adicionados per
+   product feedback. Mantém o vocabulário visual (Card +
+   CardHeader + body descritivo) pra que os tabs já leiam como
+   "vão receber conteúdo aqui" em vez de cair em página vazia.
+   Trocar pelo conteúdo real assim que o backend / spec cair.
+   ============================================================ */
+
+function RulesTab() {
+  return (
+    <Card>
+      <CardHeader
+        title="Registro de regras"
+        description="Histórico de criação, alteração e revogação de regras de moderação, automação e visibilidade aplicadas ao Fanverse."
+      />
+      <div className={styles.formBody}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-mute)' }}>
+          Em breve: timeline cronológica com cada regra editada, autor,
+          motivo da mudança e estado anterior / atual lado a lado.
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function NotificationsTab() {
+  return (
+    <Card>
+      <CardHeader
+        title="Notificações"
+        description="Modelos e canais de notificação enviados aos usuários — push, e-mail e in-app."
+      />
+      <div className={styles.formBody}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-mute)' }}>
+          Em breve: lista de templates por evento (novo seguidor, wave
+          recebido, milestone de Fanpoints etc.) com toggle por canal e
+          preview antes de enviar.
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function FanpointsTab() {
+  return (
+    <Card>
+      <CardHeader
+        title="Fanpoints"
+        description="Regras de acúmulo, multiplicadores e teto diário do programa de pontos do Fanverse."
+      />
+      <div className={styles.formBody}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-mute)' }}>
+          Em breve: configuração de quantos pontos cada ação rende
+          (play completo, share, check-in em show, etc.), janelas de
+          bônus e limite diário por usuário.
+        </p>
+      </div>
+    </Card>
   );
 }
 

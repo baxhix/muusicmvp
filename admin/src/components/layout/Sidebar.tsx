@@ -16,6 +16,7 @@ import {
   IconTrendingUp,
   IconCode,
   IconTicket,
+  IconCalendar,
   IconChevronLeft,
   IconChevronRight,
 } from '@/components/icons';
@@ -33,7 +34,11 @@ interface NavItem {
 
 /* Order locked by product feedback:
  *   Dashboard → Engajamento → Moderação → Superfãs → Usuários
- *   → Feed → Comunidade → Músicas → Convites → Fanverse */
+ *   → Feed → Comunidade → Músicas → Pre Save → Convites → Fanverse
+ *
+ * Pre Save fica adjacente a Músicas porque é uma feature de
+ * release/marketing de faixa — agrupa visualmente com o domínio
+ * de música. */
 const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',   icon: IconDashboard },
   { href: '/engagement',  label: 'Engajamento', icon: IconTrendingUp },
@@ -43,6 +48,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/feed',        label: 'Feed',        icon: IconFeed },
   { href: '/comunidades', label: 'Comunidade',  icon: IconMessage },
   { href: '/tracks',      label: 'Músicas',     icon: IconMusic },
+  { href: '/pre-save',    label: 'Pre Save',    icon: IconCalendar },
   { href: '/convites',    label: 'Convites',    icon: IconTicket },
   { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
 ];

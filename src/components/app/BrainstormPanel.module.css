@@ -100,7 +100,14 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 240;
+  /* Empurrado de 240 → 320 per product feedback "no mobile, ao
+   * abrir o modal de Features em teste, deve ficar por cima das
+   * imagens flutuantes do chat". Embora o LiveChatStack mobile
+   * caia pra z:90 e o desktop pra z:200, o salto pro topo da
+   * pilha (acima inclusive do AnaCheckInPanel z:300) elimina
+   * qualquer dúvida de stacking context — o scrim domina
+   * tudo que pinta na home enquanto o brainstorm está aberto. */
+  z-index: 320;
   background: rgba(0, 0, 0, 0.50);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
