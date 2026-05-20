@@ -139,6 +139,13 @@ interface AppShellValue {
    *  a small restore-pill instead of the full bar. */
   playerHidden: boolean;
   setPlayerHidden: Dispatch<SetStateAction<boolean>>;
+  /** Whether the EditProfileModal is open. Lives in the shell
+   *  (não na rota /app/perfil) per product feedback: clicar
+   *  "Editar perfil" no drawer abre o modal direto, sem desviar
+   *  pelo profile view. Compartilhado entre o drawer (TopBar) e
+   *  o botão "Editar perfil" do ProfilePanel. */
+  showEditProfile: boolean;
+  setShowEditProfile: Dispatch<SetStateAction<boolean>>;
   /** Ana check-in modal payload — non-null while the modal is
    *  open. Setting null closes it AND starts the 60s linger
    *  before the pin auto-clears from the globe. */
@@ -204,6 +211,11 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   // initial state is `false`; the persisted value is read in an
   // effect after hydration so the server HTML always matches.
   const [playerHidden, setPlayerHidden] = useState(false);
+
+  // Edit-profile modal: hoisted ao shell pra que o drawer (TopBar)
+  // possa abrir direto sem desviar pra /app/perfil, e o botão
+  // "Editar perfil" no ProfilePanel também consome o mesmo state.
+  const [showEditProfile, setShowEditProfile] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -534,6 +546,8 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       setPlayerSize,
       playerHidden,
       setPlayerHidden,
+      showEditProfile,
+      setShowEditProfile,
       anaModalPayload,
       closeAnaCheckIn,
       anaFlightModalPayload,
@@ -557,6 +571,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       playerExpanded,
       playerSize,
       playerHidden,
+      showEditProfile,
       anaModalPayload,
       anaFlightModalPayload,
       closeAnaFlight,

@@ -40,6 +40,14 @@ export default function PlaylistModal({
    *  reopening the modal starts at 7 again. */
   const PREVIEW_COUNT = 7;
   const [showAll, setShowAll] = useState(false);
+  /** Sinal isolado: TRUE só após clique explícito em "Ver mais".
+   *  Diferente de `showAll`, que também vira true quando a busca
+   *  está preenchida (pra não esconder matches atrás da paginação).
+   *  Esse aqui é o único que cresce o panel (.panelExpanded) —
+   *  garante que digitar na busca não redimensione o modal, per
+   *  product feedback "que mude sempre para baixo após clicar no
+   *  botão 'mais...'". */
+  const [userExpandedPanel, setUserExpandedPanel] = useState(false);
   // Live catalog — replaces the old static `SONGS` import. We derive
   // the cover image from the YouTube id right here so the modal stays
   // self-contained (matches the shape NowPlaying composes too).
@@ -61,6 +69,7 @@ export default function PlaylistModal({
         setQuery('');
         setHighlightIdx(0);
         setShowAll(false);
+        setUserExpandedPanel(false);
         setTab('recentes');
         setSelectedAlbumId(null);
       }, 360);
@@ -78,9 +87,19 @@ export default function PlaylistModal({
   useEffect(() => {
     if (open) {
       setPhase((p) => (p === 'idle' || p === 'out' ? 'in' : p));
-    } else {
-      setPhase((p) => (p === 'idle' ? 'idle' : 'out'));
+      return;
     }
+    setPhase((p) => (p === 'idle' ? 'idle' : 'out'));
+    // Fallback unmount — se o animationend de `playlist-fall` não
+    // disparar (acontecia quando o usuário fechava o modal antes do
+    // entering terminar; o Chrome travava o `playlist-fall` em
+    // frame 0 e a transição pra 'idle' nunca acontecia), garante
+    // que o phase vá pra 'idle' depois da duração da animação.
+    // 400ms = playlist-fall (320ms) + folga.
+    const t = setTimeout(() => {
+      setPhase((p) => (p === 'out' ? 'idle' : p));
+    }, 400);
+    return () => clearTimeout(t);
   }, [open]);
 
   const handleAnimationEnd = (e: AnimationEvent<HTMLElement>) => {
@@ -218,7 +237,7 @@ export default function PlaylistModal({
           backdrop CSS classes stay in the module for the closing
           animation hook on the panel itself. */}
       <aside
-        className={`${styles.panel} ${isIn ? styles.panelEntering : ''} ${isOut ? styles.panelClosing : ''}`}
+        className={`${styles.panel} ${isIn ? styles.panelEntering : ''} ${isOut ? styles.panelClosing : ''} ${userExpandedPanel ? styles.panelExpanded : ''}`}
         onAnimationEnd={handleAnimationEnd}
         role="dialog"
         aria-modal="true"
@@ -364,7 +383,13 @@ export default function PlaylistModal({
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={album.cover} alt="" className={styles.albumCardImg} />
                     </div>
-                    <span className={styles.albumCardName}>{album.name}</span>
+                    <span className={styles.albumCardMeta}>
+                      <span className={styles.albumCardName}>{album.name}</span>
+                      <span className={styles.albumCardCount}>
+                        {album.trackYoutubeIds.length}{' '}
+                        {album.trackYoutubeIds.length === 1 ? 'faixa' : 'faixas'}
+                      </span>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -446,7 +471,7 @@ export default function PlaylistModal({
             <button
               type="button"
               className={styles.viewMoreBtn}
-              onClick={() => setShowAll(true)}
+              onClick={() => { setShowAll(true); setUserExpandedPanel(true); }}
             >
               Ver mais ({hiddenCount})
             </button>

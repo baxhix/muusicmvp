@@ -13,6 +13,7 @@ import LiveChatStack from '@/components/app/LiveChatStack';
 import MobileRouteHeader from '@/components/app/MobileRouteHeader';
 import NowPlaying from '@/components/app/NowPlaying';
 import PlaylistModal from '@/components/app/PlaylistModal';
+import EditProfileModal from '@/components/app/EditProfileModal';
 import NotificationBell from '@/components/app/NotificationBell';
 import SuperfansPanel from '@/components/app/SuperfansPanel';
 import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
@@ -84,6 +85,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     setPlayerSize,
     playerHidden,
     setPlayerHidden,
+    showEditProfile,
+    setShowEditProfile,
     anaModalPayload,
     closeAnaCheckIn,
     anaFlightModalPayload,
@@ -186,7 +189,11 @@ function Shell({ children }: { children: React.ReactNode }) {
         {!hideShellChrome && (
           <TopBar
             onProfileOpen={() => router.push('/app/perfil')}
-            onEditProfileOpen={() => router.push('/app/perfil')}
+            /* "Editar perfil" no drawer abre o modal diretamente
+             * (sem desviar pela tela /app/perfil) per product
+             * feedback. O modal está montado abaixo, no shell,
+             * pra ficar acessível independente da rota. */
+            onEditProfileOpen={() => setShowEditProfile(true)}
             onDeleteAccountOpen={() => router.push('/app/perfil')}
           />
         )}
@@ -406,6 +413,17 @@ function Shell({ children }: { children: React.ReactNode }) {
         onClose={() => setShowPlaylist(false)}
         currentIdx={songIdx}
         onSelect={setSongIdx}
+      />
+
+      {/* Edit-profile modal — agora vive no shell pra que clicar
+       *  "Editar perfil" no drawer da TopBar abra o modal direto,
+       *  sem desviar pela tela /app/perfil. O botão "Editar perfil"
+       *  do ProfilePanel (dentro de /app/perfil) também consome o
+       *  mesmo state via AppShellContext, então só existe um mount
+       *  ativo no app. */}
+      <EditProfileModal
+        open={showEditProfile}
+        onClose={() => setShowEditProfile(false)}
       />
 
       {/* Superfãs as a layered overlay — desktop right-rail uses

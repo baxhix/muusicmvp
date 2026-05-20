@@ -41,6 +41,7 @@ export default function BottomNav() {
     activeOverlay,
     setActiveOverlay,
     setShowPlaylist,
+    setShowEditProfile,
   } = useAppShell();
   const isMobile = useIsMobile();
 
@@ -105,13 +106,33 @@ export default function BottomNav() {
     }
   };
 
+  /**
+   * Fecha qualquer overlay aberto pelos itens do hamburger ou do
+   * drawer da TopBar — Playlist, Superfãs/Notificações (via
+   * activeOverlay), EditProfile e Feed bottom-sheet. Cada slot da
+   * navbar chama isso ANTES de executar sua própria ação, então a
+   * superfície anterior some no mesmo gesto em que a nova entra,
+   * per product feedback "no mobile, quando algum item que abre a
+   * partir do icone hamburger estiver aberto e clicar em outro
+   * item da navbar, o que estiver aberto deve ser fechado e
+   * aberto o que foi clicado". O slot Feed re-abre o feedOpen
+   * logo depois desse reset; os demais slots não tocam mais nele.
+   */
+  const dismissShellOverlays = () => {
+    setActiveOverlay(null);
+    setShowEditProfile(false);
+    setFeedOpen(false);
+    setMoreOpen(false);
+  };
+
   const handleMapClick = () => {
     // Feed is a bottom-sheet overlay over /app. If it's open, the
     // user is technically already on /app but the map is hidden
     // by the sheet — tapping the Map slot should mean "give me
     // the map back", which requires closing the Feed first.
-    if (feedOpen) {
-      setFeedOpen(false);
+    const wasFeedOpen = feedOpen;
+    dismissShellOverlays();
+    if (wasFeedOpen) {
       // Don't fall through to flyTo / route push — the user's
       // intent was "show the map", not also re-center. The next
       // tap on Map (when feed is already closed) handles centering.
@@ -186,6 +207,12 @@ export default function BottomNav() {
             // Open the feed unconditionally — the navbar Feed slot
             // is "show me the feed", not "toggle". Closing happens
             // via the panel header's tap-to-minimize.
+            // dismissShellOverlays primeiro pra qualquer Playlist/
+            // EditProfile/hamburger aberto sumir, e só depois
+            // setFeedOpen(true) — o reset de `feedOpen` que o
+            // helper faz é batched com a abertura, então o net
+            // state é feed aberto, demais fechados.
+            dismissShellOverlays();
             setFeedOpen(true);
             // If we're not on /app, route there so FeedPanel actually
             // mounts and reads the now-true `feedOpen` flag.
@@ -228,6 +255,7 @@ export default function BottomNav() {
               className={`${styles.item} ${styles.itemCenter} ${superfansActive ? styles.itemActive : ''}`}
               onClick={() => {
                 if (isMobile) {
+                  dismissShellOverlays();
                   toggleNav('/app/ranking');
                 } else {
                   setActiveOverlay((curr) =>
@@ -271,7 +299,7 @@ export default function BottomNav() {
         <button
           type="button"
           className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
-          onClick={() => toggleNav('/app/comunidades')}
+          onClick={() => { dismissShellOverlays(); toggleNav('/app/comunidades'); }}
           onPointerEnter={() => prefetch('/app/comunidades')}
           onFocus={() => prefetch('/app/comunidades')}
           aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
@@ -327,7 +355,18 @@ export default function BottomNav() {
             <button
               type="button"
               className={`${styles.item} ${moreOpen ? styles.itemActive : ''}`}
-              onClick={() => setMoreOpen((v) => !v)}
+              onClick={() => {
+                // Fecha overlays alheios (Playlist, EditProfile,
+                // Feed) antes de toggleeear o próprio menu — não
+                // chamamos dismissShellOverlays porque esse
+                // helper também zera moreOpen, o que conflitaria
+                // com o toggle aqui (se moreOpen=true, queremos
+                // que o tap feche; se false, queremos abrir).
+                setActiveOverlay(null);
+                setShowEditProfile(false);
+                setFeedOpen(false);
+                setMoreOpen((v) => !v);
+              }}
               aria-label={moreOpen ? 'Fechar menu' : 'Abrir menu'}
               aria-haspopup="menu"
               aria-expanded={moreOpen}
