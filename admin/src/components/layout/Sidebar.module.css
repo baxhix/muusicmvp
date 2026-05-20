@@ -1,3 +1,26 @@
+/* ============================================================
+ * SIDEBAR — collapsible left rail
+ *
+ * Per product feedback:
+ *   - "refaça a sidebar para que tenha a opção de retrair o
+ *     menu ficando apenas os ícones visíveis" → see
+ *     `.sidebarCollapsed` modifier below + the collapse toggle
+ *     wired in Sidebar.tsx. Width swaps between
+ *     var(--sidebar-w) (248px expanded) and
+ *     var(--sidebar-w-collapsed) (64px collapsed); the shell's
+ *     `.main { margin-left: var(--sidebar-w) }` follows
+ *     automatically because Sidebar.tsx reassigns the
+ *     `--sidebar-w` custom property on `<html>` when toggled.
+ *   - "aumente levemente o espaço entre os itens do menu" →
+ *     `.section { gap: 4 → 7 }` + `.item { padding: 7×10 → 9×10 }`.
+ *   - "os itens que não estão ativos, deixe mais cinza" →
+ *     `.item color: var(--text-soft) → var(--text-mute)` +
+ *     icons drop to `--text-faint` at rest.
+ *   - "dando destaque ao item ativo" → active row gets a
+ *     brand-tinted background (`--brand-soft`) + a 2px left
+ *     accent stripe + crisp white text.
+ * ============================================================ */
+
 .sidebar {
   position: fixed;
   top: 0;
@@ -11,6 +34,17 @@
   border-right: 1px solid var(--border);
   padding: 12px 10px;
   gap: 4px;
+  /* Smooth the width transition so collapsing reads as a
+   * physical fold-in rather than a snap. */
+  transition: width var(--dur-base, 220ms) var(--ease-out, ease-out);
+}
+
+/* Collapsed modifier — applied on the wrapper when the user
+ * hits the toggle. Sidebar.tsx ALSO reassigns the global
+ * `--sidebar-w` custom property at the same moment so the
+ * shell's main-area margin shrinks in step. */
+.sidebarCollapsed {
+  width: var(--sidebar-w-collapsed);
 }
 
 .brand {
@@ -20,6 +54,20 @@
   padding: 8px 10px 14px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--border-soft);
+  position: relative;
+}
+
+/* Brand link — wraps the F logo + wordmark. Anchored at the
+ * left so the collapse toggle can sit at the right end of the
+ * row via `margin-left: auto`. */
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
 }
 
 .brandLogo {
@@ -33,6 +81,7 @@
   font-weight: 700;
   font-size: 13px;
   letter-spacing: -0.04em;
+  flex-shrink: 0;
 }
 
 .brandName {
@@ -43,6 +92,8 @@
   display: flex;
   flex-direction: column;
   line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
 }
 .brandTag {
   font-size: 10.5px;
@@ -52,10 +103,42 @@
   text-transform: uppercase;
 }
 
+/* Collapse / expand toggle — small circular button on the
+ * right edge of the brand row. Stays visible in both states
+ * so the user always has a click target. */
+.collapseToggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-mute);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.collapseToggle:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border);
+}
+.collapseToggle:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
 .section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  /* Bumped 4 → 7 per product feedback "aumente levemente o
+   * espaço entre os itens do menu". */
+  gap: 7px;
   margin-top: 8px;
 }
 
@@ -72,9 +155,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  /* Padding bumped 7 → 9 vertical to read as roomier rows
+   * even when the gap between siblings stays modest. */
+  padding: 9px 10px;
   border-radius: var(--r-sm);
-  color: var(--text-soft);
+  /* Rest state painted at `--text-mute` (was --text-soft) per
+   * product feedback "os itens que não estão ativos, deixe
+   * mais cinza". */
+  color: var(--text-mute);
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
@@ -90,9 +178,24 @@
   color: var(--text);
 }
 
+/* Active item — brand-tinted background + a left accent
+ * stripe so the current section pops against the now-muted
+ * inactive rows. The stripe is painted with a ::before pseudo
+ * (4px wide, full row height) so it doesn't disturb the
+ * row's normal flex flow. */
 .itemActive {
-  background: var(--surface-hover);
+  background: var(--brand-soft);
   color: var(--text);
+}
+.itemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--brand);
 }
 
 .itemIcon {
@@ -101,14 +204,20 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: var(--text-mute);
+  /* Icons drop one step further to --text-faint at rest so
+   * inactive rows look genuinely quiet. */
+  color: var(--text-faint);
+  transition: color var(--dur-fast) var(--ease-out);
 }
-.itemActive .itemIcon { color: var(--text); }
+.itemActive .itemIcon { color: var(--brand); }
 .item:hover .itemIcon { color: var(--text); }
 
 .itemLabel {
   flex: 1;
   letter-spacing: -0.005em;
+  /* When the sidebar collapses, we hide the label via the
+   * `.sidebarCollapsed .itemLabel { display: none }` rule
+   * further down. */
 }
 
 .itemBadge {
@@ -200,6 +309,51 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Collapsed-mode visual overrides ────────────────────────
+ * Hide labels + center icons + tighten internal padding so a
+ * 64px column reads cleanly as an icon-only rail. The native
+ * `title` attribute on each link/button covers the lost label
+ * on hover. */
+.sidebarCollapsed .brandName,
+.sidebarCollapsed .itemLabel,
+.sidebarCollapsed .itemBadge,
+.sidebarCollapsed .sectionLabel,
+.sidebarCollapsed .profileBody {
+  display: none;
+}
+.sidebarCollapsed .item {
+  justify-content: center;
+  padding: 9px 0;
+  gap: 0;
+}
+.sidebarCollapsed .itemActive::before {
+  /* Stripe drops to 2px in collapsed mode so the narrower
+   * column doesn't feel crowded. */
+  width: 2px;
+  top: 8px;
+  bottom: 8px;
+}
+.sidebarCollapsed .profile {
+  justify-content: center;
+  padding: 8px 0;
+  gap: 0;
+}
+.sidebarCollapsed .logoutBtn {
+  display: none;
+}
+.sidebarCollapsed .brand {
+  /* Stack brand logo + toggle vertically in the narrow column
+   * so both stay clickable without overflowing the 64px width. */
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 12px;
+  align-items: center;
+}
+.sidebarCollapsed .brandLink {
+  flex: none;
+  justify-content: center;
 }
 
 @media (max-width: 900px) {

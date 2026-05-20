@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -16,6 +16,8 @@ import {
   IconTrendingUp,
   IconCode,
   IconTicket,
+  IconChevronLeft,
+  IconChevronRight,
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
@@ -47,10 +49,64 @@ const SECONDARY_NAV: NavItem[] = [
   { href: '/desenvolvedor', label: 'Desenvolvedor',  icon: IconCode },
 ];
 
+/** localStorage key for the collapsed-state persistence. Picking a
+ *  namespaced key so the admin's flag doesn't collide with anything
+ *  the main app stores under `app:*`. */
+const COLLAPSED_KEY = 'admin:sidebar-collapsed';
+
+/**
+ * Sidebar with a collapse / expand toggle (icon-only mode) per
+ * product feedback "refaça a sidebar para que tenha a opção de
+ * retrair o menu ficando apenas os ícones visíveis". When
+ * collapsed:
+ *   - Sidebar width drops from `--sidebar-w` (248px) to
+ *     `--sidebar-w-collapsed` (64px).
+ *   - Labels, section eyebrows, brand wordmark, and the
+ *     profile body collapse to icon-only.
+ *   - The `--sidebar-w` CSS custom property is reassigned on
+ *     `<html>` so the shell's `.main { margin-left: var(--sidebar-w) }`
+ *     follows automatically — no extra plumbing needed in the
+ *     shell layout.
+ *   - State persists across reloads via localStorage.
+ *
+ * Native `title` tooltips kick in for each row so a hover reveals
+ * the label when collapsed.
+ */
 export default function Sidebar({ open = false }: { open?: boolean }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Restore the collapsed flag from localStorage on first mount
+  // + sync the CSS custom property that drives the shell's
+  // margin-left. Render is initially `false` (expanded) to match
+  // server-side output, then the effect flips it before the
+  // first paint that matters.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.localStorage.getItem(COLLAPSED_KEY);
+    const next = stored === '1';
+    setCollapsed(next);
+    document.documentElement.style.setProperty(
+      '--sidebar-w',
+      next ? 'var(--sidebar-w-collapsed)' : '248px',
+    );
+  }, []);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((curr) => {
+      const next = !curr;
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0');
+        document.documentElement.style.setProperty(
+          '--sidebar-w',
+          next ? 'var(--sidebar-w-collapsed)' : '248px',
+        );
+      }
+      return next;
+    });
+  }, []);
 
   const handleLogout = async () => {
     if (signingOut) return;
@@ -78,6 +134,10 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
         href={item.href}
         className={cn(styles.item, active && styles.itemActive)}
         aria-current={active ? 'page' : undefined}
+        // Native title surfaces the label on hover when collapsed,
+        // and provides accessible context the visible label already
+        // gave when expanded.
+        title={item.label}
       >
         <span className={styles.itemIcon}>
           <Icon size={16} />
@@ -93,14 +153,37 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
   };
 
   return (
-    <aside className={cn(styles.sidebar, open && styles.sidebarOpen)}>
-      <Link href="/dashboard" className={styles.brand}>
-        <span className={styles.brandLogo}>F</span>
-        <span className={styles.brandName}>
-          Fanverse
-          <span className={styles.brandTag}>Admin</span>
-        </span>
-      </Link>
+    <aside
+      className={cn(
+        styles.sidebar,
+        open && styles.sidebarOpen,
+        collapsed && styles.sidebarCollapsed,
+      )}
+      data-collapsed={collapsed ? 'true' : 'false'}
+    >
+      <div className={styles.brand}>
+        <Link href="/dashboard" className={styles.brandLink} title="Fanverse Admin">
+          <span className={styles.brandLogo}>F</span>
+          <span className={styles.brandName}>
+            Fanverse
+            <span className={styles.brandTag}>Admin</span>
+          </span>
+        </Link>
+        {/* Collapse toggle — pinned to the right edge of the
+         *  brand row. When the sidebar is expanded the chevron
+         *  points LEFT (suggesting "fold inward"); when
+         *  collapsed it points RIGHT (suggesting "unfold"). */}
+        <button
+          type="button"
+          className={styles.collapseToggle}
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Expandir menu' : 'Retrair menu'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expandir menu' : 'Retrair menu'}
+        >
+          {collapsed ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
+        </button>
+      </div>
 
       <div className={styles.section}>
         <span className={styles.sectionLabel}>Plataforma</span>
@@ -115,7 +198,7 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
       </div>
 
       <div className={styles.footer}>
-        <div className={styles.profile}>
+        <div className={styles.profile} title={displayName}>
           <Avatar name={displayName} src={user.avatarUrl ?? undefined} size="sm" />
           <div className={styles.profileBody}>
             <div className={styles.profileName} title={user.email}>

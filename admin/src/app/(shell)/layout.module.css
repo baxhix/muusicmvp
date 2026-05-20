@@ -5,6 +5,11 @@
 
 .main {
   margin-left: var(--sidebar-w);
+  /* Sidebar.tsx reassigns `--sidebar-w` on `<html>` whenever
+   * the user toggles the collapse — the transition below
+   * keeps the main area's left edge sliding in lockstep with
+   * the sidebar's own width transition instead of snapping. */
+  transition: margin-left var(--dur-base, 220ms) var(--ease-out, ease-out);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
