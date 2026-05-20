@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { track } from '@/lib/analytics';
@@ -214,57 +214,71 @@ export default function FloatingUsers() {
    * `stopPropagation` keeps the wrapper-level click (which can
    * flyTo the user's lat/lng on the globe) from also firing.
    */
-  const handleWave = (
-    user: FloatingUser,
-    e: React.MouseEvent<HTMLButtonElement>,
-  ) => {
-    e.stopPropagation();
-    const wasLiked = likedIds.has(user.id);
+  /**
+   * Wave click handler — stabilized via `useCallback([])` so
+   * the `FloatingUserBadge`'s `React.memo` wrapper can skip
+   * re-renders during the high-frequency
+   * `globeStore.visibleUserIds` updates that fire during a
+   * map pan. The previous version read `likedIds.has(user.id)`
+   * directly, which forced a new function identity every
+   * render of the parent. Now `wasLiked` is passed in by the
+   * caller (the badge already owns the `isLiked` prop), and
+   * every internal `set*` call uses the functional updater
+   * pattern so we don't close over stale state. */
+  const handleWave = useCallback(
+    (
+      user: FloatingUser,
+      wasLiked: boolean,
+      e: React.MouseEvent<HTMLButtonElement>,
+    ) => {
+      e.stopPropagation();
 
-    if (wasLiked) {
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(user.id);
-        return next;
-      });
-      track('user_unwaved', {
+      if (wasLiked) {
+        setLikedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(user.id);
+          return next;
+        });
+        track('user_unwaved', {
+          target_user_id: user.id,
+          source: 'floating_user',
+        });
+        return;
+      }
+
+      setLikedIds((prev) => new Set(prev).add(user.id));
+      setBurstingIds((prev) => new Set(prev).add(user.id));
+      window.setTimeout(() => {
+        setBurstingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(user.id);
+          return next;
+        });
+      }, 1800);
+
+      track('user_waved', {
         target_user_id: user.id,
+        target_user_name: user.name,
         source: 'floating_user',
       });
-      return;
-    }
 
-    setLikedIds((prev) => new Set(prev).add(user.id));
-    setBurstingIds((prev) => new Set(prev).add(user.id));
-    window.setTimeout(() => {
-      setBurstingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(user.id);
-        return next;
-      });
-    }, 1800);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('app:user-waved', {
+            detail: { userId: user.id, name: user.name },
+          }),
+        );
+      }
 
-    track('user_waved', {
-      target_user_id: user.id,
-      target_user_name: user.name,
-      source: 'floating_user',
-    });
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('app:user-waved', {
-          detail: { userId: user.id, name: user.name },
-        }),
-      );
-    }
-
-    try {
-      const s = getSocket();
-      s.emit('wave:send', { targetUserId: user.id });
-    } catch (err) {
-      console.error('wave:send emit failed:', err);
-    }
-  };
+      try {
+        const s = getSocket();
+        s.emit('wave:send', { targetUserId: user.id });
+      } catch (err) {
+        console.error('wave:send emit failed:', err);
+      }
+    },
+    [],
+  );
 
   return (
     <>
@@ -300,10 +314,17 @@ interface FloatingUserBadgeProps {
   user: FloatingUser;
   isLiked: boolean;
   isBursting: boolean;
-  onWave: (user: FloatingUser, e: React.MouseEvent<HTMLButtonElement>) => void;
+  /** Receives `(user, wasLiked, event)` — wasLiked comes from
+   *  the parent's `isLiked` prop so the handler stays stable
+   *  across renders (see `useCallback([])` upstream). */
+  onWave: (
+    user: FloatingUser,
+    wasLiked: boolean,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => void;
 }
 
-function FloatingUserBadge({
+function FloatingUserBadgeImpl({
   user,
   isLiked,
   isBursting,
@@ -426,7 +447,7 @@ function FloatingUserBadge({
         <button
           type="button"
           className={`${styles.likeBtn} ${isLiked ? styles.liked : ''}`}
-          onClick={(e) => onWave(user, e)}
+          onClick={(e) => onWave(user, isLiked, e)}
           aria-label={
             isLiked
               ? `Você acenou para ${user.name}`
@@ -483,3 +504,45 @@ function FloatingUserBadge({
     </div>
   );
 }
+
+/**
+ * `FloatingUserBadge` is wrapped in `React.memo` with a custom
+ * comparator so it doesn't re-render on every parent update.
+ *
+ * The parent (`FloatingUsers`) re-renders whenever
+ * `globeStore.visibleUserIds` changes — which fires during a
+ * map pan (RAF-throttled now, but still ~60 times during a
+ * one-second drag). Each parent render rebuilds the `pool`
+ * via `distributeFloatingUsers()`, which produces fresh
+ * `FloatingUser` objects with the SAME computed `left/top/
+ * floatDuration/floatDelay` when the underlying inputs
+ * (user.id + total off-map count) haven't changed. A default
+ * `React.memo` would still re-render because the object
+ * reference flips every parent render; the field-by-field
+ * comparator below skips when nothing visible to the user
+ * actually changed.
+ *
+ * Pair this with the `useCallback([])` `handleWave` upstream
+ * so `onWave` also has stable identity. */
+const FloatingUserBadge = memo(
+  FloatingUserBadgeImpl,
+  (prev, next) => {
+    if (prev.isLiked !== next.isLiked) return false;
+    if (prev.isBursting !== next.isBursting) return false;
+    if (prev.onWave !== next.onWave) return false;
+    const a = prev.user;
+    const b = next.user;
+    return (
+      a.id === b.id &&
+      a.name === b.name &&
+      a.city === b.city &&
+      a.song === b.song &&
+      a.artist === b.artist &&
+      a.img === b.img &&
+      a.left === b.left &&
+      a.top === b.top &&
+      a.floatDuration === b.floatDuration &&
+      a.floatDelay === b.floatDelay
+    );
+  },
+);

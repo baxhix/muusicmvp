@@ -174,11 +174,17 @@ export default function Globe() {
      * flutuante somente quando o fixo estiver fora do alcance
      * de visão do usuário."
      *
-     * Called on every `move` + `moveend` event (cheap — N users
-     * × bounds.contains() is microseconds even with 100+ pins)
-     * AND whenever the live-users list itself changes (a new
-     * user coming online inside the viewport should immediately
-     * suppress their floating counterpart).
+     * Computes bounds, iterates `lastLiveUsers`, builds a fresh
+     * `Set<string>`, and notifies every globeStore subscriber
+     * (which triggers a React re-render in FloatingUsers + every
+     * `FloatingUserBadge`). Cheap per call, but `map.on('move')`
+     * fires ~60×/sec during a desktop pan — that storm of Set
+     * allocations + React reconciliations adds up on lower-end
+     * devices. The RAF throttle wrapper below coalesces every
+     * burst of `move` events into a SINGLE publish per animation
+     * frame, while still surfacing the latest viewport state
+     * instantly when the user pauses (since RAF runs ~16ms after
+     * the last move).
      */
     const publishVisibleUserIds = () => {
       const bounds = map.getBounds();
@@ -195,8 +201,34 @@ export default function Globe() {
       globeStore.setVisibleUserIds(visible);
     };
 
-    map.on('move', publishVisibleUserIds);
-    map.on('moveend', publishVisibleUserIds);
+    /**
+     * RAF-throttled wrapper. If `move` fires multiple times
+     * within a single frame, only the latest scheduled call
+     * actually runs publishVisibleUserIds(). On `moveend` we
+     * bypass the throttle and publish immediately so the
+     * settled-viewport state lands on the very next frame even
+     * if a frame just ran. */
+    let publishRafId: number | null = null;
+    const schedulePublish = () => {
+      if (publishRafId !== null) return;
+      publishRafId = window.requestAnimationFrame(() => {
+        publishRafId = null;
+        publishVisibleUserIds();
+      });
+    };
+
+    map.on('move', schedulePublish);
+    // `moveend` fires once when the pan settles — publish
+    // synchronously here so the floating bubble flip lands
+    // immediately on release, even if a `move` was throttled in
+    // the same animation frame.
+    map.on('moveend', () => {
+      if (publishRafId !== null) {
+        window.cancelAnimationFrame(publishRafId);
+        publishRafId = null;
+      }
+      publishVisibleUserIds();
+    });
     /** Ana Castela check-in pin (singleton). Closed over by the cleanup
      *  function below via a getter ref so the inner handler in
      *  `registerAnaCheckIn` can still rotate its local `anaMarker`
