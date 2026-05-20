@@ -231,10 +231,17 @@
   display: block;
 }
 
-/* Text group */
+/* Text group — stretched to the header's cross-axis height
+ * (which is set by the 62px artist photo) + space-between
+ * justification so the children flow with the nameLine at the
+ * TOP and the Fanpoints chip at the BOTTOM, aligned with the
+ * photo's lower edge. Per product feedback "Alinhe as palavras
+ * 53.873 Fanpoints pela parte inferior." */
 .info {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 2px;
   min-width: 0;
 }
