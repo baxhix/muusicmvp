@@ -124,32 +124,60 @@ export default function FloatingAvatar({
    * Ciclo de labels com fade suave. Se `labels` for passado e
    * tiver mais de um item, o componente roteia entre eles a
    * cada 4 segundos. Fase de troca: 400ms fade-out → swap →
-   * 400ms fade-in (~800ms total), per product feedback
-   * "intercalação com fase bem suave".
+   * 400ms fade-in (~800ms total).
    *
-   * Se só `label` (string) for passado, comportamento legado:
-   * label fixo, sem ciclo.
+   * Dessincronização per product feedback "não ficar todos
+   * aparecendo e desaparecendo ao mesmo tempo": usamos um
+   * `cycleStartOffset` derivado de hash do nome (estável,
+   * sem random pra evitar hydration mismatch) que adia o
+   * primeiro fade-out de 0-3.5s. Como os intervals duram
+   * 4s, os avatares param em fases bem diferentes do ciclo
+   * e nunca trocam de label ao mesmo tempo.
+   *
+   * Se só `label` (string) for passado, comportamento
+   * legado: label fixo, sem ciclo.
    */
   const cycleList = labels && labels.length > 1 ? labels : null;
   const [labelIdx, setLabelIdx] = useState(0);
   const [labelVisible, setLabelVisible] = useState(true);
 
+  const cycleStartOffset = useMemo(() => {
+    // Hash do nome → offset em ms entre 0-3500 (cobre
+    // praticamente o ciclo inteiro de 4000ms).
+    let h = 0;
+    for (let i = 0; i < name.length; i++) {
+      h = (h * 31 + name.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h) % 3500;
+  }, [name]);
+
   useEffect(() => {
     if (!cycleList) return;
+
     let outTimeout: ReturnType<typeof setTimeout> | null = null;
-    const interval = setInterval(() => {
-      // Fade out — depois de 400ms, swap text + fade in.
-      setLabelVisible(false);
-      outTimeout = setTimeout(() => {
-        setLabelIdx((i) => (i + 1) % cycleList.length);
-        setLabelVisible(true);
-      }, 400);
-    }, 4000);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    function startCycle() {
+      interval = setInterval(() => {
+        setLabelVisible(false);
+        outTimeout = setTimeout(() => {
+          setLabelIdx((i) => (i + 1) % cycleList!.length);
+          setLabelVisible(true);
+        }, 400);
+      }, 4000);
+    }
+
+    // Atraso inicial dessincroniza este avatar dos outros —
+    // depois disso entra no ritmo de 4s. Cada avatar começa
+    // em uma fase diferente do ciclo coletivo.
+    const startTimer = setTimeout(startCycle, cycleStartOffset);
+
     return () => {
-      clearInterval(interval);
+      clearTimeout(startTimer);
+      if (interval) clearInterval(interval);
       if (outTimeout) clearTimeout(outTimeout);
     };
-  }, [cycleList]);
+  }, [cycleList, cycleStartOffset]);
 
   const currentLabel = cycleList ? cycleList[labelIdx] : label;
 

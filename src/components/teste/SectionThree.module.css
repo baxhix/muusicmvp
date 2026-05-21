@@ -10,9 +10,10 @@
   color: #fff;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  /* Headline mais ao topo (alinha com Hero/Two). */
+  align-items: flex-start;
   justify-content: center;
-  padding: 80px 24px;
+  padding: 22vh 24px 24px;
 }
 
 .center {
@@ -30,7 +31,11 @@
   font-size: clamp(56px, 11vw, 160px);
   line-height: 0.95;
   letter-spacing: -0.02em;
-  color: #fff;
+  background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   margin: 0;
   text-align: center;
   text-transform: uppercase;

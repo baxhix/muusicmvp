@@ -8,9 +8,15 @@
   color: #fff;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  /* Headline mais ao topo per product feedback — flex-start
+   * em vez de center, com padding-top vh-based pra dar
+   * respiro abaixo do navbar fixo (24px topo + 22vh).
+   * Resultado: headline aterrissa em ~22-25% do alto da
+   * viewport, deixando a metade inferior pra avatares e
+   * detalhes futuros. */
+  align-items: flex-start;
   justify-content: center;
-  padding: 96px 24px 0;
+  padding: 22vh 24px 24px;
 }
 
 .center {
@@ -22,15 +28,25 @@
   gap: 14px;
 }
 
-/* Headline — 1 palavra ALL CAPS centralizada 160px per
- * product feedback "mantenha em 160px". */
+/* Headline — 1 palavra ALL CAPS centralizada 160px.
+ *
+ * Cor via gradient linear diagonal (135deg) de #FFFFFF →
+ * #EBEBEB per product feedback. background-clip: text +
+ * text-fill-color transparent é a técnica canônica pra
+ * pintar texto com gradient — funciona em todos os
+ * navegadores modernos.
+ */
 .headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   font-size: clamp(56px, 11vw, 160px);
   line-height: 0.95;
   letter-spacing: -0.02em;
-  color: #fff;
+  background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   margin: 0;
   text-align: center;
   text-transform: uppercase;
