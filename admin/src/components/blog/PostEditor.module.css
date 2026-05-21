@@ -87,6 +87,13 @@
   color: var(--text);
   letter-spacing: -0.005em;
 }
+/* Largura do uploader em si — 16:9 ocupando a coluna toda fica
+ * grande demais; ~360px é o suficiente pra visualizar a
+ * composição da capa sem competir com o editor. */
+.coverUploadConstraint {
+  max-width: 360px;
+  width: 100%;
+}
 
 /* ── Author preview ───────────────────────────── */
 .authorPreview {

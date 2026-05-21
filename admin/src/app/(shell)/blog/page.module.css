@@ -47,6 +47,15 @@
 
 .tableCard { overflow: hidden; }
 
+/* Tabela de Posts mais compacta — padding lateral reduzido pra
+ * caber 7 colunas dentro do conteúdo da página sem scroll
+ * horizontal nem nas telas mais estreitas (~1280px). */
+.tableCard :global(thead th),
+.tableCard :global(tbody td) {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 /* ── Cells ─────────────────────────────── */
 .cellName {
   display: flex;
@@ -151,8 +160,8 @@
 /* ── Cover thumb na listagem de Posts ─────────── */
 .coverThumb {
   display: block;
-  width: 56px;
-  height: 38px;
+  width: 44px;
+  height: 30px;
   border-radius: var(--r-sm);
   overflow: hidden;
   background: var(--surface-mute, rgba(255,255,255,0.04));
@@ -179,4 +188,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Uploader de avatar no cadastro de autor — quadrado, lateral
+ * pequena pra não dominar o dialog (que tem mais campos abaixo). */
+.authorAvatarUploader {
+  max-width: 180px;
+  width: 100%;
 }

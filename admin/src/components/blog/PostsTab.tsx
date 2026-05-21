@@ -13,12 +13,10 @@ import { useToast } from '@/components/ui/Toast';
 import {
   IconCopy,
   IconEdit,
-  IconEye,
-  IconEyeOff,
   IconSearch,
   IconTrash,
 } from '@/components/icons';
-import PostStatusBadge, { POST_STATUS_LABEL } from './PostStatusBadge';
+import PostStatusBadge from './PostStatusBadge';
 import { blogPostsService } from '@/services/blog/posts';
 import { blogCategoriesService } from '@/services/blog/categories';
 import { blogAuthorsService } from '@/services/blog/authors';
@@ -140,22 +138,6 @@ export default function PostsTab() {
     }
   }
 
-  async function handlePublish(p: BlogPost) {
-    const next: BlogPostStatus = p.status === 'published' ? 'archived' : 'published';
-    try {
-      await blogPostsService.setStatus(p.id, next);
-      push({
-        type: 'success',
-        title: next === 'published' ? 'Post publicado' : 'Post despublicado',
-        description: `"${p.title}" agora está ${POST_STATUS_LABEL[next].toLowerCase()}.`,
-      });
-      await refresh();
-    } catch (err) {
-      console.error('publish toggle failed:', err);
-      push({ type: 'error', title: 'Erro ao alterar status' });
-    }
-  }
-
   async function confirmDelete() {
     if (!pendingDelete) return;
     await blogPostsService.remove(pendingDelete.id);
@@ -187,7 +169,7 @@ export default function PostsTab() {
           )}
         </div>
       ),
-      width: 72,
+      width: 56,
     },
     {
       id: 'title',
@@ -207,14 +189,14 @@ export default function PostsTab() {
       header: 'Status',
       sortKey: (p) => p.status,
       cell: (p) => <PostStatusBadge status={p.status} />,
-      width: 115,
+      width: 100,
     },
     {
       id: 'category',
       header: 'Categoria',
       sortKey: (p) => p.categoryName,
       cell: (p) => <span className={styles.muteCell}>{p.categoryName}</span>,
-      width: 140,
+      width: 120,
     },
     {
       id: 'author',
@@ -232,7 +214,7 @@ export default function PostsTab() {
           />
         </span>
       ),
-      width: 64,
+      width: 56,
       align: 'center',
     },
     {
@@ -244,65 +226,47 @@ export default function PostsTab() {
           {p.publishedAt ? formatShortDate(p.publishedAt) : '—'}
         </span>
       ),
-      width: 100,
+      width: 84,
     },
     {
       id: 'actions',
       header: 'Ações',
       align: 'right',
-      cell: (p) => {
-        const publishLabel =
-          p.status === 'published' ? 'Despublicar' : 'Publicar';
-        return (
-          <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              aria-label={`Editar ${p.title}`}
-              title="Editar"
-              onClick={() => router.push(`/blog/posts/${p.id}/editar`)}
-            >
-              <IconEdit size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              aria-label={`Duplicar ${p.title}`}
-              title="Duplicar"
-              onClick={() => void handleDuplicate(p)}
-            >
-              <IconCopy size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              aria-label={`${publishLabel} ${p.title}`}
-              title={publishLabel}
-              onClick={() => void handlePublish(p)}
-            >
-              {p.status === 'published' ? (
-                <IconEyeOff size={14} />
-              ) : (
-                <IconEye size={14} />
-              )}
-            </Button>
-            <Button
-              variant="dangerGhost"
-              size="sm"
-              iconOnly
-              aria-label={`Remover ${p.title}`}
-              title="Remover"
-              onClick={() => setPendingDelete(p)}
-            >
-              <IconTrash size={14} />
-            </Button>
-          </div>
-        );
-      },
-      width: 160,
+      cell: (p) => (
+        <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            aria-label={`Editar ${p.title}`}
+            title="Editar"
+            onClick={() => router.push(`/blog/posts/${p.id}/editar`)}
+          >
+            <IconEdit size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            aria-label={`Duplicar ${p.title}`}
+            title="Duplicar"
+            onClick={() => void handleDuplicate(p)}
+          >
+            <IconCopy size={14} />
+          </Button>
+          <Button
+            variant="dangerGhost"
+            size="sm"
+            iconOnly
+            aria-label={`Remover ${p.title}`}
+            title="Remover"
+            onClick={() => setPendingDelete(p)}
+          >
+            <IconTrash size={14} />
+          </Button>
+        </div>
+      ),
+      width: 96,
     },
   ];
 

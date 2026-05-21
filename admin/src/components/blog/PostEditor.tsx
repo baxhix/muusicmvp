@@ -368,12 +368,14 @@ export default function PostEditor({ mode, initialPost }: PostEditorProps) {
               />
               <div className={styles.coverField}>
                 <label className={styles.fieldLabel}>Imagem destaque</label>
-                <BlogImageUploader
-                  value={form.coverImageUrl}
-                  onChange={(url) => update('coverImageUrl', url)}
-                  hint="Aparece como cover do post + og:image padrão. Recomendado 1200×630."
-                  aspectRatio="16/9"
-                />
+                <div className={styles.coverUploadConstraint}>
+                  <BlogImageUploader
+                    value={form.coverImageUrl}
+                    onChange={(url) => update('coverImageUrl', url)}
+                    hint="Aparece como cover do post + og:image padrão. Recomendado 1200×630."
+                    aspectRatio="16/9"
+                  />
+                </div>
                 <Input
                   label="Alt da imagem destaque"
                   value={form.coverImageAlt}
@@ -551,12 +553,14 @@ export default function PostEditor({ mode, initialPost }: PostEditorProps) {
                   <label className={styles.fieldLabel}>
                     og:image (override)
                   </label>
-                  <BlogImageUploader
-                    value={form.ogImageUrl}
-                    onChange={(url) => update('ogImageUrl', url)}
-                    hint="Opcional · sobrescreve a imagem destaque pra cards de compartilhamento."
-                    aspectRatio="16/9"
-                  />
+                  <div className={styles.coverUploadConstraint}>
+                    <BlogImageUploader
+                      value={form.ogImageUrl}
+                      onChange={(url) => update('ogImageUrl', url)}
+                      hint="Opcional · sobrescreve a imagem destaque pra cards de compartilhamento."
+                      aspectRatio="16/9"
+                    />
+                  </div>
                 </div>
               </div>
             )}

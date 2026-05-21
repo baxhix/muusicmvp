@@ -10,11 +10,13 @@ import Table, { type Column } from '@/components/ui/Table';
 import Dialog, { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
 import { IconCheck, IconEdit, IconPlus, IconSearch, IconTrash } from '@/components/icons';
+import BlogImageUploader from './BlogImageUploader';
 import { blogAuthorsService } from '@/services/blog/authors';
 import { slugify } from '@/lib/blog/slug';
 import { formatRelative } from '@/lib/format';
 import type { BlogAuthor } from '@/types/blog';
 import styles from '@/app/(shell)/blog/page.module.css';
+import editorStyles from './PostEditor.module.css';
 
 /**
  * AutoresTab — CRUD da equipe editorial do blog.
@@ -354,13 +356,17 @@ function AuthorDialog({
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
-        <Input
-          label="Avatar (URL)"
-          value={form.avatarUrl}
-          placeholder="https://..."
-          helperText="Opcional. Quando o upload de arquivo entrar, este campo vai aceitar drop direto."
-          onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-        />
+        <div className={editorStyles.coverField}>
+          <label className={editorStyles.fieldLabel}>Avatar</label>
+          <div className={styles.authorAvatarUploader}>
+            <BlogImageUploader
+              value={form.avatarUrl}
+              onChange={(url) => setForm({ ...form, avatarUrl: url })}
+              hint="Quadrado, recomendado 256×256."
+              aspectRatio="1/1"
+            />
+          </div>
+        </div>
         <Textarea
           label="Mini bio"
           rows={3}
