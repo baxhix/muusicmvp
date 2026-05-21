@@ -18,6 +18,7 @@ import {
 } from '@/components/icons';
 import RichTextEditor from './RichTextEditor';
 import PostStatusBadge from './PostStatusBadge';
+import BlogImageUploader from './BlogImageUploader';
 import { slugify } from '@/lib/blog/slug';
 import { blogPostsService } from '@/services/blog/posts';
 import { blogCategoriesService } from '@/services/blog/categories';
@@ -365,13 +366,13 @@ export default function PostEditor({ mode, initialPost }: PostEditorProps) {
                 helperText={`URL pública: /blog/${form.slug || '...'}`}
                 onChange={(e) => updateSlug(e.target.value)}
               />
-              <div className={styles.formGrid}>
-                <Input
-                  label="Imagem destaque (URL)"
+              <div className={styles.coverField}>
+                <label className={styles.fieldLabel}>Imagem destaque</label>
+                <BlogImageUploader
                   value={form.coverImageUrl}
-                  placeholder="https://..."
-                  helperText="Aparece como cover do post + og:image padrão."
-                  onChange={(e) => update('coverImageUrl', e.target.value)}
+                  onChange={(url) => update('coverImageUrl', url)}
+                  hint="Aparece como cover do post + og:image padrão. Recomendado 1200×630."
+                  aspectRatio="16/9"
                 />
                 <Input
                   label="Alt da imagem destaque"
@@ -546,12 +547,17 @@ export default function PostEditor({ mode, initialPost }: PostEditorProps) {
                     update('focusKeywordsCsv', e.target.value)
                   }
                 />
-                <Input
-                  label="og:image (override)"
-                  value={form.ogImageUrl}
-                  placeholder={form.coverImageUrl || 'Padrão: imagem destaque'}
-                  onChange={(e) => update('ogImageUrl', e.target.value)}
-                />
+                <div className={styles.coverField}>
+                  <label className={styles.fieldLabel}>
+                    og:image (override)
+                  </label>
+                  <BlogImageUploader
+                    value={form.ogImageUrl}
+                    onChange={(url) => update('ogImageUrl', url)}
+                    hint="Opcional · sobrescreve a imagem destaque pra cards de compartilhamento."
+                    aspectRatio="16/9"
+                  />
+                </div>
               </div>
             )}
           </Card>

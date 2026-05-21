@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@/components/ui/Button';
+import Dialog from '@/components/ui/Dialog';
+import Input from '@/components/ui/Input';
 import { IconImage, IconLink, IconVideo } from '@/components/icons';
+import BlogImageUploader from './BlogImageUploader';
 import styles from './RichTextEditor.module.css';
 
 /**
@@ -62,12 +65,23 @@ export default function RichTextEditor({
   defaultPreview = false,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const savedRangeRef = useRef<Range | null>(null);
   const [preview, setPreview] = useState(defaultPreview);
   // Re-render trigger pra atualizar o estado ativo dos botões
   // do toolbar (bold/italic, current block) sem precisar de
   // observers pesados.
   const [, forceRerender] = useState({});
   const refreshToolbar = useCallback(() => forceRerender({}), []);
+
+  // Estado do dialog de inserir imagem (URL upload + alt).
+  // Quando aberto, preservamos a Range atual do editor pra
+  // restaurar o cursor antes do insertHTML — abrir o dialog
+  // muda o foco e perderia a posição.
+  const [imageDialog, setImageDialog] = useState<{
+    open: boolean;
+    url: string;
+    alt: string;
+  }>({ open: false, url: '', alt: '' });
 
   // Sincroniza o `value` externo com o conteúdo do contentEditable
   // SEM perder a posição do cursor. Só sobrescreve quando a
@@ -128,28 +142,34 @@ export default function RichTextEditor({
     handleInput();
   }
 
-  function insertImage() {
-    const url = window.prompt(
-      'URL da imagem (https://...):',
-      'https://',
-    );
+  /** Abre o dialog de inserir imagem. Salva a Range atual pra
+   *  poder restaurar o cursor depois — clicar no botão muda o
+   *  foco pra fora do contentEditable. */
+  function openImageDialog() {
+    const sel = window.getSelection();
+    savedRangeRef.current =
+      sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+    setImageDialog({ open: true, url: '', alt: '' });
+  }
+
+  function confirmImageDialog() {
+    const { url, alt } = imageDialog;
     if (!url) return;
-    const trimmed = url.trim();
-    if (!/^https?:\/\//i.test(trimmed)) {
-      window.alert('Use uma URL completa começando com http:// ou https://');
-      return;
+    // Restaura a posição original do cursor antes de inserir.
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (sel && savedRangeRef.current) {
+      sel.removeAllRanges();
+      sel.addRange(savedRangeRef.current);
     }
-    const alt = window.prompt(
-      'Descrição (alt) da imagem — IMPORTANTE pra SEO e acessibilidade:',
-      '',
-    );
-    if (alt === null) return;
-    // Envolvemos em <figure> pra que o blog público possa estilizar
-    // captions futuras + crawlers entendam o bloco. */
-    const figureHtml = `<figure><img src="${escapeAttr(trimmed)}" alt="${escapeAttr(
-      alt,
-    )}" /></figure>`;
-    exec('insertHTML', figureHtml);
+    // Envolvemos em <figure> pra que o blog público possa
+    // estilizar captions futuras + crawlers entendam o bloco. */
+    const figureHtml = `<figure><img src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" /></figure>`;
+    document.execCommand('insertHTML', false, figureHtml);
+    setImageDialog({ open: false, url: '', alt: '' });
+    savedRangeRef.current = null;
+    refreshToolbar();
+    handleInput();
   }
 
   function insertVideo() {
@@ -320,7 +340,7 @@ export default function RichTextEditor({
             type="button"
             className={styles.btn}
             onMouseDown={(e) => e.preventDefault()}
-            onClick={insertImage}
+            onClick={openImageDialog}
             aria-label="Inserir imagem"
             title="Inserir imagem"
           >
@@ -372,6 +392,58 @@ export default function RichTextEditor({
           data-placeholder={placeholder}
         />
       )}
+
+      {/* Dialog de inserir imagem inline — uploader + alt em um
+       *  só passo. Substitui o window.prompt anterior. O Confirmar
+       *  só habilita quando há URL (post-upload) + alt preenchido. */}
+      <Dialog
+        open={imageDialog.open}
+        onClose={() => setImageDialog({ open: false, url: '', alt: '' })}
+        title="Inserir imagem"
+        description="Envie um arquivo e descreva o conteúdo da imagem. O alt é importante pra SEO e acessibilidade."
+        size="md"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setImageDialog({ open: false, url: '', alt: '' })
+              }
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!imageDialog.url || !imageDialog.alt.trim()}
+              onClick={confirmImageDialog}
+            >
+              Inserir
+            </Button>
+          </>
+        }
+      >
+        <div className={styles.imageDialogBody}>
+          <BlogImageUploader
+            value={imageDialog.url}
+            onChange={(url) =>
+              setImageDialog((prev) => ({ ...prev, url }))
+            }
+            aspectRatio="16/9"
+          />
+          <Input
+            label="Descrição (alt)"
+            required
+            value={imageDialog.alt}
+            placeholder="O que aparece na imagem? Ex.: Ana Castela no palco de Linlithgow."
+            helperText="Recomendado pra leitores de tela + crawlers (SEO)."
+            onChange={(e) =>
+              setImageDialog((prev) => ({ ...prev, alt: e.target.value }))
+            }
+          />
+        </div>
+      </Dialog>
     </div>
   );
 }

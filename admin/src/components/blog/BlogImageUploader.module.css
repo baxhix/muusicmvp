@@ -1,0 +1,157 @@
+/* BlogImageUploader — single-image picker pro módulo Blog.
+ *
+ * Dois estados visuais: drop zone (vazio) e preview (com imagem),
+ * ambos respeitando o aspect ratio recebido por prop. Tokens
+ * vindos do design system do admin pra inerdar tema automatic. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fileInput { display: none; }
+
+/* ── Aspect ratios ─────────────────────────────────────────── */
+.ratio169 { aspect-ratio: 16 / 9; }
+.ratio43  { aspect-ratio: 4 / 3; }
+.ratioSquare { aspect-ratio: 1 / 1; }
+
+/* ── Drop zone (estado vazio) ──────────────────────────────── */
+.dropZone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-mute);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.dropZone:hover,
+.dropZoneActive {
+  border-color: var(--brand);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.dropBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dropTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.dropHint {
+  font-size: 11px;
+  color: var(--text-mute);
+}
+
+/* ── Preview (estado com imagem) ───────────────────────────── */
+.preview {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-mute, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-soft);
+}
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+
+.previewActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.preview:hover .previewActions,
+.preview:focus-within .previewActions {
+  opacity: 1;
+}
+
+.previewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.previewBtn:hover { background: rgba(0, 0, 0, 0.92); transform: translateY(-1px); }
+.previewBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.previewBtnDanger:hover { background: var(--danger); }
+
+/* ── Uploading state ───────────────────────────────────────── */
+.uploadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.uploadingBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.72);
+  display: grid;
+  place-items: center;
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  animation: blogimg-spin 0.7s linear infinite;
+}
+@keyframes blogimg-spin { to { transform: rotate(360deg); } }
+
+/* ── Error row ─────────────────────────────────────────────── */
+.errorRow {
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--danger);
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  background: var(--danger-bg, rgba(239, 68, 68, 0.08));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}

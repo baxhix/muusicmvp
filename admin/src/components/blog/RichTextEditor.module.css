@@ -224,3 +224,11 @@
   border-top: 1px solid var(--border);
   margin: 24px 0;
 }
+
+/* Corpo do dialog "Inserir imagem": uploader em cima, alt
+ * embaixo — gap igual ao resto dos formulários do admin. */
+.imageDialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
