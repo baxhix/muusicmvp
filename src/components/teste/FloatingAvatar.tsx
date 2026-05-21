@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styles from './FloatingAvatar.module.css';
 
 /**
@@ -37,7 +37,13 @@ import styles from './FloatingAvatar.module.css';
 export interface FloatingAvatarProps {
   src?: string;
   name: string;
+  /**
+   * Label única (string) OU array que CICLA com fade suave
+   * — pra mostrar diferentes tracks que aquele "usuário"
+   * está escutando ao longo do tempo. Cycle a cada ~4s.
+   */
   label?: string;
+  labels?: string[];
   ring?: 'green' | 'pink' | 'none';
   size?: 'sm' | 'md' | 'lg';
   /**
@@ -47,6 +53,17 @@ export interface FloatingAvatarProps {
    * `true`, está visível imediatamente.
    */
   revealed?: boolean;
+  /**
+   * Estilo "constellation circle" — usado em Section 4.
+   * Avatar entra na cena radialmente (slide do exterior pro
+   * círculo) + ganha drift sutil contínuo depois de revelado.
+   */
+  circling?: boolean;
+  /**
+   * Atraso pra começar o drift idle. Usado pra dessincronizar
+   * avatares na circular constellation.
+   */
+  driftDelay?: number;
   labelPosition?: 'right' | 'below';
   style?: React.CSSProperties;
   className?: string;
@@ -83,9 +100,12 @@ export default function FloatingAvatar({
   src,
   name,
   label,
+  labels,
   ring = 'none',
   size = 'sm',
   revealed = true,
+  circling = false,
+  driftDelay = 0,
   labelPosition = 'right',
   style,
   className,
@@ -100,17 +120,59 @@ export default function FloatingAvatar({
   void ring;
   const ringClass = '';
 
+  /**
+   * Ciclo de labels com fade suave. Se `labels` for passado e
+   * tiver mais de um item, o componente roteia entre eles a
+   * cada 4 segundos. Fase de troca: 400ms fade-out → swap →
+   * 400ms fade-in (~800ms total), per product feedback
+   * "intercalação com fase bem suave".
+   *
+   * Se só `label` (string) for passado, comportamento legado:
+   * label fixo, sem ciclo.
+   */
+  const cycleList = labels && labels.length > 1 ? labels : null;
+  const [labelIdx, setLabelIdx] = useState(0);
+  const [labelVisible, setLabelVisible] = useState(true);
+
+  useEffect(() => {
+    if (!cycleList) return;
+    let outTimeout: ReturnType<typeof setTimeout> | null = null;
+    const interval = setInterval(() => {
+      // Fade out — depois de 400ms, swap text + fade in.
+      setLabelVisible(false);
+      outTimeout = setTimeout(() => {
+        setLabelIdx((i) => (i + 1) % cycleList.length);
+        setLabelVisible(true);
+      }, 400);
+    }, 4000);
+    return () => {
+      clearInterval(interval);
+      if (outTimeout) clearTimeout(outTimeout);
+    };
+  }, [cycleList]);
+
+  const currentLabel = cycleList ? cycleList[labelIdx] : label;
+
   return (
     <div
       className={[
         styles.wrap,
         labelPosition === 'below' ? styles.wrapColumn : styles.wrapRow,
         revealed ? styles.revealed : styles.hidden,
+        circling ? styles.circling : '',
+        circling && revealed ? styles.drifting : '',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={style}
+      style={{
+        ...style,
+        // CSS var pro animation-delay do drift — varia entre
+        // avatares pra desincronizar.
+        ...(circling
+          ? ({ ['--drift-delay' as string]: `${driftDelay}s` })
+          : {}),
+      }}
     >
       <div
         className={[styles.avatar, ringClass].filter(Boolean).join(' ')}
@@ -127,16 +189,22 @@ export default function FloatingAvatar({
         )}
       </div>
 
-      {label && (
+      {currentLabel && (
         <div className={styles.labelGroup}>
-          {/* Ícone de "ouvindo" — pequena barra de chart verde
-           *  que aparece à esquerda do label per wireframe. */}
+          {/* Ícone de "ouvindo" — pequena barra de chart pulsa
+           *  pra denotar atividade. */}
           <span className={styles.listeningIcon} aria-hidden="true">
             <span />
             <span />
             <span />
           </span>
-          <span className={styles.label}>{label}</span>
+          <span
+            className={`${styles.label} ${
+              labelVisible ? styles.labelVisible : styles.labelInvisible
+            }`}
+          >
+            {currentLabel}
+          </span>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import Navbar from '@/components/teste/Navbar';
 import HeroSection from '@/components/teste/HeroSection';
 import SectionTwo from '@/components/teste/SectionTwo';
 import SectionThree from '@/components/teste/SectionThree';
+import SectionFour from '@/components/teste/SectionFour';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import styles from './page.module.css';
 
@@ -40,6 +41,11 @@ export default function TestePage() {
       <HeroSection />
       <SectionTwo />
       <SectionThree />
+      {/* Section 4 — canvas vazio onde 12 avatares formam um
+       *  círculo (no texto). Os avatares vivem na constellation
+       *  page-level com `circling: true` (slide-in radial +
+       *  drift sutil contínuo). */}
+      <SectionFour />
     </div>
   );
 }

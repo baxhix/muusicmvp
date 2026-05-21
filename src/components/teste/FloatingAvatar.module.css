@@ -15,11 +15,12 @@
   align-items: center;
   gap: 10px;
   z-index: 30;
-  /* Transição opacity (entrada com fade) + transform (sutil
-   * sobe ao aparecer pra dar sensação de "surgir"). */
+  /* Transição opacity + transform pra entrada com fade.
+   * `transform` cobre o slide vertical default (8px) E o
+   * slide radial dos avatares na circular constellation. */
   transition:
     opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
 .wrapRow {
@@ -43,9 +44,42 @@
   transform: translate3d(0, 0, 0);
 }
 
+/* Modo CIRCLING — usado pelos 12 avatares da Section 4 que
+ * formam um círculo. O slide-in não é vertical 8px, é
+ * RADIAL: o avatar começa pushed pra fora do círculo (via
+ * --circle-tx/--circle-ty seteados inline) e converge pro
+ * spot final. A transition do .wrap pega esse transform. */
+.circling.hidden {
+  transform: translate3d(
+    var(--circle-tx, 0),
+    var(--circle-ty, 0),
+    0
+  );
+}
+.circling.revealed {
+  transform: translate3d(0, 0, 0);
+}
+
+/* Drift contínuo pós-reveal — usa CSS `translate` (não
+ * `transform`) pra que NÃO conflite com a transição de
+ * `transform` que o reveal usa. Modern browsers (Chrome 104+,
+ * Firefox 72+, Safari 14.1+) suportam `translate` como
+ * propriedade independente. */
+.drifting {
+  animation: tloop-circle-drift 7s ease-in-out infinite;
+  animation-delay: var(--drift-delay, 0s);
+}
+@keyframes tloop-circle-drift {
+  0%, 100% { translate: 0 0; }
+  25%      { translate: 2.5px -1.5px; }
+  50%      { translate: 0 -3px; }
+  75%      { translate: -2.5px -1.5px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wrap { transition: opacity 200ms linear; }
-  .hidden { transform: none; }
+  .hidden, .circling.hidden { transform: none; }
+  .drifting { animation: none; }
 }
 
 /* Avatar circular em modo WIREFRAME: cinza chapado, sem
@@ -101,7 +135,12 @@
   color: rgba(255, 255, 255, 0.95);
   letter-spacing: -0.005em;
   white-space: nowrap;
+  /* Fade smooth quando o ciclo troca de track. 400ms casa
+   * com o timing no JS (fade-out → swap → fade-in). */
+  transition: opacity 400ms ease-in-out;
 }
+.labelVisible { opacity: 1; }
+.labelInvisible { opacity: 0; }
 
 /* Ícone "barrinhas" verdes pra denotar "ouvindo agora".
  * Três barras em alturas diferentes. */
