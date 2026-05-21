@@ -350,10 +350,16 @@ function renderItem(
   // hover/open state so each row maintains its own affordance state.
   const m = item;
   const isMine = m.senderId === myUserId;
-  const prev = i > 0 ? feed[i - 1] : null;
-  const prevSameSender =
-    prev && prev._type === 'message' && prev.senderId === m.senderId;
-  const showHead = !isMine && !prevSameSender;
+  // Per product feedback "não está sendo mostrado o nome, nem
+  // avatar do usuário que enviou": o Superchat agora exibe o
+  // cabeçalho (avatar + nome) em TODA mensagem de outro usuário,
+  // sem colapsar runs consecutivos. O room é vibrante e ter o
+  // rosto/nome ao lado de cada bubble reforça a identidade do
+  // fã na conversa coletiva — diferente do DM (LiveChatPanel),
+  // onde só dois interlocutores conversam e a repetição
+  // pesava. Mantém oculto pras mensagens do próprio usuário
+  // (right-alignment já marca a autoria).
+  const showHead = !isMine;
 
   return (
     <MessageRow

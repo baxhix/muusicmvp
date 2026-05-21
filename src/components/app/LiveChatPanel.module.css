@@ -282,16 +282,23 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-top-left-radius: 4px;
 }
-/* Outgoing bubbles render as fully naked text — no fill, no border,
-   no accent. The right-alignment alone is enough to mark them as
-   "yours" without adding any visual weight that competes with the
-   other user's voice. */
+/* Outgoing bubbles agora ganham um fill DISCRETO per product
+   feedback "adicione um background também nas mensagens que são
+   enviadas pelo usuário logado. Atualmente o contraste não está
+   bom, mas deve permanecer discreto e sofisticado".
+   - 6% white tint = bem mais leve que o incoming (.msgIn usa
+     ~95% near-black), então a hierarquia "voz do outro = volume
+     cheio / sua voz = sussurro" continua intacta.
+   - 1px inset branco quase invisível pra dar borda viva sem
+     desenhar uma linha visível em telas com contraste alto.
+   - Espelho do incoming: incoming tem border-top-LEFT-radius
+     reduzido (4px) marcando a "cauda" do balão à esquerda;
+     outgoing tem border-top-RIGHT-radius reduzido na direita. */
 .msgOut .bubble {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
   color: #f5f5f7;
-  border: none;
-  border-radius: 0;
-  padding: 9px 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-right-radius: 4px;
 }
 .time {
   margin-top: 3px;
