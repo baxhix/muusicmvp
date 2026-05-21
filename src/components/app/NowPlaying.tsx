@@ -7,6 +7,10 @@ import { useListeningTracker } from '@/hooks/useListeningTracker';
 import { startSpotifyLogin, disconnectSpotify } from '@/lib/spotify';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import type { CatalogTrack } from '@/data/tracksCatalog';
+import {
+  loadNowPlayingSnapshot,
+  saveNowPlayingSnapshot,
+} from '@/lib/nowPlayingResume';
 import styles from './NowPlaying.module.css';
 
 /**
@@ -34,8 +38,14 @@ export type PlayerSize = 'mini' | 'horizontal' | 'expanded' | 'video';
  * postMessage — required for the autoplay-next behavior wired
  * below. Other params kill YouTube chrome (related videos, captions
  * auto-load, etc.) so the player feels like ours.
+ *
+ * `startSeconds` (opcional): segundo em que o vídeo deve abrir. Usado
+ * pelo "voltar de onde parou" — quando o usuário recarrega a página
+ * com uma sessão de playback em andamento, lib/nowPlayingResume
+ * devolve o timestamp salvo e a gente injeta `start=N` aqui. YouTube
+ * respeita esse parâmetro nativamente.
  */
-function buildVideoSrc(youtubeId: string): string {
+function buildVideoSrc(youtubeId: string, startSeconds = 0): string {
   const params = new URLSearchParams({
     autoplay: '1',
     rel: '0',
@@ -46,6 +56,9 @@ function buildVideoSrc(youtubeId: string): string {
     fs: '1',
     enablejsapi: '1',
   });
+  if (startSeconds > 0) {
+    params.set('start', String(Math.floor(startSeconds)));
+  }
   return `https://www.youtube-nocookie.com/embed/${youtubeId}?${params.toString()}`;
 }
 
@@ -116,6 +129,32 @@ export default function NowPlaying({
     if (!isVideo) setVideoStarted(false);
   }, [isVideo]);
 
+  // ── "Voltar de onde parou" ──
+  //
+  // Snapshot lido SÓ no mount inicial (não muda durante a sessão).
+  // Carrega `{ youtubeId, time, wasPlaying, ts }` do localStorage;
+  // null se não há sessão prévia, se expirou (TTL 24h) ou se o
+  // browser não tem acesso ao storage. Quando válido, o useEffect
+  // abaixo localiza o índice da faixa no catálogo e sincroniza o
+  // songIdx + injeta `start=N` no iframe. */
+  const [restoreSnapshot] = useState(() => loadNowPlayingSnapshot());
+  // Time pendente pra injeção no PRÓXIMO mount do iframe. Cleared
+  // depois do iframe consumir, pra que troca de faixa não tente
+  // reaplicar o tempo restaurado. */
+  const [pendingStartSeconds, setPendingStartSeconds] = useState(0);
+  // Track playback time reported pelo YouTube via postMessage
+  // 'infoDelivery' — atualizado continuamente, salvo a cada 1s
+  // num localStorage debounced (effect mais abaixo). */
+  const lastKnownTimeRef = useRef(0);
+  // Garante que a restauração só rode uma vez, mesmo que o catálogo
+  // sofra mutation depois (admin adicionando faixas etc.). */
+  const restoredRef = useRef(false);
+  // Quando o restore dispara um `setSongIdx(idx)`, queremos pular o
+  // reset do `lastKnownTimeRef` que normalmente acontece em troca
+  // de faixa. Esse ref guarda o songIdx exato esperado da restore
+  // pra reset effect ignorar APENAS aquela transição. */
+  const restoreSongIdxRef = useRef<number | null>(null);
+
   // songIdx pode vir do parent (controlado) ou do estado interno (fallback)
   const [internalSongIdx, setInternalSongIdx] = useState(0);
   const songIdx = songIdxProp ?? internalSongIdx;
@@ -147,6 +186,58 @@ export default function NowPlaying({
     // só roda no mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Aplica o snapshot do "voltar de onde parou" ──
+  //
+  // Roda quando o catálogo termina de carregar (SONGS.length > 0).
+  // Procura a faixa salva pelo youtubeId; se achar, atualiza songIdx,
+  // injeta o pendingStartSeconds (consumido pelo iframe na próxima
+  // render) e marca o vídeo como "iniciado" pra pular a tela de
+  // poster. Só roda UMA vez na vida do componente (restoredRef). */
+  useEffect(() => {
+    if (restoredRef.current || !restoreSnapshot || SONGS.length === 0) return;
+    if (embed) return; // playlist embed não tem playback persistido
+    const idx = SONGS.findIndex(
+      (s) => s.youtubeId === restoreSnapshot.youtubeId,
+    );
+    restoredRef.current = true; // evita re-rodar mesmo se a faixa sumir
+    if (idx === -1) return; // faixa não está mais no catálogo
+    restoreSongIdxRef.current = idx;
+    setSongIdx(idx);
+    if (restoreSnapshot.time > 0) {
+      setPendingStartSeconds(restoreSnapshot.time);
+      lastKnownTimeRef.current = restoreSnapshot.time;
+    }
+    if (size === 'video') setVideoStarted(true);
+  }, [SONGS, restoreSnapshot, embed, size, setSongIdx]);
+
+  // Após o iframe consumir o start time (uma render depois do
+  // setPendingStartSeconds), zera o pending pra que troca de faixa
+  // não tente reaplicar o tempo restaurado. Effect depende do
+  // youtubeId atual — quando o usuário muda de música, o pending
+  // também limpa. */
+  useEffect(() => {
+    if (pendingStartSeconds === 0) return;
+    // Pequeno timeout pra garantir que o iframe pegou o src com
+    // start=N antes de a gente limpar. 0 é suficiente — agenda no
+    // próximo tick após a commit.
+    const id = window.setTimeout(() => setPendingStartSeconds(0), 0);
+    return () => window.clearTimeout(id);
+  }, [pendingStartSeconds, songIdx]);
+
+  // Sempre que a faixa muda POR AÇÃO DO USUÁRIO, zera o
+  // `lastKnownTimeRef` pra que o snapshot da nova faixa não comece
+  // com o tempo da antiga durante o pequeno gap até o YouTube
+  // enviar o primeiro `infoDelivery`. Quando a mudança vem do
+  // restore (songIdx == restoreSongIdxRef.current), pula o reset
+  // pra preservar o tempo restaurado. */
+  useEffect(() => {
+    if (restoreSongIdxRef.current === songIdx) {
+      restoreSongIdxRef.current = null;
+      return;
+    }
+    lastKnownTimeRef.current = 0;
+  }, [songIdx]);
 
   // Spotify (real) — se conectado, sobrescreve o mock
   const { track: spotifyTrack, connected: spotifyConnected } = useSpotifyNowPlaying();
@@ -305,13 +396,19 @@ export default function NowPlaying({
       }
       const payload = data as {
         event?: string;
-        info?: { playerState?: number };
+        info?: { playerState?: number; currentTime?: number };
       };
+      if (payload?.event !== 'infoDelivery') return;
+      // Captura currentTime continuamente pro snapshot do
+      // "voltar de onde parou". O YouTube envia esse campo em
+      // praticamente toda mensagem `infoDelivery` enquanto o
+      // vídeo está tocando — basta atualizar o ref e o save
+      // periódico abaixo persiste a janela mais recente.
+      if (typeof payload.info?.currentTime === 'number') {
+        lastKnownTimeRef.current = payload.info.currentTime;
+      }
       // PlayerState 0 = ENDED in the YouTube IFrame Player API.
-      if (
-        payload?.event === 'infoDelivery' &&
-        payload.info?.playerState === 0
-      ) {
+      if (payload.info?.playerState === 0) {
         goNext();
       }
     };
@@ -321,6 +418,45 @@ export default function NowPlaying({
       iframe.removeEventListener('load', subscribe);
     };
   }, [isVideo, videoStarted, songIdx, goNext]);
+
+  // ── Persistência do snapshot pro "voltar de onde parou" ──
+  //
+  // Três trigger paths:
+  //  1) Interval de 1s: pega `lastKnownTimeRef.current` (atualizado
+  //     pelo onMessage do handler acima) e grava o snapshot.
+  //  2) `visibilitychange = hidden`: o usuário fechou/escondeu a
+  //     aba — salva imediatamente pra não perder mais que 1s de
+  //     precisão.
+  //  3) Unmount: idem, save final no cleanup.
+  //
+  // Salvamos APENAS quando em modo video + videoStarted, porque é
+  // o único cenário em que há playback real (mini/horizontal são
+  // decorativos). E quando o catálogo não está pronto a gente
+  // ignora — youtubeId NULL não traz valor algum no restore. */
+  useEffect(() => {
+    if (embed) return;
+    if (!isVideo || !videoStarted) return;
+    const currentYoutubeId = SONGS[songIdx]?.youtubeId;
+    if (!currentYoutubeId) return;
+
+    const save = () => {
+      saveNowPlayingSnapshot({
+        youtubeId: currentYoutubeId,
+        time: lastKnownTimeRef.current,
+        wasPlaying: isPlaying,
+      });
+    };
+    const intervalId = window.setInterval(save, 1000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') save();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibility);
+      save(); // ULTIMA gravação na cleanup do effect
+    };
+  }, [embed, isVideo, videoStarted, songIdx, isPlaying, SONGS]);
 
   // Música atual: Spotify real OU mock rotacionando
   const song = useSpotifyData
@@ -523,7 +659,14 @@ export default function NowPlaying({
                 ref={iframeRef}
                 key={SONGS[songIdx].youtubeId}
                 className={styles.videoIframe}
-                src={buildVideoSrc(SONGS[songIdx].youtubeId)}
+                /* `pendingStartSeconds` é populado UMA vez pelo
+                 *  restore effect e zerado logo depois. Em mounts
+                 *  subsequentes (troca de faixa) o valor é 0 e o
+                 *  vídeo abre normalmente do início. */
+                src={buildVideoSrc(
+                  SONGS[songIdx].youtubeId,
+                  pendingStartSeconds,
+                )}
                 title={`${song.title} — ${song.artist}`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
