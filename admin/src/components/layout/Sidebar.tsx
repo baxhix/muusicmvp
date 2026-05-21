@@ -17,6 +17,7 @@ import {
   IconCode,
   IconTicket,
   IconCalendar,
+  IconEdit,
   IconChevronLeft,
   IconChevronRight,
 } from '@/components/icons';
@@ -49,6 +50,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/comunidades', label: 'Comunidade',  icon: IconMessage },
   { href: '/tracks',      label: 'Músicas',     icon: IconMusic },
   { href: '/pre-save',    label: 'Pre Save',    icon: IconCalendar },
+  { href: '/blog',        label: 'Blog',        icon: IconEdit },
   { href: '/convites',    label: 'Convites',    icon: IconTicket },
   { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
 ];
