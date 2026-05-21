@@ -32,7 +32,15 @@
    * the cover and the countdown chip. */
   width: 500px;
   height: 80px;
-  z-index: 60;
+  /* Banner é uma superfície ambiente que pinta sobre o mapa, mas
+   * deve SEMPRE ceder espaço pros painéis interativos (SuperfansPanel
+   * z:25, CommunityPanel z:25, ConversationsSidebar z:25) e pros
+   * modais (z:130+) per product feedback "ao abrir o modal de
+   * Superfã e todos os modais, deixe sempre por cima do banner do
+   * lançamento Fire Arena". z:14 senta logo abaixo do FeedPanel
+   * (z:15) — banner aparece sobre o map vignette e some debaixo de
+   * qualquer painel/modal que abrir. */
+  z-index: 14;
   display: flex;
   align-items: center;
   gap: 12px;
