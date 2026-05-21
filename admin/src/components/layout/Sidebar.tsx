@@ -186,10 +186,7 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
             className={styles.brandLogo}
             aria-hidden="true"
           />
-          <span className={styles.brandName}>
-            Fanverse
-            <span className={styles.brandTag}>Admin</span>
-          </span>
+          <span className={styles.brandName}>Fanverse</span>
         </Link>
         {/* Collapse toggle — pinned to the right edge of the
          *  brand row. When the sidebar is expanded the chevron

@@ -100,36 +100,33 @@
   color: inherit;
 }
 
-/* Brand mark — now renders the real Fanverse SVG asset
- * (`/fanverse-logo.svg`) per product feedback "inclua o
- * logotipo Fanverse no painel admin também". The previous
- * "F" placeholder swatch is gone; the SVG carries its own
- * purple→pink gradient so we just size + space it. */
+/* Brand mark — renderiza o SVG do Fanverse. O asset carrega um
+ * gradiente roxo→rosa nativo; aplicamos `grayscale(1)` +
+ * opacidade reduzida pra que o ícone leia como uma marca
+ * quieta ao lado do wordmark — per product feedback "deixe o
+ * ícone mais cinza do que a palavra". O wordmark fica em
+ * `var(--text)` (branco no dark), então o contraste de
+ * "palavra prominente + ícone sutil" surge natural. */
 .brandLogo {
   width: 24px;
   height: 24px;
   display: block;
   flex-shrink: 0;
   object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.55;
 }
 
 .brandName {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
   letter-spacing: -0.015em;
-  display: flex;
-  flex-direction: column;
   line-height: 1.2;
   min-width: 0;
   overflow: hidden;
-}
-.brandTag {
-  font-size: 10.5px;
-  color: var(--text-mute);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Collapse / expand toggle — small circular button on the
