@@ -37,16 +37,18 @@
   z-index: var(--z-sidebar);
   display: flex;
   flex-direction: column;
-  /* Gradient vertical sutil — top em var(--surface), bottom
-   * descendo pra var(--bg-subtle). No dark theme isso vai de
-   * #0F0F0F → #0A0A0A; no light de #FFFFFF → #F4F4F5. O
-   * resultado é "leve mais dark" sem perder a leitura de card
-   * (per product feedback). Os tokens são theme-aware, então o
-   * efeito inverte natural quando o usuário alterna tema. */
+  /* Gradient vertical pronunciado — topo perto do background da
+   * página (var(--bg) = #000 no dark) descendo pra var(--surface-2)
+   * (#161616) na base. O efeito no dark mode: o topo do card se
+   * funde quase invisível com o bg preto da página, e a base
+   * brilha um pouco mais clara — visualmente o sidebar parece
+   * "emergir" do fundo per product feedback. No light mode os
+   * dois tokens batem em #FAFAFA, o gradiente vira flat sem
+   * destoar do resto do tema. */
   background: linear-gradient(
     180deg,
-    var(--surface) 0%,
-    var(--bg-subtle) 100%
+    var(--bg) 0%,
+    var(--surface-2) 100%
   );
   border: 1px solid var(--border-soft);
   /* Radius/shadow específicos do card (não usamos var(--r-lg) /
