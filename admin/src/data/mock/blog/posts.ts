@@ -28,7 +28,7 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     subtitle:
       'A colaboração que misturou eletrônica e sertanejo abriu portas para palcos internacionais.',
     slug: 'rodeio-no-texas-com-diplo',
-    coverImageUrl: '/albuns/lets-go-rodeo.jpg',
+    coverImageUrl: 'https://picsum.photos/seed/rodeio-no-texas/480/320',
     coverImageAlt: 'Capa do single "Rodeio no Texas" com Ana Castela e Diplo',
     excerpt:
       'A faixa cruzou 50 milhões de streams em 30 dias e abriu turnês nos EUA. Como a parceria surgiu, o que a produção musical mudou na carreira da Ana, e o que vem a seguir.',
@@ -67,7 +67,7 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     title: 'Bastidores: o palco em Linlithgow Palace foi um ensaio de 3 meses',
     subtitle: 'Reportagem exclusiva da preparação para o primeiro show no Reino Unido.',
     slug: 'bastidores-show-linlithgow-palace',
-    coverImageUrl: '/albuns/heranca-boiadeira-ao-vivo.jpg',
+    coverImageUrl: 'https://picsum.photos/seed/linlithgow-bastidores/480/320',
     coverImageAlt: 'Ana Castela em ensaio para o show em Linlithgow Palace',
     excerpt:
       'Acompanhamos a equipe nas três semanas que antecederam o show internacional. Logística de palco, escolha de figurino, e como adaptar repertório pra plateia bilíngue.',
@@ -101,8 +101,8 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     title: 'Festival Rodeio de Barretos 2026: agenda, atrações e como ir',
     subtitle: undefined,
     slug: 'rodeio-barretos-2026-agenda',
-    coverImageUrl: null,
-    coverImageAlt: undefined,
+    coverImageUrl: 'https://picsum.photos/seed/rodeio-barretos-2026/480/320',
+    coverImageAlt: 'Festival do Peão de Barretos 2026 — palco principal iluminado',
     excerpt:
       'O guia completo do Festival do Peão de Barretos 2026 — dia da Ana Castela, esquema de mobilidade, ingressos.',
     bodyHtml: `<p>O Festival de Barretos é o maior evento sertanejo do país. Em 2026 a Ana sobe no palco no segundo final de semana.</p>
@@ -130,6 +130,8 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     id: 'post-cultura-boiadeira-historia',
     title: 'A história da boiadeira: das tropas reais ao palco de hoje',
     slug: 'historia-da-boiadeira',
+    coverImageUrl: 'https://picsum.photos/seed/historia-boiadeira/480/320',
+    coverImageAlt: 'Imagem ilustrativa de tropeiros do século XIX',
     excerpt:
       'De Goiás do século XIX ao streaming de 2026 — uma análise etnomusicológica de como a figura da mulher boiadeira ressignificou o sertanejo.',
     bodyHtml: `<p class="lede">A boiadeira não nasceu com a Ana Castela — mas a Ana deu a ela uma voz pop. Esse texto reconstrói a linhagem.</p>
@@ -159,6 +161,8 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     id: 'post-fanverse-tutorial-superchat',
     title: 'Guia rápido: como entrar no Superchat e participar',
     slug: 'como-usar-superchat',
+    coverImageUrl: 'https://picsum.photos/seed/superchat-tutorial/480/320',
+    coverImageAlt: 'Tela do Superchat com mensagens chegando em tempo real',
     excerpt:
       'O Superchat é o canal de chat coletivo do Fanverse, onde fãs trocam mensagens em tempo real durante os shows. Veja como entrar.',
     bodyHtml: `<p>O Superchat é um chat coletivo em tempo real...</p>`,

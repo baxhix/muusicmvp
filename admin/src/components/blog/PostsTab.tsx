@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -11,21 +11,17 @@ import Table, { type Column } from '@/components/ui/Table';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
 import {
-  IconCheck,
-  IconEdit,
-  IconPlus,
-  IconSearch,
-  IconTrash,
-  IconCalendar,
   IconCopy,
+  IconEdit,
   IconEye,
   IconEyeOff,
+  IconSearch,
+  IconTrash,
 } from '@/components/icons';
 import PostStatusBadge, { POST_STATUS_LABEL } from './PostStatusBadge';
 import { blogPostsService } from '@/services/blog/posts';
 import { blogCategoriesService } from '@/services/blog/categories';
 import { blogAuthorsService } from '@/services/blog/authors';
-import { formatDate, formatRelative } from '@/lib/format';
 import type {
   BlogAuthor,
   BlogCategory,
@@ -33,6 +29,17 @@ import type {
   BlogPostStatus,
 } from '@/types/blog';
 import styles from '@/app/(shell)/blog/page.module.css';
+
+/** Formata uma ISO date como dd/mm/aa per product feedback
+ *  "substitua o formato de data de publicação para dd/mm/aa". */
+function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d
+    .getFullYear()
+    .toString()
+    .slice(-2)}`;
+}
 
 /**
  * PostsTab — listagem de posts com filtros + ações rápidas.
@@ -62,13 +69,6 @@ const STATUS_OPTIONS: { value: BlogPostStatus | 'all'; label: string }[] = [
   { value: 'archived',  label: 'Arquivado' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'publishedAt-desc', label: 'Publicação ↓' },
-  { value: 'publishedAt-asc',  label: 'Publicação ↑' },
-  { value: 'updatedAt-desc',   label: 'Atualizado ↓' },
-  { value: 'title-asc',        label: 'Título A→Z' },
-];
-
 export default function PostsTab() {
   const router = useRouter();
   const { push } = useToast();
@@ -81,21 +81,23 @@ export default function PostsTab() {
   const [status, setStatus] = useState<BlogPostStatus | 'all'>('all');
   const [categoryId, setCategoryId] = useState<string>('all');
   const [authorId, setAuthorId] = useState<string>('all');
-  const [sort, setSort] = useState<
-    'publishedAt-desc' | 'publishedAt-asc' | 'title-asc' | 'updatedAt-desc'
-  >('publishedAt-desc');
   const [pendingDelete, setPendingDelete] = useState<BlogPost | null>(null);
 
+  /** Ordenação fixa em "publicação mais recente primeiro" (UI
+   *  do seletor foi retirada per product feedback). A própria
+   *  coluna Publicação no Table do design system continua
+   *  clicável pra reordenar localmente quando o usuário
+   *  precisar de outra ordem. */
   const refresh = useCallback(async () => {
     const [postsRes, catsRes, autsRes] = await Promise.all([
-      blogPostsService.list({ sort }),
+      blogPostsService.list({ sort: 'publishedAt-desc' }),
       blogCategoriesService.list({ limit: 200 }),
       blogAuthorsService.list({ limit: 200 }),
     ]);
     setPosts(postsRes.items);
     setCategories(catsRes.items);
     setAuthors(autsRes.items);
-  }, [sort]);
+  }, []);
 
   useEffect(() => {
     void refresh();
@@ -168,6 +170,26 @@ export default function PostsTab() {
 
   const columns: Column<BlogPost>[] = [
     {
+      id: 'cover',
+      header: '',
+      cell: (p) => (
+        <div className={styles.coverThumb}>
+          {p.coverImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={p.coverImageUrl}
+              alt={p.coverImageAlt ?? ''}
+              className={styles.coverThumbImg}
+              loading="lazy"
+            />
+          ) : (
+            <div className={styles.coverThumbEmpty} aria-hidden="true" />
+          )}
+        </div>
+      ),
+      width: 72,
+    },
+    {
       id: 'title',
       header: 'Post',
       sortKey: (p) => p.title,
@@ -199,12 +221,19 @@ export default function PostsTab() {
       header: 'Autor',
       sortKey: (p) => p.authorName,
       cell: (p) => (
-        <div className={styles.authorCell}>
-          <Avatar name={p.authorName} src={p.authorAvatarUrl ?? undefined} size="sm" />
-          <span className={styles.cellSecondary}>{p.authorName}</span>
-        </div>
+        // Avatar isolado com o nome do autor via tooltip nativo
+        // (title attr) — listagem mais densa, menos texto
+        // competindo com o título do post.
+        <span title={p.authorName} className={styles.authorAvatarOnly}>
+          <Avatar
+            name={p.authorName}
+            src={p.authorAvatarUrl ?? undefined}
+            size="sm"
+          />
+        </span>
       ),
-      width: 200,
+      width: 64,
+      align: 'center',
     },
     {
       id: 'publishedAt',
@@ -212,17 +241,10 @@ export default function PostsTab() {
       sortKey: (p) => p.publishedAt ?? '',
       cell: (p) => (
         <span className={styles.muteCell}>
-          {p.publishedAt ? formatDate(p.publishedAt) : '—'}
+          {p.publishedAt ? formatShortDate(p.publishedAt) : '—'}
         </span>
       ),
-      width: 130,
-    },
-    {
-      id: 'updatedAt',
-      header: 'Atualizado',
-      sortKey: (p) => p.updatedAt,
-      cell: (p) => <span className={styles.muteCell}>{formatRelative(p.updatedAt)}</span>,
-      width: 130,
+      width: 100,
     },
     {
       id: 'actions',
@@ -286,23 +308,9 @@ export default function PostsTab() {
 
   return (
     <div className={styles.tabBody}>
-      <Card>
-        <CardHeader
-          title="Posts"
-          description="Todos os posts do blog. Use o editor full-page pra criar ou ajustar conteúdo longo."
-          actions={
-            <Button
-              variant="primary"
-              size="sm"
-              leadingIcon={<IconPlus size={14} />}
-              onClick={() => router.push('/blog/posts/novo')}
-            >
-              Novo post
-            </Button>
-          }
-        />
-      </Card>
-
+      {/* Box "Posts / Todos os posts do blog..." removido per
+       *  product feedback. CTA "Novo post" migrou pro PageHeader
+       *  do /blog (app/(shell)/blog/page.tsx). Filtros vão direto. */}
       <Card className={styles.filters}>
         <Input
           inputSize="md"
@@ -334,23 +342,6 @@ export default function PostsTab() {
         />
       </Card>
 
-      <Card className={styles.filters2}>
-        <div />
-        <Select
-          value={sort}
-          onChange={(e) =>
-            setSort(
-              e.target.value as
-                | 'publishedAt-desc'
-                | 'publishedAt-asc'
-                | 'title-asc'
-                | 'updatedAt-desc',
-            )
-          }
-          options={SORT_OPTIONS}
-        />
-      </Card>
-
       <Card className={styles.tableCard}>
         <Table<BlogPost>
           columns={columns}
@@ -373,9 +364,3 @@ export default function PostsTab() {
     </div>
   );
 }
-
-/** Hint local: IconCheck e IconCalendar ficaram importados pra
- *  futuras ações ("publicar agendando"). Removidos do JSX por
- *  enquanto pra evitar warnings de import não usado. */
-void IconCheck;
-void IconCalendar;

@@ -147,3 +147,36 @@
   font-family: var(--font-mono);
   margin-top: 4px;
 }
+
+/* ── Cover thumb na listagem de Posts ─────────── */
+.coverThumb {
+  display: block;
+  width: 56px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-mute, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-soft);
+}
+.coverThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.coverThumbEmpty {
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(135deg,
+      var(--surface-mute, rgba(255,255,255,0.04)) 0%,
+      var(--surface-strong, rgba(255,255,255,0.06)) 100%);
+}
+
+/* Autor reduzido ao avatar — wrapper aceita o title attr pra
+ * tooltip nativo do browser sem precisar de chrome extra. */
+.authorAvatarOnly {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

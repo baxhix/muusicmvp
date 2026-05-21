@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import Tabs from '@/components/ui/Tabs';
+import Button from '@/components/ui/Button';
+import { IconPlus } from '@/components/icons';
 import PostsTab from '@/components/blog/PostsTab';
 import CategoriasTab from '@/components/blog/CategoriasTab';
 import AutoresTab from '@/components/blog/AutoresTab';
@@ -64,6 +66,22 @@ function BlogIndexInner() {
       <PageHeader
         title="Blog"
         description="Posts, categorias e autores. Edição de post abre em página dedicada."
+        actions={
+          tab === 'posts' ? (
+            // CTA Novo post alinhado ao header principal per
+            // product feedback. Só aparece quando o tab Posts
+            // está ativo — Categorias/Autores têm seus próprios
+            // CTAs dentro dos seus Cards.
+            <Button
+              variant="primary"
+              size="sm"
+              leadingIcon={<IconPlus size={14} />}
+              onClick={() => router.push('/blog/posts/novo')}
+            >
+              Novo post
+            </Button>
+          ) : null
+        }
         tabs={
           <Tabs<BlogTab>
             variant="bordered"
