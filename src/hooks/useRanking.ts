@@ -75,5 +75,17 @@ export function useRanking(enabled: boolean): UseRankingResult {
     };
   }, [enabled, user]);
 
+  // Refresh ao receber `app:points-awarded` enquanto o panel está
+  // aberto — mantém o número do "me" no ranking sincronizado com
+  // o que o ArtistBox mostra (useUserProfile faz o mesmo). Sem
+  // isso, abrir o Superfãs, ganhar pontos com o painel aberto e
+  // não ver o número subir era confuso.
+  useEffect(() => {
+    if (!enabled || !user) return;
+    const handler = () => void refresh();
+    window.addEventListener('app:points-awarded', handler);
+    return () => window.removeEventListener('app:points-awarded', handler);
+  }, [enabled, user, refresh]);
+
   return { ranking, loading, error, refresh };
 }
