@@ -37,7 +37,17 @@
   z-index: var(--z-sidebar);
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  /* Gradient vertical sutil — top em var(--surface), bottom
+   * descendo pra var(--bg-subtle). No dark theme isso vai de
+   * #0F0F0F → #0A0A0A; no light de #FFFFFF → #F4F4F5. O
+   * resultado é "leve mais dark" sem perder a leitura de card
+   * (per product feedback). Os tokens são theme-aware, então o
+   * efeito inverte natural quando o usuário alterna tema. */
+  background: linear-gradient(
+    180deg,
+    var(--surface) 0%,
+    var(--bg-subtle) 100%
+  );
   border: 1px solid var(--border-soft);
   /* Radius/shadow específicos do card (não usamos var(--r-lg) /
    * var(--shadow-sm) pra não depender dos defaults do tema —
