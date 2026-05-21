@@ -28,32 +28,34 @@ export default function Navbar() {
         Fanverse
       </a>
 
-      <nav className={styles.nav} aria-label="Principal">
-        <a href="#solucoes" className={styles.navLink}>
-          Soluções
-        </a>
-        <a href="#blog" className={styles.navLink}>
-          Blog
-        </a>
-        <a href="#login" className={styles.navLink}>
-          Login
-        </a>
-      </nav>
+      <div className={styles.rightCluster}>
+        <nav className={styles.nav} aria-label="Principal">
+          <a href="#solucoes" className={styles.navLink}>
+            Soluções
+          </a>
+          <a href="#blog" className={styles.navLink}>
+            Blog
+          </a>
+          <a href="#login" className={styles.navLink}>
+            Login
+          </a>
+        </nav>
 
-      <button
-        type="button"
-        className={styles.langToggle}
-        onClick={() => {
-          // Stub: ciclar pelas opções. Substituir por dropdown
-          // real quando i18n estiver wired.
-          setLang((prev) =>
-            prev === 'PT' ? 'EN' : prev === 'EN' ? 'ES' : 'PT',
-          );
-        }}
-        aria-label={`Idioma: ${lang}. Clique pra trocar.`}
-      >
-        {lang}
-      </button>
+        <button
+          type="button"
+          className={styles.langToggle}
+          onClick={() => {
+            // Stub: ciclar pelas opções. Substituir por dropdown
+            // real quando i18n estiver wired.
+            setLang((prev) =>
+              prev === 'PT' ? 'EN' : prev === 'EN' ? 'ES' : 'PT',
+            );
+          }}
+          aria-label={`Idioma: ${lang}. Clique pra trocar.`}
+        >
+          {lang}
+        </button>
+      </div>
     </header>
   );
 }

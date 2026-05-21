@@ -2,8 +2,11 @@
 
 import FloatingAvatar from './FloatingAvatar';
 import Sparkles from './Sparkles';
-import PhoneStack from './PhoneStack';
 import styles from './HeroSection.module.css';
+
+/* PhoneStack removido per product feedback — slot reservado pra
+ * mockups reais de smartphones (com screenshots do app) que
+ * entrarão na seção em uma iteração futura. */
 
 /**
  * Section 1 — hero da landing experimental.
@@ -72,8 +75,6 @@ export default function HeroSection() {
         floatDelay={2.6}
         style={{ bottom: '20%', right: '6%' }}
       />
-
-      <PhoneStack />
     </section>
   );
 }

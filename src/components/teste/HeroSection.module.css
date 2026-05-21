@@ -45,7 +45,10 @@
 .headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  font-size: clamp(72px, 14vw, 220px);
+  /* Cap em 160px per product feedback — display ainda
+   * substancial mas não esmaga a composição em viewports
+   * muito wide. Floor de 56px cobre mobile. */
+  font-size: clamp(56px, 11vw, 160px);
   line-height: 0.9;
   letter-spacing: -0.02em;
   color: #fff;

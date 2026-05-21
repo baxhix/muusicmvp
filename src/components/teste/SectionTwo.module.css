@@ -1,0 +1,38 @@
+/* Section 2 — mock canvas pra avaliar floating dos avatares.
+ *
+ * Mesmo footprint visual da hero (preto full-bleed, sparkles
+ * por baixo), mas com texto central menor e mais avatares
+ * espalhados. */
+
+.section {
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+}
+
+.center {
+  position: relative;
+  z-index: 5;
+  max-width: 720px;
+  text-align: center;
+}
+
+/* Heading menor que a headline da hero — H1 segura SUPERFÃS,
+ * H2 aqui é mais íntimo pra deixar os avatares respirarem. */
+.heading {
+  font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: clamp(40px, 6.5vw, 88px);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  color: #fff;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}

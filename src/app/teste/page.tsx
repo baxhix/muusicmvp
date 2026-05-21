@@ -2,6 +2,8 @@
 
 import Navbar from '@/components/teste/Navbar';
 import HeroSection from '@/components/teste/HeroSection';
+import SectionTwo from '@/components/teste/SectionTwo';
+import SectionThree from '@/components/teste/SectionThree';
 import styles from './page.module.css';
 
 /**
@@ -29,6 +31,13 @@ export default function TestePage() {
     <div className={styles.page}>
       <Navbar />
       <HeroSection />
+      {/* Sections 2 + 3 mockadas pra validar o comportamento
+       *  do floating dos avatares em arranjos diferentes
+       *  (densidade, posicionamento, tamanhos). Conteúdo
+       *  textual é placeholder — vamos iterar conforme o
+       *  feedback da motion. */}
+      <SectionTwo />
+      <SectionThree />
     </div>
   );
 }
