@@ -21,6 +21,7 @@ import {
   FAKE_CENTRAL_USER_ID,
 } from '@/lib/fakeAna';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { preloadDisplayPoints } from '@/lib/displayPoints';
 import { useRouter } from 'next/navigation';
 import {
   globeStore,
@@ -216,6 +217,17 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   // possa abrir direto sem desviar pra /app/perfil, e o botão
   // "Editar perfil" no ProfilePanel também consome o mesmo state.
   const [showEditProfile, setShowEditProfile] = useState(false);
+
+  // Pré-aquece o cache dos pontos por ação (GET /api/fanpoints/
+  // display-rules) assim que a shell monta. Garante que o
+  // primeiro click em like/comment/send já encontre o valor
+  // sincronizado com o admin — sem cair no FALLBACK estático.
+  // Idempotente e fire-and-forget: se falhar, awardPoints segue
+  // funcionando com o fallback.
+  useEffect(() => {
+    void preloadDisplayPoints();
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {

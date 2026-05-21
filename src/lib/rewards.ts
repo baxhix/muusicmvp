@@ -1,18 +1,21 @@
 /**
  * Client-side companion to the server-side rewards ledger
- * (src/server/activities/queries.ts). The point values here MUST
- * mirror the `POINTS` map on the server — they're duplicated so
- * the frontend can show an instant "+N Fanpoints" toast without a
- * server roundtrip. Source of truth still lives server-side; this
- * is just a viewer-side optimistic cache.
+ * (src/server/activities/queries.ts).
  *
- * If you change a value here, update `POINTS` in
- * `src/server/activities/queries.ts` too (and run a migration if
- * the change adds a new `kind`).
+ * Os valores de pontos NÃO ficam mais hardcoded aqui — eles vêm
+ * do cache em memória de `lib/displayPoints.ts`, que sincroniza
+ * com o endpoint público /api/fanpoints/display-rules (que por
+ * sua vez lê a tabela `fanpoint_rules` editável pelo admin).
+ *
+ * Assim, quando o admin muda um valor no /admin/config/fanpoints,
+ * o toast e o optimistic update do ArtistBox passam a refletir o
+ * valor novo em até 60s (TTL do cache cliente, ~mesmo do cache
+ * servidor) — sem mais divergência cliente ↔ servidor.
  */
 
 import { api, ApiError } from './api/client';
 import { track } from './analytics';
+import { getDisplayPoints } from './displayPoints';
 
 export type RewardRule =
   | 'like'
@@ -20,23 +23,6 @@ export type RewardRule =
   | 'send'
   | 'chat_started'
   | 'three_streams';
-
-/**
- * Display amount per rule. Matches the server-side `POINTS` map
- * 1:1 for the same kinds (post_liked → like, post_shared → send,
- * comment_posted → comment, etc.). `three_streams` is awarded
- * server-side automatically when a viewer hits a multiple-of-3
- * stream count — clients should NOT fire awardPoints('three_streams')
- * manually; it's listed here purely so a toast can label the +10
- * cleanly when the listening response surfaces it.
- */
-export const REWARD_POINTS: Record<RewardRule, number> = {
-  like: 5,
-  comment: 10,
-  send: 15,
-  chat_started: 3,
-  three_streams: 10,
-};
 
 const FRIENDLY_LABELS: Record<RewardRule, string> = {
   like: 'curtida',
@@ -83,7 +69,11 @@ export async function awardPoints(
   rule: RewardRule,
   options: AwardPointsOptions = {},
 ): Promise<void> {
-  const amount = REWARD_POINTS[rule];
+  // Lê do cache cliente (sincronizado com /api/fanpoints/display-rules).
+  // Se o cache ainda estiver cold, displayPoints devolve um fallback
+  // razoável + dispara um refresh em background — toast nunca pisca
+  // "+undefined".
+  const amount = getDisplayPoints(rule);
 
   // 1. Analytics — single funnel-friendly event with the rule + amount.
   track('points_awarded', {
