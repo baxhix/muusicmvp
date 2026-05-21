@@ -10,7 +10,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Table, { type Column } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
-import StatTile from '@/components/admin/StatTile';
+import StatCard from '@/components/ui/StatCard';
 import SuperfanDetailDrawer from '@/components/admin/SuperfanDetailDrawer';
 import {
   IconStar,
@@ -230,17 +230,17 @@ export default function SuperfansPage() {
 
       <div className={styles.body}>
         <div className={styles.kpiGrid}>
-          <StatTile
+          <StatCard
             icon={<IconStar size={14} />}
             value={kpis ? formatNumber(kpis.total) : '—'}
             label="Total de superfãs"
           />
-          <StatTile
+          <StatCard
             icon={<IconHeart size={14} />}
             value={kpis ? formatBRL(kpis.totalRevenue) : '—'}
             label="Receita gerada por superfãs"
           />
-          <StatTile
+          <StatCard
             icon={<IconMusic size={14} />}
             value={
               kpis
@@ -249,7 +249,7 @@ export default function SuperfansPage() {
             }
             label="Tempo total de escuta"
           />
-          <StatTile
+          <StatCard
             icon={<IconStar size={14} />}
             value={kpis ? `${kpis.avgDays} dias` : '—'}
             label="Tempo médio de plataforma"

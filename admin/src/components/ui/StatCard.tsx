@@ -7,6 +7,14 @@ export interface StatCardProps {
   label: string;
   value: ReactNode;
   icon?: ReactNode;
+  /**
+   * Optional secondary value rendered ao lado do principal — usado
+   * pra proporções (ex.: "75%" de "Usuários ativos") onde o número
+   * não é uma variação temporal e portanto `trend` (que vem com
+   * seta + cor de up/down) não cabe semanticamente. Vai muted +
+   * menor pra não competir com o número grande.
+   */
+  secondary?: ReactNode;
   /** trend value as a number (e.g., 0.124 = +12.4%); pass null for "no comparison" */
   trend?: number | null;
   trendLabel?: string;
@@ -62,6 +70,7 @@ export default function StatCard({
   label,
   value,
   icon,
+  secondary,
   trend,
   trendLabel,
   spark,
@@ -78,6 +87,9 @@ export default function StatCard({
       </div>
       <div className={styles.value}>
         {value}
+        {secondary != null && (
+          <span className={styles.secondary}>{secondary}</span>
+        )}
         {live && <LiveDot />}
       </div>
       {trend != null && (

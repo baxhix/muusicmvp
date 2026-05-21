@@ -11,7 +11,7 @@ import Select from '@/components/ui/Select';
 import Table, { type Column } from '@/components/ui/Table';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
-import StatTile from '@/components/admin/StatTile';
+import StatCard from '@/components/ui/StatCard';
 import UserDetailDrawer from '@/components/admin/UserDetailDrawer';
 import {
   IconUsers,
@@ -344,24 +344,24 @@ export default function UsersPage() {
 
       <div className={styles.body}>
         <div className={styles.kpiGrid}>
-          <StatTile
+          <StatCard
             icon={<IconUsers size={14} />}
             value={kpis ? formatNumber(kpis.total) : '—'}
             label="Total de usuários"
           />
-          <StatTile
+          <StatCard
             icon={<IconCheckCircle size={14} />}
             value={kpis ? formatNumber(kpis.active) : '—'}
-            pct={kpis ? formatPercent(kpis.activeRatio) : undefined}
+            secondary={kpis ? formatPercent(kpis.activeRatio) : undefined}
             label="Usuários ativos"
           />
-          <StatTile
+          <StatCard
             icon={<IconShield size={14} />}
             value={kpis ? formatNumber(kpis.minors) : '—'}
-            pct={kpis ? formatPercent(kpis.minorsRatio) : undefined}
+            secondary={kpis ? formatPercent(kpis.minorsRatio) : undefined}
             label="Menores de idade"
           />
-          <StatTile
+          <StatCard
             icon={<IconMusic size={14} />}
             value={kpis ? formatNumber(kpis.avgStreams) : '—'}
             label="Média de reproduções por usuário"

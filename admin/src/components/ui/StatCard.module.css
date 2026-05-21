@@ -51,8 +51,18 @@
   line-height: 1.1;
   font-feature-settings: 'tnum' 1;
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 10px;
+}
+
+/* Secondary value inline (proporção / pct). Vai baseline-alinhado
+ * com o valor principal, menor, em text-mute pra não competir. */
+.secondary {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-mute);
+  letter-spacing: 0;
+  font-feature-settings: 'tnum' 1;
 }
 
 /* ── Live presence dot ───────────────────────────────────

@@ -11,7 +11,7 @@ import Tabs from '@/components/ui/Tabs';
 import Table, { type Column } from '@/components/ui/Table';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
-import StatTile from '@/components/admin/StatTile';
+import StatCard from '@/components/ui/StatCard';
 import ReportDetailDrawer from '@/components/admin/ReportDetailDrawer';
 import {
   IconShield,
@@ -429,17 +429,17 @@ export default function ModerationPage() {
 
       <div className={styles.body}>
         <div className={styles.kpiGrid}>
-          <StatTile
+          <StatCard
             icon={<IconShield size={14} />}
             value={kpis ? formatNumber(kpis.open) : '—'}
             label="Denúncias abertas"
           />
-          <StatTile
+          <StatCard
             icon={<IconAlert size={14} />}
             value={kpis ? formatNumber(kpis.high) : '—'}
             label="Alta prioridade pendentes"
           />
-          <StatTile
+          <StatCard
             icon={<IconCalendar size={14} />}
             value={
               kpis
@@ -448,7 +448,7 @@ export default function ModerationPage() {
             }
             label="Tempo médio de resolução"
           />
-          <StatTile
+          <StatCard
             icon={<IconCheckCircle size={14} />}
             value={kpis ? formatNumber(kpis.recentResolved) : '—'}
             label="Resolvidas (7 dias)"
