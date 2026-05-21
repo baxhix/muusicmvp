@@ -45,8 +45,16 @@
   --z-toast: 80;
 
   /* ── Layout ── */
+  /* `--sidebar-w` é o FOOTPRINT total do sidebar (gutter +
+   * card + gutter) — `.main { margin-left: var(--sidebar-w) }`
+   * consome esse valor pra alinhar o conteúdo. O card visual em
+   * si tem `width: calc(var(--sidebar-w) - 2 * var(--sidebar-gutter))`.
+   * Bumpamos o collapsed de 64 → 76 quando o sidebar virou card
+   * flutuante: precisa de respiro lateral pros gutters não
+   * comerem o conteúdo do ícone. */
   --sidebar-w: 248px;
-  --sidebar-w-collapsed: 64px;
+  --sidebar-w-collapsed: 76px;
+  --sidebar-gutter: 10px;
   --topbar-h: 56px;
   --content-max: 1280px;
 }

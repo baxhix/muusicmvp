@@ -21,37 +21,61 @@
  *     accent stripe + crisp white text.
  * ============================================================ */
 
+/* Floating card style — o sidebar agora é um painel destacado
+ * com gutters em todos os lados, cantos arredondados e sombra
+ * sutil (referência visual: Magic Patterns / Krea-style rails).
+ * O `--sidebar-w` continua sendo o footprint TOTAL (gutter +
+ * card + gutter) pra que o `.main { margin-left }` no shell
+ * fique alinhado sem mudar de fórmula. O card propriamente dito
+ * desconta os dois gutters da largura via calc(). */
 .sidebar {
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: var(--sidebar-w);
+  top: var(--sidebar-gutter);
+  bottom: var(--sidebar-gutter);
+  left: var(--sidebar-gutter);
+  width: calc(var(--sidebar-w) - 2 * var(--sidebar-gutter));
   z-index: var(--z-sidebar);
   display: flex;
   flex-direction: column;
-  background: var(--bg);
-  border-right: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  /* Radius/shadow específicos do card (não usamos var(--r-lg) /
+   * var(--shadow-sm) pra não depender dos defaults do tema —
+   * queremos cantos mais arredondados (referência tipo Krea) e
+   * uma sombra um pouco mais expressiva pra "destacar" o
+   * sidebar da pelle de fundo). */
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.28),
+    0 8px 24px rgba(0, 0, 0, 0.22);
   padding: 12px 10px;
   gap: 4px;
-  /* Smooth the width transition so collapsing reads as a
-   * physical fold-in rather than a snap. */
-  transition: width var(--dur-base, 220ms) var(--ease-out, ease-out);
+  /* `auto` em vez de `hidden` cobre o edge case de laptops com
+   * viewport curto (chromebook 11", notch + dock no macOS) onde
+   * a soma dos 12 itens + brand + footer pode estourar o card.
+   * O eixo X fica clipado pra não criar scroll lateral no card
+   * estreito. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Smooth o ajuste de largura quando o usuário colapsa — sem
+   * isso o card snape. */
+  transition:
+    width var(--dur-base, 220ms) var(--ease-out, ease-out),
+    background var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
 }
 
-/* Collapsed modifier — applied on the wrapper when the user
- * hits the toggle. Sidebar.tsx ALSO reassigns the global
- * `--sidebar-w` custom property at the same moment so the
- * shell's main-area margin shrinks in step. */
+/* Collapsed modifier — Sidebar.tsx reassigna `--sidebar-w` no
+ * <html> simultaneamente pra que o main acompanhe a contração. */
 .sidebarCollapsed {
-  width: var(--sidebar-w-collapsed);
+  width: calc(var(--sidebar-w-collapsed) - 2 * var(--sidebar-gutter));
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px 14px;
+  padding: 6px 8px 12px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--border-soft);
   position: relative;
@@ -346,8 +370,12 @@
 }
 
 @media (max-width: 900px) {
+  /* No mobile o card desliza off-canvas. `translateX(-110%)`
+   * (em vez de -100%) garante que o gutter esquerdo + a sombra
+   * também saiam da viewport, sem deixar uma sliver visível
+   * cortada na borda. */
   .sidebar {
-    transform: translateX(-100%);
+    transform: translateX(-110%);
     transition: transform var(--dur-base) var(--ease-out);
   }
   .sidebarOpen {
