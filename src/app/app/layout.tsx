@@ -344,11 +344,18 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  layout (not on /app's page.tsx) so the dock stays visible
        *  when the user routes to Superfãs, Comunidades, Perfil,
        *  etc. — clicking the crown used to unmount the dock and
-       *  effectively hide the user's recent chats. On mobile the
-       *  dock is gated to home only (subpages take the full screen
-       *  and the right rail is gone). The chat-detail-open path
-       *  hides it too because LiveChatPanel covers the dock there. */}
-      {!hideShellChrome && !hideMobileHeader && (
+       *  effectively hide the user's recent chats. On mobile o
+       *  dock fica restrito à home (subpáginas pegam o viewport
+       *  inteiro e a right rail some).
+       *
+       *  Per product feedback "quando o usuário estiver com uma
+       *  janela de chat aberta, ela deve ficar por cima das
+       *  miniaturas das últimas conversas" — `chatDetailOpen`
+       *  também esconde o dock no DESKTOP. No /app/chat o
+       *  ConversationsSidebar já cobre o papel de "lista de
+       *  conversas", então o dock vira ruído visual e competia
+       *  com o LiveChatPanel por pixels do canto direito. */}
+      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && (
         <LiveChatStack
           conversations={chat.conversations}
           activeId={chat.activeId}

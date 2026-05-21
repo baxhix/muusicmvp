@@ -377,7 +377,19 @@ export default function NowPlaying({
       if (embed) return;
       const target = e.target as HTMLElement;
       const onControl = !!target.closest('button, iframe, .video-shell');
-      dragStartRef.current = { x: e.clientX, y: e.clientY, onControl };
+      // Quando o pointerdown nasce num controle interno (botão de
+      // playlist, anterior/próximo, iframe do YouTube etc.), saímos
+      // SEM tocar em pointer capture nem em isPointerDown. O capture
+      // anterior estava hijack-ando o click sequence: como o pointer
+      // ficava preso no player, o pointerup chegava no player (não
+      // no botão), e o browser não sintetizava o `click` event no
+      // botão original. Resultado: o usuário precisava clicar
+      // várias vezes pro modal de playlist abrir. Pulando o capture
+      // pra alvos de controle, o botão recebe seu click natural na
+      // primeira tentativa. O drag-to-dismiss continua funcionando
+      // normalmente nos pointerdowns que nascem fora dos controles. */
+      if (onControl) return;
+      dragStartRef.current = { x: e.clientX, y: e.clientY, onControl: false };
       setIsPointerDown(true);
       // Capture so subsequent move/up events fire on this element
       // even if the pointer wanders off (e.g. a fast swipe leaves
