@@ -1,5 +1,6 @@
-/* Section 3 — mock canvas com headline à direita pra criar
- * contraste de eixo com section 2 (que tem text central). */
+/* Section 3 — mesma typography da Hero/Section 2 pra que a
+ * sequência leia como variações do mesmo tema, não 3 estilos
+ * diferentes. */
 
 .section {
   position: relative;
@@ -10,34 +11,38 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 80px clamp(40px, 8vw, 120px);
+  justify-content: center;
+  padding: 80px 24px;
 }
 
 .center {
   position: relative;
   z-index: 5;
-  max-width: 480px;
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-.heading {
+.headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 700;
-  font-size: clamp(40px, 6.5vw, 88px);
-  line-height: 1.0;
-  letter-spacing: -0.015em;
+  font-weight: 900;
+  font-size: clamp(48px, 8vw, 80px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
   color: #fff;
   margin: 0;
+  text-align: center;
+  text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Última linha do heading destacada com cor — gradient
- * roxo→rosa, mesma vibe do brand. */
-.headingAccent {
-  background: linear-gradient(90deg, #c084fc 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+.phrase {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: -0.005em;
+  margin: 0;
+  text-align: center;
 }

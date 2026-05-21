@@ -40,16 +40,26 @@ export interface FloatingAvatarProps {
   label?: string;
   ring?: 'green' | 'pink' | 'none';
   size?: 'sm' | 'md' | 'lg';
-  floatDelay?: number;
+  /**
+   * Quando `false` (default), o avatar começa invisível
+   * (opacity 0) e ENTRA com fade. Usado pelos avatares
+   * revelados via scroll na AvatarConstellation. Quando
+   * `true`, está visível imediatamente.
+   */
+  revealed?: boolean;
   labelPosition?: 'right' | 'below';
   style?: React.CSSProperties;
   className?: string;
 }
 
+/**
+ * Tamanhos em px. Default é `sm` (48px) per product feedback
+ * "deixe no tamanho do usuário mocado JU, CA" — JU/CA eram os
+ * sm da Section 2. */
 const SIZE_PX: Record<NonNullable<FloatingAvatarProps['size']>, number> = {
   sm: 48,
-  md: 72,
-  lg: 96,
+  md: 56,
+  lg: 64,
 };
 
 /** Iniciais a partir do nome completo. Max 2 caracteres. */
@@ -74,8 +84,8 @@ export default function FloatingAvatar({
   name,
   label,
   ring = 'none',
-  size = 'md',
-  floatDelay = 0,
+  size = 'sm',
+  revealed = true,
   labelPosition = 'right',
   style,
   className,
@@ -96,16 +106,12 @@ export default function FloatingAvatar({
       className={[
         styles.wrap,
         labelPosition === 'below' ? styles.wrapColumn : styles.wrapRow,
+        revealed ? styles.revealed : styles.hidden,
         className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{
-        ...style,
-        // Anima cada avatar com offset diferente pra evitar o
-        // efeito "todos respirando juntos".
-        animationDelay: `${floatDelay}s`,
-      }}
+      style={style}
     >
       <div
         className={[styles.avatar, ringClass].filter(Boolean).join(' ')}

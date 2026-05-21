@@ -1,8 +1,5 @@
-/* Section 2 — mock canvas pra avaliar floating dos avatares.
- *
- * Mesmo footprint visual da hero (preto full-bleed, sparkles
- * por baixo), mas com texto central menor e mais avatares
- * espalhados. */
+/* Section 2 — segue o mesmo template de typography da Hero
+ * (headline 80px + phrase 16px cinza). Sparkles próprio. */
 
 .section {
   position: relative;
@@ -20,19 +17,31 @@
 .center {
   position: relative;
   z-index: 5;
-  max-width: 720px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-/* Heading menor que a headline da hero — H1 segura SUPERFÃS,
- * H2 aqui é mais íntimo pra deixar os avatares respirarem. */
-.heading {
+.headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 700;
-  font-size: clamp(40px, 6.5vw, 88px);
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  font-weight: 900;
+  font-size: clamp(48px, 8vw, 80px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
   color: #fff;
   margin: 0;
+  text-align: center;
+  text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
+}
+
+.phrase {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: -0.005em;
+  margin: 0;
+  text-align: center;
 }

@@ -1,19 +1,26 @@
-/* FloatingAvatar — avatar + label + idle float animation.
+/* FloatingAvatar — avatar + label, FIXOS na viewport.
  *
- * Posicionamento é responsibility do consumer (via style top/
- * left/etc). Aqui só cuidamos: avatar circle, ring color,
- * label cluster, e a animação de respiração. */
+ * Mudança per product feedback: avatares devem permanecer fixos
+ * conforme o scroll acontece (em vez de scrollar junto com a
+ * section). Position: fixed ancora ao viewport. A animação de
+ * idle float foi removida — eles ficam estáticos, só ENTRAM
+ * com fade-in quando revelados.
+ *
+ * Posicionamento (top/left/right/bottom) vem do consumer via
+ * prop `style`. */
 
 .wrap {
-  position: absolute;
+  position: fixed;
   display: flex;
   align-items: center;
-  gap: 12px;
-  /* Animação idle — translação vertical sutil de ~6px com
-   * ease-in-out. Cada instância recebe `animation-delay`
-   * diferente pra dessincronizar. */
-  animation: tloop-float 6s ease-in-out infinite;
-  will-change: transform;
+  gap: 10px;
+  z-index: 30;
+  /* Transição opacity (entrada com fade) + transform (sutil
+   * sobe ao aparecer pra dar sensação de "surgir"). */
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 .wrapRow {
   flex-direction: row;
@@ -21,16 +28,24 @@
 .wrapColumn {
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-@keyframes tloop-float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50%      { transform: translate3d(0, -6px, 0); }
+/* Estado escondido — pré-reveal. Opacity 0 + offset sutil
+ * pra que o fade-in já entre com micro-movimento. */
+.hidden {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+  pointer-events: none;
+}
+.revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wrap { animation: none; }
+  .wrap { transition: opacity 200ms linear; }
+  .hidden { transform: none; }
 }
 
 /* Avatar circular. O ring colorido é uma border de 2px
@@ -54,7 +69,7 @@
 }
 .avatarInitials {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
   letter-spacing: -0.005em;
@@ -83,7 +98,7 @@
 
 .label {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
   letter-spacing: -0.005em;
