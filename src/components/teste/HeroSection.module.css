@@ -1,0 +1,103 @@
+/* HeroSection — full-bleed dark canvas com headline central.
+ *
+ * Layout key:
+ *   - Section ocupa min 100dvh.
+ *   - Headline + subtitle vivem no `.center` flex column,
+ *     verticalmente alinhados perto do meio (offset pra cima
+ *     porque o stack de phones ocupa a base).
+ *   - Avatares + sparkles + orb são posicionados absolutos
+ *     pela section como referencia.
+ */
+
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Padding-top empurra o conteúdo abaixo do navbar fixo. */
+  padding: 96px 24px 0;
+}
+
+.center {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* Ofsset vertical pra cima — deixa espaço pros phones
+   *  aparecerem na base sem encavalar. */
+  margin-bottom: 14vh;
+}
+
+/* Headline "SUPERFÃS"
+ *
+ * Tipografia: Peace Sans (display) com fallback chain bem
+ * desenhado pra Inter 900 enquanto a fonte custom não está
+ * carregada. `font-stretch` + `letter-spacing: -0.02em`
+ * apertam um pouco as letras pra imitar o weight pesado do
+ * Peace Sans no fallback. */
+.headline {
+  font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: clamp(72px, 14vw, 220px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+  text-align: center;
+  /* Anti-aliasing pra letras grandes ficarem mais lisas. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Subtle fade-in no mount — micro-animação per produto. */
+  animation: tloop-fadeup 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.subtitle {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(13px, 1.2vw, 16px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: -0.005em;
+  margin: 0;
+  text-align: center;
+  animation: tloop-fadeup 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+@keyframes tloop-fadeup {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline, .subtitle { animation: none; }
+}
+
+/* Orb decorativo — esfera escura na direita, sutil. */
+.orb {
+  position: absolute;
+  top: 18%;
+  right: 8%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 35%,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02) 60%,
+    transparent
+  );
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}

@@ -1,0 +1,117 @@
+/* FloatingAvatar — avatar + label + idle float animation.
+ *
+ * Posicionamento é responsibility do consumer (via style top/
+ * left/etc). Aqui só cuidamos: avatar circle, ring color,
+ * label cluster, e a animação de respiração. */
+
+.wrap {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Animação idle — translação vertical sutil de ~6px com
+   * ease-in-out. Cada instância recebe `animation-delay`
+   * diferente pra dessincronizar. */
+  animation: tloop-float 6s ease-in-out infinite;
+  will-change: transform;
+}
+.wrapRow {
+  flex-direction: row;
+}
+.wrapColumn {
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes tloop-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -6px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrap { animation: none; }
+}
+
+/* Avatar circular. O ring colorido é uma border de 2px
+ * porque queríamos um destaque limpo, não um halo borrado. */
+.avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  /* Default: sem borda colorida — o avatar lê só pelo
+   * próprio contorno (gradient/photo). */
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatarInitials {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.005em;
+}
+
+/* Ring colorido — borda destacada quando o avatar está em
+ * "ativo" (verde) ou "favorito/destaque" (rosa). Usamos
+ * `outline` em vez de `border` pra não comer espaço interno
+ * (o avatar fica do mesmo tamanho independente do ring). */
+.ringGreen {
+  outline: 2px solid #2bd97f;
+  outline-offset: 3px;
+}
+.ringPink {
+  outline: 2px solid #ec4899;
+  outline-offset: 3px;
+}
+
+/* Label group: chart icon + texto. Stack horizontal default. */
+.labelGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+/* Ícone "barrinhas" verdes pra denotar "ouvindo agora".
+ * Três barras em alturas diferentes. */
+.listeningIcon {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 12px;
+}
+.listeningIcon span {
+  display: block;
+  width: 2.5px;
+  background: #2bd97f;
+  border-radius: 1px;
+}
+.listeningIcon span:nth-child(1) { height: 6px;  animation: tloop-bar 0.8s ease-in-out infinite; }
+.listeningIcon span:nth-child(2) { height: 11px; animation: tloop-bar 0.8s ease-in-out infinite 0.15s; }
+.listeningIcon span:nth-child(3) { height: 8px;  animation: tloop-bar 0.8s ease-in-out infinite 0.3s; }
+
+@keyframes tloop-bar {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .listeningIcon span { animation: none; transform: scaleY(0.7); }
+}

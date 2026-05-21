@@ -1,0 +1,32 @@
+/* Sparkles — pontos brancos pequenos espalhados, com pulsação
+ * sutil. Pointer-events disabled pra não roubar cliques. */
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dot {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  animation: tloop-twinkle 5s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@keyframes tloop-twinkle {
+  0%, 100% {
+    opacity: var(--dot-opacity-base, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    opacity: var(--dot-opacity-peak, 0.85);
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot { animation: none; }
+}
