@@ -4,6 +4,7 @@ import { db } from '@/server/db';
 import { users, tokens } from '@/server/db/schema';
 import { generateToken, MAGIC_TTL_MS } from '@/server/auth/tokens';
 import { sendMagicLink } from '@/server/email/magicLink';
+import { env } from '@/server/env';
 import { eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
@@ -59,6 +60,7 @@ export async function POST(req: Request) {
   // consumer falls back to `/avatar-placeholder.svg`, no random
   // mock photos are pulled in.
   const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const isNewUser = !existing[0];
   const defaultName = email.split('@')[0];
   const user =
     existing[0] ??
@@ -72,8 +74,25 @@ export async function POST(req: Request) {
     expiresAt: new Date(Date.now() + MAGIC_TTL_MS),
   });
 
+  /**
+   * Pra novos cadastros, queremos que o usuário caia no /app já
+   * com a câmera centrada em LATAM (Brasil é a base do produto;
+   * a vista global default fica vazia/desorientadora pra alguém
+   * que nunca viu o mapa). Reaproveitamos o `returnTo` da magic
+   * link — ele é sanitizado contra um allowlist em ambos os
+   * endpoints (request + verify), então setar pra um path
+   * próprio (`${APP_URL}/app?welcome=1`) é seguro. Quando o
+   * cliente já mandou um returnTo (admin cross-subdomain, etc.),
+   * respeitamos a intenção dele.
+   */
+  const effectiveReturnTo =
+    returnTo ??
+    (isNewUser
+      ? `${env.APP_URL.replace(/\/+$/, '')}/app?welcome=1`
+      : undefined);
+
   try {
-    await sendMagicLink(email, raw, returnTo);
+    await sendMagicLink(email, raw, effectiveReturnTo);
   } catch (err) {
     console.error('magic-link send failed:', err);
     return NextResponse.json({ error: 'email_failed' }, { status: 502 });

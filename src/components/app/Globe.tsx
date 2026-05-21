@@ -24,13 +24,45 @@ export default function Globe() {
     // navigating between /app routes (which unmounts Globe on
     // mobile) feels seamless. First visit + corrupted storage fall
     // through to the globe-view defaults.
-    const persisted = loadGlobeCamera();
-    const initialZoom = persisted?.zoom ?? 1.8;
-    const initialCenter: [number, number] = persisted
-      ? [persisted.lng, persisted.lat]
-      : [15, 20];
-    const initialBearing = persisted?.bearing ?? 0;
-    const initialPitch = persisted?.pitch ?? 0;
+    //
+    // Welcome flow override: usuário recém-cadastrado chega aqui
+    // via redirect `/app?welcome=1` (setado pelo magic-link de
+    // primeiro acesso). Quando esse flag está presente, ignoramos
+    // qualquer estado persistido e arrancamos com a câmera
+    // centrada em LATAM/Brasil — o produto é Brasil-first e a
+    // vista global default deixa o usuário desorientado no
+    // onboarding. Depois do consumo, limpamos o query param via
+    // replaceState pra que F5 não re-snape (a partir do próximo
+    // moveend o persisted toma conta normalmente).
+    const isWelcome =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('welcome') === '1';
+    const persisted = isWelcome ? null : loadGlobeCamera();
+    // LATAM-centered: longitude no centro do continente, latitude
+    // pouco acima do centro do Brasil pra incluir Caribe + Cone
+    // Sul no quadro. Zoom 3.2 mostra o continente inteiro num
+    // viewport desktop sem cortar nas bordas.
+    const WELCOME_CENTER: [number, number] = [-55, -12];
+    const WELCOME_ZOOM = 3.2;
+    const initialZoom = isWelcome ? WELCOME_ZOOM : (persisted?.zoom ?? 1.8);
+    const initialCenter: [number, number] = isWelcome
+      ? WELCOME_CENTER
+      : persisted
+        ? [persisted.lng, persisted.lat]
+        : [15, 20];
+    const initialBearing = isWelcome ? 0 : (persisted?.bearing ?? 0);
+    const initialPitch = isWelcome ? 0 : (persisted?.pitch ?? 0);
+
+    if (isWelcome && typeof window !== 'undefined') {
+      // Strip o ?welcome=1 sem recarregar — refresh subsequente
+      // não deve re-centralizar (passa a ser um usuário normal).
+      const sp = new URLSearchParams(window.location.search);
+      sp.delete('welcome');
+      const qs = sp.toString();
+      const newUrl =
+        window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash;
+      window.history.replaceState(null, '', newUrl);
+    }
 
     // Mobile viewport detection — used downstream to gate the
     // heavier Mapbox options and ambient effects that drove
