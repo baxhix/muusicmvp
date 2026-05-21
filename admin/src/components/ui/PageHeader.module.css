@@ -2,16 +2,34 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 24px 24px 18px;
+  /* Padding horizontal SAI do .header (era 24 24 18) e MIGRA pro
+   * .row/.tabs internos. O motivo: o .body das páginas usa
+   * `max-width: var(--content-max); margin: 0 auto; padding: 24`
+   * — o padding fica INSIDE o container centralizado. Pra que o
+   * título do PageHeader alinhe perfeitamente com o conteúdo do
+   * .body (em viewports wider que 1280 + sidebar), o .row do
+   * header precisa ter a mesma geometria: max-width 1280
+   * + padding 24 + margin auto. Header outer mantém background
+   * + border-bottom full-width. */
+  padding: 24px 0 18px;
   border-bottom: 1px solid var(--border-soft);
   background: var(--bg);
 }
 
+/* Conteúdo interno (row + tabs) com a mesma fórmula que o
+ * .body das páginas: max-width centralizado + padding 24
+ * interno. Em viewports mais estreitos a max-width não
+ * constrange e o padding garante o respiro lateral; em wide o
+ * conteúdo casa exatamente com o body. */
 .row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
+  max-width: var(--content-max);
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
 }
 
 .left {
@@ -55,4 +73,11 @@
 .tabs {
   margin-top: 16px;
   margin-bottom: -19px;
+  max-width: var(--content-max);
+  width: 100%;
+  padding: 0 24px;
+  /* `margin-left/right: auto` mantém o centramento horizontal
+   * sem perder o margin-top/bottom que já estavam definidos. */
+  margin-left: auto;
+  margin-right: auto;
 }
