@@ -10,18 +10,21 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
-import Switch from '@/components/ui/Switch';
 import Table, { type Column } from '@/components/ui/Table';
-import Dialog, { ConfirmDialog } from '@/components/ui/Dialog';
+import { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
 import {
   IconPlus,
   IconCheck,
   IconTrash,
-  IconEdit,
 } from '@/components/icons';
 import { teamService } from '@/services/team';
 import { workspaceService } from '@/services/billing';
+import {
+  fanpointsService,
+  type FanpointRule as ServerFanpointRule,
+  type FanpointRuleKind,
+} from '@/services/fanpoints';
 import type {
   TeamMember,
   TeamRole,
@@ -29,9 +32,9 @@ import type {
 } from '@/types';
 import {
   CATEGORY_LABEL as FANPOINT_CATEGORY_LABEL,
-  loadFanpointRules,
+  loadFanpointRules as loadBrainstormRules,
   type FanpointCategory,
-  type FanpointRule,
+  type FanpointRule as BrainstormRule,
 } from '@/data/mock/fanpoints';
 import { formatRelative } from '@/lib/format';
 import styles from './page.module.css';
@@ -149,8 +152,22 @@ function NotificationsTab() {
   );
 }
 
+
 /* ============================================================
-   Tab: Fanpoints — CRUD de regras de pontuação
+   Tab: Fanpoints
+   ----------------------------------------------------------------
+   Duas seções:
+     1. Integrado  — as 7 ActivityKinds reais do backend
+        (stream, login, chat_started, post_liked, comment_posted,
+        post_shared, three_streams). Somente o valor de pontos é
+        editável + persistido. Display metadata (label,
+        descrição, categoria) vive aqui no admin, não no DB.
+     2. Brainstorm — wishlist de regras que ainda não estão
+        implementadas no servidor (play_complete, wave_send,
+        show_checkin etc.). Read-only; serve de roadmap pra ir
+        promovendo conforme os usuários pedem. Quando uma virar
+        real, basta adicionar ao enum de ActivityKind + ensinar
+        o INTEGRATED_KIND_META abaixo + remover do mock.
    ============================================================ */
 
 const FANPOINT_CATEGORY_TONE: Record<FanpointCategory, BadgeTone> = {
@@ -161,150 +178,216 @@ const FANPOINT_CATEGORY_TONE: Record<FanpointCategory, BadgeTone> = {
   first_time: 'neutral',
 };
 
-const FANPOINT_CATEGORY_OPTIONS: { value: FanpointCategory; label: string }[] = [
-  { value: 'playback',   label: 'Player' },
-  { value: 'social',     label: 'Social' },
-  { value: 'engagement', label: 'Engajamento' },
-  { value: 'events',     label: 'Eventos' },
-  { value: 'first_time', label: 'Primeira vez' },
-];
-
-/** Estado do dialog de edição/criação de regra. */
-type RuleDraft = {
-  id: string | null; // null = criando uma nova
-  key: string;
+interface IntegratedKindMeta {
   label: string;
   description: string;
-  points: number;
-  dailyCap: number;
   category: FanpointCategory;
-  enabled: boolean;
-};
-
-function emptyDraft(): RuleDraft {
-  return {
-    id: null,
-    key: '',
-    label: '',
-    description: '',
-    points: 0,
-    dailyCap: 0,
-    category: 'engagement',
-    enabled: true,
-  };
 }
+
+/** Display metadata pras 7 kinds integradas. Mantém label/descrição
+ *  em PT-BR aqui no admin (o servidor só conhece `kind` + `points`
+ *  + `updated_at` + `updated_by`). */
+const INTEGRATED_KIND_META: Record<FanpointRuleKind, IntegratedKindMeta> = {
+  stream: {
+    label: 'Reprodução de faixa',
+    description: 'Cada play registrado no ledger. Por padrão vale 0 — o bônus real vem em "Cada 3 streams".',
+    category: 'playback',
+  },
+  login: {
+    label: 'Login com magic-link',
+    description: 'Crédito de retorno: usuário autenticado abre uma nova sessão via link no e-mail.',
+    category: 'engagement',
+  },
+  chat_started: {
+    label: 'Iniciar uma DM',
+    description: 'Primeira mensagem trocada com um novo fã. Conta uma vez por conversa.',
+    category: 'social',
+  },
+  post_liked: {
+    label: 'Curtir um post no feed',
+    description: 'Coração em qualquer item do feed (post da Ana, post de fã, single, story).',
+    category: 'social',
+  },
+  comment_posted: {
+    label: 'Publicar comentário',
+    description: 'Comentário de nível 1 ou resposta em qualquer surface do feed.',
+    category: 'social',
+  },
+  post_shared: {
+    label: 'Compartilhar um post',
+    description: 'Botão de "send" (share) num post do feed — externo (link copiado) ou interno (DM).',
+    category: 'social',
+  },
+  three_streams: {
+    label: 'Cada 3 streams sequenciais',
+    description: 'Bônus de engajamento que dispara a cada 3 reproduções acumuladas do usuário.',
+    category: 'playback',
+  },
+};
 
 function FanpointsTab() {
   const { push } = useToast();
-  const [rules, setRules] = useState<FanpointRule[]>(() => loadFanpointRules());
-  const [editing, setEditing] = useState<RuleDraft | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<FanpointRule | null>(null);
+  const [rules, setRules] = useState<ServerFanpointRule[] | null>(null);
+  // Mapa kind → state local do input (pontos ainda não salvos).
+  // Chave existe enquanto a row está com edição pendente.
+  const [drafts, setDrafts] = useState<Partial<Record<FanpointRuleKind, number>>>({});
+  // Mapa kind → "em vôo" (PATCH em andamento) pra travar UI por linha.
+  const [saving, setSaving] = useState<Partial<Record<FanpointRuleKind, boolean>>>({});
 
-  const sortedRules = useMemo(
-    () => [...rules].sort((a, b) => a.label.localeCompare(b.label)),
-    [rules],
-  );
-
-  function toggleEnabled(rule: FanpointRule) {
-    setRules((prev) =>
-      prev.map((r) =>
-        r.id === rule.id
-          ? { ...r, enabled: !r.enabled, updatedAt: new Date().toISOString() }
-          : r,
-      ),
-    );
-    push({
-      type: 'info',
-      title: `${rule.label} ${rule.enabled ? 'pausada' : 'reativada'}`,
-      description: rule.enabled
-        ? 'A ação para de creditar pontos imediatamente.'
-        : 'A ação volta a creditar pontos no próximo evento.',
-    });
-  }
-
-  function openEdit(rule: FanpointRule) {
-    setEditing({
-      id: rule.id,
-      key: rule.key,
-      label: rule.label,
-      description: rule.description,
-      points: rule.points,
-      dailyCap: rule.dailyCap,
-      category: rule.category,
-      enabled: rule.enabled,
-    });
-  }
-
-  function openCreate() {
-    setEditing(emptyDraft());
-  }
-
-  function saveDraft(draft: RuleDraft) {
-    const now = new Date().toISOString();
-    if (draft.id) {
-      // Update
-      setRules((prev) =>
-        prev.map((r) =>
-          r.id === draft.id
-            ? {
-                ...r,
-                key: draft.key.trim(),
-                label: draft.label.trim(),
-                description: draft.description.trim(),
-                points: draft.points,
-                dailyCap: draft.dailyCap,
-                category: draft.category,
-                enabled: draft.enabled,
-                updatedAt: now,
-              }
-            : r,
-        ),
-      );
-      push({
-        type: 'success',
-        title: 'Regra atualizada',
-        description: `${draft.label} salvo. As mudanças entram em vigor no próximo evento.`,
+  useEffect(() => {
+    fanpointsService
+      .list()
+      .then((res) => setRules(res.items))
+      .catch((err) => {
+        console.error('fanpointsService.list failed:', err);
+        push({
+          type: 'error',
+          title: 'Falha ao carregar Fanpoints',
+          description: 'Tente recarregar a página.',
+        });
+        setRules([]);
       });
-    } else {
-      // Create — `id` derivado do key pra ficar previsível.
-      const id = `fp-${draft.key.trim()}-${Date.now().toString(36)}`;
-      const newRule: FanpointRule = {
-        id,
-        key: draft.key.trim(),
-        label: draft.label.trim(),
-        description: draft.description.trim(),
-        points: draft.points,
-        dailyCap: draft.dailyCap,
-        category: draft.category,
-        enabled: draft.enabled,
-        updatedAt: now,
-      };
-      setRules((prev) => [...prev, newRule]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function saveRow(rule: ServerFanpointRule, nextPoints: number) {
+    if (nextPoints === rule.points) {
+      // Nada mudou — limpa o draft e retorna.
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[rule.kind];
+        return next;
+      });
+      return;
+    }
+    setSaving((s) => ({ ...s, [rule.kind]: true }));
+    try {
+      await fanpointsService.save(rule.kind, nextPoints);
+      setRules((prev) =>
+        prev
+          ? prev.map((r) =>
+              r.kind === rule.kind
+                ? { ...r, points: nextPoints, updatedAt: new Date().toISOString() }
+                : r,
+            )
+          : prev,
+      );
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[rule.kind];
+        return next;
+      });
+      const meta = INTEGRATED_KIND_META[rule.kind];
       push({
         type: 'success',
-        title: 'Regra criada',
-        description: `${draft.label} já está disponível para creditar pontos.`,
+        title: `${meta.label} → ${nextPoints} pts`,
+        description: 'Próximos eventos creditam o novo valor (até 60s pra propagar entre instâncias).',
+      });
+    } catch (err) {
+      console.error('fanpointsService.save failed:', err);
+      push({
+        type: 'error',
+        title: 'Falha ao salvar',
+        description: 'O valor anterior foi mantido. Tente novamente.',
+      });
+    } finally {
+      setSaving((s) => {
+        const next = { ...s };
+        delete next[rule.kind];
+        return next;
       });
     }
-    setEditing(null);
   }
 
-  function confirmDelete() {
-    if (!pendingDelete) return;
-    setRules((prev) => prev.filter((r) => r.id !== pendingDelete.id));
-    push({
-      type: 'warning',
-      title: 'Regra removida',
-      description: `${pendingDelete.label} não credita mais Fanpoints.`,
-    });
-    setPendingDelete(null);
-  }
-
-  const columns: Column<FanpointRule>[] = [
+  const integratedColumns: Column<ServerFanpointRule>[] = [
     {
       id: 'rule',
-      header: 'Regra',
-      sortKey: (r) => r.label,
+      header: 'Comportamento',
+      sortKey: (r) => INTEGRATED_KIND_META[r.kind].label,
+      cell: (r) => {
+        const meta = INTEGRATED_KIND_META[r.kind];
+        return (
+          <div className={styles.fpRuleCell}>
+            <span className={styles.fpRuleLabel}>{meta.label}</span>
+            <span className={styles.fpRuleKey}>
+              <code>{r.kind}</code> · {meta.description}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'category',
+      header: 'Categoria',
+      cell: (r) => {
+        const meta = INTEGRATED_KIND_META[r.kind];
+        return (
+          <Badge tone={FANPOINT_CATEGORY_TONE[meta.category]} size="sm">
+            {FANPOINT_CATEGORY_LABEL[meta.category]}
+          </Badge>
+        );
+      },
+      width: 140,
+    },
+    {
+      id: 'points',
+      header: 'Pontos',
+      align: 'right',
+      cell: (r) => {
+        const draftValue = drafts[r.kind];
+        const value = draftValue !== undefined ? draftValue : r.points;
+        const dirty = draftValue !== undefined && draftValue !== r.points;
+        const isSaving = !!saving[r.kind];
+        return (
+          <div
+            className={styles.fpPointsEditor}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="number"
+              className={styles.fpPointsInput}
+              value={String(value)}
+              disabled={isSaving}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                setDrafts((d) => ({ ...d, [r.kind]: Number.isFinite(n) ? n : 0 }));
+              }}
+              onBlur={() => void saveRow(r, value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              aria-label={`Pontos para ${INTEGRATED_KIND_META[r.kind].label}`}
+            />
+            {dirty && <span className={styles.fpPointsHint}>↵</span>}
+          </div>
+        );
+      },
+      width: 110,
+    },
+    {
+      id: 'updatedAt',
+      header: 'Última edição',
+      sortKey: (r) => r.updatedAt,
+      cell: (r) => (
+        <span className={styles.fpMute}>
+          {r.updatedBy
+            ? `${formatRelative(r.updatedAt)} · ${r.updatedBy.name ?? r.updatedBy.email}`
+            : 'Padrão do sistema'}
+        </span>
+      ),
+      width: 240,
+    },
+  ];
+
+  // Brainstorm rules — mock-only. Read-only.
+  const brainstormRules = useMemo(() => loadBrainstormRules(), []);
+  const brainstormColumns: Column<BrainstormRule>[] = [
+    {
+      id: 'rule',
+      header: 'Ideia',
       cell: (r) => (
         <div className={styles.fpRuleCell}>
           <span className={styles.fpRuleLabel}>{r.label}</span>
@@ -317,7 +400,6 @@ function FanpointsTab() {
     {
       id: 'category',
       header: 'Categoria',
-      sortKey: (r) => r.category,
       cell: (r) => (
         <Badge tone={FANPOINT_CATEGORY_TONE[r.category]} size="sm">
           {FANPOINT_CATEGORY_LABEL[r.category]}
@@ -327,8 +409,7 @@ function FanpointsTab() {
     },
     {
       id: 'points',
-      header: 'Pontos',
-      sortKey: (r) => r.points,
+      header: 'Pontos sugeridos',
       align: 'right',
       cell: (r) => (
         <span className={r.points >= 0 ? styles.fpPointsPositive : styles.fpPointsNegative}>
@@ -336,246 +417,53 @@ function FanpointsTab() {
           {r.points}
         </span>
       ),
-      width: 90,
+      width: 130,
     },
     {
-      id: 'dailyCap',
-      header: 'Cap diário',
-      sortKey: (r) => r.dailyCap,
+      id: 'cap',
+      header: 'Cap sugerido',
       align: 'right',
       cell: (r) => (
-        <span className={styles.fpDailyCap}>
-          {r.dailyCap === 0 ? '—' : r.dailyCap}
-        </span>
+        <span className={styles.fpDailyCap}>{r.dailyCap === 0 ? '—' : r.dailyCap}</span>
       ),
-      width: 100,
-    },
-    {
-      id: 'enabled',
-      header: 'Ativa',
-      sortKey: (r) => (r.enabled ? 0 : 1),
-      cell: (r) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Switch
-            checked={r.enabled}
-            onChange={() => toggleEnabled(r)}
-            aria-label={`Alternar ${r.label}`}
-          />
-        </div>
-      ),
-      width: 80,
-    },
-    {
-      id: 'updatedAt',
-      header: 'Atualizada',
-      sortKey: (r) => r.updatedAt,
-      cell: (r) => (
-        <span className={styles.fpMute}>{formatRelative(r.updatedAt)}</span>
-      ),
-      width: 140,
-    },
-    {
-      id: 'actions',
-      header: 'Ações',
-      align: 'right',
-      cell: (r) => (
-        <div className={styles.fpActions} onClick={(e) => e.stopPropagation()}>
-          <Button
-            variant="ghost"
-            size="sm"
-            iconOnly
-            aria-label={`Editar ${r.label}`}
-            title="Editar"
-            onClick={() => openEdit(r)}
-          >
-            <IconEdit size={14} />
-          </Button>
-          <Button
-            variant="dangerGhost"
-            size="sm"
-            iconOnly
-            aria-label={`Remover ${r.label}`}
-            title="Remover"
-            onClick={() => setPendingDelete(r)}
-          >
-            <IconTrash size={14} />
-          </Button>
-        </div>
-      ),
-      width: 100,
+      width: 110,
     },
   ];
 
   return (
-    <>
+    <div className={styles.fpStack}>
       <Card>
         <CardHeader
-          title="Fanpoints"
-          description="Cadastre quais comportamentos do usuário rendem Fanpoints, quanto cada ação vale e o teto diário por usuário. Mudanças entram em vigor no próximo evento processado."
-          actions={
-            <Button
-              variant="primary"
-              size="sm"
-              leadingIcon={<IconPlus size={14} />}
-              onClick={openCreate}
-            >
-              Nova regra
-            </Button>
-          }
+          title="Integrado"
+          description="Comportamentos que JÁ creditam Fanpoints em runtime. Edite o valor diretamente na coluna 'Pontos' — Enter ou clique fora pra salvar. As mudanças entram em vigor no próximo evento processado (até 60s pra propagar entre instâncias do servidor)."
         />
-        <Table<FanpointRule>
-          columns={columns}
-          data={sortedRules}
+        <Table<ServerFanpointRule>
+          columns={integratedColumns}
+          data={rules ?? []}
+          rowId={(r) => r.kind}
+          pageSize={20}
+          loading={rules === null}
+        />
+      </Card>
+
+      <Card className={styles.fpBrainstormCard}>
+        <CardHeader
+          title={
+            <span className={styles.fpBrainstormTitle}>
+              <Badge tone="neutral" size="sm">Brainstorm</Badge>
+              Próximas regras (não integradas)
+            </span>
+          }
+          description="Wishlist de comportamentos que valeriam Fanpoints. Cada item aqui ainda PRECISA de backend (novo enum em user_activities.kind + emissor no código). Edite o valor sugerido quando um usuário pedir, e quando implementar passe pra seção Integrado acima."
+        />
+        <Table<BrainstormRule>
+          columns={brainstormColumns}
+          data={brainstormRules}
           rowId={(r) => r.id}
           pageSize={20}
         />
       </Card>
-
-      <FanpointRuleDialog
-        draft={editing}
-        onCancel={() => setEditing(null)}
-        onSave={saveDraft}
-      />
-
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        onConfirm={confirmDelete}
-        title={pendingDelete ? `Remover "${pendingDelete.label}"?` : ''}
-        description="A regra deixa de creditar Fanpoints imediatamente. O histórico de pontos já creditados continua intocado — apenas eventos futuros param de pontuar."
-        confirmLabel="Remover regra"
-        destructive
-      />
-    </>
-  );
-}
-
-/** Dialog de criar/editar uma FanpointRule. Local state pra que o
- *  rascunho não sobrescreva a row real até o usuário salvar. */
-function FanpointRuleDialog({
-  draft,
-  onCancel,
-  onSave,
-}: {
-  draft: RuleDraft | null;
-  onCancel: () => void;
-  onSave: (draft: RuleDraft) => void;
-}) {
-  const [form, setForm] = useState<RuleDraft | null>(draft);
-
-  useEffect(() => {
-    setForm(draft);
-  }, [draft]);
-
-  if (!form) return null;
-
-  const isCreating = form.id === null;
-  const labelTrim = form.label.trim();
-  const keyTrim = form.key.trim();
-  const valid =
-    labelTrim.length >= 3 &&
-    keyTrim.length >= 2 &&
-    /^[a-z0-9_]+$/.test(keyTrim);
-
-  return (
-    <Dialog
-      open={draft !== null}
-      onClose={onCancel}
-      title={isCreating ? 'Nova regra de Fanpoints' : `Editar — ${draft?.label}`}
-      description={
-        isCreating
-          ? 'Defina o evento que credita Fanpoints e os parâmetros da regra.'
-          : 'Ajuste pontos, cap diário ou metadados desta regra.'
-      }
-      size="lg"
-      footer={
-        <>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={!valid}
-            leadingIcon={<IconCheck size={14} />}
-            onClick={() => onSave(form)}
-          >
-            {isCreating ? 'Criar regra' : 'Salvar'}
-          </Button>
-        </>
-      }
-    >
-      <div className={styles.formBody}>
-        <div className={styles.formGrid}>
-          <Input
-            label="Nome da regra"
-            required
-            value={form.label}
-            placeholder="Ex.: Play completo de uma faixa"
-            onChange={(e) => setForm({ ...form, label: e.target.value })}
-          />
-          <Input
-            label="Chave do evento"
-            required
-            value={form.key}
-            placeholder="Ex.: play_complete"
-            helperText="Apenas minúsculas, números e underline. Usado pelo backend pra identificar o evento."
-            onChange={(e) => setForm({ ...form, key: e.target.value })}
-          />
-        </div>
-
-        <Textarea
-          label="Descrição"
-          helperText="Aparece na tabela e ajuda o time a entender o contexto da regra."
-          rows={2}
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-
-        <div className={styles.formGrid}>
-          <Input
-            label="Pontos"
-            required
-            type="number"
-            value={String(form.points)}
-            helperText="Pode ser negativo (penalidade)."
-            onChange={(e) => setForm({ ...form, points: Number(e.target.value) || 0 })}
-          />
-          <Input
-            label="Cap diário"
-            type="number"
-            value={String(form.dailyCap)}
-            helperText="Máximo de pontos por usuário/dia. Use 0 para sem cap."
-            onChange={(e) => setForm({ ...form, dailyCap: Math.max(0, Number(e.target.value) || 0) })}
-          />
-        </div>
-
-        <div className={styles.formGrid}>
-          <Select
-            label="Categoria"
-            required
-            value={form.category}
-            onChange={(e) =>
-              setForm({ ...form, category: e.target.value as FanpointCategory })
-            }
-            options={FANPOINT_CATEGORY_OPTIONS}
-          />
-          <div className={styles.fpEnabledRow}>
-            <div>
-              <div className={styles.fpEnabledLabel}>Ativa</div>
-              <div className={styles.fpEnabledHelp}>
-                Desligada, a regra continua existindo mas não credita pontos.
-              </div>
-            </div>
-            <Switch
-              checked={form.enabled}
-              onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
-              aria-label="Ativar regra"
-            />
-          </div>
-        </div>
-      </div>
-    </Dialog>
+    </div>
   );
 }
 

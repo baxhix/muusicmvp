@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { userActivities } from '../db/schema';
+import { fanpointRules, userActivities } from '../db/schema';
 
 export type ActivityKind =
   | 'stream'
@@ -12,9 +12,13 @@ export type ActivityKind =
   | 'three_streams';
 
 /**
- * Per-action Fanpoint awards. Product spec for the engagement
- * rewards loop:
+ * Fallback / spec inicial dos pontos por ação. Os valores reais
+ * usados em runtime moram em `fanpoint_rules` (editável via
+ * admin /configurações/fanpoints). Esses defaults entram em jogo
+ * SOMENTE quando a tabela está vazia (DB nunca seedado) — então
+ * o app nunca quebra por causa de migration ainda não rodada.
  *
+ * Spec:
  *   • Like (heart on a feed post)         → +5
  *   • Comment (top-level OR reply)        → +10
  *   • Send (share arrow on a feed post)   → +15
@@ -40,6 +44,49 @@ export const POINTS: Record<ActivityKind, number> = {
 };
 
 /**
+ * Cache em-processo do mapa kind → points lido de
+ * `fanpoint_rules`. Refresh a cada 60s — janela curta o
+ * suficiente pro admin ver as mudanças quase em tempo real, longa
+ * o suficiente pra não bater no banco a cada activity inserida.
+ *
+ * Multi-instância: cada processo Node mantém seu próprio cache.
+ * Não há propagação imediata entre instâncias — o pior caso é
+ * uma instância ainda creditar pontos pelo valor antigo por até
+ * 60s após o admin patchar. Acceptable pra MVP. Quando precisar
+ * de propagação instantânea, trocar por LISTEN/NOTIFY ou
+ * pub/sub.
+ */
+let rulesCache: Map<ActivityKind, number> | null = null;
+let rulesCacheExpiry = 0;
+const RULES_CACHE_TTL_MS = 60_000;
+
+export function invalidateFanpointRulesCache(): void {
+  rulesCache = null;
+  rulesCacheExpiry = 0;
+}
+
+async function getPointsForKind(kind: ActivityKind): Promise<number> {
+  if (rulesCache === null || Date.now() > rulesCacheExpiry) {
+    try {
+      const rows = await db
+        .select({
+          kind: fanpointRules.kind,
+          points: fanpointRules.points,
+        })
+        .from(fanpointRules);
+      rulesCache = new Map(rows.map((r) => [r.kind as ActivityKind, r.points]));
+      rulesCacheExpiry = Date.now() + RULES_CACHE_TTL_MS;
+    } catch (err) {
+      // Se a query falhar (ex.: tabela ainda não migrada), continua
+      // usando o fallback hardcoded — não bloqueia o recordActivity.
+      console.error('getPointsForKind: failed to read fanpoint_rules', err);
+      return POINTS[kind];
+    }
+  }
+  return rulesCache.get(kind) ?? POINTS[kind];
+}
+
+/**
  * Append a single point-bearing activity. Safe to fire-and-forget — failures
  * are logged but don't propagate to the caller (we don't want a missed
  * audit row to break a chat send or a song change).
@@ -54,10 +101,15 @@ export async function recordActivity(
   ctx: { trackId?: string; conversationId?: string; postId?: string } = {},
 ): Promise<{ crossedMilestones: number[]; newTotal: number }> {
   try {
+    // Pontos vêm de fanpoint_rules (com cache de 60s). Fallback
+    // pro POINTS hardcoded se a tabela estiver vazia ou
+    // inacessível — recordActivity NUNCA falha silenciosamente
+    // por falta de regra cadastrada.
+    const points = await getPointsForKind(kind);
     await db.insert(userActivities).values({
       userId,
       kind,
-      points: POINTS[kind],
+      points,
       trackId: ctx.trackId ?? null,
       conversationId: ctx.conversationId ?? null,
       postId: ctx.postId ?? null,
@@ -67,7 +119,7 @@ export async function recordActivity(
     // activity total is `newTotal - thisActivityPoints`, so threshold
     // crossings are clean to compute without an extra read.
     const newTotal = await getUserPoints(userId);
-    const prev = Math.max(0, newTotal - POINTS[kind]);
+    const prev = Math.max(0, newTotal - points);
     return { crossedMilestones: findCrossedMilestones(prev, newTotal), newTotal };
   } catch (err) {
     console.error('recordActivity failed:', { userId, kind, err });

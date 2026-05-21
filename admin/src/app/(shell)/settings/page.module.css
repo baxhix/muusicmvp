@@ -404,3 +404,71 @@
   color: var(--text-mute);
   line-height: 1.4;
 }
+
+/* ── Fanpoints v2: integrado vs brainstorm ────────── */
+.fpStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Editor inline de pontos (input numérico na célula). Visualmente
+ * leve, sem chrome de input padrão — só um number-input enxuto
+ * pra que o usuário trate a coluna como editável-mas-discreta. */
+.fpPointsEditor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.fpPointsInput {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-mute, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
+  width: 64px;
+  text-align: right;
+  font-family: inherit;
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+.fpPointsInput:hover { border-color: var(--border-strong); }
+.fpPointsInput:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-bg, rgba(168, 85, 247, 0.18));
+}
+.fpPointsInput:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.fpPointsInput::-webkit-outer-spin-button,
+.fpPointsInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.fpPointsInput[type='number'] { -moz-appearance: textfield; }
+
+/* "↵" hint mostrado quando o draft tem mudança não-salva. Sussurra
+ * pro user que basta Enter (ou clicar fora) pra persistir. */
+.fpPointsHint {
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* Brainstorm card: visualmente "rascunho" — opacidade leve no
+ * fundo da tabela pra distinguir do Integrado acima. Mantém
+ * legibilidade alta, mas com um tom de "wishlist". */
+.fpBrainstormCard {
+  background: var(--surface-mute, rgba(255,255,255,0.02));
+}
+.fpBrainstormTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

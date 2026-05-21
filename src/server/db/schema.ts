@@ -471,6 +471,33 @@ export const userActivities = pgTable(
 );
 
 /**
+ * Editable point-per-kind table. Each row maps an `ActivityKind` to
+ * the Fanpoints credit that recordActivity should award on insert.
+ * The admin Fanpoints tab edits this surface; recordActivity reads
+ * with a short cache so the change propagates within ~60s.
+ *
+ * The 7 rows seeded match the current ActivityKind enum (stream,
+ * login, chat_started, post_liked, comment_posted, post_shared,
+ * three_streams). When the enum grows, the seed and the admin UI
+ * pick up the new kind automatically.
+ *
+ * Falls back to the hardcoded POINTS constant in
+ * `src/server/activities/queries.ts` if a kind has no row (e.g.
+ * during a partial migration). That keeps the runtime resilient
+ * to the table being temporarily empty.
+ */
+export const fanpointRules = pgTable('fanpoint_rules', {
+  kind: text('kind').primaryKey(),
+  points: integer('points').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
+
+/**
  * User-submitted reports. Created from anywhere a "Denunciar" button
  * exists in the app (today: chat kebab menu); later: post overflow,
  * profile overflow, etc.
