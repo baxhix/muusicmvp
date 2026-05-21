@@ -91,15 +91,14 @@ export default function FloatingAvatar({
   className,
 }: FloatingAvatarProps) {
   const px = SIZE_PX[size];
-  const hue = useMemo(() => hashHue(name), [name]);
   const initials = useMemo(() => getInitials(name), [name]);
 
-  const ringClass =
-    ring === 'green'
-      ? styles.ringGreen
-      : ring === 'pink'
-        ? styles.ringPink
-        : '';
+  /* Modo wireframe ativo per product feedback: rings coloridos
+   * (green/pink) NÃO renderizam — todos os avatares saem como
+   * placeholders cinza neutros. A prop `ring` continua aceita
+   * pra back-compat futura mas não muda o visual no momento. */
+  void ring;
+  const ringClass = '';
 
   return (
     <div
@@ -118,9 +117,6 @@ export default function FloatingAvatar({
         style={{
           width: px,
           height: px,
-          background: src
-            ? undefined
-            : `linear-gradient(135deg, hsl(${hue} 70% 55%), hsl(${(hue + 40) % 360} 65% 40%))`,
         }}
       >
         {src ? (

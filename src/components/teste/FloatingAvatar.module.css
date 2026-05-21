@@ -48,8 +48,12 @@
   .hidden { transform: none; }
 }
 
-/* Avatar circular. O ring colorido é uma border de 2px
- * porque queríamos um destaque limpo, não um halo borrado. */
+/* Avatar circular em modo WIREFRAME: cinza chapado, sem
+ * cor, sem sombra colorida — placeholder neutro pra avaliar
+ * apenas o motion e a posição. Per product feedback "deixe
+ * todos os avatares na cor cinza, como se fosse wireframe
+ * mesmo". Quando o produto subir imagens reais, esse bg
+ * cinza fica de fallback atrás da <img>. */
 .avatar {
   position: relative;
   display: grid;
@@ -57,9 +61,8 @@
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  /* Default: sem borda colorida — o avatar lê só pelo
-   * próprio contorno (gradient/photo). */
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  background: #3a3a3a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 .avatarImg {
   width: 100%;
@@ -71,21 +74,16 @@
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.55);
   letter-spacing: -0.005em;
 }
 
-/* Ring colorido — borda destacada quando o avatar está em
- * "ativo" (verde) ou "favorito/destaque" (rosa). Usamos
- * `outline` em vez de `border` pra não comer espaço interno
- * (o avatar fica do mesmo tamanho independente do ring). */
-.ringGreen {
-  outline: 2px solid #2bd97f;
-  outline-offset: 3px;
-}
+/* Rings coloridos desativados no modo wireframe — classes
+ * mantidas (sem styles) pra back-compat futura caso voltemos
+ * a usar quando os avatares ganharem foto real. */
+.ringGreen,
 .ringPink {
-  outline: 2px solid #ec4899;
-  outline-offset: 3px;
+  /* intencionalmente vazio */
 }
 
 /* Label group: chart icon + texto. Stack horizontal default. */
@@ -116,7 +114,8 @@
 .listeningIcon span {
   display: block;
   width: 2.5px;
-  background: #2bd97f;
+  /* Modo wireframe: cinza claro em vez de verde. */
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 1px;
 }
 .listeningIcon span:nth-child(1) { height: 6px;  animation: tloop-bar 0.8s ease-in-out infinite; }

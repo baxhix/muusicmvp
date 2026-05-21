@@ -26,7 +26,7 @@
 .headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  font-size: clamp(48px, 8vw, 80px);
+  font-size: clamp(56px, 11vw, 160px);
   line-height: 0.95;
   letter-spacing: -0.02em;
   color: #fff;

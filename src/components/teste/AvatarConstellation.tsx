@@ -7,104 +7,105 @@ import FloatingAvatar from './FloatingAvatar';
  * Constellation — todos os avatares do /teste num só lugar, com
  * posicionamento fixo na viewport.
  *
- * Mecânica per product feedback:
- *   - Cada avatar tem um `revealAt` (1, 2 ou 3) — o índice da
- *     section em que ele entra em cena via fade-in.
- *   - Avatares revelados ficam visíveis até o fim do scroll
- *     ("permanecerem fixos conforme o scroll acontece, pode
- *     surgir novos, com fade in, mas devem ser fixos").
- *   - IntersectionObserver assiste cada `<section>` (id
- *     "section-1", "section-2", "section-3") e empurra o
- *     `maxReached` adiante. Nunca volta.
- *   - position: fixed (configurado em FloatingAvatar.module.css)
- *     ancora ao viewport — eles NÃO scrollam com o documento.
- *
- * A lista de avatares + posições é declarativa abaixo. Pra
- * ajustar arranjos, só editar o array — sem mexer no
- * controlador de scroll.
+ * Mecânica per product feedback iter 3:
+ *   - Cada avatar tem um `section` (1, 2 ou 3) — a section em
+ *     que ele aparece. SWAP em vez de acumular: ao entrar
+ *     numa nova section, os avatares da anterior FADE OUT e
+ *     os novos FADE IN em posições diferentes.
+ *   - Scroll listener (rAF throttled) detecta qual section
+ *     ocupa o centro da viewport → seta `activeSection`.
+ *   - position: fixed (em FloatingAvatar.module.css) ancora
+ *     ao viewport — não scrollam com o documento.
  */
 
 interface AvatarSlot {
   name: string;
   label: string;
-  ring?: 'green' | 'pink' | 'none';
-  revealAt: 1 | 2 | 3;
+  /** Section em que esse avatar aparece (1/2/3). */
+  section: 1 | 2 | 3;
   /** Posicionamento fixed via CSS top/left/right/bottom. */
   style: React.CSSProperties;
 }
 
+/**
+ * 9 avatares totais — 3 por section, em posições DIFERENTES
+ * entre sections pra que o cross-dissolve seja perceptível
+ * (não dá pra ter avatar B da seção 1 na mesma posição do C
+ * da seção 2 ou parece que só trocaram as iniciais).
+ *
+ * Convenção de posicionamento:
+ *   - Section 1: cantos (top-left, bottom-left, bottom-right)
+ *   - Section 2: lateral oposta + meio (top-right, mid-left,
+ *     mid-right)
+ *   - Section 3: trio fundo (bottom-left, center-bottom,
+ *     top-center)
+ */
 const AVATARS: AvatarSlot[] = [
-  // ── Section 1 (3) — abertura ─────────────────────────────
+  // ── Section 1 — cantos ───────────────────────────────────
   {
     name: 'Marina',
     label: 'Boiadeira - Ana Castela',
-    revealAt: 1,
-    style: { top: '14%', left: '6%' },
+    section: 1,
+    style: { top: '16%', left: '6%' },
   },
   {
     name: 'Rafael',
     label: 'Boiadeira - Ana Castela',
-    ring: 'green',
-    revealAt: 1,
+    section: 1,
     style: { bottom: '20%', left: '4%' },
   },
   {
     name: 'Clara',
     label: 'Pipoco - Ana Castela',
-    ring: 'pink',
-    revealAt: 1,
+    section: 1,
     style: { bottom: '20%', right: '4%' },
   },
 
-  // ── Section 2 (3) — adensa o tecido ──────────────────────
+  // ── Section 2 — meios laterais + topo direito ────────────
   {
     name: 'Júlia',
     label: 'Solto - Ana Castela',
-    revealAt: 2,
-    style: { top: '38%', left: '10%' },
+    section: 2,
+    style: { top: '50%', left: '8%' },
   },
   {
     name: 'Pedro',
     label: 'Pipoco - Ana Castela',
-    ring: 'green',
-    revealAt: 2,
-    style: { top: '22%', right: '8%' },
+    section: 2,
+    style: { top: '18%', right: '10%' },
   },
   {
     name: 'Camila',
     label: 'Tropa do Chapelão',
-    revealAt: 2,
-    style: { top: '54%', right: '14%' },
+    section: 2,
+    style: { top: '54%', right: '12%' },
   },
 
-  // ── Section 3 (3) — fecha a constelação ──────────────────
+  // ── Section 3 — trio fundo + topo centro ─────────────────
   {
     name: 'Heitor',
     label: 'Rodeio no Texas',
-    ring: 'pink',
-    revealAt: 3,
-    style: { top: '50%', left: '20%' },
+    section: 3,
+    style: { top: '18%', left: '50%' },
   },
   {
     name: 'Lia',
     label: 'Boiadeira - Ana Castela',
-    ring: 'green',
-    revealAt: 3,
-    style: { bottom: '32%', left: '32%' },
+    section: 3,
+    style: { bottom: '14%', left: '18%' },
   },
   {
     name: 'Bruno',
     label: 'Solto - Ana Castela',
-    revealAt: 3,
-    style: { bottom: '30%', right: '24%' },
+    section: 3,
+    style: { bottom: '18%', right: '20%' },
   },
 ];
 
 export default function AvatarConstellation() {
-  /** Maior section já alcançada pelo scroll. Começa em 1
-   *  pra revelar a constelação inicial assim que a página
-   *  monta. */
-  const [maxReached, setMaxReached] = useState<1 | 2 | 3>(1);
+  /** Section atualmente ativa (centro da viewport). Começa em
+   *  1 pra mostrar a constelação inicial assim que monta. */
+  const [activeSection, setActiveSection] = useState<1 | 2 | 3>(1);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -135,7 +136,10 @@ export default function AvatarConstellation() {
           break;
         }
       }
-      setMaxReached((prev) => (active > prev ? active : prev));
+      // Atualiza SEMPRE pra a section atual — não acumula.
+      // Cada section mostra APENAS seus próprios avatares
+      // (cross-dissolve no scroll).
+      setActiveSection((prev) => (prev === active ? prev : active));
     }
 
     function onScroll() {
@@ -163,9 +167,8 @@ export default function AvatarConstellation() {
           key={a.name}
           name={a.name}
           label={a.label}
-          ring={a.ring}
           size="sm"
-          revealed={maxReached >= a.revealAt}
+          revealed={a.section === activeSection}
           style={a.style}
         />
       ))}
