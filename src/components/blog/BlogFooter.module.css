@@ -16,12 +16,14 @@
 
 .inner {
   position: relative;
-  max-width: 1200px;
+  /* Mesma fórmula responsiva do .container do Navbar — mantém
+   * o footer alinhado com o logo do header em qualquer
+   * viewport. Sem essa fórmula, em telas estreitas o footer
+   * (max-width 1200, full disponível) ficaria mais largo que
+   * o container do navbar (que reserva 200px pro lang
+   * toggle), desalinhando. */
+  max-width: min(1200px, calc(100vw - 2 * clamp(20px, 4vw, 56px) - 200px));
   margin: 0 auto;
-  /* Sem padding horizontal — o offset lateral vem do .footer.
-   * Assim .inner.left coincide com .container.left da navbar
-   * (ambos max-width 1200 + margin auto, dentro do mesmo
-   * padding clamp lateral). */
 }
 
 /* `.topRow` removido — sem o email à direita, as 3 cols

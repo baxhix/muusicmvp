@@ -19,10 +19,23 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Container 1200px centrado — brand à esquerda, nav à
- * direita do container. */
+/* Container responsivo per product feedback "em telas menores,
+ * deixe o menu mais afastado do select de idiomas... o container
+ * deve ficar responsivo e menor".
+ *
+ * Fórmula: `min(1200px, 100vw - 2*navbarPadding - 200px)`.
+ * O `200px` reserva espaço pra que, mesmo em viewports
+ * estreitos onde o container ainda não atingiu seu max, ele
+ * encolha proporcionalmente — afasta o `nav` (right edge do
+ * container) do `langToggle` (absolute na borda direita da
+ * viewport).
+ *
+ * Como é symmetric (margin auto), o LOGO no left edge também
+ * se desloca pra dentro — o footer aplica a MESMA fórmula no
+ * seu `.inner`, mantendo alinhamento entre logo do header e
+ * colunas do footer. */
 .container {
-  max-width: 1200px;
+  max-width: min(1200px, calc(100vw - 2 * clamp(20px, 4vw, 56px) - 200px));
   margin: 0 auto;
   display: flex;
   align-items: center;
