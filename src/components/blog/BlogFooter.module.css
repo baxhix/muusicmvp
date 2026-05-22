@@ -6,17 +6,22 @@
   position: relative;
   background: #000;
   color: #fff;
-  /* Sem padding-bottom: a palavra FANVERSE cola na base do
-   * footer per product feedback "deve ser colada na parte
-   * de baixo". */
-  padding: 96px 0 0;
+  /* Horizontal padding MATCH ao da navbar — clamp(20, 4vw, 56)
+   * — pra que as colunas do footer fiquem ALINHADAS com o
+   * logotipo do header per product feedback "alinhe as colunas
+   * do footer junto ao logotipo à esquerda". Sem padding-bottom:
+   * FANVERSE cola na base. */
+  padding: 96px clamp(20px, 4vw, 56px) 0;
 }
 
 .inner {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  /* Sem padding horizontal — o offset lateral vem do .footer.
+   * Assim .inner.left coincide com .container.left da navbar
+   * (ambos max-width 1200 + margin auto, dentro do mesmo
+   * padding clamp lateral). */
 }
 
 /* `.topRow` removido — sem o email à direita, as 3 cols
