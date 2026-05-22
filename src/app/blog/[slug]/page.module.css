@@ -53,7 +53,11 @@
 .subtitle {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: clamp(17px, 2vw, 21px);
+  /* Fixo em 18px per product feedback "subtítulo deve ser em
+   * 18px". Sem clamp pra que o tamanho fique consistente entre
+   * o subtítulo no FeaturedPost da home e o subtítulo no
+   * detail. */
+  font-size: 18px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.65);
   letter-spacing: -0.005em;
