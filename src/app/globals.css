@@ -6,6 +6,36 @@
 
 @import 'mapbox-gl/dist/mapbox-gl.css';
 
+/* ── Borscha — webfont custom (gerado via Font Squirrel) ──
+ *
+ * Self-hosted em /public/fonts/borscha/. Dois pesos disponíveis
+ * hoje: 300 (light) e 400 (regular). Bold (700) pendente — o
+ * kit veio sem os arquivos .woff/.woff2, precisa regerar.
+ *
+ * Uso via CSS:
+ *   font-family: 'Borscha', var(--font-inter), sans-serif;
+ *   font-weight: 300 (light) | 400 (regular)
+ *
+ * `font-display: swap` evita FOIT (texto invisível) enquanto o
+ * .woff2 baixa — paint imediato com a fallback Inter, swap
+ * suave quando a Borscha chega. */
+@font-face {
+  font-family: 'Borscha';
+  src: url('/fonts/borscha/borscha-light.woff2') format('woff2'),
+       url('/fonts/borscha/borscha-light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Borscha';
+  src: url('/fonts/borscha/borscha-regular.woff2') format('woff2'),
+       url('/fonts/borscha/borscha-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── Design tokens (app palette) ── */
 :root {
   --bg:        #000000;
