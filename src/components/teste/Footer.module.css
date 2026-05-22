@@ -19,23 +19,8 @@
   padding: 0 24px;
 }
 
-/* ── Top row ─────────────────────────────
- * align-items: flex-end pra que o hello@ encoste na BASE
- * das colunas (não no topo) per product feedback "alinhe o
- * hello@ na parte inferior das colunas". */
-.topRow {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 48px;
-}
-@media (max-width: 880px) {
-  .topRow {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 48px;
-  }
-}
+/* `.topRow` removido — sem o email à direita, as 3 cols
+ * ficam direto no .inner. */
 
 .linksGrid {
   display: grid;
@@ -86,48 +71,19 @@
 }
 .link:hover { color: #fff; }
 
-/* ── Email destaque ──────────────────────
- * Texto enorme à direita. Hover opacity sutil pra reforçar
- * afetividade ("clica aqui"). */
-.email {
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(28px, 4.4vw, 56px);
-  font-weight: 500;
-  letter-spacing: -0.025em;
-  /* line-height 1 evita que o baseline alinhamento "puxe"
-   * o email pra cima quando estamos em flex-end na topRow —
-   * a borda inferior do texto coincide com a borda inferior
-   * do bloco. */
-  line-height: 1;
-  color: #fff;
-  text-decoration: none;
-  word-break: break-word;
-  flex-shrink: 1;
-  text-align: right;
-  transition: opacity 200ms ease-out;
-}
-.email:hover { opacity: 0.78; }
-@media (max-width: 880px) {
-  .email {
-    text-align: left;
-    width: 100%;
-  }
-}
-
 /* ── Wordmark wrap ──────────────────────
- * Fora do .inner pra ocupar 90vw (max-width none). Margem
- * de cima 100px é o gap entre as colunas e o wordmark per
- * product feedback "diminua para 100px a distância entre
- * as colunas e a palavra Fanverse". Sem margem inferior —
- * o wordmark fica colado na base do footer. */
+ * Fora do .inner pra ocupar 90vw (max-width none). Gap de
+ * cima 80px per product feedback "diminua para 80px a
+ * distância das colunas do footer para a palavra Fanverse".
+ *
+ * Bottom 0 — o viewBox foi apertado (0 0 1200 200) e a
+ * baseline do text foi pra y=200, então o BOTTOM dos
+ * glifos JÁ coincide com a borda inferior do SVG. Não
+ * precisa de margin-bottom negativo. */
 .wordmarkWrap {
   width: 90vw;
   max-width: none;
-  margin: 100px auto 0;
-  /* Compensa o "espaço abaixo do baseline" do SVG (entre o
-   * baseline da fonte e a borda inferior do viewBox) pra
-   * que o glifo se ALINHE com o fim do footer, não o viewBox. */
-  margin-bottom: -2.2vw;
+  margin: 80px auto 0;
 }
 
 .wordmark {
@@ -136,6 +92,12 @@
   height: auto;
   pointer-events: none;
   user-select: none;
+  /* overflow: hidden corta qualquer "descender space" do font
+   * metric que se extenderia abaixo da baseline (FANVERSE não
+   * tem descenders, então nada visual é cortado — só impede
+   * que o paint engane o layout). Garante que o BOTTOM do SVG
+   * seja literalmente o último pixel pintado pela palavra. */
+  overflow: hidden;
 }
 .wordmarkText {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', sans-serif;
@@ -147,8 +109,8 @@
 /* Mobile responsivo */
 @media (max-width: 880px) {
   .footer { padding: 64px 0 0; }
-  .wordmarkWrap { margin-top: 64px; }
+  .wordmarkWrap { margin-top: 56px; }
 }
 @media (max-width: 560px) {
-  .wordmarkWrap { margin-top: 48px; width: 94vw; }
+  .wordmarkWrap { margin-top: 40px; width: 94vw; }
 }

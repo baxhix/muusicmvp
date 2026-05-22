@@ -25,55 +25,49 @@ export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
-        {/* Top row: colunas de links + email destaque */}
-        <div className={styles.topRow}>
-          <div className={styles.linksGrid}>
-            <div className={styles.col}>
-              <h4 className={styles.colTitle}>Company</h4>
-              <a href="#sobre"    className={styles.link}>Sobre</a>
-              <Link href="/blog"  className={styles.link}>Blog</Link>
-              <a href="#imprensa" className={styles.link}>Imprensa</a>
-            </div>
-            <div className={styles.col}>
-              <h4 className={styles.colTitle}>Superfãs</h4>
-              <a href="#sf-1"    className={styles.link}>Manifesto</a>
-              <a href="#sf-2"    className={styles.link}>Manifesto</a>
-              <a href="#sf-3"    className={styles.link}>Manifesto</a>
-              <a href="#sf-time" className={styles.link}>Time</a>
-            </div>
-            <div className={styles.col}>
-              <h4 className={styles.colTitle}>Para Artistas</h4>
-              <a href="#pa-1"    className={styles.link}>Manifesto</a>
-              <a href="#pa-2"    className={styles.link}>Manifesto</a>
-              <a href="#pa-3"    className={styles.link}>Manifesto</a>
-              <a href="#pa-time" className={styles.link}>Time</a>
-            </div>
+        {/* Linha das colunas de links. O email "hello@fanverse"
+         *  foi removido per product feedback — agora só as 3
+         *  cols ocupam o topo do footer. */}
+        <div className={styles.linksGrid}>
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Company</h4>
+            <a href="#sobre"    className={styles.link}>Sobre</a>
+            <Link href="/blog"  className={styles.link}>Blog</Link>
+            <a href="#imprensa" className={styles.link}>Imprensa</a>
           </div>
-
-          <a
-            href="mailto:hello@fanverse.com.br"
-            className={styles.email}
-            aria-label="Enviar email para hello@fanverse.com.br"
-          >
-            hello@fanverse.com.br
-          </a>
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Superfãs</h4>
+            <a href="#sf-1"    className={styles.link}>Manifesto</a>
+            <a href="#sf-2"    className={styles.link}>Manifesto</a>
+            <a href="#sf-3"    className={styles.link}>Manifesto</a>
+            <a href="#sf-time" className={styles.link}>Time</a>
+          </div>
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Para Artistas</h4>
+            <a href="#pa-1"    className={styles.link}>Manifesto</a>
+            <a href="#pa-2"    className={styles.link}>Manifesto</a>
+            <a href="#pa-3"    className={styles.link}>Manifesto</a>
+            <a href="#pa-time" className={styles.link}>Time</a>
+          </div>
         </div>
       </div>
 
       {/* Wordmark fora do `.inner` pra que possa ocupar 90% da
        *  VIEWPORT (não do container 1200px). Posicionado por
-       *  margin-top (gap 100px) e fica colado na parte de
-       *  baixo do footer (padding-bottom 0). */}
+       *  margin-top (gap 80px) e fica colado na EXTREMIDADE
+       *  FINAL DA PÁGINA — viewBox tighter (0 0 1200 200) +
+       *  text y=200 garante que o BOTTOM dos glifos coincida
+       *  com a borda inferior do SVG (e da página). */}
       <div className={styles.wordmarkWrap}>
         <svg
           className={styles.wordmark}
-          viewBox="0 0 1200 220"
-          preserveAspectRatio="xMidYMid meet"
+          viewBox="0 0 1200 200"
+          preserveAspectRatio="xMidYEnd meet"
           aria-hidden="true"
         >
           <text
             x="0"
-            y="180"
+            y="200"
             textLength="1200"
             lengthAdjust="spacingAndGlyphs"
             className={styles.wordmarkText}
