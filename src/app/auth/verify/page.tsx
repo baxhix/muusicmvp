@@ -209,7 +209,9 @@ export default function VerifyPage() {
         </div>
 
         <p className={fields.hint}>
-          Não chegou? Confere o spam. Link e código expiram em 15 minutos.
+          Não chegou?
+          <br />
+          Confere o spam. Link e código expiram em 15 minutos.
         </p>
       </div>
     </AuthShell>

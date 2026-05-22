@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { type ReactNode } from 'react';
+import Sparkles from '@/components/teste/Sparkles';
 import styles from './AuthShell.module.css';
 
 /**
@@ -54,6 +55,10 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
 
   return (
     <main className={styles.shell}>
+      {/* Background universo — sparkles espalhadas atrás de
+       *  tudo, mesma identidade visual da landing /teste. */}
+      <Sparkles count={42} seed={5} />
+
       <header className={styles.topBar}>
         {showBack && (
           <button
@@ -78,7 +83,10 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
           </button>
         )}
 
-        <Link href="/" className={styles.logoLink} aria-label="Fanverse — início">
+        {/* Logo aponta pra /teste (landing) — saída segura do
+         *  fluxo de auth sem perder progresso (o store
+         *  localStorage continua armazenado). */}
+        <Link href="/teste" className={styles.logoLink} aria-label="Fanverse — voltar pra landing">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/teste/fanverse-logo.svg"

@@ -3,21 +3,25 @@
  * estados de erro. Manter ESTRITAMENTE consistente entre as
  * 6 telas pra que o usuário sinta "um único fluxo". */
 
+/* Heading reduzido de clamp(26,4.5vw,32px) → 18px per
+ * product feedback "no fluxo de autenticação, fontes 32px
+ * deixe com 18". */
 .heading {
-  margin: 8px 0 12px;
+  margin: 8px 0 10px;
   font-family: var(--font-inter), sans-serif;
-  font-size: clamp(26px, 4.5vw, 32px);
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
   text-align: center;
   color: #fff;
 }
 
+/* Subtitle 15px → 14px per "o que é 15px para 14px". */
 .subtitle {
-  margin: 0 0 32px;
+  margin: 0 0 28px;
   font-family: var(--font-inter), sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.6);
@@ -41,7 +45,10 @@
   padding: 0 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+  /* border-radius reduzido 14 → 6px per "diminua para 6px
+   * o border radius dos botões". Inputs seguem a mesma
+   * curva pra coerência visual com os botões. */
+  border-radius: 6px;
   color: #fff;
   font-family: var(--font-inter), sans-serif;
   font-size: 16px;
@@ -82,31 +89,41 @@
 }
 
 /* ── Button primário ────────────────────
- * Branco pleno, texto preto, full-width pill. Hover sobe
- * uma sombra pra dar sensação de tátil. */
+ * Per product feedback "substitua o estilo do botão Continuar
+ * para o mesmo estilo do botão de Meu Fanverse da landing":
+ * gradient magenta→indigo animado, mesmo do CTA da navbar.
+ * Border-radius 6px (era 14, agora "diminua para 6px").
+ */
 .btn {
   width: 100%;
   height: 56px;
   display: inline-grid;
   place-items: center;
-  background: #ffffff;
-  color: #000000;
+  background:
+    linear-gradient(
+      90deg,
+      #ff00b4 0%,
+      #5b00d1 50%,
+      #ff00b4 100%
+    );
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  color: #ffffff;
   font-family: var(--font-inter), sans-serif;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.005em;
   border: 0;
-  border-radius: 14px;
+  border-radius: 6px;
   cursor: pointer;
+  animation: btnGradientShift 6s linear infinite;
   transition:
-    background 180ms ease-out,
     transform 180ms ease-out,
     box-shadow 180ms ease-out;
 }
 .btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.92);
   transform: translateY(-1px);
-  box-shadow: 0 10px 32px -10px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 32px -10px rgba(255, 0, 180, 0.5);
 }
 .btn:active:not(:disabled) {
   transform: translateY(0);
@@ -114,23 +131,19 @@
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-/* Variante gradient — usada no CTA final (success/Meu Fanverse) */
-.btnGradient {
-  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
-  background-size: 200% 100%;
-  color: #fff;
-  animation: btnGradientShift 6s linear infinite;
-}
-.btnGradient:hover:not(:disabled) {
-  background-size: 200% 100%;
-  box-shadow: 0 10px 32px -10px rgba(255, 0, 180, 0.5);
+  animation: none;
 }
 @keyframes btnGradientShift {
   from { background-position: 0% 50%; }
   to   { background-position: -200% 50%; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .btn { animation: none; }
+}
+
+/* Variante .btnGradient ainda exposta pra back-compat — agora
+ * é idêntica ao .btn padrão. */
+.btnGradient { /* alias semântico */ }
 
 /* ── Button ghost (secundário) ──────────
  * Transparente, texto cinza, hover sobe pra branco. */

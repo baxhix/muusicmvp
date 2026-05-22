@@ -80,11 +80,13 @@ export default function EmailStep() {
   }
 
   return (
-    <AuthShell back="hide" progress={1 / 6}>
+    <AuthShell back="/teste" progress={1 / 6}>
       <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h1 className={fields.heading}>Bem-vindo ao Fanverse</h1>
         <p className={fields.subtitle}>
-          Digita seu e-mail pra entrar ou criar sua conta. Sem senhas.
+          Digita seu e-mail pra entrar ou criar sua conta.
+          <br />
+          Sem senhas.
         </p>
 
         <form onSubmit={onSubmit} className={fields.form} noValidate>
@@ -118,7 +120,8 @@ export default function EmailStep() {
         </form>
 
         <p className={fields.hint}>
-          Continuando, você concorda com nossos{' '}
+          Continuando, você concorda com nossos
+          <br />
           <a href="#termos">Termos</a> e{' '}
           <a href="#privacidade">Política de Privacidade</a>.
         </p>
