@@ -7,9 +7,10 @@ import {
   getRelatedPosts,
 } from '@/data/blog/posts';
 import PostMeta from '@/components/blog/PostMeta';
-import PostBody from '@/components/blog/PostBody';
+import ReadingExperience from '@/components/blog/ReadingExperience';
 import ShareBar from '@/components/blog/ShareBar';
 import RelatedPosts from '@/components/blog/RelatedPosts';
+import FloatingByline from '@/components/blog/FloatingByline';
 import styles from './page.module.css';
 
 /**
@@ -121,9 +122,32 @@ export default async function BlogPostPage({ params }: Props) {
         </figure>
       )}
 
-      {/* ── Corpo ───────────────────────────── */}
-      <div className={styles.body}>
-        <PostBody html={post.bodyHtml} />
+      {/* ── Corpo + rail flutuante ─────────────
+       *  Grid de 3 colunas: empty | prose 680px | empty. Em
+       *  viewports >=1100px o left gutter renderiza o
+       *  FloatingByline (sticky, com reading progress); em
+       *  telas mais estreitas o CSS esconde os gutters e a
+       *  prose ocupa a coluna sozinha.
+       *
+       *  data-prose-body é a âncora que o FloatingByline usa
+       *  pra calcular o progresso de leitura. */}
+      <div className={styles.bodyWrap}>
+        <aside className={styles.railSlot} aria-label="Sobre o autor e compartilhar">
+          <FloatingByline
+            authorName={post.authorName}
+            authorAvatarUrl={post.authorAvatarUrl}
+            authorSlug={post.authorSlug}
+            title={post.title}
+          />
+        </aside>
+        <div data-prose-body className={styles.proseSlot}>
+          {/* ReadingExperience embrulha PostBody, expõe A-/A+
+           *  controls (persistidos em localStorage) e renderiza
+           *  o top progress bar fixed que cresce conforme o
+           *  leitor desce o scroll. */}
+          <ReadingExperience html={post.bodyHtml} />
+        </div>
+        <div className={styles.railRightSpace} aria-hidden="true" />
       </div>
 
       {/* ── Tags ────────────────────────────── */}

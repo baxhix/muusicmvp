@@ -20,7 +20,12 @@
 
 .prose {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 18px;
+  /* Default 16px per product feedback. CSS var `--prose-font-size`
+   * controla o tamanho — o ReadingToolbar seta esse var no
+   * inline style do <PostBody> root pra escalar a leitura entre
+   * 14/16/18/20px. Os outros tamanhos (lede, headings, blockquote)
+   * derivam proporcionalmente via `em` em vez de px fixo. */
+  font-size: var(--prose-font-size, 16px);
   line-height: 1.7;
   letter-spacing: -0.003em;
   color: rgba(255, 255, 255, 0.72);
@@ -29,10 +34,10 @@
 }
 
 /* ── Lede / first paragraph ─────────────────────────────
- * Quando o editor rico marca o primeiro parágrafo como
- * .lede, ele recebe size maior + cor mais clara. */
+ * Lede em 1.18x do tamanho do corpo (16px → 19px, 18px → 21px),
+ * mantendo a hierarquia mesmo quando o usuário ajusta o A+/A-. */
 .prose :global(.lede) {
-  font-size: 21px;
+  font-size: 1.18em;
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.82);
   margin-bottom: 32px;
@@ -108,7 +113,7 @@
   padding: 0 0 0 24px;
   border-left: 3px solid rgba(255, 255, 255, 0.32);
   font-style: italic;
-  font-size: 19px;
+  font-size: 1.06em;
   line-height: 1.55;
   /* Levemente mais bright que o corpo pra que a citação
    * "saia" da leitura linear. */
@@ -188,9 +193,8 @@
 
 /* ── Responsivo ─────────────────────────── */
 @media (max-width: 720px) {
-  .prose { font-size: 17px; }
-  .prose :global(.lede) { font-size: 19px; }
+  /* Lede e blockquote já são em `em` (proporcionais), só
+   * ajustamos os pixel-sized: headings. */
   .prose :global(h2) { font-size: 24px; margin: 40px 0 14px; }
   .prose :global(h3) { font-size: 19px; margin: 32px 0 10px; }
-  .prose :global(blockquote) { font-size: 17.5px; padding-left: 18px; }
 }

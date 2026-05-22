@@ -2,20 +2,32 @@ import styles from './PostBody.module.css';
 
 /**
  * PostBody — renderiza o HTML do post com estilos "prose"
- * otimizados pra leitura (line-length 720px, hierarquia clara
- * de headings, citações com borda lateral, imagens fluidas).
+ * otimizados pra leitura. CSS var `--prose-font-size` controla
+ * o tamanho do corpo; outros elementos (lede, blockquote)
+ * escalam proporcionais via `em`.
  *
- * O HTML já vem sanitizado do backend — aqui é só estilizar.
- * Mantemos as classes do CSS module em escopo via :global pra
- * que tags HTML internas (h2, p, blockquote, img, etc) peguem
- * o styling sem precisar reescrever o conteúdo.
+ * Prop `fontSizePx` (opcional) injeta o var inline pra que o
+ * ReadingToolbar consiga aumentar/diminuir o tamanho dinâmico.
+ * Default 16px (vem do CSS module).
  */
-export default function PostBody({ html }: { html: string }) {
+export default function PostBody({
+  html,
+  fontSizePx,
+}: {
+  html: string;
+  fontSizePx?: number;
+}) {
+  const inlineStyle: React.CSSProperties | undefined =
+    fontSizePx
+      ? ({ ['--prose-font-size' as string]: `${fontSizePx}px` } as React.CSSProperties)
+      : undefined;
+
   return (
     <div
       className={styles.prose}
-      // O conteúdo é sanitizado server-side antes de gravar no
-      // BD (HTML semântico do editor rico) — render direto.
+      style={inlineStyle}
+      // HTML sanitizado server-side antes de gravar no BD —
+      // render direto.
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

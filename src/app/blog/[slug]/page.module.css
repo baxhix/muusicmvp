@@ -106,7 +106,46 @@
   line-height: 1.5;
 }
 
-/* ── Corpo ────────────────────────────────── */
+/* ── Corpo (3-col grid com rail) ───────────────────────
+ *
+ * Grid: gutter esquerdo (rail) | prose 680px | gutter direito
+ * (vazio, mantido por simetria). O rail dentro do gutter
+ * esquerdo usa position: sticky pra acompanhar o leitor.
+ * Abaixo de 1100px o grid colapsa pra 1 coluna e o rail some.
+ */
+.bodyWrap {
+  display: grid;
+  grid-template-columns: 1fr 680px 1fr;
+  gap: 40px;
+  align-items: start;
+  max-width: 1080px;
+  margin: 0 auto 48px;
+}
+
+.railSlot {
+  justify-self: end;
+  position: sticky;
+  top: 96px;
+  align-self: start;
+}
+
+.proseSlot {
+  min-width: 0;
+}
+
+.railRightSpace {
+  /* Empty pra que a prose fique centralizada no grid. */
+}
+
+@media (max-width: 1100px) {
+  .bodyWrap {
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 720px;
+  }
+  .railSlot, .railRightSpace { display: none; }
+}
+
 .body {
   margin: 0 auto 48px;
 }
