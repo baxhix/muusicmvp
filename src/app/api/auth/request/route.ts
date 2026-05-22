@@ -60,7 +60,6 @@ export async function POST(req: Request) {
   // consumer falls back to `/avatar-placeholder.svg`, no random
   // mock photos are pulled in.
   const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  const isNewUser = !existing[0];
   const defaultName = email.split('@')[0];
   const user =
     existing[0] ??
@@ -75,21 +74,27 @@ export async function POST(req: Request) {
   });
 
   /**
-   * Pra novos cadastros, queremos que o usuário caia no /app já
-   * com a câmera centrada em LATAM (Brasil é a base do produto;
-   * a vista global default fica vazia/desorientadora pra alguém
-   * que nunca viu o mapa). Reaproveitamos o `returnTo` da magic
-   * link — ele é sanitizado contra um allowlist em ambos os
-   * endpoints (request + verify), então setar pra um path
-   * próprio (`${APP_URL}/app?welcome=1`) é seguro. Quando o
-   * cliente já mandou um returnTo (admin cross-subdomain, etc.),
-   * respeitamos a intenção dele.
+   * Toda vez que um usuário loga (não só novos cadastros),
+   * queremos que ele caia no /app com a câmera centrada em
+   * LATAM/Brasil. O produto é Brasil-first; abrir o app com
+   * câmera global default (em uma sessão nova após magic-link)
+   * fica desorientador per product feedback "sempre que um
+   * usuário fizer login, o globo deve ser exibido na região do
+   * Brasil".
+   *
+   * Reaproveitamos o `returnTo` da magic link — sanitizado
+   * contra um allowlist em ambos os endpoints (request +
+   * verify). Quando o cliente já mandou um returnTo próprio
+   * (admin cross-subdomain, deep link, etc.), respeitamos a
+   * intenção dele.
+   *
+   * O Globe.tsx detecta `?welcome=1` e ignora o
+   * loadGlobeCamera() pra forçar LATAM no primeiro frame; em
+   * seguida limpa o query param via history.replaceState pra
+   * que F5 subsequente já use o estado persistido normal.
    */
   const effectiveReturnTo =
-    returnTo ??
-    (isNewUser
-      ? `${env.APP_URL.replace(/\/+$/, '')}/app?welcome=1`
-      : undefined);
+    returnTo ?? `${env.APP_URL.replace(/\/+$/, '')}/app?welcome=1`;
 
   try {
     await sendMagicLink(email, raw, effectiveReturnTo);
