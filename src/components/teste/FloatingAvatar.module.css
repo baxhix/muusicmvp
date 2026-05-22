@@ -15,18 +15,16 @@
   align-items: center;
   gap: 10px;
   z-index: 30;
-  /* Transição opacity + transform pra entrada com fade.
-   * `transform` cobre o slide vertical default (8px) E o
-   * slide radial dos avatares na circular constellation.
-   * left/top também transicionam — quando o phase do
-   * AvatarConstellation muda (a cada 2 sections), os avatares
-   * SE MOVEM suavemente pras novas posições, dando sensação
-   * de movimento contínuo durante toda a experiência. */
+  /* Transição left/top mais longa + ease-in-out per product
+   * feedback "as transições estão secas": 1800 → 2600ms e
+   * cubic-bezier(0.65, 0, 0.35, 1) (ease-in-out simétrico)
+   * — começa lento, acelera no meio, desacelera no fim.
+   * Sensação de massa, deliberação. */
   transition:
     opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
-    left 1800ms cubic-bezier(0.22, 1, 0.36, 1),
-    top 1800ms cubic-bezier(0.22, 1, 0.36, 1);
+    left 2600ms cubic-bezier(0.65, 0, 0.35, 1),
+    top 2600ms cubic-bezier(0.65, 0, 0.35, 1);
   will-change: opacity, transform, left, top;
 }
 .wrapRow {
@@ -69,16 +67,14 @@
     transform 350ms cubic-bezier(0.33, 1, 0.68, 1);
   transform: translate3d(0, var(--parallax-y, 0px), 0);
 }
-.circling.hidden {
-  transform: translate3d(
-    var(--circle-tx, 0),
-    var(--circle-ty, 0),
-    0
-  );
-}
-.circling.revealed {
-  transform: translate3d(0, 0, 0);
-}
+/* Per product feedback "a entrada de one-by-one está com
+ * movimento e não com fade surgindo do nada": removidos os
+ * overrides de transform pra .circling.hidden e .revealed.
+ * O `.circling` base tem transform: translate3d(0,
+ * var(--parallax-y), 0) apenas — não muda entre hidden e
+ * revealed. Resultado: a transição entre estados é SOMENTE
+ * opacity 0 → 1, sem slide ou movimento posicional. Fade
+ * puro como o produto pediu. */
 
 /* Drift contínuo pós-reveal — amplificado per product
  * feedback "após ficarem visíveis aumente de forma sutil a
