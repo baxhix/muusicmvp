@@ -6,17 +6,27 @@
   left: 0;
   right: 0;
   z-index: 50;
-  /* Brand à esquerda, cluster (nav + lang) à direita.
-   * `justify-content: space-between` empurra os dois pra
-   * pontas opostas. */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  /* Brand + nav no .container centralizado (1200px); lang
+   * toggle absolute fora dele à direita da viewport. O
+   * pointer-events none no header + auto nos filhos garante
+   * que o overlay do navbar não bloqueie cliques no
+   * conteúdo abaixo. */
   padding: 24px clamp(20px, 4vw, 56px);
   pointer-events: none;
 }
 .navbar > * {
   pointer-events: auto;
+}
+
+/* Container 1200px centrado — brand à esquerda, nav à
+ * direita do container. */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
 }
 
 /* Brand "Fanverse" — texto, weight 600, sem decoração. Cor
@@ -34,15 +44,8 @@
   opacity: 0.7;
 }
 
-/* Cluster à direita: nav links + lang toggle no mesmo grupo,
- * agrupados próximos per product feedback ("aproxime-os com
- * o idioma e posicione-os à direita"). */
-.rightCluster {
-  display: inline-flex;
-  align-items: center;
-  gap: clamp(20px, 2.4vw, 32px);
-}
-
+/* Nav links — só os 3 (Soluções/Blog/Login), dentro do
+ * .container. */
 .nav {
   display: inline-flex;
   align-items: center;
@@ -64,9 +67,15 @@
   color: #fff;
 }
 
-/* Toggle de idioma — PT/EN/ES. Mesmo tom dos nav links pra
- * leitura uniforme dentro do cluster à direita. */
+/* Toggle de idioma — POSICIONADO ABSOLUTO na borda direita
+ * da VIEWPORT, fora do container 1200px. Permanece visível
+ * mesmo em telas muito largas onde o container fica
+ * centralizado. */
 .langToggle {
+  position: absolute;
+  top: 50%;
+  right: clamp(20px, 4vw, 56px);
+  transform: translateY(-50%);
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.55);

@@ -6,56 +6,50 @@ import styles from './Navbar.module.css';
 /**
  * Navbar do experimento /teste.
  *
- * Estrutura per wireframe:
- *   - Brand "Fanverse" à esquerda (não usa o logo SVG aqui —
- *     o experimento brinca com puro texto pra entoar leveza).
- *   - Cluster central: Soluções / Blog / Login.
- *   - Toggle de idioma "PT" à direita (clica e abre dropdown
- *     futuro com EN/ES). Por enquanto é só visual.
+ * Estrutura (per product feedback "deixe a palavra Fanverse do
+ * header e os menus, exceto a seleção de idioma, dentro de um
+ * container de 1200 aproximadamente"):
+ *   - `.container` de 1200px no centro:
+ *       brand "Fanverse" à esquerda + nav (Soluções / Blog /
+ *       Login) à direita do container.
+ *   - `.langToggle` posicionado absoluto na borda direita da
+ *     viewport — FORA do container. Permanece visível mesmo
+ *     em telas largas, alinhado ao mesmo padding da navbar.
  *
- * Posição: `fixed` no topo com bg transparente. Quando scroll
- * passar de ~80px o navbar ganha bg semi-opaco (frosted) pra
- * não competir com o conteúdo abaixo — implementado via
- * IntersectionObserver/scroll listener mais à frente conforme
- * mais seções forem montadas.
+ * Posição: `fixed` no topo, bg transparente.
  */
 export default function Navbar() {
   const [lang, setLang] = useState<'PT' | 'EN' | 'ES'>('PT');
 
   return (
     <header className={styles.navbar}>
-      <a href="/teste" className={styles.brand} aria-label="Fanverse — início">
-        Fanverse
-      </a>
+      {/* Container 1200px com brand + nav nas pontas. */}
+      <div className={styles.container}>
+        <a href="/teste" className={styles.brand} aria-label="Fanverse — início">
+          Fanverse
+        </a>
 
-      <div className={styles.rightCluster}>
         <nav className={styles.nav} aria-label="Principal">
-          <a href="#solucoes" className={styles.navLink}>
-            Soluções
-          </a>
-          <a href="#blog" className={styles.navLink}>
-            Blog
-          </a>
-          <a href="#login" className={styles.navLink}>
-            Login
-          </a>
+          <a href="#solucoes" className={styles.navLink}>Soluções</a>
+          <a href="#blog"     className={styles.navLink}>Blog</a>
+          <a href="#login"    className={styles.navLink}>Login</a>
         </nav>
-
-        <button
-          type="button"
-          className={styles.langToggle}
-          onClick={() => {
-            // Stub: ciclar pelas opções. Substituir por dropdown
-            // real quando i18n estiver wired.
-            setLang((prev) =>
-              prev === 'PT' ? 'EN' : prev === 'EN' ? 'ES' : 'PT',
-            );
-          }}
-          aria-label={`Idioma: ${lang}. Clique pra trocar.`}
-        >
-          {lang}
-        </button>
       </div>
+
+      {/* Lang toggle FORA do container — fica colado na borda
+       *  direita da viewport mesmo em telas muito largas. */}
+      <button
+        type="button"
+        className={styles.langToggle}
+        onClick={() => {
+          setLang((prev) =>
+            prev === 'PT' ? 'EN' : prev === 'EN' ? 'ES' : 'PT',
+          );
+        }}
+        aria-label={`Idioma: ${lang}. Clique pra trocar.`}
+      >
+        {lang}
+      </button>
     </header>
   );
 }
