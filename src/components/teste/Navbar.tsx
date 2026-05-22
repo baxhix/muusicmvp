@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import styles from './Navbar.module.css';
 
 /**
@@ -30,9 +31,11 @@ export default function Navbar() {
         </a>
 
         <nav className={styles.nav} aria-label="Principal">
-          <a href="#solucoes" className={styles.navLink}>Soluções</a>
-          <a href="#blog"     className={styles.navLink}>Blog</a>
-          <a href="#login"    className={styles.navLink}>Login</a>
+          <a href="#sobre"        className={styles.navLink}>Sobre</a>
+          <a href="#o-app"        className={styles.navLink}>O App</a>
+          <a href="#para-artistas" className={styles.navLink}>Para Artistas</a>
+          <Link href="/blog"      className={styles.navLink}>Blog</Link>
+          <a href="#login"        className={styles.navLink}>Login</a>
         </nav>
       </div>
 
