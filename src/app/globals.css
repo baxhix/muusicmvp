@@ -8,13 +8,12 @@
 
 /* ── Borscha — webfont custom (gerado via Font Squirrel) ──
  *
- * Self-hosted em /public/fonts/borscha/. Dois pesos disponíveis
- * hoje: 300 (light) e 400 (regular). Bold (700) pendente — o
- * kit veio sem os arquivos .woff/.woff2, precisa regerar.
+ * Self-hosted em /public/fonts/borscha/. Três pesos disponíveis:
+ * 300 (light), 400 (regular) e 700 (bold).
  *
  * Uso via CSS:
  *   font-family: 'Borscha', var(--font-inter), sans-serif;
- *   font-weight: 300 (light) | 400 (regular)
+ *   font-weight: 300 (light) | 400 (regular) | 700 (bold)
  *
  * `font-display: swap` evita FOIT (texto invisível) enquanto o
  * .woff2 baixa — paint imediato com a fallback Inter, swap
@@ -32,6 +31,14 @@
   src: url('/fonts/borscha/borscha-regular.woff2') format('woff2'),
        url('/fonts/borscha/borscha-regular.woff') format('woff');
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Borscha';
+  src: url('/fonts/borscha/borscha-bold.woff2') format('woff2'),
+       url('/fonts/borscha/borscha-bold.woff') format('woff');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
