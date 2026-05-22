@@ -72,40 +72,46 @@ const CIRCLE_AVATAR_SRCS = [
   '/teste/user-03.png',
 ];
 
-function buildFloatingSlots(): AvatarSlot[] {
+function buildFloatingSlots(seed: number): AvatarSlot[] {
   const count = 15;
 
-  /* Distribuição INORGÂNICA, RANDOM, sem forma geométrica
-   * clara, ao redor das BORDAS da viewport per product
-   * feedback "posicionar ao redor dos limites da página,
-   * forma inorgânica, aleatórios, sem ter uma forma
-   * geometrica clara".
+  /* Distribuição INORGÂNICA, MAIS ESPALHADA, sem forma
+   * geométrica. Per product feedback "no desktop, espalhe
+   * ainda mais os avatares quando estão flutuantes. O centro
+   * deve ficar sempre livre".
    *
-   * Algoritmo: random rejection sampling em coordenadas
-   * cartesianas (não polares, pra evitar forma de anel).
+   * Mudança principal vs versão anterior: usar `vw` no eixo
+   * horizontal e `vh` no eixo vertical (em vez de vmin), pra
+   * que em desktops largos os avatares ocupem mais a borda
+   * lateral da viewport (que vmin não acompanha — vmin é
+   * limitado pela menor dimensão).
    *
    * Regras de aceitação:
-   *   1. ao menos UM eixo deve estar "extremo" (perto da borda).
-   *      |fx| > 28 vmin OU |fy| > 24 vmin. Isso garante que
-   *      avatares estejam SEMPRE perto de pelo menos uma das
-   *      4 bordas, NUNCA na zona central morta.
-   *   2. anti-overlap: distância mínima de 13vmin entre dois
-   *      avatares.
+   *   1. ao menos UM eixo deve estar "extremo" — |fx| > 30vw
+   *      OU |fy| > 26vh. Isso garante uma ZONA CENTRAL LIVRE
+   *      de 60vw x 52vh — pelo menos 768x468px num viewport
+   *      1280x900 — disponível pra conteúdo.
+   *   2. anti-overlap: distância mínima de 12 (mixed-units,
+   *      ≈12% do viewport).
    *
-   * Limites: |fx| <= 44vmin (≈ 88% da largura útil), |fy| <=
-   * 36vmin (deixa folga pro header fixo no topo / footer no
-   * bottom).
+   * Limites externos: |fx| <= 40vw (final x dentro de 10vw
+   * de cada borda lateral); |fy| <= 38vh (final y dentro de
+   * 12vh de cada borda V — folga pro header e footer).
+   *
+   * `seed` parametrizado: permite gerar SETS diferentes de
+   * posições pra rotação a cada 2 sections (ver phase system
+   * no componente).
    */
-  const maxX = 44;
-  const maxY = 36;
-  const extremeXThreshold = 28; // |fx| > 28 → considera "perto da borda H"
-  const extremeYThreshold = 24; // |fy| > 24 → "perto da borda V"
-  const minDistance = 13; // vmin
+  const maxX = 40; // vw
+  const maxY = 38; // vh
+  const extremeXThreshold = 30; // vw
+  const extremeYThreshold = 26; // vh
+  const minDistance = 12; // mixed unit
 
-  let seed = 73;
+  let s = seed;
   const rng = () => {
-    seed = (seed + 0x6d2b79f5) >>> 0;
-    let t = seed;
+    s = (s + 0x6d2b79f5) >>> 0;
+    let t = s;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -118,7 +124,7 @@ function buildFloatingSlots(): AvatarSlot[] {
     const fx = (rng() - 0.5) * 2 * maxX;
     const fy = (rng() - 0.5) * 2 * maxY;
 
-    // Regra 1: tem que estar perto de alguma borda
+    // Regra 1: perto de alguma borda
     const extremeX = Math.abs(fx) > extremeXThreshold;
     const extremeY = Math.abs(fy) > extremeYThreshold;
     if (!extremeX && !extremeY) continue;
@@ -132,17 +138,13 @@ function buildFloatingSlots(): AvatarSlot[] {
   }
 
   return positions.map((pos, i) => {
-    /* Approach: cada avatar entra a partir de um ponto FORA
-     * da viewport, 180° oposto à posição final (crossover).
-     * startRadius 70vmax garante que o ponto inicial está
-     * sempre além das bordas, pra qualquer aspect ratio. */
+    /* Approach crossover: 180° oposto à posição final. */
     const angle = Math.atan2(pos.fy, pos.fx);
     const startRadius = 70; // vmax
     const startAngle = angle + Math.PI;
     const sx = Math.cos(startAngle) * startRadius;
     const sy = Math.sin(startAngle) * startRadius;
 
-    /* Velocidades intercaladas. */
     const enterDurationMs = 3500 + rng() * 2000;
     const driftDurationSec = 7 + rng() * 4;
 
@@ -152,12 +154,14 @@ function buildFloatingSlots(): AvatarSlot[] {
       circling: true,
       driftDelay: rng() * 4,
       style: {
-        left: `calc(50% + ${pos.fx.toFixed(2)}vmin - 24px)`,
-        top: `calc(50% + ${pos.fy.toFixed(2)}vmin - 24px)`,
+        // Posições em vw/vh — escala com viewport real, dando
+        // mais spread em desktops largos.
+        left: `calc(50% + ${pos.fx.toFixed(2)}vw - 24px)`,
+        top: `calc(50% + ${pos.fy.toFixed(2)}vh - 24px)`,
         ['--circle-tx' as string]:
-          `calc(${sx.toFixed(2)}vmax - ${pos.fx.toFixed(2)}vmin)`,
+          `calc(${sx.toFixed(2)}vmax - ${pos.fx.toFixed(2)}vw)`,
         ['--circle-ty' as string]:
-          `calc(${sy.toFixed(2)}vmax - ${pos.fy.toFixed(2)}vmin)`,
+          `calc(${sy.toFixed(2)}vmax - ${pos.fy.toFixed(2)}vh)`,
         ['--enter-duration' as string]: `${Math.round(enterDurationMs)}ms`,
         ['--drift-duration' as string]: `${driftDurationSec.toFixed(2)}s`,
       } as React.CSSProperties,
@@ -165,17 +169,31 @@ function buildFloatingSlots(): AvatarSlot[] {
   });
 }
 
-export default function AvatarConstellation() {
-  /**
-   * Visibilidade: derivado de scroll.
-   *   - showAt: scrollY > 60px (mínimo scroll detectável).
-   *   - hideAt: footer totalmente visível na viewport.
-   */
-  const [floatingVisible, setFloatingVisible] = useState(false);
+/**
+ * Sets de posições — gerados uma vez com seeds diferentes pra
+ * que cada "phase" (a cada 2 sections rolladas) tenha um layout
+ * distinto. 3 sets cobrem: phase 0 (sections 1-2), phase 1
+ * (sections 3-4), phase 2 (footer). O componente troca entre
+ * sets conforme `Math.floor(scrollY / (2 * viewport.height))`,
+ * com transição CSS suave de left/top pra dar a sensação de
+ * MOVIMENTO contínuo na experiência. Per product feedback "a
+ * cada duas seções, mude os avatares de lugar para dar ainda
+ * mais movimento na experiência".
+ */
+const FLOATING_SLOT_SEEDS = [73, 167, 251];
 
-  /** Slots geradas uma vez (memoized pra estabilidade entre
-   *  renders + evitar hydration mismatch). */
-  const slots = useMemo(() => buildFloatingSlots(), []);
+export default function AvatarConstellation() {
+  const [floatingVisible, setFloatingVisible] = useState(false);
+  const [phase, setPhase] = useState(0);
+
+  /** Pré-computa 3 sets de posições determinísticos. Memoize
+   *  com deps vazias — sets nunca mudam, só o índice ativo. */
+  const slotSets = useMemo(
+    () => FLOATING_SLOT_SEEDS.map(buildFloatingSlots),
+    [],
+  );
+
+  const currentSet = slotSets[phase % slotSets.length];
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -185,22 +203,23 @@ export default function AvatarConstellation() {
       const scrollY = window.scrollY;
       const vh = window.innerHeight;
 
-      // Mínimo scroll pra ativar (60px é suficiente — entrando
-      // na transição Section 1 → Section 2).
+      // 1. Visibilidade: scroll mínimo (>60px) E footer não
+      //    está totalmente visível na viewport.
       const hasScrolled = scrollY > 60;
-
-      // Footer totalmente visível? Olha o rect do <footer>.
-      // Quando o bottom do footer entra no viewport (ou está
-      // acima dele), o footer está totalmente revelado.
       const footer = document.querySelector('footer');
       let footerFullyVisible = false;
       if (footer) {
         const fr = footer.getBoundingClientRect();
-        footerFullyVisible = fr.bottom <= vh + 1; // +1 pra tolerância
+        footerFullyVisible = fr.bottom <= vh + 1;
       }
+      const nextVisible = hasScrolled && !footerFullyVisible;
 
-      const next = hasScrolled && !footerFullyVisible;
-      setFloatingVisible((prev) => (prev === next ? prev : next));
+      // 2. Phase index: muda a cada 2 viewport heights de scroll.
+      //    Section 1-2 → phase 0; section 3-4 → phase 1; etc.
+      const nextPhase = Math.floor(scrollY / (vh * 2));
+
+      setFloatingVisible((prev) => (prev === nextVisible ? prev : nextVisible));
+      setPhase((prev) => (prev === nextPhase ? prev : nextPhase));
     }
 
     function onScroll() {
@@ -222,7 +241,7 @@ export default function AvatarConstellation() {
 
   return (
     <>
-      {slots.map((a) => (
+      {currentSet.map((a) => (
         <FloatingAvatar
           key={a.name}
           src={a.src}

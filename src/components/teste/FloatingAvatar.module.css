@@ -17,11 +17,17 @@
   z-index: 30;
   /* Transição opacity + transform pra entrada com fade.
    * `transform` cobre o slide vertical default (8px) E o
-   * slide radial dos avatares na circular constellation. */
+   * slide radial dos avatares na circular constellation.
+   * left/top também transicionam — quando o phase do
+   * AvatarConstellation muda (a cada 2 sections), os avatares
+   * SE MOVEM suavemente pras novas posições, dando sensação
+   * de movimento contínuo durante toda a experiência. */
   transition:
     opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
+    left 1800ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 1800ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform, left, top;
 }
 .wrapRow {
   flex-direction: row;
