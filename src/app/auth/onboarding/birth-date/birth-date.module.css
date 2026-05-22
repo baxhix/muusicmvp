@@ -1,22 +1,32 @@
-.dateRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.5fr;
-  gap: 12px;
-}
-
+/* Input único de data — auto-formatado DD/MM/AAAA via JS. */
 .dateInput {
   text-align: center;
   font-variant-numeric: tabular-nums;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
 }
-.dateInputYear {
+
+/* Aviso amigável de menor de idade — não punitivo, informativo. */
+.minorNotice {
+  margin-top: -4px;
+  padding: 12px 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 180, 0.08),
+    rgba(91, 0, 209, 0.08)
+  );
+  border: 1px solid rgba(255, 0, 180, 0.22);
+  border-radius: 12px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
   text-align: center;
-  font-variant-numeric: tabular-nums;
-  font-size: 18px;
+}
+.minorNotice strong {
+  color: #fff;
   font-weight: 600;
-  letter-spacing: 0.02em;
 }
 
 .termsRow {

@@ -51,12 +51,13 @@ export default function ProfilePage() {
 
     track('profile_name_submitted', { length: trimmed.length });
 
-    saveOnboarding({ displayName: trimmed, step: 'interests' });
-    router.push('/auth/onboarding/interests');
+    // Interests step removido — vai direto pro success/finalize.
+    saveOnboarding({ displayName: trimmed, step: 'success' });
+    router.push('/auth/success');
   }
 
   return (
-    <AuthShell back="/auth/onboarding/birth-date" progress={4 / 6}>
+    <AuthShell back="/auth/onboarding/birth-date" progress={4 / 5}>
       <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h1 className={fields.heading}>Como devemos te chamar?</h1>
         <p className={fields.subtitle}>

@@ -80,7 +80,7 @@ export default function EmailStep() {
   }
 
   return (
-    <AuthShell back="/" progress={1 / 6}>
+    <AuthShell back="/" progress={1 / 5}>
       {/* flex: 1 + flex column → permite empurrar o `.hint`
        *  (Termos) pro fim da tela em mobile via margin-top:
        *  auto. Em desktop o hint segue logo abaixo do botão

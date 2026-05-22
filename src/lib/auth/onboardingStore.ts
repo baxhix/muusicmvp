@@ -22,7 +22,6 @@ export type OnboardingStep =
   | 'verify'
   | 'birth-date'
   | 'profile'
-  | 'interests'
   | 'success';
 
 export interface OnboardingState {
@@ -98,7 +97,6 @@ export const STEP_PATHS: Record<OnboardingStep, string> = {
   verify: '/auth/verify',
   'birth-date': '/auth/onboarding/birth-date',
   profile: '/auth/onboarding/profile',
-  interests: '/auth/onboarding/interests',
   success: '/auth/success',
 };
 

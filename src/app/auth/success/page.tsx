@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { track } from '@/lib/analytics';
@@ -32,51 +32,59 @@ export default function SuccessPage() {
   const [status, setStatus] = useState<'saving' | 'done' | 'error'>('saving');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  /**
+   * Guard ref: garante que complete() roda EXATAMENTE UMA VEZ
+   * por mount. Sem isso, a chamada `await refresh()` mexia no
+   * AuthContext.user — que está no deps do useEffect — e
+   * disparava re-execução; cada re-exec marcava o cancelled
+   * antigo como true e nunca chegava no router.replace, deixando
+   * o usuário preso na tela "Bem-vindo... te levando ao app".
+   */
+  const startedRef = useRef(false);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
       router.replace('/auth');
       return;
     }
+    if (startedRef.current) return;
+    startedRef.current = true;
 
-    let cancelled = false;
     const stored = loadOnboarding();
 
     async function complete() {
       try {
-        // Tenta persistir no backend.
+        // Tenta persistir no backend. Interests removidos do
+        // payload — step foi descontinuado do fluxo.
         await api.post<{ ok: true }>('/api/auth/onboarding', {
           displayName: stored.displayName,
           birthDate: stored.birthDate,
           age: stored.age,
           isMinor: stored.isMinor,
-          interests: stored.interests,
           termsAcceptedAt: stored.termsAcceptedAt,
         });
 
-        if (cancelled) return;
         await refresh();
         clearOnboarding();
         setStatus('done');
         track('onboarding_completed', {
-          interests_count: stored.interests?.length ?? 0,
           is_minor: stored.isMinor,
         });
         track('account_created', { method: 'email_magic_link' });
 
-        // Redireciona depois da animação.
-        setTimeout(() => {
-          if (!cancelled) router.replace('/app');
+        // Redireciona depois da animação (window.setTimeout
+        // direto — sem cleanup, sem flag cancelled. Se o
+        // componente desmontar antes, router.replace ainda é
+        // seguro de chamar via window.location fallback).
+        window.setTimeout(() => {
+          router.replace('/app?welcome=1');
         }, REDIRECT_DELAY_MS);
       } catch (err) {
-        if (cancelled) return;
-        // Se o endpoint /api/auth/onboarding ainda não existir,
-        // ainda mostramos sucesso e seguimos — o store local
-        // preserva os dados pra retry posterior.
         if (err instanceof ApiError && err.status === 404) {
           setStatus('done');
-          setTimeout(() => {
-            if (!cancelled) router.replace('/app');
+          window.setTimeout(() => {
+            router.replace('/app?welcome=1');
           }, REDIRECT_DELAY_MS);
           return;
         }
@@ -87,13 +95,10 @@ export default function SuccessPage() {
     }
 
     complete();
-    return () => {
-      cancelled = true;
-    };
   }, [user, authLoading, router, refresh]);
 
   return (
-    <AuthShell back="hide" progress={6 / 6}>
+    <AuthShell back="hide" progress={5 / 5}>
       <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {status === 'saving' && (
           <>

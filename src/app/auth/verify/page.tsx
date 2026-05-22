@@ -121,7 +121,7 @@ export default function VerifyPage() {
   };
 
   return (
-    <AuthShell back="/auth" progress={2 / 6}>
+    <AuthShell back="/auth" progress={2 / 5}>
       <div
         className={fields.fadeIn}
         style={{
