@@ -26,7 +26,15 @@ export default function Navbar() {
       {/* Container 1200px com brand + nav nas pontas. */}
       <div className={styles.container}>
         <a href="/teste" className={styles.brand} aria-label="Fanverse — início">
-          Fanverse
+          {/* Logo SVG mono-branco. Tamanho controlado via CSS
+           *  (height: 20px) pra ficar proporcional à navbar
+           *  (padding vertical 18px). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/teste/fanverse-logo.svg"
+            alt="Fanverse"
+            className={styles.brandLogo}
+          />
         </a>
 
         <nav className={styles.nav} aria-label="Principal">

@@ -30,19 +30,28 @@
   gap: 32px;
 }
 
-/* Brand "Fanverse" — texto, weight 600, sem decoração. Cor
- * #fff full-contrast. */
+/* Brand "Fanverse" — agora SVG logo mono-branco. O link
+ * wrapper só inline-flex pra que a âncora não introduza
+ * baseline gap em volta da imagem. */
 .brand {
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
   color: #fff;
   text-decoration: none;
   transition: opacity 200ms ease-out;
 }
 .brand:hover {
   opacity: 0.7;
+}
+
+/* Logo SVG — height 20px (proporcional ao padding vertical
+ * de 18px da navbar). Largura escala automaticamente via
+ * width: auto + aspect ratio do SVG (184x30 → ~123px de
+ * largura). */
+.brandLogo {
+  height: 20px;
+  width: auto;
+  display: block;
 }
 
 /* Nav links — só os 3 (Soluções/Blog/Login), dentro do
