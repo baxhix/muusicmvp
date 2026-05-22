@@ -4,22 +4,23 @@ import { useEffect, useMemo, useState } from 'react';
 import FloatingAvatar from './FloatingAvatar';
 
 /**
- * Constellation — todos os avatares do /teste num só lugar, com
- * posicionamento fixo na viewport.
+ * Constellation — UM ÚNICO set de avatares flutuantes, ativos
+ * durante toda a experiência da landing (não mais um set por
+ * section).
  *
- * Mecânica:
- *   - Cada avatar tem um `section` (1/2/3/4) — a section em
- *     que ele aparece. SWAP em vez de acumular: ao entrar
- *     numa nova section, o set anterior FADE OUT e o novo
- *     FADE IN. Seções 1-3 têm 3 avatares cada; seção 4 tem
- *     12 formando um círculo.
- *   - Scroll listener (rAF throttled) detecta qual section
- *     ocupa o centro da viewport.
- *   - Avatares com `circling: true` (todos da seção 4) ganham
- *     animação radial de entrada + drift contínuo sutil.
- *   - Labels podem ser uma string (estática) OU array (cycle
- *     suave com fade entre tracks a cada 4s) — quem decide é
- *     a definição abaixo.
+ * Visibilidade controlada por scroll:
+ *   - Hidden no topo da página (scrollY <= 60px).
+ *   - REVELAM quando o usuário scrolla qualquer mínimo (>60px,
+ *     começando a entrar na Section 2 da landing).
+ *   - Permanecem visíveis enquanto o footer não está
+ *     totalmente visível.
+ *   - Hidden de novo quando footer.bottom <= viewport.bottom
+ *     (footer totalmente revelado).
+ *
+ * Posicionamento INORGÂNICO: 15 avatares distribuídos
+ * aleatoriamente em torno das BORDAS da viewport (com zona
+ * central excluída pra deixar conteúdo respirar). Sem forma
+ * geométrica clara — apenas pontos random com anti-overlap.
  */
 
 interface AvatarSlot {
@@ -27,121 +28,17 @@ interface AvatarSlot {
   /** Path opcional pra imagem. Sem src → renderiza placeholder
    *  cinza + iniciais (modo wireframe). */
   src?: string;
-  /** Estática OU array que cicla com fade. */
-  label?: string;
-  labels?: string[];
-  section: 1 | 2 | 3 | 4;
   circling?: boolean;
   driftDelay?: number;
   style: React.CSSProperties;
 }
 
-/* ── Sections 1-3: 3 avatares cada, cantos diferentes ─────── */
-const SECTION_AVATARS: AvatarSlot[] = [
-  // Section 1 — cantos. Únicos com fotos reais (user-01/02/03);
-  // demais sections seguem com placeholder cinza wireframe.
-  {
-    name: 'Marina',
-    src: '/teste/user-01.png',
-    labels: [
-      'Boiadeira - Ana Castela',
-      'Pipoco - Ana Castela',
-      'Solto - Ana Castela',
-    ],
-    section: 1,
-    style: { top: '16%', left: '6%' },
-  },
-  {
-    name: 'Rafael',
-    src: '/teste/user-02.png',
-    labels: [
-      'Boiadeira - Ana Castela',
-      'Tropa do Chapelão',
-      'Rodeio no Texas',
-    ],
-    section: 1,
-    style: { bottom: '20%', left: '4%' },
-  },
-  {
-    name: 'Clara',
-    src: '/teste/user-03.png',
-    labels: [
-      'Pipoco - Ana Castela',
-      'Solto - Ana Castela',
-      'Boiadeira - Ana Castela',
-    ],
-    section: 1,
-    style: { bottom: '20%', right: '4%' },
-  },
-
-  // Section 2 — meios laterais + topo direito
-  {
-    name: 'Júlia',
-    labels: [
-      'Solto - Ana Castela',
-      'Pipoco - Ana Castela',
-      'Tropa do Chapelão',
-    ],
-    section: 2,
-    style: { top: '50%', left: '8%' },
-  },
-  {
-    name: 'Pedro',
-    labels: [
-      'Pipoco - Ana Castela',
-      'Rodeio no Texas',
-      'Boiadeira - Ana Castela',
-    ],
-    section: 2,
-    style: { top: '18%', right: '10%' },
-  },
-  {
-    name: 'Camila',
-    labels: [
-      'Tropa do Chapelão',
-      'Solto - Ana Castela',
-      'Pipoco - Ana Castela',
-    ],
-    section: 2,
-    style: { top: '54%', right: '12%' },
-  },
-
-  // Section 3 — trio fundo + topo centro
-  {
-    name: 'Heitor',
-    labels: [
-      'Rodeio no Texas',
-      'Boiadeira - Ana Castela',
-      'Solto - Ana Castela',
-    ],
-    section: 3,
-    style: { top: '18%', left: '50%' },
-  },
-  {
-    name: 'Lia',
-    labels: [
-      'Boiadeira - Ana Castela',
-      'Pipoco - Ana Castela',
-      'Tropa do Chapelão',
-    ],
-    section: 3,
-    style: { bottom: '14%', left: '18%' },
-  },
-  {
-    name: 'Bruno',
-    labels: [
-      'Solto - Ana Castela',
-      'Rodeio no Texas',
-      'Pipoco - Ana Castela',
-    ],
-    section: 3,
-    style: { bottom: '18%', right: '20%' },
-  },
-];
+/* SECTION_AVATARS removido per product feedback "os demais
+ * avatares podem ser excluídos das outras seções e vamos
+ * ficar apenas com as animações flutuantes". */
 
 /**
- * Section 4 — 12 avatares formando um GRUPO orgânico ao redor
- * do centro da viewport (não um círculo).
+ * Floaters — 15 avatares random ao redor das BORDAS da viewport.
  *
  * Per product feedback "a aproximação dos avatares em formato
  * de círculo não deve ser perfeito, deve ser apenas um grupo".
@@ -175,23 +72,35 @@ const CIRCLE_AVATAR_SRCS = [
   '/teste/user-03.png',
 ];
 
-function buildCircleSlots(): AvatarSlot[] {
+function buildFloatingSlots(): AvatarSlot[] {
   const count = 15;
-  /* Distribuição em ANEL (annulus) ao redor do centro — não
-   * mais em "bands laterais". Per product feedback
-   * "distribua mais nas laterais, em cima e em baixo,
-   * liberando mais espaço no centro para receber o
-   * conteúdo".
+
+  /* Distribuição INORGÂNICA, RANDOM, sem forma geométrica
+   * clara, ao redor das BORDAS da viewport per product
+   * feedback "posicionar ao redor dos limites da página,
+   * forma inorgânica, aleatórios, sem ter uma forma
+   * geometrica clara".
    *
-   * - innerRadius: raio mínimo (zona vazia central pro
-   *   conteúdo, fica intacta).
-   * - outerRadius: raio máximo (não pode ir muito longe
-   *   senão avatares no topo invadem o header / no fundo
-   *   saem da viewport).
-   * - Avatares ficam no anel innerRadius..outerRadius.
+   * Algoritmo: random rejection sampling em coordenadas
+   * cartesianas (não polares, pra evitar forma de anel).
+   *
+   * Regras de aceitação:
+   *   1. ao menos UM eixo deve estar "extremo" (perto da borda).
+   *      |fx| > 28 vmin OU |fy| > 24 vmin. Isso garante que
+   *      avatares estejam SEMPRE perto de pelo menos uma das
+   *      4 bordas, NUNCA na zona central morta.
+   *   2. anti-overlap: distância mínima de 13vmin entre dois
+   *      avatares.
+   *
+   * Limites: |fx| <= 44vmin (≈ 88% da largura útil), |fy| <=
+   * 36vmin (deixa folga pro header fixo no topo / footer no
+   * bottom).
    */
-  const innerRadius = 28; // vmin
-  const outerRadius = 38; // vmin
+  const maxX = 44;
+  const maxY = 36;
+  const extremeXThreshold = 28; // |fx| > 28 → considera "perto da borda H"
+  const extremeYThreshold = 24; // |fy| > 24 → "perto da borda V"
+  const minDistance = 13; // vmin
 
   let seed = 73;
   const rng = () => {
@@ -202,81 +111,53 @@ function buildCircleSlots(): AvatarSlot[] {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 
-  return Array.from({ length: count }, (_, i) => {
-    /* Distribuição EM SETORES uniformes de 24° (= 360°/15),
-     * cobrindo o círculo INTEIRO. Per product feedback "em
-     * cima e em baixo" — os 4 quadrantes (esq, dir, topo,
-     * fundo) ficam todos representados.
-     *
-     * Anti-overlap garantido por dois mecanismos:
-     *   1. Jitter angular limitado (±0.4 * sector = ±4.8°)
-     *      → vizinhos ficam SEMPRE >=14.4° de distância
-     *      angular um do outro.
-     *   2. Alternância de SHELL (raio interno vs externo):
-     *      avatares pares ficam mais perto do innerRadius;
-     *      ímpares perto do outerRadius. Resulta em zigzag
-     *      radial — dois vizinhos próximos angularmente
-     *      ainda assim ficam afastados radialmente (gap > 8vmin).
-     *
-     * Distância mínima resultante entre vizinhos: ~10vmin
-     * (~90px em viewports típicos), ≈2x o diâmetro do
-     * avatar — sem sobreposição.
-     */
-    const sectorAngle = (Math.PI * 2) / count; // 24°
-    const baseAngle = i * sectorAngle - Math.PI / 2; // sector 0 no topo
-    const angleJitter = (rng() - 0.5) * sectorAngle * 0.4; // ±4.8°
-    const angle = baseAngle + angleJitter;
+  const positions: Array<{ fx: number; fy: number }> = [];
+  let attempts = 0;
+  while (positions.length < count && attempts < 10000) {
+    attempts++;
+    const fx = (rng() - 0.5) * 2 * maxX;
+    const fy = (rng() - 0.5) * 2 * maxY;
 
-    // Shell alternada: pares → inner, ímpares → outer.
-    const shellTarget = i % 2 === 0 ? innerRadius + 3 : outerRadius - 3;
-    const radiusJitter = (rng() - 0.5) * 3; // ±1.5vmin
-    const r = shellTarget + radiusJitter;
+    // Regra 1: tem que estar perto de alguma borda
+    const extremeX = Math.abs(fx) > extremeXThreshold;
+    const extremeY = Math.abs(fy) > extremeYThreshold;
+    if (!extremeX && !extremeY) continue;
 
-    const fx = Math.cos(angle) * r;
-    const fy = Math.sin(angle) * r;
+    // Regra 2: anti-overlap
+    if (positions.some(
+      (p) => Math.hypot(p.fx - fx, p.fy - fy) < minDistance,
+    )) continue;
 
-    /* CROSSOVER per product feedback "os avatares que entrarem
-     * pela esquerda se posicionam flutuante mais à direita e
-     * vice-versa".
-     *
-     * Implementação elegante: o ângulo do ponto INICIAL é 180°
-     * oposto ao ângulo final. Se o avatar termina à direita
-     * (angle ≈ 0°), entra pela esquerda (startAngle ≈ 180°);
-     * se termina em cima-direita (angle = 30°), entra de
-     * baixo-esquerda (startAngle = 210°). Diagonais ficam
-     * naturalmente representadas.
-     *
-     * startRadius 70vmax — sempre além das bordas da viewport.
-     */
+    positions.push({ fx, fy });
+  }
+
+  return positions.map((pos, i) => {
+    /* Approach: cada avatar entra a partir de um ponto FORA
+     * da viewport, 180° oposto à posição final (crossover).
+     * startRadius 70vmax garante que o ponto inicial está
+     * sempre além das bordas, pra qualquer aspect ratio. */
+    const angle = Math.atan2(pos.fy, pos.fx);
     const startRadius = 70; // vmax
     const startAngle = angle + Math.PI;
     const sx = Math.cos(startAngle) * startRadius;
     const sy = Math.sin(startAngle) * startRadius;
 
-    /* Velocidades MAIS LENTAS per product feedback "a
-     * velocidade de entrada e saída dos avatares deve ser
-     * menor".
-     * - Approach: 3.5-5.5s (era 2.2-3.8s).
-     * - Drift idle: 7-11s (era 5.5-8.5s). Curva mais lenta
-     *   reforça a "sensação de espaço sem gravidade". */
+    /* Velocidades intercaladas. */
     const enterDurationMs = 3500 + rng() * 2000;
     const driftDurationSec = 7 + rng() * 4;
 
     return {
-      name: `group-${i}`,
+      name: `floater-${i}`,
       src: CIRCLE_AVATAR_SRCS[i % CIRCLE_AVATAR_SRCS.length],
-      section: 4,
       circling: true,
       driftDelay: rng() * 4,
       style: {
-        left: `calc(50% + ${fx.toFixed(2)}vmin - 24px)`,
-        top: `calc(50% + ${fy.toFixed(2)}vmin - 24px)`,
-        // --circle-tx/ty: delta da posição FINAL até o ponto
-        // INICIAL (180° oposto, fora da viewport).
+        left: `calc(50% + ${pos.fx.toFixed(2)}vmin - 24px)`,
+        top: `calc(50% + ${pos.fy.toFixed(2)}vmin - 24px)`,
         ['--circle-tx' as string]:
-          `calc(${sx.toFixed(2)}vmax - ${fx.toFixed(2)}vmin)`,
+          `calc(${sx.toFixed(2)}vmax - ${pos.fx.toFixed(2)}vmin)`,
         ['--circle-ty' as string]:
-          `calc(${sy.toFixed(2)}vmax - ${fy.toFixed(2)}vmin)`,
+          `calc(${sy.toFixed(2)}vmax - ${pos.fy.toFixed(2)}vmin)`,
         ['--enter-duration' as string]: `${Math.round(enterDurationMs)}ms`,
         ['--drift-duration' as string]: `${driftDurationSec.toFixed(2)}s`,
       } as React.CSSProperties,
@@ -285,42 +166,53 @@ function buildCircleSlots(): AvatarSlot[] {
 }
 
 export default function AvatarConstellation() {
-  /** Section atualmente ativa (centro da viewport). */
-  const [activeSection, setActiveSection] = useState<1 | 2 | 3 | 4>(1);
+  /**
+   * Visibilidade: derivado de scroll.
+   *   - showAt: scrollY > 60px (mínimo scroll detectável).
+   *   - hideAt: footer totalmente visível na viewport.
+   */
+  const [floatingVisible, setFloatingVisible] = useState(false);
 
-  /** Circle slots geradas uma vez (memoized pra estabilidade
-   *  entre renders + evitar hydration mismatch). */
-  const circleSlots = useMemo(() => buildCircleSlots(), []);
+  /** Slots geradas uma vez (memoized pra estabilidade entre
+   *  renders + evitar hydration mismatch). */
+  const slots = useMemo(() => buildFloatingSlots(), []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     let raf = 0;
-    function checkActiveSection() {
-      const center = window.innerHeight * 0.5;
-      let active: 1 | 2 | 3 | 4 = 1;
-      for (let i = 1; i <= 4; i++) {
-        const el = document.getElementById(`section-${i}`);
-        if (!el) continue;
-        const r = el.getBoundingClientRect();
-        if (r.top <= center && r.bottom >= center) {
-          active = i as 1 | 2 | 3 | 4;
-          break;
-        }
+    function check() {
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+
+      // Mínimo scroll pra ativar (60px é suficiente — entrando
+      // na transição Section 1 → Section 2).
+      const hasScrolled = scrollY > 60;
+
+      // Footer totalmente visível? Olha o rect do <footer>.
+      // Quando o bottom do footer entra no viewport (ou está
+      // acima dele), o footer está totalmente revelado.
+      const footer = document.querySelector('footer');
+      let footerFullyVisible = false;
+      if (footer) {
+        const fr = footer.getBoundingClientRect();
+        footerFullyVisible = fr.bottom <= vh + 1; // +1 pra tolerância
       }
-      setActiveSection((prev) => (prev === active ? prev : active));
+
+      const next = hasScrolled && !footerFullyVisible;
+      setFloatingVisible((prev) => (prev === next ? prev : next));
     }
 
     function onScroll() {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        checkActiveSection();
+        check();
       });
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    checkActiveSection();
+    check();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
@@ -328,19 +220,15 @@ export default function AvatarConstellation() {
     };
   }, []);
 
-  const allSlots = [...SECTION_AVATARS, ...circleSlots];
-
   return (
     <>
-      {allSlots.map((a) => (
+      {slots.map((a) => (
         <FloatingAvatar
           key={a.name}
           src={a.src}
           name={a.name}
-          label={a.label}
-          labels={a.labels}
           size="sm"
-          revealed={a.section === activeSection}
+          revealed={floatingVisible}
           circling={a.circling}
           driftDelay={a.driftDelay}
           style={a.style}
