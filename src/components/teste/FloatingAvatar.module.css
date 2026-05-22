@@ -58,18 +58,17 @@
  * profissional em vez de todos chegando em sync. Default
  * 2400ms se a var não estiver presente. */
 .circling {
-  /* Transições suaves: opacity (fade no aparecer/desaparecer),
-   * transform (legado pra entry crossover quando used), e left/
-   * top (mudança de posição entre phases). */
+  /* Transição rápida no transform pra aplicar o parallax
+   * inertia (--parallax-y). 350ms ease-out dá um lag sutil
+   * sem ficar pesado.
+   *
+   * Como o avatar está sempre `revealed` agora, o transform
+   * é usado pelo parallax — sem entry crossover. */
   transition:
     opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--enter-duration, 4000ms) cubic-bezier(0.22, 1, 0.36, 1);
+    transform 350ms cubic-bezier(0.33, 1, 0.68, 1);
+  transform: translate3d(0, var(--parallax-y, 0px), 0);
 }
-
-/* avatar-arrive REMOVIDO — o sweep crossover a cada phase
- * change ficou "estranho" per product feedback. Agora a
- * mudança de posição entre phases acontece via transição
- * smooth de left/top (no .wrap), sem remount nem sweep. */
 .circling.hidden {
   transform: translate3d(
     var(--circle-tx, 0),
