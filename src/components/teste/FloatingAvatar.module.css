@@ -44,19 +44,17 @@
   transform: translate3d(0, 0, 0);
 }
 
-/* Modo CIRCLING — usado pelos 12 avatares da Section 4 que
- * formam um círculo. O slide-in não é mais vertical 8px nem
- * radial pequeno — agora vem das EXTREMIDADES LATERAIS da
- * viewport (--circle-tx em ±55vw via calc no inline style).
- * A distância grande exige uma transição mais longa pra que
- * o movimento não fique "jato" — override do timing de
- * `transform` específico pro modo circling (opacity continua
- * com o timing default do .wrap).
- */
+/* Modo CIRCLING — usado pelos 15 avatares da Section 4 que
+ * formam o grupo. O slide-in agora vem de FORA da viewport
+ * NA DIREÇÃO do ângulo final (top, bottom, laterais E
+ * diagonais — não só lateral). Velocidade INTERCALADA per
+ * avatar via --enter-duration (2.2-3.8s) pra dar dinamismo
+ * profissional em vez de todos chegando em sync. Default
+ * 2400ms se a var não estiver presente. */
 .circling {
   transition:
     opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform var(--enter-duration, 2400ms) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .circling.hidden {
   transform: translate3d(
@@ -69,20 +67,31 @@
   transform: translate3d(0, 0, 0);
 }
 
-/* Drift contínuo pós-reveal — usa CSS `translate` (não
- * `transform`) pra que NÃO conflite com a transição de
- * `transform` que o reveal usa. Modern browsers (Chrome 104+,
- * Firefox 72+, Safari 14.1+) suportam `translate` como
- * propriedade independente. */
+/* Drift contínuo pós-reveal — amplificado per product
+ * feedback "após ficarem visíveis aumente de forma sutil a
+ * velocidade do aspecto flutuante deles na tela, para causar
+ * a sensação de espaço e sem gravidade":
+ *   - Amplitude aumentada (3px → 10px) pra que o "flutuar"
+ *     seja perceptível, não subliminar.
+ *   - Duração INTERCALADA per avatar via --drift-duration
+ *     (5.5-8.5s). Cada um respira no próprio tempo — sem
+ *     aquele "heartbeat coletivo" feio. Default 7s.
+ *   - Trajetória ligeiramente em "8" (cruza pelo origem em
+ *     0/50/100% mas com offsets diferentes a cada quarto)
+ *     pra simular drift orgânico em vez de elipse simples.
+ *
+ * Usa CSS `translate` (não `transform`) pra não conflitar
+ * com a transição de `transform` do reveal. */
 .drifting {
-  animation: tloop-circle-drift 7s ease-in-out infinite;
+  animation: tloop-circle-drift var(--drift-duration, 7s) ease-in-out infinite;
   animation-delay: var(--drift-delay, 0s);
 }
 @keyframes tloop-circle-drift {
   0%, 100% { translate: 0 0; }
-  25%      { translate: 2.5px -1.5px; }
-  50%      { translate: 0 -3px; }
-  75%      { translate: -2.5px -1.5px; }
+  20%      { translate: 6px -4px; }
+  40%      { translate: -3px -8px; }
+  60%      { translate: -7px 3px; }
+  80%      { translate: 4px 7px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

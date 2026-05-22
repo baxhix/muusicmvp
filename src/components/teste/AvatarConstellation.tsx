@@ -176,7 +176,9 @@ const CIRCLE_AVATAR_SRCS = [
 ];
 
 function buildCircleSlots(): AvatarSlot[] {
-  const count = 12;
+  /* Per product feedback "adicione mais 3 avatares" — total
+   * sobe de 12 → 15 cabeças no grupo da Section 4. */
+  const count = 15;
   const maxRadius = 26; // vmin (limite externo do grupo)
   const minRadiusFactor = 0.4; // 40% — quem fica mais perto do centro
   let seed = 73;
@@ -189,46 +191,54 @@ function buildCircleSlots(): AvatarSlot[] {
   };
 
   return Array.from({ length: count }, (_, i) => {
-    // Ângulo base distribuído (30° entre vizinhos) com jitter
-    // grande pra quebrar o ritmo — alguns ficam quase juntos.
+    // Ângulo base distribuído com jitter generoso. Como temos
+    // 15 fatias agora, ângulo entre vizinhos é 24° (era 30°)
+    // com jitter de ±12° pra preservar a mesma sensação de
+    // grupo desorganizado.
     const baseAngle = (i / count) * Math.PI * 2 - Math.PI / 2;
-    const angleJitter = (rng() - 0.5) * (Math.PI / 6); // ±15°
+    const angleJitter = (rng() - 0.5) * (Math.PI / 7.5); // ±12°
     const angle = baseAngle + angleJitter;
 
-    // Raio aleatório no range minRadiusFactor..1.0 — alguns
-    // perto do centro, outros na "casca". Distribuição
-    // uniforme: chance igual de cair em qualquer distância
-    // (não viesado pra borda nem centro).
+    // Raio aleatório no range minRadiusFactor..1.0 — distribuição
+    // uniforme; alguns perto do centro, outros na "casca".
     const radiusFactor = minRadiusFactor + rng() * (1 - minRadiusFactor);
     const r = maxRadius * radiusFactor;
 
     const fx = Math.cos(angle) * r;
     const fy = Math.sin(angle) * r;
 
-    /* Approach: cada avatar entra a partir da EXTREMIDADE LATERAL
-     * da página (left ou right edge) per product feedback "afaste
-     * mais o ponto inicial da animação, colocando-os nas
-     * extremidades laterais da página e se aproximando".
+    /* Approach REFEITO per product feedback "redistribua o
+     * caminho da chegada deles não somente das laterais, mas
+     * pela diagonal, por cima e por baixo":
      *
-     * Lógica:
-     *   - Sign horizontal = lado em que o avatar está em relação
-     *     ao centro (cos(angle) > 0 → vem da direita, < 0 → da
-     *     esquerda).
-     *   - --circle-tx: deslocamento horizontal pra que o ponto
-     *     inicial caia fora da viewport (±55vw → ~5vw além da
-     *     borda, garantindo entrada visualmente "de fora"). O
-     *     calc() já subtrai o fx final pra que o resultado seja
-     *     o DELTA do final até o início.
-     *   - --circle-ty: pequeno offset vertical proporcional ao
-     *     fy (50%) — não é estritamente horizontal, dá um leve
-     *     arco no movimento.
+     * Cada avatar entra a partir de um ponto FORA da viewport
+     * NA DIREÇÃO DO PRÓPRIO ÂNGULO FINAL. Ou seja: o avatar
+     * que termina no topo vem de cima; o que termina no canto
+     * inferior direito vem do canto inferior direito; e assim
+     * por diante.
+     *
+     * Implementação: projetamos o vetor radial num raio de
+     * 75vmax (≈garante que está além de qualquer canto da
+     * viewport, pra qualquer aspect ratio).
+     *
+     * Velocidades intercaladas per "diminua a velocidade que
+     * os avatares se aproximam de uma forma geral e intercale
+     * para que tenha velocidades diferentes". Range 2200-3800ms
+     * (era 1400ms uniforme).
      */
-    const horizontalSign = fx >= 0 ? 1 : -1;
-    const lateralStartVw = 55; // 5vw além da borda da viewport
+    const startRadius = 75; // vmax
+    const sx = Math.cos(angle) * startRadius;
+    const sy = Math.sin(angle) * startRadius;
+
+    /* Velocidade de approach intercalada (2.2s-3.8s).
+     * Velocidade do drift idle (5.5s-8.5s) também varia pra
+     * dar dinamismo profissional. */
+    const enterDurationMs = 2200 + rng() * 1600;
+    const driftDurationSec = 5.5 + rng() * 3.0;
 
     return {
       name: `group-${i}`,
-      // Cicla pelas 3 fotos (4 instâncias de cada).
+      // Cicla pelas 3 fotos (5 instâncias de cada com count=15).
       src: CIRCLE_AVATAR_SRCS[i % CIRCLE_AVATAR_SRCS.length],
       section: 4,
       circling: true,
@@ -236,9 +246,16 @@ function buildCircleSlots(): AvatarSlot[] {
       style: {
         left: `calc(50% + ${fx.toFixed(2)}vmin - 24px)`,
         top: `calc(50% + ${fy.toFixed(2)}vmin - 24px)`,
+        // --circle-tx/ty: delta do ponto FINAL até o ponto
+        // INICIAL fora da viewport (na direção do ângulo).
         ['--circle-tx' as string]:
-          `calc(${horizontalSign * lateralStartVw}vw - ${fx.toFixed(2)}vmin)`,
-        ['--circle-ty' as string]: `${(fy * 0.5).toFixed(2)}vmin`,
+          `calc(${sx.toFixed(2)}vmax - ${fx.toFixed(2)}vmin)`,
+        ['--circle-ty' as string]:
+          `calc(${sy.toFixed(2)}vmax - ${fy.toFixed(2)}vmin)`,
+        // Velocidades individualizadas — cada avatar move com
+        // ritmo próprio.
+        ['--enter-duration' as string]: `${Math.round(enterDurationMs)}ms`,
+        ['--drift-duration' as string]: `${driftDurationSec.toFixed(2)}s`,
       } as React.CSSProperties,
     };
   });
