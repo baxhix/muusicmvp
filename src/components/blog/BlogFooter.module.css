@@ -1,41 +1,38 @@
-/* Footer — 3 cols + email + FANVERSE SVG gigante de 100%.
- *
- * Sem overflow hidden — o SVG do wordmark agora é elemento
- * inline no flow normal, então o footer cresce naturalmente
- * pra acomodar. Sem position absolute pra wordmark. */
+/* Footer — 3 cols + email + FANVERSE SVG gigante 90vw colado
+ * na parte de baixo. Wordmark vive FORA do .inner (que cap
+ * em 1200px) pra poder ocupar 90% da viewport. */
 
 .footer {
   position: relative;
   background: #000;
   color: #fff;
-  padding: 96px 24px 56px;
+  /* Sem padding-bottom: a palavra FANVERSE cola na base do
+   * footer per product feedback "deve ser colada na parte
+   * de baixo". */
+  padding: 96px 0 0;
 }
 
 .inner {
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  /* 150px entre o topRow e o wordmark per product feedback
-   * "posicione as 3 colunas do footer 150px acima da
-   * palavra FANVERSE gigante". */
-  gap: 150px;
+  padding: 0 24px;
 }
 
 /* ── Top row ─────────────────────────────
- * Esquerda: 3 cols de links. Direita: email gigante.
- * Em viewports estreitas (<=880px) o email vai pra baixo
- * dos links. */
+ * align-items: flex-end pra que o hello@ encoste na BASE
+ * das colunas (não no topo) per product feedback "alinhe o
+ * hello@ na parte inferior das colunas". */
 .topRow {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 48px;
 }
 @media (max-width: 880px) {
   .topRow {
     flex-direction: column;
+    align-items: stretch;
     gap: 48px;
   }
 }
@@ -62,12 +59,14 @@
 .col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  /* Reduzido per product feedback "diminua o espaçamento
+   * entre os itens de texto das colunas do footer". */
+  gap: 6px;
   min-width: 0;
 }
 
 .colTitle {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   font-weight: 600;
@@ -88,14 +87,18 @@
 .link:hover { color: #fff; }
 
 /* ── Email destaque ──────────────────────
- * Texto enorme à direita, todo em branco. Hover faz uma
- * pequena escala-up sutil pra reforçar afetividade. */
+ * Texto enorme à direita. Hover opacity sutil pra reforçar
+ * afetividade ("clica aqui"). */
 .email {
   font-family: var(--font-inter), sans-serif;
   font-size: clamp(28px, 4.4vw, 56px);
   font-weight: 500;
   letter-spacing: -0.025em;
-  line-height: 1.05;
+  /* line-height 1 evita que o baseline alinhamento "puxe"
+   * o email pra cima quando estamos em flex-end na topRow —
+   * a borda inferior do texto coincide com a borda inferior
+   * do bloco. */
+  line-height: 1;
   color: #fff;
   text-decoration: none;
   word-break: break-word;
@@ -111,13 +114,22 @@
   }
 }
 
-/* ── Wordmark SVG ────────────────────────
- * SVG ocupa 100% do container (max 1200px). O <text>
- * dentro usa textLength=1200 + lengthAdjust=spacingAndGlyphs
- * pra que a fonte se estique horizontalmente até ocupar
- * exatamente esse comprimento — independente da fonte
- * aplicada (Peace Sans, Inter 900, etc).
- */
+/* ── Wordmark wrap ──────────────────────
+ * Fora do .inner pra ocupar 90vw (max-width none). Margem
+ * de cima 100px é o gap entre as colunas e o wordmark per
+ * product feedback "diminua para 100px a distância entre
+ * as colunas e a palavra Fanverse". Sem margem inferior —
+ * o wordmark fica colado na base do footer. */
+.wordmarkWrap {
+  width: 90vw;
+  max-width: none;
+  margin: 100px auto 0;
+  /* Compensa o "espaço abaixo do baseline" do SVG (entre o
+   * baseline da fonte e a borda inferior do viewBox) pra
+   * que o glifo se ALINHE com o fim do footer, não o viewBox. */
+  margin-bottom: -2.2vw;
+}
+
 .wordmark {
   display: block;
   width: 100%;
@@ -128,16 +140,15 @@
 .wordmarkText {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', sans-serif;
   font-weight: 900;
-  font-size: 240px; /* base font-size — textLength reescala glyphs */
+  font-size: 240px;
   fill: rgba(255, 255, 255, 0.04);
 }
 
-/* Em mobile, reduzir o gap (150px é exagero em telas pequenas)
- * e dar mais respiro de baixo. */
+/* Mobile responsivo */
 @media (max-width: 880px) {
-  .inner { gap: 96px; }
-  .footer { padding: 64px 20px 40px; }
+  .footer { padding: 64px 0 0; }
+  .wordmarkWrap { margin-top: 64px; }
 }
 @media (max-width: 560px) {
-  .inner { gap: 64px; }
+  .wordmarkWrap { margin-top: 48px; width: 94vw; }
 }

@@ -58,10 +58,13 @@ export default function Footer() {
             hello@fanverse.com.br
           </a>
         </div>
+      </div>
 
-        {/* Wordmark gigante — SVG com text scalado pra ocupar
-         *  100% do container (max 1200px). aria-hidden = é só
-         *  decoração visual. */}
+      {/* Wordmark fora do `.inner` pra que possa ocupar 90% da
+       *  VIEWPORT (não do container 1200px). Posicionado por
+       *  margin-top (gap 100px) e fica colado na parte de
+       *  baixo do footer (padding-bottom 0). */}
+      <div className={styles.wordmarkWrap}>
         <svg
           className={styles.wordmark}
           viewBox="0 0 1200 220"
