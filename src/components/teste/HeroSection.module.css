@@ -94,12 +94,13 @@
 }
 
 /* Mockup de phones — row 3 do grid (180px abaixo do
- * headline). max-width 900px centralizado + drop-shadow
- * pra dar profundidade. */
+ * headline). max-width 540px per product feedback "diminua
+ * a imagem dos smartphones proporcionalmente para 540px de
+ * largura". Centralizado + drop-shadow. */
 .phonesWrap {
   grid-row: 3;
   width: 100%;
-  max-width: 900px;
+  max-width: 540px;
   display: flex;
   justify-content: center;
   animation: tloop-fadeup 1000ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
