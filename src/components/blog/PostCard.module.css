@@ -1,0 +1,129 @@
+/* PostCard — visual neutro, leitura primeiro.
+ *
+ * Hover: cover faz scale 1.025 + opacidade slight up; title
+ * fica branco puro. Sem box-shadow porque o card está sobre
+ * bg #0a0a0a — qualquer sombra cinza fica ruim. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Sem border ou background — o card flutua na grade
+   * deixando o conteúdo respirar. */
+}
+
+.cardCompact {
+  flex-direction: row;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.coverLink {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: border-color 280ms ease-out;
+}
+.coverLink:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.cardCompact .coverLink {
+  flex-shrink: 0;
+  width: 120px;
+}
+.cardCompact .cover {
+  aspect-ratio: 1 / 1;
+  width: 120px;
+}
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.coverLink:hover .coverImg {
+  transform: scale(1.04);
+}
+.coverFallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1c1c1c, #0c0c0c);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.category {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  align-self: flex-start;
+  transition: color 200ms ease-out;
+}
+.category:hover { color: #fff; }
+
+.title {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.92);
+  /* Limita a 3 linhas pra estabilizar altura dos cards na grade. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cardCompact .title {
+  font-size: 14.5px;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 200ms ease-out;
+}
+.titleLink:hover {
+  color: #fff;
+}
+
+.excerpt {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: -0.005em;
+  /* 3 linhas, ellipsis. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cardCompact .excerpt {
+  display: none;
+}

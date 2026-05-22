@@ -1,0 +1,165 @@
+/* Blog detail — line-length controlado, hero + cover full-bleed
+ * limitado ao container; o corpo prosa fica narrower (680px). */
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+  animation: blog-detail-fadein 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes blog-detail-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page { animation: none; }
+}
+
+.hero {
+  margin: 24px 0 32px;
+}
+
+.heroInner {
+  max-width: 740px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  align-self: flex-start;
+  transition: color 200ms ease-out;
+}
+.category:hover { color: #fff; }
+
+.title {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(30px, 5vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.subtitle {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: -0.005em;
+}
+
+.byline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 8px;
+}
+
+.shareSlot {
+  margin-left: auto;
+}
+@media (max-width: 600px) {
+  .shareSlot { margin-left: 0; }
+}
+
+/* ── Cover ────────────────────────────────── */
+.cover {
+  margin: 0 auto 48px;
+  max-width: 980px;
+}
+.coverImg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.coverCaption {
+  margin: 12px auto 0;
+  max-width: 680px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── Corpo ────────────────────────────────── */
+.body {
+  margin: 0 auto 48px;
+}
+
+/* ── Tags ─────────────────────────────────── */
+.tagsRow {
+  max-width: 680px;
+  margin: 0 auto 56px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 5px 12px;
+  text-decoration: none;
+  transition: background 220ms ease-out, color 220ms ease-out;
+}
+.tag:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Author card (bio expandida no rodapé) ── */
+.authorCard {
+  max-width: 680px;
+  margin: 0 auto 32px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+/* ── Share rodapé ─────────────────────────── */
+.shareBottom {
+  max-width: 680px;
+  margin: 0 auto 24px;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Responsivo ───────────────────────────── */
+@media (max-width: 720px) {
+  .page { padding: 16px 18px 0; }
+  .hero { margin: 16px 0 24px; }
+  .heroInner { gap: 12px; }
+  .cover { margin-bottom: 32px; }
+  .body { margin-bottom: 32px; }
+  .tagsRow { margin-bottom: 36px; }
+  .authorCard { padding: 18px; margin-bottom: 24px; }
+}

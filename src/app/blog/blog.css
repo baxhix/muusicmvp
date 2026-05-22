@@ -1,0 +1,44 @@
+/* Blog — escopo de estilo da árvore /blog.
+ *
+ * Mantemos o resto do app intocado (o landing/, o /app/ etc não
+ * mudam) — apenas o subtree do blog adota essa palette dark
+ * focada em leitura. */
+
+.blog-shell {
+  min-height: 100dvh;
+  background: #0a0a0a;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.blog-main {
+  /* Espaço pra que o sticky header não cubra o início da
+   * página em jumps via âncora. */
+  scroll-margin-top: 80px;
+}
+
+/* Smooth scroll global no /blog — facilita o "voltar pro topo"
+ * e a leitura de anchor links. */
+html:has(.blog-shell) {
+  scroll-behavior: smooth;
+}
+
+/* Anti-flicker no Safari: imagens carregando dão jitter no
+ * card cover. Object-fit + transition no IMG lida com isso,
+ * mas vale forçar opacity transition no IMG inicial. */
+.blog-shell img {
+  opacity: 1;
+  transition: opacity 200ms ease-out;
+}
+.blog-shell img[loading="lazy"]:not([src]) {
+  opacity: 0;
+}
+
+/* Selection cor — branco transparente em vez do roxo browser
+ * default. Combina com a palette do blog. */
+.blog-shell ::selection {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
