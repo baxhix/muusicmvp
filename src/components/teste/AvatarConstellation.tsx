@@ -204,13 +204,19 @@ export default function AvatarConstellation() {
   const [targetPhase, setTargetPhase] = useState(0);
 
   /**
-   * Staggered entrance: começa com 5 avatares visíveis. Após
-   * 2s, +2 (total 7). Após +1s, +1 (total 8). Após +1s, +1
-   * (total 9). Após +1s, +1 (total 10). Per product feedback
-   * "ao carregar a página deve ser mostrado 5 avatares, após
-   * 2s surgem mais 2 e após 1s surge mais 1 por segundo".
+   * Staggered entrance: NINGUÉM visível no load — avatares
+   * aparecem UM POR UM com fade suave. Per product feedback
+   * "não inicie mostrando todos os avatares, eles devem
+   * aparecer, um de cada vez, com fade suave, depois do
+   * site carregar".
+   *
+   * Cronograma: 500ms após mount, +1. Depois +1 a cada
+   * 350ms até atingir 10. Total ~3.6s do mount à última
+   * aparição. Como o fade-in do .circling tem 1100ms, as
+   * transitions se sobrepõem — sensação de cascata fluída,
+   * não uma chegada por vez "discrete".
    */
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(0);
 
   /** Parallax scroll: -px = avatar sobe (acompanhando conteúdo
    *  pra cima); recovers para 0 (desce de volta) per "ao
@@ -226,14 +232,16 @@ export default function AvatarConstellation() {
 
   const currentSet = slotSets[phase % slotSets.length];
 
-  // Staggered reveal — kicks once on mount.
+  // Staggered reveal — UM avatar por vez, cascading.
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    // 0s: 5 (initial state)
-    timers.push(setTimeout(() => setVisibleCount(7), 2000));  // +2 at 2s
-    timers.push(setTimeout(() => setVisibleCount(8), 3000));  // +1 at 3s
-    timers.push(setTimeout(() => setVisibleCount(9), 4000));  // +1 at 4s
-    timers.push(setTimeout(() => setVisibleCount(10), 5000)); // +1 at 5s
+    const startDelay = 500;   // ms — espera o site assentar
+    const intervalMs = 350;   // ms entre cada avatar
+
+    for (let n = 1; n <= 10; n++) {
+      const delay = startDelay + (n - 1) * intervalMs;
+      timers.push(setTimeout(() => setVisibleCount(n), delay));
+    }
     return () => timers.forEach(clearTimeout);
   }, []);
 
