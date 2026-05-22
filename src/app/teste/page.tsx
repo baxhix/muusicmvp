@@ -6,6 +6,7 @@ import SectionTwo from '@/components/teste/SectionTwo';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionFour from '@/components/teste/SectionFour';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
+import Footer from '@/components/teste/Footer';
 import styles from './page.module.css';
 
 /**
@@ -46,6 +47,7 @@ export default function TestePage() {
        *  page-level com `circling: true` (slide-in radial +
        *  drift sutil contínuo). */}
       <SectionFour />
+      <Footer />
     </div>
   );
 }

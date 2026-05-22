@@ -1,0 +1,173 @@
+/* Footer do /teste — bloco preto com 3 colunas de links,
+ * email destaque, policy row e wordmark gigante atrás. */
+
+.footer {
+  position: relative;
+  background: #000;
+  color: #fff;
+  padding: 96px 24px 56px;
+  overflow: hidden;
+}
+
+.inner {
+  position: relative;
+  z-index: 2; /* acima do wordmark de fundo */
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+/* ── Top row ─────────────────────────────
+ * Esquerda: 3 cols de links. Direita: email gigante.
+ * Em viewports estreitas (<= 880px) o email vai pra baixo
+ * dos links. */
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 48px;
+}
+@media (max-width: 880px) {
+  .topRow {
+    flex-direction: column;
+    gap: 48px;
+  }
+}
+
+.linksGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 48px;
+  flex-shrink: 0;
+}
+@media (max-width: 720px) {
+  .linksGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 480px) {
+  .linksGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 20px;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.colTitle {
+  margin: 0 0 8px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.link {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: color 200ms ease-out;
+  width: fit-content;
+}
+.link:hover { color: #fff; }
+
+/* ── Email destaque ──────────────────────
+ * Texto enorme à direita, todo em branco. Hover faz uma
+ * pequena escala-up sutil pra reforçar afetividade
+ * ("clica aqui"). */
+.email {
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(28px, 4.4vw, 56px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: #fff;
+  text-decoration: none;
+  /* Quebra o email em duas linhas em viewports estreitas
+   * se necessário — o '@' é o ponto natural. */
+  word-break: break-word;
+  flex-shrink: 1;
+  text-align: right;
+  transition: opacity 200ms ease-out;
+}
+.email:hover {
+  opacity: 0.78;
+}
+@media (max-width: 880px) {
+  .email {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+/* ── Policy row ──────────────────────────
+ * Centralizada, com gap generoso. Links em tom mute. */
+.policyRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  flex-wrap: wrap;
+}
+@media (max-width: 480px) {
+  .policyRow { gap: 24px; }
+}
+
+.policyLink {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: color 200ms ease-out;
+}
+.policyLink:hover { color: #fff; }
+
+/* ── Wordmark gigante atrás de tudo ──────
+ * Position absolute, full-width, encostado na base. Cor
+ * rgba branco MUITO sutil pra dar sensação de marca sem
+ * competir. Letter-spacing apertado pra encaixar entre
+ * as bordas do viewport sem cortar nem dar gap. */
+.bgWordmark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2vw;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 900;
+  font-size: clamp(100px, 16vw, 280px);
+  letter-spacing: -0.06em;
+  line-height: 1;
+  text-align: center;
+  /* Cor MUITO sutil — quase invisível mas presente quando
+   * a luz da viewport pega no pixel. */
+  color: rgba(255, 255, 255, 0.025);
+  white-space: nowrap;
+  user-select: none;
+  /* Garante que mesmo em mobile o texto se encaixe — quando
+   * o clamp não dá conta, escala. */
+  transform-origin: bottom center;
+}
+@media (max-width: 720px) {
+  .bgWordmark {
+    /* Em mobile o letter-spacing afetado por clamp menor
+     * pode quebrar — força um size que cabe. */
+    font-size: 22vw;
+    bottom: -2vw;
+  }
+}

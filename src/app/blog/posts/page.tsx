@@ -59,11 +59,6 @@ export default function BlogPostsListPage() {
     <div className={styles.page}>
       <header className={styles.head}>
         <h1 className={styles.heading}>Todos os posts</h1>
-        <p className={styles.tag}>
-          {allPosts.length}{' '}
-          {allPosts.length === 1 ? 'post publicado' : 'posts publicados'}
-          {' '}— do mais recente ao mais antigo.
-        </p>
 
         {/* Search field — visível, prominente. Sincroniza com
          *  ?q= e filtra client-side. */}

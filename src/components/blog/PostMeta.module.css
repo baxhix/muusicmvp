@@ -1,5 +1,9 @@
 .meta {
   font-family: var(--font-inter), sans-serif;
+  /* Espacinho do elemento que vier por cima — per product
+   * feedback "afaste um pouco do elemento que está por cima".
+   * Discreto, não rompe o fluxo dos parents que já têm gap. */
+  margin-top: 8px;
 }
 
 .authorLink {
@@ -37,7 +41,11 @@
 .authorBody {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  /* Reduzido per product feedback "diminua levemente a
+   * distância entre o nome do autor e data/tempo de leitura".
+   * Zero gap — o line-height natural já dá respiração mínima
+   * sem desconectar visualmente as duas linhas. */
+  gap: 0;
   min-width: 0;
 }
 .authorName {

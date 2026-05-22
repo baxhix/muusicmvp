@@ -36,9 +36,13 @@ export default function BlogHomePage() {
             Ver todos →
           </Link>
         </div>
-        <div className={styles.grid}>
+        {/* Lista (não grid) per product feedback. Cada post
+         *  ocupa uma linha inteira com cover à esquerda + body
+         *  à direita. Em mobile colapsa pra vertical (cover
+         *  em cima). */}
+        <div className={styles.list}>
           {recents.map((p) => (
-            <PostCard key={p.id} post={p} />
+            <PostCard key={p.id} post={p} compact />
           ))}
         </div>
       </section>
