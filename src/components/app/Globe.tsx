@@ -44,13 +44,27 @@ export default function Globe() {
     // viewport desktop sem cortar nas bordas.
     const WELCOME_CENTER: [number, number] = [-55, -12];
     const WELCOME_ZOOM = 3.2;
-    const initialZoom = isWelcome ? WELCOME_ZOOM : (persisted?.zoom ?? 1.8);
+    /* No welcome flow, em vez de snap direto pra Brasil,
+     * arrancamos em VISTA GLOBAL com bearing negativo (Earth
+     * rotacionada como se o usuário estivesse olhando de
+     * fora) e disparamos um flyTo de 3s pra Brasil quando o
+     * map.on('load') dispara. Sensação de "aproximação
+     * cinematográfica" em vez de teleporte. Per product
+     * feedback "iniciar com uma animação/giro do globo,
+     * talvez um loading de 3s até ir para a região do
+     * Brasil". */
+    const WELCOME_FLY_DURATION_MS = 3000;
+    const WELCOME_GLOBAL_CENTER: [number, number] = [40, 30]; // Europa/África — bem longe do Brasil
+    const WELCOME_GLOBAL_ZOOM = 1.5;
+    const WELCOME_GLOBAL_BEARING = -45; // rotacionado pra dar movimento ao flyTo
+
+    const initialZoom = isWelcome ? WELCOME_GLOBAL_ZOOM : (persisted?.zoom ?? 1.8);
     const initialCenter: [number, number] = isWelcome
-      ? WELCOME_CENTER
+      ? WELCOME_GLOBAL_CENTER
       : persisted
         ? [persisted.lng, persisted.lat]
         : [15, 20];
-    const initialBearing = isWelcome ? 0 : (persisted?.bearing ?? 0);
+    const initialBearing = isWelcome ? WELCOME_GLOBAL_BEARING : (persisted?.bearing ?? 0);
     const initialPitch = isWelcome ? 0 : (persisted?.pitch ?? 0);
 
     if (isWelcome && typeof window !== 'undefined') {
@@ -1067,6 +1081,27 @@ export default function Globe() {
       // moment `load` fires, and is cheap because the canvas is
       // already sized roughly correctly.
       map.resize();
+
+      // Welcome flow: depois de validar o magic link / OTP, o
+      // usuário cai aqui com isWelcome=true. O Map foi
+      // inicializado em vista global (Europa/África, zoom 1.5,
+      // bearing -45) e agora disparamos um flyTo cinematográfico
+      // de 3s pra Brasil. Sensação de "aproximação ao planeta"
+      // em vez de teleporte direto. Per product feedback "vamos
+      // iniciar com uma animação/giro do globo, talvez um
+      // loading de 3s até ir para a região do Brasil".
+      if (isWelcome) {
+        map.flyTo({
+          center: WELCOME_CENTER,
+          zoom: WELCOME_ZOOM,
+          bearing: 0,
+          pitch: 0,
+          duration: WELCOME_FLY_DURATION_MS,
+          essential: true, // executa mesmo com prefers-reduced-motion (UX crítico do onboarding)
+          curve: 1.6,      // ease curve do flyTo — valores >1 dão mais "pull" cinematográfico
+        });
+      }
+
       // Kick the idle-spin loop. It self-suspends immediately if
       // rotation isn't enabled yet (default for the first 6s), so
       // this is a cheap probe — not a 60×/s burner.
