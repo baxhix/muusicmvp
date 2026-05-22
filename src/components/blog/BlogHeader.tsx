@@ -30,7 +30,15 @@ export default function BlogHeader() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/blog" className={styles.brand} aria-label="Fanverse Blog">
-          <span className={styles.brandWord}>Fanverse</span>
+          {/* Logo SVG mono-branco — mesmo asset usado no /teste
+           *  navbar pra manter consistência de marca. Altura 20px
+           *  proporcional ao padding vertical 14px do header. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fanverse-logo.svg"
+            alt="Fanverse"
+            className={styles.brandLogo}
+          />
           <span className={styles.brandTag}>Blog</span>
         </Link>
 
