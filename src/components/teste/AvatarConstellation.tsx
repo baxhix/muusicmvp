@@ -83,29 +83,37 @@ const CIRCLE_AVATAR_SRCS = [
  * Coordenadas em vw (x) e vh (y) — escalam com viewport.
  * Cada zona define [xMin, xMax] × [yMin, yMax].
  */
+/**
+ * REORDENADO per product feedback "diminua para 4 avatares
+ * flutuantes no mobile, pois 10 são muitos".
+ *
+ * As 4 PRIMEIRAS zonas são os QUATRO CANTOS — usados no
+ * mobile (count visível = 4). Ordem: top-left, top-right,
+ * bottom-left, bottom-right. Garante distribuição visual
+ * balanceada nas 4 extremidades quando só 4 estão visíveis.
+ *
+ * Zonas 5-10 são as adicionais (edges + cantos extras)
+ * usadas no desktop pra chegar a 10 total.
+ */
 const ZONES: ReadonlyArray<{
   readonly count: number;
   readonly xRange: readonly [number, number];
   readonly yRange: readonly [number, number];
 }> = [
+  // CANTOS — primeiros 4 (mobile mostra apenas estes).
   { count: 1, xRange: [-40, -28], yRange: [-32, -18] }, // top-left
-  { count: 1, xRange: [-12, 12],  yRange: [-32, -22] }, // top-edge
   { count: 1, xRange: [28, 40],   yRange: [-32, -18] }, // top-right
-  /* Per product feedback "posicione os avatares mais
-   * centralizados verticalmente mais próximos da extremidade
-   * de cima e de baixo. O de cima para cima, e o de baixo
-   * para baixo." Antes os 2 edges laterais tinham yRange
-   * [-12, 12] (cruzando o centro vertical). Agora: o left-edge
-   * fica restrito à METADE SUPERIOR (yRange [-26, -16],
-   * empurrado pra cima), e o right-edge fica restrito à
-   * METADE INFERIOR (yRange [16, 26], empurrado pra baixo). */
-  { count: 1, xRange: [-40, -28], yRange: [-26, -16] },  // left-edge UPPER
-  { count: 1, xRange: [28, 40],   yRange: [16, 26] },    // right-edge LOWER
-  { count: 2, xRange: [-40, -26], yRange: [16, 34] },   // bottom-left ★
+  { count: 1, xRange: [-40, -26], yRange: [16, 34] },   // bottom-left
+  { count: 1, xRange: [26, 40],   yRange: [16, 34] },   // bottom-right
+  // EXTRAS — só renderizados no desktop.
+  { count: 1, xRange: [-12, 12],  yRange: [-32, -22] }, // top-edge
+  { count: 1, xRange: [-40, -28], yRange: [-26, -16] }, // left-edge UPPER
+  { count: 1, xRange: [28, 40],   yRange: [16, 26] },   // right-edge LOWER
   { count: 1, xRange: [-12, 12],  yRange: [22, 34] },   // bottom-edge
-  { count: 2, xRange: [26, 40],   yRange: [16, 34] },   // bottom-right ★
+  { count: 1, xRange: [-40, -26], yRange: [16, 34] },   // bottom-left extra
+  { count: 1, xRange: [26, 40],   yRange: [16, 34] },   // bottom-right extra
 ];
-// Soma: 1+1+1+1+1+2+1+2 = 10 ✓
+// Soma: 1+1+1+1+1+1+1+1+1+1 = 10 ✓ (4 corners + 6 extras)
 
 function buildFloatingSlots(seed: number): AvatarSlot[] {
   /* Anti-overlap entre avatares — distância min 11 (mixed
@@ -207,23 +215,23 @@ function sectionToPhase(sectionIdx: number): number {
  *  pequeno delay". */
 const PHASE_DELAY_MS = 350;
 
+/** Breakpoint mobile pro count de avatares. */
+const MOBILE_BREAKPOINT_PX = 720;
+
 export default function AvatarConstellation() {
   const [phase, setPhase] = useState(0);
   const [targetPhase, setTargetPhase] = useState(0);
 
   /**
-   * Staggered entrance: NINGUÉM visível no load — avatares
-   * aparecem UM POR UM com fade suave. Per product feedback
-   * "não inicie mostrando todos os avatares, eles devem
-   * aparecer, um de cada vez, com fade suave, depois do
-   * site carregar".
-   *
-   * Cronograma: 500ms após mount, +1. Depois +1 a cada
-   * 350ms até atingir 10. Total ~3.6s do mount à última
-   * aparição. Como o fade-in do .circling tem 1100ms, as
-   * transitions se sobrepõem — sensação de cascata fluída,
-   * não uma chegada por vez "discrete".
+   * Max count responsivo per product feedback "diminua para 4
+   * avatares flutuantes no mobile, pois 10 são muitos". 4 em
+   * mobile (≤720px), 10 em desktop. As 4 primeiras zonas
+   * estão ordenadas como CANTOS (top-left/right + bottom-
+   * left/right) — distribuição balanceada mesmo com apenas
+   * 4 visíveis.
    */
+  const [maxCount, setMaxCount] = useState(10);
+
   const [visibleCount, setVisibleCount] = useState(0);
 
   /** Parallax scroll: -px = avatar sobe (acompanhando conteúdo
@@ -240,18 +248,32 @@ export default function AvatarConstellation() {
 
   const currentSet = slotSets[phase % slotSets.length];
 
-  // Staggered reveal — UM avatar por vez, cascading.
+  // Detect viewport pra decidir count máximo (mobile = 4).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const checkMobile = () => {
+      setMaxCount(window.innerWidth <= MOBILE_BREAKPOINT_PX ? 4 : 10);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Staggered reveal — UM avatar por vez, cascading. Roda até
+  // maxCount (4 mobile, 10 desktop). Se viewport mudar
+  // durante o stagger, o effect refaz os timers com o novo
+  // limite.
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const startDelay = 500;   // ms — espera o site assentar
-    const intervalMs = 350;   // ms entre cada avatar
+    const startDelay = 500;
+    const intervalMs = 350;
 
-    for (let n = 1; n <= 10; n++) {
+    for (let n = 1; n <= maxCount; n++) {
       const delay = startDelay + (n - 1) * intervalMs;
       timers.push(setTimeout(() => setVisibleCount(n), delay));
     }
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [maxCount]);
 
   // Scroll listener: phase detection + parallax inertia.
   useEffect(() => {
@@ -342,23 +364,22 @@ export default function AvatarConstellation() {
     return () => clearTimeout(t);
   }, [targetPhase, phase]);
 
+  // Slice pra renderizar apenas maxCount avatares (4 mobile, 10 desktop).
+  const visibleSet = currentSet.slice(0, maxCount);
+
   return (
     <>
-      {currentSet.map((a, i) => (
+      {visibleSet.map((a, i) => (
         <FloatingAvatar
           key={a.name}
           src={a.src}
           name={a.name}
           size="sm"
-          // Staggered: avatar `i` só aparece quando i < visibleCount.
           revealed={i < visibleCount}
           circling={a.circling}
           driftDelay={a.driftDelay}
           style={{
             ...a.style,
-            // Parallax via CSS var. O .wrap aplica esse var no
-            // transform com transição rápida (350ms) — efeito
-            // de "scroll inertia" suave.
             ['--parallax-y' as string]: `${parallaxY.toFixed(1)}px`,
           }}
         />

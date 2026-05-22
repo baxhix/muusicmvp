@@ -203,23 +203,34 @@
 }
 
 /* ── Responsivo mobile (<=720px) ──────────
- * Per product feedback "deixe responsivo essa tela
- * ocultando os itens do menu, exceto o CTA que deve ficar
- * em uma linha":
- *   - .navLink (O App, Para Artistas) escondidos.
- *   - .langToggle (PT/EN) também escondido — "exceto o CTA"
- *     significa SÓ o CTA permanece.
- *   - Resultado: logo à esquerda + CTA "Meu Fanverse" à
- *     direita, tudo na mesma linha.
+ * Logo à esquerda + CTA Meu Fanverse à direita, ambos em
+ * UMA linha. NavLinks (O App, Para Artistas) e langToggle
+ * escondidos.
+ *
+ * Container precisa de max-width: 100% — a fórmula desktop
+ * reserva 200px pro lang toggle, mas no mobile o lang está
+ * escondido, então a reserva sobra e fazia o container
+ * encolher demais (chegava a ~135px em 375px viewport,
+ * forçando o CTA a quebrar em 2 linhas).
  *
  * Esta media query mora no FIM do arquivo de propósito —
- * precisa sobrescrever os `display: inline-flex` base de
- * .langToggle e .nav (que vêm antes no arquivo). Em CSS,
- * regras de mesma especificidade decididas pela ordem de
- * declaração — a última vence.
+ * precisa sobrescrever os `display` e `max-width` base de
+ * regras anteriores. Em CSS, regras de mesma especificidade
+ * são resolvidas por ordem — a última vence.
  */
 @media (max-width: 720px) {
+  .container {
+    /* Sem reserva de 200px — lang está escondido aqui. Logo
+     * + CTA precisam de espaço pra ficar em UMA linha. */
+    max-width: 100%;
+  }
   .navLink { display: none; }
   .langToggle { display: none; }
   .nav { gap: 0; }
+  .ctaPill {
+    /* Garante que "Meu Fanverse" não quebre em 2 linhas
+     * mesmo em viewports muito pequenos (iPhone SE 320px). */
+    white-space: nowrap;
+    padding: 8px 14px;
+  }
 }

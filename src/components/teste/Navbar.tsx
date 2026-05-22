@@ -40,10 +40,9 @@ export default function Navbar() {
         <nav className={styles.nav} aria-label="Principal">
           <a href="#o-app"         className={styles.navLink}>O App</a>
           <a href="#para-artistas" className={styles.navLink}>Para Artistas</a>
-          {/* CTA principal — pill branco com texto preto, fica
-           *  no fim do nav per product feedback "totalmente
-           *  arredondado, cor branca e texto preto". */}
-          <a href="#meu-fanverse"  className={styles.ctaPill}>
+          {/* CTA principal → /auth (fluxo de autenticação
+           *  unificado email-first). */}
+          <a href="/auth"  className={styles.ctaPill}>
             Meu Fanverse
           </a>
         </nav>
