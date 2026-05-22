@@ -4,22 +4,22 @@ import styles from './Footer.module.css';
 /**
  * Footer do /teste.
  *
- * Estrutura per wireframe:
+ * Estrutura per wireframe + product feedback:
  *   - 3 colunas de links (Company / Superfãs / Para Artistas)
  *     na esquerda, alinhadas ao topo.
  *   - Endereço de email "hello@fanverse.com.br" enorme à
- *     direita — vira o ponto de destaque do footer (CTA
- *     visual implícito).
- *   - Linha de policies (Privacidade + Termos) centralizada
- *     embaixo.
- *   - Wordmark gigante FANVERSE no rodapé, ultra-discreto
- *     (rgba branco ~0.04) — quase invisível, dá só uma
- *     sensação de marca preenchendo o espaço sem competir
- *     com o conteúdo.
+ *     direita.
+ *   - 150px de gap (CSS) entre as colunas e a palavra
+ *     gigante "FANVERSE".
+ *   - "FANVERSE" gigante via SVG com `textLength` +
+ *     `lengthAdjust="spacingAndGlyphs"` — assim o texto
+ *     escala pra ocupar 100% do container (max 1200px),
+ *     independente da fonte aplicada. Aceita Peace Sans
+ *     quando o .woff2 for adicionado em /fonts/, ou Inter
+ *     900 como fallback.
  *
- * Os usuários flutuantes da AvatarConstellation (que aparecem
- * por cima quando o footer entra no viewport) são gerenciados
- * em paralelo — não tem nada relacionado a eles aqui.
+ * Política removida per product feedback ("Remova Políticas de
+ * Privacidade e Termos de uso").
  */
 export default function Footer() {
   return (
@@ -36,16 +36,16 @@ export default function Footer() {
             </div>
             <div className={styles.col}>
               <h4 className={styles.colTitle}>Superfãs</h4>
-              <a href="#sf-1"   className={styles.link}>Manifesto</a>
-              <a href="#sf-2"   className={styles.link}>Manifesto</a>
-              <a href="#sf-3"   className={styles.link}>Manifesto</a>
+              <a href="#sf-1"    className={styles.link}>Manifesto</a>
+              <a href="#sf-2"    className={styles.link}>Manifesto</a>
+              <a href="#sf-3"    className={styles.link}>Manifesto</a>
               <a href="#sf-time" className={styles.link}>Time</a>
             </div>
             <div className={styles.col}>
               <h4 className={styles.colTitle}>Para Artistas</h4>
-              <a href="#pa-1"   className={styles.link}>Manifesto</a>
-              <a href="#pa-2"   className={styles.link}>Manifesto</a>
-              <a href="#pa-3"   className={styles.link}>Manifesto</a>
+              <a href="#pa-1"    className={styles.link}>Manifesto</a>
+              <a href="#pa-2"    className={styles.link}>Manifesto</a>
+              <a href="#pa-3"    className={styles.link}>Manifesto</a>
               <a href="#pa-time" className={styles.link}>Time</a>
             </div>
           </div>
@@ -59,21 +59,25 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* Policy row centralizada */}
-        <div className={styles.policyRow}>
-          <a href="#privacidade" className={styles.policyLink}>
-            Políticas de Privacidade
-          </a>
-          <a href="#termos" className={styles.policyLink}>
-            Termos de uso
-          </a>
-        </div>
-      </div>
-
-      {/* Wordmark gigante atrás de tudo. aria-hidden — é só
-       *  decoração visual. */}
-      <div className={styles.bgWordmark} aria-hidden="true">
-        FANVERSE
+        {/* Wordmark gigante — SVG com text scalado pra ocupar
+         *  100% do container (max 1200px). aria-hidden = é só
+         *  decoração visual. */}
+        <svg
+          className={styles.wordmark}
+          viewBox="0 0 1200 220"
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden="true"
+        >
+          <text
+            x="0"
+            y="180"
+            textLength="1200"
+            lengthAdjust="spacingAndGlyphs"
+            className={styles.wordmarkText}
+          >
+            FANVERSE
+          </text>
+        </svg>
       </div>
     </footer>
   );

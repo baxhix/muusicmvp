@@ -1,27 +1,31 @@
-/* Footer do /teste — bloco preto com 3 colunas de links,
- * email destaque, policy row e wordmark gigante atrás. */
+/* Footer — 3 cols + email + FANVERSE SVG gigante de 100%.
+ *
+ * Sem overflow hidden — o SVG do wordmark agora é elemento
+ * inline no flow normal, então o footer cresce naturalmente
+ * pra acomodar. Sem position absolute pra wordmark. */
 
 .footer {
   position: relative;
   background: #000;
   color: #fff;
   padding: 96px 24px 56px;
-  overflow: hidden;
 }
 
 .inner {
   position: relative;
-  z-index: 2; /* acima do wordmark de fundo */
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 80px;
+  /* 150px entre o topRow e o wordmark per product feedback
+   * "posicione as 3 colunas do footer 150px acima da
+   * palavra FANVERSE gigante". */
+  gap: 150px;
 }
 
 /* ── Top row ─────────────────────────────
  * Esquerda: 3 cols de links. Direita: email gigante.
- * Em viewports estreitas (<= 880px) o email vai pra baixo
+ * Em viewports estreitas (<=880px) o email vai pra baixo
  * dos links. */
 .topRow {
   display: flex;
@@ -85,8 +89,7 @@
 
 /* ── Email destaque ──────────────────────
  * Texto enorme à direita, todo em branco. Hover faz uma
- * pequena escala-up sutil pra reforçar afetividade
- * ("clica aqui"). */
+ * pequena escala-up sutil pra reforçar afetividade. */
 .email {
   font-family: var(--font-inter), sans-serif;
   font-size: clamp(28px, 4.4vw, 56px);
@@ -95,16 +98,12 @@
   line-height: 1.05;
   color: #fff;
   text-decoration: none;
-  /* Quebra o email em duas linhas em viewports estreitas
-   * se necessário — o '@' é o ponto natural. */
   word-break: break-word;
   flex-shrink: 1;
   text-align: right;
   transition: opacity 200ms ease-out;
 }
-.email:hover {
-  opacity: 0.78;
-}
+.email:hover { opacity: 0.78; }
 @media (max-width: 880px) {
   .email {
     text-align: left;
@@ -112,62 +111,33 @@
   }
 }
 
-/* ── Policy row ──────────────────────────
- * Centralizada, com gap generoso. Links em tom mute. */
-.policyRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 56px;
-  flex-wrap: wrap;
-}
-@media (max-width: 480px) {
-  .policyRow { gap: 24px; }
-}
-
-.policyLink {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: -0.005em;
-  color: rgba(255, 255, 255, 0.4);
-  text-decoration: none;
-  transition: color 200ms ease-out;
-}
-.policyLink:hover { color: #fff; }
-
-/* ── Wordmark gigante atrás de tudo ──────
- * Position absolute, full-width, encostado na base. Cor
- * rgba branco MUITO sutil pra dar sensação de marca sem
- * competir. Letter-spacing apertado pra encaixar entre
- * as bordas do viewport sem cortar nem dar gap. */
-.bgWordmark {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -2vw;
-  z-index: 1;
+/* ── Wordmark SVG ────────────────────────
+ * SVG ocupa 100% do container (max 1200px). O <text>
+ * dentro usa textLength=1200 + lengthAdjust=spacingAndGlyphs
+ * pra que a fonte se estique horizontalmente até ocupar
+ * exatamente esse comprimento — independente da fonte
+ * aplicada (Peace Sans, Inter 900, etc).
+ */
+.wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
   pointer-events: none;
-  font-family: var(--font-inter), sans-serif;
-  font-weight: 900;
-  font-size: clamp(100px, 16vw, 280px);
-  letter-spacing: -0.06em;
-  line-height: 1;
-  text-align: center;
-  /* Cor MUITO sutil — quase invisível mas presente quando
-   * a luz da viewport pega no pixel. */
-  color: rgba(255, 255, 255, 0.025);
-  white-space: nowrap;
   user-select: none;
-  /* Garante que mesmo em mobile o texto se encaixe — quando
-   * o clamp não dá conta, escala. */
-  transform-origin: bottom center;
 }
-@media (max-width: 720px) {
-  .bgWordmark {
-    /* Em mobile o letter-spacing afetado por clamp menor
-     * pode quebrar — força um size que cabe. */
-    font-size: 22vw;
-    bottom: -2vw;
-  }
+.wordmarkText {
+  font-family: 'Peace Sans', var(--font-inter), 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 240px; /* base font-size — textLength reescala glyphs */
+  fill: rgba(255, 255, 255, 0.04);
+}
+
+/* Em mobile, reduzir o gap (150px é exagero em telas pequenas)
+ * e dar mais respiro de baixo. */
+@media (max-width: 880px) {
+  .inner { gap: 96px; }
+  .footer { padding: 64px 20px 40px; }
+}
+@media (max-width: 560px) {
+  .inner { gap: 64px; }
 }

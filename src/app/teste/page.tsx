@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/teste/Navbar';
 import HeroSection from '@/components/teste/HeroSection';
+import PhonesSection from '@/components/teste/PhonesSection';
 import SectionTwo from '@/components/teste/SectionTwo';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionFour from '@/components/teste/SectionFour';
@@ -40,6 +41,7 @@ export default function TestePage() {
        *  cena. */}
       <AvatarConstellation />
       <HeroSection />
+      <PhonesSection />
       <SectionTwo />
       <SectionThree />
       {/* Section 4 — canvas vazio onde 12 avatares formam um
