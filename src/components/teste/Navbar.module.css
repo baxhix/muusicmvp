@@ -93,10 +93,10 @@
   transform: translateY(0);
 }
 
-/* Segmented control PT/EN — POSICIONADO ABSOLUTO na borda
- * direita da VIEWPORT, fora do container 1200px. Permanece
- * visível mesmo em telas muito largas onde o container fica
- * centralizado. */
+/* Toggle PT/EN — minimal, sem bordas nem pill bg per product
+ * feedback "remova as bordas. mantenha apenas o tom diferente
+ * de black/cinza". Só dois textos lado a lado: o ativo em
+ * branco, o inativo em cinza médio. Clique troca o ativo. */
 .langToggle {
   position: absolute;
   top: 50%;
@@ -104,35 +104,30 @@
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  gap: 10px;
 }
 
 .langOption {
-  width: 34px;
-  height: 26px;
-  display: inline-grid;
-  place-items: center;
   border: 0;
-  border-radius: 999px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.55);
+  padding: 4px 2px;
+  color: rgba(255, 255, 255, 0.4); /* inativo: cinza */
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   letter-spacing: 0.005em;
   cursor: pointer;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: color 200ms ease-out;
 }
 .langOption:hover {
-  color: #fff;
+  color: rgba(255, 255, 255, 0.7);
 }
 .langActive {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  color: #ffffff; /* ativo: branco puro */
+  font-weight: 600;
+}
+.langActive:hover {
+  color: #ffffff;
 }
 
 @media (max-width: 720px) {
