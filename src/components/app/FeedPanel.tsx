@@ -239,7 +239,7 @@ export default function FeedPanel() {
   // `minimized` is just the inverse used by the existing CSS
   // class / scroll auto-jump logic — kept as a local alias so
   // the rest of this file doesn't need to be rewritten.
-  const { feedOpen, setFeedOpen } = useAppShell();
+  const { feedOpen, setFeedOpen, welcomeStage } = useAppShell();
   const minimized = !feedOpen;
   const setMinimized = (next: boolean | ((m: boolean) => boolean)) => {
     if (typeof next === 'function') {
@@ -345,8 +345,19 @@ export default function FeedPanel() {
   // directly, and reading `feedOpen` here keeps this panel in
   // sync. No event plumbing required.
 
+  // Welcome reveal: fica invisível até welcomeStage >= 1.
+  // Default 5 (sessão normal) → sempre visível desde o primeiro
+  // paint. Em sessões com ?welcome=1, o stage começa em 0 e
+  // sobe pra 1 depois do flyTo do globo (3.5s).
+  const welcomeReady = welcomeStage >= 1;
+  const welcomeStyle: React.CSSProperties = {
+    opacity: welcomeReady ? 1 : 0,
+    pointerEvents: welcomeReady ? 'auto' : 'none',
+    transition: 'opacity 700ms cubic-bezier(0.22, 1, 0.36, 1)',
+  };
+
   return (
-    <>
+    <div style={welcomeStyle}>
     {minimized && <div className={styles.minimizedGradient} />}
     <div className={`${styles.panel} ${minimized ? styles.panelMinimized : ''}`}>
 
@@ -434,6 +445,6 @@ export default function FeedPanel() {
           (z-index handled in its own module). */}
       <FeedCelebration />
     </div>
-    </>
+    </div>
   );
 }

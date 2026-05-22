@@ -92,7 +92,18 @@ function Shell({ children }: { children: React.ReactNode }) {
     anaFlightModalPayload,
     closeAnaFlight,
     feedOpen,
+    welcomeStage,
   } = useAppShell();
+
+  // Helper pra wrappar elementos com fade controlado pelo
+  // welcomeStage. Retorna a className combinada — opacity 0 +
+  // pointer-events none quando o stage atual não cobre o
+  // threshold. Default é 5 (sessão normal) → todos os
+  // wrappers ficam ready desde o paint.
+  const fadeClass = (threshold: number) =>
+    welcomeStage >= threshold
+      ? styles.welcomeFade
+      : `${styles.welcomeFade} ${styles.welcomeFadeHidden}`;
   // Watches the viewer's Fanpoints balance for 100-multiple
   // crossings and dispatches `app:milestone-fp` so the
   // MilestoneNotification banner can pop globally.
@@ -187,15 +198,17 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  inside `.mapLayer` via {children}. */}
       <div className={styles.shell}>
         {!hideShellChrome && (
-          <TopBar
-            onProfileOpen={() => router.push('/app/perfil')}
-            /* "Editar perfil" no drawer abre o modal diretamente
-             * (sem desviar pela tela /app/perfil) per product
-             * feedback. O modal está montado abaixo, no shell,
-             * pra ficar acessível independente da rota. */
-            onEditProfileOpen={() => setShowEditProfile(true)}
-            onDeleteAccountOpen={() => router.push('/app/perfil')}
-          />
+          <div className={fadeClass(5)}>
+            <TopBar
+              onProfileOpen={() => router.push('/app/perfil')}
+              /* "Editar perfil" no drawer abre o modal diretamente
+               * (sem desviar pela tela /app/perfil) per product
+               * feedback. O modal está montado abaixo, no shell,
+               * pra ficar acessível independente da rota. */
+              onEditProfileOpen={() => setShowEditProfile(true)}
+              onDeleteAccountOpen={() => router.push('/app/perfil')}
+            />
+          </div>
         )}
 
         {/* Mobile route header — back arrow + centered title +
@@ -235,7 +248,7 @@ function Shell({ children }: { children: React.ReactNode }) {
            *     cluster directly under the avatars dock — no CSS
            *     change needed, only the visibility gate. */}
           {!hideShellChrome && !hideMobileHeader && (!feedOpen || !isMobile) && (
-            <div className={styles.topBar}>
+            <div className={`${styles.topBar} ${fadeClass(5)}`}>
               {isMobile ? (
                 <button
                   type="button"
@@ -328,7 +341,11 @@ function Shell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
 
-        {!hideShellChrome && <BottomNav />}
+        {!hideShellChrome && (
+          <div className={fadeClass(4)}>
+            <BottomNav />
+          </div>
+        )}
       </div>
 
       {/* ArtistBox (Fanverse identity + missions panel) — on
@@ -338,7 +355,11 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  feedback it lives ONLY on home (/app) — subpages have the
        *  MobileRouteHeader instead. Also always hidden when a chat
        *  detail is open. */}
-      {!hideShellChrome && !hideMobileHeader && <ArtistBox />}
+      {!hideShellChrome && !hideMobileHeader && (
+        <div className={fadeClass(2)}>
+          <ArtistBox />
+        </div>
+      )}
 
       {/* Avatar dock for the latest 3 conversations. Lives in the
        *  layout (not on /app's page.tsx) so the dock stays visible
@@ -356,16 +377,18 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  conversas", então o dock vira ruído visual e competia
        *  com o LiveChatPanel por pixels do canto direito. */}
       {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && (
-        <LiveChatStack
-          conversations={chat.conversations}
-          activeId={chat.activeId}
-          onlineUserIds={onlineUserIds}
-          onOpen={(conversationId) => {
-            chat.open(conversationId);
-            router.push('/app/chat');
-          }}
-          onOpenAll={() => router.push('/app/chat')}
-        />
+        <div className={fadeClass(5)}>
+          <LiveChatStack
+            conversations={chat.conversations}
+            activeId={chat.activeId}
+            onlineUserIds={onlineUserIds}
+            onOpen={(conversationId) => {
+              chat.open(conversationId);
+              router.push('/app/chat');
+            }}
+            onOpenAll={() => router.push('/app/chat')}
+          />
+        </div>
       )}
 
       {/* SuperchatTrigger pill (top-right floater) was removed
@@ -391,29 +414,33 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  the user has had a chance to orient themselves. From
        *  the second session onward the localStorage flag flips
        *  and this gate becomes a no-op. */}
-      {!isFirstAccess && !hideShellChrome && !hideMobileHeader && (playerHidden ? (
-        <button
-          type="button"
-          className={styles.playerRestorePill}
-          onClick={() => setPlayerHidden(false)}
-          aria-label="Mostrar player"
-          title="Mostrar player"
-        >
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 3v8.5a2.5 2.5 0 1 1-1.6-2.3" />
-            <path d="M6 3l7-1.5v8.5a2.5 2.5 0 1 1-1.6-2.3" />
-          </svg>
-        </button>
-      ) : (
-        <NowPlaying
-          onExpandChange={setPlayerExpanded}
-          onSizeChange={setPlayerSize}
-          songIdx={songIdx}
-          onSongIdxChange={setSongIdx}
-          onOpenPlaylist={() => setShowPlaylist(true)}
-          onDismiss={() => setPlayerHidden(true)}
-        />
-      ))}
+      {!isFirstAccess && !hideShellChrome && !hideMobileHeader && (
+        <div className={fadeClass(3)}>
+          {playerHidden ? (
+            <button
+              type="button"
+              className={styles.playerRestorePill}
+              onClick={() => setPlayerHidden(false)}
+              aria-label="Mostrar player"
+              title="Mostrar player"
+            >
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 3v8.5a2.5 2.5 0 1 1-1.6-2.3" />
+                <path d="M6 3l7-1.5v8.5a2.5 2.5 0 1 1-1.6-2.3" />
+              </svg>
+            </button>
+          ) : (
+            <NowPlaying
+              onExpandChange={setPlayerExpanded}
+              onSizeChange={setPlayerSize}
+              songIdx={songIdx}
+              onSongIdxChange={setSongIdx}
+              onOpenPlaylist={() => setShowPlaylist(true)}
+              onDismiss={() => setPlayerHidden(true)}
+            />
+          )}
+        </div>
+      )}
 
       <PlaylistModal
         open={showPlaylist}

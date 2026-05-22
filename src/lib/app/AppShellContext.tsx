@@ -159,6 +159,22 @@ interface AppShellValue {
   closeAnaFlight: () => void;
   /** Close the Ana check-in modal (with the linger timer). */
   closeAnaCheckIn: () => void;
+  /**
+   * Welcome reveal stage (0–5). Quando o usuário cai em /app
+   * vindo do fluxo de auth (`/app?welcome=1`), todo o chrome
+   * inicial é escondido — só o Globe aparece com o flyTo
+   * cinematográfico. Depois da animação, os elementos
+   * surgem com fade em sequência:
+   *   0 = nada (load inicial)
+   *   1 = Feed visível
+   *   2 = ArtistBox (Fanverse box) também
+   *   3 = NowPlaying (player) também
+   *   4 = BottomNav (navbar) também
+   *   5 = TopBar + right-rail + LiveChatStack + FloatingUsers
+   * Quando o usuário entra SEM ?welcome=1, fica em stage 5 desde
+   * o mount (= comportamento normal).
+   */
+  welcomeStage: number;
 }
 
 const AppShellContext = createContext<AppShellValue | null>(null);
@@ -195,6 +211,39 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const { flags: brainstormFlags } = useBrainstormFlags();
 
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
+
+  /**
+   * Welcome reveal: começa em 5 (default = tudo visível) e
+   * SOMENTE quando detectamos `?welcome=1` na URL (cliente)
+   * cai pra 0 e escala de volta com timers. SSR seguro porque
+   * o initial state é 5 — primeira render do server pinta
+   * tudo já visível, evitando flash de elementos ocultos pra
+   * sessões normais.
+   */
+  const [welcomeStage, setWelcomeStage] = useState(5);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('welcome') !== '1') return;
+
+    // Welcome detectado — começa do zero e cascade até 5.
+    setWelcomeStage(0);
+
+    // Cronograma: globe flyTo dura ~3s. Reveal começa em 3.5s
+    // (dá folga pro último frame do voo settle), e cada
+    // elemento entra 700ms depois do anterior — coincide com
+    // o `transition: opacity 700ms` aplicado.
+    const timers = [
+      window.setTimeout(() => setWelcomeStage(1), 3500), // Feed
+      window.setTimeout(() => setWelcomeStage(2), 4200), // ArtistBox
+      window.setTimeout(() => setWelcomeStage(3), 4900), // Player
+      window.setTimeout(() => setWelcomeStage(4), 5600), // Navbar
+      window.setTimeout(() => setWelcomeStage(5), 6300), // demais chrome
+    ];
+
+    return () => timers.forEach((t) => clearTimeout(t));
+  }, []);
 
   // ── Player state — persistent across routes so the NowPlaying
   // mini-bar keeps playing while the user is on chat/community/etc.
@@ -564,6 +613,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       closeAnaCheckIn,
       anaFlightModalPayload,
       closeAnaFlight,
+      welcomeStage,
     }),
     [
       chat,
@@ -588,6 +638,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
       anaFlightModalPayload,
       closeAnaFlight,
       closeAnaCheckIn,
+      welcomeStage,
     ],
   );
 

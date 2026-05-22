@@ -10,6 +10,28 @@
  * shell mounts the persistent UI.
  */
 
+/* Welcome-fade wrapper genérico. Cada elemento da UI que precisa
+ * aparecer em sequência depois do flyTo do globo (FeedPanel,
+ * ArtistBox, NowPlaying, BottomNav, TopBar, etc.) renderiza
+ * dentro de um <div className={welcomeFade}> com style {
+ * '--ready': 0 | 1 } controlado pelo welcomeStage do
+ * AppShellContext. Quando ready=0, opacity 0 + pointer-events
+ * none. Quando ready=1, opacity 1 com transição 700ms ease-out
+ * — fade in suave.
+ *
+ * Sessões normais (sem ?welcome=1) começam direto em
+ * welcomeStage=5 → todos os wrappers entram já como ready=1
+ * desde o primeiro paint, sem flash de invisibilidade. */
+.welcomeFade {
+  opacity: var(--ready, 1);
+  pointer-events: var(--pe, auto);
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.welcomeFadeHidden {
+  --ready: 0;
+  --pe: none;
+}
+
 .shell {
   position: fixed;
   inset: 0;
