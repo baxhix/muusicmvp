@@ -8,39 +8,42 @@
   color: #fff;
   overflow: hidden;
   display: flex;
-  /* Headline mais ao topo per product feedback — flex-start
-   * em vez de center, com padding-top vh-based pra dar
-   * respiro abaixo do navbar fixo (24px topo + 22vh).
-   * Resultado: headline aterrissa em ~22-25% do alto da
-   * viewport, deixando a metade inferior pra avatares e
-   * detalhes futuros. */
+  /* Headline mais ao topo via padding 22vh + ajuste fino de
+   * 50px per product feedback "posicione 50px mais abaixo
+   * o headline e o subtítulo. Mas mantenha a imagem dos
+   * smartphones no mesmo local". Esse +50px é compensado
+   * em `.center` reduzindo o gap (row 2) de 180 → 130,
+   * mantendo o Y dos phones intacto. */
   align-items: flex-start;
   justify-content: center;
-  padding: 22vh 24px 24px;
+  padding: calc(22vh + 50px) 24px 24px;
 }
 
 .center {
   position: relative;
   z-index: 5;
   /* Grid de 3 rows pra travar a distância da imagem dos
-   * phones EXATAMENTE 180px abaixo do headline.
+   * phones em relação ao headline.
    *   row 1: headline (auto-sized)
-   *   row 2: 180px fixos (a frase de apoio fica AQUI,
-   *          alinhada ao topo — não empurra row 3)
+   *   row 2: 130px fixos (a frase de apoio fica AQUI,
+   *          alinhada ao topo — não empurra row 3). Era
+   *          180px; reduziu pra 130 pra compensar os +50px
+   *          adicionados no padding-top do .hero, mantendo
+   *          o Y absoluto dos phones intacto.
    *   row 3: phones (auto, centralizado)
-   * Resultado: phones.top - headline.bottom = 180px,
-   * independente do conteúdo da frase. */
+   */
   display: grid;
-  grid-template-rows: auto 180px auto;
+  grid-template-rows: auto 130px auto;
   justify-items: center;
   width: 100%;
   max-width: 1100px;
 }
 @media (max-width: 720px) {
   .center {
-    /* Em mobile o gap fixo de 180 fica exagerado — reduz
-     * proporcionalmente pra que a hero não estique demais. */
-    grid-template-rows: auto 120px auto;
+    /* Em mobile o gap fixo fica exagerado — reduz
+     * proporcionalmente. Considera o +50px adicionado em
+     * padding-top. */
+    grid-template-rows: auto 80px auto;
   }
 }
 
