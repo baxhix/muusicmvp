@@ -67,30 +67,61 @@
   color: #fff;
 }
 
-/* CTA pill — Meu Fanverse. Totalmente arredondado (border-
- * radius 999), bg branco puro, texto preto. Tema invertido
- * sobre o navbar dark pra alta atenção. Fica no fim do nav,
- * destacado do resto. */
+/* CTA pill — Meu Fanverse.
+ *
+ * Per product feedback: gradient magenta → indigo (igual ao
+ * mockup de referência) com ANIMAÇÃO contínua de
+ * deslizamento horizontal.
+ *
+ * Técnica: background-size 300% + repetição das duas cores
+ * (magenta, indigo, magenta, indigo) faz o tile do gradient
+ * ser 3x maior que o botão. Animando background-position de
+ * 0% até -200% (= o ciclo completo das 2 cores), o gradient
+ * "flui" infinito sem nenhum salto visual (a posição -200%
+ * coincide com a posição 0%).
+ *
+ * 8s de duração + ease linear = movimento suave e contínuo,
+ * sem chamar muita atenção. prefers-reduced-motion congela
+ * o gradient. */
 .ctaPill {
   display: inline-flex;
   align-items: center;
   padding: 8px 18px;
-  background: #ffffff;
-  color: #000000;
+  background:
+    linear-gradient(
+      90deg,
+      #ff00b4 0%,
+      #5b00d1 50%,
+      #ff00b4 100%
+    );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  color: #ffffff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 999px;
-  transition: background 200ms ease-out, transform 200ms ease-out;
+  animation: ctaPillShift 8s linear infinite;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
 }
 .ctaPill:hover {
-  background: rgba(255, 255, 255, 0.88);
   transform: translateY(-1px);
+  /* Glow sutil colored no hover pra reforçar interatividade. */
+  box-shadow: 0 8px 24px -8px rgba(255, 0, 180, 0.5);
 }
 .ctaPill:active {
   transform: translateY(0);
+}
+
+@keyframes ctaPillShift {
+  from { background-position: 0% 50%; }
+  to   { background-position: -200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaPill { animation: none; }
 }
 
 /* Toggle PT/EN — segmented pill SEM borda per product
