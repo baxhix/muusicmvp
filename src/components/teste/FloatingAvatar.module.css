@@ -52,9 +52,11 @@
  * profissional em vez de todos chegando em sync. Default
  * 2400ms se a var não estiver presente. */
 .circling {
+  /* Opacity 700 → 1100ms acompanha o approach mais lento.
+   * Fade out na saída usa o mesmo timing. */
   transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--enter-duration, 2400ms) cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--enter-duration, 4000ms) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .circling.hidden {
   transform: translate3d(

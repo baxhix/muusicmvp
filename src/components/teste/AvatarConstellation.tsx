@@ -176,11 +176,16 @@ const CIRCLE_AVATAR_SRCS = [
 ];
 
 function buildCircleSlots(): AvatarSlot[] {
-  /* Per product feedback "adicione mais 3 avatares" — total
-   * sobe de 12 → 15 cabeças no grupo da Section 4. */
   const count = 15;
-  const maxRadius = 26; // vmin (limite externo do grupo)
-  const minRadiusFactor = 0.4; // 40% — quem fica mais perto do centro
+  /* maxRadius mais largo (26 → 32vmin) per product feedback
+   * "distribua-os mais aos lados da página, pois ao centro
+   * irei colocar conteúdos". Avatares ocupam mais espaço
+   * lateral, deixando o centro livre. */
+  const maxRadius = 32; // vmin
+  /* minRadiusFactor sobe de 40% → 65% — TODOS os avatares
+   * ficam pelo menos a 65% do raio máximo (longe do centro). */
+  const minRadiusFactor = 0.65;
+
   let seed = 73;
   const rng = () => {
     seed = (seed + 0x6d2b79f5) >>> 0;
@@ -191,54 +196,59 @@ function buildCircleSlots(): AvatarSlot[] {
   };
 
   return Array.from({ length: count }, (_, i) => {
-    // Ângulo base distribuído com jitter generoso. Como temos
-    // 15 fatias agora, ângulo entre vizinhos é 24° (era 30°)
-    // com jitter de ±12° pra preservar a mesma sensação de
-    // grupo desorganizado.
-    const baseAngle = (i / count) * Math.PI * 2 - Math.PI / 2;
-    const angleJitter = (rng() - 0.5) * (Math.PI / 7.5); // ±12°
-    const angle = baseAngle + angleJitter;
+    /* Distribuição lateral: avatares alternam entre band
+     * ESQUERDA (centro 180°) e DIREITA (centro 0°), com
+     * jitter generoso de ±60°. Nenhum cai no eixo vertical
+     * puro — o centro fica livre pra conteúdo futuro.
+     *
+     * Algorítmo organico: i par → lado esquerdo, i ímpar →
+     * direito. Como i percorre 0..14, isso dá 8 left + 7
+     * right (≈simétrico). Dentro de cada lado o jitter
+     * espalha em arco de 120° (de -60° a +60° do eixo
+     * horizontal), permitindo posições ligeiramente acima ou
+     * abaixo do centro mas SEMPRE na metade lateral.
+     */
+    const isLeft = i % 2 === 0;
+    const sideCenter = isLeft ? Math.PI : 0;
+    const sideJitter = (rng() - 0.5) * ((Math.PI * 2) / 3); // ±60°
+    const angle = sideCenter + sideJitter;
 
-    // Raio aleatório no range minRadiusFactor..1.0 — distribuição
-    // uniforme; alguns perto do centro, outros na "casca".
+    // Raio polarizado pra perimeter (65-100% do max).
     const radiusFactor = minRadiusFactor + rng() * (1 - minRadiusFactor);
     const r = maxRadius * radiusFactor;
 
     const fx = Math.cos(angle) * r;
     const fy = Math.sin(angle) * r;
 
-    /* Approach REFEITO per product feedback "redistribua o
-     * caminho da chegada deles não somente das laterais, mas
-     * pela diagonal, por cima e por baixo":
+    /* CROSSOVER per product feedback "os avatares que entrarem
+     * pela esquerda se posicionam flutuante mais à direita e
+     * vice-versa".
      *
-     * Cada avatar entra a partir de um ponto FORA da viewport
-     * NA DIREÇÃO DO PRÓPRIO ÂNGULO FINAL. Ou seja: o avatar
-     * que termina no topo vem de cima; o que termina no canto
-     * inferior direito vem do canto inferior direito; e assim
-     * por diante.
+     * Implementação elegante: o ângulo do ponto INICIAL é 180°
+     * oposto ao ângulo final. Se o avatar termina à direita
+     * (angle ≈ 0°), entra pela esquerda (startAngle ≈ 180°);
+     * se termina em cima-direita (angle = 30°), entra de
+     * baixo-esquerda (startAngle = 210°). Diagonais ficam
+     * naturalmente representadas.
      *
-     * Implementação: projetamos o vetor radial num raio de
-     * 75vmax (≈garante que está além de qualquer canto da
-     * viewport, pra qualquer aspect ratio).
-     *
-     * Velocidades intercaladas per "diminua a velocidade que
-     * os avatares se aproximam de uma forma geral e intercale
-     * para que tenha velocidades diferentes". Range 2200-3800ms
-     * (era 1400ms uniforme).
+     * startRadius 70vmax — sempre além das bordas da viewport.
      */
-    const startRadius = 75; // vmax
-    const sx = Math.cos(angle) * startRadius;
-    const sy = Math.sin(angle) * startRadius;
+    const startRadius = 70; // vmax
+    const startAngle = angle + Math.PI;
+    const sx = Math.cos(startAngle) * startRadius;
+    const sy = Math.sin(startAngle) * startRadius;
 
-    /* Velocidade de approach intercalada (2.2s-3.8s).
-     * Velocidade do drift idle (5.5s-8.5s) também varia pra
-     * dar dinamismo profissional. */
-    const enterDurationMs = 2200 + rng() * 1600;
-    const driftDurationSec = 5.5 + rng() * 3.0;
+    /* Velocidades MAIS LENTAS per product feedback "a
+     * velocidade de entrada e saída dos avatares deve ser
+     * menor".
+     * - Approach: 3.5-5.5s (era 2.2-3.8s).
+     * - Drift idle: 7-11s (era 5.5-8.5s). Curva mais lenta
+     *   reforça a "sensação de espaço sem gravidade". */
+    const enterDurationMs = 3500 + rng() * 2000;
+    const driftDurationSec = 7 + rng() * 4;
 
     return {
       name: `group-${i}`,
-      // Cicla pelas 3 fotos (5 instâncias de cada com count=15).
       src: CIRCLE_AVATAR_SRCS[i % CIRCLE_AVATAR_SRCS.length],
       section: 4,
       circling: true,
@@ -246,14 +256,12 @@ function buildCircleSlots(): AvatarSlot[] {
       style: {
         left: `calc(50% + ${fx.toFixed(2)}vmin - 24px)`,
         top: `calc(50% + ${fy.toFixed(2)}vmin - 24px)`,
-        // --circle-tx/ty: delta do ponto FINAL até o ponto
-        // INICIAL fora da viewport (na direção do ângulo).
+        // --circle-tx/ty: delta da posição FINAL até o ponto
+        // INICIAL (180° oposto, fora da viewport).
         ['--circle-tx' as string]:
           `calc(${sx.toFixed(2)}vmax - ${fx.toFixed(2)}vmin)`,
         ['--circle-ty' as string]:
           `calc(${sy.toFixed(2)}vmax - ${fy.toFixed(2)}vmin)`,
-        // Velocidades individualizadas — cada avatar move com
-        // ritmo próprio.
         ['--enter-duration' as string]: `${Math.round(enterDurationMs)}ms`,
         ['--drift-duration' as string]: `${driftDurationSec.toFixed(2)}s`,
       } as React.CSSProperties,
