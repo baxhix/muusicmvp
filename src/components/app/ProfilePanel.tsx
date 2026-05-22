@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import NowPlaying from './NowPlaying';
+import NowPlayingPreview from './NowPlayingPreview';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
 import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
@@ -266,26 +267,40 @@ export default function ProfilePanel({
           </p>
         </div>
 
-        {/* ── Player + Online/Offline toggle (toggle só no próprio perfil) ── */}
+        {/* ── Player + Online/Offline toggle (toggle só no próprio perfil) ──
+         *
+         * Quando é o PRÓPRIO perfil, renderiza o <NowPlaying embed />
+         * com controles completos — é o player do usuário logado e
+         * faz sentido controlar daqui.
+         *
+         * Quando é o perfil de OUTRO usuário, renderiza só o
+         * <NowPlayingPreview /> com os dados de `user.nowPlaying`
+         * (track atual deles). Sem controles, sem botões de Spotify,
+         * sem progress bar — o player do outro usuário só está
+         * sendo EXIBIDO, não controlado. Per product feedback. */}
         {user.nowPlaying && (
           <div className={styles.playerRow}>
-            <NowPlaying embed />
-            {isOwnProfile && (
-              <div className={styles.onlineToggleWrap}>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={online}
-                  aria-label={online ? 'Ficar offline' : 'Ficar online'}
-                  className={`${styles.onlineToggle} ${online ? styles.onlineToggleOn : ''}`}
-                  onClick={() => setOnline(v => !v)}
-                >
-                  <span className={styles.onlineToggleKnob} />
-                </button>
-                <span className={styles.onlineToggleLabel}>
-                  {online ? 'Online' : 'Offline'}
-                </span>
-              </div>
+            {isOwnProfile ? (
+              <>
+                <NowPlaying embed />
+                <div className={styles.onlineToggleWrap}>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={online}
+                    aria-label={online ? 'Ficar offline' : 'Ficar online'}
+                    className={`${styles.onlineToggle} ${online ? styles.onlineToggleOn : ''}`}
+                    onClick={() => setOnline(v => !v)}
+                  >
+                    <span className={styles.onlineToggleKnob} />
+                  </button>
+                  <span className={styles.onlineToggleLabel}>
+                    {online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <NowPlayingPreview track={user.nowPlaying} />
             )}
           </div>
         )}

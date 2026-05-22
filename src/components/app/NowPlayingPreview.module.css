@@ -1,0 +1,98 @@
+/* NowPlayingPreview — display-only pill estilo .playerEmbed do
+ * NowPlaying real. Mantém o mesmo bg + radius + padding pra
+ * que no ProfilePanel a leitura seja idêntica ao do perfil
+ * próprio (só sem controles). */
+
+.preview {
+  /* Mesmas medidas/colors do .player + .playerEmbed do
+   * NowPlaying, replicadas aqui pra que esse componente seja
+   * autossuficiente (sem coupling via shared classes). */
+  position: relative;
+  max-width: 296px;
+  width: 100%;
+  background: var(--surface, rgba(20, 20, 22, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 11px 16px 11px 11px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  pointer-events: auto;
+  /* backdrop-filter pra harmonizar com o restante do shell */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Capa circular 38px (mesmo size do .art do NowPlaying). */
+.art {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.artImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.artFallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #3a3a3a, #1c1c1c);
+}
+
+/* Info — título + artista. Mesma tipografia do NowPlaying. */
+.info {
+  flex: 1;
+  min-width: 0;
+}
+.title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink, #f5f5f5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+.artist {
+  font-size: 12px;
+  color: var(--ink-mute, rgba(245, 245, 245, 0.6));
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wave bars — equalizer animado de 3 barrinhas. Sinaliza
+ * "ao vivo" sem oferecer affordance de controle. */
+.wave {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.wave span {
+  display: block;
+  width: 2.5px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 1px;
+  transform-origin: bottom center;
+}
+.wave span:nth-child(1) { height: 7px;  animation: nowplaying-preview-bar 0.8s ease-in-out infinite; }
+.wave span:nth-child(2) { height: 12px; animation: nowplaying-preview-bar 0.8s ease-in-out infinite 0.15s; }
+.wave span:nth-child(3) { height: 9px;  animation: nowplaying-preview-bar 0.8s ease-in-out infinite 0.3s; }
+
+@keyframes nowplaying-preview-bar {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave span { animation: none; transform: scaleY(0.7); }
+}
