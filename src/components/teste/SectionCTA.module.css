@@ -6,7 +6,11 @@
 .cta {
   display: inline-flex;
   align-items: center;
-  padding: 11px 24px;
+  /* Padding: 11x24 → 17x30 per product feedback "aumente 12px
+   * a largura e altura dos CTAs na landing page" — mesma
+   * fórmula do .ctaPill do navbar pra manter pareamento
+   * visual. Font 14px mantida. */
+  padding: 17px 30px;
   margin-top: 24px;
   background:
     linear-gradient(

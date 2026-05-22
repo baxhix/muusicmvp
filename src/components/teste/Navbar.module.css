@@ -1,4 +1,4 @@
-/* Navbar do /teste — minimalista, três colunas (brand | nav | lang). */
+/* Navbar do /teste — minimalista, três colunas (brand | nav | menu). */
 
 .navbar {
   position: fixed;
@@ -6,8 +6,9 @@
   left: 0;
   right: 0;
   z-index: 50;
-  /* Brand + nav no .container centralizado (1200px); lang
-   * toggle absolute fora dele à direita da viewport. */
+  /* Brand + nav no .container centralizado (1200px); menu
+   * trigger (3 traços) absolute fora dele à direita da
+   * viewport. */
   padding: 18px clamp(20px, 4vw, 56px);
   /* Frosted glass per product feedback "adicione cor no
    * background do header e aplique o efeito de desfoque do
@@ -27,7 +28,7 @@
  * O `200px` reserva espaço pra que, mesmo em viewports
  * estreitos onde o container ainda não atingiu seu max, ele
  * encolha proporcionalmente — afasta o `nav` (right edge do
- * container) do `langToggle` (absolute na borda direita da
+ * container) do `.menuRoot` (absolute na borda direita da
  * viewport).
  *
  * Como é symmetric (margin auto), o LOGO no left edge também
@@ -74,9 +75,6 @@
   gap: clamp(18px, 2.4vw, 32px);
 }
 
-/* (responsivo mobile movido pro fim do arquivo — precisa
- *  vir DEPOIS da definição base de .langToggle pra
- *  sobrescrever o display: inline-flex). */
 .navLink {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   /* 14px per product feedback "deixe os itens do menu com
@@ -109,17 +107,17 @@
  * "flui" infinito sem nenhum salto visual (a posição -200%
  * coincide com a posição 0%).
  *
- * 8s de duração + ease linear = movimento suave e contínuo,
+ * 6s de duração + ease linear = movimento suave e contínuo,
  * sem chamar muita atenção. prefers-reduced-motion congela
  * o gradient. */
 .ctaPill {
   display: inline-flex;
   align-items: center;
-  /* Padding aumentado ~30% per product feedback "aumente 30%
-   * o tamanho cta da landing page, mas mantenha o tamanho da
-   * font atual" — 8x18 → 11x24. Área visual cresce sem mexer
-   * no font-size 14px. */
-  padding: 11px 24px;
+  /* Padding: 11x24 → 17x30 per product feedback "aumente 12px
+   * a largura e altura dos CTAs na landing page" (+6 cada
+   * lado em ambos os eixos = +12 width / +12 height). Mantém
+   * font-size 14px. */
+  padding: 17px 30px;
   background:
     linear-gradient(
       90deg,
@@ -161,81 +159,205 @@
   .ctaPill { animation: none; }
 }
 
-/* Toggle PT/EN — segmented pill SEM borda per product
- * feedback "deixe o idioma em forma de toggle como estava,
- * porém sem borda". O wrapper tem só bg sutil pra dar
- * affordance de "control"; o ativo recebe bg invertido
- * branco translúcido. Nenhum border anywhere. */
-.langToggle {
+/* ── Hamburger menu + super submenu ─────────────────────
+ * Substitui o antigo segmented PT/EN. O wrapper `.menuRoot`
+ * fica absolute na borda direita da viewport (mesma posição
+ * que o lang toggle ocupava), permitindo que o panel se
+ * ancore relativamente ao trigger via position: absolute
+ * filho. */
+.menuRoot {
   position: absolute;
   top: 50%;
   right: clamp(20px, 4vw, 56px);
   transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 999px;
 }
 
-.langOption {
-  width: 34px;
-  height: 26px;
-  display: inline-grid;
-  place-items: center;
+/* Botão de 3 traços. Tamanho compacto (40x40) com 3 .menuBar
+ * empilhados via flex column. Hover ilumina; estado open
+ * "vira" o ícone num X via rotation (sutil — não é menu
+ * full-screen, só feedback de aberto/fechado). */
+.menuTrigger {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
   border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.5); /* inativo: cinza */
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.005em;
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  transition: background 200ms ease-out, color 200ms ease-out;
+  transition: background 200ms ease-out;
 }
-.langOption:hover {
+.menuTrigger:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.menuBar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #ffffff;
+  border-radius: 1px;
+  transition: transform 220ms ease-out, opacity 200ms ease-out;
+}
+
+/* Estado open: bar1 vira /, bar3 vira \, bar2 some — clássico
+ * burger → X. Mantém o feedback consistente independente do
+ * que está dentro do panel. */
+.menuTriggerOpen .menuBar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.menuTriggerOpen .menuBar:nth-child(2) {
+  opacity: 0;
+}
+.menuTriggerOpen .menuBar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Super submenu — glass dropdown ancorado top-right do
+ * trigger. Aparece com fade + leve translate-y; quando
+ * fechado fica display visible mas opacity 0 + pointer-events
+ * none, pra que aria-hidden funcione e a transition rode em
+ * ambos os sentidos.
+ *
+ * z-index alto pra ficar acima da navbar (que já é z 50) e de
+ * qualquer overlay da page. */
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 260px;
+  padding: 10px;
+  background: rgba(14, 14, 18, 0.92);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.6),
+    0 8px 16px -8px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+  z-index: 51;
+}
+.menuPanelOpen {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.menuSectionLabel {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 8px 12px 6px;
+}
+
+.menuItem {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px 1fr 20px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease-out;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.menuItemActive {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menuItemCode {
+  width: 36px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: rgba(255, 255, 255, 0.85);
 }
-.langActive {
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff; /* ativo: branco puro */
+.menuItemActive .menuItemCode {
+  background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
+  color: #fff;
 }
-.langActive:hover {
+
+.menuItemLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.menuItemNative {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.92);
+}
+.menuItemSub {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.menuItemCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #ffffff;
 }
 
 /* ── Responsivo mobile (<=720px) ──────────
- * Logo à esquerda + CTA Meu Fanverse à direita, ambos em
- * UMA linha. NavLinks (O App, Para Artistas) e langToggle
- * escondidos.
+ * Logo à esquerda + CTA Meu Fanverse no centro/direita + menu
+ * hamburger na ponta direita. NavLinks (O App, Para Artistas)
+ * seguem escondidos — eles têm âncora pra sections da
+ * landing, espaço escasso em mobile.
  *
- * Container precisa de max-width: 100% — a fórmula desktop
- * reserva 200px pro lang toggle, mas no mobile o lang está
- * escondido, então a reserva sobra e fazia o container
- * encolher demais (chegava a ~135px em 375px viewport,
- * forçando o CTA a quebrar em 2 linhas).
- *
- * Esta media query mora no FIM do arquivo de propósito —
- * precisa sobrescrever os `display` e `max-width` base de
- * regras anteriores. Em CSS, regras de mesma especificidade
- * são resolvidas por ordem — a última vence.
+ * O hamburger é compacto o suficiente (40x40) pra caber junto
+ * com o CTA mesmo em iPhone SE (320px).
  */
 @media (max-width: 720px) {
   .container {
-    /* Sem reserva de 200px — lang está escondido aqui. Logo
-     * + CTA precisam de espaço pra ficar em UMA linha. */
-    max-width: 100%;
+    /* Reserva 60px pra menuRoot (40px + gap). */
+    max-width: calc(100vw - 2 * clamp(16px, 4vw, 56px) - 60px);
   }
   .navLink { display: none; }
-  .langToggle { display: none; }
   .nav { gap: 0; }
   .ctaPill {
-    /* Garante que "Meu Fanverse" não quebre em 2 linhas
-     * mesmo em viewports muito pequenos (iPhone SE 320px).
-     * Padding também escalado ~30% (8x14 → 11x18). */
+    /* Mantém em uma linha. Padding também escalado per
+     * feedback: 11x18 → 17x24 (+12 width / +12 height). */
     white-space: nowrap;
-    padding: 11px 18px;
+    padding: 17px 24px;
+  }
+  /* Trigger maior área-toque mas mesmo tamanho visual. */
+  .menuTrigger {
+    width: 38px;
+    height: 38px;
+  }
+  /* Panel ajustado pra mobile: right alinhado ao trigger, mas
+   * sem exceder a viewport. */
+  .menuPanel {
+    min-width: 240px;
+    right: 0;
   }
 }
