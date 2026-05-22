@@ -43,6 +43,12 @@ export const tokens = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     kind: text('kind', { enum: ['magic', 'session'] }).notNull(),
+    /** OTP de 6 dígitos enviado no mesmo email do magic link
+     *  como fallback (usuário pode clicar no link OU digitar o
+     *  código). Só preenchido pra kind='magic'; null pra
+     *  kind='session'. Index parcial em (code, kind) permite
+     *  lookup eficiente em /api/auth/verify por {email, code}. */
+    code: text('code'),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

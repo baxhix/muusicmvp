@@ -148,6 +148,13 @@
       "when": 1779366779396,
       "tag": "0021_harsh_marvel_zombies",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1779380000000,
+      "tag": "0022_auth_otp_code",
+      "breakpoints": true
     }
   ]
 }

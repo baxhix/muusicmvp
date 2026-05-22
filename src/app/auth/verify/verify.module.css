@@ -19,6 +19,46 @@
 
 /* Status box — indica que o sistema está aguardando o clique
  * no link. Spinner pequeno + texto suave. */
+/* OTP input: centralized + monospace pra que os 6 dígitos
+ * fiquem visualmente bem espaçados. */
+.otpInput {
+  text-align: center;
+  font-family: var(--font-inter), monospace;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+  padding-right: 12px;
+}
+
+/* Divider "ou" entre o input do código e a status box do link. */
+.divider {
+  position: relative;
+  margin: 24px 0 16px;
+  width: 100%;
+  text-align: center;
+}
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.divider span {
+  position: relative;
+  display: inline-block;
+  padding: 0 12px;
+  background: #000;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .statusBox {
   display: inline-flex;
   align-items: center;

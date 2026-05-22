@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/server/db';
 import { users, tokens } from '@/server/db/schema';
-import { generateToken, MAGIC_TTL_MS } from '@/server/auth/tokens';
+import { generateToken, generateCode, MAGIC_TTL_MS } from '@/server/auth/tokens';
 import { sendMagicLink } from '@/server/email/magicLink';
 import { env } from '@/server/env';
 import { eq } from 'drizzle-orm';
@@ -66,10 +66,12 @@ export async function POST(req: Request) {
     (await db.insert(users).values({ email, name: defaultName }).returning())[0];
 
   const { raw, hash } = generateToken();
+  const code = generateCode(); // 6-digit OTP fallback
   await db.insert(tokens).values({
     tokenHash: hash,
     userId: user.id,
     kind: 'magic',
+    code,
     expiresAt: new Date(Date.now() + MAGIC_TTL_MS),
   });
 
@@ -97,7 +99,7 @@ export async function POST(req: Request) {
     returnTo ?? `${env.APP_URL.replace(/\/+$/, '')}/app?welcome=1`;
 
   try {
-    await sendMagicLink(email, raw, effectiveReturnTo);
+    await sendMagicLink(email, raw, code, effectiveReturnTo);
   } catch (err) {
     console.error('magic-link send failed:', err);
     return NextResponse.json({ error: 'email_failed' }, { status: 502 });

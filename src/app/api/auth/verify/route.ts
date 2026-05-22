@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '@/server/db';
-import { tokens } from '@/server/db/schema';
+import { tokens, users } from '@/server/db/schema';
 import { hashToken } from '@/server/auth/tokens';
 import { createSession } from '@/server/auth/session';
 import { env } from '@/server/env';
@@ -27,6 +28,10 @@ function safeReturnTo(raw: string | null): string | null {
   }
 }
 
+/**
+ * GET: chamado pelo magic link no email. Consome o token via hash
+ * e cria sessão. Redireciona pra /app (ou returnTo).
+ */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const raw = url.searchParams.get('token');
@@ -55,7 +60,6 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL('/?auth=expired', env.APP_URL));
   }
 
-  // Mark consumed and create a session in a single round-trip is fine for MVP.
   await db
     .update(tokens)
     .set({ consumedAt: new Date() })
@@ -63,9 +67,72 @@ export async function GET(req: Request) {
 
   await createSession(magic.userId);
 
-  // If the magic link carried a returnTo (admin.muusic.live, etc.),
-  // land the user back where they started. The session cookie is
-  // scoped to .muusic.live so every subdomain sees it. Falls back to
-  // /app on muusic.live for the default flow.
   return NextResponse.redirect(returnTo ?? new URL('/app', env.APP_URL));
+}
+
+/**
+ * POST: chamado pelo /auth/verify quando o usuário digita o
+ * código de 6 dígitos como FALLBACK ao magic link.
+ *
+ * Body: { email, code }. Procura o token magic ativo da conta
+ * com esse email + code, valida expiração + single-use, cria
+ * sessão. Retorna JSON (não redirect) pra que o frontend
+ * controle a navegação após o success.
+ */
+const postBodySchema = z.object({
+  email: z.string().email().max(254).transform((s) => s.trim().toLowerCase()),
+  code: z.string().regex(/^\d{6}$/),
+});
+
+export async function POST(req: Request) {
+  let parsed;
+  try {
+    parsed = postBodySchema.parse(await req.json());
+  } catch {
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+  }
+
+  const { email, code } = parsed;
+
+  // Resolve user pelo email primeiro (o token é vinculado por
+  // userId, não email diretamente).
+  const userRow = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (!userRow[0]) {
+    // Não revela se o email existe — generic error.
+    return NextResponse.json({ error: 'invalid_code' }, { status: 400 });
+  }
+
+  const row = await db
+    .select()
+    .from(tokens)
+    .where(
+      and(
+        eq(tokens.userId, userRow[0].id),
+        eq(tokens.kind, 'magic'),
+        eq(tokens.code, code),
+        gt(tokens.expiresAt, new Date()),
+        isNull(tokens.consumedAt),
+      ),
+    )
+    .limit(1);
+
+  const magic = row[0];
+  if (!magic) {
+    return NextResponse.json({ error: 'invalid_code' }, { status: 400 });
+  }
+
+  // Marca consumido pelo hash do token (PK).
+  await db
+    .update(tokens)
+    .set({ consumedAt: new Date() })
+    .where(eq(tokens.tokenHash, magic.tokenHash));
+
+  await createSession(magic.userId);
+
+  return NextResponse.json({ ok: true });
 }
