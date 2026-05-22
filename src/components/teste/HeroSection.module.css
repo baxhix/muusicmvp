@@ -60,7 +60,11 @@
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   font-size: clamp(56px, 11vw, 142px);
-  line-height: 0.95;
+  /* line-height 1.05 (era 0.95) — line-box mais alta pra
+   * caber o acento do Ã sem clipping. Com 0.95 + background-
+   * clip: text o navegador clipava o tilde porque o text-box
+   * usado pelo gradient não incluía a área do diacrítico. */
+  line-height: 1.05;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
   -webkit-background-clip: text;
@@ -68,6 +72,12 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
   margin: 0;
+  /* Padding 0 0.06em — apenas horizontal — dá respiro pras
+   * bordas (S inicial e S final) que o display font heavy
+   * extende além da text-box base do background-clip. Sem
+   * isso o pixel da última letra ficava cortado em fonts
+   * com overhang lateral grande. */
+  padding: 0 0.06em;
   text-align: center;
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
