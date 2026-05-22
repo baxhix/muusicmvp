@@ -7,6 +7,7 @@ import { track } from '@/lib/analytics';
 import {
   loadOnboarding,
   saveOnboarding,
+  clearOnboarding,
   STEP_PATHS,
 } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
@@ -40,18 +41,32 @@ export default function EmailStep() {
     if (!authLoading && user) router.replace('/app');
   }, [authLoading, user, router]);
 
-  // Restore do email se o usuário fechou e voltou.
+  // Restore do email + retoma onboarding em andamento.
+  // Só redireciona pra step paths SE o usuário ainda tiver
+  // sessão ativa (authLoading=false + user existe). Sem
+  // essa guarda, um logout deixava o localStorage com step
+  // antigo e o EmailStep mandava pra /auth/onboarding/...
+  // que (sem sessão) bounceava de volta pra /auth → loop
+  // infinito ("tela tremendo").
   useEffect(() => {
+    if (authLoading) return; // espera AuthContext resolver
+
     const stored = loadOnboarding();
     if (stored.email && !email) setEmail(stored.email);
-    // Se o store já está num step além de 'email', envia o
-    // usuário direto pra onde parou — preserva continuidade.
+
     if (stored.step !== 'email') {
-      router.replace(STEP_PATHS[stored.step]);
+      if (user) {
+        // Sessão ativa + step em andamento → retoma.
+        router.replace(STEP_PATHS[stored.step]);
+      } else {
+        // Sem sessão + step stale → limpa o store pra evitar
+        // loops e fica no email step.
+        clearOnboarding();
+      }
     }
     track('auth_started', {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authLoading, user]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

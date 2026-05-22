@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import type { ApiUser } from '@/lib/api/types';
+import { clearOnboarding } from '@/lib/auth/onboardingStore';
 
 interface AuthContextValue {
   user: ApiUser | null;
@@ -65,6 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('logout failed:', err);
     }
     setUser(null);
+    // Limpa o onboardingStore — sem isso, o /auth ao reload
+    // detectava um step antigo (birth-date/profile/etc) e
+    // tentava redirecionar pra ele. Como a página não tem
+    // sessão, ela bounceava de volta pra /auth → loop
+    // infinito (tela "tremendo").
+    clearOnboarding();
     // Hard navigation drops in-memory state (socket, hooks) cleanly.
     if (typeof window !== 'undefined') {
       window.location.href = '/auth';
