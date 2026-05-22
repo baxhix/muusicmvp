@@ -67,6 +67,32 @@
   color: #fff;
 }
 
+/* CTA pill — Meu Fanverse. Totalmente arredondado (border-
+ * radius 999), bg branco puro, texto preto. Tema invertido
+ * sobre o navbar dark pra alta atenção. Fica no fim do nav,
+ * destacado do resto. */
+.ctaPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  background: #ffffff;
+  color: #000000;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: background 200ms ease-out, transform 200ms ease-out;
+}
+.ctaPill:hover {
+  background: rgba(255, 255, 255, 0.88);
+  transform: translateY(-1px);
+}
+.ctaPill:active {
+  transform: translateY(0);
+}
+
 /* Segmented control PT/EN — POSICIONADO ABSOLUTO na borda
  * direita da VIEWPORT, fora do container 1200px. Permanece
  * visível mesmo em telas muito largas onde o container fica
