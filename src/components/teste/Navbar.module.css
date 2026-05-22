@@ -53,7 +53,9 @@
 }
 .navLink {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14.5px;
+  /* 16px per product feedback "diminua pra 16px a tipografia
+   * do header" — uniforme com .brand. */
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: -0.005em;
   /* Cinza médio per product feedback — não competem com o
@@ -98,12 +100,15 @@
   background-position: 0% 50%;
   color: #ffffff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
+  /* 16px alinhado com a tipografia do header. */
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 999px;
-  animation: ctaPillShift 8s linear infinite;
+  /* Animação mais rápida per product feedback "deixe mais
+   * rápida a animação do Meu Fanverse" (8s → 3s). */
+  animation: ctaPillShift 3s linear infinite;
   transition: transform 200ms ease-out, box-shadow 200ms ease-out;
 }
 .ctaPill:hover {

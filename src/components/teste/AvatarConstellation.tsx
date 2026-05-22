@@ -24,6 +24,9 @@ import FloatingAvatar from './FloatingAvatar';
 
 interface AvatarSlot {
   name: string;
+  /** Path opcional pra imagem. Sem src → renderiza placeholder
+   *  cinza + iniciais (modo wireframe). */
+  src?: string;
   /** Estática OU array que cicla com fade. */
   label?: string;
   labels?: string[];
@@ -35,9 +38,11 @@ interface AvatarSlot {
 
 /* ── Sections 1-3: 3 avatares cada, cantos diferentes ─────── */
 const SECTION_AVATARS: AvatarSlot[] = [
-  // Section 1 — cantos
+  // Section 1 — cantos. Únicos com fotos reais (user-01/02/03);
+  // demais sections seguem com placeholder cinza wireframe.
   {
     name: 'Marina',
+    src: '/teste/user-01.png',
     labels: [
       'Boiadeira - Ana Castela',
       'Pipoco - Ana Castela',
@@ -48,6 +53,7 @@ const SECTION_AVATARS: AvatarSlot[] = [
   },
   {
     name: 'Rafael',
+    src: '/teste/user-02.png',
     labels: [
       'Boiadeira - Ana Castela',
       'Tropa do Chapelão',
@@ -58,6 +64,7 @@ const SECTION_AVATARS: AvatarSlot[] = [
   },
   {
     name: 'Clara',
+    src: '/teste/user-03.png',
     labels: [
       'Pipoco - Ana Castela',
       'Solto - Ana Castela',
@@ -258,6 +265,7 @@ export default function AvatarConstellation() {
       {allSlots.map((a) => (
         <FloatingAvatar
           key={a.name}
+          src={a.src}
           name={a.name}
           label={a.label}
           labels={a.labels}
