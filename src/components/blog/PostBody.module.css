@@ -1,13 +1,29 @@
 /* Prose typography — Inter only, generous line-height,
  * line-length cap em ~680px (regra clássica de readability:
- * 50-75 caracteres por linha em fonte 18px). */
+ * 50-75 caracteres por linha em fonte 18px).
+ *
+ * Hierarquia de contraste (per product feedback "deixe o texto
+ * num tom de cinza confortável fazendo contraste com subtítulos
+ * e com o título que deve ser branco"):
+ *   - Corpo (p):       rgba(255,255,255,0.72) — cinza médio,
+ *                       confortável pra leitura longa, claramente
+ *                       mais quieto que headings.
+ *   - Lede:            rgba(255,255,255,0.82) — intro com leve
+ *                       destaque pra puxar o leitor.
+ *   - Headings h2/3/4: #fff — peak contrast, "subtítulos" param
+ *                       a leitura e organizam.
+ *   - Strong:          #fff — emphasis dentro do parágrafo.
+ *   - Blockquote:      rgba(255,255,255,0.82) italic — vibe de
+ *                       citação destacada.
+ *   - Title (h1, no page.module.css): branco puro.
+ */
 
 .prose {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 18px;
   line-height: 1.7;
   letter-spacing: -0.003em;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.72);
   max-width: 680px;
   margin: 0 auto;
 }
@@ -18,7 +34,7 @@
 .prose :global(.lede) {
   font-size: 21px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.82);
   margin-bottom: 32px;
 }
 
@@ -94,7 +110,9 @@
   font-style: italic;
   font-size: 19px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.78);
+  /* Levemente mais bright que o corpo pra que a citação
+   * "saia" da leitura linear. */
+  color: rgba(255, 255, 255, 0.82);
 }
 .prose :global(blockquote p) {
   margin: 0;
