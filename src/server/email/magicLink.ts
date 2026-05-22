@@ -21,8 +21,12 @@ export async function sendMagicLink(
   if (returnTo) params.set('returnTo', returnTo);
   const url = `${env.APP_URL}/api/auth/verify?${params.toString()}`;
 
-  // Code com espaço no meio pra leitura: "123 456".
-  const codeFormatted = `${code.slice(0, 3)} ${code.slice(3)}`;
+  // Code SEM espaço — per product feedback "ao copiar e colar
+  // sempre fica faltando um número". O espaço entre os 3+3
+  // dígitos quebrava o copy de duplo-clique (selecionava só
+  // metade). A leitura humana é preservada pelo
+  // letter-spacing CSS no template (`letter-spacing: 0.2em`).
+  const codeFormatted = code;
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
