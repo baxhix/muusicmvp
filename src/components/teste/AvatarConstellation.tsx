@@ -163,6 +163,18 @@ const SECTION_AVATARS: AvatarSlot[] = [
  * RNG: mulberry32 com seed fixo (73) pra render determinístico
  * SSR/CSR — sem hydration mismatch.
  */
+/**
+ * 3 fotos de usuário existentes — recicladas em ciclo entre os
+ * 12 avatares do grupo per product feedback "use as imagens
+ * dos primeiros avatares para as simulações de avatares que
+ * se aproximam, mesmo que se repitam".
+ */
+const CIRCLE_AVATAR_SRCS = [
+  '/teste/user-01.png',
+  '/teste/user-02.png',
+  '/teste/user-03.png',
+];
+
 function buildCircleSlots(): AvatarSlot[] {
   const count = 12;
   const maxRadius = 26; // vmin (limite externo do grupo)
@@ -192,23 +204,41 @@ function buildCircleSlots(): AvatarSlot[] {
 
     const fx = Math.cos(angle) * r;
     const fy = Math.sin(angle) * r;
-    // Approach: pushed pra fora radialmente +60% do raio
-    // INDIVIDUAL — quem está perto do centro slide um pouco;
-    // quem está longe slide mais. Mantém o sentido visual.
-    const approachFactor = 1.6;
-    const ax = Math.cos(angle) * r * (approachFactor - 1);
-    const ay = Math.sin(angle) * r * (approachFactor - 1);
+
+    /* Approach: cada avatar entra a partir da EXTREMIDADE LATERAL
+     * da página (left ou right edge) per product feedback "afaste
+     * mais o ponto inicial da animação, colocando-os nas
+     * extremidades laterais da página e se aproximando".
+     *
+     * Lógica:
+     *   - Sign horizontal = lado em que o avatar está em relação
+     *     ao centro (cos(angle) > 0 → vem da direita, < 0 → da
+     *     esquerda).
+     *   - --circle-tx: deslocamento horizontal pra que o ponto
+     *     inicial caia fora da viewport (±55vw → ~5vw além da
+     *     borda, garantindo entrada visualmente "de fora"). O
+     *     calc() já subtrai o fx final pra que o resultado seja
+     *     o DELTA do final até o início.
+     *   - --circle-ty: pequeno offset vertical proporcional ao
+     *     fy (50%) — não é estritamente horizontal, dá um leve
+     *     arco no movimento.
+     */
+    const horizontalSign = fx >= 0 ? 1 : -1;
+    const lateralStartVw = 55; // 5vw além da borda da viewport
 
     return {
       name: `group-${i}`,
+      // Cicla pelas 3 fotos (4 instâncias de cada).
+      src: CIRCLE_AVATAR_SRCS[i % CIRCLE_AVATAR_SRCS.length],
       section: 4,
       circling: true,
       driftDelay: rng() * 4,
       style: {
         left: `calc(50% + ${fx.toFixed(2)}vmin - 24px)`,
         top: `calc(50% + ${fy.toFixed(2)}vmin - 24px)`,
-        ['--circle-tx' as string]: `${ax.toFixed(2)}vmin`,
-        ['--circle-ty' as string]: `${ay.toFixed(2)}vmin`,
+        ['--circle-tx' as string]:
+          `calc(${horizontalSign * lateralStartVw}vw - ${fx.toFixed(2)}vmin)`,
+        ['--circle-ty' as string]: `${(fy * 0.5).toFixed(2)}vmin`,
       } as React.CSSProperties,
     };
   });

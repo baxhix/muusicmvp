@@ -45,10 +45,19 @@
 }
 
 /* Modo CIRCLING — usado pelos 12 avatares da Section 4 que
- * formam um círculo. O slide-in não é vertical 8px, é
- * RADIAL: o avatar começa pushed pra fora do círculo (via
- * --circle-tx/--circle-ty seteados inline) e converge pro
- * spot final. A transition do .wrap pega esse transform. */
+ * formam um círculo. O slide-in não é mais vertical 8px nem
+ * radial pequeno — agora vem das EXTREMIDADES LATERAIS da
+ * viewport (--circle-tx em ±55vw via calc no inline style).
+ * A distância grande exige uma transição mais longa pra que
+ * o movimento não fique "jato" — override do timing de
+ * `transform` específico pro modo circling (opacity continua
+ * com o timing default do .wrap).
+ */
+.circling {
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
 .circling.hidden {
   transform: translate3d(
     var(--circle-tx, 0),
