@@ -54,13 +54,16 @@
   display: block;
 }
 
-/* Nav links — só os 3 (Soluções/Blog/Login), dentro do
- * .container. */
+/* Nav links + CTA. Dentro do .container. */
 .nav {
   display: inline-flex;
   align-items: center;
   gap: clamp(18px, 2.4vw, 32px);
 }
+
+/* (responsivo mobile movido pro fim do arquivo — precisa
+ *  vir DEPOIS da definição base de .langToggle pra
+ *  sobrescrever o display: inline-flex). */
 .navLink {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   /* 14px per product feedback "deixe os itens do menu com
@@ -186,11 +189,24 @@
   color: #ffffff;
 }
 
+/* ── Responsivo mobile (<=720px) ──────────
+ * Per product feedback "deixe responsivo essa tela
+ * ocultando os itens do menu, exceto o CTA que deve ficar
+ * em uma linha":
+ *   - .navLink (O App, Para Artistas) escondidos.
+ *   - .langToggle (PT/EN) também escondido — "exceto o CTA"
+ *     significa SÓ o CTA permanece.
+ *   - Resultado: logo à esquerda + CTA "Meu Fanverse" à
+ *     direita, tudo na mesma linha.
+ *
+ * Esta media query mora no FIM do arquivo de propósito —
+ * precisa sobrescrever os `display: inline-flex` base de
+ * .langToggle e .nav (que vêm antes no arquivo). Em CSS,
+ * regras de mesma especificidade decididas pela ordem de
+ * declaração — a última vence.
+ */
 @media (max-width: 720px) {
-  .nav {
-    gap: 18px;
-  }
-  .navLink {
-    font-size: 13px;
-  }
+  .navLink { display: none; }
+  .langToggle { display: none; }
+  .nav { gap: 0; }
 }
