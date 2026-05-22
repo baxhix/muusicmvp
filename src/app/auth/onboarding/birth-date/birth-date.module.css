@@ -1,0 +1,49 @@
+.dateRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 12px;
+}
+
+.dateInput {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.dateInputYear {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.termsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 4px 4px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  user-select: none;
+}
+.termsRow a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.termsRow a:hover { color: #fff; }
+
+.checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: #ff00b4;
+  cursor: pointer;
+}

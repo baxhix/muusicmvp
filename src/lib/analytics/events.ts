@@ -70,6 +70,19 @@ export interface EventPayloadMap {
   auth_login_success:   { user_id: string; method: 'magic_link' | 'spotify' };
   auth_login_failed:    { reason: string };
   auth_logout:          Record<string, never>;
+  /** Refator do auth flow (2025): novos eventos pro fluxo
+   *  unificado email-first + magic link + OTP + onboarding
+   *  progressivo. */
+  auth_started:           Record<string, never>;
+  email_submitted:        { email_domain?: string };
+  magic_link_sent:        { email_domain?: string };
+  magic_link_resent:      Record<string, never>;
+  otp_requested:          Record<string, never>;
+  otp_failed:             { reason: number | string };
+  verification_completed: { method: 'magic_link' | 'otp' };
+  login_success:          { user_id: string };
+  account_created:        { method: 'email_magic_link' | 'social' };
+  auth_abandoned:         { step: string };
 
   // ── SESSION (auto-fired by AnalyticsProvider) ─────────────────
   session_started: { is_authenticated: boolean };
@@ -81,10 +94,19 @@ export interface EventPayloadMap {
   navigation_changed:   { from: string; to: string };
 
   // ── ONBOARDING ────────────────────────────────────────────────
-  onboarding_started:         Record<string, never>;
+  onboarding_started:         { step?: string };
   onboarding_step_completed:  { step: string; step_index: number };
-  onboarding_completed:       { steps_count: number; duration_seconds?: number };
+  onboarding_completed:       { steps_count?: number; duration_seconds?: number; interests_count?: number; is_minor?: boolean };
   first_engagement:           { surface: 'feed' | 'chat' | 'player' | 'comment' };
+  /** Refator auth 2025: data de nascimento submetida (idade
+   *  calculada e flag is_minor identificada). */
+  age_submitted:              { age: number; is_minor: boolean };
+  /** Flow específico pra menores ativado — backend pode
+   *  aplicar restrições de conteúdo / consentimento parental
+   *  baseado nessa flag. */
+  minor_flow_started:         { age: number };
+  profile_name_submitted:     { length: number };
+  interests_submitted:        { count: number };
 
   // ── FEED + POSTS ──────────────────────────────────────────────
   feed_loaded:                  { source: 'admin' | 'mock' | 'mixed'; post_count: number };
@@ -237,6 +259,16 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   auth_login_success:   { category: 'auth', importance: 'critical', description: 'Sessão de usuário criada com sucesso.', trigger: 'Cookie de sessão emitido após magic-link / Spotify.', ga4: true },
   auth_login_failed:    { category: 'auth', importance: 'high', description: 'Tentativa de login rejeitada.', trigger: 'Resposta 4xx do endpoint de auth.' },
   auth_logout:          { category: 'auth', importance: 'medium', description: 'Usuário encerrou a sessão manualmente.', trigger: 'Botão "Sair" clicado no menu/dock.' },
+  auth_started:           { category: 'auth', importance: 'high', description: 'Usuário entrou na tela inicial /auth (refator email-first).', trigger: 'EmailStep monta.', ga4: true },
+  email_submitted:        { category: 'auth', importance: 'high', description: 'E-mail submetido na primeira tela do fluxo unificado.', trigger: 'Form /auth submetido com validação OK.', ga4: true },
+  magic_link_sent:        { category: 'auth', importance: 'high', description: 'Backend confirmou envio do magic link.', trigger: '/api/auth/request retornou 200.', ga4: true },
+  magic_link_resent:      { category: 'auth', importance: 'medium', description: 'Usuário pediu reenvio do magic link.', trigger: 'Botão "Reenviar" na tela /auth/verify após cooldown.' },
+  otp_requested:          { category: 'auth', importance: 'medium', description: 'Usuário submeteu código OTP de 6 dígitos como fallback.', trigger: 'Form de OTP em /auth/verify submetido.' },
+  otp_failed:             { category: 'auth', importance: 'medium', description: 'Validação de OTP falhou (código inválido ou expirado).', trigger: '/api/auth/verify retornou erro.' },
+  verification_completed: { category: 'auth', importance: 'critical', description: 'Verificação (magic link ou OTP) concluída.', trigger: 'AuthContext.user populado após verify.', ga4: true },
+  login_success:          { category: 'auth', importance: 'critical', description: 'Usuário retornante autenticado (já tinha conta).', trigger: 'verify completed + user já tem perfil.', ga4: true },
+  account_created:        { category: 'auth', importance: 'critical', description: 'Nova conta finalizada com onboarding completo.', trigger: 'POST /api/auth/onboarding ok ou success page final.', ga4: true },
+  auth_abandoned:         { category: 'auth', importance: 'high', description: 'Usuário saiu do fluxo em algum step (analytics de abandono).', trigger: 'Beforeunload OU navegação pra fora de /auth/*.' },
 
   // Session
   session_started: { category: 'session', importance: 'high', description: 'Início de sessão analítica (primeira interação após carregar a página).', trigger: 'AnalyticsProvider monta no app.', ga4: true },
@@ -252,6 +284,10 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   onboarding_step_completed: { category: 'onboarding', importance: 'medium', description: 'Etapa concreta do onboarding terminada.', trigger: 'CTA do step disparado.' },
   onboarding_completed:      { category: 'onboarding', importance: 'critical', description: 'Onboarding chegou ao fim.', trigger: 'Última tela do fluxo concluída.', ga4: true },
   first_engagement:          { category: 'onboarding', importance: 'critical', description: 'Primeira interação real do usuário (curtir, comentar, mandar mensagem, dar play).', trigger: 'Detectado uma única vez por user_id.', ga4: true },
+  age_submitted:             { category: 'onboarding', importance: 'critical', description: 'Data de nascimento submetida; idade e is_minor calculados.', trigger: '/auth/onboarding/birth-date step concluído.', ga4: true },
+  minor_flow_started:        { category: 'onboarding', importance: 'critical', description: 'Usuário menor de idade — backend pode aplicar restrições.', trigger: 'age_submitted detecta age < 18.', ga4: true },
+  profile_name_submitted:    { category: 'onboarding', importance: 'high', description: 'Nome de exibição definido.', trigger: '/auth/onboarding/profile step concluído.' },
+  interests_submitted:       { category: 'onboarding', importance: 'high', description: 'Interesses iniciais selecionados (pré-onboarding social).', trigger: '/auth/onboarding/interests step concluído.' },
 
   // Feed
   feed_loaded:                 { category: 'feed', importance: 'medium', description: 'Painel de feed terminou o carregamento inicial.', trigger: 'FeedPanel monta + admin posts hidratados.' },

@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import AuthFlow from './AuthFlow';
+import EmailStep from './EmailStep';
 
 export default function AuthPage() {
   return (
     <Suspense fallback={null}>
-      <AuthFlow />
+      <EmailStep />
     </Suspense>
   );
 }
