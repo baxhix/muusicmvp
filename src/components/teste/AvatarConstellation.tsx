@@ -91,8 +91,16 @@ const ZONES: ReadonlyArray<{
   { count: 1, xRange: [-40, -28], yRange: [-32, -18] }, // top-left
   { count: 1, xRange: [-12, 12],  yRange: [-32, -22] }, // top-edge
   { count: 1, xRange: [28, 40],   yRange: [-32, -18] }, // top-right
-  { count: 1, xRange: [-40, -28], yRange: [-12, 12] },  // left-edge
-  { count: 1, xRange: [28, 40],   yRange: [-12, 12] },  // right-edge
+  /* Per product feedback "posicione os avatares mais
+   * centralizados verticalmente mais próximos da extremidade
+   * de cima e de baixo. O de cima para cima, e o de baixo
+   * para baixo." Antes os 2 edges laterais tinham yRange
+   * [-12, 12] (cruzando o centro vertical). Agora: o left-edge
+   * fica restrito à METADE SUPERIOR (yRange [-26, -16],
+   * empurrado pra cima), e o right-edge fica restrito à
+   * METADE INFERIOR (yRange [16, 26], empurrado pra baixo). */
+  { count: 1, xRange: [-40, -28], yRange: [-26, -16] },  // left-edge UPPER
+  { count: 1, xRange: [28, 40],   yRange: [16, 26] },    // right-edge LOWER
   { count: 2, xRange: [-40, -26], yRange: [16, 34] },   // bottom-left ★
   { count: 1, xRange: [-12, 12],  yRange: [22, 34] },   // bottom-edge
   { count: 2, xRange: [26, 40],   yRange: [16, 34] },   // bottom-right ★
