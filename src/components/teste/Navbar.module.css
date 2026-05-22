@@ -7,15 +7,16 @@
   right: 0;
   z-index: 50;
   /* Brand + nav no .container centralizado (1200px); lang
-   * toggle absolute fora dele à direita da viewport. O
-   * pointer-events none no header + auto nos filhos garante
-   * que o overlay do navbar não bloqueie cliques no
-   * conteúdo abaixo. */
-  padding: 24px clamp(20px, 4vw, 56px);
-  pointer-events: none;
-}
-.navbar > * {
-  pointer-events: auto;
+   * toggle absolute fora dele à direita da viewport. */
+  padding: 18px clamp(20px, 4vw, 56px);
+  /* Frosted glass per product feedback "adicione cor no
+   * background do header e aplique o efeito de desfoque do
+   * fundo": preto translúcido + backdrop-filter blur, com
+   * hairline sutil de separação. -webkit prefix pra Safari. */
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Container 1200px centrado — brand à esquerda, nav à
