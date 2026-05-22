@@ -523,8 +523,13 @@ function Shell({ children }: { children: React.ReactNode }) {
       {/* Fire Arena launch countdown banner — desktop-only,
        *  pinned to the top of the viewport. Component itself
        *  early-returns null on mobile via the useIsMobile
-       *  hook, so the mount here is unconditional. */}
-      <FireArenaBanner />
+       *  hook, so the mount here is unconditional.
+       *
+       *  Welcome reveal: faz parte do "demais chrome" (stage 5)
+       *  — entra junto com TopBar, right-rail e LiveChatStack. */}
+      <div className={fadeClass(5)}>
+        <FireArenaBanner />
+      </div>
     </>
   );
 }
