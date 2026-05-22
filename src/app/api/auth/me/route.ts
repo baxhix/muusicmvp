@@ -38,6 +38,9 @@ export async function GET() {
       lng: user.lng,
       avatarUrl: absoluteAvatar(user.avatarUrl),
       role: user.role,
+      // Flag pra que o frontend (verify page) decida entre
+      // /app e /auth/onboarding/birth-date.
+      isOnboarded: user.isOnboarded,
     },
   });
 }

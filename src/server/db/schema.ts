@@ -26,6 +26,31 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   // 'admin' grants access to /admin and admin-only endpoints.
   role: text('role', { enum: ['user', 'admin'] }).notNull().default('user'),
+  /** Flag de onboarding completo. FALSE pra contas recém-criadas
+   *  pelo magic link (backend só seedou email + name=prefix);
+   *  vira TRUE depois do POST /api/auth/onboarding rodar com
+   *  birthDate, displayName, interests etc. Usado no verify
+   *  step pra decidir entre /app (returning) e /auth/onboarding/
+   *  birth-date (novo). */
+  isOnboarded: boolean('is_onboarded').notNull().default(false),
+  /** Data de nascimento (ISO date) preenchida no onboarding —
+   *  obrigatória pra LGPD e age gating. Null pra contas
+   *  pré-onboarding-flow. */
+  birthDate: text('birth_date'),
+  /** Cache da idade calculada no submit (evita recalcular toda
+   *  vez). */
+  age: integer('age'),
+  /** Flag se o usuário é menor de idade (age < 18). Backend
+   *  pode aplicar restrições de conteúdo / consentimento
+   *  parental baseado nessa flag. */
+  isMinor: boolean('is_minor').notNull().default(false),
+  /** Aceite de termos + privacidade — timestamp ISO. Null se
+   *  ainda não aceitou (contas pré-onboarding-flow). */
+  termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
+  /** Array de IDs de interesses selecionados no onboarding
+   *  (pré-onboarding social). Serializado como text[] do
+   *  postgres. */
+  interests: text('interests').array(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
 });

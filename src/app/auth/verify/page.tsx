@@ -60,8 +60,11 @@ export default function VerifyPage() {
   useEffect(() => {
     if (authLoading || !user) return;
     track('verification_completed', { method: 'magic_link' });
-    const isReturning = Boolean(user.name);
-    if (isReturning) {
+    // Usa user.isOnboarded (vem do backend) pra decidir o
+    // próximo passo. Boolean(user.name) era falso positivo —
+    // o backend seeda name=email-prefix em qualquer conta nova,
+    // então essa flag não distinguia returning de new.
+    if (user.isOnboarded) {
       track('login_success', { user_id: user.id });
       router.replace('/app');
     } else {

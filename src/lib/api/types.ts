@@ -15,6 +15,11 @@ export interface ApiUser {
   lng: number | null;
   avatarUrl: string | null;
   role: 'user' | 'admin';
+  /** Flag de onboarding completo. False pra contas recém-criadas
+   *  via magic link que ainda precisam preencher birth-date /
+   *  profile / interests. Verify page usa pra decidir entre
+   *  /app (returning) e /auth/onboarding/birth-date (novo). */
+  isOnboarded: boolean;
 }
 
 export interface ApiOnlineUser {

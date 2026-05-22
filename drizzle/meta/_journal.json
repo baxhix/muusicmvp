@@ -155,6 +155,13 @@
       "when": 1779380000000,
       "tag": "0022_auth_otp_code",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1779400000000,
+      "tag": "0023_users_onboarding",
+      "breakpoints": true
     }
   ]
 }
