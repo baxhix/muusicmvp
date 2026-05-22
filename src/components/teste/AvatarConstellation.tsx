@@ -322,21 +322,32 @@ export default function AvatarConstellation() {
       );
 
       // -- Parallax: aplica delta do scroll ao offset.
+      // DESABILITADO em mobile per product feedback "ao fazer
+      // scroll mobile, os avatares ficam tremendo": iOS Safari
+      // recalcula vh quando a URL bar mostra/esconde, e o
+      // parallax somava jitter em cima desse movimento natural.
+      // Mantém o tracking de scroll position pra phase detection,
+      // só pula a parte de translation.
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - prevScrollY;
       prevScrollY = currentScrollY;
-      // Scroll DOWN (delta > 0): parallax fica NEGATIVO →
-      // avatares "sobem com o conteúdo" (CSS: translateY
-      // negativo = sobe). Factor 0.55 atenua o efeito —
-      // avatares não acompanham 1:1 o scroll, só insinuam.
-      parallaxRef.current = Math.max(
-        -90,
-        Math.min(90, parallaxRef.current - delta * 0.55),
-      );
-      setParallaxY(parallaxRef.current);
 
-      // Kickoff decay (RAF loop que volta o offset pra 0).
-      if (!decayRaf) decayRaf = requestAnimationFrame(decayLoop);
+      if (window.innerWidth > MOBILE_BREAKPOINT_PX) {
+        // Scroll DOWN (delta > 0): parallax fica NEGATIVO →
+        // avatares "sobem com o conteúdo". Factor 0.55 atenua.
+        parallaxRef.current = Math.max(
+          -90,
+          Math.min(90, parallaxRef.current - delta * 0.55),
+        );
+        setParallaxY(parallaxRef.current);
+
+        // Kickoff decay (RAF loop que volta o offset pra 0).
+        if (!decayRaf) decayRaf = requestAnimationFrame(decayLoop);
+      } else if (parallaxRef.current !== 0) {
+        // Mobile: força reset pra zero, sem decay (efeito off).
+        parallaxRef.current = 0;
+        setParallaxY(0);
+      }
     }
 
     function onScroll() {
