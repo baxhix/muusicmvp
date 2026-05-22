@@ -81,7 +81,20 @@ export default function EmailStep() {
 
   return (
     <AuthShell back="/" progress={1 / 6}>
-      <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* flex: 1 + flex column → permite empurrar o `.hint`
+       *  (Termos) pro fim da tela em mobile via margin-top:
+       *  auto. Em desktop o hint segue logo abaixo do botão
+       *  (não há espaço suficiente pra "empurrar"). */}
+      <div
+        className={fields.fadeIn}
+        style={{
+          width: '100%',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <h1 className={fields.heading}>Bem-vindo ao Fanverse</h1>
         <p className={fields.subtitle}>
           Digita seu e-mail pra entrar ou criar sua conta.

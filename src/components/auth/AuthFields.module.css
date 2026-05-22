@@ -195,6 +195,18 @@
 }
 .hint a:hover { color: #fff; }
 
+/* Mobile: empurra o hint pra parte inferior da tela —
+ * funciona como um "footer" do step quando o parent é flex
+ * column + flex: 1. Per product feedback "no mobile, deixe o
+ * texto de termos no footer". */
+@media (max-width: 720px) {
+  .hint {
+    margin-top: auto;
+    padding-top: 32px;
+    padding-bottom: 8px;
+  }
+}
+
 /* ── Animation: step fade-in ──────────── */
 .fadeIn {
   animation: stepFadeIn 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
