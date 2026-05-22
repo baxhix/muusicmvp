@@ -114,7 +114,11 @@
   font-weight: 600;
   letter-spacing: -0.005em;
   border: 0;
-  border-radius: 6px;
+  /* Totalmente arredondado per product feedback "deixe o botão
+   * totalmente arredondado com a animação do gradient que tem
+   * na home" — 999px = pill shape (mesmo do CTA Meu Fanverse
+   * da navbar). */
+  border-radius: 999px;
   cursor: pointer;
   animation: btnGradientShift 6s linear infinite;
   transition:

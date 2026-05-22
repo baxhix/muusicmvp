@@ -83,10 +83,9 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
           </button>
         )}
 
-        {/* Logo aponta pra /teste (landing) — saída segura do
-         *  fluxo de auth sem perder progresso (o store
-         *  localStorage continua armazenado). */}
-        <Link href="/teste" className={styles.logoLink} aria-label="Fanverse — voltar pra landing">
+        {/* Logo aponta pra / (raiz do site, muusic.live) — saída
+         *  do fluxo de auth pro home principal. */}
+        <Link href="/" className={styles.logoLink} aria-label="Fanverse — voltar pra home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/teste/fanverse-logo.svg"

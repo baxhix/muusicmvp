@@ -180,11 +180,6 @@ export default function VerifyPage() {
           <span>ou</span>
         </div>
 
-        <div className={styles.statusBox}>
-          <div className={styles.spinnerDot} aria-hidden="true" />
-          <span>Aguardando você clicar no link…</span>
-        </div>
-
         <div className={styles.actions}>
           <button
             type="button"

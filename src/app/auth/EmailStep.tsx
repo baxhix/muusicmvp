@@ -80,7 +80,7 @@ export default function EmailStep() {
   }
 
   return (
-    <AuthShell back="/teste" progress={1 / 6}>
+    <AuthShell back="/" progress={1 / 6}>
       <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h1 className={fields.heading}>Bem-vindo ao Fanverse</h1>
         <p className={fields.subtitle}>
