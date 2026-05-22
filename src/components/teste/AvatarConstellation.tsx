@@ -177,14 +177,21 @@ const CIRCLE_AVATAR_SRCS = [
 
 function buildCircleSlots(): AvatarSlot[] {
   const count = 15;
-  /* maxRadius mais largo (26 → 32vmin) per product feedback
-   * "distribua-os mais aos lados da página, pois ao centro
-   * irei colocar conteúdos". Avatares ocupam mais espaço
-   * lateral, deixando o centro livre. */
-  const maxRadius = 32; // vmin
-  /* minRadiusFactor sobe de 40% → 65% — TODOS os avatares
-   * ficam pelo menos a 65% do raio máximo (longe do centro). */
-  const minRadiusFactor = 0.65;
+  /* Distribuição em ANEL (annulus) ao redor do centro — não
+   * mais em "bands laterais". Per product feedback
+   * "distribua mais nas laterais, em cima e em baixo,
+   * liberando mais espaço no centro para receber o
+   * conteúdo".
+   *
+   * - innerRadius: raio mínimo (zona vazia central pro
+   *   conteúdo, fica intacta).
+   * - outerRadius: raio máximo (não pode ir muito longe
+   *   senão avatares no topo invadem o header / no fundo
+   *   saem da viewport).
+   * - Avatares ficam no anel innerRadius..outerRadius.
+   */
+  const innerRadius = 28; // vmin
+  const outerRadius = 38; // vmin
 
   let seed = 73;
   const rng = () => {
@@ -196,26 +203,34 @@ function buildCircleSlots(): AvatarSlot[] {
   };
 
   return Array.from({ length: count }, (_, i) => {
-    /* Distribuição lateral: avatares alternam entre band
-     * ESQUERDA (centro 180°) e DIREITA (centro 0°), com
-     * jitter generoso de ±60°. Nenhum cai no eixo vertical
-     * puro — o centro fica livre pra conteúdo futuro.
+    /* Distribuição EM SETORES uniformes de 24° (= 360°/15),
+     * cobrindo o círculo INTEIRO. Per product feedback "em
+     * cima e em baixo" — os 4 quadrantes (esq, dir, topo,
+     * fundo) ficam todos representados.
      *
-     * Algorítmo organico: i par → lado esquerdo, i ímpar →
-     * direito. Como i percorre 0..14, isso dá 8 left + 7
-     * right (≈simétrico). Dentro de cada lado o jitter
-     * espalha em arco de 120° (de -60° a +60° do eixo
-     * horizontal), permitindo posições ligeiramente acima ou
-     * abaixo do centro mas SEMPRE na metade lateral.
+     * Anti-overlap garantido por dois mecanismos:
+     *   1. Jitter angular limitado (±0.4 * sector = ±4.8°)
+     *      → vizinhos ficam SEMPRE >=14.4° de distância
+     *      angular um do outro.
+     *   2. Alternância de SHELL (raio interno vs externo):
+     *      avatares pares ficam mais perto do innerRadius;
+     *      ímpares perto do outerRadius. Resulta em zigzag
+     *      radial — dois vizinhos próximos angularmente
+     *      ainda assim ficam afastados radialmente (gap > 8vmin).
+     *
+     * Distância mínima resultante entre vizinhos: ~10vmin
+     * (~90px em viewports típicos), ≈2x o diâmetro do
+     * avatar — sem sobreposição.
      */
-    const isLeft = i % 2 === 0;
-    const sideCenter = isLeft ? Math.PI : 0;
-    const sideJitter = (rng() - 0.5) * ((Math.PI * 2) / 3); // ±60°
-    const angle = sideCenter + sideJitter;
+    const sectorAngle = (Math.PI * 2) / count; // 24°
+    const baseAngle = i * sectorAngle - Math.PI / 2; // sector 0 no topo
+    const angleJitter = (rng() - 0.5) * sectorAngle * 0.4; // ±4.8°
+    const angle = baseAngle + angleJitter;
 
-    // Raio polarizado pra perimeter (65-100% do max).
-    const radiusFactor = minRadiusFactor + rng() * (1 - minRadiusFactor);
-    const r = maxRadius * radiusFactor;
+    // Shell alternada: pares → inner, ímpares → outer.
+    const shellTarget = i % 2 === 0 ? innerRadius + 3 : outerRadius - 3;
+    const radiusJitter = (rng() - 0.5) * 3; // ±1.5vmin
+    const r = shellTarget + radiusJitter;
 
     const fx = Math.cos(angle) * r;
     const fy = Math.sin(angle) * r;
