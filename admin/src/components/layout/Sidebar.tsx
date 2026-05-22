@@ -18,6 +18,7 @@ import {
   IconTicket,
   IconCalendar,
   IconEdit,
+  IconVideo,
   IconChevronLeft,
   IconChevronRight,
 } from '@/components/icons';
@@ -35,11 +36,12 @@ interface NavItem {
 
 /* Order locked by product feedback:
  *   Dashboard → Engajamento → Moderação → Superfãs → Usuários
- *   → Feed → Comunidade → Músicas → Pre Save → Convites → Fanverse
+ *   → Feed → Comunidade → Superchat → Músicas → Pre Save →
+ *   Live → Blog → Convites → Fanverse
  *
- * Pre Save fica adjacente a Músicas porque é uma feature de
- * release/marketing de faixa — agrupa visualmente com o domínio
- * de música. */
+ * Superchat fica adjacente a Comunidade (ambos são chat/relação
+ * entre fãs); Live fica adjacente a Pre Save (ambos são features
+ * de marketing/release que acontecem em volta da música). */
 const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard',   label: 'Dashboard',   icon: IconDashboard },
   { href: '/engagement',  label: 'Engajamento', icon: IconTrendingUp },
@@ -48,8 +50,10 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/users',       label: 'Usuários',    icon: IconUsers },
   { href: '/feed',        label: 'Feed',        icon: IconFeed },
   { href: '/comunidades', label: 'Comunidade',  icon: IconMessage },
+  { href: '/superchat',   label: 'Superchat',   icon: IconMessage },
   { href: '/tracks',      label: 'Músicas',     icon: IconMusic },
   { href: '/pre-save',    label: 'Pre Save',    icon: IconCalendar },
+  { href: '/live',        label: 'Live',        icon: IconVideo },
   { href: '/blog',        label: 'Blog',        icon: IconEdit },
   { href: '/convites',    label: 'Convites',    icon: IconTicket },
   { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
