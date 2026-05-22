@@ -133,32 +133,33 @@ const SECTION_AVATARS: AvatarSlot[] = [
 ];
 
 /**
- * Section 4 — 12 avatares formando um círculo "imperfeito"
- * (jitter ±2vmin) ao redor do centro da viewport. Cada um:
- *   - Posicionado em ângulo `i * 30°` ao redor do center.
- *   - Tem `circling: true` → slide-in radial do exterior pro
- *     spot final (translates `--circle-tx/--circle-ty` quando
- *     hidden).
- *   - Pós-reveal: ganha drift sutil (animation com translate
- *     CSS property, independente do transform usado no
- *     reveal).
- *   - `driftDelay` único pra dessincronizar a respiração.
- *   - Sem labels — o foco da seção é a formação visual.
+ * Section 4 — 12 avatares formando um GRUPO orgânico ao redor
+ * do centro da viewport (não um círculo).
  *
- * Math:
- *   - Radius = 26vmin (escala com a menor dim. da viewport).
- *   - Approach distance = +60% do raio (pushed outward
- *     quando hidden).
- *   - Final pos: `left: calc(50% + cos(angle) * 26vmin - 24px)`
- *     (-24px = metade do avatar sm 48px pra centralizar).
- *   - Jitter: ±1.5vmin no raio + ±6° no ângulo, com seed
- *     determinístico pra evitar hydration mismatch.
+ * Per product feedback "a aproximação dos avatares em formato
+ * de círculo não deve ser perfeito, deve ser apenas um grupo".
+ *
+ * Estratégia:
+ *   - Ângulos base distribuídos a cada 30° (12 fatias) MAS
+ *     com jitter generoso de ±15° — algumas fatias quase se
+ *     fundem, outras abrem.
+ *   - Raio VARIÁVEL pra cada avatar (40-100% do max). Quem
+ *     "ficou mais perto do centro" e quem "ficou mais longe"
+ *     varia organicamente — quebra completamente a leitura
+ *     de "anel" e dá profundidade ao cluster.
+ *   - Sem labels, sem ring colorido — só formação visual.
+ *   - Approach extra ainda é radial (sai de fora pra dentro)
+ *     mas calcula com base no raio FINAL de cada um pra que
+ *     o slide-in respeite a distância individual.
+ *   - driftDelay continua dessincronizando a respiração.
+ *
+ * RNG: mulberry32 com seed fixo (73) pra render determinístico
+ * SSR/CSR — sem hydration mismatch.
  */
 function buildCircleSlots(): AvatarSlot[] {
   const count = 12;
-  const radius = 26; // vmin
-  const approachExtra = radius * 0.6; // 60% mais longe quando hidden
-  // RNG determinístico pra jitter (mulberry32 simplificado).
+  const maxRadius = 26; // vmin (limite externo do grupo)
+  const minRadiusFactor = 0.4; // 40% — quem fica mais perto do centro
   let seed = 73;
   const rng = () => {
     seed = (seed + 0x6d2b79f5) >>> 0;
@@ -169,29 +170,36 @@ function buildCircleSlots(): AvatarSlot[] {
   };
 
   return Array.from({ length: count }, (_, i) => {
+    // Ângulo base distribuído (30° entre vizinhos) com jitter
+    // grande pra quebrar o ritmo — alguns ficam quase juntos.
     const baseAngle = (i / count) * Math.PI * 2 - Math.PI / 2;
-    const angleJitter = (rng() - 0.5) * (Math.PI / 30); // ±6°
-    const radiusJitter = (rng() - 0.5) * 3; // ±1.5vmin
+    const angleJitter = (rng() - 0.5) * (Math.PI / 6); // ±15°
     const angle = baseAngle + angleJitter;
-    const r = radius + radiusJitter;
+
+    // Raio aleatório no range minRadiusFactor..1.0 — alguns
+    // perto do centro, outros na "casca". Distribuição
+    // uniforme: chance igual de cair em qualquer distância
+    // (não viesado pra borda nem centro).
+    const radiusFactor = minRadiusFactor + rng() * (1 - minRadiusFactor);
+    const r = maxRadius * radiusFactor;
+
     const fx = Math.cos(angle) * r;
     const fy = Math.sin(angle) * r;
-    // Approach (start) position pushed outward radialmente.
-    const ax = Math.cos(angle) * approachExtra;
-    const ay = Math.sin(angle) * approachExtra;
+    // Approach: pushed pra fora radialmente +60% do raio
+    // INDIVIDUAL — quem está perto do centro slide um pouco;
+    // quem está longe slide mais. Mantém o sentido visual.
+    const approachFactor = 1.6;
+    const ax = Math.cos(angle) * r * (approachFactor - 1);
+    const ay = Math.sin(angle) * r * (approachFactor - 1);
 
     return {
-      name: `circle-${i}`,
-      // Sem label — Section 4 é puro visual.
+      name: `group-${i}`,
       section: 4,
       circling: true,
-      driftDelay: rng() * 4, // 0-4s pra desincronizar
+      driftDelay: rng() * 4,
       style: {
         left: `calc(50% + ${fx.toFixed(2)}vmin - 24px)`,
         top: `calc(50% + ${fy.toFixed(2)}vmin - 24px)`,
-        // CSS vars consumidas pelo .circling.hidden no CSS
-        // module — o transform vai pra essa direção quando o
-        // avatar está pré-reveal.
         ['--circle-tx' as string]: `${ax.toFixed(2)}vmin`,
         ['--circle-ty' as string]: `${ay.toFixed(2)}vmin`,
       } as React.CSSProperties,
