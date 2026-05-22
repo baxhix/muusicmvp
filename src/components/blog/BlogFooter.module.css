@@ -22,21 +22,28 @@
 /* `.topRow` removido — sem o email à direita, as 3 cols
  * ficam direto no .inner. */
 
+/* Per product feedback "mantenha as colunas alinhadas à
+ * esquerda. No lado direito irei colocar outras informações
+ * posteriores.":
+ * cols dimensionadas por content (não esticam) +
+ * justify-content: start (encostam na esquerda do .inner).
+ * Sobra espaço à direita pra futuro conteúdo. */
 .linksGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, max-content);
+  justify-content: start;
   gap: 48px;
   flex-shrink: 0;
 }
 @media (max-width: 720px) {
   .linksGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, max-content);
     gap: 24px;
   }
 }
 @media (max-width: 480px) {
   .linksGrid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: max-content max-content;
     gap: 32px 20px;
   }
 }

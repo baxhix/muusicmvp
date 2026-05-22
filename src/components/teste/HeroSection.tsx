@@ -25,11 +25,25 @@ export default function HeroSection() {
     >
       <Sparkles count={28} seed={9} />
 
+      {/* Grid 3 rows: headline (row 1) — gap fixo de 180px
+       *  (row 2, com a frase de apoio sobreposta no topo) —
+       *  mockup de phones (row 3). Assim o TOPO do mockup
+       *  fica exatamente 180px abaixo da BASE do headline,
+       *  independente do tamanho do texto da frase. */}
       <div className={styles.center}>
         <h1 className={styles.headline}>SUPERFÃS</h1>
         <p className={styles.phrase}>
           O lugar certo para criar conexões
         </p>
+        <div className={styles.phonesWrap}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/teste/phones-mockup.png"
+            alt="Três smartphones mostrando o app Fanverse"
+            className={styles.phonesImg}
+            loading="eager"
+          />
+        </div>
       </div>
     </section>
   );

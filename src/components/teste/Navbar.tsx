@@ -19,7 +19,7 @@ import styles from './Navbar.module.css';
  * Posição: `fixed` no topo, bg transparente.
  */
 export default function Navbar() {
-  const [lang, setLang] = useState<'PT' | 'EN' | 'ES'>('PT');
+  const [lang, setLang] = useState<'PT' | 'EN'>('PT');
 
   return (
     <header className={styles.navbar}>
@@ -36,20 +36,29 @@ export default function Navbar() {
         </nav>
       </div>
 
-      {/* Lang toggle FORA do container — fica colado na borda
-       *  direita da viewport mesmo em telas muito largas. */}
-      <button
-        type="button"
-        className={styles.langToggle}
-        onClick={() => {
-          setLang((prev) =>
-            prev === 'PT' ? 'EN' : prev === 'EN' ? 'ES' : 'PT',
-          );
-        }}
-        aria-label={`Idioma: ${lang}. Clique pra trocar.`}
-      >
-        {lang}
-      </button>
+      {/* Segmented control PT/EN — fora do container, colado na
+       *  borda direita da viewport. Cada opção é um button
+       *  próprio; o ativo recebe estilo invertido. Padrão de
+       *  acessibilidade: role=group + aria-pressed nos
+       *  toggles. */}
+      <div className={styles.langToggle} role="group" aria-label="Idioma">
+        <button
+          type="button"
+          className={`${styles.langOption} ${lang === 'PT' ? styles.langActive : ''}`}
+          aria-pressed={lang === 'PT'}
+          onClick={() => setLang('PT')}
+        >
+          PT
+        </button>
+        <button
+          type="button"
+          className={`${styles.langOption} ${lang === 'EN' ? styles.langActive : ''}`}
+          aria-pressed={lang === 'EN'}
+          onClick={() => setLang('EN')}
+        >
+          EN
+        </button>
+      </div>
     </header>
   );
 }

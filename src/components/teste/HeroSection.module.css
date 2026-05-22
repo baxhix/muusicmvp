@@ -22,10 +22,26 @@
 .center {
   position: relative;
   z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
+  /* Grid de 3 rows pra travar a distância da imagem dos
+   * phones EXATAMENTE 180px abaixo do headline.
+   *   row 1: headline (auto-sized)
+   *   row 2: 180px fixos (a frase de apoio fica AQUI,
+   *          alinhada ao topo — não empurra row 3)
+   *   row 3: phones (auto, centralizado)
+   * Resultado: phones.top - headline.bottom = 180px,
+   * independente do conteúdo da frase. */
+  display: grid;
+  grid-template-rows: auto 180px auto;
+  justify-items: center;
+  width: 100%;
+  max-width: 1100px;
+}
+@media (max-width: 720px) {
+  .center {
+    /* Em mobile o gap fixo de 180 fica exagerado — reduz
+     * proporcionalmente pra que a hero não estique demais. */
+    grid-template-rows: auto 120px auto;
+  }
 }
 
 /* Headline — 1 palavra ALL CAPS centralizada 160px.
@@ -37,6 +53,7 @@
  * navegadores modernos.
  */
 .headline {
+  grid-row: 1;
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   font-size: clamp(56px, 11vw, 160px);
@@ -55,17 +72,46 @@
   animation: tloop-fadeup 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Frase de apoio (>2 palavras) — regra fixada com o produto:
- * Inter, 16px, cinza, centralizada. */
+/* Frase de apoio — regra fixada com o produto:
+ * Inter, 16px, cinza, centralizada. Mora na row 2 do grid
+ * (o "gap" de 180px), alinhada ao topo + margem pra
+ * separar do headline. Como a row é FIXA em 180px, o
+ * tamanho da frase não empurra a row 3 (os phones). */
 .phrase {
+  grid-row: 2;
+  align-self: start;
+  margin-top: 14px;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.55);
   letter-spacing: -0.005em;
-  margin: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-right: 0;
   text-align: center;
   animation: tloop-fadeup 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+/* Mockup de phones — row 3 do grid (180px abaixo do
+ * headline). max-width 900px centralizado + drop-shadow
+ * pra dar profundidade. */
+.phonesWrap {
+  grid-row: 3;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  justify-content: center;
+  animation: tloop-fadeup 1000ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+}
+.phonesImg {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 30px 80px rgba(0, 0, 0, 0.6));
+}
+@media (max-width: 720px) {
+  .phonesWrap { max-width: 100%; padding: 0 16px; }
 }
 
 @keyframes tloop-fadeup {
