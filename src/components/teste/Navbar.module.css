@@ -93,10 +93,11 @@
   transform: translateY(0);
 }
 
-/* Toggle PT/EN — minimal, sem bordas nem pill bg per product
- * feedback "remova as bordas. mantenha apenas o tom diferente
- * de black/cinza". Só dois textos lado a lado: o ativo em
- * branco, o inativo em cinza médio. Clique troca o ativo. */
+/* Toggle PT/EN — segmented pill SEM borda per product
+ * feedback "deixe o idioma em forma de toggle como estava,
+ * porém sem borda". O wrapper tem só bg sutil pra dar
+ * affordance de "control"; o ativo recebe bg invertido
+ * branco translúcido. Nenhum border anywhere. */
 .langToggle {
   position: absolute;
   top: 50%;
@@ -104,27 +105,34 @@
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
 }
 
 .langOption {
+  width: 34px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
   border: 0;
+  border-radius: 999px;
   background: transparent;
-  padding: 4px 2px;
-  color: rgba(255, 255, 255, 0.4); /* inativo: cinza */
+  color: rgba(255, 255, 255, 0.5); /* inativo: cinza */
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.005em;
   cursor: pointer;
-  transition: color 200ms ease-out;
+  transition: background 200ms ease-out, color 200ms ease-out;
 }
 .langOption:hover {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.85);
 }
 .langActive {
+  background: rgba(255, 255, 255, 0.16);
   color: #ffffff; /* ativo: branco puro */
-  font-weight: 600;
 }
 .langActive:hover {
   color: #ffffff;
