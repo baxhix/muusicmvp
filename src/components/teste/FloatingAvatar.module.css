@@ -91,12 +91,12 @@
   .drifting { animation: none; }
 }
 
-/* Avatar circular em modo WIREFRAME: cinza chapado, sem
- * cor, sem sombra colorida — placeholder neutro pra avaliar
- * apenas o motion e a posição. Per product feedback "deixe
- * todos os avatares na cor cinza, como se fosse wireframe
- * mesmo". Quando o produto subir imagens reais, esse bg
- * cinza fica de fallback atrás da <img>. */
+/* Avatar circular. Bg padrão TRANSPARENTE per product
+ * feedback "remova o background cinza que tem nas imagens
+ * dos avatares" — os PNGs do produto têm transparência ao
+ * redor do recorte da foto, e o cinza estava aparecendo nas
+ * bordas. Quando NÃO há src (fallback iniciais), o modifier
+ * .avatarFallback abaixo aplica o cinza só pra esses casos. */
 .avatar {
   position: relative;
   display: grid;
@@ -104,6 +104,10 @@
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  background: transparent;
+}
+/* Fallback bg só quando não há imagem (iniciais). */
+.avatarFallback {
   background: #3a3a3a;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }

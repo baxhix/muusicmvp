@@ -203,7 +203,17 @@ export default function FloatingAvatar({
       }}
     >
       <div
-        className={[styles.avatar, ringClass].filter(Boolean).join(' ')}
+        className={[
+          styles.avatar,
+          ringClass,
+          // Sem src → aplica bg cinza wireframe (.avatarFallback)
+          // pra que as iniciais ainda apareçam num "card". Com
+          // src, bg fica transparente pra não aparecer ao redor
+          // da foto (que pode ter transparência no PNG).
+          !src ? styles.avatarFallback : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         style={{
           width: px,
           height: px,
