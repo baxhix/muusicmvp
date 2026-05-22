@@ -184,12 +184,33 @@ function buildFloatingSlots(seed: number): AvatarSlot[] {
  */
 const FLOATING_SLOT_SEEDS = [73, 167, 251];
 
-export default function AvatarConstellation() {
-  const [floatingVisible, setFloatingVisible] = useState(false);
-  const [phase, setPhase] = useState(0);
+/**
+ * Mapeamento section → phase per product feedback:
+ *   - Hero (section 1): phase 0 — set A inicial.
+ *   - Section 2 + 3: phase 1 — set B (primeira mudança).
+ *   - Section 4 + 5 + 6 + footer: phase 2 — set C (segunda mudança).
+ *
+ * Avatares ficam sempre visíveis (no Hero já estão visíveis e
+ * flutuantes; nunca desaparecem, nem no footer).
+ */
+function sectionToPhase(sectionIdx: number): number {
+  if (sectionIdx <= 1) return 0;
+  if (sectionIdx <= 3) return 1;
+  return 2;
+}
 
-  /** Pré-computa 3 sets de posições determinísticos. Memoize
-   *  com deps vazias — sets nunca mudam, só o índice ativo. */
+/** Pequeno delay (ms) entre detectar mudança de section e
+ *  aplicar o novo phase per "acompanham o scroll com um
+ *  pequeno delay". */
+const PHASE_DELAY_MS = 350;
+
+export default function AvatarConstellation() {
+  const [phase, setPhase] = useState(0);
+  /** targetPhase é o phase derivado do scroll diretamente —
+   *  `phase` segue ele com o delay. */
+  const [targetPhase, setTargetPhase] = useState(0);
+
+  /** Pré-computa 3 sets de posições determinísticos. */
   const slotSets = useMemo(
     () => FLOATING_SLOT_SEEDS.map(buildFloatingSlots),
     [],
@@ -197,31 +218,39 @@ export default function AvatarConstellation() {
 
   const currentSet = slotSets[phase % slotSets.length];
 
+  // Scroll listener: detecta qual section ocupa o centro do
+  // viewport e mapeia pra phase.
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     let raf = 0;
     function check() {
-      const scrollY = window.scrollY;
       const vh = window.innerHeight;
+      const center = vh * 0.5;
 
-      // 1. Visibilidade: scroll mínimo (>60px) E footer não
-      //    está totalmente visível na viewport.
-      const hasScrolled = scrollY > 60;
+      // Procura section ativa (com center da viewport dentro).
+      let active = 1;
+      for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById(`section-${i}`);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (r.top <= center && r.bottom > center) {
+          active = i;
+          break;
+        }
+      }
+      // Footer no centro? Trata como section 7 (mas mapa pro
+      // phase 2 igual section 4+).
       const footer = document.querySelector('footer');
-      let footerFullyVisible = false;
       if (footer) {
         const fr = footer.getBoundingClientRect();
-        footerFullyVisible = fr.bottom <= vh + 1;
+        if (fr.top <= center) active = 7;
       }
-      const nextVisible = hasScrolled && !footerFullyVisible;
 
-      // 2. Phase index: muda a cada 2 viewport heights de scroll.
-      //    Section 1-2 → phase 0; section 3-4 → phase 1; etc.
-      const nextPhase = Math.floor(scrollY / (vh * 2));
-
-      setFloatingVisible((prev) => (prev === nextVisible ? prev : nextVisible));
-      setPhase((prev) => (prev === nextPhase ? prev : nextPhase));
+      const nextTargetPhase = sectionToPhase(active);
+      setTargetPhase((prev) =>
+        prev === nextTargetPhase ? prev : nextTargetPhase,
+      );
     }
 
     function onScroll() {
@@ -241,20 +270,28 @@ export default function AvatarConstellation() {
     };
   }, []);
 
+  // Aplica o targetPhase após o delay — gera o "pequeno delay"
+  // mencionado no feedback (scroll detecta nova section, mas o
+  // movimento de avatares acontece ~350ms depois).
+  useEffect(() => {
+    if (targetPhase === phase) return;
+    const t = setTimeout(() => setPhase(targetPhase), PHASE_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [targetPhase, phase]);
+
   return (
     <>
       {currentSet.map((a) => (
         <FloatingAvatar
-          // Key inclui o phase pra forçar re-mount nas trocas
-          // de set — gatilho da animação CSS de "movimento"
-          // (scale dip) que roda no mount. Combinado com a
-          // transition de left/top do .wrap, gera um movimento
-          // que escala suavemente durante a mudança.
-          key={`${a.name}-${phase}`}
+          // Key SEM phase — avatares persistem entre mudanças
+          // de phase. A transição de left/top do .wrap leva
+          // os avatares pras novas posições suavemente, sem
+          // remount nem sweep.
+          key={a.name}
           src={a.src}
           name={a.name}
           size="sm"
-          revealed={floatingVisible}
+          revealed
           circling={a.circling}
           driftDelay={a.driftDelay}
           style={a.style}

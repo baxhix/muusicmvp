@@ -58,36 +58,18 @@
  * profissional em vez de todos chegando em sync. Default
  * 2400ms se a var não estiver presente. */
 .circling {
-  /* Opacity 700 → 1100ms acompanha o approach mais lento.
-   * Fade out na saída usa o mesmo timing. */
+  /* Transições suaves: opacity (fade no aparecer/desaparecer),
+   * transform (legado pra entry crossover quando used), e left/
+   * top (mudança de posição entre phases). */
   transition:
     opacity 1100ms cubic-bezier(0.22, 1, 0.36, 1),
     transform var(--enter-duration, 4000ms) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Animação de "chegada" — roda em CADA mount do avatar.
- * Combinada com o key={name + phase} no AvatarConstellation,
- * isso significa que a cada mudança de phase os avatares se
- * desmontam e remontam, e a animação roda do início — dando
- * o efeito de MOVIMENTO sweep que o produto pediu ("na
- * mudança de posição de avatares, aplique um movimento").
- *
- * O avatar entra do ponto crossover (--circle-tx/ty, 180°
- * oposto à posição final, definido inline) com fade — e
- * desliza pra posição zero. */
-.circling.revealed {
-  animation: avatar-arrive var(--enter-duration, 4000ms) cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes avatar-arrive {
-  from {
-    opacity: 0;
-    transform: translate3d(var(--circle-tx, 0), var(--circle-ty, 0), 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
+/* avatar-arrive REMOVIDO — o sweep crossover a cada phase
+ * change ficou "estranho" per product feedback. Agora a
+ * mudança de posição entre phases acontece via transição
+ * smooth de left/top (no .wrap), sem remount nem sweep. */
 .circling.hidden {
   transform: translate3d(
     var(--circle-tx, 0),
