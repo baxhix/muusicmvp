@@ -1,6 +1,7 @@
 'use client';
 
 import Sparkles from './Sparkles';
+import SectionCTA from './SectionCTA';
 import styles from './SectionThree.module.css';
 
 /**
@@ -27,6 +28,7 @@ export default function SectionThree() {
         <p className={styles.phrase}>
           Descubra, conecte e pertença a uma comunidade
         </p>
+        <SectionCTA />
       </div>
     </section>
   );

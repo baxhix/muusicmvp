@@ -1,6 +1,7 @@
 'use client';
 
 import Sparkles from './Sparkles';
+import SectionCTA from './SectionCTA';
 import styles from './SectionTwo.module.css';
 
 /**
@@ -27,6 +28,7 @@ export default function SectionTwo() {
       <div className={styles.center}>
         <h2 className={styles.headline}>MÚSICA</h2>
         <p className={styles.phrase}>Cada música leva você a alguém</p>
+        <SectionCTA />
       </div>
     </section>
   );

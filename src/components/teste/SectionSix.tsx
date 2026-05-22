@@ -1,6 +1,7 @@
 'use client';
 
 import Sparkles from './Sparkles';
+import SectionCTA from './SectionCTA';
 import styles from './SectionSix.module.css';
 
 /**
@@ -24,6 +25,7 @@ export default function SectionSix() {
         <p className={styles.phrase}>
           Disponível para iOS e Android
         </p>
+        <SectionCTA>Baixar app</SectionCTA>
       </div>
     </section>
   );

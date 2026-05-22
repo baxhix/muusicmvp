@@ -1,6 +1,7 @@
 'use client';
 
 import Sparkles from './Sparkles';
+import SectionCTA from './SectionCTA';
 import styles from './SectionFive.module.css';
 
 /**
@@ -27,6 +28,7 @@ export default function SectionFive() {
         <p className={styles.phrase}>
           O lugar onde a sua arte encontra quem importa
         </p>
+        <SectionCTA />
       </div>
     </section>
   );

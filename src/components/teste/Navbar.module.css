@@ -115,7 +115,11 @@
 .ctaPill {
   display: inline-flex;
   align-items: center;
-  padding: 8px 18px;
+  /* Padding aumentado ~30% per product feedback "aumente 30%
+   * o tamanho cta da landing page, mas mantenha o tamanho da
+   * font atual" — 8x18 → 11x24. Área visual cresce sem mexer
+   * no font-size 14px. */
+  padding: 11px 24px;
   background:
     linear-gradient(
       90deg,
@@ -229,8 +233,9 @@
   .nav { gap: 0; }
   .ctaPill {
     /* Garante que "Meu Fanverse" não quebre em 2 linhas
-     * mesmo em viewports muito pequenos (iPhone SE 320px). */
+     * mesmo em viewports muito pequenos (iPhone SE 320px).
+     * Padding também escalado ~30% (8x14 → 11x18). */
     white-space: nowrap;
-    padding: 8px 14px;
+    padding: 11px 18px;
   }
 }

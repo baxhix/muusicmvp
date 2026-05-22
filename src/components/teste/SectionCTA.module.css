@@ -1,0 +1,49 @@
+/* SectionCTA — mesma identidade visual do ctaPill da Navbar
+ * (gradient magenta→indigo animado, pill 999px, font 14px,
+ * padding 11x24) mas margin-top maior pra dar respiro
+ * abaixo do subtítulo da section. */
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 24px;
+  margin-top: 24px;
+  background:
+    linear-gradient(
+      90deg,
+      #ff00b4 0%,
+      #5b00d1 50%,
+      #ff00b4 100%
+    );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  color: #ffffff;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border-radius: 999px;
+  animation: ctaShift 6s linear infinite;
+  transition:
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
+  white-space: nowrap;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 32px -10px rgba(255, 0, 180, 0.5);
+}
+.cta:active {
+  transform: translateY(0);
+}
+
+@keyframes ctaShift {
+  from { background-position: 0% 50%; }
+  to   { background-position: -200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta { animation: none; }
+}
