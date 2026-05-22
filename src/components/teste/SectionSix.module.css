@@ -1,5 +1,4 @@
-/* Section 2 — segue o mesmo template de typography da Hero
- * (headline 80px + phrase 16px cinza). Sparkles próprio. */
+/* Section 6 — Baixe o App. */
 
 .section {
   position: relative;
@@ -9,7 +8,6 @@
   color: #fff;
   overflow: hidden;
   display: flex;
-  /* Headline mais ao topo (alinha com Hero). */
   align-items: flex-start;
   justify-content: center;
   padding: 22vh 24px 24px;
@@ -27,9 +25,11 @@
 .headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  /* -15% per product feedback. 56→48, 11→9.35, 160→136. */
+  /* "BAIXE O APP" tem 3 palavras + 2 espaços = ~11 chars.
+   * Em viewports estreitos pode quebrar — line-height 1.05
+   * acomoda o tilde/diacrítico ausente sem ficar apertado. */
   font-size: clamp(48px, 9.35vw, 136px);
-  line-height: 0.95;
+  line-height: 1.0;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
   -webkit-background-clip: text;
@@ -37,6 +37,7 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
   margin: 0;
+  padding: 0 0.06em;
   text-align: center;
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;

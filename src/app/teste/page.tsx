@@ -5,6 +5,8 @@ import HeroSection from '@/components/teste/HeroSection';
 import SectionTwo from '@/components/teste/SectionTwo';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionFour from '@/components/teste/SectionFour';
+import SectionFive from '@/components/teste/SectionFive';
+import SectionSix from '@/components/teste/SectionSix';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
 import styles from './page.module.css';
@@ -49,6 +51,8 @@ export default function TestePage() {
        *  page-level com `circling: true` (slide-in radial +
        *  drift sutil contínuo). */}
       <SectionFour />
+      <SectionFive />
+      <SectionSix />
       <Footer />
     </div>
   );

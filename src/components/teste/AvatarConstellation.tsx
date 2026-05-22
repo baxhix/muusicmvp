@@ -73,7 +73,9 @@ const CIRCLE_AVATAR_SRCS = [
 ];
 
 function buildFloatingSlots(seed: number): AvatarSlot[] {
-  const count = 15;
+  /* Count reduzido de 15 → 10 per product feedback "oculte 5
+   * para ficar menos carregado de informações a página". */
+  const count = 10;
 
   /* Distribuição INORGÂNICA, MAIS ESPALHADA, sem forma
    * geométrica. Per product feedback "no desktop, espalhe
@@ -243,7 +245,12 @@ export default function AvatarConstellation() {
     <>
       {currentSet.map((a) => (
         <FloatingAvatar
-          key={a.name}
+          // Key inclui o phase pra forçar re-mount nas trocas
+          // de set — gatilho da animação CSS de "movimento"
+          // (scale dip) que roda no mount. Combinado com a
+          // transition de left/top do .wrap, gera um movimento
+          // que escala suavemente durante a mudança.
+          key={`${a.name}-${phase}`}
           src={a.src}
           name={a.name}
           size="sm"

@@ -28,7 +28,8 @@
 .headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  font-size: clamp(56px, 11vw, 160px);
+  /* -15% per product feedback. 56→48, 11→9.35, 160→136. */
+  font-size: clamp(48px, 9.35vw, 136px);
   line-height: 0.95;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);

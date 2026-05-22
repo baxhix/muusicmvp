@@ -59,7 +59,9 @@
   grid-row: 1;
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  font-size: clamp(56px, 11vw, 142px);
+  /* -15% per product feedback "diminua 15% o tamanho de
+   * todos os headlines". 56→48, 11→9.35, 142→121. */
+  font-size: clamp(48px, 9.35vw, 121px);
   /* line-height 1.05 (era 0.95) — line-box mais alta pra
    * caber o acento do Ã sem clipping. Com 0.95 + background-
    * clip: text o navegador clipava o tilde porque o text-box

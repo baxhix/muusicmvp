@@ -1,5 +1,5 @@
-/* Section 2 — segue o mesmo template de typography da Hero
- * (headline 80px + phrase 16px cinza). Sparkles próprio. */
+/* Section 5 — Artistas. Mesmo template tipográfico das outras
+ * (headline ALL CAPS + phrase Inter 16px cinza). */
 
 .section {
   position: relative;
@@ -9,7 +9,6 @@
   color: #fff;
   overflow: hidden;
   display: flex;
-  /* Headline mais ao topo (alinha com Hero). */
   align-items: flex-start;
   justify-content: center;
   padding: 22vh 24px 24px;
@@ -27,7 +26,6 @@
 .headline {
   font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  /* -15% per product feedback. 56→48, 11→9.35, 160→136. */
   font-size: clamp(48px, 9.35vw, 136px);
   line-height: 0.95;
   letter-spacing: -0.02em;
@@ -37,6 +35,7 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
   margin: 0;
+  padding: 0 0.06em;
   text-align: center;
   text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
