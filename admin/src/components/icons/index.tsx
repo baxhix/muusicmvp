@@ -416,3 +416,34 @@ export const IconArchive = (p: IconProps) => (
     <line x1="10" y1="12" x2="14" y2="12" />
   </svg>
 );
+
+// Folder — pasta clássica estilo Finder/Drive.
+export const IconFolder = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+  </svg>
+);
+
+// Folder com seta — usada pra "abrir pasta" / navegar pra dentro.
+export const IconFolderOpen = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v.5" />
+    <path d="M3 9.5v8a2 2 0 0 0 2 2h13a2 2 0 0 0 1.9-1.4l1.7-6.1A1 1 0 0 0 20.7 11H5" />
+  </svg>
+);
+
+// Home — usado no breadcrumb (raiz do explorer).
+export const IconHome = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 12L12 3l9 9" />
+    <path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10" />
+  </svg>
+);
+
+// File icon — documento genérico (pra arquivos sem thumb).
+export const IconFile = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+    <polyline points="14 3 14 9 20 9" />
+  </svg>
+);

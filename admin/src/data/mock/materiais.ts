@@ -1,242 +1,478 @@
 /**
- * Materiais — mock catalog do acervo da artista.
+ * Materiais — acervo hierárquico de conteúdo exclusivo da artista.
  *
- * Modela o conteúdo exclusivo que a equipe da Ana Castela publica
- * pros superfãs: álbuns de fotos dos shows, álbuns musicais
- * exclusivos, wallpapers, figurinhas de WhatsApp, templates de
- * stories, logotipos oficiais.
+ * Per product feedback "estilo pastas e subpastas, como do Google
+ * Drive, finder, etc.", modelamos o acervo como uma árvore de nós
+ * (pastas + arquivos) navegável via breadcrumb. Cada nó tem
+ * `parentId` apontando pro container — `null` significa raiz.
  *
- * Alguns desses materiais também viram posts no feed (flag
- * `publishedToFeed`), mas o conjunto inteiro fica disponível no
- * acervo pro usuário acessar quando quiser — diferença chave em
- * relação ao feed que é cronológico/efêmero.
+ * Estrutura:
+ *   Materiais (root)
+ *   ├─ Álbuns de fotos
+ *   │  ├─ Rodeio BH (folder)
+ *   │  │  ├─ palco-01.jpg
+ *   │  │  ├─ bastidores-01.jpg
+ *   │  │  └─ ...
+ *   │  └─ Jaguariúna (folder) ...
+ *   ├─ Álbuns exclusivos
+ *   │  ├─ Acústico Curitiba (folder)
+ *   │  │  ├─ track-01.mp3
+ *   │  │  └─ ...
+ *   ├─ Wallpapers
+ *   │  ├─ Mobile (folder)
+ *   │  └─ Desktop (folder)
+ *   ├─ Figurinhas
+ *   ├─ Templates
+ *   └─ Logotipos
  *
- * Quando o backend cair, trocar `loadMateriais()` por um fetch —
- * shape dos tipos + renderers da página são agnósticos.
+ * Quando o backend cair, troca-se `loadMateriaisTree()` por
+ * `fetch('/api/admin/materiais')` — o shape do nó + os renderers
+ * são agnósticos da fonte.
  */
-
-export type MaterialCategoria =
-  | 'fotos_shows'
-  | 'albuns_exclusivos'
-  | 'wallpapers'
-  | 'figurinhas'
-  | 'templates'
-  | 'logotipos';
 
 export type MaterialFormato =
   | 'jpg'
   | 'png'
   | 'pdf'
   | 'mp3'
+  | 'mp4'
   | 'zip'
-  | 'svg'
-  | 'mp4';
+  | 'svg';
 
 export type MaterialStatus = 'rascunho' | 'publicado' | 'agendado' | 'arquivado';
 
-export interface MaterialItem {
+/** Nó da árvore — pode ser pasta ou arquivo. */
+export type MaterialNode = MaterialFolder | MaterialFile;
+
+export interface MaterialFolderBase {
   id: string;
-  titulo: string;
-  categoria: MaterialCategoria;
+  type: 'folder';
+  name: string;
+  parentId: string | null;
+  /** Cover opcional pra ilustrar a pasta na grid view. */
+  thumb?: string;
+  /** Descrição curta — usada no header da pasta + no preview. */
+  description?: string;
+}
+
+export type MaterialFolder = MaterialFolderBase;
+
+export interface MaterialFile {
+  id: string;
+  type: 'file';
+  name: string;
+  parentId: string;
   formato: MaterialFormato;
-  /** Thumbnail/cover usada na lista. Caminho relativo a /public. */
   thumb: string;
-  /** Bytes do asset (single file ou ZIP do bundle). */
   tamanhoBytes: number;
-  /** Quantos itens individuais carrega (ex: 24 fotos num álbum). */
-  contagemItens?: number;
   status: MaterialStatus;
-  /** Quando o material entrou no acervo (visível pro fã). */
   publicadoEm: string; // ISO
-  /** Se também virou post no feed, mantém a ref. */
   publishedToFeed: boolean;
-  /** Total de downloads desde a publicação. */
   downloads: number;
-  /** Total de favoritos / saves pelos fãs. */
   favoritos: number;
-  /** Descrição curta — mostra no detalhe + no feed quando vira post. */
-  descricao: string;
+  description: string;
   createdBy: { id: string; name: string };
 }
 
-/** Categoria → metadados pra rendering (label, descrição, count). */
-export interface MaterialCategoriaMeta {
-  id: MaterialCategoria;
-  label: string;
-  description: string;
-}
+/** Status → label para Badge. */
+export const MATERIAL_STATUS_LABEL: Record<MaterialStatus, string> = {
+  rascunho:  'Rascunho',
+  publicado: 'Publicado',
+  agendado:  'Agendado',
+  arquivado: 'Arquivado',
+};
 
-export const MATERIAL_CATEGORIA_META: Record<MaterialCategoria, MaterialCategoriaMeta> = {
-  fotos_shows: {
-    id: 'fotos_shows',
-    label: 'Álbuns de fotos',
+/* ──────────────────────────────────────────────────────────────
+ * Fixture data — flat list com parentId. Construímos a árvore em
+ * runtime via helpers (childrenOf, pathOf). Manter flat facilita
+ * (a) busca por id, (b) renderização da grid via filter, e
+ * (c) migração pra um schema relacional no futuro.
+ * ────────────────────────────────────────────────────────────── */
+
+const ROOT_FOLDERS: MaterialFolder[] = [
+  {
+    id: 'cat-fotos-shows',
+    type: 'folder',
+    name: 'Álbuns de fotos',
+    parentId: null,
+    thumb: '/ana-castela.png',
     description: 'Registros bastidores + palco das turnês.',
   },
-  albuns_exclusivos: {
-    id: 'albuns_exclusivos',
-    label: 'Álbuns exclusivos',
+  {
+    id: 'cat-albuns-exclusivos',
+    type: 'folder',
+    name: 'Álbuns exclusivos',
+    parentId: null,
+    thumb: '/albuns/album-livin-deluxe.jpg',
     description: 'Versões alternativas, demos e gravações privadas.',
   },
-  wallpapers: {
-    id: 'wallpapers',
-    label: 'Wallpapers',
+  {
+    id: 'cat-wallpapers',
+    type: 'folder',
+    name: 'Wallpapers',
+    parentId: null,
+    thumb: '/albuns/album-pipoca.jpg',
     description: 'Mobile + desktop em alta resolução.',
   },
-  figurinhas: {
-    id: 'figurinhas',
-    label: 'Figurinhas',
+  {
+    id: 'cat-figurinhas',
+    type: 'folder',
+    name: 'Figurinhas',
+    parentId: null,
+    thumb: '/ana-castela-box.jpg',
     description: 'Stickers para WhatsApp e Telegram.',
   },
-  templates: {
-    id: 'templates',
-    label: 'Templates',
+  {
+    id: 'cat-templates',
+    type: 'folder',
+    name: 'Templates',
+    parentId: null,
+    thumb: '/albuns/album-let-rodeo.jpg',
     description: 'Stories, posts e capas para os fãs personalizarem.',
   },
-  logotipos: {
-    id: 'logotipos',
-    label: 'Logotipos',
+  {
+    id: 'cat-logotipos',
+    type: 'folder',
+    name: 'Logotipos',
+    parentId: null,
+    thumb: '/icon-chapeu-ac.svg',
     description: 'Marca oficial em SVG e PNG, variantes light/dark.',
   },
-};
+];
 
-/** Status → tone do Badge (alinhado com o resto do admin). */
-export const MATERIAL_STATUS_LABEL: Record<MaterialStatus, string> = {
-  rascunho:   'Rascunho',
-  publicado:  'Publicado',
-  agendado:   'Agendado',
-  arquivado:  'Arquivado',
-};
-
-/** Dataset determinístico — não embaralha entre renders. */
-export const MOCK_MATERIAIS: MaterialItem[] = [
-  // ── Álbuns de fotos ──────────────────────────────────
+const SUBFOLDERS: MaterialFolder[] = [
+  // Álbuns de fotos — subpastas por show
   {
-    id: 'm-show-rodeio-bh',
-    titulo: 'Rodeio BH · Outubro 2025',
-    categoria: 'fotos_shows',
-    formato: 'zip',
+    id: 'show-rodeio-bh',
+    type: 'folder',
+    name: 'Rodeio BH · Out 2025',
+    parentId: 'cat-fotos-shows',
     thumb: '/ana-castela.png',
-    tamanhoBytes: 142_336_000,
-    contagemItens: 48,
+    description: 'Show de Belo Horizonte — palco, bastidores e camarins.',
+  },
+  {
+    id: 'show-jaguariuna',
+    type: 'folder',
+    name: 'Jaguariúna Festival',
+    parentId: 'cat-fotos-shows',
+    thumb: '/central-anacastela.png',
+    description: 'Maior festival country de SP — palco e público.',
+  },
+  {
+    id: 'show-fortaleza',
+    type: 'folder',
+    name: 'Fortaleza · Verão de cowboy',
+    parentId: 'cat-fotos-shows',
+    thumb: '/ana-castela-box.jpg',
+    description: 'Show beira-mar no Aterro de Iracema.',
+  },
+  // Álbuns exclusivos — subpastas por sessão
+  {
+    id: 'album-acustico-curitiba',
+    type: 'folder',
+    name: 'Acústico Curitiba',
+    parentId: 'cat-albuns-exclusivos',
+    thumb: '/albuns/album-livin-deluxe.jpg',
+    description: 'Sessão íntima em estúdio com voz e violão.',
+  },
+  {
+    id: 'album-demos-2025',
+    type: 'folder',
+    name: 'Demos perdidas 2025',
+    parentId: 'cat-albuns-exclusivos',
+    thumb: '/albuns/album-pipoca.jpg',
+    description: 'Versões iniciais — voz guia, em construção.',
+  },
+  // Wallpapers — subpastas por device
+  {
+    id: 'wp-mobile',
+    type: 'folder',
+    name: 'Mobile',
+    parentId: 'cat-wallpapers',
+    description: '1080×2400 pra Android e iPhone.',
+  },
+  {
+    id: 'wp-desktop',
+    type: 'folder',
+    name: 'Desktop',
+    parentId: 'cat-wallpapers',
+    description: '4K e ultrawide.',
+  },
+];
+
+const FILES: MaterialFile[] = [
+  // ── Show Rodeio BH (5 arquivos) ───────────────────
+  {
+    id: 'f-rodeiobh-palco-01',
+    type: 'file',
+    name: 'palco-abertura.jpg',
+    parentId: 'show-rodeio-bh',
+    formato: 'jpg',
+    thumb: '/ana-castela.png',
+    tamanhoBytes: 4_280_000,
     status: 'publicado',
     publicadoEm: '2026-04-12T18:00:00.000Z',
     publishedToFeed: true,
-    downloads: 8421,
-    favoritos: 2156,
-    descricao:
-      'Bastidores + palco do show de Belo Horizonte, com fotos exclusivas dos camarins e da pré-saída.',
+    downloads: 2842,
+    favoritos: 814,
+    description: 'Frame icônico da abertura — entrada da artista no palco.',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
-    id: 'm-show-jaguariuna',
-    titulo: 'Jaguariúna Rodeo Festival',
-    categoria: 'fotos_shows',
-    formato: 'zip',
+    id: 'f-rodeiobh-publico',
+    type: 'file',
+    name: 'publico-vista-aerea.jpg',
+    parentId: 'show-rodeio-bh',
+    formato: 'jpg',
+    thumb: '/ana-castela.png',
+    tamanhoBytes: 5_140_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-12T18:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 1208,
+    favoritos: 342,
+    description: 'Vista aérea da arena lotada durante "Pipoca".',
+    createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
+  },
+  {
+    id: 'f-rodeiobh-bastidores-01',
+    type: 'file',
+    name: 'bastidores-camarim.jpg',
+    parentId: 'show-rodeio-bh',
+    formato: 'jpg',
     thumb: '/central-anacastela.png',
-    tamanhoBytes: 188_500_000,
-    contagemItens: 62,
+    tamanhoBytes: 3_200_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-12T18:00:00.000Z',
+    publishedToFeed: true,
+    downloads: 1908,
+    favoritos: 612,
+    description: 'Momento de descontração no camarim antes do show.',
+    createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
+  },
+  {
+    id: 'f-rodeiobh-todas-fotos',
+    type: 'file',
+    name: 'todas-fotos.zip',
+    parentId: 'show-rodeio-bh',
+    formato: 'zip',
+    thumb: '/ana-castela.png',
+    tamanhoBytes: 142_336_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-12T18:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 5240,
+    favoritos: 1880,
+    description: 'Pacote completo: 48 fotos em alta resolução.',
+    createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
+  },
+  {
+    id: 'f-rodeiobh-video-recap',
+    type: 'file',
+    name: 'recap-3min.mp4',
+    parentId: 'show-rodeio-bh',
+    formato: 'mp4',
+    thumb: '/ana-castela-box.jpg',
+    tamanhoBytes: 84_200_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-14T19:00:00.000Z',
+    publishedToFeed: true,
+    downloads: 9410,
+    favoritos: 3220,
+    description: 'Vídeo recap oficial — highlights do show editados em 3 minutos.',
+    createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
+  },
+
+  // ── Jaguariúna (3 arquivos) ─────────────────────
+  {
+    id: 'f-jagua-palco',
+    type: 'file',
+    name: 'main-stage.jpg',
+    parentId: 'show-jaguariuna',
+    formato: 'jpg',
+    thumb: '/central-anacastela.png',
+    tamanhoBytes: 6_240_000,
     status: 'publicado',
     publicadoEm: '2026-03-28T14:30:00.000Z',
     publishedToFeed: true,
-    downloads: 11_842,
-    favoritos: 3294,
-    descricao:
-      'Fotos do maior festival country de São Paulo — palco, público, momentos com convidados.',
+    downloads: 3120,
+    favoritos: 921,
+    description: 'Vista frontal do palco principal durante o headliner.',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
-    id: 'm-show-fortaleza',
-    titulo: 'Fortaleza · Verão de cowboy',
-    categoria: 'fotos_shows',
+    id: 'f-jagua-convidados',
+    type: 'file',
+    name: 'duetos-convidados.jpg',
+    parentId: 'show-jaguariuna',
+    formato: 'jpg',
+    thumb: '/ana-castela.png',
+    tamanhoBytes: 4_810_000,
+    status: 'publicado',
+    publicadoEm: '2026-03-28T14:30:00.000Z',
+    publishedToFeed: false,
+    downloads: 2104,
+    favoritos: 624,
+    description: 'Encontro no palco com convidados surpresa.',
+    createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
+  },
+  {
+    id: 'f-jagua-pacote',
+    type: 'file',
+    name: 'pacote-completo.zip',
+    parentId: 'show-jaguariuna',
     formato: 'zip',
+    thumb: '/central-anacastela.png',
+    tamanhoBytes: 188_500_000,
+    status: 'publicado',
+    publicadoEm: '2026-03-28T14:30:00.000Z',
+    publishedToFeed: false,
+    downloads: 6580,
+    favoritos: 2410,
+    description: '62 fotos do show + bastidores em alta resolução.',
+    createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
+  },
+
+  // ── Fortaleza (2 arquivos) ──────────────────────
+  {
+    id: 'f-forta-01',
+    type: 'file',
+    name: 'praia-aterro.jpg',
+    parentId: 'show-fortaleza',
+    formato: 'jpg',
     thumb: '/ana-castela-box.jpg',
-    tamanhoBytes: 96_244_000,
-    contagemItens: 34,
+    tamanhoBytes: 5_410_000,
     status: 'publicado',
     publicadoEm: '2026-02-14T22:00:00.000Z',
     publishedToFeed: false,
-    downloads: 5210,
-    favoritos: 1487,
-    descricao:
-      'Praia, areia e country — registros únicos do show beira-mar no Aterro de Iracema.',
+    downloads: 1420,
+    favoritos: 380,
+    description: 'Pôr-do-sol antes do show, vista do palco no Aterro.',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
-    id: 'm-show-rio',
-    titulo: 'Pedreira do Rio · Live especial',
-    categoria: 'fotos_shows',
+    id: 'f-forta-pacote',
+    type: 'file',
+    name: 'pacote-fortaleza.zip',
+    parentId: 'show-fortaleza',
     formato: 'zip',
-    thumb: '/ana-castela.png',
-    tamanhoBytes: 154_980_000,
-    contagemItens: 51,
-    status: 'agendado',
-    publicadoEm: '2026-05-25T19:00:00.000Z',
+    thumb: '/ana-castela-box.jpg',
+    tamanhoBytes: 96_244_000,
+    status: 'publicado',
+    publicadoEm: '2026-02-14T22:00:00.000Z',
     publishedToFeed: false,
-    downloads: 0,
-    favoritos: 0,
-    descricao:
-      'Cobertura completa do gravacao live na Pedreira — sai sábado pós-edição.',
+    downloads: 3210,
+    favoritos: 1108,
+    description: '34 fotos do show beira-mar.',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
 
-  // ── Álbuns exclusivos ────────────────────────────────
+  // ── Acústico Curitiba (4 arquivos) ──────────────
   {
-    id: 'm-album-acustico-curitiba',
-    titulo: 'Acústico Curitiba · Sessões privadas',
-    categoria: 'albuns_exclusivos',
-    formato: 'zip',
+    id: 'f-acust-01',
+    type: 'file',
+    name: '01-pipoca-acustico.mp3',
+    parentId: 'album-acustico-curitiba',
+    formato: 'mp3',
     thumb: '/albuns/album-livin-deluxe.jpg',
-    tamanhoBytes: 224_000_000,
-    contagemItens: 8,
+    tamanhoBytes: 8_240_000,
     status: 'publicado',
     publicadoEm: '2026-04-02T10:00:00.000Z',
     publishedToFeed: true,
-    downloads: 22_540,
-    favoritos: 9821,
-    descricao:
-      '8 faixas acústicas gravadas ao vivo num estúdio íntimo em Curitiba — só pra superfãs do Fanverse.',
+    downloads: 12_840,
+    favoritos: 5840,
+    description: 'Pipoca em versão acústica — voz + violão.',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
   {
-    id: 'm-album-demos-2025',
-    titulo: 'Demos perdidas 2025',
-    categoria: 'albuns_exclusivos',
+    id: 'f-acust-02',
+    type: 'file',
+    name: '02-nosso-quadro-acustico.mp3',
+    parentId: 'album-acustico-curitiba',
+    formato: 'mp3',
+    thumb: '/albuns/album-livin-deluxe.jpg',
+    tamanhoBytes: 7_810_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-02T10:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 9420,
+    favoritos: 4210,
+    description: 'Nosso Quadro acústico — intimista.',
+    createdBy: { id: 'team-music', name: 'Equipe Música' },
+  },
+  {
+    id: 'f-acust-todas',
+    type: 'file',
+    name: 'album-completo.zip',
+    parentId: 'album-acustico-curitiba',
     formato: 'zip',
+    thumb: '/albuns/album-livin-deluxe.jpg',
+    tamanhoBytes: 224_000_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-02T10:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 8240,
+    favoritos: 3140,
+    description: 'Álbum completo · 8 faixas em FLAC + MP3 320kbps.',
+    createdBy: { id: 'team-music', name: 'Equipe Música' },
+  },
+  {
+    id: 'f-acust-capa',
+    type: 'file',
+    name: 'capa-acustico.png',
+    parentId: 'album-acustico-curitiba',
+    formato: 'png',
+    thumb: '/albuns/album-livin-deluxe.jpg',
+    tamanhoBytes: 2_840_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-02T10:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 4210,
+    favoritos: 1200,
+    description: 'Capa oficial do álbum acústico em alta resolução.',
+    createdBy: { id: 'team-design', name: 'Equipe Design' },
+  },
+
+  // ── Demos 2025 (2 arquivos) ─────────────────────
+  {
+    id: 'f-demos-01',
+    type: 'file',
+    name: 'rascunho-cowgirl.mp3',
+    parentId: 'album-demos-2025',
+    formato: 'mp3',
     thumb: '/albuns/album-pipoca.jpg',
-    tamanhoBytes: 88_400_000,
-    contagemItens: 5,
+    tamanhoBytes: 5_810_000,
     status: 'publicado',
     publicadoEm: '2026-03-15T12:00:00.000Z',
     publishedToFeed: false,
-    downloads: 14_812,
-    favoritos: 6043,
-    descricao:
-      'Versões iniciais de músicas que não entraram no álbum oficial — com voz guia, ainda em construção.',
+    downloads: 6240,
+    favoritos: 2480,
+    description: 'Primeira versão do single "Cowgirl" — voz guia.',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
   {
-    id: 'm-album-rodeio-deluxe',
-    titulo: "Let's Go Rodeo · Deluxe Edition",
-    categoria: 'albuns_exclusivos',
+    id: 'f-demos-pack',
+    type: 'file',
+    name: 'todas-demos.zip',
+    parentId: 'album-demos-2025',
     formato: 'zip',
-    thumb: '/albuns/album-let-rodeo.jpg',
-    tamanhoBytes: 312_000_000,
-    contagemItens: 14,
-    status: 'agendado',
-    publicadoEm: '2026-08-15T00:00:00.000Z',
+    thumb: '/albuns/album-pipoca.jpg',
+    tamanhoBytes: 88_400_000,
+    status: 'publicado',
+    publicadoEm: '2026-03-15T12:00:00.000Z',
     publishedToFeed: false,
-    downloads: 0,
-    favoritos: 0,
-    descricao:
-      '14 faixas — versão deluxe completa, com 3 colaborações inéditas. Lançamento simultâneo nos DSPs e no Fanverse.',
+    downloads: 8420,
+    favoritos: 3120,
+    description: '5 demos completas em qualidade de estúdio.',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
 
-  // ── Wallpapers ───────────────────────────────────────
+  // ── Wallpapers Mobile (3 arquivos) ─────────────
   {
-    id: 'm-wp-rodeio-mobile',
-    titulo: 'Rodeio · Mobile 1080×2400',
-    categoria: 'wallpapers',
+    id: 'f-wp-mob-rodeio',
+    type: 'file',
+    name: 'rodeio-1080x2400.png',
+    parentId: 'wp-mobile',
     formato: 'png',
     thumb: '/ana-castela.png',
     tamanhoBytes: 3_400_000,
@@ -245,28 +481,14 @@ export const MOCK_MATERIAIS: MaterialItem[] = [
     publishedToFeed: false,
     downloads: 18_244,
     favoritos: 5412,
-    descricao: 'Wallpaper exclusivo da capa de Rodeio — versão mobile vertical.',
+    description: 'Wallpaper Rodeio · vertical 1080×2400, otimizado pra notch.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
-    id: 'm-wp-rodeio-desktop',
-    titulo: 'Rodeio · Desktop 4K',
-    categoria: 'wallpapers',
-    formato: 'png',
-    thumb: '/ana-castela.png',
-    tamanhoBytes: 8_800_000,
-    status: 'publicado',
-    publicadoEm: '2026-04-01T09:00:00.000Z',
-    publishedToFeed: false,
-    downloads: 9421,
-    favoritos: 3120,
-    descricao: 'Versão desktop wide do wallpaper de Rodeio — 3840×2160.',
-    createdBy: { id: 'team-design', name: 'Equipe Design' },
-  },
-  {
-    id: 'm-wp-pipoca-mobile',
-    titulo: 'Pipoca · Mobile',
-    categoria: 'wallpapers',
+    id: 'f-wp-mob-pipoca',
+    type: 'file',
+    name: 'pipoca-1080x2400.png',
+    parentId: 'wp-mobile',
     formato: 'png',
     thumb: '/albuns/album-pipoca.jpg',
     tamanhoBytes: 2_980_000,
@@ -275,134 +497,166 @@ export const MOCK_MATERIAIS: MaterialItem[] = [
     publishedToFeed: false,
     downloads: 14_104,
     favoritos: 4221,
-    descricao: 'A boiadeira no campo de milho — wallpaper temático mobile.',
+    description: 'A boiadeira no campo de milho — vertical pra mobile.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
-    id: 'm-wp-cowgirl-pack',
-    titulo: 'Cowgirl pack · 6 wallpapers',
-    categoria: 'wallpapers',
+    id: 'f-wp-mob-cowgirl',
+    type: 'file',
+    name: 'cowgirl-pack-6.zip',
+    parentId: 'wp-mobile',
     formato: 'zip',
     thumb: '/albuns/album-livin-deluxe.jpg',
     tamanhoBytes: 24_800_000,
-    contagemItens: 6,
     status: 'publicado',
     publicadoEm: '2026-02-28T10:00:00.000Z',
     publishedToFeed: true,
     downloads: 31_840,
     favoritos: 12_490,
-    descricao: 'Pacote completo de 6 wallpapers temáticos cowgirl — mobile + desktop.',
+    description: 'Pacote de 6 wallpapers cowgirl em variações de cor.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
-  // ── Figurinhas ───────────────────────────────────────
+  // ── Wallpapers Desktop (2 arquivos) ─────────────
   {
-    id: 'm-stickers-emoji-pack-1',
-    titulo: 'Emoji pack 1 · Reações',
-    categoria: 'figurinhas',
+    id: 'f-wp-desk-rodeio',
+    type: 'file',
+    name: 'rodeio-3840x2160.png',
+    parentId: 'wp-desktop',
+    formato: 'png',
+    thumb: '/ana-castela.png',
+    tamanhoBytes: 8_800_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-01T09:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 9421,
+    favoritos: 3120,
+    description: 'Rodeio em 4K wide pra desktop.',
+    createdBy: { id: 'team-design', name: 'Equipe Design' },
+  },
+  {
+    id: 'f-wp-desk-ultrawide',
+    type: 'file',
+    name: 'ultrawide-5120x1440.png',
+    parentId: 'wp-desktop',
+    formato: 'png',
+    thumb: '/central-anacastela.png',
+    tamanhoBytes: 14_200_000,
+    status: 'publicado',
+    publicadoEm: '2026-04-05T11:00:00.000Z',
+    publishedToFeed: false,
+    downloads: 2480,
+    favoritos: 824,
+    description: 'Versão ultrawide 32:9 pra monitores extra-largos.',
+    createdBy: { id: 'team-design', name: 'Equipe Design' },
+  },
+
+  // ── Figurinhas (direto na categoria, sem subpasta) ─
+  {
+    id: 'f-stickers-emoji',
+    type: 'file',
+    name: 'emoji-pack-1-reacoes.zip',
+    parentId: 'cat-figurinhas',
     formato: 'zip',
     thumb: '/ana-castela-box.jpg',
     tamanhoBytes: 4_200_000,
-    contagemItens: 24,
     status: 'publicado',
     publicadoEm: '2026-03-10T11:00:00.000Z',
     publishedToFeed: true,
     downloads: 48_220,
     favoritos: 21_140,
-    descricao:
-      '24 stickers de reação pra WhatsApp e Telegram — chorando, rindo, dancando, lealdade.',
+    description: '24 stickers de reação pra WhatsApp e Telegram.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
-    id: 'm-stickers-frases',
-    titulo: 'Pacote Frases',
-    categoria: 'figurinhas',
+    id: 'f-stickers-frases',
+    type: 'file',
+    name: 'frases-iconicas.zip',
+    parentId: 'cat-figurinhas',
     formato: 'zip',
     thumb: '/central-anacastela.png',
     tamanhoBytes: 5_120_000,
-    contagemItens: 18,
     status: 'publicado',
     publicadoEm: '2026-02-22T16:00:00.000Z',
     publishedToFeed: false,
     downloads: 24_810,
     favoritos: 9420,
-    descricao: 'Stickers com frases icônicas das músicas. Bom dia, eu sou a boiadeira.',
+    description: '18 stickers com frases icônicas das músicas.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
-    id: 'm-stickers-acessorios',
-    titulo: 'Acessórios country',
-    categoria: 'figurinhas',
+    id: 'f-stickers-acess',
+    type: 'file',
+    name: 'acessorios-country.zip',
+    parentId: 'cat-figurinhas',
     formato: 'zip',
     thumb: '/ana-castela.png',
     tamanhoBytes: 3_840_000,
-    contagemItens: 14,
     status: 'rascunho',
     publicadoEm: '2026-05-15T00:00:00.000Z',
     publishedToFeed: false,
     downloads: 0,
     favoritos: 0,
-    descricao: 'Botas, chapéus, fivelas — stickers temáticos do universo country. Ainda em finalização.',
+    description: 'Botas, chapéus, fivelas — 14 stickers. Em finalização.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
-  // ── Templates ────────────────────────────────────────
+  // ── Templates (direto na categoria) ─────────────
   {
-    id: 'm-tpl-stories-launch',
-    titulo: 'Story de lançamento · 9 layouts',
-    categoria: 'templates',
+    id: 'f-tpl-story',
+    type: 'file',
+    name: 'story-lancamento-9-layouts.zip',
+    parentId: 'cat-templates',
     formato: 'zip',
     thumb: '/ana-castela.png',
     tamanhoBytes: 12_200_000,
-    contagemItens: 9,
     status: 'publicado',
     publicadoEm: '2026-04-08T13:00:00.000Z',
     publishedToFeed: true,
     downloads: 6240,
     favoritos: 2110,
-    descricao:
-      'Templates editáveis no Canva pros fãs anunciarem o lançamento de Rodeio Deluxe nos seus stories.',
+    description: '9 layouts editáveis no Canva pra story de lançamento.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
-    id: 'm-tpl-feed-post',
-    titulo: 'Post de feed · Grid 3×1',
-    categoria: 'templates',
+    id: 'f-tpl-feed',
+    type: 'file',
+    name: 'post-grid-3x1.zip',
+    parentId: 'cat-templates',
     formato: 'zip',
     thumb: '/albuns/album-let-rodeo.jpg',
     tamanhoBytes: 8_600_000,
-    contagemItens: 3,
     status: 'publicado',
     publicadoEm: '2026-03-30T10:30:00.000Z',
     publishedToFeed: false,
     downloads: 4108,
     favoritos: 1244,
-    descricao:
-      'Trinca de posts horizontais que formam o grid completo no perfil — versões claras e escuras.',
+    description: 'Trinca de posts horizontais — grid 3×1 no perfil.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
-    id: 'm-tpl-capa-evento',
-    titulo: 'Capa de evento · 2 variantes',
-    categoria: 'templates',
+    id: 'f-tpl-capa',
+    type: 'file',
+    name: 'capa-evento-2-variantes.pdf',
+    parentId: 'cat-templates',
     formato: 'pdf',
     thumb: '/central-anacastela.png',
     tamanhoBytes: 2_440_000,
-    contagemItens: 2,
     status: 'publicado',
     publicadoEm: '2026-03-12T09:00:00.000Z',
     publishedToFeed: false,
     downloads: 1820,
     favoritos: 542,
-    descricao: 'Cover pra fan-meet ou evento local. PDF editável.',
+    description: 'Cover pra fan-meet ou evento local · PDF editável.',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
-  // ── Logotipos ────────────────────────────────────────
+  // ── Logotipos (direto na categoria) ─────────────
   {
-    id: 'm-logo-oficial-svg',
-    titulo: 'Logotipo oficial · SVG',
-    categoria: 'logotipos',
+    id: 'f-logo-svg',
+    type: 'file',
+    name: 'logotipo-oficial.svg',
+    parentId: 'cat-logotipos',
     formato: 'svg',
     thumb: '/icon-chapeu-ac.svg',
     tamanhoBytes: 12_400,
@@ -411,31 +665,30 @@ export const MOCK_MATERIAIS: MaterialItem[] = [
     publishedToFeed: false,
     downloads: 5240,
     favoritos: 1840,
-    descricao:
-      'Marca oficial em formato vetorial. Variantes positiva e negativa inclusas.',
+    description: 'Marca oficial em SVG — positiva e negativa.',
     createdBy: { id: 'team-brand', name: 'Equipe Brand' },
   },
   {
-    id: 'm-logo-pack-png',
-    titulo: 'Logotipo · Pack PNG',
-    categoria: 'logotipos',
+    id: 'f-logo-png-pack',
+    type: 'file',
+    name: 'pack-png.zip',
+    parentId: 'cat-logotipos',
     formato: 'zip',
     thumb: '/icon-chapeu-ac.svg',
     tamanhoBytes: 1_840_000,
-    contagemItens: 6,
     status: 'publicado',
     publicadoEm: '2026-01-15T10:00:00.000Z',
     publishedToFeed: false,
     downloads: 8420,
     favoritos: 2410,
-    descricao:
-      'PNGs em transparência: branco, preto, gradiente, marca dágua — 6 versões em alta resolução.',
+    description: '6 variantes PNG em transparência (branco, preto, gradiente).',
     createdBy: { id: 'team-brand', name: 'Equipe Brand' },
   },
   {
-    id: 'm-logo-manual-uso',
-    titulo: 'Manual de uso da marca',
-    categoria: 'logotipos',
+    id: 'f-logo-manual',
+    type: 'file',
+    name: 'manual-de-uso.pdf',
+    parentId: 'cat-logotipos',
     formato: 'pdf',
     thumb: '/icon-chapeu-ac.svg',
     tamanhoBytes: 18_400_000,
@@ -444,29 +697,87 @@ export const MOCK_MATERIAIS: MaterialItem[] = [
     publishedToFeed: false,
     downloads: 2840,
     favoritos: 624,
-    descricao:
-      'Guia oficial: cores, espaço mínimo, usos proibidos. Para parceiros e produção.',
+    description: 'Guia oficial: cores, espaçamento mínimo, usos proibidos.',
     createdBy: { id: 'team-brand', name: 'Equipe Brand' },
   },
 ];
 
-export function loadMateriais(): MaterialItem[] {
-  return MOCK_MATERIAIS;
+/** Lista plana com todos os nós. Helpers consomem dali. */
+export const MOCK_NODES: MaterialNode[] = [
+  ...ROOT_FOLDERS,
+  ...SUBFOLDERS,
+  ...FILES,
+];
+
+/* ──────────────────────────────────────────────────────────────
+ * Helpers — operações sobre a árvore.
+ * ────────────────────────────────────────────────────────────── */
+
+export function loadMateriaisTree(): MaterialNode[] {
+  return MOCK_NODES;
 }
 
-/** Sumário por categoria — usado pelos cards de visão geral. */
-export function summarizeByCategoria(items: MaterialItem[]) {
-  const out: Record<MaterialCategoria, { count: number; downloads: number }> = {
-    fotos_shows:        { count: 0, downloads: 0 },
-    albuns_exclusivos:  { count: 0, downloads: 0 },
-    wallpapers:         { count: 0, downloads: 0 },
-    figurinhas:         { count: 0, downloads: 0 },
-    templates:          { count: 0, downloads: 0 },
-    logotipos:          { count: 0, downloads: 0 },
-  };
-  for (const m of items) {
-    out[m.categoria].count += 1;
-    out[m.categoria].downloads += m.downloads;
+/** Filhos diretos de uma pasta (id null = raiz). */
+export function childrenOf(
+  nodes: MaterialNode[],
+  parentId: string | null,
+): MaterialNode[] {
+  return nodes.filter((n) => n.parentId === parentId);
+}
+
+/** Caminho da raiz até o nó alvo — array de pastas (pra breadcrumb). */
+export function pathOf(
+  nodes: MaterialNode[],
+  targetId: string | null,
+): MaterialFolder[] {
+  if (targetId === null) return [];
+  const path: MaterialFolder[] = [];
+  let cursor: MaterialNode | undefined = nodes.find((n) => n.id === targetId);
+  while (cursor) {
+    if (cursor.type === 'folder') path.unshift(cursor);
+    const parentId: string | null = cursor.parentId;
+    cursor = parentId ? nodes.find((n) => n.id === parentId) : undefined;
   }
-  return out;
+  return path;
+}
+
+/** Encontra um nó por id (helper conveniente). */
+export function findNode(
+  nodes: MaterialNode[],
+  id: string | null,
+): MaterialNode | undefined {
+  if (!id) return undefined;
+  return nodes.find((n) => n.id === id);
+}
+
+/** Conta itens (arquivos) DENTRO de uma pasta, recursivamente. */
+export function countFilesDeep(
+  nodes: MaterialNode[],
+  folderId: string,
+): number {
+  let count = 0;
+  const stack: string[] = [folderId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    for (const n of nodes) {
+      if (n.parentId !== id) continue;
+      if (n.type === 'file') count += 1;
+      else stack.push(n.id);
+    }
+  }
+  return count;
+}
+
+/** Sumário global do acervo (pra KPIs no header). */
+export function summarizeTree(nodes: MaterialNode[]) {
+  const files = nodes.filter((n): n is MaterialFile => n.type === 'file');
+  const folders = nodes.filter((n): n is MaterialFolder => n.type === 'folder');
+  return {
+    totalFiles: files.length,
+    totalFolders: folders.length,
+    totalDownloads: files.reduce((sum, f) => sum + f.downloads, 0),
+    totalFavoritos: files.reduce((sum, f) => sum + f.favoritos, 0),
+    noFeed: files.filter((f) => f.publishedToFeed).length,
+    totalBytes: files.reduce((sum, f) => sum + f.tamanhoBytes, 0),
+  };
 }

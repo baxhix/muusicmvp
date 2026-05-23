@@ -3,329 +3,386 @@
 import { useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
-import Badge, { type BadgeTone } from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import StatCard from '@/components/ui/StatCard';
-import Table, { type Column } from '@/components/ui/Table';
 import {
   IconPlus,
   IconSearch,
   IconArchive,
   IconDownload,
-  IconHeart,
   IconFeed,
+  IconFolder,
+  IconFolderOpen,
+  IconHome,
+  IconFile,
   IconImage,
+  IconMusic,
+  IconVideo,
+  IconChevronRight,
+  IconTrash,
 } from '@/components/icons';
 import {
-  loadMateriais,
-  summarizeByCategoria,
-  MATERIAL_CATEGORIA_META,
-  MATERIAL_STATUS_LABEL,
-  type MaterialItem,
-  type MaterialCategoria,
-  type MaterialStatus,
+  loadMateriaisTree,
+  childrenOf,
+  pathOf,
+  findNode,
+  countFilesDeep,
+  summarizeTree,
+  type MaterialNode,
+  type MaterialFolder,
+  type MaterialFile,
+  type MaterialFormato,
 } from '@/data/mock/materiais';
-import { formatNumber, formatRelative, formatDate } from '@/lib/format';
+import { formatNumber, formatRelative } from '@/lib/format';
+import { formatBytes } from './shared';
+import MaterialPreviewDrawer from './MaterialPreviewDrawer';
 import styles from './page.module.css';
 
 /**
- * Materiais — acervo de conteúdo exclusivo da Ana Castela pros
- * superfãs do Fanverse.
+ * Materiais — navegador de arquivos hierárquico do acervo da
+ * artista. Per product feedback "estilo pastas e subpastas, como
+ * do Google Drive, finder, etc. Com caminho em forma de
+ * breadcrumb, preview e cta para download e exclusão".
  *
- * Concepção: este NÃO é o feed (cronológico, efêmero). É o
- * ACERVO permanente — álbuns de fotos de shows, álbuns musicais
- * exclusivos, wallpapers, figurinhas, templates, logotipos.
- * Algumas peças também viram posts no feed (flag
- * `publishedToFeed`), mas o acervo é a "biblioteca" sempre
- * acessível.
+ * Arquitetura:
+ *   - State `currentFolderId` (null = raiz) navega na árvore
+ *   - State `selectedFileId` abre o preview drawer com Download +
+ *     Excluir
+ *   - Breadcrumb mostra o caminho da raiz até a pasta atual
+ *   - Grid view por padrão (cards de pasta + cards de arquivo)
  *
- * Layout:
- *   1. PageHeader + ação "Novo material"
- *   2. KPIs (4 cards): total, downloads, no feed, categorias
- *   3. Grid de 6 categorias com count + downloads agregados
- *   4. Filtros (search + status + categoria)
- *   5. Tabela com lista filtrada de itens
- *
- * Dados mockados via `loadMateriais()`. Quando o backend cair,
- * troca-se a função sem mudar os renderers.
+ * Backend pendente — handleDownload e handleDelete são stubs
+ * informativos. Quando ligados, basta swap as funções por
+ * fetches; o shape dos nós é estável.
  */
 
-const STATUS_TONE: Record<MaterialStatus, BadgeTone> = {
-  rascunho:  'neutral',
-  publicado: 'success',
-  agendado:  'info',
-  arquivado: 'warning',
-};
-
-const STATUS_OPTIONS: { value: MaterialStatus | 'all'; label: string }[] = [
-  { value: 'all',       label: 'Todos os status' },
-  { value: 'publicado', label: 'Publicados' },
-  { value: 'agendado',  label: 'Agendados' },
-  { value: 'rascunho',  label: 'Rascunhos' },
-  { value: 'arquivado', label: 'Arquivados' },
-];
-
-const CATEGORIA_OPTIONS: { value: MaterialCategoria | 'all'; label: string }[] = [
-  { value: 'all', label: 'Todas as categorias' },
-  ...(Object.values(MATERIAL_CATEGORIA_META).map((m) => ({
-    value: m.id,
-    label: m.label,
-  }))),
-];
-
-/** Formata bytes em KB/MB/GB. Inline porque não é usado em outro
- *  lugar do admin ainda — quando virar, promove pra format.ts. */
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1_073_741_824) return `${(bytes / 1_048_576).toFixed(1)} MB`;
-  return `${(bytes / 1_073_741_824).toFixed(2)} GB`;
+/** Mapeia formato → ícone usado no card do arquivo. */
+function fileFormatIcon(formato: MaterialFormato) {
+  switch (formato) {
+    case 'jpg':
+    case 'png':
+    case 'svg':
+      return IconImage;
+    case 'mp3':
+      return IconMusic;
+    case 'mp4':
+      return IconVideo;
+    default:
+      return IconFile;
+  }
 }
 
 export default function MateriaisPage() {
-  const [items] = useState<MaterialItem[]>(() => loadMateriais());
+  const [nodes] = useState<MaterialNode[]>(() => loadMateriaisTree());
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<MaterialStatus | 'all'>('all');
-  const [categoria, setCategoria] = useState<MaterialCategoria | 'all'>('all');
 
-  /* Sumário das categorias — usado pelos cards de visão geral
-   * (independente dos filtros, sempre mostra o acervo inteiro). */
-  const categoriaSummary = useMemo(() => summarizeByCategoria(items), [items]);
-
-  const filtered = useMemo(() => {
+  /* Derived: caminho de pastas do root até a atual (pra breadcrumb)
+   * e filhos diretos do folder atual (pra grid). */
+  const breadcrumb = useMemo(
+    () => pathOf(nodes, currentFolderId),
+    [nodes, currentFolderId],
+  );
+  const currentChildren = useMemo(() => {
+    const all = childrenOf(nodes, currentFolderId);
     const q = search.trim().toLowerCase();
-    return items.filter((m) => {
-      if (status !== 'all' && m.status !== status) return false;
-      if (categoria !== 'all' && m.categoria !== categoria) return false;
-      if (q) {
-        const hay = `${m.titulo} ${MATERIAL_CATEGORIA_META[m.categoria].label} ${m.descricao}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
+    if (!q) return all;
+    return all.filter((n) => {
+      const hay = `${n.name} ${n.type === 'file' ? n.description : (n as MaterialFolder).description ?? ''}`.toLowerCase();
+      return hay.includes(q);
     });
-  }, [items, search, status, categoria]);
+  }, [nodes, currentFolderId, search]);
 
-  const summary = useMemo(() => {
-    const total = items.length;
-    const totalDownloads = items.reduce((sum, m) => sum + m.downloads, 0);
-    const noFeed = items.filter((m) => m.publishedToFeed).length;
-    const categoriasAtivas = Object.values(categoriaSummary).filter(
-      (s) => s.count > 0,
-    ).length;
-    return { total, totalDownloads, noFeed, categoriasAtivas };
-  }, [items, categoriaSummary]);
+  const folders = currentChildren.filter(
+    (n): n is MaterialFolder => n.type === 'folder',
+  );
+  const files = currentChildren.filter(
+    (n): n is MaterialFile => n.type === 'file',
+  );
 
-  const columns: Column<MaterialItem>[] = [
-    {
-      id: 'titulo',
-      header: 'Material',
-      sortKey: (m) => m.titulo,
-      cell: (m) => (
-        <div className={styles.cellMaterial}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={m.thumb} alt="" className={styles.cellThumb} />
-          <div className={styles.cellInfo}>
-            <span className={styles.cellTitulo}>{m.titulo}</span>
-            <span className={styles.cellDesc}>{m.descricao}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'categoria',
-      header: 'Categoria',
-      sortKey: (m) => m.categoria,
-      cell: (m) => (
-        <span className={styles.categoriaChip}>
-          {MATERIAL_CATEGORIA_META[m.categoria].label}
-        </span>
-      ),
-      width: 160,
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      sortKey: (m) => m.status,
-      cell: (m) => (
-        <Badge tone={STATUS_TONE[m.status]} size="sm" dot>
-          {MATERIAL_STATUS_LABEL[m.status]}
-        </Badge>
-      ),
-      width: 120,
-    },
-    {
-      id: 'downloads',
-      header: 'Downloads',
-      sortKey: (m) => m.downloads,
-      align: 'right',
-      cell: (m) => (
-        <span className={styles.numCell}>{formatNumber(m.downloads)}</span>
-      ),
-      width: 110,
-    },
-    {
-      id: 'favoritos',
-      header: 'Favoritos',
-      sortKey: (m) => m.favoritos,
-      align: 'right',
-      cell: (m) => (
-        <span className={styles.numCellMute}>{formatNumber(m.favoritos)}</span>
-      ),
-      width: 110,
-    },
-    {
-      id: 'tamanho',
-      header: 'Tamanho',
-      sortKey: (m) => m.tamanhoBytes,
-      align: 'right',
-      cell: (m) => (
-        <span className={styles.muteCell}>{formatBytes(m.tamanhoBytes)}</span>
-      ),
-      width: 100,
-    },
-    {
-      id: 'publicadoEm',
-      header: 'Publicado',
-      sortKey: (m) => m.publicadoEm,
-      cell: (m) => (
-        <div className={styles.dateCell}>
-          <span className={styles.dateRel}>
-            {m.status === 'agendado'
-              ? `em ${formatDate(m.publicadoEm)}`
-              : formatRelative(m.publicadoEm)}
-          </span>
-          {m.publishedToFeed && (
-            <span className={styles.feedBadge} title="Também publicado no feed">
-              <IconFeed size={11} /> No feed
-            </span>
-          )}
-        </div>
-      ),
-      width: 160,
-    },
-  ];
+  /* Sumário global pros KPIs no header — não depende do folder
+   * atual; sempre reflete o acervo inteiro. */
+  const summary = useMemo(() => summarizeTree(nodes), [nodes]);
+
+  const selectedFile = useMemo(() => {
+    if (!selectedFileId) return null;
+    const n = findNode(nodes, selectedFileId);
+    return n && n.type === 'file' ? n : null;
+  }, [nodes, selectedFileId]);
+
+  /* Handlers — backend stubs. Quando ligados, swap pelas chamadas
+   * reais. Por ora `alert` cumpre o papel de feedback. */
+  function handleDownload(file: MaterialFile) {
+    // TODO: GET /api/admin/materiais/{id}/download → blob
+    alert(
+      `Download mockado: ${file.name}\n(${formatBytes(file.tamanhoBytes)})\n\nQuando o backend ligar, substitua o stub por\nfetch('/api/admin/materiais/${file.id}/download').`,
+    );
+  }
+
+  function handleDelete(file: MaterialFile) {
+    const ok = confirm(
+      `Excluir "${file.name}"?\n\nEsta ação remove o arquivo do acervo e desfaz qualquer post no feed associado a ele.`,
+    );
+    if (!ok) return;
+    // TODO: DELETE /api/admin/materiais/{id}
+    alert('Exclusão mockada — backend pendente.');
+    setSelectedFileId(null);
+  }
+
+  function navigateTo(folderId: string | null) {
+    setCurrentFolderId(folderId);
+    setSearch('');
+  }
+
+  const currentFolder = breadcrumb[breadcrumb.length - 1] ?? null;
 
   return (
     <div className={styles.page}>
       <PageHeader
         title="Materiais"
-        description="Acervo de conteúdo exclusivo pros superfãs — fotos de shows, álbuns, wallpapers, figurinhas, templates e logotipos. Algumas peças também viram posts no feed; aqui é a biblioteca permanente."
+        description="Acervo de conteúdo exclusivo pros superfãs. Navegue por pastas — fotos de shows, álbuns, wallpapers, figurinhas, templates e logotipos."
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            leadingIcon={<IconPlus size={14} />}
-            disabled
-            title="Upload de material indisponível até a integração com storage ser ligada."
-          >
-            Novo material
-          </Button>
+          <div className={styles.headerActions}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leadingIcon={<IconFolderOpen size={14} />}
+              disabled
+              title="Criar pasta indisponível até a integração com storage ser ligada."
+            >
+              Nova pasta
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              leadingIcon={<IconPlus size={14} />}
+              disabled
+              title="Upload indisponível até a integração com storage ser ligada."
+            >
+              Upload
+            </Button>
+          </div>
         }
       />
 
       {/* ── KPIs ───────────────────────────────────────── */}
       <div className={styles.kpiGrid}>
         <StatCard
-          label="Total no acervo"
-          value={String(summary.total)}
+          label="Arquivos no acervo"
+          value={formatNumber(summary.totalFiles)}
           icon={<IconArchive size={14} />}
-          trendLabel={`${summary.categoriasAtivas} categorias ativas`}
+          trendLabel={`${summary.totalFolders} pastas`}
         />
         <StatCard
           label="Downloads totais"
           value={formatNumber(summary.totalDownloads)}
           icon={<IconDownload size={14} />}
-          trendLabel="Somatório de todos os itens"
+          trendLabel="Somatório de todos os arquivos"
         />
         <StatCard
           label="Publicados no feed"
           value={String(summary.noFeed)}
           icon={<IconFeed size={14} />}
-          trendLabel="Viraram post além de viverem no acervo"
+          trendLabel="Viraram post além do acervo"
         />
         <StatCard
-          label="Favoritos"
-          value={formatNumber(items.reduce((s, m) => s + m.favoritos, 0))}
-          icon={<IconHeart size={14} />}
-          trendLabel="Saves de fãs em todos os materiais"
+          label="Tamanho total"
+          value={formatBytes(summary.totalBytes)}
+          trendLabel={`${formatNumber(summary.totalFavoritos)} favoritos`}
         />
       </div>
 
-      {/* ── Categoria overview ────────────────────────── */}
-      <section className={styles.categoriaSection}>
-        <div className={styles.sectionTitleRow}>
-          <h2 className={styles.sectionTitle}>Por categoria</h2>
-          <span className={styles.sectionHint}>
-            Clique pra filtrar a tabela abaixo
-          </span>
-        </div>
-        <div className={styles.categoriaGrid}>
-          {Object.values(MATERIAL_CATEGORIA_META).map((cat) => {
-            const stats = categoriaSummary[cat.id];
-            const active = categoria === cat.id;
+      {/* ── Breadcrumb + search ───────────────────────── */}
+      <Card className={styles.toolbar}>
+        <nav className={styles.breadcrumb} aria-label="Caminho">
+          {/* Root crumb — sempre presente. */}
+          <button
+            type="button"
+            className={`${styles.crumb} ${currentFolderId === null ? styles.crumbActive : ''}`}
+            onClick={() => navigateTo(null)}
+          >
+            <IconHome size={13} />
+            <span>Materiais</span>
+          </button>
+
+          {breadcrumb.map((folder, i) => {
+            const isLast = i === breadcrumb.length - 1;
             return (
-              <button
-                key={cat.id}
-                type="button"
-                className={`${styles.categoriaCard} ${active ? styles.categoriaCardActive : ''}`}
-                onClick={() =>
-                  setCategoria((prev) => (prev === cat.id ? 'all' : cat.id))
-                }
-                aria-pressed={active}
-              >
-                <span className={styles.categoriaIcon} aria-hidden="true">
-                  <IconImage size={14} />
-                </span>
-                <span className={styles.categoriaLabel}>{cat.label}</span>
-                <span className={styles.categoriaDesc}>{cat.description}</span>
-                <div className={styles.categoriaStats}>
-                  <span className={styles.categoriaCount}>
-                    <strong>{stats.count}</strong> {stats.count === 1 ? 'item' : 'itens'}
-                  </span>
-                  <span className={styles.categoriaDownloads}>
-                    {formatNumber(stats.downloads)} downloads
-                  </span>
-                </div>
-              </button>
+              <span key={folder.id} className={styles.crumbGroup}>
+                <IconChevronRight size={12} className={styles.crumbSep} />
+                <button
+                  type="button"
+                  className={`${styles.crumb} ${isLast ? styles.crumbActive : ''}`}
+                  onClick={() => navigateTo(folder.id)}
+                  disabled={isLast}
+                >
+                  {folder.name}
+                </button>
+              </span>
             );
           })}
-        </div>
-      </section>
+        </nav>
 
-      {/* ── Filters ───────────────────────────────────── */}
-      <Card className={styles.filters}>
         <Input
-          inputSize="md"
-          placeholder="Buscar por título ou descrição…"
+          inputSize="sm"
+          placeholder="Buscar nesta pasta…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          leadingIcon={<IconSearch size={14} />}
-        />
-        <Select
-          value={categoria}
-          onChange={(e) =>
-            setCategoria(e.target.value as MaterialCategoria | 'all')
-          }
-          options={CATEGORIA_OPTIONS}
-        />
-        <Select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as MaterialStatus | 'all')}
-          options={STATUS_OPTIONS}
+          leadingIcon={<IconSearch size={13} />}
+          className={styles.searchInput}
         />
       </Card>
 
-      {/* ── Tabela ────────────────────────────────────── */}
-      <Card className={styles.tableCard}>
-        <Table<MaterialItem>
-          columns={columns}
-          data={filtered}
-          rowId={(m) => m.id}
-          pageSize={10}
-        />
-      </Card>
+      {/* ── Folder header (when inside a folder) ──────── */}
+      {currentFolder && (
+        <header className={styles.folderHeader}>
+          <div className={styles.folderHeaderLeft}>
+            <div className={styles.folderIconBig}>
+              <IconFolderOpen size={18} />
+            </div>
+            <div>
+              <h2 className={styles.folderTitle}>{currentFolder.name}</h2>
+              {currentFolder.description && (
+                <p className={styles.folderDesc}>{currentFolder.description}</p>
+              )}
+            </div>
+          </div>
+          <div className={styles.folderMeta}>
+            <span>{folders.length} {folders.length === 1 ? 'subpasta' : 'subpastas'}</span>
+            <span className={styles.folderMetaSep}>·</span>
+            <span>{files.length} {files.length === 1 ? 'arquivo' : 'arquivos'}</span>
+          </div>
+        </header>
+      )}
+
+      {/* ── Empty state ───────────────────────────────── */}
+      {currentChildren.length === 0 && (
+        <Card className={styles.emptyCard}>
+          <div className={styles.emptyIcon} aria-hidden="true">
+            <IconFolder size={20} />
+          </div>
+          <div className={styles.emptyTitle}>Nada por aqui</div>
+          <div className={styles.emptyHint}>
+            {search.trim()
+              ? `Nenhum item corresponde a "${search.trim()}".`
+              : 'Esta pasta está vazia. Use "Upload" pra adicionar o primeiro arquivo.'}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Folder grid ───────────────────────────────── */}
+      {folders.length > 0 && (
+        <section className={styles.gridSection}>
+          <h3 className={styles.sectionLabel}>Pastas</h3>
+          <div className={styles.folderGrid}>
+            {folders.map((folder) => {
+              const count = countFilesDeep(nodes, folder.id);
+              return (
+                <button
+                  key={folder.id}
+                  type="button"
+                  className={styles.folderCard}
+                  onDoubleClick={() => navigateTo(folder.id)}
+                  onClick={() => navigateTo(folder.id)}
+                >
+                  <div className={styles.folderCardTop}>
+                    <span className={styles.folderCardIcon}>
+                      <IconFolder size={14} />
+                    </span>
+                  </div>
+                  <span className={styles.folderCardName}>{folder.name}</span>
+                  <span className={styles.folderCardMeta}>
+                    {count} {count === 1 ? 'arquivo' : 'arquivos'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── File grid ─────────────────────────────────── */}
+      {files.length > 0 && (
+        <section className={styles.gridSection}>
+          <h3 className={styles.sectionLabel}>Arquivos</h3>
+          <div className={styles.fileGrid}>
+            {files.map((file) => {
+              const FormatIcon = fileFormatIcon(file.formato);
+              const isSelected = selectedFileId === file.id;
+              return (
+                <button
+                  key={file.id}
+                  type="button"
+                  className={`${styles.fileCard} ${isSelected ? styles.fileCardSelected : ''}`}
+                  onClick={() => setSelectedFileId(file.id)}
+                  aria-label={`Abrir preview de ${file.name}`}
+                >
+                  {/* Thumbnail */}
+                  <div className={styles.fileThumb}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={file.thumb} alt="" />
+                    <span className={styles.fileBadge}>
+                      <FormatIcon size={11} />
+                      <span>{file.formato.toUpperCase()}</span>
+                    </span>
+                    {file.publishedToFeed && (
+                      <span className={styles.fileFeedBadge} title="Publicado no feed">
+                        <IconFeed size={10} />
+                      </span>
+                    )}
+                  </div>
+                  {/* Footer card */}
+                  <div className={styles.fileBody}>
+                    <span className={styles.fileName}>{file.name}</span>
+                    <div className={styles.fileMeta}>
+                      <span>{formatBytes(file.tamanhoBytes)}</span>
+                      <span className={styles.fileMetaSep}>·</span>
+                      <span>{formatRelative(file.publicadoEm)}</span>
+                    </div>
+                  </div>
+                  {/* Quick actions visíveis no hover. */}
+                  <div className={styles.fileActions}>
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      className={styles.fileActionBtn}
+                      title="Download"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(file);
+                      }}
+                    >
+                      <IconDownload size={13} />
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      className={`${styles.fileActionBtn} ${styles.fileActionBtnDanger}`}
+                      title="Excluir"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(file);
+                      }}
+                    >
+                      <IconTrash size={13} />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Preview drawer ────────────────────────────── */}
+      <MaterialPreviewDrawer
+        file={selectedFile}
+        onClose={() => setSelectedFileId(null)}
+        onDownload={handleDownload}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

@@ -1,6 +1,4 @@
-/* Materiais — admin page styles. Mesma fundação rítmica de
- * pre-save/feed: KPIs no topo, section dedicada pras categorias
- * (visão de hub), filtros em card slim, tabela com a lista. */
+/* Materiais — file explorer estilo Drive/Finder. */
 
 .page {
   padding: 24px;
@@ -12,223 +10,385 @@
   width: 100%;
 }
 
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 
-/* ── Categoria overview ──────────────────────────────── */
-.categoriaSection {
+/* ── Toolbar (breadcrumb + search) ───────────────────── */
+.toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.sectionTitleRow {
-  display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 10px 14px;
+}
+@media (max-width: 760px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 }
 
-.sectionTitle {
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.crumbGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.crumbSep {
+  color: var(--text-faint);
+  opacity: 0.7;
+  margin: 0 2px;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background 140ms ease-out, color 140ms ease-out;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crumb:hover:not(:disabled) {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+  color: var(--text);
+}
+.crumb:disabled {
+  cursor: default;
+}
+.crumbActive {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.searchInput {
+  width: 260px;
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .searchInput { width: 100%; }
+}
+
+/* ── Folder header (above grid) ──────────────────────── */
+.folderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 4px 0;
+  margin-top: 4px;
+}
+.folderHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.folderIconBig {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--primary-soft, rgba(124, 92, 255, 0.10));
+  color: var(--primary, #7C5CFF);
+  flex-shrink: 0;
+}
+.folderTitle {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.005em;
   color: var(--text);
   margin: 0;
 }
-
-.sectionHint {
-  font-size: 11.5px;
+.folderDesc {
+  font-size: 12px;
   color: var(--text-mute);
+  margin: 2px 0 0;
+}
+.folderMeta {
+  font-size: 12px;
+  color: var(--text-mute);
+  white-space: nowrap;
+}
+.folderMetaSep {
+  margin: 0 6px;
+  opacity: 0.6;
 }
 
-.categoriaGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+/* ── Sections (Pastas / Arquivos) ────────────────────── */
+.gridSection {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.categoriaCard {
-  text-align: left;
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 8px 0 0;
+}
+
+/* ── Folder grid ─────────────────────────────────────── */
+.folderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.folderCard {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   padding: 14px 14px 12px;
+  text-align: left;
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: 12px;
   cursor: pointer;
-  transition: background 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
   font-family: inherit;
+  transition: background 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
 }
-.categoriaCard:hover {
+.folderCard:hover {
   background: var(--surface-hover, var(--surface));
   border-color: var(--border);
   transform: translateY(-1px);
 }
-.categoriaCardActive {
-  border-color: var(--primary);
-  background: var(--primary-soft, rgba(99, 102, 241, 0.08));
-}
-.categoriaCardActive:hover {
-  background: var(--primary-soft, rgba(99, 102, 241, 0.10));
-}
 
-.categoriaIcon {
-  width: 28px;
-  height: 28px;
+.folderCardTop {
+  margin-bottom: 4px;
+}
+.folderCardIcon {
+  width: 30px;
+  height: 30px;
   display: inline-grid;
   place-items: center;
   border-radius: 8px;
   background: var(--surface-mute, rgba(255, 255, 255, 0.04));
-  color: var(--text-mute);
-  margin-bottom: 6px;
-}
-.categoriaCardActive .categoriaIcon {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--primary);
+  color: var(--text);
 }
 
-.categoriaLabel {
+.folderCardName {
   font-size: 13.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.categoriaDesc {
-  font-size: 11.5px;
-  color: var(--text-mute);
-  line-height: 1.4;
-}
-
-.categoriaStats {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-soft);
+.folderCardMeta {
   font-size: 11.5px;
   color: var(--text-mute);
 }
-.categoriaCount strong {
-  color: var(--text);
-  font-weight: 600;
-  margin-right: 3px;
-}
 
-/* ── Filters ─────────────────────────────────────────── */
-.filters {
+/* ── File grid ───────────────────────────────────────── */
+.fileGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 8px;
-  padding: 12px;
-}
-@media (max-width: 720px) {
-  .filters { grid-template-columns: 1fr; }
 }
 
-/* ── Tabela ──────────────────────────────────────────── */
-.tableCard { overflow: hidden; }
-
-.cellMaterial {
+.fileCard {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  text-align: left;
+  transition: background 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
 }
-.cellThumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+.fileCard:hover {
+  background: var(--surface-hover, var(--surface));
+  border-color: var(--border);
+  transform: translateY(-1px);
+}
+.fileCardSelected {
+  border-color: var(--primary, #7C5CFF);
+  box-shadow: 0 0 0 1px var(--primary, #7C5CFF) inset;
+}
+
+/* Thumb area — aspecto 4:3, imagem cover. */
+.fileThumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--surface-mute, rgba(255, 255, 255, 0.04));
+  overflow: hidden;
+}
+.fileThumb img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid var(--border-soft);
-  background: var(--surface-mute, rgba(255, 255, 255, 0.04));
+  display: block;
+  transition: transform 320ms ease-out;
 }
-.cellInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.cellTitulo {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cellDesc {
-  font-size: 11.5px;
-  color: var(--text-mute);
-  /* Trunca em 1 linha pra não inflar a altura da row. */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 420px;
+.fileCard:hover .fileThumb img {
+  transform: scale(1.02);
 }
 
-.categoriaChip {
-  display: inline-block;
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.005em;
-  color: var(--text-mute);
-  background: var(--surface-mute, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--border-soft);
-  border-radius: 999px;
-  padding: 2px 9px;
-  white-space: nowrap;
-}
-
-.muteCell {
-  font-size: 12px;
-  color: var(--text-mute);
-}
-
-.numCell {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-.numCellMute {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-  font-size: 13px;
-  color: var(--text-mute);
-}
-
-.dateCell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.dateRel {
-  font-size: 12px;
-  color: var(--text);
-}
-
-.feedBadge {
+/* Badge de formato no canto inferior-esquerdo. */
+.fileBadge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 2px 7px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--primary, #7C5CFF);
-  background: var(--primary-soft, rgba(124, 92, 255, 0.10));
-  border: 1px solid var(--primary-soft, rgba(124, 92, 255, 0.20));
+  font-weight: 700;
+  letter-spacing: 0.04em;
   border-radius: 999px;
-  padding: 1px 7px 1px 5px;
-  width: fit-content;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Indicador de "publicado no feed" no canto superior-direito. */
+.fileFeedBadge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary, #7C5CFF);
+  color: #fff;
+  box-shadow: 0 4px 10px -2px rgba(124, 92, 255, 0.4);
+}
+
+/* Footer do card — nome + meta. */
+.fileBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+}
+.fileName {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fileMeta {
+  font-size: 11px;
+  color: var(--text-mute);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.fileMetaSep {
+  opacity: 0.55;
+}
+
+/* Quick actions — escondidas até hover do card. */
+.fileActions {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+.fileCard:hover .fileActions,
+.fileCard:focus-within .fileActions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fileActionBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(20, 22, 26, 0.86);
+  color: #fff;
+  cursor: pointer;
+  transition: background 140ms ease-out, transform 120ms ease-out;
+}
+.fileActionBtn:hover {
+  background: rgba(20, 22, 26, 1);
+  transform: scale(1.05);
+}
+.fileActionBtnDanger:hover {
+  background: rgba(220, 38, 38, 0.92);
+}
+
+/* ── Empty state ─────────────────────────────────────── */
+.emptyCard {
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.emptyIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--surface-mute, rgba(255, 255, 255, 0.04));
+  color: var(--text-mute);
+  margin-bottom: 4px;
+}
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.emptyHint {
+  font-size: 12.5px;
+  color: var(--text-mute);
+  max-width: 360px;
+  line-height: 1.5;
 }
