@@ -159,37 +159,32 @@
   .ctaPill { animation: none; }
 }
 
-/* ── Hamburger menu + super submenu ─────────────────────
- * Substitui o antigo segmented PT/EN. O wrapper `.menuRoot`
- * fica absolute na borda direita da viewport (mesma posição
- * que o lang toggle ocupava), permitindo que o panel se
- * ancore relativamente ao trigger via position: absolute
- * filho. */
-.menuRoot {
+/* ── Hamburger trigger ─────────────────────────────
+ * Botão de 3 traços absolute na borda direita da viewport.
+ * Clicar abre o megamenu (.megaPanel). Estado open vira
+ * burger → X via rotation dos bars. */
+.menuTrigger {
   position: absolute;
   top: 50%;
   right: clamp(20px, 4vw, 56px);
   transform: translateY(-50%);
-}
-
-/* Botão de 3 traços. Tamanho compacto (40x40) com 3 .menuBar
- * empilhados via flex column. Hover ilumina; estado open
- * "vira" o ícone num X via rotation (sutil — não é menu
- * full-screen, só feedback de aberto/fechado). */
-.menuTrigger {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background 200ms ease-out;
+  /* z-index acima do panel (z=70) pra que o trigger continue
+   * clicável quando o menu está aberto, permitindo fechar
+   * pelo mesmo botão. */
+  z-index: 80;
 }
 .menuTrigger:hover {
   background: rgba(255, 255, 255, 0.10);
@@ -197,167 +192,408 @@
 
 .menuBar {
   display: block;
-  width: 18px;
+  width: 20px;
   height: 2px;
   background: #ffffff;
   border-radius: 1px;
-  transition: transform 220ms ease-out, opacity 200ms ease-out;
+  transition: transform 260ms cubic-bezier(0.65, 0, 0.35, 1), opacity 200ms ease-out;
 }
 
-/* Estado open: bar1 vira /, bar3 vira \, bar2 some — clássico
- * burger → X. Mantém o feedback consistente independente do
- * que está dentro do panel. */
+.menuTriggerOpen {
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.10);
+}
 .menuTriggerOpen .menuBar:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
+  transform: translateY(8px) rotate(45deg);
 }
 .menuTriggerOpen .menuBar:nth-child(2) {
   opacity: 0;
 }
 .menuTriggerOpen .menuBar:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  transform: translateY(-8px) rotate(-45deg);
 }
 
-/* Super submenu — glass dropdown ancorado top-right do
- * trigger. Aparece com fade + leve translate-y; quando
- * fechado fica display visible mas opacity 0 + pointer-events
- * none, pra que aria-hidden funcione e a transition rode em
- * ambos os sentidos.
- *
- * z-index alto pra ficar acima da navbar (que já é z 50) e de
- * qualquer overlay da page. */
-.menuPanel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  min-width: 260px;
-  padding: 10px;
-  background: rgba(14, 14, 18, 0.92);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  box-shadow:
-    0 24px 64px -12px rgba(0, 0, 0, 0.6),
-    0 8px 16px -8px rgba(0, 0, 0, 0.4);
+/* ── Megamenu overlay ──────────────────────────────
+ * Full-viewport dimmer atrás do panel. Captura outside
+ * clicks. Quando fechado: opacity 0 + pointer-events none. */
+.megaOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   opacity: 0;
-  transform: translateY(-6px);
   pointer-events: none;
-  transition: opacity 180ms ease-out, transform 180ms ease-out;
-  z-index: 51;
+  transition: opacity 280ms ease-out;
+  z-index: 60;
 }
-.menuPanelOpen {
+.megaOverlayOpen {
   opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
 }
 
-.menuSectionLabel {
+/* ── Megamenu panel ────────────────────────────────
+ * Slides do topo até 70vh. Glass escuro com blur generoso.
+ * Border-radius só nas bottom corners pra dar sensação de
+ * "puxado de cima" — como um drawer.
+ *
+ * Per product feedback "ao clicar no hamburguer da landing
+ * page, deve ser aberto uma caixa que ocupe 70% da tela
+ * partindo de cima pra baixo com 4 itens principais, grandes
+ * e subitens na font inter 14px. Bem disruptivo e inovador". */
+.megaPanel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70vh;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(91, 0, 209, 0.18) 0%, rgba(8, 8, 12, 0.96) 60%),
+    rgba(8, 8, 12, 0.96);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.65);
+  transform: translateY(-100%);
+  transition: transform 420ms cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: 70;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.megaPanelOpen {
+  transform: translateY(0);
+}
+
+/* Wordmark gigante decorativo ao fundo — "FANVERSE" enorme,
+ * peso visual mas baixa opacidade. Editorial revista. */
+.megaWordmark {
+  position: absolute;
+  bottom: -10vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: clamp(120px, 22vw, 320px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.megaInner {
+  position: relative;
+  z-index: 2;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  padding: 32px clamp(20px, 4vw, 56px) 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.megaHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Margin pra dar respiro do top sem brigar com a navbar
+   * (que está z=50, abaixo). Padding-top do .megaInner já
+   * conta o espaço total. */
+  padding-top: 32px;
+  margin-bottom: 24px;
+}
+
+.megaTagline {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.10em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  padding: 8px 12px 6px;
-}
-
-.menuItem {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 36px 1fr 20px;
+  color: rgba(255, 255, 255, 0.4);
+  /* Bullet gradient antes do texto. */
+  display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
-  transition: background 160ms ease-out;
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
-.menuItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-.menuItemActive {
-  background: rgba(255, 255, 255, 0.08);
+.megaTagline::before {
+  content: '';
+  width: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 100%);
+  border-radius: 1px;
 }
 
-.menuItemCode {
-  width: 36px;
-  height: 28px;
+.megaClose {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 180ms ease-out, border-color 180ms ease-out, background 180ms ease-out;
+}
+.megaClose:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Lista dos 4 grupos — rows divididos por hairline. Cada row
+ * tem 2 colunas: left (number + title Borscha gigante) e
+ * right (subitens Inter 14px). */
+.megaList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* O conteúdo é maior que o panel em algumas viewports —
+   * permite scroll interno preservando o overlay externo. */
+  overflow-y: auto;
+  /* Esconde scrollbar visual; o scroll segue funcional. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+.megaList::-webkit-scrollbar { width: 4px; }
+.megaList::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 2px; }
+
+.megaGroup {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: 48px;
+  padding: 22px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  /* Stagger fade-up animation por grupo — o delay
+   * inline-style ajusta o offset por index. */
+  opacity: 0;
+  transform: translateY(12px);
+  animation: megaItemIn 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-play-state: paused;
+}
+.megaPanelOpen .megaGroup {
+  animation-play-state: running;
+}
+.megaGroup:last-of-type {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.megaGroupLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  min-width: 0;
+}
+.megaGroupIndex {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.megaGroupTitle {
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: clamp(40px, 6.4vw, 88px);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  color: #fff;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* Coluna direita: subitens ou langPills. */
+.megaGroupRight {
+  display: flex;
+  align-items: center;
+}
+
+.megaSubList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Subitem: Inter 14px com hover line gradient growing. */
+.megaSubitem {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: padding 200ms ease-out, color 200ms ease-out;
+}
+.megaSubitem:hover {
+  padding-left: 8px;
+  color: #fff;
+}
+
+.megaSubitemLabel {
+  /* Per product feedback: subitens Inter 14px. */
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.megaSubitemHint {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+}
+.megaSubitemArrow {
+  display: inline-block;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 200ms ease-out, transform 220ms ease-out;
+}
+.megaSubitem:hover .megaSubitemArrow {
+  color: #ff00b4;
+  transform: translateX(4px);
+}
+
+/* Lang pills — alternativa ao subitem padrão, exclusiva do
+ * grupo 04 (Idioma). 2 pills grandes com code + nome + sub. */
+.langPills {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.langPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: background 200ms ease-out, border-color 200ms ease-out;
+}
+.langPill:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.langPillActive {
+  background: rgba(255, 0, 180, 0.08);
+  border-color: rgba(255, 0, 180, 0.35);
+}
+.langPillCode {
+  width: 38px;
+  height: 30px;
   display: inline-grid;
   place-items: center;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.85);
 }
-.menuItemActive .menuItemCode {
+.langPillActive .langPillCode {
   background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
-  color: #fff;
 }
-
-.menuItemLabel {
+.langPillLabel {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
 }
-.menuItemNative {
+.langPillName {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  color: rgba(255, 255, 255, 0.92);
 }
-.menuItemSub {
-  font-size: 12px;
+.langPillSub {
+  font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0;
   color: rgba(255, 255, 255, 0.45);
 }
 
-.menuItemCheck {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
+@keyframes megaItemIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .megaPanel { transition: opacity 200ms ease-out; }
+  .megaGroup { animation: none; opacity: 1; transform: none; }
 }
 
 /* ── Responsivo mobile (<=720px) ──────────
  * Logo à esquerda + CTA Meu Fanverse no centro/direita + menu
  * hamburger na ponta direita. NavLinks (O App, Para Artistas)
- * seguem escondidos — eles têm âncora pra sections da
- * landing, espaço escasso em mobile.
+ * escondidos.
  *
- * O hamburger é compacto o suficiente (40x40) pra caber junto
- * com o CTA mesmo em iPhone SE (320px).
- */
+ * Megamenu: em mobile, grid 2-col vira stacked (left + right
+ * empilhados). Title tamanho mais contido pra caber em 70vh
+ * mesmo com 4 grupos. */
 @media (max-width: 720px) {
   .container {
-    /* Reserva 60px pra menuRoot (40px + gap). */
-    max-width: calc(100vw - 2 * clamp(16px, 4vw, 56px) - 60px);
+    /* Reserva 64px pro trigger (44px + gap). */
+    max-width: calc(100vw - 2 * clamp(16px, 4vw, 56px) - 64px);
   }
   .navLink { display: none; }
   .nav { gap: 0; }
   .ctaPill {
-    /* Mantém em uma linha. Padding também escalado per
-     * feedback: 11x18 → 17x24 (+12 width / +12 height). */
     white-space: nowrap;
     padding: 17px 24px;
   }
-  /* Trigger maior área-toque mas mesmo tamanho visual. */
-  .menuTrigger {
-    width: 38px;
-    height: 38px;
+  .menuTrigger { width: 42px; height: 42px; }
+
+  /* Megamenu mobile: pad menor, header padding-top menor pra
+   * abrir mais espaço pros 4 grupos. */
+  .megaInner {
+    padding: 24px 20px 16px;
   }
-  /* Panel ajustado pra mobile: right alinhado ao trigger, mas
-   * sem exceder a viewport. */
-  .menuPanel {
-    min-width: 240px;
-    right: 0;
+  .megaHeader { padding-top: 24px; margin-bottom: 16px; }
+  .megaGroup {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px 0;
   }
+  .megaGroupLeft { gap: 16px; }
+  .megaGroupTitle {
+    font-size: clamp(34px, 11vw, 56px);
+  }
+  .megaWordmark { font-size: clamp(100px, 30vw, 200px); bottom: -6vh; }
+  .langPill { padding: 12px 16px; }
+
+  /* Em viewports mobile altos (iPhone Pro), 70vh continua
+   * confortável; em low-end (320x568), tightens. */
+}
+@media (max-height: 600px) {
+  .megaPanel { height: 88vh; }
+  .megaGroup { padding: 14px 0; }
+  .megaGroupTitle { font-size: clamp(30px, 9vw, 48px); }
 }

@@ -1,9 +1,9 @@
-/* Diagnóstico — Section 2.
+/* Diagnóstico — Section 2 com foco em superfãs.
  *
- * Header editorial (eyebrow + título 3 linhas + body) seguido
- * de tabela de contraste 2-col Hoje vs Fanverse. Linha
- * divisória horizontal entre cada row pra reforçar paralelo
- * vertical. */
+ * Estrutura:
+ *   - Header editorial (eyebrow + título 2 linhas + body)
+ *   - Stat board: 3 stats display gigantes em grid 3-col
+ *   - Outcomes: título + grid de 3 cards "o que muda" */
 
 .section {
   position: relative;
@@ -24,8 +24,6 @@
   margin-bottom: 96px;
 }
 
-/* Eyebrow padronizado pra todas as sections desta página:
- * número grande gradient + label uppercase. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -55,11 +53,11 @@
 .title {
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
-  font-size: clamp(36px, 5.4vw, 80px);
-  line-height: 1.05;
+  font-size: clamp(40px, 6.4vw, 96px);
+  line-height: 1.0;
   letter-spacing: -0.025em;
   color: #fff;
-  margin: 0 0 28px;
+  margin: 0 0 32px;
   text-wrap: balance;
 }
 
@@ -81,136 +79,229 @@
   max-width: 720px;
   margin: 0;
 }
+.body strong {
+  color: #fff;
+  font-weight: 600;
+  background: linear-gradient(90deg, #ff00b4 0%, #ad48ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
 
-/* ── Tabela de comparação ──────────────────────
- * Grid 2 colunas com gap zero entre as células de uma mesma
- * row (a linha divisória central faz o "vs" implícito), mas
- * gap maior entre rows. Cada cell tem padding generoso pra
- * que o paralelo seja confortável de ler em desktop e empilhe
- * limpo em mobile. */
-.compareTable {
+/* ── Stat board ────────────────────────────────────
+ * 3 stats display gigantes lado a lado. Border verticais
+ * separam os 3 (sem caixa em volta) — visual de "infográfico
+ * de revista". */
+.statBoard {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
   border-top: 1px solid var(--pa-line);
   border-bottom: 1px solid var(--pa-line);
+  margin-bottom: 120px;
 }
 
-.compareHead {
-  display: contents;
-}
-.compareHeadCell {
-  padding: 28px 32px 24px;
-  border-bottom: 1px solid var(--pa-line);
-  border-right: 1px solid var(--pa-line);
-}
-.compareHeadCell:last-child {
-  border-right: 0;
-}
-.compareLabel {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-.compareLabelFv {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-  background: var(--pa-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-.compareHeadCellFv {
-  background: linear-gradient(180deg, rgba(255, 0, 180, 0.04) 0%, transparent 100%);
-}
-
-.compareRow {
-  display: contents;
-}
-.compareRow > .compareCellToday,
-.compareRow > .compareCellFv {
-  padding: 40px 32px;
-  border-bottom: 1px solid var(--pa-line);
-}
-.compareRow:last-of-type .compareCellToday,
-.compareRow:last-of-type .compareCellFv {
-  border-bottom: 0;
-}
-.compareCellToday {
+.stat {
+  padding: 56px 36px 48px;
   border-right: 1px solid var(--pa-line);
   display: flex;
   flex-direction: column;
   gap: 14px;
+  position: relative;
+  overflow: hidden;
 }
-.compareCellFv {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  background: linear-gradient(180deg, rgba(255, 0, 180, 0.03) 0%, transparent 100%);
-}
+.stat:last-child { border-right: 0; }
 
-.compareIndex {
+/* Subtle hover: gradient halo no fundo do stat. */
+.stat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 0, 180, 0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 320ms ease-out;
+  pointer-events: none;
+}
+.stat:hover::before { opacity: 1; }
+
+.statIndex {
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.30);
+  position: relative;
+  z-index: 2;
 }
-.compareIndexFv {
+
+.statValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+}
+.statValue {
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: clamp(72px, 12vw, 168px);
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+.statUnit {
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.05em;
+  font-size: clamp(36px, 6vw, 80px);
+  line-height: 0.85;
+  letter-spacing: -0.02em;
   background: var(--pa-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+  margin-left: 4px;
 }
 
-.compareCellToday p {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 19px;
-  font-weight: 400;
-  line-height: 1.45;
+.statLabel {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
   letter-spacing: -0.005em;
-  color: rgba(255, 255, 255, 0.55);
-  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 8px 0 0;
+  position: relative;
+  z-index: 2;
 }
-.compareCellFv p {
+
+.statSource {
   font-family: var(--font-inter), sans-serif;
-  font-size: 19px;
+  font-size: 11.5px;
   font-weight: 500;
   line-height: 1.45;
-  letter-spacing: -0.005em;
-  color: #fff;
-  margin: 0;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--pa-line);
+  position: relative;
+  z-index: 2;
 }
 
-@media (max-width: 880px) {
+/* ── Outcomes — como o dado vira acionável ──────── */
+.outcomesTitle {
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: clamp(32px, 4.8vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0 0 48px;
+  max-width: 720px;
+}
+.outcomesTitle em {
+  font-style: normal;
+  background: linear-gradient(120deg, #ff00b4 0%, #ad48ff 50%, #5b00d1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.outcomesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.outcome {
+  padding: 40px 32px 32px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--pa-line);
+  display: flex;
+  flex-direction: column;
+  transition: background 240ms ease-out, border-color 240ms ease-out, transform 240ms ease-out;
+}
+.outcome:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--pa-line-strong);
+  transform: translateY(-4px);
+}
+
+.outcomeArea {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--pa-line);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 28px;
+}
+.outcome:hover .outcomeArea {
+  background: rgba(255, 0, 180, 0.08);
+  border-color: rgba(255, 0, 180, 0.25);
+  color: #fff;
+}
+
+.outcomeTitle {
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: #fff;
+  margin: 0 0 14px;
+}
+
+.outcomeBody {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: -0.005em;
+  margin: 0 0 28px;
+  flex: 1;
+}
+
+.outcomeRewrite {
+  margin: 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--pa-line);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #fff;
+}
+.outcomeRewriteArrow {
+  font-size: 14px;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+@media (max-width: 1024px) {
+  .statBoard { grid-template-columns: 1fr; }
+  .stat { border-right: 0; border-bottom: 1px solid var(--pa-line); padding: 40px 24px; }
+  .stat:last-child { border-bottom: 0; }
+  .outcomesGrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
   .section { padding: 100px 20px; }
   .header { margin-bottom: 64px; }
-  .compareTable {
-    grid-template-columns: 1fr;
-  }
-  .compareHead, .compareRow { display: contents; }
-  .compareHeadCell {
-    border-right: 0;
-    border-bottom: 1px solid var(--pa-line);
-    padding: 20px 0 12px;
-  }
-  .compareRow > .compareCellToday,
-  .compareRow > .compareCellFv {
-    padding: 24px 0;
-  }
-  .compareCellToday {
-    border-right: 0;
-  }
-  .compareCellToday p, .compareCellFv p { font-size: 17px; }
+  .statBoard { margin-bottom: 80px; }
+  .outcome { padding: 32px 24px 28px; }
 }
