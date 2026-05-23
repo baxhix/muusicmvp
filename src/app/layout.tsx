@@ -89,6 +89,21 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
+        {/* Welcome bootstrap — roda SINCRONAMENTE durante o
+            parse do HTML, antes da hidratação do React. Lê
+            ?welcome=1|back e marca data-welcome no <html> pra
+            que o CSS (em app/layout.module.css) esconda todos
+            os elementos .welcomeFade ANTES do primeiro paint.
+            Sem isso, o SSR renderiza com stage=5 (sem window),
+            o cliente quer stage=0, e a hydration mismatch
+            cancela a animação — os elementos aparecem instantâneos
+            em vez de fadear. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var w=new URLSearchParams(window.location.search).get('welcome');if(w==='1'||w==='back'){document.documentElement.setAttribute('data-welcome',w);}}catch(e){}})();",
+          }}
+        />
         {/* Pixels e tags de tracking (GA4, Clarity, Meta Pixel,
             etc.) — next/script com strategy="afterInteractive"
             injeta os scripts no DOM real (head, na prática), sem

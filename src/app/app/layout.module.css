@@ -32,6 +32,22 @@
   --pe: none;
 }
 
+/* Bootstrap pré-hidratação: o inline script no root layout
+ * (app/layout.tsx) seta data-welcome no <html> antes do React
+ * hidratar, baseado em ?welcome=1|back. Aqui zeramos --ready
+ * pra TODOS os .welcomeFade independente da threshold. O
+ * AppShellContext, após o flyTo do globo (~3500ms), remove
+ * esse attribute via documentElement.removeAttribute(...)
+ * — a especificidade do html[data-welcome] some, --ready
+ * volta pro default (1), e a transition de 700ms roda em
+ * unison pra todos os elementos. Essa é a única forma
+ * confiável de garantir que o SSR e o cliente concordem no
+ * estado inicial (welcomeStage 0) sem hydration mismatch. */
+:global(html[data-welcome]) .welcomeFade {
+  --ready: 0;
+  --pe: none;
+}
+
 .shell {
   position: fixed;
   inset: 0;

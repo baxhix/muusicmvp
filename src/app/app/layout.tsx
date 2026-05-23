@@ -337,8 +337,19 @@ function Shell({ children }: { children: React.ReactNode }) {
           />
 
           {/* Route content lands here. position:fixed panels work
-           *  the same way they did before the refactor. */}
-          {children}
+           *  the same way they did before the refactor.
+           *
+           *  Wrapper .welcomeFade pra que tudo que vive nas pages
+           *  (Feed, MockToastRotator notifications, BrainstormPanel,
+           *  Superlive/CollectiveListening triggers, FloatingUsers,
+           *  MobileHomeChrome) participe do reveal pós-globo. Sem
+           *  esse wrapper, esses elementos ficavam visíveis durante
+           *  o flyTo enquanto TopBar/ArtistBox/BottomNav fadeavam.
+           *
+           *  threshold=5 = "demais chrome" — entra no reveal único
+           *  simultâneo controlado pelo html[data-welcome] removido
+           *  via AppShellContext. */}
+          <div className={fadeClass(5)}>{children}</div>
         </div>
 
         {!hideShellChrome && (

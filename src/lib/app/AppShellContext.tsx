@@ -223,22 +223,28 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   const [activeOverlay, setActiveOverlay] = useState<ActiveOverlay>(null);
 
   /**
-   * Welcome reveal: começa em 5 (default = tudo visível) e
-   * SOMENTE quando detectamos `?welcome=` na URL (cliente)
-   * cai pra 0 e escala de volta com timers.
+   * Welcome reveal: o estado de "tudo escondido" é GARANTIDO
+   * pré-hidratação via inline script no root layout — que
+   * seta `data-welcome` no <html> antes do React montar. O CSS
+   * em layout.module.css usa esse attr pra zerar --ready em
+   * todos os .welcomeFade. Sem o inline script, hydration
+   * mismatch entre SSR (stage=5) e cliente (stage=0) cancelava
+   * a animação (elementos apareciam instantâneos).
    *
-   * IMPORTANTE: o modo é capturado num useState LAZY INIT —
-   * que roda durante render, antes de qualquer useEffect.
-   * Necessário porque o Globe (componente-filho deste
-   * provider) tem o próprio useEffect que dispara o flyTo +
-   * STRIP-EIA o `?welcome=` da URL via history.replaceState.
-   * React roda effects de filhos ANTES de pais, então se
-   * lêssemos a URL aqui dentro do useEffect, o param já
-   * teria sumido. Lendo no initializer garantimos a captura
-   * antes do Globe rodar.
+   * Aqui o trabalho é só: detectar o modo, esperar o globo
+   * settle (~3500ms) e remover o attr — a CSS transition de
+   * 700ms cuida do fade-in pra todos os elementos juntos.
    *
-   * SSR safe: typeof window check; retorna null no servidor
-   * e nunca dispara o cascade.
+   * Per product feedback "gerar uma experiência surpreendente
+   * a cada login" — tanto new quanto returning users veem o
+   * mesmo reveal simultâneo. O cascade per-elemento antigo foi
+   * descontinuado porque (a) nunca funcionou em produção
+   * devido ao hydration mismatch e (b) o reveal simultâneo
+   * tem mais impacto cinematográfico.
+   *
+   * O welcomeStage segue exposto como 0|5 pra compatibilidade
+   * com qualquer consumidor externo (não é mais usado pelo
+   * fade interno, que é controlado via attr no html).
    */
   const [welcomeMode] = useState<'new' | 'back' | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -248,36 +254,28 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     return null;
   });
 
-  /* Stage default = 5 (tudo visível) se não estamos no flow
-   * de welcome; 0 caso contrário (Globe + sparkles only). */
   const [welcomeStage, setWelcomeStage] = useState(welcomeMode ? 0 : 5);
 
   useEffect(() => {
     if (!welcomeMode) return;
+    if (typeof document === 'undefined') return;
 
     // Globe flyTo dura 3s; usamos 3500ms como gatilho do
     // reveal pra dar folga ao último frame do voo settle.
-    if (welcomeMode === 'back') {
-      // Retornante — salto único: todos os elementos fadeiam
-      // ao mesmo tempo após o globo se posicionar. Per
-      // product feedback "todos os elementos surgem ao mesmo
-      // tempo com o fade após o globo se posicionar".
-      const t = window.setTimeout(() => setWelcomeStage(5), 3500);
-      return () => clearTimeout(t);
-    }
+    const t = window.setTimeout(() => {
+      // Remove o attr → CSS transition roda (opacity 0→1, 700ms)
+      // em unison pra TODOS os .welcomeFade do app.
+      document.documentElement.removeAttribute('data-welcome');
+      setWelcomeStage(5);
+    }, 3500);
 
-    // Novo usuário — cascade sequencial. Cada elemento entra
-    // 700ms depois do anterior — coincide com o `transition:
-    // opacity 700ms` aplicado.
-    const timers = [
-      window.setTimeout(() => setWelcomeStage(1), 3500), // Feed
-      window.setTimeout(() => setWelcomeStage(2), 4200), // ArtistBox
-      window.setTimeout(() => setWelcomeStage(3), 4900), // Player
-      window.setTimeout(() => setWelcomeStage(4), 5600), // Navbar
-      window.setTimeout(() => setWelcomeStage(5), 6300), // demais chrome
-    ];
-
-    return () => timers.forEach((t) => clearTimeout(t));
+    return () => {
+      clearTimeout(t);
+      // Cleanup defensivo: se o provider desmontar antes do
+      // timer (navegação rápida), garantimos que o attr não
+      // fique permanentemente preso no <html>.
+      document.documentElement.removeAttribute('data-welcome');
+    };
   }, [welcomeMode]);
 
   // ── Player state — persistent across routes so the NowPlaying
