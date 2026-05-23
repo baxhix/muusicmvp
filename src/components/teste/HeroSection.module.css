@@ -57,7 +57,10 @@
  */
 .headline {
   grid-row: 1;
-  font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Test: trocando Peace Sans por Borscha (self-hosted, peso
+   * 700 já carregado) per product feedback "mude a fonte dos
+   * títulos da landing page para a Borscha para testarmos". */
+  font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   /* -15% per product feedback "diminua 15% o tamanho de
    * todos os headlines". 56→48, 11→9.35, 142→121. */

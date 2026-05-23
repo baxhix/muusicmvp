@@ -117,7 +117,7 @@
   overflow: hidden;
 }
 .wordmarkText {
-  font-family: 'Peace Sans', var(--font-inter), 'Inter', sans-serif;
+  font-family: 'Borscha', var(--font-inter), 'Inter', sans-serif;
   font-weight: 900;
   font-size: 240px;
   fill: rgba(255, 255, 255, 0.04);

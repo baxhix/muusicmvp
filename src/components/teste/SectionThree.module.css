@@ -26,7 +26,7 @@
 }
 
 .headline {
-  font-family: 'Peace Sans', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
   /* -15% per product feedback. 56→48, 11→9.35, 160→136. */
   font-size: clamp(48px, 9.35vw, 136px);
