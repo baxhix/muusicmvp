@@ -253,22 +253,31 @@
   gap: 7px;
   white-space: nowrap;
   overflow: hidden;
+  /* Tipografia "Fanverse Ana Castela" passa pra Borscha bold
+   * per product feedback "deixe a palavra Fanverse Ana Castela
+   * com o fonte Borcha Bold". font-family aplicada no parent
+   * pra que os dois spans filhos (.label + .name) herdem
+   * automaticamente. weight 700 = peso 'Bold' do kit
+   * self-hosted (weights 300/400/700 carregados em globals.css). */
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .label {
   font-size: 17px;
-  font-weight: 800;
+  /* 700 = peso bold registrado no @font-face da Borscha.
+   * 800 sintetizaria bold acima do glyph real, distorcendo. */
+  font-weight: 700;
   color: rgba(245,245,247,0.97);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.15;
   flex-shrink: 0;
 }
 
 .name {
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
   color: rgba(245,245,247,0.97);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.15;
