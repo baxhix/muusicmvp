@@ -42,7 +42,19 @@ import {
 } from '@/data/mock/materiais';
 import Badge from '@/components/ui/Badge';
 import { formatNumber, formatRelative } from '@/lib/format';
-import { formatBytes } from './shared';
+import {
+  formatBytes,
+  generateId,
+  loadFromStorage,
+  saveToStorage,
+  clearStorage,
+  collectDescendantIds,
+} from './shared';
+import {
+  NewFolderDialog,
+  UploadFileDialog,
+  RenameDialog,
+} from './dialogs';
 import MaterialPreviewDrawer from './MaterialPreviewDrawer';
 import { cn } from '@/lib/utils';
 import styles from './page.module.css';
@@ -89,12 +101,29 @@ function fileFormatIcon(formato: MaterialFormato) {
 }
 
 export default function MateriaisPage() {
-  const [nodes, setNodes] = useState<MaterialNode[]>(() => loadMateriaisTree());
+  /* Árvore inicial: tenta o localStorage primeiro (mudanças do
+   * admin sobrevivem refresh); fallback no mock seed. SSR safe
+   * porque loadFromStorage retorna null no servidor. */
+  const [nodes, setNodes] = useState<MaterialNode[]>(() => {
+    const stored = loadFromStorage();
+    return stored && stored.length > 0 ? stored : loadMateriaisTree();
+  });
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [view, setView] = useState<ViewMode>('grid');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  /* Dialogs state — controlados aqui, montados no final do JSX. */
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<MaterialNode | null>(null);
+
+  /* Persiste a árvore no localStorage a cada mudança. Roda em
+   * efeito (não na mesma render) pra não bloquear o paint. */
+  useEffect(() => {
+    saveToStorage(nodes);
+  }, [nodes]);
 
   /* Restore preferência de view salva — SSR safe começa em
    * 'grid' (default) e flipa no client se houver preferência. */
@@ -188,8 +217,14 @@ export default function MateriaisPage() {
       `Excluir "${file.name}"?\n\nEsta ação remove o arquivo do acervo e desfaz qualquer post no feed associado a ele.`,
     );
     if (!ok) return;
-    alert('Exclusão mockada — backend pendente.');
+    /* Remove de fato do state — persiste via effect. */
+    setNodes((curr) => curr.filter((n) => n.id !== file.id));
     setSelectedFileId(null);
+    setSelectedIds((curr) => {
+      const next = new Set(curr);
+      next.delete(file.id);
+      return next;
+    });
   }
 
   /** Baixa um conjunto de arquivos. Stub — backend pendente.
@@ -213,7 +248,8 @@ export default function MateriaisPage() {
       `Excluir ${count} ${count === 1 ? 'arquivo' : 'arquivos'} selecionados?\n\nEsta ação não pode ser desfeita.`,
     );
     if (!ok) return;
-    alert(`Exclusão em massa mockada — ${count} arquivos.`);
+    /* Remove os selecionados de fato do state. */
+    setNodes((curr) => curr.filter((n) => !selectedIds.has(n.id)));
     clearSelection();
   }
 
@@ -225,6 +261,93 @@ export default function MateriaisPage() {
         n.type === 'file' && n.id === fileId ? { ...n, audience } : n,
       ),
     );
+  }
+
+  /** Cria uma nova subpasta dentro da pasta atual. */
+  function handleCreateFolder(payload: { name: string; description?: string }) {
+    const newFolder: MaterialFolder = {
+      id: generateId('folder'),
+      type: 'folder',
+      name: payload.name,
+      parentId: currentFolderId, // null se estamos no root
+      description: payload.description,
+    };
+    setNodes((curr) => [...curr, newFolder]);
+  }
+
+  /** Adiciona um novo arquivo (mock — só metadados). */
+  function handleUploadFile(payload: {
+    name: string;
+    formato: MaterialFormato;
+    tamanhoBytes: number;
+    audience: MaterialAudience;
+    description: string;
+    thumb: string;
+    publishedToFeed: boolean;
+  }) {
+    /* Não dá pra adicionar arquivo no root — só dentro de pasta.
+     *  Se o usuário tentou (botão deve estar disabled lá em
+     *  cima), a gente bloqueia defensivamente. */
+    if (!currentFolderId) return;
+    const newFile: MaterialFile = {
+      id: generateId('file'),
+      type: 'file',
+      name: payload.name,
+      parentId: currentFolderId,
+      formato: payload.formato,
+      thumb: payload.thumb,
+      tamanhoBytes: payload.tamanhoBytes,
+      status: 'publicado',
+      publicadoEm: new Date().toISOString(),
+      publishedToFeed: payload.publishedToFeed,
+      downloads: 0,
+      favoritos: 0,
+      description: payload.description,
+      audience: payload.audience,
+      createdBy: { id: 'admin-current', name: 'Equipe Admin' },
+    };
+    setNodes((curr) => [...curr, newFile]);
+  }
+
+  /** Renomeia um nó (pasta ou arquivo). */
+  function handleRename(nextName: string) {
+    if (!renameTarget) return;
+    setNodes((curr) =>
+      curr.map((n) => (n.id === renameTarget.id ? { ...n, name: nextName } : n)),
+    );
+    setRenameTarget(null);
+  }
+
+  /** Exclui uma pasta + cascateia todos os descendentes. */
+  function handleDeleteFolder(folder: MaterialFolder) {
+    const fileCount = countFilesDeep(nodes, folder.id);
+    const message =
+      fileCount === 0
+        ? `Excluir a pasta "${folder.name}"?`
+        : `Excluir a pasta "${folder.name}" e ${fileCount} ${fileCount === 1 ? 'arquivo' : 'arquivos'} dentro dela?\n\nEsta ação não pode ser desfeita.`;
+    const ok = confirm(message);
+    if (!ok) return;
+    const idsToRemove = collectDescendantIds(nodes, folder.id);
+    setNodes((curr) => curr.filter((n) => !idsToRemove.has(n.id)));
+    /* Se estávamos navegados pra dentro da pasta excluída,
+     *  volta pro parent. */
+    if (currentFolderId && idsToRemove.has(currentFolderId)) {
+      setCurrentFolderId(folder.parentId);
+    }
+    clearSelection();
+  }
+
+  /** Restaura o acervo pro mock inicial (limpa localStorage). */
+  function handleResetAcervo() {
+    const ok = confirm(
+      'Restaurar o acervo pro estado inicial?\n\nTodas as mudanças locais (pastas criadas, arquivos adicionados, renomeações, exclusões e audiências editadas) serão descartadas.',
+    );
+    if (!ok) return;
+    clearStorage();
+    setNodes(loadMateriaisTree());
+    setCurrentFolderId(null);
+    clearSelection();
+    setSelectedFileId(null);
   }
 
   /** Resolve os MaterialFile a partir dos ids selecionados. */
@@ -248,11 +371,18 @@ export default function MateriaisPage() {
         actions={
           <div className={styles.headerActions}>
             <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetAcervo}
+              title="Limpa as mudanças locais e restaura o acervo seed."
+            >
+              Restaurar
+            </Button>
+            <Button
               variant="secondary"
               size="sm"
               leadingIcon={<IconFolderOpen size={14} />}
-              disabled
-              title="Criar pasta indisponível até a integração com storage ser ligada."
+              onClick={() => setNewFolderOpen(true)}
             >
               Nova pasta
             </Button>
@@ -260,8 +390,13 @@ export default function MateriaisPage() {
               variant="primary"
               size="sm"
               leadingIcon={<IconPlus size={14} />}
-              disabled
-              title="Upload indisponível até a integração com storage ser ligada."
+              onClick={() => setUploadOpen(true)}
+              disabled={!currentFolderId}
+              title={
+                currentFolderId
+                  ? 'Adiciona um arquivo na pasta atual'
+                  : 'Entre numa pasta antes de adicionar arquivos.'
+              }
             >
               Upload
             </Button>
@@ -373,10 +508,33 @@ export default function MateriaisPage() {
               )}
             </div>
           </div>
-          <div className={styles.folderMeta}>
-            <span>{folders.length} {folders.length === 1 ? 'subpasta' : 'subpastas'}</span>
-            <span className={styles.folderMetaSep}>·</span>
-            <span>{files.length} {files.length === 1 ? 'arquivo' : 'arquivos'}</span>
+          <div className={styles.folderHeaderRight}>
+            <div className={styles.folderMeta}>
+              <span>{folders.length} {folders.length === 1 ? 'subpasta' : 'subpastas'}</span>
+              <span className={styles.folderMetaSep}>·</span>
+              <span>{files.length} {files.length === 1 ? 'arquivo' : 'arquivos'}</span>
+            </div>
+            <div className={styles.folderHeaderActions}>
+              <button
+                type="button"
+                className={styles.folderHeaderBtn}
+                onClick={() => setRenameTarget(currentFolder)}
+                title="Renomear pasta"
+                aria-label="Renomear pasta"
+              >
+                Renomear
+              </button>
+              <button
+                type="button"
+                className={`${styles.folderHeaderBtn} ${styles.folderHeaderBtnDanger}`}
+                onClick={() => handleDeleteFolder(currentFolder)}
+                title="Excluir pasta e todo o conteúdo"
+                aria-label="Excluir pasta"
+              >
+                <IconTrash size={12} />
+                Excluir
+              </button>
+            </div>
           </div>
         </header>
       )}
@@ -698,6 +856,27 @@ export default function MateriaisPage() {
         onDownload={handleDownload}
         onDelete={handleDelete}
         onAudienceChange={handleAudienceChange}
+        onRename={(file) => setRenameTarget(file)}
+      />
+
+      {/* ── Dialogs CRUD ──────────────────────────────── */}
+      <NewFolderDialog
+        open={newFolderOpen}
+        parentName={currentFolder?.name ?? 'Materiais'}
+        onClose={() => setNewFolderOpen(false)}
+        onConfirm={handleCreateFolder}
+      />
+      <UploadFileDialog
+        open={uploadOpen}
+        parentName={currentFolder?.name ?? 'Materiais'}
+        onClose={() => setUploadOpen(false)}
+        onConfirm={handleUploadFile}
+      />
+      <RenameDialog
+        open={renameTarget !== null}
+        target={renameTarget}
+        onClose={() => setRenameTarget(null)}
+        onConfirm={handleRename}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import {
   IconTrash,
   IconFeed,
   IconHeart,
+  IconEdit,
 } from '@/components/icons';
 import {
   MATERIAL_STATUS_LABEL,
@@ -37,6 +38,8 @@ export interface MaterialPreviewDrawerProps {
   /** Handler de mudança da audiência do material. Recebe id +
    *  novo tier — page é responsável por persistir. */
   onAudienceChange: (fileId: string, audience: MaterialAudience) => void;
+  /** Abre o RenameDialog pra renomear o arquivo. */
+  onRename: (file: MaterialFile) => void;
 }
 
 /**
@@ -51,6 +54,7 @@ export default function MaterialPreviewDrawer({
   onDownload,
   onDelete,
   onAudienceChange,
+  onRename,
 }: MaterialPreviewDrawerProps) {
   if (!file) return null;
 
@@ -74,6 +78,14 @@ export default function MaterialPreviewDrawer({
       size="lg"
       footer={
         <div className={styles.footerActions}>
+          <Button
+            variant="ghost"
+            size="md"
+            leadingIcon={<IconEdit size={14} />}
+            onClick={() => onRename(file)}
+          >
+            Renomear
+          </Button>
           <Button
             variant="primary"
             size="md"
