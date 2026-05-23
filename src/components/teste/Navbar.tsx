@@ -79,8 +79,8 @@ export default function Navbar() {
         </a>
 
         <nav className={styles.nav} aria-label="Principal">
-          <a href="#o-app"         className={styles.navLink}>O App</a>
-          <a href="#para-artistas" className={styles.navLink}>Para Artistas</a>
+          <a href="#o-app"        className={styles.navLink}>O App</a>
+          <a href="/para-artistas" className={styles.navLink}>Para Artistas</a>
           {/* CTA principal → /auth (fluxo de autenticação
            *  unificado email-first). */}
           <a href="/auth"  className={styles.ctaPill}>

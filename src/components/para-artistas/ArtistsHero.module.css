@@ -1,0 +1,218 @@
+/* ArtistsHero — primeiro movimento da página /para-artistas.
+ *
+ * Editorial-display: headline ocupa praticamente toda a tela.
+ * Eyebrow tracking-wide, headline duas linhas (segunda
+ * recebe gradient magenta→indigo), lede curta, dois CTAs. */
+
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  background: radial-gradient(ellipse at 50% 0%, #1a0a1f 0%, #08080a 45%, #000 100%);
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 140px 24px 100px;
+}
+
+.center {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Eyebrow — pequeno, uppercase, tracking generoso. Acima do
+ * headline pra dar contexto antes do impacto tipográfico. */
+.eyebrow {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 32px;
+  /* Pequeno bullet decorativo gradient antes do texto */
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 2px;
+  background: var(--pa-gradient);
+  border-radius: 1px;
+}
+
+/* Headline — Borscha bold gigante. Duas linhas; a segunda
+ * é a parte com gradient ("dos seus fãs?"). Line-height
+ * apertada pra que a peça pareça "esculpida". */
+.headline {
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: clamp(56px, 9.5vw, 144px);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  margin: 0 0 36px;
+  text-align: left;
+  text-wrap: balance;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.headlineLine {
+  display: block;
+  color: #fff;
+}
+
+.headlineLineAccent {
+  display: block;
+  /* Mesma gradient da CTA pill: magenta → indigo. Aqui usada
+   * em diagonal pra acompanhar a inclinação visual do
+   * headline (esquerda-baixa pra direita-alta). */
+  background: linear-gradient(120deg, #ff00b4 0%, #ad48ff 45%, #5b00d1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Lede — frase de apoio. Inter 18-22px, larger que o body
+ * regular (16) pra dar peso ao argumento. <strong> ganha
+ * full white. */
+.lede {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(16px, 1.4vw, 20px);
+  font-weight: 400;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: -0.005em;
+  max-width: 640px;
+  margin: 0 0 48px;
+}
+.lede strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Cluster de actions — CTA primário (pill gradient) + CTA
+ * secundário (ghost com seta). */
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* Primário — mesma anatomia da .ctaPill da navbar (gradient
+ * magenta→indigo animado), com o tamanho atualizado per
+ * feedback +12 width/height = 17x30 padding. */
+.ctaPrimary {
+  display: inline-flex;
+  align-items: center;
+  padding: 17px 30px;
+  background:
+    linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  color: #ffffff;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border-radius: 999px;
+  animation: paHeroShift 6s linear infinite;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+.ctaPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 36px -10px rgba(255, 0, 180, 0.55);
+}
+.ctaPrimary:active { transform: translateY(0); }
+
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 17px 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0;
+  transition: color 200ms ease-out, border-color 200ms ease-out, gap 200ms ease-out;
+}
+.ctaSecondary:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+  gap: 12px;
+}
+.ctaArrow {
+  display: inline-block;
+  transition: transform 220ms ease-out;
+}
+.ctaSecondary:hover .ctaArrow { transform: translateX(2px); }
+
+/* Scroll hint na base — minimalista, só linha vertical
+ * pulsante + label. Marca explicitamente que o conteúdo
+ * continua abaixo. */
+.scrollHint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.scrollHintText {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+.scrollHintLine {
+  width: 1px;
+  height: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
+  animation: paScrollHint 2.2s ease-in-out infinite;
+}
+
+@keyframes paHeroShift {
+  from { background-position: 0% 50%; }
+  to   { background-position: -200% 50%; }
+}
+@keyframes paScrollHint {
+  0%   { transform: translateY(-8px); opacity: 0.2; }
+  50%  { transform: translateY(0);    opacity: 0.8; }
+  100% { transform: translateY(8px);  opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaPrimary, .scrollHintLine { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .hero { padding: 120px 20px 80px; }
+  .lede { font-size: 16px; }
+  .actions { gap: 14px; }
+  .ctaPrimary, .ctaSecondary { padding: 14px 24px; }
+  .ctaSecondary { padding-left: 4px; padding-right: 4px; }
+  .scrollHint { bottom: 18px; }
+}

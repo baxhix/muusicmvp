@@ -1,0 +1,146 @@
+/* ContatoCTA — Section 5 (final).
+ *
+ * Cinematic close: bg gradient suave centralizado, eyebrow,
+ * headline display, lede, CTA primário + email visível.
+ *
+ * Sparkles cobrindo tudo — moldura visual de abertura/fechamento
+ * da página. */
+
+.section {
+  position: relative;
+  width: 100%;
+  /* Gradient cônico sutil pra dar profundidade no fechamento.
+   * Centro mais quente (rgba magenta low alpha) → preto puro
+   * nas bordas. */
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255, 0, 180, 0.06) 0%, rgba(91, 0, 209, 0.04) 35%, #000 75%),
+    #000;
+  color: #fff;
+  padding: 180px 24px 160px;
+  border-top: 1px solid var(--pa-line);
+  overflow: hidden;
+}
+
+.inner {
+  position: relative;
+  z-index: 5;
+  max-width: 880px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.eyebrowIndex {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.eyebrowLabel {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Title display — Borscha bold gigante. Centralizado. */
+.title {
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: clamp(56px, 9vw, 140px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin: 0 0 36px;
+  text-align: center;
+}
+
+.lede {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(16px, 1.4vw, 20px);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: -0.005em;
+  max-width: 620px;
+  margin: 0 0 56px;
+  text-align: center;
+}
+.lede strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* CTA pill — gradient animado, mesma anatomia da navbar. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 17px 30px;
+  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  color: #ffffff;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border-radius: 999px;
+  animation: paContatoShift 6s linear infinite;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+}
+.cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 36px -10px rgba(255, 0, 180, 0.55);
+}
+.cta:active { transform: translateY(0); }
+
+.email {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.25);
+  padding-bottom: 2px;
+  transition: color 200ms ease-out, border-color 200ms ease-out;
+}
+.email:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+@keyframes paContatoShift {
+  from { background-position: 0% 50%; }
+  to   { background-position: -200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .section { padding: 120px 20px 100px; }
+}

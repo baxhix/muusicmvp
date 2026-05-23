@@ -1,0 +1,216 @@
+/* Diagnóstico — Section 2.
+ *
+ * Header editorial (eyebrow + título 3 linhas + body) seguido
+ * de tabela de contraste 2-col Hoje vs Fanverse. Linha
+ * divisória horizontal entre cada row pra reforçar paralelo
+ * vertical. */
+
+.section {
+  position: relative;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  padding: 140px 24px;
+  border-top: 1px solid var(--pa-line);
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  max-width: 920px;
+  margin-bottom: 96px;
+}
+
+/* Eyebrow padronizado pra todas as sections desta página:
+ * número grande gradient + label uppercase. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.eyebrowIndex {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.eyebrowLabel {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.title {
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 5.4vw, 80px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #fff;
+  margin: 0 0 28px;
+  text-wrap: balance;
+}
+
+.titleAccent {
+  font-style: normal;
+  background: linear-gradient(120deg, #ff00b4 0%, #ad48ff 50%, #5b00d1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.body {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: -0.005em;
+  max-width: 720px;
+  margin: 0;
+}
+
+/* ── Tabela de comparação ──────────────────────
+ * Grid 2 colunas com gap zero entre as células de uma mesma
+ * row (a linha divisória central faz o "vs" implícito), mas
+ * gap maior entre rows. Cada cell tem padding generoso pra
+ * que o paralelo seja confortável de ler em desktop e empilhe
+ * limpo em mobile. */
+.compareTable {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--pa-line);
+  border-bottom: 1px solid var(--pa-line);
+}
+
+.compareHead {
+  display: contents;
+}
+.compareHeadCell {
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid var(--pa-line);
+  border-right: 1px solid var(--pa-line);
+}
+.compareHeadCell:last-child {
+  border-right: 0;
+}
+.compareLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+.compareLabelFv {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.compareHeadCellFv {
+  background: linear-gradient(180deg, rgba(255, 0, 180, 0.04) 0%, transparent 100%);
+}
+
+.compareRow {
+  display: contents;
+}
+.compareRow > .compareCellToday,
+.compareRow > .compareCellFv {
+  padding: 40px 32px;
+  border-bottom: 1px solid var(--pa-line);
+}
+.compareRow:last-of-type .compareCellToday,
+.compareRow:last-of-type .compareCellFv {
+  border-bottom: 0;
+}
+.compareCellToday {
+  border-right: 1px solid var(--pa-line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.compareCellFv {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: linear-gradient(180deg, rgba(255, 0, 180, 0.03) 0%, transparent 100%);
+}
+
+.compareIndex {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.30);
+}
+.compareIndexFv {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.compareCellToday p {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+.compareCellFv p {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  color: #fff;
+  margin: 0;
+}
+
+@media (max-width: 880px) {
+  .section { padding: 100px 20px; }
+  .header { margin-bottom: 64px; }
+  .compareTable {
+    grid-template-columns: 1fr;
+  }
+  .compareHead, .compareRow { display: contents; }
+  .compareHeadCell {
+    border-right: 0;
+    border-bottom: 1px solid var(--pa-line);
+    padding: 20px 0 12px;
+  }
+  .compareRow > .compareCellToday,
+  .compareRow > .compareCellFv {
+    padding: 24px 0;
+  }
+  .compareCellToday {
+    border-right: 0;
+  }
+  .compareCellToday p, .compareCellFv p { font-size: 17px; }
+}

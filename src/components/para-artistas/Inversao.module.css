@@ -1,0 +1,174 @@
+/* Inversão — Section 3.
+ *
+ * Mesma fundação editorial das outras sections (header com
+ * eyebrow + título + body) seguida de grid de 3 cards
+ * verticais. Cada card tem número display, título Borscha,
+ * body Inter e "rewrite" — bloco compacto antes/depois. */
+
+.section {
+  position: relative;
+  width: 100%;
+  /* Bg sutilmente diferente do diagnóstico — gradient
+   * radial faz a section "respirar" e separa visualmente
+   * sem mudar de cor base. */
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(91, 0, 209, 0.06) 0%, transparent 55%),
+    #000;
+  color: #fff;
+  padding: 140px 24px;
+  border-top: 1px solid var(--pa-line);
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  max-width: 920px;
+  margin-bottom: 96px;
+}
+
+/* Eyebrow padronizado. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.eyebrowIndex {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.eyebrowLabel {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.title {
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: clamp(48px, 8vw, 120px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin: 0 0 28px;
+  text-wrap: balance;
+}
+
+.body {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: -0.005em;
+  max-width: 680px;
+  margin: 0;
+}
+
+/* ── Pilares ── */
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.pillar {
+  position: relative;
+  padding: 56px 36px 40px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--pa-line);
+  display: flex;
+  flex-direction: column;
+  /* Hover gentil — eleva e ilumina border. */
+  transition: background 240ms ease-out, border-color 240ms ease-out, transform 240ms ease-out;
+}
+.pillar:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: var(--pa-line-strong);
+  transform: translateY(-4px);
+}
+
+.pillarNumber {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 72px;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  margin-bottom: 36px;
+  background: var(--pa-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.pillarTitle {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0 0 16px;
+}
+
+.pillarBody {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: -0.005em;
+  margin: 0 0 32px;
+  flex: 1;
+}
+
+/* Rewrite: antes/depois resumido em 1 linha. Mora no rodapé
+ * do card, alinhado à esquerda. */
+.pillarRewrite {
+  margin: 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--pa-line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pillarRewriteLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+.pillarRewriteText {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: #fff;
+}
+
+@media (max-width: 980px) {
+  .pillars { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .section { padding: 100px 20px; }
+  .header { margin-bottom: 64px; }
+  .pillar { padding: 40px 28px 32px; }
+  .pillarNumber { font-size: 60px; margin-bottom: 24px; }
+  .pillarTitle { font-size: 24px; }
+}
