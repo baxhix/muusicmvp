@@ -9,11 +9,11 @@
 .section {
   position: relative;
   width: 100%;
-  /* Gradient cônico sutil pra dar profundidade no fechamento.
-   * Centro mais quente (rgba magenta low alpha) → preto puro
-   * nas bordas. */
+  /* Gradient radial sutil no centro pra dar profundidade.
+   * Centro em mint + amber low-alpha → preto nas bordas.
+   * Mesma paleta complementar do resto da página. */
   background:
-    radial-gradient(ellipse at 50% 50%, rgba(255, 0, 180, 0.06) 0%, rgba(91, 0, 209, 0.04) 35%, #000 75%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 255, 178, 0.06) 0%, rgba(255, 212, 59, 0.04) 40%, #000 78%),
     #000;
   color: #fff;
   padding: 180px 24px 160px;
@@ -92,18 +92,20 @@
   gap: 24px;
 }
 
-/* CTA pill — gradient animado, mesma anatomia da navbar. */
+/* CTA pill — gradient animado mint→amber, mesma anatomia
+ * do ctaPrimary do Hero. Texto preto pra contrastar com
+ * fundo claro do pill. */
 .cta {
   display: inline-flex;
   align-items: center;
   padding: 17px 30px;
-  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
+  background: var(--pa-gradient-cta);
   background-size: 300% 100%;
   background-position: 0% 50%;
-  color: #ffffff;
+  color: #06100b;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 999px;
@@ -112,7 +114,7 @@
 }
 .cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 36px -10px rgba(255, 0, 180, 0.55);
+  box-shadow: 0 12px 36px -10px var(--pa-glow-mint);
 }
 .cta:active { transform: translateY(0); }
 

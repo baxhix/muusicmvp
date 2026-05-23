@@ -9,10 +9,10 @@
   position: relative;
   width: 100%;
   /* Bg sutilmente diferente do diagnóstico — gradient
-   * radial faz a section "respirar" e separa visualmente
-   * sem mudar de cor base. */
+   * radial em tom amber baixo alpha faz a section "respirar"
+   * e separa visualmente sem mudar de cor base. */
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(91, 0, 209, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 212, 59, 0.05) 0%, transparent 55%),
     #000;
   color: #fff;
   padding: 140px 24px;

@@ -8,7 +8,9 @@
   position: relative;
   min-height: 100dvh;
   width: 100%;
-  background: radial-gradient(ellipse at 50% 0%, #1a0a1f 0%, #08080a 45%, #000 100%);
+  /* Tint mint sutil no topo — mesma técnica do magenta-tint
+   * antigo, agora com o novo accent. */
+  background: radial-gradient(ellipse at 50% 0%, #06241a 0%, #08100b 45%, #000 100%);
   color: #fff;
   overflow: hidden;
   display: flex;
@@ -74,10 +76,9 @@
 
 .headlineLineAccent {
   display: block;
-  /* Mesma gradient da CTA pill: magenta → indigo. Aqui usada
-   * em diagonal pra acompanhar a inclinação visual do
-   * headline (esquerda-baixa pra direita-alta). */
-  background: linear-gradient(120deg, #ff00b4 0%, #ad48ff 45%, #5b00d1 100%);
+  /* Paleta complementar mint→amber, diagonal pra acompanhar
+   * inclinação visual do headline. */
+  background: var(--pa-gradient-tri);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -118,14 +119,18 @@
   display: inline-flex;
   align-items: center;
   padding: 17px 30px;
-  background:
-    linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
+  /* Mesma anatomia do .ctaPill da navbar (3-stop animado),
+   * mas em mint→amber pra manter consistência local da
+   * página /para-artistas. */
+  background: var(--pa-gradient-cta);
   background-size: 300% 100%;
   background-position: 0% 50%;
-  color: #ffffff;
+  /* Texto preto sobre mint/amber claros — contraste mais
+   * legível que branco. */
+  color: #06100b;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 999px;
@@ -134,7 +139,7 @@
 }
 .ctaPrimary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 36px -10px rgba(255, 0, 180, 0.55);
+  box-shadow: 0 12px 36px -10px var(--pa-glow-mint);
 }
 .ctaPrimary:active { transform: translateY(0); }
 

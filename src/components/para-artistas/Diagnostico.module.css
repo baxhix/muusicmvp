@@ -63,7 +63,7 @@
 
 .titleAccent {
   font-style: normal;
-  background: linear-gradient(120deg, #ff00b4 0%, #ad48ff 50%, #5b00d1 100%);
+  background: var(--pa-gradient-tri);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -80,9 +80,8 @@
   margin: 0;
 }
 .body strong {
-  color: #fff;
   font-weight: 600;
-  background: linear-gradient(90deg, #ff00b4 0%, #ad48ff 100%);
+  background: var(--pa-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -118,7 +117,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 100%, rgba(255, 0, 180, 0.06) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 50% 100%, rgba(0, 255, 178, 0.07) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 320ms ease-out;
   pointer-events: none;
@@ -203,7 +202,7 @@
 }
 .outcomesTitle em {
   font-style: normal;
-  background: linear-gradient(120deg, #ff00b4 0%, #ad48ff 50%, #5b00d1 100%);
+  background: var(--pa-gradient-tri);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -246,8 +245,8 @@
   margin-bottom: 28px;
 }
 .outcome:hover .outcomeArea {
-  background: rgba(255, 0, 180, 0.08);
-  border-color: rgba(255, 0, 180, 0.25);
+  background: rgba(0, 255, 178, 0.10);
+  border-color: rgba(0, 255, 178, 0.28);
   color: #fff;
 }
 

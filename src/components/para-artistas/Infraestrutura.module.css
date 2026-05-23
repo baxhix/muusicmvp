@@ -114,8 +114,8 @@
   transition: background 240ms ease-out, color 240ms ease-out, border-color 240ms ease-out;
 }
 .card:hover .iconBox {
-  background: rgba(255, 0, 180, 0.08);
-  border-color: rgba(255, 0, 180, 0.25);
+  background: rgba(0, 255, 178, 0.10);
+  border-color: rgba(0, 255, 178, 0.30);
   color: #fff;
 }
 

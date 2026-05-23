@@ -1,22 +1,54 @@
 /* /para-artistas — landing institucional pra empresários.
  *
- * Mesma fundação visual do /teste (preto, frosted, sparkles),
- * mas com tom EDITORIAL — typography Borscha bold dominante,
- * eyebrows numerados (01, 02, 03), e blocos contrastantes
- * (diagnóstico vs proposta). */
+ * Paleta INTENCIONALMENTE complementar ao resto do site:
+ *   - O ecossistema /teste e a navbar global usam magenta
+ *     (#ff00b4) + indigo (#5b00d1). É o nosso "brand pop".
+ *   - Aqui, per product feedback "use uma paleta de cores
+ *     complementar e não as já usadas", trocamos pra
+ *     mint (#00FFB2) + amber (#FFD43B). Complementar tanto
+ *     no sentido de color theory (warm yellow é
+ *     complementar de magenta) quanto no semântico:
+ *     mint=tech/data, amber=money/decisão — ressonante com
+ *     o público B2B (empresários e financeiro de carreira).
+ *
+ * Por consistência, expomos como CSS vars no .page e os
+ * componentes-filhos só consomem via var(). Trocar palette
+ * no futuro é uma edição neste arquivo.
+ */
 
 .page {
   background: #000;
   color: #fff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --pa-bg: #000;
-  --pa-bg-soft: #0a0a0e;
+  --pa-bg-soft: #06100b;
   --pa-text: #f5f5f5;
   --pa-text-mute: rgba(245, 245, 245, 0.55);
   --pa-text-faint: rgba(245, 245, 245, 0.32);
   --pa-line: rgba(255, 255, 255, 0.08);
   --pa-line-strong: rgba(255, 255, 255, 0.16);
-  /* Gradient accent — mesma magenta→indigo da CTA pill da
-   * navbar. Usado em eyebrows, accents textuais e badges. */
-  --pa-gradient: linear-gradient(90deg, #ff00b4 0%, #5b00d1 100%);
+
+  /* Paleta complementar — mint→amber. */
+  --pa-accent-1: #00ffb2;   /* electric mint */
+  --pa-accent-2: #ffd43b;   /* sodium amber */
+  --pa-accent-mid: #7ff0a0; /* blend mint→yellow */
+
+  /* Gradient 2-stop horizontal — pra eyebrows, badges e
+   * detalhes lineares. */
+  --pa-gradient: linear-gradient(90deg, #00ffb2 0%, #ffd43b 100%);
+
+  /* Gradient 3-stop diagonal — pra texto accent grande
+   * (titleAccent, .outcomesTitle em). */
+  --pa-gradient-tri: linear-gradient(120deg, #00ffb2 0%, #7ff0a0 50%, #ffd43b 100%);
+
+  /* Gradient 3-stop pra CTA pill animado — mesma forma do
+   * navbar (3 stops com cor inicial repetida no fim pra que
+   * o background-position seamless). */
+  --pa-gradient-cta: linear-gradient(90deg, #00ffb2 0%, #ffd43b 50%, #00ffb2 100%);
+
+  /* Halo rgba pra hover states (ponto de partida na mesma
+   * cor mint, com alpha baixíssima). */
+  --pa-halo-mint: rgba(0, 255, 178, 0.10);
+  --pa-halo-amber: rgba(255, 212, 59, 0.10);
+  --pa-glow-mint: rgba(0, 255, 178, 0.50);
 }

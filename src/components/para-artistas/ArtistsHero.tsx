@@ -25,8 +25,6 @@ export default function ArtistsHero() {
       <Sparkles count={32} seed={511} />
 
       <div className={styles.center}>
-        <span className={styles.eyebrow}>Para empresários e artistas</span>
-
         <h1 className={styles.headline}>
           <span className={styles.headlineLine}>Quem é o dono</span>
           <span className={styles.headlineLineAccent}>dos seus fãs?</span>
