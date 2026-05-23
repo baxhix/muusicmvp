@@ -447,3 +447,25 @@ export const IconFile = (p: IconProps) => (
     <polyline points="14 3 14 9 20 9" />
   </svg>
 );
+
+// Grid view (4 squares) — usado no toggle de visualização.
+export const IconGrid = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
+
+// List view (3 hamburger lines com dots) — toggle pair do Grid.
+export const IconList = (p: IconProps) => (
+  <svg {...base(p)}>
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </svg>
+);
