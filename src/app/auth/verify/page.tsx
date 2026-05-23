@@ -66,7 +66,14 @@ export default function VerifyPage() {
     // então essa flag não distinguia returning de new.
     if (user.isOnboarded) {
       track('login_success', { user_id: user.id });
-      router.replace('/app');
+      // ?welcome=back — usuário retornante. Triggera o globe
+      // flyTo cinematográfico + reveal simultâneo de todos os
+      // elementos após o globo settle (vs cascade pra novos).
+      // Per product feedback "também para os usuários que já
+      // possuem conta. Nesse caso específico, todos os
+      // elementos surgem ao mesmo tempo com o fade após o
+      // globo se posicionar".
+      router.replace('/app?welcome=back');
     } else {
       saveOnboarding({ step: 'birth-date' });
       router.replace('/auth/onboarding/birth-date');

@@ -25,18 +25,29 @@ export default function Globe() {
     // mobile) feels seamless. First visit + corrupted storage fall
     // through to the globe-view defaults.
     //
-    // Welcome flow override: usuário recém-cadastrado chega aqui
-    // via redirect `/app?welcome=1` (setado pelo magic-link de
-    // primeiro acesso). Quando esse flag está presente, ignoramos
-    // qualquer estado persistido e arrancamos com a câmera
-    // centrada em LATAM/Brasil — o produto é Brasil-first e a
-    // vista global default deixa o usuário desorientado no
-    // onboarding. Depois do consumo, limpamos o query param via
-    // replaceState pra que F5 não re-snape (a partir do próximo
-    // moveend o persisted toma conta normalmente).
-    const isWelcome =
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).get('welcome') === '1';
+    // Welcome flow override: usuário chega aqui via redirect com
+    // `?welcome=1` (novo cadastro pós-onboarding) OU `?welcome=back`
+    // (usuário retornante que fez login). Em ambos os casos
+    // ignoramos qualquer estado persistido e arrancamos com a
+    // câmera centrada em LATAM/Brasil + flyTo cinematográfico — o
+    // produto é Brasil-first e a vista global default deixa o
+    // usuário desorientado. Per product feedback "comportamento
+    // do globo ter animação e fixar na região da América Latina
+    // logo após fazer login, também para os usuários que já
+    // possuem conta".
+    //
+    // O diferencial entre `1` e `back` é tratado no
+    // AppShellContext (cascade vs salto único do welcome stage)
+    // — o Globe não precisa distinguir.
+    //
+    // Depois do consumo, limpamos o query param via replaceState
+    // pra que F5 não re-snape (a partir do próximo moveend o
+    // persisted toma conta normalmente).
+    const welcomeParam =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('welcome')
+        : null;
+    const isWelcome = welcomeParam === '1' || welcomeParam === 'back';
     const persisted = isWelcome ? null : loadGlobeCamera();
     // LATAM-centered: longitude no centro do continente, latitude
     // pouco acima do centro do Brasil pra incluir Caribe + Cone
@@ -68,8 +79,9 @@ export default function Globe() {
     const initialPitch = isWelcome ? 0 : (persisted?.pitch ?? 0);
 
     if (isWelcome && typeof window !== 'undefined') {
-      // Strip o ?welcome=1 sem recarregar — refresh subsequente
+      // Strip o ?welcome= sem recarregar — refresh subsequente
       // não deve re-centralizar (passa a ser um usuário normal).
+      // .delete cobre tanto `welcome=1` quanto `welcome=back`.
       const sp = new URLSearchParams(window.location.search);
       sp.delete('welcome');
       const qs = sp.toString();

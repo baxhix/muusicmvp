@@ -161,17 +161,27 @@ interface AppShellValue {
   closeAnaCheckIn: () => void;
   /**
    * Welcome reveal stage (0–5). Quando o usuário cai em /app
-   * vindo do fluxo de auth (`/app?welcome=1`), todo o chrome
-   * inicial é escondido — só o Globe aparece com o flyTo
-   * cinematográfico. Depois da animação, os elementos
-   * surgem com fade em sequência:
-   *   0 = nada (load inicial)
-   *   1 = Feed visível
-   *   2 = ArtistBox (Fanverse box) também
-   *   3 = NowPlaying (player) também
-   *   4 = BottomNav (navbar) também
+   * vindo do fluxo de auth, todo o chrome inicial é escondido
+   * — só o Globe aparece com o flyTo cinematográfico. Depois
+   * da animação, os elementos surgem com fade.
+   *
+   * Dois modos:
+   *   - `?welcome=1` (NOVO usuário pós-onboarding): cascade
+   *     sequencial 0→1→2→3→4→5 (Feed → ArtistBox → Player →
+   *     Navbar → TopBar/right-rail/etc) com 700ms entre cada.
+   *   - `?welcome=back` (USUÁRIO retornante): salto único
+   *     0→5 logo após o globo settle (~3500ms). Todos os
+   *     elementos aparecem juntos com o mesmo fade de 700ms
+   *     — onboarded user não precisa do "tour" do novo.
+   *
+   * Stages:
+   *   0 = nada (load inicial — só globo + sparkles do bg)
+   *   1 = Feed visível (só no modo `1`)
+   *   2 = ArtistBox (Fanverse box) também (só no modo `1`)
+   *   3 = NowPlaying (player) também (só no modo `1`)
+   *   4 = BottomNav (navbar) também (só no modo `1`)
    *   5 = TopBar + right-rail + LiveChatStack + FloatingUsers
-   * Quando o usuário entra SEM ?welcome=1, fica em stage 5 desde
+   * Quando o usuário entra SEM ?welcome=, fica em stage 5 desde
    * o mount (= comportamento normal).
    */
   welcomeStage: number;
@@ -214,7 +224,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
 
   /**
    * Welcome reveal: começa em 5 (default = tudo visível) e
-   * SOMENTE quando detectamos `?welcome=1` na URL (cliente)
+   * SOMENTE quando detectamos `?welcome=` na URL (cliente)
    * cai pra 0 e escala de volta com timers. SSR seguro porque
    * o initial state é 5 — primeira render do server pinta
    * tudo já visível, evitando flash de elementos ocultos pra
@@ -225,15 +235,28 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const sp = new URLSearchParams(window.location.search);
-    if (sp.get('welcome') !== '1') return;
+    const welcomeMode = sp.get('welcome');
+    if (welcomeMode !== '1' && welcomeMode !== 'back') return;
 
-    // Welcome detectado — começa do zero e cascade até 5.
+    // Welcome detectado — começa do zero. O timing pós-globo
+    // depende do modo.
     setWelcomeStage(0);
 
-    // Cronograma: globe flyTo dura ~3s. Reveal começa em 3.5s
-    // (dá folga pro último frame do voo settle), e cada
-    // elemento entra 700ms depois do anterior — coincide com
-    // o `transition: opacity 700ms` aplicado.
+    // Globe flyTo dura 3s; usamos 3500ms como gatilho do
+    // reveal pra dar folga ao último frame do voo settle.
+    if (welcomeMode === 'back') {
+      // Retornante — salto único: todos os elementos fadeiam
+      // ao mesmo tempo após o globo se posicionar. Um único
+      // setTimeout pra simplicidade. Per product feedback
+      // "todos os elementos surgem ao mesmo tempo com o fade
+      // após o globo se posicionar".
+      const t = window.setTimeout(() => setWelcomeStage(5), 3500);
+      return () => clearTimeout(t);
+    }
+
+    // Novo usuário — cascade sequencial. Cada elemento entra
+    // 700ms depois do anterior — coincide com o `transition:
+    // opacity 700ms` aplicado.
     const timers = [
       window.setTimeout(() => setWelcomeStage(1), 3500), // Feed
       window.setTimeout(() => setWelcomeStage(2), 4200), // ArtistBox
