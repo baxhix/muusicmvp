@@ -24,7 +24,7 @@ export default function SectionThree() {
       <Sparkles count={36} seed={42} />
 
       <div className={styles.center}>
-        <h2 className={styles.headline}>PERTENCER</h2>
+        <h2 className={styles.headline}>Pertencer</h2>
         <p className={styles.phrase}>
           Descubra, conecte e pertença a uma comunidade
         </p>

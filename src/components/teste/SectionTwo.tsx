@@ -26,7 +26,7 @@ export default function SectionTwo() {
       <Sparkles count={32} seed={21} />
 
       <div className={styles.center}>
-        <h2 className={styles.headline}>MÚSICA</h2>
+        <h2 className={styles.headline}>Música</h2>
         <p className={styles.phrase}>Cada música leva você a alguém</p>
         <SectionCTA />
       </div>

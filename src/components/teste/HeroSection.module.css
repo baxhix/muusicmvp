@@ -84,7 +84,6 @@
    * com overhang lateral grande. */
   padding: 0 0.06em;
   text-align: center;
-  text-transform: uppercase;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   animation: tloop-fadeup 800ms cubic-bezier(0.22, 1, 0.36, 1) both;

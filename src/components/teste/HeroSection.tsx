@@ -31,7 +31,7 @@ export default function HeroSection() {
        *  fica exatamente 180px abaixo da BASE do headline,
        *  independente do tamanho do texto da frase. */}
       <div className={styles.center}>
-        <h1 className={styles.headline}>SUPERFÃS</h1>
+        <h1 className={styles.headline}>Superfãs</h1>
         <p className={styles.phrase}>
           O lugar certo para criar conexões
         </p>

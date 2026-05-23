@@ -21,7 +21,7 @@ export default function SectionSix() {
       <Sparkles count={28} seed={219} />
 
       <div className={styles.center}>
-        <h2 className={styles.headline}>BAIXE O APP</h2>
+        <h2 className={styles.headline}>Baixe o app</h2>
         <p className={styles.phrase}>
           Disponível para iOS e Android
         </p>

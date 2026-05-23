@@ -24,7 +24,7 @@ export default function SectionFive() {
       <Sparkles count={32} seed={134} />
 
       <div className={styles.center}>
-        <h2 className={styles.headline}>ARTISTAS</h2>
+        <h2 className={styles.headline}>Artistas</h2>
         <p className={styles.phrase}>
           O lugar onde a sua arte encontra quem importa
         </p>
