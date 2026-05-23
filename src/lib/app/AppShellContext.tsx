@@ -225,31 +225,43 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   /**
    * Welcome reveal: começa em 5 (default = tudo visível) e
    * SOMENTE quando detectamos `?welcome=` na URL (cliente)
-   * cai pra 0 e escala de volta com timers. SSR seguro porque
-   * o initial state é 5 — primeira render do server pinta
-   * tudo já visível, evitando flash de elementos ocultos pra
-   * sessões normais.
+   * cai pra 0 e escala de volta com timers.
+   *
+   * IMPORTANTE: o modo é capturado num useState LAZY INIT —
+   * que roda durante render, antes de qualquer useEffect.
+   * Necessário porque o Globe (componente-filho deste
+   * provider) tem o próprio useEffect que dispara o flyTo +
+   * STRIP-EIA o `?welcome=` da URL via history.replaceState.
+   * React roda effects de filhos ANTES de pais, então se
+   * lêssemos a URL aqui dentro do useEffect, o param já
+   * teria sumido. Lendo no initializer garantimos a captura
+   * antes do Globe rodar.
+   *
+   * SSR safe: typeof window check; retorna null no servidor
+   * e nunca dispara o cascade.
    */
-  const [welcomeStage, setWelcomeStage] = useState(5);
+  const [welcomeMode] = useState<'new' | 'back' | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const v = new URLSearchParams(window.location.search).get('welcome');
+    if (v === '1') return 'new';
+    if (v === 'back') return 'back';
+    return null;
+  });
+
+  /* Stage default = 5 (tudo visível) se não estamos no flow
+   * de welcome; 0 caso contrário (Globe + sparkles only). */
+  const [welcomeStage, setWelcomeStage] = useState(welcomeMode ? 0 : 5);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const sp = new URLSearchParams(window.location.search);
-    const welcomeMode = sp.get('welcome');
-    if (welcomeMode !== '1' && welcomeMode !== 'back') return;
-
-    // Welcome detectado — começa do zero. O timing pós-globo
-    // depende do modo.
-    setWelcomeStage(0);
+    if (!welcomeMode) return;
 
     // Globe flyTo dura 3s; usamos 3500ms como gatilho do
     // reveal pra dar folga ao último frame do voo settle.
     if (welcomeMode === 'back') {
       // Retornante — salto único: todos os elementos fadeiam
-      // ao mesmo tempo após o globo se posicionar. Um único
-      // setTimeout pra simplicidade. Per product feedback
-      // "todos os elementos surgem ao mesmo tempo com o fade
-      // após o globo se posicionar".
+      // ao mesmo tempo após o globo se posicionar. Per
+      // product feedback "todos os elementos surgem ao mesmo
+      // tempo com o fade após o globo se posicionar".
       const t = window.setTimeout(() => setWelcomeStage(5), 3500);
       return () => clearTimeout(t);
     }
@@ -266,7 +278,7 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     ];
 
     return () => timers.forEach((t) => clearTimeout(t));
-  }, []);
+  }, [welcomeMode]);
 
   // ── Player state — persistent across routes so the NowPlaying
   // mini-bar keeps playing while the user is on chat/community/etc.
