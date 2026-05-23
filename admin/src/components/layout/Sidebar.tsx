@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  IconArchive,
   IconDashboard,
   IconFeed,
   IconUsers,
@@ -23,6 +24,7 @@ import {
   IconChevronRight,
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
+import Tooltip from '@/components/ui/Tooltip';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import styles from './Sidebar.module.css';
@@ -55,6 +57,11 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/pre-save',    label: 'Pre Save',    icon: IconCalendar },
   { href: '/live',        label: 'Live',        icon: IconVideo },
   { href: '/blog',        label: 'Blog',        icon: IconEdit },
+  /* Materiais — acervo de conteúdo exclusivo da artista
+   * (álbuns de fotos de shows, álbuns exclusivos, wallpapers,
+   * figurinhas, templates, logotipos). Vive ao lado de Blog
+   * porque ambos são "publicações" da equipe da artista. */
+  { href: '/materiais',   label: 'Materiais',   icon: IconArchive },
   { href: '/convites',    label: 'Convites',    icon: IconTicket },
   { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
 ];
@@ -143,27 +150,30 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
   const renderItem = (item: NavItem) => {
     const Icon = item.icon;
     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    /* Tooltip custom (Tooltip.tsx) substitui o `title=` nativo per
+     * product feedback "adicione tooltips personalizados estilo o
+     * da imagem em anexo". O pill aparece à direita do trigger
+     * quando o sidebar está collapsed (label invisível); quando
+     * expandido o label já está visível → tooltip desabilitado pra
+     * não duplicar info. */
     return (
-      <Link
-        key={item.href}
-        href={item.href}
-        className={cn(styles.item, active && styles.itemActive)}
-        aria-current={active ? 'page' : undefined}
-        // Native title surfaces the label on hover when collapsed,
-        // and provides accessible context the visible label already
-        // gave when expanded.
-        title={item.label}
-      >
-        <span className={styles.itemIcon}>
-          <Icon size={16} />
-        </span>
-        <span className={styles.itemLabel}>{item.label}</span>
-        {typeof item.badge === 'number' && item.badge > 0 && (
-          <span className={cn(styles.itemBadge, !active && styles.itemBadgeMute)}>
-            {item.badge}
+      <Tooltip key={item.href} label={item.label} side="right" disabled={!collapsed}>
+        <Link
+          href={item.href}
+          className={cn(styles.item, active && styles.itemActive)}
+          aria-current={active ? 'page' : undefined}
+        >
+          <span className={styles.itemIcon}>
+            <Icon size={16} />
           </span>
-        )}
-      </Link>
+          <span className={styles.itemLabel}>{item.label}</span>
+          {typeof item.badge === 'number' && item.badge > 0 && (
+            <span className={cn(styles.itemBadge, !active && styles.itemBadgeMute)}>
+              {item.badge}
+            </span>
+          )}
+        </Link>
+      </Tooltip>
     );
   };
 

@@ -406,3 +406,13 @@ export const IconTicket = (p: IconProps) => (
     <path d="M12 16v2" />
   </svg>
 );
+
+// Archive icon — usado pela entrada Materiais. Caixa fechada com
+// puxador horizontal no topo, sugere "acervo" / "coleção".
+export const IconArchive = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="3" y="3" width="18" height="4" rx="1" />
+    <path d="M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7" />
+    <line x1="10" y1="12" x2="14" y2="12" />
+  </svg>
+);

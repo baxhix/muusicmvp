@@ -1,0 +1,135 @@
+/* Tooltip — pill escuro flutuante. Same visual language do
+ * mockup do product feedback: bg quase-preto, raio médio,
+ * label branca, pequeno triângulo apontando pro trigger. */
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  /* O wrapper não deve introduzir gap/baseline-shift no layout
+   * do consumer. Os filhos comuns (links da sidebar) já têm
+   * seu próprio display/align. */
+}
+
+.bubble {
+  position: absolute;
+  z-index: 9999;
+  /* Pill: padding equilibrado, raio bom, sem afilar nas pontas. */
+  padding: 6px 10px;
+  background: rgba(20, 22, 26, 0.96);
+  color: rgba(245, 245, 247, 0.94);
+  font-family: var(--font-inter, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  white-space: nowrap;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 10px 24px -8px rgba(0, 0, 0, 0.55),
+    0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  opacity: 0;
+  /* Translate no eixo da side pra animar "vindo do trigger". */
+  transform: translate(var(--tip-tx, 0), var(--tip-ty, 0)) scale(0.92);
+  transition:
+    opacity 140ms ease-out,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bubbleOpen {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}
+
+/* Pequeno tail triangular apontando pro trigger. Usa ::before
+ * com border-trick — o losango virado é desenhado por 4 bordas
+ * onde 3 são transparent + 1 colorida na direção certa. */
+.bubble::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* ── Side: right (default) ───────────────────────────────
+ * Tooltip à direita do trigger. Animação entra desde a
+ * esquerda pra que pareça "saindo do ícone". */
+.side_right {
+  top: 50%;
+  left: 100%;
+  margin-left: 10px;
+  transform: translate(-4px, -50%) scale(0.92);
+  --tip-tx: -4px;
+  --tip-ty: -50%;
+}
+.side_right.bubbleOpen {
+  transform: translate(0, -50%) scale(1);
+}
+.side_right::before {
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  border-width: 5px 6px 5px 0;
+  border-color: transparent rgba(20, 22, 26, 0.96) transparent transparent;
+}
+
+/* ── Side: left ─────────────────────────────────────── */
+.side_left {
+  top: 50%;
+  right: 100%;
+  margin-right: 10px;
+  transform: translate(4px, -50%) scale(0.92);
+}
+.side_left.bubbleOpen {
+  transform: translate(0, -50%) scale(1);
+}
+.side_left::before {
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border-width: 5px 0 5px 6px;
+  border-color: transparent transparent transparent rgba(20, 22, 26, 0.96);
+}
+
+/* ── Side: top ──────────────────────────────────────── */
+.side_top {
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 10px;
+  transform: translate(-50%, 4px) scale(0.92);
+}
+.side_top.bubbleOpen {
+  transform: translate(-50%, 0) scale(1);
+}
+.side_top::before {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 5px 0 5px;
+  border-color: rgba(20, 22, 26, 0.96) transparent transparent transparent;
+}
+
+/* ── Side: bottom ──────────────────────────────────── */
+.side_bottom {
+  top: 100%;
+  left: 50%;
+  margin-top: 10px;
+  transform: translate(-50%, -4px) scale(0.92);
+}
+.side_bottom.bubbleOpen {
+  transform: translate(-50%, 0) scale(1);
+}
+.side_bottom::before {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 5px 6px 5px;
+  border-color: transparent transparent rgba(20, 22, 26, 0.96) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble { transition: opacity 100ms linear; transform: none; }
+  .bubbleOpen { transform: none; }
+}
