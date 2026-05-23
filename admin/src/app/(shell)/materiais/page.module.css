@@ -395,6 +395,54 @@
   box-shadow: 0 4px 10px -2px rgba(124, 92, 255, 0.4);
 }
 
+/* ── Audience chip — visível no canto inferior-direito da thumb.
+ *  Sinaliza pra qual tier de superfã o material é acessível.
+ *  Color-coded por tier conforme MATERIAL_AUDIENCE_META.tone. */
+.audienceChip {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid transparent;
+}
+
+/* Tons por tier — gradientes sutis sobre bg dark, mesmo
+ * vocabulário visual usado pelo Badge tone={...}. */
+.audience_top1 {
+  background: linear-gradient(135deg, rgba(252, 211, 77, 0.92) 0%, rgba(245, 158, 11, 0.92) 100%);
+  color: #1a1407;
+  border-color: rgba(252, 211, 77, 0.5);
+}
+.audience_top10 {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.92) 0%, rgba(168, 85, 247, 0.92) 100%);
+  color: #fff;
+  border-color: rgba(236, 72, 153, 0.5);
+}
+.audience_top50 {
+  background: rgba(96, 165, 250, 0.92);
+  color: #fff;
+  border-color: rgba(96, 165, 250, 0.5);
+}
+.audience_top100 {
+  background: rgba(74, 222, 128, 0.85);
+  color: #052e16;
+  border-color: rgba(74, 222, 128, 0.5);
+}
+.audience_all {
+  background: rgba(20, 22, 26, 0.78);
+  color: rgba(245, 245, 247, 0.92);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 .fileBody {
   display: flex;
   flex-direction: column;
@@ -490,7 +538,8 @@
 .listHeader,
 .listRow {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1.4fr) 90px 90px 100px 130px 78px;
+  /* check · nome · formato · acesso · tamanho · downloads · data · actions */
+  grid-template-columns: 36px minmax(0, 1.4fr) 90px 92px 90px 100px 130px 78px;
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
@@ -596,7 +645,8 @@
 
 .listColFormat,
 .listColSize,
-.listColDl {
+.listColDl,
+.listColAudience {
   font-size: 12.5px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -604,6 +654,10 @@
 .listColSize,
 .listColDl {
   color: var(--text-mute);
+}
+.listColAudience {
+  display: inline-flex;
+  align-items: center;
 }
 
 .listColDate {
@@ -648,18 +702,27 @@
   border-color: rgba(220, 38, 38, 0.25);
 }
 
-/* Em viewports estreitas, list view encolhe colunas. */
-@media (max-width: 980px) {
+/* Em viewports estreitas, list view encolhe colunas (acesso é
+ * mais importante que data — então mantemos audience visível
+ * mais tempo). */
+@media (max-width: 1080px) {
   .listHeader,
   .listRow {
-    grid-template-columns: 36px minmax(0, 1.4fr) 90px 90px 78px;
+    grid-template-columns: 36px minmax(0, 1.4fr) 90px 92px 90px 130px 78px;
   }
-  .listColDl, .listColDate { display: none; }
+  .listColDl { display: none; }
+}
+@media (max-width: 880px) {
+  .listHeader,
+  .listRow {
+    grid-template-columns: 36px minmax(0, 1.4fr) 92px 90px 78px;
+  }
+  .listColFormat, .listColDl, .listColDate { display: none; }
 }
 @media (max-width: 640px) {
   .listHeader,
   .listRow {
-    grid-template-columns: 36px minmax(0, 1fr) 78px;
+    grid-template-columns: 36px minmax(0, 1fr) 92px 78px;
   }
   .listColFormat, .listColSize, .listColDl, .listColDate { display: none; }
 }

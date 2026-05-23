@@ -33,11 +33,14 @@ import {
   countFilesDeep,
   summarizeTree,
   MATERIAL_STATUS_LABEL,
+  MATERIAL_AUDIENCE_META,
   type MaterialNode,
   type MaterialFolder,
   type MaterialFile,
   type MaterialFormato,
+  type MaterialAudience,
 } from '@/data/mock/materiais';
+import Badge from '@/components/ui/Badge';
 import { formatNumber, formatRelative } from '@/lib/format';
 import { formatBytes } from './shared';
 import MaterialPreviewDrawer from './MaterialPreviewDrawer';
@@ -86,7 +89,7 @@ function fileFormatIcon(formato: MaterialFormato) {
 }
 
 export default function MateriaisPage() {
-  const [nodes] = useState<MaterialNode[]>(() => loadMateriaisTree());
+  const [nodes, setNodes] = useState<MaterialNode[]>(() => loadMateriaisTree());
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -212,6 +215,16 @@ export default function MateriaisPage() {
     if (!ok) return;
     alert(`Exclusão em massa mockada — ${count} arquivos.`);
     clearSelection();
+  }
+
+  /** Atualiza a audiência de um arquivo. Mock — quando o backend
+   *  cair, vira PATCH /api/admin/materiais/{id} { audience }. */
+  function handleAudienceChange(fileId: string, audience: MaterialAudience) {
+    setNodes((curr) =>
+      curr.map((n) =>
+        n.type === 'file' && n.id === fileId ? { ...n, audience } : n,
+      ),
+    );
   }
 
   /** Resolve os MaterialFile a partir dos ids selecionados. */
@@ -527,6 +540,14 @@ export default function MateriaisPage() {
                         <FormatIcon size={11} />
                         <span>{file.formato.toUpperCase()}</span>
                       </span>
+                      {/* Audiência — chip no canto inferior-direito.
+                       *  Sempre visível. Visualiza quem pode acessar. */}
+                      <span
+                        className={`${styles.audienceChip} ${styles[`audience_${file.audience}`]}`}
+                        title={MATERIAL_AUDIENCE_META[file.audience].description}
+                      >
+                        {MATERIAL_AUDIENCE_META[file.audience].shortLabel}
+                      </span>
                       {file.publishedToFeed && (
                         <span className={styles.fileFeedBadge} title="Publicado no feed">
                           <IconFeed size={10} />
@@ -580,6 +601,7 @@ export default function MateriaisPage() {
               <span className={styles.listColCheck}></span>
               <span className={styles.listColName}>Nome</span>
               <span className={styles.listColFormat}>Formato</span>
+              <span className={styles.listColAudience}>Acesso</span>
               <span className={styles.listColSize}>Tamanho</span>
               <span className={styles.listColDl}>Downloads</span>
               <span className={styles.listColDate}>Publicado</span>
@@ -627,6 +649,11 @@ export default function MateriaisPage() {
                       {file.formato.toUpperCase()}
                     </span>
                   </span>
+                  <span className={styles.listColAudience}>
+                    <Badge tone={MATERIAL_AUDIENCE_META[file.audience].tone} size="sm">
+                      {MATERIAL_AUDIENCE_META[file.audience].shortLabel}
+                    </Badge>
+                  </span>
                   <span className={styles.listColSize}>
                     {formatBytes(file.tamanhoBytes)}
                   </span>
@@ -670,6 +697,7 @@ export default function MateriaisPage() {
         onClose={() => setSelectedFileId(null)}
         onDownload={handleDownload}
         onDelete={handleDelete}
+        onAudienceChange={handleAudienceChange}
       />
     </div>
   );

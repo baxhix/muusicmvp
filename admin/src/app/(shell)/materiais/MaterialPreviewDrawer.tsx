@@ -3,6 +3,7 @@
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
+import Select from '@/components/ui/Select';
 import {
   IconDownload,
   IconTrash,
@@ -11,8 +12,11 @@ import {
 } from '@/components/icons';
 import {
   MATERIAL_STATUS_LABEL,
+  MATERIAL_AUDIENCE_META,
+  MATERIAL_AUDIENCE_ORDER,
   type MaterialFile,
   type MaterialStatus,
+  type MaterialAudience,
 } from '@/data/mock/materiais';
 import { formatNumber, formatDateLong } from '@/lib/format';
 import { formatBytes } from './shared';
@@ -30,29 +34,36 @@ export interface MaterialPreviewDrawerProps {
   onClose: () => void;
   onDownload: (file: MaterialFile) => void;
   onDelete: (file: MaterialFile) => void;
+  /** Handler de mudança da audiência do material. Recebe id +
+   *  novo tier — page é responsável por persistir. */
+  onAudienceChange: (fileId: string, audience: MaterialAudience) => void;
 }
 
 /**
  * Drawer de preview de arquivo — abre quando o usuário clica num
- * card de file na grid. Mostra thumb grande, metadados e dois CTAs:
- * Download e Excluir.
- *
- * Os handlers são plumados pelo parent (page.tsx) — o drawer só
- * decide a UI. Quando o backend cair, basta trocar as
- * implementações em handle{Download,Delete} da page.
+ * card de file na grid. Mostra thumb grande, metadados, controle
+ * de audiência (Top 1/10/50/100/Todos) e dois CTAs: Download e
+ * Excluir.
  */
 export default function MaterialPreviewDrawer({
   file,
   onClose,
   onDownload,
   onDelete,
+  onAudienceChange,
 }: MaterialPreviewDrawerProps) {
   if (!file) return null;
 
-  /** Se o arquivo for imagem (jpg/png/svg), renderiza preview real;
-   *  outros formatos (mp3, mp4, zip, pdf) caem num placeholder
-   *  ícone-temático. */
   const isImage = ['jpg', 'png', 'svg'].includes(file.formato);
+
+  /* Options pro Select de audiência — ordenadas do mais restrito
+   * pro mais aberto, com descrição inline pra contextualizar. */
+  const audienceOptions = MATERIAL_AUDIENCE_ORDER.map((id) => ({
+    value: id,
+    label: MATERIAL_AUDIENCE_META[id].label,
+  }));
+
+  const currentAudience = MATERIAL_AUDIENCE_META[file.audience];
 
   return (
     <Drawer
@@ -63,10 +74,6 @@ export default function MaterialPreviewDrawer({
       size="lg"
       footer={
         <div className={styles.footerActions}>
-          {/* CTAs primário (Download) e secundário (Excluir).
-           *  Como o backend não existe, ambos disparam handlers
-           *  no-op informativos via onDownload/onDelete — o page
-           *  toasta uma confirmação. */}
           <Button
             variant="primary"
             size="md"
@@ -98,7 +105,9 @@ export default function MaterialPreviewDrawer({
             />
           ) : (
             <div className={styles.previewPlaceholder}>
-              <div className={styles.placeholderFormat}>{file.formato.toUpperCase()}</div>
+              <div className={styles.placeholderFormat}>
+                {file.formato.toUpperCase()}
+              </div>
               <div className={styles.placeholderHint}>
                 Visualização indisponível pra este formato.
               </div>
@@ -106,7 +115,7 @@ export default function MaterialPreviewDrawer({
           )}
         </div>
 
-        {/* Status + flags. */}
+        {/* Status + flags */}
         <div className={styles.statusRow}>
           <Badge tone={STATUS_TONE[file.status]} size="sm" dot>
             {MATERIAL_STATUS_LABEL[file.status]}
@@ -118,7 +127,34 @@ export default function MaterialPreviewDrawer({
           )}
         </div>
 
-        {/* Metadados em grid. */}
+        {/* Bloco de Audiência — controle dedicado. Ocupa uma
+         *  seção própria porque é a decisão editorial principal
+         *  do admin neste material. */}
+        <section className={styles.audienceSection}>
+          <div className={styles.audienceSectionHead}>
+            <h3 className={styles.sectionTitle}>Quem pode acessar</h3>
+            <Badge tone={currentAudience.tone} size="sm">
+              {currentAudience.shortLabel}
+            </Badge>
+          </div>
+          <p className={styles.audienceDescription}>
+            {currentAudience.description}
+          </p>
+          <Select
+            label="Definir audiência"
+            value={file.audience}
+            onChange={(e) =>
+              onAudienceChange(file.id, e.target.value as MaterialAudience)
+            }
+            options={audienceOptions}
+          />
+          <p className={styles.audienceHelp}>
+            Ranking de superfãs é recalculado diariamente pelo Engajamento. Apenas usuários
+            dentro do tier escolhido (ou superior) verão este arquivo no app.
+          </p>
+        </section>
+
+        {/* Metadados em grid */}
         <dl className={styles.meta}>
           <div className={styles.metaItem}>
             <dt>Formato</dt>

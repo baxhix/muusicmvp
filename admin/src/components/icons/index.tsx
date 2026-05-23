@@ -458,14 +458,16 @@ export const IconGrid = (p: IconProps) => (
   </svg>
 );
 
-// List view (3 hamburger lines com dots) — toggle pair do Grid.
+// List view (3 traços horizontais limpos) — toggle pair do
+// Grid. Versão anterior tinha dots no lado esquerdo que
+// pareciam checkboxes de "select all" — confundia o usuário.
+// Per product feedback "o botão de lista está com a função de
+// selecionar todos e não de visualizar em lista", refeito sem
+// os dots — apenas 3 linhas full-width estilo hamburger.
 export const IconList = (p: IconProps) => (
   <svg {...base(p)}>
-    <line x1="8" y1="6" x2="21" y2="6" />
-    <line x1="8" y1="12" x2="21" y2="12" />
-    <line x1="8" y1="18" x2="21" y2="18" />
-    <line x1="3" y1="6" x2="3.01" y2="6" />
-    <line x1="3" y1="12" x2="3.01" y2="12" />
-    <line x1="3" y1="18" x2="3.01" y2="18" />
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="18" x2="21" y2="18" />
   </svg>
 );

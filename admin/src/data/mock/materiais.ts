@@ -41,6 +41,80 @@ export type MaterialFormato =
 
 export type MaterialStatus = 'rascunho' | 'publicado' | 'agendado' | 'arquivado';
 
+/**
+ * Audiência permitida pra um material — controla quem pode
+ * baixar/visualizar. Tiers são cumulativos: 'top10' significa
+ * "top 10 ou melhor"; 'all' = todo mundo. Per product feedback
+ * "inclua uma opção para o admin escolher quem poderá ter acesso
+ * a este material. O top 1, 10, 50, 100 ou todos".
+ *
+ * Lógica de visibilidade (client-side):
+ *   if (audience === 'all') visible
+ *   else if (audience === 'top100' && userRank <= 100) visible
+ *   else if (audience === 'top50'  && userRank <= 50)  visible
+ *   ...etc.
+ */
+export type MaterialAudience = 'top1' | 'top10' | 'top50' | 'top100' | 'all';
+
+/** Metadata por tier — usado pra rendering (label, tone do
+ *  Badge, descrição curta no Select). */
+export interface MaterialAudienceMeta {
+  id: MaterialAudience;
+  label: string;
+  shortLabel: string;
+  /** Tom usado no Badge/chip. */
+  tone: 'neutral' | 'info' | 'brand' | 'warning' | 'success';
+  description: string;
+}
+
+export const MATERIAL_AUDIENCE_META: Record<MaterialAudience, MaterialAudienceMeta> = {
+  top1: {
+    id: 'top1',
+    label: 'Top 1',
+    shortLabel: 'Top 1',
+    tone: 'warning', // amber — máxima exclusividade
+    description: 'Só pra o superfã número 1 do ranking.',
+  },
+  top10: {
+    id: 'top10',
+    label: 'Top 10',
+    shortLabel: 'Top 10',
+    tone: 'brand', // magenta — alta exclusividade
+    description: 'Os 10 superfãs mais engajados.',
+  },
+  top50: {
+    id: 'top50',
+    label: 'Top 50',
+    shortLabel: 'Top 50',
+    tone: 'info', // azul/roxo — exclusivo
+    description: 'Os 50 superfãs no topo do ranking.',
+  },
+  top100: {
+    id: 'top100',
+    label: 'Top 100',
+    shortLabel: 'Top 100',
+    tone: 'success', // verde — premium
+    description: 'Os 100 superfãs mais ativos.',
+  },
+  all: {
+    id: 'all',
+    label: 'Todos os fãs',
+    shortLabel: 'Todos',
+    tone: 'neutral', // cinza — aberto
+    description: 'Disponível pra qualquer usuário cadastrado.',
+  },
+};
+
+/** Lista ordenada do mais restrito pro mais aberto — usada nos
+ *  Selects (UI mantém uma ordem consistente). */
+export const MATERIAL_AUDIENCE_ORDER: MaterialAudience[] = [
+  'top1',
+  'top10',
+  'top50',
+  'top100',
+  'all',
+];
+
 /** Nó da árvore — pode ser pasta ou arquivo. */
 export type MaterialNode = MaterialFolder | MaterialFile;
 
@@ -71,6 +145,9 @@ export interface MaterialFile {
   downloads: number;
   favoritos: number;
   description: string;
+  /** Quem pode acessar este material — controla visibilidade
+   *  pro fã. Editável pelo admin. */
+  audience: MaterialAudience;
   createdBy: { id: string; name: string };
 }
 
@@ -216,6 +293,7 @@ const FILES: MaterialFile[] = [
     downloads: 2842,
     favoritos: 814,
     description: 'Frame icônico da abertura — entrada da artista no palco.',
+    audience: 'top100',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -232,6 +310,7 @@ const FILES: MaterialFile[] = [
     downloads: 1208,
     favoritos: 342,
     description: 'Vista aérea da arena lotada durante "Pipoca".',
+    audience: 'top100',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -248,6 +327,7 @@ const FILES: MaterialFile[] = [
     downloads: 1908,
     favoritos: 612,
     description: 'Momento de descontração no camarim antes do show.',
+    audience: 'top50',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -264,6 +344,7 @@ const FILES: MaterialFile[] = [
     downloads: 5240,
     favoritos: 1880,
     description: 'Pacote completo: 48 fotos em alta resolução.',
+    audience: 'top10',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -280,6 +361,7 @@ const FILES: MaterialFile[] = [
     downloads: 9410,
     favoritos: 3220,
     description: 'Vídeo recap oficial — highlights do show editados em 3 minutos.',
+    audience: 'top10',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
 
@@ -298,6 +380,7 @@ const FILES: MaterialFile[] = [
     downloads: 3120,
     favoritos: 921,
     description: 'Vista frontal do palco principal durante o headliner.',
+    audience: 'top100',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -314,6 +397,7 @@ const FILES: MaterialFile[] = [
     downloads: 2104,
     favoritos: 624,
     description: 'Encontro no palco com convidados surpresa.',
+    audience: 'top50',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -330,6 +414,7 @@ const FILES: MaterialFile[] = [
     downloads: 6580,
     favoritos: 2410,
     description: '62 fotos do show + bastidores em alta resolução.',
+    audience: 'top10',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
 
@@ -348,6 +433,7 @@ const FILES: MaterialFile[] = [
     downloads: 1420,
     favoritos: 380,
     description: 'Pôr-do-sol antes do show, vista do palco no Aterro.',
+    audience: 'top100',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
   {
@@ -364,6 +450,7 @@ const FILES: MaterialFile[] = [
     downloads: 3210,
     favoritos: 1108,
     description: '34 fotos do show beira-mar.',
+    audience: 'top50',
     createdBy: { id: 'team-photo', name: 'Equipe Fotografia' },
   },
 
@@ -382,6 +469,7 @@ const FILES: MaterialFile[] = [
     downloads: 12_840,
     favoritos: 5840,
     description: 'Pipoca em versão acústica — voz + violão.',
+    audience: 'top50',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
   {
@@ -398,6 +486,7 @@ const FILES: MaterialFile[] = [
     downloads: 9420,
     favoritos: 4210,
     description: 'Nosso Quadro acústico — intimista.',
+    audience: 'top50',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
   {
@@ -414,6 +503,7 @@ const FILES: MaterialFile[] = [
     downloads: 8240,
     favoritos: 3140,
     description: 'Álbum completo · 8 faixas em FLAC + MP3 320kbps.',
+    audience: 'top10',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
   {
@@ -430,6 +520,7 @@ const FILES: MaterialFile[] = [
     downloads: 4210,
     favoritos: 1200,
     description: 'Capa oficial do álbum acústico em alta resolução.',
+    audience: 'all',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
@@ -448,6 +539,7 @@ const FILES: MaterialFile[] = [
     downloads: 6240,
     favoritos: 2480,
     description: 'Primeira versão do single "Cowgirl" — voz guia.',
+    audience: 'top1',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
   {
@@ -464,6 +556,7 @@ const FILES: MaterialFile[] = [
     downloads: 8420,
     favoritos: 3120,
     description: '5 demos completas em qualidade de estúdio.',
+    audience: 'top10',
     createdBy: { id: 'team-music', name: 'Equipe Música' },
   },
 
@@ -482,6 +575,7 @@ const FILES: MaterialFile[] = [
     downloads: 18_244,
     favoritos: 5412,
     description: 'Wallpaper Rodeio · vertical 1080×2400, otimizado pra notch.',
+    audience: 'all',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -498,6 +592,7 @@ const FILES: MaterialFile[] = [
     downloads: 14_104,
     favoritos: 4221,
     description: 'A boiadeira no campo de milho — vertical pra mobile.',
+    audience: 'all',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -514,6 +609,7 @@ const FILES: MaterialFile[] = [
     downloads: 31_840,
     favoritos: 12_490,
     description: 'Pacote de 6 wallpapers cowgirl em variações de cor.',
+    audience: 'top100',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
@@ -532,6 +628,7 @@ const FILES: MaterialFile[] = [
     downloads: 9421,
     favoritos: 3120,
     description: 'Rodeio em 4K wide pra desktop.',
+    audience: 'top100',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -548,6 +645,7 @@ const FILES: MaterialFile[] = [
     downloads: 2480,
     favoritos: 824,
     description: 'Versão ultrawide 32:9 pra monitores extra-largos.',
+    audience: 'top100',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
@@ -566,6 +664,7 @@ const FILES: MaterialFile[] = [
     downloads: 48_220,
     favoritos: 21_140,
     description: '24 stickers de reação pra WhatsApp e Telegram.',
+    audience: 'all',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -582,6 +681,7 @@ const FILES: MaterialFile[] = [
     downloads: 24_810,
     favoritos: 9420,
     description: '18 stickers com frases icônicas das músicas.',
+    audience: 'all',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -598,6 +698,7 @@ const FILES: MaterialFile[] = [
     downloads: 0,
     favoritos: 0,
     description: 'Botas, chapéus, fivelas — 14 stickers. Em finalização.',
+    audience: 'top100',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
@@ -616,6 +717,7 @@ const FILES: MaterialFile[] = [
     downloads: 6240,
     favoritos: 2110,
     description: '9 layouts editáveis no Canva pra story de lançamento.',
+    audience: 'top100',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -632,6 +734,7 @@ const FILES: MaterialFile[] = [
     downloads: 4108,
     favoritos: 1244,
     description: 'Trinca de posts horizontais — grid 3×1 no perfil.',
+    audience: 'top100',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
   {
@@ -648,6 +751,7 @@ const FILES: MaterialFile[] = [
     downloads: 1820,
     favoritos: 542,
     description: 'Cover pra fan-meet ou evento local · PDF editável.',
+    audience: 'top50',
     createdBy: { id: 'team-design', name: 'Equipe Design' },
   },
 
@@ -666,6 +770,7 @@ const FILES: MaterialFile[] = [
     downloads: 5240,
     favoritos: 1840,
     description: 'Marca oficial em SVG — positiva e negativa.',
+    audience: 'all',
     createdBy: { id: 'team-brand', name: 'Equipe Brand' },
   },
   {
@@ -682,6 +787,7 @@ const FILES: MaterialFile[] = [
     downloads: 8420,
     favoritos: 2410,
     description: '6 variantes PNG em transparência (branco, preto, gradiente).',
+    audience: 'all',
     createdBy: { id: 'team-brand', name: 'Equipe Brand' },
   },
   {
@@ -698,6 +804,7 @@ const FILES: MaterialFile[] = [
     downloads: 2840,
     favoritos: 624,
     description: 'Guia oficial: cores, espaçamento mínimo, usos proibidos.',
+    audience: 'top100',
     createdBy: { id: 'team-brand', name: 'Equipe Brand' },
   },
 ];
