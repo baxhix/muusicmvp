@@ -33,6 +33,33 @@ function format(level: LogLevel, scope: string, msg: string): string {
   return `${ts} [${level.toUpperCase()}] ${scope}: ${msg}`;
 }
 
+/* ──────────────────────────────────────────────────────────────
+ * Transport pluggável — Sentry/Datadog/Better Stack registram
+ * via `setErrorTransport()`. Sem transport: só `console.error`.
+ *
+ * Quando Sentry entrar:
+ *
+ *   // instrumentation.ts (Next.js)
+ *   import * as Sentry from '@sentry/node';
+ *   import { setErrorTransport } from '@/server/log';
+ *
+ *   Sentry.init({ dsn: env.SENTRY_DSN });
+ *   setErrorTransport((err, ctx) => {
+ *     Sentry.captureException(err, { extra: ctx });
+ *   });
+ *
+ * Cobertura instantânea de TODOS os logger.error() do codebase
+ * sem precisar tocar nos call-sites. Esse é o ponto.
+ * ────────────────────────────────────────────────────────────── */
+
+type ErrorTransport = (err: unknown, ctx?: LogContext) => void;
+
+let externalTransport: ErrorTransport | undefined;
+
+export function setErrorTransport(transport: ErrorTransport): void {
+  externalTransport = transport;
+}
+
 export const logger = {
   debug(scope: string, ctx?: LogContext) {
     if (process.env.NODE_ENV === 'production') return;
@@ -49,9 +76,11 @@ export const logger = {
 
   /**
    * Erro com payload opcional. Aceita Error ou qualquer thing —
-   * extrai .message e .stack quando há. Se você está pensando
-   * "deveria ter um Sentry aqui" — sim. Mas é um change futuro
-   * de UMA linha, não 50.
+   * extrai .message e .stack quando há.
+   *
+   * Envia pro transport externo (Sentry/Datadog/etc.) quando
+   * `setErrorTransport()` foi chamado no boot. Sem transport,
+   * só `console.error` (visível em `docker logs`).
    */
   error(scope: string, err: unknown, ctx?: LogContext) {
     const message = err instanceof Error ? err.message : String(err);
@@ -60,6 +89,15 @@ export const logger = {
       ...(ctx ?? {}),
       ...(stack ? { stack } : {}),
     });
-    /* HOOK FUTURO: Sentry.captureException(err, { contexts: { ctx } }) */
+    /* Sentry/Datadog opcional — falha do transport NÃO derruba o
+     * caller (try/catch defensivo). */
+    if (externalTransport) {
+      try {
+        externalTransport(err, { scope, ...(ctx ?? {}) });
+      } catch {
+        /* Telemetria broken não pode quebrar o request. Engolimos
+         * silenciosamente — o console.error acima já registrou. */
+      }
+    }
   },
 };

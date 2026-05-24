@@ -13,7 +13,10 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "realtime:dev": "tsx watch src/server/realtime/server.ts",
-    "realtime:start": "tsx src/server/realtime/server.ts"
+    "realtime:start": "tsx src/server/realtime/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@types/canvas-confetti": "^1.9.0",
@@ -43,6 +46,8 @@
     "eslint": "^9",
     "eslint-config-next": "^15.1.0",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.0",
+    "@vitest/coverage-v8": "^2.1.0"
   }
 }
