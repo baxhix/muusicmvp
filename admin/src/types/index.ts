@@ -54,11 +54,6 @@ export interface User {
   verified?: boolean;
 }
 
-/* ── Posts (Feed) ─────────────────────────────────────────── */
-
-export type PostType = 'audio' | 'image' | 'video' | 'text';
-export type PostStatus = 'published' | 'draft' | 'review' | 'removed';
-
 /* ── Admin Feed CMS ───────────────────────────────────────────
  * Distinct from the legacy `Post` type above (which models the
  * mocked "all posts on the platform" surface). These shapes mirror
@@ -168,29 +163,6 @@ export interface SiteTag {
   } | null;
 }
 
-export interface Post {
-  id: ID;
-  authorId: ID;
-  author: Pick<User, 'id' | 'name' | 'handle' | 'avatar' | 'verified'>;
-  type: PostType;
-  status: PostStatus;
-  title?: string;
-  body: string;
-  mediaUrl?: string;
-  thumbnailUrl?: string;
-  tags: string[];
-  metrics: {
-    likes: number;
-    comments: number;
-    shares: number;
-    plays?: number;
-  };
-  pinned?: boolean;
-  reportedCount: number;
-  publishedAt: ISODate;
-  updatedAt: ISODate;
-}
-
 /* ── Moderation / Reports ─────────────────────────────────── */
 
 export type ReportReason =
@@ -204,7 +176,7 @@ export type ReportReason =
 
 export type ReportStatus = 'open' | 'review' | 'resolved' | 'dismissed' | 'escalated';
 
-export type ReportTarget =
+type ReportTarget =
   | { kind: 'post'; postId: ID }
   | { kind: 'user'; userId: ID }
   | { kind: 'message'; messageId: ID };
@@ -435,58 +407,6 @@ export interface TeamMember {
   lastActiveAt: ISODate;
   twoFactor: boolean;
   status: 'active' | 'invited';
-}
-
-/* ── Settings: Integrations ───────────────────────────────── */
-
-export type IntegrationCategory = 'music' | 'payments' | 'maps' | 'analytics' | 'comms';
-
-export interface Integration {
-  id: ID;
-  name: string;
-  description: string;
-  category: IntegrationCategory;
-  connected: boolean;
-  connectedAt?: ISODate;
-  scope?: string[];
-}
-
-/* ── Settings: API Keys ───────────────────────────────────── */
-
-export interface ApiKey {
-  id: ID;
-  label: string;
-  prefix: string;
-  createdAt: ISODate;
-  lastUsedAt?: ISODate;
-  scopes: string[];
-  createdBy: string;
-}
-
-/* ── Settings: Billing ────────────────────────────────────── */
-
-export type BillingPlanId = 'starter' | 'growth' | 'enterprise';
-
-export interface BillingPlan {
-  id: BillingPlanId;
-  name: string;
-  monthlyBRL: number;
-  seats: number;
-  seatsUsed: number;
-  nextChargeAt: ISODate;
-  paymentMethod: {
-    brand: string;
-    last4: string;
-    expiresAt: string;
-  };
-}
-
-export interface BillingInvoice {
-  id: ID;
-  number: string;
-  date: ISODate;
-  amount: number;
-  status: 'paid' | 'pending' | 'failed';
 }
 
 /* ── Settings: Workspace (Geral) ──────────────────────────── */

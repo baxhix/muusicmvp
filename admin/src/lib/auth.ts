@@ -68,11 +68,6 @@ export async function checkAdminAuth(): Promise<AuthCheckResult> {
   }
 }
 
-export const muusicAppUrl = (path = '/') => {
-  const base = API_BASE || '';
-  return `${base}${path}`;
-};
-
 /**
  * POST /api/auth/logout — destroys the session cookie on the muusic
  * backend. The cookie is scoped to `.muusic.live` so this drops auth

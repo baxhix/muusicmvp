@@ -20,10 +20,8 @@
    ============================================================ */
 
 import { MOCK_USERS } from '@/data/mock/users';
-import { MOCK_POSTS } from '@/data/mock/posts';
 import { MOCK_REPORTS } from '@/data/mock/reports';
 import { MOCK_SUPERFANS } from '@/data/mock/superfans';
-import { MOCK_ACTIVITY } from '@/data/mock/activity';
 import {
   MOCK_KPIS,
   MOCK_GROWTH,
@@ -33,13 +31,7 @@ import {
   REPORTS_BY_REASON,
 } from '@/data/mock/metrics';
 import { MOCK_TEAM } from '@/data/mock/team';
-import { MOCK_INTEGRATIONS } from '@/data/mock/integrations';
-import { MOCK_API_KEYS } from '@/data/mock/apiKeys';
-import {
-  MOCK_BILLING_PLAN,
-  MOCK_INVOICES,
-  MOCK_WORKSPACE,
-} from '@/data/mock/billing';
+import { MOCK_WORKSPACE } from '@/data/mock/billing';
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 type ApiCall<T> = (method: Method, path: string, body?: unknown) => Promise<T>;
@@ -62,27 +54,20 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * served by the backend.
  */
 const mockRoutes: Record<string, () => unknown> = {
-  // Real backend path — mocked here too so designers running the admin
-  // standalone (no APP_URL set) still see a populated table.
+  // Real backend path — mocked here também pra que designers rodando o
+  // admin standalone (sem APP_URL set) ainda vejam tabela populada.
   'GET /api/admin/users': () => MOCK_USERS,
   'GET /users':       () => MOCK_USERS,
-  'GET /posts':       () => MOCK_POSTS,
   'GET /reports':     () => MOCK_REPORTS,
   'GET /superfans':   () => MOCK_SUPERFANS,
-  'GET /activity':    () => MOCK_ACTIVITY,
-  'GET /metrics/kpis':         () => MOCK_KPIS,
-  'GET /metrics/growth':       () => MOCK_GROWTH,
-  'GET /metrics/revenue':      () => MOCK_REVENUE,
-  'GET /metrics/posts-by-type': () => POSTS_BY_TYPE,
+  'GET /metrics/kpis':              () => MOCK_KPIS,
+  'GET /metrics/growth':            () => MOCK_GROWTH,
+  'GET /metrics/revenue':           () => MOCK_REVENUE,
+  'GET /metrics/posts-by-type':     () => POSTS_BY_TYPE,
   'GET /metrics/plan-distribution': () => PLAN_DISTRIBUTION,
   'GET /metrics/reports-by-reason': () => REPORTS_BY_REASON,
-
-  'GET /settings/team':         () => MOCK_TEAM,
-  'GET /settings/integrations': () => MOCK_INTEGRATIONS,
-  'GET /settings/api-keys':     () => MOCK_API_KEYS,
-  'GET /settings/billing/plan': () => MOCK_BILLING_PLAN,
-  'GET /settings/billing/invoices': () => MOCK_INVOICES,
-  'GET /settings/workspace':    () => MOCK_WORKSPACE,
+  'GET /settings/team':             () => MOCK_TEAM,
+  'GET /settings/workspace':        () => MOCK_WORKSPACE,
 };
 
 const mockCall: ApiCall<unknown> = async (method, path) => {

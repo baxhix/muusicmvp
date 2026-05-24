@@ -1,10 +1,5 @@
 import { api } from './api';
-import type { BillingInvoice, BillingPlan, WorkspaceSettings } from '@/types';
-
-export const billingService = {
-  plan:      () => api.get<BillingPlan>('/settings/billing/plan'),
-  invoices:  () => api.get<BillingInvoice[]>('/settings/billing/invoices'),
-};
+import type { WorkspaceSettings } from '@/types';
 
 export const workspaceService = {
   get:    () => api.get<WorkspaceSettings>('/settings/workspace'),

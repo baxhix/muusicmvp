@@ -80,17 +80,6 @@ export interface BlogTag {
 
 export type BlogPostStatus = 'draft' | 'scheduled' | 'published' | 'archived';
 
-export interface BlogPostMedia {
-  /** "cover" pra imagem destaque ou imagens inline; "video" pra
-   *  vídeos embarcados (YouTube/Vimeo URL ou MP4 hospedado). */
-  type: 'image' | 'video';
-  url: string;
-  /** Alt text obrigatório em imagens — quem subir sem alt deve ser
-   *  bloqueado pelo form (acessibilidade + SEO pesam aqui). */
-  alt?: string;
-  caption?: string;
-}
-
 export interface BlogPostSEO {
   /** Título usado em <title> + og:title. Cai pro `title` do post
    *  se vazio (pré-preenchido pelo form, sobrescrivível). */
