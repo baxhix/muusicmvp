@@ -5,7 +5,7 @@ import { users, tokens } from '@/server/db/schema';
 import { generateToken, generateCode, MAGIC_TTL_MS } from '@/server/auth/tokens';
 import { sendMagicLink } from '@/server/email/magicLink';
 import { env } from '@/server/env';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { limitByIp, limitByKey, magicLinkLimiter } from '@/server/rateLimit';
 import { TokenBucket } from '@/server/realtime/rateLimit';
 import { logger } from '@/server/log';
@@ -81,20 +81,40 @@ export async function POST(req: Request) {
   // `avatarUrl` is left at the schema's NULL default — every
   // consumer falls back to `/avatar-placeholder.svg`, no random
   // mock photos are pulled in.
-  const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
   const defaultName = email.split('@')[0];
-  const user =
-    existing[0] ??
-    (await db.insert(users).values({ email, name: defaultName }).returning())[0];
-
   const { raw, hash } = generateToken();
   const code = generateCode(); // 6-digit OTP fallback
-  await db.insert(tokens).values({
-    tokenHash: hash,
-    userId: user.id,
-    kind: 'magic',
-    code,
-    expiresAt: new Date(Date.now() + MAGIC_TTL_MS),
+
+  // Atômico: upsert user + cria magic token na MESMA transação.
+  // Sem isso, falha entre INSERT users e INSERT tokens deixava
+  // user fantasma sem token (próxima request criava token novo, mas
+  // já tinha gravado o user inutilmente). Agora ou ambos comitam,
+  // ou nenhum. Email é enviado FORA da transação (não dá pra
+  // rollback de I/O HTTP — se o token comitar e o email falhar,
+  // o token órfão expira em 15min naturalmente).
+  const user = await db.transaction(async (tx) => {
+    // Filtra soft-deleted: usuário que pediu exclusão LGPD não
+    // recebe magic link mesmo digitando o mesmo email. Se quiser
+    // voltar, vai precisar do hard-delete final (cron job dropa
+    // a row após o período de retenção) e cadastrar de novo —
+    // no banco, vira conta nova.
+    const existing = await tx
+      .select()
+      .from(users)
+      .where(and(eq(users.email, email), isNull(users.deletedAt)))
+      .limit(1);
+    const u =
+      existing[0] ??
+      (await tx.insert(users).values({ email, name: defaultName }).returning())[0];
+
+    await tx.insert(tokens).values({
+      tokenHash: hash,
+      userId: u.id,
+      kind: 'magic',
+      code,
+      expiresAt: new Date(Date.now() + MAGIC_TTL_MS),
+    });
+    return u;
   });
 
   /**

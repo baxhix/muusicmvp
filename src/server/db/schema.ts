@@ -53,7 +53,27 @@ export const users = pgTable('users', {
   interests: text('interests').array(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
-});
+  /**
+   * Soft delete — quando o usuário pede exclusão (LGPD art. 18),
+   * marcamos `deletedAt` em vez de DELETE direto. Mantemos a row
+   * por retenção legal (30-90 dias dependendo da reivindicação),
+   * com PII anonimizada antes do hard delete final (cron job
+   * futuro).
+   *
+   * Comportamento esperado:
+   *   - getCurrentUser() filtra deletedAt IS NULL — soft-deleted
+   *     não consegue logar.
+   *   - Magic link request pra email soft-deleted é tratado como
+   *     conta nova (cria outro user com mesmo email — único após
+   *     anonimização final).
+   *   - Listings (admin, autorias de posts, etc.) ainda mostram
+   *     a row mas com badge "Usuário removido". Aplicar filtro
+   *     nessas queries é próxima rodada.
+   */
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (t) => [
+  index('users_deleted_at_idx').on(t.deletedAt),
+]);
 
 /**
  * Stores both magic-link tokens and session tokens. Distinguished by `kind`.

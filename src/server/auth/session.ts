@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '../db';
 import { tokens, users, type User } from '../db/schema';
 import { env } from '../env';
@@ -84,7 +84,11 @@ export async function consumeMagicAndCreateSession(
   void recordActivity(userId, 'login');
 }
 
-/** Read the session cookie and return the current user, or null. */
+/** Read the session cookie and return the current user, or null.
+ *  Filtra usuários soft-deleted (`deletedAt IS NULL`) — quem
+ *  pediu exclusão LGPD não consegue mais autenticar mesmo
+ *  segurando um cookie de sessão válido. Defesa-em-profundidade
+ *  além do destroySessionsForUser que roda no soft-delete. */
 export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE)?.value;
@@ -100,6 +104,7 @@ export async function getCurrentUser(): Promise<User | null> {
         eq(tokens.tokenHash, hash),
         eq(tokens.kind, 'session'),
         gt(tokens.expiresAt, new Date()),
+        isNull(users.deletedAt),
       ),
     )
     .limit(1);
