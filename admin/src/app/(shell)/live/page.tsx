@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
@@ -19,12 +19,12 @@ import {
   IconVideo,
 } from '@/components/icons';
 import {
-  loadLiveEvents,
-  STATUS_LABEL,
-  AUDIENCE_LABEL,
+  liveService,
+  LIVE_STATUS_LABEL as STATUS_LABEL,
+  LIVE_AUDIENCE_LABEL as AUDIENCE_LABEL,
   type LiveEvent,
   type LiveStatus,
-} from '@/data/mock/live';
+} from '@/services/live';
 import { formatNumber, formatRelative } from '@/lib/format';
 import styles from './page.module.css';
 
@@ -65,9 +65,16 @@ function formatLiveDateTime(iso: string): string {
 }
 
 export default function LivePage() {
-  const [rows] = useState<LiveEvent[]>(() => loadLiveEvents());
+  const [rows, setRows] = useState<LiveEvent[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<LiveStatus | 'all'>('all');
+
+  useEffect(() => {
+    liveService.list().then(setRows).catch((err) => {
+      console.error('liveService.list failed:', err);
+      setRows([]);
+    });
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

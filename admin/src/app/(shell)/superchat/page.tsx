@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
@@ -15,12 +15,12 @@ import {
   IconShield,
 } from '@/components/icons';
 import {
-  loadSuperchatRooms,
+  superchatService,
   SUPERCHAT_STATUS_LABEL,
   SUPERCHAT_KIND_LABEL,
   type SuperchatRoom,
   type SuperchatRoomStatus,
-} from '@/data/mock/superchat';
+} from '@/services/superchat';
 import { formatNumber, formatRelative } from '@/lib/format';
 import styles from './page.module.css';
 
@@ -51,7 +51,13 @@ const STATUS_OPTIONS = [
 ];
 
 export default function SuperchatPage() {
-  const [rows] = useState<SuperchatRoom[]>(() => loadSuperchatRooms());
+  const [rows, setRows] = useState<SuperchatRoom[]>([]);
+  useEffect(() => {
+    superchatService.list().then(setRows).catch((err) => {
+      console.error('superchatService.list failed:', err);
+      setRows([]);
+    });
+  }, []);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<SuperchatRoomStatus | 'all'>('all');
 

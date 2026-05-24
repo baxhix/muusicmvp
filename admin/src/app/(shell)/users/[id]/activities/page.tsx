@@ -31,7 +31,7 @@ import { MOCK_USERS } from '@/data/mock/users';
 import {
   generateUserActivities,
   summarizeActivities,
-} from '@/data/mock/userActivities';
+} from '@/services/userActivities';
 import { usersService } from '@/services/users';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';

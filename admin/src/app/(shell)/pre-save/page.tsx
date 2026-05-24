@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
@@ -17,12 +17,12 @@ import {
   IconHeart,
 } from '@/components/icons';
 import {
-  loadPreSaveCampaigns,
-  PLATFORM_LABEL,
-  STATUS_LABEL,
+  preSaveService,
+  PRE_SAVE_PLATFORM_LABEL as PLATFORM_LABEL,
+  PRE_SAVE_STATUS_LABEL as STATUS_LABEL,
   type PreSaveCampaign,
   type PreSaveStatus,
-} from '@/data/mock/preSave';
+} from '@/services/preSave';
 import { formatDate, formatNumber, formatRelative } from '@/lib/format';
 import styles from './page.module.css';
 
@@ -51,7 +51,13 @@ const STATUS_OPTIONS = [
 ];
 
 export default function PreSavePage() {
-  const [rows] = useState<PreSaveCampaign[]>(() => loadPreSaveCampaigns());
+  const [rows, setRows] = useState<PreSaveCampaign[]>([]);
+  useEffect(() => {
+    preSaveService.list().then(setRows).catch((err) => {
+      console.error('preSaveService.list failed:', err);
+      setRows([]);
+    });
+  }, []);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<PreSaveStatus | 'all'>('all');
 

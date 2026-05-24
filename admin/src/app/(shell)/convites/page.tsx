@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
@@ -22,10 +22,10 @@ import {
   IconTrash,
 } from '@/components/icons';
 import {
-  buildMockInviteCodes,
+  invitesService,
   formatInviteCode,
   summarizeInvites,
-} from '@/data/mock/invites';
+} from '@/services/invites';
 import { formatDateTime, formatPercent, formatRelative } from '@/lib/format';
 import type { InviteCode, InviteStatus } from '@/types';
 import styles from './page.module.css';
@@ -80,7 +80,13 @@ export default function ConvitesPage() {
   // Initial dataset is deterministic from the mock generator. New
   // codes minted via the "Gerar" button are prepended client-side
   // — they live only in component state until refresh.
-  const [rows, setRows] = useState<InviteCode[]>(() => buildMockInviteCodes());
+  const [rows, setRows] = useState<InviteCode[]>([]);
+  useEffect(() => {
+    invitesService.list().then(setRows).catch((err) => {
+      console.error('invitesService.list failed:', err);
+      setRows([]);
+    });
+  }, []);
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<InviteStatus | 'all'>('all');
