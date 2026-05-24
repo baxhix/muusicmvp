@@ -9,12 +9,40 @@ import {
   users,
 } from '../db/schema';
 import { env } from '../env';
+import { logger } from '../log';
 
 const ONLINE_WINDOW_MS = 60_000;
+
+/** Detecta se a coluna `users.deleted_at` existe — cacheado pra
+ *  evitar query repetida. Em DBs onde a migration 0025 ainda não
+ *  rodou, retornamos `false` e as KPIs caem pra contagem total. */
+let hasDeletedAtCache: boolean | null = null;
+async function usersHasDeletedAt(): Promise<boolean> {
+  if (hasDeletedAtCache !== null) return hasDeletedAtCache;
+  try {
+    const rows = await db.execute(
+      sql`SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'deleted_at' LIMIT 1`,
+    );
+    // pg driver retorna { rows: [...] }; drizzle execute às vezes
+    // só o array. Cobre ambos.
+    const arr = (rows as { rows?: unknown[] }).rows ?? (rows as unknown as unknown[]);
+    hasDeletedAtCache = Array.isArray(arr) && arr.length > 0;
+  } catch {
+    hasDeletedAtCache = false;
+  }
+  if (!hasDeletedAtCache) {
+    logger.warn('admin.queries.deleted_at_missing', {
+      hint: 'rode a migration 0025_users_soft_delete no DB',
+    });
+  }
+  return hasDeletedAtCache;
+}
 
 /** High-level KPIs for the admin dashboard. */
 export async function getAdminKpis() {
   const since = new Date(Date.now() - ONLINE_WINDOW_MS);
+  const hasDeletedAt = await usersHasDeletedAt();
 
   const [
     [{ value: totalUsers }],
@@ -26,12 +54,17 @@ export async function getAdminKpis() {
     [{ value: unreadNotifications }],
   ] = await Promise.all([
     // LGPD: KPIs ignoram soft-deleted (não inflam contagem
-    // depois do usuário pedir exclusão).
-    db.select({ value: count() }).from(users).where(sql`${users.deletedAt} IS NULL`),
-    db
-      .select({ value: count() })
-      .from(users)
-      .where(and(gt(users.lastSeenAt, since), sql`${users.deletedAt} IS NULL`)),
+    // depois do usuário pedir exclusão). Fallback p/ contagem
+    // total se a coluna ainda não existir.
+    hasDeletedAt
+      ? db.select({ value: count() }).from(users).where(sql`${users.deletedAt} IS NULL`)
+      : db.select({ value: count() }).from(users),
+    hasDeletedAt
+      ? db
+          .select({ value: count() })
+          .from(users)
+          .where(and(gt(users.lastSeenAt, since), sql`${users.deletedAt} IS NULL`))
+      : db.select({ value: count() }).from(users).where(gt(users.lastSeenAt, since)),
     db.select({ value: count() }).from(messages),
     db.select({ value: count() }).from(tracks),
     db.select({ value: count() }).from(listeningHistory),

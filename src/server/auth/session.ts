@@ -3,6 +3,7 @@ import { and, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '../db';
 import { tokens, users, type User } from '../db/schema';
 import { env } from '../env';
+import { logger } from '../log';
 import { hashToken, SESSION_TTL_MS, generateToken } from './tokens';
 import { recordActivity } from '../activities/queries';
 
@@ -88,28 +89,59 @@ export async function consumeMagicAndCreateSession(
  *  Filtra usuários soft-deleted (`deletedAt IS NULL`) — quem
  *  pediu exclusão LGPD não consegue mais autenticar mesmo
  *  segurando um cookie de sessão válido. Defesa-em-profundidade
- *  além do destroySessionsForUser que roda no soft-delete. */
+ *  além do destroySessionsForUser que roda no soft-delete.
+ *
+ *  Resiliência: se a coluna `deleted_at` ainda não existe no DB
+ *  (deploy onde a migration 0025 não rodou), cai pra query sem o
+ *  filtro. Loga warning pra alertar — o cron LGPD ainda não está
+ *  ativo em ambientes assim, então o risco efetivo é zero. */
 export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const raw = cookieStore.get(SESSION_COOKIE)?.value;
   if (!raw) return null;
 
   const hash = hashToken(raw);
-  const rows = await db
-    .select({ user: users })
-    .from(tokens)
-    .innerJoin(users, eq(users.id, tokens.userId))
-    .where(
-      and(
-        eq(tokens.tokenHash, hash),
-        eq(tokens.kind, 'session'),
-        gt(tokens.expiresAt, new Date()),
-        isNull(users.deletedAt),
-      ),
-    )
-    .limit(1);
-
-  return rows[0]?.user ?? null;
+  try {
+    const rows = await db
+      .select({ user: users })
+      .from(tokens)
+      .innerJoin(users, eq(users.id, tokens.userId))
+      .where(
+        and(
+          eq(tokens.tokenHash, hash),
+          eq(tokens.kind, 'session'),
+          gt(tokens.expiresAt, new Date()),
+          isNull(users.deletedAt),
+        ),
+      )
+      .limit(1);
+    return rows[0]?.user ?? null;
+  } catch (err) {
+    // Postgres erro 42703 = "undefined_column". Acontece se a
+    // migration 0025_users_soft_delete não foi aplicada no DB
+    // (timestamp do journal estava bagunçado em deploys antigos).
+    // Fallback sem o filtro pra não deixar o usuário fora do app.
+    const code = (err as { code?: string })?.code;
+    if (code === '42703') {
+      logger.warn('auth.session.deleted_at_missing', {
+        hint: 'rode a migration 0025_users_soft_delete no DB',
+      });
+      const rows = await db
+        .select({ user: users })
+        .from(tokens)
+        .innerJoin(users, eq(users.id, tokens.userId))
+        .where(
+          and(
+            eq(tokens.tokenHash, hash),
+            eq(tokens.kind, 'session'),
+            gt(tokens.expiresAt, new Date()),
+          ),
+        )
+        .limit(1);
+      return rows[0]?.user ?? null;
+    }
+    throw err;
+  }
 }
 
 /** Delete the cookie and the corresponding token row. */
