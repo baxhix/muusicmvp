@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardHeader } from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
@@ -138,13 +138,20 @@ export default function UsersPage() {
     };
   }, [users]);
 
-  /* ── Filtered list ────────────────────────────────────── */
+  /* ── Filtered list ──────────────────────────────────────
+   *
+   * useDeferredValue desacopla a digitação dos filtros do recálculo
+   * pesado do filter — o input fica snappy enquanto a tabela
+   * atualiza de forma async. Crítico em bases com milhares de
+   * usuários. Sem isto, cada keystroke ia rodar o filter loop
+   * inteiro + re-render da Table como prioridade alta. */
+  const deferredFilters = useDeferredValue(filters);
   const filtered = useMemo(() => {
     if (!users) return [];
-    const name = filters.name.trim().toLowerCase();
-    const location = filters.location.trim().toLowerCase();
-    const song = filters.streamSong.trim().toLowerCase();
-    const targetDate = parseInputDate(filters.streamDate);
+    const name = deferredFilters.name.trim().toLowerCase();
+    const location = deferredFilters.location.trim().toLowerCase();
+    const song = deferredFilters.streamSong.trim().toLowerCase();
+    const targetDate = parseInputDate(deferredFilters.streamDate);
 
     return users.filter((u) => {
       if (name && !u.name.toLowerCase().includes(name) && !u.email.toLowerCase().includes(name)) return false;
@@ -152,8 +159,8 @@ export default function UsersPage() {
         const hay = `${u.city} ${u.state} ${u.city.toLowerCase()}-${u.state.toLowerCase()}`.toLowerCase();
         if (!hay.includes(location)) return false;
       }
-      if (filters.age && !ageInRange(u.age, filters.age)) return false;
-      if (filters.sex && u.sex !== filters.sex) return false;
+      if (deferredFilters.age && !ageInRange(u.age, deferredFilters.age)) return false;
+      if (deferredFilters.sex && u.sex !== deferredFilters.sex) return false;
       if (targetDate) {
         if (!u.lastStream || formatStreamDate(u.lastStream.playedAt) !== targetDate) return false;
       }
@@ -162,7 +169,7 @@ export default function UsersPage() {
       }
       return true;
     });
-  }, [users, filters]);
+  }, [users, deferredFilters]);
 
   /* ── Actions ──────────────────────────────────────────── */
   function handleBan(user: User) {
@@ -195,8 +202,14 @@ export default function UsersPage() {
     setDrawerOpen(true);
   }
 
-  /* ── Table columns ────────────────────────────────────── */
-  const columns: Column<User>[] = [
+  /* ── Table columns ──────────────────────────────────────
+   *
+   * useMemo([]) porque a definição é estática — as cell functions
+   * só fecham sobre handleBan/handleBlock, que por sua vez chamam
+   * setPendingAction (referência estável do useState setter). Sem
+   * o memo, cada keystroke do filtro recria todas as cell functions,
+   * forçando a Table a remontar todas as células. */
+  const columns: Column<User>[] = useMemo(() => [
     {
       id: 'user',
       header: 'Usuário',
@@ -328,7 +341,7 @@ export default function UsersPage() {
         </div>
       ),
     },
-  ];
+  ], []);
 
   return (
     <>

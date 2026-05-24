@@ -254,8 +254,11 @@ export default function ModerationPage() {
     setDrawerOpen(true);
   }
 
-  /* ── Table columns ──────────────────────── */
-  const columns: Column<Report>[] = [
+  /* ── Table columns ────────────────────────
+   *  useMemo([]) — definições estáticas. Sem o memo cada keystroke
+   *  dos filtros (reason/priority/targetKind) recriava todas as
+   *  cells e remontava as linhas da Table. */
+  const columns: Column<Report>[] = useMemo(() => [
     {
       id: 'reporter',
       header: 'Denunciante',
@@ -367,7 +370,7 @@ export default function ModerationPage() {
         );
       },
     },
-  ];
+  ], []);
 
   /* ── Pending action labels ────────────────── */
   const pendingLabels = pending

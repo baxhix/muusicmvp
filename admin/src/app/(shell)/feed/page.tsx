@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Switch from '@/components/ui/Switch';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import Table, { type Column } from '@/components/ui/Table';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import EmptyState from '@/components/ui/EmptyState';
@@ -133,12 +134,18 @@ export default function AdminFeedPage() {
   // feedback "Inclua um ícone na lista de análise de dados".
   const [insightsPost, setInsightsPost] = useState<FeedItem | null>(null);
 
+  /* Debounce só do search — status/type são selects, atualizam
+   * imediatamente; search é texto digitado e antes disparava
+   * refetch a cada keystroke. 300ms é o sweet spot pra parecer
+   * instantâneo sem spam de network. */
+  const debouncedSearch = useDebouncedValue(filters.search, 300);
+
   const refetch = useCallback(async () => {
     try {
       const res = await feedService.list({
         status: filters.status,
         type: filters.type,
-        search: filters.search.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
         limit: 200,
       });
       setItems(res.items);
@@ -151,7 +158,9 @@ export default function AdminFeedPage() {
         description: 'Tente recarregar a página em instantes.',
       });
     }
-  }, [filters, push]);
+    // filters.search é intencionalmente omitido — debouncedSearch
+    // é o gate que dispara o refetch.
+  }, [filters.status, filters.type, debouncedSearch, push]);
 
   useEffect(() => {
     refetch();

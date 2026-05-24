@@ -117,8 +117,10 @@ export default function SuperfansPage() {
     });
   }
 
-  /* ── Columns ──────────────────────────────── */
-  const columns: Column<Superfan>[] = [
+  /* ── Columns ────────────────────────────────
+   *  useMemo([]) — definições estáticas; sem memo cada keystroke
+   *  do filtro recriava todas as cells (cf. users/moderation). */
+  const columns: Column<Superfan>[] = useMemo(() => [
     {
       id: 'rank',
       header: '#',
@@ -208,7 +210,7 @@ export default function SuperfansPage() {
       cell: (s) => <span className={styles.cellMute}>{s.daysActive} d</span>,
       width: 100,
     },
-  ];
+  ], []);
 
   return (
     <>

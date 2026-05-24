@@ -44,6 +44,7 @@ import {
 } from '@/lib/materiais';
 import Badge from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { formatNumber, formatRelative } from '@/lib/format';
 import { formatBytes, validateFile } from './shared';
 import { NewFolderDialog, RenameDialog, FolderPermissionsDialog } from './dialogs';
@@ -209,15 +210,19 @@ export default function MateriaisPage() {
     () => pathOf(nodes, currentFolderId),
     [nodes, currentFolderId],
   );
+  /* Debounce do search pra que cada keystroke não dispare
+   * recálculo do filter + re-render dos cards/lista. Pasta com
+   * 100+ itens é onde isto mais aparece. */
+  const debouncedSearch = useDebouncedValue(search, 200);
   const currentChildren = useMemo(() => {
     const all = childrenOf(nodes, currentFolderId);
-    const q = search.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     if (!q) return all;
     return all.filter((n) => {
       const hay = `${n.name} ${n.type === 'file' ? n.description : (n as MaterialFolder).description ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [nodes, currentFolderId, search]);
+  }, [nodes, currentFolderId, debouncedSearch]);
 
   /* Split em folders/files num único pass — memoizado pra que
    * filtros/seleção/dialogs não disparem reconstrução. */
