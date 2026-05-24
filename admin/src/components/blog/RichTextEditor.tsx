@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Dialog from '@/components/ui/Dialog';
 import Input from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
 import { IconImage, IconLink, IconVideo } from '@/components/icons';
 import BlogImageUploader from './BlogImageUploader';
 import styles from './RichTextEditor.module.css';
@@ -83,6 +84,21 @@ export default function RichTextEditor({
     alt: string;
   }>({ open: false, url: '', alt: '' });
 
+  // Dialogs pra link/vídeo — substituem window.prompt nativo
+  // pra manter consistência visual com o resto do admin e não
+  // bloquear o thread principal. Preservam a Range igual ao
+  // imageDialog.
+  const [linkDialog, setLinkDialog] = useState<{
+    open: boolean;
+    url: string;
+  }>({ open: false, url: '' });
+  const [videoDialog, setVideoDialog] = useState<{
+    open: boolean;
+    url: string;
+  }>({ open: false, url: '' });
+
+  const { push: pushToast } = useToast();
+
   // Sincroniza o `value` externo com o conteúdo do contentEditable
   // SEM perder a posição do cursor. Só sobrescreve quando a
   // diferença sair do controle (ex.: form reset). */
@@ -119,26 +135,46 @@ export default function RichTextEditor({
   }
 
   function insertLink() {
-    const url = window.prompt(
-      'URL do link (com https://):',
-      'https://',
-    );
-    if (!url) return;
-    const trimmed = url.trim();
+    // Salva a Range atual ANTES de abrir o dialog (o dialog
+    // muda o foco e perderíamos a seleção). Mesmo padrão do
+    // openImageDialog.
+    const sel = window.getSelection();
+    savedRangeRef.current =
+      sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+    setLinkDialog({ open: true, url: 'https://' });
+  }
+
+  function confirmLinkDialog() {
+    const trimmed = linkDialog.url.trim();
+    if (!trimmed) return;
     if (!/^https?:\/\//i.test(trimmed)) {
-      window.alert('Use uma URL completa começando com http:// ou https://');
+      pushToast({
+        type: 'warning',
+        title: 'URL inválida',
+        description: 'Use uma URL completa começando com http:// ou https://',
+      });
       return;
     }
-    exec('createLink', trimmed);
+    // Restaura a Range salva antes do execCommand.
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (sel && savedRangeRef.current) {
+      sel.removeAllRanges();
+      sel.addRange(savedRangeRef.current);
+    }
+    document.execCommand('createLink', false, trimmed);
     // Aplica target="_blank" + rel="noopener" no link recém
     // criado pra não levar o leitor pra fora do site sem
-    // proteção CSRF. */
-    const sel = window.getSelection();
-    const anchor = sel?.anchorNode?.parentElement?.closest('a');
+    // proteção CSRF.
+    const sel2 = window.getSelection();
+    const anchor = sel2?.anchorNode?.parentElement?.closest('a');
     if (anchor) {
       anchor.setAttribute('target', '_blank');
       anchor.setAttribute('rel', 'noopener noreferrer');
     }
+    setLinkDialog({ open: false, url: '' });
+    savedRangeRef.current = null;
+    refreshToolbar();
     handleInput();
   }
 
@@ -173,24 +209,40 @@ export default function RichTextEditor({
   }
 
   function insertVideo() {
-    const url = window.prompt(
-      'URL do vídeo (YouTube, Vimeo, ou link direto MP4):',
-      'https://',
-    );
-    if (!url) return;
-    const trimmed = url.trim();
+    const sel = window.getSelection();
+    savedRangeRef.current =
+      sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+    setVideoDialog({ open: true, url: 'https://' });
+  }
+
+  function confirmVideoDialog() {
+    const trimmed = videoDialog.url.trim();
+    if (!trimmed) return;
     const embedSrc = toEmbedSrc(trimmed);
     if (!embedSrc) {
-      window.alert(
-        'Não consegui reconhecer essa URL. Use um link de YouTube/Vimeo válido ou um arquivo .mp4 direto.',
-      );
+      pushToast({
+        type: 'warning',
+        title: 'URL não reconhecida',
+        description:
+          'Use um link de YouTube/Vimeo válido ou um arquivo .mp4 direto.',
+      });
       return;
+    }
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (sel && savedRangeRef.current) {
+      sel.removeAllRanges();
+      sel.addRange(savedRangeRef.current);
     }
     const html =
       embedSrc.type === 'iframe'
         ? `<figure class="video-embed"><iframe src="${escapeAttr(embedSrc.url)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></figure>`
         : `<figure class="video-embed"><video src="${escapeAttr(embedSrc.url)}" controls></video></figure>`;
-    exec('insertHTML', html);
+    document.execCommand('insertHTML', false, html);
+    setVideoDialog({ open: false, url: '' });
+    savedRangeRef.current = null;
+    refreshToolbar();
+    handleInput();
   }
 
   function insertHr() {
@@ -443,6 +495,100 @@ export default function RichTextEditor({
             }
           />
         </div>
+      </Dialog>
+
+      {/* Dialog de link — substitui o window.prompt + window.alert
+       *  anteriores. Submit no Enter pra digitação rápida. */}
+      <Dialog
+        open={linkDialog.open}
+        onClose={() => setLinkDialog({ open: false, url: '' })}
+        title="Inserir link"
+        description="Cole a URL pra qual o texto selecionado deve apontar."
+        size="md"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLinkDialog({ open: false, url: '' })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!linkDialog.url.trim()}
+              onClick={confirmLinkDialog}
+            >
+              Inserir
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="URL"
+          required
+          autoFocus
+          value={linkDialog.url}
+          placeholder="https://"
+          helperText="Use https:// pra abrir em nova aba com rel=noopener."
+          onChange={(e) =>
+            setLinkDialog((prev) => ({ ...prev, url: e.target.value }))
+          }
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              confirmLinkDialog();
+            }
+          }}
+        />
+      </Dialog>
+
+      {/* Dialog de vídeo — YouTube / Vimeo / MP4 direto. Mesma UX
+       *  do link, com helper específico pros formatos aceitos. */}
+      <Dialog
+        open={videoDialog.open}
+        onClose={() => setVideoDialog({ open: false, url: '' })}
+        title="Inserir vídeo"
+        description="Cole o link de YouTube, Vimeo, ou um arquivo .mp4 direto."
+        size="md"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVideoDialog({ open: false, url: '' })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!videoDialog.url.trim()}
+              onClick={confirmVideoDialog}
+            >
+              Inserir
+            </Button>
+          </>
+        }
+      >
+        <Input
+          label="URL do vídeo"
+          required
+          autoFocus
+          value={videoDialog.url}
+          placeholder="https://youtube.com/watch?v=..."
+          helperText="Aceita YouTube, Vimeo, ou .mp4 direto."
+          onChange={(e) =>
+            setVideoDialog((prev) => ({ ...prev, url: e.target.value }))
+          }
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              confirmVideoDialog();
+            }
+          }}
+        />
       </Dialog>
     </div>
   );

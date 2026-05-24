@@ -13,6 +13,7 @@ import {
   IconCalendar,
   IconMusic,
   IconEye,
+  IconTrash,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
@@ -32,6 +33,7 @@ export interface UserDetailDrawerProps {
   onClose: () => void;
   onBan: (user: User) => void;
   onBlock: (user: User) => void;
+  onDelete?: (user: User) => void;
 }
 
 export default function UserDetailDrawer({
@@ -40,6 +42,7 @@ export default function UserDetailDrawer({
   onClose,
   onBan,
   onBlock,
+  onDelete,
 }: UserDetailDrawerProps) {
   const router = useRouter();
 
@@ -146,6 +149,16 @@ export default function UserDetailDrawer({
           >
             Banir usuário
           </Button>
+          {onDelete && (
+            <Button
+              variant="dangerGhost"
+              size="md"
+              leadingIcon={<IconTrash size={14} />}
+              onClick={() => onDelete(user)}
+            >
+              Excluir conta
+            </Button>
+          )}
         </div>
       </div>
 

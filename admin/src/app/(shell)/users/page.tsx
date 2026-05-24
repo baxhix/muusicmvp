@@ -21,6 +21,7 @@ import {
   IconBan,
   IconDownload,
   IconCalendar,
+  IconTrash,
 } from '@/components/icons';
 import { formatNumber, formatPercent } from '@/lib/format';
 import { usersService } from '@/services/users';
@@ -101,9 +102,10 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<
-    | { kind: 'ban' | 'block'; user: User }
+    | { kind: 'ban' | 'block' | 'delete'; user: User }
     | null
   >(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const { push } = useToast();
 
   useEffect(() => {
@@ -178,9 +180,54 @@ export default function UsersPage() {
   function handleBlock(user: User) {
     setPendingAction({ kind: 'block', user });
   }
-  function confirmAction() {
+  function handleDelete(user: User) {
+    setPendingAction({ kind: 'delete', user });
+  }
+  async function confirmAction() {
     if (!pendingAction || !users) return;
     const { kind, user } = pendingAction;
+
+    // Delete vai pro backend real (LGPD: soft-delete + revoga sessões).
+    // Ban/block ainda são side-effects locais — não tem backend pra eles.
+    if (kind === 'delete') {
+      setActionLoading(true);
+      try {
+        await usersService.remove(user.id);
+        // Remove da listagem local sem re-fetch (server já filtra deletedAt).
+        setUsers(users.filter((u) => u.id !== user.id));
+        // Fecha drawer se estava aberto pro user deletado.
+        if (selectedUser?.id === user.id) {
+          setDrawerOpen(false);
+          setSelectedUser(null);
+        }
+        push({
+          type: 'success',
+          title: `${user.name} foi removido`,
+          description:
+            'Conta marcada como excluída e sessões revogadas. ' +
+            'Os dados são anonimizados após o período de retenção.',
+        });
+        setPendingAction(null);
+      } catch (err) {
+        // 400 cannot_delete_self vem com mensagem específica
+        const msg = (err as { message?: string })?.message ?? '';
+        const isSelf = msg.includes('cannot_delete_self');
+        push({
+          type: 'error',
+          title: isSelf
+            ? 'Você não pode excluir a si mesmo'
+            : 'Não foi possível excluir',
+          description: isSelf
+            ? 'Peça pra outro admin executar essa ação.'
+            : 'Tente novamente. Se persistir, verifique o log do servidor.',
+        });
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
+    // Ban / block — comportamento legacy local.
     const newStatus = kind === 'ban' ? 'banned' : 'suspended';
     setUsers(users.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u)));
     if (selectedUser?.id === user.id) {
@@ -338,6 +385,16 @@ export default function UsersPage() {
           >
             <IconBan size={14} />
           </Button>
+          <Button
+            variant="dangerGhost"
+            size="sm"
+            iconOnly
+            aria-label={`Excluir ${u.name}`}
+            title="Excluir conta"
+            onClick={() => handleDelete(u)}
+          >
+            <IconTrash size={14} />
+          </Button>
         </div>
       ),
     },
@@ -448,28 +505,42 @@ export default function UsersPage() {
         onClose={() => setDrawerOpen(false)}
         onBan={handleBan}
         onBlock={handleBlock}
+        onDelete={handleDelete}
       />
 
       <ConfirmDialog
         open={pendingAction !== null}
-        onClose={() => setPendingAction(null)}
+        onClose={() => (actionLoading ? undefined : setPendingAction(null))}
         onConfirm={confirmAction}
-        destructive={pendingAction?.kind === 'ban'}
+        loading={actionLoading}
+        destructive={
+          pendingAction?.kind === 'ban' || pendingAction?.kind === 'delete'
+        }
         title={
           pendingAction?.kind === 'ban'
             ? `Banir ${pendingAction.user.name}?`
             : pendingAction?.kind === 'block'
               ? `Bloquear ${pendingAction.user.name}?`
-              : ''
+              : pendingAction?.kind === 'delete'
+                ? `Excluir ${pendingAction.user.name}?`
+                : ''
         }
         description={
           pendingAction?.kind === 'ban'
             ? 'A conta perde acesso permanente à plataforma. Essa ação pode ser revertida só por um admin senior.'
             : pendingAction?.kind === 'block'
               ? 'O acesso é suspenso temporariamente. Você pode reativar depois pela tela de detalhe.'
-              : ''
+              : pendingAction?.kind === 'delete'
+                ? 'A conta sai da listagem imediatamente e todas as sessões são encerradas. Os dados pessoais são anonimizados após o período de retenção legal (LGPD).'
+                : ''
         }
-        confirmLabel={pendingAction?.kind === 'ban' ? 'Banir conta' : 'Bloquear conta'}
+        confirmLabel={
+          pendingAction?.kind === 'ban'
+            ? 'Banir conta'
+            : pendingAction?.kind === 'delete'
+              ? 'Excluir conta'
+              : 'Bloquear conta'
+        }
       />
     </>
   );

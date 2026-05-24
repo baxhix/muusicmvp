@@ -18,7 +18,16 @@ export const usersService = {
   get:    (id: string) => api.get<User>(`/users/${id}`),
   create: (data: Partial<User>) => api.post<User>('/users', data),
   update: (id: string, data: Partial<User>) => api.patch<User>(`/users/${id}`, data),
-  remove: (id: string) => api.delete<void>(`/users/${id}`),
+  /**
+   * Soft delete via backend real — marca `deleted_at` + revoga sessões.
+   * O usuário some da listagem do admin imediatamente porque
+   * `listAllUsers` filtra `deleted_at IS NULL`. Backend:
+   * DELETE /api/admin/users/:id (LGPD: row preservada por retenção,
+   * cron anonimiza PII depois). */
+  remove: (id: string) =>
+    api.delete<{ ok: boolean; marked: boolean; sessionsRevoked: number }>(
+      `/api/admin/users/${id}`,
+    ),
   suspend: (id: string) => api.post<User>(`/users/${id}/suspend`),
   ban:     (id: string) => api.post<User>(`/users/${id}/ban`),
   reactivate: (id: string) => api.post<User>(`/users/${id}/reactivate`),
