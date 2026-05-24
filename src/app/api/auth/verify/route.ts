@@ -6,6 +6,7 @@ import { tokens, users } from '@/server/db/schema';
 import { hashToken } from '@/server/auth/tokens';
 import { createSession } from '@/server/auth/session';
 import { env } from '@/server/env';
+import { limitByIp, verifyLimiter } from '@/server/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -85,6 +86,12 @@ const postBodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  /* Rate limit por IP — protege contra brute-force do OTP de 6
+   *  dígitos. 10 burst + 3/min sustentado. Acima disso o
+   *  atacante teria que esperar entre tentativas. */
+  const rl = limitByIp(req, verifyLimiter, 'auth.verify');
+  if (!rl.ok) return rl.response;
+
   let parsed;
   try {
     parsed = postBodySchema.parse(await req.json());

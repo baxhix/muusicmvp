@@ -6,6 +6,14 @@ import { generateToken, generateCode, MAGIC_TTL_MS } from '@/server/auth/tokens'
 import { sendMagicLink } from '@/server/email/magicLink';
 import { env } from '@/server/env';
 import { eq } from 'drizzle-orm';
+import { limitByIp, limitByKey, magicLinkLimiter } from '@/server/rateLimit';
+import { TokenBucket } from '@/server/realtime/rateLimit';
+import { logger } from '@/server/log';
+
+/* Bucket por email pra prevenir inbox-spam: mesmo que o atacante
+ *  use IPs diferentes, não consegue floodar UM endereço específico.
+ *  3 requests / 10min = 3 burst, refill 0.005/s. */
+const perEmailLimiter = new TokenBucket(3, 0.005);
 
 export const runtime = 'nodejs';
 
@@ -34,6 +42,11 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  /* Rate limit POR IP — primeira camada, antes de qualquer
+   *  trabalho. Atacante com 1 IP só consegue 5 requests/min. */
+  const ipLimit = limitByIp(req, magicLinkLimiter, 'auth.request');
+  if (!ipLimit.ok) return ipLimit.response;
+
   let parsed;
   try {
     parsed = bodySchema.parse(await req.json());
@@ -43,6 +56,15 @@ export async function POST(req: Request) {
 
   const { email } = parsed;
   const returnTo = sanitizeReturnTo(parsed.returnTo);
+
+  /* Rate limit POR EMAIL — segunda camada, protege a vítima de
+   *  receber inbox-spam mesmo se atacante rodar IPs diferentes.
+   *  3 emails por 10min, sustentado. */
+  const emailLimit = limitByKey(email, perEmailLimiter);
+  if (!emailLimit.ok) {
+    logger.warn('auth.request.rate-limited', { email });
+    return emailLimit.response;
+  }
 
   // Upsert: create user if first sign-in, otherwise reuse.
   //
@@ -101,7 +123,7 @@ export async function POST(req: Request) {
   try {
     await sendMagicLink(email, raw, code, effectiveReturnTo);
   } catch (err) {
-    console.error('magic-link send failed:', err);
+    logger.error('auth.request.email-send', err, { email });
     return NextResponse.json({ error: 'email_failed' }, { status: 502 });
   }
 

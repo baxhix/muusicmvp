@@ -84,19 +84,6 @@ export function resolveReportImagePath(filename: string): string | null {
   return path.join(REPORTS_DIR, filename);
 }
 
-export function contentTypeOf(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase();
-  switch (ext) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'webp':
-      return 'image/webp';
-    case 'gif':
-      return 'image/gif';
-    default:
-      return 'application/octet-stream';
-  }
-}
+/** Content-Type baseado na extensão. Re-export do central pra
+ *  manter API existente das rotas; lógica única em `storage/mime.ts`. */
+export { getContentType as contentTypeOf } from '../storage/mime';

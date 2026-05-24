@@ -145,26 +145,6 @@ export function resolveMaterialPath(filename: string): string | null {
   return path.join(MATERIAIS_DIR, filename);
 }
 
-/** Inverso do upload — MIME canônico pra Content-Type ao servir. */
-export function contentTypeOf(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase();
-  switch (ext) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'svg':
-      return 'image/svg+xml';
-    case 'mp3':
-      return 'audio/mpeg';
-    case 'mp4':
-      return 'video/mp4';
-    case 'pdf':
-      return 'application/pdf';
-    case 'zip':
-      return 'application/zip';
-    default:
-      return 'application/octet-stream';
-  }
-}
+/** Content-Type baseado na extensão. Re-export do central pra
+ *  manter API existente das rotas; lógica única em `storage/mime.ts`. */
+export { getContentType as contentTypeOf } from '../storage/mime';
