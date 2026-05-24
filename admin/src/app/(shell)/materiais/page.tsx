@@ -174,11 +174,13 @@ export default function MateriaisPage() {
 
   function updateView(next: ViewMode) {
     setView(next);
-    /* Fecha o preview drawer ao trocar view — caso contrário,
-     * a ring "fileCardOpen" no card que tava com preview aberto
-     * dá impressão visual de "Grid icon selecionou um arquivo"
-     * (bug perceptual reportado pelo usuário). */
+    /* Fecha o preview drawer + limpa seleção em massa ao trocar
+     * view. Sem o clear de selectedIds, items selecionados via
+     * "Selecionar todos" da bulk bar continuavam destacados na
+     * view nova — usuário interpretava como "o toggle de view
+     * causou a seleção". navigateTo já faz o mesmo padrão. */
     setSelectedFileId(null);
+    setSelectedIds(new Set());
     if (typeof window !== 'undefined') {
       try {
         window.localStorage.setItem(VIEW_PREF_KEY, next);
