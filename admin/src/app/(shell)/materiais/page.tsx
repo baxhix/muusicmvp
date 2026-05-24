@@ -121,7 +121,12 @@ export default function MateriaisPage() {
   /* Dialogs state — controlados aqui, montados no final do JSX. */
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  /* Arquivos pre-carregados no dialog (vindos do drop zone do
+   * empty state ou do header). undefined = dialog abre vazio. */
+  const [uploadInitialFiles, setUploadInitialFiles] = useState<File[] | undefined>(undefined);
   const [renameTarget, setRenameTarget] = useState<MaterialNode | null>(null);
+  /* Visual feedback do drag-over no empty state. */
+  const [emptyDragOver, setEmptyDragOver] = useState(false);
 
   /* Fetch inicial — pega a árvore do backend ao montar.
    * Idempotente (sem cache local que possa ficar stale entre
@@ -370,37 +375,20 @@ export default function MateriaisPage() {
     }
   }
 
-  /** Upload de arquivo — POST /file (multipart). O dialog já
-   *  fornece o File real; passamos junto com a metadata. */
-  async function handleUploadFile(payload: {
-    name: string;
-    formato: MaterialFormato;
-    tamanhoBytes: number;
-    audience: MaterialAudience;
-    description: string;
-    thumb: string;
-    publishedToFeed: boolean;
-    file?: File;
-  }) {
-    if (!currentFolderId) return;
-    if (!payload.file) {
-      alert('Selecione um arquivo antes de salvar.');
-      return;
-    }
-    try {
-      const file = await uploadFile({
-        file: payload.file,
-        parentId: currentFolderId,
-        name: payload.name,
-        description: payload.description,
-        audience: payload.audience,
-        thumb: payload.thumb.startsWith('data:') ? undefined : payload.thumb,
-        publishedToFeed: payload.publishedToFeed,
-      });
-      upsertNode(file);
-    } catch (err) {
-      reportError('upload file', err);
-    }
+  /** Handler chamado pelo UploadFileDialog a cada arquivo
+   *  concluído. O dialog faz o upload via service e devolve o
+   *  node já criado pelo backend — aqui só fazemos upsert na
+   *  árvore. Fluxo: dialog → uploadFile(service) → backend cria
+   *  + responde → handler insere. */
+  function handleFileUploaded(node: MaterialNode) {
+    upsertNode(node);
+  }
+
+  /* Abre o dialog de upload, opcionalmente pré-carregando com
+   * arquivos vindos de drag/drop. */
+  function openUploadDialog(initialFiles?: File[]) {
+    setUploadInitialFiles(initialFiles);
+    setUploadOpen(true);
   }
 
   /** Renomeia — PATCH. */
@@ -474,12 +462,12 @@ export default function MateriaisPage() {
               variant="primary"
               size="sm"
               leadingIcon={<IconPlus size={14} />}
-              onClick={() => setUploadOpen(true)}
+              onClick={() => openUploadDialog()}
               disabled={loading || !currentFolderId}
               title={
                 !currentFolderId
                   ? 'Entre numa pasta antes de adicionar arquivos.'
-                  : 'Adiciona um arquivo na pasta atual'
+                  : 'Adiciona arquivos na pasta atual'
               }
             >
               Upload
@@ -717,18 +705,67 @@ export default function MateriaisPage() {
       )}
 
       {/* ── Empty state ───────────────────────────────── */}
-      {currentChildren.length === 0 && (
-        <Card className={styles.emptyCard}>
-          <div className={styles.emptyIcon} aria-hidden="true">
-            <IconFolder size={20} />
-          </div>
-          <div className={styles.emptyTitle}>Nada por aqui</div>
-          <div className={styles.emptyHint}>
-            {search.trim()
-              ? `Nenhum item corresponde a "${search.trim()}".`
-              : 'Esta pasta está vazia. Use "Upload" pra adicionar o primeiro arquivo.'}
-          </div>
-        </Card>
+      {currentChildren.length === 0 && !loading && !loadError && (
+        <>
+          {search.trim() ? (
+            /* Filtro ativo sem hits — não vira dropzone porque
+             * o usuário tá buscando, não criando. */
+            <Card className={styles.emptyCard}>
+              <div className={styles.emptyIcon} aria-hidden="true">
+                <IconFolder size={20} />
+              </div>
+              <div className={styles.emptyTitle}>Nada por aqui</div>
+              <div className={styles.emptyHint}>
+                Nenhum item corresponde a &quot;{search.trim()}&quot;.
+              </div>
+            </Card>
+          ) : (
+            /* Pasta vazia (não-busca) vira dropzone direto.
+             * Per product feedback "onde está escrito Nada por
+             * aqui, já deve ser o ambiente onde será feito o
+             * upload". */
+            <div
+              className={`${styles.emptyDropzone} ${emptyDragOver ? styles.emptyDropzoneActive : ''} ${!currentFolderId ? styles.emptyDropzoneDisabled : ''}`}
+              role="button"
+              tabIndex={currentFolderId ? 0 : -1}
+              onClick={() => currentFolderId && openUploadDialog()}
+              onDragOver={(e) => {
+                if (!currentFolderId) return;
+                e.preventDefault();
+                setEmptyDragOver(true);
+              }}
+              onDragLeave={() => setEmptyDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setEmptyDragOver(false);
+                if (!currentFolderId) return;
+                const files = Array.from(e.dataTransfer?.files ?? []);
+                if (files.length === 0) return;
+                openUploadDialog(files);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (currentFolderId) openUploadDialog();
+                }
+              }}
+            >
+              <div className={styles.emptyIcon} aria-hidden="true">
+                <IconPlus size={20} />
+              </div>
+              <div className={styles.emptyTitle}>
+                {currentFolderId
+                  ? 'Solte arquivos aqui pra começar'
+                  : 'Crie uma pasta primeiro'}
+              </div>
+              <div className={styles.emptyHint}>
+                {currentFolderId
+                  ? 'Arraste arquivos do seu computador ou clique para selecionar. JPG, PNG, SVG, MP3, MP4, PDF, ZIP — até 50 MB cada. Vários ao mesmo tempo entram numa fila.'
+                  : 'Os arquivos vivem dentro de pastas. Use "Nova pasta" no topo pra criar a primeira.'}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* ── Folder section — sempre em grid. Pastas são
@@ -1011,8 +1048,20 @@ export default function MateriaisPage() {
       <UploadFileDialog
         open={uploadOpen}
         parentName={currentFolder?.name ?? 'Materiais'}
-        onClose={() => setUploadOpen(false)}
-        onConfirm={handleUploadFile}
+        parentId={currentFolderId}
+        initialFiles={uploadInitialFiles}
+        onClose={() => {
+          setUploadOpen(false);
+          setUploadInitialFiles(undefined);
+        }}
+        onFileUploaded={handleFileUploaded}
+        onComplete={(summary) => {
+          if (summary.failed > 0) {
+            console.warn(
+              `Upload concluído com ${summary.failed} falha${summary.failed === 1 ? '' : 's'} de ${summary.ok + summary.failed}.`,
+            );
+          }
+        }}
       />
       <RenameDialog
         open={renameTarget !== null}

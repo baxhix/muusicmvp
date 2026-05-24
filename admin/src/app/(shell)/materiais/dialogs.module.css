@@ -137,6 +137,147 @@
   flex-shrink: 0;
 }
 
+/* ── Upload queue list ───────────────────────────────────
+ * Lista de arquivos selecionados pra upload. Cada item mostra
+ * status icon + nome + meta (size · format) + erro inline +
+ * barra de progresso quando em upload. */
+.queueList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 6px;
+  background: var(--surface-mute, rgba(255, 255, 255, 0.02));
+}
+
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid transparent;
+  transition: background 140ms ease-out, border-color 140ms ease-out;
+}
+
+.queueItem_uploading {
+  background: var(--primary-soft, rgba(124, 92, 255, 0.06));
+  border-color: rgba(124, 92, 255, 0.18);
+}
+.queueItem_done {
+  background: rgba(74, 222, 128, 0.06);
+  border-color: rgba(74, 222, 128, 0.18);
+}
+.queueItem_error,
+.queueItem_invalid {
+  background: rgba(220, 38, 38, 0.05);
+  border-color: rgba(220, 38, 38, 0.20);
+}
+
+.queueItemIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--surface-mute, rgba(255, 255, 255, 0.04));
+  color: var(--text-mute);
+  flex-shrink: 0;
+}
+.queueItem_uploading .queueItemIcon {
+  background: rgba(124, 92, 255, 0.16);
+  color: var(--primary, #7C5CFF);
+}
+.queueItem_done .queueItemIcon {
+  background: rgba(74, 222, 128, 0.18);
+  color: #4ade80;
+}
+.queueItem_error .queueItemIcon,
+.queueItem_invalid .queueItemIcon {
+  background: rgba(220, 38, 38, 0.14);
+  color: #ef4444;
+}
+
+.queueSpin {
+  animation: queueSpin 1s linear infinite;
+}
+@keyframes queueSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.queueItemBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.queueItemName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.queueItemMeta {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.queueItemError {
+  color: #ef4444;
+}
+
+/* Barra de progresso embaixo do meta — só visível em uploading. */
+.progressTrack {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--surface-mute, rgba(255, 255, 255, 0.06));
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary, #7C5CFF) 0%, #9d83ff 100%);
+  border-radius: 999px;
+  transition: width 200ms ease-out;
+}
+
+.queueItemRemove {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background 140ms ease-out, color 140ms ease-out, border-color 140ms ease-out;
+  flex-shrink: 0;
+}
+.queueItemRemove:hover {
+  background: rgba(220, 38, 38, 0.12);
+  color: #ef4444;
+  border-color: rgba(220, 38, 38, 0.25);
+}
+.queueItemRemove:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 /* Grid de thumbnails default — escolha visual pra capa do
  * arquivo mockado. Active recebe ring colorida. */
 .thumbGrid {

@@ -55,13 +55,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'missing_parent' }, { status: 400 });
   }
 
-  const description = form.get('description');
-  if (typeof description !== 'string' || !description.trim()) {
-    return NextResponse.json(
-      { error: 'missing_description' },
-      { status: 400 },
-    );
-  }
+  /* Description é opcional. Upload em massa (drop zone) envia
+   * arquivos sem descrição — fica em branco e o admin pode
+   * editar depois pelo drawer. Validação só rejeita se o
+   * payload for inválido (não-string). */
+  const descriptionRaw = form.get('description');
+  const description =
+    typeof descriptionRaw === 'string' ? descriptionRaw.trim() : '';
 
   const audienceRaw = form.get('audience');
   const audience =
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       thumbUrl: thumb,
       filename: saved.filename,
       tamanhoBytes: saved.tamanhoBytes,
-      description: description.trim(),
+      description,
       audience,
       publishedToFeed,
       createdById: admin.id,

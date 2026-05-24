@@ -6,7 +6,14 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
-import { IconUpload, IconImage } from '@/components/icons';
+import {
+  IconUpload,
+  IconCheck,
+  IconX,
+  IconLoader,
+  IconAlert,
+  IconTrash,
+} from '@/components/icons';
 import {
   MATERIAL_AUDIENCE_META,
   MATERIAL_AUDIENCE_ORDER,
@@ -14,6 +21,11 @@ import {
   type MaterialFormato,
   type MaterialNode,
 } from '@/data/mock/materiais';
+import {
+  uploadFile,
+  describeError,
+  MateriaisApiError,
+} from '@/services/materiais';
 import { formatBytes } from './shared';
 import styles from './dialogs.module.css';
 
@@ -40,69 +52,22 @@ function inferFormato(filename: string): MaterialFormato {
   }
 }
 
-/** Lê o arquivo como data URL e redimensiona pra thumb 256×256
- *  via canvas (cover, mantém aspect ratio). Reduz o payload do
- *  localStorage drasticamente — uma imagem original de 5MB vira
- *  ~30KB de JPG base64. Resolve via Promise pra que o caller
- *  use async/await. */
-function generateThumbnail(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!file.type.startsWith('image/')) {
-      reject(new Error('Não é imagem'));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Falha ao decodificar imagem'));
-      img.onload = () => {
-        const size = 256;
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas indisponível'));
-          return;
-        }
-        // Cover: escala mantendo aspect ratio + crop centralizado.
-        const sourceAspect = img.width / img.height;
-        const targetAspect = 1;
-        let sx = 0, sy = 0, sw = img.width, sh = img.height;
-        if (sourceAspect > targetAspect) {
-          // Imagem mais larga que alta — corta laterais.
-          sw = img.height * targetAspect;
-          sx = (img.width - sw) / 2;
-        } else if (sourceAspect < targetAspect) {
-          // Imagem mais alta que larga — corta topo/baixo.
-          sh = img.width / targetAspect;
-          sy = (img.height - sh) / 2;
-        }
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
-        /* JPEG quality 0.82 é o sweet spot entre fidelidade e
-         * tamanho. SVG/PNG/etc viram JPEG aqui mesmo — o thumb
-         * é só preview, não a versão final. */
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
+/* MIMEs aceitos pelo backend — mantemos uma cópia client-side
+ * pra rejeitar arquivos inválidos ANTES do upload (UX melhor que
+ * receber 415 do servidor depois de subir o arquivo todo). */
+const ACCEPTED_MIMES = new Set([
+  'image/jpeg', 'image/png', 'image/svg+xml',
+  'audio/mpeg', 'audio/mp3',
+  'video/mp4',
+  'application/pdf',
+  'application/zip', 'application/x-zip-compressed',
+]);
+const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
-/* Thumbs default que existem em /public — usamos pra dar uma
- * capa razoável aos uploads mockados (sem precisar implementar
- * file storage de verdade). Ordem reflete diversidade visual. */
-const DEFAULT_THUMB_OPTIONS = [
-  '/ana-castela.png',
-  '/ana-castela-box.jpg',
-  '/central-anacastela.png',
-  '/albuns/album-let-rodeo.jpg',
-  '/albuns/album-pipoca.jpg',
-  '/albuns/album-livin-deluxe.jpg',
-  '/icon-chapeu-ac.svg',
-];
+/* Atributo `accept` do <input type="file"> — agrega os MIMEs +
+ * extensões pra que o seletor do OS filtre nativamente. */
+const FILE_PICKER_ACCEPT =
+  'image/jpeg,image/png,image/svg+xml,audio/mpeg,video/mp4,application/pdf,application/zip,.jpg,.jpeg,.png,.svg,.mp3,.mp4,.pdf,.zip';
 
 const FORMATO_OPTIONS: { value: MaterialFormato; label: string }[] = [
   { value: 'jpg', label: 'JPG (imagem)' },
@@ -202,271 +167,397 @@ export function NewFolderDialog({
 }
 
 /* ──────────────────────────────────────────────────────────────
- * UploadFileDialog — adiciona um arquivo (mock — só metadados,
- * sem upload real). O backend ainda vai precisar fazer storage;
- * aqui só preenche um nó na árvore.
+ * UploadFileDialog — fila de uploads multi-arquivo com progresso
+ *
+ * Comportamento:
+ *   - Aceita N arquivos por vez (file picker múltiplo + drag/drop
+ *     interno na própria lista do dialog).
+ *   - Cada arquivo entra na fila com status `pending`.
+ *   - Validação client-side: tamanho ≤ 50 MB + MIME na whitelist;
+ *     falhas marcam o item como `invalid` (não tenta upload, mas
+ *     fica visível com o motivo).
+ *   - Audiência (Top 1/10/50/100/Todos) e publishedToFeed são
+ *     COMPARTILHADOS pra todos os arquivos da fila — UX rápida
+ *     pra upload em massa. Edição per-arquivo fica no drawer
+ *     depois.
+ *   - Nome no acervo = file.name original (preservado). Sem
+ *     edição inline aqui — o admin pode renomear via drawer.
+ *   - Concurrency: 3 uploads simultâneos máximo (evita esgotar
+ *     o pool de conexões do browser).
+ *   - Progresso real por arquivo via XHR upload.onprogress.
+ *   - Falhas não bloqueiam a fila — os erros aparecem inline e
+ *     a fila continua nos próximos.
  * ────────────────────────────────────────────────────────────── */
+
+const MAX_CONCURRENT = 3;
+
+type QueueStatus =
+  | 'pending'   // ainda não começou
+  | 'invalid'   // falhou pré-validação (não vai tentar)
+  | 'uploading' // em progresso
+  | 'done'      // sucesso
+  | 'error';    // tentou e falhou
+
+interface QueueItem {
+  /** id estável (timestamp+random) pra key do React e cancelamento. */
+  key: string;
+  file: File;
+  formato: MaterialFormato;
+  status: QueueStatus;
+  /** 0–100 — progresso real do XHR; 0 quando pending, 100 quando done. */
+  progress: number;
+  /** Mensagem amigável quando status='invalid' ou 'error'. */
+  message?: string;
+  /** Node retornado pelo backend após sucesso — useful pra
+   *  inserir na árvore sem refetch. */
+  node?: MaterialNode;
+}
+
+/** Valida um arquivo client-side. Retorna mensagem de erro
+ *  ou null se válido. Espelha as regras do backend (storage.ts)
+ *  pra evitar uploads que vão ser rejeitados. */
+function validateFile(file: File): string | null {
+  if (file.size === 0) return 'Arquivo vazio.';
+  if (file.size > MAX_BYTES) {
+    return `Arquivo grande demais (${formatBytes(file.size)}). Limite: 50 MB.`;
+  }
+  if (!ACCEPTED_MIMES.has(file.type)) {
+    return `Formato não suportado (${file.type || 'desconhecido'}).`;
+  }
+  return null;
+}
 
 export interface UploadFileDialogProps {
   open: boolean;
   parentName: string;
+  parentId: string | null;
+  /** Arquivos iniciais — usado quando o dialog é aberto via
+   *  drag-and-drop no empty state. */
+  initialFiles?: File[];
   onClose: () => void;
-  onConfirm: (payload: {
-    name: string;
-    formato: MaterialFormato;
-    tamanhoBytes: number;
-    audience: MaterialAudience;
-    description: string;
-    thumb: string;
-    publishedToFeed: boolean;
-    /** File real do <input type="file"> — necessário pro upload
-     *  multipart no backend. undefined se o usuário não picou
-     *  arquivo (o submit é bloqueado pelo canSubmit). */
-    file?: File;
-  }) => void;
+  /** Disparado após cada arquivo terminar com sucesso. Recebe o
+   *  node retornado pelo backend — o page faz upsert na árvore. */
+  onFileUploaded: (node: MaterialNode) => void;
+  /** Disparado quando a fila termina (todos os arquivos chegaram
+   *  a um estado terminal). */
+  onComplete?: (summary: { ok: number; failed: number }) => void;
 }
 
 export function UploadFileDialog({
   open,
   parentName,
+  parentId,
+  initialFiles,
   onClose,
-  onConfirm,
+  onFileUploaded,
+  onComplete,
 }: UploadFileDialogProps) {
-  const [name, setName] = useState('');
-  const [formato, setFormato] = useState<MaterialFormato>('jpg');
-  const [tamanhoBytes, setTamanhoBytes] = useState(0);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
   const [audience, setAudience] = useState<MaterialAudience>('all');
-  const [description, setDescription] = useState('');
-  const [thumb, setThumb] = useState(DEFAULT_THUMB_OPTIONS[0]);
   const [publishedToFeed, setPublishedToFeed] = useState(false);
-  const [pickedFile, setPickedFile] = useState<File | null>(null);
-  const [processingFile, setProcessingFile] = useState(false);
-  const [fileError, setFileError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  /* Filename derivado pra mostrar na UI — só lê do File state
-   * pra evitar duplicar estado. */
-  const pickedFileName = pickedFile?.name ?? null;
+  /** Cria QueueItems a partir de uma lista de File — aplica
+   *  validação e marca inválidos sem tentar upload. */
+  function ingestFiles(files: FileList | File[]) {
+    const list = Array.from(files);
+    const items: QueueItem[] = list.map((file, i) => {
+      const error = validateFile(file);
+      return {
+        key: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        formato: inferFormato(file.name),
+        status: error ? 'invalid' : 'pending',
+        progress: 0,
+        message: error ?? undefined,
+      };
+    });
+    setQueue((curr) => [...curr, ...items]);
+  }
 
+  /* Reset ao abrir + ingestão dos initialFiles (vindos do drop
+   * zone). */
   useEffect(() => {
     if (open) {
-      setName('');
-      setFormato('jpg');
-      setTamanhoBytes(0);
+      setQueue([]);
       setAudience('all');
-      setDescription('');
-      setThumb(DEFAULT_THUMB_OPTIONS[0]);
       setPublishedToFeed(false);
-      setPickedFile(null);
-      setProcessingFile(false);
-      setFileError(null);
-    }
-  }, [open]);
-
-  /** Quando o usuário seleciona um arquivo via input. Auto-fill
-   *  metadados + gera thumb se for imagem. */
-  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFileError(null);
-    setPickedFile(file);
-    setName((curr) => curr.trim() ? curr : file.name);
-    setFormato(inferFormato(file.name));
-    setTamanhoBytes(file.size);
-
-    if (file.type.startsWith('image/')) {
-      setProcessingFile(true);
-      try {
-        const dataUrl = await generateThumbnail(file);
-        setThumb(dataUrl);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Falha ao processar imagem';
-        setFileError(`${msg}. Usando capa default.`);
-      } finally {
-        setProcessingFile(false);
+      setRunning(false);
+      if (initialFiles && initialFiles.length > 0) {
+        ingestFiles(initialFiles);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  function handlePickerChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files) return;
+    ingestFiles(e.target.files);
+    /* Reset do value pra que selecionar o mesmo arquivo de
+     * novo dispare o change. */
+    e.target.value = '';
   }
 
-  const canSubmit =
-    name.trim().length > 0 &&
-    description.trim().length > 0 &&
-    pickedFile !== null &&
-    !processingFile;
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    if (!e.dataTransfer?.files) return;
+    ingestFiles(e.dataTransfer.files);
+  }
 
-  function submit(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (!canSubmit || !pickedFile) return;
-    onConfirm({
-      name: name.trim(),
-      formato,
-      tamanhoBytes: tamanhoBytes > 0 ? tamanhoBytes : pickedFile.size,
-      audience,
-      description: description.trim(),
-      thumb,
-      publishedToFeed,
-      file: pickedFile,
+  function removeItem(key: string) {
+    setQueue((curr) => curr.filter((it) => it.key !== key));
+  }
+
+  function updateItem(key: string, patch: Partial<QueueItem>) {
+    setQueue((curr) =>
+      curr.map((it) => (it.key === key ? { ...it, ...patch } : it)),
+    );
+  }
+
+  /** Workers paralelos limitados — pega o próximo `pending` da
+   *  fila, processa, repete até a fila não ter mais pendentes. */
+  async function startQueue() {
+    if (!parentId) return;
+    if (running) return;
+    setRunning(true);
+
+    /* Snapshot fechado dos itens pendentes no momento do click.
+     * Como state-driven, usamos o queue mais recente via ref-like
+     * pattern: usa setQueue(curr => ...) em cada step. */
+    const getPending = (): QueueItem[] => {
+      let snapshot: QueueItem[] = [];
+      setQueue((curr) => {
+        snapshot = curr.filter((it) => it.status === 'pending');
+        return curr;
+      });
+      return snapshot;
+    };
+
+    async function processOne(item: QueueItem) {
+      updateItem(item.key, { status: 'uploading', progress: 0 });
+      try {
+        const node = await uploadFile({
+          file: item.file,
+          parentId: parentId!,
+          /* Nome preservado do PC do usuário per product feedback. */
+          name: item.file.name,
+          audience,
+          publishedToFeed,
+          onProgress: (percent) => updateItem(item.key, { progress: percent }),
+        });
+        updateItem(item.key, {
+          status: 'done',
+          progress: 100,
+          node,
+        });
+        onFileUploaded(node);
+      } catch (err) {
+        const message =
+          err instanceof MateriaisApiError
+            ? describeError(err)
+            : 'Falha no upload.';
+        updateItem(item.key, { status: 'error', message });
+      }
+    }
+
+    /* Worker pool: lança até MAX_CONCURRENT em paralelo,
+     * repetindo enquanto houver pendentes. */
+    async function worker() {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const pending = getPending();
+        if (pending.length === 0) return;
+        const next = pending[0];
+        /* Marca como uploading IMEDIATAMENTE pra que outros
+         * workers não peguem o mesmo. processOne re-marca como
+         * done/error no fim. */
+        updateItem(next.key, { status: 'uploading' });
+        await processOne(next);
+      }
+    }
+
+    const workers = Array.from({ length: MAX_CONCURRENT }, () => worker());
+    await Promise.all(workers);
+
+    setRunning(false);
+
+    /* Conta sucesso/falha após todos os workers terminarem. */
+    setQueue((curr) => {
+      const ok = curr.filter((it) => it.status === 'done').length;
+      const failed = curr.filter(
+        (it) => it.status === 'error' || it.status === 'invalid',
+      ).length;
+      onComplete?.({ ok, failed });
+      return curr;
     });
-    onClose();
   }
+
+  const hasPending = queue.some((it) => it.status === 'pending');
+  const validCount = queue.filter((it) => it.status === 'pending').length;
+  const doneCount = queue.filter((it) => it.status === 'done').length;
+  const totalCount = queue.length;
+  const allFinished =
+    queue.length > 0 &&
+    queue.every(
+      (it) =>
+        it.status === 'done' ||
+        it.status === 'error' ||
+        it.status === 'invalid',
+    );
+
+  const closeLabel = running
+    ? 'Aguarde…'
+    : allFinished
+      ? 'Concluir'
+      : 'Cancelar';
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      title="Novo arquivo"
-      description={`Será publicado em "${parentName}". O arquivo binário NÃO é armazenado (backend de storage pendente) — só os metadados + thumb redimensionado ficam no acervo local.`}
+      onClose={() => {
+        if (running) return;
+        onClose();
+      }}
+      title="Upload de arquivos"
+      description={`Serão publicados em "${parentName}". Os nomes originais dos arquivos são preservados.`}
       size="lg"
       footer={
         <div className={styles.footer}>
-          <Button variant="ghost" size="md" onClick={onClose}>
-            Cancelar
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={onClose}
+            disabled={running}
+          >
+            {closeLabel}
           </Button>
           <Button
             variant="primary"
             size="md"
-            onClick={() => submit()}
-            disabled={!canSubmit}
+            onClick={startQueue}
+            disabled={!parentId || !hasPending || running}
           >
-            Adicionar ao acervo
+            {running
+              ? `Enviando ${doneCount}/${totalCount}…`
+              : hasPending
+                ? `Enviar ${validCount} ${validCount === 1 ? 'arquivo' : 'arquivos'}`
+                : 'Selecione arquivos'}
           </Button>
         </div>
       }
     >
-      <form className={styles.body} onSubmit={submit}>
-        {/* File picker — drop-zone clicável. Auto-preenche o
-         *  resto dos campos quando um arquivo é selecionado. */}
-        <div>
-          <span className={styles.fieldLabel}>Arquivo</span>
-          <button
-            type="button"
-            className={styles.dropzone}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {pickedFileName ? (
-              <div className={styles.dropzonePicked}>
-                {thumb.startsWith('data:') ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={thumb} alt="" className={styles.dropzoneThumb} />
-                ) : (
-                  <span className={styles.dropzoneIcon}>
-                    <IconImage size={20} />
+      <div className={styles.body}>
+        {/* Dropzone — sempre clicável e aceita drag/drop. */}
+        <div
+          className={styles.dropzone}
+          onClick={() => !running && fileInputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          role="button"
+          tabIndex={0}
+          aria-disabled={running}
+        >
+          <div className={styles.dropzoneEmpty}>
+            <span className={styles.dropzoneIcon}>
+              <IconUpload size={20} />
+            </span>
+            <span className={styles.dropzoneEmptyTitle}>
+              Clique ou arraste arquivos aqui
+            </span>
+            <span className={styles.dropzoneEmptyHint}>
+              JPG, PNG, SVG, MP3, MP4, PDF, ZIP — até 50 MB cada.
+            </span>
+          </div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={FILE_PICKER_ACCEPT}
+          multiple
+          onChange={handlePickerChange}
+          style={{ display: 'none' }}
+        />
+
+        {/* Lista da fila — só aparece quando há arquivos. */}
+        {queue.length > 0 && (
+          <ul className={styles.queueList}>
+            {queue.map((it) => (
+              <li
+                key={it.key}
+                className={`${styles.queueItem} ${styles[`queueItem_${it.status}`]}`}
+              >
+                <span className={styles.queueItemIcon}>
+                  {it.status === 'pending' && <IconUpload size={14} />}
+                  {it.status === 'uploading' && (
+                    <IconLoader size={14} className={styles.queueSpin} />
+                  )}
+                  {it.status === 'done' && <IconCheck size={14} />}
+                  {it.status === 'error' && <IconAlert size={14} />}
+                  {it.status === 'invalid' && <IconAlert size={14} />}
+                </span>
+                <div className={styles.queueItemBody}>
+                  <span className={styles.queueItemName}>{it.file.name}</span>
+                  <span className={styles.queueItemMeta}>
+                    {formatBytes(it.file.size)} · {it.formato.toUpperCase()}
+                    {it.message && (
+                      <span className={styles.queueItemError}>
+                        {' '}— {it.message}
+                      </span>
+                    )}
                   </span>
-                )}
-                <div className={styles.dropzonePickedInfo}>
-                  <span className={styles.dropzonePickedName}>{pickedFileName}</span>
-                  <span className={styles.dropzonePickedMeta}>
-                    {processingFile
-                      ? 'Processando…'
-                      : `${formatBytes(tamanhoBytes)} · ${formato.toUpperCase()}`}
-                  </span>
+                  {it.status === 'uploading' && (
+                    <div className={styles.progressTrack}>
+                      <div
+                        className={styles.progressFill}
+                        style={{ width: `${it.progress}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <span className={styles.dropzoneSwap}>Trocar arquivo</span>
-              </div>
-            ) : (
-              <div className={styles.dropzoneEmpty}>
-                <span className={styles.dropzoneIcon}>
-                  <IconUpload size={20} />
-                </span>
-                <span className={styles.dropzoneEmptyTitle}>
-                  Clique para selecionar um arquivo
-                </span>
-                <span className={styles.dropzoneEmptyHint}>
-                  Imagens (JPG, PNG, SVG), áudio (MP3), vídeo (MP4), documentos (PDF, ZIP).
-                </span>
-              </div>
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,audio/mpeg,video/mp4,application/pdf,application/zip"
-            onChange={handleFileSelected}
-            style={{ display: 'none' }}
-          />
-          {fileError && <p className={styles.fileError}>{fileError}</p>}
-        </div>
+                {(it.status === 'pending' ||
+                  it.status === 'invalid' ||
+                  it.status === 'error') && (
+                  <button
+                    type="button"
+                    className={styles.queueItemRemove}
+                    onClick={() => removeItem(it.key)}
+                    aria-label={`Remover ${it.file.name} da fila`}
+                    disabled={running}
+                  >
+                    <IconTrash size={12} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <Input
-          label="Nome no acervo"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ex: palco-encerramento.jpg"
-          required
-          helperText="Edita aqui se quiser um nome diferente do arquivo original."
-        />
-
-        <div className={styles.row2}>
-          <Select
-            label="Formato"
-            value={formato}
-            onChange={(e) => setFormato(e.target.value as MaterialFormato)}
-            options={FORMATO_OPTIONS}
-          />
-          <Input
-            label="Tamanho"
-            value={tamanhoBytes > 0 ? formatBytes(tamanhoBytes) : '—'}
-            readOnly
-            disabled
-            helperText="Auto-detectado do arquivo."
-          />
-        </div>
-
-        <Textarea
-          label="Descrição"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="O que este material entrega pro fã — contexto, exclusividade, mood."
-          rows={3}
-          required
-        />
-
+        {/* Form compartilhado — audiência aplica a todos. */}
         <Select
           label="Quem pode acessar"
           value={audience}
           onChange={(e) => setAudience(e.target.value as MaterialAudience)}
           options={AUDIENCE_OPTIONS}
+          disabled={running}
+          helperText="Aplicado a todos os arquivos deste upload. Pode ser editado por arquivo depois."
         />
-
-        {/* Capa default só pra non-imagens. Pra imagens, o thumb
-         *  é gerado a partir do arquivo enviado. */}
-        {!thumb.startsWith('data:') && (
-          <div>
-            <span className={styles.fieldLabel}>Capa (thumb)</span>
-            <p className={styles.fieldHint}>
-              Como o arquivo não é imagem, escolha uma capa do banco visual.
-            </p>
-            <div className={styles.thumbGrid}>
-              {DEFAULT_THUMB_OPTIONS.map((src) => (
-                <button
-                  key={src}
-                  type="button"
-                  className={`${styles.thumbOption} ${thumb === src ? styles.thumbOptionActive : ''}`}
-                  onClick={() => setThumb(src)}
-                  aria-pressed={thumb === src}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <label className={styles.checkboxRow}>
           <input
             type="checkbox"
             checked={publishedToFeed}
             onChange={(e) => setPublishedToFeed(e.target.checked)}
+            disabled={running}
           />
           <span>
-            <strong>Também publicar no feed</strong>
+            <strong>Também publicar todos no feed</strong>
             <span className={styles.checkboxHint}>
-              Cria automaticamente um post quando o arquivo é adicionado.
+              Cria automaticamente um post pra cada arquivo adicionado.
             </span>
           </span>
         </label>
-      </form>
+      </div>
     </Dialog>
   );
 }

@@ -106,37 +106,89 @@ export interface UploadFilePayload {
   file: File;
   parentId: string;
   name?: string;
-  description: string;
+  description?: string;
   audience: MaterialAudience;
   thumb?: string;
   publishedToFeed?: boolean;
+  /** Callback opcional pra progresso real do upload via XHR
+   *  (0–100). Quando ausente, usamos fetch (sem progresso). */
+  onProgress?: (percent: number) => void;
+  /** AbortSignal pra cancelar o upload (XHR.abort no signal). */
+  signal?: AbortSignal;
 }
 
-/** Faz upload de um arquivo (multipart). */
+/** Faz upload de um arquivo (multipart). Usa XHR quando há
+ *  `onProgress` ou `signal`; senão fetch (mais simples). */
 export async function uploadFile(
   input: UploadFilePayload,
 ): Promise<MaterialNode> {
   const form = new FormData();
   form.append('file', input.file);
   form.append('parentId', input.parentId);
-  form.append('description', input.description);
   form.append('audience', input.audience);
+  if (input.description) form.append('description', input.description);
   if (input.name) form.append('name', input.name);
   if (input.thumb) form.append('thumb', input.thumb);
   form.append('publishedToFeed', input.publishedToFeed ? '1' : '0');
 
-  const res = await fetch(`${BASE_URL}/api/admin/materiais/file`, {
-    method: 'POST',
-    body: form,
-    credentials: 'include',
-    /* SEM Content-Type manual — browser preenche com o
-     * boundary correto. */
-  });
-  if (!res.ok) {
-    throw new MateriaisApiError(res.status, await readErrorCode(res));
+  /* Fast path: sem progresso/signal → fetch normal. */
+  if (!input.onProgress && !input.signal) {
+    const res = await fetch(`${BASE_URL}/api/admin/materiais/file`, {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      throw new MateriaisApiError(res.status, await readErrorCode(res));
+    }
+    const data = (await res.json()) as NodeResponse;
+    return data.node;
   }
-  const data = (await res.json()) as NodeResponse;
-  return data.node;
+
+  /* XHR pra progresso + cancelamento. fetch ainda não suporta
+   * `upload.onprogress` (em qualquer browser). XHR continua
+   * sendo o padrão pra esse caso de uso. */
+  return new Promise<MaterialNode>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${BASE_URL}/api/admin/materiais/file`, true);
+    xhr.withCredentials = true;
+
+    if (input.onProgress) {
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          input.onProgress?.(Math.round((e.loaded / e.total) * 100));
+        }
+      });
+    }
+
+    if (input.signal) {
+      input.signal.addEventListener('abort', () => xhr.abort());
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText) as NodeResponse;
+          resolve(data.node);
+        } catch {
+          reject(new MateriaisApiError(xhr.status, 'parse_error'));
+        }
+      } else {
+        let code = `http_${xhr.status}`;
+        try {
+          const body = JSON.parse(xhr.responseText) as ApiErrorBody;
+          if (body.error) code = body.error;
+        } catch {
+          /* response não é JSON — mantém o code default */
+        }
+        reject(new MateriaisApiError(xhr.status, code));
+      }
+    };
+    xhr.onerror = () => reject(new MateriaisApiError(0, 'network_error'));
+    xhr.onabort = () => reject(new MateriaisApiError(0, 'aborted'));
+
+    xhr.send(form);
+  });
 }
 
 export interface UpdateNodePayload {
