@@ -219,6 +219,10 @@ export interface UploadFileDialogProps {
     description: string;
     thumb: string;
     publishedToFeed: boolean;
+    /** File real do <input type="file"> — necessário pro upload
+     *  multipart no backend. undefined se o usuário não picou
+     *  arquivo (o submit é bloqueado pelo canSubmit). */
+    file?: File;
   }) => void;
 }
 
@@ -235,10 +239,14 @@ export function UploadFileDialog({
   const [description, setDescription] = useState('');
   const [thumb, setThumb] = useState(DEFAULT_THUMB_OPTIONS[0]);
   const [publishedToFeed, setPublishedToFeed] = useState(false);
-  const [pickedFileName, setPickedFileName] = useState<string | null>(null);
+  const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [processingFile, setProcessingFile] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  /* Filename derivado pra mostrar na UI — só lê do File state
+   * pra evitar duplicar estado. */
+  const pickedFileName = pickedFile?.name ?? null;
 
   useEffect(() => {
     if (open) {
@@ -249,7 +257,7 @@ export function UploadFileDialog({
       setDescription('');
       setThumb(DEFAULT_THUMB_OPTIONS[0]);
       setPublishedToFeed(false);
-      setPickedFileName(null);
+      setPickedFile(null);
       setProcessingFile(false);
       setFileError(null);
     }
@@ -261,7 +269,7 @@ export function UploadFileDialog({
     const file = e.target.files?.[0];
     if (!file) return;
     setFileError(null);
-    setPickedFileName(file.name);
+    setPickedFile(file);
     setName((curr) => curr.trim() ? curr : file.name);
     setFormato(inferFormato(file.name));
     setTamanhoBytes(file.size);
@@ -283,19 +291,21 @@ export function UploadFileDialog({
   const canSubmit =
     name.trim().length > 0 &&
     description.trim().length > 0 &&
+    pickedFile !== null &&
     !processingFile;
 
   function submit(e?: React.FormEvent) {
     e?.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !pickedFile) return;
     onConfirm({
       name: name.trim(),
       formato,
-      tamanhoBytes: tamanhoBytes > 0 ? tamanhoBytes : 1_048_576, // 1MB default
+      tamanhoBytes: tamanhoBytes > 0 ? tamanhoBytes : pickedFile.size,
       audience,
       description: description.trim(),
       thumb,
       publishedToFeed,
+      file: pickedFile,
     });
     onClose();
   }

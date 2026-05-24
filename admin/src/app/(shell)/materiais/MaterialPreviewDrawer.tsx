@@ -192,7 +192,7 @@ export default function MaterialPreviewDrawer({
           </div>
           <div className={styles.metaItem}>
             <dt>Por</dt>
-            <dd>{file.createdBy.name}</dd>
+            <dd>{file.createdBy?.name ?? '—'}</dd>
           </div>
         </dl>
       </div>

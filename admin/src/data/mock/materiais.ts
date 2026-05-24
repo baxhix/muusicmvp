@@ -125,8 +125,9 @@ export interface MaterialFolderBase {
   parentId: string | null;
   /** Cover opcional pra ilustrar a pasta na grid view. */
   thumb?: string;
-  /** Descrição curta — usada no header da pasta + no preview. */
-  description?: string;
+  /** Descrição curta — usada no header da pasta + no preview.
+   *  Backend devolve null em vez de undefined; aceitar ambos. */
+  description?: string | null;
 }
 
 export type MaterialFolder = MaterialFolderBase;
@@ -138,6 +139,14 @@ export interface MaterialFile {
   parentId: string;
   formato: MaterialFormato;
   thumb: string;
+  /** URL servida pelo backend pra baixar o binário. Opcional
+   *  porque arquivos mockados antigos (do tempo da localStorage)
+   *  ainda não tinham esse campo. */
+  fileUrl?: string;
+  /** Filename canonical no disco do backend — necessário pro
+   *  Content-Disposition do download. Opcional pelo mesmo
+   *  motivo do fileUrl. */
+  filename?: string;
   tamanhoBytes: number;
   status: MaterialStatus;
   publicadoEm: string; // ISO
@@ -148,7 +157,9 @@ export interface MaterialFile {
   /** Quem pode acessar este material — controla visibilidade
    *  pro fã. Editável pelo admin. */
   audience: MaterialAudience;
-  createdBy: { id: string; name: string };
+  /** Pode ser null quando o backend não conseguiu resolver
+   *  o autor (registros antigos sem created_by_id, etc). */
+  createdBy: { id: string; name: string } | null;
 }
 
 /** Status → label para Badge. */

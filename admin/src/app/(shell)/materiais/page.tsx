@@ -27,7 +27,6 @@ import {
   IconEdit,
 } from '@/components/icons';
 import {
-  loadMateriaisTree,
   childrenOf,
   pathOf,
   findNode,
@@ -43,20 +42,23 @@ import {
 } from '@/data/mock/materiais';
 import Badge from '@/components/ui/Badge';
 import { formatNumber, formatRelative } from '@/lib/format';
-import {
-  formatBytes,
-  generateId,
-  loadFromStorage,
-  saveToStorage,
-  clearStorage,
-  collectDescendantIds,
-} from './shared';
+import { formatBytes } from './shared';
 import {
   NewFolderDialog,
   UploadFileDialog,
   RenameDialog,
 } from './dialogs';
 import MaterialPreviewDrawer from './MaterialPreviewDrawer';
+import {
+  listMateriais,
+  createFolder,
+  uploadFile,
+  updateNode,
+  deleteNode,
+  getDownloadUrl,
+  describeError,
+  MateriaisApiError,
+} from '@/services/materiais';
 import { cn } from '@/lib/utils';
 import styles from './page.module.css';
 
@@ -102,13 +104,14 @@ function fileFormatIcon(formato: MaterialFormato) {
 }
 
 export default function MateriaisPage() {
-  /* Árvore inicial: tenta o localStorage primeiro (mudanças do
-   * admin sobrevivem refresh); fallback no mock seed. SSR safe
-   * porque loadFromStorage retorna null no servidor. */
-  const [nodes, setNodes] = useState<MaterialNode[]>(() => {
-    const stored = loadFromStorage();
-    return stored && stored.length > 0 ? stored : loadMateriaisTree();
-  });
+  /* Árvore = source of truth do server. Carregada via
+   * listMateriais() no mount; mudanças refletem aqui depois de
+   * cada operação confirmada pelo backend (refetch ou
+   * mutação direta do array com o node retornado). */
+  const [nodes, setNodes] = useState<MaterialNode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -120,11 +123,30 @@ export default function MateriaisPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<MaterialNode | null>(null);
 
-  /* Persiste a árvore no localStorage a cada mudança. Roda em
-   * efeito (não na mesma render) pra não bloquear o paint. */
+  /* Fetch inicial — pega a árvore do backend ao montar.
+   * Idempotente (sem cache local que possa ficar stale entre
+   * sessões). */
   useEffect(() => {
-    saveToStorage(nodes);
-  }, [nodes]);
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+    listMateriais()
+      .then((tree) => {
+        if (cancelled) return;
+        setNodes(tree);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('materiais list failed:', err);
+        setLoadError(describeError(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /* Restore preferência de view salva — SSR safe começa em
    * 'grid' (default) e flipa no client se houver preferência. */
@@ -211,78 +233,146 @@ export default function MateriaisPage() {
     setSelectedIds(new Set());
   }
 
-  /* Handlers — backend stubs. */
-  function handleDownload(file: MaterialFile) {
-    alert(
-      `Download mockado: ${file.name}\n(${formatBytes(file.tamanhoBytes)})\n\nQuando o backend ligar, swap por\nfetch('/api/admin/materiais/${file.id}/download').`,
-    );
+  /** Helper genérico pra reportar erros do backend e logar no
+   *  console. UI mostra a mensagem amigável; logger fica com o
+   *  raw pra debug. */
+  function reportError(operation: string, err: unknown) {
+    console.error(`materiais ${operation} failed:`, err);
+    alert(describeError(err));
   }
 
-  function handleDelete(file: MaterialFile) {
-    const ok = confirm(
-      `Excluir "${file.name}"?\n\nEsta ação remove o arquivo do acervo e desfaz qualquer post no feed associado a ele.`,
-    );
-    if (!ok) return;
-    /* Remove de fato do state — persiste via effect. */
-    setNodes((curr) => curr.filter((n) => n.id !== file.id));
-    setSelectedFileId(null);
-    setSelectedIds((curr) => {
-      const next = new Set(curr);
-      next.delete(file.id);
+  /** Refetch — pega a árvore do servidor de novo. Usado depois
+   *  de operações em massa onde mutação local seria error-prone
+   *  (ex: delete cascateado). */
+  async function refetchTree() {
+    try {
+      const tree = await listMateriais();
+      setNodes(tree);
+    } catch (err) {
+      reportError('refetch', err);
+    }
+  }
+
+  /* Helpers de atualização local — combina com o node devolvido
+   * pelo backend pra evitar refetch quando a mutação é simples. */
+  function upsertNode(node: MaterialNode) {
+    setNodes((curr) => {
+      const idx = curr.findIndex((n) => n.id === node.id);
+      if (idx === -1) return [...curr, node];
+      const next = curr.slice();
+      next[idx] = node;
       return next;
     });
   }
 
-  /** Baixa um conjunto de arquivos. Stub — backend pendente.
-   *  Quando ligado, vira um POST /api/admin/materiais/bulk-download
-   *  que devolve um ZIP. */
-  function handleBulkDownload(targetFiles: MaterialFile[]) {
-    if (targetFiles.length === 0) return;
-    const totalBytes = targetFiles.reduce((s, f) => s + f.tamanhoBytes, 0);
-    alert(
-      `Baixar ${targetFiles.length} arquivos (${formatBytes(totalBytes)})?\n\nQuando o backend ligar, ele empacotará num ZIP único.\n\n${targetFiles
-        .slice(0, 5)
-        .map((f) => `• ${f.name}`)
-        .join('\n')}${targetFiles.length > 5 ? `\n• …e mais ${targetFiles.length - 5}` : ''}`,
-    );
+  /** Download de arquivo — abre o endpoint do backend que serve
+   *  o binário com Content-Disposition: attachment. O browser
+   *  cuida do download. Não passa por fetch JS porque a resposta
+   *  é binária. */
+  function handleDownload(file: MaterialFile) {
+    if (!file.id) return;
+    window.open(getDownloadUrl(file.id), '_blank');
   }
 
-  function handleBulkDelete() {
+  /** Apaga arquivo via DELETE. Mutação local após confirmação
+   *  do server. */
+  async function handleDelete(file: MaterialFile) {
+    const ok = confirm(
+      `Excluir "${file.name}"?\n\nEsta ação remove o arquivo do acervo e desfaz qualquer post no feed associado a ele.`,
+    );
+    if (!ok) return;
+    try {
+      await deleteNode(file.id);
+      setNodes((curr) => curr.filter((n) => n.id !== file.id));
+      setSelectedFileId(null);
+      setSelectedIds((curr) => {
+        const next = new Set(curr);
+        next.delete(file.id);
+        return next;
+      });
+    } catch (err) {
+      reportError('delete file', err);
+    }
+  }
+
+  /** Bulk download — abre uma aba por arquivo (browser limita a
+   *  ~6 simultâneas; suficiente pro caso típico). Quando a
+   *  feature de ZIP do backend cair, swap por single open de
+   *  /api/admin/materiais/bulk-download. */
+  function handleBulkDownload(targetFiles: MaterialFile[]) {
+    if (targetFiles.length === 0) return;
+    if (
+      targetFiles.length > 1 &&
+      !confirm(`Baixar ${targetFiles.length} arquivos? Cada um abrirá em uma aba.`)
+    ) {
+      return;
+    }
+    targetFiles.forEach((f, i) => {
+      /* Pequeno stagger pra evitar que o browser bloqueie pop-ups
+       * (vários window.open síncronos disparam o blocker). */
+      setTimeout(() => window.open(getDownloadUrl(f.id), '_blank'), i * 250);
+    });
+  }
+
+  /** Bulk delete — deleta cada um sequencialmente pra controlar
+   *  o estado de forma confiável. Refetch ao final se houve
+   *  qualquer mudança. */
+  async function handleBulkDelete() {
     if (!hasSelection) return;
     const count = selectedIds.size;
     const ok = confirm(
       `Excluir ${count} ${count === 1 ? 'arquivo' : 'arquivos'} selecionados?\n\nEsta ação não pode ser desfeita.`,
     );
     if (!ok) return;
-    /* Remove os selecionados de fato do state. */
-    setNodes((curr) => curr.filter((n) => !selectedIds.has(n.id)));
+
+    const ids = Array.from(selectedIds);
+    const failures: string[] = [];
+    for (const id of ids) {
+      try {
+        await deleteNode(id);
+      } catch (err) {
+        failures.push(id);
+        console.error(`bulk delete failed for ${id}:`, err);
+      }
+    }
+    /* Refetch garante consistência mesmo com falhas parciais. */
+    await refetchTree();
     clearSelection();
+    if (failures.length > 0) {
+      alert(
+        `Falha ao excluir ${failures.length} de ${ids.length} arquivos. Lista re-sincronizada.`,
+      );
+    }
   }
 
-  /** Atualiza a audiência de um arquivo. Mock — quando o backend
-   *  cair, vira PATCH /api/admin/materiais/{id} { audience }. */
-  function handleAudienceChange(fileId: string, audience: MaterialAudience) {
-    setNodes((curr) =>
-      curr.map((n) =>
-        n.type === 'file' && n.id === fileId ? { ...n, audience } : n,
-      ),
-    );
+  /** Mudança de audiência — PATCH no backend. Mutação local
+   *  com o node retornado pra refletir imediatamente. */
+  async function handleAudienceChange(fileId: string, audience: MaterialAudience) {
+    try {
+      const updated = await updateNode(fileId, { audience });
+      upsertNode(updated);
+    } catch (err) {
+      reportError('update audience', err);
+    }
   }
 
-  /** Cria uma nova subpasta dentro da pasta atual. */
-  function handleCreateFolder(payload: { name: string; description?: string }) {
-    const newFolder: MaterialFolder = {
-      id: generateId('folder'),
-      type: 'folder',
-      name: payload.name,
-      parentId: currentFolderId, // null se estamos no root
-      description: payload.description,
-    };
-    setNodes((curr) => [...curr, newFolder]);
+  /** Cria pasta — POST /folder. */
+  async function handleCreateFolder(payload: { name: string; description?: string }) {
+    try {
+      const folder = await createFolder({
+        name: payload.name,
+        description: payload.description,
+        parentId: currentFolderId,
+      });
+      upsertNode(folder);
+    } catch (err) {
+      reportError('create folder', err);
+    }
   }
 
-  /** Adiciona um novo arquivo (mock — só metadados). */
-  function handleUploadFile(payload: {
+  /** Upload de arquivo — POST /file (multipart). O dialog já
+   *  fornece o File real; passamos junto com a metadata. */
+  async function handleUploadFile(payload: {
     name: string;
     formato: MaterialFormato;
     tamanhoBytes: number;
@@ -290,42 +380,45 @@ export default function MateriaisPage() {
     description: string;
     thumb: string;
     publishedToFeed: boolean;
+    file?: File;
   }) {
-    /* Não dá pra adicionar arquivo no root — só dentro de pasta.
-     *  Se o usuário tentou (botão deve estar disabled lá em
-     *  cima), a gente bloqueia defensivamente. */
     if (!currentFolderId) return;
-    const newFile: MaterialFile = {
-      id: generateId('file'),
-      type: 'file',
-      name: payload.name,
-      parentId: currentFolderId,
-      formato: payload.formato,
-      thumb: payload.thumb,
-      tamanhoBytes: payload.tamanhoBytes,
-      status: 'publicado',
-      publicadoEm: new Date().toISOString(),
-      publishedToFeed: payload.publishedToFeed,
-      downloads: 0,
-      favoritos: 0,
-      description: payload.description,
-      audience: payload.audience,
-      createdBy: { id: 'admin-current', name: 'Equipe Admin' },
-    };
-    setNodes((curr) => [...curr, newFile]);
+    if (!payload.file) {
+      alert('Selecione um arquivo antes de salvar.');
+      return;
+    }
+    try {
+      const file = await uploadFile({
+        file: payload.file,
+        parentId: currentFolderId,
+        name: payload.name,
+        description: payload.description,
+        audience: payload.audience,
+        thumb: payload.thumb.startsWith('data:') ? undefined : payload.thumb,
+        publishedToFeed: payload.publishedToFeed,
+      });
+      upsertNode(file);
+    } catch (err) {
+      reportError('upload file', err);
+    }
   }
 
-  /** Renomeia um nó (pasta ou arquivo). */
-  function handleRename(nextName: string) {
+  /** Renomeia — PATCH. */
+  async function handleRename(nextName: string) {
     if (!renameTarget) return;
-    setNodes((curr) =>
-      curr.map((n) => (n.id === renameTarget.id ? { ...n, name: nextName } : n)),
-    );
-    setRenameTarget(null);
+    const id = renameTarget.id;
+    try {
+      const updated = await updateNode(id, { name: nextName });
+      upsertNode(updated);
+      setRenameTarget(null);
+    } catch (err) {
+      reportError('rename', err);
+    }
   }
 
-  /** Exclui uma pasta + cascateia todos os descendentes. */
-  function handleDeleteFolder(folder: MaterialFolder) {
+  /** Exclui pasta — DELETE; backend cuida do cascade. Refetch
+   *  pra sincronizar (descendents foram removidos no servidor). */
+  async function handleDeleteFolder(folder: MaterialFolder) {
     const fileCount = countFilesDeep(nodes, folder.id);
     const message =
       fileCount === 0
@@ -333,27 +426,19 @@ export default function MateriaisPage() {
         : `Excluir a pasta "${folder.name}" e ${fileCount} ${fileCount === 1 ? 'arquivo' : 'arquivos'} dentro dela?\n\nEsta ação não pode ser desfeita.`;
     const ok = confirm(message);
     if (!ok) return;
-    const idsToRemove = collectDescendantIds(nodes, folder.id);
-    setNodes((curr) => curr.filter((n) => !idsToRemove.has(n.id)));
-    /* Se estávamos navegados pra dentro da pasta excluída,
-     *  volta pro parent. */
-    if (currentFolderId && idsToRemove.has(currentFolderId)) {
-      setCurrentFolderId(folder.parentId);
+    try {
+      await deleteNode(folder.id);
+      /* Se estávamos navegados pra dentro da pasta excluída,
+       *  volta pro parent ANTES do refetch (UI fica
+       *  consistente). */
+      if (currentFolderId === folder.id) {
+        setCurrentFolderId(folder.parentId);
+      }
+      await refetchTree();
+      clearSelection();
+    } catch (err) {
+      reportError('delete folder', err);
     }
-    clearSelection();
-  }
-
-  /** Restaura o acervo pro mock inicial (limpa localStorage). */
-  function handleResetAcervo() {
-    const ok = confirm(
-      'Restaurar o acervo pro estado inicial?\n\nTodas as mudanças locais (pastas criadas, arquivos adicionados, renomeações, exclusões e audiências editadas) serão descartadas.',
-    );
-    if (!ok) return;
-    clearStorage();
-    setNodes(loadMateriaisTree());
-    setCurrentFolderId(null);
-    clearSelection();
-    setSelectedFileId(null);
   }
 
   /** Resolve os MaterialFile a partir dos ids selecionados. */
@@ -377,18 +462,11 @@ export default function MateriaisPage() {
         actions={
           <div className={styles.headerActions}>
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetAcervo}
-              title="Limpa as mudanças locais e restaura o acervo seed."
-            >
-              Restaurar
-            </Button>
-            <Button
               variant="secondary"
               size="sm"
               leadingIcon={<IconFolderOpen size={14} />}
               onClick={() => setNewFolderOpen(true)}
+              disabled={loading}
             >
               Nova pasta
             </Button>
@@ -397,11 +475,11 @@ export default function MateriaisPage() {
               size="sm"
               leadingIcon={<IconPlus size={14} />}
               onClick={() => setUploadOpen(true)}
-              disabled={!currentFolderId}
+              disabled={loading || !currentFolderId}
               title={
-                currentFolderId
-                  ? 'Adiciona um arquivo na pasta atual'
-                  : 'Entre numa pasta antes de adicionar arquivos.'
+                !currentFolderId
+                  ? 'Entre numa pasta antes de adicionar arquivos.'
+                  : 'Adiciona um arquivo na pasta atual'
               }
             >
               Upload
@@ -409,6 +487,33 @@ export default function MateriaisPage() {
           </div>
         }
       />
+
+      {/* ── Loading / Error states ─────────────────────── */}
+      {loading && (
+        <Card className={styles.emptyCard}>
+          <div className={styles.emptyTitle}>Carregando acervo…</div>
+        </Card>
+      )}
+      {loadError && (
+        <Card className={styles.emptyCard}>
+          <div className={styles.emptyTitle}>Não foi possível carregar</div>
+          <div className={styles.emptyHint}>{loadError}</div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setLoadError(null);
+              setLoading(true);
+              listMateriais()
+                .then((tree) => setNodes(tree))
+                .catch((err) => setLoadError(describeError(err)))
+                .finally(() => setLoading(false));
+            }}
+          >
+            Tentar de novo
+          </Button>
+        </Card>
+      )}
 
       {/* ── KPIs ───────────────────────────────────────── */}
       <div className={styles.kpiGrid}>
