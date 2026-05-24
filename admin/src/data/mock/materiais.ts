@@ -128,6 +128,10 @@ export interface MaterialFolderBase {
   /** Descrição curta — usada no header da pasta + no preview.
    *  Backend devolve null em vez de undefined; aceitar ambos. */
   description?: string | null;
+  /** Tier de acesso — só relevante em pastas-raiz (parentId === null).
+   *  Subpastas herdam da pasta-mãe. Opcional pra acomodar mocks
+   *  antigos; o backend sempre retorna o valor (default 'all'). */
+  audience?: MaterialAudience;
 }
 
 export type MaterialFolder = MaterialFolderBase;

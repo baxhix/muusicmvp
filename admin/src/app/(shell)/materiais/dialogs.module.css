@@ -355,3 +355,78 @@
   color: var(--text-mute);
   line-height: 1.4;
 }
+
+/* ── FolderPermissionsDialog ─────────────────────────
+ * Lista de opções (radio styled como checkbox) com título +
+ * descrição. Selecionado tem accent border + check icon. */
+.permissionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permissionsOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface-mute, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 140ms ease-out, border-color 140ms ease-out;
+}
+.permissionsOption:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+  border-color: var(--border);
+}
+.permissionsOptionChecked {
+  background: var(--accent-soft, rgba(255, 255, 255, 0.06));
+  border-color: var(--accent, #FAFAFA);
+}
+
+/* Checkbox visual — quadrado, fica check quando marcado. */
+.permissionsCheckbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1.5px solid var(--border-strong, rgba(255, 255, 255, 0.30));
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+  color: transparent;
+  transition: background 140ms ease-out, border-color 140ms ease-out, color 140ms ease-out;
+}
+.permissionsCheckboxChecked {
+  background: var(--accent, #FAFAFA);
+  border-color: var(--accent, #FAFAFA);
+  color: var(--accent-fg, #0A0A0A);
+}
+
+.permissionsLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.permissionsLabelTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+
+.permissionsLabelDesc {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  line-height: 1.45;
+}

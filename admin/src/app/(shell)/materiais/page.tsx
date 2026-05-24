@@ -25,6 +25,7 @@ import {
   IconList,
   IconEdit,
   IconCheck,
+  IconShield,
 } from '@/components/icons';
 import {
   childrenOf,
@@ -43,7 +44,7 @@ import {
 import Badge from '@/components/ui/Badge';
 import { formatNumber, formatRelative } from '@/lib/format';
 import { formatBytes, validateFile } from './shared';
-import { NewFolderDialog, RenameDialog } from './dialogs';
+import { NewFolderDialog, RenameDialog, FolderPermissionsDialog } from './dialogs';
 import MaterialPreviewModal from './MaterialPreviewModal';
 import FloatingUploadPanel, {
   type UploadItem,
@@ -120,6 +121,9 @@ export default function MateriaisPage() {
   /* Dialogs state — controlados aqui, montados no final do JSX. */
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<MaterialNode | null>(null);
+  /* Pasta de primeiro-nível sendo editada via dialog de permissões. */
+  const [permissionsTarget, setPermissionsTarget] =
+    useState<MaterialFolder | null>(null);
   /* Visual feedback do drag-over no empty state. */
   const [emptyDragOver, setEmptyDragOver] = useState(false);
 
@@ -558,6 +562,24 @@ export default function MateriaisPage() {
     }
   }
 
+  /** Atualiza permissão de acesso da pasta — PATCH audience.
+   *  Só faz sentido em pastas de primeiro-nível (button visível
+   *  apenas nessas). Subpastas herdam da raiz no momento do
+   *  download/listagem no main app. */
+  async function handleUpdatePermissions(audience: MaterialAudience) {
+    if (!permissionsTarget) return;
+    const id = permissionsTarget.id;
+    try {
+      const updated = await updateNode(id, { audience });
+      upsertNode(updated);
+      /* Sem fechar aqui — o dialog fecha sozinho no submit() bem
+       *  sucedido pra não piscar UI durante o await. */
+    } catch (err) {
+      reportError('update permissions', err);
+      throw err; // re-throw pro dialog manter o loading state
+    }
+  }
+
   /** Exclui pasta — DELETE; backend cuida do cascade. Refetch
    *  pra sincronizar (descendents foram removidos no servidor). */
   async function handleDeleteFolder(folder: MaterialFolder) {
@@ -788,6 +810,21 @@ export default function MateriaisPage() {
               >
                 Renomear
               </button>
+              {/* Permissões — só pasta de primeiro nível.
+               *  Subpastas herdam da pasta-mãe (regra de negócio
+               *  do produto: audience é definida no topo da árvore). */}
+              {currentFolder.parentId === null && (
+                <button
+                  type="button"
+                  className={styles.folderHeaderBtn}
+                  onClick={() => setPermissionsTarget(currentFolder)}
+                  title="Gerenciar quem pode acessar esta pasta"
+                  aria-label="Permissões"
+                >
+                  <IconShield size={12} />
+                  Permissões
+                </button>
+              )}
               <button
                 type="button"
                 className={`${styles.folderHeaderBtn} ${styles.folderHeaderBtnDanger}`}
@@ -1274,6 +1311,12 @@ export default function MateriaisPage() {
         target={renameTarget}
         onClose={() => setRenameTarget(null)}
         onConfirm={handleRename}
+      />
+      <FolderPermissionsDialog
+        open={permissionsTarget !== null}
+        folder={permissionsTarget}
+        onClose={() => setPermissionsTarget(null)}
+        onConfirm={handleUpdatePermissions}
       />
 
       {/* ── Painel flutuante de uploads ──────────────────

@@ -34,6 +34,10 @@ export interface ApiMaterialFolder {
   name: string;
   parentId: string | null;
   description: string | null;
+  /** Tier de acesso da pasta. Só faz sentido em pastas de
+   *  primeiro nível (parentId === null) — subpastas e arquivos
+   *  herdam da raiz no momento da entrega. */
+  audience: MaterialAudience;
 }
 
 export interface ApiMaterialFile {
@@ -85,6 +89,7 @@ export function mapNodeWithAuthor(
       name: n.name,
       parentId: n.parentId,
       description: n.description,
+      audience: (n.audience ?? 'all') as MaterialAudience,
     };
   }
   // File — vários campos podem ser null por causa da union de
