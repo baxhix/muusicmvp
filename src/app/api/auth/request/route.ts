@@ -98,28 +98,11 @@ export async function POST(req: Request) {
     // voltar, vai precisar do hard-delete final (cron job dropa
     // a row após o período de retenção) e cadastrar de novo —
     // no banco, vira conta nova.
-    // Fallback se a migration 0025 (deleted_at) ainda não rodou
-     // no DB: cai pra query sem o filtro de soft-delete. Postgres
-     // 42703 = "undefined_column".
-    let existing;
-    try {
-      existing = await tx
-        .select()
-        .from(users)
-        .where(and(eq(users.email, email), isNull(users.deletedAt)))
-        .limit(1);
-    } catch (err) {
-      const code = (err as { code?: string })?.code;
-      if (code !== '42703') throw err;
-      logger.warn('auth.request.deleted_at_missing', {
-        hint: 'rode a migration 0025_users_soft_delete no DB',
-      });
-      existing = await tx
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
-    }
+    const existing = await tx
+      .select()
+      .from(users)
+      .where(and(eq(users.email, email), isNull(users.deletedAt)))
+      .limit(1);
     const u =
       existing[0] ??
       (await tx.insert(users).values({ email, name: defaultName }).returning())[0];
