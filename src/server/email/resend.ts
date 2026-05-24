@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { env } from '../env';
 import { logger } from '../log';
+import { recordEmailSend } from './log';
 
 let client: Resend | undefined;
 
@@ -114,4 +115,67 @@ export async function sendEmailWithRetry<T>(
     }
   }
   throw lastErr;
+}
+
+/* ──────────────────────────────────────────────────────────────
+ * sendEmail — wrapper de alto nível com audit trail.
+ *
+ * Usar este em vez de chamar `sendEmailWithRetry` direto sempre
+ * que o destinatário/subject forem conhecidos antecipadamente.
+ * O `email_logs` registra cada chamada (sucesso ou falha) +
+ * latência, alimentando as métricas e o histórico do admin.
+ * ────────────────────────────────────────────────────────────── */
+
+export interface SendEmailInput {
+  to: string;
+  subject: string;
+  html: string;
+  /** Identificador semântico do tipo de email — usado como `kind`
+   *  na tabela `email_logs` e como `scope` no logger. Ex:
+   *  'magic_link', 'welcome', 'campaign'. */
+  kind: string;
+  /** Quando vem de uma campanha — agrupa os envios no log. */
+  campaignId?: string | null;
+  retries?: number;
+  timeoutMs?: number;
+}
+
+export async function sendEmail(input: SendEmailInput): Promise<void> {
+  const started = Date.now();
+  try {
+    await sendEmailWithRetry(
+      () =>
+        getResend().emails.send({
+          from: env.EMAIL_FROM,
+          to: input.to,
+          subject: input.subject,
+          html: input.html,
+        }),
+      {
+        scope: input.kind,
+        retries: input.retries,
+        timeoutMs: input.timeoutMs,
+      },
+    );
+    void recordEmailSend({
+      to: input.to,
+      kind: input.kind,
+      subject: input.subject,
+      status: 'sent',
+      campaignId: input.campaignId ?? null,
+      durationMs: Date.now() - started,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    void recordEmailSend({
+      to: input.to,
+      kind: input.kind,
+      subject: input.subject,
+      status: 'failed',
+      errorMessage: message.slice(0, 500),
+      campaignId: input.campaignId ?? null,
+      durationMs: Date.now() - started,
+    });
+    throw err;
+  }
 }

@@ -877,3 +877,108 @@ export type CommunityTopicCommentReaction =
   typeof communityTopicCommentReactions.$inferSelect;
 export type NewCommunityTopicCommentReaction =
   typeof communityTopicCommentReactions.$inferInsert;
+
+/* ──────────────────────────────────────────────────────────────
+ * EMAIL — Templates, logs, campanhas.
+ *
+ * Pra que serve cada tabela:
+ *   - `email_templates`: subject + HTML editáveis pelos emails do
+ *     sistema (magic_link hoje, welcome/etc. futuros). Quando um
+ *     send precisa do template, lê daqui; se não existir ou
+ *     is_active=false, cai pro hardcoded em código. Garante que
+ *     desativar o registro no DB é safe — emails continuam saindo.
+ *   - `email_logs`: registro de TODO email que sai (sucesso ou
+ *     falha). Audit trail + métricas. Linha gravada por
+ *     `recordEmailSend()` em `src/server/email/log.ts`.
+ *   - `email_campaigns`: broadcasts criados via admin. Estado de
+ *     dispatch (draft → sending → sent), contadores parciais pra
+ *     UI mostrar progresso, segmento + params.
+ * ────────────────────────────────────────────────────────────── */
+
+export const emailTemplates = pgTable('email_templates', {
+  // `kind` é a primary-key natural (slug estável usado em código).
+  // Ex.: 'magic_link', 'welcome', 'account_deleted'.
+  kind: text('kind').primaryKey(),
+  subject: text('subject').notNull(),
+  html: text('html').notNull(),
+  // Quando false, fallback pro hardcoded em código — kill switch
+  // se template no DB der ruim.
+  isActive: boolean('is_active').notNull().default(true),
+  /** Descrição livre exibida no admin (quando o template dispara). */
+  description: text('description'),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
+
+export const emailLogs = pgTable(
+  'email_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** Email do destinatário — armazenado plain pra audit. LGPD:
+     *  hard-delete junto com o user no cron de retenção. */
+    to: text('to').notNull(),
+    /** Same `kind` do template, ou 'campaign' pra broadcast, ou
+     *  'manual_test' pra preview disparado pelo admin. */
+    kind: text('kind').notNull(),
+    subject: text('subject').notNull(),
+    /** 'sent' | 'failed'. */
+    status: text('status').notNull(),
+    errorMessage: text('error_message'),
+    /** FK opcional pra agrupar envios de uma mesma campanha. */
+    campaignId: uuid('campaign_id'),
+    sentAt: timestamp('sent_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    /** Latência do call à API Resend (ms). Útil pra debugar
+     *  degradação do upstream. */
+    durationMs: integer('duration_ms'),
+  },
+  (t) => [
+    index('email_logs_sent_at_idx').on(t.sentAt),
+    index('email_logs_kind_idx').on(t.kind),
+    index('email_logs_status_idx').on(t.status),
+    index('email_logs_campaign_idx').on(t.campaignId),
+  ],
+);
+
+export const emailCampaigns = pgTable('email_campaigns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  subject: text('subject').notNull(),
+  html: text('html').notNull(),
+  /** Segmento de destinatários:
+   *  'all'         — todos os usuários ativos (deleted_at IS NULL)
+   *  'superfans'   — top X% por fanpoints (params: { topPct })
+   *  'inactive'    — sem login há N dias (params: { days })
+   *  'city'        — usuários de uma cidade (params: { city })
+   *  'custom_emails' — lista de emails fornecida (params: { emails })
+   */
+  segment: text('segment').notNull(),
+  segmentParams: jsonb('segment_params'),
+  /** 'draft' | 'sending' | 'sent' | 'failed' | 'canceled'. */
+  status: text('status').notNull().default('draft'),
+  /** Quando setado, o dispatcher só começa após esse instante. */
+  scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+  sentCount: integer('sent_count').notNull().default(0),
+  failedCount: integer('failed_count').notNull().default(0),
+  totalRecipients: integer('total_recipients').notNull().default(0),
+  createdBy: uuid('created_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  /** Setado quando dispatcher termina (status virou 'sent' ou 'failed'). */
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+});
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type NewEmailTemplate = typeof emailTemplates.$inferInsert;
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type NewEmailLog = typeof emailLogs.$inferInsert;
+export type EmailCampaign = typeof emailCampaigns.$inferSelect;
+export type NewEmailCampaign = typeof emailCampaigns.$inferInsert;
