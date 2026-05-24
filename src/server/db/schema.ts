@@ -759,10 +759,86 @@ export const communityTopicCommentReactions = pgTable(
   ],
 );
 
+/* ──────────────────────────────────────────────────────────────
+ * Materiais — acervo de conteúdo exclusivo da artista pros
+ * superfãs. Árvore hierárquica: pastas + arquivos. Cada arquivo
+ * carrega o binário no filesystem (uploads/materiais/) e os
+ * metadados aqui. Audience controla quem pode acessar via tier.
+ *
+ * Self-referencing FK em parent_id permite estrutura recursiva.
+ * onDelete: 'cascade' simplifica a exclusão — apagar uma pasta
+ * remove todos os descendentes no DB sem código extra (o handler
+ * ainda tem que limpar os arquivos físicos do disco).
+ * ────────────────────────────────────────────────────────────── */
+export const materialNodes = pgTable(
+  'material_nodes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** 'folder' = container navegável; 'file' = item baixável. */
+    type: text('type', { enum: ['folder', 'file'] }).notNull(),
+    name: text('name').notNull(),
+    /** null = raiz; senão referencia outro material_nodes (pasta). */
+    parentId: uuid('parent_id').references(
+      (): AnyPgColumn => materialNodes.id,
+      { onDelete: 'cascade' },
+    ),
+    description: text('description'),
+
+    /* ── Campos exclusivos de FILE (NULL pra folders) ───────── */
+    /** Formato canônico do arquivo. Determina o ícone na UI. */
+    formato: text('formato', {
+      enum: ['jpg', 'png', 'svg', 'mp3', 'mp4', 'pdf', 'zip'],
+    }),
+    /** URL do binário original servido por /api/materiais/files/[filename]. */
+    fileUrl: text('file_url'),
+    /** URL do thumbnail 256×256 — pode ser data URL (base64),
+     *  caminho /public/... ou outra URL servida pelo backend. */
+    thumbUrl: text('thumb_url'),
+    /** Filename canonical no filesystem. Usado pra deletar do
+     *  disco quando o registro é removido. */
+    filename: text('filename'),
+    /** Bytes do binário original (não do thumb). */
+    tamanhoBytes: integer('tamanho_bytes'),
+    status: text('status', {
+      enum: ['rascunho', 'publicado', 'agendado', 'arquivado'],
+    }).default('publicado'),
+    publicadoEm: timestamp('publicado_em', { withTimezone: true }),
+    publishedToFeed: boolean('published_to_feed').notNull().default(false),
+    downloads: integer('downloads').notNull().default(0),
+    favoritos: integer('favoritos').notNull().default(0),
+    /** Tier de audiência (Top 1/10/50/100/Todos) — controla
+     *  visibilidade pros fãs. Folder não usa (NULL ok). */
+    audience: text('audience', {
+      enum: ['top1', 'top10', 'top50', 'top100', 'all'],
+    }).default('all'),
+
+    /** Admin que criou. NULL se o registro veio do seed. */
+    createdById: uuid('created_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    /** Query mais comum: listar filhos de uma pasta — index em
+     *  parent_id elimina full scan. */
+    index('material_nodes_parent_idx').on(t.parentId),
+    /** Filtros por tipo (separar pastas de arquivos no tree
+     *  listing). */
+    index('material_nodes_type_idx').on(t.type),
+  ],
+);
+
 export type Report = typeof reports.$inferSelect;
 export type NewReport = typeof reports.$inferInsert;
 export type SiteTag = typeof siteTags.$inferSelect;
 export type NewSiteTag = typeof siteTags.$inferInsert;
+export type MaterialNode = typeof materialNodes.$inferSelect;
+export type NewMaterialNode = typeof materialNodes.$inferInsert;
 export type FeedPost = typeof feedPosts.$inferSelect;
 export type NewFeedPost = typeof feedPosts.$inferInsert;
 export type FeedComment = typeof feedComments.$inferSelect;
