@@ -808,14 +808,31 @@ export default function MateriaisPage() {
        *     contextual com count + ações de massa. */}
       {files.length > 0 && (
         <div className={cn(styles.bulkBar, hasSelection && styles.bulkBarActive)}>
-          <label className={styles.bulkSelectAll}>
+          {/* IMPORTANTE: NÃO usar <label> aqui. O componente
+           *  Checkbox JÁ renderiza um <label> interno. Label
+           *  aninhado é HTML inválido e alguns navegadores
+           *  "vazam" o binding pro próximo form control no
+           *  DOM — fazia cliques em botões alheios (Grid/Lista,
+           *  Renomear, Excluir) dispararem o toggleSelectAll. */}
+          <div className={styles.bulkSelectAll}>
             <Checkbox
               checked={isAllSelected}
               indeterminate={isPartiallySelected}
               onChange={toggleSelectAll}
               aria-label="Selecionar todos os arquivos"
             />
-            <span className={styles.bulkSelectAllLabel}>
+            <span
+              className={styles.bulkSelectAllLabel}
+              onClick={toggleSelectAll}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleSelectAll();
+                }
+              }}
+            >
               {hasSelection ? (
                 <>
                   <strong>{selectedIds.size}</strong> de {files.length} selecionado
@@ -825,7 +842,7 @@ export default function MateriaisPage() {
                 <>Selecionar todos ({files.length})</>
               )}
             </span>
-          </label>
+          </div>
 
           <div className={styles.bulkActions}>
             {hasSelection ? (
