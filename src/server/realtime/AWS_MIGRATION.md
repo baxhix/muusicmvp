@@ -132,12 +132,15 @@ Alternativa local: PgBouncer no ECS, mesma ideia mas self-managed.
 ## Ordem recomendada de execução pelo dev
 
 1. Provisionar ElastiCache + RDS Proxy (1h infra)
-2. Plugar Redis adapter no Socket.IO + sticky sessions (2h)
-3. Migrar rate-limit pro `RedisTokenBucket` (2h — 9 call sites + await)
-4. Migrar presence pro Redis SET (2h)
-5. Deploy gradual — 1 instância nova ao lado das antigas, validar
+2. Aplicar `scripts/pg_trgm_indexes.sql` no RDS após o restore
+   do dump (`psql $RDS_URL -f scripts/pg_trgm_indexes.sql`).
+   No RDS master user tem CREATE EXTENSION nativo. (15min)
+3. Plugar Redis adapter no Socket.IO + sticky sessions (2h)
+4. Migrar rate-limit pro `RedisTokenBucket` (2h — 9 call sites + await)
+5. Migrar presence pro Redis SET (2h)
+6. Deploy gradual — 1 instância nova ao lado das antigas, validar
    métricas, depois flipar todas (1h)
-6. EventBridge pro cron (30min)
+7. EventBridge pro cron (30min)
 
 **Total estimado: 1 dia de trabalho** — caso o repo siga com os
 stubs prontos. Sem os stubs, o mesmo trabalho leva 3-4 dias

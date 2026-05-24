@@ -1,3 +1,23 @@
+-- ARQUIVO OPT-IN — NÃO É APLICADO AUTOMATICAMENTE PELO DRIZZLE.
+--
+-- Para rodar:
+--   psql "$DATABASE_URL" -f scripts/pg_trgm_indexes.sql
+--
+-- Por que está aqui e não em `drizzle/`: `CREATE EXTENSION pg_trgm`
+-- exige privilégio de superuser em vários setups Postgres. Se o
+-- role da app não tiver, o drizzle-migrator aborta a sequência de
+-- migrations e nenhuma migration futura roda (mesmo padrão do
+-- incidente 0025_users_soft_delete). Em AWS RDS o master user tem
+-- o privilégio nativo; em VPS depende do setup.
+--
+-- Quando aplicar:
+--   - **Hoje (VPS Hostinger)**: rode manualmente SE/QUANDO precisar.
+--     Com tabelas pequenas (< 5k rows) o ganho é irrelevante e o
+--     ILIKE faz seq scan rápido mesmo. Pode esperar.
+--   - **Migração AWS**: rodar logo após o `pg_dump | pg_restore`
+--     no RDS. Lá o CREATE EXTENSION funciona com o role master
+--     padrão sem ajustes.
+--
 -- pg_trgm + GIN indexes nas colunas ILIKE do admin e busca pública.
 --
 -- Por quê: queries `WHERE col ILIKE '%foo%'` fazem sequential scan

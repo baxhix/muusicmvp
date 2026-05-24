@@ -176,13 +176,6 @@
       "when": 1779600000000,
       "tag": "0025_users_soft_delete",
       "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "7",
-      "when": 1779700000000,
-      "tag": "0026_pg_trgm_indexes",
-      "breakpoints": true
     }
   ]
 }
