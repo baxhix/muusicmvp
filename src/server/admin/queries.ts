@@ -1,4 +1,4 @@
-import { sql, gt, count } from 'drizzle-orm';
+import { sql, gt, count, and } from 'drizzle-orm';
 import { db } from '../db';
 import {
   conversations,
@@ -25,8 +25,13 @@ export async function getAdminKpis() {
     [{ value: totalConversations }],
     [{ value: unreadNotifications }],
   ] = await Promise.all([
-    db.select({ value: count() }).from(users),
-    db.select({ value: count() }).from(users).where(gt(users.lastSeenAt, since)),
+    // LGPD: KPIs ignoram soft-deleted (não inflam contagem
+    // depois do usuário pedir exclusão).
+    db.select({ value: count() }).from(users).where(sql`${users.deletedAt} IS NULL`),
+    db
+      .select({ value: count() })
+      .from(users)
+      .where(and(gt(users.lastSeenAt, since), sql`${users.deletedAt} IS NULL`)),
     db.select({ value: count() }).from(messages),
     db.select({ value: count() }).from(tracks),
     db.select({ value: count() }).from(listeningHistory),
@@ -195,6 +200,11 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       FROM user_activities
       WHERE user_id = u.id
     ) p ON TRUE
+    -- LGPD: usuário soft-deleted some da listagem admin imediatamente.
+    -- A row continua no DB pelo período de retenção (anonimizada
+    -- após N dias via cron), mas operador não precisa ver a entrada
+    -- na tabela principal.
+    WHERE u.deleted_at IS NULL
     ORDER BY u.created_at DESC
     LIMIT ${limit} OFFSET ${offset}
   `);

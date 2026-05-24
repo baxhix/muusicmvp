@@ -16,7 +16,8 @@
     "realtime:start": "tsx src/server/realtime/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "cron:anonymize": "tsx src/server/cron/anonymizeDeletedUsers.ts"
   },
   "dependencies": {
     "@types/canvas-confetti": "^1.9.0",
