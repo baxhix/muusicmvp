@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { promises as fs } from 'node:fs';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import {
   getMaterialNode,
   incrementDownloads,
 } from '@/server/materiais/queries';
-import { resolveMaterialPath, contentTypeOf } from '@/server/materiais/storage';
+import { resolveMaterialPath } from '@/server/materiais/storage';
+import { serveFile } from '@/server/storage/serveFile';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -14,15 +15,21 @@ export const runtime = 'nodejs';
  *
  * Faz três coisas:
  *   1. Resolve o node por ID.
- *   2. Increment do contador `downloads` (analytics).
- *   3. Stream do binário com header `Content-Disposition:
- *      attachment` — força o browser a baixar em vez de exibir
- *      inline. Filename na resposta usa o `name` user-friendly
- *      do registro (ex: "palco-encerramento.jpg"), não o nome
- *      sanitizado interno (que tem o UUID prefix).
+ *   2. Increment do contador `downloads` (analytics, fire-and-forget).
+ *   3. Stream do binário com `Content-Disposition: attachment`
+ *      forçando download. Filename na resposta usa o `name`
+ *      user-friendly (ex: "palco-encerramento.jpg") em vez do
+ *      sanitizado interno com UUID prefix.
+ *
+ * `serveFile` cuida do streaming — antes carregava o arquivo
+ * inteiro pra RAM, o que era problema em downloads grandes
+ * (50MB zips) com vários users simultâneos.
+ *
+ * Cache-Control `no-store` porque é uma ação contábil (incrementa
+ * downloads); proxies não devem servir cópia cacheada.
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireAdmin();
@@ -41,36 +48,24 @@ export async function GET(
     return NextResponse.json({ error: 'not_a_file' }, { status: 400 });
   }
 
-  const p = resolveMaterialPath(found.node.filename);
-  if (!p) {
-    return NextResponse.json({ error: 'invalid_filename' }, { status: 500 });
-  }
-
-  let buf: Buffer;
-  try {
-    buf = await fs.readFile(p);
-  } catch {
-    return NextResponse.json({ error: 'file_missing' }, { status: 404 });
-  }
-
-  /* Analytics — fire-and-forget. Mesmo se falhar não
-   *  comprometemos o download. */
+  /* Analytics — fire-and-forget. Falha aqui não compromete download. */
   void incrementDownloads(id).catch((err) => {
-    console.error('materiais download counter failed:', err);
+    logger.error('materiais.download.counter', err, { id });
   });
 
-  /* Sanitize do filename de saída: aspas + chars problemáticos
-   *  fora do permitido pelo Content-Disposition. RFC 5987
-   *  recomenda filename* pra unicode; aqui mantemos simples + ASCII. */
+  /* Sanitize do filename de saída — RFC 5987 recomenda filename*
+   * pra unicode; aqui ASCII simples é suficiente. */
   const safeName = found.node.name
     .replace(/[^a-zA-Z0-9._-]/g, '_')
     .slice(0, 200);
 
-  return new Response(new Uint8Array(buf), {
-    headers: {
-      'Content-Type': contentTypeOf(found.node.filename),
-      'Content-Disposition': `attachment; filename="${safeName}"`,
-      'Cache-Control': 'no-store',
+  return serveFile(
+    req,
+    resolveMaterialPath(found.node.filename),
+    found.node.filename,
+    {
+      downloadAs: safeName,
+      cacheControl: 'no-store',
     },
-  });
+  );
 }

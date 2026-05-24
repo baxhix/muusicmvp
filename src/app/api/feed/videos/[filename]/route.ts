@@ -1,47 +1,22 @@
-import { promises as fs } from 'node:fs';
-import { NextResponse } from 'next/server';
-import {
-  contentTypeOf,
-  resolveFeedVideoPath,
-} from '@/server/feed/storage';
+import { resolveFeedVideoPath } from '@/server/feed/storage';
+import { serveFile } from '@/server/storage/serveFile';
 
 export const runtime = 'nodejs';
 
 /**
- * Public route — serves admin-uploaded videos by filename.
+ * Public route — serves admin-uploaded videos por filename.
  *
- * No auth required (feed posts are public anyway). The filename
- * whitelist in resolveFeedVideoPath prevents path traversal.
- *
- * Note: this is a SIMPLE serve — entire file read into memory, no
- * HTTP Range support. For ≤100 MB clips Next.js + Node handle the
- * memory fine, but for longer clips later we should switch to a
- * streamed `Body.fromReadable` with Range header parsing so the
- * video element can seek without re-downloading.
+ * Sem auth (feed posts são públicos). Path traversal protegido pelo
+ * whitelist regex em `resolveFeedVideoPath`. `serveFile` cuida de:
+ *   - Streaming (RAM constante mesmo em vídeo grande)
+ *   - HTTP Range support — necessário pro <video> seekbar funcionar
+ *     (browser baixa só o pedaço solicitado, não o vídeo inteiro)
+ *   - ETag → 304 quando cliente já cacheou
  */
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ filename: string }> },
 ) {
   const { filename } = await ctx.params;
-  const p = resolveFeedVideoPath(filename);
-  if (!p) return new NextResponse('not found', { status: 404 });
-
-  let buf: Buffer;
-  try {
-    buf = await fs.readFile(p);
-  } catch {
-    return new NextResponse('not found', { status: 404 });
-  }
-
-  return new NextResponse(new Uint8Array(buf), {
-    status: 200,
-    headers: {
-      'Content-Type': contentTypeOf(filename),
-      'Cache-Control': 'public, max-age=31536000, immutable',
-      'Content-Length': String(buf.byteLength),
-      // Hint to browsers that we accept (future) Range requests.
-      'Accept-Ranges': 'bytes',
-    },
-  });
+  return serveFile(req, resolveFeedVideoPath(filename), filename);
 }
