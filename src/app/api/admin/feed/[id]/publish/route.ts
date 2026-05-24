@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { publishFeedPostNow } from '@/server/feed/admin';
+import { handleApiError, NotFoundError } from '@/server/api/errors';
 
 export const runtime = 'nodejs';
 
@@ -21,9 +22,17 @@ export async function POST(
     const post = await publishFeedPostNow(id);
     return NextResponse.json(post);
   } catch (err) {
-    const code = err instanceof Error ? err.message : 'publish_failed';
-    const status = code === 'post_not_found' ? 404 : 500;
-    if (status === 500) console.error('publishFeedPostNow failed:', err);
-    return NextResponse.json({ error: code }, { status });
+    // publishFeedPostNow lança Error('post_not_found') quando o id
+    // não existe — converte pro tipo padronizado pra 404.
+    if (err instanceof Error && err.message === 'post_not_found') {
+      return handleApiError(new NotFoundError('post_not_found'), {
+        scope: 'admin.feed.publish',
+        ctx: { id },
+      });
+    }
+    return handleApiError(err, {
+      scope: 'admin.feed.publish',
+      ctx: { id },
+    });
   }
 }

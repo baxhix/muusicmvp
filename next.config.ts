@@ -47,6 +47,44 @@ const SECURITY_HEADERS = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
 ];
 
+/**
+ * Content-Security-Policy — modo Report-Only.
+ *
+ * MODO DE ROLLOUT PRUDENTE:
+ *   1. (atual) Report-Only — browser NÃO bloqueia, só envia
+ *      relatórios pro endpoint configurado. Permite descobrir
+ *      todas as fontes legítimas (Mapbox tiles, PostHog,
+ *      inline scripts, fonts CDN, etc.) antes de enforce.
+ *   2. (futuro) Após 1–2 semanas de telemetria, ajustar a
+ *      policy e mudar pra `Content-Security-Policy` (enforce).
+ *
+ * Sources atuais conhecidas (mapeadas via auditoria):
+ *   - script: self + 'unsafe-inline' (welcome flag script no
+ *     root layout) + PostHog (us.i.posthog.com) + Mapbox
+ *   - style: self + 'unsafe-inline' (Tailwind/CSS Modules
+ *     inline em alguns componentes)
+ *   - img: self + data: + blob: + api.mapbox.com + *.tile.openstreetmap.org
+ *   - font: self + data: (Borscha self-hosted)
+ *   - connect: self + Resend webhook + PostHog + Mapbox API
+ *   - frame-ancestors: 'none' (anti-clickjacking — substitui
+ *     X-Frame-Options nos browsers modernos)
+ *
+ * 'unsafe-inline' em script é o ponto que mais incomoda — ideal
+ * é mover pra nonce ou hash. Próxima iteração.
+ */
+const CSP_REPORT_ONLY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com https://api.mapbox.com https://*.mapbox.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https: https://api.mapbox.com https://*.tile.openstreetmap.org",
+  "font-src 'self' data:",
+  "connect-src 'self' https://us.i.posthog.com https://api.mapbox.com wss://*.mapbox.com https://api.resend.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+].join('; ');
+
 const nextConfig: NextConfig = {
   // Produces .next/standalone for the production Docker image.
   output: 'standalone',
@@ -71,7 +109,17 @@ const nextConfig: NextConfig = {
         // herdam, e o overhead é desprezível (são headers, não geram
         // request adicional).
         source: '/:path*',
-        headers: SECURITY_HEADERS,
+        headers: [
+          ...SECURITY_HEADERS,
+          // CSP em modo Report-Only — não bloqueia nada, só registra
+          // violações no console do browser pra mapear fontes externas
+          // legítimas antes de ativar enforce. Não aplica em /api/*
+          // (rotas JSON não renderizam scripts).
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: CSP_REPORT_ONLY,
+          },
+        ],
       },
     ];
   },

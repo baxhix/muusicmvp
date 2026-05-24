@@ -4,7 +4,7 @@ import { and, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '@/server/db';
 import { tokens, users } from '@/server/db/schema';
 import { hashToken } from '@/server/auth/tokens';
-import { createSession } from '@/server/auth/session';
+import { consumeMagicAndCreateSession } from '@/server/auth/session';
 import { env } from '@/server/env';
 import { limitByIp, verifyLimiter } from '@/server/rateLimit';
 
@@ -61,12 +61,10 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL('/?auth=expired', env.APP_URL));
   }
 
-  await db
-    .update(tokens)
-    .set({ consumedAt: new Date() })
-    .where(eq(tokens.tokenHash, hash));
-
-  await createSession(magic.userId);
+  // Atômico: marca magic consumido + cria session na MESMA transação.
+  // Se qualquer um falhar, ambos revertem e o usuário pode tentar de
+  // novo com o mesmo link (em vez de ficar com magic consumido sem session).
+  await consumeMagicAndCreateSession(hash, magic.userId);
 
   return NextResponse.redirect(returnTo ?? new URL('/app', env.APP_URL));
 }
@@ -133,13 +131,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'invalid_code' }, { status: 400 });
   }
 
-  // Marca consumido pelo hash do token (PK).
-  await db
-    .update(tokens)
-    .set({ consumedAt: new Date() })
-    .where(eq(tokens.tokenHash, magic.tokenHash));
-
-  await createSession(magic.userId);
+  // Atômico: marca consumido + cria session na MESMA transação
+  // (ver consumeMagicAndCreateSession docs).
+  await consumeMagicAndCreateSession(magic.tokenHash, magic.userId);
 
   return NextResponse.json({ ok: true });
 }

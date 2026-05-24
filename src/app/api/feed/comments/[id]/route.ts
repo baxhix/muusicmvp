@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/server/auth/requireUser';
 import { deleteComment } from '@/server/feed/comments';
+import { ForbiddenError, handleApiError } from '@/server/api/errors';
 
 export const runtime = 'nodejs';
 
@@ -29,12 +30,12 @@ export async function DELETE(
       callerId: user.id,
       callerIsAdmin: user.role === 'admin',
     });
-    if (!ok) {
-      return NextResponse.json({ error: 'forbidden_or_missing' }, { status: 403 });
-    }
+    if (!ok) throw new ForbiddenError('forbidden_or_missing');
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('DELETE comment failed:', err);
-    return NextResponse.json({ error: 'delete_failed' }, { status: 500 });
+    return handleApiError(err, {
+      scope: 'feed.comments.delete',
+      ctx: { id, userId: user.id },
+    });
   }
 }

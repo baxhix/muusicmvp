@@ -1,39 +1,37 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import {
   getMaterialNode,
   updateNode,
   deleteNode,
   collectFilenamesDeep,
-  type MaterialAudience,
-  type MaterialStatus,
 } from '@/server/materiais/queries';
 import { deleteMaterialFile } from '@/server/materiais/storage';
+import { handleApiError, NotFoundError, ValidationError } from '@/server/api/errors';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
-const AUDIENCES = new Set<MaterialAudience>([
-  'top1', 'top10', 'top50', 'top100', 'all',
-]);
-const STATUSES = new Set<MaterialStatus>([
-  'rascunho', 'publicado', 'agendado', 'arquivado',
-]);
-
-interface PatchBody {
-  name?: string;
-  description?: string | null;
-  audience?: string;
-  status?: string;
-  publishedToFeed?: boolean;
-}
+/* Schema do patch — todos os campos opcionais. Pelo menos um
+ * precisa estar presente (refine no fim). Enums estritos. */
+const PatchSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    description: z.string().trim().max(2000).nullable().optional(),
+    audience: z.enum(['top1', 'top10', 'top50', 'top100', 'all']).optional(),
+    status: z.enum(['rascunho', 'publicado', 'agendado', 'arquivado']).optional(),
+    publishedToFeed: z.boolean().optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: 'no_changes',
+  });
 
 /**
  * PATCH /api/admin/materiais/[id]
  *   body JSON: { name?, description?, audience?, status?, publishedToFeed? }
  *
- * Atualiza qualquer subset dos campos editáveis. Validação por
- * campo — ignora valores fora do enum em vez de 400 (defensivo
- * pra UI velha).
+ * Atualiza qualquer subset dos campos editáveis.
  */
 export async function PATCH(
   req: Request,
@@ -44,61 +42,25 @@ export async function PATCH(
 
   const { id } = await ctx.params;
   if (!id) {
-    return NextResponse.json({ error: 'missing_id' }, { status: 400 });
-  }
-
-  let body: PatchBody;
-  try {
-    body = (await req.json()) as PatchBody;
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
-  }
-
-  const patch: {
-    name?: string;
-    description?: string | null;
-    audience?: MaterialAudience;
-    status?: MaterialStatus;
-    publishedToFeed?: boolean;
-  } = {};
-
-  if (typeof body.name === 'string' && body.name.trim()) {
-    patch.name = body.name.trim();
-  }
-  if (body.description === null) {
-    patch.description = null;
-  } else if (typeof body.description === 'string') {
-    patch.description = body.description.trim() || null;
-  }
-  if (
-    typeof body.audience === 'string' &&
-    AUDIENCES.has(body.audience as MaterialAudience)
-  ) {
-    patch.audience = body.audience as MaterialAudience;
-  }
-  if (
-    typeof body.status === 'string' &&
-    STATUSES.has(body.status as MaterialStatus)
-  ) {
-    patch.status = body.status as MaterialStatus;
-  }
-  if (typeof body.publishedToFeed === 'boolean') {
-    patch.publishedToFeed = body.publishedToFeed;
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return NextResponse.json({ error: 'no_changes' }, { status: 400 });
+    return handleApiError(new ValidationError('missing_id'), {
+      scope: 'admin.materiais.update',
+    });
   }
 
   try {
+    const raw = await req.json().catch(() => {
+      throw new ValidationError('invalid_json');
+    });
+    const patch = PatchSchema.parse(raw);
+
     const updated = await updateNode(id, patch);
-    if (!updated) {
-      return NextResponse.json({ error: 'not_found' }, { status: 404 });
-    }
+    if (!updated) throw new NotFoundError();
     return NextResponse.json({ node: updated });
   } catch (err) {
-    console.error('materiais update failed:', err);
-    return NextResponse.json({ error: 'update_failed' }, { status: 500 });
+    return handleApiError(err, {
+      scope: 'admin.materiais.update',
+      ctx: { id },
+    });
   }
 }
 
@@ -118,16 +80,16 @@ export async function DELETE(
 
   const { id } = await ctx.params;
   if (!id) {
-    return NextResponse.json({ error: 'missing_id' }, { status: 400 });
+    return handleApiError(new ValidationError('missing_id'), {
+      scope: 'admin.materiais.delete',
+    });
   }
 
   try {
     /* Verifica existência + tipo pra saber se precisamos do
      *  recursive cleanup. */
     const found = await getMaterialNode(id);
-    if (!found) {
-      return NextResponse.json({ error: 'not_found' }, { status: 404 });
-    }
+    if (!found) throw new NotFoundError();
 
     /* Coleta os filenames de descendentes (incluindo ele mesmo
      *  se for file). Recursive CTE no DB. */
@@ -136,18 +98,30 @@ export async function DELETE(
     /* Apaga o registro — cascade FK limpa os descendentes do DB. */
     const ok = await deleteNode(id);
     if (!ok) {
-      return NextResponse.json({ error: 'delete_failed' }, { status: 500 });
+      throw new Error('delete_failed');
     }
 
     /* Best-effort cleanup dos binários no disco. Falhas aqui
      *  não invalidam a operação — o registro já foi removido,
      *  ficar com arquivo órfão é um caso recuperável via cron.
      *  Paraleliza com Promise.all pra não esperar serialmente. */
-    await Promise.all(filenames.map((fn) => deleteMaterialFile(fn)));
+    const results = await Promise.allSettled(
+      filenames.map((fn) => deleteMaterialFile(fn)),
+    );
+    const orphans = results.filter((r) => r.status === 'rejected').length;
+    if (orphans > 0) {
+      logger.warn('admin.materiais.delete.orphans', {
+        id,
+        orphan_count: orphans,
+        total: filenames.length,
+      });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('materiais delete failed:', err);
-    return NextResponse.json({ error: 'delete_failed' }, { status: 500 });
+    return handleApiError(err, {
+      scope: 'admin.materiais.delete',
+      ctx: { id },
+    });
   }
 }
