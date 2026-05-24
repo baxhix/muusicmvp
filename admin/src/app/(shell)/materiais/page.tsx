@@ -803,46 +803,39 @@ export default function MateriaisPage() {
         </header>
       )}
 
-      {/* ── Bulk actions bar — sempre visível quando há
-       *     arquivos. Quando seleção ativa, troca pra modo
-       *     contextual com count + ações de massa. */}
+      {/* ── Bulk actions bar — só botões puros, ZERO checkbox aqui.
+       *
+       *  Histórico de bugs com esta área:
+       *    1) <label> externo + Checkbox interno (que renderiza
+       *       outro <label>) → labels aninhados → browsers
+       *       vazavam binding pra qualquer botão da página.
+       *    2) Mesmo trocando o externo por <div>, ainda havia
+       *       um Checkbox React component pintando seu próprio
+       *       <label sem htmlFor> aqui — coexistindo com 13+
+       *       outros checkboxes da lista de arquivos → DOM
+       *       confuso, cliques alheios disparavam selectAll
+       *       OU toggleSelect(arquivo aleatório).
+       *
+       *  Solução definitiva: NENHUM checkbox aqui. Apenas botões.
+       *  "Selecionar todos" é um <button> explícito. Clique vai
+       *  só pro botão, ponto. */}
       {files.length > 0 && (
         <div className={cn(styles.bulkBar, hasSelection && styles.bulkBarActive)}>
-          {/* IMPORTANTE: NÃO usar <label> aqui. O componente
-           *  Checkbox JÁ renderiza um <label> interno. Label
-           *  aninhado é HTML inválido e alguns navegadores
-           *  "vazam" o binding pro próximo form control no
-           *  DOM — fazia cliques em botões alheios (Grid/Lista,
-           *  Renomear, Excluir) dispararem o toggleSelectAll. */}
-          <div className={styles.bulkSelectAll}>
-            <Checkbox
-              checked={isAllSelected}
-              indeterminate={isPartiallySelected}
-              onChange={toggleSelectAll}
-              aria-label="Selecionar todos os arquivos"
-            />
-            <span
-              className={styles.bulkSelectAllLabel}
-              onClick={toggleSelectAll}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleSelectAll();
-                }
-              }}
-            >
-              {hasSelection ? (
-                <>
-                  <strong>{selectedIds.size}</strong> de {files.length} selecionado
-                  {selectedIds.size === 1 ? '' : 's'}
-                </>
-              ) : (
-                <>Selecionar todos ({files.length})</>
-              )}
-            </span>
-          </div>
+          <button
+            type="button"
+            className={styles.bulkSelectAllBtn}
+            onClick={toggleSelectAll}
+            aria-pressed={isAllSelected}
+          >
+            {hasSelection ? (
+              <>
+                <strong>{selectedIds.size}</strong> de {files.length} selecionado
+                {selectedIds.size === 1 ? '' : 's'}
+              </>
+            ) : (
+              <>Selecionar todos ({files.length})</>
+            )}
+          </button>
 
           <div className={styles.bulkActions}>
             {hasSelection ? (

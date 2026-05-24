@@ -1,4 +1,10 @@
-import { forwardRef, useEffect, useRef, type InputHTMLAttributes } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useRef,
+  type InputHTMLAttributes,
+} from 'react';
 import { cn } from '@/lib/utils';
 import { IconCheck, IconMinus } from '@/components/icons';
 import styles from './Checkbox.module.css';
@@ -8,10 +14,23 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
   indeterminate?: boolean;
 }
 
+/**
+ * Checkbox com binding EXPLÍCITO via htmlFor (não implícito por
+ * nesting). Cada instância gera um id único via useId pra
+ * eliminar qualquer ambiguidade de label binding em DOMs grandes
+ * com muitos checkboxes coexistindo (file lists, bulk bars, etc).
+ *
+ * Bug histórico: usar label sem htmlFor (binding implícito por
+ * descendant) funcionava na maioria dos casos mas tinha edge
+ * cases onde clicks em elementos não-relacionados disparavam o
+ * binding. Solução: explicit-by-default.
+ */
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
-  { label, indeterminate = false, className, disabled, ...rest },
+  { label, indeterminate = false, className, disabled, id, ...rest },
   forwardedRef
 ) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
   const innerRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -21,6 +40,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   return (
     <label
       className={cn(styles.wrap, className)}
+      htmlFor={inputId}
       aria-disabled={disabled || undefined}
     >
       <input
@@ -29,6 +49,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
           if (typeof forwardedRef === 'function') forwardedRef(node);
           else if (forwardedRef) forwardedRef.current = node;
         }}
+        id={inputId}
         type="checkbox"
         className={styles.input}
         disabled={disabled}
