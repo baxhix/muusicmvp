@@ -2,7 +2,7 @@
  * log and Algoritmo screens. Code cell uses monospace + a small
  * copy button so operators can hand the code to a user fast. */
 
-.page {
+.body {
   padding: 24px;
   display: flex;
   flex-direction: column;

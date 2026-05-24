@@ -1,6 +1,11 @@
-/* Materiais — file explorer estilo Drive/Finder. */
+/* Materiais — file explorer estilo Drive/Finder.
+ *
+ * Padrão de página do admin (consistente com superfans/dashboard/
+ * users/...):  PageHeader full-width FORA do .body, e .body é o
+ * container centralizado com padding 24 + max-width 1280 + gap
+ * vertical entre seções. */
 
-.page {
+.body {
   padding: 24px;
   display: flex;
   flex-direction: column;

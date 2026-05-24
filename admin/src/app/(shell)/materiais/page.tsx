@@ -64,23 +64,28 @@ import styles from './page.module.css';
 
 /**
  * Materiais — navegador de arquivos hierárquico do acervo da
- * artista (per product feedback "estilo pastas e subpastas, como
- * do Google Drive, finder, etc.").
+ * artista, estilo Google Drive / Finder.
  *
- * Capabilities:
+ * Funcionalidades:
  *   - Navegação por pastas com breadcrumb clicável
  *   - Toggle de visualização Grid / Lista (persistido em
- *     localStorage por product feedback "inclua a opção de ver
- *     em formato de lista também e o usuário escolher")
- *   - Multi-seleção de arquivos com checkboxes — incluindo
- *     "Selecionar todos" e ações em massa (Baixar / Excluir)
- *     per product feedback "inclua a opção selecionar todos e
- *     baixar todos"
- *   - Preview drawer com Download + Excluir individual
+ *     localStorage)
+ *   - Multi-seleção de arquivos com ações em massa (Baixar /
+ *     Excluir / Selecionar todos)
+ *   - Drag-and-drop pra upload (na pasta atual ou na empty state
+ *     da pasta)
+ *   - Fila de upload com progress + cancel — exibida no
+ *     FloatingUploadPanel (bottom-right, persistente)
+ *   - Preview em modal lightbox com navegação por setas
+ *   - Permissões de acesso (tier de fãs) — só editáveis na pasta
+ *     de primeiro nível, subpastas e arquivos herdam
  *
- * Seleção é por-pasta: navegar pra outra pasta limpa a seleção
- * (mesma UX do Finder/Drive — itens visíveis numa pasta não
- * "viajam" pra outra).
+ * Convenções de UX:
+ *   - Seleção é por-pasta: navegar pra outra pasta limpa a
+ *     seleção (mesma UX do Finder/Drive)
+ *   - Audience só pode ser editada na raiz da árvore
+ *   - Upload começa imediatamente ao soltar arquivos — sem modal
+ *     de confirmação intermediário
  */
 
 const VIEW_PREF_KEY = 'materiais:view';
@@ -227,12 +232,11 @@ export default function MateriaisPage() {
     return n && n.type === 'file' ? n : null;
   }, [nodes, selectedFileId]);
 
-  /* Seleção state — boolean derivado pra ergonomia do JSX. */
+  /* Seleção state — booleans derivados pra ergonomia do JSX. */
   const allFileIds = useMemo(() => files.map((f) => f.id), [files]);
   const hasSelection = selectedIds.size > 0;
   const isAllSelected =
     allFileIds.length > 0 && allFileIds.every((id) => selectedIds.has(id));
-  const isPartiallySelected = hasSelection && !isAllSelected;
 
   function toggleSelect(fileId: string) {
     setSelectedIds((curr) => {
@@ -619,7 +623,7 @@ export default function MateriaisPage() {
   const currentFolder = breadcrumb[breadcrumb.length - 1] ?? null;
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Materiais"
         description="Acervo de conteúdo exclusivo pros superfãs. Navegue por pastas — fotos de shows, álbuns, wallpapers, figurinhas, templates e logotipos."
@@ -663,6 +667,7 @@ export default function MateriaisPage() {
         }
       />
 
+      <div className={styles.body}>
       {/* ── Loading / Error states ─────────────────────── */}
       {loading && (
         <Card className={styles.emptyCard}>
@@ -840,22 +845,9 @@ export default function MateriaisPage() {
         </header>
       )}
 
-      {/* ── Bulk actions bar — só botões puros, ZERO checkbox aqui.
-       *
-       *  Histórico de bugs com esta área:
-       *    1) <label> externo + Checkbox interno (que renderiza
-       *       outro <label>) → labels aninhados → browsers
-       *       vazavam binding pra qualquer botão da página.
-       *    2) Mesmo trocando o externo por <div>, ainda havia
-       *       um Checkbox React component pintando seu próprio
-       *       <label sem htmlFor> aqui — coexistindo com 13+
-       *       outros checkboxes da lista de arquivos → DOM
-       *       confuso, cliques alheios disparavam selectAll
-       *       OU toggleSelect(arquivo aleatório).
-       *
-       *  Solução definitiva: NENHUM checkbox aqui. Apenas botões.
-       *  "Selecionar todos" é um <button> explícito. Clique vai
-       *  só pro botão, ponto. */}
+      {/* Bulk actions bar — "Selecionar todos" usa <button> puro
+       *  (não <Checkbox>) pra evitar label binding ambíguo em DOMs
+       *  com muitos checkboxes coexistindo. */}
       {files.length > 0 && (
         <div className={cn(styles.bulkBar, hasSelection && styles.bulkBarActive)}>
           <button
@@ -1062,17 +1054,10 @@ export default function MateriaisPage() {
                     isSelected && styles.fileCardSelected,
                   )}
                 >
-                  {/* Checkbox no canto top-left — sempre visível
-                   *  quando há seleção ativa, ou no hover.
-                   *
-                   *  CRÍTICO: botão direto (não <Checkbox> component).
-                   *  Histórico: usando <Checkbox> (que renderiza
-                   *  <label htmlFor><input hidden></label>), em DOMs
-                   *  com 13+ checkboxes coexistindo, o click no .box
-                   *  às vezes não chegava ao input via label-binding
-                   *  (estado interno não atualizava). Solução
-                   *  definitiva: botão puro, estado controlado por
-                   *  className, click handler direto. Zero magia.  */}
+                  {/* Checkbox no canto top-left — visível em hover ou
+                   *  quando há seleção ativa. Usa <button> direto pra
+                   *  evitar label binding ambíguo em DOMs com muitos
+                   *  checkboxes coexistindo. */}
                   <div
                     className={cn(
                       styles.fileCheckbox,
@@ -1133,10 +1118,9 @@ export default function MateriaisPage() {
                     </div>
                   </button>
 
-                  {/* Quick actions visíveis no hover. <button> (não
-                   *  <span role="button">) — semântica + click
-                   *  consistente. stopPropagation porque o card
-                   *  inteiro tem clickable areas adjacentes. */}
+                  {/* Quick actions visíveis no hover — download +
+                   *  excluir. stopPropagation evita interferir no
+                   *  clique do card (abre preview). */}
                   <div className={styles.fileActions}>
                     <button
                       type="button"
@@ -1283,6 +1267,7 @@ export default function MateriaisPage() {
           </Card>
         </section>
       )}
+      </div>
 
       {/* ── Preview modal (lightbox) ────────────────────
        *  Substitui o drawer lateral. Permite navegação entre
@@ -1330,6 +1315,6 @@ export default function MateriaisPage() {
         onDismissItem={dismissQueueItem}
         onClearFinished={clearFinishedQueue}
       />
-    </div>
+    </>
   );
 }

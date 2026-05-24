@@ -133,12 +133,13 @@ export default function SuperchatPage() {
   ];
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Superchat"
         description="Salas de chat coletivo do Fanverse: superchat global, chats das lives e comunidades dedicadas. Acompanhe atividade em tempo real."
       />
 
+      <div className={styles.body}>
       {/* ── KPIs ───────────────────────────────────────── */}
       <div className={styles.kpiGrid}>
         <StatCard
@@ -194,6 +195,7 @@ export default function SuperchatPage() {
           pageSize={10}
         />
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

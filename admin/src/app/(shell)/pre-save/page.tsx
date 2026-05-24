@@ -143,7 +143,7 @@ export default function PreSavePage() {
   ];
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Pre Save"
         description="Campanhas de pre-save: usuários salvam a faixa antes do release e recebem o drop automaticamente."
@@ -160,6 +160,7 @@ export default function PreSavePage() {
         }
       />
 
+      <div className={styles.body}>
       {/* ── KPIs ───────────────────────────────────────── */}
       <div className={styles.kpiGrid}>
         <StatCard
@@ -216,6 +217,7 @@ export default function PreSavePage() {
           pageSize={10}
         />
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

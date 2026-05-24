@@ -284,7 +284,7 @@ export default function ConvitesPage() {
   ];
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Convites"
         description="Códigos de 6 caracteres que abrem o cadastro no app. Cada resgate gera 4 novos códigos para o convidado distribuir."
@@ -312,6 +312,7 @@ export default function ConvitesPage() {
         }
       />
 
+      <div className={styles.body}>
       {/* ── KPIs ───────────────────────────────────────── */}
       <div className={styles.kpiGrid}>
         <StatCard
@@ -387,6 +388,7 @@ export default function ConvitesPage() {
           />
         )}
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

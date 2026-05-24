@@ -1,7 +1,7 @@
 /* Developer reference — endpoint catalog. Dense, scannable, with
  * row-level expansion for the API details. */
 
-.page {
+.body {
   padding: 24px;
   display: flex;
   flex-direction: column;

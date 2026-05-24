@@ -374,7 +374,7 @@ export default function DesenvolvedorPage() {
   const [tab, setTab] = useState<DevTab>('endpoints');
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Desenvolvedor"
         description="Referência técnica do Fanverse: endpoints REST/Socket, tags de rastreamento e documentação OpenAPI."
@@ -388,10 +388,12 @@ export default function DesenvolvedorPage() {
         }
       />
 
-      {tab === 'endpoints' && <EndpointsTab />}
-      {tab === 'tags'      && <TagsManager />}
-      {tab === 'swagger'   && <SwaggerTab />}
-    </div>
+      <div className={styles.body}>
+        {tab === 'endpoints' && <EndpointsTab />}
+        {tab === 'tags'      && <TagsManager />}
+        {tab === 'swagger'   && <SwaggerTab />}
+      </div>
+    </>
   );
 }
 

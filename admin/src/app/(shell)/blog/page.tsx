@@ -62,7 +62,7 @@ function BlogIndexInner() {
   }, [tab]);
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Blog"
         description="Posts, categorias e autores. Edição de post abre em página dedicada."
@@ -92,10 +92,12 @@ function BlogIndexInner() {
         }
       />
 
-      {tab === 'posts'      && <PostsTab />}
-      {tab === 'categorias' && <CategoriasTab />}
-      {tab === 'autores'    && <AutoresTab />}
-    </div>
+      <div className={styles.body}>
+        {tab === 'posts'      && <PostsTab />}
+        {tab === 'categorias' && <CategoriasTab />}
+        {tab === 'autores'    && <AutoresTab />}
+      </div>
+    </>
   );
 }
 

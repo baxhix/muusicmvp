@@ -173,7 +173,7 @@ export default function LivePage() {
   ];
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title="Live"
         description="Eventos ao vivo agendados pelo backoffice. Defina data, libere o chat (Superchat) e escolha quais fãs serão notificados e poderão entrar."
@@ -190,6 +190,7 @@ export default function LivePage() {
         }
       />
 
+      <div className={styles.body}>
       {/* ── KPIs ───────────────────────────────────────── */}
       <div className={styles.kpiGrid}>
         <StatCard
@@ -261,6 +262,7 @@ export default function LivePage() {
           </div>
         </div>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

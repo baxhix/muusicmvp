@@ -2,7 +2,7 @@
  * Convites/Engajamento: KPIs no topo, filtros em card slim,
  * tabela com a lista. */
 
-.page {
+.body {
   padding: 24px;
   display: flex;
   flex-direction: column;
