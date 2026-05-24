@@ -901,6 +901,11 @@ export const emailTemplates = pgTable('email_templates', {
   kind: text('kind').primaryKey(),
   subject: text('subject').notNull(),
   html: text('html').notNull(),
+  /** Estrutura do editor visual (tema + blocos). Quando setado,
+   *  o admin pode voltar a editar visualmente e o `html` foi
+   *  gerado a partir desta estrutura. Null = template editado em
+   *  HTML raw, sem round-trip pro visual. */
+  design: jsonb('design'),
   // Quando false, fallback pro hardcoded em código — kill switch
   // se template no DB der ruim.
   isActive: boolean('is_active').notNull().default(true),

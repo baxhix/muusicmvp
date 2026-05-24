@@ -5,6 +5,7 @@
  */
 
 import { api } from './api';
+import type { EmailDesign } from './emailDesign';
 
 export interface EmailTemplate {
   kind: string;
@@ -13,10 +14,12 @@ export interface EmailTemplate {
   variables: { name: string; description: string }[];
   defaultSubject: string;
   defaultHtml: string;
+  defaultDesign: EmailDesign | null;
   isEdited: boolean;
   isActive: boolean;
   subject: string;
   html: string;
+  design: EmailDesign | null;
   updatedAt: string | null;
 }
 
@@ -65,7 +68,10 @@ export interface EmailCampaign {
 export interface UpsertTemplateInput {
   kind: string;
   subject: string;
+  /** Quando `design` setado, o server REGENERA o html e ignora
+   *  este campo. Mandar string vazia é OK no modo visual. */
   html: string;
+  design?: EmailDesign | null;
   isActive: boolean;
   description?: string;
 }

@@ -1,26 +1,40 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import Dialog from '@/components/ui/Dialog';
+import Tabs from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
 import { IconEdit, IconSend, IconCheckCircle } from '@/components/icons';
 import { emailsService, type EmailTemplate } from '@/services/emails';
+import {
+  type EmailDesign,
+  designToHtml,
+  interpolatePreview,
+} from '@/services/emailDesign';
+import VisualEditor from './VisualEditor';
 import styles from './TemplatesTab.module.css';
 
 /**
  * Templates editáveis dos emails do sistema.
  *
- * Cada card mostra um template "conhecido" (magic_link, etc.).
- * Click "Editar" abre o editor: subject + HTML + preview lado a
- * lado, lista de {{variáveis}} disponíveis, botão "Enviar teste".
+ * Lista de cards (1 por template conhecido) + editor em dialog.
  *
- * "Editado" badge aparece quando o registro do DB sobrescreveu o
- * default. Toggle "Ativo" controla se o template do DB é usado
- * (false = fallback pro hardcoded em código).
+ * No editor, toggle "Visual / HTML":
+ *   - Visual: editor form-based (cores, blocos). Salva `design`
+ *             JSON + html regenerado server-side. Padrão pra
+ *             equipe de gestão.
+ *   - HTML:   textarea raw. Salva só html, zera design. Pra dev
+ *             que precisa de algo fora da grade visual.
+ *
+ * Quando o admin abre um template sem `design` salvo (primeira
+ * vez), começa no modo Visual com o `defaultDesign` do
+ * KNOWN_TEMPLATES. Se já tem design → carrega. Se editou em
+ * HTML antes → o toggle pra Visual recomeça do `defaultDesign`
+ * com aviso (perde-se o HTML editado manualmente).
  */
 export default function TemplatesTab() {
   const [items, setItems] = useState<EmailTemplate[] | null>(null);
@@ -29,6 +43,7 @@ export default function TemplatesTab() {
 
   useEffect(() => {
     refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function refetch() {
@@ -56,7 +71,7 @@ export default function TemplatesTab() {
       <Card>
         <CardHeader
           title="Templates do sistema"
-          description="Subject + HTML que o servidor usa quando dispara cada tipo de email. Se desativar um template editado, o sistema cai pro fallback hardcoded — kill switch seguro."
+          description="Subject + visual do email que o servidor usa quando dispara cada tipo. Modo Visual (form-based) pra editar sem mexer em HTML; modo HTML pra controle total. Desativar um template editado faz o sistema cair pro fallback hardcoded — kill switch seguro."
         />
         <div className={styles.grid}>
           {items === null && (
@@ -80,6 +95,9 @@ export default function TemplatesTab() {
                     )}
                     {!t.isEdited && (
                       <Badge tone="neutral" size="sm">Default</Badge>
+                    )}
+                    {t.design && (
+                      <Badge tone="success" size="sm">Editor visual</Badge>
                     )}
                   </div>
                 </div>
@@ -118,6 +136,8 @@ export default function TemplatesTab() {
 
 /* ── Editor dialog ───────────────────────────────────────────────── */
 
+type EditorMode = 'visual' | 'html';
+
 interface TemplateEditorProps {
   template: EmailTemplate;
   onClose: () => void;
@@ -127,35 +147,66 @@ interface TemplateEditorProps {
 function TemplateEditor({ template, onClose, onSaved }: TemplateEditorProps) {
   const { push } = useToast();
   const [subject, setSubject] = useState(template.subject);
-  const [html, setHtml] = useState(template.html);
-  const [isActive, setIsActive] = useState(template.isActive || !template.isEdited);
+  const [isActive, setIsActive] = useState(
+    template.isActive || !template.isEdited,
+  );
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+
+  /* Estado dos dois modos coexiste — admin pode flipar e voltar
+   * sem perder o que digitou (até salvar). Quando salva, só o
+   * modo ativo é enviado pro server. */
+  const [mode, setMode] = useState<EditorMode>(
+    template.design ? 'visual' : template.isEdited ? 'html' : 'visual',
+  );
+  const [design, setDesign] = useState<EmailDesign>(
+    template.design ?? template.defaultDesign ?? makeFallbackDesign(template.label),
+  );
+  const [html, setHtml] = useState(template.html);
+
+  /* Preview compartilhado entre os 2 modos. Visual = regenerado
+   * a partir do design. HTML = direto do textarea. */
+  const previewHtml = useMemo(() => {
+    const raw = mode === 'visual' ? designToHtml(design) : html;
+    return interpolatePreview(raw, template.variables);
+  }, [mode, design, html, template.variables]);
 
   async function save() {
     setSaving(true);
     try {
-      const res = await emailsService.templates.upsert({
-        kind: template.kind,
-        subject,
-        html,
-        isActive,
-        description: template.description,
-      });
+      const payload =
+        mode === 'visual'
+          ? {
+              kind: template.kind,
+              subject,
+              html: '',
+              design,
+              isActive,
+              description: template.description,
+            }
+          : {
+              kind: template.kind,
+              subject,
+              html,
+              design: null,
+              isActive,
+              description: template.description,
+            };
+      const res = await emailsService.templates.upsert(payload);
       push({
         type: 'success',
         title: 'Template salvo',
-        description: 'A próxima vez que esse email for disparado, usa a versão editada.',
+        description:
+          'A próxima vez que esse email for disparado, usa a versão editada.',
       });
       onSaved({
         ...template,
         subject,
-        html,
+        html: res.template.html,
+        design: (res.template.design as EmailDesign | null) ?? null,
         isActive,
         isEdited: true,
-        updatedAt: res.template.updatedAt
-          ? new Date(res.template.updatedAt as unknown as string).toISOString()
-          : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
     } catch (err) {
       push({
@@ -171,10 +222,11 @@ function TemplateEditor({ template, onClose, onSaved }: TemplateEditorProps) {
   async function sendTest() {
     setTesting(true);
     try {
+      const rawHtml = mode === 'visual' ? designToHtml(design) : html;
       const res = await emailsService.templates.test({
         kind: template.kind,
         subject,
-        html,
+        html: rawHtml,
       });
       push({
         type: 'success',
@@ -193,9 +245,25 @@ function TemplateEditor({ template, onClose, onSaved }: TemplateEditorProps) {
   }
 
   function reset() {
+    if (mode === 'visual') {
+      setDesign(template.defaultDesign ?? makeFallbackDesign(template.label));
+    } else {
+      setHtml(template.defaultHtml);
+    }
     setSubject(template.defaultSubject);
-    setHtml(template.defaultHtml);
     setIsActive(false);
+  }
+
+  function switchTo(next: EditorMode) {
+    /* Sair do Visual → HTML: preenche o textarea com o HTML
+     * regenerado, pra o usuário ver e poder ajustar. */
+    if (mode === 'visual' && next === 'html') {
+      setHtml(designToHtml(design));
+    }
+    /* Sair de HTML → Visual: avisa que perde edits HTML. Se
+     * havia design original carregamos ele de volta; senão, o
+     * defaultDesign. */
+    setMode(next);
   }
 
   return (
@@ -226,7 +294,7 @@ function TemplateEditor({ template, onClose, onSaved }: TemplateEditorProps) {
             leadingIcon={<IconCheckCircle size={14} />}
             onClick={save}
             loading={saving}
-            disabled={testing || !subject.trim() || !html.trim()}
+            disabled={testing || !subject.trim()}
           >
             Salvar
           </Button>
@@ -278,22 +346,38 @@ function TemplateEditor({ template, onClose, onSaved }: TemplateEditorProps) {
           </div>
         )}
 
+        <Tabs<EditorMode>
+          items={[
+            { id: 'visual', label: 'Editor visual' },
+            { id: 'html',   label: 'HTML (avançado)' },
+          ]}
+          value={mode}
+          onChange={switchTo}
+          variant="pills"
+        />
+
         <div className={styles.editorSplit}>
           <div className={styles.editorPane}>
-            <label className={styles.paneLabel}>HTML</label>
-            <textarea
-              className={styles.htmlEditor}
-              value={html}
-              onChange={(e) => setHtml(e.target.value)}
-              spellCheck={false}
-            />
+            <label className={styles.paneLabel}>
+              {mode === 'visual' ? 'Estrutura do email' : 'HTML cru'}
+            </label>
+            {mode === 'visual' ? (
+              <VisualEditor value={design} onChange={setDesign} />
+            ) : (
+              <textarea
+                className={styles.htmlEditor}
+                value={html}
+                onChange={(e) => setHtml(e.target.value)}
+                spellCheck={false}
+              />
+            )}
           </div>
           <div className={styles.editorPane}>
             <label className={styles.paneLabel}>Preview</label>
             <iframe
               className={styles.previewFrame}
               title="Preview"
-              srcDoc={previewWithFakeVars(html, template.variables)}
+              srcDoc={previewHtml}
             />
           </div>
         </div>
@@ -302,23 +386,34 @@ function TemplateEditor({ template, onClose, onSaved }: TemplateEditorProps) {
   );
 }
 
-/** Substitui {{vars}} por valores fictícios pro preview ficar
- *  renderizado igual ao email final. Vars desconhecidas
- *  permanecem inalteradas — facilita debug visual. */
-function previewWithFakeVars(
-  html: string,
-  vars: { name: string; description: string }[],
-): string {
-  const fakes: Record<string, string> = {
-    magicUrl: 'https://example.com/preview',
-    code: '123456',
-    email: 'usuario@example.com',
-    userName: 'João',
+/** Quando o admin abre um template sem `defaultDesign` (templates
+ *  legados ou orphan), monta um design mínimo razoável. */
+function makeFallbackDesign(label: string): EmailDesign {
+  return {
+    version: 1,
+    theme: {
+      bgColor: '#f6f6f7',
+      contentBg: '#ffffff',
+      textColor: '#111111',
+      mutedColor: '#888888',
+      linkColor: '#000000',
+      buttonBg: '#000000',
+      buttonText: '#ffffff',
+      buttonRadius: 999,
+      fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+    header: { enabled: true, title: label },
+    blocks: [
+      {
+        id: 'fallback-1',
+        kind: 'paragraph',
+        text: 'Edite este texto.',
+      },
+    ],
+    footer: {
+      enabled: true,
+      text: 'Se você não pediu este email, ignore.',
+    },
   };
-  let out = html;
-  for (const v of vars) {
-    const replacement = fakes[v.name] ?? `[${v.name}]`;
-    out = out.replaceAll(`{{${v.name}}}`, replacement);
-  }
-  return out;
 }

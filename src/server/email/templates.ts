@@ -16,6 +16,8 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { emailTemplates, type EmailTemplate } from '../db/schema';
+import type { EmailDesign } from './design';
+import { magicLinkDefaultDesign } from './design';
 
 export interface GetTemplateOptions {
   kind: string;
@@ -49,6 +51,10 @@ export interface UpsertTemplateInput {
   html: string;
   isActive: boolean;
   description?: string | null;
+  /** Quando setado, indica que o template foi editado via editor
+   *  visual e o `html` foi gerado a partir desta estrutura. Null
+   *  = template editado em HTML cru. */
+  design?: EmailDesign | null;
   updatedBy: string;
 }
 
@@ -62,6 +68,7 @@ export async function upsertTemplate(
       kind: input.kind,
       subject: input.subject,
       html: input.html,
+      design: (input.design ?? null) as unknown as Record<string, unknown> | null,
       isActive: input.isActive,
       description: input.description ?? null,
       updatedBy: input.updatedBy,
@@ -71,6 +78,7 @@ export async function upsertTemplate(
       set: {
         subject: input.subject,
         html: input.html,
+        design: (input.design ?? null) as unknown as Record<string, unknown> | null,
         isActive: input.isActive,
         description: input.description ?? null,
         updatedBy: input.updatedBy,
@@ -114,8 +122,12 @@ export interface KnownTemplate {
   variables: { name: string; description: string }[];
   /** Subject default — usado quando o admin clica "criar template". */
   defaultSubject: string;
-  /** HTML default — base pro admin editar. */
+  /** HTML default — base pro admin editar em modo HTML cru. */
   defaultHtml: string;
+  /** Design default — base pro editor visual. Quando o admin
+   *  abre o editor visual pela primeira vez sem `design` salvo,
+   *  carregamos este preset. */
+  defaultDesign: EmailDesign;
 }
 
 export const KNOWN_TEMPLATES: KnownTemplate[] = [
@@ -150,6 +162,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
   </p>
   <p style="font-size: 12px; color: #aaa; margin-top: 32px;">Se você não pediu este email, ignore.</p>
 </div>`,
+    defaultDesign: magicLinkDefaultDesign(),
   },
 ];
 

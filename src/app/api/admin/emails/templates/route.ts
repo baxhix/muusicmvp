@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { listTemplates, upsertTemplate, KNOWN_TEMPLATES } from '@/server/email/templates';
+import { designToHtml, type EmailDesign } from '@/server/email/design';
 import { handleApiError, ValidationError } from '@/server/api/errors';
 
 export const runtime = 'nodejs';
@@ -31,11 +32,13 @@ export async function GET() {
       variables: known.variables,
       defaultSubject: known.defaultSubject,
       defaultHtml: known.defaultHtml,
+      defaultDesign: known.defaultDesign,
       // Estado atual: editado no DB ou usando fallback?
       isEdited: Boolean(db),
       isActive: db?.isActive ?? false,
       subject: db?.subject ?? known.defaultSubject,
       html: db?.html ?? known.defaultHtml,
+      design: db?.design ?? null,
       updatedAt: db?.updatedAt?.toISOString() ?? null,
     };
   });
@@ -50,20 +53,90 @@ export async function GET() {
       variables: [],
       defaultSubject: p.subject,
       defaultHtml: p.html,
+      defaultDesign: null,
       isEdited: true,
       isActive: p.isActive,
       subject: p.subject,
       html: p.html,
+      design: p.design ?? null,
       updatedAt: p.updatedAt.toISOString(),
     }));
 
   return NextResponse.json({ items: [...items, ...orphans] });
 }
 
+/* Design schema — espelha src/server/email/design.ts. Aceito como
+ * jsonb cru; validação leve (tipos básicos). Generator regenera
+ * o HTML a partir desta estrutura — caller pode mandar `html`
+ * vazio que o server preenche. */
+const blockSchema = z.discriminatedUnion('kind', [
+  z.object({
+    id: z.string(),
+    kind: z.literal('heading'),
+    text: z.string().max(500),
+    level: z.union([z.literal(2), z.literal(3)]).optional(),
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal('paragraph'),
+    text: z.string().max(5000),
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal('button'),
+    text: z.string().max(120),
+    href: z.string().max(2000),
+    align: z.enum(['center', 'left']).optional(),
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal('image'),
+    src: z.string().max(2000),
+    alt: z.string().max(500),
+    width: z.number().int().min(50).max(1000).optional(),
+  }),
+  z.object({ id: z.string(), kind: z.literal('divider') }),
+  z.object({
+    id: z.string(),
+    kind: z.literal('spacer'),
+    height: z.number().int().min(4).max(200).optional(),
+  }),
+]);
+
+const designSchema = z.object({
+  version: z.literal(1),
+  theme: z.object({
+    bgColor: z.string().max(40),
+    contentBg: z.string().max(40),
+    textColor: z.string().max(40),
+    mutedColor: z.string().max(40),
+    linkColor: z.string().max(40),
+    buttonBg: z.string().max(40),
+    buttonText: z.string().max(40),
+    buttonRadius: z.number().int().min(0).max(999),
+    fontFamily: z.string().max(200),
+  }),
+  header: z.object({
+    enabled: z.boolean(),
+    title: z.string().max(200),
+    subtitle: z.string().max(500).optional(),
+  }),
+  blocks: z.array(blockSchema).max(50),
+  footer: z.object({
+    enabled: z.boolean(),
+    text: z.string().max(1000),
+  }),
+});
+
 const upsertSchema = z.object({
   kind: z.string().min(1).max(80).regex(/^[a-z0-9_]+$/),
   subject: z.string().min(1).max(200),
-  html: z.string().min(1).max(50_000),
+  /** Quando `design` vem setado, o html é REGENERADO pelo
+   *  generator (server-side), ignorando o html submetido — evita
+   *  divergência entre design e html persistidos. Quando design
+   *  vem null, o html submetido é gravado direto (modo HTML cru). */
+  html: z.string().max(50_000),
+  design: designSchema.nullable().optional(),
   isActive: z.boolean(),
   description: z.string().max(500).optional(),
 });
@@ -76,8 +149,21 @@ export async function POST(req: Request) {
     const body = upsertSchema.safeParse(await req.json());
     if (!body.success) throw new ValidationError('invalid_body');
 
+    const data = body.data;
+    const design = (data.design ?? null) as EmailDesign | null;
+
+    // Se design veio, regenera HTML deterministicamente —
+    // ignora qualquer html que o client tenha mandado.
+    const html = design ? designToHtml(design) : data.html;
+    if (!html) throw new ValidationError('html_empty');
+
     const saved = await upsertTemplate({
-      ...body.data,
+      kind: data.kind,
+      subject: data.subject,
+      html,
+      design,
+      isActive: data.isActive,
+      description: data.description,
       updatedBy: auth.id,
     });
 
