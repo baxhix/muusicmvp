@@ -1,6 +1,17 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db';
+import { env } from '../env';
 import { materialNodes, users, type MaterialNode } from '../db/schema';
+
+/** Converte URL relativa em absoluta usando APP_URL. Idempotente:
+ *  já-absolutas (http/https) passam direto. Backfill defensivo
+ *  pra registros antigos que foram salvos com path relativo. */
+function absolutize(url: string | null | undefined): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/')) return `${env.APP_URL}${url}`;
+  return url; // data: URL ou outro esquema — passa direto
+}
 
 /* ──────────────────────────────────────────────────────────────
  * Tipos canônicos de aplicação (espelha o que a UI consome).
@@ -79,14 +90,17 @@ export function mapNodeWithAuthor(
   // File — vários campos podem ser null por causa da union de
   // tipos no DB. Casts defensivos pra que a API sempre devolva
   // valores presentes.
+  /* URLs sempre saem absolutas — defensivo contra dados antigos
+   * salvos com path relativo (antes do fix em storage.ts).
+   * Admin renderiza <img> apontando pro main app via APP_URL. */
   return {
     id: n.id,
     type: 'file',
     name: n.name,
     parentId: n.parentId ?? '',
     formato: (n.formato ?? 'jpg') as MaterialFormato,
-    thumb: n.thumbUrl ?? n.fileUrl ?? '/icon-chapeu-ac.svg',
-    fileUrl: n.fileUrl ?? '',
+    thumb: absolutize(n.thumbUrl ?? n.fileUrl) || '/icon-chapeu-ac.svg',
+    fileUrl: absolutize(n.fileUrl),
     filename: n.filename ?? '',
     tamanhoBytes: n.tamanhoBytes ?? 0,
     status: (n.status ?? 'publicado') as MaterialStatus,

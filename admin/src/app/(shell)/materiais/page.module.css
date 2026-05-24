@@ -564,7 +564,13 @@
 }
 
 /* Checkbox sobre a thumb (top-left). Escondido até hover ou
- * até a seleção estar ativa (qualquer arquivo selecionado). */
+ * até a seleção estar ativa (qualquer arquivo selecionado).
+ *
+ * CRÍTICO: pointer-events: none quando opacity 0 — sem isso,
+ * o checkbox invisível interceptava cliques no card inteiro
+ * (z-index 3 + position absolute por cima do .fileCardClickable).
+ * Bug observado: clicar no card pra abrir preview marcava o item
+ * em vez disso. */
 .fileCheckbox {
   position: absolute;
   top: 8px;
@@ -576,6 +582,7 @@
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   opacity: 0;
+  pointer-events: none;
   transform: translateY(-2px);
   transition: opacity 140ms ease-out, transform 140ms ease-out;
 }
@@ -583,10 +590,13 @@
 .fileCard:focus-within .fileCheckbox,
 .fileCheckboxAlwaysVisible {
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
-/* Quick actions — escondidas até hover do card. */
+/* Quick actions — escondidas até hover do card. Mesma proteção
+ * do .fileCheckbox: pointer-events: none quando invisível pra
+ * não capturar cliques. */
 .fileActions {
   position: absolute;
   top: 8px;
@@ -594,6 +604,7 @@
   display: inline-flex;
   gap: 4px;
   opacity: 0;
+  pointer-events: none;
   transform: translateY(-4px);
   transition: opacity 160ms ease-out, transform 160ms ease-out;
   z-index: 3;
@@ -601,6 +612,7 @@
 .fileCard:hover .fileActions,
 .fileCard:focus-within .fileActions {
   opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
 }
 

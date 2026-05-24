@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { env } from '../env';
 
 /**
  * Storage helper para arquivos do acervo "Materiais".
@@ -106,8 +107,13 @@ export async function saveMaterialFile(
     throw new Error('write_failed' satisfies MaterialUploadError);
   }
 
+  /* URL ABSOLUTA — env.APP_URL prefixado. Necessário porque o
+   * admin app vive em outro origin (admin.muusic.live) e
+   * precisa carregar o binário via <img> apontando pro main
+   * app (muusic.live). Path relativo resolveria pro origin do
+   * admin (404). Cookies compartilhados via COOKIE_DOMAIN. */
   return {
-    url: `/api/admin/materiais/files/${filename}`,
+    url: `${env.APP_URL}/api/admin/materiais/files/${filename}`,
     filename,
     formato: meta.formato,
     tamanhoBytes: file.size,
