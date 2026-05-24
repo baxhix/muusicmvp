@@ -10,6 +10,7 @@ import {
   recordListeningTick,
   stopListening,
 } from '../../listening/queries';
+import { logger } from '../../log';
 import type { AppServer, AppSocket } from '../types';
 
 const tickSchema = z.object({
@@ -33,9 +34,11 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
         // Surface in logs — a user playing a YouTube ID we never seeded
         // means their listening will be invisible to history, ranking
         // and same-track matching. Easy to miss without this hint.
-        console.warn(
-          `[listening:tick] user=${userId} played unknown youtubeId=${parsed.data.youtubeId} — not in tracks catalog, skipping`,
-        );
+        logger.warn('listening.tick.unknown-track', {
+          userId,
+          youtubeId: parsed.data.youtubeId,
+          reason: 'not in tracks catalog',
+        });
         return;
       }
 
@@ -85,7 +88,7 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
             });
           }
         } catch (err) {
-          console.error('[listening:tick] achievement broadcast failed:', err);
+          logger.error('listening.tick.achievement-broadcast', err);
         }
       }
 
@@ -120,14 +123,16 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
           });
         }
       } catch (err) {
-        console.error('[listening:tick] superchat activity emit failed:', err);
+        logger.error('listening.tick.superchat-emit', err);
       }
 
       const created = await notifySameTrackListeners(userId, track.id);
 
-      console.log(
-        `[listening] user=${userId} → track=${track.id} (${track.title}); same-track notifications created: ${created.length}`,
-      );
+      logger.info('listening.tick.notify-same-track', {
+        userId,
+        trackId: track.id,
+        notificationsCreated: created.length,
+      });
 
       if (created.length === 0) return;
 
@@ -163,7 +168,7 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
     } catch (err) {
       // Catch-all so a transient DB hiccup or constraint violation doesn't
       // crash the realtime process and drop every active socket connection.
-      console.error('[listening:tick] handler failed:', err);
+      logger.error('listening.tick.handler', err);
     }
   });
 
@@ -171,7 +176,7 @@ export function registerListeningHandlers(io: AppServer, socket: AppSocket): voi
     try {
       await stopListening(userId);
     } catch (err) {
-      console.error('[listening:stop] handler failed:', err);
+      logger.error('listening.stop.handler', err);
     }
   });
 }

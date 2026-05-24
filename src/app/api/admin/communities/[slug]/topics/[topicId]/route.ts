@@ -7,6 +7,7 @@ import {
   adminUpdateTopic,
   getAdminTopic,
 } from '@/server/communities/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -85,7 +86,7 @@ export async function PATCH(
         : code === 'title_empty' || code === 'title_too_long'
           ? 400
           : 500;
-    if (status === 500) console.error('admin patch topic failed:', err);
+    if (status === 500) logger.error('admin.communities.slug.topics.topicId.admin-patch-topic', err)
     return NextResponse.json({ error: code }, { status });
   }
 }
@@ -111,7 +112,7 @@ export async function DELETE(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'delete_failed';
     const status = code === 'not_found' ? 404 : 500;
-    if (status === 500) console.error('admin delete topic failed:', err);
+    if (status === 500) logger.error('admin.communities.slug.topics.topicId.admin-delete-topic', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getTopic } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +20,7 @@ export async function GET(
     }
     return NextResponse.json({ topic });
   } catch (err) {
-    console.error('GET topic failed:', err);
+    logger.error('communities.slug.topics.topicId.get-topic', err)
     return NextResponse.json({ error: 'fetch_failed' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { adminRemoveMember } from '@/server/communities/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -26,7 +27,7 @@ export async function DELETE(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'remove_failed';
     const status = code === 'not_found' ? 404 : 500;
-    if (status === 500) console.error('admin remove member failed:', err);
+    if (status === 500) logger.error('admin.communities.slug.members.userId.admin-remove-member', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

@@ -6,6 +6,7 @@ import {
   createCommunity,
   listCommunities,
 } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(page);
   } catch (err) {
-    console.error('GET /api/communities failed:', err);
+    logger.error('communities.get-apicommunities', err)
     return NextResponse.json({ error: 'list_failed' }, { status: 500 });
   }
 }
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
         : code === 'name_empty' || code === 'name_too_long'
           ? 400
           : 500;
-    if (status === 500) console.error('POST /api/communities failed:', err);
+    if (status === 500) logger.error('communities.post-apicommunities', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

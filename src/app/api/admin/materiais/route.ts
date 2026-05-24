@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { listMateriaisTree } from '@/server/materiais/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +20,7 @@ export async function GET() {
     const nodes = await listMateriaisTree();
     return NextResponse.json({ nodes });
   } catch (err) {
-    console.error('materiais list failed:', err);
+    logger.error('admin.materiais.materiais-list', err)
     return NextResponse.json({ error: 'list_failed' }, { status: 500 });
   }
 }

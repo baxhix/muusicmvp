@@ -5,6 +5,7 @@ import { reports, users } from '@/server/db/schema';
 import { requireUser } from '@/server/auth/requireUser';
 import { saveReportImage } from '@/server/reports/storage';
 import { limitByIp, writeLimiter } from '@/server/rateLimit';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
         .set({ imageUrl: result.url })
         .where(eq(reports.id, created.id));
     } catch (err) {
-      console.warn('report image save failed (report kept w/o image):', err);
+      logger.warn('reports.image-save-failed');
       // Swallow — text-only report is still valuable to admins.
     }
   }

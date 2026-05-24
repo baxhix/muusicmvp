@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/server/auth/requireUser';
 import { joinCommunity } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -24,7 +25,7 @@ export async function POST(
     const code = err instanceof Error ? err.message : 'join_failed';
     const status = code === 'not_found' ? 404 : 500;
     if (status === 500)
-      console.error('POST /api/communities/:slug/join failed:', err);
+      logger.error('communities.slug.join.post-apicommunitiesslugjoin', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

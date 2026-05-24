@@ -5,6 +5,7 @@ import {
   isFanpointRuleKind,
   upsertFanpointRule,
 } from '@/server/admin/fanpointRules';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +56,7 @@ export async function PATCH(
     await upsertFanpointRule(kind, parsed.data.points, admin.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('upsertFanpointRule failed:', err);
+    logger.error('admin.fanpoints.rules.kind.upsertfanpointrule', err)
     return NextResponse.json({ error: 'save_failed' }, { status: 500 });
   }
 }

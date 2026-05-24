@@ -6,6 +6,7 @@ import {
   deleteGroupImages,
   saveGroupImage,
 } from '@/server/groups/storage';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -69,7 +70,7 @@ export async function POST(
       code === 'too_large' || code === 'unsupported_type' || code === 'no_file'
         ? 400
         : 500;
-    if (status === 500) console.error('saveGroupImage failed:', err);
+    if (status === 500) logger.error('conversations.id.image.savegroupimage', err)
     return NextResponse.json({ error: code }, { status });
   }
 

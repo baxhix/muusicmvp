@@ -8,6 +8,7 @@ import { registerListeningHandlers } from './handlers/listening';
 import { registerPresenceHandlers } from './handlers/presence';
 import { registerWaveHandlers } from './handlers/waves';
 import type { AppServer } from './types';
+import { logger } from '@/server/log';
 
 const PORT = parseInt(process.env.SOCKET_PORT ?? '3002', 10);
 
@@ -48,22 +49,22 @@ io.on('connection', (socket) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`[realtime] listening on :${PORT} (origin=${env.APP_URL})`);
+  logger.info('realtime.server.realtime-listening-on-port-originenvapp_')
 });
 
 // Top-level safety net — log instead of crash. A single bad query inside
 // a socket handler shouldn't take down the entire realtime process and
 // drop every connected client.
 process.on('unhandledRejection', (reason) => {
-  console.error('[realtime] unhandledRejection:', reason);
+  logger.error('realtime.server.realtime-unhandledrejection', reason)
 });
 process.on('uncaughtException', (err) => {
-  console.error('[realtime] uncaughtException:', err);
+  logger.error('realtime.server.realtime-uncaughtexception', err)
 });
 
 // Graceful shutdown — close active sockets so processes don't hang on SIGTERM.
 const shutdown = (signal: string) => {
-  console.log(`[realtime] received ${signal}, shutting down`);
+  logger.info('realtime.server.realtime-received-signal-shutting-down')
   io.close(() => {
     httpServer.close(() => process.exit(0));
   });

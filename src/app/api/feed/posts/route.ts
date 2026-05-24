@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/server/auth/requireUser';
+import { logger } from '@/server/log';
 import {
   listPublicFeedPosts,
   publishDueScheduled,
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
 
   // Best-effort lazy promote — non-blocking on failure.
   publishDueScheduled().catch((err) =>
-    console.warn('publishDueScheduled (public feed) failed:', err),
+    logger.warn('feed.posts.publish-due-scheduled'),
   );
 
   const items = await listPublicFeedPosts({

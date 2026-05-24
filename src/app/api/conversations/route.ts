@@ -5,6 +5,7 @@ import { listConversationsForUser } from '@/server/chat/queries';
 import { getOrCreateDm, userExists } from '@/server/chat/dm';
 import { createGroup } from '@/server/chat/groups';
 import { limitByIp, writeLimiter } from '@/server/rateLimit';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
             ? 404
             : 500;
       if (status === 500) {
-        console.error('createGroup failed:', err);
+        logger.error('conversations.creategroup', err)
       }
       return NextResponse.json({ error: code }, { status });
     }

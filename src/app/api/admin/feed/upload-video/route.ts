@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { saveFeedVideo } from '@/server/feed/storage';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 // Videos are big — opt into the streaming body parser so 100 MB
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
       code === 'unsupported_type' ? 415 :
       code === 'no_file' ? 400 :
       500;
-    if (status === 500) console.error('feed video upload failed:', err);
+    if (status === 500) logger.error('admin.feed.upload-video.feed-video-upload', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

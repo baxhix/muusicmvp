@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/server/auth/requireUser';
 import { leaveCommunity } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +30,7 @@ export async function POST(
           ? 403
           : 500;
     if (status === 500)
-      console.error('POST /api/communities/:slug/leave failed:', err);
+      logger.error('communities.slug.leave.post-apicommunitiesslugleave', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

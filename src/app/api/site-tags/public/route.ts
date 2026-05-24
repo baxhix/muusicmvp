@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getActiveSiteTags } from '@/server/admin/tags';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -27,7 +28,7 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.warn('public site-tags fetch failed:', err);
+    logger.warn('site-tags.public.fetch-failed');
     return NextResponse.json({ tags: [] });
   }
 }

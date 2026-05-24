@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { notifications, users } from '../../db/schema';
 import type { AppServer, AppSocket } from '../types';
+import { logger } from '@/server/log';
 
 /**
  * Realtime handler for the heart "wave" interaction that fires
@@ -115,7 +116,7 @@ export function registerWaveHandlers(io: AppServer, socket: AppSocket): void {
 
         ack?.({ ok: true });
       } catch (err) {
-        console.error('[wave:send] handler failed:', err);
+        logger.error('realtime.waves.wavesend-handler', err)
         ack?.({ ok: false, error: 'send_failed' });
       }
     },

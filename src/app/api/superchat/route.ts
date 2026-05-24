@@ -8,6 +8,7 @@ import {
 } from '@/server/chat/dm';
 import { listMessages } from '@/server/chat/queries';
 import { listReactionsForMessages } from '@/server/chat/reactions';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -54,10 +55,7 @@ export async function GET() {
       reactions: reactionsByMessage.get(m.id) ?? [],
     }));
   } catch (err) {
-    console.error(
-      '[/api/superchat] reactions hydration failed — serving messages without them:',
-      err,
-    );
+    logger.error('superchat.reactions-hydration', err);
     messagesWithReactions = messages.map((m) => ({ ...m, reactions: [] }));
   }
 

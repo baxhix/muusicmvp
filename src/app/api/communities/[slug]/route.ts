@@ -7,6 +7,7 @@ import {
   getCommunityBySlug,
   updateCommunity,
 } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -36,7 +37,7 @@ export async function GET(
     }
     return NextResponse.json({ community });
   } catch (err) {
-    console.error('GET /api/communities/:slug failed:', err);
+    logger.error('communities.slug.get-apicommunitiesslug', err)
     return NextResponse.json({ error: 'fetch_failed' }, { status: 500 });
   }
 }
@@ -81,7 +82,7 @@ export async function PATCH(
             ? 400
             : 500;
     if (status === 500)
-      console.error('PATCH /api/communities/:slug failed:', err);
+      logger.error('communities.slug.patch-apicommunitiesslug', err)
     return NextResponse.json({ error: code }, { status });
   }
 }
@@ -102,7 +103,7 @@ export async function DELETE(
     const status =
       code === 'forbidden' ? 403 : code === 'not_found' ? 404 : 500;
     if (status === 500)
-      console.error('DELETE /api/communities/:slug failed:', err);
+      logger.error('communities.slug.delete-apicommunitiesslug', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

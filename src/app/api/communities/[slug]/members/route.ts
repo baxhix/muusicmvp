@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/server/auth/session';
 import { listMembers } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -24,7 +25,7 @@ export async function GET(
     const code = err instanceof Error ? err.message : 'list_failed';
     const status = code === 'not_found' ? 404 : 500;
     if (status === 500)
-      console.error('GET /api/communities/:slug/members failed:', err);
+      logger.error('communities.slug.members.get-apicommunitiesslugmembers', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

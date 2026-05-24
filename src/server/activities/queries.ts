@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { fanpointRules, userActivities } from '../db/schema';
+import { logger } from '../log';
 
 export type ActivityKind =
   | 'stream'
@@ -79,7 +80,7 @@ async function getPointsForKind(kind: ActivityKind): Promise<number> {
     } catch (err) {
       // Se a query falhar (ex.: tabela ainda não migrada), continua
       // usando o fallback hardcoded — não bloqueia o recordActivity.
-      console.error('getPointsForKind: failed to read fanpoint_rules', err);
+      logger.error('activities.getpointsforkind-to-read-fanpoint_rules', err)
       return POINTS[kind];
     }
   }
@@ -122,7 +123,7 @@ export async function recordActivity(
     const prev = Math.max(0, newTotal - points);
     return { crossedMilestones: findCrossedMilestones(prev, newTotal), newTotal };
   } catch (err) {
-    console.error('recordActivity failed:', { userId, kind, err });
+    logger.error('activities.record', err, { userId, kind });
     return { crossedMilestones: [], newTotal: 0 };
   }
 }

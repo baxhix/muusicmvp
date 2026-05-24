@@ -93,7 +93,7 @@ export async function deleteUserAvatars(userId: string): Promise<void> {
       ),
     );
   } catch (err) {
-    console.warn('deleteUserAvatars failed:', err);
+    logger.warn('avatars.delete-failed');
   }
 }
 

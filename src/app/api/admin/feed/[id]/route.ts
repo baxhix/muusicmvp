@@ -6,6 +6,7 @@ import {
   getAdminFeedPost,
   updateFeedPost,
 } from '@/server/feed/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -96,7 +97,7 @@ export async function PATCH(
             code === 'invalid_expires_date'
           ? 400
           : 500;
-    if (status === 500) console.error('updateFeedPost failed:', err);
+    if (status === 500) logger.error('admin.feed.id.updatefeedpost', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

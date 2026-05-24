@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/server/auth/requireUser';
 import { toggleTopicCommentReaction } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -60,7 +61,7 @@ export async function POST(
             ? 400
             : 500;
     if (status === 500)
-      console.error('POST topic comment reaction failed:', err);
+      logger.error('communities.slug.topics.topicId.comments.commentId.reactions.post-topic-comment-reaction', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

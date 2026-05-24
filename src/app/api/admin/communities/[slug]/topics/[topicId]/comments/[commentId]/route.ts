@@ -5,6 +5,7 @@ import {
   adminHardDeleteComment,
   adminSoftDeleteComment,
 } from '@/server/communities/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -47,7 +48,7 @@ export async function PATCH(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'update_failed';
     const status = code === 'not_found' ? 404 : 500;
-    if (status === 500) console.error('admin patch comment failed:', err);
+    if (status === 500) logger.error('admin.communities.slug.topics.topicId.comments.commentId.admin-patch-comment', err)
     return NextResponse.json({ error: code }, { status });
   }
 }
@@ -71,7 +72,7 @@ export async function DELETE(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'delete_failed';
     const status = code === 'not_found' ? 404 : 500;
-    if (status === 500) console.error('admin delete comment failed:', err);
+    if (status === 500) logger.error('admin.communities.slug.topics.topicId.comments.commentId.admin-delete-comment', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

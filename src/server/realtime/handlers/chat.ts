@@ -5,6 +5,7 @@ import {
   getReactableConversation,
   toggleReaction,
 } from '../../chat/reactions';
+import { logger } from '@/server/log';
 import {
   joinBucket,
   reactBucket,
@@ -58,7 +59,7 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       socket.join(room(parsed.data.conversationId));
       ack?.({ ok: true });
     } catch (err) {
-      console.error('[chat:join] handler failed:', err);
+      logger.error('realtime.chat.chatjoin-handler', err)
       ack?.({ ok: false, error: 'internal' });
     }
   });
@@ -69,7 +70,7 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       if (!parsed.success) return;
       socket.leave(room(parsed.data.conversationId));
     } catch (err) {
-      console.error('[chat:leave] handler failed:', err);
+      logger.error('realtime.chat.chatleave-handler', err)
     }
   });
 
@@ -124,7 +125,7 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
       ack?.({ ok: true, messageId: result.message.id });
     } catch (err) {
-      console.error('[chat:send] handler failed:', err);
+      logger.error('realtime.chat.chatsend-handler', err)
       ack?.({ ok: false, error: 'send_failed' });
     }
   });
@@ -142,7 +143,7 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
         isTyping: parsed.data.isTyping,
       });
     } catch (err) {
-      console.error('[chat:typing] handler failed:', err);
+      logger.error('realtime.chat.chattyping-handler', err)
     }
   });
 
@@ -187,7 +188,7 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
         ack?.({ ok: true });
       } catch (err) {
-        console.error('[chat:react] handler failed:', err);
+        logger.error('realtime.chat.chatreact-handler', err)
         ack?.({ ok: false, error: 'react_failed' });
       }
     },

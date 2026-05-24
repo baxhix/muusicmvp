@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { saveFeedImage } from '@/server/feed/storage';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       code === 'unsupported_type' ? 415 :
       code === 'no_file' ? 400 :
       500;
-    if (status === 500) console.error('feed image upload failed:', err);
+    if (status === 500) logger.error('admin.feed.upload.feed-image-upload', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

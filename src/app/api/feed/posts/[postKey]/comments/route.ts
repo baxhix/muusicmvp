@@ -6,6 +6,7 @@ import {
   getOrCreateFeedPost,
   listComments,
 } from '@/server/feed/comments';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -70,7 +71,7 @@ export async function GET(
         : code === 'feed_post_not_found'
           ? 404
           : 500;
-    if (status === 500) console.error('GET comments failed:', err);
+    if (status === 500) logger.error('feed.posts.postKey.comments.get-comments', err)
     return NextResponse.json({ error: code }, { status });
   }
 }
@@ -111,7 +112,7 @@ export async function POST(
       code === 'empty_body' || code === 'body_too_long' || code === 'invalid_post_key'
         ? 400
         : 500;
-    if (status === 500) console.error('POST comment failed:', err);
+    if (status === 500) logger.error('feed.posts.postKey.comments.post-comment', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

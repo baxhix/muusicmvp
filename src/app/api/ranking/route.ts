@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/server/auth/requireUser';
 import { getRanking } from '@/server/activities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
 
   try {
     const ranking = await getRanking(parsed.data.limit);
-    console.log(`[ranking] returned ${ranking.length} users to ${auth.email}`);
+    logger.info('ranking.ranking-returned-rankinglength-users-to-')
     return NextResponse.json({ ranking });
   } catch (err) {
     // The most likely cause when this throws is a missing user_activities
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
     const tableMissing =
       /user_activities/i.test(msg) &&
       /(does not exist|undefined table|42P01)/i.test(msg);
-    console.error('[ranking] query failed:', msg);
+    logger.error('ranking.ranking-query', msg)
     return NextResponse.json(
       {
         error: tableMissing ? 'migration_missing' : 'query_failed',

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { isSiteTagKind, upsertSiteTag } from '@/server/admin/tags';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +54,7 @@ export async function PATCH(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'save_failed';
     const status = code === 'value_too_long' || code === 'invalid_kind' ? 400 : 500;
-    if (status === 500) console.error('upsertSiteTag failed:', err);
+    if (status === 500) logger.error('admin.site-tags.kind.upsertsitetag', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

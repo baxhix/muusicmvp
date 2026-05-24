@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { listAdminTopics } from '@/server/communities/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -60,7 +61,7 @@ export async function GET(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'list_failed';
     const status = code === 'not_found' ? 404 : 500;
-    if (status === 500) console.error('admin topics list failed:', err);
+    if (status === 500) logger.error('admin.communities.slug.topics.admin-topics-list', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

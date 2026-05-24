@@ -8,6 +8,7 @@ import {
   type FeedStatus,
   type FeedType,
 } from '@/server/feed/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -81,7 +82,7 @@ export async function GET(req: Request) {
   // Sweep due scheduled posts before reading. Best-effort — if it
   // fails, the listing still works (just with stale statuses).
   publishDueScheduled().catch((err) =>
-    console.warn('publishDueScheduled (admin list) failed:', err),
+    logger.warn('admin.feed.publish-due-scheduled'),
   );
 
   const { items, total } = await listAdminFeedPosts({
@@ -140,7 +141,7 @@ export async function POST(req: Request) {
       code === 'invalid_expires_date'
         ? 400
         : 500;
-    if (status === 500) console.error('createFeedPost failed:', err);
+    if (status === 500) logger.error('admin.feed.createfeedpost', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

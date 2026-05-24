@@ -102,6 +102,6 @@ export async function deleteGroupImages(conversationId: string): Promise<void> {
       ),
     );
   } catch (err) {
-    console.warn('deleteGroupImages failed:', err);
+    logger.warn('groups.delete-images-failed');
   }
 }

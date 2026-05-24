@@ -5,6 +5,7 @@ import { db } from '@/server/db';
 import { feedComments } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { createComment, listReplies } from '@/server/feed/comments';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +45,7 @@ export async function GET(
     });
     return NextResponse.json({ items });
   } catch (err) {
-    console.error('GET replies failed:', err);
+    logger.error('feed.comments.id.replies.get-replies', err)
     return NextResponse.json({ error: 'list_failed' }, { status: 500 });
   }
 }
@@ -97,7 +98,7 @@ export async function POST(
         : code === 'parent_not_found'
           ? 404
           : 500;
-    if (status === 500) console.error('POST reply failed:', err);
+    if (status === 500) logger.error('feed.comments.id.replies.post-reply', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

@@ -6,6 +6,7 @@ import {
   getFolderAudience,
   type MaterialAudience,
 } from '@/server/materiais/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
       code === 'unsupported_type' ? 415 :
       code === 'no_file'          ? 400 :
       500;
-    if (status === 500) console.error('materiais file upload failed:', err);
+    if (status === 500) logger.error('admin.materiais.file.materiais-file-upload', err)
     return NextResponse.json({ error: code }, { status });
   }
 
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ node }, { status: 201 });
   } catch (err) {
-    console.error('materiais file db insert failed:', err);
+    logger.error('admin.materiais.file.materiais-file-db-insert', err)
     return NextResponse.json({ error: 'create_failed' }, { status: 500 });
   }
 }

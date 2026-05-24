@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { setPostActive } from '@/server/feed/admin';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -40,7 +41,7 @@ export async function POST(
   } catch (err) {
     const code = err instanceof Error ? err.message : 'toggle_failed';
     const status = code === 'post_not_found' ? 404 : 500;
-    if (status === 500) console.error('setPostActive failed:', err);
+    if (status === 500) logger.error('admin.feed.id.active.setpostactive', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

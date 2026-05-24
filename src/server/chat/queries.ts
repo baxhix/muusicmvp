@@ -2,6 +2,7 @@ import { and, desc, eq, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { conversationParticipants, messages, users } from '../db/schema';
 import { listReactionsForMessages } from './reactions';
+import { logger } from '@/server/log';
 
 /**
  * List the current user's DMs with their last message, the "other" participant,
@@ -206,7 +207,7 @@ export async function listMessages(
     } catch (err) {
       // Log but don't propagate — the conversation history is
       // far more important than the reactions chips.
-      console.error('listMessages reaction hydration failed:', err);
+      logger.error('chat.listmessages-reaction-hydration', err)
     }
   }
 

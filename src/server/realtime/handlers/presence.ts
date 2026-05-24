@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { users } from '../../db/schema';
 import type { AppServer, AppSocket } from '../types';
+import { logger } from '@/server/log';
 
 const HEARTBEAT_MS = 30_000;
 
@@ -57,7 +58,7 @@ async function touchLastSeen(userId: string): Promise<void> {
   try {
     await db.update(users).set({ lastSeenAt: new Date() }).where(eq(users.id, userId));
   } catch (err) {
-    console.error('touchLastSeen failed:', err);
+    logger.error('realtime.presence.touchlastseen', err)
   }
 }
 

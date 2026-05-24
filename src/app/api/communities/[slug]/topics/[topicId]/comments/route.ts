@@ -6,6 +6,7 @@ import {
   createTopicComment,
   listTopicComments,
 } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -38,7 +39,7 @@ export async function GET(
     });
     return NextResponse.json(page);
   } catch (err) {
-    console.error('GET topic comments failed:', err);
+    logger.error('communities.slug.topics.topicId.comments.get-topic-comments', err)
     return NextResponse.json({ error: 'list_failed' }, { status: 500 });
   }
 }
@@ -80,7 +81,7 @@ export async function POST(
           : code === 'empty_body' || code === 'body_too_long'
             ? 400
             : 500;
-    if (status === 500) console.error('POST topic comment failed:', err);
+    if (status === 500) logger.error('communities.slug.topics.topicId.comments.post-topic-comment', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

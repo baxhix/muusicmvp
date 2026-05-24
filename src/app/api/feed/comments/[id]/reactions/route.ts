@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/server/auth/requireUser';
 import { toggleCommentReaction } from '@/server/feed/comments';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -58,7 +59,7 @@ export async function POST(
         : code === 'comment_deleted' || code === 'invalid_emoji' || code === 'emoji_too_long'
           ? 400
           : 500;
-    if (status === 500) console.error('POST reaction failed:', err);
+    if (status === 500) logger.error('feed.comments.id.reactions.post-reaction', err)
     return NextResponse.json({ error: code }, { status });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { getPoolStats } from '@/server/db';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,7 +52,7 @@ export async function GET() {
     };
     idleTxTimeout = b.rows[0]?.idle_in_transaction_session_timeout ?? 'n/a';
   } catch (err) {
-    console.warn('[pool-stats] failed to read GUCs:', err);
+    logger.warn('admin.pool-stats.gucs');
   }
 
   return NextResponse.json({

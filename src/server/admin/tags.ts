@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { siteTags, users } from '../db/schema';
+import { logger } from '../log';
 
 /**
  * Site tags server module.
@@ -122,7 +123,7 @@ export async function getActiveSiteTags(): Promise<ActiveTag[]> {
   } catch (err) {
     // DB hiccup → don't break the layout. Return whatever we have
     // cached (even if stale) or empty.
-    console.warn('getActiveSiteTags failed, falling back:', err);
+    logger.warn('admin.tags.fallback');
     return cache?.tags ?? [];
   }
 }

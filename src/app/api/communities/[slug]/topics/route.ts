@@ -6,6 +6,7 @@ import {
   createTopic,
   listTopics,
 } from '@/server/communities/queries';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -60,7 +61,7 @@ export async function GET(
     const code = err instanceof Error ? err.message : 'list_failed';
     const status = code === 'not_found' ? 404 : 500;
     if (status === 500)
-      console.error('GET /api/communities/:slug/topics failed:', err);
+      logger.error('communities.slug.topics.get-apicommunitiesslugtopics', err)
     return NextResponse.json({ error: code }, { status });
   }
 }
@@ -103,7 +104,7 @@ export async function POST(
             ? 400
             : 500;
     if (status === 500)
-      console.error('POST /api/communities/:slug/topics failed:', err);
+      logger.error('communities.slug.topics.post-apicommunitiesslugtopics', err)
     return NextResponse.json({ error: code }, { status });
   }
 }
