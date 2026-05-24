@@ -1,4 +1,4 @@
-import { getResend } from './resend';
+import { getResend, sendEmailWithRetry } from './resend';
 import { env } from '../env';
 
 /**
@@ -60,10 +60,16 @@ export async function sendMagicLink(
     </div>
   `;
 
-  await getResend().emails.send({
-    from: env.EMAIL_FROM,
-    to,
-    subject: 'Seu link de acesso ao Fanverse',
-    html,
-  });
+  // Envio com timeout (8s) + retry exponencial em falha transiente.
+  // Erros 4xx (email inválido, quota) não retentam.
+  await sendEmailWithRetry(
+    () =>
+      getResend().emails.send({
+        from: env.EMAIL_FROM,
+        to,
+        subject: 'Seu link de acesso ao Fanverse',
+        html,
+      }),
+    { scope: 'auth.magic-link' },
+  );
 }

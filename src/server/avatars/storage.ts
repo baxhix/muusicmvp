@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { logger } from '../log';
 
 /**
  * Where uploaded avatars live on disk. Mounted as a Docker volume in prod so
@@ -68,7 +69,7 @@ export async function saveAvatar(
   try {
     await fs.writeFile(path.join(AVATARS_DIR, filename), buffer);
   } catch (err) {
-    console.error('avatar write failed:', err);
+    logger.error('avatar.write', err);
     throw new Error('write_failed' satisfies AvatarUploadError);
   }
 

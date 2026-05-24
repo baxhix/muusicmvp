@@ -4,6 +4,7 @@ import { db } from '@/server/db';
 import { reports, users } from '@/server/db/schema';
 import { requireUser } from '@/server/auth/requireUser';
 import { saveReportImage } from '@/server/reports/storage';
+import { limitByIp, writeLimiter } from '@/server/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +28,11 @@ export const runtime = 'nodejs';
  *   - Image is saved to a dedicated reports directory.
  */
 export async function POST(req: Request) {
+  // Rate limit anti-flood. Reports são vetor clássico de abuso
+  // (atacante denuncia usuário em massa pra forçar shadowban).
+  const rl = limitByIp(req, writeLimiter, 'reports-create');
+  if (!rl.ok) return rl.response;
+
   const auth = await requireUser();
   if (auth instanceof NextResponse) return auth;
   const reporter = auth;

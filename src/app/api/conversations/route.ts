@@ -4,6 +4,7 @@ import { requireUser } from '@/server/auth/requireUser';
 import { listConversationsForUser } from '@/server/chat/queries';
 import { getOrCreateDm, userExists } from '@/server/chat/dm';
 import { createGroup } from '@/server/chat/groups';
+import { limitByIp, writeLimiter } from '@/server/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -47,6 +48,11 @@ const groupSchema = z.object({
 const createSchema = z.union([dmSchema, groupSchema]);
 
 export async function POST(req: Request) {
+  // Rate limit: criar conversa/DM é vetor de spam (mensagem
+  // automatizada em massa). 10 burst, 6/min sustentado.
+  const rl = limitByIp(req, writeLimiter, 'conversations-create');
+  if (!rl.ok) return rl.response;
+
   const auth = await requireUser();
   if (auth instanceof NextResponse) return auth;
   const user = auth;

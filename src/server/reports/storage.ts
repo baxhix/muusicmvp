@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { logger } from '../log';
 
 /**
  * Where uploaded report-evidence images live on disk. Mounted as a
@@ -67,7 +68,7 @@ export async function saveReportImage(
   try {
     await fs.writeFile(path.join(REPORTS_DIR, filename), buffer);
   } catch (err) {
-    console.error('report image write failed:', err);
+    logger.error('reports.image.write', err);
     throw new Error('write_failed' satisfies ReportImageError);
   }
 

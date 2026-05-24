@@ -33,6 +33,17 @@ export const magicLinkLimiter = new TokenBucket(5, 0.083);
  *  disso o atacante teria que esperar entre tentativas. */
 export const verifyLimiter = new TokenBucket(10, 0.05);
 
+/** Uploads (avatar, report image, materiais admin):
+ *  20 burst, refill 0.1/s = 6/min sustentado. Generoso pra fluxos
+ *  legítimos (upload em rajada num drag-and-drop de 10 fotos),
+ *  mas corta abuse de saturar disco/banda. */
+export const uploadLimiter = new TokenBucket(20, 0.1);
+
+/** Criação de conteúdo público (report, comunidade, comentário):
+ *  10 burst, refill 0.1/s = 6/min sustentado. Suficiente pra usuário
+ *  ativo, freia bot que tenta floodar conteúdo. */
+export const writeLimiter = new TokenBucket(10, 0.1);
+
 /* ──────────────────────────────────────────────────────────────
  * Helpers HTTP
  * ────────────────────────────────────────────────────────────── */

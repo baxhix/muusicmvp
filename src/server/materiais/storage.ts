@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { env } from '../env';
+import { logger } from '../log';
 
 /**
  * Storage helper para arquivos do acervo "Materiais".
@@ -103,7 +104,7 @@ export async function saveMaterialFile(
   try {
     await fs.writeFile(path.join(MATERIAIS_DIR, filename), buffer);
   } catch (err) {
-    console.error('materiais upload write failed:', err);
+    logger.error('materiais.upload.write', err);
     throw new Error('write_failed' satisfies MaterialUploadError);
   }
 

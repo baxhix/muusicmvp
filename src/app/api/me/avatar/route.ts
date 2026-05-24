@@ -4,6 +4,7 @@ import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { requireUser } from '@/server/auth/requireUser';
 import { deleteUserAvatars, saveAvatar } from '@/server/avatars/storage';
+import { limitByIp, uploadLimiter } from '@/server/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -17,6 +18,12 @@ export const runtime = 'nodejs';
  * and updates `users.avatar_url`.
  */
 export async function POST(req: Request) {
+  // Rate limit anti-abuse de disco/banda. Generoso pra usuário
+  // legítimo (20 burst, 6/min sustentado), barra bot tentando
+  // saturar o storage.
+  const rl = limitByIp(req, uploadLimiter, 'avatar-upload');
+  if (!rl.ok) return rl.response;
+
   const auth = await requireUser();
   if (auth instanceof NextResponse) return auth;
   const user = auth;

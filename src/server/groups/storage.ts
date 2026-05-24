@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { logger } from '../log';
 
 /**
  * Where uploaded group avatars live on disk. Mounted as a Docker
@@ -65,7 +66,7 @@ export async function saveGroupImage(
   try {
     await fs.writeFile(path.join(GROUPS_DIR, filename), buffer);
   } catch (err) {
-    console.error('group image write failed:', err);
+    logger.error('groups.image.write', err);
     throw new Error('write_failed' satisfies GroupImageError);
   }
 

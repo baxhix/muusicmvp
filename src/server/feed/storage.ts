@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { logger } from '../log';
 
 /**
  * Storage helper for admin-uploaded feed images.
@@ -97,7 +98,7 @@ export async function saveFeedImage(
   try {
     await fs.writeFile(path.join(FEED_DIR, filename), buffer);
   } catch (err) {
-    console.error('feed image write failed:', err);
+    logger.error('feed.image.write', err);
     throw new Error('write_failed' satisfies FeedUploadError);
   }
 
@@ -134,7 +135,7 @@ export async function saveFeedVideo(
   try {
     await fs.writeFile(path.join(FEED_DIR, filename), buffer);
   } catch (err) {
-    console.error('feed video write failed:', err);
+    logger.error('feed.video.write', err);
     throw new Error('write_failed' satisfies FeedUploadError);
   }
 
