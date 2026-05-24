@@ -44,7 +44,7 @@ import Badge from '@/components/ui/Badge';
 import { formatNumber, formatRelative } from '@/lib/format';
 import { formatBytes, validateFile } from './shared';
 import { NewFolderDialog, RenameDialog } from './dialogs';
-import MaterialPreviewDrawer from './MaterialPreviewDrawer';
+import MaterialPreviewModal from './MaterialPreviewModal';
 import FloatingUploadPanel, {
   type UploadItem,
 } from './FloatingUploadPanel';
@@ -1247,13 +1247,19 @@ export default function MateriaisPage() {
         </section>
       )}
 
-      {/* ── Preview drawer ────────────────────────────── */}
-      <MaterialPreviewDrawer
+      {/* ── Preview modal (lightbox) ────────────────────
+       *  Substitui o drawer lateral. Permite navegação entre
+       *  arquivos via setas (mouse) ou ← / → (teclado).
+       *  `files` é a lista de arquivos da pasta atual — usado
+       *  pra calcular prev/next. */}
+      <MaterialPreviewModal
         file={selectedFile}
+        files={files}
         onClose={() => setSelectedFileId(null)}
         onDownload={handleDownload}
         onDelete={handleDelete}
         onRename={(file) => setRenameTarget(file)}
+        onSelect={(file) => setSelectedFileId(file.id)}
       />
 
       {/* ── Dialogs CRUD ──────────────────────────────── */}
