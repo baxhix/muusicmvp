@@ -1,0 +1,66 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 960px) {
+  .kpiGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Tabela "por kind" — leitura compacta, sem zebra heavy. */
+.kindTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.kindTable th,
+.kindTable td {
+  text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.kindTable thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.kindCell {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+.sentCell { color: var(--success-fg, #2c8a4a); }
+.failedCell { color: var(--danger-fg, #c13a3a); font-weight: 600; }
+
+/* Mini-gráfico inline — bars puramente CSS. */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 16px;
+  height: 140px;
+}
+.bar {
+  flex: 1;
+  background: var(--brand-soft, rgba(99, 102, 241, 0.2));
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  position: relative;
+  transition: opacity 120ms ease;
+}
+.bar:hover { opacity: 0.8; }
+.barFail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--danger-fg, #c13a3a);
+  border-radius: 3px 3px 0 0;
+}

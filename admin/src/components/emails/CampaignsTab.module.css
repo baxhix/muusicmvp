@@ -1,0 +1,155 @@
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.card {
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--card-bg);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.cardMeta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.cardMeta code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  background: var(--bg-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.cardStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cardSubject {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.progressLabel,
+.progressMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.failed { color: var(--danger-fg, #c13a3a); }
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  overflow: hidden;
+  min-width: 120px;
+}
+.progressFill {
+  display: block;
+  height: 100%;
+  background: var(--brand-fg);
+  transition: width 240ms ease;
+}
+
+/* ── Composer ─────────────────────────────────────────────────── */
+
+.composerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paneLabel {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.htmlEditor {
+  width: 100%;
+  height: 200px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-soft);
+  resize: vertical;
+}
+.htmlEditor:focus {
+  outline: none;
+  border-color: var(--brand-fg);
+}
+
+.segmentRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 720px) {
+  .segmentRow { grid-template-columns: 1fr; }
+}
+
+.emailList {
+  width: 100%;
+  height: 100px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-soft);
+  resize: vertical;
+}
+.emailList:focus {
+  outline: none;
+  border-color: var(--brand-fg);
+}

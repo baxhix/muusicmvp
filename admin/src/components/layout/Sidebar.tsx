@@ -20,6 +20,7 @@ import {
   IconCalendar,
   IconEdit,
   IconVideo,
+  IconMail,
   IconChevronLeft,
   IconChevronRight,
 } from '@/components/icons';
@@ -62,6 +63,10 @@ const PRIMARY_NAV: NavItem[] = [
    * figurinhas, templates, logotipos). Vive ao lado de Blog
    * porque ambos são "publicações" da equipe da artista. */
   { href: '/materiais',   label: 'Materiais',   icon: IconArchive },
+  /* E-mails — gerencia templates do sistema (magic link, etc.),
+   * lê histórico de envios via Resend, métricas e campanhas
+   * (broadcast por segmento de usuários). */
+  { href: '/emails',      label: 'E-mails',     icon: IconMail },
   { href: '/convites',    label: 'Convites',    icon: IconTicket },
   { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
 ];

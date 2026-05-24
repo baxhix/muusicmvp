@@ -1,0 +1,12 @@
+/* E-mails — admin page styles. Mesma densidade rítmica do Blog
+ * e demais páginas com tabs. */
+
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
