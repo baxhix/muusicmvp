@@ -299,6 +299,11 @@
   gap: 8px;
 }
 
+/* Wrapper relative pra ancorar as quick actions absolute. */
+.folderCardWrap {
+  position: relative;
+}
+
 .folderCard {
   display: flex;
   flex-direction: column;
@@ -310,12 +315,54 @@
   border-radius: 12px;
   cursor: pointer;
   font-family: inherit;
+  width: 100%;
   transition: background 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
 }
 .folderCard:hover {
   background: var(--surface-hover, var(--surface));
   border-color: var(--border);
   transform: translateY(-1px);
+}
+
+/* Quick actions na folder card — visíveis no hover do wrapper.
+ * Espelha o padrão das file cards (Download/Excluir no canto). */
+.folderCardActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+  z-index: 3;
+}
+.folderCardWrap:hover .folderCardActions,
+.folderCardWrap:focus-within .folderCardActions {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.folderCardActionBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(20, 22, 26, 0.86);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  transition: background 140ms ease-out, transform 120ms ease-out;
+}
+.folderCardActionBtn:hover {
+  background: rgba(20, 22, 26, 1);
+  transform: scale(1.05);
+}
+.folderCardActionBtnDanger:hover {
+  background: rgba(220, 38, 38, 0.92);
 }
 
 .folderCardTop {

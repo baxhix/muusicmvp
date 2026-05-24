@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Dialog from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
+import { IconUpload, IconImage } from '@/components/icons';
 import {
   MATERIAL_AUDIENCE_META,
   MATERIAL_AUDIENCE_ORDER,
@@ -13,7 +14,82 @@ import {
   type MaterialFormato,
   type MaterialNode,
 } from '@/data/mock/materiais';
+import { formatBytes } from './shared';
 import styles from './dialogs.module.css';
+
+/** Mapeia extensão → formato do nosso enum. Default ao 'jpg'. */
+function inferFormato(filename: string): MaterialFormato {
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  switch (ext) {
+    case 'jpg': case 'jpeg':
+      return 'jpg';
+    case 'png':
+      return 'png';
+    case 'svg':
+      return 'svg';
+    case 'mp3': case 'wav': case 'flac': case 'm4a':
+      return 'mp3';
+    case 'mp4': case 'mov': case 'webm':
+      return 'mp4';
+    case 'pdf':
+      return 'pdf';
+    case 'zip': case 'rar': case '7z':
+      return 'zip';
+    default:
+      return 'jpg';
+  }
+}
+
+/** Lê o arquivo como data URL e redimensiona pra thumb 256×256
+ *  via canvas (cover, mantém aspect ratio). Reduz o payload do
+ *  localStorage drasticamente — uma imagem original de 5MB vira
+ *  ~30KB de JPG base64. Resolve via Promise pra que o caller
+ *  use async/await. */
+function generateThumbnail(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Não é imagem'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Falha ao decodificar imagem'));
+      img.onload = () => {
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas indisponível'));
+          return;
+        }
+        // Cover: escala mantendo aspect ratio + crop centralizado.
+        const sourceAspect = img.width / img.height;
+        const targetAspect = 1;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (sourceAspect > targetAspect) {
+          // Imagem mais larga que alta — corta laterais.
+          sw = img.height * targetAspect;
+          sx = (img.width - sw) / 2;
+        } else if (sourceAspect < targetAspect) {
+          // Imagem mais alta que larga — corta topo/baixo.
+          sh = img.width / targetAspect;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
+        /* JPEG quality 0.82 é o sweet spot entre fidelidade e
+         * tamanho. SVG/PNG/etc viram JPEG aqui mesmo — o thumb
+         * é só preview, não a versão final. */
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 /* Thumbs default que existem em /public — usamos pra dar uma
  * capa razoável aos uploads mockados (sem precisar implementar
@@ -154,34 +230,68 @@ export function UploadFileDialog({
 }: UploadFileDialogProps) {
   const [name, setName] = useState('');
   const [formato, setFormato] = useState<MaterialFormato>('jpg');
-  const [tamanhoMB, setTamanhoMB] = useState('5');
+  const [tamanhoBytes, setTamanhoBytes] = useState(0);
   const [audience, setAudience] = useState<MaterialAudience>('all');
   const [description, setDescription] = useState('');
   const [thumb, setThumb] = useState(DEFAULT_THUMB_OPTIONS[0]);
   const [publishedToFeed, setPublishedToFeed] = useState(false);
+  const [pickedFileName, setPickedFileName] = useState<string | null>(null);
+  const [processingFile, setProcessingFile] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (open) {
       setName('');
       setFormato('jpg');
-      setTamanhoMB('5');
+      setTamanhoBytes(0);
       setAudience('all');
       setDescription('');
       setThumb(DEFAULT_THUMB_OPTIONS[0]);
       setPublishedToFeed(false);
+      setPickedFileName(null);
+      setProcessingFile(false);
+      setFileError(null);
     }
   }, [open]);
 
-  const canSubmit = name.trim().length > 0 && description.trim().length > 0;
+  /** Quando o usuário seleciona um arquivo via input. Auto-fill
+   *  metadados + gera thumb se for imagem. */
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileError(null);
+    setPickedFileName(file.name);
+    setName((curr) => curr.trim() ? curr : file.name);
+    setFormato(inferFormato(file.name));
+    setTamanhoBytes(file.size);
+
+    if (file.type.startsWith('image/')) {
+      setProcessingFile(true);
+      try {
+        const dataUrl = await generateThumbnail(file);
+        setThumb(dataUrl);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Falha ao processar imagem';
+        setFileError(`${msg}. Usando capa default.`);
+      } finally {
+        setProcessingFile(false);
+      }
+    }
+  }
+
+  const canSubmit =
+    name.trim().length > 0 &&
+    description.trim().length > 0 &&
+    !processingFile;
 
   function submit(e?: React.FormEvent) {
     e?.preventDefault();
     if (!canSubmit) return;
-    const sizeMb = Math.max(0.1, parseFloat(tamanhoMB) || 0);
     onConfirm({
       name: name.trim(),
       formato,
-      tamanhoBytes: Math.round(sizeMb * 1_048_576),
+      tamanhoBytes: tamanhoBytes > 0 ? tamanhoBytes : 1_048_576, // 1MB default
       audience,
       description: description.trim(),
       thumb,
@@ -195,7 +305,7 @@ export function UploadFileDialog({
       open={open}
       onClose={onClose}
       title="Novo arquivo"
-      description={`Será publicado em "${parentName}". Mock — quando o storage real estiver ligado, o upload de arquivo binário entra aqui.`}
+      description={`Será publicado em "${parentName}". O arquivo binário NÃO é armazenado (backend de storage pendente) — só os metadados + thumb redimensionado ficam no acervo local.`}
       size="lg"
       footer={
         <div className={styles.footer}>
@@ -214,13 +324,66 @@ export function UploadFileDialog({
       }
     >
       <form className={styles.body} onSubmit={submit}>
+        {/* File picker — drop-zone clicável. Auto-preenche o
+         *  resto dos campos quando um arquivo é selecionado. */}
+        <div>
+          <span className={styles.fieldLabel}>Arquivo</span>
+          <button
+            type="button"
+            className={styles.dropzone}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {pickedFileName ? (
+              <div className={styles.dropzonePicked}>
+                {thumb.startsWith('data:') ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={thumb} alt="" className={styles.dropzoneThumb} />
+                ) : (
+                  <span className={styles.dropzoneIcon}>
+                    <IconImage size={20} />
+                  </span>
+                )}
+                <div className={styles.dropzonePickedInfo}>
+                  <span className={styles.dropzonePickedName}>{pickedFileName}</span>
+                  <span className={styles.dropzonePickedMeta}>
+                    {processingFile
+                      ? 'Processando…'
+                      : `${formatBytes(tamanhoBytes)} · ${formato.toUpperCase()}`}
+                  </span>
+                </div>
+                <span className={styles.dropzoneSwap}>Trocar arquivo</span>
+              </div>
+            ) : (
+              <div className={styles.dropzoneEmpty}>
+                <span className={styles.dropzoneIcon}>
+                  <IconUpload size={20} />
+                </span>
+                <span className={styles.dropzoneEmptyTitle}>
+                  Clique para selecionar um arquivo
+                </span>
+                <span className={styles.dropzoneEmptyHint}>
+                  Imagens (JPG, PNG, SVG), áudio (MP3), vídeo (MP4), documentos (PDF, ZIP).
+                </span>
+              </div>
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,audio/mpeg,video/mp4,application/pdf,application/zip"
+            onChange={handleFileSelected}
+            style={{ display: 'none' }}
+          />
+          {fileError && <p className={styles.fileError}>{fileError}</p>}
+        </div>
+
         <Input
-          label="Nome do arquivo"
+          label="Nome no acervo"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Ex: palco-encerramento.jpg"
-          autoFocus
           required
+          helperText="Edita aqui se quiser um nome diferente do arquivo original."
         />
 
         <div className={styles.row2}>
@@ -231,13 +394,11 @@ export function UploadFileDialog({
             options={FORMATO_OPTIONS}
           />
           <Input
-            label="Tamanho (MB)"
-            type="number"
-            min="0.1"
-            step="0.1"
-            value={tamanhoMB}
-            onChange={(e) => setTamanhoMB(e.target.value)}
-            placeholder="5"
+            label="Tamanho"
+            value={tamanhoBytes > 0 ? formatBytes(tamanhoBytes) : '—'}
+            readOnly
+            disabled
+            helperText="Auto-detectado do arquivo."
           />
         </div>
 
@@ -257,23 +418,30 @@ export function UploadFileDialog({
           options={AUDIENCE_OPTIONS}
         />
 
-        <div>
-          <span className={styles.fieldLabel}>Capa (thumb)</span>
-          <div className={styles.thumbGrid}>
-            {DEFAULT_THUMB_OPTIONS.map((src) => (
-              <button
-                key={src}
-                type="button"
-                className={`${styles.thumbOption} ${thumb === src ? styles.thumbOptionActive : ''}`}
-                onClick={() => setThumb(src)}
-                aria-pressed={thumb === src}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" />
-              </button>
-            ))}
+        {/* Capa default só pra non-imagens. Pra imagens, o thumb
+         *  é gerado a partir do arquivo enviado. */}
+        {!thumb.startsWith('data:') && (
+          <div>
+            <span className={styles.fieldLabel}>Capa (thumb)</span>
+            <p className={styles.fieldHint}>
+              Como o arquivo não é imagem, escolha uma capa do banco visual.
+            </p>
+            <div className={styles.thumbGrid}>
+              {DEFAULT_THUMB_OPTIONS.map((src) => (
+                <button
+                  key={src}
+                  type="button"
+                  className={`${styles.thumbOption} ${thumb === src ? styles.thumbOptionActive : ''}`}
+                  onClick={() => setThumb(src)}
+                  aria-pressed={thumb === src}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" />
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <label className={styles.checkboxRow}>
           <input

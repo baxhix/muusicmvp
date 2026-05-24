@@ -24,6 +24,7 @@ import {
   IconTrash,
   IconGrid,
   IconList,
+  IconEdit,
 } from '@/components/icons';
 import {
   loadMateriaisTree,
@@ -135,6 +136,11 @@ export default function MateriaisPage() {
 
   function updateView(next: ViewMode) {
     setView(next);
+    /* Fecha o preview drawer ao trocar view — caso contrário,
+     * a ring "fileCardOpen" no card que tava com preview aberto
+     * dá impressão visual de "Grid icon selecionou um arquivo"
+     * (bug perceptual reportado pelo usuário). */
+    setSelectedFileId(null);
     if (typeof window !== 'undefined') {
       try {
         window.localStorage.setItem(VIEW_PREF_KEY, next);
@@ -629,22 +635,53 @@ export default function MateriaisPage() {
             {folders.map((folder) => {
               const count = countFilesDeep(nodes, folder.id);
               return (
-                <button
-                  key={folder.id}
-                  type="button"
-                  className={styles.folderCard}
-                  onClick={() => navigateTo(folder.id)}
-                >
-                  <div className={styles.folderCardTop}>
-                    <span className={styles.folderCardIcon}>
-                      <IconFolder size={14} />
+                <div key={folder.id} className={styles.folderCardWrap}>
+                  <button
+                    type="button"
+                    className={styles.folderCard}
+                    onClick={() => navigateTo(folder.id)}
+                  >
+                    <div className={styles.folderCardTop}>
+                      <span className={styles.folderCardIcon}>
+                        <IconFolder size={14} />
+                      </span>
+                    </div>
+                    <span className={styles.folderCardName}>{folder.name}</span>
+                    <span className={styles.folderCardMeta}>
+                      {count} {count === 1 ? 'arquivo' : 'arquivos'}
                     </span>
+                  </button>
+                  {/* Quick actions — Renomear + Excluir, visíveis no
+                   *  hover. Botões absolute pra ficarem por cima do
+                   *  link clicável da pasta. stopPropagation pra
+                   *  não disparar a navegação. */}
+                  <div className={styles.folderCardActions}>
+                    <button
+                      type="button"
+                      className={styles.folderCardActionBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRenameTarget(folder);
+                      }}
+                      title="Renomear pasta"
+                      aria-label={`Renomear ${folder.name}`}
+                    >
+                      <IconEdit size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.folderCardActionBtn} ${styles.folderCardActionBtnDanger}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteFolder(folder);
+                      }}
+                      title="Excluir pasta e todo o conteúdo"
+                      aria-label={`Excluir ${folder.name}`}
+                    >
+                      <IconTrash size={12} />
+                    </button>
                   </div>
-                  <span className={styles.folderCardName}>{folder.name}</span>
-                  <span className={styles.folderCardMeta}>
-                    {count} {count === 1 ? 'arquivo' : 'arquivos'}
-                  </span>
-                </button>
+                </div>
               );
             })}
           </div>
