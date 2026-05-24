@@ -14,11 +14,8 @@ import {
   IconChevronRight,
   IconX,
 } from '@/components/icons';
-import {
-  MATERIAL_STATUS_LABEL,
-  type MaterialFile,
-  type MaterialStatus,
-} from '@/data/mock/materiais';
+import type { MaterialFile, MaterialStatus } from '@/types/materiais';
+import { MATERIAL_STATUS_LABEL } from '@/lib/materiais';
 import { formatNumber, formatDateLong } from '@/lib/format';
 import { formatBytes } from './shared';
 import styles from './MaterialPreviewModal.module.css';

@@ -17,7 +17,7 @@ import type {
   MaterialNode,
   MaterialAudience,
   MaterialStatus,
-} from '@/data/mock/materiais';
+} from '@/types/materiais';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 

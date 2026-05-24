@@ -27,6 +27,13 @@ import {
   IconCheck,
   IconShield,
 } from '@/components/icons';
+import type {
+  MaterialNode,
+  MaterialFolder,
+  MaterialFile,
+  MaterialFormato,
+  MaterialAudience,
+} from '@/types/materiais';
 import {
   childrenOf,
   pathOf,
@@ -34,13 +41,9 @@ import {
   summarizeTree,
   MATERIAL_STATUS_LABEL,
   MATERIAL_AUDIENCE_META,
-  type MaterialNode,
-  type MaterialFolder,
-  type MaterialFile,
-  type MaterialFormato,
-  type MaterialAudience,
-} from '@/data/mock/materiais';
+} from '@/lib/materiais';
 import Badge from '@/components/ui/Badge';
+import { useToast } from '@/components/ui/Toast';
 import { formatNumber, formatRelative } from '@/lib/format';
 import { formatBytes, validateFile } from './shared';
 import { NewFolderDialog, RenameDialog, FolderPermissionsDialog } from './dialogs';
@@ -108,6 +111,8 @@ function fileFormatIcon(formato: MaterialFormato) {
 }
 
 export default function MateriaisPage() {
+  const { push } = useToast();
+
   /* Árvore = source of truth do server. Carregada via
    * listMateriais() no mount; mudanças refletem aqui depois de
    * cada operação confirmada pelo backend (refetch ou
@@ -292,7 +297,7 @@ export default function MateriaisPage() {
    *  raw pra debug. */
   function reportError(operation: string, err: unknown) {
     console.error(`materiais ${operation} failed:`, err);
-    alert(describeError(err));
+    push({ type: 'error', title: 'Algo deu errado', description: describeError(err) });
   }
 
   /** Refetch — pega a árvore do servidor de novo. Usado depois
@@ -393,9 +398,11 @@ export default function MateriaisPage() {
     await refetchTree();
     clearSelection();
     if (failures.length > 0) {
-      alert(
-        `Falha ao excluir ${failures.length} de ${ids.length} arquivos. Lista re-sincronizada.`,
-      );
+      push({
+        type: 'warning',
+        title: 'Exclusão parcial',
+        description: `Falha ao excluir ${failures.length} de ${ids.length} arquivos. Lista re-sincronizada.`,
+      });
     }
   }
 
@@ -506,9 +513,11 @@ export default function MateriaisPage() {
    *  root). */
   function enqueueFiles(files: File[] | FileList) {
     if (!currentFolderId) {
-      alert(
-        'Entre numa pasta antes de enviar arquivos. O acervo é organizado em pastas.',
-      );
+      push({
+        type: 'info',
+        title: 'Escolha uma pasta',
+        description: 'Entre numa pasta antes de enviar arquivos. O acervo é organizado em pastas.',
+      });
       return;
     }
     const list = Array.from(files);

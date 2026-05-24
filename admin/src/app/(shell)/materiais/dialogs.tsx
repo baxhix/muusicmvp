@@ -7,13 +7,15 @@ import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
 import { IconCheck } from '@/components/icons';
+import type {
+  MaterialAudience,
+  MaterialFolder,
+  MaterialNode,
+} from '@/types/materiais';
 import {
   MATERIAL_AUDIENCE_META,
   MATERIAL_AUDIENCE_ORDER,
-  type MaterialAudience,
-  type MaterialFolder,
-  type MaterialNode,
-} from '@/data/mock/materiais';
+} from '@/lib/materiais';
 import { cn } from '@/lib/utils';
 import styles from './dialogs.module.css';
 
