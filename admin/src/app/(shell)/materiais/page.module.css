@@ -589,18 +589,16 @@
  * em vez disso. */
 .fileCheckbox {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 10px;
+  left: 10px;
   z-index: 3;
-  padding: 4px;
-  background: rgba(20, 22, 26, 0.72);
-  border-radius: 6px;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-2px);
   transition: opacity 140ms ease-out, transform 140ms ease-out;
+  /* Drop shadow pra destacar do background da thumb sem precisar
+   * de backdrop-filter num wrapper. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
 }
 .fileCard:hover .fileCheckbox,
 .fileCard:focus-within .fileCheckbox,
@@ -608,6 +606,38 @@
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+/* Checkbox como botão puro — substitui o componente <Checkbox>
+ * dentro do card de arquivo. Decisão: o componente compartilhado
+ * usa <label htmlFor>, o que em DOMs grandes com muitos checkboxes
+ * coexistindo (grid + list view com 13+ arquivos) tinha edge
+ * cases de binding ambíguo. Aqui o botão controla o visual e o
+ * estado diretamente — sem label, sem htmlFor, sem input hidden. */
+.fileCheckboxBtn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  color: transparent;
+  transition: background 140ms ease-out, border-color 140ms ease-out, color 140ms ease-out;
+}
+.fileCheckboxBtn:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+}
+.fileCheckboxBtnChecked {
+  background: var(--accent, #FAFAFA);
+  border-color: var(--accent, #FAFAFA);
+  color: var(--accent-fg, #0A0A0A);
+}
+.fileCheckboxBtn:focus-visible {
+  outline: 2px solid var(--accent, #FAFAFA);
+  outline-offset: 2px;
 }
 
 /* Quick actions — escondidas até hover do card. Mesma proteção

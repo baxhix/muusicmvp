@@ -5,7 +5,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Checkbox from '@/components/ui/Checkbox';
 import StatCard from '@/components/ui/StatCard';
 import {
   IconPlus,
@@ -25,6 +24,7 @@ import {
   IconGrid,
   IconList,
   IconEdit,
+  IconCheck,
 } from '@/components/icons';
 import {
   childrenOf,
@@ -1026,19 +1026,37 @@ export default function MateriaisPage() {
                   )}
                 >
                   {/* Checkbox no canto top-left — sempre visível
-                   *  quando há seleção ativa, ou no hover. */}
+                   *  quando há seleção ativa, ou no hover.
+                   *
+                   *  CRÍTICO: botão direto (não <Checkbox> component).
+                   *  Histórico: usando <Checkbox> (que renderiza
+                   *  <label htmlFor><input hidden></label>), em DOMs
+                   *  com 13+ checkboxes coexistindo, o click no .box
+                   *  às vezes não chegava ao input via label-binding
+                   *  (estado interno não atualizava). Solução
+                   *  definitiva: botão puro, estado controlado por
+                   *  className, click handler direto. Zero magia.  */}
                   <div
                     className={cn(
                       styles.fileCheckbox,
                       hasSelection && styles.fileCheckboxAlwaysVisible,
                     )}
-                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={() => toggleSelect(file.id)}
+                    <button
+                      type="button"
+                      className={cn(
+                        styles.fileCheckboxBtn,
+                        isSelected && styles.fileCheckboxBtnChecked,
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(file.id);
+                      }}
                       aria-label={`Selecionar ${file.name}`}
-                    />
+                      aria-pressed={isSelected}
+                    >
+                      {isSelected ? <IconCheck size={12} strokeWidth={3} /> : null}
+                    </button>
                   </div>
 
                   <button
@@ -1078,26 +1096,35 @@ export default function MateriaisPage() {
                     </div>
                   </button>
 
-                  {/* Quick actions visíveis no hover. */}
+                  {/* Quick actions visíveis no hover. <button> (não
+                   *  <span role="button">) — semântica + click
+                   *  consistente. stopPropagation porque o card
+                   *  inteiro tem clickable areas adjacentes. */}
                   <div className={styles.fileActions}>
-                    <span
-                      role="button"
-                      tabIndex={-1}
+                    <button
+                      type="button"
                       className={styles.fileActionBtn}
                       title="Download"
-                      onClick={() => handleDownload(file)}
+                      aria-label={`Baixar ${file.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(file);
+                      }}
                     >
                       <IconDownload size={13} />
-                    </span>
-                    <span
-                      role="button"
-                      tabIndex={-1}
+                    </button>
+                    <button
+                      type="button"
                       className={cn(styles.fileActionBtn, styles.fileActionBtnDanger)}
                       title="Excluir"
-                      onClick={() => handleDelete(file)}
+                      aria-label={`Excluir ${file.name}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(file);
+                      }}
                     >
                       <IconTrash size={13} />
-                    </span>
+                    </button>
                   </div>
                 </div>
               );
@@ -1130,15 +1157,22 @@ export default function MateriaisPage() {
                   className={cn(styles.listRow, isSelected && styles.listRowSelected)}
                   role="row"
                 >
-                  <span
-                    className={styles.listColCheck}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Checkbox
-                      checked={isSelected}
-                      onChange={() => toggleSelect(file.id)}
+                  <span className={styles.listColCheck}>
+                    <button
+                      type="button"
+                      className={cn(
+                        styles.fileCheckboxBtn,
+                        isSelected && styles.fileCheckboxBtnChecked,
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(file.id);
+                      }}
                       aria-label={`Selecionar ${file.name}`}
-                    />
+                      aria-pressed={isSelected}
+                    >
+                      {isSelected ? <IconCheck size={12} strokeWidth={3} /> : null}
+                    </button>
                   </span>
                   <button
                     type="button"
@@ -1184,16 +1218,24 @@ export default function MateriaisPage() {
                     <button
                       type="button"
                       className={styles.listIconBtn}
-                      onClick={() => handleDownload(file)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(file);
+                      }}
                       title="Download"
+                      aria-label={`Baixar ${file.name}`}
                     >
                       <IconDownload size={13} />
                     </button>
                     <button
                       type="button"
                       className={cn(styles.listIconBtn, styles.listIconBtnDanger)}
-                      onClick={() => handleDelete(file)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(file);
+                      }}
                       title="Excluir"
+                      aria-label={`Excluir ${file.name}`}
                     >
                       <IconTrash size={13} />
                     </button>

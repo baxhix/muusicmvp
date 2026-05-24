@@ -12,7 +12,6 @@ import {
 } from '@/components/icons';
 import {
   MATERIAL_STATUS_LABEL,
-  MATERIAL_AUDIENCE_META,
   type MaterialFile,
   type MaterialStatus,
 } from '@/data/mock/materiais';
@@ -52,7 +51,6 @@ export default function MaterialPreviewDrawer({
   if (!file) return null;
 
   const isImage = ['jpg', 'png', 'svg'].includes(file.formato);
-  const currentAudience = MATERIAL_AUDIENCE_META[file.audience];
 
   return (
     <Drawer
@@ -123,27 +121,6 @@ export default function MaterialPreviewDrawer({
             </span>
           )}
         </div>
-
-        {/* Bloco de Audiência — read-only. Per product feedback
-         *  "remova o bloco de permissão de acesso dessa etapa.
-         *  Deve ser feita na pasta e não nos arquivos." Mantemos
-         *  o badge visível porque é informação relevante, mas a
-         *  edição passa pelo nível da pasta. */}
-        <section className={styles.audienceSection}>
-          <div className={styles.audienceSectionHead}>
-            <h3 className={styles.sectionTitle}>Quem pode acessar</h3>
-            <Badge tone={currentAudience.tone} size="sm">
-              {currentAudience.shortLabel}
-            </Badge>
-          </div>
-          <p className={styles.audienceDescription}>
-            {currentAudience.description}
-          </p>
-          <p className={styles.audienceHelp}>
-            Esta audiência é definida na pasta pai. Pra mudar, edite a pasta —
-            os arquivos dentro herdam automaticamente.
-          </p>
-        </section>
 
         {/* Metadados em grid */}
         <dl className={styles.meta}>
