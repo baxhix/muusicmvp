@@ -44,7 +44,6 @@
  * (escritas continuam no FS até o cutover do env var).
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Readable } from 'node:stream';
 import type { SaveOptions, Storage } from './types';
 
@@ -94,10 +93,10 @@ export class S3Storage implements Storage {
   }
 
   async save(
-    bucket: string,
-    key: string,
-    bytes: Buffer | Uint8Array,
-    opts?: SaveOptions,
+    _bucket: string,
+    _key: string,
+    _bytes: Buffer | Uint8Array,
+    _opts?: SaveOptions,
   ): Promise<void> {
     /* TODO(aws-migration):
      * await new Upload({
@@ -114,7 +113,7 @@ export class S3Storage implements Storage {
     throw new Error('s3.save: não implementado');
   }
 
-  async read(bucket: string, key: string): Promise<Buffer | null> {
+  async read(_bucket: string, _key: string): Promise<Buffer | null> {
     /* TODO(aws-migration):
      * try {
      *   const r = await this.client.send(
@@ -136,7 +135,7 @@ export class S3Storage implements Storage {
     throw new Error('s3.read: não implementado');
   }
 
-  async readStream(bucket: string, key: string): Promise<Readable | null> {
+  async readStream(_bucket: string, _key: string): Promise<Readable | null> {
     /* TODO(aws-migration):
      * try {
      *   const r = await this.client.send(
@@ -156,7 +155,7 @@ export class S3Storage implements Storage {
     throw new Error('s3.readStream: não implementado');
   }
 
-  async delete(bucket: string, key: string): Promise<void> {
+  async delete(_bucket: string, _key: string): Promise<void> {
     /* TODO(aws-migration): idempotente — DeleteObjectCommand não
      *  falha se a key não existir.
      *
@@ -170,7 +169,7 @@ export class S3Storage implements Storage {
     throw new Error('s3.delete: não implementado');
   }
 
-  async exists(bucket: string, key: string): Promise<boolean> {
+  async exists(_bucket: string, _key: string): Promise<boolean> {
     /* TODO(aws-migration):
      * try {
      *   await this.client.send(
@@ -188,7 +187,7 @@ export class S3Storage implements Storage {
     throw new Error('s3.exists: não implementado');
   }
 
-  async size(bucket: string, key: string): Promise<number | null> {
+  async size(_bucket: string, _key: string): Promise<number | null> {
     /* TODO(aws-migration):
      * try {
      *   const r = await this.client.send(

@@ -59,8 +59,6 @@
  * é async por natureza, sem impacto observável de latência.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 /**
  * Script Lua atômico — refill + deduct numa única operação Redis.
  *
@@ -116,7 +114,7 @@ export class RedisTokenBucket {
   // private scriptSha?: string;
 
   constructor(
-    private readonly config: RedisTokenBucketConfig,
+    private readonly _config: RedisTokenBucketConfig,
     // redis: Redis,
   ) {
     /* TODO(aws-migration):
@@ -135,7 +133,7 @@ export class RedisTokenBucket {
 
   /** Mesma semântica do `TokenBucket` in-memory: true = permitido,
    *  false = rate-limited. */
-  async consume(key: string, cost = 1): Promise<boolean> {
+  async consume(_key: string, _cost = 1): Promise<boolean> {
     /* TODO(aws-migration):
      * const fullKey = `rl:${this.config.namespace}:${key}`;
      * const args = [
