@@ -31,7 +31,6 @@ import {
   childrenOf,
   pathOf,
   findNode,
-  countFilesDeep,
   summarizeTree,
   MATERIAL_STATUS_LABEL,
   MATERIAL_AUDIENCE_META,
@@ -215,12 +214,41 @@ export default function MateriaisPage() {
     });
   }, [nodes, currentFolderId, search]);
 
-  const folders = currentChildren.filter(
-    (n): n is MaterialFolder => n.type === 'folder',
-  );
-  const files = currentChildren.filter(
-    (n): n is MaterialFile => n.type === 'file',
-  );
+  /* Split em folders/files num único pass — memoizado pra que
+   * filtros/seleção/dialogs não disparem reconstrução. */
+  const { folders, files } = useMemo(() => {
+    const folders: MaterialFolder[] = [];
+    const files: MaterialFile[] = [];
+    for (const n of currentChildren) {
+      if (n.type === 'folder') folders.push(n);
+      else files.push(n);
+    }
+    return { folders, files };
+  }, [currentChildren]);
+
+  /* Pre-compute file count por pasta (deep). Antes era O(folders × tree)
+   * a cada render porque cada folder card chamava countFilesDeep. Agora
+   * 1 pass O(tree) ao mudar `nodes` + lookup O(1) por folder. */
+  const fileCountByFolder = useMemo(() => {
+    const map = new Map<string, number>();
+    // Inicializa todas as folders com 0 pra evitar undefined em pastas vazias.
+    for (const n of nodes) {
+      if (n.type === 'folder') map.set(n.id, 0);
+    }
+    // Pra cada arquivo, sobe na árvore via parentId e incrementa cada
+    // ancestral. Total: O(N × depth_média) — bom o suficiente até
+    // milhares de nodes.
+    const byId = new Map(nodes.map((n) => [n.id, n] as const));
+    for (const n of nodes) {
+      if (n.type !== 'file') continue;
+      let cursor: MaterialNode | undefined = byId.get(n.parentId);
+      while (cursor && cursor.type === 'folder') {
+        map.set(cursor.id, (map.get(cursor.id) ?? 0) + 1);
+        cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+      }
+    }
+    return map;
+  }, [nodes]);
 
   /* Sumário global pros KPIs no header — não depende do folder
    * atual; sempre reflete o acervo inteiro. */
@@ -587,7 +615,7 @@ export default function MateriaisPage() {
   /** Exclui pasta — DELETE; backend cuida do cascade. Refetch
    *  pra sincronizar (descendents foram removidos no servidor). */
   async function handleDeleteFolder(folder: MaterialFolder) {
-    const fileCount = countFilesDeep(nodes, folder.id);
+    const fileCount = fileCountByFolder.get(folder.id) ?? 0;
     const message =
       fileCount === 0
         ? `Excluir a pasta "${folder.name}"?`
@@ -981,7 +1009,7 @@ export default function MateriaisPage() {
           <h3 className={styles.sectionLabel}>Pastas</h3>
           <div className={styles.folderGrid}>
             {folders.map((folder) => {
-              const count = countFilesDeep(nodes, folder.id);
+              const count = fileCountByFolder.get(folder.id) ?? 0;
               return (
                 <div key={folder.id} className={styles.folderCardWrap}>
                   <button
@@ -1089,7 +1117,12 @@ export default function MateriaisPage() {
                   >
                     <div className={styles.fileThumb}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={file.thumb} alt="" />
+                      <img
+                        src={file.thumb}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
                       <span className={styles.fileBadge}>
                         <FormatIcon size={11} />
                         <span>{file.formato.toUpperCase()}</span>
@@ -1201,7 +1234,13 @@ export default function MateriaisPage() {
                     onClick={() => setSelectedFileId(file.id)}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={file.thumb} alt="" className={styles.listThumb} />
+                    <img
+                      src={file.thumb}
+                      alt=""
+                      className={styles.listThumb}
+                      loading="lazy"
+                      decoding="async"
+                    />
                     <span className={styles.listNameBody}>
                       <span className={styles.listNameText}>{file.name}</span>
                       <span className={styles.listNameDesc}>{file.description}</span>

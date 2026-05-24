@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Avatar from '@/components/ui/Avatar';
@@ -149,7 +149,9 @@ export default function FeedPostInsightsDrawer({
   const [comments, setComments] = useState<MockComment[]>([]);
   // Reset the comment list whenever a new post is opened so
   // moderating post A doesn't carry stale state into post B.
-  useMemo(() => {
+  // useEffect (não useMemo) porque é um side-effect (setState),
+  // não uma computação — useMemo aqui era um anti-pattern.
+  useEffect(() => {
     setComments(post ? buildMockComments(post.id) : []);
   }, [post]);
 
