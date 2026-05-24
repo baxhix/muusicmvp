@@ -60,6 +60,11 @@ services:
       REPORTS_DIR: /app/uploads/reports
       GROUPS_DIR: /app/uploads/groups
       FEED_DIR: /app/uploads/feed
+      # Materiais — acervo de conteúdo exclusivo (admin upload).
+      # Persiste no volume `uploads` junto com o resto; backup
+      # único captura tudo. Default do storage.ts coincide com
+      # esse path, mas declarar aqui torna explícito.
+      MATERIAIS_DIR: /app/uploads/materiais
     volumes:
       # Avatar + report-evidence uploads persist across container
       # rebuilds. Both directories live under the same `uploads`
