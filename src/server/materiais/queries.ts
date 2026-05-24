@@ -153,6 +153,7 @@ export interface CreateFolderInput {
   name: string;
   description?: string | null;
   parentId?: string | null;
+  audience?: MaterialAudience;
   createdById?: string | null;
 }
 
@@ -166,6 +167,7 @@ export async function createFolder(
       name: input.name,
       description: input.description ?? null,
       parentId: input.parentId ?? null,
+      audience: input.audience ?? 'all',
       createdById: input.createdById ?? null,
     })
     .returning();
@@ -174,6 +176,20 @@ export async function createFolder(
     authorId: null,
     authorName: null,
   });
+}
+
+/** Lê só a audiência de um node (folder) — usado pra herança
+ *  ao criar arquivos. Quick query sem joins. Retorna 'all'
+ *  como default seguro se o node não existir. */
+export async function getFolderAudience(
+  folderId: string,
+): Promise<MaterialAudience> {
+  const rows = await db
+    .select({ audience: materialNodes.audience })
+    .from(materialNodes)
+    .where(eq(materialNodes.id, folderId))
+    .limit(1);
+  return (rows[0]?.audience ?? 'all') as MaterialAudience;
 }
 
 export interface CreateFileInput {

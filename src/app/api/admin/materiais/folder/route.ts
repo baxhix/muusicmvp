@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/server/auth/requireAdmin';
-import { createFolder } from '@/server/materiais/queries';
+import {
+  createFolder,
+  type MaterialAudience,
+} from '@/server/materiais/queries';
 
 export const runtime = 'nodejs';
+
+const AUDIENCES = new Set<MaterialAudience>([
+  'top1', 'top10', 'top50', 'top100', 'all',
+]);
 
 interface CreateFolderBody {
   name?: string;
   description?: string | null;
   parentId?: string | null;
+  audience?: string;
 }
 
 /**
@@ -42,12 +50,18 @@ export async function POST(req: Request) {
     typeof body.parentId === 'string' && body.parentId.length > 0
       ? body.parentId
       : null;
+  const audience =
+    typeof body.audience === 'string' &&
+    AUDIENCES.has(body.audience as MaterialAudience)
+      ? (body.audience as MaterialAudience)
+      : 'all';
 
   try {
     const node = await createFolder({
       name,
       description,
       parentId,
+      audience,
       createdById: admin.id,
     });
     return NextResponse.json({ node }, { status: 201 });

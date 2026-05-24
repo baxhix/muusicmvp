@@ -84,6 +84,9 @@ export interface CreateFolderPayload {
   name: string;
   description?: string;
   parentId: string | null;
+  /** Audiência da pasta — todos os arquivos criados aqui dentro
+   *  herdam por default. Default 'all' se omitido. */
+  audience?: MaterialAudience;
 }
 
 /** Cria uma pasta dentro de outra (ou no root se parentId=null). */
@@ -97,6 +100,7 @@ export async function createFolder(
       name: input.name,
       description: input.description ?? null,
       parentId: input.parentId,
+      audience: input.audience ?? 'all',
     },
   );
   return data.node;
@@ -107,9 +111,10 @@ export interface UploadFilePayload {
   parentId: string;
   name?: string;
   description?: string;
-  audience: MaterialAudience;
+  /** Opcional: se omitido, o backend herda da pasta pai. Per
+   *  product feedback, audiência é configurada na pasta. */
+  audience?: MaterialAudience;
   thumb?: string;
-  publishedToFeed?: boolean;
   /** Callback opcional pra progresso real do upload via XHR
    *  (0–100). Quando ausente, usamos fetch (sem progresso). */
   onProgress?: (percent: number) => void;
@@ -125,11 +130,11 @@ export async function uploadFile(
   const form = new FormData();
   form.append('file', input.file);
   form.append('parentId', input.parentId);
-  form.append('audience', input.audience);
+  /* Audience é opcional — backend herda da pasta quando não vem. */
+  if (input.audience) form.append('audience', input.audience);
   if (input.description) form.append('description', input.description);
   if (input.name) form.append('name', input.name);
   if (input.thumb) form.append('thumb', input.thumb);
-  form.append('publishedToFeed', input.publishedToFeed ? '1' : '0');
 
   /* Fast path: sem progresso/signal → fetch normal. */
   if (!input.onProgress && !input.signal) {

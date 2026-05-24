@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -42,13 +42,12 @@ import {
 } from '@/data/mock/materiais';
 import Badge from '@/components/ui/Badge';
 import { formatNumber, formatRelative } from '@/lib/format';
-import { formatBytes } from './shared';
-import {
-  NewFolderDialog,
-  UploadFileDialog,
-  RenameDialog,
-} from './dialogs';
+import { formatBytes, validateFile } from './shared';
+import { NewFolderDialog, RenameDialog } from './dialogs';
 import MaterialPreviewDrawer from './MaterialPreviewDrawer';
+import FloatingUploadPanel, {
+  type UploadItem,
+} from './FloatingUploadPanel';
 import {
   listMateriais,
   createFolder,
@@ -120,13 +119,25 @@ export default function MateriaisPage() {
 
   /* Dialogs state — controlados aqui, montados no final do JSX. */
   const [newFolderOpen, setNewFolderOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  /* Arquivos pre-carregados no dialog (vindos do drop zone do
-   * empty state ou do header). undefined = dialog abre vazio. */
-  const [uploadInitialFiles, setUploadInitialFiles] = useState<File[] | undefined>(undefined);
   const [renameTarget, setRenameTarget] = useState<MaterialNode | null>(null);
   /* Visual feedback do drag-over no empty state. */
   const [emptyDragOver, setEmptyDragOver] = useState(false);
+
+  /* Fila de uploads — controlada inteira aqui, renderizada no
+   * FloatingUploadPanel bottom-right. Per product feedback "o
+   * upload já deve começar, mostrar o andamento e o botão de
+   * cancelar". State é único pra que múltiplas seleções
+   * acumulem na mesma fila sem precisar de modal. */
+  const [queue, setQueue] = useState<UploadItem[]>([]);
+  /* AbortControllers por key — usados pra cancelar uploads em
+   * progresso. Mantidos em ref pra não disparar re-renders. */
+  const abortRef = useRef(new Map<string, AbortController>());
+  /* Worker active count — limita concurrency a MAX_CONCURRENT. */
+  const activeWorkersRef = useRef(0);
+  const MAX_CONCURRENT_UPLOADS = 3;
+  /* Input file global pra abrir o picker via header. Ref persistente
+   * pra evitar montar/desmontar. */
+  const headerFileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* Fetch inicial — pega a árvore do backend ao montar.
    * Idempotente (sem cache local que possa ficar stale entre
@@ -350,24 +361,19 @@ export default function MateriaisPage() {
     }
   }
 
-  /** Mudança de audiência — PATCH no backend. Mutação local
-   *  com o node retornado pra refletir imediatamente. */
-  async function handleAudienceChange(fileId: string, audience: MaterialAudience) {
-    try {
-      const updated = await updateNode(fileId, { audience });
-      upsertNode(updated);
-    } catch (err) {
-      reportError('update audience', err);
-    }
-  }
-
-  /** Cria pasta — POST /folder. */
-  async function handleCreateFolder(payload: { name: string; description?: string }) {
+  /** Cria pasta — POST /folder. Per product feedback, audience
+   *  é definida na pasta (não nos arquivos). */
+  async function handleCreateFolder(payload: {
+    name: string;
+    description?: string;
+    audience: MaterialAudience;
+  }) {
     try {
       const folder = await createFolder({
         name: payload.name,
         description: payload.description,
         parentId: currentFolderId,
+        audience: payload.audience,
       });
       upsertNode(folder);
     } catch (err) {
@@ -375,20 +381,166 @@ export default function MateriaisPage() {
     }
   }
 
-  /** Handler chamado pelo UploadFileDialog a cada arquivo
-   *  concluído. O dialog faz o upload via service e devolve o
-   *  node já criado pelo backend — aqui só fazemos upsert na
-   *  árvore. Fluxo: dialog → uploadFile(service) → backend cria
-   *  + responde → handler insere. */
-  function handleFileUploaded(node: MaterialNode) {
-    upsertNode(node);
+  /* ── Upload queue management ────────────────────────────
+   * Sem modal. Drop ou click no botão Upload → enqueue +
+   * start worker pool. Items aparecem no FloatingUploadPanel
+   * bottom-right; progresso real via XHR onProgress.
+   * Cancelamento via AbortController.
+   * ──────────────────────────────────────────────────────── */
+
+  function updateQueueItem(key: string, patch: Partial<UploadItem>) {
+    setQueue((curr) =>
+      curr.map((it) => (it.key === key ? { ...it, ...patch } : it)),
+    );
   }
 
-  /* Abre o dialog de upload, opcionalmente pré-carregando com
-   * arquivos vindos de drag/drop. */
-  function openUploadDialog(initialFiles?: File[]) {
-    setUploadInitialFiles(initialFiles);
-    setUploadOpen(true);
+  /** Processa um único item. Marca uploading → faz o upload com
+   *  progresso + abort signal → marca done ou error. Erros de
+   *  rede ou validação aparecem na mensagem. */
+  async function processItem(item: UploadItem, parentId: string) {
+    const ctrl = new AbortController();
+    abortRef.current.set(item.key, ctrl);
+    updateQueueItem(item.key, { status: 'uploading', progress: 0 });
+
+    try {
+      const node = await uploadFile({
+        file: item.file,
+        parentId,
+        /* Nome preservado direto do PC do usuário. */
+        name: item.file.name,
+        /* Sem audience — backend herda da pasta. */
+        signal: ctrl.signal,
+        onProgress: (percent) =>
+          updateQueueItem(item.key, { progress: percent }),
+      });
+      updateQueueItem(item.key, {
+        status: 'done',
+        progress: 100,
+      });
+      upsertNode(node);
+    } catch (err) {
+      /* Detecta cancelamento via signal pra diferenciar de erro. */
+      if (ctrl.signal.aborted) {
+        updateQueueItem(item.key, {
+          status: 'cancelled',
+          message: 'Cancelado',
+        });
+      } else {
+        const message =
+          err instanceof MateriaisApiError
+            ? describeError(err)
+            : 'Falha no upload.';
+        updateQueueItem(item.key, { status: 'error', message });
+      }
+    } finally {
+      abortRef.current.delete(item.key);
+      activeWorkersRef.current -= 1;
+      /* Tenta pegar o próximo da fila. */
+      pumpQueue();
+    }
+  }
+
+  /** Worker pump — enquanto houver pending e capacidade,
+   *  inicia o próximo. Lê o snapshot mais recente da queue via
+   *  setQueue + callback identidade. */
+  function pumpQueue() {
+    if (!currentFolderId) return;
+    setQueue((curr) => {
+      let availableSlots = MAX_CONCURRENT_UPLOADS - activeWorkersRef.current;
+      if (availableSlots <= 0) return curr;
+      for (const item of curr) {
+        if (availableSlots === 0) break;
+        if (item.status !== 'pending') continue;
+        availableSlots -= 1;
+        activeWorkersRef.current += 1;
+        /* Dispara o processItem em background — não awaitar
+         * dentro do setQueue. */
+        void processItem(item, currentFolderId);
+      }
+      return curr;
+    });
+  }
+
+  /** Adiciona arquivos na fila + dispara workers se houver
+   *  capacidade. Validação client-side: arquivos inválidos
+   *  entram com status='invalid' (não tentam upload).
+   *  Bloqueia se não há pasta atual (caso usuário arraste no
+   *  root). */
+  function enqueueFiles(files: File[] | FileList) {
+    if (!currentFolderId) {
+      alert(
+        'Entre numa pasta antes de enviar arquivos. O acervo é organizado em pastas.',
+      );
+      return;
+    }
+    const list = Array.from(files);
+    if (list.length === 0) return;
+
+    const newItems: UploadItem[] = list.map((file, i) => {
+      const error = validateFile(file);
+      return {
+        key: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        file,
+        status: error ? 'invalid' : 'pending',
+        progress: 0,
+        message: error ?? undefined,
+      };
+    });
+    setQueue((curr) => [...curr, ...newItems]);
+    /* Próximo tick — garante que o setQueue acima já comitou. */
+    queueMicrotask(pumpQueue);
+  }
+
+  /** Cancela um item específico — se uploading, aborta o XHR;
+   *  se pending, só marca cancelled (worker nem chega a pegar). */
+  function cancelItem(key: string) {
+    const ctrl = abortRef.current.get(key);
+    if (ctrl) {
+      ctrl.abort();
+      return; /* processItem catch marca como cancelled */
+    }
+    /* Pending — marca direto. */
+    updateQueueItem(key, { status: 'cancelled', message: 'Cancelado' });
+  }
+
+  /** Cancela tudo que ainda não terminou. */
+  function cancelAllUploads() {
+    /* Abort dos uploading. */
+    abortRef.current.forEach((ctrl: AbortController) => ctrl.abort());
+    /* Marca os pending como cancelled (já que worker não vai
+     * pegar — pumpQueue só pega pending). */
+    setQueue((curr) =>
+      curr.map((it) =>
+        it.status === 'pending'
+          ? { ...it, status: 'cancelled' as const, message: 'Cancelado' }
+          : it,
+      ),
+    );
+  }
+
+  function dismissQueueItem(key: string) {
+    setQueue((curr) => curr.filter((it) => it.key !== key));
+  }
+
+  function clearFinishedQueue() {
+    setQueue((curr) =>
+      curr.filter(
+        (it) =>
+          it.status === 'pending' || it.status === 'uploading',
+      ),
+    );
+  }
+
+  /** Abre o picker do OS quando o usuário clica em "Upload"
+   *  no header. Multi-select default. */
+  function openHeaderPicker() {
+    headerFileInputRef.current?.click();
+  }
+  function handleHeaderPickerChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) enqueueFiles(e.target.files);
+    /* Reset value pra permitir selecionar o mesmo arquivo
+     * de novo no futuro. */
+    e.target.value = '';
   }
 
   /** Renomeia — PATCH. */
@@ -462,7 +614,7 @@ export default function MateriaisPage() {
               variant="primary"
               size="sm"
               leadingIcon={<IconPlus size={14} />}
-              onClick={() => openUploadDialog()}
+              onClick={openHeaderPicker}
               disabled={loading || !currentFolderId}
               title={
                 !currentFolderId
@@ -472,6 +624,17 @@ export default function MateriaisPage() {
             >
               Upload
             </Button>
+            {/* Input invisível conectado ao botão Upload. Single
+             *  source de file picker do header — multi-select, todos
+             *  os formatos aceitos. */}
+            <input
+              ref={headerFileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/svg+xml,audio/mpeg,video/mp4,application/pdf,application/zip,.jpg,.jpeg,.png,.svg,.mp3,.mp4,.pdf,.zip"
+              multiple
+              onChange={handleHeaderPickerChange}
+              style={{ display: 'none' }}
+            />
           </div>
         }
       />
@@ -728,7 +891,7 @@ export default function MateriaisPage() {
               className={`${styles.emptyDropzone} ${emptyDragOver ? styles.emptyDropzoneActive : ''} ${!currentFolderId ? styles.emptyDropzoneDisabled : ''}`}
               role="button"
               tabIndex={currentFolderId ? 0 : -1}
-              onClick={() => currentFolderId && openUploadDialog()}
+              onClick={() => currentFolderId && openHeaderPicker()}
               onDragOver={(e) => {
                 if (!currentFolderId) return;
                 e.preventDefault();
@@ -741,12 +904,14 @@ export default function MateriaisPage() {
                 if (!currentFolderId) return;
                 const files = Array.from(e.dataTransfer?.files ?? []);
                 if (files.length === 0) return;
-                openUploadDialog(files);
+                /* Drop → upload IMEDIATO (sem modal). Per product
+                 *  feedback "o upload já deve começar". */
+                enqueueFiles(files);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  if (currentFolderId) openUploadDialog();
+                  if (currentFolderId) openHeaderPicker();
                 }
               }}
             >
@@ -1034,7 +1199,6 @@ export default function MateriaisPage() {
         onClose={() => setSelectedFileId(null)}
         onDownload={handleDownload}
         onDelete={handleDelete}
-        onAudienceChange={handleAudienceChange}
         onRename={(file) => setRenameTarget(file)}
       />
 
@@ -1045,29 +1209,23 @@ export default function MateriaisPage() {
         onClose={() => setNewFolderOpen(false)}
         onConfirm={handleCreateFolder}
       />
-      <UploadFileDialog
-        open={uploadOpen}
-        parentName={currentFolder?.name ?? 'Materiais'}
-        parentId={currentFolderId}
-        initialFiles={uploadInitialFiles}
-        onClose={() => {
-          setUploadOpen(false);
-          setUploadInitialFiles(undefined);
-        }}
-        onFileUploaded={handleFileUploaded}
-        onComplete={(summary) => {
-          if (summary.failed > 0) {
-            console.warn(
-              `Upload concluído com ${summary.failed} falha${summary.failed === 1 ? '' : 's'} de ${summary.ok + summary.failed}.`,
-            );
-          }
-        }}
-      />
       <RenameDialog
         open={renameTarget !== null}
         target={renameTarget}
         onClose={() => setRenameTarget(null)}
         onConfirm={handleRename}
+      />
+
+      {/* ── Painel flutuante de uploads ──────────────────
+       *  Sempre montado; auto-hides quando queue está vazia.
+       *  Acompanha o usuário através de navegação entre pastas
+       *  (fica fixo na viewport). */}
+      <FloatingUploadPanel
+        items={queue}
+        onCancelItem={cancelItem}
+        onCancelAll={cancelAllUploads}
+        onDismissItem={dismissQueueItem}
+        onClearFinished={clearFinishedQueue}
       />
     </div>
   );

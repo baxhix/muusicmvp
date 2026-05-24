@@ -3,7 +3,6 @@
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
-import Select from '@/components/ui/Select';
 import {
   IconDownload,
   IconTrash,
@@ -14,10 +13,8 @@ import {
 import {
   MATERIAL_STATUS_LABEL,
   MATERIAL_AUDIENCE_META,
-  MATERIAL_AUDIENCE_ORDER,
   type MaterialFile,
   type MaterialStatus,
-  type MaterialAudience,
 } from '@/data/mock/materiais';
 import { formatNumber, formatDateLong } from '@/lib/format';
 import { formatBytes } from './shared';
@@ -35,9 +32,6 @@ export interface MaterialPreviewDrawerProps {
   onClose: () => void;
   onDownload: (file: MaterialFile) => void;
   onDelete: (file: MaterialFile) => void;
-  /** Handler de mudança da audiência do material. Recebe id +
-   *  novo tier — page é responsável por persistir. */
-  onAudienceChange: (fileId: string, audience: MaterialAudience) => void;
   /** Abre o RenameDialog pra renomear o arquivo. */
   onRename: (file: MaterialFile) => void;
 }
@@ -53,20 +47,11 @@ export default function MaterialPreviewDrawer({
   onClose,
   onDownload,
   onDelete,
-  onAudienceChange,
   onRename,
 }: MaterialPreviewDrawerProps) {
   if (!file) return null;
 
   const isImage = ['jpg', 'png', 'svg'].includes(file.formato);
-
-  /* Options pro Select de audiência — ordenadas do mais restrito
-   * pro mais aberto, com descrição inline pra contextualizar. */
-  const audienceOptions = MATERIAL_AUDIENCE_ORDER.map((id) => ({
-    value: id,
-    label: MATERIAL_AUDIENCE_META[id].label,
-  }));
-
   const currentAudience = MATERIAL_AUDIENCE_META[file.audience];
 
   return (
@@ -139,9 +124,11 @@ export default function MaterialPreviewDrawer({
           )}
         </div>
 
-        {/* Bloco de Audiência — controle dedicado. Ocupa uma
-         *  seção própria porque é a decisão editorial principal
-         *  do admin neste material. */}
+        {/* Bloco de Audiência — read-only. Per product feedback
+         *  "remova o bloco de permissão de acesso dessa etapa.
+         *  Deve ser feita na pasta e não nos arquivos." Mantemos
+         *  o badge visível porque é informação relevante, mas a
+         *  edição passa pelo nível da pasta. */}
         <section className={styles.audienceSection}>
           <div className={styles.audienceSectionHead}>
             <h3 className={styles.sectionTitle}>Quem pode acessar</h3>
@@ -152,17 +139,9 @@ export default function MaterialPreviewDrawer({
           <p className={styles.audienceDescription}>
             {currentAudience.description}
           </p>
-          <Select
-            label="Definir audiência"
-            value={file.audience}
-            onChange={(e) =>
-              onAudienceChange(file.id, e.target.value as MaterialAudience)
-            }
-            options={audienceOptions}
-          />
           <p className={styles.audienceHelp}>
-            Ranking de superfãs é recalculado diariamente pelo Engajamento. Apenas usuários
-            dentro do tier escolhido (ou superior) verão este arquivo no app.
+            Esta audiência é definida na pasta pai. Pra mudar, edite a pasta —
+            os arquivos dentro herdam automaticamente.
           </p>
         </section>
 

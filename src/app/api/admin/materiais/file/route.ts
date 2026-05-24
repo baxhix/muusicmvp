@@ -3,6 +3,7 @@ import { requireAdmin } from '@/server/auth/requireAdmin';
 import { saveMaterialFile } from '@/server/materiais/storage';
 import {
   createFile,
+  getFolderAudience,
   type MaterialAudience,
 } from '@/server/materiais/queries';
 
@@ -63,19 +64,26 @@ export async function POST(req: Request) {
   const description =
     typeof descriptionRaw === 'string' ? descriptionRaw.trim() : '';
 
+  /* Audience é OPCIONAL no upload. Per product feedback "remova
+   * o bloco de permissão de acesso dessa etapa. Deve ser feita
+   * na pasta e não nos arquivos." Quando ausente, o arquivo
+   * herda da pasta parent. Se vier explicitamente, override. */
   const audienceRaw = form.get('audience');
-  const audience =
-    typeof audienceRaw === 'string' && AUDIENCES.has(audienceRaw as MaterialAudience)
-      ? (audienceRaw as MaterialAudience)
-      : 'all';
+  let audience: MaterialAudience;
+  if (
+    typeof audienceRaw === 'string' &&
+    AUDIENCES.has(audienceRaw as MaterialAudience)
+  ) {
+    audience = audienceRaw as MaterialAudience;
+  } else {
+    audience = await getFolderAudience(parentId);
+  }
 
   const nameRaw = form.get('name');
   const displayName =
     typeof nameRaw === 'string' && nameRaw.trim() ? nameRaw.trim() : file.name;
 
   const thumbRaw = form.get('thumb');
-  const publishedToFeedRaw = form.get('publishedToFeed');
-  const publishedToFeed = publishedToFeedRaw === '1' || publishedToFeedRaw === 'true';
 
   /* 1) Salva o binário no disco. saveMaterialFile valida MIME +
    *    size; throw com erro string-coded mapeado abaixo. */
@@ -112,7 +120,7 @@ export async function POST(req: Request) {
       tamanhoBytes: saved.tamanhoBytes,
       description,
       audience,
-      publishedToFeed,
+      publishedToFeed: false,
       createdById: admin.id,
     });
     return NextResponse.json({ node }, { status: 201 });
