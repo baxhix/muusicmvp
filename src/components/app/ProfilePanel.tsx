@@ -32,6 +32,8 @@ interface Props {
   onEditProfile?: () => void;
   /** Own-profile only: opens the user's messages surface (Superchat). */
   onOpenMessages?: () => void;
+  /** Own-profile only: opens the notification preferences modal. */
+  onOpenNotifications?: () => void;
   /** Other-profile only: starts/jumps to a DM with the displayed user. */
   onSendMessage?: (userId: string, label: string) => void;
   /** Other-profile only: report this user. */
@@ -192,6 +194,7 @@ export default function ProfilePanel({
   onClose,
   onEditProfile,
   onOpenMessages,
+  onOpenNotifications,
   onSendMessage,
   onReport,
 }: Props) {
@@ -405,6 +408,29 @@ export default function ProfilePanel({
             </>
           )}
         </div>
+
+        {/* Linha extra (own profile only): atalho pra preferências
+            de notificação. Vive em row separada porque os 2 botões
+            do actionsRow já ocupam a largura confortável; adicionar
+            um terceiro espremia tudo. */}
+        {isOwnProfile && (
+          <div className={styles.actionsRow}>
+            <button
+              type="button"
+              className={styles.actionBtn}
+              style={{ maxWidth: 'unset', flex: '1 1 100%' }}
+              onClick={() => onOpenNotifications?.()}
+              aria-label="Notificações"
+            >
+              Notificações
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
+                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* ── Tabs ── */}
         <div className={styles.tabs}>
