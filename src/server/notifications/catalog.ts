@@ -217,6 +217,24 @@ export const KNOWN_NOTIFICATIONS: KnownNotification[] = [
     defaultChannels: ['email'],
     wired: true,
   },
+  {
+    kind: 'manager_daily_report',
+    label: 'Relatório diário do gestor',
+    description:
+      'Email matinal (06h00) com KPIs da plataforma referentes ao dia ' +
+      'anterior: total de usuários cadastrados, novos cadastros, ' +
+      'streams, mensagens no chat e tempo médio de sessão. Vai SÓ pro ' +
+      'gestor (MANAGER_EMAIL env, default demari.lets@gmail.com).',
+    trigger:
+      'Cron diário às 06h00 (TZ America/Sao_Paulo). HTTP trigger via ' +
+      '/api/cron/manager-report gated por CRON_SECRET; CLI via ' +
+      '`npm run cron:manager-report`.',
+    category: 'lifecycle',
+    supportedChannels: ['email'],
+    defaultChannels: ['email'],
+    wired: true,
+    system: true, // gestor sempre recebe — não dá pra desligar via UI
+  },
 ];
 
 export function getKnownNotification(kind: string): KnownNotification | null {

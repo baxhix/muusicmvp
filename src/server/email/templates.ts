@@ -195,6 +195,70 @@ function welcomeDefaultDesign(): EmailDesign {
   };
 }
 
+/* Relatório diário do gestor — disparado pelo cron matinal (06h00)
+ * com KPIs do dia anterior. Block focado em métricas numéricas:
+ * cada paragraph é uma stat. */
+function managerDailyReportDefaultDesign(): EmailDesign {
+  return {
+    version: 1,
+    theme: {
+      bgColor: '#f6f6f7',
+      contentBg: '#ffffff',
+      textColor: '#111111',
+      mutedColor: '#888888',
+      linkColor: '#000000',
+      buttonBg: '#000000',
+      buttonText: '#ffffff',
+      buttonRadius: 999,
+      fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+    header: {
+      enabled: true,
+      title: 'Relatório diário do Fanverse',
+      subtitle: 'KPIs do dia {{dateLabel}}',
+    },
+    blocks: [
+      {
+        id: 'mreport-1',
+        kind: 'paragraph',
+        text: 'Bom dia. Resumo da operação nas últimas 24h:',
+      },
+      {
+        id: 'mreport-2',
+        kind: 'paragraph',
+        text: '<b>{{totalUsers}}</b> usuários cadastrados no total (<b>+{{newUsers}}</b> entraram ontem).',
+      },
+      {
+        id: 'mreport-3',
+        kind: 'paragraph',
+        text: '<b>{{streams}}</b> streams · <b>{{messages}}</b> mensagens trocadas no chat.',
+      },
+      {
+        id: 'mreport-4',
+        kind: 'paragraph',
+        text: 'Tempo médio de sessão: <b>{{avgSessionMinutes}} min</b>.',
+      },
+      {
+        id: 'mreport-5',
+        kind: 'button',
+        text: 'Abrir painel admin',
+        href: '{{adminUrl}}',
+        align: 'center',
+      },
+      {
+        id: 'mreport-6',
+        kind: 'paragraph',
+        text: '<i>Métricas com fonte mista (real onde já temos schema; mocadas onde ainda não). Os mocks ficam fixos por dia — não inflam ao longo do tempo.</i>',
+      },
+    ],
+    footer: {
+      enabled: false,
+      text: '',
+    },
+  };
+}
+
 /* Resumo diário — disparado pelo cron noturno (23h59) com saldo
  * de fanpoints do dia, distância pro próximo tier e highlights
  * perdidos. Block longo: header + 3 paragraphs de stat + button
@@ -417,6 +481,38 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
   <p style="font-size:12px;color:#888;margin-top:24px;">Até amanhã. 👋</p>
 </div>`,
     defaultDesign: dailyDigestDefaultDesign(),
+  },
+  {
+    kind: 'manager_daily_report',
+    label: 'Relatório diário do gestor',
+    description:
+      'Email matinal (06h00) com KPIs da plataforma — usuários, ' +
+      'streams, mensagens, tempo médio de sessão. Vai SÓ pro gestor ' +
+      '(MANAGER_EMAIL env).',
+    variables: [
+      { name: 'dateLabel', description: 'Data do dia anterior (ex: "24 mai")' },
+      { name: 'totalUsers', description: 'Total de usuários cadastrados (ativos)' },
+      { name: 'newUsers', description: 'Novos cadastros no dia anterior' },
+      { name: 'streams', description: 'Streams contabilizados (real ou mock)' },
+      { name: 'messages', description: 'Mensagens no chat no dia anterior' },
+      { name: 'avgSessionMinutes', description: 'Tempo médio de sessão em minutos (mock)' },
+      { name: 'adminUrl', description: 'URL do painel admin' },
+    ],
+    defaultSubject: 'Fanverse · KPIs de {{dateLabel}}',
+    defaultHtml: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
+  <h1 style="font-size:22px;font-weight:700;margin:0 0 6px;">Relatório diário do Fanverse</h1>
+  <p style="font-size:13px;color:#888;margin:0 0 22px;">KPIs do dia {{dateLabel}}</p>
+  <p style="font-size:15px;line-height:1.55;color:#333;">Bom dia. Resumo da operação nas últimas 24h:</p>
+  <ul style="list-style:none;padding:0;margin:18px 0;font-size:15px;line-height:1.7;color:#333;">
+    <li>👥 <b>{{totalUsers}}</b> usuários cadastrados <span style="color:#888;">(+{{newUsers}} ontem)</span></li>
+    <li>🎵 <b>{{streams}}</b> streams</li>
+    <li>💬 <b>{{messages}}</b> mensagens no chat</li>
+    <li>⏱ Tempo médio de sessão: <b>{{avgSessionMinutes}} min</b></li>
+  </ul>
+  <p style="margin:28px 0;text-align:center;"><a href="{{adminUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Abrir painel admin</a></p>
+  <p style="font-size:11px;color:#aaa;font-style:italic;margin-top:24px;">Métricas com fonte mista: real onde já temos schema (usuários, mensagens); mocadas onde ainda não (streams, sessão). Os mocks são fixos por dia.</p>
+</div>`,
+    defaultDesign: managerDailyReportDefaultDesign(),
   },
 ];
 

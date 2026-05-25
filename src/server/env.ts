@@ -16,6 +16,10 @@ const schema = z.object({
   // em produção pra habilitar agendamento externo (cron-job.org,
   // Vercel Cron, systemd timer).
   CRON_SECRET: z.string().min(16).optional(),
+  // Email do gestor — destino do cron `manager_daily_report` (06h00
+  // diário). Override em testing pra mandar pro próprio email; sem
+  // override, default hardcoded é demari.lets@gmail.com.
+  MANAGER_EMAIL: z.string().email().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -34,6 +38,7 @@ function load(): Env {
     MAPBOX_TOKEN: process.env.MAPBOX_TOKEN,
     COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
     CRON_SECRET: process.env.CRON_SECRET,
+    MANAGER_EMAIL: process.env.MANAGER_EMAIL,
     NODE_ENV: process.env.NODE_ENV,
   });
   return cached;
