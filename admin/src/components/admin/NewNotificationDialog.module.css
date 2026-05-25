@@ -4,6 +4,27 @@
   gap: 16px;
 }
 
+/* Banner contextual — usado hoje pro disclaimer da push em
+ * desenvolvimento. Tons "warning" (âmbar) pra sinalizar estado
+ * planejado/aguardando, sem alarmar (não é erro). */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--warning, #f59e0b) 40%, transparent);
+  background: color-mix(in srgb, var(--warning, #f59e0b) 8%, transparent);
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--warning, #f59e0b);
+}
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;

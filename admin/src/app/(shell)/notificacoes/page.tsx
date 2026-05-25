@@ -473,6 +473,9 @@ export default function NotificacoesPage() {
         onClose={() => setCreateOpen(false)}
         existingKinds={items?.map((i) => i.kind) ?? []}
         onCreated={handleCreated}
+        /* Tab ativa determina o tipo de criação — Plataforma vs Push
+         * têm dialogs distintos (título, copy, defaults, banner). */
+        channel={channelTab}
       />
     </>
   );

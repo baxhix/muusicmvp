@@ -7,19 +7,22 @@ import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
-import { IconCheckCircle, IconBell, IconMail } from '@/components/icons';
-import { cn } from '@/lib/utils';
+import { IconCheckCircle, IconAlert } from '@/components/icons';
 import {
   buildCustomDraft,
   saveCustomDraft,
   loadCustomDrafts,
   CATEGORY_LABEL,
-  CHANNEL_LABEL,
   type NotificationItem,
   type NotificationCategory,
-  type NotificationChannel,
 } from '@/services/notifications';
 import styles from './NewNotificationDialog.module.css';
+
+/** Canal do contexto onde a criação foi iniciada — vem da tab
+ *  ativa em /admin/notificacoes. Determina o tom + os defaults
+ *  do dialog. NÃO existe canal `push` no enum NotificationChannel
+ *  do servidor; tratamos como placeholder até o canal subir. */
+export type CreationChannel = 'platform' | 'push';
 
 interface NewNotificationDialogProps {
   open: boolean;
@@ -27,6 +30,9 @@ interface NewNotificationDialogProps {
   /** Lista atual de kinds (catálogo + drafts) — pra impedir duplicado. */
   existingKinds: string[];
   onCreated: (draft: NotificationItem) => void;
+  /** Tab de canal onde o user clicou "Nova notificação". Determina
+   *  título, descrição, defaults e campos extras visíveis. */
+  channel: CreationChannel;
 }
 
 const CATEGORY_OPTIONS: { value: NotificationCategory; label: string }[] = [
@@ -38,6 +44,62 @@ const CATEGORY_OPTIONS: { value: NotificationCategory; label: string }[] = [
 
 const KIND_REGEX = /^[a-z0-9_]+$/;
 
+/* Cópia varia por canal — título, descrição do dialog, helper
+ * texts e placeholders dos campos refletem o contexto. "Nem
+ * sempre são iguais e enviadas no mesmo tempo" — separação total
+ * dos fluxos. */
+const COPY: Record<
+  CreationChannel,
+  {
+    title: string;
+    description: string;
+    submitLabel: string;
+    triggerLabel: string;
+    triggerPlaceholder: string;
+    descPlaceholder: string;
+    labelPlaceholder: string;
+    kindPlaceholder: string;
+    /** Banner de aviso opcional acima do form (e.g. push em dev). */
+    banner: string | null;
+  }
+> = {
+  platform: {
+    title: 'Nova notificação na plataforma',
+    description:
+      'Aparece dentro do app (sino, feed). Disparada conforme o ' +
+      'gatilho — em tempo real ou agendada por cron.',
+    submitLabel: 'Criar na plataforma',
+    triggerLabel: 'Quando dispara',
+    triggerPlaceholder:
+      'Ex: Quando o usuário recebe uma resposta em um post seu.',
+    descPlaceholder:
+      'O que o usuário vê no sino. Curto, contextual, com nome do autor.',
+    labelPlaceholder: 'ex: Resposta no seu post',
+    kindPlaceholder: 'ex: post_reply',
+    banner: null,
+  },
+  push: {
+    title: 'Nova push notification (App)',
+    description:
+      'Notificação enviada ao app instalado no celular do usuário. ' +
+      'Independente da plataforma — pode ser agendada pra outro horário, ' +
+      'pra outro segmento e com outro copy.',
+    submitLabel: 'Criar push',
+    triggerLabel: 'Quando dispara (agenda ou evento)',
+    triggerPlaceholder:
+      'Ex: Diariamente às 9h pros usuários que não abriram o app em 3+ dias.',
+    descPlaceholder:
+      'Texto curto e direto — push tem limite de caracteres e o usuário ' +
+      'lê na lockscreen.',
+    labelPlaceholder: 'ex: Volta pra ver o que rolou',
+    kindPlaceholder: 'ex: push_winback_3d',
+    banner:
+      'Push notifications estão em desenvolvimento — o canal ainda não ' +
+      'dispara automaticamente. O draft fica salvo como planejado e entra ' +
+      'no ar quando a integração subir.',
+  },
+};
+
 /**
  * Dialog de criação de notificação personalizada (mock).
  *
@@ -46,37 +108,26 @@ const KIND_REGEX = /^[a-z0-9_]+$/;
  * marcado com `wired=false` + `system=false`, aparece na listagem
  * com badge "Personalizada" e é editável pelo mesmo editor full-page.
  *
- * Campos:
- *   - kind: slug único (lowercase + underscores), obrigatório
- *   - label: nome visível
- *   - description: texto principal
- *   - trigger: descrição do gatilho
- *   - category: 1 das 4 do catálogo
- *   - canais suportados (multi): pelo menos 1
- *   - canais default (multi): subconjunto dos suportados
- *
- * Validação rasa — esse fluxo é demo. Em produção, com BE, faria
- * mais validações (unicidade no DB, tamanho, etc).
+ * Canal-aware: o `channel` prop vem da tab ativa em
+ * /admin/notificacoes (Plataforma vs App Push). Determina título,
+ * defaults e copy do form — Plataforma vai pro canal `in_app`, Push
+ * vai pra um placeholder até o canal `push` ser adicionado ao enum.
  */
 export default function NewNotificationDialog({
   open,
   onClose,
   existingKinds,
   onCreated,
+  channel,
 }: NewNotificationDialogProps) {
   const { push } = useToast();
+  const copy = COPY[channel];
 
   const [kind, setKind] = useState('');
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [trigger, setTrigger] = useState('');
   const [category, setCategory] = useState<NotificationCategory>('engagement');
-  const [supported, setSupported] = useState<Set<NotificationChannel>>(
-    new Set(['in_app']),
-  );
-  const [defaults, setDefaults] = useState<Set<NotificationChannel>>(
-    new Set(['in_app']),
-  );
 
   /* Reseta o form sempre que abre — evita state "azedo" de uma
    * abertura anterior cancelada. */
@@ -87,10 +138,8 @@ export default function NewNotificationDialog({
       setDescription('');
       setTrigger('');
       setCategory('engagement');
-      setSupported(new Set(['in_app']));
-      setDefaults(new Set(['in_app']));
     }
-  }, [open]);
+  }, [open, channel]);
 
   const trimmedKind = kind.trim().toLowerCase();
   const kindError = useMemo(() => {
@@ -104,39 +153,8 @@ export default function NewNotificationDialog({
   }, [trimmedKind, existingKinds]);
 
   const labelError = !label.trim() ? 'Obrigatório.' : null;
-  const channelError =
-    supported.size === 0 ? 'Selecione pelo menos um canal.' : null;
 
-  const canSubmit = !kindError && !labelError && !channelError;
-
-  function toggleSupported(ch: NotificationChannel) {
-    setSupported((prev) => {
-      const next = new Set(prev);
-      if (next.has(ch)) {
-        next.delete(ch);
-        /* Se desligou um canal supported, garante que ele também
-         * sai dos defaults — defaults é subconjunto. */
-        setDefaults((d) => {
-          const dn = new Set(d);
-          dn.delete(ch);
-          return dn;
-        });
-      } else {
-        next.add(ch);
-      }
-      return next;
-    });
-  }
-
-  function toggleDefault(ch: NotificationChannel) {
-    if (!supported.has(ch)) return;
-    setDefaults((prev) => {
-      const next = new Set(prev);
-      if (next.has(ch)) next.delete(ch);
-      else next.add(ch);
-      return next;
-    });
-  }
+  const canSubmit = !kindError && !labelError;
 
   function submit() {
     if (!canSubmit) return;
@@ -152,19 +170,30 @@ export default function NewNotificationDialog({
       });
       return;
     }
+    /* Canal-determinado: Plataforma → ['in_app']; Push → ['in_app']
+     * (placeholder até o enum suportar 'push'). Defaults seguem o
+     * mesmo conjunto pra manter o draft consistente. Quando o canal
+     * push existir, basta trocar 'in_app' por 'push' no branch. */
+    const supportedChannels =
+      channel === 'platform'
+        ? (['in_app'] as const)
+        : (['in_app'] as const); // TODO: ['push'] quando o enum subir
     const draft = buildCustomDraft({
       kind: trimmedKind,
       label: label.trim(),
       description: description.trim() || 'Sem descrição.',
       trigger: trigger.trim() || 'Gatilho a definir.',
       category,
-      supportedChannels: Array.from(supported),
-      defaultChannels: Array.from(defaults),
+      supportedChannels: [...supportedChannels],
+      defaultChannels: [...supportedChannels],
     });
     saveCustomDraft(draft);
     push({
       type: 'success',
-      title: 'Notificação criada',
+      title:
+        channel === 'platform'
+          ? 'Notificação criada na plataforma'
+          : 'Push criada (planejada)',
       description: `"${draft.label}" está disponível na listagem.`,
     });
     onCreated(draft);
@@ -175,8 +204,8 @@ export default function NewNotificationDialog({
       open={open}
       onClose={onClose}
       size="lg"
-      title="Nova notificação"
-      description="Crie uma notificação personalizada. Aparece na listagem com badge “Personalizada” e fica editável no mesmo editor das demais."
+      title={copy.title}
+      description={copy.description}
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -189,12 +218,22 @@ export default function NewNotificationDialog({
             onClick={submit}
             disabled={!canSubmit}
           >
-            Criar notificação
+            {copy.submitLabel}
           </Button>
         </>
       }
     >
       <div className={styles.body}>
+        {/* Banner contextual — só aparece pra push, sinalizando que o
+         * canal ainda não dispara automaticamente. Visualmente parecido
+         * com os toasts "warning" pra reforçar que é estado planejado. */}
+        {copy.banner && (
+          <div className={styles.banner} role="status">
+            <IconAlert size={14} />
+            <span>{copy.banner}</span>
+          </div>
+        )}
+
         <div className={styles.row}>
           <Input
             label="Identificador (kind)"
@@ -203,7 +242,7 @@ export default function NewNotificationDialog({
             onChange={(e) =>
               setKind(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
             }
-            placeholder="ex: boas_vindas_premium"
+            placeholder={copy.kindPlaceholder}
             helperText={
               kindError ?? 'Usado em código + nos logs. Não muda depois.'
             }
@@ -215,7 +254,7 @@ export default function NewNotificationDialog({
             required
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="ex: Boas-vindas Premium"
+            placeholder={copy.labelPlaceholder}
             errorText={labelError && label.length > 0 ? labelError : undefined}
             maxLength={200}
           />
@@ -225,98 +264,29 @@ export default function NewNotificationDialog({
           label="Descrição"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="O que essa notificação comunica pro usuário?"
+          placeholder={copy.descPlaceholder}
           rows={2}
           maxLength={2000}
         />
 
         <Textarea
-          label="Quando dispara"
+          label={copy.triggerLabel}
           value={trigger}
           onChange={(e) => setTrigger(e.target.value)}
-          placeholder="Ex: Quando o usuário ativa o plano premium pela primeira vez."
+          placeholder={copy.triggerPlaceholder}
           rows={2}
           maxLength={2000}
         />
 
-        <div className={styles.row}>
-          <Select
-            label="Categoria"
-            value={category}
-            onChange={(e) =>
-              setCategory(e.target.value as NotificationCategory)
-            }
-            options={CATEGORY_OPTIONS}
-            required
-          />
-
-          <div className={styles.channelGroup}>
-            <span className={styles.channelGroupLabel}>
-              Canais suportados <span className={styles.required}>*</span>
-            </span>
-            <div className={styles.channelChips}>
-              {(['in_app', 'email'] as NotificationChannel[]).map((ch) => {
-                const Icon = ch === 'email' ? IconMail : IconBell;
-                const active = supported.has(ch);
-                return (
-                  <button
-                    key={ch}
-                    type="button"
-                    className={cn(
-                      styles.channelChip,
-                      active && styles.channelChipActive,
-                    )}
-                    onClick={() => toggleSupported(ch)}
-                  >
-                    <Icon size={12} />
-                    {CHANNEL_LABEL[ch]}
-                  </button>
-                );
-              })}
-            </div>
-            {channelError && (
-              <span className={styles.channelError}>{channelError}</span>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.defaultsRow}>
-          <span className={styles.channelGroupLabel}>
-            Canais ativos por padrão
-          </span>
-          <span className={styles.defaultsHint}>
-            Subconjunto dos suportados — define o estado inicial quando
-            ninguém ainda configurou.
-          </span>
-          <div className={styles.channelChips}>
-            {(['in_app', 'email'] as NotificationChannel[]).map((ch) => {
-              const Icon = ch === 'email' ? IconMail : IconBell;
-              const isSupported = supported.has(ch);
-              const active = defaults.has(ch);
-              return (
-                <button
-                  key={ch}
-                  type="button"
-                  className={cn(
-                    styles.channelChip,
-                    active && styles.channelChipActive,
-                    !isSupported && styles.channelChipMuted,
-                  )}
-                  onClick={() => toggleDefault(ch)}
-                  disabled={!isSupported}
-                  title={
-                    !isSupported
-                      ? 'Habilite primeiro como canal suportado'
-                      : undefined
-                  }
-                >
-                  <Icon size={12} />
-                  {CHANNEL_LABEL[ch]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <Select
+          label="Categoria"
+          value={category}
+          onChange={(e) =>
+            setCategory(e.target.value as NotificationCategory)
+          }
+          options={CATEGORY_OPTIONS}
+          required
+        />
       </div>
     </Dialog>
   );
