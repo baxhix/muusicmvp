@@ -11,6 +11,11 @@ const schema = z.object({
   // shared between muusic.live and admin.muusic.live. Use leading dot:
   // ".muusic.live"
   COOKIE_DOMAIN: z.string().optional(),
+  // Shared secret pra endpoints de cron (POST /api/cron/*). Sem ele, os
+  // endpoints retornam 401 — só rodam via CLI (npm run cron:*). Definir
+  // em produção pra habilitar agendamento externo (cron-job.org,
+  // Vercel Cron, systemd timer).
+  CRON_SECRET: z.string().min(16).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 
@@ -28,6 +33,7 @@ function load(): Env {
     EMAIL_FROM: process.env.EMAIL_FROM,
     MAPBOX_TOKEN: process.env.MAPBOX_TOKEN,
     COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
+    CRON_SECRET: process.env.CRON_SECRET,
     NODE_ENV: process.env.NODE_ENV,
   });
   return cached;

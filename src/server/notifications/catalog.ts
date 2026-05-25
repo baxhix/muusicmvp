@@ -200,6 +200,23 @@ export const KNOWN_NOTIFICATIONS: KnownNotification[] = [
     defaultChannels: ['in_app'],
     wired: false,
   },
+  {
+    kind: 'daily_digest',
+    label: 'Resumo diário',
+    description:
+      'Email noturno (23h59) com fanpoints do dia, distância pro próximo ' +
+      'nível e destaques que o usuário pode ter perdido na plataforma. ' +
+      'Vai pra TODOS os usuários cadastrados — feature útil enquanto a ' +
+      'base é pequena, pode virar opt-in quando escalar.',
+    trigger:
+      'Cron diário às 23h59 (TZ America/Sao_Paulo). HTTP trigger via ' +
+      '/api/cron/daily-digest gated por CRON_SECRET; CLI via ' +
+      '`npm run cron:daily-digest`.',
+    category: 'engagement',
+    supportedChannels: ['email'],
+    defaultChannels: ['email'],
+    wired: true,
+  },
 ];
 
 export function getKnownNotification(kind: string): KnownNotification | null {

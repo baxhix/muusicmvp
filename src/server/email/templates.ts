@@ -195,6 +195,66 @@ function welcomeDefaultDesign(): EmailDesign {
   };
 }
 
+/* Resumo diário — disparado pelo cron noturno (23h59) com saldo
+ * de fanpoints do dia, distância pro próximo tier e highlights
+ * perdidos. Block longo: header + 3 paragraphs de stat + button
+ * "Abrir o app" + paragraph de "destaques do dia". */
+function dailyDigestDefaultDesign(): EmailDesign {
+  return {
+    version: 1,
+    theme: {
+      bgColor: '#f6f6f7',
+      contentBg: '#ffffff',
+      textColor: '#111111',
+      mutedColor: '#888888',
+      linkColor: '#000000',
+      buttonBg: '#000000',
+      buttonText: '#ffffff',
+      buttonRadius: 999,
+      fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+    header: {
+      enabled: true,
+      title: 'Seu dia no Fanverse, {{userName}}',
+      subtitle: 'Resumo de {{dateLabel}}',
+    },
+    blocks: [
+      {
+        id: 'digest-1',
+        kind: 'paragraph',
+        text: 'Você ganhou <b>{{pointsToday}} fanpoints</b> hoje — seu saldo atual é <b>{{totalPoints}}</b>.',
+      },
+      {
+        id: 'digest-2',
+        kind: 'paragraph',
+        text: '<i>Faltam {{pointsToNext}} pontos pra você entrar no {{nextTierLabel}}.</i>',
+      },
+      {
+        id: 'digest-3',
+        kind: 'paragraph',
+        text: '<b>Você perdeu hoje:</b><br/>{{missedHighlights}}',
+      },
+      {
+        id: 'digest-4',
+        kind: 'button',
+        text: 'Voltar pro Fanverse',
+        href: '{{appUrl}}',
+        align: 'center',
+      },
+      {
+        id: 'digest-5',
+        kind: 'paragraph',
+        text: 'Até amanhã. 👋',
+      },
+    ],
+    footer: {
+      enabled: false,
+      text: '',
+    },
+  };
+}
+
 /* Nova mensagem direta — dispara em TODA DM no Fanverse, online
  * ou não. Email mostra snippet + CTA pra abrir a conversa. */
 function newDmDefaultDesign(): EmailDesign {
@@ -325,6 +385,38 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
   <p style="font-size:12px;color:#888;margin-top:32px;">Se você está recebendo muitas dessas, dá pra silenciar nas configurações da conta.</p>
 </div>`,
     defaultDesign: newDmDefaultDesign(),
+  },
+  {
+    kind: 'daily_digest',
+    label: 'Resumo diário',
+    description:
+      'Email noturno (23h59) com resumo do dia: fanpoints ganhos, ' +
+      'distância pro próximo nível e destaques perdidos. Vai pra ' +
+      'todos os usuários enquanto a base é pequena.',
+    variables: [
+      { name: 'userName', description: 'Nome do usuário (display name)' },
+      { name: 'dateLabel', description: 'Data do dia em formato curto (ex: "25 mai")' },
+      { name: 'pointsToday', description: 'Fanpoints ganhos no dia (número)' },
+      { name: 'totalPoints', description: 'Saldo total de fanpoints' },
+      { name: 'nextTierLabel', description: 'Próximo tier (ex: "Top 50")' },
+      { name: 'pointsToNext', description: 'Quantos pontos faltam pro próximo tier' },
+      { name: 'missedHighlights', description: 'Lista HTML <br>-separada do que o user perdeu' },
+      { name: 'appUrl', description: 'URL pra voltar ao /app' },
+    ],
+    defaultSubject: 'Seu dia no Fanverse · {{pointsToday}} fanpoints novos',
+    defaultHtml: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+  <h1 style="font-size:22px;font-weight:700;margin:0 0 8px;">Seu dia no Fanverse, {{userName}}</h1>
+  <p style="font-size:13px;color:#888;margin:0 0 20px;">Resumo de {{dateLabel}}</p>
+  <p style="font-size:15px;line-height:1.55;color:#333;">Você ganhou <b>{{pointsToday}} fanpoints</b> hoje — seu saldo atual é <b>{{totalPoints}}</b>.</p>
+  <p style="font-size:15px;line-height:1.55;color:#333;font-style:italic;">Faltam {{pointsToNext}} pontos pra você entrar no {{nextTierLabel}}.</p>
+  <div style="margin:20px 0;padding:14px 16px;background:#f6f6f7;border-radius:10px;font-size:14px;line-height:1.55;color:#222;">
+    <p style="margin:0 0 8px;font-weight:600;">Você perdeu hoje:</p>
+    <div>{{missedHighlights}}</div>
+  </div>
+  <p style="margin:28px 0;text-align:center;"><a href="{{appUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Voltar pro Fanverse</a></p>
+  <p style="font-size:12px;color:#888;margin-top:24px;">Até amanhã. 👋</p>
+</div>`,
+    defaultDesign: dailyDigestDefaultDesign(),
   },
 ];
 
