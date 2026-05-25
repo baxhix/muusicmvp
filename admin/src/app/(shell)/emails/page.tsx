@@ -14,13 +14,16 @@ import styles from './page.module.css';
 /**
  * E-mails — admin page.
  *
- * 4 tabs:
+ * 5 tabs (ordem mantém Histórico no fim — é audit trail, não algo
+ * que o admin precisa consultar primeiro):
  *   - Métricas:    KPIs e gráfico dos últimos 30 dias (default)
- *   - Histórico:   audit trail paginado de TODO envio (sent/failed)
- *   - Templates:   edita subject/HTML dos emails do sistema
- *                  (magic_link hoje, futuros). Preview + teste.
+ *   - Templates:   edita subject/HTML dos emails do sistema.
+ *                  Preview + teste.
+ *   - Marca:       config global aplicada a todos os emails
+ *                  (logo, footer, redes).
  *   - Campanhas:   broadcasts por segmento (todos, superfãs,
  *                  inativos, cidade, lista custom).
+ *   - Histórico:   audit trail paginado de TODO envio (sent/failed).
  *
  * Estado das tabs persiste via `?tab=...` query string —
  * deep-link da sidebar pra qualquer aba.
@@ -28,17 +31,17 @@ import styles from './page.module.css';
 
 type EmailsTab =
   | 'metricas'
-  | 'historico'
   | 'templates'
   | 'marca'
-  | 'campanhas';
+  | 'campanhas'
+  | 'historico';
 
 const TABS: { id: EmailsTab; label: string }[] = [
   { id: 'metricas',   label: 'Métricas' },
-  { id: 'historico',  label: 'Histórico' },
   { id: 'templates',  label: 'Templates' },
   { id: 'marca',      label: 'Marca' },
   { id: 'campanhas',  label: 'Campanhas' },
+  { id: 'historico',  label: 'Histórico' },
 ];
 
 function EmailsPageInner() {
