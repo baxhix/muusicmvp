@@ -407,6 +407,10 @@ export interface TeamMember {
   lastActiveAt: ISODate;
   twoFactor: boolean;
   status: 'active' | 'invited';
+  /** Grupos da sidebar (Plataforma, Superfãs, Growth, Site, Sistema)
+   *  + entradas top-level (Dashboard, Usuários) aos quais este membro
+   *  tem acesso/visualização. undefined = acesso total (legacy). */
+  groupAccess?: string[];
 }
 
 /* ── Settings: Workspace (Geral) ──────────────────────────── */

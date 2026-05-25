@@ -4,6 +4,11 @@ const NOW = Date.now();
 const days = (n: number) => new Date(NOW - n * 86_400_000).toISOString();
 const minutes = (n: number) => new Date(NOW - n * 60_000).toISOString();
 
+/* groupAccess preenchido com exemplos plausíveis pra cada role.
+ * Owner fica com undefined (acesso total — bypass do gating); os
+ * demais recebem subconjuntos coerentes com o nível de privilégio.
+ * A lista de chaves espelha as labels da Sidebar (componentes/layout/
+ * Sidebar.tsx) — qualquer rename lá precisa rebatizar aqui. */
 export const MOCK_TEAM: TeamMember[] = [
   {
     id: 'tm_001',
@@ -15,6 +20,7 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: minutes(2),
     twoFactor: true,
     status: 'active',
+    // undefined = acesso total
   },
   {
     id: 'tm_002',
@@ -26,6 +32,7 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: minutes(28),
     twoFactor: true,
     status: 'active',
+    groupAccess: ['Dashboard', 'Usuários', 'Plataforma', 'Superfãs', 'Growth', 'Site', 'Sistema'],
   },
   {
     id: 'tm_003',
@@ -37,6 +44,7 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: minutes(180),
     twoFactor: false,
     status: 'active',
+    groupAccess: ['Dashboard', 'Plataforma', 'Superfãs', 'Growth'],
   },
   {
     id: 'tm_004',
@@ -48,6 +56,7 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: minutes(11),
     twoFactor: true,
     status: 'active',
+    groupAccess: ['Usuários', 'Plataforma', 'Superfãs'],
   },
   {
     id: 'tm_005',
@@ -59,6 +68,7 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: days(2),
     twoFactor: false,
     status: 'active',
+    groupAccess: ['Plataforma'],
   },
   {
     id: 'tm_006',
@@ -70,6 +80,7 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: days(5),
     twoFactor: false,
     status: 'active',
+    groupAccess: ['Dashboard'],
   },
   {
     id: 'tm_007',
@@ -80,5 +91,6 @@ export const MOCK_TEAM: TeamMember[] = [
     lastActiveAt: days(2),
     twoFactor: false,
     status: 'invited',
+    groupAccess: ['Dashboard', 'Plataforma', 'Superfãs'],
   },
 ];

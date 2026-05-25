@@ -17,7 +17,12 @@ import {
   IconPlus,
   IconCheck,
   IconTrash,
+  IconEdit,
 } from '@/components/icons';
+import AdminUserDialog, {
+  SIDEBAR_GROUPS,
+  type AdminUserDialogMode,
+} from '@/components/admin/AdminUserDialog';
 import { teamService } from '@/services/team';
 import { workspaceService } from '@/services/billing';
 import {
@@ -40,27 +45,25 @@ import { formatRelative } from '@/lib/format';
 import styles from './page.module.css';
 
 // Scope:
-//   - Geral / Usuários — workspace e equipe (mantidos do design original)
-//   - Registro de regras / Notificações — stubs prontos pra ganhar
-//     conteúdo quando o backend correspondente cair
-//   - Fanpoints — CRUD de comportamentos × pontos (FanpointsTab)
+//   - Geral — workspace settings
+//   - Usuários — CRUD completo de admins (convidar, editar, excluir,
+//     bulk delete, acesso por grupo da sidebar)
 //
-// O tab "Tags" foi movido pra /desenvolvedor per product feedback
-// "leve o item de Tags para [Desenvolvedor]" — integrações de
-// pixels ficam mais coerentes lá.
+// Removidos daqui:
+//   - "Registro de regras" e "Notificações" foram movidos pras suas
+//     próprias páginas no menu (Notificações tem rota dedicada
+//     /notificacoes; regras agora não tem mais espaço aqui — vão
+//     pra outras abas conforme produto). Esta aba ficou enxuta:
+//     workspace + usuários.
+//   - Fanpoints virou /fanpoints sob "Superfãs".
+//   - Tags foi pra /desenvolvedor.
 type SettingsTab =
   | 'general'
-  | 'team'
-  | 'rules'
-  | 'notifications';
+  | 'team';
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: 'general',       label: 'Geral' },
-  { id: 'team',          label: 'Usuários' },
-  { id: 'rules',         label: 'Registro de regras' },
-  { id: 'notifications', label: 'Notificações' },
-  /* Fanpoints virou página própria em /fanpoints (sob "Superfãs"
-   * no menu) — removido daqui pra evitar duplicação. */
+  { id: 'general', label: 'Geral' },
+  { id: 'team',    label: 'Usuários' },
 ];
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -99,59 +102,17 @@ export default function SettingsPage() {
       />
 
       <div className={styles.body}>
-        {tab === 'general'       && <GeneralTab />}
-        {tab === 'team'          && <TeamTab />}
-        {tab === 'rules'         && <RulesTab />}
-        {tab === 'notifications' && <NotificationsTab />}
+        {tab === 'general' && <GeneralTab />}
+        {tab === 'team'    && <TeamTab />}
       </div>
     </>
   );
 }
 
-/* ============================================================
-   Stub tabs — placeholders pros 3 novos tabs adicionados per
-   product feedback. Mantém o vocabulário visual (Card +
-   CardHeader + body descritivo) pra que os tabs já leiam como
-   "vão receber conteúdo aqui" em vez de cair em página vazia.
-   Trocar pelo conteúdo real assim que o backend / spec cair.
-   ============================================================ */
-
-function RulesTab() {
-  return (
-    <Card>
-      <CardHeader
-        title="Registro de regras"
-        description="Histórico de criação, alteração e revogação de regras de moderação, automação e visibilidade aplicadas ao Fanverse."
-      />
-      <div className={styles.formBody}>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-mute)' }}>
-          Em breve: timeline cronológica com cada regra editada, autor,
-          motivo da mudança e estado anterior / atual lado a lado.
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-function NotificationsTab() {
-  return (
-    <Card>
-      <CardHeader
-        title="Notificações"
-        description="Modelos e canais de notificação enviados aos usuários — push, e-mail e in-app."
-      />
-      <div className={styles.formBody}>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-mute)' }}>
-          Em breve: lista de templates por evento (novo seguidor, wave
-          recebido, milestone de Fanpoints etc.) com toggle por canal e
-          preview antes de enviar.
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-/* Fanpoints — extraído pra /fanpoints (sob "Superfãs" no menu) */
+/* "Registro de regras" e "Notificações" — antes eram stub-tabs aqui,
+ * agora vivem em outras páginas do menu (Notificações tem rota
+ * própria em /notificacoes). Removidos daqui pra evitar duplicação
+ * conforme product feedback. */
 
 
 /* ============================================================
@@ -273,10 +234,86 @@ function TeamTab() {
   const [members, setMembers] = useState<TeamMember[] | null>(null);
   const { push } = useToast();
   const [pendingRemove, setPendingRemove] = useState<TeamMember | null>(null);
+  const [pendingBulkRemove, setPendingBulkRemove] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  /* Dialog de criar/editar — controlado por modo + member-alvo.
+   * member=null em create (form em branco), populated em edit. */
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<AdminUserDialogMode>('create');
+  const [dialogMember, setDialogMember] = useState<TeamMember | null>(null);
 
   useEffect(() => {
     teamService.list().then(setMembers);
   }, []);
+
+  function openCreate() {
+    setDialogMode('create');
+    setDialogMember(null);
+    setDialogOpen(true);
+  }
+
+  function openEdit(m: TeamMember) {
+    if (m.role === 'owner') {
+      /* Owner não passa pelo fluxo de edição via dialog — protege a
+       * conta principal de mudanças acidentais de role/access. */
+      push({
+        type: 'info',
+        title: 'Owner não pode ser editado',
+        description: 'A conta owner só pode ser ajustada pelo CLI/DB.',
+      });
+      return;
+    }
+    setDialogMode('edit');
+    setDialogMember(m);
+    setDialogOpen(true);
+  }
+
+  function handleSubmit(next: TeamMember) {
+    if (!members) return;
+    setMembers((prev) => {
+      if (!prev) return prev;
+      const exists = prev.some((m) => m.id === next.id);
+      return exists
+        ? prev.map((m) => (m.id === next.id ? next : m))
+        : [...prev, next];
+    });
+    push({
+      type: 'success',
+      title: dialogMode === 'create' ? 'Membro criado' : 'Membro atualizado',
+      description:
+        dialogMode === 'create'
+          ? `${next.name} recebeu acesso ao painel.`
+          : `${next.name} foi atualizado com sucesso.`,
+    });
+    setDialogOpen(false);
+    setDialogMember(null);
+  }
+
+  function handleBulkRemove() {
+    if (!members) return;
+    const toRemove = members.filter(
+      (m) => selectedIds.includes(m.id) && m.role !== 'owner',
+    );
+    setMembers(members.filter((m) => !selectedIds.includes(m.id) || m.role === 'owner'));
+    push({
+      type: 'warning',
+      title: `${toRemove.length} membro(s) removido(s)`,
+      description: 'Eles perderam acesso ao painel administrativo.',
+    });
+    setSelectedIds([]);
+    setPendingBulkRemove(false);
+  }
+
+  /* Quantos selecionados podem ser efetivamente removidos (owner
+   * fica fora). Usado pra desabilitar o botão de bulk delete e
+   * mostrar contagem honesta. */
+  const removableSelectedCount = useMemo(() => {
+    if (!members) return 0;
+    return members.filter(
+      (m) => selectedIds.includes(m.id) && m.role !== 'owner',
+    ).length;
+  }, [members, selectedIds]);
 
   const columns: Column<TeamMember>[] = [
     {
@@ -303,6 +340,29 @@ function TeamTab() {
         </Badge>
       ),
       width: 130,
+    },
+    {
+      id: 'access',
+      header: 'Acesso',
+      sortKey: (m) => (m.groupAccess?.length ?? SIDEBAR_GROUPS.length),
+      cell: (m) => {
+        /* Owner não tem groupAccess (acesso total). Members novos
+         * sem groupAccess também caem aqui — interpretamos como
+         * "todas as áreas" pra não bloquear acidentalmente. */
+        if (m.role === 'owner' || !m.groupAccess) {
+          return <span className={styles.memberMute}>Todas as áreas</span>;
+        }
+        const count = m.groupAccess.length;
+        if (count === SIDEBAR_GROUPS.length) {
+          return <span className={styles.memberMute}>Todas as áreas</span>;
+        }
+        return (
+          <span className={styles.accessCount}>
+            {count} de {SIDEBAR_GROUPS.length} áreas
+          </span>
+        );
+      },
+      width: 160,
     },
     {
       id: '2fa',
@@ -339,7 +399,21 @@ function TeamTab() {
       header: 'Ação',
       align: 'right',
       cell: (m) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.actionCell}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            aria-label={`Editar ${m.name}`}
+            title="Editar acesso e função"
+            onClick={() => openEdit(m)}
+            disabled={m.role === 'owner'}
+          >
+            <IconEdit size={14} />
+          </Button>
           <Button
             variant="dangerGhost"
             size="sm"
@@ -360,20 +434,14 @@ function TeamTab() {
     <>
       <Card>
         <CardHeader
-          title="Membros da equipe"
-          description="Quem tem acesso ao painel administrativo do Fanverse."
+          title="Usuários do admin"
+          description="Quem tem acesso ao painel administrativo do Fanverse. Defina nome, função e quais áreas da sidebar cada membro pode visualizar."
           actions={
             <Button
               variant="primary"
               size="sm"
               leadingIcon={<IconPlus size={14} />}
-              onClick={() =>
-                push({
-                  type: 'info',
-                  title: 'Convite indisponível',
-                  description: 'O fluxo de convite precisa do backend conectado.',
-                })
-              }
+              onClick={openCreate}
             >
               Convidar membro
             </Button>
@@ -385,8 +453,38 @@ function TeamTab() {
           rowId={(m) => m.id}
           pageSize={10}
           loading={members === null}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onRowClick={openEdit}
+          bulkActions={
+            <Button
+              variant="dangerGhost"
+              size="sm"
+              leadingIcon={<IconTrash size={14} />}
+              disabled={removableSelectedCount === 0}
+              onClick={() => setPendingBulkRemove(true)}
+            >
+              Remover {removableSelectedCount} membro(s)
+            </Button>
+          }
         />
       </Card>
+
+      <AdminUserDialog
+        open={dialogOpen}
+        mode={dialogMode}
+        member={dialogMember}
+        existingEmails={
+          members?.map((m) => m.email).filter((e) => e !== dialogMember?.email) ??
+          []
+        }
+        onClose={() => {
+          setDialogOpen(false);
+          setDialogMember(null);
+        }}
+        onSubmit={handleSubmit}
+      />
 
       <ConfirmDialog
         open={pendingRemove !== null}
@@ -403,6 +501,16 @@ function TeamTab() {
         }}
         title={pendingRemove ? `Remover ${pendingRemove.name}?` : ''}
         description="O usuário perde acesso imediato ao painel administrativo. Você pode convidar novamente depois."
+        confirmLabel="Remover acesso"
+        destructive
+      />
+
+      <ConfirmDialog
+        open={pendingBulkRemove}
+        onClose={() => setPendingBulkRemove(false)}
+        onConfirm={handleBulkRemove}
+        title={`Remover ${removableSelectedCount} membro(s)?`}
+        description="Todos os selecionados perdem acesso imediato ao painel. A conta owner (se selecionada) é preservada."
         confirmLabel="Remover acesso"
         destructive
       />

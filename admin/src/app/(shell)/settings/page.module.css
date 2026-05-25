@@ -77,6 +77,24 @@
   color: var(--text-mute);
 }
 
+/* Coluna Acesso: contagem de áreas (X de Y) com tom acentuado
+ * quando é restrito. Helper visual pra distinguir membros com
+ * permissão limitada na tabela. */
+.accessCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand-fg, #6366f1);
+}
+
+/* Wrapper das ações de linha (editar + remover). flex inline com
+ * gap pequeno pra os icon-buttons não colarem. */
+.actionCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
 /* ── Integrações ────────────────────────────── */
 
 .integrationsGrid {
