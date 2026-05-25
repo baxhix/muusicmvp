@@ -1,0 +1,172 @@
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* ── Grid de tier cards ────────────────────────────────────── */
+
+.tierGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.tierCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  background: var(--card-bg, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  overflow: hidden;
+}
+.tierCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--tier-color, var(--brand-fg, #6366f1));
+  box-shadow: 0 12px 24px -16px var(--tier-color, rgba(99, 102, 241, 0.4));
+}
+
+/* Faixa fina da cor temática no topo do card — sinal visual claro
+ * de qual tier é mesmo sem ler. */
+.tierCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--tier-color, var(--brand-fg, #6366f1));
+}
+
+.tierHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tierLabel {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.tierCapacity {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-mute);
+}
+
+.tierTagline {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-mute);
+  line-height: 1.5;
+  min-height: 39px;
+}
+
+.tierStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+
+.tierStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tierStatLabel {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-mute);
+}
+
+.tierStatValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.tierStatTotal {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-faint);
+  margin-left: 4px;
+}
+
+.tierFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.tierCta {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--tier-color, var(--brand-fg, #6366f1));
+}
+
+.tierFooter svg {
+  color: var(--tier-color, var(--brand-fg, #6366f1));
+}
+
+/* ── Help card ─────────────────────────────────────────────── */
+
+.helpCard {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.helpHead {
+  display: inline-flex;
+}
+
+.helpList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.helpList li strong {
+  font-weight: 600;
+  margin-right: 2px;
+}
