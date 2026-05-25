@@ -1,0 +1,437 @@
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.disabledBanner {
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--warning, #d97706) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning, #d97706) 30%, transparent);
+  border-radius: var(--r-md);
+  font-size: 12px;
+  color: var(--warning, #d97706);
+  line-height: 1.4;
+}
+.wrap[data-disabled="true"] .phoneFrame,
+.wrap[data-disabled="true"] .emailFrame {
+  filter: grayscale(0.6);
+  opacity: 0.7;
+}
+
+/* ── Phone mockup ────────────────────────────────────────────── */
+
+.phoneFrame {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #0d0d12 0%, #1a1a22 100%);
+  border-radius: 32px;
+  padding: 36px 14px 24px;
+  box-shadow:
+    0 0 0 6px #1f1f28,
+    0 0 0 7px #0a0a0e,
+    0 24px 48px -16px rgba(0, 0, 0, 0.4);
+  color: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.phoneNotch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 18px;
+  background: #0a0a0e;
+  border-radius: 14px;
+}
+
+.phoneStatusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 12px;
+  margin-bottom: 12px;
+  color: #f3f4f6;
+}
+.phoneStatusRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+/* ── App header ──────────────────────────────────────────────── */
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #15151c;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.appBrand {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.bellWrap {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #232331;
+  border-radius: 999px;
+}
+.bellIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f3f4f6;
+}
+.bellBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0d0d12;
+}
+
+/* ── Notification panel (dropdown) ───────────────────────────── */
+
+.notifPanel {
+  background: #15151c;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notifPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  padding: 0 2px 4px;
+  border-bottom: 1px solid #232331;
+}
+.notifPanelHint {
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.notifItem {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  background: #1c1c25;
+  border-radius: 10px;
+  position: relative;
+}
+
+.notifItemIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--brand-fg, #6366f1) 40%, #1c1c25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.notifItemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notifItemRow1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.notifItemTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #f3f4f6;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notifItemDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--brand-fg, #6366f1);
+}
+
+.notifItemDesc {
+  font-size: 11.5px;
+  color: #d1d5db;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notifItemMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+}
+.notifItemCategory {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #232331;
+  border-radius: 999px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+.notifItemTime {
+  color: #6b7280;
+}
+
+.notifTrigger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #1a1a23;
+  border-radius: 8px;
+  border-left: 3px solid var(--brand-fg, #6366f1);
+}
+.notifTriggerLabel {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  font-weight: 600;
+}
+.notifTriggerText {
+  font-size: 11.5px;
+  color: #d1d5db;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+/* ── Email mockup ────────────────────────────────────────────── */
+
+.emailFrame {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.inboxWindow {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.inboxHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-mute);
+  font-weight: 600;
+}
+.inboxHint {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--brand-fg, #6366f1);
+}
+
+.inboxRow {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  position: relative;
+}
+.inboxRow::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--brand-fg, #6366f1);
+}
+.inboxAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.inboxBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.inboxRow1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.inboxFrom {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.inboxTime {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.inboxSubject {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inboxSnippet {
+  font-size: 12px;
+  color: var(--text-mute);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Email body ──────────────────────────────────────────────── */
+
+.emailBody {
+  background: #ffffff;
+  color: #111111;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 24px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 16px -8px rgba(0, 0, 0, 0.15);
+}
+.emailBodyHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.emailLogo {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d12;
+  color: #fff;
+  border-radius: 8px;
+}
+.emailFromName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111111;
+}
+.emailTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: #111111;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+.emailParagraph {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+}
+.emailCta {
+  align-self: flex-start;
+  background: #0d0d12;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  margin-top: 4px;
+  transition: opacity 120ms ease;
+}
+.emailCta:hover {
+  opacity: 0.85;
+}
+.emailFooter {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}

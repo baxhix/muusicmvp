@@ -1,6 +1,7 @@
 'use client';
 
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardHeader } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -9,9 +10,6 @@ import Select from '@/components/ui/Select';
 import StatCard from '@/components/ui/StatCard';
 import Table, { type Column } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
-import NotificationDetailDrawer, {
-  type NotificationSaveDraft,
-} from '@/components/admin/NotificationDetailDrawer';
 import {
   IconBell,
   IconCheckCircle,
@@ -26,7 +24,6 @@ import {
   CATEGORY_LABEL,
   CHANNEL_LABEL,
   type NotificationItem,
-  type NotificationChannel,
   type NotificationCategory,
 } from '@/services/notifications';
 import { formatNumber } from '@/lib/format';
@@ -36,11 +33,13 @@ import styles from './page.module.css';
 /**
  * Notificações — listagem em tabela (padrão Users / Materiais) com
  * filtros no topo. Categoria virou COLUNA + FILTRO (chip), não mais
- * seção. Clicar numa linha abre o drawer de edição completa.
+ * seção. Clicar numa linha NAVEGA pra `/notificacoes/[kind]`, página
+ * dedicada de edição com sidebar + preview mockup do canal (in-app
+ * + email).
  *
- * Toggle de master (ligado/desligado) e canais ficam dentro do
- * drawer pra evitar bagunça visual na linha — os ícones na coluna
- * "Canais" são read-only e refletem o estado salvo.
+ * Toggle de master (ligado/desligado) e canais ficam dentro da
+ * página de edição — esta listagem é read-only com ícones que
+ * mostram o estado salvo.
  */
 
 const STATUS_OPTIONS = [
@@ -66,6 +65,7 @@ const CATEGORY_OPTIONS: { value: '' | NotificationCategory; label: string }[] = 
 
 export default function NotificacoesPage() {
   const { push } = useToast();
+  const router = useRouter();
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [filters, setFilters] = useState({
     search: '',
@@ -73,9 +73,6 @@ export default function NotificacoesPage() {
     status: '' as '' | 'enabled' | 'disabled' | 'system',
     wired: '' as '' | 'wired' | 'planned',
   });
-  const [selected, setSelected] = useState<NotificationItem | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     notificationsService
@@ -132,96 +129,8 @@ export default function NotificacoesPage() {
     });
   }, [items, deferredFilters]);
 
-  /* Optimistic save: atualiza state local + manda pro server.
-   * Em erro, reverte. Recebemos do drawer um payload já normalizado
-   * (overrides como string|null|undefined). */
-  async function persist(payload: NotificationSaveDraft) {
-    if (!items || !selected) return;
-    const previous = selected;
-
-    /* Atualiza visualmente já com os novos valores efetivos. Para
-     * overrides:
-     *   - null: volta pro default do catálogo
-     *   - undefined: mantém o estado atual
-     *   - string: usa a string como valor efetivo
-     */
-    const resolveValue = (
-      override: string | null | undefined,
-      currentEffective: string,
-      defaultValue: string,
-    ): string => {
-      if (override === null) return defaultValue;
-      if (override === undefined) return currentEffective;
-      return override;
-    };
-
-    const next: NotificationItem = {
-      ...previous,
-      enabled: payload.enabled,
-      channels: payload.channels,
-      label: resolveValue(
-        payload.labelOverride,
-        previous.label,
-        previous.defaultLabel,
-      ),
-      description: resolveValue(
-        payload.descriptionOverride,
-        previous.description,
-        previous.defaultDescription,
-      ),
-      trigger: resolveValue(
-        payload.triggerOverride,
-        previous.trigger,
-        previous.defaultTrigger,
-      ),
-      hasLabelOverride:
-        payload.labelOverride === undefined
-          ? previous.hasLabelOverride
-          : payload.labelOverride !== null,
-      hasDescriptionOverride:
-        payload.descriptionOverride === undefined
-          ? previous.hasDescriptionOverride
-          : payload.descriptionOverride !== null,
-      hasTriggerOverride:
-        payload.triggerOverride === undefined
-          ? previous.hasTriggerOverride
-          : payload.triggerOverride !== null,
-      updatedAt: new Date().toISOString(),
-    };
-
-    setItems((prev) =>
-      prev ? prev.map((x) => (x.kind === previous.kind ? next : x)) : prev,
-    );
-    setSelected(next);
-    setSaving(true);
-    try {
-      await notificationsService.upsert(payload);
-      push({
-        type: 'success',
-        title: 'Notificação atualizada',
-        description: `“${next.label}” foi salva com sucesso.`,
-      });
-      setDrawerOpen(false);
-      setSelected(null);
-    } catch (err) {
-      // Rollback
-      setItems((prev) =>
-        prev ? prev.map((x) => (x.kind === previous.kind ? previous : x)) : prev,
-      );
-      setSelected(previous);
-      push({
-        type: 'error',
-        title: 'Erro ao salvar',
-        description: err instanceof Error ? err.message : 'Tente novamente.',
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function openDrawer(item: NotificationItem) {
-    setSelected(item);
-    setDrawerOpen(true);
+  function openEditor(item: NotificationItem) {
+    router.push(`/notificacoes/${encodeURIComponent(item.kind)}`);
   }
 
   /* Columns memoizados — definição estática + closures sobre setters
@@ -450,7 +359,7 @@ export default function NotificacoesPage() {
             columns={columns}
             data={filtered}
             rowId={(i) => i.kind}
-            onRowClick={openDrawer}
+            onRowClick={openEditor}
             pageSize={15}
             loading={items === null}
             emptyState={
@@ -462,18 +371,6 @@ export default function NotificacoesPage() {
           />
         </Card>
       </div>
-
-      <NotificationDetailDrawer
-        item={selected}
-        open={drawerOpen}
-        saving={saving}
-        onClose={() => {
-          if (saving) return;
-          setDrawerOpen(false);
-          setSelected(null);
-        }}
-        onSave={persist}
-      />
     </>
   );
 }
