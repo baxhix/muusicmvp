@@ -32,6 +32,9 @@ export async function GET() {
       // fallback pro KNOWN_TEMPLATES.label hardcoded.
       label: db?.label ?? known.label,
       description: known.description,
+      /* Classificação de destinatário — atributo do catálogo
+       * (em código), não editável no admin. */
+      audience: known.audience,
       variables: known.variables,
       defaultSubject: known.defaultSubject,
       defaultHtml: known.defaultHtml,
@@ -54,6 +57,11 @@ export async function GET() {
       // Custom: label do DB se existir, senão usa o próprio kind.
       label: p.label ?? p.kind,
       description: p.description ?? '(sem descrição)',
+      /* Orphans (templates customizados ou legacy) caem em
+       * "usuarios" por default — caso mais comum quando o admin
+       * cria um template via UI. Pode ser refinado depois com uma
+       * coluna `audience` no DB. */
+      audience: 'usuarios' as const,
       variables: [],
       defaultSubject: p.subject,
       defaultHtml: p.html,

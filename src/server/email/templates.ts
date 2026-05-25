@@ -120,10 +120,21 @@ export function interpolate(
  * Quando o código adiciona um novo email do sistema, vem cadastrar
  * aqui pra aparecer no admin. Não precisa de migration pra cada um.
  */
+/** Quem é o destinatário pretendido do template — usado pra
+ *  organizar a listagem e o filtro no admin.
+ *   - `gestao`   → vai pro time interno (relatórios, métricas).
+ *   - `usuarios` → vai pra usuário final cadastrado na plataforma.
+ *  A classificação é estrutural (atributo do template em código),
+ *  não editável pelo admin. Quando um novo template for criado,
+ *  basta marcar aqui no catálogo. */
+export type TemplateAudience = 'gestao' | 'usuarios';
+
 export interface KnownTemplate {
   kind: string;
   label: string;
   description: string;
+  /** Classificação de destinatário — filtrável no admin. */
+  audience: TemplateAudience;
   variables: { name: string; description: string }[];
   /** Subject default — usado quando o admin clica "criar template". */
   defaultSubject: string;
@@ -437,6 +448,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
       'próprio magic link + código OTP do primeiro acesso, então o ' +
       'usuário recebe UM único email de cadastro+acesso. Idempotente ' +
       'via claim atômico em welcomeEmailSentAt.',
+    audience: 'usuarios',
     variables: [
       { name: 'userName', description: 'Nome do usuário (display name)' },
       { name: 'magicUrl', description: 'URL completa pro botão "Entrar"' },
@@ -460,6 +472,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
     description:
       'Disparado quando o usuário pede pra entrar via email. Inclui ' +
       'link clicável + código OTP de 6 dígitos como fallback.',
+    audience: 'usuarios',
     variables: [
       { name: 'magicUrl', description: 'URL completa pro botão "Entrar"' },
       { name: 'code', description: 'Código OTP de 6 dígitos (sem espaços)' },
@@ -490,6 +503,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
       'Disparado quando alguém te manda DM no Fanverse. Vai pra TODO ' +
       'destinatário (online ou não) por padrão — admin pode desligar ' +
       'o canal email em /notificacoes/new_dm pra silenciar.',
+    audience: 'usuarios',
     variables: [
       { name: 'senderName', description: 'Nome de quem mandou a mensagem' },
       { name: 'messageSnippet', description: 'Trecho da mensagem (até 200 chars)' },
@@ -512,6 +526,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
       'Email noturno (23h59) com resumo do dia: fanpoints ganhos, ' +
       'distância pro próximo nível e destaques perdidos. Vai pra ' +
       'todos os usuários enquanto a base é pequena.',
+    audience: 'usuarios',
     variables: [
       { name: 'userName', description: 'Nome do usuário (display name)' },
       { name: 'dateLabel', description: 'Data do dia em formato curto (ex: "25 mai")' },
@@ -544,6 +559,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
       'Email matinal (06h00) com KPIs da plataforma — usuários, ' +
       'streams, mensagens, tempo médio de sessão. Vai SÓ pro gestor ' +
       '(MANAGER_EMAIL env).',
+    audience: 'gestao',
     variables: [
       { name: 'dateLabel', description: 'Data do dia anterior (ex: "24 mai")' },
       { name: 'totalUsers', description: 'Total de usuários cadastrados (ativos)' },
@@ -578,6 +594,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
       'reações no comment dele OU comunidade bombando (10+ ' +
       'interações em 6h). Lista APENAS o nome das comunidades, ' +
       'sem conteúdo — induz a abrir o app pra ver.',
+    audience: 'usuarios',
     variables: [
       { name: 'userName', description: 'Nome do usuário (display name)' },
       { name: 'communityList', description: 'Lista HTML <br>-separada dos nomes das comunidades' },

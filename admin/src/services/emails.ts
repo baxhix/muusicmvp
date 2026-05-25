@@ -7,10 +7,16 @@
 import { api } from './api';
 import type { EmailDesign, BrandSettings } from './emailDesign';
 
+/** Classificação de destinatário pretendido — espelha o tipo
+ *  TemplateAudience do servidor. */
+export type TemplateAudience = 'gestao' | 'usuarios';
+
 export interface EmailTemplate {
   kind: string;
   label: string;
   description: string;
+  /** Pra quem o template é destinado — filtrável na listagem. */
+  audience: TemplateAudience;
   variables: { name: string; description: string }[];
   defaultSubject: string;
   defaultHtml: string;
@@ -22,6 +28,12 @@ export interface EmailTemplate {
   design: EmailDesign | null;
   updatedAt: string | null;
 }
+
+/** Label pt-BR pra exibir nas chips + badges do card. */
+export const AUDIENCE_LABEL: Record<TemplateAudience, string> = {
+  gestao: 'Gestão',
+  usuarios: 'Usuários',
+};
 
 export interface EmailLog {
   id: string;
