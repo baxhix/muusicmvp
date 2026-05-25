@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardHeader } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import StatCard from '@/components/ui/StatCard';
 import Table, { type Column } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
+import NewNotificationDialog from '@/components/admin/NewNotificationDialog';
 import {
   IconBell,
   IconCheckCircle,
@@ -18,9 +20,12 @@ import {
   IconMail,
   IconSearch,
   IconShield,
+  IconPlus,
 } from '@/components/icons';
 import {
   notificationsService,
+  loadCustomDrafts,
+  isCustomDraftKind,
   CATEGORY_LABEL,
   CHANNEL_LABEL,
   type NotificationItem,
@@ -73,21 +78,37 @@ export default function NotificacoesPage() {
     status: '' as '' | 'enabled' | 'disabled' | 'system',
     wired: '' as '' | 'wired' | 'planned',
   });
+  const [createOpen, setCreateOpen] = useState(false);
 
+  /* Drafts personalizados (localStorage) — merged com o catálogo
+   * do servidor. Os drafts ficam DEPOIS dos itens do catálogo na
+   * lista, pra preservar a ordem oficial e empurrar os custom pro
+   * fim da paginação. */
   useEffect(() => {
     notificationsService
       .list()
-      .then((res) => setItems(res.items))
+      .then((res) => {
+        const drafts = loadCustomDrafts();
+        setItems([...res.items, ...drafts]);
+      })
       .catch((err: unknown) => {
         push({
           type: 'error',
           title: 'Erro ao carregar notificações',
           description: err instanceof Error ? err.message : '',
         });
-        setItems([]);
+        /* Mesmo se a API falhar, tenta carregar drafts locais. */
+        setItems(loadCustomDrafts());
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function handleCreated(draft: NotificationItem) {
+    setCreateOpen(false);
+    setItems((prev) => (prev ? [...prev, draft] : [draft]));
+    /* Navega direto pro editor — UX típica de "criou, agora edita". */
+    router.push(`/notificacoes/${encodeURIComponent(draft.kind)}`);
+  }
 
   /* Stats globais — sempre baseado em todos os items, não no
    * filtrado, pra dar uma visão real do catálogo. */
@@ -142,22 +163,38 @@ export default function NotificacoesPage() {
         id: 'notification',
         header: 'Notificação',
         sortKey: (i) => i.label,
-        cell: (i) => (
-          <div className={styles.cellMain}>
-            <div className={styles.cellMainHead}>
-              <span className={styles.cellTitle}>{i.label}</span>
-              {(i.hasLabelOverride ||
-                i.hasDescriptionOverride ||
-                i.hasTriggerOverride) && (
-                <Badge tone="brand" size="sm">
-                  Editado
-                </Badge>
-              )}
+        cell: (i) => {
+          /* Detecta draft personalizado — drafts NÃO têm `wired` e
+           * vivem em localStorage. Aqui o sinal: kind existe no
+           * store de drafts. (Não usamos isCustomDraftKind aqui em
+           * loop pra evitar localStorage thrashing — em vez disso,
+           * inferimos pelo `wired === false && system === false`
+           * combinado com a presença em loadCustomDrafts no mount.
+           * Fallback simples: usa o helper, é fast pra <50 drafts.) */
+          const isCustom = isCustomDraftKind(i.kind);
+          return (
+            <div className={styles.cellMain}>
+              <div className={styles.cellMainHead}>
+                <span className={styles.cellTitle}>{i.label}</span>
+                {isCustom ? (
+                  <Badge tone="info" size="sm" dot>
+                    Personalizada
+                  </Badge>
+                ) : (
+                  (i.hasLabelOverride ||
+                    i.hasDescriptionOverride ||
+                    i.hasTriggerOverride) && (
+                    <Badge tone="brand" size="sm">
+                      Editado
+                    </Badge>
+                  )
+                )}
+              </div>
+              <span className={styles.cellDescription}>{i.description}</span>
+              <code className={styles.cellKind}>{i.kind}</code>
             </div>
-            <span className={styles.cellDescription}>{i.description}</span>
-            <code className={styles.cellKind}>{i.kind}</code>
-          </div>
-        ),
+          );
+        },
       },
       {
         id: 'category',
@@ -256,6 +293,16 @@ export default function NotificacoesPage() {
       <PageHeader
         title="Notificações"
         description="Catálogo de notificações que a plataforma dispara — no app e por email. Clique numa linha pra editar o conteúdo, canais e estado. Sistema (login etc.) não pode ser desligado."
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
+            leadingIcon={<IconPlus size={14} />}
+            onClick={() => setCreateOpen(true)}
+          >
+            Nova notificação
+          </Button>
+        }
       />
 
       <div className={styles.body}>
@@ -371,6 +418,13 @@ export default function NotificacoesPage() {
           />
         </Card>
       </div>
+
+      <NewNotificationDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        existingKinds={items?.map((i) => i.kind) ?? []}
+        onCreated={handleCreated}
+      />
     </>
   );
 }

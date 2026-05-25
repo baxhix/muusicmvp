@@ -69,3 +69,90 @@ export const CHANNEL_LABEL: Record<NotificationChannel, string> = {
   in_app: 'No app',
   email: 'Email',
 };
+
+/* ── Custom drafts (mock, client-only) ──────────────────────────
+ *
+ * O catálogo "real" (KNOWN_NOTIFICATIONS) vive no servidor e exige
+ * deploy pra mudar. Pra que o admin possa simular "criar uma
+ * notificação" sem depender do BE, mantemos um store local em
+ * localStorage com notificações personalizadas. Aparece na listagem
+ * com badge "Personalizada"; o editor detecta e salva também em
+ * localStorage (não no DB).
+ *
+ * Quando o BE eventualmente suportar criação dinâmica, este store
+ * pode virar um shim que faz POST + remove do localStorage. */
+
+const CUSTOM_DRAFTS_KEY = 'notificacoes:custom-drafts';
+
+export function loadCustomDrafts(): NotificationItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_DRAFTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as NotificationItem[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomDraft(draft: NotificationItem): void {
+  if (typeof window === 'undefined') return;
+  const all = loadCustomDrafts().filter((d) => d.kind !== draft.kind);
+  all.push({ ...draft, updatedAt: new Date().toISOString() });
+  window.localStorage.setItem(CUSTOM_DRAFTS_KEY, JSON.stringify(all));
+}
+
+export function deleteCustomDraft(kind: string): void {
+  if (typeof window === 'undefined') return;
+  const all = loadCustomDrafts().filter((d) => d.kind !== kind);
+  window.localStorage.setItem(CUSTOM_DRAFTS_KEY, JSON.stringify(all));
+}
+
+export function isCustomDraftKind(kind: string): boolean {
+  return loadCustomDrafts().some((d) => d.kind === kind);
+}
+
+/** Constrói um NotificationItem novo a partir dos campos mínimos
+ *  do formulário de criação. Os campos `defaultX` espelham os
+ *  efetivos (pra custom drafts não existe noção de "default" do
+ *  catálogo), `hasXOverride` ficam false, `wired/system` false. */
+export interface CreateCustomDraftInput {
+  kind: string;
+  label: string;
+  description: string;
+  trigger: string;
+  category: NotificationCategory;
+  supportedChannels: NotificationChannel[];
+  defaultChannels: NotificationChannel[];
+}
+
+export function buildCustomDraft(
+  input: CreateCustomDraftInput,
+): NotificationItem {
+  const channels: Partial<Record<NotificationChannel, boolean>> = {};
+  for (const ch of input.supportedChannels) {
+    channels[ch] = input.defaultChannels.includes(ch);
+  }
+  return {
+    kind: input.kind,
+    label: input.label,
+    description: input.description,
+    trigger: input.trigger,
+    defaultLabel: input.label,
+    defaultDescription: input.description,
+    defaultTrigger: input.trigger,
+    hasLabelOverride: false,
+    hasDescriptionOverride: false,
+    hasTriggerOverride: false,
+    category: input.category,
+    supportedChannels: input.supportedChannels,
+    defaultChannels: input.defaultChannels,
+    wired: false,
+    system: false,
+    enabled: true,
+    channels,
+    updatedAt: new Date().toISOString(),
+  };
+}

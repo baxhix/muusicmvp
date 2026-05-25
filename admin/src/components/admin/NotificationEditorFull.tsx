@@ -18,11 +18,16 @@ import {
   IconAlert,
   IconHome,
   IconChevronRight,
+  IconTrash,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import NotificationPreview from './NotificationPreview';
+import NotificationPreview, { type PreviewDevice } from './NotificationPreview';
+import { ConfirmDialog } from '@/components/ui/Dialog';
 import {
   notificationsService,
+  saveCustomDraft,
+  deleteCustomDraft,
+  buildCustomDraft,
   CATEGORY_LABEL,
   CHANNEL_LABEL,
   type NotificationItem,
@@ -33,10 +38,14 @@ import styles from './NotificationEditorFull.module.css';
 
 interface NotificationEditorFullProps {
   item: NotificationItem;
+  /** Quando true, o item veio dos drafts em localStorage. O save
+   *  vai pro localStorage (não pra API). Também habilita o botão
+   *  de excluir. Esconde os "Restaurar padrão" porque não existe
+   *  conceito de catálogo pra drafts personalizados. */
+  isCustomDraft?: boolean;
 }
 
 type ViewMode = 'editor' | 'preview';
-type PreviewChannel = 'in_app' | 'email';
 
 /**
  * Editor full-page de uma notificação.
@@ -56,6 +65,7 @@ type PreviewChannel = 'in_app' | 'email';
  */
 export default function NotificationEditorFull({
   item,
+  isCustomDraft = false,
 }: NotificationEditorFullProps) {
   const router = useRouter();
   const { push } = useToast();
@@ -80,21 +90,29 @@ export default function NotificationEditorFull({
   const [triggerRestored, setTriggerRestored] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const labelInputRef = useRef<HTMLInputElement>(null);
 
   /* Mobile alterna entre editor/preview via tabs. */
   const [view, setView] = useState<ViewMode>('editor');
 
-  /* Preview canvas tem seu próprio toggle in_app vs email — só
-   * mostra a aba quando o canal é supported. */
-  const initialPreviewChannel: PreviewChannel = item.supportedChannels.includes(
+  /* Preview canvas tem seu próprio toggle de device — iPhone /
+   * Android (ambos do canal in_app) e Email. Só mostra cada aba
+   * quando o canal correspondente é supported. Default: iPhone se
+   * in_app suportado, senão email. */
+  const initialPreviewDevice: PreviewDevice = item.supportedChannels.includes(
     'in_app',
   )
-    ? 'in_app'
+    ? 'iphone'
     : 'email';
-  const [previewChannel, setPreviewChannel] = useState<PreviewChannel>(
-    initialPreviewChannel,
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>(
+    initialPreviewDevice,
   );
+
+  /* Quando o device é iphone/android, queremos checar `in_app`
+   * pra o `channelEnabled`; email checa `email`. */
+  const previewChannelKey: NotificationChannel =
+    previewDevice === 'email' ? 'email' : 'in_app';
 
   const isSystem = item.system;
   const masterChecked = isSystem ? true : enabled;
@@ -187,29 +205,49 @@ export default function NotificationEditorFull({
     if (!dirty || saving) return;
     setSaving(true);
     try {
-      await notificationsService.upsert({
-        kind: item.kind,
-        enabled,
-        channels,
-        labelOverride: overrideFor(
-          label,
-          item.defaultLabel,
-          item.hasLabelOverride,
-          labelRestored,
-        ),
-        descriptionOverride: overrideFor(
-          description,
-          item.defaultDescription,
-          item.hasDescriptionOverride,
-          descriptionRestored,
-        ),
-        triggerOverride: overrideFor(
-          trigger,
-          item.defaultTrigger,
-          item.hasTriggerOverride,
-          triggerRestored,
-        ),
-      });
+      if (isCustomDraft) {
+        /* Drafts personalizados → localStorage. Reconstruímos o
+         * NotificationItem com os campos atuais — `defaultX` espelha
+         * o que está no draft (não há "catálogo" pra um custom). */
+        const updatedDraft = buildCustomDraft({
+          kind: item.kind,
+          label: label.trim(),
+          description: description.trim() || item.description,
+          trigger: trigger.trim() || item.trigger,
+          category: item.category,
+          supportedChannels: item.supportedChannels,
+          defaultChannels: item.defaultChannels,
+        });
+        /* Preserva enabled + channels do estado atual (o build cria
+         * com defaults). */
+        updatedDraft.enabled = enabled;
+        updatedDraft.channels = channels;
+        saveCustomDraft(updatedDraft);
+      } else {
+        await notificationsService.upsert({
+          kind: item.kind,
+          enabled,
+          channels,
+          labelOverride: overrideFor(
+            label,
+            item.defaultLabel,
+            item.hasLabelOverride,
+            labelRestored,
+          ),
+          descriptionOverride: overrideFor(
+            description,
+            item.defaultDescription,
+            item.hasDescriptionOverride,
+            descriptionRestored,
+          ),
+          triggerOverride: overrideFor(
+            trigger,
+            item.defaultTrigger,
+            item.hasTriggerOverride,
+            triggerRestored,
+          ),
+        });
+      }
       push({
         type: 'success',
         title: 'Notificação salva',
@@ -225,6 +263,19 @@ export default function NotificationEditorFull({
     } finally {
       setSaving(false);
     }
+  }
+
+  /* Excluir só faz sentido pra drafts personalizados — itens do
+   * catálogo não podem ser apagados (são definidos em código). */
+  function handleDelete() {
+    if (!isCustomDraft) return;
+    deleteCustomDraft(item.kind);
+    push({
+      type: 'success',
+      title: 'Notificação removida',
+      description: `“${item.label}” foi excluída do catálogo personalizado.`,
+    });
+    router.push('/notificacoes');
   }
 
   return (
@@ -276,6 +327,19 @@ export default function NotificationEditorFull({
               />
               <span>{masterChecked ? 'Ativa' : 'Desativada'}</span>
             </label>
+            {isCustomDraft && (
+              <Button
+                variant="dangerGhost"
+                size="sm"
+                iconOnly
+                onClick={() => setConfirmDelete(true)}
+                disabled={saving}
+                aria-label="Excluir notificação"
+                title="Excluir notificação personalizada"
+              >
+                <IconTrash size={14} />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -330,16 +394,19 @@ export default function NotificationEditorFull({
             <Badge tone="neutral" size="sm">
               {CATEGORY_LABEL[item.category]}
             </Badge>
-            {isSystem ? (
+            {isCustomDraft ? (
+              <Badge tone="info" size="sm" dot>Personalizada</Badge>
+            ) : isSystem ? (
               <Badge tone="warning" size="sm">Sistema</Badge>
             ) : item.wired ? (
               <Badge tone="success" size="sm" dot>Em produção</Badge>
             ) : (
               <Badge tone="neutral" size="sm">Planejada</Badge>
             )}
-            {(labelEdited || descriptionEdited || triggerEdited) && (
-              <Badge tone="brand" size="sm">Editado</Badge>
-            )}
+            {!isCustomDraft &&
+              (labelEdited || descriptionEdited || triggerEdited) && (
+                <Badge tone="brand" size="sm">Editado</Badge>
+              )}
           </div>
         </div>
       </header>
@@ -455,15 +522,16 @@ export default function NotificationEditorFull({
               <div className={styles.sectionHead}>
                 <span className={styles.sectionTitle}>Conteúdo e copy</span>
                 <span className={styles.sectionDesc}>
-                  Personalize o texto. Deixe igual ao padrão pra voltar ao
-                  copy do catálogo.
+                  {isCustomDraft
+                    ? 'Edite o copy livremente. Drafts personalizados não têm "padrão de catálogo" — qualquer valor vira o novo padrão pra esta notificação.'
+                    : 'Personalize o texto. Deixe igual ao padrão pra voltar ao copy do catálogo.'}
                 </span>
               </div>
 
               <div className={styles.fieldGroup}>
                 <div className={styles.fieldHead}>
                   <span className={styles.fieldLabel}>Descrição</span>
-                  {descriptionEdited && (
+                  {!isCustomDraft && descriptionEdited && (
                     <button
                       type="button"
                       className={styles.restoreBtn}
@@ -485,14 +553,18 @@ export default function NotificationEditorFull({
                   disabled={saving}
                   maxLength={2000}
                   rows={3}
-                  helperText={`Padrão: "${item.defaultDescription}"`}
+                  helperText={
+                    isCustomDraft
+                      ? undefined
+                      : `Padrão: "${item.defaultDescription}"`
+                  }
                 />
               </div>
 
               <div className={styles.fieldGroup}>
                 <div className={styles.fieldHead}>
                   <span className={styles.fieldLabel}>Quando dispara</span>
-                  {triggerEdited && (
+                  {!isCustomDraft && triggerEdited && (
                     <button
                       type="button"
                       className={styles.restoreBtn}
@@ -514,11 +586,15 @@ export default function NotificationEditorFull({
                   disabled={saving}
                   maxLength={2000}
                   rows={2}
-                  helperText={`Padrão: "${item.defaultTrigger}"`}
+                  helperText={
+                    isCustomDraft
+                      ? undefined
+                      : `Padrão: "${item.defaultTrigger}"`
+                  }
                 />
               </div>
 
-              {labelEdited && (
+              {!isCustomDraft && labelEdited && (
                 <div className={styles.fieldGroup}>
                   <div className={styles.fieldHead}>
                     <span className={styles.fieldLabel}>Nome / título</span>
@@ -635,33 +711,49 @@ export default function NotificationEditorFull({
             <div className={styles.previewToolbar}>
               {/* Pill toggle no padrão do DevicePreview (template
                * de email) — botão com ícone + label, active state
-               * com fundo branco e shadow sutil. */}
+               * com fundo branco e shadow sutil. Três opções:
+               * iPhone, Android (ambos do canal in_app) e Email. */}
               <div className={styles.previewToggle}>
                 {item.supportedChannels.includes('in_app') && (
-                  <button
-                    type="button"
-                    className={cn(
-                      styles.previewToggleBtn,
-                      previewChannel === 'in_app' &&
-                        styles.previewToggleActive,
-                    )}
-                    onClick={() => setPreviewChannel('in_app')}
-                    aria-pressed={previewChannel === 'in_app'}
-                  >
-                    <IconBell size={14} />
-                    No app
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={cn(
+                        styles.previewToggleBtn,
+                        previewDevice === 'iphone' &&
+                          styles.previewToggleActive,
+                      )}
+                      onClick={() => setPreviewDevice('iphone')}
+                      aria-pressed={previewDevice === 'iphone'}
+                    >
+                      <AppleIcon />
+                      iPhone
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        styles.previewToggleBtn,
+                        previewDevice === 'android' &&
+                          styles.previewToggleActive,
+                      )}
+                      onClick={() => setPreviewDevice('android')}
+                      aria-pressed={previewDevice === 'android'}
+                    >
+                      <AndroidIcon />
+                      Android
+                    </button>
+                  </>
                 )}
                 {item.supportedChannels.includes('email') && (
                   <button
                     type="button"
                     className={cn(
                       styles.previewToggleBtn,
-                      previewChannel === 'email' &&
+                      previewDevice === 'email' &&
                         styles.previewToggleActive,
                     )}
-                    onClick={() => setPreviewChannel('email')}
-                    aria-pressed={previewChannel === 'email'}
+                    onClick={() => setPreviewDevice('email')}
+                    aria-pressed={previewDevice === 'email'}
                   >
                     <IconMail size={14} />
                     Email
@@ -674,20 +766,66 @@ export default function NotificationEditorFull({
             </div>
 
             <NotificationPreview
-              channel={previewChannel}
+              device={previewDevice}
               label={label || item.defaultLabel}
               description={description || item.defaultDescription}
               trigger={trigger || item.defaultTrigger}
               category={item.category}
               channelEnabled={
-                (channels[previewChannel] ??
-                  item.defaultChannels.includes(previewChannel)) &&
+                (channels[previewChannelKey] ??
+                  item.defaultChannels.includes(previewChannelKey)) &&
                 masterChecked
               }
             />
           </div>
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          handleDelete();
+        }}
+        destructive
+        title={`Excluir "${item.label}"?`}
+        description="A notificação personalizada será removida do catálogo local. Essa ação não pode ser desfeita."
+        confirmLabel="Excluir notificação"
+      />
     </div>
+  );
+}
+
+/* ── Inline brand icons (Apple / Android) — para os toggles de
+ *    device do preview. Inline + monocromático pra herdar a cor
+ *    dos botões via currentColor (mesma pegada das icons do app). */
+
+function AppleIcon() {
+  return (
+    <svg
+      width="13"
+      height="14"
+      viewBox="0 0 14 17"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M11.5 12c-.4.9-.6 1.3-1.1 2.1-.7 1-1.7 2.3-2.9 2.3-1.1 0-1.4-.7-2.9-.7-1.5 0-1.8.7-2.9.7-1.2 0-2.2-1.2-2.9-2.2C-.4 11.4-.6 7.9.6 5.9c.9-1.4 2.3-2.3 3.6-2.3 1.4 0 2.2.7 3.3.7 1.1 0 1.7-.7 3.3-.7 1.2 0 2.5.7 3.4 1.8-3 1.6-2.5 5.9-2.7 6.6zM9 2.4C9.5 1.7 9.9.7 9.8 0c-.7.1-1.5.5-2 1.1-.5.6-.9 1.5-.8 2.3.7.1 1.5-.3 2-1z" />
+    </svg>
+  );
+}
+
+function AndroidIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      {/* Cabeça do bonequinho — meia-lua + antenas + olhos. */}
+      <path d="M11.6 4.2l.9-1.6a.3.3 0 1 0-.5-.3l-.9 1.6A5.4 5.4 0 0 0 8 3.5c-1.1 0-2.2.3-3.1.7L4 2.6a.3.3 0 1 0-.5.3l.9 1.5A4.6 4.6 0 0 0 2 8.4h12a4.6 4.6 0 0 0-2.4-4.2zM5.2 7c-.3 0-.6-.3-.6-.6 0-.4.3-.6.6-.6.4 0 .6.2.6.6 0 .3-.2.6-.6.6zm5.6 0c-.4 0-.6-.3-.6-.6 0-.4.2-.6.6-.6.3 0 .6.2.6.6 0 .3-.3.6-.6.6z" />
+    </svg>
   );
 }

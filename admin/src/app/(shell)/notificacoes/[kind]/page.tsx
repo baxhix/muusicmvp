@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import NotificationEditorFull from '@/components/admin/NotificationEditorFull';
 import {
   notificationsService,
+  loadCustomDrafts,
   type NotificationItem,
 } from '@/services/notifications';
 
@@ -16,13 +17,15 @@ interface PageProps {
  * Editor full-page de uma notificação.
  *
  * Carrega TODOS os items (catálogo é bounded — ~14 entries) e
- * filtra pelo `kind` da URL. Se não achar, redireciona pra lista.
- * Mesmo pattern do editor de templates de email.
+ * filtra pelo `kind` da URL. Fallback: se não achar no catálogo,
+ * tenta os drafts personalizados em localStorage (criados pelo
+ * "Nova notificação"). Se nem aí estiver, redireciona pra lista.
  */
 export default function NotificacaoEditPage({ params }: PageProps) {
   const { kind } = use(params);
   const router = useRouter();
   const [item, setItem] = useState<NotificationItem | null | 'not-found'>(null);
+  const [isCustom, setIsCustom] = useState(false);
 
   useEffect(() => {
     let cancel = false;
@@ -31,11 +34,29 @@ export default function NotificacaoEditPage({ params }: PageProps) {
       .then((res) => {
         if (cancel) return;
         const found = res.items.find((i) => i.kind === kind);
-        setItem(found ?? 'not-found');
+        if (found) {
+          setItem(found);
+          return;
+        }
+        /* Fallback pros custom drafts (localStorage). */
+        const draft = loadCustomDrafts().find((d) => d.kind === kind);
+        if (draft) {
+          setItem(draft);
+          setIsCustom(true);
+        } else {
+          setItem('not-found');
+        }
       })
       .catch(() => {
         if (cancel) return;
-        setItem('not-found');
+        /* Mesmo em erro de API, ainda tenta o draft local. */
+        const draft = loadCustomDrafts().find((d) => d.kind === kind);
+        if (draft) {
+          setItem(draft);
+          setIsCustom(true);
+        } else {
+          setItem('not-found');
+        }
       });
     return () => {
       cancel = true;
@@ -67,5 +88,5 @@ export default function NotificacaoEditPage({ params }: PageProps) {
     return null;
   }
 
-  return <NotificationEditorFull item={item} />;
+  return <NotificationEditorFull item={item} isCustomDraft={isCustom} />;
 }

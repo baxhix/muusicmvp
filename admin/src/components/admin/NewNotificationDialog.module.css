@@ -1,0 +1,93 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .row { grid-template-columns: 1fr; }
+}
+
+/* ── Channel groups ─────────────────────────────────────────── */
+
+.channelGroup,
+.defaultsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.defaultsRow {
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-soft);
+  margin-top: 4px;
+}
+
+.channelGroupLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+
+.required {
+  color: var(--danger, #c0392b);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+.defaultsHint {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.channelChips {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.channelChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-mute);
+  transition: all 120ms ease;
+}
+.channelChip:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.channelChipActive {
+  background: color-mix(in srgb, var(--brand-fg, #6366f1) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--brand-fg, #6366f1) 50%, var(--border));
+  color: var(--text);
+}
+.channelChipActive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-fg, #6366f1) 16%, var(--surface));
+}
+.channelChipMuted {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.channelError {
+  font-size: 11.5px;
+  color: var(--danger, #c0392b);
+}

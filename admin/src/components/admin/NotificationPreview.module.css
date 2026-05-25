@@ -20,51 +20,128 @@
   opacity: 0.7;
 }
 
-/* ── Phone mockup ────────────────────────────────────────────── */
+/* ── Phone mockups (shared shell + OS variants) ─────────────── */
 
 .phoneFrame {
   position: relative;
   width: 100%;
-  max-width: 320px;
+  max-width: 340px;
+  /* Mais alto que a versão anterior — pediu pra dar mais ar pra
+   * notificação respirar dentro do device. */
+  min-height: 620px;
   margin: 0 auto;
-  background: linear-gradient(180deg, #0d0d12 0%, #1a1a22 100%);
-  border-radius: 32px;
-  padding: 36px 14px 24px;
-  box-shadow:
-    0 0 0 6px #1f1f28,
-    0 0 0 7px #0a0a0e,
-    0 24px 48px -16px rgba(0, 0, 0, 0.4);
+  padding: 44px 14px 30px;
   color: #f3f4f6;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.phoneNotch {
+/* iOS frame — corners arredondados, gradient profundo, Dynamic
+ * Island, home indicator. Bezel preto sólido + duplo ring. */
+.phoneFrameIOS {
+  background: linear-gradient(180deg, #0d0d12 0%, #1a1a22 100%);
+  border-radius: 38px;
+  box-shadow:
+    0 0 0 6px #1f1f28,
+    0 0 0 7px #0a0a0e,
+    0 24px 48px -16px rgba(0, 0, 0, 0.4);
+}
+
+/* Android frame — corners ligeiramente menos arredondados, bezel
+ * mais discreto (sem o duplo ring metalizado). */
+.phoneFrameAndroid {
+  background: linear-gradient(180deg, #1a1d24 0%, #25282f 100%);
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 4px #2a2e36,
+    0 24px 48px -16px rgba(0, 0, 0, 0.4);
+}
+
+/* iOS Dynamic Island — pill preto centralizado no topo. */
+.iosIsland {
   position: absolute;
-  top: 8px;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 28px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+/* Android punch-hole — círculo da câmera frontal. */
+.androidHole {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #000;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+/* Bottom indicators */
+.iosHomeIndicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  opacity: 0.85;
+}
+.androidGesturePill {
+  position: absolute;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
   width: 100px;
-  height: 18px;
-  background: #0a0a0e;
-  border-radius: 14px;
+  height: 3px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  opacity: 0.6;
 }
+
+/* ── Status bar (compartilhado, com tweaks por OS) ───────────── */
 
 .phoneStatusBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   padding: 0 12px;
-  margin-bottom: 12px;
+  margin-top: 4px;
+  margin-bottom: 14px;
   color: #f3f4f6;
+}
+.statusTime {
+  font-variant-numeric: tabular-nums;
 }
 .phoneStatusRight {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  opacity: 0.9;
+  gap: 5px;
+  color: #f3f4f6;
+}
+.phoneStatusRight svg {
+  display: block;
+}
+
+.androidBattery {
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* iOS prefere battery icon à direita, com mais espaço; Android
+ * usa percentual textual. Tweaks pequenos. */
+.phoneFrameAndroid .phoneStatusBar {
+  font-size: 11.5px;
 }
 
 /* ── App header ──────────────────────────────────────────────── */
@@ -73,27 +150,35 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: #15151c;
   border-radius: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+}
+.phoneFrameAndroid .appHeader {
+  background: #1f232a;
+  border-radius: 6px;
 }
 
 .appBrand {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .bellWrap {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #232331;
   border-radius: 999px;
+}
+.phoneFrameAndroid .bellWrap {
+  background: #2c313a;
+  border-radius: 8px;
 }
 .bellIcon {
   display: inline-flex;
@@ -118,16 +203,23 @@
   justify-content: center;
   border: 2px solid #0d0d12;
 }
+.phoneFrameAndroid .bellBadge {
+  border-color: #1a1d24;
+}
 
-/* ── Notification panel (dropdown) ───────────────────────────── */
+/* ── Notification panel ──────────────────────────────────────── */
 
 .notifPanel {
   background: #15151c;
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+}
+.phoneFrameAndroid .notifPanel {
+  background: #1f232a;
+  border-radius: 8px;
 }
 
 .notifPanelHead {
@@ -138,8 +230,11 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #9ca3af;
-  padding: 0 2px 4px;
+  padding: 0 2px 6px;
   border-bottom: 1px solid #232331;
+}
+.phoneFrameAndroid .notifPanelHead {
+  border-bottom-color: #2c313a;
 }
 .notifPanelHint {
   font-size: 10px;
@@ -151,30 +246,38 @@
 
 .notifItem {
   display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 10px;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
   align-items: flex-start;
-  padding: 10px;
+  padding: 12px;
   background: #1c1c25;
-  border-radius: 10px;
+  border-radius: 12px;
   position: relative;
+}
+.phoneFrameAndroid .notifItem {
+  background: #262b34;
+  border-radius: 6px;
 }
 
 .notifItemIcon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--brand-fg, #6366f1) 40%, #1c1c25);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #fff;
 }
+.phoneFrameAndroid .notifItemIcon {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-fg, #6366f1) 50%, #262b34);
+}
 
 .notifItemBody {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -186,7 +289,7 @@
 }
 
 .notifItemTitle {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: #f3f4f6;
   line-height: 1.25;
@@ -203,11 +306,11 @@
 }
 
 .notifItemDesc {
-  font-size: 11.5px;
+  font-size: 12px;
   color: #d1d5db;
-  line-height: 1.4;
+  line-height: 1.45;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -227,6 +330,9 @@
   color: #9ca3af;
   font-weight: 500;
 }
+.phoneFrameAndroid .notifItemCategory {
+  background: #2c313a;
+}
 .notifItemTime {
   color: #6b7280;
 }
@@ -235,10 +341,14 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: #1a1a23;
-  border-radius: 8px;
+  border-radius: 10px;
   border-left: 3px solid var(--brand-fg, #6366f1);
+}
+.phoneFrameAndroid .notifTrigger {
+  background: #21262f;
+  border-radius: 6px;
 }
 .notifTriggerLabel {
   font-size: 9.5px;
