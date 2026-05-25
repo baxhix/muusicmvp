@@ -109,32 +109,18 @@ function Shell({ children }: { children: React.ReactNode }) {
   // MilestoneNotification banner can pop globally.
   useFanpointMilestones();
 
-  // First-access guard — per product feedback "No primeiro
-  // acesso do usuário, oculte o ícone de player que fica no
-  // mapa". A brand-new visitor lands on /app without any music
-  // UI cluttering the map; the player only starts appearing on
-  // subsequent visits.
-  //
-  // Detection is a single localStorage flag ("app:has-visited").
-  // Initial React state is `true` (= treat as first access) so
-  // SSR + the initial client render both keep the player
-  // hidden — no flash of player before the effect runs. The
-  // effect then either:
-  //   - finds the flag already set → mark as returning user,
-  //     show the player.
-  //   - finds nothing → keep the player hidden THIS session
-  //     but set the flag so the NEXT visit shows the player.
-  const [isFirstAccess, setIsFirstAccess] = useState(true);
+  // NOTE: Antes havia um first-access guard que escondia o player
+  // no primeiro acesso (flag "app:has-visited" em localStorage).
+  // Revertido por feedback de produto: usuário recém-cadastrado
+  // precisa ver o player imediatamente. Mantemos limpando a flag
+  // antiga pra garantir que browsers que tinham o estado sujo
+  // entrem no fluxo novo direto.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const KEY = 'app:has-visited';
-    if (window.localStorage.getItem(KEY) === '1') {
-      setIsFirstAccess(false);
-    } else {
-      // Flag set immediately so subsequent /app mounts (refresh,
-      // route navigation back to /app, next-day return, etc.) get
-      // the normal player chrome.
-      window.localStorage.setItem(KEY, '1');
+    try {
+      window.localStorage.removeItem('app:has-visited');
+    } catch {
+      /* localStorage indisponível (modo privado, quota) — sem efeito. */
     }
   }, []);
 
@@ -417,15 +403,13 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  and a docked player there competes with their content +
        *  the BottomNav gradient scrim. When dismissed, the restore
        *  pill follows the same visibility rule. */}
-      {/* Player block also gated on `!isFirstAccess`. On a
-       *  visitor's first /app session the music UI stays
-       *  completely off the map; both the NowPlaying pill and
-       *  the (when-dismissed) restore button are suppressed
-       *  together so the home reads as a clean canvas before
-       *  the user has had a chance to orient themselves. From
-       *  the second session onward the localStorage flag flips
-       *  and this gate becomes a no-op. */}
-      {!isFirstAccess && !hideShellChrome && !hideMobileHeader && (
+      {/* Player aparece no primeiro acesso também — feedback de
+       *  produto reverteu o gate anterior que escondia o player
+       *  pra usuários recém-cadastrados (issue: "usuário que
+       *  acabou de se cadastrar não está aparecendo o player").
+       *  As demais regras (hideShellChrome em chat detail mobile,
+       *  hideMobileHeader em subpage mobile) seguem valendo. */}
+      {!hideShellChrome && !hideMobileHeader && (
         <div className={fadeClass(3)}>
           {playerHidden ? (
             <button
