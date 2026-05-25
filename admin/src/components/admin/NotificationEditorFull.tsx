@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,7 +16,10 @@ import {
   IconShield,
   IconEdit,
   IconAlert,
+  IconHome,
+  IconChevronRight,
 } from '@/components/icons';
+import { cn } from '@/lib/utils';
 import NotificationPreview from './NotificationPreview';
 import {
   notificationsService,
@@ -230,12 +232,29 @@ export default function NotificationEditorFull({
       {/* ── Topbar ──────────────────────────────────────── */}
       <header className={styles.topbar}>
         <div className={styles.topbarRow1}>
-          <nav className={styles.breadcrumb} aria-label="Navegação">
-            <Link href="/notificacoes" className={styles.bcLink}>
-              Notificações
-            </Link>
-            <span className={styles.bcSep} aria-hidden="true">/</span>
-            <span className={styles.bcCurrent}>{label || item.kind}</span>
+          {/* Breadcrumb estilo Materiais — botões com ícone home no
+           * root + chevron como separador + estado `crumbActive` no
+           * último (não clicável). */}
+          <nav className={styles.breadcrumb} aria-label="Caminho">
+            <button
+              type="button"
+              className={styles.crumb}
+              onClick={() => router.push('/notificacoes')}
+            >
+              <IconHome size={13} />
+              <span>Notificações</span>
+            </button>
+            <span className={styles.crumbGroup}>
+              <IconChevronRight size={12} className={styles.crumbSep} />
+              <button
+                type="button"
+                className={cn(styles.crumb, styles.crumbActive)}
+                disabled
+                aria-current="page"
+              >
+                {label || item.kind}
+              </button>
+            </span>
           </nav>
 
           <div className={styles.topbarActions}>
@@ -614,19 +633,41 @@ export default function NotificationEditorFull({
         >
           <div className={styles.previewWrap}>
             <div className={styles.previewToolbar}>
-              <Tabs<PreviewChannel>
-                items={[
-                  ...(item.supportedChannels.includes('in_app')
-                    ? [{ id: 'in_app' as const, label: 'No app' }]
-                    : []),
-                  ...(item.supportedChannels.includes('email')
-                    ? [{ id: 'email' as const, label: 'Email' }]
-                    : []),
-                ]}
-                value={previewChannel}
-                onChange={setPreviewChannel}
-                variant="pills"
-              />
+              {/* Pill toggle no padrão do DevicePreview (template
+               * de email) — botão com ícone + label, active state
+               * com fundo branco e shadow sutil. */}
+              <div className={styles.previewToggle}>
+                {item.supportedChannels.includes('in_app') && (
+                  <button
+                    type="button"
+                    className={cn(
+                      styles.previewToggleBtn,
+                      previewChannel === 'in_app' &&
+                        styles.previewToggleActive,
+                    )}
+                    onClick={() => setPreviewChannel('in_app')}
+                    aria-pressed={previewChannel === 'in_app'}
+                  >
+                    <IconBell size={14} />
+                    No app
+                  </button>
+                )}
+                {item.supportedChannels.includes('email') && (
+                  <button
+                    type="button"
+                    className={cn(
+                      styles.previewToggleBtn,
+                      previewChannel === 'email' &&
+                        styles.previewToggleActive,
+                    )}
+                    onClick={() => setPreviewChannel('email')}
+                    aria-pressed={previewChannel === 'email'}
+                  >
+                    <IconMail size={14} />
+                    Email
+                  </button>
+                )}
+              </div>
               <span className={styles.previewLegend}>
                 Simulação · valores em tempo real
               </span>

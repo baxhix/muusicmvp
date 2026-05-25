@@ -37,41 +37,60 @@
   flex-wrap: wrap;
 }
 
-/* ── Breadcrumb ──────────────────────────────────────────────── */
+/* ── Breadcrumb — padrão Materiais ──────────────────────────────
+ * Botões clicáveis com IconChevronRight como separador. O último
+ * crumb recebe `crumbActive` (cor mais forte + bold + disabled).
+ * Idêntico ao toolbar do /materiais pra que o admin tenha o mesmo
+ * vocabulário visual em todas as listagens. */
 
 .breadcrumb {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-faint);
+  gap: 2px;
+  flex-wrap: wrap;
   min-width: 0;
 }
-.bcLink {
+
+.crumbGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.crumbSep {
   color: var(--text-faint);
-  text-decoration: none;
-  padding: 4px 6px;
+  opacity: 0.7;
+  margin: 0 2px;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 0;
   border-radius: 6px;
-  transition: all 120ms ease;
-  white-space: nowrap;
-}
-.bcLink:hover {
-  background: var(--bg-soft);
-  color: var(--text-body);
-}
-.bcSep {
-  color: var(--text-faint);
-  opacity: 0.5;
-  user-select: none;
-}
-.bcCurrent {
-  color: var(--text-body);
+  font-family: inherit;
+  font-size: 13px;
   font-weight: 500;
-  padding: 4px 6px;
-  white-space: nowrap;
+  letter-spacing: -0.005em;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: background 140ms ease-out, color 140ms ease-out;
+  max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
+  white-space: nowrap;
+}
+.crumb:hover:not(:disabled) {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+  color: var(--text);
+}
+.crumb:disabled { cursor: default; }
+.crumbActive {
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* ── Ações ───────────────────────────────────────────────────── */
@@ -541,6 +560,40 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+/* Pill toggle no padrão do DevicePreview (template de email) —
+ * btn com ícone + label, fundo claro no active. Mesma classe-set
+ * (toggle/toggleBtn/toggleActive) renomeada com prefix `preview`
+ * pra não colidir com `.channelToggle` da sidebar. */
+.previewToggle {
+  display: inline-flex;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.previewToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-faint);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 120ms ease;
+}
+.previewToggleBtn:hover { color: var(--text-body); }
+.previewToggleActive {
+  background: var(--card-bg);
+  color: var(--text-body);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .previewLegend {
