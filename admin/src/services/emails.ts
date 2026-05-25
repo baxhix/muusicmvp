@@ -105,6 +105,12 @@ export const emailsService = {
         '/api/admin/emails/templates/test',
         input,
       ),
+    /** Remove um template editado do DB. Templates conhecidos voltam
+     *  a usar o fallback hardcoded; customizados somem da lista. */
+    remove: (kind: string) =>
+      api.delete<{ ok: boolean; deleted: boolean }>(
+        `/api/admin/emails/templates/${kind}`,
+      ),
   },
 
   logs: {

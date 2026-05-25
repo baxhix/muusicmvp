@@ -1,0 +1,274 @@
+/* ── Root layout ─────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--admin-topbar-h, 0px));
+  /* Sai do padding default da page wrap pra ocupar tudo. */
+  margin: -24px;
+  background: var(--bg);
+}
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  z-index: 5;
+  min-height: 64px;
+}
+
+.topbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px 6px 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.backBtn:hover {
+  background: var(--bg-soft);
+  color: var(--text-body);
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-body);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titleMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.kindBadge {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  background: var(--bg-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-faint);
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.activeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-body);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.activeToggle:hover { background: var(--bg-soft); }
+
+/* ── Mobile tabs (hidden on desktop) ─────────────────────────── */
+
+.mobileTabs {
+  display: none;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+}
+
+/* ── Body: sidebar + canvas ──────────────────────────────────── */
+
+.body {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+
+.sidebar {
+  border-right: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sidebarInner {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.varsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-soft);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.varsList li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+.varsList code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--brand-fg, #6366f1);
+  font-weight: 600;
+}
+.varsList span { color: var(--text-faint); }
+
+.editorSection {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HTML mode editor ────────────────────────────────────────── */
+
+.htmlMode {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.htmlHint {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--warning-soft, rgba(234, 179, 8, 0.1));
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--warning-fg, #92400e);
+  line-height: 1.4;
+}
+
+.htmlEditor {
+  width: 100%;
+  min-height: 400px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-soft);
+  resize: vertical;
+}
+.htmlEditor:focus {
+  outline: none;
+  border-color: var(--brand-fg);
+}
+
+/* ── Canvas (preview) ────────────────────────────────────────── */
+
+.canvas {
+  padding: 24px;
+  overflow: auto;
+  min-height: 0;
+  background: var(--bg);
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .body {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .root {
+    height: auto;
+    min-height: calc(100vh - var(--admin-topbar-h, 0px));
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .topbarRight {
+    flex-wrap: wrap;
+  }
+
+  .mobileTabs {
+    display: block;
+  }
+
+  .body {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .hiddenMobile {
+    display: none;
+  }
+
+  .activeMobile {
+    display: block;
+  }
+
+  .canvas {
+    min-height: 600px;
+  }
+}
