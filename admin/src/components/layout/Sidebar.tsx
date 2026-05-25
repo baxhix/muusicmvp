@@ -99,6 +99,21 @@ const NAV: NavEntry[] = [
 
   {
     kind: 'group',
+    id: 'plataforma',
+    label: 'Plataforma',
+    icon: IconGrid,
+    children: [
+      { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
+      { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
+      { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
+      { kind: 'leaf', href: '/emails',        label: 'E-mails' },
+      { kind: 'leaf', href: '/live',          label: 'Lives' },
+      { kind: 'leaf', href: '/pre-save',      label: 'Presave' },
+    ],
+  },
+
+  {
+    kind: 'group',
     id: 'superfans',
     label: 'Superfãs',
     icon: IconStar,
@@ -120,21 +135,6 @@ const NAV: NavEntry[] = [
       { kind: 'leaf', href: '/convites',   label: 'Convites' },
       { kind: 'leaf', href: '/engagement', label: 'Engajamento' },
       { kind: 'leaf', href: '/aquisicao',  label: 'Aquisição' },
-    ],
-  },
-
-  {
-    kind: 'group',
-    id: 'plataforma',
-    label: 'Plataforma',
-    icon: IconGrid,
-    children: [
-      { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
-      { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
-      { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
-      { kind: 'leaf', href: '/emails',        label: 'E-mails' },
-      { kind: 'leaf', href: '/live',          label: 'Lives' },
-      { kind: 'leaf', href: '/pre-save',      label: 'Presave' },
     ],
   },
 
