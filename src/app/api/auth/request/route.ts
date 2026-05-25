@@ -4,6 +4,7 @@ import { db } from '@/server/db';
 import { users, tokens } from '@/server/db/schema';
 import { generateToken, generateCode, MAGIC_TTL_MS } from '@/server/auth/tokens';
 import { sendMagicLink } from '@/server/email/magicLink';
+import { sendWelcomeEmail } from '@/server/email/welcome';
 import { env } from '@/server/env';
 import { and, eq, isNull } from 'drizzle-orm';
 import { limitByIp, limitByKey, magicLinkLimiter } from '@/server/rateLimit';
@@ -92,7 +93,14 @@ export async function POST(req: Request) {
   // ou nenhum. Email é enviado FORA da transação (não dá pra
   // rollback de I/O HTTP — se o token comitar e o email falhar,
   // o token órfão expira em 15min naturalmente).
-  const user = await db.transaction(async (tx) => {
+  //
+  // Também retornamos `isNewUser` pra que, fora da transação,
+  // possamos disparar o email de boas-vindas APENAS pra criação
+  // real de conta (não pra logins subsequentes). Combinado com o
+  // claim atômico abaixo (UPDATE WHERE welcomeEmailSentAt IS NULL),
+  // garante que boas-vindas sai uma única vez no momento da
+  // criação de conta — mesmo em corridas concorrentes.
+  const { user, isNewUser } = await db.transaction(async (tx) => {
     // Filtra soft-deleted: usuário que pediu exclusão LGPD não
     // recebe magic link mesmo digitando o mesmo email. Se quiser
     // voltar, vai precisar do hard-delete final (cron job dropa
@@ -103,6 +111,7 @@ export async function POST(req: Request) {
       .from(users)
       .where(and(eq(users.email, email), isNull(users.deletedAt)))
       .limit(1);
+    const isNew = !existing[0];
     const u =
       existing[0] ??
       (await tx.insert(users).values({ email, name: defaultName }).returning())[0];
@@ -114,7 +123,7 @@ export async function POST(req: Request) {
       code,
       expiresAt: new Date(Date.now() + MAGIC_TTL_MS),
     });
-    return u;
+    return { user: u, isNewUser: isNew };
   });
 
   /**
@@ -145,6 +154,49 @@ export async function POST(req: Request) {
   } catch (err) {
     logger.error('auth.request.email-send', err, { email });
     return NextResponse.json({ error: 'email_failed' }, { status: 502 });
+  }
+
+  /* Boas-vindas no momento da criação de conta. Só faz sentido
+   * disparar pra usuários novos — quem já existia (relogin) NÃO
+   * recebe de novo. O `isNewUser` flag indica se a transação
+   * acima fez INSERT.
+   *
+   * Mesmo assim, fazemos um claim atômico (UPDATE WHERE
+   * welcomeEmailSentAt IS NULL ... RETURNING) antes de chamar
+   * `sendWelcomeEmail` pra:
+   *   1. Garantir idempotência em corridas concorrentes — dois
+   *      POSTs simultâneos pra um email novo só fazem um INSERT
+   *      (pelo unique constraint), mas ambos veriam isNewUser
+   *      true só pra um deles; o claim cobre o caso edge.
+   *   2. Honrar o legacy: se essa rota for re-deployada e algum
+   *      user já tem `welcomeEmailSentAt` setado por uma versão
+   *      anterior (que disparava no onboarding), não duplica.
+   *
+   * Fire-and-forget — o response da /auth/request NÃO espera o
+   * boas-vindas. Resend pode demorar 1-3s. Falha aqui é só log.
+   * O template lido é o `boas_vindas` cadastrado no admin
+   * (`/emails/templates/boas_vindas/edit`) com fallback pro
+   * catálogo. */
+  if (isNewUser) {
+    const claimed = await db
+      .update(users)
+      .set({ welcomeEmailSentAt: new Date() })
+      .where(
+        and(eq(users.id, user.id), isNull(users.welcomeEmailSentAt)),
+      )
+      .returning({ id: users.id, email: users.email, name: users.name });
+
+    if (claimed.length > 0) {
+      const row = claimed[0];
+      const displayName = row.name ?? defaultName;
+      void sendWelcomeEmail({ to: row.email, userName: displayName }).catch(
+        (err: unknown) => {
+          logger.error('auth.request.welcome-send-failed', err, {
+            userId: row.id,
+          });
+        },
+      );
+    }
   }
 
   // Don't reveal whether the user already existed.

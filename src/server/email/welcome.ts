@@ -1,6 +1,7 @@
 /**
- * Email de boas-vindas — disparado UMA VEZ por usuário, logo após
- * o onboarding completar (POST /api/auth/onboarding).
+ * Email de boas-vindas — disparado UMA VEZ por usuário no
+ * momento da criação de conta (POST /api/auth/request, quando a
+ * transação faz INSERT em `users`).
  *
  * Idempotência: o caller só chama esta função se
  * `users.welcome_email_sent_at IS NULL`. Após enviar, o caller
@@ -8,8 +9,10 @@
  * pelo UPDATE ... WHERE welcome_email_sent_at IS NULL no caller
  * (atômico no Postgres).
  *
- * Mesmo pipeline do magicLink: lê template do DB com fallback
- * hardcoded + brand settings (logo no header + brand footer).
+ * Mesmo pipeline do magicLink: lê template `boas_vindas` do DB
+ * (editável em `/admin/emails/templates/boas_vindas/edit`) com
+ * fallback hardcoded + brand settings (logo no header + brand
+ * footer).
  */
 
 import { sendEmail } from './resend';
