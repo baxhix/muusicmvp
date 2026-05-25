@@ -197,6 +197,13 @@
       "when": 1780000000000,
       "tag": "0028_email_brand_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1780100000000,
+      "tag": "0029_email_template_label",
+      "breakpoints": true
     }
   ]
 }

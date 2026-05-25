@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -9,10 +10,10 @@ import Tabs from '@/components/ui/Tabs';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
 import {
-  IconChevronLeft,
   IconSend,
   IconCheckCircle,
   IconTrash,
+  IconEdit,
 } from '@/components/icons';
 import { emailsService, type EmailTemplate } from '@/services/emails';
 import {
@@ -48,6 +49,8 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
   const router = useRouter();
   const { push } = useToast();
 
+  const [label, setLabel] = useState(template.label);
+  const labelInputRef = useRef<HTMLInputElement>(null);
   const [subject, setSubject] = useState(template.subject);
   const [isActive, setIsActive] = useState(
     template.isActive || !template.isEdited,
@@ -101,10 +104,12 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
   async function save() {
     setSaving(true);
     try {
+      const trimmedLabel = label.trim();
       const payload =
         mode === 'visual'
           ? {
               kind: template.kind,
+              label: trimmedLabel || undefined,
               subject,
               html: '',
               design,
@@ -113,6 +118,7 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
             }
           : {
               kind: template.kind,
+              label: trimmedLabel || undefined,
               subject,
               html,
               design: null,
@@ -195,79 +201,105 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
 
   return (
     <div className={styles.root}>
-      {/* ── Topbar fixo ──────────────────────────────────────── */}
+      {/* ── Topbar — 2 linhas: breadcrumb/actions + título ──── */}
       <header className={styles.topbar}>
-        <div className={styles.topbarLeft}>
-          <button
-            type="button"
-            className={styles.backBtn}
-            onClick={() => router.push('/emails?tab=templates')}
-            aria-label="Voltar"
-          >
-            <IconChevronLeft size={16} />
-            <span>Templates</span>
-          </button>
-          <div className={styles.titleBlock}>
-            <h1 className={styles.title}>{template.label}</h1>
-            <div className={styles.titleMeta}>
-              <code className={styles.kindBadge}>{template.kind}</code>
-              {template.isEdited && isActive && (
-                <Badge tone="brand" size="sm" dot>Editado · ativo</Badge>
-              )}
-              {template.isEdited && !isActive && (
-                <Badge tone="neutral" size="sm">Editado · desativado</Badge>
-              )}
-              {!template.isEdited && (
-                <Badge tone="neutral" size="sm">Default</Badge>
-              )}
-              {!isKnown && (
-                <Badge tone="warning" size="sm">Custom</Badge>
-              )}
-            </div>
+        {/* Linha 1: breadcrumb à esquerda, ações à direita */}
+        <div className={styles.topbarRow1}>
+          <nav className={styles.breadcrumb} aria-label="Navegação">
+            <Link href="/emails?tab=templates" className={styles.bcLink}>
+              E-mails
+            </Link>
+            <span className={styles.bcSep} aria-hidden="true">/</span>
+            <Link href="/emails?tab=templates" className={styles.bcLink}>
+              Templates
+            </Link>
+            <span className={styles.bcSep} aria-hidden="true">/</span>
+            <span className={styles.bcCurrent}>{label || template.kind}</span>
+          </nav>
+
+          <div className={styles.topbarActions}>
+            <label className={styles.activeToggle}>
+              <input
+                type="checkbox"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
+              <span>Ativo</span>
+            </label>
+            {template.isEdited && (
+              <Button
+                variant="dangerGhost"
+                size="sm"
+                iconOnly
+                aria-label="Remover"
+                title={isKnown ? 'Restaurar default' : 'Remover template'}
+                onClick={() => setConfirmDelete(true)}
+              >
+                <IconTrash size={14} />
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              leadingIcon={<IconSend size={14} />}
+              onClick={sendTest}
+              loading={testing}
+              disabled={saving}
+            >
+              Enviar teste
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              leadingIcon={<IconCheckCircle size={14} />}
+              onClick={save}
+              loading={saving}
+              disabled={testing || !subject.trim()}
+            >
+              Salvar
+            </Button>
           </div>
         </div>
 
-        <div className={styles.topbarRight}>
-          <label className={styles.activeToggle}>
+        {/* Linha 2: título editável + badges */}
+        <div className={styles.topbarRow2}>
+          <div className={styles.titleWrap}>
             <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
+              ref={labelInputRef}
+              type="text"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Nome do template"
+              className={styles.titleInput}
+              aria-label="Nome do template"
+              spellCheck={false}
             />
-            <span>Ativo</span>
-          </label>
-          {template.isEdited && (
-            <Button
-              variant="dangerGhost"
-              size="sm"
-              iconOnly
-              aria-label="Remover"
-              title={isKnown ? 'Restaurar default' : 'Remover template'}
-              onClick={() => setConfirmDelete(true)}
+            <button
+              type="button"
+              className={styles.titleEditIcon}
+              onClick={() => labelInputRef.current?.focus()}
+              aria-label="Editar nome"
+              title="Clique pra editar"
+              tabIndex={-1}
             >
-              <IconTrash size={14} />
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            leadingIcon={<IconSend size={14} />}
-            onClick={sendTest}
-            loading={testing}
-            disabled={saving}
-          >
-            Enviar teste
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            leadingIcon={<IconCheckCircle size={14} />}
-            onClick={save}
-            loading={saving}
-            disabled={testing || !subject.trim()}
-          >
-            Salvar
-          </Button>
+              <IconEdit size={14} />
+            </button>
+          </div>
+          <div className={styles.titleMeta}>
+            <code className={styles.kindBadge}>{template.kind}</code>
+            {template.isEdited && isActive && (
+              <Badge tone="brand" size="sm" dot>Editado · ativo</Badge>
+            )}
+            {template.isEdited && !isActive && (
+              <Badge tone="neutral" size="sm">Editado · desativado</Badge>
+            )}
+            {!template.isEdited && (
+              <Badge tone="neutral" size="sm">Default</Badge>
+            )}
+            {!isKnown && (
+              <Badge tone="warning" size="sm">Custom</Badge>
+            )}
+          </div>
         </div>
       </header>
 

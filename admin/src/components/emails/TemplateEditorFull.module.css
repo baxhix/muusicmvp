@@ -3,90 +3,86 @@
 .root {
   display: flex;
   flex-direction: column;
-  /* Altura = viewport menos o TopBar do shell (--topbar-h é
-   * definido em globals.css = 56px). Antes usávamos uma var
-   * inexistente que caía pra 0, fazendo o editor estourar o
-   * viewport e criar scroll na página. */
+  /* Altura = viewport menos o TopBar do shell (--topbar-h definido
+   * em globals.css = 56px). */
   height: calc(100vh - var(--topbar-h, 56px));
   background: var(--bg);
   overflow: hidden;
 }
 
-/* ── Topbar ──────────────────────────────────────────────────── */
+/* ── Topbar (2 linhas) ──────────────────────────────────────── */
 
 .topbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 20px;
+  flex-direction: column;
+  gap: 14px;
+  padding: 12px 24px 16px;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
   z-index: 5;
-  min-height: 64px;
 }
 
-.topbarLeft {
+/* Linha 1: breadcrumb (esquerda) + ações (direita). */
+.topbarRow1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 32px;
+}
+
+/* Linha 2: título editável + meta. */
+.topbarRow2 {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ── Breadcrumb ──────────────────────────────────────────────── */
+
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-faint);
   min-width: 0;
 }
 
-.backBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px 6px 6px;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+.bcLink {
   color: var(--text-faint);
-  cursor: pointer;
+  text-decoration: none;
+  padding: 4px 6px;
+  border-radius: 6px;
   transition: all 120ms ease;
+  white-space: nowrap;
 }
-.backBtn:hover {
+.bcLink:hover {
   background: var(--bg-soft);
   color: var(--text-body);
 }
 
-.titleBlock {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.bcSep {
+  color: var(--text-faint);
+  opacity: 0.5;
+  user-select: none;
 }
 
-.title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+.bcCurrent {
   color: var(--text-body);
-  line-height: 1.2;
+  font-weight: 500;
+  padding: 4px 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 320px;
 }
 
-.titleMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
+/* ── Ações ───────────────────────────────────────────────────── */
 
-.kindBadge {
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 11px;
-  background: var(--bg-soft);
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: var(--text-faint);
-}
-
-.topbarRight {
+.topbarActions {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -102,8 +98,97 @@
   cursor: pointer;
   padding: 6px 10px;
   border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  transition: all 120ms ease;
 }
-.activeToggle:hover { background: var(--bg-soft); }
+.activeToggle:hover {
+  background: var(--bg-soft);
+}
+
+/* ── Título editável (h1 + ícone edit) ──────────────────────── */
+
+.titleWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.titleInput {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-body);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-left: -10px;
+  width: 100%;
+  max-width: 600px;
+  line-height: 1.2;
+  transition: all 120ms ease;
+  cursor: text;
+}
+.titleInput::placeholder {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+.titleInput:hover {
+  border-color: var(--border-subtle);
+  background: var(--bg-soft);
+}
+.titleInput:focus {
+  outline: none;
+  border-color: var(--brand-fg, #6366f1);
+  background: var(--card-bg);
+  box-shadow: 0 0 0 3px var(--brand-soft, rgba(99, 102, 241, 0.12));
+}
+
+.titleEditIcon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.titleWrap:hover .titleEditIcon,
+.titleInput:focus + .titleEditIcon {
+  opacity: 1;
+}
+.titleEditIcon:hover {
+  background: var(--bg-soft);
+  color: var(--text-body);
+}
+
+.titleMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.kindBadge {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  background: var(--bg-soft);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--text-faint);
+  border: 1px solid var(--border-subtle);
+}
 
 /* ── Mobile tabs (hidden on desktop) ─────────────────────────── */
 
@@ -114,20 +199,19 @@
   background: var(--card-bg);
 }
 
-/* ── Body: sidebar + canvas ──────────────────────────────────── */
+/* ── Body: sidebar (60%) + canvas (40%) ──────────────────────── */
 
 .body {
   display: grid;
-  /* Sidebar mais larga (440 → controles do tema/blocos respiram
-   * sem espremer color pickers + inputs). Canvas pega o resto e
-   * o DevicePreview lá dentro já constrange o device ao tamanho
-   * adequado (640 desktop / 390 mobile). */
-  grid-template-columns: 440px 1fr;
+  /* 60% editor / 40% preview no desktop. Preview clamped a 380px
+   * mínimo pra device frame caber + 720px máximo pra não engordar
+   * demais em telas grandes. */
+  grid-template-columns: 1fr minmax(380px, 40%);
   flex: 1;
   min-height: 0;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────── */
+/* ── Sidebar (form, agora coluna principal) ─────────────────── */
 
 .sidebar {
   border-right: 1px solid var(--border-subtle);
@@ -137,10 +221,11 @@
 }
 
 .sidebarInner {
-  padding: 20px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
+  max-width: 720px;
 }
 
 .section {
@@ -166,7 +251,7 @@
   gap: 6px;
   background: var(--bg-soft);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 12px 14px;
 }
 .varsList li {
   display: flex;
@@ -225,7 +310,7 @@
 /* ── Canvas (preview) ────────────────────────────────────────── */
 
 .canvas {
-  padding: 24px;
+  padding: 20px;
   overflow: auto;
   min-height: 0;
   background: var(--bg);
@@ -233,15 +318,18 @@
 
 /* ── Responsive ──────────────────────────────────────────────── */
 
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .body {
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: 1fr minmax(360px, 40%);
   }
 }
 
 @media (max-width: 1024px) {
   .body {
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 1fr minmax(340px, 42%);
+  }
+  .sidebarInner {
+    padding: 18px 22px;
   }
 }
 
@@ -253,12 +341,22 @@
   }
 
   .topbar {
-    flex-wrap: wrap;
-    align-items: flex-start;
+    padding: 10px 16px 14px;
   }
 
-  .topbarRight {
+  .topbarRow1 {
     flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbarActions {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .titleInput {
+    font-size: 18px;
   }
 
   .mobileTabs {
@@ -273,6 +371,10 @@
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
     max-height: none;
+  }
+
+  .sidebarInner {
+    padding: 16px 18px;
   }
 
   .hiddenMobile {

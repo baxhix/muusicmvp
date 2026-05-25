@@ -47,6 +47,9 @@ export async function listTemplates(): Promise<EmailTemplate[]> {
 
 export interface UpsertTemplateInput {
   kind: string;
+  /** Nome amigável (editável pelo admin). Quando null, GET usa
+   *  fallback do KNOWN_TEMPLATES.label. */
+  label?: string | null;
   subject: string;
   html: string;
   isActive: boolean;
@@ -66,6 +69,7 @@ export async function upsertTemplate(
     .insert(emailTemplates)
     .values({
       kind: input.kind,
+      label: input.label ?? null,
       subject: input.subject,
       html: input.html,
       design: (input.design ?? null) as unknown as Record<string, unknown> | null,
@@ -76,6 +80,7 @@ export async function upsertTemplate(
     .onConflictDoUpdate({
       target: emailTemplates.kind,
       set: {
+        label: input.label ?? null,
         subject: input.subject,
         html: input.html,
         design: (input.design ?? null) as unknown as Record<string, unknown> | null,

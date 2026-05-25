@@ -67,6 +67,9 @@ export interface EmailCampaign {
 
 export interface UpsertTemplateInput {
   kind: string;
+  /** Nome amigável editável. Quando vazio/ausente, o server cai
+   *  pro label do KNOWN_TEMPLATES (catálogo em código). */
+  label?: string;
   subject: string;
   /** Quando `design` setado, o server REGENERA o html e ignora
    *  este campo. Mandar string vazia é OK no modo visual. */

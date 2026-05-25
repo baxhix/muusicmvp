@@ -899,6 +899,10 @@ export const emailTemplates = pgTable('email_templates', {
   // `kind` é a primary-key natural (slug estável usado em código).
   // Ex.: 'magic_link', 'welcome', 'account_deleted'.
   kind: text('kind').primaryKey(),
+  /** Nome amigável editável pelo admin. Quando null, GET cai
+   *  pro `label` definido no KNOWN_TEMPLATES (ou pro próprio
+   *  kind, se for template custom sem catálogo). */
+  label: text('label'),
   subject: text('subject').notNull(),
   html: text('html').notNull(),
   /** Estrutura do editor visual (tema + blocos). Quando setado,

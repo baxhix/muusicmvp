@@ -28,7 +28,9 @@ export async function GET() {
     const db = persistedByKind.get(known.kind);
     return {
       kind: known.kind,
-      label: known.label,
+      // Label do DB tem prioridade (admin renomeou pelo editor);
+      // fallback pro KNOWN_TEMPLATES.label hardcoded.
+      label: db?.label ?? known.label,
       description: known.description,
       variables: known.variables,
       defaultSubject: known.defaultSubject,
@@ -49,7 +51,8 @@ export async function GET() {
     .filter((p) => !KNOWN_TEMPLATES.some((k) => k.kind === p.kind))
     .map((p) => ({
       kind: p.kind,
-      label: p.kind,
+      // Custom: label do DB se existir, senão usa o próprio kind.
+      label: p.label ?? p.kind,
       description: p.description ?? '(sem descrição)',
       variables: [],
       defaultSubject: p.subject,
@@ -131,6 +134,9 @@ const designSchema = z.object({
 
 const upsertSchema = z.object({
   kind: z.string().min(1).max(80).regex(/^[a-z0-9_]+$/),
+  /** Nome amigável editável pelo admin. Quando ausente/vazio,
+   *  GET usa fallback do KNOWN_TEMPLATES.label. */
+  label: z.string().min(1).max(120).optional(),
   subject: z.string().min(1).max(200),
   /** Quando `design` vem setado, o html é REGENERADO pelo
    *  generator (server-side), ignorando o html submetido — evita
@@ -162,6 +168,7 @@ export async function POST(req: Request) {
 
     const saved = await upsertTemplate({
       kind: data.kind,
+      label: data.label,
       subject: data.subject,
       html,
       design,
