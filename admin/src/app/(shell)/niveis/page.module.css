@@ -142,31 +142,3 @@
   color: var(--tier-color, var(--brand-fg, #6366f1));
 }
 
-/* ── Help card ─────────────────────────────────────────────── */
-
-.helpCard {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.helpHead {
-  display: inline-flex;
-}
-
-.helpList {
-  margin: 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text);
-  line-height: 1.55;
-}
-
-.helpList li strong {
-  font-weight: 600;
-  margin-right: 2px;
-}

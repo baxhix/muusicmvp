@@ -2,9 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/ui/PageHeader';
-import { Card } from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
-import Badge from '@/components/ui/Badge';
 import {
   IconStar,
   IconUsers,
@@ -128,28 +126,6 @@ export default function NiveisHubPage() {
           })}
         </div>
 
-        <Card className={styles.helpCard}>
-          <div className={styles.helpHead}>
-            <Badge tone="info" size="sm">Como funciona</Badge>
-          </div>
-          <ol className={styles.helpList}>
-            <li>
-              <strong>Ranking automático.</strong> O sistema ordena os
-              superfãs por total de fanpoints. A posição no ranking define
-              o tier — o admin não atribui manualmente.
-            </li>
-            <li>
-              <strong>Benefícios configuráveis.</strong> Cada tier tem uma
-              lista de benefícios que você edita aqui. Liga, desliga,
-              cria, remove livre.
-            </li>
-            <li>
-              <strong>Hierarquia inclusiva.</strong> Quem está no Top 1
-              também recebe os benefícios do Top 10, Top 50 e Top 100 —
-              o tier superior é cumulativo.
-            </li>
-          </ol>
-        </Card>
       </div>
     </>
   );

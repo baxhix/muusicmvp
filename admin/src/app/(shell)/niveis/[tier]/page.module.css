@@ -112,12 +112,10 @@
   padding: 14px 16px;
   background: var(--surface-2);
   border-radius: 10px;
-  border-left: 3px solid var(--tier-color, var(--brand-fg));
   transition: opacity 120ms ease;
 }
 .benefitCard[data-disabled="true"] {
   opacity: 0.55;
-  border-left-color: var(--text-faint);
 }
 
 .benefitMain {
