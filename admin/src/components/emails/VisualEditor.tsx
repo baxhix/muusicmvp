@@ -148,6 +148,27 @@ function HeaderSection({ header, onChange }: HeaderSectionProps) {
       {header.enabled && (
         <>
           <Input
+            label="Logo (URL) — opcional"
+            value={header.logoUrl ?? ''}
+            onChange={(e) => onChange({ ...header, logoUrl: e.target.value })}
+            placeholder="https://muusic.live/logo.png"
+            helperText="Sobrescreve o logo global da marca. Deixe vazio pra usar o padrão configurado em Marca."
+          />
+          {header.logoUrl && (
+            <Input
+              label="Altura do logo (px)"
+              type="number"
+              value={String(header.logoHeight ?? 40)}
+              onChange={(e) =>
+                onChange({
+                  ...header,
+                  logoHeight: Number(e.target.value) || 40,
+                })
+              }
+              helperText="Default 40px. Largura é automática (proporcional)."
+            />
+          )}
+          <Input
             label="Título"
             value={header.title}
             onChange={(e) => onChange({ ...header, title: e.target.value })}

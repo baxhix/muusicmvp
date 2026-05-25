@@ -3,10 +3,13 @@
 .root {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--admin-topbar-h, 0px));
-  /* Sai do padding default da page wrap pra ocupar tudo. */
-  margin: -24px;
+  /* Altura = viewport menos o TopBar do shell (--topbar-h é
+   * definido em globals.css = 56px). Antes usávamos uma var
+   * inexistente que caía pra 0, fazendo o editor estourar o
+   * viewport e criar scroll na página. */
+  height: calc(100vh - var(--topbar-h, 56px));
   background: var(--bg);
+  overflow: hidden;
 }
 
 /* ── Topbar ──────────────────────────────────────────────────── */
@@ -115,7 +118,11 @@
 
 .body {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  /* Sidebar mais larga (440 → controles do tema/blocos respiram
+   * sem espremer color pickers + inputs). Canvas pega o resto e
+   * o DevicePreview lá dentro já constrange o device ao tamanho
+   * adequado (640 desktop / 390 mobile). */
+  grid-template-columns: 440px 1fr;
   flex: 1;
   min-height: 0;
 }
@@ -226,16 +233,23 @@
 
 /* ── Responsive ──────────────────────────────────────────────── */
 
+@media (max-width: 1200px) {
+  .body {
+    grid-template-columns: 400px 1fr;
+  }
+}
+
 @media (max-width: 1024px) {
   .body {
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 360px 1fr;
   }
 }
 
 @media (max-width: 860px) {
   .root {
     height: auto;
-    min-height: calc(100vh - var(--admin-topbar-h, 0px));
+    min-height: calc(100vh - var(--topbar-h, 56px));
+    overflow: visible;
   }
 
   .topbar {
@@ -258,6 +272,7 @@
   .sidebar {
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
+    max-height: none;
   }
 
   .hiddenMobile {

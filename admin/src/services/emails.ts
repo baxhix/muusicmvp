@@ -5,7 +5,7 @@
  */
 
 import { api } from './api';
-import type { EmailDesign } from './emailDesign';
+import type { EmailDesign, BrandSettings } from './emailDesign';
 
 export interface EmailTemplate {
   kind: string;
@@ -134,6 +134,18 @@ export const emailsService = {
   metrics: {
     get: (days = 30) =>
       api.get<EmailMetrics>(`/api/admin/emails/metrics?days=${days}`),
+  },
+
+  /** Brand settings — config global aplicada a TODOS os emails:
+   *  logo no header + footer institucional (links + redes sociais).
+   *  Singleton: 1 row no DB. */
+  brand: {
+    get: () => api.get<{ settings: BrandSettings }>('/api/admin/emails/brand'),
+    upsert: (settings: BrandSettings) =>
+      api.post<{ ok: boolean; settings: BrandSettings }>(
+        '/api/admin/emails/brand',
+        settings,
+      ),
   },
 
   campaigns: {

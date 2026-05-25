@@ -1,5 +1,7 @@
 import { sendEmail } from './resend';
 import { getTemplate, interpolate, getKnownTemplate } from './templates';
+import { getBrandSettings } from './brand';
+import { designToHtml } from './design';
 import { env } from '../env';
 
 /**
@@ -40,28 +42,51 @@ export async function sendMagicLink(
   // letter-spacing CSS no template (`letter-spacing: 0.2em`).
   const vars = { magicUrl, code };
 
+  // Busca brand settings em paralelo com o template — ambos vão
+  // pro renderer juntos. Cached 60s no módulo brand.ts.
+  const [dbTemplate, brand] = await Promise.all([
+    getTemplate('magic_link'),
+    getBrandSettings(),
+  ]);
+
   // 1ª tentativa: template editável no DB.
-  const dbTemplate = await getTemplate('magic_link');
   if (dbTemplate) {
+    // Se o template tem design salvo, regenera HTML COM brand
+    // pra incluir logo + brand footer. Senão, usa o html cru
+    // do DB + sufixa o brand footer manualmente.
+    let html: string;
+    if (dbTemplate.design) {
+      html = designToHtml(
+        dbTemplate.design as unknown as Parameters<typeof designToHtml>[0],
+        brand,
+      );
+    } else {
+      html = dbTemplate.html;
+    }
     await sendEmail({
       to,
       subject: interpolate(dbTemplate.subject, vars),
-      html: interpolate(dbTemplate.html, vars),
+      html: interpolate(html, vars),
       kind: 'magic_link',
     });
     return;
   }
 
-  // 2ª: fallback hardcoded vindo de KNOWN_TEMPLATES.
+  // 2ª: fallback hardcoded vindo de KNOWN_TEMPLATES. Aqui também
+  // tenta gerar via defaultDesign pra aplicar brand; se não houver,
+  // usa o HTML hardcoded raso sem brand footer (cenário improvável
+  // — todos os KNOWN_TEMPLATES têm defaultDesign).
   const known = getKnownTemplate('magic_link');
   if (!known) {
-    // Sanity check — KNOWN_TEMPLATES sempre tem 'magic_link'.
     throw new Error('magic_link template not registered in KNOWN_TEMPLATES');
   }
+  const fallbackHtml = known.defaultDesign
+    ? designToHtml(known.defaultDesign, brand)
+    : known.defaultHtml;
   await sendEmail({
     to,
     subject: interpolate(known.defaultSubject, vars),
-    html: interpolate(known.defaultHtml, vars),
+    html: interpolate(fallbackHtml, vars),
     kind: 'magic_link',
   });
 }

@@ -987,3 +987,24 @@ export type EmailLog = typeof emailLogs.$inferSelect;
 export type NewEmailLog = typeof emailLogs.$inferInsert;
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type NewEmailCampaign = typeof emailCampaigns.$inferInsert;
+
+/**
+ * Configurações globais de marca aplicadas a todos os emails:
+ *   - logo URL (renderiza no header)
+ *   - cores de marca (override do tema base)
+ *   - footer com links institucionais + redes sociais
+ *
+ * Singleton: id=1 (CHECK no DB). Row pré-existe via seed.
+ */
+export const emailBrandSettings = pgTable('email_brand_settings', {
+  id: integer('id').primaryKey().default(1),
+  settings: jsonb('settings').notNull().default({}),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
+
+export type EmailBrandSettingsRow = typeof emailBrandSettings.$inferSelect;

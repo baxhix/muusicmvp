@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,6 +17,7 @@ import {
 import { emailsService, type EmailTemplate } from '@/services/emails';
 import {
   type EmailDesign,
+  type BrandSettings,
   designToHtml,
   interpolatePreview,
 } from '@/services/emailDesign';
@@ -66,13 +67,31 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
   /* Mobile: alterna Editor ↔ Preview por tab. */
   const [view, setView] = useState<ViewMode>('editor');
 
-  /* Preview HTML — gerado a partir do design (modo visual) ou
-   * direto do textarea (modo HTML). Vars fictícias substituídas
-   * pra renderizar exatamente como o destinatário verá. */
+  /* Brand settings — carregados uma vez e passados pro generator
+   * pra incluir logo do header + brand footer no preview. */
+  const [brand, setBrand] = useState<BrandSettings | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    emailsService.brand
+      .get()
+      .then((res) => {
+        if (!cancel) setBrand(res.settings ?? null);
+      })
+      .catch(() => {
+        if (!cancel) setBrand(null);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  /* Preview HTML — gerado a partir do design (modo visual) +
+   * brand settings (logo + footer institucional). Modo HTML usa
+   * direto o textarea sem brand (admin assume controle total). */
   const previewHtml = useMemo(() => {
-    const raw = mode === 'visual' ? designToHtml(design) : html;
+    const raw = mode === 'visual' ? designToHtml(design, brand) : html;
     return interpolatePreview(raw, template.variables);
-  }, [mode, design, html, template.variables]);
+  }, [mode, design, html, template.variables, brand]);
 
   /* Templates conhecidos (no catálogo de código) só podem ter o
    * row DB deletado pra "voltar pro default". Templates custom
@@ -120,7 +139,8 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
   async function sendTest() {
     setTesting(true);
     try {
-      const rawHtml = mode === 'visual' ? designToHtml(design) : html;
+      const rawHtml =
+        mode === 'visual' ? designToHtml(design, brand) : html;
       const res = await emailsService.templates.test({
         kind: template.kind,
         subject,
@@ -168,7 +188,7 @@ export default function TemplateEditorFull({ template }: TemplateEditorFullProps
 
   function switchMode(next: EditorMode) {
     if (mode === 'visual' && next === 'html') {
-      setHtml(designToHtml(design));
+      setHtml(designToHtml(design, brand));
     }
     setMode(next);
   }

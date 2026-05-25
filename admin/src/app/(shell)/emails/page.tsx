@@ -7,6 +7,7 @@ import Tabs from '@/components/ui/Tabs';
 import MetricsTab from '@/components/emails/MetricsTab';
 import LogsTab from '@/components/emails/LogsTab';
 import TemplatesTab from '@/components/emails/TemplatesTab';
+import BrandTab from '@/components/emails/BrandTab';
 import CampaignsTab from '@/components/emails/CampaignsTab';
 import styles from './page.module.css';
 
@@ -25,12 +26,18 @@ import styles from './page.module.css';
  * deep-link da sidebar pra qualquer aba.
  */
 
-type EmailsTab = 'metricas' | 'historico' | 'templates' | 'campanhas';
+type EmailsTab =
+  | 'metricas'
+  | 'historico'
+  | 'templates'
+  | 'marca'
+  | 'campanhas';
 
 const TABS: { id: EmailsTab; label: string }[] = [
   { id: 'metricas',   label: 'Métricas' },
   { id: 'historico',  label: 'Histórico' },
   { id: 'templates',  label: 'Templates' },
+  { id: 'marca',      label: 'Marca' },
   { id: 'campanhas',  label: 'Campanhas' },
 ];
 
@@ -69,6 +76,7 @@ function EmailsPageInner() {
         {tab === 'metricas'  && <MetricsTab />}
         {tab === 'historico' && <LogsTab />}
         {tab === 'templates' && <TemplatesTab />}
+        {tab === 'marca'     && <BrandTab />}
         {tab === 'campanhas' && <CampaignsTab />}
       </div>
     </>

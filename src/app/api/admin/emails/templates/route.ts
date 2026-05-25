@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import { listTemplates, upsertTemplate, KNOWN_TEMPLATES } from '@/server/email/templates';
 import { designToHtml, type EmailDesign } from '@/server/email/design';
+import { getBrandSettings } from '@/server/email/brand';
 import { handleApiError, ValidationError } from '@/server/api/errors';
 
 export const runtime = 'nodejs';
@@ -153,8 +154,10 @@ export async function POST(req: Request) {
     const design = (data.design ?? null) as EmailDesign | null;
 
     // Se design veio, regenera HTML deterministicamente —
-    // ignora qualquer html que o client tenha mandado.
-    const html = design ? designToHtml(design) : data.html;
+    // ignora qualquer html que o client tenha mandado. Inclui
+    // brand settings pro logo no header + brand footer.
+    const brand = design ? await getBrandSettings() : null;
+    const html = design ? designToHtml(design, brand) : data.html;
     if (!html) throw new ValidationError('html_empty');
 
     const saved = await upsertTemplate({

@@ -57,7 +57,7 @@ export default function DevicePreview({
           </button>
         </div>
         <div className={styles.hint}>
-          {mode === 'mobile' ? '390 × 720' : '720 × 600'} · preview ao vivo
+          {mode === 'mobile' ? '360 × 640' : '560 × 540'} · preview ao vivo
         </div>
       </div>
 

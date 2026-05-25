@@ -19,6 +19,9 @@ import { requireAdmin } from '@/server/auth/requireAdmin';
 import { sendEmail } from '@/server/email/resend';
 import { interpolate } from '@/server/email/templates';
 import { handleApiError, ValidationError } from '@/server/api/errors';
+/* Brand é resolvido dentro do magicLink/route principal; aqui o
+ * caller já passou o html FINAL gerado client-side (vindo do
+ * editor visual após designToHtml). */
 
 export const runtime = 'nodejs';
 
