@@ -135,8 +135,10 @@ export interface KnownTemplate {
   defaultDesign: EmailDesign;
 }
 
-/* Boas-vindas — disparado UMA VEZ quando o usuário completa o
- * onboarding (POST /api/auth/onboarding). */
+/* Boas-vindas — disparado UMA VEZ no momento da criação de conta
+ * (POST /api/auth/request quando o usuário é INSERT). Carrega o
+ * próprio magic link + código OTP do primeiro acesso, então o
+ * usuário recebe UM email único de cadastro+acesso. */
 function welcomeDefaultDesign(): EmailDesign {
   return {
     version: 1,
@@ -165,13 +167,23 @@ function welcomeDefaultDesign(): EmailDesign {
       },
       {
         id: 'welcome-2',
-        kind: 'button',
-        text: 'Abrir o app',
-        href: '{{appUrl}}',
-        align: 'center',
+        kind: 'paragraph',
+        text: 'Clique no botão abaixo pra entrar pela primeira vez. O link expira em 15 minutos e só pode ser usado uma vez.',
       },
       {
         id: 'welcome-3',
+        kind: 'button',
+        text: 'Entrar no Fanverse',
+        href: '{{magicUrl}}',
+        align: 'center',
+      },
+      {
+        id: 'welcome-4',
+        kind: 'paragraph',
+        text: 'Ou digite o código no app: {{code}}',
+      },
+      {
+        id: 'welcome-5',
         kind: 'paragraph',
         text: 'Qualquer dúvida, é só responder este email.',
       },
@@ -188,18 +200,25 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
     kind: 'boas_vindas',
     label: 'Boas-vindas',
     description:
-      'Disparado uma única vez quando o usuário completa o onboarding ' +
-      '(birth-date, nome, etc). Idempotente: se já foi enviado, não ' +
-      'reenviam mesmo em re-trigger do fluxo.',
+      'Disparado uma única vez no momento da criação de conta — quando ' +
+      'o endpoint /api/auth/request faz o INSERT do usuário. Carrega o ' +
+      'próprio magic link + código OTP do primeiro acesso, então o ' +
+      'usuário recebe UM único email de cadastro+acesso. Idempotente ' +
+      'via claim atômico em welcomeEmailSentAt.',
     variables: [
       { name: 'userName', description: 'Nome do usuário (display name)' },
-      { name: 'appUrl', description: 'URL do app pra abrir a home' },
+      { name: 'magicUrl', description: 'URL completa pro botão "Entrar"' },
+      { name: 'code', description: 'Código OTP de 6 dígitos (sem espaços)' },
     ],
     defaultSubject: 'Bem-vindo ao Fanverse, {{userName}}!',
     defaultHtml: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
   <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Bem-vindo ao Fanverse, {{userName}}!</h1>
-  <p style="font-size:15px;line-height:1.55;color:#333;">É um prazer ter você por aqui.</p>
-  <p style="margin:28px 0;"><a href="{{appUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Abrir o app</a></p>
+  <p style="font-size:15px;line-height:1.55;color:#333;">É um prazer ter você por aqui. Clique no botão abaixo pra entrar pela primeira vez — o link expira em 15 minutos.</p>
+  <p style="margin:28px 0;"><a href="{{magicUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Entrar no Fanverse</a></p>
+  <div style="margin:32px 0;padding:20px;background:#f6f6f7;border-radius:12px;text-align:center;">
+    <p style="font-size:13px;color:#666;margin:0 0 8px;">Ou digite este código no app:</p>
+    <p style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:28px;font-weight:700;letter-spacing:0.2em;color:#111;margin:0;">{{code}}</p>
+  </div>
 </div>`,
     defaultDesign: welcomeDefaultDesign(),
   },

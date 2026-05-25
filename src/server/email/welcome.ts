@@ -25,13 +25,26 @@ import { logger } from '../log';
 export interface SendWelcomeEmailInput {
   to: string;
   userName: string;
+  /** Magic link completo do primeiro acesso. O boas_vindas é o
+   *  ÚNICO email que o user recebe ao criar conta — então precisa
+   *  carregar o link de verify dele mesmo. */
+  magicUrl: string;
+  /** OTP de 6 dígitos como fallback ao link (mesmo token, mesma
+   *  expiração). Sem espaços. */
+  code: string;
 }
 
 export async function sendWelcomeEmail(
   input: SendWelcomeEmailInput,
 ): Promise<void> {
+  /* `appUrl` mantido pra retro-compat — admins que já tinham
+   * template salvo no DB pré-mudança podem ainda referenciar
+   * {{appUrl}} no copy customizado. Para novos templates, use
+   * {{magicUrl}}. */
   const vars = {
     userName: input.userName,
+    magicUrl: input.magicUrl,
+    code: input.code,
     appUrl: `${env.APP_URL}/app`,
   };
 

@@ -5,6 +5,19 @@ import { designToHtml } from './design';
 import { env } from '../env';
 
 /**
+ * Constrói a URL completa de verify a partir do token raw (não
+ * hasheado, o mesmo que vai no email). `returnTo` é opcional —
+ * quando presente, o verify redireciona pro subdomínio de origem
+ * após criar a sessão. Exportado pra ser reusado em outros
+ * disparos (ex: boas_vindas, que carrega o próprio magic link).
+ */
+export function buildMagicUrl(token: string, returnTo?: string): string {
+  const params = new URLSearchParams({ token });
+  if (returnTo) params.set('returnTo', returnTo);
+  return `${env.APP_URL}/api/auth/verify?${params.toString()}`;
+}
+
+/**
  * Send a magic-link email with BOTH the clickable link AND a
  * 6-digit OTP fallback code. Usuário pode:
  *   - clicar no botão "Entrar" → /api/auth/verify?token=...
@@ -31,9 +44,7 @@ export async function sendMagicLink(
   code: string,
   returnTo?: string,
 ): Promise<void> {
-  const params = new URLSearchParams({ token });
-  if (returnTo) params.set('returnTo', returnTo);
-  const magicUrl = `${env.APP_URL}/api/auth/verify?${params.toString()}`;
+  const magicUrl = buildMagicUrl(token, returnTo);
 
   // Code SEM espaço — per product feedback "ao copiar e colar
   // sempre fica faltando um número". O espaço entre os 3+3

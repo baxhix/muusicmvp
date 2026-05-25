@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/server/db';
 import { users, tokens } from '@/server/db/schema';
 import { generateToken, generateCode, MAGIC_TTL_MS } from '@/server/auth/tokens';
-import { sendMagicLink } from '@/server/email/magicLink';
+import { sendMagicLink, buildMagicUrl } from '@/server/email/magicLink';
 import { sendWelcomeEmail } from '@/server/email/welcome';
 import { env } from '@/server/env';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -149,34 +149,26 @@ export async function POST(req: Request) {
   const effectiveReturnTo =
     returnTo ?? `${env.APP_URL.replace(/\/+$/, '')}/app?welcome=1`;
 
-  try {
-    await sendMagicLink(email, raw, code, effectiveReturnTo);
-  } catch (err) {
-    logger.error('auth.request.email-send', err, { email });
-    return NextResponse.json({ error: 'email_failed' }, { status: 502 });
-  }
-
-  /* Boas-vindas no momento da criação de conta. Só faz sentido
-   * disparar pra usuários novos — quem já existia (relogin) NÃO
-   * recebe de novo. O `isNewUser` flag indica se a transação
-   * acima fez INSERT.
+  /* Switch de email baseado em "conta nova vs. relogin":
+   *   - isNewUser=true  → template `boas_vindas` (cadastrado em
+   *     /admin/emails/templates/boas_vindas/edit). Esse template
+   *     carrega o magic link + código OTP do primeiro acesso, então
+   *     o user recebe UM ÚNICO email com cadastro + acesso.
+   *   - isNewUser=false → template `magic_link` (acesso recorrente).
    *
-   * Mesmo assim, fazemos um claim atômico (UPDATE WHERE
-   * welcomeEmailSentAt IS NULL ... RETURNING) antes de chamar
-   * `sendWelcomeEmail` pra:
-   *   1. Garantir idempotência em corridas concorrentes — dois
-   *      POSTs simultâneos pra um email novo só fazem um INSERT
-   *      (pelo unique constraint), mas ambos veriam isNewUser
-   *      true só pra um deles; o claim cobre o caso edge.
-   *   2. Honrar o legacy: se essa rota for re-deployada e algum
-   *      user já tem `welcomeEmailSentAt` setado por uma versão
-   *      anterior (que disparava no onboarding), não duplica.
+   * Observação de privacidade: o response da rota continua igual
+   * pros dois casos ("ok: true"), pra não revelar via timing/payload
+   * se o email já existia. A diferenciação só aparece no inbox do
+   * dono real do email — quem tem acesso, sabe se foi cadastrado
+   * agora ou já tinha conta. Trade-off explícito de UX vs. anti-
+   * enumeration.
    *
-   * Fire-and-forget — o response da /auth/request NÃO espera o
-   * boas-vindas. Resend pode demorar 1-3s. Falha aqui é só log.
-   * O template lido é o `boas_vindas` cadastrado no admin
-   * (`/emails/templates/boas_vindas/edit`) com fallback pro
-   * catálogo. */
+   * Pra criação de conta, fazemos um claim atômico em
+   * welcomeEmailSentAt antes do envio. Isso protege contra:
+   *   1. Race condition: dois POSTs simultâneos pro mesmo email
+   *      novo — só um vence o claim.
+   *   2. Legacy/rollback: se essa rota for redeployada após uma
+   *      versão antiga que disparava no onboarding, não duplica. */
   if (isNewUser) {
     const claimed = await db
       .update(users)
@@ -186,16 +178,42 @@ export async function POST(req: Request) {
       )
       .returning({ id: users.id, email: users.email, name: users.name });
 
-    if (claimed.length > 0) {
+    const claimWon = claimed.length > 0;
+    /* Quando o claim NÃO foi nosso (legacy: welcomeEmailSentAt já
+     * setado por versão antiga, ou race com outro POST), caímos no
+     * magic_link normal — o usuário ainda precisa de um link de
+     * acesso, só que não vamos remandar boas-vindas. */
+    if (!claimWon) {
+      try {
+        await sendMagicLink(email, raw, code, effectiveReturnTo);
+      } catch (err) {
+        logger.error('auth.request.email-send', err, { email });
+        return NextResponse.json({ error: 'email_failed' }, { status: 502 });
+      }
+    } else {
       const row = claimed[0];
       const displayName = row.name ?? defaultName;
-      void sendWelcomeEmail({ to: row.email, userName: displayName }).catch(
-        (err: unknown) => {
-          logger.error('auth.request.welcome-send-failed', err, {
-            userId: row.id,
-          });
-        },
-      );
+      const magicUrl = buildMagicUrl(raw, effectiveReturnTo);
+      try {
+        await sendWelcomeEmail({
+          to: row.email,
+          userName: displayName,
+          magicUrl,
+          code,
+        });
+      } catch (err) {
+        logger.error('auth.request.welcome-send-failed', err, {
+          userId: row.id,
+        });
+        return NextResponse.json({ error: 'email_failed' }, { status: 502 });
+      }
+    }
+  } else {
+    try {
+      await sendMagicLink(email, raw, code, effectiveReturnTo);
+    } catch (err) {
+      logger.error('auth.request.email-send', err, { email });
+      return NextResponse.json({ error: 'email_failed' }, { status: 502 });
     }
   }
 
