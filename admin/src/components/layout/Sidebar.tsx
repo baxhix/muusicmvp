@@ -129,11 +129,12 @@ const NAV: NavEntry[] = [
     label: 'Plataforma',
     icon: IconGrid,
     children: [
-      { kind: 'leaf', href: '/moderation', label: 'Moderação', badge: 12 },
-      { kind: 'leaf', href: '/tracks',     label: 'Músicas' },
-      { kind: 'leaf', href: '/emails',     label: 'E-mails' },
-      { kind: 'leaf', href: '/live',       label: 'Lives' },
-      { kind: 'leaf', href: '/pre-save',   label: 'Presave' },
+      { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
+      { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
+      { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
+      { kind: 'leaf', href: '/emails',        label: 'E-mails' },
+      { kind: 'leaf', href: '/live',          label: 'Lives' },
+      { kind: 'leaf', href: '/pre-save',      label: 'Presave' },
     ],
   },
 

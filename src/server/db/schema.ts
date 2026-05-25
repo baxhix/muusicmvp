@@ -1018,3 +1018,25 @@ export const emailBrandSettings = pgTable('email_brand_settings', {
 });
 
 export type EmailBrandSettingsRow = typeof emailBrandSettings.$inferSelect;
+
+/**
+ * Catálogo de notificações disparadas pela plataforma (in-app +
+ * email). O TIPO vive em código (KNOWN_NOTIFICATIONS em
+ * src/server/notifications/catalog.ts); esta tabela só persiste
+ * as escolhas do admin: on/off geral + on/off por canal.
+ *
+ * Tipos sem row no DB caem pros defaults definidos no catálogo.
+ */
+export const notificationSettings = pgTable('notification_settings', {
+  kind: text('kind').primaryKey(),
+  enabled: boolean('enabled').notNull().default(true),
+  channels: jsonb('channels').notNull().default({}),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
+
+export type NotificationSettingsRow = typeof notificationSettings.$inferSelect;
