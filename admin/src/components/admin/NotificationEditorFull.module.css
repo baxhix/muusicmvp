@@ -1,14 +1,23 @@
-/* Estrutura espelha TemplateEditorFull.module.css mas com algumas
- * tokens próprias pra estados (status card, channel cards, etc.). */
+/* Estrutura: container centralizado igual às outras páginas
+ * (max-width var(--content-max) + padding 24 + margin auto),
+ * com scroll natural da página. Antes a tela era full-bleed
+ * (100vh + overflow hidden + 2 áreas de scroll internas) — o
+ * que destoava do resto do admin. O editor visual de templates
+ * (TemplateEditorFull) ainda usa full-bleed propositalmente, esse
+ * aqui não precisa: o conteúdo é mais curto e o preview do
+ * canvas é leve. */
 
 /* ── Root layout ─────────────────────────────────────────────── */
 
 .root {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--topbar-h, 56px));
+  gap: 18px;
+  max-width: var(--content-max);
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
   background: var(--bg);
-  overflow: hidden;
 }
 
 /* ── Topbar (2 linhas) ──────────────────────────────────────── */
@@ -17,11 +26,10 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 12px 24px 16px;
+  padding: 16px 20px;
   background: var(--card-bg);
-  border-bottom: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-  z-index: 5;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
 }
 .topbarRow1 {
   display: flex;
@@ -182,23 +190,26 @@
 
 .body {
   display: grid;
-  grid-template-columns: 1fr minmax(400px, 50%);
-  flex: 1;
-  min-height: 0;
+  grid-template-columns: 1fr minmax(380px, 46%);
+  gap: 18px;
+  /* sem flex:1/min-height — o body flui naturalmente dentro do
+   * container e a página inteira rola como uma só. */
 }
 
 .sidebar {
-  border-right: 1px solid var(--border-subtle);
   background: var(--card-bg);
-  overflow-y: auto;
-  min-height: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  /* Scroll natural da página. Sticky no canvas (à direita) faz
+   * o preview seguir o user enquanto ele rola o formulário —
+   * comportamento clássico de editor lado-a-lado sem precisar
+   * de scroll panel interno. */
 }
 .sidebarInner {
-  padding: 24px 28px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-width: 760px;
 }
 
 .section {
@@ -597,17 +608,17 @@
  * acessíveis enquanto o user rola o conteúdo. Bg `card-bg` + border
  * superior + spacing pra criar separação visual com a última seção. */
 
+/* Footer agora inline — flui no fim do form. O scroll é da página
+ * inteira (não mais painel interno), então sticky não faz sentido:
+ * os botões já aparecem no fim da seção do form e o user chega
+ * neles naturalmente ao rolar. */
 .formFooter {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 24px -28px -24px;
-  padding: 14px 28px;
-  background: var(--card-bg);
+  margin: 8px -24px -22px;
+  padding: 14px 24px 0;
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -618,16 +629,10 @@
   margin-left: auto;
 }
 
-@media (max-width: 1024px) {
-  .formFooter {
-    margin: 18px -22px -18px;
-    padding: 12px 22px;
-  }
-}
 @media (max-width: 860px) {
   .formFooter {
-    margin: 16px -18px -16px;
-    padding: 12px 18px;
+    margin: 8px -20px -18px;
+    padding: 12px 20px 0;
     flex-wrap: wrap;
   }
   .formFooterRight {
@@ -636,15 +641,33 @@
   }
 }
 
-/* ── Canvas (preview) ────────────────────────────────────────── */
+/* ── Canvas (preview) ──────────────────────────────────────────
+ *
+ * Sticky no topo da viewport (com offset abaixo da topbar)
+ * pra que o preview siga o user enquanto ele rola o
+ * formulário à esquerda — feedback contínuo sem precisar de
+ * scroll panel interno. Em telas curtas (max-height: 700) o
+ * sticky desliga porque o preview ocupa tela demais. */
 
 .canvas {
-  padding: 24px;
-  overflow: auto;
-  min-height: 0;
-  background: var(--bg);
+  padding: 22px 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: calc(var(--topbar-h, 56px) + 24px);
+  align-self: start;
+  max-height: calc(100vh - var(--topbar-h, 56px) - 48px);
+  overflow: auto;
+}
+
+@media (max-height: 700px) {
+  .canvas {
+    position: static;
+    max-height: none;
+  }
 }
 
 .previewWrap {
@@ -709,27 +732,26 @@
 
 @media (max-width: 1280px) {
   .body {
-    grid-template-columns: 1fr minmax(380px, 48%);
+    grid-template-columns: 1fr minmax(360px, 48%);
   }
 }
 
 @media (max-width: 1024px) {
   .body {
-    grid-template-columns: 1fr minmax(360px, 46%);
+    grid-template-columns: 1fr minmax(340px, 46%);
   }
   .sidebarInner {
-    padding: 18px 22px;
+    padding: 18px 20px;
   }
 }
 
 @media (max-width: 860px) {
   .root {
-    height: auto;
-    min-height: calc(100vh - var(--topbar-h, 56px));
-    overflow: visible;
+    padding: 16px;
+    gap: 14px;
   }
   .topbar {
-    padding: 10px 16px 14px;
+    padding: 12px 14px;
   }
   .topbarRow1 {
     flex-wrap: wrap;
@@ -765,5 +787,12 @@
   .canvas {
     padding: 16px;
     min-height: 600px;
+    /* No single-column mobile, o canvas vira o item EMBAIXO
+     * do form — sticky aqui criaria um preview "pendurado" no
+     * topo da viewport enquanto o user rola o form, o que é
+     * confuso. Volta pro flow normal. */
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
