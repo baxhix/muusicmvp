@@ -117,6 +117,17 @@
   opacity: 0.55;
 }
 
+/* Wordmark variant — usado quando o sidebar está expandido.
+ * O SVG já contém o texto FANVERSE em tipografia oficial, então
+ * largura é natural (aspect ratio 184:30). Sem filter pra preservar
+ * o branco original (legibilidade no fundo escuro). */
+.brandLogoWordmark {
+  width: auto;
+  height: 20px;
+  filter: none;
+  opacity: 1;
+}
+
 .brandName {
   font-size: 14px;
   font-weight: 600;

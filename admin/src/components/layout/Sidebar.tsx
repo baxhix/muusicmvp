@@ -397,14 +397,18 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
     >
       <div className={styles.brand}>
         <Link href="/dashboard" className={styles.brandLink} title="Fanverse Admin">
+          {/* Mesmo wordmark da landing /teste (FANVERSE em tipografia
+           *  oficial). No modo collapsed, troca pra mini-ícone só
+           *  pra caber nos 64px de largura. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/fanverse-logo.svg"
-            alt=""
-            className={styles.brandLogo}
-            aria-hidden="true"
+            src={collapsed ? '/fanverse-logo.svg' : '/teste-fanverse-logo.svg'}
+            alt="Fanverse"
+            className={cn(
+              styles.brandLogo,
+              !collapsed && styles.brandLogoWordmark,
+            )}
           />
-          <span className={styles.brandName}>Fanverse</span>
         </Link>
         <button
           type="button"
