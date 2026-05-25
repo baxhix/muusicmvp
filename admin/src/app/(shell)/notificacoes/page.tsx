@@ -12,6 +12,7 @@ import StatCard from '@/components/ui/StatCard';
 import Table, { type Column } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
 import NewNotificationDialog from '@/components/admin/NewNotificationDialog';
+import Tabs from '@/components/ui/Tabs';
 import {
   IconBell,
   IconCheckCircle,
@@ -68,10 +69,22 @@ const CATEGORY_OPTIONS: { value: '' | NotificationCategory; label: string }[] = 
   { value: 'engagement', label: CATEGORY_LABEL.engagement },
 ];
 
+/* Tabs de canal no topo da listagem — segregação cross-cutting
+ * dos canais. "Plataforma" = notificações que aparecem dentro do
+ * app (in_app); "App Push" = push notifications (planejado, sem
+ * suporte hoje no catálogo). E-mail é tratado em /admin/emails. */
+type ChannelTabId = 'platform' | 'push';
+
+const CHANNEL_TABS: { id: ChannelTabId; label: string }[] = [
+  { id: 'platform', label: 'Plataforma' },
+  { id: 'push',     label: 'App (Push Notification)' },
+];
+
 export default function NotificacoesPage() {
   const { push } = useToast();
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[] | null>(null);
+  const [channelTab, setChannelTab] = useState<ChannelTabId>('platform');
   const [filters, setFilters] = useState({
     search: '',
     category: '' as '' | NotificationCategory,
@@ -110,23 +123,38 @@ export default function NotificacoesPage() {
     router.push(`/notificacoes/${encodeURIComponent(draft.kind)}`);
   }
 
-  /* Stats globais — sempre baseado em todos os items, não no
-   * filtrado, pra dar uma visão real do catálogo. */
-  const stats = useMemo(() => {
+  /* Items restritos pela tab de canal ativa. A tab é dimensão
+   * primária da view — stats, filters e tabela todos derivam
+   * desse subset, pra que os KPIs reflitam o tab selecionado. */
+  const itemsForChannel = useMemo(() => {
     if (!items) return null;
-    const wired = items.filter((i) => i.wired).length;
-    const active = items.filter((i) => i.wired && i.enabled).length;
-    const planned = items.filter((i) => !i.wired).length;
-    return { total: items.length, wired, active, planned };
-  }, [items]);
+    if (channelTab === 'platform') {
+      return items.filter((i) => i.supportedChannels.includes('in_app'));
+    }
+    /* App (Push Notification): canal `push` não existe no enum hoje
+     * (NotificationChannel = 'in_app' | 'email'). Como não há
+     * notificações ainda com push, retornamos lista vazia — a aba
+     * mostra empty state "em breve". Quando push for adicionado ao
+     * catálogo basta trocar pra `i.supportedChannels.includes('push')`. */
+    return [];
+  }, [items, channelTab]);
+
+  /* Stats — derivados do itemsForChannel pra refletir o tab. */
+  const stats = useMemo(() => {
+    if (!itemsForChannel) return null;
+    const wired = itemsForChannel.filter((i) => i.wired).length;
+    const active = itemsForChannel.filter((i) => i.wired && i.enabled).length;
+    const planned = itemsForChannel.filter((i) => !i.wired).length;
+    return { total: itemsForChannel.length, wired, active, planned };
+  }, [itemsForChannel]);
 
   /* useDeferredValue desacopla a digitação do recálculo do filter —
    * mesmo padrão da página de usuários. */
   const deferredFilters = useDeferredValue(filters);
   const filtered = useMemo(() => {
-    if (!items) return [];
+    if (!itemsForChannel) return [];
     const q = deferredFilters.search.trim().toLowerCase();
-    return items.filter((i) => {
+    return itemsForChannel.filter((i) => {
       if (q) {
         const hay =
           `${i.label} ${i.kind} ${i.description} ${i.trigger}`.toLowerCase();
@@ -306,6 +334,16 @@ export default function NotificacoesPage() {
       />
 
       <div className={styles.body}>
+        {/* Tabs de canal — dimensão primária. Plataforma = in_app
+         * (sino dentro do app); App Push = push notification, ainda
+         * sem suporte no catálogo. E-mail vive em /admin/emails. */}
+        <Tabs<ChannelTabId>
+          items={CHANNEL_TABS}
+          value={channelTab}
+          onChange={setChannelTab}
+          variant="bordered"
+        />
+
         {/* KPIs */}
         <div className={styles.kpiGrid}>
           <StatCard
@@ -388,7 +426,7 @@ export default function NotificacoesPage() {
           {filterCount > 0 && (
             <div className={styles.filterSummary}>
               <span>
-                {filtered.length} de {items?.length ?? 0} notificações
+                {filtered.length} de {itemsForChannel?.length ?? 0} notificações
               </span>
               <button
                 type="button"
@@ -410,10 +448,21 @@ export default function NotificacoesPage() {
             pageSize={15}
             loading={items === null}
             emptyState={
-              <div className={styles.emptyState}>
-                <IconBell size={20} />
-                <span>Nenhuma notificação corresponde aos filtros.</span>
-              </div>
+              channelTab === 'push' ? (
+                <div className={styles.emptyState}>
+                  <IconAlert size={20} />
+                  <span>
+                    Push notifications em breve — canal ainda não está
+                    wired no catálogo. Quando subir, as notificações
+                    aparecem aqui.
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.emptyState}>
+                  <IconBell size={20} />
+                  <span>Nenhuma notificação corresponde aos filtros.</span>
+                </div>
+              )
             }
           />
         </Card>
