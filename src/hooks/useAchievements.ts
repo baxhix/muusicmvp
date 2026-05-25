@@ -33,7 +33,11 @@ export interface SocialAchievement {
 }
 
 const SOCIAL_TOAST_MS = 4500;
-const SELF_CELEBRATION_MS = 7000;
+/* Lifetime da celebração de fanpoints na tela. Reduzido pela
+ * metade do valor antigo (7000) — a animação ficava tempo demais
+ * pro usuário. AchievementCelebration tem t3 = 3200ms (300ms
+ * antes da desmontagem) pra começar o fade-out. */
+const SELF_CELEBRATION_MS = 3500;
 
 /**
  * Hook used by AchievementCelebration + SocialAchievementToast. Keeps

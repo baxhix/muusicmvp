@@ -42,19 +42,21 @@ function fireConfettiBurst(): void {
     disableForReducedMotion: true,
   };
   // Three origins: left, center, right — gives a wider visual sweep
-  // than a single burst without doubling the particle budget.
-  confetti({ ...defaults, particleCount: 60, origin: { x: 0.2, y: 0.6 } });
-  confetti({ ...defaults, particleCount: 90, origin: { x: 0.5, y: 0.55 } });
-  confetti({ ...defaults, particleCount: 60, origin: { x: 0.8, y: 0.6 } });
+  // que um burst só. Counts ajustados pela metade do original
+  // (60/90/60 → 30/45/30) pra celebração mais discreta.
+  confetti({ ...defaults, particleCount: 30, origin: { x: 0.2, y: 0.6 } });
+  confetti({ ...defaults, particleCount: 45, origin: { x: 0.5, y: 0.55 } });
+  confetti({ ...defaults, particleCount: 30, origin: { x: 0.8, y: 0.6 } });
 }
 
 /**
  * Full-screen, non-modal celebration overlay. Listens for the
  * me:achievement socket event via useAchievements, fires confetti
  * and centers a congratulatory line. Auto-dismisses with fade-out
- * after ~7s (lifetime managed by the hook). pointer-events: none on
- * the wrapper so the user keeps full interaction with the rest of
- * the app while the overlay plays.
+ * after ~3.5s (lifetime managed by the hook — diminuído pela
+ * metade do original 7s pra mensagem ser mais discreta).
+ * pointer-events: none on the wrapper so the user keeps full
+ * interaction with the rest of the app while the overlay plays.
  */
 export default function AchievementCelebration() {
   const { myAchievements } = useAchievements();
@@ -84,11 +86,11 @@ function CelebrationFrame({ item }: { item: MyAchievement }) {
 
   useEffect(() => {
     fireConfettiBurst();
-    // Re-burst at 1.8s for a longer "trail" without taxing the
-    // confetti renderer continuously.
-    const t2 = window.setTimeout(fireConfettiBurst, 1800);
-    // Trigger fade-out 600ms before the hook unmounts us.
-    const t3 = window.setTimeout(() => setExiting(true), 6400);
+    // Re-burst at 900ms (metade do antigo 1800) pra acompanhar o
+    // lifetime reduzido pela metade do hook.
+    const t2 = window.setTimeout(fireConfettiBurst, 900);
+    // Fade-out 300ms antes do hook desmontar (lifetime 3500ms).
+    const t3 = window.setTimeout(() => setExiting(true), 3200);
     return () => {
       window.clearTimeout(t2);
       window.clearTimeout(t3);
