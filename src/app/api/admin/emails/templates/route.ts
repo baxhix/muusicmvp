@@ -124,6 +124,10 @@ const designSchema = z.object({
     enabled: z.boolean(),
     title: z.string().max(200),
     subtitle: z.string().max(500).optional(),
+    /* Logo opcional. Override do logo global da marca. Aceita
+     * string vazia (admin limpando o campo) ou URL. */
+    logoUrl: z.string().max(2000).optional(),
+    logoHeight: z.number().int().min(8).max(200).optional(),
   }),
   blocks: z.array(blockSchema).max(50),
   footer: z.object({
