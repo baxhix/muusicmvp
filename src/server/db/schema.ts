@@ -33,6 +33,12 @@ export const users = pgTable('users', {
    *  step pra decidir entre /app (returning) e /auth/onboarding/
    *  birth-date (novo). */
   isOnboarded: boolean('is_onboarded').notNull().default(false),
+  /** Marker pra idempotência do email de boas-vindas. Setado
+   *  pela rota /api/auth/onboarding logo após persistir o
+   *  is_onboarded. Próximas chamadas não reenviam. */
+  welcomeEmailSentAt: timestamp('welcome_email_sent_at', {
+    withTimezone: true,
+  }),
   /** Data de nascimento (ISO date) preenchida no onboarding —
    *  obrigatória pra LGPD e age gating. Null pra contas
    *  pré-onboarding-flow. */

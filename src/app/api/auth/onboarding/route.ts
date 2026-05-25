@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { getCurrentUser } from '@/server/auth/session';
+import { sendWelcomeEmail } from '@/server/email/welcome';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +17,10 @@ export const runtime = 'nodejs';
  * Persiste tudo no schema + seta is_onboarded=true, o que
  * faz o próximo /api/auth/me retornar isOnboarded=true e o
  * verify page redirecionar pra /app em logins futuros.
+ *
+ * Após persistir, dispara email de boas-vindas EXATAMENTE UMA
+ * VEZ via UPDATE atômico que marca welcome_email_sent_at.
+ * Falha do email não invalida o onboarding — só é logado.
  *
  * Auth: requer sessão (cookie). Sem cookie → 401.
  */
@@ -54,6 +60,38 @@ export async function POST(req: Request) {
   }
 
   await db.update(users).set(patch).where(eq(users.id, me.id));
+
+  /* Boas-vindas: claim atômico via UPDATE com WHERE NULL.
+   * Returning retorna a row se foi a primeira vez (e portanto
+   * o claim foi nosso). Se já tinha timestamp, returning vem
+   * vazio e a gente não envia.
+   *
+   * Em paralelo: race condition entre 2 chamadas simultâneas do
+   * onboarding leva apenas uma a "vencer" o claim — Postgres
+   * garante atomicidade do UPDATE. Sem chance de double-send. */
+  const claimed = await db
+    .update(users)
+    .set({ welcomeEmailSentAt: new Date() })
+    .where(
+      and(eq(users.id, me.id), isNull(users.welcomeEmailSentAt)),
+    )
+    .returning({ id: users.id, email: users.email, name: users.name });
+
+  if (claimed.length > 0) {
+    const row = claimed[0];
+    const displayName =
+      parsed.displayName ?? row.name ?? row.email?.split('@')[0] ?? 'fã';
+    // Fire-and-forget: o response do onboarding NÃO espera o email.
+    // Resend pode demorar 1-3s e o usuário já está vendo a tela de
+    // sucesso. Falha aqui é só log — não invalida o onboarding.
+    void sendWelcomeEmail({ to: row.email, userName: displayName }).catch(
+      (err: unknown) => {
+        logger.error('email.welcome.send-failed', err, {
+          userId: row.id,
+        });
+      },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

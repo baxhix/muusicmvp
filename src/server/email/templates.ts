@@ -135,7 +135,74 @@ export interface KnownTemplate {
   defaultDesign: EmailDesign;
 }
 
+/* Boas-vindas — disparado UMA VEZ quando o usuário completa o
+ * onboarding (POST /api/auth/onboarding). */
+function welcomeDefaultDesign(): EmailDesign {
+  return {
+    version: 1,
+    theme: {
+      bgColor: '#f6f6f7',
+      contentBg: '#ffffff',
+      textColor: '#111111',
+      mutedColor: '#888888',
+      linkColor: '#000000',
+      buttonBg: '#000000',
+      buttonText: '#ffffff',
+      buttonRadius: 999,
+      fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+    header: {
+      enabled: true,
+      title: 'Bem-vindo ao Fanverse, {{userName}}!',
+      subtitle: 'A casa dos superfãs.',
+    },
+    blocks: [
+      {
+        id: 'welcome-1',
+        kind: 'paragraph',
+        text: 'É um prazer ter você por aqui. O Fanverse é o seu espaço pra acompanhar a artista, conhecer outros fãs e participar de momentos exclusivos.',
+      },
+      {
+        id: 'welcome-2',
+        kind: 'button',
+        text: 'Abrir o app',
+        href: '{{appUrl}}',
+        align: 'center',
+      },
+      {
+        id: 'welcome-3',
+        kind: 'paragraph',
+        text: 'Qualquer dúvida, é só responder este email.',
+      },
+    ],
+    footer: {
+      enabled: false,
+      text: '',
+    },
+  };
+}
+
 export const KNOWN_TEMPLATES: KnownTemplate[] = [
+  {
+    kind: 'boas_vindas',
+    label: 'Boas-vindas',
+    description:
+      'Disparado uma única vez quando o usuário completa o onboarding ' +
+      '(birth-date, nome, etc). Idempotente: se já foi enviado, não ' +
+      'reenviam mesmo em re-trigger do fluxo.',
+    variables: [
+      { name: 'userName', description: 'Nome do usuário (display name)' },
+      { name: 'appUrl', description: 'URL do app pra abrir a home' },
+    ],
+    defaultSubject: 'Bem-vindo ao Fanverse, {{userName}}!',
+    defaultHtml: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+  <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Bem-vindo ao Fanverse, {{userName}}!</h1>
+  <p style="font-size:15px;line-height:1.55;color:#333;">É um prazer ter você por aqui.</p>
+  <p style="margin:28px 0;"><a href="{{appUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Abrir o app</a></p>
+</div>`,
+    defaultDesign: welcomeDefaultDesign(),
+  },
   {
     kind: 'magic_link',
     label: 'Link de acesso (magic link)',
