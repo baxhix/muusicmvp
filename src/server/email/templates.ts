@@ -249,7 +249,7 @@ function managerDailyReportDefaultDesign(): EmailDesign {
       {
         id: 'mreport-6',
         kind: 'paragraph',
-        text: '<i>Métricas com fonte mista (real onde já temos schema; mocadas onde ainda não). Os mocks ficam fixos por dia — não inflam ao longo do tempo.</i>',
+        text: '<i>Tempo médio de sessão é estimado por enquanto — vira número real quando o schema de sessões cair. Os demais KPIs vêm direto do banco.</i>',
       },
     ],
     footer: {
@@ -510,7 +510,7 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
     <li>⏱ Tempo médio de sessão: <b>{{avgSessionMinutes}} min</b></li>
   </ul>
   <p style="margin:28px 0;text-align:center;"><a href="{{adminUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Abrir painel admin</a></p>
-  <p style="font-size:11px;color:#aaa;font-style:italic;margin-top:24px;">Métricas com fonte mista: real onde já temos schema (usuários, mensagens); mocadas onde ainda não (streams, sessão). Os mocks são fixos por dia.</p>
+  <p style="font-size:11px;color:#aaa;font-style:italic;margin-top:24px;">Tempo médio de sessão é estimado por enquanto — vira número real quando o schema de sessões cair. Os demais KPIs vêm direto do banco.</p>
 </div>`,
     defaultDesign: managerDailyReportDefaultDesign(),
   },

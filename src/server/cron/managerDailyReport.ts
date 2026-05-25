@@ -10,12 +10,14 @@
  *   - newUsers         → COUNT(users) WHERE created_at >= yesterday
  *                        AND created_at < today (timezone BRT)
  *   - messages         → COUNT(messages) WHERE created_at >= yesterday
- *   - streams          → MOCK (sem schema de tracks_played ainda)
+ *   - streams          → COUNT(listening_history) WHERE started_at na
+ *                        janela. Cada play do player gera 1 row em
+ *                        listening_history; contar rows = "streams".
  *   - avgSessionMinutes → MOCK (sem schema de sessions ainda)
  *
- * Os mocks são determinísticos por data (hash do dateSeed) pra
- * que rodar 2x no mesmo dia retorne os mesmos números — evita
- * confusão se o cron disparar duplicado por alguma razão.
+ * O mock de avgSessionMinutes é determinístico por data (hash do
+ * dateSeed) pra que rodar 2x no mesmo dia retorne o mesmo número
+ * — evita confusão se o cron disparar duplicado por alguma razão.
  *
  * Janela de tempo: usa "ontem 00:00 BRT" até "hoje 00:00 BRT" —
  * cobre o dia civil completo conforme o cron roda às 06h00 do
@@ -27,9 +29,9 @@
  *   - CLI:  npm run cron:manager-report
  */
 
-import { and, count, eq, gte, isNull, lt } from 'drizzle-orm';
+import { and, count, gte, isNull, lt } from 'drizzle-orm';
 import { db } from '../db';
-import { users, messages } from '../db/schema';
+import { users, messages, listeningHistory } from '../db/schema';
 import { env } from '../env';
 import { isNotificationEnabled } from '../notifications/settings';
 import { sendManagerDailyReportEmail } from '../email/managerDailyReport';
@@ -143,15 +145,27 @@ export async function runManagerDailyReport(): Promise<ManagerReportResult> {
     .where(and(gte(messages.createdAt, start), lt(messages.createdAt, end)));
   const messagesCount = messagesRes[0]?.n ?? 0;
 
-  /* ── Mocks (sem schema) ──────────────────────────────── */
+  /* streams — reproduções de música. Cada play registra uma row
+   * em listening_history com started_at; basta contar rows na
+   * janela de ontem. Não filtramos por endedAt (play em andamento
+   * conta como stream se começou no dia). */
+  const streamsRes = await db
+    .select({ n: count() })
+    .from(listeningHistory)
+    .where(
+      and(
+        gte(listeningHistory.startedAt, start),
+        lt(listeningHistory.startedAt, end),
+      ),
+    );
+  const streams = streamsRes[0]?.n ?? 0;
+
+  /* ── Mock (último KPI sem schema dedicado) ────────────── */
 
   const seed = start.toISOString().slice(0, 10); // YYYY-MM-DD da janela
-  /* streams: range 50–800 plausível pra MVP. Escala com totalUsers
-   * pra ficar realista: ~5–25 streams por usuário/dia (com floor
-   * pra não dar zero). */
-  const baseStreams = Math.max(50, totalUsers * 8);
-  const streams = baseStreams + dailyMockHash(`streams:${seed}`, 0, baseStreams);
-  /* avgSessionMinutes: 4–18 min, curva centralizada em 8–10. */
+  /* avgSessionMinutes: 4–18 min, curva centralizada em 8–10.
+   * Quando tivermos `user_sessions` (login/logout ou heartbeat
+   * de presença ≥ 30s contínuos), trocar pela média real. */
   const avgSessionMinutes = 4 + dailyMockHash(`session:${seed}`, 0, 14);
 
   /* Destinatário fixo. */
