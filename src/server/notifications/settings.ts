@@ -22,6 +22,9 @@ export interface NotificationSettingsValue {
   kind: string;
   enabled: boolean;
   channels: Partial<Record<NotificationChannel, boolean>>;
+  labelOverride: string | null;
+  descriptionOverride: string | null;
+  triggerOverride: string | null;
   updatedAt: string | null;
 }
 
@@ -36,6 +39,9 @@ async function loadFromDb(): Promise<Map<string, NotificationSettingsValue>> {
       kind: row.kind,
       enabled: row.enabled,
       channels: (row.channels ?? {}) as Partial<Record<NotificationChannel, boolean>>,
+      labelOverride: row.labelOverride ?? null,
+      descriptionOverride: row.descriptionOverride ?? null,
+      triggerOverride: row.triggerOverride ?? null,
       updatedAt: row.updatedAt?.toISOString() ?? null,
     });
   }
@@ -80,6 +86,9 @@ export async function listNotifications(): Promise<NotificationSettingsValue[]> 
       kind: known.kind,
       enabled: true,
       channels,
+      labelOverride: null,
+      descriptionOverride: null,
+      triggerOverride: null,
       updatedAt: null,
     };
   });
@@ -89,6 +98,11 @@ export interface UpsertNotificationInput {
   kind: string;
   enabled: boolean;
   channels: Partial<Record<NotificationChannel, boolean>>;
+  /** Quando undefined, NÃO toca a coluna. Quando null, limpa
+   *  (volta pro catálogo). Quando string, salva como override. */
+  labelOverride?: string | null;
+  descriptionOverride?: string | null;
+  triggerOverride?: string | null;
   updatedBy: string;
 }
 
@@ -108,12 +122,26 @@ export async function upsertNotification(
     }
   }
 
+  /* Normaliza overrides: trim + se vier vazio depois do trim,
+   * vira null (= volta pro default do catálogo). undefined = mantém
+   * o valor atual no DB. */
+  const normalize = (v: string | null | undefined) =>
+    v === undefined ? undefined : v === null || v.trim() === '' ? null : v.trim();
+  const labelOverride = normalize(input.labelOverride);
+  const descriptionOverride = normalize(input.descriptionOverride);
+  const triggerOverride = normalize(input.triggerOverride);
+
+  /* Drizzle não aceita Record<string, unknown> aqui — buildamos
+   * o objeto tipado com os fields opcionais explícitos. */
   await db
     .insert(notificationSettings)
     .values({
       kind: input.kind,
       enabled: input.enabled,
       channels: cleanChannels as unknown as Record<string, unknown>,
+      labelOverride: labelOverride ?? null,
+      descriptionOverride: descriptionOverride ?? null,
+      triggerOverride: triggerOverride ?? null,
       updatedBy: input.updatedBy,
     })
     .onConflictDoUpdate({
@@ -121,6 +149,9 @@ export async function upsertNotification(
       set: {
         enabled: input.enabled,
         channels: cleanChannels as unknown as Record<string, unknown>,
+        labelOverride: labelOverride ?? null,
+        descriptionOverride: descriptionOverride ?? null,
+        triggerOverride: triggerOverride ?? null,
         updatedBy: input.updatedBy,
         updatedAt: new Date(),
       },

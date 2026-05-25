@@ -1031,6 +1031,10 @@ export const notificationSettings = pgTable('notification_settings', {
   kind: text('kind').primaryKey(),
   enabled: boolean('enabled').notNull().default(true),
   channels: jsonb('channels').notNull().default({}),
+  /** Overrides editáveis — caem pro catálogo quando null. */
+  labelOverride: text('label_override'),
+  descriptionOverride: text('description_override'),
+  triggerOverride: text('trigger_override'),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

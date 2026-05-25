@@ -218,6 +218,13 @@
       "when": 1780300000000,
       "tag": "0031_notification_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1780400000000,
+      "tag": "0032_notification_overrides",
+      "breakpoints": true
     }
   ]
 }
