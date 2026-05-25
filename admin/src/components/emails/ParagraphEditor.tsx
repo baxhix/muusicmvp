@@ -17,15 +17,16 @@ interface ParagraphEditorProps {
 /**
  * Editor de parágrafo com toolbar mínimo:
  *   - B  (bold via execCommand sobre a seleção)
+ *   - I  (italic via execCommand sobre a seleção)
  *   - 4 alinhamentos (propriedade do bloco, aplica no <p> renderizado)
  *
  * Quebra de linha = Enter (contentEditable já cria <div>/<br>;
  * normalizamos em handleInput pra <br> simples — emails só
  * entendem <br>/<p>).
  *
- * Saída: HTML limitado (strong, b, br) — sanitizado novamente
+ * Saída: HTML limitado (strong/b, em/i, br) — sanitizado novamente
  * tanto no renderer client (preview) quanto no server-side antes
- * de enviar o email final.
+ * de enviar o email final (allowlist em design.ts).
  */
 export default function ParagraphEditor({
   value,
@@ -74,6 +75,16 @@ export default function ParagraphEditor({
     handleInput();
   }
 
+  function applyItalic(e: React.MouseEvent) {
+    e.preventDefault(); // não tira o focus do editor
+    editorRef.current?.focus();
+    /* execCommand('italic') gera <i> ou <em> dependendo do
+     * browser — ambos passam pelo sanitizer (allowlist em
+     * design.ts cobre os dois). */
+    document.execCommand('italic');
+    handleInput();
+  }
+
   function setAlign(a: Align) {
     return (e: React.MouseEvent) => {
       e.preventDefault();
@@ -92,6 +103,15 @@ export default function ParagraphEditor({
           title="Negrito (Ctrl+B)"
         >
           <span style={{ fontWeight: 800 }}>B</span>
+        </button>
+        <button
+          type="button"
+          className={styles.btn}
+          onMouseDown={applyItalic}
+          aria-label="Itálico"
+          title="Itálico (Ctrl+I)"
+        >
+          <span style={{ fontStyle: 'italic', fontFamily: 'serif' }}>I</span>
         </button>
         <span className={styles.sep} aria-hidden="true" />
         <button
