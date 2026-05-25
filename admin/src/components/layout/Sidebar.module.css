@@ -386,3 +386,152 @@
     box-shadow: var(--shadow-pop);
   }
 }
+
+/* ── Nav container (substitui .section quando IA virou tree) ─── */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ── Group (parent collapsable) ──────────────────────────────── */
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-faint);
+  text-align: left;
+  transition: all 120ms ease;
+  font-family: inherit;
+}
+.groupHeader:hover {
+  background: var(--surface-hover);
+  color: var(--fg, var(--text));
+}
+.groupHeader:focus-visible {
+  outline: 2px solid var(--brand-fg, #6366f1);
+  outline-offset: -2px;
+}
+
+/* Quando o group contém a rota ativa, header fica destacado
+ * sem virar "ativo" — sinal de "você está dentro deste grupo". */
+.groupHeaderActive {
+  color: var(--fg, var(--text));
+}
+.groupHeaderActive .itemIcon {
+  color: var(--fg, var(--text));
+}
+
+.groupCaret {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  transition: transform 160ms ease;
+  flex-shrink: 0;
+}
+.groupCaretOpen {
+  transform: rotate(180deg);
+}
+
+.groupChildren {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0 4px 0;
+  margin-left: 26px;
+  /* linha-guia esquerda sutil pra hierarquia visual */
+  border-left: 1px solid var(--surface-3);
+}
+
+/* ── Child leaf (sem ícone, indentado) ───────────────────────── */
+
+.child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 14px;
+  text-decoration: none;
+  color: var(--text-faint);
+  font-size: 13px;
+  border-radius: 7px;
+  transition: all 120ms ease;
+  position: relative;
+}
+.child:hover {
+  background: var(--surface-hover);
+  color: var(--fg, var(--text));
+}
+
+.childActive {
+  background: var(--surface-3);
+  color: var(--fg, var(--text));
+  font-weight: 500;
+}
+.childActive:hover {
+  background: var(--surface-3);
+}
+
+/* Indicador visual sutil na esquerda do child ativo */
+.childActive::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--brand-fg, currentColor);
+  border-radius: 999px;
+}
+
+.childLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Disabled row (Fanverse pinned no fim) ───────────────────── */
+
+.disabledRow {
+  padding: 8px 10px 0;
+  border-top: 1px solid var(--surface-3);
+  margin-top: 4px;
+}
+
+.itemDisabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Collapsed mode: esconde labels e caret dos groups ──────── */
+
+.sidebarCollapsed .groupChildren,
+.sidebarCollapsed .groupCaret {
+  display: none;
+}
+.sidebarCollapsed .groupHeader {
+  justify-content: center;
+}

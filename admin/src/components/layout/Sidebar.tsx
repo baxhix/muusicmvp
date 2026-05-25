@@ -4,23 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  IconArchive,
   IconDashboard,
-  IconFeed,
   IconUsers,
-  IconShield,
   IconStar,
-  IconSettings,
-  IconLogout,
-  IconMessage,
-  IconMusic,
   IconTrendingUp,
-  IconCode,
-  IconTicket,
-  IconCalendar,
-  IconEdit,
-  IconVideo,
-  IconMail,
+  IconGrid,
+  IconHome,
+  IconSettings,
+  IconLogo,
+  IconLogout,
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
 } from '@/components/icons';
@@ -30,96 +23,217 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import styles from './Sidebar.module.css';
 
-interface NavItem {
+/* ──────────────────────────────────────────────────────────────
+ * Modelo de navegação — tree de 2 níveis:
+ *
+ *   - Top-level leaf:   item com rota, sem filhos. Ícone.
+ *   - Group:            container de leaves. Ícone. Click toggla
+ *                       expand/collapse; não navega.
+ *   - Group leaf:       item com rota, sem ícone, indentado.
+ *
+ * Itens filhos NÃO têm ícone (per IA definida pelo produto:
+ * "Itens de categoria filho, não precisam de ícones, apenas o pai").
+ * ────────────────────────────────────────────────────────────── */
+
+interface NavLeaf {
+  kind: 'leaf';
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: number }>;
+  /** Só itens top-level recebem ícone. */
+  icon?: React.ComponentType<{ size?: number }>;
   badge?: number;
+  /** Visual esmaecido + sem navegação. Usado por Fanverse (rota
+   *  ainda existe, mas não é foco do produto agora). */
+  disabled?: boolean;
 }
 
-/* Order locked by product feedback:
- *   Dashboard → Engajamento → Moderação → Superfãs → Usuários
- *   → Feed → Comunidade → Superchat → Músicas → Pre Save →
- *   Live → Blog → Convites → Fanverse
+interface NavGroup {
+  kind: 'group';
+  /** Slug usado em localStorage pra persistir aberto/fechado. */
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
+  children: NavLeaf[];
+}
+
+type NavEntry = NavLeaf | NavGroup;
+
+/* ──────────────────────────────────────────────────────────────
+ * IA atual:
  *
- * Superchat fica adjacente a Comunidade (ambos são chat/relação
- * entre fãs); Live fica adjacente a Pre Save (ambos são features
- * de marketing/release que acontecem em volta da música). */
-const PRIMARY_NAV: NavItem[] = [
-  { href: '/dashboard',   label: 'Dashboard',   icon: IconDashboard },
-  { href: '/engagement',  label: 'Engajamento', icon: IconTrendingUp },
-  { href: '/moderation',  label: 'Moderação',   icon: IconShield, badge: 12 },
-  { href: '/superfans',   label: 'Superfãs',    icon: IconStar },
-  { href: '/users',       label: 'Usuários',    icon: IconUsers },
-  { href: '/feed',        label: 'Feed',        icon: IconFeed },
-  { href: '/comunidades', label: 'Comunidade',  icon: IconMessage },
-  { href: '/superchat',   label: 'Superchat',   icon: IconMessage },
-  { href: '/tracks',      label: 'Músicas',     icon: IconMusic },
-  { href: '/pre-save',    label: 'Pre Save',    icon: IconCalendar },
-  { href: '/live',        label: 'Live',        icon: IconVideo },
-  { href: '/blog',        label: 'Blog',        icon: IconEdit },
-  /* Materiais — acervo de conteúdo exclusivo da artista
-   * (álbuns de fotos de shows, álbuns exclusivos, wallpapers,
-   * figurinhas, templates, logotipos). Vive ao lado de Blog
-   * porque ambos são "publicações" da equipe da artista. */
-  { href: '/materiais',   label: 'Materiais',   icon: IconArchive },
-  /* E-mails — gerencia templates do sistema (magic link, etc.),
-   * lê histórico de envios via Resend, métricas e campanhas
-   * (broadcast por segmento de usuários). */
-  { href: '/emails',      label: 'E-mails',     icon: IconMail },
-  { href: '/convites',    label: 'Convites',    icon: IconTicket },
-  { href: '/fanverse',    label: 'Fanverse',    icon: IconStar },
+ *   Dashboard
+ *   Usuários
+ *
+ *   Superfãs    (group)
+ *     Feed
+ *     Comunidades
+ *     Superchat
+ *     Materiais
+ *     Fanpoints
+ *
+ *   Growth      (group)
+ *     Convites
+ *     Engajamento
+ *     Aquisição
+ *
+ *   Plataforma  (group)
+ *     Moderação
+ *     Músicas
+ *     E-mails
+ *     Lives
+ *     Presave
+ *
+ *   Site        (group)
+ *     Blog
+ *
+ *   Sistema     (group)
+ *     Configurações
+ *     Desenvolvedor
+ *
+ *   Fanverse    (disabled, no rodapé)
+ * ────────────────────────────────────────────────────────────── */
+
+const NAV: NavEntry[] = [
+  { kind: 'leaf', href: '/dashboard', label: 'Dashboard', icon: IconDashboard },
+  { kind: 'leaf', href: '/users',     label: 'Usuários',  icon: IconUsers },
+
+  {
+    kind: 'group',
+    id: 'superfans',
+    label: 'Superfãs',
+    icon: IconStar,
+    children: [
+      { kind: 'leaf', href: '/feed',         label: 'Feed' },
+      { kind: 'leaf', href: '/comunidades',  label: 'Comunidades' },
+      { kind: 'leaf', href: '/superchat',    label: 'Superchat' },
+      { kind: 'leaf', href: '/materiais',    label: 'Materiais' },
+      { kind: 'leaf', href: '/fanpoints',    label: 'Fanpoints' },
+    ],
+  },
+
+  {
+    kind: 'group',
+    id: 'growth',
+    label: 'Growth',
+    icon: IconTrendingUp,
+    children: [
+      { kind: 'leaf', href: '/convites',   label: 'Convites' },
+      { kind: 'leaf', href: '/engagement', label: 'Engajamento' },
+      { kind: 'leaf', href: '/aquisicao',  label: 'Aquisição' },
+    ],
+  },
+
+  {
+    kind: 'group',
+    id: 'plataforma',
+    label: 'Plataforma',
+    icon: IconGrid,
+    children: [
+      { kind: 'leaf', href: '/moderation', label: 'Moderação', badge: 12 },
+      { kind: 'leaf', href: '/tracks',     label: 'Músicas' },
+      { kind: 'leaf', href: '/emails',     label: 'E-mails' },
+      { kind: 'leaf', href: '/live',       label: 'Lives' },
+      { kind: 'leaf', href: '/pre-save',   label: 'Presave' },
+    ],
+  },
+
+  {
+    kind: 'group',
+    id: 'site',
+    label: 'Site',
+    icon: IconHome,
+    children: [
+      { kind: 'leaf', href: '/blog', label: 'Blog' },
+    ],
+  },
+
+  {
+    kind: 'group',
+    id: 'sistema',
+    label: 'Sistema',
+    icon: IconSettings,
+    children: [
+      { kind: 'leaf', href: '/settings',      label: 'Configurações' },
+      { kind: 'leaf', href: '/desenvolvedor', label: 'Desenvolvedor' },
+    ],
+  },
 ];
 
-const SECONDARY_NAV: NavItem[] = [
-  { href: '/settings',    label: 'Configurações', icon: IconSettings },
-  { href: '/desenvolvedor', label: 'Desenvolvedor',  icon: IconCode },
-];
+/** Mantido fora da NAV principal — visual esmaecido + sem grupo,
+ *  pinned no final da sidebar pra indicar feature em pausa. */
+const FANVERSE_DISABLED: NavLeaf = {
+  kind: 'leaf',
+  href: '/fanverse',
+  label: 'Fanverse',
+  icon: IconLogo,
+  disabled: true,
+};
 
-/** localStorage key for the collapsed-state persistence. Picking a
- *  namespaced key so the admin's flag doesn't collide with anything
- *  the main app stores under `app:*`. */
 const COLLAPSED_KEY = 'admin:sidebar-collapsed';
+const GROUP_STATE_KEY = 'admin:sidebar-groups';
 
-/**
- * Sidebar with a collapse / expand toggle (icon-only mode) per
- * product feedback "refaça a sidebar para que tenha a opção de
- * retrair o menu ficando apenas os ícones visíveis". When
- * collapsed:
- *   - Sidebar width drops from `--sidebar-w` (248px) to
- *     `--sidebar-w-collapsed` (64px).
- *   - Labels, section eyebrows, brand wordmark, and the
- *     profile body collapse to icon-only.
- *   - The `--sidebar-w` CSS custom property is reassigned on
- *     `<html>` so the shell's `.main { margin-left: var(--sidebar-w) }`
- *     follows automatically — no extra plumbing needed in the
- *     shell layout.
- *   - State persists across reloads via localStorage.
- *
- * Native `title` tooltips kick in for each row so a hover reveals
- * the label when collapsed.
- */
+/** Encontra qual group contém uma rota — usado pra auto-expandir
+ *  o grupo quando o usuário navega pra um filho dele. */
+function findOwnerGroup(pathname: string): string | null {
+  for (const entry of NAV) {
+    if (entry.kind !== 'group') continue;
+    for (const child of entry.children) {
+      if (pathname === child.href || pathname.startsWith(`${child.href}/`)) {
+        return entry.id;
+      }
+    }
+  }
+  return null;
+}
+
 export default function Sidebar({ open = false }: { open?: boolean }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-  // Restore the collapsed flag from localStorage on first mount
-  // + sync the CSS custom property that drives the shell's
-  // margin-left. Render is initially `false` (expanded) to match
-  // server-side output, then the effect flips it before the
-  // first paint that matters.
+  /* Restaura collapsed + estado dos grupos do localStorage no mount.
+   * Estado dos grupos: persistido por id pra cada admin escolher
+   * quais grupos quer ver expandidos. */
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem(COLLAPSED_KEY);
-    const next = stored === '1';
-    setCollapsed(next);
+    const storedCollapsed = window.localStorage.getItem(COLLAPSED_KEY);
+    const nextCollapsed = storedCollapsed === '1';
+    setCollapsed(nextCollapsed);
     document.documentElement.style.setProperty(
       '--sidebar-w',
-      next ? 'var(--sidebar-w-collapsed)' : '248px',
+      nextCollapsed ? 'var(--sidebar-w-collapsed)' : '248px',
     );
+
+    /* Inicializa grupos: tenta localStorage; se não houver,
+     * abre o grupo da rota atual + Superfãs (mais usado). */
+    let initialGroups: Record<string, boolean> = {};
+    const storedGroups = window.localStorage.getItem(GROUP_STATE_KEY);
+    if (storedGroups) {
+      try {
+        initialGroups = JSON.parse(storedGroups) as Record<string, boolean>;
+      } catch {
+        // ignore parse errors — usa default
+      }
+    } else {
+      initialGroups = { superfans: true };
+    }
+    const owner = findOwnerGroup(pathname);
+    if (owner && !initialGroups[owner]) {
+      initialGroups[owner] = true;
+    }
+    setOpenGroups(initialGroups);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* Quando a rota muda (navegação interna), garante que o grupo
+   * que contém ela esteja aberto. */
+  useEffect(() => {
+    const owner = findOwnerGroup(pathname);
+    if (!owner) return;
+    setOpenGroups((prev) => (prev[owner] ? prev : { ...prev, [owner]: true }));
+  }, [pathname]);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((curr) => {
@@ -135,41 +249,51 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
     });
   }, []);
 
+  const toggleGroup = useCallback((id: string) => {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(GROUP_STATE_KEY, JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
   const handleLogout = async () => {
     if (signingOut) return;
     setSigningOut(true);
     try {
       await logout();
-      // logout() reloads on success — if it returns here, the reload
-      // didn't fire (e.g. mock mode) so flip the button back to idle.
     } finally {
       setSigningOut(false);
     }
   };
 
-  // Profile footer text — fall back to the email prefix when the user
-  // hasn't set a display name yet (most magic-link signups don't).
   const displayName = user.name?.trim() || user.email.split('@')[0];
   const displayRole = user.role === 'admin' ? 'Admin · muusic' : 'Conta';
 
-  const renderItem = (item: NavItem) => {
+  /* ── Renderers ─────────────────────────────────────────────── */
+
+  /** Item top-level COM ícone (Dashboard, Usuários, Fanverse). */
+  function renderTopLeaf(item: NavLeaf) {
     const Icon = item.icon;
     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-    /* Tooltip custom (Tooltip.tsx) substitui o `title=` nativo per
-     * product feedback "adicione tooltips personalizados estilo o
-     * da imagem em anexo". O pill aparece à direita do trigger
-     * quando o sidebar está collapsed (label invisível); quando
-     * expandido o label já está visível → tooltip desabilitado pra
-     * não duplicar info. */
+    const interactive = !item.disabled;
+    const Wrapper: React.ElementType = interactive ? Link : 'div';
+    const wrapperProps = interactive ? { href: item.href } : { 'aria-disabled': true };
     return (
       <Tooltip key={item.href} label={item.label} side="right" disabled={!collapsed}>
-        <Link
-          href={item.href}
-          className={cn(styles.item, active && styles.itemActive)}
-          aria-current={active ? 'page' : undefined}
+        <Wrapper
+          {...wrapperProps}
+          className={cn(
+            styles.item,
+            active && interactive && styles.itemActive,
+            item.disabled && styles.itemDisabled,
+          )}
+          aria-current={active && interactive ? 'page' : undefined}
         >
           <span className={styles.itemIcon}>
-            <Icon size={16} />
+            {Icon ? <Icon size={16} /> : null}
           </span>
           <span className={styles.itemLabel}>{item.label}</span>
           {typeof item.badge === 'number' && item.badge > 0 && (
@@ -177,10 +301,89 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
               {item.badge}
             </span>
           )}
-        </Link>
+        </Wrapper>
       </Tooltip>
     );
-  };
+  }
+
+  /** Item filho de um grupo (SEM ícone, indentado). */
+  function renderChildLeaf(item: NavLeaf) {
+    const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn(styles.child, active && styles.childActive)}
+        aria-current={active ? 'page' : undefined}
+      >
+        <span className={styles.childLabel}>{item.label}</span>
+        {typeof item.badge === 'number' && item.badge > 0 && (
+          <span className={cn(styles.itemBadge, !active && styles.itemBadgeMute)}>
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    );
+  }
+
+  /** Group header — toggla aberto/fechado. Mostra caret. */
+  function renderGroup(group: NavGroup) {
+    const Icon = group.icon;
+    const isOpen = openGroups[group.id] ?? false;
+    /* Grupo recebe destaque visual quando alguma rota interna
+     * está ativa (mesmo se collapsed) — pista de "você está aqui". */
+    const owner = findOwnerGroup(pathname);
+    const hasActiveChild = owner === group.id;
+
+    /* No modo collapsed (sidebar de ícones), o "toggle" não faz
+     * sentido — mostramos só o ícone do grupo num tooltip que
+     * lista os filhos no hover. Por ora, simplificamos: o
+     * próprio ícone clica e abre o sidebar inteiro. */
+    return (
+      <div key={group.id} className={styles.group}>
+        <Tooltip
+          label={group.label}
+          side="right"
+          disabled={!collapsed}
+        >
+          <button
+            type="button"
+            className={cn(
+              styles.groupHeader,
+              hasActiveChild && styles.groupHeaderActive,
+            )}
+            onClick={() => toggleGroup(group.id)}
+            aria-expanded={isOpen}
+            aria-controls={`sidebar-group-${group.id}`}
+          >
+            <span className={styles.itemIcon}>
+              <Icon size={16} />
+            </span>
+            <span className={styles.itemLabel}>{group.label}</span>
+            <span
+              className={cn(
+                styles.groupCaret,
+                isOpen && styles.groupCaretOpen,
+              )}
+              aria-hidden="true"
+            >
+              <IconChevronDown size={12} />
+            </span>
+          </button>
+        </Tooltip>
+        {isOpen && !collapsed && (
+          <div
+            id={`sidebar-group-${group.id}`}
+            className={styles.groupChildren}
+            role="group"
+            aria-label={group.label}
+          >
+            {group.children.map(renderChildLeaf)}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <aside
@@ -193,11 +396,6 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
     >
       <div className={styles.brand}>
         <Link href="/dashboard" className={styles.brandLink} title="Fanverse Admin">
-          {/* Actual Fanverse SVG brand mark — same purple→pink
-              stripey-F asset the main app + auth surfaces use,
-              so the visual identity reads consistently across
-              the platform. Per product feedback "inclua o
-              logotipo Fanverse no painel admin também". */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/fanverse-logo.svg"
@@ -207,10 +405,6 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
           />
           <span className={styles.brandName}>Fanverse</span>
         </Link>
-        {/* Collapse toggle — pinned to the right edge of the
-         *  brand row. When the sidebar is expanded the chevron
-         *  points LEFT (suggesting "fold inward"); when
-         *  collapsed it points RIGHT (suggesting "unfold"). */}
         <button
           type="button"
           className={styles.collapseToggle}
@@ -223,17 +417,16 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
         </button>
       </div>
 
-      <div className={styles.section}>
-        <span className={styles.sectionLabel}>Plataforma</span>
-        {PRIMARY_NAV.map(renderItem)}
-      </div>
+      <nav className={styles.nav} aria-label="Navegação principal">
+        {NAV.map((entry) =>
+          entry.kind === 'leaf' ? renderTopLeaf(entry) : renderGroup(entry),
+        )}
+      </nav>
 
       <div className={styles.spacer} />
 
-      <div className={styles.section}>
-        <span className={styles.sectionLabel}>Sistema</span>
-        {SECONDARY_NAV.map(renderItem)}
-      </div>
+      {/* Fanverse pinned no rodapé, desabilitado. */}
+      <div className={styles.disabledRow}>{renderTopLeaf(FANVERSE_DISABLED)}</div>
 
       <div className={styles.footer}>
         <div className={styles.profile} title={displayName}>

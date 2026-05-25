@@ -1,0 +1,112 @@
+/* Fanpoints — view extraída de settings/page.module.css.
+ * Mesmos tokens do design system. */
+
+.fpRuleCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.fpRuleLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.fpRuleKey {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  line-height: 1.4;
+}
+.fpRuleKey code {
+  font-family: var(--font-mono);
+  background: var(--surface-mute, rgba(255,255,255,0.04));
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  margin-right: 4px;
+}
+
+.fpPointsPositive {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success, #3DDB74);
+}
+.fpPointsNegative {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger, #f43f5e);
+}
+.fpDailyCap {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+.fpMute {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+.fpStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fpPointsEditor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.fpPointsInput {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-mute, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 4px 8px;
+  width: 64px;
+  text-align: right;
+  font-family: inherit;
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+.fpPointsInput:hover { border-color: var(--border-strong); }
+.fpPointsInput:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-bg, rgba(168, 85, 247, 0.18));
+}
+.fpPointsInput:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.fpPointsInput::-webkit-outer-spin-button,
+.fpPointsInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.fpPointsInput[type='number'] { -moz-appearance: textfield; }
+
+.fpPointsHint {
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.fpBrainstormCard {
+  background: var(--surface-mute, rgba(255,255,255,0.02));
+}
+.fpBrainstormTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
