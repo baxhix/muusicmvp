@@ -501,6 +501,96 @@
   color: var(--text-mute);
 }
 
+/* ── Testar disparo — cron trigger card ─────────────────────
+ * Bloco visível só pros kinds que têm cron handler (manager,
+ * daily digest, community interactions). Visual parecido com
+ * `.statusCard` (info à esquerda, action à direita) mas mais
+ * neutro pra não competir com o toggle Ativa/Desativada lá em
+ * cima. Resultado do último teste aparece embaixo como chip. */
+
+.triggerCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.triggerCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.triggerCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.triggerCardHelper {
+  font-size: 12px;
+  color: var(--text-mute);
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .triggerCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Chip de resultado — bg verde claro pra sucesso, vermelho pra
+ * falha. Mantém o mesmo padrão visual dos toasts pra que o user
+ * reconheça imediatamente. */
+.triggerResult {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-2);
+}
+.triggerResult[data-tone='success'] {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.06);
+}
+.triggerResult[data-tone='success'] svg {
+  color: rgb(34, 197, 94);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.triggerResult[data-tone='error'] {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.06);
+}
+.triggerResult[data-tone='error'] svg {
+  color: rgb(239, 68, 68);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.triggerResultText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.45;
+  min-width: 0;
+}
+.triggerResultText strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.triggerResultMeta {
+  color: var(--text-mute);
+  font-size: 11px;
+}
+
 /* ── Form footer (actions) ───────────────────────────────────
  * Botões Cancelar/Salvar (e Excluir, pra custom drafts) ficam no
  * fim do form. Sticky no bottom da sidebar pra que continuem

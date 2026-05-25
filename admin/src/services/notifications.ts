@@ -51,12 +51,41 @@ export interface UpsertNotificationInput {
   triggerOverride?: string | null;
 }
 
+/* Resposta do POST /api/admin/cron/trigger — `result` é "qualquer
+ * coisa" porque cada handler de cron retorna stats diferentes
+ * (managerDailyReport tem totalUsers/newUsers etc., dailyDigest
+ * tem totalSent/skipped, communityInteractions tem sent/skipped).
+ * Tipamos como Record genérico pra cobrir todos e deixar o UI
+ * extrair só o que precisa exibir. */
+export interface CronTriggerResponse {
+  ok: boolean;
+  kind: string;
+  durationMs: number;
+  result: Record<string, unknown>;
+}
+
 export const notificationsService = {
   list: () =>
     api.get<{ items: NotificationItem[] }>('/api/admin/notifications'),
   upsert: (input: UpsertNotificationInput) =>
     api.post<{ ok: boolean }>('/api/admin/notifications', input),
+  /** Dispara um cron job manualmente — usado pelo botão "Enviar
+   *  teste agora" do editor. Backend valida que o `kind` está no
+   *  registry; se não estiver, devolve 400 invalid/unknown_kind. */
+  trigger: (kind: string) =>
+    api.post<CronTriggerResponse>('/api/admin/cron/trigger', { kind }),
 };
+
+/** Kinds de notificação que têm um cron job conectado e podem ser
+ *  disparados pelo botão "Enviar teste agora". Mantemos a lista
+ *  aqui (em vez de derivar do server) porque o editor precisa
+ *  decidir SE mostra o botão antes mesmo de chamar a API. Espelha
+ *  exatamente CRON_REGISTRY no servidor. */
+export const TRIGGERABLE_KINDS = new Set<string>([
+  'manager_daily_report',
+  'daily_digest',
+  'community_interactions',
+]);
 
 export const CATEGORY_LABEL: Record<NotificationCategory, string> = {
   lifecycle: 'Ciclo de vida',

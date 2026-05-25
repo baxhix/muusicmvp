@@ -19,6 +19,7 @@ import {
   IconHome,
   IconChevronRight,
   IconTrash,
+  IconSend,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import NotificationPreview, { type PreviewDevice } from './NotificationPreview';
@@ -30,8 +31,10 @@ import {
   buildCustomDraft,
   CATEGORY_LABEL,
   CHANNEL_LABEL,
+  TRIGGERABLE_KINDS,
   type NotificationItem,
   type NotificationChannel,
+  type CronTriggerResponse,
 } from '@/services/notifications';
 import { formatDateTime } from '@/lib/format';
 import styles from './NotificationEditorFull.module.css';
@@ -92,6 +95,17 @@ export default function NotificationEditorFull({
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const labelInputRef = useRef<HTMLInputElement>(null);
+
+  /* Trigger ("Enviar teste agora") — só renderiza pros kinds
+   * cron-disparáveis (TRIGGERABLE_KINDS) e wired. Mantém o último
+   * resultado pra exibir feedback inline (não é só toast). */
+  const isTriggerable =
+    !isCustomDraft && item.wired && TRIGGERABLE_KINDS.has(item.kind);
+  const [triggering, setTriggering] = useState(false);
+  const [lastTrigger, setLastTrigger] = useState<CronTriggerResponse | null>(
+    null,
+  );
+  const [lastTriggerError, setLastTriggerError] = useState<string | null>(null);
 
   /* Mobile alterna entre editor/preview via tabs. */
   const [view, setView] = useState<ViewMode>('editor');
@@ -262,6 +276,37 @@ export default function NotificationEditorFull({
       });
     } finally {
       setSaving(false);
+    }
+  }
+
+  /* Dispara o cron em "modo teste" — chama o handler real,
+   * mesmas queries + mesmo envio de email. Não há dry-run no BE
+   * (cron já é idempotente o suficiente pra rodar 2x sem efeitos
+   * laterais inesperados na maioria dos casos). UI deixa isso
+   * claro com texto "Vai enviar email de verdade". */
+  async function handleTrigger() {
+    if (!isTriggerable || triggering) return;
+    setTriggering(true);
+    setLastTrigger(null);
+    setLastTriggerError(null);
+    try {
+      const res = await notificationsService.trigger(item.kind);
+      setLastTrigger(res);
+      push({
+        type: 'success',
+        title: 'Disparo concluído',
+        description: summarizeTriggerResult(item.kind, res),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Falha desconhecida.';
+      setLastTriggerError(msg);
+      push({
+        type: 'error',
+        title: 'Não foi possível disparar',
+        description: msg,
+      });
+    } finally {
+      setTriggering(false);
     }
   }
 
@@ -644,6 +689,68 @@ export default function NotificationEditorFull({
               </div>
             </section>
 
+            {/* ── Testar disparo (só pros kinds wired ao cron) ─────
+             * Roda o handler real (queries no DB + Resend). Sem
+             * dry-run no BE — mensagem deixa explícito pra evitar
+             * surpresa. Bloco fica visível só pros 3 kinds
+             * conectados ao cron registry. */}
+            {isTriggerable && (
+              <section className={styles.section}>
+                <div className={styles.sectionHead}>
+                  <span className={styles.sectionTitle}>Testar disparo</span>
+                  <span className={styles.sectionDesc}>
+                    Roda o cron agora, do jeito que rodaria automaticamente.
+                    O email é enviado de verdade — não é simulação.
+                  </span>
+                </div>
+                <div className={styles.triggerCard}>
+                  <div className={styles.triggerCardInfo}>
+                    <span className={styles.triggerCardTitle}>
+                      Executar &quot;{item.label}&quot; agora
+                    </span>
+                    <span className={styles.triggerCardHelper}>
+                      Mesmo destinatário, mesmas queries e mesmos efeitos
+                      colaterais (logs, cooldowns) do cron agendado.
+                    </span>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    leadingIcon={<IconSend size={14} />}
+                    onClick={handleTrigger}
+                    loading={triggering}
+                    disabled={triggering || saving}
+                  >
+                    {triggering ? 'Disparando…' : 'Enviar teste agora'}
+                  </Button>
+                </div>
+
+                {lastTrigger && (
+                  <div className={styles.triggerResult} data-tone="success">
+                    <IconCheckCircle size={13} />
+                    <div className={styles.triggerResultText}>
+                      <strong>Último teste</strong>
+                      <span>
+                        {summarizeTriggerResult(item.kind, lastTrigger)}
+                      </span>
+                      <span className={styles.triggerResultMeta}>
+                        Duração: {lastTrigger.durationMs}ms
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {lastTriggerError && (
+                  <div className={styles.triggerResult} data-tone="error">
+                    <IconAlert size={13} />
+                    <div className={styles.triggerResultText}>
+                      <strong>Falha no último teste</strong>
+                      <span>{lastTriggerError}</span>
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
             {/* ── Footer com ações ───────────────────────── */}
             <footer className={styles.formFooter}>
               {isCustomDraft && (
@@ -774,6 +881,49 @@ export default function NotificationEditorFull({
       />
     </div>
   );
+}
+
+/** Constrói uma descrição curta do resultado do trigger pra mostrar
+ *  no toast e na seção de "último teste". Cada kind tem campos
+ *  diferentes na resposta — picamos os mais relevantes pra texto
+ *  legível, com fallback genérico se a estrutura mudar. */
+function summarizeTriggerResult(
+  kind: string,
+  res: CronTriggerResponse,
+): string {
+  const r = res.result ?? {};
+  if (kind === 'manager_daily_report') {
+    const to = typeof r.to === 'string' ? r.to : '';
+    const totalUsers = typeof r.totalUsers === 'number' ? r.totalUsers : null;
+    const newUsers = typeof r.newUsers === 'number' ? r.newUsers : null;
+    const streams = typeof r.streams === 'number' ? r.streams : null;
+    const sent = r.sent === true;
+    const parts: string[] = [];
+    if (sent && to) parts.push(`Enviado pra ${to}.`);
+    if (!sent) parts.push('Cron rodou mas o email NÃO foi enviado.');
+    if (totalUsers != null) parts.push(`${totalUsers} usuários ativos`);
+    if (newUsers != null) parts.push(`+${newUsers} novos`);
+    if (streams != null) parts.push(`${streams} streams`);
+    return parts.join(' · ');
+  }
+  if (kind === 'daily_digest') {
+    const sent = typeof r.sent === 'number' ? r.sent : null;
+    const skipped = typeof r.skipped === 'number' ? r.skipped : null;
+    const parts: string[] = [];
+    if (sent != null) parts.push(`${sent} enviados`);
+    if (skipped != null) parts.push(`${skipped} pulados`);
+    return parts.join(' · ') || 'Cron rodou.';
+  }
+  if (kind === 'community_interactions') {
+    const sent = typeof r.sent === 'number' ? r.sent : null;
+    const candidates =
+      typeof r.candidates === 'number' ? r.candidates : null;
+    const parts: string[] = [];
+    if (candidates != null) parts.push(`${candidates} candidatos`);
+    if (sent != null) parts.push(`${sent} emails enviados`);
+    return parts.join(' · ') || 'Cron rodou.';
+  }
+  return `Cron "${kind}" rodou (${res.durationMs}ms).`;
 }
 
 /* ── Inline brand icons (Apple / Android) — para os toggles de
