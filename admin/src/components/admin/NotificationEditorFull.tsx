@@ -308,56 +308,19 @@ export default function NotificationEditorFull({
             </span>
           </nav>
 
-          <div className={styles.topbarActions}>
-            <label
-              className={styles.activeToggle}
-              title={
-                isSystem
-                  ? 'Notificação de sistema — sempre ativa'
-                  : enabled
-                    ? 'Clique pra desativar'
-                    : 'Clique pra ativar'
-              }
-            >
-              <input
-                type="checkbox"
-                checked={masterChecked}
-                disabled={isSystem || saving}
-                onChange={(e) => setEnabled(e.target.checked)}
-              />
-              <span>{masterChecked ? 'Ativa' : 'Desativada'}</span>
-            </label>
+          {/* Topbar limpo: status do edit state apenas (Personalizada
+           * / Editado). Os atributos do catálogo (kind, categoria,
+           * sistema) + master toggle vivem agora dentro do formulário
+           * — junto com os campos que afetam. Botões Cancelar/Salvar
+           * descem pro footer do form. */}
+          <div className={styles.topbarStatus}>
             {isCustomDraft && (
-              <Button
-                variant="dangerGhost"
-                size="sm"
-                iconOnly
-                onClick={() => setConfirmDelete(true)}
-                disabled={saving}
-                aria-label="Excluir notificação"
-                title="Excluir notificação personalizada"
-              >
-                <IconTrash size={14} />
-              </Button>
+              <Badge tone="info" size="sm" dot>Personalizada</Badge>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/notificacoes')}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              leadingIcon={<IconCheckCircle size={14} />}
-              onClick={save}
-              loading={saving}
-              disabled={!dirty}
-            >
-              Salvar alterações
-            </Button>
+            {!isCustomDraft &&
+              (labelEdited || descriptionEdited || triggerEdited) && (
+                <Badge tone="brand" size="sm">Editado</Badge>
+              )}
           </div>
         </div>
 
@@ -388,25 +351,6 @@ export default function NotificationEditorFull({
             >
               <IconEdit size={14} />
             </button>
-          </div>
-          <div className={styles.titleMeta}>
-            <code className={styles.kindBadge}>{item.kind}</code>
-            <Badge tone="neutral" size="sm">
-              {CATEGORY_LABEL[item.category]}
-            </Badge>
-            {isCustomDraft ? (
-              <Badge tone="info" size="sm" dot>Personalizada</Badge>
-            ) : isSystem ? (
-              <Badge tone="warning" size="sm">Sistema</Badge>
-            ) : item.wired ? (
-              <Badge tone="success" size="sm" dot>Em produção</Badge>
-            ) : (
-              <Badge tone="neutral" size="sm">Planejada</Badge>
-            )}
-            {!isCustomDraft &&
-              (labelEdited || descriptionEdited || triggerEdited) && (
-                <Badge tone="brand" size="sm">Editado</Badge>
-              )}
           </div>
         </div>
       </header>
@@ -699,6 +643,41 @@ export default function NotificationEditorFull({
                 </div>
               </div>
             </section>
+
+            {/* ── Footer com ações ───────────────────────── */}
+            <footer className={styles.formFooter}>
+              {isCustomDraft && (
+                <Button
+                  variant="dangerGhost"
+                  size="md"
+                  leadingIcon={<IconTrash size={14} />}
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={saving}
+                >
+                  Excluir notificação
+                </Button>
+              )}
+              <div className={styles.formFooterRight}>
+                <Button
+                  variant="ghost"
+                  size="md"
+                  onClick={() => router.push('/notificacoes')}
+                  disabled={saving}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  leadingIcon={<IconCheckCircle size={14} />}
+                  onClick={save}
+                  loading={saving}
+                  disabled={!dirty}
+                >
+                  Salvar alterações
+                </Button>
+              </div>
+            </footer>
           </div>
         </aside>
 

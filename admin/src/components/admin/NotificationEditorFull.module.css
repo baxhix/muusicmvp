@@ -93,32 +93,16 @@
   font-weight: 600;
 }
 
-/* ── Ações ───────────────────────────────────────────────────── */
-
-.topbarActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.activeToggle {
+/* ── Status pills no topbar ──────────────────────────────────
+ * Após o move de botões/badges pro form, o topbar à direita só
+ * mostra os indicadores de estado do EDIT (Personalizada, Editado).
+ * Atributos do catálogo (kind, categoria, sistema) viraram parte
+ * do form na seção "Atributos do catálogo". */
+.topbarStatus {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-body);
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border-subtle);
-  background: var(--card-bg);
-  transition: all 120ms ease;
-}
-.activeToggle:hover {
-  background: var(--bg-soft);
-}
-.activeToggle input {
-  margin: 0;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* ── Título editável ─────────────────────────────────────────── */
@@ -183,23 +167,6 @@
 .titleEditIcon:hover {
   background: var(--bg-soft);
   color: var(--text-body);
-}
-
-.titleMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.kindBadge {
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 11px;
-  background: var(--bg-soft);
-  padding: 3px 8px;
-  border-radius: 4px;
-  color: var(--text-faint);
-  border: 1px solid var(--border-subtle);
 }
 
 /* ── Mobile tabs ─────────────────────────────────────────────── */
@@ -532,6 +499,51 @@
 }
 .metaInline svg {
   color: var(--text-mute);
+}
+
+/* ── Form footer (actions) ───────────────────────────────────
+ * Botões Cancelar/Salvar (e Excluir, pra custom drafts) ficam no
+ * fim do form. Sticky no bottom da sidebar pra que continuem
+ * acessíveis enquanto o user rola o conteúdo. Bg `card-bg` + border
+ * superior + spacing pra criar separação visual com a última seção. */
+
+.formFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 24px -28px -24px;
+  padding: 14px 28px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.formFooterRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (max-width: 1024px) {
+  .formFooter {
+    margin: 18px -22px -18px;
+    padding: 12px 22px;
+  }
+}
+@media (max-width: 860px) {
+  .formFooter {
+    margin: 16px -18px -16px;
+    padding: 12px 18px;
+    flex-wrap: wrap;
+  }
+  .formFooterRight {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* ── Canvas (preview) ────────────────────────────────────────── */

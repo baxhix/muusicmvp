@@ -146,8 +146,28 @@ describe('softDeleteUser', () => {
 
     expect(captured[0].values).toMatchObject({
       deletedAt: expect.any(Date),
+      email: 'user-789@deleted.muusic.live',
     });
-    // Não vaza outros campos no UPDATE — apenas deleted_at
-    expect(Object.keys(captured[0].values ?? {})).toEqual(['deletedAt']);
+    /* Campos esperados no UPDATE: deletedAt (timestamp) + email
+     * (anonimizado, libera o original pra novos cadastros). Não
+     * vaza outros campos — name/avatar ficam pra cron de retenção
+     * que roda dias depois conforme política LGPD. */
+    expect(Object.keys(captured[0].values ?? {}).sort()).toEqual([
+      'deletedAt',
+      'email',
+    ]);
+  });
+
+  it('email anonimizado é determinístico (mesmo userId → mesmo email)', async () => {
+    mockState.updateReturning = [
+      { id: 'consistent-id', deletedAt: new Date() },
+    ];
+    mockState.deleteReturning = [];
+
+    await softDeleteUser('consistent-id');
+
+    expect(captured[0].values).toMatchObject({
+      email: 'consistent-id@deleted.muusic.live',
+    });
   });
 });
