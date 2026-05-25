@@ -785,6 +785,38 @@ export const communityTopicCommentReactions = pgTable(
   ],
 );
 
+/**
+ * Anti-spam pro cron de interações em comunidades. Cada (user,
+ * community) que recebe um email aqui é gravado com sent_at; o
+ * próximo run consulta antes de mandar de novo (cooldown 6h
+ * default). Sem isto, um community quente acumulando interações
+ * mandaria email a cada execução do cron.
+ *
+ * reason text: 'reply' (respondeu meu comment/topic), 'reaction'
+ * (curtiu meu comment) ou 'viral' (10+ interações em 6h numa
+ * comunidade onde comentei).
+ */
+export const communityNotificationLog = pgTable(
+  'community_notification_log',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    communityId: uuid('community_id')
+      .notNull()
+      .references(() => communities.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(), // 'reply' | 'reaction' | 'viral'
+    sentAt: timestamp('sent_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('cnl_user_sent_idx').on(t.userId, t.sentAt),
+    index('cnl_user_community_idx').on(t.userId, t.communityId, t.sentAt),
+  ],
+);
+
 /* ──────────────────────────────────────────────────────────────
  * Materiais — acervo de conteúdo exclusivo da artista pros
  * superfãs. Árvore hierárquica: pastas + arquivos. Cada arquivo

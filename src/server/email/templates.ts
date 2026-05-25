@@ -195,6 +195,61 @@ function welcomeDefaultDesign(): EmailDesign {
   };
 }
 
+/* Movimentação em comunidades — disparado pelo cron de interações.
+ * Lista NOMES das comunidades onde tem novidade (sem conteúdo)
+ * + CTA pra abrir o app. O ponto é GERAR CURIOSIDADE, não
+ * resumir tudo no email — fazer o usuário voltar. */
+function communityInteractionsDefaultDesign(): EmailDesign {
+  return {
+    version: 1,
+    theme: {
+      bgColor: '#f6f6f7',
+      contentBg: '#ffffff',
+      textColor: '#111111',
+      mutedColor: '#888888',
+      linkColor: '#000000',
+      buttonBg: '#000000',
+      buttonText: '#ffffff',
+      buttonRadius: 999,
+      fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    },
+    header: {
+      enabled: true,
+      title: 'Tá rolando algo nas suas comunidades',
+      subtitle: 'E você tá perdendo, {{userName}}.',
+    },
+    blocks: [
+      {
+        id: 'comint-1',
+        kind: 'paragraph',
+        text: 'Nas últimas 6 horas, essas comunidades ganharam movimentação:',
+      },
+      {
+        id: 'comint-2',
+        kind: 'paragraph',
+        text: '{{communityList}}',
+      },
+      {
+        id: 'comint-3',
+        kind: 'button',
+        text: 'Ver o que está acontecendo',
+        href: '{{appUrl}}',
+        align: 'center',
+      },
+      {
+        id: 'comint-4',
+        kind: 'paragraph',
+        text: '<i>Vai lá antes que perca o assunto.</i>',
+      },
+    ],
+    footer: {
+      enabled: false,
+      text: '',
+    },
+  };
+}
+
 /* Relatório diário do gestor — disparado pelo cron matinal (06h00)
  * com KPIs do dia anterior. Block focado em métricas numéricas:
  * cada paragraph é uma stat. */
@@ -513,6 +568,31 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
   <p style="font-size:11px;color:#aaa;font-style:italic;margin-top:24px;">Tempo médio de sessão é estimado por enquanto — vira número real quando o schema de sessões cair. Os demais KPIs vêm direto do banco.</p>
 </div>`,
     defaultDesign: managerDailyReportDefaultDesign(),
+  },
+  {
+    kind: 'community_interactions',
+    label: 'Movimentação em comunidades',
+    description:
+      'Email periódico avisando o usuário que está rolando ' +
+      'movimentação em comunidades que ele participa — respostas, ' +
+      'reações no comment dele OU comunidade bombando (10+ ' +
+      'interações em 6h). Lista APENAS o nome das comunidades, ' +
+      'sem conteúdo — induz a abrir o app pra ver.',
+    variables: [
+      { name: 'userName', description: 'Nome do usuário (display name)' },
+      { name: 'communityList', description: 'Lista HTML <br>-separada dos nomes das comunidades' },
+      { name: 'appUrl', description: 'URL pra abrir o /app' },
+    ],
+    defaultSubject: 'Tá rolando algo nas suas comunidades, {{userName}}',
+    defaultHtml: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
+  <h1 style="font-size:22px;font-weight:700;margin:0 0 6px;">Tá rolando algo nas suas comunidades</h1>
+  <p style="font-size:13px;color:#888;margin:0 0 20px;">E você tá perdendo, {{userName}}.</p>
+  <p style="font-size:15px;line-height:1.55;color:#333;">Nas últimas 6 horas, essas comunidades ganharam movimentação:</p>
+  <div style="margin:18px 0;padding:14px 16px;background:#f6f6f7;border-radius:10px;font-size:15px;line-height:1.7;color:#222;">{{communityList}}</div>
+  <p style="margin:28px 0;text-align:center;"><a href="{{appUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Ver o que está acontecendo</a></p>
+  <p style="font-size:13px;color:#888;font-style:italic;margin-top:24px;">Vai lá antes que perca o assunto.</p>
+</div>`,
+    defaultDesign: communityInteractionsDefaultDesign(),
   },
 ];
 

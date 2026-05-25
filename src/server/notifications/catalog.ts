@@ -218,6 +218,26 @@ export const KNOWN_NOTIFICATIONS: KnownNotification[] = [
     wired: true,
   },
   {
+    kind: 'community_interactions',
+    label: 'Movimentação nas comunidades',
+    description:
+      'Aviso por email de quando alguém respondeu/curtiu seu comentário ' +
+      'ou quando uma comunidade onde você comentou está bombando (10+ ' +
+      'interações nas últimas 6h). O email menciona só o NOME da ' +
+      'comunidade, sem o conteúdo — gera curiosidade pra o usuário ' +
+      'voltar conferir.',
+    trigger:
+      'Cron periódico (recomendado a cada 6h, TZ America/Sao_Paulo). ' +
+      'HTTP trigger via /api/cron/community-interactions gated por ' +
+      'CRON_SECRET; CLI via `npm run cron:community-interactions`. ' +
+      'Cooldown de 6h por (user, community) via tabela ' +
+      'community_notification_log.',
+    category: 'social',
+    supportedChannels: ['email'],
+    defaultChannels: ['email'],
+    wired: true,
+  },
+  {
     kind: 'manager_daily_report',
     label: 'Relatório diário do gestor',
     description:
