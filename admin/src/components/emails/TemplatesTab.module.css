@@ -239,17 +239,17 @@
 }
 
 .cardKind {
-  /* Pill inline-block (não mais flex item full-width) — ocupa só
-   * o necessário pro texto do kind, alinhado à esquerda como uma
-   * "subetiqueta" técnica do título. */
+  /* Subetiqueta técnica abaixo do título — texto monoespaçado
+   * plano (sem background/padding) pra que o primeiro caractere
+   * ALINHE EXATAMENTE com o "B" do título. O pill anterior tinha
+   * padding-left 6px que empurrava o texto pra dentro e desalinhava
+   * com o título acima. */
   display: inline-block;
   align-self: flex-start;
   font-family: 'SF Mono', Menlo, Consolas, monospace;
   font-size: 11px;
   color: var(--text-faint);
-  background: var(--bg-soft);
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
