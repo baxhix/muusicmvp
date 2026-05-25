@@ -1,20 +1,20 @@
 /**
  * Email de "nova mensagem direta" — disparado pelo chat backend
- * (sendMessage) quando o destinatário está OFFLINE no momento do
- * envio (sem socket ativo via presence.ts).
+ * (sendMessage) em TODA DM, online ou não. Email é canal redundante
+ * além do in-app, não substituto.
  *
- * Por que existe: o canal in-app já gera notificação (sino + badge)
- * pra TODAS as DMs. Mas quando o user nem está com o app aberto,
- * essa notificação fica invisível até ele voltar. O email cobre
- * esse gap.
+ * Por que existe: cobre o cenário onde o user fechou o app ou não
+ * está olhando o sino agora, e ainda assim quer/precisa ser
+ * notificado. Pra usuários que querem silenciar (DMs ativas), o
+ * admin desliga o canal email no /admin/notificacoes/new_dm.
  *
- * Anti-spam: o caller deve gatear via `isNotificationEnabled('new_dm',
- * 'email')` (toggle do admin) E via `!isOnline(recipientId)` (estado
- * real). Sem esses dois, este helper não deve ser chamado.
+ * Gate único: o caller deve verificar `isNotificationEnabled('new_dm',
+ * 'email')` (toggle do admin). Sem isso, dispara sempre.
  *
  * Coalescing/throttling de email NÃO é feito aqui — fica como TODO
  * na v2 (ex: max 1 email/conversa a cada 10 minutos). Por enquanto,
- * cada mensagem offline gera um email — aceitável pro MVP.
+ * cada mensagem gera um email pra cada destinatário — aceitável pro
+ * MVP, admin pode desligar o canal se virar problema.
  *
  * Mesmo pipeline dos outros emails: template do DB (editável via
  * /admin/emails/templates/new_dm/edit) com fallback pro

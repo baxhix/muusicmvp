@@ -84,13 +84,13 @@ export const KNOWN_NOTIFICATIONS: KnownNotification[] = [
     kind: 'new_dm',
     label: 'Nova mensagem direta',
     description:
-      'Quando outro fã inicia ou responde uma DM. No app, dispara ' +
-      'sempre. Por email, dispara SÓ se o destinatário estiver ' +
-      'offline (sem socket ativo) — evita spam pra quem já tá vendo ' +
-      'a conversa em tempo real.',
+      'Quando outro fã inicia ou responde uma DM. Dispara nos dois ' +
+      'canais (in-app e email) pra TODO destinatário, online ou não — ' +
+      'email é canal redundante além do realtime. Pra evitar emails ' +
+      'em DMs ativas, desligue o canal email aqui no admin.',
     trigger:
-      'Mensagem inserida em `messages` com kind=dm. Email só sai ' +
-      'quando isOnline(recipientId) === false no momento do envio.',
+      'Mensagem inserida em `messages` com kind=dm. Email vai pra ' +
+      'todo recipientId independente de presença.',
     category: 'social',
     supportedChannels: ['in_app', 'email'],
     defaultChannels: ['in_app', 'email'],

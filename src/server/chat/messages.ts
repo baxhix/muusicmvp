@@ -8,7 +8,6 @@ import {
   users,
   type Message,
 } from '../db/schema';
-import { isOnline } from '../realtime/handlers/presence';
 import { isNotificationEnabled } from '../notifications/settings';
 import {
   sendNewDmEmail,
@@ -154,23 +153,22 @@ export async function sendMessage(
     .where(eq(users.id, senderId))
     .limit(1);
 
-  /* Email pra DMs cujo destinatário está OFFLINE — separa-se em
-   * fire-and-forget aqui FORA da transação. O in-app já foi
-   * notificado dentro do tx (campo notifications). O email é só
-   * pra cobrir o gap de quem fechou o app.
+  /* Email pra TODA DM — separa-se em fire-and-forget aqui FORA da
+   * transação. O in-app já foi notificado dentro do tx (campo
+   * notifications). O email é mais um canal redundante (não
+   * importa se o destinatário está online ou não).
    *
    * Guard chain (todos têm que passar):
    *   - É DM (group rooms confiam no realtime + unread count)
    *   - Tem destinatários
    *   - Notificação `new_dm` habilitada pelo admin no canal email
-   *   - Destinatário NÃO está com socket ativo (isOnline === false)
    *
    * Anti-spam de email NÃO é feito aqui — fica como TODO v2
    * (ex: max 1 email/conversa a cada 10min). Por enquanto, cada
-   * mensagem offline gera um email. Snippet é truncado em 200
-   * chars pra caber no preview do inbox. */
+   * mensagem em DM gera 1 email pra cada destinatário. Snippet é
+   * truncado em 200 chars pra caber no preview do inbox. */
   if (txResult.conv?.type === 'dm' && txResult.others.length > 0) {
-    void dispatchOfflineDmEmails({
+    void dispatchNewDmEmails({
       conversationId,
       senderName:
         sender?.name ?? sender?.email?.split('@')[0] ?? 'Alguém',
@@ -193,41 +191,38 @@ export async function sendMessage(
 }
 
 /**
- * Para cada destinatário OFFLINE de uma DM, fire-and-forget o
- * email de "nova mensagem". Não joga exceção — falhas são só
- * logadas (Resend down não deve quebrar o envio da mensagem em si).
+ * Para cada destinatário de uma DM, fire-and-forget o email de
+ * "nova mensagem" — independente do estado online. Não joga exceção;
+ * falhas são só logadas (Resend down não deve quebrar o envio da
+ * mensagem em si).
  *
- * Separado em função pra que o caller (sendMessage) não tenha que
- * importar `users` schema duas vezes nem orquestrar a checagem de
- * online + notification settings inline.
+ * Antes esta função filtrava por `!isOnline(id)` (só offline). Per
+ * product feedback, agora dispara pra todo destinatário — email é
+ * canal redundante além do in-app, não substituto. Admin pode
+ * desligar o canal email do `new_dm` no /notificacoes/new_dm pra
+ * voltar ao comportamento antigo.
  */
-async function dispatchOfflineDmEmails(params: {
+async function dispatchNewDmEmails(params: {
   conversationId: string;
   senderName: string;
   messageBody: string;
   recipientUserIds: string[];
 }): Promise<void> {
   try {
-    /* Filtra destinatários online ANTES de bater no DB/Resend.
-     * isOnline é uma checagem em memória O(1) — barato fazer
-     * primeiro. */
-    const offlineIds = params.recipientUserIds.filter(
-      (id) => !isOnline(id),
-    );
-    if (offlineIds.length === 0) return;
+    if (params.recipientUserIds.length === 0) return;
 
     /* Gate pelo toggle do admin. Se o canal email do `new_dm`
      * estiver desligado, nem busca os emails (economiza query). */
     const emailEnabled = await isNotificationEnabled('new_dm', 'email');
     if (!emailEnabled) return;
 
-    /* Pesca os emails dos offline (e exclui soft-deleted — deleted
-     * users tem email anonimizado pra @deleted.muusic.live, mas
-     * mesmo assim não vale mandar). Loop individual com .limit(1)
-     * mantém compatibilidade com Drizzle sem `inArray`; pra DM
-     * (1 destinatário típico) o overhead é desprezível. */
+    /* Pesca emails dos destinatários (exclui soft-deleted — deleted
+     * users têm email anonimizado pra @deleted.muusic.live e não
+     * devem receber). Loop individual com .limit(1) mantém compat
+     * com Drizzle sem `inArray`; pra DM (1 destinatário típico)
+     * o overhead é desprezível. */
     const deliverable = await Promise.all(
-      offlineIds.map(async (id) => {
+      params.recipientUserIds.map(async (id) => {
         const rows = await db
           .select({
             id: users.id,
@@ -266,7 +261,7 @@ async function dispatchOfflineDmEmails(params: {
      * pelo `sendEmail` em si. */
     results.forEach((res, i) => {
       if (res.status === 'rejected') {
-        logger.error('chat.offline-dm.email-failed', res.reason, {
+        logger.error('chat.new-dm.email-failed', res.reason, {
           recipientId: valid[i]?.id,
         });
       }
@@ -274,7 +269,7 @@ async function dispatchOfflineDmEmails(params: {
   } catch (err) {
     /* Qualquer erro fora dos casos individuais (DB caiu, etc) —
      * só loga. O envio da mensagem em si continua. */
-    logger.error('chat.offline-dm.dispatch-failed', err, {
+    logger.error('chat.new-dm.dispatch-failed', err, {
       conversationId: params.conversationId,
     });
   }

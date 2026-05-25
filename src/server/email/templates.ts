@@ -195,9 +195,8 @@ function welcomeDefaultDesign(): EmailDesign {
   };
 }
 
-/* Nova mensagem direta — dispara quando outro fã manda DM E o
- * destinatário está OFFLINE (sem socket ativo). Email mostra
- * snippet da mensagem + CTA pra abrir a conversa. */
+/* Nova mensagem direta — dispara em TODA DM no Fanverse, online
+ * ou não. Email mostra snippet + CTA pra abrir a conversa. */
 function newDmDefaultDesign(): EmailDesign {
   return {
     version: 1,
@@ -222,12 +221,12 @@ function newDmDefaultDesign(): EmailDesign {
       {
         id: 'newdm-1',
         kind: 'paragraph',
-        text: '{{senderName}} te mandou uma mensagem enquanto você estava fora. Veja só:',
+        text: '{{senderName}} te mandou uma mensagem no Fanverse:',
       },
       {
         id: 'newdm-2',
         kind: 'paragraph',
-        text: '“{{messageSnippet}}”',
+        text: '<i>“{{messageSnippet}}”</i>',
       },
       {
         id: 'newdm-3',
@@ -239,7 +238,7 @@ function newDmDefaultDesign(): EmailDesign {
       {
         id: 'newdm-4',
         kind: 'paragraph',
-        text: 'Se você está recebendo várias dessas, vale silenciar nas configurações do app — você ainda vai ver tudo lá quando voltar.',
+        text: 'Se você está recebendo muitas dessas, vale silenciar nas configurações da conta.',
       },
     ],
     footer: {
@@ -307,11 +306,11 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
   },
   {
     kind: 'new_dm',
-    label: 'Nova mensagem (offline)',
+    label: 'Nova mensagem direta',
     description:
-      'Disparado quando alguém manda DM pra um usuário que NÃO está ' +
-      'com socket ativo no momento. Cobre o cenário do user que ' +
-      'fechou o app — o email avisa pra ele voltar.',
+      'Disparado quando alguém te manda DM no Fanverse. Vai pra TODO ' +
+      'destinatário (online ou não) por padrão — admin pode desligar ' +
+      'o canal email em /notificacoes/new_dm pra silenciar.',
     variables: [
       { name: 'senderName', description: 'Nome de quem mandou a mensagem' },
       { name: 'messageSnippet', description: 'Trecho da mensagem (até 200 chars)' },
@@ -320,10 +319,10 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
     defaultSubject: 'Nova mensagem de {{senderName}} no Fanverse',
     defaultHtml: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
   <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;">Você tem uma nova mensagem</h1>
-  <p style="font-size:15px;line-height:1.55;color:#333;"><b>{{senderName}}</b> te mandou uma mensagem enquanto você estava fora:</p>
+  <p style="font-size:15px;line-height:1.55;color:#333;"><b>{{senderName}}</b> te mandou uma mensagem no Fanverse:</p>
   <blockquote style="margin:20px 0;padding:14px 16px;background:#f6f6f7;border-left:3px solid #111;border-radius:6px;font-size:14.5px;line-height:1.5;color:#222;font-style:italic;">{{messageSnippet}}</blockquote>
   <p style="margin:28px 0;"><a href="{{conversationUrl}}" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;">Abrir conversa</a></p>
-  <p style="font-size:12px;color:#888;margin-top:32px;">Se você está recebendo várias dessas, dá pra silenciar nas configurações — as mensagens continuam disponíveis no app quando você voltar.</p>
+  <p style="font-size:12px;color:#888;margin-top:32px;">Se você está recebendo muitas dessas, dá pra silenciar nas configurações da conta.</p>
 </div>`,
     defaultDesign: newDmDefaultDesign(),
   },
