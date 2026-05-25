@@ -8,6 +8,16 @@ import ParticipantsModal from './ParticipantsModal';
 import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import styles from './SuperchatPanel.module.css';
 
+/** Auto-resize do textarea: cresce com o conteúdo até MAX_PX, depois
+ *  scroll interno. Reseta height pra `auto` antes de medir
+ *  scrollHeight pra que encolha quando o user apaga linhas. */
+const MAX_SUPERCHAT_TEXTAREA_PX = 120;
+function autoResizeChat(el: HTMLTextAreaElement | null): void {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight, MAX_SUPERCHAT_TEXTAREA_PX)}px`;
+}
+
 /** Pointer to the message currently being replied to. The actual
  *  quote is materialized at SEND time by buildReplyBody(). */
 interface ReplyTarget {
@@ -87,6 +97,7 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     useSuperchat(open && joined);
 
   const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showParticipants, setShowParticipants] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ReplyTarget | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -129,6 +140,9 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     send(body);
     setDraft('');
     setReplyingTo(null);
+    /* Reseta a altura do textarea — senão fica esticado mesmo
+     * com draft vazio depois de mandar mensagem multi-linha. */
+    requestAnimationFrame(() => autoResizeChat(inputRef.current));
   };
 
   const onReplyTo = (m: ApiMessage) => {
@@ -140,11 +154,13 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
     });
   };
 
-  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSubmit();
     }
+    /* Shift+Enter cai pro default do textarea: insere \n. Sem
+     * preventDefault, o browser faz o trabalho. */
   };
 
   if (!user) return null;
@@ -235,14 +251,19 @@ export default function SuperchatPanel({ open, onClose, onMarkRead }: SuperchatP
           )}
 
           <div className={styles.inputArea}>
-            <input
+            <textarea
+              ref={inputRef}
               className={styles.field}
               placeholder={replyingTo ? 'Sua resposta…' : 'Manda essa pra galera…'}
               autoComplete="off"
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                autoResizeChat(e.currentTarget);
+              }}
               onKeyDown={onKey}
               maxLength={4000}
+              rows={1}
             />
             <button
               className={styles.sendBtn}

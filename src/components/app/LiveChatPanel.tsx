@@ -14,6 +14,16 @@ import {
 import { useAuth as useAuthCtx } from '@/lib/auth/AuthContext';
 import styles from './LiveChatPanel.module.css';
 
+/** Auto-resize do textarea: cresce com o conteúdo até MAX_PX, depois
+ *  aparece scroll. Reseta pra altura natural antes de medir
+ *  scrollHeight pra que ENCOLHA quando o usuário apaga linhas. */
+const MAX_CHAT_TEXTAREA_PX = 120;
+function autoResizeChat(el: HTMLTextAreaElement | null): void {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight, MAX_CHAT_TEXTAREA_PX)}px`;
+}
+
 /** Block-user remains stubbed — the /api/block endpoint doesn't exist
  *  yet. Reporting (above) is wired to real /api/reports. */
 async function blockUser(userId: string, name: string | null): Promise<void> {
@@ -139,7 +149,7 @@ export default function LiveChatPanel({
   const [mentionStart, setMentionStart] = useState<number | null>(null);
   const [mentionQuery, setMentionQuery] = useState('');
   const [pickedMentions, setPickedMentions] = useState<MentionableMember[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const { user: authUser } = useAuthCtx();
   const mentionMembers = useConversationMembers(
     conversation ?? null,
@@ -302,6 +312,9 @@ export default function LiveChatPanel({
     setPickedMentions([]);
     setMentionStart(null);
     setMentionQuery('');
+    /* Reseta altura do textarea — sem isso, depois de enviar uma
+     * mensagem multi-linha o campo fica esticado com o draft vazio. */
+    requestAnimationFrame(() => autoResizeChat(inputRef.current));
     await onSend(body);
   };
 
@@ -333,10 +346,14 @@ export default function LiveChatPanel({
     setMentionQuery('');
   };
 
-  const handleDraftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setDraft(value);
     updateMentionState(value, e.target.selectionStart ?? value.length);
+    /* Auto-grow: cresce com o conteúdo até 120px, depois scroll
+     * interno. Sem isso, o textarea ficaria fixo em 1 linha mesmo
+     * com várias quebras (shift+enter). */
+    autoResizeChat(e.currentTarget);
   };
 
   const handlePickMention = (m: MentionableMember) => {
@@ -366,7 +383,7 @@ export default function LiveChatPanel({
     });
   };
 
-  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       // Mention autocomplete consumes Enter to pick the highlight.
       // Don't submit while it's open — its global keydown listener
@@ -375,6 +392,9 @@ export default function LiveChatPanel({
       e.preventDefault();
       submit();
     }
+    /* Shift+Enter cai pro default do textarea: insere \n na posição
+     * do caret. Não precisa de handler — só não chamamos
+     * preventDefault. */
   };
 
   const isGroup = conversation?.type === 'group';
@@ -757,7 +777,7 @@ export default function LiveChatPanel({
           />
         )}
 
-        <input
+        <textarea
           ref={inputRef}
           className={styles.field}
           placeholder={replyingTo ? 'Sua resposta…' : 'Mensagem…'}
@@ -773,6 +793,7 @@ export default function LiveChatPanel({
           }}
           onKeyDown={onKey}
           maxLength={4000}
+          rows={1}
         />
         <button
           className={styles.sendBtn}

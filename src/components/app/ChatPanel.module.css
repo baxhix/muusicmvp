@@ -124,6 +124,10 @@
   font-size: 11px;
   line-height: 1.45;
   word-break: break-word;
+  /* Preserva \n + colapsa runs de espaço — assim mensagens
+   * multi-linha enviadas com shift+enter renderizam quebra de
+   * linha no bubble. */
+  white-space: pre-wrap;
 }
 .msgIn  .bubble {
   background: rgba(28,28,28,1);
@@ -197,10 +201,12 @@
 .songArtist { font-size: 9px; color: var(--ink-mute); }
 .songIcon { color: var(--accent); flex-shrink: 0; font-size: 14px; }
 
-/* input area */
+/* input area — textarea pra suportar shift+enter (quebra de linha)
+ * com auto-grow. JS reseta scrollHeight a cada change pra crescer
+ * com o conteúdo até ~120px, depois aparece scroll interno. */
 .inputArea {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid rgba(255,255,255,0.06);
@@ -211,12 +217,20 @@
   flex: 1;
   background: rgba(22,22,22,1);
   border: none;
-  border-radius: 999px;
-  padding: 7px 12px;
+  /* border-radius menor que o pill antigo (999px) — accommoda
+   * crescimento vertical sem cantos esquisitos quando vira
+   * multi-linha. */
+  border-radius: 14px;
+  padding: 8px 12px;
   font-size: 11px;
+  line-height: 1.45;
   color: var(--ink);
   font-family: var(--sans);
   outline: none;
+  resize: none;
+  min-height: 30px;
+  max-height: 120px;
+  overflow-y: auto;
   transition: background 0.15s;
 }
 .field::placeholder { color: var(--ink-mute); }

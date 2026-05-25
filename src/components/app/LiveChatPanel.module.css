@@ -540,6 +540,9 @@
 
 .inputArea {
   display: flex;
+  /* align flex-end pra que o sendBtn (altura fixa) fique alinhado
+   * com a base do textarea quando ele cresce com shift+enter. */
+  align-items: flex-end;
   gap: 8px;
   padding: 12px 14px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -548,12 +551,21 @@
 .field {
   flex: 1;
   padding: 10px 14px;
-  border-radius: 999px;
+  /* Radius menor que o pill antigo (999px) — o textarea cresce
+   * vertical com shift+enter e pill puro fica feio em 3+ linhas.
+   * 18px mantém o feel arredondado mas comporta a altura. */
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: #f5f5f7;
   font-size: 14px;
+  line-height: 1.4;
   outline: none;
+  font-family: inherit;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
   transition: border-color 0.15s, background 0.15s;
 }
 .field:focus {

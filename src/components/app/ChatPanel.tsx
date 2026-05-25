@@ -1,8 +1,25 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback, KeyboardEvent } from 'react';
+import {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  type KeyboardEvent,
+  type ChangeEvent,
+} from 'react';
 import styles from './ChatPanel.module.css';
 import type { ChatUser, ChatMessage } from '@/types';
+
+/** Auto-resize do textarea: cresce com o conteúdo até MAX_TEXTAREA_PX,
+ *  depois aparece scroll. Reseta pra altura natural antes de medir
+ *  scrollHeight (senão fica preso na altura máxima anterior). */
+const MAX_TEXTAREA_PX = 120;
+function autoResize(el: HTMLTextAreaElement | null): void {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_PX)}px`;
+}
 
 interface ChatPanelProps {
   user: ChatUser | null;
@@ -20,6 +37,7 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
   const [inputVal, setInputVal] = useState('');
   const [showTyping, setShowTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // When user changes, load their messages
@@ -39,6 +57,9 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
     const text = inputVal.trim();
     if (!text || !user) return;
     setInputVal('');
+    /* Reseta altura do textarea — sem isso, depois de mandar uma
+     * mensagem multi-linha o campo fica esticado mesmo vazio. */
+    requestAnimationFrame(() => autoResize(inputRef.current));
 
     const newMsg: ChatMessage = { dir: 'out', text, time: formatNow() };
     setMessages((prev) => {
@@ -57,9 +78,21 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
     }
   }, [inputVal, user]);
 
+  const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+    setInputVal(e.target.value);
+    autoResize(e.currentTarget);
+  }, []);
+
+  /* Enter = enviar; Shift+Enter = quebra de linha (deixa o textarea
+   * inserir o \n nativamente, sem preventDefault). Em mobile, o
+   * teclado não tem Shift então só o botão de send funciona — OK
+   * (a entrada multi-linha vem de paste). */
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') sendMessage();
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     },
     [sendMessage],
   );
@@ -133,15 +166,18 @@ export default function ChatPanel({ user, isOpen, onClose }: ChatPanelProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Input — textarea com auto-grow + shift+enter pra quebra
+          de linha (Enter sozinho envia). */}
       <div className={styles.inputArea}>
-        <input
+        <textarea
+          ref={inputRef}
           className={styles.field}
           placeholder="Mensagem…"
           autoComplete="off"
           value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
+          rows={1}
         />
         <button className={styles.sendBtn} onClick={sendMessage} aria-label="Enviar">
           <svg viewBox="0 0 14 14" fill="none">

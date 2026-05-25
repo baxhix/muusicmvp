@@ -499,6 +499,9 @@
 
 .inputArea {
   display: flex;
+  /* align flex-end pro botão de send ficar grudado à base do
+   * textarea quando ele cresce com shift+enter. */
+  align-items: flex-end;
   gap: 8px;
   padding: 12px 14px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -507,12 +510,21 @@
 .field {
   flex: 1;
   padding: 10px 14px;
-  border-radius: 999px;
+  /* Antes era pill puro (999px). Diminuí pra 18px porque o
+   * textarea agora cresce vertical com shift+enter — em 3+ linhas
+   * o pill ficava com cantos esquisitos. */
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: #f5f5f7;
   font-size: 14px;
+  line-height: 1.4;
   outline: none;
+  font-family: inherit;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
   transition: border-color 0.15s, background 0.15s;
 }
 .field:focus {
