@@ -423,9 +423,9 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
         )}
       </nav>
 
-      <div className={styles.spacer} />
-
-      {/* Fanverse pinned no rodapé, desabilitado. */}
+      {/* Fanverse pinned no rodapé, desabilitado. `.nav` tem
+       *  flex:1 e empurra naturalmente o disabled + footer pra
+       *  base — sem .spacer pra não competir por espaço. */}
       <div className={styles.disabledRow}>{renderTopLeaf(FANVERSE_DISABLED)}</div>
 
       <div className={styles.footer}>
