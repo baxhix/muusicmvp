@@ -169,9 +169,13 @@ function linkify(text: string, color: string): string {
 const PARAGRAPH_ALLOWED_TAG = /^<\/?(strong|b|br|i|em)\s*\/?>$/i;
 
 /** Espelho do backend: mantém só tags allowlisted + linkifica
- *  URLs em texto livre + escape do resto. */
+ *  URLs em texto livre + escape do resto. Converte `\n` em `<br/>`
+ *  antes do tokenize pra que o preview mostre exatamente o que o
+ *  email vai mostrar (sem pre-wrap, newlines literais colapsariam
+ *  pra espaço). Idêntico ao server-side. */
 function formatParagraphHtml(text: string, linkColor: string): string {
-  const tokens = text.split(/(<[^>]+>)/);
+  const normalized = text.replace(/\r\n/g, '<br/>').replace(/\n/g, '<br/>');
+  const tokens = normalized.split(/(<[^>]+>)/);
   return tokens
     .map((token) => {
       if (token.startsWith('<') && token.endsWith('>')) {

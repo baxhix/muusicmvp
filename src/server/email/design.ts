@@ -264,13 +264,21 @@ const PARAGRAPH_ALLOWED_TAG = /^<\/?(strong|b|br|i|em)\s*\/?>$/i;
 
 /**
  * Sanitiza + linkifica o texto de paragraph:
+ *   - converte `\n` / `\r\n` literais em `<br/>` (defesa contra
+ *     valores antigos salvos antes do editor normalizar, e contra
+ *     paste de texto puro que o editor possa ter deixado passar)
  *   - mantém só tags allowlisted (strong/b/br/i/em) sem attrs
  *   - escapa o resto do conteúdo como HTML
  *   - linkifica URLs em texto livre
  */
 function formatParagraphHtml(text: string, linkColor: string): string {
+  /* Newlines viram <br/> ANTES do tokenize — assim ambos os fluxos
+   * (legacy text com `\n` + texto novo com `<br/>` do editor)
+   * resultam no mesmo HTML final. O <p> do email não tem pre-wrap,
+   * sem essa conversão `\n` colapsaria pra espaço. */
+  const normalized = text.replace(/\r\n/g, '<br/>').replace(/\n/g, '<br/>');
   // Quebra em tokens: <tag> ou texto livre.
-  const tokens = text.split(/(<[^>]+>)/);
+  const tokens = normalized.split(/(<[^>]+>)/);
   return tokens
     .map((token) => {
       if (token.startsWith('<') && token.endsWith('>')) {

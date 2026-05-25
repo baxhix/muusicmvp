@@ -20,9 +20,11 @@ interface ParagraphEditorProps {
  *   - I  (italic via execCommand sobre a seleção)
  *   - 4 alinhamentos (propriedade do bloco, aplica no <p> renderizado)
  *
- * Quebra de linha = Enter (contentEditable já cria <div>/<br>;
- * normalizamos em handleInput pra <br> simples — emails só
- * entendem <br>/<p>).
+ * Quebra de linha: Enter E Shift+Enter ambos inserem `<br/>`. Não
+ * existe noção de "parágrafo novo" dentro de um bloco — o bloco
+ * inteiro é UM <p> no email. Interceptamos os dois pra garantir
+ * consistência cross-browser (alguns browsers inserem <div>,
+ * outros <p>, outros literal `\n` em pre-wrap).
  *
  * Saída: HTML limitado (strong/b, em/i, br) — sanitizado novamente
  * tanto no renderer client (preview) quanto no server-side antes
@@ -57,15 +59,44 @@ export default function ParagraphEditor({
     /* Normaliza output: contentEditable de alguns browsers
      * envolve linhas em <div> ou <p>. Convertemos isso pra
      * <br/> pra emails renderizarem consistente. Mantemos
-     * <strong>, <b>, <br>, <i>, <em> intactos. */
+     * <strong>, <b>, <br>, <i>, <em> intactos.
+     *
+     * Também troca `\r\n` / `\n` literais por `<br/>` — o editor
+     * usa `white-space: pre-wrap` no CSS, então newlines literais
+     * (de paste de texto puro, por exemplo) aparecem como linha
+     * nova VISUALMENTE, mas o <p> do email não tem pre-wrap e
+     * colapsaria pra um espaço. Convertemos pra <br/> aqui pra
+     * que o saved value seja idêntico ao que o user vê. */
     const html = el.innerHTML
       .replace(/<div><br\s*\/?><\/div>/gi, '<br/>')
       .replace(/<div>/gi, '<br/>')
       .replace(/<\/div>/gi, '')
       .replace(/<p>/gi, '<br/>')
-      .replace(/<\/p>/gi, '');
+      .replace(/<\/p>/gi, '')
+      .replace(/\r\n/g, '<br/>')
+      .replace(/\n/g, '<br/>');
     lastEmitted.current = html;
     onChange(html);
+  }
+
+  /* Intercepta Enter / Shift+Enter: ambos inserem <br/> via
+   * execCommand. O default do contentEditable varia muito —
+   * Chrome envolve em <div>, Firefox em <br>, Safari pode usar
+   * `\n` literal em pre-wrap — e a normalização no handleInput
+   * é frágil pros casos raros (ex.: paste seguido de enter no
+   * meio do texto). Forçando `<br/>` aqui, o saved value bate
+   * 1:1 com o que aparece no email. */
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    /* `insertLineBreak` é o comando idiomático e cross-browser
+     * pra inserir <br/>. Fallback pra insertHTML caso o browser
+     * não suporte (raro mas seguro). */
+    const ok = document.execCommand('insertLineBreak');
+    if (!ok) {
+      document.execCommand('insertHTML', false, '<br/>');
+    }
+    handleInput();
   }
 
   function applyBold(e: React.MouseEvent) {
@@ -163,6 +194,7 @@ export default function ParagraphEditor({
         className={styles.editor}
         onInput={handleInput}
         onBlur={handleInput}
+        onKeyDown={handleKeyDown}
         style={{ textAlign: align }}
         role="textbox"
         aria-label="Texto do parágrafo"
