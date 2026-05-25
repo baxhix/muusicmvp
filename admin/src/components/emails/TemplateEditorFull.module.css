@@ -203,10 +203,9 @@
 
 .body {
   display: grid;
-  /* 60% editor / 40% preview no desktop. Preview clamped a 380px
-   * mínimo pra device frame caber + 720px máximo pra não engordar
-   * demais em telas grandes. */
-  grid-template-columns: 1fr minmax(380px, 40%);
+  /* 50/50 desktop. Preview clamped a 380px mínimo pra device
+   * frame caber. */
+  grid-template-columns: 1fr minmax(380px, 50%);
   flex: 1;
   min-height: 0;
 }
@@ -320,13 +319,13 @@
 
 @media (max-width: 1280px) {
   .body {
-    grid-template-columns: 1fr minmax(360px, 40%);
+    grid-template-columns: 1fr minmax(360px, 48%);
   }
 }
 
 @media (max-width: 1024px) {
   .body {
-    grid-template-columns: 1fr minmax(340px, 42%);
+    grid-template-columns: 1fr minmax(340px, 46%);
   }
   .sidebarInner {
     padding: 18px 22px;
