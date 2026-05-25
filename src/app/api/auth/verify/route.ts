@@ -66,6 +66,29 @@ export async function GET(req: Request) {
   // novo com o mesmo link (em vez de ficar com magic consumido sem session).
   await consumeMagicAndCreateSession(hash, magic.userId);
 
+  /* Checa isOnboarded — usuário NOVO (boas_vindas, conta acabada de
+   * criar) tem que passar pelo onboarding antes de cair em /app.
+   * Sem isto, clique no magic link da boas_vindas pulava direto
+   * pra /app?welcome=1 sem coletar nome/birth-date, e as
+   * animações de primeiro acesso não rodavam porque vinham de
+   * outro caminho (/auth/success → /app?welcome=1).
+   *
+   * Returning users (isOnboarded=true) seguem direto pro returnTo
+   * normal — animações de retorno (?welcome=back) rolam ao chegar
+   * em /app. */
+  const userRow = await db
+    .select({ isOnboarded: users.isOnboarded })
+    .from(users)
+    .where(eq(users.id, magic.userId))
+    .limit(1);
+  const isOnboarded = userRow[0]?.isOnboarded ?? false;
+
+  if (!isOnboarded) {
+    return NextResponse.redirect(
+      new URL('/auth/onboarding/birth-date', env.APP_URL),
+    );
+  }
+
   return NextResponse.redirect(returnTo ?? new URL('/app', env.APP_URL));
 }
 

@@ -247,10 +247,6 @@ export const KNOWN_TEMPLATES: KnownTemplate[] = [
     <p style="font-size: 13px; color: #666; margin: 0 0 8px;">Ou digite este código no app:</p>
     <p style="font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 28px; font-weight: 700; letter-spacing: 0.2em; color: #111; margin: 0;">{{code}}</p>
   </div>
-  <p style="font-size: 13px; color: #888;">
-    Se o botão não funcionar, copie e cole este link no navegador:<br/>
-    <span style="word-break: break-all;">{{magicUrl}}</span>
-  </p>
   <p style="font-size: 12px; color: #aaa; margin-top: 32px;">Se você não pediu este email, ignore.</p>
 </div>`,
     defaultDesign: magicLinkDefaultDesign(),

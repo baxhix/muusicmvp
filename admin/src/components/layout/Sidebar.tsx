@@ -103,6 +103,12 @@ const NAV: NavEntry[] = [
     label: 'Plataforma',
     icon: IconGrid,
     children: [
+      /* Feed e Comunidades movidos de Superfãs pra cá conforme
+       * reorg do produto — são features da plataforma como um
+       * todo, não exclusivas do tier de superfãs. Ficam no topo
+       * por serem o conteúdo mais consultado. */
+      { kind: 'leaf', href: '/feed',          label: 'Feed' },
+      { kind: 'leaf', href: '/comunidades',   label: 'Comunidades' },
       { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
       { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
       { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
@@ -118,8 +124,6 @@ const NAV: NavEntry[] = [
     label: 'Superfãs',
     icon: IconStar,
     children: [
-      { kind: 'leaf', href: '/feed',         label: 'Feed' },
-      { kind: 'leaf', href: '/comunidades',  label: 'Comunidades' },
       { kind: 'leaf', href: '/superchat',    label: 'Superchat' },
       { kind: 'leaf', href: '/materiais',    label: 'Materiais' },
       { kind: 'leaf', href: '/fanpoints',    label: 'Fanpoints' },
