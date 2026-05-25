@@ -44,7 +44,11 @@ export interface BlockHeading {
 export interface BlockParagraph {
   id: string;
   kind: 'paragraph';
+  /** HTML limitado: pode conter <strong>, <b>, <br>, <br/>, <i>,
+   *  <em>. Qualquer outra tag é stripada no renderer. URLs em
+   *  texto livre viram <a> automaticamente. */
   text: string;
+  align?: 'left' | 'center' | 'right' | 'justify';
 }
 export interface BlockButton {
   id: string;
@@ -253,6 +257,37 @@ function linkify(text: string, color: string): string {
   );
 }
 
+/* Tags permitidas no texto de paragraphs (input vem do editor
+ * visual). Allowlist estrito — defesa em profundidade contra XSS
+ * mesmo que o admin tenha sessão válida. */
+const PARAGRAPH_ALLOWED_TAG = /^<\/?(strong|b|br|i|em)\s*\/?>$/i;
+
+/**
+ * Sanitiza + linkifica o texto de paragraph:
+ *   - mantém só tags allowlisted (strong/b/br/i/em) sem attrs
+ *   - escapa o resto do conteúdo como HTML
+ *   - linkifica URLs em texto livre
+ */
+function formatParagraphHtml(text: string, linkColor: string): string {
+  // Quebra em tokens: <tag> ou texto livre.
+  const tokens = text.split(/(<[^>]+>)/);
+  return tokens
+    .map((token) => {
+      if (token.startsWith('<') && token.endsWith('>')) {
+        if (!PARAGRAPH_ALLOWED_TAG.test(token)) return '';
+        // Normaliza pra lowercase + remove possíveis atributos.
+        const lower = token.toLowerCase();
+        const m = lower.match(/^<(\/?)(strong|b|br|i|em)\s*\/?>$/);
+        if (!m) return '';
+        const [, slash, name] = m;
+        if (name === 'br') return '<br/>';
+        return `<${slash}${name}>`;
+      }
+      return linkify(token, linkColor);
+    })
+    .join('');
+}
+
 function renderBlock(block: EmailBlock, theme: EmailTheme): string {
   switch (block.kind) {
     case 'heading': {
@@ -264,11 +299,13 @@ function renderBlock(block: EmailBlock, theme: EmailTheme): string {
 </td></tr>`;
     }
 
-    case 'paragraph':
+    case 'paragraph': {
+      const align = block.align ?? 'left';
       return `
-<tr><td style="padding:0 0 14px;">
-  <p style="margin:0;font-family:${theme.fontFamily};font-size:15px;line-height:1.55;color:${theme.textColor};">${linkify(block.text, theme.linkColor)}</p>
+<tr><td style="padding:0 0 14px;text-align:${align};">
+  <p style="margin:0;font-family:${theme.fontFamily};font-size:15px;line-height:1.55;color:${theme.textColor};text-align:${align};">${formatParagraphHtml(block.text, theme.linkColor)}</p>
 </td></tr>`;
+    }
 
     case 'button': {
       const align = block.align === 'left' ? 'left' : 'center';

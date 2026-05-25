@@ -83,7 +83,10 @@ const blockSchema = z.discriminatedUnion('kind', [
   z.object({
     id: z.string(),
     kind: z.literal('paragraph'),
-    text: z.string().max(5000),
+    /* Texto suporta HTML limitado: <strong>, <b>, <br>, <i>, <em>.
+     * Renderer faz allowlist; aqui só limita tamanho. */
+    text: z.string().max(10_000),
+    align: z.enum(['left', 'center', 'right', 'justify']).optional(),
   }),
   z.object({
     id: z.string(),

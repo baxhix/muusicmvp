@@ -11,6 +11,7 @@ import {
   type EmailTheme,
   newBlockId,
 } from '@/services/emailDesign';
+import ParagraphEditor from './ParagraphEditor';
 import styles from './VisualEditor.module.css';
 
 interface VisualEditorProps {
@@ -374,12 +375,12 @@ function BlockEditor({
         )}
 
         {block.kind === 'paragraph' && (
-          <textarea
-            className={styles.textarea}
+          <ParagraphEditor
             value={block.text}
-            onChange={(e) => onChange({ ...block, text: e.target.value })}
-            placeholder="Texto do parágrafo. Use {{magicUrl}} pra variáveis."
-            rows={3}
+            onChange={(text) => onChange({ ...block, text })}
+            align={block.align ?? 'left'}
+            onAlignChange={(align) => onChange({ ...block, align })}
+            placeholder="Texto do parágrafo. Use {{var}} pra variáveis."
           />
         )}
 

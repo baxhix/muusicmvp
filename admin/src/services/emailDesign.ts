@@ -27,7 +27,9 @@ export interface BlockHeading {
 export interface BlockParagraph {
   id: string;
   kind: 'paragraph';
+  /** HTML limitado: pode conter <strong>, <b>, <br>, <i>, <em>. */
   text: string;
+  align?: 'left' | 'center' | 'right' | 'justify';
 }
 export interface BlockButton {
   id: string;
@@ -164,6 +166,28 @@ function linkify(text: string, color: string): string {
   );
 }
 
+const PARAGRAPH_ALLOWED_TAG = /^<\/?(strong|b|br|i|em)\s*\/?>$/i;
+
+/** Espelho do backend: mantém só tags allowlisted + linkifica
+ *  URLs em texto livre + escape do resto. */
+function formatParagraphHtml(text: string, linkColor: string): string {
+  const tokens = text.split(/(<[^>]+>)/);
+  return tokens
+    .map((token) => {
+      if (token.startsWith('<') && token.endsWith('>')) {
+        if (!PARAGRAPH_ALLOWED_TAG.test(token)) return '';
+        const lower = token.toLowerCase();
+        const m = lower.match(/^<(\/?)(strong|b|br|i|em)\s*\/?>$/);
+        if (!m) return '';
+        const [, slash, name] = m;
+        if (name === 'br') return '<br/>';
+        return `<${slash}${name}>`;
+      }
+      return linkify(token, linkColor);
+    })
+    .join('');
+}
+
 function renderBlock(block: EmailBlock, theme: EmailTheme): string {
   switch (block.kind) {
     case 'heading': {
@@ -171,8 +195,10 @@ function renderBlock(block: EmailBlock, theme: EmailTheme): string {
       const size = level === 2 ? 20 : 16;
       return `<tr><td style="padding:0 0 12px;"><h${level} style="margin:0;font-family:${theme.fontFamily};font-size:${size}px;font-weight:700;color:${theme.textColor};line-height:1.3;">${esc(block.text)}</h${level}></td></tr>`;
     }
-    case 'paragraph':
-      return `<tr><td style="padding:0 0 14px;"><p style="margin:0;font-family:${theme.fontFamily};font-size:15px;line-height:1.55;color:${theme.textColor};">${linkify(block.text, theme.linkColor)}</p></td></tr>`;
+    case 'paragraph': {
+      const align = block.align ?? 'left';
+      return `<tr><td style="padding:0 0 14px;text-align:${align};"><p style="margin:0;font-family:${theme.fontFamily};font-size:15px;line-height:1.55;color:${theme.textColor};text-align:${align};">${formatParagraphHtml(block.text, theme.linkColor)}</p></td></tr>`;
+    }
     case 'button': {
       const align = block.align === 'left' ? 'left' : 'center';
       return `<tr><td style="padding:18px 0;text-align:${align};"><a href="${esc(block.href)}" style="display:inline-block;background:${theme.buttonBg};color:${theme.buttonText};text-decoration:none;font-family:${theme.fontFamily};font-size:15px;font-weight:600;padding:12px 22px;border-radius:${theme.buttonRadius}px;">${esc(block.text)}</a></td></tr>`;
