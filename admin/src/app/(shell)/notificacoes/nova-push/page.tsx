@@ -44,73 +44,145 @@ import styles from './page.module.css';
  * no mesmo tempo").
  */
 
-const CATEGORY_OPTIONS: { value: NotificationCategory; label: string }[] = [
+/* Schema espelha a tabela `push_notifications` no Firebase. Os
+ * campos auto-gerados (id, sender_id, created_at, sent_at) NÃO
+ * aparecem no form — o banner avisa o admin. */
+
+const TYPE_OPTIONS: { value: NotificationCategory; label: string }[] = [
   { value: 'lifecycle',  label: CATEGORY_LABEL.lifecycle },
   { value: 'social',     label: CATEGORY_LABEL.social },
   { value: 'content',    label: CATEGORY_LABEL.content },
   { value: 'engagement', label: CATEGORY_LABEL.engagement },
 ];
 
-const KIND_REGEX = /^[a-z0-9_]+$/;
+/** Espelha o enum Firebase `target_type`: quem recebe a push.
+ *  Quando a integração real subir, esses values batem 1:1 com a
+ *  coluna. Default = todos os usuários. */
+type TargetType =
+  | 'all_users'
+  | 'top_superfans'
+  | 'inactive_users'
+  | 'by_city'
+  | 'single_user'
+  | 'custom_list';
+
+const TARGET_OPTIONS: { value: TargetType; label: string }[] = [
+  { value: 'all_users',      label: 'Todos os usuários' },
+  { value: 'top_superfans',  label: 'Top superfãs (top X% por fanpoints)' },
+  { value: 'inactive_users', label: 'Inativos (X+ dias sem entrar)' },
+  { value: 'by_city',        label: 'Por cidade' },
+  { value: 'single_user',    label: 'Um usuário específico' },
+  { value: 'custom_list',    label: 'Lista de emails' },
+];
+
+/** Slug a partir do título — usado pro kind interno do draft.
+ *  Remove acentos, normaliza pra a-z0-9 + underscore, trunca em
+ *  60 chars (limite do regex de validação do catálogo). */
+function slugifyTitle(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 60) || 'push';
+}
 
 export default function NovaPushPage() {
   const router = useRouter();
   const { push } = useToast();
 
-  const [kind, setKind] = useState('');
-  const [label, setLabel] = useState('');
-  const [description, setDescription] = useState('');
-  const [trigger, setTrigger] = useState('');
-  const [category, setCategory] = useState<NotificationCategory>('engagement');
+  /* Campos espelhando o schema Firebase `push_notifications`.
+   * id/sender_id/created_at/sent_at são auto-gerados — não têm
+   * input aqui (avisamos via banner). */
+  const [title, setTitle] = useState('');           // → Firebase `title`
+  const [body, setBody] = useState('');             // → Firebase `body`
+  const [imageUrl, setImageUrl] = useState('');     // → Firebase `image_url`
+  const [deepLink, setDeepLink] = useState('');     // → Firebase `deep_link`
+  const [type, setType] = useState<NotificationCategory>('engagement'); // → `type`
+  const [targetType, setTargetType] = useState<TargetType>('all_users'); // → `target_type`
+  const [scheduledAt, setScheduledAt] = useState(''); // → Firebase `scheduled_at`
   const [saving, setSaving] = useState(false);
   /* Tab do preview — alterna entre mockup iPhone e Android.
    * Default iPhone porque é o mais comum. */
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('iphone');
 
-  /* Lista de kinds existentes — usado pra validar duplicado contra
-   * drafts em localStorage. O catálogo do servidor não é checado
-   * aqui (race aceitável pra demo), mas o save final faz re-check. */
+  /* Lista de kinds existentes em localStorage. O kind é DERIVADO
+   * do `title` no save — o admin não precisa pensar em slug. */
   const [existingKinds, setExistingKinds] = useState<string[]>([]);
   useEffect(() => {
     setExistingKinds(loadCustomDrafts().map((d) => d.kind));
   }, []);
 
-  const trimmedKind = kind.trim().toLowerCase();
-  const kindError = useMemo(() => {
-    if (!trimmedKind) return 'Identificador obrigatório.';
-    if (trimmedKind.length > 60) return 'Máximo 60 caracteres.';
-    if (!KIND_REGEX.test(trimmedKind))
-      return 'Use só letras minúsculas, números e _.';
-    if (existingKinds.includes(trimmedKind))
-      return 'Já existe uma notificação com esse identificador.';
+  /* Validação rasa por campo. O `title` é obrigatório (define o
+   * slug do draft). `body` também é (pra que a notificação tenha
+   * conteúdo). image_url e deep_link são opcionais — quando
+   * preenchidos, conferimos formato URL básico. */
+  const trimmedTitle = title.trim();
+  const titleError = useMemo(() => {
+    if (!trimmedTitle) return 'Título obrigatório.';
+    if (trimmedTitle.length > 100) return 'Máximo 100 caracteres.';
+    const slug = slugifyTitle(trimmedTitle);
+    if (existingKinds.includes(slug)) {
+      return 'Já existe uma push com identificador semelhante. Escolha outro título.';
+    }
     return null;
-  }, [trimmedKind, existingKinds]);
+  }, [trimmedTitle, existingKinds]);
 
-  const labelError = !label.trim() ? 'Obrigatório.' : null;
-  const canSubmit = !kindError && !labelError && !saving;
+  const bodyError = !body.trim() ? 'Corpo obrigatório.' : null;
+
+  const imageUrlError = useMemo(() => {
+    if (!imageUrl.trim()) return null;
+    try {
+      const u = new URL(imageUrl.trim());
+      if (!u.protocol.startsWith('http')) return 'Use https:// ou http://.';
+      return null;
+    } catch {
+      return 'URL inválida.';
+    }
+  }, [imageUrl]);
+
+  const canSubmit = !titleError && !bodyError && !imageUrlError && !saving;
 
   function submit() {
     if (!canSubmit) return;
     setSaving(true);
+    const slug = slugifyTitle(trimmedTitle);
     /* Defesa anti-race: re-checa contra localStorage no momento de
      * salvar (alguém pode ter criado um draft com mesmo kind em
      * outra aba). */
-    const conflict = loadCustomDrafts().some((d) => d.kind === trimmedKind);
+    const conflict = loadCustomDrafts().some((d) => d.kind === slug);
     if (conflict) {
       setSaving(false);
       push({
         type: 'error',
         title: 'Identificador já em uso',
-        description: 'Escolha um nome diferente — esse já foi cadastrado.',
+        description: 'Já existe uma push com identificador semelhante.',
       });
       return;
     }
+    /* O draft mocado em localStorage aceita só (kind, label,
+     * description, trigger, category, channels). Os campos
+     * Firebase extra (image_url, deep_link, target_type,
+     * scheduled_at) seriam persistidos quando a integração real
+     * subir — por enquanto entram no trigger como humano-readable
+     * pra não perder o contexto. */
+    const triggerDesc = [
+      `Tipo: ${type}`,
+      `Destinatário: ${targetType}`,
+      scheduledAt ? `Agendado para ${scheduledAt}` : 'Envio imediato',
+      imageUrl.trim() ? `Imagem: ${imageUrl.trim()}` : null,
+      deepLink.trim() ? `Deep link: ${deepLink.trim()}` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
     const draft = buildCustomDraft({
-      kind: trimmedKind,
-      label: label.trim(),
-      description: description.trim() || 'Sem descrição.',
-      trigger: trigger.trim() || 'Gatilho a definir.',
-      category,
+      kind: slug,
+      label: trimmedTitle,
+      description: body.trim(),
+      trigger: triggerDesc,
+      category: type,
       /* Placeholder até o enum NotificationChannel ganhar 'push' —
        * salvamos como in_app pra que a UI tenha algo coerente pra
        * renderizar nos badges. Quando push subir, trocar aqui. */
@@ -175,7 +247,7 @@ export default function NovaPushPage() {
           <Card>
             <CardHeader
               title="Detalhes da push"
-              description="Preencha identificador, copy e gatilho. O draft fica salvo como planejado até o canal push subir."
+              description="Campos alinhados com a tabela push_notifications do Firebase. id, sender_id, created_at e sent_at são preenchidos automaticamente no envio."
             />
 
             {/* Banner contextual — push ainda não dispara. */}
@@ -189,65 +261,86 @@ export default function NovaPushPage() {
             </div>
 
             <div className={styles.form}>
-              {/* Ordem: Nome → Kind. O kind é só um identificador
-               *  técnico (slug pros logs), então fica em segundo plano;
-               *  o admin entra mais naturalmente pelo Nome. */}
+              <Input
+                label="Título (title)"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="ex: Volta pra ver o que rolou"
+                helperText={
+                  titleError ??
+                  'Texto em negrito que aparece na lockscreen. Curto e direto (máx ~50 chars pra não cortar).'
+                }
+                errorText={titleError && title.length > 0 ? titleError : undefined}
+                maxLength={100}
+              />
+
+              <Textarea
+                label="Corpo (body)"
+                required
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="Mensagem principal da push, sob o título."
+                rows={2}
+                maxLength={240}
+                helperText={
+                  bodyError ??
+                  'Conteúdo principal da notificação. iOS/Android cortam com "..." em ~120 chars dependendo do device.'
+                }
+                errorText={bodyError && body.length > 0 ? bodyError : undefined}
+              />
+
+              <Input
+                label="Imagem (image_url)"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://muusic.live/images/push/exemplo.png"
+                helperText={
+                  imageUrlError ??
+                  'Opcional. URL pública de uma imagem (PNG/JPG até ~1MB) que aparece junto da notificação. Vazio = só texto.'
+                }
+                errorText={imageUrlError ?? undefined}
+                maxLength={500}
+              />
+
+              <Input
+                label="Deep link (deep_link)"
+                value={deepLink}
+                onChange={(e) => setDeepLink(e.target.value)}
+                placeholder="/app/feed ou fanverse://post/abc123"
+                helperText="Opcional. Caminho do app que abre ao tocar na push. Vazio = abre na home (/app)."
+                maxLength={500}
+              />
+
               <div className={styles.row}>
-                <Input
-                  label="Nome / título"
-                  required
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder="ex: Volta pra ver o que rolou"
-                  errorText={
-                    labelError && label.length > 0 ? labelError : undefined
-                  }
-                  maxLength={200}
-                />
-                <Input
-                  label="Identificador (kind)"
-                  required
-                  value={kind}
+                <Select
+                  label="Tipo (type)"
+                  value={type}
                   onChange={(e) =>
-                    setKind(
-                      e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
-                    )
+                    setType(e.target.value as NotificationCategory)
                   }
-                  placeholder="ex: push_winback_3d"
-                  helperText={
-                    kindError ?? 'Usado em código + nos logs. Não muda depois.'
+                  options={TYPE_OPTIONS}
+                  required
+                  helperText="Categoria do push. Usado pra agrupamento e estatísticas no admin."
+                />
+                <Select
+                  label="Destinatário (target_type)"
+                  value={targetType}
+                  onChange={(e) =>
+                    setTargetType(e.target.value as TargetType)
                   }
-                  errorText={kindError && kind ? kindError : undefined}
-                  maxLength={60}
+                  options={TARGET_OPTIONS}
+                  required
+                  helperText="Quem recebe a push. 'Todos' ignora filtros; segmentos pegam uma fatia da base."
                 />
               </div>
 
-              <Textarea
-                label="Descrição"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Texto curto e direto — push tem limite de caracteres e o usuário lê na lockscreen."
-                rows={2}
-                maxLength={2000}
-              />
-
-              <Textarea
-                label="Quando dispara (agenda ou evento)"
-                value={trigger}
-                onChange={(e) => setTrigger(e.target.value)}
-                placeholder="Ex: Diariamente às 9h pros usuários que não abriram o app em 3+ dias."
-                rows={2}
-                maxLength={2000}
-              />
-
-              <Select
-                label="Categoria"
-                value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value as NotificationCategory)
-                }
-                options={CATEGORY_OPTIONS}
-                required
+              <Input
+                label="Agendamento (scheduled_at)"
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                helperText="Opcional. Data e hora pra o envio. Vazio = enviar assim que aprovado. Após o disparo, sent_at é preenchido automaticamente."
               />
             </div>
 
@@ -312,13 +405,12 @@ export default function NovaPushPage() {
             <div className={styles.previewStage}>
               <NotificationPreview
                 device={previewDevice}
-                label={label || 'Nome / título da push'}
+                label={title || 'Título da push'}
                 description={
-                  description ||
-                  'A descrição da push aparece aqui — curta e direta.'
+                  body || 'Corpo da push aparece aqui — curto e direto.'
                 }
                 trigger=""
-                category={category}
+                category={type}
                 channelEnabled
               />
             </div>
