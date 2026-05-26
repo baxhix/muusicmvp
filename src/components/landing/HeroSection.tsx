@@ -143,12 +143,10 @@ export default function HeroSection() {
           "Já sou da tribo" ghost button is gated off. */}
       <div className={styles.heroCta}>
         <Link href="/auth?mode=signup" className={styles.heroCtaPrimary}>
-          {/* Círculo decorativo à esquerda — leva o gradient animado
-           *  magenta→indigo (que antes vivia no fundo do CTA). O
-           *  botão em si agora é preto com borda cinza; o "punch"
-           *  visual concentrado no orb. aria-hidden porque é
-           *  puramente decorativo. */}
-          <span className={styles.ctaOrb} aria-hidden="true" />
+          {/* Pill preto sólido + texto branco + sombra colorida
+           *  animada deslizando atrás. Mesmo padrão do CTA "Meu
+           *  Fanverse" do /teste — orb interno removido pra
+           *  consistência. */}
           Entrar no Fanverse
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

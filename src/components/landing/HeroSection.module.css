@@ -415,16 +415,16 @@
  *   - Gap 12px entre orb e texto.
  * O punch visual sai do fundo do pill (era cinza claro) e migra
  * pro orb animado. Borda cinza sutil define a silhueta. */
+/* Mesmo padrão do CTA "Meu Fanverse" do /teste: preto + texto
+ * branco + sombra colorida deslizando atrás. Padding simétrico
+ * sem orb interno. */
 .heroCtaPrimary {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 22px 4px 4px;
+  gap: 8px;
+  padding: 14px 26px;
   background: #08080A;
   color: #ffffff;
-  /* Sem borda — o halo gradient (::before) atrás já dá a
-   * silhueta. Border + halo somam ruído. Mesmo padrão do CTA
-   * "Meu Fanverse" da /teste. */
   border: none;
   border-radius: 999px;
   font-size: 14px;
@@ -436,23 +436,21 @@
    * phones where the pill's natural width approached the screen
    * width. */
   white-space: nowrap;
-  /* position:relative + isolation:isolate criam contexto de
-   * empilhamento isolado pro pseudo `::before` (a sombra
-   * animada) ficar atrás do conteúdo sem afetar nada fora. */
   position: relative;
   isolation: isolate;
   transition: transform 180ms ease;
 }
 
-/* Sombra-gradient permanente em movimento — pseudo absolute
- * atrás do pill, MESMO gradient e animação do orb à esquerda
- * (sincronia visual). filter:blur cria a sensação de "halo
- * iluminado" embaixo do botão; inset negativo sangra o glow
- * pra fora da silhueta do pill. */
+/* Sombra-gradient com DUAS animações compostas (espelha o CTA
+ * do /teste pra consistência):
+ *   1) cta-orb-shift (4.5s) — cores fluem horizontal dentro do halo
+ *   2) cta-shadow-drift (8s) — translada o halo ±16px (sombra
+ *      desliza fisicamente atrás do botão)
+ * Períodos descasados pra leitura orgânica. */
 .heroCtaPrimary::before {
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -10px;
   z-index: -1;
   border-radius: inherit;
   background: linear-gradient(
@@ -463,56 +461,39 @@
   );
   background-size: 300% 100%;
   background-position: 0% 50%;
-  animation: cta-orb-shift 4.5s linear infinite;
-  filter: blur(16px);
-  opacity: 0.65;
+  animation:
+    cta-orb-shift 4.5s linear infinite,
+    cta-shadow-drift 8s ease-in-out infinite;
+  filter: blur(18px);
+  opacity: 0.7;
   pointer-events: none;
+}
+
+@keyframes cta-shadow-drift {
+  0%, 100% { transform: translateX(-16px); }
+  50%      { transform: translateX(16px); }
 }
 
 .heroCtaPrimary:hover {
   transform: translateY(-1px);
 }
 .heroCtaPrimary:hover::before {
-  /* Halo mais intenso no hover sem mexer no blur (evita salto
-   * no tamanho aparente). */
-  opacity: 0.85;
+  opacity: 0.9;
 }
 .heroCtaPrimary:active {
   transform: translateY(0);
 }
 
-/* Orb à esquerda do CTA — círculo perfeito (border-radius 50%)
- * com o mesmo gradient magenta→indigo→magenta animado que o
- * /teste navbar tem na pill. background-size 300% + animation
- * deslocando background-position cria o efeito de fluxo. */
-.ctaOrb {
-  display: inline-block;
-  flex-shrink: 0;
-  /* Diâmetro pequeno o bastante pra caber no pill (altura ~40px
-   * com font-size 14px + padding 4px): 32px deixa o orb com 4px
-   * de respiro top/bottom mesmo se o pill cresce um pouco. */
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(
-    90deg,
-    #ff00b4 0%,
-    #5b00d1 50%,
-    #ff00b4 100%
-  );
-  background-size: 300% 100%;
-  background-position: 0% 50%;
-  animation: cta-orb-shift 4.5s linear infinite;
-  box-shadow: 0 0 12px -2px rgba(255, 0, 180, 0.5);
-}
-
+/* Keyframes do gradient horizontal usado pelo halo (::before)
+ * do CTA. Antes era compartilhado com um orb interno (.ctaOrb);
+ * o orb foi removido pra harmonizar com o /teste, mas o nome do
+ * keyframe permanece pra manter histórico de diff legível. */
 @keyframes cta-orb-shift {
   from { background-position: 0% 50%; }
   to   { background-position: -200% 50%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ctaOrb,
   .heroCtaPrimary::before {
     animation: none;
   }
