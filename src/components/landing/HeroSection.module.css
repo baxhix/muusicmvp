@@ -441,16 +441,25 @@
   transition: transform 180ms ease;
 }
 
-/* Sombra-gradient com DUAS animações compostas (espelha o CTA
- * do /teste pra consistência):
- *   1) cta-orb-shift (4.5s) — cores fluem horizontal dentro do halo
- *   2) cta-shadow-drift (8s) — translada o halo ±16px (sombra
- *      desliza fisicamente atrás do botão)
- * Períodos descasados pra leitura orgânica. */
+/* Sombra-gradient como DROP-SHADOW colorido — espelha o CTA
+ * do /teste pra consistência. Per product feedback "Deixe a
+ * sombra em movimento do CTA por trás do botão. Da forma
+ * como está parece que todo o botão está colorido cores":
+ * o pseudo agora vive ABAIXO do meio do botão (top: 55%) +
+ * sangra pra baixo + leve bleed horizontal — só a parte
+ * inferior fica visível como sombra colorida deslizante. A
+ * parte superior fica coberta pelo pill preto opaco.
+ *
+ * Duas animações compostas:
+ *   1) cta-orb-shift (4.5s) — cores magenta↔indigo fluem dentro do gradient
+ *   2) cta-shadow-drift (8s) — translada o pseudo ±18px L-R */
 .heroCtaPrimary::before {
   content: '';
   position: absolute;
-  inset: -10px;
+  top: 55%;
+  bottom: -18px;
+  left: -6px;
+  right: -6px;
   z-index: -1;
   border-radius: inherit;
   background: linear-gradient(
@@ -464,14 +473,14 @@
   animation:
     cta-orb-shift 4.5s linear infinite,
     cta-shadow-drift 8s ease-in-out infinite;
-  filter: blur(18px);
-  opacity: 0.7;
+  filter: blur(22px);
+  opacity: 0.65;
   pointer-events: none;
 }
 
 @keyframes cta-shadow-drift {
-  0%, 100% { transform: translateX(-16px); }
-  50%      { transform: translateX(16px); }
+  0%, 100% { transform: translateX(-18px); }
+  50%      { transform: translateX(18px); }
 }
 
 .heroCtaPrimary:hover {
