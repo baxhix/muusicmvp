@@ -95,7 +95,7 @@ void main(){
   haloBreath = pow(haloBreath, 1.8);
 
   // ---------- soft energy mask (no rim, no frame) ----------
-  float sphere = smoothstep(R, R - 0.22, r);
+  float sphere = smoothstep(R + 0.10, R - 0.34, r);       // wider, softer edge
   float halo   = exp(-pow((r - R*0.7) * 9.0, 2.0)) * 0.35; // tighter, dimmer
   float wideHalo = exp(-pow((r - R*0.5) * 5.5, 2.0)) * 0.10;
 
