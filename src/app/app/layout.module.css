@@ -302,9 +302,11 @@
 
 /* ── Orb decorativo da marca (FanverseCore) ──
  *
- * Desktop: top-left, alinhado à altura da topbar (perto onde
- * vivia o backBtn). 50×50 pra ter presença sem competir com o
- * conteúdo do mapa.
+ * Desktop: top-right, AO LADO da navbar (avatar do usuário em
+ * top:42, right:14, 52×52). Posicionado pra ficar imediatamente
+ * à esquerda do avatar, com 12px de gap, alinhado verticalmente
+ * pelo top:42 — leem como uma linha horizontal de chrome no
+ * topo. 50×50 (~mesmo diâmetro do avatar) pra balanço visual.
  *
  * Mobile: bottom-left, ACIMA da BottomNav. A BottomNav pill
  * tem outer top em ~80px da base da viewport (24px padding +
@@ -317,9 +319,12 @@
  * pelos mesmos motivos. */
 .orbSlot {
   position: fixed;
-  top: 14px;
-  left: 18px;
-  z-index: 22; /* acima do backBtn (20), abaixo de painéis/modais */
+  /* Alinhado à mesma top-axis da .userMenu (top:42) pra a navbar
+   * ficar visualmente coerente. right = 14 (avatar right) + 52
+   * (avatar width) + 12 (gap) = 78. */
+  top: 42px;
+  right: 78px;
+  z-index: 22;
   width: 50px;
   height: 50px;
   pointer-events: none;
@@ -328,6 +333,7 @@
 @media (max-width: 768px) {
   .orbSlot {
     top: auto;
+    right: auto;
     bottom: 96px;
     left: 14px;
     width: 44px;
