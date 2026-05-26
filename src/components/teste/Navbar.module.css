@@ -254,10 +254,19 @@
 .menuBar {
   display: block;
   width: 20px;
-  height: 2px;
+  /* 1px per spec — desktop quer linhas finas no hamburger. No
+   * mobile a media query abaixo bumpa pra 2px pra preservar
+   * legibilidade no tap target menor / DPI maior. */
+  height: 1px;
   background: #ffffff;
   border-radius: 1px;
   transition: transform 260ms cubic-bezier(0.65, 0, 0.35, 1), opacity 200ms ease-out;
+}
+
+@media (max-width: 720px) {
+  .menuBar {
+    height: 2px;
+  }
 }
 
 .menuTriggerOpen {
@@ -436,11 +445,15 @@
 .megaList::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 2px; }
 
 .megaGroup {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.4fr);
-  align-items: center;
-  gap: 48px;
-  padding: 22px 0;
+  /* Layout VERTICAL — antes era grid 2-cols (title | subitens
+   *  lado a lado). Agora título em cima, subitens abaixo, como
+   *  uma coluna empilhada por grupo. Faz o menu inteiro ler
+   *  como uma cascata de palavras grandes. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 28px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   /* Stagger fade-up animation por grupo — o delay
    * inline-style ajusta o offset por index. */
@@ -484,10 +497,15 @@
   text-transform: uppercase;
 }
 
-/* Coluna direita: subitens ou langPills. */
+/* Container dos subitens — agora abaixo do título, ocupando
+ * largura total do grupo (layout vertical do .megaGroup). */
 .megaGroupRight {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  width: 100%;
+  padding-left: clamp(40px, 5vw, 72px);
+  /* Subitens indentados pra criar hierarquia visual com o
+   * título grande do grupo logo acima. */
 }
 
 .megaSubList {
@@ -496,50 +514,48 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   width: 100%;
 }
 
-/* Subitem: Inter 14px com hover line gradient growing. */
+/* Subitem em Borscha (headline) — labels agora em fonte de
+ * headline, alinhadas verticalmente. Removido o hint e a seta
+ * da grid pra que o texto domine. Hover ainda translada à
+ * direita pra reforçar a interação. */
 .megaSubitem {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
+  display: inline-flex;
   align-items: baseline;
   gap: 16px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.92);
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  color: rgba(255, 255, 255, 0.85);
   transition: padding 200ms ease-out, color 200ms ease-out;
 }
 .megaSubitem:hover {
-  padding-left: 8px;
+  padding-left: 10px;
   color: #fff;
 }
 
 .megaSubitemLabel {
-  /* Per product feedback: subitens Inter 14px. */
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-}
-.megaSubitemHint {
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.35);
+  /* Headline font (Borscha) — palavras grandes empilhadas
+   * verticalmente como uma cascata. Size ~clamp(28..48px)
+   * pra ler como secundárias dos títulos do grupo (que vão
+   * em 40..88px) mas ainda como peso de headline. */
+  font-family: 'Borscha', var(--font-inter), -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  font-size: clamp(24px, 3.4vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
 }
+/* Hint + arrow ESCONDIDOS no novo layout vertical — as
+ * palavras em Borscha ficam protagonistas, sem ornamentos
+ * laterais. Mantém os elementos no JSX (acessibilidade +
+ * compat com listas existentes) mas suprime visualmente. */
+.megaSubitemHint,
 .megaSubitemArrow {
-  display: inline-block;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
-  transition: color 200ms ease-out, transform 220ms ease-out;
-}
-.megaSubitem:hover .megaSubitemArrow {
-  color: #ff00b4;
-  transform: translateX(4px);
+  display: none;
 }
 
 /* Lang pills — alternativa ao subitem padrão, exclusiva do
