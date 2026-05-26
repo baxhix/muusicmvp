@@ -300,6 +300,41 @@
   .superchatTriggerSlot { display: none; }
 }
 
+/* ── Orb decorativo da marca (FanverseCore) ──
+ *
+ * Desktop: top-left, alinhado à altura da topbar (perto onde
+ * vivia o backBtn). 50×50 pra ter presença sem competir com o
+ * conteúdo do mapa.
+ *
+ * Mobile: bottom-left, ACIMA da BottomNav. A BottomNav pill
+ * tem outer top em ~80px da base da viewport (24px padding +
+ * ~56px pill), então fixamos o orb em `bottom: 96px` pra dar
+ * 16px de respiro. 44×44 ligeiramente menor — espaço é mais
+ * disputado no mobile.
+ *
+ * pointer-events:none no wrapper porque é decorativo (a
+ * animação não responde a click/hover). aria-hidden no JSX
+ * pelos mesmos motivos. */
+.orbSlot {
+  position: fixed;
+  top: 14px;
+  left: 18px;
+  z-index: 22; /* acima do backBtn (20), abaixo de painéis/modais */
+  width: 50px;
+  height: 50px;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .orbSlot {
+    top: auto;
+    bottom: 96px;
+    left: 14px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* ── Back-to-landing link ── */
 .backBtn {
   position: fixed;

@@ -9,6 +9,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
 import ArtistBox from '@/components/app/ArtistBox';
+import FanverseCore from '@/components/animations/FanverseCore';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import MobileRouteHeader from '@/components/app/MobileRouteHeader';
 import NowPlaying from '@/components/app/NowPlaying';
@@ -194,6 +195,19 @@ function Shell({ children }: { children: React.ReactNode }) {
               onEditProfileOpen={() => setShowEditProfile(true)}
               onDeleteAccountOpen={() => router.push('/app/perfil')}
             />
+          </div>
+        )}
+
+        {/* Orb decorativo da marca — mesmo WebGL2 shader do /teste
+         *  e da landing. Desktop: top-left, alinhado ao topo da
+         *  navbar. Mobile: bottom-left, acima da BottomNav (CSS
+         *  decide via @media). aria-hidden + pointer-events:none
+         *  no wrapper porque é puramente decorativo (não-clicável).
+         *  Hidden em chat detail mobile (.hideShellChrome) pra
+         *  liberar a viewport do LiveChatPanel. */}
+        {!hideShellChrome && (
+          <div className={`${styles.orbSlot} ${fadeClass(5)}`} aria-hidden="true">
+            <FanverseCore />
           </div>
         )}
 

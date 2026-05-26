@@ -33,8 +33,14 @@
 @media (max-width: 768px) {
   .root {
     /* Mobile pill geometry: .nav padding-bottom 18 + pill
-     * height ~56 + 24 gap = 98px from viewport bottom. */
-    bottom: 98px;
+     * height ~56 + 24 gap = 98px from viewport bottom.
+     *
+     * Bumped 98 → 156 pra clear o orb decorativo (FanverseCore)
+     * que vive em bottom-left no mobile (bottom:96 + 44 = topo
+     * em 140). 156 dá 16px de respiro acima do orb e alinha com
+     * o bottom mobile do SameTrackToast — consistência entre as
+     * duas filas de toast. */
+    bottom: 156px;
   }
 }
 
