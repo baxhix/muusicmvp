@@ -27,6 +27,14 @@ const SEX_LABEL: Record<User['sex'], string> = {
   NaoInformado: 'Prefere não informar',
 };
 
+/** Formata data ISO (YYYY-MM-DD) pra DD/MM/AAAA legível pt-BR.
+ *  Fallback pro raw se a string não bater o padrão esperado. */
+function formatBirthDate(iso: string): string {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 export interface UserDetailDrawerProps {
   user: User | null;
   open: boolean;
@@ -111,7 +119,11 @@ export default function UserDetailDrawer({
           <div className={styles.dataCol}>
             <span className={styles.eyebrow}>Dados cadastrados</span>
             <span className={styles.dataField}>
-              <b>Idade:</b> {user.age} anos
+              <b>Nascimento:</b>{' '}
+              {user.birthDate ? formatBirthDate(user.birthDate) : '—'}
+            </span>
+            <span className={styles.dataField}>
+              <b>Idade:</b> {user.age > 0 ? `${user.age} anos` : '—'}
             </span>
             <span className={styles.dataField}>
               <b>Sexo:</b> {SEX_LABEL[user.sex]}

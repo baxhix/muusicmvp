@@ -31,6 +31,9 @@ export interface User {
   plan: UserPlan;
   /** Cadastro principal mostrado na tela de Usuários */
   age: number;
+  /** Data de nascimento ISO (YYYY-MM-DD) salva no onboarding.
+   *  null quando o usuário não preencheu (legacy ou skip). */
+  birthDate: string | null;
   sex: UserSex;
   phone: string;
   city: string;

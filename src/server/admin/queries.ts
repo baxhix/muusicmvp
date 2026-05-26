@@ -70,7 +70,13 @@ export interface AdminUserRow {
   role: 'fan' | 'creator';
   status: 'active';
   plan: 'free';
+  /** Idade calculada — vem direto da coluna `age` do users (gravada
+   *  no onboarding). Quando não preenchida (usuário sem onboarding
+   *  completo, ou conta legacy), cai pra 0. */
   age: number;
+  /** Data de nascimento ISO (YYYY-MM-DD) salva no onboarding. Pode
+   *  ser null quando o user pulou ou ainda não fez onboarding. */
+  birthDate: string | null;
   sex: 'NaoInformado';
   phone: string;
   city: string;
@@ -169,6 +175,8 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       u.id,
       u.email,
       u.name,
+      u.birth_date,
+      u.age,
       u.city,
       u.country,
       u.country_code,
@@ -235,7 +243,30 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       role: 'fan',
       status: 'active',
       plan: 'free',
-      age: 0,
+      /* Idade: prioriza coluna `age` (gravada no onboarding); se
+       * estiver null mas houver `birth_date`, calcula a partir
+       * dela; senão 0. Quando o usuário pula o onboarding inteiro,
+       * fica 0 mesmo — o filtro de idade na listagem trata 0 como
+       * "não informado". */
+      age: (() => {
+        const stored = r.age as number | null;
+        if (typeof stored === 'number' && stored > 0) return stored;
+        const bd = r.birth_date as string | null;
+        if (!bd) return 0;
+        const m = bd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return 0;
+        const birth = new Date(
+          Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])),
+        );
+        const now = new Date();
+        let age = now.getUTCFullYear() - birth.getUTCFullYear();
+        const mo = now.getUTCMonth() - birth.getUTCMonth();
+        if (mo < 0 || (mo === 0 && now.getUTCDate() < birth.getUTCDate())) {
+          age -= 1;
+        }
+        return age >= 0 && age < 150 ? age : 0;
+      })(),
+      birthDate: (r.birth_date as string | null) ?? null,
       sex: 'NaoInformado',
       phone: '',
       city: (r.city as string | null) ?? '',
