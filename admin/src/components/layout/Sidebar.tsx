@@ -410,18 +410,18 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
           <span className={styles.brandOrb} aria-hidden="true">
             <FanverseCore />
           </span>
-          {/* Mesmo wordmark da landing /teste (FANVERSE em tipografia
-           *  oficial). No modo collapsed, troca pra mini-ícone só
-           *  pra caber nos 64px de largura. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={collapsed ? '/fanverse-logo.svg' : '/teste-fanverse-logo.svg'}
-            alt="Fanverse"
-            className={cn(
-              styles.brandLogo,
-              !collapsed && styles.brandLogoWordmark,
-            )}
-          />
+          {/* Wordmark "FANVERSE" SÓ no modo expandido. Quando o
+           *  sidebar está collapsed (64px), o orb à esquerda já
+           *  serve como marca completa — o F mini-ícone antigo
+           *  virava ruído ao lado do orb. */}
+          {!collapsed && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/teste-fanverse-logo.svg"
+              alt="Fanverse"
+              className={cn(styles.brandLogo, styles.brandLogoWordmark)}
+            />
+          )}
         </Link>
         <button
           type="button"
