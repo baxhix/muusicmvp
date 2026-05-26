@@ -60,13 +60,15 @@
 }
 
 /* Orb animado (FanverseCore — WebGL2 fluido) à ESQUERDA do
- * wordmark. 32px alinhado verticalmente com a altura do logo
- * de 20px — o orb fica ligeiramente maior porque a animação
- * tem halos suaves que respiram pra fora da bounding box.
- * line-height 0 evita gap baseline residual em volta do canvas. */
+ * wordmark. 64px — sangra além do padding vertical da navbar
+ * (18px ×2 = 36px de chrome interno), criando presença visual
+ * forte: os halos da animação respiram pra fora da própria
+ * navbar. O canvas se redimensiona via ResizeObserver então só
+ * mudar a CSS basta. line-height 0 evita gap baseline em volta
+ * do <canvas>. */
 .brandOrb {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
   display: inline-block;
   flex-shrink: 0;
   line-height: 0;
