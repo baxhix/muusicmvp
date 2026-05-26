@@ -415,15 +415,18 @@
  *   - Gap 12px entre orb e texto.
  * O punch visual sai do fundo do pill (era cinza claro) e migra
  * pro orb animado. Borda cinza sutil define a silhueta. */
-/* Mesmo padrão do CTA "Meu Fanverse" do /teste: preto + texto
- * branco + sombra colorida deslizando atrás. Padding simétrico
- * sem orb interno. */
+/* CTA "Entrar no Fanverse" — espelho do CTA "Meu Fanverse"
+ * do /teste (mesma recipe definitiva):
+ *   - Fill: PRETO PURO (#000), sem borda.
+ *   - Texto: branco puro (#fff).
+ *   - Sombra em movimento: gradient magenta↔indigo num pseudo
+ *     `::before` ATRÁS do fill. */
 .heroCtaPrimary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 14px 26px;
-  background: #08080A;
+  background: #000000;
   color: #ffffff;
   border: none;
   border-radius: 999px;
@@ -431,35 +434,29 @@
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
-  /* Keep label + chevron on a single line on every viewport.
-   * Default flex layout was happy to wrap to two lines on narrow
-   * phones where the pill's natural width approached the screen
-   * width. */
+  /* Keep label + chevron on a single line on every viewport. */
   white-space: nowrap;
   position: relative;
   isolation: isolate;
   transition: transform 180ms ease;
 }
 
-/* Sombra-gradient como DROP-SHADOW colorido — espelha o CTA
- * do /teste pra consistência. Per product feedback "Deixe a
- * sombra em movimento do CTA por trás do botão. Da forma
- * como está parece que todo o botão está colorido cores":
- * o pseudo agora vive ABAIXO do meio do botão (top: 55%) +
- * sangra pra baixo + leve bleed horizontal — só a parte
- * inferior fica visível como sombra colorida deslizante. A
- * parte superior fica coberta pelo pill preto opaco.
+/* Sombra-gradient em movimento ATRÁS do fill preto.
+ *
+ * Pseudo do MESMO TAMANHO do botão (`inset: 0`). Fill #000
+ * opaco + z-index acima do pseudo dentro do stacking context
+ * isolado → a área interna do pseudo fica 100% coberta. Tudo
+ * que se vê é o BLEED do `filter: blur(24px)` extrapolando
+ * pra fora do botão. Drift translateX ±26px faz a cor
+ * "respirar" L-R sem nunca envolver o pill por completo.
  *
  * Duas animações compostas:
- *   1) cta-orb-shift (4.5s) — cores magenta↔indigo fluem dentro do gradient
- *   2) cta-shadow-drift (8s) — translada o pseudo ±18px L-R */
+ *   1) cta-orb-shift (4.5s) — cores fluem DENTRO do gradient
+ *   2) cta-shadow-drift (8s) — translada o pseudo INTEIRO L-R */
 .heroCtaPrimary::before {
   content: '';
   position: absolute;
-  top: 55%;
-  bottom: -18px;
-  left: -6px;
-  right: -6px;
+  inset: 0;
   z-index: -1;
   border-radius: inherit;
   background: linear-gradient(
@@ -473,21 +470,21 @@
   animation:
     cta-orb-shift 4.5s linear infinite,
     cta-shadow-drift 8s ease-in-out infinite;
-  filter: blur(22px);
-  opacity: 0.65;
+  filter: blur(24px);
+  opacity: 0.75;
   pointer-events: none;
 }
 
 @keyframes cta-shadow-drift {
-  0%, 100% { transform: translateX(-18px); }
-  50%      { transform: translateX(18px); }
+  0%, 100% { transform: translateX(-26px); }
+  50%      { transform: translateX(26px); }
 }
 
 .heroCtaPrimary:hover {
   transform: translateY(-1px);
 }
 .heroCtaPrimary:hover::before {
-  opacity: 0.9;
+  opacity: 0.95;
 }
 .heroCtaPrimary:active {
   transform: translateY(0);

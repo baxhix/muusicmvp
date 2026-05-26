@@ -114,26 +114,27 @@
   color: #fff;
 }
 
-/* CTA pill — Meu Fanverse. Reestilizado pra espelhar o CTA
- * "Entrar no Fanverse" da home (/): fundo preto, borda quase
- * invisível (cinza muito próximo do preto) e o gradient
- * animado magenta→indigo se concentra num orb decorativo à
- * ESQUERDA. Mantém o tamanho geral do pill original (~50px
- * de altura) ajustando o padding pra acomodar o orb. */
+/* CTA pill — Meu Fanverse.
+ *
+ * Recipe definitivo (per product feedback "Cor: preto, texto:
+ * branco, sombra em movimento atrás do fill"):
+ *   - Fill: PRETO PURO (#000), sem borda.
+ *   - Texto: branco puro (#fff).
+ *   - Sombra em movimento: gradient magenta↔indigo num pseudo
+ *     `::before` que vive ATRÁS do fill (z-index:-1 dentro do
+ *     stacking context isolado pelo `isolation: isolate`).
+ *     A área visível da sombra vem só do BLUR extrapolando os
+ *     limites do pseudo — o fill preto cobre 100% do pseudo
+ *     na área interna do pill. O drift translateX move a
+ *     concentração de cor de um lado pro outro. */
 .ctaPill {
   display: inline-flex;
   align-items: center;
-  /* Padding simétrico restaurado (sem orb interno): mesma
-   * geometria do CTA original do /teste (17×30) pra preservar
-   * o tamanho visual percebido. */
   padding: 17px 30px;
-  background: #08080A;
-  /* Sem borda — a sombra animada atrás (::before) já dá a
-   * silhueta sutil que separa o pill do fundo da navbar. */
+  background: #000000;
   border: none;
   color: #ffffff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  /* 14px alinhado com os nav links. */
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.005em;
@@ -141,38 +142,37 @@
   border-radius: 999px;
   /* position:relative + isolation:isolate criam contexto de
    * empilhamento isolado pro pseudo `::before` (a sombra
-   * animada) ficar atrás do conteúdo sem afetar nada fora. */
+   * animada) ficar ATRÁS do fill sem afetar nada fora do
+   * botão. Sem `isolation` o z-index:-1 do pseudo poderia
+   * vazar pra trás de elementos siblings da página. */
   position: relative;
   isolation: isolate;
-  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+  transition: transform 200ms ease-out;
 }
 
-/* Sombra-gradient em movimento ATRÁS do pill — drop-shadow
- * style. Per product feedback "Deixe a sombra em movimento do
- * CTA por trás do botão. Da forma como está parece que todo o
- * botão está colorido cores":
+/* Sombra-gradient em movimento ATRÁS do fill preto.
  *
- * Antes o pseudo tinha `inset: -10px` (bleed em volta de TODA
- * a silhueta), o que fazia a cor aparecer como um halo
- * envolvendo o botão inteiro — leitura "botão colorido".
+ * Geometria: pseudo do MESMO TAMANHO do botão (`inset: 0`).
+ * Como o fill (.ctaPill background:#000) é OPACO e tem
+ * z-index acima do pseudo dentro do stacking context isolado,
+ * a área INTERNA do pseudo fica 100% coberta. Tudo que se vê
+ * é o BLEED do `filter: blur(...)`, que extrapola os limites
+ * do pseudo pra fora do botão.
  *
- * Agora o pseudo é posicionado abaixo do meio do botão (top:
- * 55%) e sangra pra baixo (bottom: -18px) + leve bleed
- * horizontal (left/right: -6px). Como o pill é opaco (preto
- * sólido) e tem z-index acima do pseudo, a parte superior
- * fica COBERTA — só o que sangra ABAIXO aparece, lendo como
- * uma sombra-drop colorida. O drift translateX ±18px move
- * essa sombra L-R por trás do botão.
+ * Resultado: o pill lê preto sólido + um glow colorido difuso
+ * vazando pelas bordas. Como o gradient drifta horizontalmente
+ * via translateX, o glow visível "respira" de um lado pro
+ * outro — concentrado num lado, ausente no oposto a cada
+ * extremo do drift. Nunca lê como "botão colorido", lê como
+ * "botão preto com sombra colorida atrás".
  *
- * filter:blur(22px) suaviza pra não revelar bordas; opacity
- * 0.65 dá presença sem sobrecarregar. */
+ * Duas animações compostas:
+ *   1) ctaPillShift (6s) — desloca as cores DENTRO do gradient
+ *   2) ctaShadowDrift (8s) — translada o pseudo INTEIRO ±26px */
 .ctaPill::before {
   content: '';
   position: absolute;
-  top: 55%;
-  bottom: -18px;
-  left: -6px;
-  right: -6px;
+  inset: 0;
   z-index: -1;
   border-radius: inherit;
   background: linear-gradient(
@@ -186,8 +186,8 @@
   animation:
     ctaPillShift 6s linear infinite,
     ctaShadowDrift 8s ease-in-out infinite;
-  filter: blur(22px);
-  opacity: 0.65;
+  filter: blur(24px);
+  opacity: 0.75;
   pointer-events: none;
 }
 
@@ -195,10 +195,9 @@
   transform: translateY(-1px);
 }
 .ctaPill:hover::before {
-  /* Intensifica a sombra no hover — sem mexer no blur, só na
-   * opacidade pra leitura ficar mais "viva" sem distorcer o
-   * tamanho aparente. */
-  opacity: 0.9;
+  /* Intensifica a sombra no hover — só pela opacidade pra não
+   * distorcer o tamanho percebido do glow. */
+  opacity: 0.95;
 }
 .ctaPill:active {
   transform: translateY(0);
@@ -210,13 +209,14 @@
 }
 
 /* Drift horizontal da sombra inteira — translateX simétrico
- * pra que o "puxa pra direita / volta pra esquerda" pareça
- * um movimento natural atrás do botão, não um deslocamento
- * desbalanceado. ease-in-out evita parar bruscamente nas
- * extremidades. */
+ * ±26px (era ±18). O drift maior é o que produz a leitura
+ * "sombra deslizando ATRÁS do botão": quando o pseudo se
+ * move pra um lado, o blur vaza forte pra esse lado e some
+ * do oposto, criando um "respiro" de cor que não envolve o
+ * botão inteiro. */
 @keyframes ctaShadowDrift {
-  0%, 100% { transform: translateX(-18px); }
-  50%      { transform: translateX(18px); }
+  0%, 100% { transform: translateX(-26px); }
+  50%      { transform: translateX(26px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
