@@ -17,7 +17,9 @@
   background: rgba(0, 0, 0, 0.55);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* Sem borda inferior — per product feedback "Remova a borda
+   * do header que fixa fixo". O blur do glass + o gradient da
+   * página atrás já dão suficiente separação visual. */
 }
 
 /* Container responsivo per product feedback "em telas menores,
@@ -238,17 +240,25 @@
   gap: 6px;
   padding: 0;
   border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  /* Sem fundo cinza + sem border-radius arredondado — per
+   * product feedback "No meu hamburguer, remova o circulo
+   * cinza que tem em volta". O tap-target (44×44) é
+   * preservado pra acessibilidade, mas visualmente só os
+   * 3 traços ficam à mostra. */
+  background: transparent;
+  border-radius: 0;
   cursor: pointer;
-  transition: background 200ms ease-out;
+  transition: opacity 200ms ease-out;
   /* z-index acima do panel (z=70) pra que o trigger continue
    * clicável quando o menu está aberto, permitindo fechar
    * pelo mesmo botão. */
   z-index: 80;
 }
 .menuTrigger:hover {
-  background: rgba(255, 255, 255, 0.10);
+  /* Feedback de hover via leve fade-out das barras (em vez do
+   * antigo background hover) — mantém o visual limpo sem
+   * círculo cinza piscando. */
+  opacity: 0.7;
 }
 
 .menuBar {
@@ -424,37 +434,35 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-/* Lista dos 4 grupos — rows divididos por hairline. Cada row
- * tem 2 colunas: left (number + title Borscha gigante) e
- * right (subitens Inter 14px). */
+/* Lista dos 4 grupos — agora GRID 4-cols (era flex column com
+ * scroll). Per product feedback "em 4 colunas com os itens
+ * para não dar scroll": cada grupo vira uma coluna; tudo
+ * cabe dentro do 70vh sem overflow. */
 .megaList {
   list-style: none;
   margin: 0;
   padding: 0;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  /* O conteúdo é maior que o panel em algumas viewports —
-   * permite scroll interno preservando o overlay externo. */
-  overflow-y: auto;
-  /* Esconde scrollbar visual; o scroll segue funcional. */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(20px, 2.4vw, 40px);
+  /* Sem overflow-y: auto — o conteúdo precisa caber. Se o
+   * design crescer, a fonte (clamp) é o ponto de ajuste. */
+  overflow: hidden;
+  min-height: 0;
 }
-.megaList::-webkit-scrollbar { width: 4px; }
-.megaList::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 2px; }
 
 .megaGroup {
-  /* Layout VERTICAL — antes era grid 2-cols (title | subitens
-   *  lado a lado). Agora título em cima, subitens abaixo, como
-   *  uma coluna empilhada por grupo. Faz o menu inteiro ler
-   *  como uma cascata de palavras grandes. */
+  /* Cada grupo é uma coluna vertical: número + título no topo,
+   * subitens empilhados abaixo. Sem mais hairlines horizontais
+   * (eram rows). */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 18px;
-  padding: 28px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 14px;
+  padding: 8px 0;
+  border: none;
+  min-width: 0;
   /* Stagger fade-up animation por grupo — o delay
    * inline-style ajusta o offset por index. */
   opacity: 0;
@@ -465,20 +473,19 @@
 .megaPanelOpen .megaGroup {
   animation-play-state: running;
 }
-.megaGroup:last-of-type {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
 
 .megaGroupLeft {
   display: flex;
-  align-items: baseline;
-  gap: 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   min-width: 0;
+  width: 100%;
 }
 .megaGroupIndex {
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 14px;
   letter-spacing: 0.04em;
   background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
   -webkit-background-clip: text;
@@ -489,23 +496,29 @@
 .megaGroupTitle {
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
-  font-size: clamp(40px, 6.4vw, 88px);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
+  /* Tamanho reduzido pra caber 4 colunas no 70vh sem scroll —
+   * per product feedback "Diminua o tamanho da letra, se
+   * necessário". */
+  font-size: clamp(22px, 2.4vw, 36px);
+  line-height: 1;
+  letter-spacing: -0.02em;
   color: #fff;
   margin: 0;
-  text-transform: uppercase;
+  /* Sem uppercase — per product feedback "deve ser escrito
+   * apenas com a primeira letra maiuscula". O dado já está
+   * em sentence case ('Produto', 'Conteúdo', ...). */
+  text-transform: none;
 }
 
-/* Container dos subitens — agora abaixo do título, ocupando
- * largura total do grupo (layout vertical do .megaGroup). */
+/* Container dos subitens — empilhados abaixo do título, sem
+ * indentação extra. Em layout 4-col cada coluna é estreita; o
+ * subitem usa toda a largura disponível. */
 .megaGroupRight {
   display: flex;
   align-items: flex-start;
   width: 100%;
-  padding-left: clamp(40px, 5vw, 72px);
-  /* Subitens indentados pra criar hierarquia visual com o
-   * título grande do grupo logo acima. */
+  padding-left: 0;
+  margin-top: 2px;
 }
 
 .megaSubList {
@@ -525,29 +538,28 @@
 .megaSubitem {
   display: inline-flex;
   align-items: baseline;
-  gap: 16px;
-  padding: 10px 0;
+  gap: 12px;
+  padding: 4px 0;
   text-decoration: none;
   color: rgba(255, 255, 255, 0.85);
   transition: padding 200ms ease-out, color 200ms ease-out;
 }
 .megaSubitem:hover {
-  padding-left: 10px;
+  padding-left: 6px;
   color: #fff;
 }
 
 .megaSubitemLabel {
-  /* Headline font (Borscha) — palavras grandes empilhadas
-   * verticalmente como uma cascata. Size ~clamp(28..48px)
-   * pra ler como secundárias dos títulos do grupo (que vão
-   * em 40..88px) mas ainda como peso de headline. */
+  /* Headline font (Borscha) — agora menor (era clamp 24..44px)
+   * pra caber 4 colunas sem scroll. Sentence case (sem
+   * uppercase) per product feedback. */
   font-family: 'Borscha', var(--font-inter), -apple-system,
     BlinkMacSystemFont, sans-serif;
-  font-size: clamp(24px, 3.4vw, 44px);
+  font-size: clamp(14px, 1.3vw, 20px);
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-transform: none;
 }
 /* Hint + arrow ESCONDIDOS no novo layout vertical — as
  * palavras em Borscha ficam protagonistas, sem ornamentos
@@ -648,20 +660,27 @@
   }
   .menuTrigger { width: 42px; height: 42px; }
 
-  /* Megamenu mobile: pad menor, header padding-top menor pra
-   * abrir mais espaço pros 4 grupos. */
+  /* Megamenu mobile: 4 colunas vira 2 colunas no mobile —
+   * caber 4 numa viewport <720px ficaria ilegível. As fontes
+   * já são clamp(), então auto-encolhem. */
   .megaInner {
     padding: 24px 20px 16px;
   }
   .megaHeader { padding-top: 24px; margin-bottom: 16px; }
-  .megaGroup {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 18px 0;
+  .megaList {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
   }
-  .megaGroupLeft { gap: 16px; }
+  .megaGroup {
+    gap: 10px;
+    padding: 6px 0;
+  }
+  .megaGroupLeft { gap: 4px; }
   .megaGroupTitle {
-    font-size: clamp(34px, 11vw, 56px);
+    font-size: clamp(18px, 5.4vw, 28px);
+  }
+  .megaSubitemLabel {
+    font-size: clamp(13px, 3.6vw, 16px);
   }
   .megaWordmark { font-size: clamp(100px, 30vw, 200px); bottom: -6vh; }
   .langPill { padding: 12px 16px; }
@@ -671,6 +690,7 @@
 }
 @media (max-height: 600px) {
   .megaPanel { height: 88vh; }
-  .megaGroup { padding: 14px 0; }
-  .megaGroupTitle { font-size: clamp(30px, 9vw, 48px); }
+  .megaGroup { padding: 4px 0; }
+  .megaGroupTitle { font-size: clamp(18px, 2.4vw, 28px); }
+  .megaSubitemLabel { font-size: clamp(13px, 1.2vw, 16px); }
 }
