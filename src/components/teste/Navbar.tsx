@@ -147,13 +147,10 @@ export default function Navbar() {
             <a href="#o-app"        className={styles.navLink}>O App</a>
             <a href="/para-artistas" className={styles.navLink}>Para Artistas</a>
             <a href="/auth" className={styles.ctaPill}>
-              {/* Orb gradient à ESQUERDA — o gradient animado, que
-               *  antes ocupava o fundo inteiro do pill, agora se
-               *  concentra num círculo decorativo. Pill em si fica
-               *  preto com borda quase invisível. Mesmo padrão do
-               *  CTA "Entrar no Fanverse" da home. aria-hidden
-               *  porque é puramente visual. */}
-              <span className={styles.ctaOrb} aria-hidden="true" />
+              {/* Pill preto sólido + sombra gradient animada atrás
+               *  (::before pseudo, ver Navbar.module.css). O orb
+               *  interno foi removido — toda a energia visual fica
+               *  na sombra que desliza atrás do botão. */}
               Meu Fanverse
             </a>
           </nav>

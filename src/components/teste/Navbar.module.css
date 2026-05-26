@@ -121,13 +121,12 @@
 .ctaPill {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  /* Padding compensa o orb à esquerda: 6 top/bottom + 6 left
-   * + 26 right. Total height = 6+38(orb)+6 = 50px, próximo
-   * dos 51px do pill anterior (17×2 + ~17 line-height). */
-  padding: 6px 26px 6px 6px;
+  /* Padding simétrico restaurado (sem orb interno): mesma
+   * geometria do CTA original do /teste (17×30) pra preservar
+   * o tamanho visual percebido. */
+  padding: 17px 30px;
   background: #08080A;
-  /* Sem borda — o halo gradient atrás (::before) já dá a
+  /* Sem borda — a sombra animada atrás (::before) já dá a
    * silhueta sutil que separa o pill do fundo da navbar. */
   border: none;
   color: #ffffff;
@@ -143,21 +142,32 @@
    * animada) ficar atrás do conteúdo sem afetar nada fora. */
   position: relative;
   isolation: isolate;
-  transition: transform 200ms ease-out, box-shadow 200ms ease-out,
-    border-color 200ms ease-out;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
 }
 
-/* Sombra-gradient permanente em movimento — pseudo absolute
- * por trás do pill, com o MESMO gradient e MESMA animação
- * `ctaPillShift` do orb (sincronia visual). filter:blur cria
- * a sensação de "halo iluminado" embaixo do botão; opacity
- * 0.65 deixa cromático sem sobrecarregar. inset negativo
- * sangra o glow pra fora da silhueta do pill, dando o efeito
- * de luz emanando dele. */
+/* Sombra-gradient em movimento atrás do pill — pseudo absolute
+ * com DUAS animações compostas:
+ *
+ *   1) `ctaPillShift` (6s, linear) — desloca o
+ *      background-position dentro do halo, fazendo as cores
+ *      magenta→indigo→magenta fluírem como se passassem por
+ *      trás do botão.
+ *
+ *   2) `ctaShadowDrift` (8s, ease-in-out) — translada o
+ *      pseudo inteiro (transform translateX) ~16px pra cada
+ *      lado, criando a sensação física de a sombra DESLIZAR
+ *      atrás do pill. Período mais longo que o shift cromático
+ *      pra que as duas ondas não fiquem em fase — leitura
+ *      mais orgânica.
+ *
+ * filter:blur(18px) torna a sombra macia o suficiente pra que
+ * o drift de 16px não revele bordas duras. opacity 0.7 dá
+ * presença sem sobrecarregar. inset:-10px aumenta a área da
+ * sombra pra ela ter "pano" pra deslizar sem revelar o limite. */
 .ctaPill::before {
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -10px;
   z-index: -1;
   border-radius: inherit;
   background: linear-gradient(
@@ -168,9 +178,11 @@
   );
   background-size: 300% 100%;
   background-position: 0% 50%;
-  animation: ctaPillShift 6s linear infinite;
-  filter: blur(16px);
-  opacity: 0.65;
+  animation:
+    ctaPillShift 6s linear infinite,
+    ctaShadowDrift 8s ease-in-out infinite;
+  filter: blur(18px);
+  opacity: 0.7;
   pointer-events: none;
 }
 
@@ -178,35 +190,13 @@
   transform: translateY(-1px);
 }
 .ctaPill:hover::before {
-  /* Intensifica o halo no hover — sem mexer no blur, só na
+  /* Intensifica a sombra no hover — sem mexer no blur, só na
    * opacidade pra leitura ficar mais "viva" sem distorcer o
    * tamanho aparente. */
-  opacity: 0.85;
+  opacity: 0.9;
 }
 .ctaPill:active {
   transform: translateY(0);
-}
-
-/* Orb à esquerda do CTA — círculo perfeito com o mesmo
- * gradient animado magenta→indigo→magenta que antes vivia
- * no fundo do pill inteiro. background-size 300% + animation
- * deslocando background-position cria o efeito de fluxo. */
-.ctaOrb {
-  display: inline-block;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(
-    90deg,
-    #ff00b4 0%,
-    #5b00d1 50%,
-    #ff00b4 100%
-  );
-  background-size: 300% 100%;
-  background-position: 0% 50%;
-  animation: ctaPillShift 6s linear infinite;
-  box-shadow: 0 0 14px -2px rgba(255, 0, 180, 0.5);
 }
 
 @keyframes ctaPillShift {
@@ -214,8 +204,17 @@
   to   { background-position: -200% 50%; }
 }
 
+/* Drift horizontal da sombra inteira — translateX simétrico
+ * pra que o "puxa pra direita / volta pra esquerda" pareça
+ * um movimento natural atrás do botão, não um deslocamento
+ * desbalanceado. ease-in-out evita parar bruscamente nas
+ * extremidades. */
+@keyframes ctaShadowDrift {
+  0%, 100% { transform: translateX(-16px); }
+  50%      { transform: translateX(16px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ctaOrb,
   .ctaPill::before {
     animation: none;
   }
