@@ -1,6 +1,7 @@
-/* Página dedicada de criação de push notification — segue o
- * padrão das outras páginas do admin: body centralizado em
- * `--content-max`, card único com header + form + footer de ações. */
+/* Página dedicada de criação de push notification — body
+ * centralizado em `--content-max` e divisão em 2 colunas (form
+ * + preview) abaixo. Em telas estreitas (< 1024) vira 1 coluna
+ * com o preview embaixo do form. */
 
 .body {
   padding: 24px;
@@ -10,6 +11,42 @@
   max-width: var(--content-max);
   margin: 0 auto;
   width: 100%;
+}
+
+/* ── Split form | preview (50/50) ───────────────────────────── */
+
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .splitLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card do preview tem comportamento sticky em telas largas pra
+ * que o mockup do celular acompanhe o admin enquanto ele rola
+ * pelo form — feedback contínuo sem precisar voltar pro topo. */
+.previewCard {
+  position: sticky;
+  top: calc(var(--topbar-h, 56px) + 24px);
+}
+@media (max-width: 1024px) {
+  .previewCard {
+    position: static;
+  }
+}
+
+.previewStage {
+  padding: 24px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: var(--bg-soft);
 }
 
 /* ── Breadcrumb (padrão Materiais / Níveis) ─────────────────── */

@@ -16,6 +16,7 @@ import {
   IconChevronRight,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import NotificationPreview from '@/components/admin/NotificationPreview';
 import {
   buildCustomDraft,
   saveCustomDraft,
@@ -162,103 +163,133 @@ export default function NovaPushPage() {
           </span>
         </nav>
 
-        <Card>
-          <CardHeader
-            title="Detalhes da push"
-            description="Preencha identificador, copy e gatilho. O draft fica salvo como planejado até o canal push subir."
-          />
+        {/* Layout 2 colunas: form à esquerda, preview do celular
+         *  à direita (metade da área cada). Em telas < 1024 vira
+         *  1 coluna com o preview embaixo. */}
+        <div className={styles.splitLayout}>
+          <Card>
+            <CardHeader
+              title="Detalhes da push"
+              description="Preencha identificador, copy e gatilho. O draft fica salvo como planejado até o canal push subir."
+            />
 
-          {/* Banner contextual — push ainda não dispara. */}
-          <div className={styles.banner} role="status">
-            <IconAlert size={14} />
-            <span>
-              Push notifications estão em desenvolvimento. O canal ainda
-              não dispara automaticamente — o draft fica salvo como
-              planejado e entra no ar quando a integração subir.
-            </span>
-          </div>
+            {/* Banner contextual — push ainda não dispara. */}
+            <div className={styles.banner} role="status">
+              <IconAlert size={14} />
+              <span>
+                Push notifications estão em desenvolvimento. O canal ainda
+                não dispara automaticamente — o draft fica salvo como
+                planejado e entra no ar quando a integração subir.
+              </span>
+            </div>
 
-          <div className={styles.form}>
-            <div className={styles.row}>
-              <Input
-                label="Identificador (kind)"
-                required
-                value={kind}
-                onChange={(e) =>
-                  setKind(
-                    e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
-                  )
-                }
-                placeholder="ex: push_winback_3d"
-                helperText={
-                  kindError ?? 'Usado em código + nos logs. Não muda depois.'
-                }
-                errorText={kindError && kind ? kindError : undefined}
-                maxLength={60}
+            <div className={styles.form}>
+              <div className={styles.row}>
+                <Input
+                  label="Identificador (kind)"
+                  required
+                  value={kind}
+                  onChange={(e) =>
+                    setKind(
+                      e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
+                    )
+                  }
+                  placeholder="ex: push_winback_3d"
+                  helperText={
+                    kindError ?? 'Usado em código + nos logs. Não muda depois.'
+                  }
+                  errorText={kindError && kind ? kindError : undefined}
+                  maxLength={60}
+                />
+                <Input
+                  label="Nome / título"
+                  required
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="ex: Volta pra ver o que rolou"
+                  errorText={
+                    labelError && label.length > 0 ? labelError : undefined
+                  }
+                  maxLength={200}
+                />
+              </div>
+
+              <Textarea
+                label="Descrição"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Texto curto e direto — push tem limite de caracteres e o usuário lê na lockscreen."
+                rows={2}
+                maxLength={2000}
               />
-              <Input
-                label="Nome / título"
-                required
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="ex: Volta pra ver o que rolou"
-                errorText={
-                  labelError && label.length > 0 ? labelError : undefined
+
+              <Textarea
+                label="Quando dispara (agenda ou evento)"
+                value={trigger}
+                onChange={(e) => setTrigger(e.target.value)}
+                placeholder="Ex: Diariamente às 9h pros usuários que não abriram o app em 3+ dias."
+                rows={2}
+                maxLength={2000}
+              />
+
+              <Select
+                label="Categoria"
+                value={category}
+                onChange={(e) =>
+                  setCategory(e.target.value as NotificationCategory)
                 }
-                maxLength={200}
+                options={CATEGORY_OPTIONS}
+                required
               />
             </div>
 
-            <Textarea
-              label="Descrição"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Texto curto e direto — push tem limite de caracteres e o usuário lê na lockscreen."
-              rows={2}
-              maxLength={2000}
-            />
+            <footer className={styles.footer}>
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={cancel}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                leadingIcon={<IconCheckCircle size={14} />}
+                onClick={submit}
+                loading={saving}
+                disabled={!canSubmit}
+              >
+                Criar push
+              </Button>
+            </footer>
+          </Card>
 
-            <Textarea
-              label="Quando dispara (agenda ou evento)"
-              value={trigger}
-              onChange={(e) => setTrigger(e.target.value)}
-              placeholder="Ex: Diariamente às 9h pros usuários que não abriram o app em 3+ dias."
-              rows={2}
-              maxLength={2000}
+          {/* Preview do celular — reflete label/description/trigger
+           * em tempo real conforme o admin digita. Usa o mesmo
+           * NotificationPreview do editor full-page de notificações
+           * (variant iphone). channelEnabled=true porque toda
+           * notification recém-criada vai ativa por padrão. */}
+          <Card className={styles.previewCard}>
+            <CardHeader
+              title="Preview no celular"
+              description="Como o push vai aparecer na lockscreen. Atualiza enquanto você digita."
             />
-
-            <Select
-              label="Categoria"
-              value={category}
-              onChange={(e) =>
-                setCategory(e.target.value as NotificationCategory)
-              }
-              options={CATEGORY_OPTIONS}
-              required
-            />
-          </div>
-
-          <footer className={styles.footer}>
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={cancel}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              leadingIcon={<IconCheckCircle size={14} />}
-              onClick={submit}
-              loading={saving}
-              disabled={!canSubmit}
-            >
-              Criar push
-            </Button>
-          </footer>
-        </Card>
+            <div className={styles.previewStage}>
+              <NotificationPreview
+                device="iphone"
+                label={label || 'Nome / título da push'}
+                description={
+                  description ||
+                  'A descrição da push aparece aqui — curta e direta.'
+                }
+                trigger={trigger || 'Gatilho a definir.'}
+                category={category}
+                channelEnabled
+              />
+            </div>
+          </Card>
+        </div>
       </div>
     </>
   );
