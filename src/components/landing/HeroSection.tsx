@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './HeroSection.module.css';
 
 const HeroGlobe = dynamic(() => import('./HeroGlobe'), { ssr: false });
@@ -119,12 +120,22 @@ export default function HeroSection() {
           asset used on the auth email-entry surface so the brand
           identity reads continuous across landing → auth. */}
       <div className={styles.copy}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/fanverse-logo.svg"
-          alt="Fanverse"
-          className={styles.heroLogo}
-        />
+        {/* Logo + orb animado num wrapper centralizado. O wrapper
+         *  herda o position:absolute + animação de fade-in que antes
+         *  vivia direto no <img>. Orb (canvas WebGL2) à ESQUERDA,
+         *  aria-hidden porque é decorativo — o alt do <img> já
+         *  comunica "Fanverse". */}
+        <div className={styles.heroLogoWrap}>
+          <span className={styles.heroOrb} aria-hidden="true">
+            <FanverseCore />
+          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fanverse-logo.svg"
+            alt="Fanverse"
+            className={styles.heroLogo}
+          />
+        </div>
         <h1 className={styles.headline} aria-live="polite">
           <span>{displayText}</span>
           <span className={styles.cursor} aria-hidden="true" />
