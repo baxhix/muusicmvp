@@ -283,18 +283,18 @@
  * `left: 50%` + `translateX(-50%)` keeps the logo
  * horizontally centered. The fade-in animation composes that
  * X transform with a small Y nudge. */
-/* Wrapper centralizado que agora carrega o positioning + a
- * animação de fade-in que antes vivia no <img>. Layout interno
- * flex pra que o orb (FanverseCore) e o wordmark fiquem lado a
- * lado, alinhados verticalmente. */
-.heroLogoWrap {
+.heroLogo {
   position: absolute;
   top: clamp(24px, 3vh, 48px);
   left: 50%;
   z-index: 6;
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
+  /* Shrunk a further 20% per product feedback "Diminua 20% o
+   * tamanho do logotipo no centro": clamp(48, 6vh, 64) ×0.8 →
+   * clamp(38, 4.8vh, 51). */
+  height: clamp(38px, 4.8vh, 51px);
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
   opacity: 0;
   transform: translateX(-50%);
   animation: hero-logo-fadein 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
@@ -303,27 +303,6 @@
 @keyframes hero-logo-fadein {
   from { opacity: 0; transform: translate(-50%, -6px); }
   to   { opacity: 1; transform: translate(-50%, 0);    }
-}
-
-/* Orb animado (FanverseCore) à ESQUERDA do wordmark. Tamanho ~1.5x
- * a altura do logo pra dar presença visual (a animação tem halos
- * que respiram pra fora da bounding box). Acompanha o mesmo clamp
- * pra escalar com vh. */
-.heroOrb {
-  width: clamp(56px, 7.2vh, 76px);
-  height: clamp(56px, 7.2vh, 76px);
-  display: inline-block;
-  flex-shrink: 0;
-  line-height: 0;
-}
-
-/* Wordmark agora é um flex child neutro — perdeu position/transform.
- * Mantém o drop-shadow pro relevo da sombra contra o fundo. */
-.heroLogo {
-  height: clamp(38px, 4.8vh, 51px);
-  width: auto;
-  display: block;
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
 }
 
 @media (prefers-reduced-motion: reduce) {
