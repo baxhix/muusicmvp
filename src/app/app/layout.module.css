@@ -302,30 +302,27 @@
 
 /* ── Orb decorativo da marca (FanverseCore) ──
  *
- * Desktop: alinhado à ESQUERDA da BottomNav (que vive
- * centralizada na base da viewport, 300px de largura, bottom:18).
- * Coordenadas:
- *   - vertical: pill center = bottom 18 + 72/2 = 54px da base;
- *     orb 50×50 centrado nessa linha → bottom: 29px.
- *   - horizontal: left:50% + transform pra empurrar pra esquerda
- *     do pill. Offset = 150 (metade do pill width 300) + 12 (gap)
- *     + 50 (orb width) = 212px à esquerda do centro.
+ * Desktop: TOPO CENTRAL da viewport, 100×100 (era 50×50 ao lado
+ * da BottomNav — dobrou per product feedback "No desktop,
+ * duplique o tamanho do orbe… posicione o Orbe no topo ao
+ * centro"). Como o ArtistBox foi ocultado no desktop no mesmo
+ * round, o top-center fica visualmente livre pro orb.
  *
- * Mobile: bottom-left no canto, ACIMA da BottomNav (mesma
- * estratégia anterior — pill mobile fica em geometria diferente,
- * então mantemos a posição independente).
+ * Mobile: o orb antigo daqui (.orbSlot) está display:none
+ * (regra abaixo). O orb mobile vive em
+ * src/components/app/MobileHomeChrome (.headerOrb).
  *
  * pointer-events:none no wrapper porque é decorativo (a
  * animação não responde a click/hover). aria-hidden no JSX
  * pelos mesmos motivos. */
 .orbSlot {
   position: fixed;
-  bottom: 29px;
+  top: 18px;
   left: 50%;
-  transform: translateX(-212px);
+  transform: translateX(-50%);
   z-index: 22;
-  width: 50px;
-  height: 50px;
+  width: 100px;
+  height: 100px;
   pointer-events: none;
 }
 

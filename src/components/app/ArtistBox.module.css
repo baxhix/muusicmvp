@@ -899,7 +899,14 @@
  *     occupy the scarce top-of-screen real estate.
  */
 @media (min-width: 769px) {
+  /* ArtistBox HIDDEN no desktop per product feedback "oculte o
+   * banner da Ana Castela". O componente continua sendo
+   * renderizado em src/app/app/layout.tsx mas fica
+   * visualmente suprimido — re-ativar é só remover este
+   * display:none. Mobile já estava display:none no @media
+   * abaixo; agora ambas as plataformas escondem o banner. */
   .box {
+    display: none;
     width: 320px;
     left: 42px;
     border-radius: 20px;
