@@ -74,3 +74,30 @@
     will-change: auto;
   }
 }
+
+/* Orbe FanverseCore — slot 390×390 centralizado, plantado logo
+ * acima do Footer. Tamanho dado pelo CSS (canvas WebGL2 auto-
+ * redimensiona via ResizeObserver). margin top/bottom dão
+ * respiro pra que o orb não cole nem na section anterior nem
+ * no header do footer.
+ *
+ * line-height 0 evita o gap-baseline padrão do <canvas>.
+ * pointer-events:none reforça que é decorativo. */
+.preFooterOrb {
+  width: 390px;
+  height: 390px;
+  margin: 96px auto 64px;
+  display: block;
+  line-height: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  /* Mobile: encolhe pra caber em viewports estreitos sem
+   * sangrar fora da página. Mantém proporção 1:1. */
+  .preFooterOrb {
+    width: min(80vw, 280px);
+    height: min(80vw, 280px);
+    margin: 64px auto 40px;
+  }
+}
