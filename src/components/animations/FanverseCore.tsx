@@ -124,18 +124,14 @@ void main(){
   vec2 s2 = vec2(0.48, 0.18);
   vec2 s3 = vec2(0.42, 0.16);
 
-  // Sharpness oscillates entre soft/blurry e solid/crisp. Ajustado pra
-  // bater o look da imagem de referência: traços visíveis e definidos
-  // a maior parte do tempo, com momentos mais firmes recorrentes, mas
-  // sem chegar em "duro/cortante".
-  //   - Range 6..14: nunca fica totalmente borrado nem totalmente
-  //     cristalino. Lower bound 6 mantém uma definição mínima.
-  //   - pow(sw, 2.0): bias suave — picos do sine duram mais (vs pow³),
-  //     então os "momentos sólidos" são frequentes e sustentados, não
-  //     flashes raros.
+  // Sharpness range 9..17 com bias pow(sw, 2.0). Floor 9 garante
+  // que mesmo o estado "fluido" tem definição clara; pico 17 produz
+  // momentos quase cristalinos. Combinado com o boost de intensity
+  // + tonemap menos compressor lá embaixo, os traços lêem como
+  // sólidos e brilhantes o tempo todo.
   float sw = 0.5 + 0.5 * sin(uTime * 0.7 + 1.3);
   sw = pow(sw, 2.0);
-  float sharpness = mix(6.0, 14.0, sw);
+  float sharpness = mix(9.0, 17.0, sw);
   float p0 = petal(puv, c0, a0, s0, sharpness);
   float p1 = petal(puv, c1, a1, s1, sharpness);
   float p2 = petal(puv, c2, a2, s2, sharpness);
@@ -154,9 +150,10 @@ void main(){
   inner += col2 * p2;
   inner += col3 * p3;
 
-  // bright hot core where petals overlap
+  // bright hot core where petals overlap — boost de brilho (0.9 → 1.15)
+  // pra deixar o núcleo mais incandescente; overlap também sobe (0.8 → 1.0).
   float overlap = p0*p1 + p1*p2 + p2*p3 + p0*p3;
-  float core = exp(-r*r * 22.0) * 0.9 + smoothstep(0.4, 1.8, overlap) * 0.8;
+  float core = exp(-r*r * 22.0) * 1.15 + smoothstep(0.4, 1.8, overlap) * 1.0;
   inner += uC4 * core;
 
   // subtle inner depth tint
@@ -184,8 +181,10 @@ void main(){
   // grain
   col += (hash(gl_FragCoord.xy + uTime) - 0.5) * 0.015;
 
-  // tonemap
-  col = col / (1.0 + col*0.7);
+  // tonemap Reinhard — fator reduzido 0.7 → 0.55 pra comprimir
+  // menos os brilhantes (deixa os picos mais "incandescentes"
+  // em vez de saturar pra branco/cinza claro).
+  col = col / (1.0 + col*0.55);
 
   // alpha: soft body + halos, no rim
   float a = clamp(sphere*0.95 + halo*(0.2 + 0.7*haloBreath) + wideHalo*(0.2 + 0.8*haloBreath), 0.0, 1.0);
@@ -194,7 +193,10 @@ void main(){
 }`;
 
 export function FanverseCore({
-  intensity = 1,
+  /* Default 1.3 (era 1) — multiplica o `col` final no shader pra
+   * que o orb leia como brilhante na navbar. Caller pode passar
+   * intensity={1} pra voltar ao baseline. */
+  intensity = 1.3,
   palette = DEFAULT_PALETTE,
   maxDpr = 1.75,
   className,
