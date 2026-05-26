@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './Navbar.module.css';
 
 type Lang = 'PT' | 'EN';
@@ -125,6 +126,15 @@ export default function Navbar() {
         {/* Container 1200px com brand + nav nas pontas. */}
         <div className={styles.container}>
           <a href="/teste" className={styles.brand} aria-label="Fanverse — início">
+            {/* Orb animado vai à ESQUERDA do wordmark — feedback de
+             *  produto. FanverseCore renderiza num canvas WebGL2
+             *  auto-contido (sem deps externas), com tamanho ditado
+             *  pelo container. Aria-hidden porque é puramente
+             *  decorativo — o aria-label do <a> já comunica
+             *  "Fanverse" pra screen reader. */}
+            <span className={styles.brandOrb} aria-hidden="true">
+              <FanverseCore />
+            </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/teste/fanverse-logo.svg"

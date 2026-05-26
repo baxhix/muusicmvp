@@ -50,12 +50,26 @@
 .brand {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   color: #fff;
   text-decoration: none;
   transition: opacity 200ms ease-out;
 }
 .brand:hover {
   opacity: 0.7;
+}
+
+/* Orb animado (FanverseCore — WebGL2 fluido) à ESQUERDA do
+ * wordmark. 32px alinhado verticalmente com a altura do logo
+ * de 20px — o orb fica ligeiramente maior porque a animação
+ * tem halos suaves que respiram pra fora da bounding box.
+ * line-height 0 evita gap baseline residual em volta do canvas. */
+.brandOrb {
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 /* Logo SVG — height 20px (proporcional ao padding vertical
