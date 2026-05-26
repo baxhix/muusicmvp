@@ -302,28 +302,27 @@
 
 /* ── Orb decorativo da marca (FanverseCore) ──
  *
- * Desktop: top-right, AO LADO da navbar (avatar do usuário em
- * top:42, right:14, 52×52). Posicionado pra ficar imediatamente
- * à esquerda do avatar, com 12px de gap, alinhado verticalmente
- * pelo top:42 — leem como uma linha horizontal de chrome no
- * topo. 50×50 (~mesmo diâmetro do avatar) pra balanço visual.
+ * Desktop: alinhado à ESQUERDA da BottomNav (que vive
+ * centralizada na base da viewport, 300px de largura, bottom:18).
+ * Coordenadas:
+ *   - vertical: pill center = bottom 18 + 72/2 = 54px da base;
+ *     orb 50×50 centrado nessa linha → bottom: 29px.
+ *   - horizontal: left:50% + transform pra empurrar pra esquerda
+ *     do pill. Offset = 150 (metade do pill width 300) + 12 (gap)
+ *     + 50 (orb width) = 212px à esquerda do centro.
  *
- * Mobile: bottom-left, ACIMA da BottomNav. A BottomNav pill
- * tem outer top em ~80px da base da viewport (24px padding +
- * ~56px pill), então fixamos o orb em `bottom: 96px` pra dar
- * 16px de respiro. 44×44 ligeiramente menor — espaço é mais
- * disputado no mobile.
+ * Mobile: bottom-left no canto, ACIMA da BottomNav (mesma
+ * estratégia anterior — pill mobile fica em geometria diferente,
+ * então mantemos a posição independente).
  *
  * pointer-events:none no wrapper porque é decorativo (a
  * animação não responde a click/hover). aria-hidden no JSX
  * pelos mesmos motivos. */
 .orbSlot {
   position: fixed;
-  /* Alinhado à mesma top-axis da .userMenu (top:42) pra a navbar
-   * ficar visualmente coerente. right = 14 (avatar right) + 52
-   * (avatar width) + 12 (gap) = 78. */
-  top: 42px;
-  right: 78px;
+  bottom: 29px;
+  left: 50%;
+  transform: translateX(-212px);
   z-index: 22;
   width: 50px;
   height: 50px;
@@ -332,10 +331,9 @@
 
 @media (max-width: 768px) {
   .orbSlot {
-    top: auto;
-    right: auto;
     bottom: 96px;
     left: 14px;
+    transform: none;
     width: 44px;
     height: 44px;
   }
