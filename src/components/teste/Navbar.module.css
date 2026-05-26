@@ -112,39 +112,24 @@
   color: #fff;
 }
 
-/* CTA pill — Meu Fanverse.
- *
- * Per product feedback: gradient magenta → indigo (igual ao
- * mockup de referência) com ANIMAÇÃO contínua de
- * deslizamento horizontal.
- *
- * Técnica: background-size 300% + repetição das duas cores
- * (magenta, indigo, magenta, indigo) faz o tile do gradient
- * ser 3x maior que o botão. Animando background-position de
- * 0% até -200% (= o ciclo completo das 2 cores), o gradient
- * "flui" infinito sem nenhum salto visual (a posição -200%
- * coincide com a posição 0%).
- *
- * 6s de duração + ease linear = movimento suave e contínuo,
- * sem chamar muita atenção. prefers-reduced-motion congela
- * o gradient. */
+/* CTA pill — Meu Fanverse. Reestilizado pra espelhar o CTA
+ * "Entrar no Fanverse" da home (/): fundo preto, borda quase
+ * invisível (cinza muito próximo do preto) e o gradient
+ * animado magenta→indigo se concentra num orb decorativo à
+ * ESQUERDA. Mantém o tamanho geral do pill original (~50px
+ * de altura) ajustando o padding pra acomodar o orb. */
 .ctaPill {
   display: inline-flex;
   align-items: center;
-  /* Padding: 11x24 → 17x30 per product feedback "aumente 12px
-   * a largura e altura dos CTAs na landing page" (+6 cada
-   * lado em ambos os eixos = +12 width / +12 height). Mantém
-   * font-size 14px. */
-  padding: 17px 30px;
-  background:
-    linear-gradient(
-      90deg,
-      #ff00b4 0%,
-      #5b00d1 50%,
-      #ff00b4 100%
-    );
-  background-size: 300% 100%;
-  background-position: 0% 50%;
+  gap: 12px;
+  /* Padding compensa o orb à esquerda: 6 top/bottom + 6 left
+   * + 26 right. Total height = 6+38(orb)+6 = 50px, próximo
+   * dos 51px do pill anterior (17×2 + ~17 line-height). */
+  padding: 6px 26px 6px 6px;
+  background: #08080A;
+  /* Borda "cinza quase preto" per feedback — discreta a ponto
+   * de quase desaparecer no fundo escuro da navbar. */
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #ffffff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   /* 14px alinhado com os nav links. */
@@ -153,19 +138,39 @@
   letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 999px;
-  /* Velocidade refinada — começou em 8s (lento demais), foi
-   * pra 3s (rápido demais), agora em 6s pra dar movimento
-   * perceptível sem distrair. */
-  animation: ctaPillShift 6s linear infinite;
-  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out,
+    border-color 200ms ease-out;
 }
 .ctaPill:hover {
   transform: translateY(-1px);
-  /* Glow sutil colored no hover pra reforçar interatividade. */
-  box-shadow: 0 8px 24px -8px rgba(255, 0, 180, 0.5);
+  border-color: rgba(255, 255, 255, 0.18);
+  /* Glow sutil colored no hover — herda o tom do orb (magenta). */
+  box-shadow: 0 8px 24px -8px rgba(255, 0, 180, 0.45);
 }
 .ctaPill:active {
   transform: translateY(0);
+}
+
+/* Orb à esquerda do CTA — círculo perfeito com o mesmo
+ * gradient animado magenta→indigo→magenta que antes vivia
+ * no fundo do pill inteiro. background-size 300% + animation
+ * deslocando background-position cria o efeito de fluxo. */
+.ctaOrb {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    #ff00b4 0%,
+    #5b00d1 50%,
+    #ff00b4 100%
+  );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: ctaPillShift 6s linear infinite;
+  box-shadow: 0 0 14px -2px rgba(255, 0, 180, 0.5);
 }
 
 @keyframes ctaPillShift {
@@ -174,7 +179,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ctaPill { animation: none; }
+  .ctaOrb { animation: none; }
 }
 
 /* ── Hamburger trigger ─────────────────────────────
