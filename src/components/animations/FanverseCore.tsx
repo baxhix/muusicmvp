@@ -13,12 +13,17 @@ export interface FanverseCoreProps {
   className?: string;
 }
 
+/* Paleta vibrante: cada cor cromática puxada pro pico de saturação
+ * (chroma máximo), mais próxima dos eixos RGB puros pra preservar
+ * o punch após o tonemap Reinhard do shader (col / (1 + col*0.7)).
+ * O deep-space #080318 fica como está — é o background que
+ * sustenta o contraste das outras. */
 const DEFAULT_PALETTE: [string, string, string, string, string] = [
-  "#080318", // deep space
-  "#5b1fd1", // vivid violet
-  "#b026ff", // electric magenta-purple
-  "#ff2bd6", // neon pink
-  "#22f0ff", // neon cyan
+  "#080318", // deep space (unchanged)
+  "#6500FF", // electric violet (era #5b1fd1)
+  "#C800FF", // saturated magenta-purple (era #b026ff)
+  "#FF00B8", // pure neon pink (era #ff2bd6)
+  "#00FFE5", // peak cyan-aqua (era #22f0ff)
 ];
 
 function hexToRgb(hex: string): [number, number, number] {
