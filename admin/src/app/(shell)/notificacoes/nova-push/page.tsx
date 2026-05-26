@@ -16,7 +16,9 @@ import {
   IconChevronRight,
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import NotificationPreview from '@/components/admin/NotificationPreview';
+import NotificationPreview, {
+  type PreviewDevice,
+} from '@/components/admin/NotificationPreview';
 import {
   buildCustomDraft,
   saveCustomDraft,
@@ -61,6 +63,9 @@ export default function NovaPushPage() {
   const [trigger, setTrigger] = useState('');
   const [category, setCategory] = useState<NotificationCategory>('engagement');
   const [saving, setSaving] = useState(false);
+  /* Tab do preview — alterna entre mockup iPhone e Android.
+   * Default iPhone porque é o mais comum. */
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('iphone');
 
   /* Lista de kinds existentes — usado pra validar duplicado contra
    * drafts em localStorage. O catálogo do servidor não é checado
@@ -184,7 +189,21 @@ export default function NovaPushPage() {
             </div>
 
             <div className={styles.form}>
+              {/* Ordem: Nome → Kind. O kind é só um identificador
+               *  técnico (slug pros logs), então fica em segundo plano;
+               *  o admin entra mais naturalmente pelo Nome. */}
               <div className={styles.row}>
+                <Input
+                  label="Nome / título"
+                  required
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="ex: Volta pra ver o que rolou"
+                  errorText={
+                    labelError && label.length > 0 ? labelError : undefined
+                  }
+                  maxLength={200}
+                />
                 <Input
                   label="Identificador (kind)"
                   required
@@ -200,17 +219,6 @@ export default function NovaPushPage() {
                   }
                   errorText={kindError && kind ? kindError : undefined}
                   maxLength={60}
-                />
-                <Input
-                  label="Nome / título"
-                  required
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  placeholder="ex: Volta pra ver o que rolou"
-                  errorText={
-                    labelError && label.length > 0 ? labelError : undefined
-                  }
-                  maxLength={200}
                 />
               </div>
 
@@ -265,30 +273,56 @@ export default function NovaPushPage() {
             </footer>
           </Card>
 
-          {/* Preview do celular — reflete label/description/trigger
-           * em tempo real conforme o admin digita. Usa o mesmo
-           * NotificationPreview do editor full-page de notificações
-           * (variant iphone). channelEnabled=true porque toda
-           * notification recém-criada vai ativa por padrão. */}
-          <Card className={styles.previewCard}>
-            <CardHeader
-              title="Preview no celular"
-              description="Como o push vai aparecer na lockscreen. Atualiza enquanto você digita."
-            />
+          {/* Preview do celular — sem Card chrome (sem título, sem
+           *  descrição, sem background). Só as tabs iPhone/Android
+           *  textuais + o mockup. trigger="" pra esconder o bloco
+           *  "Disparada quando..." (controlado dentro do componente
+           *  NotificationPreview por trigger.trim() !== ''). */}
+          <div className={styles.previewSection}>
+            <div
+              className={styles.previewToggle}
+              role="tablist"
+              aria-label="Escolher mockup do celular"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={previewDevice === 'iphone'}
+                className={cn(
+                  styles.previewToggleBtn,
+                  previewDevice === 'iphone' && styles.previewToggleActive,
+                )}
+                onClick={() => setPreviewDevice('iphone')}
+              >
+                iPhone
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={previewDevice === 'android'}
+                className={cn(
+                  styles.previewToggleBtn,
+                  previewDevice === 'android' && styles.previewToggleActive,
+                )}
+                onClick={() => setPreviewDevice('android')}
+              >
+                Android
+              </button>
+            </div>
             <div className={styles.previewStage}>
               <NotificationPreview
-                device="iphone"
+                device={previewDevice}
                 label={label || 'Nome / título da push'}
                 description={
                   description ||
                   'A descrição da push aparece aqui — curta e direta.'
                 }
-                trigger={trigger || 'Gatilho a definir.'}
+                trigger=""
                 category={category}
                 channelEnabled
               />
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </>

@@ -157,10 +157,16 @@ function PhoneMockup({
           </div>
         </div>
 
-        <div className={styles.notifTrigger}>
-          <span className={styles.notifTriggerLabel}>Disparada quando</span>
-          <span className={styles.notifTriggerText}>{trigger}</span>
-        </div>
+        {/* "Disparada quando ..." só renderiza quando o caller passou
+         *  trigger não-vazio. Permite usar este componente em fluxos
+         *  onde o gatilho não faz parte do mockup (ex.: criação de
+         *  push notification em /notificacoes/nova-push). */}
+        {trigger.trim() !== '' && (
+          <div className={styles.notifTrigger}>
+            <span className={styles.notifTriggerLabel}>Disparada quando</span>
+            <span className={styles.notifTriggerText}>{trigger}</span>
+          </div>
+        )}
       </div>
 
       {/* Bottom chrome — home indicator (iOS) ou gesture pill (Android). */}
