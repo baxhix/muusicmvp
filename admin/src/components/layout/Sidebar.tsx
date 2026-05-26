@@ -19,6 +19,7 @@ import {
 } from '@/components/icons';
 import Avatar from '@/components/ui/Avatar';
 import Tooltip from '@/components/ui/Tooltip';
+import FanverseCore from '@/components/animations/FanverseCore';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/AuthContext';
 import styles from './Sidebar.module.css';
@@ -402,6 +403,13 @@ export default function Sidebar({ open = false }: { open?: boolean }) {
     >
       <div className={styles.brand}>
         <Link href="/dashboard" className={styles.brandLink} title="Fanverse Admin">
+          {/* Orb decorativo à esquerda do wordmark — mesmo
+           *  shader WebGL2 que aplicamos no /teste, na landing e
+           *  no /app. aria-hidden porque é decorativo, o
+           *  title="Fanverse Admin" do Link já comunica a marca. */}
+          <span className={styles.brandOrb} aria-hidden="true">
+            <FanverseCore />
+          </span>
           {/* Mesmo wordmark da landing /teste (FANVERSE em tipografia
            *  oficial). No modo collapsed, troca pra mini-ícone só
            *  pra caber nos 64px de largura. */}

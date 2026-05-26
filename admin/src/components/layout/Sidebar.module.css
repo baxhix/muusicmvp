@@ -100,16 +100,37 @@
   color: inherit;
 }
 
+/* Orb decorativo (FanverseCore WebGL2) à ESQUERDA do logo.
+ * Mesmo padrão da landing/teste/app. Tamanho 28×28: encosta
+ * no wordmark (height 18) com 5px de respiro top/bottom — os
+ * halos da animação sangram pra fora da bounding box sem
+ * empurrar a altura visual. Modo collapsed (mini icon 20×20)
+ * usa um tamanho ligeiramente menor pra caber nos 64px da
+ * sidebar fechada. */
+.brandOrb {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.sidebarCollapsed .brandOrb {
+  width: 24px;
+  height: 24px;
+}
+
 /* Brand mark — renderiza o SVG do Fanverse. O asset carrega um
  * gradiente roxo→rosa nativo; aplicamos `grayscale(1)` +
  * opacidade reduzida pra que o ícone leia como uma marca
  * quieta ao lado do wordmark — per product feedback "deixe o
  * ícone mais cinza do que a palavra". O wordmark fica em
  * `var(--text)` (branco no dark), então o contraste de
- * "palavra prominente + ícone sutil" surge natural. */
+ * "palavra prominente + ícone sutil" surge natural.
+ * Tamanho reduzido levemente (24→20 collapsed) per produto pra
+ * dar espaço pro orb à esquerda sem inchar a header da sidebar. */
 .brandLogo {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: block;
   flex-shrink: 0;
   object-fit: contain;
@@ -120,10 +141,11 @@
 /* Wordmark variant — usado quando o sidebar está expandido.
  * O SVG já contém o texto FANVERSE em tipografia oficial, então
  * largura é natural (aspect ratio 184:30). Sem filter pra preservar
- * o branco original (legibilidade no fundo escuro). */
+ * o branco original (legibilidade no fundo escuro). Altura
+ * reduzida 20→18 per produto. */
 .brandLogoWordmark {
   width: auto;
-  height: 20px;
+  height: 18px;
   filter: none;
   opacity: 1;
 }
