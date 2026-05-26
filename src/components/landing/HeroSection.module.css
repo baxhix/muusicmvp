@@ -404,34 +404,81 @@
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
+/* CTA novo: pill preta com borda cinza + orb animado à esquerda.
+ *
+ * Geometria do pill:
+ *   - Padding vertical 4px (em cima e embaixo) reservado pro orb
+ *     respirar, conforme spec ("4px do lado esquerdo, em cima e
+ *     embaixo").
+ *   - Padding-left 4px também — o orb fica colado nessa margem.
+ *   - Padding-right 22px pra texto + chevron terem respiro à direita.
+ *   - Gap 12px entre orb e texto.
+ * O punch visual sai do fundo do pill (era cinza claro) e migra
+ * pro orb animado. Borda cinza sutil define a silhueta. */
 .heroCtaPrimary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 26px;
-  background: var(--ink);
-  color: #08080A;
-  border: none;
-  border-radius: 999px;          /* totalmente arredondado (pill) */
+  gap: 12px;
+  padding: 4px 22px 4px 4px;
+  background: #08080A;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
-  /* Keep the "Entrar no Fanverse" label + chevron on a single
-   * line on every viewport per product feedback "no mobile,
-   * deixe o botão em apenas uma linha". Default flex layout
-   * was happy to wrap to two lines on narrow phones where the
-   * pill's natural width approached the screen width. */
+  /* Keep label + chevron on a single line on every viewport.
+   * Default flex layout was happy to wrap to two lines on narrow
+   * phones where the pill's natural width approached the screen
+   * width. */
   white-space: nowrap;
-  transition: transform 180ms ease, box-shadow 220ms ease, background 180ms ease;
-  box-shadow: 0 6px 20px -4px rgba(125, 211, 252, 0.30), 0 0 0 1px rgba(255,255,255,0.04);
+  transition: transform 180ms ease, box-shadow 220ms ease,
+    border-color 180ms ease;
+  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.45);
 }
 .heroCtaPrimary:hover {
-  background: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 10px 28px -4px rgba(125, 211, 252, 0.40), 0 0 0 1px rgba(125,211,252,0.18);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 28px -4px rgba(91, 0, 209, 0.35);
 }
-.heroCtaPrimary:active { transform: translateY(0); }
+.heroCtaPrimary:active {
+  transform: translateY(0);
+}
+
+/* Orb à esquerda do CTA — círculo perfeito (border-radius 50%)
+ * com o mesmo gradient magenta→indigo→magenta animado que o
+ * /teste navbar tem na pill. background-size 300% + animation
+ * deslocando background-position cria o efeito de fluxo. */
+.ctaOrb {
+  display: inline-block;
+  flex-shrink: 0;
+  /* Diâmetro pequeno o bastante pra caber no pill (altura ~40px
+   * com font-size 14px + padding 4px): 32px deixa o orb com 4px
+   * de respiro top/bottom mesmo se o pill cresce um pouco. */
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    #ff00b4 0%,
+    #5b00d1 50%,
+    #ff00b4 100%
+  );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: cta-orb-shift 4.5s linear infinite;
+  box-shadow: 0 0 12px -2px rgba(255, 0, 180, 0.5);
+}
+
+@keyframes cta-orb-shift {
+  from { background-position: 0% 50%; }
+  to   { background-position: -200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaOrb { animation: none; }
+}
 
 .heroCtaGhost {
   background: transparent;
