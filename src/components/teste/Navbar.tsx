@@ -8,56 +8,67 @@ type Lang = 'PT' | 'EN';
 
 interface Subitem {
   label: string;
-  hint?: string;
   href: string;
 }
 interface MenuGroup {
-  index: string;
   title: string;
   items: Subitem[];
 }
 
-/* 4 grupos principais do megamenu, definidos top-level pra
- * facilitar revisão de copy. Cada grupo tem um número display
- * (01-04), título em ALL CAPS (Borscha bold gigante) e uma
- * lista de subitens (Inter 14px). */
+/* 4 grupos principais do megamenu (sem numeração — removida
+ * per product feedback). Cada grupo tem título em Borscha
+ * + lista de subitens em Inter 14px regular.
+ *
+ * Lista expandida com mais entradas (algumas mockadas) per
+ * product feedback "aumente para mais itens, mesmo mocados".
+ * As entradas mockadas apontam pra âncoras sem destino real
+ * — quando a página correspondente existir, o href é
+ * substituído. */
 const GROUPS: MenuGroup[] = [
   {
-    index: '01',
     title: 'Produto',
     items: [
-      { label: 'O App',           hint: 'Como funciona',    href: '/teste' },
-      { label: 'Para Artistas',   hint: 'Operação + dados', href: '/para-artistas' },
-      { label: 'Pre-save',        hint: 'Lançamentos',      href: '/teste#section-5' },
+      { label: 'O App',         href: '/teste' },
+      { label: 'Para Artistas', href: '/para-artistas' },
+      { label: 'Pre-save',      href: '/teste#section-5' },
+      { label: 'Fanpoints',     href: '#fanpoints' },
+      { label: 'Live',          href: '#live' },
+      { label: 'Superchat',     href: '#superchat' },
+      { label: 'Fire Arena',    href: '#fire-arena' },
     ],
   },
   {
-    index: '02',
     title: 'Conteúdo',
     items: [
-      { label: 'Blog',            hint: 'Notas + ensaios',  href: '/blog' },
-      { label: 'Imprensa',        hint: 'Press kit',        href: '#imprensa' },
-      { label: 'Newsletter',      hint: 'Quinzenal',        href: '#newsletter' },
+      { label: 'Blog',          href: '/blog' },
+      { label: 'Imprensa',      href: '#imprensa' },
+      { label: 'Newsletter',    href: '#newsletter' },
+      { label: 'Manifesto',     href: '#manifesto' },
+      { label: 'Time',          href: '#time' },
+      { label: 'Eventos',       href: '#eventos' },
+      { label: 'Podcast',       href: '#podcast' },
     ],
   },
   {
-    index: '03',
     title: 'Conta',
     items: [
-      { label: 'Meu Fanverse',    hint: 'Entrar',           href: '/auth' },
-      { label: 'Criar conta',     hint: 'Email-first',      href: '/auth' },
-      { label: 'Suporte',         hint: 'Time humano',      href: 'mailto:suporte@fanverse.com.br' },
+      { label: 'Meu Fanverse',  href: '/auth' },
+      { label: 'Criar conta',   href: '/auth' },
+      { label: 'Suporte',       href: 'mailto:suporte@fanverse.com.br' },
+      { label: 'Configurações', href: '#config' },
+      { label: 'Privacidade',   href: '#privacidade' },
+      { label: 'Termos de uso', href: '#termos' },
+      { label: 'Status',        href: '#status' },
     ],
   },
   {
-    index: '04',
     title: 'Idioma',
     items: [
       // Idiomas aparecem aqui também como subitens. A
       // interação real (selecionar idioma) é tratada pelos
       // botões abaixo do nome do grupo via .langPills.
-      { label: 'Português (BR)',  hint: 'Padrão',           href: '#lang-pt' },
-      { label: 'English (US)',    hint: 'Em breve',         href: '#lang-en' },
+      { label: 'Português (BR)', href: '#lang-pt' },
+      { label: 'English (US)',   href: '#lang-en' },
     ],
   },
 ];
@@ -184,7 +195,13 @@ export default function Navbar() {
 
       {/* Megamenu — fixed top, 70vh, slide-down from top.
        *  aria-hidden quando fechado evita que SR enxergue o
-       *  conteúdo desligado. */}
+       *  conteúdo desligado.
+       *
+       *  Per product feedback: wordmark gigante "FANVERSE" do
+       *  fundo + tagline "Navegar" + numeração 01-04 dos
+       *  grupos foram TODOS removidos. Sobrou só o conteúdo
+       *  (4 colunas de links) + um X grande no canto superior
+       *  esquerdo pra fechar. */}
       <div
         id="fanverse-megamenu"
         role="dialog"
@@ -193,42 +210,38 @@ export default function Navbar() {
         aria-hidden={!menuOpen}
         className={`${styles.megaPanel} ${menuOpen ? styles.megaPanelOpen : ''}`}
       >
-        {/* Wordmark gigante decorativo ao fundo — efeito
-         *  editorial estilo "cabeçalho de revista". */}
-        <div className={styles.megaWordmark} aria-hidden="true">FANVERSE</div>
+        {/* Botão de fechar — X grande, sem rótulo "Fechar",
+         *  absolute no canto superior ESQUERDO do panel per
+         *  product feedback "deixe um X grande na parte
+         *  superior esquerda". aria-label preserva a
+         *  acessibilidade pra screen readers. */}
+        <button
+          type="button"
+          className={styles.megaClose}
+          onClick={close}
+          aria-label="Fechar menu"
+        >
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="20" y1="4" x2="4" y2="20" />
+            <line x1="4" y1="4" x2="20" y2="20" />
+          </svg>
+        </button>
 
         <div className={styles.megaInner}>
-          <div className={styles.megaHeader}>
-            <span className={styles.megaTagline}>Navegar</span>
-            <button
-              type="button"
-              className={styles.megaClose}
-              onClick={close}
-              aria-label="Fechar menu"
-            >
-              <span>Fechar</span>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-
           <ul className={styles.megaList} role="menu">
             {GROUPS.map((group, gi) => (
               <li
-                key={group.index}
+                key={group.title}
                 className={styles.megaGroup}
                 role="none"
                 style={{ animationDelay: `${gi * 60 + 120}ms` }}
               >
                 <div className={styles.megaGroupLeft}>
-                  <span className={styles.megaGroupIndex}>{group.index}</span>
                   <h3 className={styles.megaGroupTitle}>{group.title}</h3>
                 </div>
 
                 <div className={styles.megaGroupRight}>
-                  {group.index === '04' ? (
+                  {group.title === 'Idioma' ? (
                     /* Idioma usa pills toggle direto — não é
                      *  navegação, é state. Visual disruptivo:
                      *  pills grandes coladas. */
@@ -265,11 +278,11 @@ export default function Navbar() {
                             className={styles.megaSubitem}
                             onClick={close}
                           >
+                            {/* Label puro em Inter 14px regular per
+                             *  product feedback. Hint + arrow
+                             *  removidos do JSX (não havia mais
+                             *  campo `hint` no MenuGroup). */}
                             <span className={styles.megaSubitemLabel}>{item.label}</span>
-                            {item.hint && (
-                              <span className={styles.megaSubitemHint}>{item.hint}</span>
-                            )}
-                            <span className={styles.megaSubitemArrow} aria-hidden="true">→</span>
                           </a>
                         </li>
                       ))}

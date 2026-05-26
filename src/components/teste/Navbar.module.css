@@ -347,26 +347,10 @@
   transform: translateY(0);
 }
 
-/* Wordmark gigante decorativo ao fundo — "FANVERSE" enorme,
- * peso visual mas baixa opacidade. Editorial revista. */
-.megaWordmark {
-  position: absolute;
-  bottom: -10vh;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
-  font-weight: 700;
-  font-size: clamp(120px, 22vw, 320px);
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: transparent;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  pointer-events: none;
-  white-space: nowrap;
-  user-select: none;
-}
+/* Wordmark "FANVERSE" + tagline "Navegar" + .megaHeader foram
+ * removidos per product feedback — o panel agora abre direto
+ * pra grid 4-col, sem cabeçalho decorativo. Só sobra o botão
+ * de fechar (X grande no canto superior esquerdo). */
 
 .megaInner {
   position: relative;
@@ -375,63 +359,42 @@
   margin: 0 auto;
   width: 100%;
   height: 100%;
-  padding: 32px clamp(20px, 4vw, 56px) 24px;
+  /* Padding-top maior pra deixar o X grande respirar — antes
+   * tinha o .megaHeader ocupando esse espaço. */
+  padding: 72px clamp(20px, 4vw, 56px) 24px;
   display: flex;
   flex-direction: column;
 }
 
-.megaHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  /* Margin pra dar respiro do top sem brigar com a navbar
-   * (que está z=50, abaixo). Padding-top do .megaInner já
-   * conta o espaço total. */
-  padding-top: 32px;
-  margin-bottom: 24px;
-}
-
-.megaTagline {
-  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  /* Bullet gradient antes do texto. */
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-.megaTagline::before {
-  content: '';
-  width: 28px;
-  height: 2px;
-  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 100%);
-  border-radius: 1px;
-}
-
+/* X grande no canto superior ESQUERDO do panel — sem rótulo
+ * "Fechar" e sem border arredondada. Per product feedback
+ * "deixe um X grande na parte superior esquerda".
+ *
+ * position:absolute pra não interferir no flow do .megaInner
+ * (que agora é apenas a grid 4-col). 48×48 dá tap-target
+ * confortável; o stroke fino (1.5) e cor branca discreta
+ * mantêm o visual editorial. */
 .megaClose {
+  position: absolute;
+  top: 20px;
+  left: clamp(20px, 4vw, 56px);
+  z-index: 3;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
-  transition: color 180ms ease-out, border-color 180ms ease-out, background 180ms ease-out;
+  border-radius: 0;
+  transition: color 180ms ease-out, transform 200ms ease-out;
 }
 .megaClose:hover {
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  transform: rotate(90deg);
 }
 
 /* Lista dos 4 grupos — agora GRID 4-cols (era flex column com
@@ -481,32 +444,21 @@
   gap: 6px;
   min-width: 0;
   width: 100%;
-}
-.megaGroupIndex {
-  font-family: 'Borscha', var(--font-inter), sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  /* Espaço extra abaixo do título antes dos subitens — separa
+   * visualmente o "header" da coluna da lista de links. */
+  margin-bottom: 8px;
 }
 .megaGroupTitle {
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
-  /* Tamanho reduzido pra caber 4 colunas no 70vh sem scroll —
-   * per product feedback "Diminua o tamanho da letra, se
-   * necessário". */
+  /* Mantém o título destacado em Borscha. Subitens agora são
+   * Inter 14px regular (declarado em .megaSubitemLabel), então
+   * o título precisa de peso visual claro. */
   font-size: clamp(22px, 2.4vw, 36px);
   line-height: 1;
   letter-spacing: -0.02em;
   color: #fff;
   margin: 0;
-  /* Sem uppercase — per product feedback "deve ser escrito
-   * apenas com a primeira letra maiuscula". O dado já está
-   * em sentence case ('Produto', 'Conteúdo', ...). */
   text-transform: none;
 }
 
@@ -539,9 +491,9 @@
   display: inline-flex;
   align-items: baseline;
   gap: 12px;
-  padding: 4px 0;
+  padding: 6px 0;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.65);
   transition: padding 200ms ease-out, color 200ms ease-out;
 }
 .megaSubitem:hover {
@@ -550,83 +502,95 @@
 }
 
 .megaSubitemLabel {
-  /* Headline font (Borscha) — agora menor (era clamp 24..44px)
-   * pra caber 4 colunas sem scroll. Sentence case (sem
-   * uppercase) per product feedback. */
-  font-family: 'Borscha', var(--font-inter), -apple-system,
-    BlinkMacSystemFont, sans-serif;
-  font-size: clamp(14px, 1.3vw, 20px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  /* Inter 14px regular per product feedback "deixe em Inter
+   * 14px regular". Migrou de Borscha bold (era display
+   * gigante) pra texto de leitura — combina com a estética
+   * de menu de revista, lista enxuta em vez de cascata de
+   * headlines. */
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
   text-transform: none;
 }
-/* Hint + arrow ESCONDIDOS no novo layout vertical — as
- * palavras em Borscha ficam protagonistas, sem ornamentos
- * laterais. Mantém os elementos no JSX (acessibilidade +
- * compat com listas existentes) mas suprime visualmente. */
+/* Hint + arrow não existem mais no JSX, mas a regra fica
+ * por compat caso outro componente importe esses tokens. */
 .megaSubitemHint,
 .megaSubitemArrow {
   display: none;
 }
 
-/* Lang pills — alternativa ao subitem padrão, exclusiva do
- * grupo 04 (Idioma). 2 pills grandes com code + nome + sub. */
+/* Lang pills DISCRETAS — per product feedback "Deixe mais
+ * discretos os idiomas". Antes eram pills grandes (14×20
+ * padding + border colorido + code badge). Agora são apenas
+ * texto Inter 14px regular alinhado com os outros subitens
+ * da coluna, com um ponto colorido marcando o idioma ativo.
+ *
+ * Visualmente lê-se como uma lista simples: "Português (BR)"
+ * + "English (US)", igual aos demais subitens. O ativo ganha
+ * cor cheia + dot magenta antes do label. */
 .langPills {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
   width: 100%;
 }
 .langPill {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 14px;
-  color: #fff;
+  gap: 8px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  color: rgba(255, 255, 255, 0.65);
   cursor: pointer;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: background 200ms ease-out, border-color 200ms ease-out;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  text-align: left;
+  transition: color 200ms ease-out, padding 200ms ease-out;
 }
 .langPill:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  padding-left: 6px;
 }
 .langPillActive {
-  background: rgba(255, 0, 180, 0.08);
-  border-color: rgba(255, 0, 180, 0.35);
+  color: #fff;
+  background: transparent;
+  border-color: transparent;
 }
-.langPillCode {
-  width: 38px;
-  height: 30px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.langPillActive .langPillCode {
+/* Ponto colorido antes do label só no ativo — marca discreta
+ * em vez do antigo code-badge + border. */
+.langPillActive::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
+  flex-shrink: 0;
+}
+/* Code (PT/EN) + sub ("Em breve") ficam escondidos pra que
+ *  só o nome longo apareça — visual de lista simples. JSX
+ *  preserva os spans pra a11y de screen reader. */
+.langPillCode,
+.langPillSub {
+  display: none;
 }
 .langPillLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
 }
 .langPillName {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-}
-.langPillSub {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
 @keyframes megaItemIn {
@@ -661,12 +625,16 @@
   .menuTrigger { width: 42px; height: 42px; }
 
   /* Megamenu mobile: 4 colunas vira 2 colunas no mobile —
-   * caber 4 numa viewport <720px ficaria ilegível. As fontes
-   * já são clamp(), então auto-encolhem. */
+   * caber 4 numa viewport <720px ficaria ilegível. */
   .megaInner {
-    padding: 24px 20px 16px;
+    padding: 64px 20px 16px;
   }
-  .megaHeader { padding-top: 24px; margin-bottom: 16px; }
+  .megaClose {
+    top: 14px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+  }
   .megaList {
     grid-template-columns: repeat(2, 1fr);
     gap: 18px;
@@ -675,15 +643,17 @@
     gap: 10px;
     padding: 6px 0;
   }
-  .megaGroupLeft { gap: 4px; }
+  .megaGroupLeft { gap: 4px; margin-bottom: 4px; }
   .megaGroupTitle {
     font-size: clamp(18px, 5.4vw, 28px);
   }
   .megaSubitemLabel {
-    font-size: clamp(13px, 3.6vw, 16px);
+    font-size: 13px;
   }
-  .megaWordmark { font-size: clamp(100px, 30vw, 200px); bottom: -6vh; }
-  .langPill { padding: 12px 16px; }
+  .langPill {
+    padding: 6px 0;
+    font-size: 13px;
+  }
 
   /* Em viewports mobile altos (iPhone Pro), 70vh continua
    * confortável; em low-end (320x568), tightens. */
