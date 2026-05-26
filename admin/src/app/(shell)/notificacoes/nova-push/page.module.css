@@ -1,0 +1,111 @@
+/* Página dedicada de criação de push notification — segue o
+ * padrão das outras páginas do admin: body centralizado em
+ * `--content-max`, card único com header + form + footer de ações. */
+
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Breadcrumb (padrão Materiais / Níveis) ─────────────────── */
+
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.crumbGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.crumbSep {
+  color: var(--text-faint);
+  margin: 0 2px;
+}
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--text-mute);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 120ms ease;
+}
+.crumb:hover {
+  background: var(--bg-soft);
+  color: var(--text);
+}
+.crumbActive {
+  color: var(--text);
+  font-weight: 600;
+  cursor: default;
+}
+.crumbActive:hover {
+  background: none;
+}
+
+/* ── Banner âmbar (push em dev) ─────────────────────────────── */
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 16px 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--warning, #f59e0b) 40%, transparent);
+  background: color-mix(in srgb, var(--warning, #f59e0b) 8%, transparent);
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--warning, #f59e0b);
+}
+
+/* ── Form ───────────────────────────────────────────────────── */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Footer de ações ────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+}

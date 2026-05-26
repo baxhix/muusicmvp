@@ -316,6 +316,18 @@ export default function NotificacoesPage() {
     (filters.status ? 1 : 0) +
     (filters.wired ? 1 : 0);
 
+  /* Click no "Nova notificação" tem comportamento diferente por
+   * tab: Plataforma abre o modal (UX rápido pra criar in-app),
+   * Push navega pra página dedicada (feedback de produto —
+   * "remova o modal que antecede a criação de uma nova push"). */
+  function handleNew() {
+    if (channelTab === 'push') {
+      router.push('/notificacoes/nova-push');
+      return;
+    }
+    setCreateOpen(true);
+  }
+
   return (
     <>
       <PageHeader
@@ -326,7 +338,7 @@ export default function NotificacoesPage() {
             variant="primary"
             size="sm"
             leadingIcon={<IconPlus size={14} />}
-            onClick={() => setCreateOpen(true)}
+            onClick={handleNew}
           >
             Nova notificação
           </Button>
