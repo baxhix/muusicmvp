@@ -124,15 +124,18 @@ void main(){
   vec2 s2 = vec2(0.48, 0.18);
   vec2 s3 = vec2(0.42, 0.16);
 
-  // Sharpness oscillates so streaks alternate between soft/blurry and solid/crisp.
-  // Higher value = tighter, more solid petal. Now biased: spends most of the loop
-  // soft and briefly spikes to a much sharper peak (18) — gives moments of
-  // crisp, solid streaks instead of a uniform sinusoidal swap. pow(sw, 3.0)
-  // pushes the distribution toward low values, only crossing ~0.5 near the
-  // sine peak — feels like the orb "focuses" intermittently.
+  // Sharpness oscillates entre soft/blurry e solid/crisp. Ajustado pra
+  // bater o look da imagem de referência: traços visíveis e definidos
+  // a maior parte do tempo, com momentos mais firmes recorrentes, mas
+  // sem chegar em "duro/cortante".
+  //   - Range 6..14: nunca fica totalmente borrado nem totalmente
+  //     cristalino. Lower bound 6 mantém uma definição mínima.
+  //   - pow(sw, 2.0): bias suave — picos do sine duram mais (vs pow³),
+  //     então os "momentos sólidos" são frequentes e sustentados, não
+  //     flashes raros.
   float sw = 0.5 + 0.5 * sin(uTime * 0.7 + 1.3);
-  sw = pow(sw, 3.0);
-  float sharpness = mix(5.0, 18.0, sw);
+  sw = pow(sw, 2.0);
+  float sharpness = mix(6.0, 14.0, sw);
   float p0 = petal(puv, c0, a0, s0, sharpness);
   float p1 = petal(puv, c1, a1, s1, sharpness);
   float p2 = petal(puv, c2, a2, s2, sharpness);
