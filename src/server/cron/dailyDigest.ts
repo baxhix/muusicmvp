@@ -4,11 +4,14 @@
  * Comportamento atual:
  *   - Itera TODOS os usuários ativos (deleted_at IS NULL,
  *     isOnboarded=true, email não-anonimizado).
- *   - Pra cada usuário gera dados MOCADOS de:
- *       * fanpoints ganhos no dia (0–250)
- *       * saldo total (estável-por-usuário via hash do id)
- *       * tier atual + próximo + delta pra subir
- *       * highlights perdidos (sample do pool fixo de eventos)
+ *   - Pra cada usuário:
+ *       * `totalPoints`  → SUM(points) em user_activities (REAL).
+ *       * `pointsToday`  → SUM(points) na janela 00:00–24:00 BRT (REAL).
+ *       * `tier atual / próximo / delta` → derivado do totalPoints
+ *         contra MOCK_TIER_THRESHOLDS (ainda mock — depende do
+ *         ranking dinâmico Top 1/10/50/100).
+ *       * `missedHighlights` → sample do pool fixo (ainda mock —
+ *         depende de tabela consolidada de eventos perdidos).
  *   - Manda email via sendDailyDigestEmail (template `daily_digest`,
  *     editável no admin /admin/emails/templates/daily_digest/edit).
  *   - Respeita o toggle do admin em /admin/notificacoes/daily_digest
@@ -20,19 +23,17 @@
  *     Cron / Hostinger systemd timer.
  *   - CLI: `npm run cron:daily-digest`.
  *
- * Quando o backend tiver as tabelas reais:
- *   - `user_fanpoints` (saldo total + delta diário)
- *   - `user_activities` (eventos perdidos: lives, posts, etc)
- *   - Troca buildDigestForUser por queries reais.
- *
  * Performance: O(N) onde N = usuários ativos. Pra MVP (base
  * pequena, dezenas de usuários) é OK síncrono. Pra centenas+,
  * batch via Promise.all(chunk) com concurrency-limit.
+ *
+ * Query de pontos: 1 query agregada com LATERAL joins faz SUM
+ * total + SUM do dia por usuário num único round-trip — não
+ * gera N+1 dentro do loop.
  */
 
-import { and, eq, isNull, isNotNull, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { db } from '../db';
-import { users } from '../db/schema';
 import { isNotificationEnabled } from '../notifications/settings';
 import { sendDailyDigestEmail } from '../email/dailyDigest';
 import { logger } from '../log';
@@ -93,22 +94,19 @@ export interface DigestStats {
   missedHighlights: string[];
 }
 
-/** Calcula os stats mocados pra um usuário num dia. Determinístico
- *  por (id, date) — execução re-rodada produz os mesmos números. */
+/** Calcula os stats do digest pra um usuário. `totalPoints` e
+ *  `pointsToday` vêm das queries reais em `user_activities` —
+ *  caller injeta. Tier + highlights ainda derivados de mocks
+ *  (depende de tabelas que ainda não consolidamos). Highlights
+ *  determinísticas por (id, date) — execução re-rodada produz
+ *  os mesmos textos. */
 export function buildDigestForUser(
   userId: string,
   userName: string,
   dateSeed: string,
+  totalPoints: number,
+  pointsToday: number,
 ): DigestStats {
-  /* pointsToday: 0–250 com curva ligeiramente skewed pra baixo
-   * (multiplico por 0.7 pro range médio bater na faixa 0–175 e o
-   * "ganhei pouco hoje" ser mais comum que "ganhei muito"). */
-  const pointsToday = Math.floor(dailyHash(userId, dateSeed, 250) * 0.7);
-
-  /* totalPoints: hash do userId só (estável). Range 50–14000 cobre
-   * desde quem está fora dos tiers (< 100) até quase Top 1. */
-  const totalPoints = hashToRange(userId, 50, 14_000);
-
   /* Tier atual + próximo. Encontra o maior threshold <= total e
    * pega o próximo da lista. Se já está no top1, mostra "Top 1"
    * de novo com 0 falta (mensagem de já chegou). */
@@ -153,6 +151,25 @@ function formatDateLabel(d: Date = new Date()): string {
   return `${d.getDate()} ${months[d.getMonth()]}`;
 }
 
+/** Limites do dia CIVIL ATUAL em BRT (UTC-3), retornados como
+ *  Date em UTC absoluto pra usar direto na query timestamptz.
+ *  Janela [start, end) cobre 00:00:00 BRT até 23:59:59.999 BRT
+ *  do mesmo dia. Cron roda às 23:59 BRT, então a janela inclui
+ *  quase tudo do dia exceto o último minuto — trade-off aceitável
+ *  pra ter um único dia civil consistente. */
+function todayBoundsBRT(): { start: Date; end: Date } {
+  const now = new Date();
+  const brtOffsetHours = -3;
+  const brtNow = new Date(now.getTime() + brtOffsetHours * 60 * 60 * 1000);
+  const y = brtNow.getUTCFullYear();
+  const m = brtNow.getUTCMonth();
+  const d = brtNow.getUTCDate();
+  /* "Hoje 00:00 BRT" em UTC absoluto = (y, m, d, 03:00 UTC). */
+  const start = new Date(Date.UTC(y, m, d, 3, 0, 0, 0));
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+}
+
 export interface DailyDigestRunResult {
   sent: number;
   skipped: number;
@@ -174,28 +191,48 @@ export async function runDailyDigest(): Promise<DailyDigestRunResult> {
     return { sent: 0, skipped: 0, failed: 0, durationMs: Date.now() - startedAt };
   }
 
-  /* Filtros:
+  /* Query única com LATERAL joins: traz usuários elegíveis +
+   * SUM(points) total + SUM(points) do dia em um round-trip.
+   * Filtros (idênticos ao bloco antigo):
    *   - deleted_at IS NULL (anonimizados ficam fora)
    *   - is_onboarded = true (contas órfãs sem onboarding pulam)
-   *   - email IS NOT NULL (defensivo — coluna é NOT NULL no schema,
-   *     mas a anonimização troca pra @deleted.muusic.live; aqui
-   *     filtramos esse domínio também)
-   * */
-  const eligible = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-    })
-    .from(users)
-    .where(
-      and(
-        isNull(users.deletedAt),
-        eq(users.isOnboarded, true),
-        isNotNull(users.email),
-        sql`${users.email} NOT LIKE '%@deleted.muusic.live'`,
-      ),
-    );
+   *   - email NOT LIKE '%@deleted.muusic.live' (defensivo —
+   *     anonimização troca pra esse domínio).
+   * Pra usuários sem nenhuma atividade, COALESCE(..., 0) garante
+   * 0 em vez de NULL — saldo zero no email. */
+  const { start, end } = todayBoundsBRT();
+  const eligibleQuery = await db.execute<{
+    id: string;
+    name: string | null;
+    email: string;
+    total_points: number;
+    today_points: number;
+  }>(sql`
+    SELECT
+      u.id,
+      u.name,
+      u.email,
+      COALESCE(p_total.total, 0)::int AS total_points,
+      COALESCE(p_today.total, 0)::int AS today_points
+    FROM users u
+    LEFT JOIN LATERAL (
+      SELECT SUM(points)::int AS total
+      FROM user_activities
+      WHERE user_id = u.id
+    ) p_total ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT SUM(points)::int AS total
+      FROM user_activities
+      WHERE user_id = u.id
+        AND created_at >= ${start}
+        AND created_at < ${end}
+    ) p_today ON TRUE
+    WHERE u.deleted_at IS NULL
+      AND u.is_onboarded = true
+      AND u.email IS NOT NULL
+      AND u.email NOT LIKE '%@deleted.muusic.live'
+  `);
+  const eligible = eligibleQuery.rows;
 
   const dateSeed = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const dateLabel = formatDateLabel();
@@ -208,7 +245,13 @@ export async function runDailyDigest(): Promise<DailyDigestRunResult> {
   for (const u of eligible) {
     try {
       const displayName = u.name ?? u.email.split('@')[0] ?? 'fã';
-      const stats = buildDigestForUser(u.id, displayName, dateSeed);
+      const stats = buildDigestForUser(
+        u.id,
+        displayName,
+        dateSeed,
+        u.total_points,
+        u.today_points,
+      );
       await sendDailyDigestEmail({
         to: u.email,
         userName: displayName,
