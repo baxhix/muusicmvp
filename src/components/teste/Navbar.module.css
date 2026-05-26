@@ -50,7 +50,9 @@
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  /* Gap reduzido 10→4 — aproxima o wordmark do orb, ficam
+   * lidos como uma unidade visual em vez de dois elementos. */
+  gap: 4px;
   color: #fff;
   text-decoration: none;
   transition: opacity 200ms ease-out;
