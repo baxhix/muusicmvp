@@ -138,14 +138,51 @@
   letter-spacing: -0.005em;
   text-decoration: none;
   border-radius: 999px;
+  /* position:relative + isolation:isolate criam contexto de
+   * empilhamento isolado pro pseudo `::before` (a sombra
+   * animada) ficar atrás do conteúdo sem afetar nada fora. */
+  position: relative;
+  isolation: isolate;
   transition: transform 200ms ease-out, box-shadow 200ms ease-out,
     border-color 200ms ease-out;
 }
+
+/* Sombra-gradient permanente em movimento — pseudo absolute
+ * por trás do pill, com o MESMO gradient e MESMA animação
+ * `ctaPillShift` do orb (sincronia visual). filter:blur cria
+ * a sensação de "halo iluminado" embaixo do botão; opacity
+ * 0.65 deixa cromático sem sobrecarregar. inset negativo
+ * sangra o glow pra fora da silhueta do pill, dando o efeito
+ * de luz emanando dele. */
+.ctaPill::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #ff00b4 0%,
+    #5b00d1 50%,
+    #ff00b4 100%
+  );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: ctaPillShift 6s linear infinite;
+  filter: blur(16px);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
 .ctaPill:hover {
   transform: translateY(-1px);
   border-color: rgba(255, 255, 255, 0.18);
-  /* Glow sutil colored no hover — herda o tom do orb (magenta). */
-  box-shadow: 0 8px 24px -8px rgba(255, 0, 180, 0.45);
+}
+.ctaPill:hover::before {
+  /* Intensifica o halo no hover — sem mexer no blur, só na
+   * opacidade pra leitura ficar mais "viva" sem distorcer o
+   * tamanho aparente. */
+  opacity: 0.85;
 }
 .ctaPill:active {
   transform: translateY(0);
@@ -179,7 +216,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ctaOrb { animation: none; }
+  .ctaOrb,
+  .ctaPill::before {
+    animation: none;
+  }
 }
 
 /* ── Hamburger trigger ─────────────────────────────
