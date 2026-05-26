@@ -422,7 +422,10 @@
   padding: 4px 22px 4px 4px;
   background: #08080A;
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  /* Sem borda — o halo gradient (::before) atrás já dá a
+   * silhueta. Border + halo somam ruído. Mesmo padrão do CTA
+   * "Meu Fanverse" da /teste. */
+  border: none;
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
@@ -433,14 +436,46 @@
    * phones where the pill's natural width approached the screen
    * width. */
   white-space: nowrap;
-  transition: transform 180ms ease, box-shadow 220ms ease,
-    border-color 180ms ease;
-  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.45);
+  /* position:relative + isolation:isolate criam contexto de
+   * empilhamento isolado pro pseudo `::before` (a sombra
+   * animada) ficar atrás do conteúdo sem afetar nada fora. */
+  position: relative;
+  isolation: isolate;
+  transition: transform 180ms ease;
 }
+
+/* Sombra-gradient permanente em movimento — pseudo absolute
+ * atrás do pill, MESMO gradient e animação do orb à esquerda
+ * (sincronia visual). filter:blur cria a sensação de "halo
+ * iluminado" embaixo do botão; inset negativo sangra o glow
+ * pra fora da silhueta do pill. */
+.heroCtaPrimary::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #ff00b4 0%,
+    #5b00d1 50%,
+    #ff00b4 100%
+  );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: cta-orb-shift 4.5s linear infinite;
+  filter: blur(16px);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
 .heroCtaPrimary:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 10px 28px -4px rgba(91, 0, 209, 0.35);
+}
+.heroCtaPrimary:hover::before {
+  /* Halo mais intenso no hover sem mexer no blur (evita salto
+   * no tamanho aparente). */
+  opacity: 0.85;
 }
 .heroCtaPrimary:active {
   transform: translateY(0);
@@ -477,7 +512,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ctaOrb { animation: none; }
+  .ctaOrb,
+  .heroCtaPrimary::before {
+    animation: none;
+  }
 }
 
 .heroCtaGhost {
