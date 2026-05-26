@@ -127,9 +127,9 @@
    * dos 51px do pill anterior (17×2 + ~17 line-height). */
   padding: 6px 26px 6px 6px;
   background: #08080A;
-  /* Borda "cinza quase preto" per feedback — discreta a ponto
-   * de quase desaparecer no fundo escuro da navbar. */
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Sem borda — o halo gradient atrás (::before) já dá a
+   * silhueta sutil que separa o pill do fundo da navbar. */
+  border: none;
   color: #ffffff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   /* 14px alinhado com os nav links. */
@@ -176,7 +176,6 @@
 
 .ctaPill:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.18);
 }
 .ctaPill:hover::before {
   /* Intensifica o halo no hover — sem mexer no blur, só na
