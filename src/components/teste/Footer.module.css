@@ -144,7 +144,18 @@
   overflow: hidden;
 }
 .wordmarkText {
-  font-family: 'Borscha', var(--font-inter), 'Inter', sans-serif;
+  /* Peace Sans como primeira escolha — per product feedback "A
+   * palavra Fanverse gigante no footer, deixe na fonte Peace
+   * Sans como estava". Peace Sans NÃO está self-hosted no
+   * projeto (não existe .woff2 em /public/fonts/peace-sans/);
+   * assim como na versão original do footer, o browser cai no
+   * fallback Inter 900, que dá a aparência display condensada
+   * que vigorava antes da troca pra Borscha (commit cfdf4ba).
+   *
+   * Pra ativar os glifos reais do Peace Sans, adicionar:
+   *   /public/fonts/peace-sans/peace-sans.woff2
+   * + @font-face correspondente no globals.css. */
+  font-family: 'Peace Sans', var(--font-inter), 'Inter', sans-serif;
   font-weight: 900;
   font-size: 240px;
   fill: rgba(255, 255, 255, 0.04);
