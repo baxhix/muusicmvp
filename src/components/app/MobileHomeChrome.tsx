@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileHomeChrome.module.css';
 
 /**
@@ -54,6 +55,22 @@ export default function MobileHomeChrome() {
   return (
     <div className={styles.chrome} aria-hidden="false">
       <div className={styles.headerBg} aria-hidden="true" />
+      {/* Orb decorativo da marca — vive ao lado ESQUERDO do
+       *  header mobile per product feedback "No mobile, dobre o
+       *  tamanho do orbe e posicione no header à esquerda. Vai
+       *  ficar Orbe, Logotipo Ana Castela e Icone de mensagens".
+       *  Layout horizontal resultante: [orb] [logo Ana Castela
+       *  centralizado] [ícone de mensagens à direita].
+       *
+       *  Tamanho 88×88 = 2× o orb antigo do canto inferior
+       *  esquerdo (44×44), que foi suprimido em mobile via
+       *  app/app/layout.module.css. O canvas WebGL2 do
+       *  FanverseCore auto-redimensiona via ResizeObserver pro
+       *  novo tamanho. aria-hidden + pointer-events:none porque
+       *  é puramente decorativo. */}
+      <span className={styles.headerOrb} aria-hidden="true">
+        <FanverseCore />
+      </span>
       <div className={styles.brand} aria-hidden="false">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

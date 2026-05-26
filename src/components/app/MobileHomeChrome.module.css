@@ -154,6 +154,44 @@
   height: 0;
 }
 
+/* Orb FanverseCore — slot 88×88 ancorado à esquerda do header,
+ * verticalmente alinhado ao centro do logo Ana Castela.
+ *
+ * Geometria:
+ *   - chrome height = 133px
+ *   - logo center y ≈ 74.25 (centralizado em chrome midline
+ *     com +6px nudge per product feedback anterior)
+ *   - orb 88×88, centro coincide com logo center: top = 74.25
+ *     − 44 = 30.25 → arredondado pra 30px
+ *   - left:14 espelha a margem do antigo orb canto-inferior-
+ *     esquerdo, mantendo continuidade de "presença esquerda"
+ *
+ * O canvas WebGL2 do FanverseCore se redimensiona via
+ * ResizeObserver — o tamanho do CSS é a fonte da verdade.
+ * line-height 0 evita gap-baseline em volta do <canvas>. */
+.headerOrb {
+  position: absolute;
+  top: 30px;
+  left: 14px;
+  width: 88px;
+  height: 88px;
+  display: inline-block;
+  line-height: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 360px) {
+  /* Phones pequenos (<360px): encolhe levemente o orb pra que
+   * o logo central tenha respiro maior. */
+  .headerOrb {
+    top: 36px;
+    left: 8px;
+    width: 72px;
+    height: 72px;
+  }
+}
+
 /* Brand column — logo + "FANVERSE" wordmark. Dropped INTO the
  * lower half of the chrome card so the Fanpoints chip + message
  * icon can ride at the top. The logo also got +21% (56 → 68) so

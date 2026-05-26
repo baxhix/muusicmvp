@@ -330,12 +330,15 @@
 }
 
 @media (max-width: 768px) {
+  /* Mobile: o orb antigo do canto inferior esquerdo está
+   * SUPRIMIDO per product feedback "No mobile, dobre o tamanho
+   * do orbe e posicione no header à esquerda". O orb agora vive
+   * em src/components/app/MobileHomeChrome (.headerOrb, 88×88),
+   * dentro da home /app. Esconder aqui via display:none mantém
+   * o desktop intacto + qualquer regra futura herda do bloco
+   * desktop sem precisar override. */
   .orbSlot {
-    bottom: 96px;
-    left: 14px;
-    transform: none;
-    width: 44px;
-    height: 44px;
+    display: none;
   }
 }
 
