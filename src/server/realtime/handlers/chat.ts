@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { sendMessage } from '../../chat/messages';
-import { userIsInConversation } from '../../chat/queries';
+import { markConversationRead, userIsInConversation } from '../../chat/queries';
 import {
   getReactableConversation,
   toggleReaction,
@@ -37,10 +37,29 @@ const reactSchema = z.object({
   emoji: z.string().min(1).max(32),
 });
 
+const readSchema = z.object({
+  conversationId: z.string().uuid(),
+  messageId: z.string().uuid().optional(),
+});
+
 type Ack = (res: { ok: boolean; error?: string; messageId?: string }) => void;
 
 const room     = (conversationId: string) => `conv:${conversationId}`;
 const userRoom = (userId: string)         => `user:${userId}`;
+
+/* P1.4: dedupe de chat:typing por (userId, conversationId) com
+ * TTL curto. Mesmo que o cliente emita a cada keystroke (legacy),
+ * o server agrupa em janelas de 1500ms — o broadcast pros outros
+ * clientes só dispara 1× por janela. Reduz network noise drástica
+ * em grupos ativos (N membros × M keystrokes/s = N×M broadcasts).
+ *
+ * Map em memória é OK enquanto o realtime é single-process; ao
+ * mover pro Redis adapter (P2.5) precisa migrar pra cache compartilhado. */
+const TYPING_DEDUPE_WINDOW_MS = 1500;
+const typingLastEmit = new Map<string, number>();
+function typingKey(userId: string, convId: string, isTyping: boolean): string {
+  return `${userId}:${convId}:${isTyping ? '1' : '0'}`;
+}
 
 export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
   const userId = socket.data.userId;
@@ -137,6 +156,16 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       if (!typingBucket.consume(userId)) return;
       const parsed = typingSchema.safeParse(input);
       if (!parsed.success) return;
+
+      /* P1.4: dedupe por (userId, conversationId, isTyping) com
+       * janela TTL. Mesmo state em <1500ms = no-op. Reduz fan-out
+       * de N×M broadcasts em grupos ativos. */
+      const key = typingKey(userId, parsed.data.conversationId, parsed.data.isTyping);
+      const now = Date.now();
+      const last = typingLastEmit.get(key) ?? 0;
+      if (now - last < TYPING_DEDUPE_WINDOW_MS) return;
+      typingLastEmit.set(key, now);
+
       socket.to(room(parsed.data.conversationId)).emit('chat:typing', {
         conversationId: parsed.data.conversationId,
         userId,
@@ -152,6 +181,46 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
   // participant" — no separate authz call needed. After the toggle we
   // broadcast the new aggregated list to everyone in the conversation
   // room so chips stay in sync without per-client refetches.
+  /* P1.5: chat:read via socket. Antes era só POST /read; agora
+   * o evento socket faz o UPDATE + broadcast pro userRoom do
+   * próprio user. Sessões secundárias (outra aba, outro device)
+   * recebem o broadcast e zeram o badge local sem precisar de
+   * polling. POST /read continua válido como fallback REST. */
+  socket.on(
+    'chat:read',
+    async (
+      input: unknown,
+      ack?: (res: { ok: boolean; error?: string }) => void,
+    ) => {
+      try {
+        const parsed = readSchema.safeParse(input);
+        if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
+
+        const inIt = await userIsInConversation(userId, parsed.data.conversationId);
+        if (!inIt) return ack?.({ ok: false, error: 'forbidden' });
+
+        await markConversationRead(
+          parsed.data.conversationId,
+          userId,
+          { messageId: parsed.data.messageId },
+        );
+
+        // Broadcast pra TODAS as sessions do user (incluindo essa) —
+        // cada cliente decide se atualiza ou ignora baseado no seu
+        // próprio estado local.
+        io.to(userRoom(userId)).emit('chat:read', {
+          conversationId: parsed.data.conversationId,
+          messageId: parsed.data.messageId,
+        });
+
+        ack?.({ ok: true });
+      } catch (err) {
+        logger.error('realtime.chat.chatread-handler', err);
+        ack?.({ ok: false, error: 'read_failed' });
+      }
+    },
+  );
+
   socket.on(
     'chat:react',
     async (

@@ -143,24 +143,43 @@ export async function hideConversationForUser(
 }
 
 /**
- * Mark the conversation read up to its latest message for the given user.
- * Idempotent — sets `last_read_message_id` to the most recent message id
- * AND zera o `unread_count` denormalizado (P0.2).
+ * Mark the conversation read for the given user. Idempotente —
+ * sets `last_read_message_id` + zera `unread_count` denormalizado.
  *
- * O reset do counter é o passo crítico: sem isso o badge vermelho do
- * dock continuaria mostrando o número antigo até a próxima mensagem
- * (que disparava recálculo via subquery — agora eliminada).
+ * Quando `opts.messageId` vier, usa-o direto em vez de procurar a
+ * última mensagem (P1.6). Cliente sempre sabe qual é a última
+ * porque acabou de receber via socket; a SELECT ORDER BY LIMIT 1
+ * fica de fallback pra paths antigos / chamadas REST sem body.
  */
 export async function markConversationRead(
   conversationId: string,
   userId: string,
+  opts: { messageId?: string } = {},
 ): Promise<void> {
+  if (opts.messageId) {
+    // Caminho rápido: usamos o messageId vindo do cliente. Sem
+    // ORDER BY + LIMIT, sem hit no index de messages — apenas
+    // UPDATE em conversation_participants (PK lookup).
+    await db.execute(sql`
+      UPDATE conversation_participants
+      SET
+        last_read_message_id = ${opts.messageId},
+        unread_count = 0
+      WHERE conversation_id = ${conversationId}
+        AND user_id = ${userId}
+    `);
+    return;
+  }
+
+  // Fallback legado — cliente sem messageId conhecido. Resolve
+  // server-side via ORDER BY (cobertura pelo partial index 0038).
   await db.execute(sql`
     UPDATE conversation_participants
     SET
       last_read_message_id = (
         SELECT id FROM messages
         WHERE conversation_id = ${conversationId}
+          AND kind = 'user'
         ORDER BY created_at DESC
         LIMIT 1
       ),

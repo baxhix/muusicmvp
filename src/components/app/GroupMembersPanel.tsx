@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { api } from '@/lib/api/client';
 import type { ApiGroupMember } from '@/lib/api/types';
+import { invalidateConversationMembers } from '@/hooks/useConversationMembers';
 import styles from './GroupMembersPanel.module.css';
 
 interface Props {
@@ -144,6 +145,9 @@ export default function GroupMembersPanel({
         );
         return;
       }
+      // P1.2: invalida cache compartilhado pra que MentionAutocomplete
+      // e qualquer outra surface refletindo o roster também se atualize.
+      invalidateConversationMembers(conversationId);
       await refresh();
     } catch (err) {
       console.error('kick failed:', err);

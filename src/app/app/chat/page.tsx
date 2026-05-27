@@ -6,7 +6,9 @@ import ConversationsSidebar from '@/components/app/ConversationsSidebar';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import UserPicker from '@/components/app/UserPicker';
 import GroupMembersPanel from '@/components/app/GroupMembersPanel';
+import ChatErrorBoundary from '@/components/app/ChatErrorBoundary';
 import { showAppToast } from '@/components/app/AppToast';
+import { invalidateConversationMembers } from '@/hooks/useConversationMembers';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useAuth } from '@/lib/auth/AuthContext';
 import {
@@ -90,6 +92,12 @@ export default function ChatPage() {
         }}
       />
 
+      {/* ErrorBoundary local — uma mensagem malformada (regex de
+       * @mention quebrada, reply prefix com encoding ruim, reactions
+       * com emoji inválido) crasheava o panel inteiro e por bubble
+       * matava todo o /app shell. Aqui isolamos o blast radius:
+       * o panel vira fallback de erro mantendo mapa + navbar vivos. */}
+      <ChatErrorBoundary onClose={chat.close}>
       <LiveChatPanel
         conversation={activeConversation}
         messages={chat.messages}
@@ -169,6 +177,7 @@ export default function ChatPage() {
           }
         }}
       />
+      </ChatErrorBoundary>
 
       <GroupMembersPanel
         open={showGroupMembers && activeConversation?.type === 'group'}
@@ -263,6 +272,9 @@ export default function ChatPage() {
             setAddingMemberToGroup(null);
             setShowGroupMembers(false);
             setTimeout(() => setShowGroupMembers(true), 30);
+            /* P1.2: invalida cache local (não confiamos no
+             * broadcast aqui porque ele pode demorar pra chegar). */
+            invalidateConversationMembers(convId);
             void chat.refreshConversations();
           } catch (err) {
             console.error('add member failed:', err);

@@ -1,0 +1,71 @@
+.fallback {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 14px;
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.fallbackIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 245, 247, 0.6);
+}
+
+.fallbackTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #f5f5f7;
+  max-width: 280px;
+}
+
+.fallbackText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.55);
+  max-width: 320px;
+}
+
+.fallbackActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.fallbackBtn {
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: var(--accent, #3ddb74);
+  color: #061110;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+.fallbackBtn:hover {
+  background: #4be086;
+}
+
+.fallbackBtnGhost {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.85);
+}
+.fallbackBtnGhost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}

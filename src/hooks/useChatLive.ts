@@ -11,6 +11,7 @@ import type {
 } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useSocket } from './useSocket';
+import { invalidateConversationMembers } from './useConversationMembers';
 
 /** Count @[Name](uuid) tokens in a message body. Same regex shape
  *  the server uses to parse mentions — keeps the analytics
@@ -130,22 +131,36 @@ export function useChatLive(): UseChatLiveResult {
         )
         .then((res) => {
           // API returns newest-first; flip to oldest-first for display.
-          setMessages([...res.messages].reverse());
+          const ordered = [...res.messages].reverse();
+          setMessages(ordered);
           // Optimistically zero this thread's unreadCount in the list while
-          // the server-side mark-read POST is in flight.
+          // the server-side mark-read is in flight.
           setConversations((prev) =>
             prev.map((c) =>
               c.id === conversationId ? { ...c, unreadCount: 0 } : c,
             ),
           );
+          /* P1.5+P1.6: usa o socket pra mark-read quando disponível
+           * (broadcast cross-session via chat:read) + passa o
+           * messageId direto evitando ORDER BY server-side. POST
+           * REST continua como fallback quando socket offline. */
+          const lastMessageId =
+            ordered.length > 0 ? ordered[ordered.length - 1].id : undefined;
+          if (socket && socket.connected) {
+            socket.emit('chat:read', {
+              conversationId,
+              messageId: lastMessageId,
+            });
+          } else {
+            api
+              .post(`/api/conversations/${conversationId}/read`, {
+                messageId: lastMessageId,
+              })
+              .catch((err) => console.error('mark read failed:', err));
+          }
         })
         .catch((err) => console.error('messages fetch failed:', err))
         .finally(() => setLoadingMessages(false));
-
-      // Persist the read marker so it survives reloads / other devices.
-      api
-        .post(`/api/conversations/${conversationId}/read`)
-        .catch((err) => console.error('mark read failed:', err));
 
       socket?.emit('chat:join', { conversationId });
     },
@@ -157,6 +172,30 @@ export function useChatLive(): UseChatLiveResult {
     setActiveId(null);
     setMessages([]);
   }, [activeId, socket]);
+
+  // ── Realtime: auto re-join da conv ativa em reconexão ─────────────────
+  //
+  // P1.8: o socket faz auto-reconnect (singleton em lib/socket/client.ts),
+  // mas as rooms server-side se perdem em qualquer disconnect/reconnect.
+  // Sem isto, depois de um background-tab no iOS (que mata o WebSocket),
+  // o user volta com a conv aberta MAS sem receber mais mensagens —
+  // até reabrir manualmente. Fix: em `connect`, re-emitimos chat:join
+  // pra activeIdRef.current quando há uma conv aberta.
+  //
+  // Usamos o ref (não state) pra evitar recriar o handler em cada
+  // mudança de activeId — o handler escuta sempre, e olha o ref
+  // atual no momento que a reconexão dispara.
+  useEffect(() => {
+    if (!socket) return;
+    const onConnect = () => {
+      const convId = activeIdRef.current;
+      if (convId) socket.emit('chat:join', { conversationId: convId });
+    };
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off('connect', onConnect);
+    };
+  }, [socket]);
 
   // ── Send a message via socket (server persists + broadcasts) ───────────
   const send = useCallback(
@@ -329,8 +368,11 @@ export function useChatLive(): UseChatLiveResult {
           return [...filtered, msg];
         });
         // User is viewing this thread — keep the read marker fresh.
+        // P1.6: passa o messageId direto, evitando ORDER BY no server.
         api
-          .post(`/api/conversations/${msg.conversationId}/read`)
+          .post(`/api/conversations/${msg.conversationId}/read`, {
+            messageId: msg.id,
+          })
           .catch((err) => console.error('mark read (active) failed:', err));
       }
 
@@ -376,6 +418,29 @@ export function useChatLive(): UseChatLiveResult {
     };
   }, [socket, loadList, user]);
 
+  // ── Realtime: chat:read cross-session sync (P1.5) ───────────────────────
+  //
+  // Quando o user lê uma conv numa sessão (web), as outras sessions
+  // (mobile, outra aba) recebem este broadcast pelo userRoom e
+  // zeram o badge local sem polling. Conversa NÃO precisa estar
+  // ativa pra receber — só precisa estar na lista.
+  useEffect(() => {
+    if (!socket) return;
+    const onRead = (payload: { conversationId: string }) => {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === payload.conversationId && c.unreadCount > 0
+            ? { ...c, unreadCount: 0 }
+            : c,
+        ),
+      );
+    };
+    socket.on('chat:read', onRead);
+    return () => {
+      socket.off('chat:read', onRead);
+    };
+  }, [socket]);
+
   // ── Realtime: per-user thread update poke ───────────────────────────────
   //
   // Disparado pelo server pra eventos de FORA do hot-path de envio:
@@ -383,9 +448,30 @@ export function useChatLive(): UseChatLiveResult {
   // Esses casos mudam a forma da conversation summary (memberCount,
   // name, imageUrl, etc.) que o patch local do `chat:message` não
   // cobre. Aqui sim refrescamos a lista do servidor.
+  //
+  // P1.3: skip se o payload é pra conv que o user JÁ está vendo —
+  // chat:message já cobriu o patch local (lastMessage + unread). O
+  // thread:update disparado pelo mesmo send vira no-op pra evitar
+  // refetch redundante. Outros disparos de thread:update (rename,
+  // addMember vindos de outras sessões) ainda funcionam porque eles
+  // virão por canais que NÃO emitem chat:message.
   useEffect(() => {
     if (!socket) return;
-    const onThreadUpdate = () => loadList();
+    const onThreadUpdate = (payload?: { conversationId?: string }) => {
+      /* P1.2: invalida cache de members da conversa tocada — pode
+       * ter sido addMember/kick/rename/image upload. Forçar refetch
+       * mantém GroupMembersPanel/mention autocomplete em sync.
+       * Quando payload sem conversationId vier (broadcast legado),
+       * invalidamos tudo defensivamente. */
+      invalidateConversationMembers(payload?.conversationId);
+      if (
+        payload?.conversationId &&
+        payload.conversationId === activeIdRef.current
+      ) {
+        return;
+      }
+      loadList();
+    };
     socket.on('chat:thread:update', onThreadUpdate);
     return () => {
       socket.off('chat:thread:update', onThreadUpdate);

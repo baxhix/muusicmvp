@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
+import { buildReplyBody } from './MessageBody';
+import MessageBubble, {
+  SystemMessagePill,
+  hashReactions,
+} from './MessageBubble';
 import VerifiedBadge from './VerifiedBadge';
 import ReportModal from './ReportModal';
 import MentionAutocomplete from './MentionAutocomplete';
@@ -277,10 +281,27 @@ export default function LiveChatPanel({
     };
   }, [pickerOpenId]);
 
-  const toggleReaction = (msgId: string, emoji: string) => {
-    onReact(msgId, emoji);
-    setPickerOpenId(null);
-  };
+  /* P1.1: callbacks estáveis via useCallback pra que o memo do
+   * MessageBubble não invalide por reference change a cada render
+   * do parent. */
+  const toggleReaction = useCallback(
+    (msgId: string, emoji: string) => {
+      onReact(msgId, emoji);
+      setPickerOpenId(null);
+    },
+    [onReact],
+  );
+
+  const handleTogglePicker = useCallback((msgId: string) => {
+    setPickerOpenId((cur) => (cur === msgId ? null : msgId));
+  }, []);
+
+  const handleReply = useCallback(
+    (replyTo: { senderName: string; body: string }) => {
+      setReplyingTo(replyTo);
+    },
+    [],
+  );
 
   /** Convert each picked mention's "@Display" occurrence in the
    *  draft body into the canonical "@[Display](uuid)" form. Done
@@ -654,15 +675,10 @@ export default function LiveChatPanel({
                 lastDay = k;
               }
 
-              // System events ("X criou o grupo", "Y entrou", "Z saiu")
-              // render as centered grey pill em vez de bubble normal.
-              // O body field carries o verbo em PT-BR; combinamos com
-              // o senderName hidratado pelo JOIN do listMessages.
-              //
-              // Caso especial: para o próprio user (senderId === user.id)
-              // em kind='system_leave', renderizamos só "Você saiu"
-              // (sem o "saiu do grupo" composto) per product feedback:
-              // "para o próprio usuário logado 'Você saiu'".
+              // System events: pílula cinza centralizada via memo'd
+              // component (SystemMessagePill). Não tem hover-actions
+              // nem reactions, então a memoization é trivial por
+              // (who, verb).
               if (m.kind && m.kind !== 'user') {
                 const isMe = m.senderId === user?.id;
                 const who =
@@ -672,128 +688,32 @@ export default function LiveChatPanel({
                       m.senderEmail?.split('@')[0] ??
                       'Alguém';
                 const verb =
-                  isMe && m.kind === 'system_leave'
-                    ? 'saiu'
-                    : m.body;
+                  isMe && m.kind === 'system_leave' ? 'saiu' : m.body;
                 nodes.push(
-                  <div key={m.id} className={styles.systemMsg}>
-                    <span className={styles.systemMsgPill}>
-                      <strong>{who}</strong> {verb}
-                    </span>
-                  </div>,
+                  <SystemMessagePill key={m.id} who={who} verb={verb} />,
                 );
                 continue;
               }
 
+              // User-typed message: bubble memoizada por
+              // (id, body, createdAt, reactionsKey, pickerOpen, isMine).
+              // Callbacks são useCallback estáveis no parent — memo
+              // realmente skipa re-renders quando nada relevante muda.
               const isMine = m.senderId === user?.id;
-              const msgReactions = m.reactions ?? [];
               const pickerOpen = pickerOpenId === m.id;
-
               nodes.push(
-                <div
+                <MessageBubble
                   key={m.id}
-                  className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}
-                >
-                  <div className={styles.bubbleRow}>
-                    <div className={styles.bubble}>
-                      <MessageBody body={m.body} maxPreviewWidth={300} />
-                    </div>
-
-                    {/* Hover actions — reaction trigger + reply
-                        button. Both fade in on bubble hover. The
-                        reply button captures the original message
-                        (after stripping any existing reply prefix
-                        so chained replies only quote the latest)
-                        and focuses the input. */}
-                    <span className={styles.msgActions}>
-                      <button
-                        type="button"
-                        className={styles.actionBtn}
-                        onClick={() => {
-                          const senderName = isMine
-                            ? 'Você'
-                            : other?.name ?? 'Conversa';
-                          setReplyingTo({
-                            senderName,
-                            body: stripReplyPrefix(m.body),
-                          });
-                        }}
-                        aria-label="Responder à mensagem"
-                        title="Responder"
-                      >
-                        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M9 4L4 9l5 5" />
-                          <path d="M4 9h7a3 3 0 0 1 3 3v0" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.actionBtn}
-                        onClick={() =>
-                          setPickerOpenId((cur) => (cur === m.id ? null : m.id))
-                        }
-                        aria-label="Reagir à mensagem"
-                        aria-haspopup="menu"
-                        aria-expanded={pickerOpen}
-                      >
-                        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                          <circle cx="8" cy="8" r="6.4" />
-                          <circle cx="5.8" cy="6.6" r="0.7" fill="currentColor" />
-                          <circle cx="10.2" cy="6.6" r="0.7" fill="currentColor" />
-                          <path d="M5.6 10c.7.9 1.6 1.3 2.4 1.3.9 0 1.7-.4 2.4-1.3" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    </span>
-
-                    {pickerOpen && (
-                      <div className={styles.reactPicker} ref={pickerRef} role="menu">
-                        {REACTION_EMOJIS.map((e) => {
-                          const mineAlready = msgReactions.some(
-                            (r) => r.emoji === e && r.mine,
-                          );
-                          return (
-                            <button
-                              key={e}
-                              type="button"
-                              role="menuitem"
-                              className={`${styles.reactPickerItem} ${mineAlready ? styles.reactPickerItemActive : ''}`}
-                              onClick={() => toggleReaction(m.id, e)}
-                              aria-label={`Reagir com ${e}`}
-                            >
-                              {e}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Aggregated reaction badges — one chip per emoji,
-                      mine-styled when the user is among the reactors.
-                      Counts hidden when 1 (DM = mostly 1:1 reactions
-                      anyway). Click toggles your own contribution. */}
-                  {msgReactions.length > 0 && (
-                    <div className={styles.reactionBadgeRow}>
-                      {msgReactions.map((r) => (
-                        <button
-                          key={r.emoji}
-                          type="button"
-                          className={`${styles.reactionBadge} ${r.mine ? styles.reactionBadgeMine : ''}`}
-                          onClick={() => toggleReaction(m.id, r.emoji)}
-                          aria-label={`${r.emoji} ${r.count}${r.mine ? ' (você reagiu)' : ''}`}
-                          aria-pressed={r.mine}
-                        >
-                          <span aria-hidden="true">{r.emoji}</span>
-                          {r.count > 1 && (
-                            <span className={styles.reactionBadgeCount}>{r.count}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className={styles.time}>{formatTime(m.createdAt)}</div>
-                </div>,
+                  message={m}
+                  isMine={isMine}
+                  reactionsKey={hashReactions(m.reactions)}
+                  pickerOpen={pickerOpen}
+                  otherName={other?.name}
+                  pickerRef={pickerRef}
+                  onReply={handleReply}
+                  onTogglePicker={handleTogglePicker}
+                  onToggleReaction={toggleReaction}
+                />,
               );
             }
             return nodes;
