@@ -1,7 +1,5 @@
 /* Container PADRÃO do admin shell — mesma fórmula usada em
- * /convites, /notificacoes, /aquisicao etc. Sem isto, o stub
- * ficava sem padding lateral nem max-width, encostando nas
- * bordas da viewport. */
+ * /convites, /notificacoes, /aquisicao etc. */
 .body {
   padding: 24px;
   display: flex;
@@ -12,32 +10,176 @@
   width: 100%;
 }
 
-.placeholder {
+/* ── List ───────────────────────────────────────────────── */
+.list {
   display: flex;
-  gap: 16px;
-  padding: 24px;
-  background: rgba(168, 85, 247, 0.04);
-  border: 1px dashed rgba(168, 85, 247, 0.18);
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Cada FAQ é uma "row" — question + meta + actions. Quando o
+ * usuário clica em "Editar", a row expande e mostra os
+ * inputs/textarea inline (não abre dialog separado, pra fluxo de
+ * edição rápida + ver várias FAQs ao mesmo tempo). */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  color: rgba(245, 245, 247, 0.75);
-  font-size: 13.5px;
-  line-height: 1.55;
+  transition: background 0.14s ease, border-color 0.14s ease;
 }
-.placeholder p {
-  margin: 0 0 8px;
+.row:hover { background: rgba(255, 255, 255, 0.04); }
+
+.orderHandle {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  color: rgba(245, 245, 247, 0.4);
+}
+.orderBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.orderBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
   color: #f5f5f7;
+}
+.orderBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rowQuestion {
+  font-size: 14px;
   font-weight: 600;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.placeholder ul {
-  margin: 0;
-  padding-left: 20px;
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.55);
 }
-.placeholder li {
-  margin-bottom: 4px;
+.rowMeta .dot { opacity: 0.5; }
+.rowCategory {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.32);
+  color: #d8b4fe;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
-.placeholder code {
-  background: rgba(255, 255, 255, 0.06);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 12.5px;
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.statusPublished {
+  background: rgba(61, 219, 116, 0.14);
+  border: 1px solid rgba(61, 219, 116, 0.32);
+  color: #3ddb74;
+}
+.statusDraft {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.rowActions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Empty + loading ────────────────────────────────────── */
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 14px;
+}
+.loading {
+  padding: 32px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.45);
+  font-size: 13px;
+}
+
+/* ── Form (dialog body) ─────────────────────────────────── */
+.formStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .formRow { grid-template-columns: 1fr; }
+}
+.publishToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+.publishToggle > span {
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.85);
+}
+.publishToggle > span > em {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.5);
+}
+
+.errorBanner {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(248, 113, 113, 0.10);
+  border: 1px solid rgba(248, 113, 113, 0.32);
+  color: #f87171;
+  font-size: 13px;
 }

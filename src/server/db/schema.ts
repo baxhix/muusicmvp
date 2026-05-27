@@ -717,6 +717,53 @@ export const siteTags = pgTable('site_tags', {
   }),
 });
 
+/**
+ * FAQ entries — perguntas e respostas que aparecem na seção FAQ
+ * pública do site. CRUD vive em /admin/site/faq; o backend lista
+ * publicadas (publishedAt NOT NULL) pra render do site público.
+ *
+ *   - `category` é texto livre por enquanto (ex: "Conta", "Pagamentos",
+ *     "Privacidade"). Quando o produto crescer, vira FK pra uma
+ *     tabela de categorias dedicada.
+ *
+ *   - `sortOrder` controla a posição. Por convenção, valores menores
+ *     aparecem primeiro. Reordenação no admin atualiza o campo em
+ *     todas as rows afetadas dentro de uma única transação.
+ *
+ *   - `publishedAt` é soft-publish: null = rascunho (não aparece no
+ *     site), non-null = publicado. Mais semântico que um boolean
+ *     porque já carrega a data de publicação pra timeline / SEO.
+ */
+export const faqEntries = pgTable(
+  'faq_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    question: text('question').notNull(),
+    answer: text('answer').notNull(),
+    category: text('category'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    updatedBy: uuid('updated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (t) => ({
+    /* Index por (sortOrder, createdAt) acelera o SELECT do site
+     * público que ordena por sort_order asc e desempata por
+     * data de criação. */
+    faqOrderIdx: index('faq_entries_order_idx').on(t.sortOrder, t.createdAt),
+  }),
+);
+
 /* ── Communities (foruns) ────────────────────────────────────────
  *
  * User-created communities. Anyone with ≥10k Fanpoints can spawn

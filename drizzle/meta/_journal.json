@@ -288,6 +288,13 @@
       "when": 1781300000000,
       "tag": "0041_cleared_history_before",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1781400000000,
+      "tag": "0042_faq_entries",
+      "breakpoints": true
     }
   ]
 }
