@@ -44,8 +44,14 @@ export default function ChatPage() {
   const { chat, liveUsers, onlineUserIds } = useAppShell();
   const { user: authUser } = useAuth();
 
-  const [showUserPicker, setShowUserPicker] = useState(false);
-  const [showGroupPicker, setShowGroupPicker] = useState(false);
+  /* Os pickers de "Nova conversa" e "Novo grupo" foram movidos
+   * pra DENTRO do `ConversationsSidebar` como subview inline per
+   * product feedback ("usar o mesmo espaço, estilo e posição"
+   * do painel hospedeiro). O state de visibilidade vive agora no
+   * próprio sidebar; aqui só recebemos os callbacks finais
+   * (`onPickUser` / `onCreateGroup`). O "Adicionar membro" continua
+   * sendo um overlay porque é disparado de outro contexto (kebab
+   * do GroupMembersPanel), fora do sidebar. */
   const [showGroupMembers, setShowGroupMembers] = useState(false);
   const [addingMemberToGroup, setAddingMemberToGroup] =
     useState<string | null>(null);
@@ -82,8 +88,10 @@ export default function ChatPage() {
         onlineUserIds={onlineUserIds}
         onClose={() => router.push('/app')}
         onOpenConversation={chat.open}
-        onNewConversation={() => setShowUserPicker(true)}
-        onNewGroup={() => setShowGroupPicker(true)}
+        onPickUser={(uid) => chat.openDmWith(uid)}
+        onCreateGroup={async ({ name, memberIds }) => {
+          await chat.createGroup({ name, memberIds });
+        }}
         onConversationHidden={(hiddenId) => {
           /* Se a conversa apagada estava aberta no detalhe, fecha
            * o painel — ela vai sumir da lista no próximo refresh
@@ -226,31 +234,6 @@ export default function ChatPage() {
            * panel stays open so the user sees the input prefill
            * with the new value via the `currentName` prop. */
           void chat.refreshConversations();
-        }}
-      />
-
-      <UserPicker
-        open={showUserPicker}
-        onClose={() => setShowUserPicker(false)}
-        onPick={(uid) => {
-          setShowUserPicker(false);
-          chat.openDmWith(uid);
-        }}
-      />
-
-      <UserPicker
-        open={showGroupPicker}
-        mode="group"
-        onClose={() => setShowGroupPicker(false)}
-        /* Lista default em group mode = DM partners das
-         * conversas recentes (ordenados por última mensagem
-         * desc) per product feedback "liste os usuários em
-         * ordem de que já tive conversas abertas, não somente
-         * os que estiverem online". */
-        recentConversations={chat.conversations}
-        onCreateGroup={async ({ name, memberIds }) => {
-          await chat.createGroup({ name, memberIds });
-          setShowGroupPicker(false);
         }}
       />
 

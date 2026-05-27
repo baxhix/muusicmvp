@@ -28,6 +28,20 @@
   overflow: hidden;
   animation: pop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* Variante inline: o picker vira "subview" dentro do painel
+ * hospedeiro (ConversationsSidebar). Zera o chrome do modal
+ * (border, radius, shadow) porque o host já fornece esses. */
+.modalInline {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+}
 @keyframes pop {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0)   scale(1);    }
@@ -58,6 +72,30 @@
   cursor: pointer;
 }
 .closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
+
+/* Inline mode: o header ganha um botão de voltar à esquerda em vez
+ * do × fechar à direita. O título fica centrado entre o back btn e
+ * o espaço vazio (sem closeBtn). Padding um pouco maior em cima pra
+ * alinhar com o header original da ConversationsSidebar host. */
+.headerInline {
+  padding: 16px 16px 12px;
+  gap: 10px;
+}
+.backBtn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: rgba(245, 245, 247, 0.75);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.backBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
 
 /* Standardized search field — recipe lifted verbatim from
  * ConversationsSidebar (the chat sidebar's search) per product

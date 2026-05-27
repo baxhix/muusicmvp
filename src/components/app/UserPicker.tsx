@@ -36,6 +36,11 @@ interface SingleProps {
    *  sendo o online list). Em modo group, são a fonte default
    *  da lista (DM partners ordenados por última mensagem). */
   recentConversations?: ApiConversationSummary[];
+  /** Quando `true`, renderiza embedded (sem backdrop nem fixed
+   *  position) — usado pra exibir o picker como subview dentro
+   *  de outro painel (ex: ConversationsSidebar). Default = false
+   *  (modal overlay tradicional). */
+  inline?: boolean;
 }
 interface GroupProps {
   open: boolean;
@@ -43,6 +48,7 @@ interface GroupProps {
   mode: 'group';
   onCreateGroup: (args: { name: string; memberIds: string[] }) => void;
   recentConversations?: ApiConversationSummary[];
+  inline?: boolean;
 }
 type Props = SingleProps | GroupProps;
 
@@ -201,17 +207,34 @@ export default function UserPicker(props: Props) {
   // CTA habilitada com APENAS membros selecionados — o nome é
   // opcional (default "Grupo sem nome" servidor-side).
   const canCreate = isGroupMode && selectedIds.length > 0;
+  const inline = !!props.inline;
 
-  return (
-    <div className={styles.backdrop} onClick={onClose} role="dialog" aria-label={title}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
+  /* Modo INLINE renderiza só o conteúdo (header + search + list +
+   * footer) — sem backdrop nem .modal envelope. O parent
+   * (ex: ConversationsSidebar) controla o container. */
+  const content = (
+    <>
+        <div className={`${styles.header} ${inline ? styles.headerInline : ''}`}>
+          {inline ? (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={onClose}
+              aria-label="Voltar"
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M10 3 5 8l5 5" />
+              </svg>
+            </button>
+          ) : null}
           <span className={styles.title}>{title}</span>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
+          {!inline && (
+            <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {isGroupMode && (
@@ -363,6 +386,29 @@ export default function UserPicker(props: Props) {
               : 'Digite ao menos 2 caracteres pra buscar'}
           </div>
         ) : null}
+    </>
+  );
+
+  /* Inline render: o parent fornece o container (ex: o
+   * `.panel` da ConversationsSidebar). Sem backdrop, sem fixed
+   * envelope — só o conteúdo herdando a chrome do host. */
+  if (inline) {
+    return (
+      <div
+        className={`${styles.modal} ${styles.modalInline}`}
+        role="region"
+        aria-label={title}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  /* Modo overlay padrão: backdrop full-screen + modal centrado. */
+  return (
+    <div className={styles.backdrop} onClick={onClose} role="dialog" aria-label={title}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        {content}
       </div>
     </div>
   );

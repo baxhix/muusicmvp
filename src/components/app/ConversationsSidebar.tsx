@@ -6,6 +6,7 @@ import { stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
 import { showAppToast } from './AppToast';
 import { confirmDialog } from './ConfirmDialog';
+import UserPicker from './UserPicker';
 import styles from './ConversationsSidebar.module.css';
 
 interface Props {
@@ -16,10 +17,13 @@ interface Props {
   onlineUserIds?: ReadonlySet<string>;
   onClose: () => void;
   onOpenConversation: (conversationId: string) => void;
-  /** Fired when the user clicks "+ Nova conversa" — typically opens UserPicker. */
-  onNewConversation: () => void;
-  /** Fired when the user clicks "Novo grupo" — opens UserPicker in group mode. */
-  onNewGroup: () => void;
+  /** Callback de "iniciar DM com este usuário" — agora disparado
+   *  pelo `UserPicker` inline hospedado dentro do próprio sidebar
+   *  (antes era um modal overlay no parent). */
+  onPickUser: (userId: string) => void;
+  /** Callback de "criar grupo" — também disparado pelo UserPicker
+   *  inline em modo group. */
+  onCreateGroup: (args: { name: string; memberIds: string[] }) => void;
   /** Disparado depois que o user escolheu "Apagar conversa" no
    *  kebab e o backend confirmou o hide. Parent deve refresh da
    *  lista pra remover a row sumida. */
@@ -46,8 +50,8 @@ export default function ConversationsSidebar({
   onlineUserIds,
   onClose,
   onOpenConversation,
-  onNewConversation,
-  onNewGroup,
+  onPickUser,
+  onCreateGroup,
   onConversationHidden,
 }: Props) {
   const [query, setQuery] = useState('');
@@ -55,6 +59,16 @@ export default function ConversationsSidebar({
    * clicar no botão flutuante, abre duas opções logo acima:
    * Nova conversa e Novo grupo". */
   const [fabOpen, setFabOpen] = useState(false);
+  /* Subview inline do UserPicker (substitui o modal overlay).
+   *   - null      → mostra a lista de conversas (default)
+   *   - 'single'  → mostra UserPicker em single mode (Nova conversa)
+   *   - 'group'   → mostra UserPicker em group mode (Novo grupo)
+   * Per product feedback "O modal de novo grupo, nova conversa...
+   * pode ser adaptado para a experiencia ser no box que já está
+   * aberto do chat mesmo, digo usar o mesmo espaço, estilo e
+   * posição". O picker vira subview do painel hospedeiro em vez
+   * de um overlay sobre tudo. */
+  const [createView, setCreateView] = useState<'single' | 'group' | null>(null);
   /* Kebab por linha. Guardamos o id da conversa cujo menu está
    * aberto — null significa "todos fechados". Click outside fecha
    * via listener global; click em outra linha troca pra ela. */
@@ -126,9 +140,14 @@ export default function ConversationsSidebar({
   }, [open]);
 
   // Quando o sidebar fecha, o menu do FAB também fecha — evita ele
-  // ficar aberto invisível e ressurgir na próxima abertura.
+  // ficar aberto invisível e ressurgir na próxima abertura. Mesmo
+  // raciocínio pro inline UserPicker: se o painel sumiu, a subview
+  // de criação não deve ressurgir no próximo open.
   useEffect(() => {
-    if (!open) setFabOpen(false);
+    if (!open) {
+      setFabOpen(false);
+      setCreateView(null);
+    }
   }, [open]);
 
   // Escape closes the drawer — standard floating UI behavior, matches
@@ -168,6 +187,46 @@ export default function ConversationsSidebar({
       return name.includes(q);
     });
   }, [dms, query]);
+
+  /* Subview inline do UserPicker. Quando `createView` está setado,
+   * o painel hospeda o picker no lugar da lista de conversas —
+   * o picker traz seu próprio header (com back button), input de
+   * nome (group mode), search e footer/CTA. O outer `<aside>`
+   * permanece o mesmo pra preservar a animação de slide-in. */
+  if (open && createView !== null) {
+    const close = () => setCreateView(null);
+    return (
+      <aside
+        className={`${styles.panel} ${styles.panelOpen}`}
+        role="dialog"
+        aria-label={createView === 'group' ? 'Novo grupo' : 'Iniciar conversa'}
+      >
+        {createView === 'group' ? (
+          <UserPicker
+            inline
+            open
+            mode="group"
+            onClose={close}
+            recentConversations={conversations}
+            onCreateGroup={(args) => {
+              onCreateGroup(args);
+              setCreateView(null);
+            }}
+          />
+        ) : (
+          <UserPicker
+            inline
+            open
+            onClose={close}
+            onPick={(uid) => {
+              onPickUser(uid);
+              setCreateView(null);
+            }}
+          />
+        )}
+      </aside>
+    );
+  }
 
   return (
     <aside
@@ -405,7 +464,7 @@ export default function ConversationsSidebar({
             className={styles.fabMenuItem}
             onClick={() => {
               setFabOpen(false);
-              onNewConversation();
+              setCreateView('single');
             }}
           >
             <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -419,7 +478,7 @@ export default function ConversationsSidebar({
             className={styles.fabMenuItem}
             onClick={() => {
               setFabOpen(false);
-              onNewGroup();
+              setCreateView('group');
             }}
           >
             <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
