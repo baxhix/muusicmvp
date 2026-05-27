@@ -4,10 +4,17 @@
 
 .footer {
   position: relative;
-  /* Transparente — galáxia da page (GalaxyBackdrop +
-   * .page::before) transparece através do footer também,
-   * mantendo a continuidade visual com as sections acima. */
-  background: transparent;
+  /* Frosted shelf — preto translúcido (alpha 0.55) + backdrop
+   * blur 18px. Per product feedback "O footer precisa ter um
+   * background preto, talvez com transparência ou com o efeito
+   * de blur do fundo, para dar leitura no FANVERSE gigante e
+   * no menu". A galáxia continua transparecendo por baixo (via
+   * o alpha), mas com o blur as estrelas e nebulae viram um
+   * brilho difuso em vez de pontos nítidos competindo com o
+   * texto. Mesmo padrão visual da navbar (que é blur 12px). */
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   color: #fff;
   /* Horizontal padding MATCH ao da navbar — clamp(20, 4vw, 56)
    * — pra que as colunas do footer fiquem ALINHADAS com o

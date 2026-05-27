@@ -40,11 +40,13 @@ function makeRng(seed: number) {
   };
 }
 
-// 240 (era 180) — bump leve pra compensar a remoção dos
-// <Sparkles> per-section (Hero 28 + Three 36 + Four 40 + Five 32
-// = 136 stars). Como o GalaxyBackdrop é fixed no viewport, 240
-// fica visível o tempo todo; antes a soma variava por seção.
-const STAR_COUNT = 240;
+// 120 (era 240) — reduzido pela metade per product feedback
+// "Diminua pela metade a quantidade de pontos (estrelas)
+// estáticas no fundo. Somente as estáticas". Como o canvas é
+// 1 layer estático, o ganho de perf aqui é marginal (o draw
+// custa O(n)), mas a leitura visual fica mais limpa — densidade
+// menor evita que as estrelas compitam com o texto das sections.
+const STAR_COUNT = 120;
 
 interface Star {
   // Posições normalizadas 0..1 — multiplicadas pela viewport
