@@ -52,6 +52,7 @@ interface CommunityPanelProps {
 
 type View =
   | { kind: 'list' }
+  | { kind: 'create' }
   | { kind: 'detail'; slug: string }
   | { kind: 'topic'; slug: string; topicId: string };
 
@@ -88,6 +89,7 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
       if (e.key !== 'Escape') return;
       if (view.kind === 'topic') setView({ kind: 'detail', slug: view.slug });
       else if (view.kind === 'detail') setView({ kind: 'list' });
+      else if (view.kind === 'create') setView({ kind: 'list' });
       else onClose();
     };
     document.addEventListener('keydown', onKey);
@@ -102,7 +104,18 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
       aria-hidden={!open}
     >
       {view.kind === 'list' && (
-        <CommunityListView onClose={onClose} onOpenCommunity={(slug) => setView({ kind: 'detail', slug })} />
+        <CommunityListView
+          onClose={onClose}
+          onOpenCommunity={(slug) => setView({ kind: 'detail', slug })}
+          onOpenCreate={() => setView({ kind: 'create' })}
+        />
+      )}
+      {view.kind === 'create' && (
+        <CommunityCreateView
+          onBack={() => setView({ kind: 'list' })}
+          onClose={onClose}
+          onCreated={(slug) => setView({ kind: 'detail', slug })}
+        />
       )}
       {view.kind === 'detail' && (
         <CommunityDetailView
@@ -263,16 +276,20 @@ function KebabMenu({
 function CommunityListView({
   onClose,
   onOpenCommunity,
+  onOpenCreate,
 }: {
   onClose: () => void;
   onOpenCommunity: (slug: string) => void;
+  /** Solicita ao parent que troque pra view 'create' inline.
+   *  Substitui o `setCreateOpen(true)` que abria o CreateCommunityModal
+   *  como overlay — agora vira subview do próprio painel. */
+  onOpenCreate: () => void;
 }) {
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
   const canCreate = (profile?.fanpoints ?? 0) >= CREATE_FP_THRESHOLD;
 
   const [query, setQuery] = useState('');
-  const [createOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<ApiCommunityCard | null>(null);
   const { items, loading, refresh } = useCommunities({
     enabled: true,
@@ -473,7 +490,7 @@ function CommunityListView({
         <button
           type="button"
           className={styles.fab}
-          onClick={() => setCreateOpen(true)}
+          onClick={onOpenCreate}
           aria-label="Nova comunidade"
           title="Nova comunidade"
         >
@@ -497,16 +514,11 @@ function CommunityListView({
         </footer>
       ) : null}
 
-      {createOpen && (
-        <CreateCommunityModal
-          onClose={() => setCreateOpen(false)}
-          onCreated={(slug) => {
-            setCreateOpen(false);
-            void refresh();
-            onOpenCommunity(slug);
-          }}
-        />
-      )}
+      {/* O modal de "Nova comunidade" virou subview inline do
+       *  CommunityPanel (`view.kind === 'create'`) per product
+       *  feedback "usar o mesmo espaço, estilo e posição" do
+       *  painel hospedeiro. O parent dispara `onOpenCreate()` —
+       *  controla a navegação via view-state. */}
 
       {renameTarget && (
         <RenameCommunityModal
@@ -519,6 +531,122 @@ function CommunityListView({
           }}
         />
       )}
+    </>
+  );
+}
+
+/* ── View 1.5: Create community (subview inline) ─────────────────
+ * Substitui o antigo `CreateCommunityModal` overlay per product
+ * feedback "o modal de nova comunidade pode ser adaptado pra a
+ * experiencia ser no box que já está aberto, usar o mesmo espaço,
+ * estilo e posição". O form ocupa o painel inteiro com header
+ * (← Voltar) e CTA "Criar" no rodapé. Reutiliza as classes
+ * `.modalField` etc do CSS module porque elas só estilizam
+ * inputs/labels — não dependem do `.modalBackdrop`. */
+function CommunityCreateView({
+  onBack,
+  onClose,
+  onCreated,
+}: {
+  onBack: () => void;
+  onClose: () => void;
+  onCreated: (slug: string) => void;
+}) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await api.post<{ id: string; slug: string }>(
+        '/api/communities',
+        {
+          name: name.trim(),
+          description: description.trim() || null,
+          imageUrl: imageUrl.trim() || null,
+        },
+      );
+      onCreated(res.slug);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const body = err.body as { error?: string } | null;
+        setError(body?.error ?? `HTTP ${err.status}`);
+      } else {
+        setError('network_error');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <HeaderBar title="Nova comunidade" onBack={onBack} onClose={onClose} />
+      <form className={styles.body} onSubmit={handleSubmit}>
+        <label className={styles.modalField}>
+          <span>Nome</span>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+            required
+            autoFocus
+            disabled={submitting}
+          />
+        </label>
+        <label className={styles.modalField}>
+          <span>Descrição (opcional)</span>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxLength={500}
+            rows={4}
+            disabled={submitting}
+          />
+        </label>
+        <label className={styles.modalField}>
+          <span>URL da imagem (opcional)</span>
+          <input
+            type="url"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://…"
+            maxLength={500}
+            disabled={submitting}
+          />
+        </label>
+        {error && (
+          <p className={styles.modalError}>
+            {error === 'insufficient_fanpoints'
+              ? `Você precisa de ${CREATE_FP_THRESHOLD.toLocaleString('pt-BR')} Fanpoints.`
+              : `Erro: ${error}`}
+          </p>
+        )}
+        <div className={styles.modalActions}>
+          <button
+            type="button"
+            className={styles.modalCancel}
+            onClick={onBack}
+            disabled={submitting}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className={styles.modalSubmit}
+            disabled={!name.trim() || submitting}
+          >
+            {submitting ? 'Criando…' : 'Criar'}
+          </button>
+        </div>
+      </form>
     </>
   );
 }
@@ -1185,103 +1313,9 @@ function CommentRow({
 
 /* ── Modals ──────────────────────────────────────────────────── */
 
-function CreateCommunityModal({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: (slug: string) => void;
-}) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || submitting) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await api.post<{ id: string; slug: string }>(
-        '/api/communities',
-        {
-          name: name.trim(),
-          description: description.trim() || null,
-          imageUrl: imageUrl.trim() || null,
-        },
-      );
-      onCreated(res.slug);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        const body = err.body as { error?: string } | null;
-        setError(body?.error ?? `HTTP ${err.status}`);
-      } else {
-        setError('network_error');
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <form
-        className={styles.modal}
-        onSubmit={handleSubmit}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className={styles.modalTitle}>Nova comunidade</h3>
-        <label className={styles.modalField}>
-          <span>Nome</span>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={80}
-            required
-            autoFocus
-          />
-        </label>
-        <label className={styles.modalField}>
-          <span>Descrição (opcional)</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={500}
-            rows={3}
-          />
-        </label>
-        <label className={styles.modalField}>
-          <span>URL da imagem (opcional)</span>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://…"
-            maxLength={500}
-          />
-        </label>
-        {error && (
-          <p className={styles.modalError}>
-            {error === 'insufficient_fanpoints'
-              ? `Você precisa de ${CREATE_FP_THRESHOLD.toLocaleString('pt-BR')} Fanpoints.`
-              : `Erro: ${error}`}
-          </p>
-        )}
-        <div className={styles.modalActions}>
-          <button type="button" className={styles.modalCancel} onClick={onClose} disabled={submitting}>
-            Cancelar
-          </button>
-          <button type="submit" className={styles.modalSubmit} disabled={!name.trim() || submitting}>
-            {submitting ? 'Criando…' : 'Criar'}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
+/* `CreateCommunityModal` foi removido — virou subview inline
+ * `CommunityCreateView` mais acima neste arquivo, dirigido pelo
+ * view-state machine do CommunityPanel. */
 
 function RenameCommunityModal({
   slug,
