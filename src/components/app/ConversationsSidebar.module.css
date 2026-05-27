@@ -99,53 +99,139 @@
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
-.newBtn {
-  width: 28px; height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* `.newBtn` e `.newGroupBtn` foram removidos do header per
+ * product feedback "Adicione o mesmo estilo do botão
+ * flutuante Nova Comunidade na aba de Chat". Agora as ações
+ * vivem num FAB lilás no canto inferior direito que expande
+ * um menu com "Nova conversa" e "Novo grupo" acima dele
+ * (ver .fab, .fabMenu, .fabMenuItem abaixo). Mesmo padrão
+ * visual do CommunityPanel. */
+
+/* ── FAB flutuante ──
+ * Espelha o `.fab` do CommunityPanel: pill lilás 52×52
+ * ancorado em bottom: 18 / right: 18 do panel. Glow sombrado
+ * dual-cast (dark drop + lilac soft glow) pra ler bem em
+ * Android low-end + iOS retina. */
+.fab {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(245, 245, 247, 0.65);
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.85) 0%,
+    rgba(168, 85, 247, 0.7) 100%);
+  border: none;
+  color: #ffffff;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.14s ease;
+  box-shadow:
+    0 8px 18px -6px rgba(0, 0, 0, 0.65),
+    0 4px 12px -4px rgba(168, 85, 247, 0.35);
+  transition: background 0.14s ease, transform 0.18s cubic-bezier(0.65, 0, 0.35, 1),
+              box-shadow 0.14s ease;
+  z-index: 10;
 }
-.newBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
-  transform: scale(1.04);
+.fab svg {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.18s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.fab:hover {
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(168, 85, 247, 0.82) 100%);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 24px -6px rgba(0, 0, 0, 0.7),
+    0 6px 16px -4px rgba(168, 85, 247, 0.45);
+}
+.fab:active {
+  transform: translateY(0) scale(0.96);
+}
+/* Quando o menu está aberto, gira o "+" pra um "×" (45°). */
+.fab.fabActive svg {
+  transform: rotate(45deg);
 }
 
-/* Pill texto "Novo grupo" — substituiu o ícone "two heads" per
- * product feedback. Tipografia parecida com o título do header
- * pra ficar visualmente integrado, padding horizontal generoso
- * pra ler como botão claro. Mesmo hover/transition do .newBtn. */
-.newGroupBtn {
-  height: 28px;
+/* Menu expansível ancorado ACIMA do FAB. As 2 opções viram
+ * pills horizontais empilhadas verticalmente, com gap. Em
+ * mobile o painel é largo o suficiente pra que o menu não
+ * encoste no edge esquerdo. */
+.fabMenu {
+  position: absolute;
+  right: 18px;
+  /* 18 (fab bottom) + 52 (fab height) + 12 (gap) = 82px */
+  bottom: 82px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  z-index: 11;
+  animation: fabMenuIn 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fabMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fabMenuItem {
   display: inline-flex;
   align-items: center;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid rgba(168, 85, 247, 0.35);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(245, 245, 247, 0.85);
+  background: rgba(20, 12, 30, 0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  color: #f5f5f7;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
-  flex-shrink: 0;
   white-space: nowrap;
-  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  box-shadow:
+    0 6px 14px -4px rgba(0, 0, 0, 0.55),
+    0 2px 8px -2px rgba(168, 85, 247, 0.25);
+  transition: background 0.14s ease, border-color 0.14s ease,
+              transform 0.14s ease;
 }
-.newGroupBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
+.fabMenuItem:hover {
+  background: rgba(40, 22, 60, 0.94);
+  border-color: rgba(168, 85, 247, 0.55);
+  transform: translateX(-2px);
+}
+.fabMenuItem:active {
+  transform: scale(0.97);
+}
+.fabMenuItem svg {
+  color: rgba(216, 180, 254, 0.95);
+}
+
+/* Backdrop transparente em tela inteira pra capturar
+ * outside-clicks e fechar o menu. pointer-events:auto pra
+ * receber o click mas sem visual algum. */
+.fabBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fabMenu { animation: none; }
+  .fab svg { transition: none; }
 }
 
 .closeBtn {

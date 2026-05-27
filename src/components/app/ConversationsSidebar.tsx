@@ -44,11 +44,21 @@ export default function ConversationsSidebar({
   onNewGroup,
 }: Props) {
   const [query, setQuery] = useState('');
+  /* Estado do menu expansível do FAB. Per product feedback "Ao
+   * clicar no botão flutuante, abre duas opções logo acima:
+   * Nova conversa e Novo grupo". */
+  const [fabOpen, setFabOpen] = useState(false);
 
   // Reset the search field whenever the sidebar opens — stale filter
   // text from a previous session would confuse the user.
   useEffect(() => {
     if (open) setQuery('');
+  }, [open]);
+
+  // Quando o sidebar fecha, o menu do FAB também fecha — evita ele
+  // ficar aberto invisível e ressurgir na próxima abertura.
+  useEffect(() => {
+    if (!open) setFabOpen(false);
   }, [open]);
 
   // Escape closes the drawer — standard floating UI behavior, matches
@@ -94,31 +104,11 @@ export default function ConversationsSidebar({
     >
       <header className={styles.header}>
         <h2 className={styles.title}>Chat</h2>
-        {/* Era um ícone "two heads" (criar grupo) ao lado do título.
-         *  Per product feedback "substitua o ícone de Criar grupo
-         *  por um botão Novo grupo", virou um pill texto. Usa o
-         *  estilo dedicado .newGroupBtn (pill mais largo que o
-         *  .newBtn quadrado do "+", ver ConversationsSidebar.module.css). */}
-        <button
-          type="button"
-          className={styles.newGroupBtn}
-          onClick={onNewGroup}
-          aria-label="Novo grupo"
-          title="Novo grupo"
-        >
-          Novo grupo
-        </button>
-        <button
-          type="button"
-          className={styles.newBtn}
-          onClick={onNewConversation}
-          aria-label="Nova conversa"
-          title="Nova conversa"
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M8 3v10M3 8h10" />
-          </svg>
-        </button>
+        {/* Os botões "Nova conversa" / "Novo grupo" SAÍRAM do
+         *  header per product feedback. Agora vivem dentro de um
+         *  menu expansível ancorado ao FAB lilás no canto
+         *  inferior direito do painel (ver `.fab` + `.fabMenu`
+         *  abaixo). Mesmo padrão do CommunityPanel. */}
         <button
           type="button"
           className={styles.closeBtn}
@@ -268,6 +258,66 @@ export default function ConversationsSidebar({
           })
         )}
       </div>
+
+      {/* FAB flutuante no canto inferior direito do panel — mesmo
+       *  visual do "+" do CommunityPanel (lilás, 52×52, glow). Ao
+       *  clicar, abre menu com duas opções "Nova conversa" e
+       *  "Novo grupo" logo acima. O backdrop transparente em
+       *  toda a viewport captura outside-clicks pra fechar. */}
+      {fabOpen && (
+        <div
+          className={styles.fabBackdrop}
+          onClick={() => setFabOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      {fabOpen && (
+        <div className={styles.fabMenu} role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.fabMenuItem}
+            onClick={() => {
+              setFabOpen(false);
+              onNewConversation();
+            }}
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
+            Nova conversa
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={styles.fabMenuItem}
+            onClick={() => {
+              setFabOpen(false);
+              onNewGroup();
+            }}
+          >
+            <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="6.5" cy="6.5" r="2.5" />
+              <path d="M2 15c0-2.2 2-4 4.5-4S11 12.8 11 15" />
+              <circle cx="13" cy="5.5" r="2" />
+              <path d="M12 14c0-1.7 1.6-3 3.5-3s.5 0 .5 0" />
+            </svg>
+            Novo grupo
+          </button>
+        </div>
+      )}
+      <button
+        type="button"
+        className={`${styles.fab} ${fabOpen ? styles.fabActive : ''}`}
+        onClick={() => setFabOpen((v) => !v)}
+        aria-label={fabOpen ? 'Fechar menu' : 'Nova conversa ou grupo'}
+        aria-expanded={fabOpen}
+        aria-haspopup="menu"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
     </aside>
   );
 }
