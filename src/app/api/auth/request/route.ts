@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { db } from '@/server/db';
 import { users, tokens } from '@/server/db/schema';
@@ -9,6 +10,7 @@ import { env } from '@/server/env';
 import { and, eq, isNull } from 'drizzle-orm';
 import { limitByIp, limitByKey, magicLinkLimiter } from '@/server/rateLimit';
 import { TokenBucket } from '@/server/realtime/rateLimit';
+import { resolveSlugForSignup } from '@/server/acquisition/links';
 import { logger } from '@/server/log';
 
 /* Bucket por email pra prevenir inbox-spam: mesmo que o atacante
@@ -100,6 +102,16 @@ export async function POST(req: Request) {
   // claim atômico abaixo (UPDATE WHERE welcomeEmailSentAt IS NULL),
   // garante que boas-vindas sai uma única vez no momento da
   // criação de conta — mesmo em corridas concorrentes.
+  /* Atribuição de aquisição — lê o cookie `fanverse_ref` setado
+   * pelo /r/[slug] e resolve o slug → link_id ANTES da
+   * transaction. Se o cookie estiver vazio, expirado ou apontar
+   * pra um slug inexistente, signupLinkId vira null (signup
+   * orgânico). A resolução nunca derruba o signup — se a query
+   * falhar, segue null. */
+  const cookieStore = await cookies();
+  const refSlug = cookieStore.get('fanverse_ref')?.value ?? null;
+  const signupLinkId = await resolveSlugForSignup(refSlug);
+
   const { user, isNewUser } = await db.transaction(async (tx) => {
     // Filtra soft-deleted: usuário que pediu exclusão LGPD não
     // recebe magic link mesmo digitando o mesmo email. Se quiser
@@ -112,9 +124,21 @@ export async function POST(req: Request) {
       .where(and(eq(users.email, email), isNull(users.deletedAt)))
       .limit(1);
     const isNew = !existing[0];
+    /* signupLinkId só é setado em users NOVOS — accounts
+     * existentes não devem ser re-atribuídas por causa de um
+     * cookie residual de outro link. */
     const u =
       existing[0] ??
-      (await tx.insert(users).values({ email, name: defaultName }).returning())[0];
+      (
+        await tx
+          .insert(users)
+          .values({
+            email,
+            name: defaultName,
+            signupLinkId: signupLinkId ?? undefined,
+          })
+          .returning()
+      )[0];
 
     await tx.insert(tokens).values({
       tokenHash: hash,

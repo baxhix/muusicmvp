@@ -57,6 +57,13 @@ export const users = pgTable('users', {
    *  (pré-onboarding social). Serializado como text[] do
    *  postgres. */
   interests: text('interests').array(),
+  /** Atribuição de aquisição — FK opcional pra
+   * artist_signup_links.id. Setado no momento da criação do
+   * user row, lendo o cookie `fanverse_ref` (cravado pelo
+   * /r/[slug]). Null = signup orgânico (não veio de link de
+   * artista). FK declarada no nível do SQL (migration) pra
+   * evitar circular import com artistSignupLinks abaixo. */
+  signupLinkId: uuid('signup_link_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   /**
@@ -552,6 +559,42 @@ export const fanpointRules = pgTable('fanpoint_rules', {
   updatedBy: uuid('updated_by').references(() => users.id, {
     onDelete: 'set null',
   }),
+});
+
+/**
+ * Artist signup links — cada artista (ou campanha) tem um link
+ * exclusivo (`/r/{slug}`) pra compartilhar nas redes. Usuários que
+ * se cadastram via esse link ficam atribuídos ao artista pelo
+ * campo `users.signup_link_id`.
+ *
+ * Fluxo:
+ *   1. Admin cria um link em /admin/aquisicao → row em
+ *      artist_signup_links com slug único (ex: "ana-castela").
+ *   2. Visitante clica em muusic.live/r/ana-castela.
+ *   3. /r/[slug] (em src/app/r/[slug]) seta cookie
+ *      `fanverse_ref={slug}` (30 dias) e redireciona pra /teste.
+ *   4. Visitante completa cadastro. Na criação do user row, o
+ *      backend lê o cookie + busca o slug → grava signup_link_id.
+ *   5. Admin vê em /admin/aquisicao/[id] quantos users vieram
+ *      de cada link.
+ *
+ * `archivedAt` é soft-delete — links inativos param de receber
+ * novos signups mas o histórico permanece pra atribuição.
+ */
+export const artistSignupLinks = pgTable('artist_signup_links', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique(),
+  artistName: text('artist_name').notNull(),
+  /** Rótulo interno opcional pra distinguir múltiplas campanhas
+   * do mesmo artista (ex: "Story do Insta — semana 3"). */
+  label: text('label'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  createdBy: uuid('created_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
 });
 
 /**
