@@ -1,7 +1,15 @@
+/* Container PADRÃO do admin shell — mesma fórmula usada em
+ * /convites, /notificacoes, /aquisicao etc. Sem isto, o stub
+ * ficava sem padding lateral nem max-width, encostando nas
+ * bordas da viewport. */
 .body {
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
 }
 
 .placeholder {

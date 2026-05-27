@@ -117,45 +117,79 @@
 }
 .item:hover { transform: scale(1.28) translateX(-4px); }
 
-/* "View all conversations" chip — sits BELOW the 3 most-recent
- * avatars on MOBILE only (hidden on desktop where the topBar's
- * Chat icon already covers this entry point). Same circular
- * footprint as the avatars so the column reads as one
- * continuous strip. Filled translucent surface so it visually
- * differentiates from the photo avatars above without breaking
- * the rhythm. */
+/* Botão "+" abaixo dos 3 avatares — espelha o style do FAB
+ * lilás do CommunityPanel + ConversationsSidebar, mas no
+ * footprint dos avatares (44 desktop, 53 mobile) per product
+ * feedback "mesmo tamanho que os avatares". Visível em
+ * DESKTOP E MOBILE (antes era mobile-only). */
 .viewAllBtn {
   position: relative;
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: none;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  color: rgba(245, 245, 247, 0.92);
+  /* Gradient lilás (mesmo do FAB do CommunityPanel). */
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.85) 0%,
+    rgba(168, 85, 247, 0.7) 100%);
+  color: #ffffff;
   cursor: pointer;
-  display: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: transform 200ms ease-out, background 200ms ease;
-  /* Match the avatar `.item`s spacing — 6px breathing room
-   * above so the dock reads as a uniform column of touch
-   * targets instead of the chat icon hugging the last avatar
-   * with no gap. */
+  box-shadow:
+    0 6px 14px -4px rgba(0, 0, 0, 0.55),
+    0 3px 10px -3px rgba(168, 85, 247, 0.35);
+  transition: transform 200ms ease-out, box-shadow 0.14s ease,
+              background 0.14s ease;
   margin-top: 6px;
+  /* isolation:isolate cria stacking context isolado pro pseudo
+   * `::after` com o gradient stroke (z-index relativo). */
+  isolation: isolate;
 }
 .viewAllBtn svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+}
+/* Gradient stroke (mesmo do .inner::after da BottomNav) —
+ * lilás → rosa → lilás com mask-composite:exclude pra ficar
+ * só na borda do círculo. */
+.viewAllBtn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 1.5px solid transparent;
+  background-image: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.55) 0%,
+    rgba(236, 72, 153, 0.75) 50%,
+    rgba(168, 85, 247, 0.55) 100%
+  );
+  background-origin: border-box;
+  background-clip: border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 .viewAllBtn:hover {
-  transform: scale(1.18) translateX(-3px);
-  background: rgba(255, 255, 255, 0.10);
+  transform: scale(1.06);
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(168, 85, 247, 0.82) 100%);
+  box-shadow:
+    0 8px 18px -4px rgba(0, 0, 0, 0.6),
+    0 5px 14px -3px rgba(168, 85, 247, 0.5);
 }
 .viewAllBtn:active {
-  transform: scale(1) translateX(0);
+  transform: scale(0.96);
 }
 
 .itemActive { transform: scale(1.18) translateX(-4px); }
@@ -393,19 +427,16 @@
   .item:hover {
     transform: scale(1.18) translateX(-2px);
   }
-  /* Reveal the "view all" button on mobile. Sized -35% from the
-   * previous 53px footprint (53 × 0.65 ≈ 34) per product
-   * feedback — the icon now reads as a quieter, smaller
-   * follow-on to the chat-preview avatars above instead of a
-   * peer-sized button. */
+  /* No mobile o `.viewAllBtn` cresce pra 53×53 (peer-sized com
+   * os avatares) per product feedback "mesmo tamanho que os
+   * avatares". O SVG do "+" também ganha um respiro vertical. */
   .viewAllBtn {
-    display: inline-flex;
-    width: 34px;
-    height: 34px;
+    width: 53px;
+    height: 53px;
   }
   .viewAllBtn svg {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
   }
   .itemActive {
     transform: scale(1.10) translateX(-2px);

@@ -72,15 +72,19 @@ export default function ConversationsSidebar({
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  // DMs only — the global Superchat lives at the bottom of the
-  // screen via SuperchatTrigger, doesn't belong in this list.
+  // DMs + grupos com nome. Filtra o "Superchat" (com ícone do
+  // chapéu) per product feedback "Remova o item ou grupo
+  // Superchat, que tem o chapeu como icone, marcado como tendo
+  // 28 membros". Detecção por nome (mesma do LiveChatStack)
+  // porque a API não expõe slug de conversa.
   const dms = useMemo(
     () =>
-      conversations.filter((c) =>
-        c.type === 'dm'
-          ? !!c.otherUser
-          : c.type === 'group' && !!c.name,
-      ),
+      conversations.filter((c) => {
+        if (c.type === 'dm') return !!c.otherUser;
+        if (c.type !== 'group' || !c.name) return false;
+        if (c.name === 'Superchat') return false;
+        return true;
+      }),
     [conversations],
   );
 

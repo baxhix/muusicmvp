@@ -47,16 +47,17 @@ export default function LiveChatStack({
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
-  // Include both DMs (with a resolvable other user) AND user-created
-  // groups. The global Superchat (named room, accessed via
-  // SuperchatTrigger) is excluded — it has no slug check available
-  // here, but in practice it's the only group without `name` set by
-  // the createGroup flow, and we skip rendering it explicitly below.
+  // Include DMs (resolvable other user) AND user-created groups.
+  // O grupo "Superchat" (com ícone do chapéu Ana Castela) está
+  // FILTRADO per product feedback "Remova o item ou grupo Superchat,
+  // que tem o chapeu como icone, marcado como tendo 28 membros".
+  // Detecção por nome porque a API não expõe slug; mesma matching
+  // que o ConversationsSidebar usa.
   const dockable = conversations.filter((c) => {
     if (c.type === 'dm') return !!c.otherUser;
-    // Groups must have a name (user-created); the unnamed Superchat
-    // shouldn't appear in the dock since it has its own trigger.
-    return c.type === 'group' && !!c.name;
+    if (c.type !== 'group' || !c.name) return false;
+    if (c.name === 'Superchat') return false;
+    return true;
   });
   const items = dockable.slice(0, DOCK_LIMIT);
 
@@ -160,31 +161,29 @@ export default function LiveChatStack({
           );
         })}
 
-        {/* "View all conversations" affordance — sits BELOW the 3
-            most-recent avatars per product feedback. Visible only
-            on mobile (CSS @media) since on desktop the route
-            shortcut + topBar Chat icon already cover this entry
-            point. Now uses the SAME paper-airplane glyph the
-            mobile right-rail Send icon (in app/app/layout.tsx)
-            does, so both chat affordances read as the same
-            family. */}
+        {/* Botão "+" abaixo das miniaturas — abre a lista completa
+            de conversas (que tem o FAB de Nova conversa/Novo grupo
+            internamente). Per product feedback "Substitua o ícone
+            de mensagens abaixo das miniaturas pelo botão de '+'
+            com o mesmo tamanho que os avatares e no mesmo estilo
+            que o '+' comunidade e novo grupo/conversa". Visível
+            em desktop E mobile (era só mobile). */}
         {onOpenAll && (
           <button
             type="button"
             className={styles.viewAllBtn}
             onClick={onOpenAll}
-            aria-label="Ver todas as conversas"
+            aria-label="Nova conversa ou grupo"
           >
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.7"
+              strokeWidth="2.2"
               strokeLinecap="round"
-              strokeLinejoin="round"
               aria-hidden="true"
             >
-              <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
+              <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
         )}

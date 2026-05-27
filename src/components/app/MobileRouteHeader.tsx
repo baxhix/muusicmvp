@@ -33,7 +33,7 @@ import styles from './MobileRouteHeader.module.css';
  */
 
 const TITLE_MAP: Record<string, string> = {
-  '/app/chat': 'Conversas',
+  '/app/chat': 'Chat',
   '/app/comunidades': 'Comunidades',
   '/app/ranking': 'Superfãs',
   '/app/perfil': 'Meu Perfil',
