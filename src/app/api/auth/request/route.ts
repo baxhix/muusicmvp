@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { db } from '@/server/db';
 import { users, tokens } from '@/server/db/schema';
@@ -9,6 +10,7 @@ import { env } from '@/server/env';
 import { and, eq, isNull } from 'drizzle-orm';
 import { limitByIp, limitByKey, magicLinkLimiter } from '@/server/rateLimit';
 import { TokenBucket } from '@/server/realtime/rateLimit';
+import { resolveSlugForSignup } from '@/server/acquisition/links';
 import { logger } from '@/server/log';
 
 /* Bucket por email pra prevenir inbox-spam: mesmo que o atacante
@@ -100,16 +102,22 @@ export async function POST(req: Request) {
   // claim atômico abaixo (UPDATE WHERE welcomeEmailSentAt IS NULL),
   // garante que boas-vindas sai uma única vez no momento da
   // criação de conta — mesmo em corridas concorrentes.
-  /* HOTFIX: a atribuição de aquisição (cookie `fanverse_ref` →
-   * users.signup_link_id) foi removida temporariamente porque
-   * a migração 0035 falhou silenciosamente em prod, deixando
-   * a coluna inexistente — qualquer SELECT/INSERT que a
-   * referenciasse explodia o login com 500.
+  /* Atribuição de aquisição — lê o cookie `fanverse_ref` setado
+   * pelo /r/[slug] e resolve o slug → link_id ANTES da
+   * transaction. Se o cookie estiver vazio, expirado ou apontar
+   * pra um slug inexistente, signupLinkId vira null (signup
+   * orgânico). A resolução nunca derruba o signup — se a query
+   * falhar, segue null.
    *
-   * Restaurar depois que confirmar que a migration rodou. O
-   * resto da Aquisição (admin UI, /r/[slug] redirect com
-   * cookie) continua funcionando — só o write final do
-   * `signup_link_id` no user novo está suspenso. */
+   * Após o incidente do migration 0035 não-aplicada que
+   * derrubou o login (hotfix 08cff75), o write do
+   * signupLinkId é feito em UPDATE pós-INSERT em vez de
+   * direto no values{}. Mantém o INSERT mínimo + tolera
+   * falha do UPDATE sem abortar a tx (via .catch no Promise). */
+  const cookieStore = await cookies();
+  const refSlug = cookieStore.get('fanverse_ref')?.value ?? null;
+  const signupLinkId = await resolveSlugForSignup(refSlug);
+
   const { user, isNewUser } = await db.transaction(async (tx) => {
     // Filtra soft-deleted: usuário que pediu exclusão LGPD não
     // recebe magic link mesmo digitando o mesmo email. Se quiser
@@ -135,6 +143,28 @@ export async function POST(req: Request) {
     });
     return { user: u, isNewUser: isNew };
   });
+
+  /* Atribuição de aquisição (best-effort, FORA da transaction
+   * principal): se o user é NOVO E temos um link resolvido,
+   * grava signupLinkId em UPDATE separado. Fica fora porque
+   * em Postgres, qualquer erro dentro de uma tx aborta a tx
+   * inteira (mesmo com try/catch JS em volta) — não queremos
+   * que uma falha no tracking de aquisição (ex: regressão de
+   * migration) derrube o signup do usuário. */
+  if (isNewUser && signupLinkId) {
+    try {
+      await db
+        .update(users)
+        .set({ signupLinkId })
+        .where(eq(users.id, user.id));
+    } catch (err) {
+      logger.warn('auth.request.signup-link-update-failed', {
+        userId: user.id,
+        signupLinkId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
 
   /**
    * Toda vez que um usuário loga (não só novos cadastros),
