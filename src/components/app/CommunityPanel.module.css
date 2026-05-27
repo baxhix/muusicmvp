@@ -1050,72 +1050,37 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(180deg,
-    rgba(168, 85, 247, 0.85) 0%,
-    rgba(168, 85, 247, 0.7) 100%);
+  /* Per product feedback "os botões flutuantes não devem ter borda
+   * e o gradiente é no preenchimento", o gradient lilás→rosa→lilás
+   * agora é o background do próprio FAB em vez de viver no stroke
+   * via ::after + mask-composite. Resultado: silhueta limpa sem
+   * ring, gradient mais presente. */
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(236, 72, 153, 1) 50%,
+    rgba(168, 85, 247, 0.95) 100%
+  );
   border: none;
   color: #ffffff;
   cursor: pointer;
-  /* Shadow split into two casts: a tight DARK drop for depth
-   * on low-end Android displays (which render the previous
-   * lilac glow as a light fuzzy halo) + a much smaller lilac
-   * brand tint at lower alpha for the iOS-style soft glow.
-   * Removed the `inset rgba(255,255,255,0.06)` highlight —
-   * it was reading as a gray ring on Samsung. */
   box-shadow:
     0 8px 18px -6px rgba(0, 0, 0, 0.65),
-    0 4px 12px -4px rgba(168, 85, 247, 0.35);
-  transition: background 0.14s ease, transform 0.14s ease,
+    0 4px 12px -4px rgba(236, 72, 153, 0.4);
+  transition: filter 0.14s ease, transform 0.14s ease,
               box-shadow 0.14s ease;
   z-index: 10;
-  /* isolation:isolate cria stacking context pro pseudo
-   * `::after` (gradient stroke) ficar acima do bg lilás. */
-  isolation: isolate;
-}
-/* Gradient stroke lilás→rosa→lilás (mesmo da BottomNav)
- * per product feedback "Nos botões de + adicione o gradient
- * que tem no stroke da bottombar". mask-composite:exclude
- * limita o gradient à borda do círculo. */
-.fab::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  border: 1.5px solid transparent;
-  background-image: linear-gradient(
-    90deg,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(236, 72, 153, 0.75) 50%,
-    rgba(168, 85, 247, 0.55) 100%
-  );
-  background-origin: border-box;
-  background-clip: border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
 }
 .fab svg {
   width: 24px;
   height: 24px;
 }
 .fab:hover {
-  background: linear-gradient(180deg,
-    rgba(168, 85, 247, 0.95) 0%,
-    rgba(168, 85, 247, 0.82) 100%);
+  filter: brightness(1.1);
   transform: translateY(-2px);
-  /* Same dual-cast strategy as the resting state — dark drop
-   * leads the depth cue, lilac glow plays a quieter
-   * supporting role. Inset white highlight dropped to keep
-   * the silhouette clean on Samsung. */
   box-shadow:
     0 12px 24px -6px rgba(0, 0, 0, 0.7),
-    0 6px 16px -4px rgba(168, 85, 247, 0.45);
+    0 6px 16px -4px rgba(236, 72, 153, 0.5);
 }
 .fab:active {
   transform: translateY(0) scale(0.96);

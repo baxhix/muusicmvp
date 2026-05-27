@@ -44,9 +44,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
+  /* Owner-only: somente quem CRIOU o grupo pode renomear ou
+   * trocar imagem per product feedback "Somente pessoas que
+   * criaram o grupo podem editar o nome, subir imagem...".
+   * Antes admins também podiam — removido. Quando voltarmos
+   * a expor admins na UI, adicionar OR `role === 'admin'`. */
   const role = await getUserRole(id, user.id);
-  if (!role) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
-  if (role === 'member') {
+  if (role !== 'owner') {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

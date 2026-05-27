@@ -121,6 +121,11 @@ const NAV: NavEntry[] = [
       { kind: 'leaf', href: '/comunidades',   label: 'Comunidades' },
       { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
       { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
+      /* "Chat" — gestão de features do universo de chat
+       * (sistema de mensagens, grupos, conversas). Hoje só uma
+       * lista de toggles mockados; futuramente vira o painel de
+       * controle real das policies do Chat. */
+      { kind: 'leaf', href: '/chat',          label: 'Chat' },
       { kind: 'leaf', href: '/emails',        label: 'E-mails' },
       { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
       { kind: 'leaf', href: '/live',          label: 'Lives',   disabled: true },

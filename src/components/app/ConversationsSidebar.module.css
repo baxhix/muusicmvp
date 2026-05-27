@@ -121,48 +121,28 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(180deg,
-    rgba(168, 85, 247, 0.85) 0%,
-    rgba(168, 85, 247, 0.7) 100%);
+  /* Gradient horizontal lilás → rosa → lilás (mesmo da BottomNav)
+   * AGORA no preenchimento per product feedback "os botões
+   * flutuantes não devem ter borda e o gradiente é no
+   * preenchimento". Antes o gradient ficava num ::after com
+   * mask-composite:exclude (só na borda) em cima de um bg lilás
+   * sólido — agora o fundo lilás-sólido sumiu e o gradient é o
+   * background do próprio elemento. */
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(236, 72, 153, 1) 50%,
+    rgba(168, 85, 247, 0.95) 100%
+  );
   border: none;
   color: #ffffff;
   cursor: pointer;
   box-shadow:
     0 8px 18px -6px rgba(0, 0, 0, 0.65),
-    0 4px 12px -4px rgba(168, 85, 247, 0.35);
-  transition: background 0.14s ease, transform 0.18s cubic-bezier(0.65, 0, 0.35, 1),
+    0 4px 12px -4px rgba(236, 72, 153, 0.4);
+  transition: filter 0.14s ease, transform 0.18s cubic-bezier(0.65, 0, 0.35, 1),
               box-shadow 0.14s ease;
   z-index: 10;
-  /* isolation:isolate cria stacking context isolado pro pseudo
-   * ::after com o gradient stroke ficar em cima do bg lilás. */
-  isolation: isolate;
-}
-/* Gradient stroke (mesmo lilás → rosa → lilás da BottomNav).
- * mask-composite:exclude clipa o gradient só pra borda do
- * círculo, criando o ring colorido em cima do fill lilás. */
-.fab::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  border: 1.5px solid transparent;
-  background-image: linear-gradient(
-    90deg,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(236, 72, 153, 0.75) 50%,
-    rgba(168, 85, 247, 0.55) 100%
-  );
-  background-origin: border-box;
-  background-clip: border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
 }
 .fab svg {
   width: 24px;
@@ -170,13 +150,13 @@
   transition: transform 0.18s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .fab:hover {
-  background: linear-gradient(180deg,
-    rgba(168, 85, 247, 0.95) 0%,
-    rgba(168, 85, 247, 0.82) 100%);
+  /* Sem trocar de gradient — só intensificamos via filter pra
+   * preservar a continuidade visual entre rest e hover. */
+  filter: brightness(1.1);
   transform: translateY(-2px);
   box-shadow:
     0 12px 24px -6px rgba(0, 0, 0, 0.7),
-    0 6px 16px -4px rgba(168, 85, 247, 0.45);
+    0 6px 16px -4px rgba(236, 72, 153, 0.5);
 }
 .fab:active {
   transform: translateY(0) scale(0.96);

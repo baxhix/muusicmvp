@@ -40,7 +40,11 @@ const dmSchema = z.object({
 
 const groupSchema = z.object({
   type: z.literal('group'),
-  name: z.string().min(1).max(80),
+  /* Nome agora é opcional — servidor preenche "Grupo sem nome"
+   * quando vazio/ausente per product feedback. Limite alto
+   * (80) preservado pra que nomes longos quebrem com erro
+   * explícito em vez de silenciar. */
+  name: z.string().max(80).optional().default(''),
   imageUrl: z.string().max(500).optional().nullable(),
   // Need at least one other member; the auth user is auto-added as owner.
   memberIds: z.array(z.string().uuid()).min(1).max(500),

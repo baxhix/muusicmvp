@@ -129,10 +129,17 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  /* Gradient lilás (mesmo do FAB do CommunityPanel). */
-  background: linear-gradient(180deg,
-    rgba(168, 85, 247, 0.85) 0%,
-    rgba(168, 85, 247, 0.7) 100%);
+  /* Gradient lilás→rosa→lilás no preenchimento (sem ::after
+   * com borda colorida). Mesmo padrão dos FABs Nova
+   * Comunidade / Nova conversa per product feedback "os
+   * botões flutuantes não devem ter borda e o gradiente é
+   * no preenchimento". */
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(236, 72, 153, 1) 50%,
+    rgba(168, 85, 247, 0.95) 100%
+  );
   color: #ffffff;
   cursor: pointer;
   display: inline-flex;
@@ -140,53 +147,21 @@
   justify-content: center;
   box-shadow:
     0 6px 14px -4px rgba(0, 0, 0, 0.55),
-    0 3px 10px -3px rgba(168, 85, 247, 0.35);
+    0 3px 10px -3px rgba(236, 72, 153, 0.4);
   transition: transform 200ms ease-out, box-shadow 0.14s ease,
-              background 0.14s ease;
+              filter 0.14s ease;
   margin-top: 6px;
-  /* isolation:isolate cria stacking context isolado pro pseudo
-   * `::after` com o gradient stroke (z-index relativo). */
-  isolation: isolate;
 }
 .viewAllBtn svg {
   width: 18px;
   height: 18px;
 }
-/* Gradient stroke (mesmo do .inner::after da BottomNav) —
- * lilás → rosa → lilás com mask-composite:exclude pra ficar
- * só na borda do círculo. */
-.viewAllBtn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  border: 1.5px solid transparent;
-  background-image: linear-gradient(
-    90deg,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(236, 72, 153, 0.75) 50%,
-    rgba(168, 85, 247, 0.55) 100%
-  );
-  background-origin: border-box;
-  background-clip: border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
 .viewAllBtn:hover {
   transform: scale(1.06);
-  background: linear-gradient(180deg,
-    rgba(168, 85, 247, 0.95) 0%,
-    rgba(168, 85, 247, 0.82) 100%);
+  filter: brightness(1.1);
   box-shadow:
     0 8px 18px -4px rgba(0, 0, 0, 0.6),
-    0 5px 14px -3px rgba(168, 85, 247, 0.5);
+    0 5px 14px -3px rgba(236, 72, 153, 0.55);
 }
 .viewAllBtn:active {
   transform: scale(0.96);

@@ -179,6 +179,21 @@
 @media (prefers-reduced-motion: reduce) {
   .panelFixed { animation: none; }
 }
+
+/* Mobile: aproximar o painel da navbar per product feedback "no
+ * mobile, volte as notificações para próximo da navbar". O 100px
+ * dos modais irmãos (Superfãs, Playlist) é calibrado pra desktop;
+ * no mobile aquele gap deixa a card flutuando longe do trigger
+ * que abriu ela (o slot da navbar). Reduzimos pra 72px — apenas
+ * uma "respiração" sobre a navbar (~12px acima do top dela). */
+@media (max-width: 768px) {
+  .panelFixed {
+    bottom: 72px;
+    /* Ajusta o cap proporcionalmente pra manter ~16px de respiro
+     * no topo da viewport quando a lista cresce. */
+    max-height: calc(100vh - 96px);
+  }
+}
 @keyframes pop {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0);    }

@@ -9,6 +9,14 @@ import {
 } from '../db/schema';
 
 /**
+ * Fallback canônico aplicado quando um grupo é criado sem nome.
+ * Exposto pra que clientes possam exibir a mesma string em estados
+ * otimistas (ex: optimistic insert na lista de conversas antes do
+ * round-trip terminar). NÃO traduzir aqui — é a string de banco.
+ */
+export const DEFAULT_GROUP_NAME = 'Grupo sem nome';
+
+/**
  * Build a new user-created group conversation in a single transaction.
  *
  * Inserts the conversation row (type='group', name, image_url,
@@ -27,10 +35,16 @@ export async function createGroup(args: {
   imageUrl: string | null;
   memberIds: string[];
 }): Promise<{ id: string }> {
-  const trimmedName = args.name.trim();
-  if (!trimmedName) {
-    throw new Error('empty_name');
-  }
+  /* Per product feedback "ao adicionar pessoas sem ter colocado o
+   * nome do grupo, permita que o grupo seja criado com o nome
+   * 'Grupo sem nome' e depois o usuário edita". Vazio NÃO joga
+   * mais — vira o fallback canônico. Comprimento > 80 ainda
+   * estoura porque cabe num UI limit razoável.
+   *
+   * Reutilizamos a constante DEFAULT_GROUP_NAME (exportada) pra
+   * que clientes possam reaproveitar a mesma string ao renderizar
+   * estados otimistas antes do round-trip. */
+  const trimmedName = args.name.trim() || DEFAULT_GROUP_NAME;
   if (trimmedName.length > 80) {
     throw new Error('name_too_long');
   }

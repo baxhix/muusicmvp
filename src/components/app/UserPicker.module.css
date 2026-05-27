@@ -138,6 +138,13 @@
 }
 
 .itemText {
+  /* flex:1 ocupa todo o espaço entre o avatar e o .addBtn,
+   * empurrando o CTA pra extrema direita independente do
+   * tamanho do nome/subtitle. Sem isso, em rows com nome
+   * curto o botão grudava no texto em vez de ancorar na
+   * direita per product feedback "alinhe os botões de
+   * adicionar à direita, sempre". */
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;

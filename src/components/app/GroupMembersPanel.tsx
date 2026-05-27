@@ -110,7 +110,17 @@ export default function GroupMembersPanel({
     return () => document.removeEventListener('keydown', onKey);
   }, [open, busy, onClose]);
 
-  const canManage = myRole === 'owner' || myRole === 'admin';
+  /* Per product feedback "Somente pessoas que criaram o grupo
+   * podem editar o nome, subir imagem e apagar mensagens de
+   * outras pessoas". `admin` continua reservado (rota futura),
+   * mas no UI atual nada além do owner pode editar configuração
+   * do grupo. */
+  const canManage = myRole === 'owner';
+  /* Kick de membros usa um threshold mais frouxo — owner pode
+   * remover qualquer um (exceto ele mesmo, que sai via "Sair do
+   * grupo"). Admins não existem no UI hoje; quando a feature for
+   * exposta, basta voltar pra `canManage || myRole === 'admin'`. */
+  const canKick = myRole === 'owner';
 
   const handleKick = async (userId: string) => {
     if (!conversationId || busy) return;
@@ -353,10 +363,9 @@ export default function GroupMembersPanel({
             const isMe = m.id === currentUserId;
             const img = m.avatarUrl ?? '/avatar-placeholder.svg';
             const canKickThis =
-              canManage &&
+              canKick &&
               !isMe &&
-              m.role !== 'owner' &&
-              !(m.role === 'admin' && myRole !== 'owner');
+              m.role !== 'owner';
             return (
               <div key={m.id} className={styles.row}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

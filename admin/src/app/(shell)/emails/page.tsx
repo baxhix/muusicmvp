@@ -8,22 +8,24 @@ import MetricsTab from '@/components/emails/MetricsTab';
 import LogsTab from '@/components/emails/LogsTab';
 import TemplatesTab from '@/components/emails/TemplatesTab';
 import BrandTab from '@/components/emails/BrandTab';
-import CampaignsTab from '@/components/emails/CampaignsTab';
 import styles from './page.module.css';
 
 /**
  * E-mails — admin page.
  *
- * 5 tabs (ordem mantém Histórico no fim — é audit trail, não algo
+ * 4 tabs (ordem mantém Histórico no fim — é audit trail, não algo
  * que o admin precisa consultar primeiro):
  *   - Métricas:    KPIs e gráfico dos últimos 30 dias (default)
  *   - Templates:   edita subject/HTML dos emails do sistema.
  *                  Preview + teste.
  *   - Marca:       config global aplicada a todos os emails
  *                  (logo, footer, redes).
- *   - Campanhas:   broadcasts por segmento (todos, superfãs,
- *                  inativos, cidade, lista custom).
  *   - Histórico:   audit trail paginado de TODO envio (sent/failed).
+ *
+ * Tab "Campanhas" foi removida per product feedback "no admin,
+ * remova o item Campanhas de Email". O CampaignsTab.tsx fica
+ * dormindo no repo pra fácil reativação caso o produto volte a
+ * pedir broadcasts por segmento, mas não é montado nem importado.
  *
  * Estado das tabs persiste via `?tab=...` query string —
  * deep-link da sidebar pra qualquer aba.
@@ -33,14 +35,12 @@ type EmailsTab =
   | 'metricas'
   | 'templates'
   | 'marca'
-  | 'campanhas'
   | 'historico';
 
 const TABS: { id: EmailsTab; label: string }[] = [
   { id: 'metricas',   label: 'Métricas' },
   { id: 'templates',  label: 'Templates' },
   { id: 'marca',      label: 'Marca' },
-  { id: 'campanhas',  label: 'Campanhas' },
   { id: 'historico',  label: 'Histórico' },
 ];
 
@@ -80,7 +80,6 @@ function EmailsPageInner() {
         {tab === 'historico' && <LogsTab />}
         {tab === 'templates' && <TemplatesTab />}
         {tab === 'marca'     && <BrandTab />}
-        {tab === 'campanhas' && <CampaignsTab />}
       </div>
     </>
   );

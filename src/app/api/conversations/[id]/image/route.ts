@@ -40,8 +40,11 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_id' }, { status: 400 });
   }
 
+  /* Owner-only per product feedback "Somente pessoas que criaram
+   * o grupo podem ... subir imagem ...". Admin não tem UI hoje;
+   * o gate fica em sintonia com PATCH /api/conversations/:id. */
   const role = await getUserRole(id, user.id);
-  if (!role || role === 'member') {
+  if (role !== 'owner') {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

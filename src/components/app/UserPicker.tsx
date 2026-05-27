@@ -136,7 +136,12 @@ export default function UserPicker(props: Props) {
        * userId (segurança contra eventuais conversas duplicadas
        * do MESMO par), ordena por createdAt da última mensagem
        * desc (fallback: createdAt da conversa). Fora a lista
-       * vai mostrar quem TEM histórico, não quem tá online. */
+       * vai mostrar quem TEM histórico, não quem tá online.
+       *
+       * Subtitle vazia em group mode per product feedback "não
+       * mostre a última conversa com o usuário" — o picker é
+       * pra selecionar pessoas, não revisar histórico. O nome
+       * sozinho lê melhor sem o snippet competindo por atenção. */
       const seen = new Set<string>();
       const dmRows = props.recentConversations
         .filter((c) => c.type === 'dm' && !!c.otherUser)
@@ -150,16 +155,11 @@ export default function UserPicker(props: Props) {
         const u = c.otherUser!;
         if (seen.has(u.id)) continue;
         seen.add(u.id);
-        const last = c.lastMessage?.body
-          ? c.lastMessage.body.length > 48
-            ? `${c.lastMessage.body.slice(0, 48)}…`
-            : c.lastMessage.body
-          : 'Conversa iniciada';
         out.push({
           id: u.id,
           name: u.name,
           avatarUrl: u.avatarUrl,
-          subtitle: last,
+          subtitle: '',
         });
       }
       return out;
@@ -180,8 +180,14 @@ export default function UserPicker(props: Props) {
 
   const handleCreate = () => {
     if (!isGroupMode || submitting) return;
+    if (selectedIds.length === 0) return;
+    /* Nome agora é OPCIONAL — quando vazio, o servidor (createGroup)
+     * preenche "Grupo sem nome" e o usuário pode renomear depois
+     * via GroupMembersPanel. Per product feedback "ao adicionar
+     * pessoas sem ter colocado o nome do grupo, permita que o
+     * grupo seja criado com o nome 'Grupo sem nome' e depois o
+     * usuário edita". */
     const trimmed = groupName.trim();
-    if (!trimmed || selectedIds.length === 0) return;
     setSubmitting(true);
     (props as GroupProps).onCreateGroup({
       name: trimmed,
@@ -192,7 +198,9 @@ export default function UserPicker(props: Props) {
   if (!open) return null;
 
   const title = isGroupMode ? 'Novo grupo' : 'Iniciar conversa';
-  const canCreate = isGroupMode && groupName.trim().length > 0 && selectedIds.length > 0;
+  // CTA habilitada com APENAS membros selecionados — o nome é
+  // opcional (default "Grupo sem nome" servidor-side).
+  const canCreate = isGroupMode && selectedIds.length > 0;
 
   return (
     <div className={styles.backdrop} onClick={onClose} role="dialog" aria-label={title}>
@@ -274,7 +282,9 @@ export default function UserPicker(props: Props) {
                   <img src={img} alt={u.name ?? ''} className={styles.itemAvatar} />
                   <div className={styles.itemText}>
                     <span className={styles.itemName}>{u.name ?? 'Anônimo'}</span>
-                    <span className={styles.itemSub}>{u.subtitle}</span>
+                    {u.subtitle && (
+                      <span className={styles.itemSub}>{u.subtitle}</span>
+                    )}
                   </div>
                   {isGroupMode ? (
                     /* CTA explícito "Adicionar" / "Adicionado"
