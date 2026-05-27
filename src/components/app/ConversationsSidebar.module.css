@@ -120,6 +120,34 @@
   transform: scale(1.04);
 }
 
+/* Pill texto "Novo grupo" — substituiu o ícone "two heads" per
+ * product feedback. Tipografia parecida com o título do header
+ * pra ficar visualmente integrado, padding horizontal generoso
+ * pra ler como botão claro. Mesmo hover/transition do .newBtn. */
+.newGroupBtn {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.85);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.newGroupBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F5F5F7;
+}
+
 .closeBtn {
   width: 28px; height: 28px;
   display: inline-flex;

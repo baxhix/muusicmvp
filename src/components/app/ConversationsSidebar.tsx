@@ -94,20 +94,19 @@ export default function ConversationsSidebar({
     >
       <header className={styles.header}>
         <h2 className={styles.title}>Chat</h2>
+        {/* Era um ícone "two heads" (criar grupo) ao lado do título.
+         *  Per product feedback "substitua o ícone de Criar grupo
+         *  por um botão Novo grupo", virou um pill texto. Usa o
+         *  estilo dedicado .newGroupBtn (pill mais largo que o
+         *  .newBtn quadrado do "+", ver ConversationsSidebar.module.css). */}
         <button
           type="button"
-          className={styles.newBtn}
+          className={styles.newGroupBtn}
           onClick={onNewGroup}
           aria-label="Novo grupo"
           title="Novo grupo"
         >
-          {/* Group icon — two stacked heads, signals "more than one". */}
-          <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="6.5" cy="6.5" r="2.5" />
-            <path d="M2 15c0-2.2 2-4 4.5-4S11 12.8 11 15" />
-            <circle cx="13" cy="5.5" r="2" />
-            <path d="M12 14c0-1.7 1.6-3 3.5-3s.5 0 .5 0" />
-          </svg>
+          Novo grupo
         </button>
         <button
           type="button"

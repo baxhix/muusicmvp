@@ -328,14 +328,153 @@ const ENDPOINTS: Endpoint[] = [
     description: 'multipart/form-data, campo `file`. Aceita MP4/WebM/MOV/OGV até 100MB.',
   },
   {
-    method: 'GET', path: '/api/admin/users', area: 'admin', status: 'planned', auth: 'admin',
+    method: 'GET', path: '/api/admin/users', area: 'admin', status: 'stable', auth: 'admin',
     summary: 'Lista paginada de usuários (admin).',
-    description: 'Endpoint planejado — hoje a tela /admin/users consome mock client-side.',
+    description: 'Aceita ?search, ?limit, ?offset. Retorna users + count total.',
   },
   {
-    method: 'GET', path: '/api/admin/users/:id/activities', area: 'admin', status: 'planned', auth: 'admin',
+    method: 'GET', path: '/api/admin/users/:id', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Detalhe completo de um usuário.',
+    description: 'Inclui birth_date, age, fanpoints, lastSeenAt + relacionamentos.',
+  },
+  {
+    method: 'GET', path: '/api/admin/users/:id/activities', area: 'admin', status: 'stable', auth: 'admin',
     summary: 'Log de atividades do usuário (compliance).',
-    description: 'Endpoint planejado para a página /admin/users/[id]/activities. Hoje consome mock determinístico.',
+    description: 'Histórico timeline-style: signups, tracks tocadas, comentários, denúncias.',
+  },
+
+  /* ── admin · notifications (Plataforma → Notificações) ── */
+  {
+    method: 'GET', path: '/api/admin/notifications', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Catálogo de notificações + overrides do banco.',
+    description: 'Retorna KNOWN_NOTIFICATIONS merged com notification_settings (override do admin sobrepõe defaults do catálogo). Cada item traz hasLabelOverride/hasDescriptionOverride/hasTriggerOverride pra UI mostrar "Editado".',
+  },
+  {
+    method: 'POST', path: '/api/admin/notifications', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Upsert override de uma notificação.',
+    description: 'Body { kind, enabled, channels, labelOverride?, descriptionOverride?, triggerOverride? }. null = restaurar default do catálogo; string = override.',
+  },
+  {
+    method: 'DELETE', path: '/api/admin/notifications', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Apagar uma notificação (banco + sino dos usuários).',
+    description: 'Aceita ?kind=X ou body { kind }. Remove override de notification_settings E todas as instâncias (notifications) entregues aos usuários — o sino do app vazia imediatamente. Tipos do catálogo voltam aos defaults.',
+  },
+  {
+    method: 'GET', path: '/api/notifications', area: 'notifications', status: 'stable', auth: 'user',
+    summary: 'Notificações do usuário (sino do app).',
+    description: 'Retorna 50 mais recentes do user logado, ordenadas por createdAt desc. Marcadas como lidas via readAt.',
+  },
+
+  /* ── admin · cron triggers manuais ── */
+  {
+    method: 'POST', path: '/api/admin/cron/trigger', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Dispara um cron job manualmente.',
+    description: 'Body { kind }. Aceita os kinds do CRON_REGISTRY (manager_daily_report, daily_digest, community_interactions). Usado pelo botão "Enviar teste agora" do editor de notificações.',
+  },
+
+  /* ── admin · fanpoints (Superfãs → Fanpoints) ── */
+  {
+    method: 'GET', path: '/api/admin/fanpoints/rules', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Lista regras de pontuação por comportamento.',
+    description: 'Retorna fanpoint_rules merged com o catálogo. Cada regra mapeia um kind (ex: track_play) pra um valor em pontos.',
+  },
+  {
+    method: 'POST', path: '/api/admin/fanpoints/rules', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Upsert pontos por kind de comportamento.',
+    description: 'Body { kind, points }. Invalida cache em memória (recordActivity lê com TTL 60s).',
+  },
+  {
+    method: 'GET', path: '/api/admin/fanpoints/rules/:kind', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Detalhe de uma regra específica.',
+    description: 'Útil quando o admin abre o editor de uma regra individual.',
+  },
+  {
+    method: 'DELETE', path: '/api/admin/fanpoints/rules/:kind', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Restaura regra pro default do catálogo.',
+    description: 'Apaga o override em fanpoint_rules — o kind volta a usar o valor default.',
+  },
+
+  /* ── admin · materiais (Superfãs → Materiais) ── */
+  {
+    method: 'GET', path: '/api/admin/materiais', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Árvore de pastas + arquivos do acervo.',
+    description: 'Lista todas as pastas com files dentro. Cada pasta carrega audience (Top 1/10/50/100/Todos).',
+  },
+  {
+    method: 'POST', path: '/api/admin/materiais/folder', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Criar pasta nova.',
+    description: 'Body { name, audience }. Audience determina quais users veem os arquivos.',
+  },
+  {
+    method: 'POST', path: '/api/admin/materiais/file', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Upload de arquivo pra uma pasta.',
+    description: 'multipart/form-data: campo `file` + `folderId`. Grava em /uploads/materiais/.',
+  },
+  {
+    method: 'DELETE', path: '/api/admin/materiais/:id', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Apagar arquivo ou pasta.',
+    description: 'Cascata: apagar pasta remove os arquivos e o blob do disco.',
+  },
+  {
+    method: 'GET', path: '/api/admin/materiais/:id/download', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Download direto do arquivo.',
+    description: 'Stream do blob com Content-Disposition: attachment.',
+  },
+
+  /* ── admin · emails (Plataforma → E-mails) ── */
+  {
+    method: 'GET', path: '/api/admin/emails/templates', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Catálogo de templates de email.',
+    description: 'Retorna todos os kinds (boas_vindas, magic_link, daily_digest, etc) com label, audience e estado dos overrides.',
+  },
+  {
+    method: 'GET', path: '/api/admin/emails/templates/:kind', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Template individual com HTML + variáveis.',
+    description: 'Inclui subject, htmlOverride, preheaderOverride e a lista de placeholders disponíveis no contexto.',
+  },
+  {
+    method: 'POST', path: '/api/admin/emails/templates/:kind', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Upsert override de um template.',
+    description: 'Body com subject/html/preheader. null = restaurar; string = override.',
+  },
+  {
+    method: 'POST', path: '/api/admin/emails/templates/test', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Enviar email-teste pro admin.',
+    description: 'Body { kind, to }. Renderiza o template com variáveis mock e dispara via provider.',
+  },
+  {
+    method: 'GET', path: '/api/admin/emails/logs', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Histórico de emails enviados.',
+    description: 'Aceita ?status (sent/failed/queued) + ?kind + paginação. Usado em /emails/logs.',
+  },
+
+  /* ── admin · tracks (Plataforma → Músicas) ── */
+  {
+    method: 'GET', path: '/api/admin/tracks', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Listagem de tracks do catálogo.',
+    description: 'Aceita ?search, ?artist, ?album, ?limit, ?offset.',
+  },
+  {
+    method: 'POST', path: '/api/admin/tracks', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Criar track no catálogo.',
+    description: 'Body completo com title, artist, album, isrc, coverUrl, youtubeId, spotifyId.',
+  },
+  {
+    method: 'GET', path: '/api/admin/tracks/:id', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Detalhe de uma track.',
+    description: 'Inclui stats (plays, likes, vezes na playlist).',
+  },
+
+  /* ── admin · site tags (Sistema → Desenvolvedor → Tags) ── */
+  {
+    method: 'GET', path: '/api/admin/site-tags', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Lista de pixels/tracking tags configurados.',
+    description: 'PostHog, Clarity, GA, Meta Pixel, etc. Cada kind tem enabled + key.',
+  },
+  {
+    method: 'POST', path: '/api/admin/site-tags/:kind', area: 'admin', status: 'stable', auth: 'admin',
+    summary: 'Upsert chave de um pixel.',
+    description: 'Body { key, enabled }. Invalida o cache do endpoint público /api/site-tags/public.',
   },
   {
     method: 'GET', path: '/api/site-tags/public', area: 'system', status: 'stable', auth: 'public',
