@@ -40,13 +40,13 @@ function makeRng(seed: number) {
   };
 }
 
-// 120 (era 240) — reduzido pela metade per product feedback
-// "Diminua pela metade a quantidade de pontos (estrelas)
-// estáticas no fundo. Somente as estáticas". Como o canvas é
-// 1 layer estático, o ganho de perf aqui é marginal (o draw
-// custa O(n)), mas a leitura visual fica mais limpa — densidade
-// menor evita que as estrelas compitam com o texto das sections.
-const STAR_COUNT = 120;
+// 84 (era 120) — corte adicional de 30% per product feedback
+// "Remova mais 30% dos pontos estáticos". Histórico:
+// 180 → 240 (bump compensando remoção dos Sparkles per-section)
+// → 120 (metade) → 84 (-30%). Densidade visual deliberadamente
+// rarefeita pra que as estrelas pareçam mais "espalhadas no
+// espaço" em vez de pontilhismo denso.
+const STAR_COUNT = 84;
 
 interface Star {
   // Posições normalizadas 0..1 — multiplicadas pela viewport
