@@ -21,6 +21,12 @@ interface Props {
    *  array `reactions` falhava). */
   reactionsKey: string;
   pickerOpen: boolean;
+  /** Renderiza header (avatar + nome) acima da bubble — mesmo
+   *  padrão do SuperchatPanel. Drives pelo parent: em grupos,
+   *  `showHead = !isMine` (msgs de outros recebem header pra
+   *  identificar quem disse). Em DMs, sempre false (1:1 dispensa
+   *  identidade). */
+  showHead: boolean;
   /** Nome do "outro" lado da DM, pra preencher o sender name
    *  no banner de reply. Em group cair pra "Conversa" — fluxo
    *  de mention/reply é único nesse panel. */
@@ -29,6 +35,17 @@ interface Props {
   onReply: (replyTo: { senderName: string; body: string }) => void;
   onTogglePicker: (messageId: string) => void;
   onToggleReaction: (messageId: string, emoji: string) => void;
+}
+
+/** Resolve o nome de quem mandou — prioridade: senderName hidratado
+ *  pelo JOIN → local-part do email → "Anônimo". */
+function senderLabel(m: ApiMessage): string {
+  if (m.senderName?.trim()) return m.senderName.trim();
+  if (m.senderEmail) return m.senderEmail.split('@')[0];
+  return 'Anônimo';
+}
+function senderAvatar(m: ApiMessage): string {
+  return m.senderAvatarUrl ?? '/avatar-placeholder.svg';
 }
 
 /**
@@ -44,6 +61,7 @@ function MessageBubbleImpl({
   message: m,
   isMine,
   pickerOpen,
+  showHead,
   otherName,
   pickerRef,
   onReply,
@@ -54,6 +72,21 @@ function MessageBubbleImpl({
 
   return (
     <div className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}>
+      {showHead && (
+        /* Header com avatar + nome do sender — só em grupos pra
+         * msgs de outros (mesmo padrão do SuperchatPanel). DMs
+         * dispensam porque já são 1:1 e o alignment esquerda/direita
+         * marca a autoria. */
+        <div className={styles.msgHead}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={senderAvatar(m)}
+            alt=""
+            className={styles.msgAvatar}
+          />
+          <span className={styles.msgSender}>{senderLabel(m)}</span>
+        </div>
+      )}
       <div className={styles.bubbleRow}>
         <div className={styles.bubble}>
           <MessageBody body={m.body} maxPreviewWidth={300} />
@@ -165,8 +198,15 @@ const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
     prev.message.id === next.message.id &&
     prev.message.body === next.message.body &&
     prev.message.createdAt === next.message.createdAt &&
+    /* senderName/avatar mudam quando o backend re-hidrata (rare —
+     * mudança de display name do user). Incluir no comparator
+     * garante que o header re-renderiza nesses casos. */
+    prev.message.senderName === next.message.senderName &&
+    prev.message.senderAvatarUrl === next.message.senderAvatarUrl &&
+    prev.message.senderEmail === next.message.senderEmail &&
     prev.isMine === next.isMine &&
     prev.pickerOpen === next.pickerOpen &&
+    prev.showHead === next.showHead &&
     prev.reactionsKey === next.reactionsKey &&
     prev.otherName === next.otherName &&
     prev.onReply === next.onReply &&

@@ -255,6 +255,33 @@
 .msgIn  { align-self: flex-start; }
 .msgOut { align-self: flex-end; align-items: flex-end; }
 
+/* Header acima das mensagens "in" em GRUPOS — avatar + nome do
+ * sender. Mesma estética do SuperchatPanel (.msgHead), trazida pra
+ * cá pra manter a consistência de identidade. Em DMs o header NÃO
+ * aparece (LiveChatPanel renderiza só quando isGroup && !isMine —
+ * ver MessageBubble.tsx). */
+.msgHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  margin-left: 2px;
+}
+.msgAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+.msgSender {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.85);
+  letter-spacing: -0.005em;
+}
+
 /* Wraps the bubble + the reaction trigger button so the trigger can
    live on either side of the bubble (right for incoming, left for
    outgoing) without breaking the column layout that keeps the

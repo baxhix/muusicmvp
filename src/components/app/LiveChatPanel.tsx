@@ -720,6 +720,11 @@ export default function LiveChatPanel({
               // realmente skipa re-renders quando nada relevante muda.
               const isMine = m.senderId === user?.id;
               const pickerOpen = pickerOpenId === m.id;
+              /* Em grupos, mostra header (avatar + nome do sender)
+               * acima das mensagens de OUTROS users — mesmo padrão
+               * do SuperchatPanel. Em DMs, dispensa porque 1:1 já
+               * tem alignment esquerda/direita identificando autoria. */
+              const showHead = isGroup && !isMine;
               nodes.push(
                 <MessageBubble
                   key={m.id}
@@ -727,6 +732,7 @@ export default function LiveChatPanel({
                   isMine={isMine}
                   reactionsKey={hashReactions(m.reactions)}
                   pickerOpen={pickerOpen}
+                  showHead={showHead}
                   otherName={other?.name}
                   pickerRef={pickerRef}
                   onReply={handleReply}
