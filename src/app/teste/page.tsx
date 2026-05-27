@@ -9,7 +9,6 @@ import SectionFive from '@/components/teste/SectionFive';
 import SectionSix from '@/components/teste/SectionSix';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
-import FanverseCore from '@/components/animations/FanverseCore';
 import GalaxyBackdrop from '@/components/teste/GalaxyBackdrop';
 import styles from './page.module.css';
 
@@ -61,14 +60,12 @@ export default function TestePage() {
       <SectionFour />
       <SectionFive />
       <SectionSix />
-      {/* Orbe FanverseCore — cópia decorativa do orb da marca,
-       *  cravada LOGO ACIMA do footer per product feedback. 390×390
-       *  centralizado horizontalmente. aria-hidden + pointer-events
-       *  none porque é puramente decorativo (canvas WebGL2 sem
-       *  estado interativo). */}
-      <div className={styles.preFooterOrb} aria-hidden="true">
-        <FanverseCore />
-      </div>
+      {/* O orbe FanverseCore 390×390 que vivia aqui foi removido
+       *  per product feedback (e por motivos de performance —
+       *  era a segunda instância de WebGL2 shader rodando em
+       *  paralelo com o orb da navbar). A galáxia + nebulae
+       *  scroll-driven do GalaxyBackdrop seguem como ambient
+       *  visual da página. */}
       <Footer />
     </div>
   );

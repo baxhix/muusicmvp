@@ -1,6 +1,5 @@
 'use client';
 
-import Sparkles from './Sparkles';
 import styles from './SectionFour.module.css';
 
 /**
@@ -11,6 +10,8 @@ import styles from './SectionFour.module.css';
  * fundo limpo onde os 12 avatares da circular constellation
  * (declarados na <AvatarConstellation />) podem aparecer e
  * formar o círculo.
+ *
+ * Sparkles removido — star field global em <GalaxyBackdrop />.
  */
 export default function SectionFour() {
   return (
@@ -18,8 +19,6 @@ export default function SectionFour() {
       id="section-4"
       data-section="4"
       className={styles.section}
-    >
-      <Sparkles count={40} seed={88} />
-    </section>
+    />
   );
 }

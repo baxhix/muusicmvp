@@ -1,6 +1,5 @@
 'use client';
 
-import Sparkles from './Sparkles';
 import styles from './HeroSection.module.css';
 
 /**
@@ -23,7 +22,8 @@ export default function HeroSection() {
       data-section="1"
       className={styles.hero}
     >
-      <Sparkles count={28} seed={9} />
+      {/* Sparkles removido — substituído pelo star field global em
+       *  <GalaxyBackdrop /> (canvas único, mesma densidade visual). */}
 
       {/* Grid 3 rows: headline (row 1) — gap fixo de 180px
        *  (row 2, com a frase de apoio sobreposta no topo) —

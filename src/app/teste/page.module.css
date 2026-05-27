@@ -40,20 +40,20 @@
   z-index: -1;
   pointer-events: none;
   background:
+    /* Nebulae reduzidas 8 → 4 pra cortar paint cost. Mantidas
+     * as 4 dominantes em cada quadrante; as auxiliares (azul
+     * profundo, teal/cyan, âmbar, indigo bottom-right) foram
+     * removidas. O GalaxyBackdrop adiciona mais 4 nebulae
+     * scroll-driven por cima, então densidade visual total se
+     * mantém. */
     /* Nebula violeta dominante (top-left). */
-    radial-gradient(ellipse 55% 45% at 12% 18%,  rgba(91, 0, 209, 0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 12% 18%,  rgba(91, 0, 209, 0.12) 0%, transparent 65%),
     /* Rosa neon (mid-right). */
-    radial-gradient(ellipse 48% 38% at 88% 35%,  rgba(255, 0, 180, 0.09) 0%, transparent 60%),
-    /* Azul profundo (top-right). */
-    radial-gradient(ellipse 40% 32% at 78% 8%,   rgba(0, 80, 200, 0.075) 0%, transparent 65%),
-    /* Teal/cyan (left-mid). */
-    radial-gradient(ellipse 38% 50% at 6% 62%,   rgba(0, 200, 220, 0.06) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 38% at 88% 35%,  rgba(255, 0, 180, 0.10) 0%, transparent 60%),
     /* Magenta queimado (bottom-mid). */
-    radial-gradient(ellipse 60% 42% at 50% 88%,  rgba(190, 0, 140, 0.08) 0%, transparent 65%),
-    /* Âmbar discreto (mid-left). */
-    radial-gradient(ellipse 32% 26% at 22% 78%,  rgba(220, 130, 30, 0.05) 0%, transparent 65%),
-    /* Indigo (bottom-right). */
-    radial-gradient(ellipse 45% 38% at 92% 78%,  rgba(70, 0, 180, 0.085) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 42% at 50% 88%,  rgba(190, 0, 140, 0.10) 0%, transparent 65%),
+    /* Indigo bottom-right (mantém balanço). */
+    radial-gradient(ellipse 45% 38% at 92% 78%,  rgba(70, 0, 180, 0.10) 0%, transparent 65%),
     /* Base preta absoluta — mais escura agora pra dar mais
      * contraste com as estrelas do GalaxyBackdrop (espelha
      * o `space-color: #000005` do Mapbox no /app). */
@@ -84,29 +84,9 @@
   }
 }
 
-/* Orbe FanverseCore — slot 390×390 centralizado, plantado logo
- * acima do Footer. Tamanho dado pelo CSS (canvas WebGL2 auto-
- * redimensiona via ResizeObserver). margin top/bottom dão
- * respiro pra que o orb não cole nem na section anterior nem
- * no header do footer.
- *
- * line-height 0 evita o gap-baseline padrão do <canvas>.
- * pointer-events:none reforça que é decorativo. */
-.preFooterOrb {
-  width: 390px;
-  height: 390px;
-  margin: 96px auto 64px;
-  display: block;
-  line-height: 0;
-  pointer-events: none;
-}
-
-@media (max-width: 720px) {
-  /* Mobile: encolhe pra caber em viewports estreitos sem
-   * sangrar fora da página. Mantém proporção 1:1. */
-  .preFooterOrb {
-    width: min(80vw, 280px);
-    height: min(80vw, 280px);
-    margin: 64px auto 40px;
-  }
-}
+/* .preFooterOrb removido — o orbe 390×390 que vivia entre a
+ * SectionSix e o Footer foi descontinuado. A segunda instância
+ * WebGL2 do FanverseCore custava muito em GPU (10× mais pixels
+ * que o orb da navbar) e era a maior fonte de jank na região
+ * pre-footer. Pra restaurar, re-importar FanverseCore na
+ * page.tsx + renderizar dentro de um wrapper desse tipo. */

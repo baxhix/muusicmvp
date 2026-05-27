@@ -1,6 +1,5 @@
 'use client';
 
-import Sparkles from './Sparkles';
 import SectionCTA from './SectionCTA';
 import styles from './SectionThree.module.css';
 
@@ -21,7 +20,7 @@ export default function SectionThree() {
       data-section="3"
       className={styles.section}
     >
-      <Sparkles count={36} seed={42} />
+      {/* Sparkles removido — star field global em GalaxyBackdrop. */}
 
       <div className={styles.center}>
         <h2 className={styles.headline}>Pertencer</h2>

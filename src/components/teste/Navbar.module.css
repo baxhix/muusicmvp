@@ -14,9 +14,14 @@
    * background do header e aplique o efeito de desfoque do
    * fundo": preto translúcido + backdrop-filter blur, com
    * hairline sutil de separação. -webkit prefix pra Safari. */
-  background: rgba(0, 0, 0, 0.55);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(0, 0, 0, 0.65);
+  /* Backdrop-filter reduzido (era blur(20px) saturate(180%))
+   * por perf — blur custa amostragem em vizinhança e
+   * saturate adiciona um passo de color matrix. Com alpha do
+   * background subindo de 0.55 → 0.65 + blur menor, leitura
+   * visual fica equivalente sem o paint cost do saturate. */
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   /* Sem borda inferior — per product feedback "Remova a borda
    * do header que fixa fixo". O blur do glass + o gradient da
    * página atrás já dão suficiente separação visual. */
