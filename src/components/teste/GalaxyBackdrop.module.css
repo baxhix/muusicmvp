@@ -56,7 +56,7 @@
   will-change: transform, opacity;
 }
 
-/* Star canvas — 180 estrelas pintadas em UM ÚNICO layer.
+/* Star canvas — 84 estrelas pintadas em UM ÚNICO layer.
  * Substitui 180 <span> que existiam aqui antes (cada um com
  * animation própria, ~180 composited layers e ~180 style
  * recalcs por twinkle keyframe). Agora é 1 layer só, paint
@@ -65,7 +65,19 @@
  *
  * O JS no GalaxyBackdrop.tsx redimensiona o canvas via
  * window 'resize' e redesenha as estrelas (que ficam em
- * posições normalizadas 0..1). */
+ * posições normalizadas 0..1).
+ *
+ * `opacity` ligada ao `--galaxy-scroll` per product feedback
+ * "diminua a quantidade de pontos na primeira seção apenas,
+ * depois, nas demais eles podem ir voltando". Como cada
+ * estrela tem alpha individual (0.3..0.95) e o canvas inteiro
+ * é multiplicado pela opacity do CSS, na Section 1 (scroll=0)
+ * a opacity geral cai pra 0.4 — as estrelas mais dim
+ * desaparecem por completo (ficam alpha ~0.12), só as mais
+ * brilhantes leem. Visualmente parece "menos estrelas".
+ * Conforme o user scrolla, opacity sobe de 0.4 até 1.0 em
+ * scroll≈0.30, e todas as estrelas voltam à vida. Browser
+ * auto-clampa opacity em [0..1]. */
 .starCanvas {
   position: absolute;
   inset: 0;
@@ -73,6 +85,8 @@
   height: 100%;
   pointer-events: none;
   display: block;
+  opacity: calc(var(--galaxy-scroll, 0) * 2 + 0.4);
+  will-change: opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
