@@ -69,8 +69,8 @@ export default function Footer() {
             <div className={styles.col}>
               <h5>Legal</h5>
               <ul>
-                <li><a href="#">Privacidade</a></li>
-                <li><a href="#">Termos</a></li>
+                <li><a href="/privacidade">Privacidade</a></li>
+                <li><a href="/termos">Termos</a></li>
                 <li><a href="#">Cookies</a></li>
               </ul>
             </div>

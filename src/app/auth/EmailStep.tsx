@@ -172,8 +172,12 @@ export default function EmailStep() {
         <p className={fields.hint}>
           Continuando, você concorda com nossos
           <br />
-          <a href="#termos">Termos</a> e{' '}
-          <a href="#privacidade">Política de Privacidade</a>.
+          <a href="/termos" target="_blank" rel="noopener noreferrer">Termos</a>{' '}
+          e{' '}
+          <a href="/privacidade" target="_blank" rel="noopener noreferrer">
+            Política de Privacidade
+          </a>
+          .
         </p>
       </div>
     </AuthShell>

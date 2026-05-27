@@ -175,3 +175,27 @@ export async function publishLegalDocument(
     .returning();
   return toRow(row);
 }
+
+/**
+ * Leitor público — usado pelas páginas `/termos` e `/privacidade`.
+ * Retorna a row APENAS se `publishedAt IS NOT NULL`; rascunhos
+ * jamais aparecem no site público.
+ *
+ * Retorna `null` quando o documento ainda não foi publicado — a
+ * página renderiza um placeholder informando "em breve".
+ *
+ * NÃO chama `ensureExists` — pra essa surface, "row inexistente"
+ * é equivalente a "não publicado", e criar uma row vazia em hot
+ * path de read público seria desperdício.
+ */
+export async function getPublishedLegalDocument(
+  kind: LegalDocumentKind,
+): Promise<LegalDocumentRow | null> {
+  const [row] = await db
+    .select()
+    .from(legalDocuments)
+    .where(eq(legalDocuments.kind, kind))
+    .limit(1);
+  if (!row || row.publishedAt === null) return null;
+  return toRow(row);
+}

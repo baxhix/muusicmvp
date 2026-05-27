@@ -1,0 +1,97 @@
+/* Página estática-style pra documentos legais (Termos / Privacidade).
+ * Visual sóbrio, alta legibilidade, tipografia conservadora.
+ * Mesma paleta dark do resto do site mas sem o overhead visual
+ * da landing — é texto longo e formal, não material de marketing. */
+
+.shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(60% 30% at 50% 0%, rgba(168, 85, 247, 0.04) 0%, transparent 60%),
+    linear-gradient(180deg, #0a0a0c 0%, #050507 100%);
+  color: #f5f5f7;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 32px 24px 0;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.6);
+  text-decoration: none;
+  transition: color 0.14s ease;
+}
+.backLink:hover { color: #f5f5f7; }
+.backLink svg {
+  width: 14px;
+  height: 14px;
+}
+
+.main {
+  flex: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 32px 24px 96px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(32px, 5vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #f5f5f7;
+}
+.meta {
+  margin: 0 0 32px;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.5);
+  letter-spacing: -0.005em;
+}
+.meta strong {
+  color: rgba(245, 245, 247, 0.75);
+  font-weight: 600;
+}
+
+/* Body — preserva quebras de linha do textarea do admin via
+ * `white-space: pre-wrap`. Tipografia de leitura: 16px,
+ * line-height 1.7, gap natural entre parágrafos. */
+.body {
+  font-size: 16px;
+  line-height: 1.75;
+  color: rgba(245, 245, 247, 0.85);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  letter-spacing: -0.003em;
+}
+
+/* Empty/placeholder — quando o doc ainda não foi publicado, em
+ * vez de 404 mostramos um placeholder amigável (caso o link já
+ * tenha vazado pra produção antes da primeira publicação). */
+.placeholder {
+  text-align: center;
+  padding: 80px 24px;
+  color: rgba(245, 245, 247, 0.6);
+}
+.placeholder h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+.placeholder p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 380px;
+  margin: 0 auto;
+}

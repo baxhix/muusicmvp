@@ -188,8 +188,14 @@ export default function BirthDatePage() {
             />
             <span>
               Concordo com os{' '}
-              <a href="#termos">Termos de Uso</a> e a{' '}
-              <a href="#privacidade">Política de Privacidade</a>.
+              <a href="/termos" target="_blank" rel="noopener noreferrer">
+                Termos de Uso
+              </a>{' '}
+              e a{' '}
+              <a href="/privacidade" target="_blank" rel="noopener noreferrer">
+                Política de Privacidade
+              </a>
+              .
             </span>
           </label>
 

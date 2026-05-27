@@ -559,26 +559,28 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Legal</span>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
+                    {/* Termos + Privacidade abrem as páginas públicas
+                     *  /termos e /privacidade. O conteúdo vem do admin
+                     *  em /admin/site/lgpd (LGPD CRUD). Antes esses
+                     *  botões eram `disabled` + "Em breve". */}
+                    <Link
+                      href="/termos"
+                      className={styles.drawerItem}
+                      onClick={() => closeAll()}
                     >
                       <DrawerItemIcon name="file" />
                       <span>Termos de Uso</span>
                       <DrawerChevron />
-                    </button>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
+                    </Link>
+                    <Link
+                      href="/privacidade"
+                      className={styles.drawerItem}
+                      onClick={() => closeAll()}
                     >
                       <DrawerItemIcon name="shield" />
                       <span>Política de Privacidade</span>
                       <DrawerChevron />
-                    </button>
+                    </Link>
                     <button
                       className={`${styles.drawerItem} ${styles.drawerItemDelete} ${styles.drawerItemDisabled}`}
                       disabled
