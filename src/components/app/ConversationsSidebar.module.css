@@ -409,12 +409,16 @@
   background: rgba(255, 255, 255, 0.06);
 }
 .kebabItem:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Sem cor vermelha per product feedback "remova a cor vermelha
+ * dos botões envolvendo o chat que ficam nos três pontinhos".
+ * Classe mantida pra compatibilidade — herda o tom neutro do
+ * .kebabItem agora. */
 .kebabItemDanger {
-  color: #fca5a5;
+  color: inherit;
 }
 .kebabItemDanger:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.12);
-  color: #fecaca;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
 }
 
 /* Mobile/touch: kebab visível por padrão (sem hover state). */

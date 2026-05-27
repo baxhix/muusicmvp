@@ -192,10 +192,14 @@
   transition: background 0.12s, color 0.12s;
 }
 .kebabItem:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
-/* Destructive variant for "Bloquear" — same hover bg but red text
-   so the consequence reads before the click. */
-.kebabItemDanger { color: #f87171; }
-.kebabItemDanger:hover { background: rgba(248, 113, 113, 0.12); color: #fca5a5; }
+/* "Destructive variant" mantido como hook de className pra
+ * compatibilidade com call-sites antigos, mas SEM cor vermelha
+ * per product feedback "remova a cor vermelha dos botões
+ * envolvendo o chat que ficam nos três pontinhos". Hoje só
+ * herda o tom neutro do .kebabItem — sem highlight de
+ * "consequência" visual. */
+.kebabItemDanger { color: inherit; }
+.kebabItemDanger:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
 
 /* × close — hidden everywhere now that the back arrow covers
  * both "voltar à lista" and "fechar conversa". Kept in the CSS
@@ -351,8 +355,16 @@
   color: rgba(245, 245, 247, 0.65);
   font-size: 12px;
   letter-spacing: 0.01em;
-  max-width: 80%;
-  text-align: center;
+  /* Sempre UMA linha per product feedback "após um grupo ser
+   * criado, deixe a mensagem 'igor.moryama entrou no grupo' em
+   * apenas uma linha". Se o nome do user for absurdamente longo
+   * truncamos com ellipsis em vez de quebrar a pill em 2 linhas.
+   * max-width 92% (não 100%) preserva margem visual lateral. */
+  max-width: 92%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
 }
 .systemMsgPill strong {
   color: rgba(245, 245, 247, 0.85);

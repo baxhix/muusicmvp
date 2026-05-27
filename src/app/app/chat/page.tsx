@@ -178,6 +178,11 @@ export default function ChatPage() {
             ? activeConversation.name ?? null
             : null
         }
+        currentImageUrl={
+          activeConversation?.type === 'group'
+            ? activeConversation.imageUrl ?? null
+            : null
+        }
         currentUserId={authUser?.id ?? ''}
         myRole={activeConversation?.myRole ?? null}
         onClose={() => setShowGroupMembers(false)}

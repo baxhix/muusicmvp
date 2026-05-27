@@ -17,6 +17,9 @@ interface Props {
   conversationId: string | null;
   /** Current group name — drives the prefilled rename input. */
   currentName: string | null;
+  /** Current group image URL — drives o avatar grande no topo do
+   *  panel (clicável pra trocar imagem quando canManage). */
+  currentImageUrl?: string | null;
   /** Caller's own user id — used to mark "Você" + show the leave button. */
   currentUserId: string;
   /** Caller's role inside this group. Drives kick + admin-only actions. */
@@ -54,6 +57,7 @@ export default function GroupMembersPanel({
   open,
   conversationId,
   currentName,
+  currentImageUrl,
   currentUserId,
   myRole,
   onClose,
@@ -218,7 +222,7 @@ export default function GroupMembersPanel({
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         window.alert(
           data.error === 'forbidden'
-            ? 'Só admins e o dono podem renomear o grupo.'
+            ? 'Apenas o dono do grupo pode renomear.'
             : data.error === 'empty_name'
               ? 'Dê um nome ao grupo.'
               : data.error === 'name_too_long'
@@ -268,44 +272,6 @@ export default function GroupMembersPanel({
     >
       <header className={styles.header}>
         <h2 className={styles.title}>Membros</h2>
-        {canManage && (
-          <>
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={handlePickImage}
-              aria-label="Trocar imagem do grupo"
-              title="Trocar imagem do grupo"
-              disabled={busy}
-            >
-              {/* Camera icon — signals "upload image" without
-                  competing with the + icon below it. */}
-              <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 5h2l1.5-2h5L13 5h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
-                <circle cx="9" cy="10" r="3" />
-              </svg>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={handleImageChange}
-              style={{ display: 'none' }}
-            />
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={onAddMember}
-              aria-label="Adicionar membro"
-              title="Adicionar membro"
-              disabled={busy}
-            >
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M8 3v10M3 8h10" />
-              </svg>
-            </button>
-          </>
-        )}
         <button
           type="button"
           className={styles.closeBtn}
@@ -319,11 +285,43 @@ export default function GroupMembersPanel({
         </button>
       </header>
 
-      {canManage && (
-        <div className={styles.renameRow}>
-          <label className={styles.renameLabel} htmlFor="group-name-input">
-            Nome do grupo
-          </label>
+      {/* "Identity card" do grupo: avatar grande + nome do grupo +
+       * input de rename. Pra owner, o avatar vira clicável (overlay
+       * com ícone de câmera) e dispara o file picker; pra member
+       * normal é só display. Centraliza as 2 ações de gestão de
+       * identidade (imagem + nome) num bloco visualmente coeso. */}
+      <div className={styles.identity}>
+        <button
+          type="button"
+          className={`${styles.avatarBtn} ${canManage ? styles.avatarBtnEditable : ''}`}
+          onClick={canManage ? handlePickImage : undefined}
+          disabled={!canManage || busy}
+          aria-label={canManage ? 'Trocar imagem do grupo' : 'Imagem do grupo'}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={currentImageUrl ?? '/avatar-placeholder.svg'}
+            alt=""
+            className={styles.avatarLarge}
+          />
+          {canManage && (
+            <span className={styles.avatarOverlay} aria-hidden="true">
+              <svg viewBox="0 0 18 18" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 5h2l1.5-2h5L13 5h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+                <circle cx="9" cy="10" r="3" />
+              </svg>
+            </span>
+          )}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleImageChange}
+          style={{ display: 'none' }}
+        />
+
+        {canManage ? (
           <div className={styles.renameField}>
             <input
               id="group-name-input"
@@ -348,6 +346,29 @@ export default function GroupMembersPanel({
               Salvar
             </button>
           </div>
+        ) : (
+          <span className={styles.identityName}>
+            {currentName ?? 'Grupo'}
+          </span>
+        )}
+      </div>
+
+      {/* CTA "Adicionar membros" — botão dedicado ao final do header
+       * pra owner. Substitui o "+" pequeno que ficava no header
+       * antigo: mais visível e claro. */}
+      {canManage && (
+        <div className={styles.addMemberRow}>
+          <button
+            type="button"
+            className={styles.addMemberBtn}
+            onClick={onAddMember}
+            disabled={busy}
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M8 3v10M3 8h10" />
+            </svg>
+            Adicionar membros
+          </button>
         </div>
       )}
 

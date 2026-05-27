@@ -73,24 +73,108 @@
   color: #f5f5f7;
 }
 
-/* ── Rename row ──────────────────────────────────────────── */
-/* Inline form to edit the group's display name. Only mounted for
-   owner/admin — caller guards via `canManage` in the panel. */
-.renameRow {
-  padding: 14px 18px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+/* ── Identity card (avatar + nome) ──────────────────────────
+ * Bloco visual no topo do panel pro owner editar imagem e nome.
+ * Substitui o "ícone câmera + ícone +" microscópicos que ficavam
+ * no header — agora a edição de identidade do grupo é o primeiro
+ * elemento óbvio do panel. */
+.identity {
+  padding: 20px 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
 }
-.renameLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(245, 245, 247, 0.55);
+.avatarBtn {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: default;
+  overflow: hidden;
+  flex-shrink: 0;
 }
+.avatarBtn:disabled { cursor: default; }
+.avatarBtnEditable {
+  cursor: pointer;
+}
+.avatarBtnEditable:disabled { cursor: not-allowed; }
+.avatarLarge {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  transition: filter 0.18s ease, border-color 0.18s ease;
+}
+.avatarBtnEditable:hover:not(:disabled) .avatarLarge {
+  filter: brightness(0.6);
+  border-color: rgba(168, 85, 247, 0.55);
+}
+.avatarOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+.avatarBtnEditable:hover:not(:disabled) .avatarOverlay {
+  opacity: 1;
+}
+.identityName {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Add member CTA ──────────────────────────────────────────
+ * Botão dedicado abaixo do identity card pra owner adicionar
+ * membros. Substitui o "+" pequeno do header — affordance mais
+ * óbvia. */
+.addMemberRow {
+  padding: 12px 18px 4px;
+  flex-shrink: 0;
+}
+.addMemberBtn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+}
+.addMemberBtn:hover:not(:disabled) {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.65);
+  color: #ffffff;
+}
+.addMemberBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
 .renameField {
   display: flex;
   gap: 8px;
@@ -240,13 +324,16 @@
   background: linear-gradient(180deg, transparent 0%, rgba(2, 2, 3, 0.6) 100%);
   flex-shrink: 0;
 }
+/* "Sair do grupo" — sem cor vermelha per product feedback. Mantém
+ * a affordance de pill destacado mas em tom neutro, igual aos
+ * outros botões do chat. */
 .leaveBtn {
   width: 100%;
   padding: 11px 18px;
   border-radius: 10px;
-  background: rgba(248, 113, 113, 0.10);
-  border: 1px solid rgba(248, 113, 113, 0.3);
-  color: #fca5a5;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 247, 0.85);
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -255,9 +342,9 @@
   transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
 .leaveBtn:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: rgba(248, 113, 113, 0.5);
-  color: #fecaca;
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 .leaveBtn:disabled { opacity: 0.45; cursor: not-allowed; }
 
