@@ -178,6 +178,54 @@
   text-align: center;
 }
 
+/* ── Banner "sessão expirada" (?expired=1) ──
+ * Tom âmbar/warning, não-bloqueante, mostrado acima do heading
+ * quando o AuthContext redireciona pra /auth?expired=1 depois
+ * de detectar 401 mid-session numa rota privada. Padding +
+ * border + icon dot fazem ele ler como notificação contextual
+ * sem competir com o título principal. */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #f5d76e;
+  padding: 12px 14px;
+  margin: 0 0 18px;
+  background: rgba(245, 215, 110, 0.08);
+  border: 1px solid rgba(245, 215, 110, 0.22);
+  border-radius: 12px;
+  line-height: 1.4;
+  width: 100%;
+  max-width: 360px;
+}
+.bannerIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(245, 215, 110, 0.18);
+  color: #f5d76e;
+  display: inline-grid;
+  place-items: center;
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.bannerText {
+  flex: 1;
+  text-align: left;
+}
+.bannerText strong {
+  display: block;
+  color: #fff8d8;
+  font-weight: 600;
+  font-size: 13.5px;
+  margin-bottom: 2px;
+}
+
 /* ── Disclaimer / hint pequeno ────────── */
 .hint {
   font-family: var(--font-inter), sans-serif;

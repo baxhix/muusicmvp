@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { track } from '@/lib/analytics';
 import {
@@ -30,7 +30,15 @@ const EMAIL_REGEX = /^[\w.+-]+@[\w-]+\.[\w.-]+$/;
 
 export default function EmailStep() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, requestMagicLink } = useAuth();
+
+  /* Banner "sessão expirada" — quando o AuthContext redireciona
+   * pra /auth?expired=1 depois de detectar 401 mid-session
+   * numa rota privada. Sem isso o user voltava sem entender o
+   * que tinha acontecido (bug reportado: "perdeu meus dados,
+   * foi substituído por outro user sem aviso"). */
+  const sessionExpired = searchParams.get('expired') === '1';
 
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -110,6 +118,20 @@ export default function EmailStep() {
           alignItems: 'center',
         }}
       >
+        {/* Banner contextual quando o user chega aqui via redirect
+         *  de sessão expirada (?expired=1 setado pelo AuthContext).
+         *  Tom âmbar/warning, não-bloqueante — explica o que
+         *  aconteceu sem assustar quem só esquece de logar. */}
+        {sessionExpired && (
+          <div className={fields.banner} role="status" aria-live="polite">
+            <span className={fields.bannerIcon} aria-hidden="true">!</span>
+            <span className={fields.bannerText}>
+              <strong>Sua sessão expirou</strong>
+              Faça login novamente pra continuar de onde parou.
+            </span>
+          </div>
+        )}
+
         <h1 className={fields.heading}>Bem-vindo ao Fanverse</h1>
         <p className={fields.subtitle}>
           Digita seu e-mail pra entrar ou criar sua conta.
