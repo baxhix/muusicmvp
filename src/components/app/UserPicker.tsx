@@ -292,27 +292,26 @@ export default function UserPicker(props: Props) {
                      * product feedback "um cta de adicionar os
                      * usuários no grupo" — affordance clara em
                      * vez de toggle implícito no row click. */
+                    /* Botão compacto: estado idle mostra apenas
+                     * "+" em branco per product feedback "no botão
+                     * de adicionar, deixe apenas o caracter + na
+                     * cor branca". Estado selecionado mantém o
+                     * "✓" + cor verde pra dar feedback claro de
+                     * "adicionado" sem precisar de label. */
                     <button
                       type="button"
                       className={`${styles.addBtn} ${isSelected ? styles.addBtnOn : ''}`}
                       onClick={() => toggleSelect(u.id)}
                       disabled={submitting}
                       aria-pressed={isSelected}
+                      aria-label={isSelected ? 'Remover do grupo' : 'Adicionar ao grupo'}
                     >
                       {isSelected ? (
-                        <>
-                          <svg width="12" height="12" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-                            <path d="M2 5l2 2 4-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          Adicionado
-                        </>
+                        <svg width="14" height="14" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                          <path d="M2 5l2 2 4-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                       ) : (
-                        <>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                          </svg>
-                          Adicionar
-                        </>
+                        <span aria-hidden="true" className={styles.addBtnPlus}>+</span>
                       )}
                     </button>
                   ) : (

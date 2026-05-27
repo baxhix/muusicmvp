@@ -218,104 +218,44 @@ function Shell({ children }: { children: React.ReactNode }) {
         {showMobileRouteHeader && <MobileRouteHeader />}
 
         <div className={styles.mapLayer}>
-          {/* Right-rail cluster — content diverges by viewport.
+          {/* Right-rail cluster MOBILE-ONLY — abriga só o atalho
+           * de "Conversas" (Send/paper-airplane) com o badge de
+           * unreads. No desktop o cluster foi retirado per
+           * product feedback "remova o ícone de mensagem do botão
+           * '+' na lista lateral de chat" + "remova também o
+           * ícone de Play": ambos os botões desktop (Send/Chat e
+           * Play/Playlist) saíram, e o acesso ao chat fica via
+           * LiveChatStack ("+" abaixo dos avatares) e ao
+           * Playlist via NowPlaying mini-bar.
            *
-           * Desktop: Chat + Playlist. Notificações + Superfãs got
-           *   promoted out of here into the BottomNav per product
-           *   feedback ("Mapa, Feed, Superfã, Comunidade e
-           *   Notificações"), so the cluster keeps only the
-           *   surfaces still without a navbar slot.
-           *
-           * Mobile: only the Chat / Send icon stays. The
-           *   Notificações button was removed from this cluster
-           *   per product feedback; notifications surface through
-           *   the BottomNav's red unread badge on the chat slot
-           *   instead.
-           *
-           * Feed-open behaviour diverges by viewport per the
-           * latest product feedback "No desktop, quando eu
-           * estiver com o feed ativo, mostre os ícones de Chat
-           * e playlist abaixo dos avatares":
-           *   - Mobile + feedOpen → HIDE (the feed takes the
-           *     whole viewport, so reaching chat / playlist while
-           *     reading the feed isn't a common path).
-           *   - Desktop + feedOpen → SHOW (the feed is a 398px
-           *     right-side panel that doesn't cover the right
-           *     rail; keeping the cluster visible below the
-           *     LiveChatStack avatars preserves quick access
-           *     while reading the feed). Vertical anchoring
-           *     (`top: 50%; translateY(8px)`) already places the
-           *     cluster directly under the avatars dock — no CSS
-           *     change needed, only the visibility gate. */}
-          {!hideShellChrome && !hideMobileHeader && (!feedOpen || !isMobile) && (
+           * No mobile o atalho de Chat segue aqui porque o
+           * LiveChatStack tem footprint diferente (avatares menores
+           * verticalmente) e o BottomNav já está cheio. */}
+          {!hideShellChrome && !hideMobileHeader && isMobile && !feedOpen && (
             <div className={`${styles.topBar} ${fadeClass(5)}`}>
-              {isMobile ? (
-                <button
-                  type="button"
-                  className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
-                  onClick={() => {
-                    if (pathname.startsWith('/app/chat')) {
-                      router.push('/app');
-                    } else {
-                      router.push('/app/chat');
-                    }
-                  }}
-                  aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
-                  aria-pressed={pathname.startsWith('/app/chat')}
-                  title="Conversas"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
-                  </svg>
-                  {chatUnreadCount > 0 && (
-                    <span className={styles.shortcutBtnBadge} aria-hidden="true">
-                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                    </span>
-                  )}
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
-                    onClick={() => {
-                      // Toggle the chat surface: tap once opens the
-                      // ConversationsSidebar route, tap again returns
-                      // to the map. Mirrors the right-rail "toggle"
-                      // shape of the other entries in this cluster.
-                      if (pathname.startsWith('/app/chat')) {
-                        router.push('/app');
-                      } else {
-                        router.push('/app/chat');
-                      }
-                    }}
-                    aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
-                    aria-pressed={pathname.startsWith('/app/chat')}
-                    title="Conversas"
-                  >
-                    {/* Paper-airplane (Send) glyph — Instagram-DM
-                     *  pattern. Outline-stroke at the same 1.7 weight
-                     *  as the surrounding right-rail icons so the
-                     *  whole cluster reads as one icon set. */}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
-                    </svg>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`${styles.shortcutBtn} ${showPlaylist ? styles.shortcutBtnActive : ''}`}
-                    onClick={() => setShowPlaylist(!showPlaylist)}
-                    aria-label="Músicas"
-                    aria-pressed={showPlaylist}
-                    title="Músicas"
-                  >
-                    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M7 4.5v13l11-6.5z" />
-                    </svg>
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
+                onClick={() => {
+                  if (pathname.startsWith('/app/chat')) {
+                    router.push('/app');
+                  } else {
+                    router.push('/app/chat');
+                  }
+                }}
+                aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
+                aria-pressed={pathname.startsWith('/app/chat')}
+                title="Conversas"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
+                </svg>
+                {chatUnreadCount > 0 && (
+                  <span className={styles.shortcutBtnBadge} aria-hidden="true">
+                    {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                  </span>
+                )}
+              </button>
             </div>
           )}
 
