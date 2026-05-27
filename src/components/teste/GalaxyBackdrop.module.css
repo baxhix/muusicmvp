@@ -47,8 +47,13 @@
       transparent 65%
     );
   transform: translate3d(0, calc(var(--galaxy-scroll, 0) * -70vh), 0);
+  /* Fade-in conforme --galaxy-scroll, idêntico ao .page::before:
+   * opacity 0 até scroll=0.10 (~Section 1), sobe linearmente
+   * até 1 em scroll≈0.43. Mantém a primeira seção em tom
+   * escuro puro e os gradientes aparecem suavemente depois. */
+  opacity: calc((var(--galaxy-scroll, 0) - 0.10) * 3);
   transition: transform 220ms linear;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 /* Star canvas — 180 estrelas pintadas em UM ÚNICO layer.

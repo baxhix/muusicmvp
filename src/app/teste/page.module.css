@@ -64,7 +64,19 @@
    * frame). O pseudo já é `position: fixed`, então o
    * background acompanha naturalmente o viewport sem precisar
    * desse hack. */
-  will-change: transform;
+  will-change: transform, opacity;
+  /* Fade-in das nebulae conforme o usuário scrolla — per
+   * product feedback "a primeira seção mais para um tom
+   * escuro e os gradientes começassem após ela, de forma
+   * suave". `--galaxy-scroll` é 0..1 (progresso do scroll
+   * global). A fórmula `(scroll - 0.10) * 3` mantém opacity
+   * em 0 até scroll=0.10 (~primeira section), depois sobe
+   * linearmente até 1 em scroll≈0.43. Opacity é
+   * auto-clamped 0..1 pelo browser, então não precisa de
+   * min/max. A primeira section fica preta pura (Section 1
+   * cobre ~15% da página total assumindo 6 sections + footer),
+   * e as nebulae aparecem gradualmente depois. */
+  opacity: calc((var(--galaxy-scroll, 0) - 0.10) * 3);
   animation: galaxy-drift 60s ease-in-out infinite alternate;
 }
 

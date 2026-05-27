@@ -58,23 +58,20 @@ interface Star {
 }
 
 export default function GalaxyBackdrop() {
-  const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvasMaybe = canvasRef.current;
-    const rootMaybe = rootRef.current;
-    if (!canvasMaybe || !rootMaybe) return;
+    if (!canvasMaybe) return;
     const ctxMaybe = canvasMaybe.getContext('2d', { alpha: true });
     if (!ctxMaybe) return;
 
     // Re-bind em consts explicitamente tipadas pra preservar o
-    // narrowing dentro das closures (`draw`, `resize`,
-    // `updateScroll`). A CFA do TypeScript não estende
-    // narrowing pra dentro de closures por default.
+    // narrowing dentro das closures (`draw`, `resize`). A CFA
+    // do TypeScript não estende narrowing pra dentro de
+    // closures por default.
     const canvas: HTMLCanvasElement = canvasMaybe;
     const ctx: CanvasRenderingContext2D = ctxMaybe;
-    const root: HTMLDivElement = rootMaybe;
 
     // Gera o star field uma vez com seed determinístico (mesmas
     // posições entre montagens, sem hydration concern porque é
@@ -124,17 +121,20 @@ export default function GalaxyBackdrop() {
     window.addEventListener('resize', resize);
 
     // --galaxy-scroll: progresso 0..1 setado a cada scroll
-    // (rAF-throttled). Setada AGORA no .root do component (era
-    // no documentElement) — limita o style-recalc à subárvore
-    // de GalaxyBackdrop em vez de cascateá-lo pra árvore
-    // inteira do <html>. A .nebulaScroll é filha de .root, então
-    // herda a var via cascade naturalmente.
+    // (rAF-throttled). Setada no documentElement pra que tanto
+    // o `.page::before` quanto o `.nebulaScroll` (em outras
+    // subárvores) consigam consumir via cascade. Antes era só
+    // no .root do GalaxyBackdrop, mas o fade-in dos gradientes
+    // depende de ambos os elementos lerem a mesma var.
     let scrollRaf = 0;
     function updateScroll() {
       const sy = window.scrollY;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const progress = max > 0 ? Math.min(1, Math.max(0, sy / max)) : 0;
-      root.style.setProperty('--galaxy-scroll', progress.toFixed(4));
+      document.documentElement.style.setProperty(
+        '--galaxy-scroll',
+        progress.toFixed(4),
+      );
       scrollRaf = 0;
     }
     function onScroll() {
@@ -147,13 +147,15 @@ export default function GalaxyBackdrop() {
       window.removeEventListener('resize', resize);
       window.removeEventListener('scroll', onScroll);
       if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      document.documentElement.style.removeProperty('--galaxy-scroll');
     };
   }, []);
 
   return (
-    <div ref={rootRef} className={styles.root} aria-hidden="true">
+    <div className={styles.root} aria-hidden="true">
       {/* Camada de nebulae adicional — translada com o scroll
-       *  via --galaxy-scroll (setada no .root acima por JS). */}
+       *  + fade-in conforme --galaxy-scroll (setada no
+       *  documentElement por JS, herdada via cascade). */}
       <div className={styles.nebulaScroll} />
       {/* Star field em canvas — 1 layer composited em vez de
        *  180 spans com animation própria. */}
