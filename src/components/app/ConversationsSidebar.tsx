@@ -55,6 +55,12 @@ export default function ConversationsSidebar({
   onConversationHidden,
 }: Props) {
   const [query, setQuery] = useState('');
+  /* Filtro por tipo de interação. null = mostrar tudo (default);
+   * 'dm' = só conversas 1:1; 'group' = só grupos. Per product
+   * feedback "dois pequenos botões de Conversas e Grupos, para
+   * filtrar esses dois tipos de interação". Clicar o chip ativo
+   * de novo desativa (volta pra null). */
+  const [typeFilter, setTypeFilter] = useState<'dm' | 'group' | null>(null);
   /* Estado do menu expansível do FAB. Per product feedback "Ao
    * clicar no botão flutuante, abre duas opções logo acima:
    * Nova conversa e Novo grupo". */
@@ -133,10 +139,13 @@ export default function ConversationsSidebar({
     }
   };
 
-  // Reset the search field whenever the sidebar opens — stale filter
-  // text from a previous session would confuse the user.
+  // Reset the search field + type filter whenever the sidebar opens —
+  // stale filter state from a previous session would confuse the user.
   useEffect(() => {
-    if (open) setQuery('');
+    if (open) {
+      setQuery('');
+      setTypeFilter(null);
+    }
   }, [open]);
 
   // Quando o sidebar fecha, o menu do FAB também fecha — evita ele
@@ -178,15 +187,22 @@ export default function ConversationsSidebar({
   );
 
   const filtered = useMemo(() => {
+    /* Aplica o filtro de tipo primeiro (Conversas vs Grupos) — fica
+     * mais barato derivar a base reduzida antes da text search. */
+    const base = typeFilter
+      ? dms.filter((c) =>
+          typeFilter === 'group' ? c.type === 'group' : c.type === 'dm',
+        )
+      : dms;
     const q = query.trim().toLowerCase();
-    if (!q) return dms;
-    return dms.filter((c) => {
+    if (!q) return base;
+    return base.filter((c) => {
       const name = (
         c.type === 'group' ? c.name ?? '' : c.otherUser?.name ?? ''
       ).toLowerCase();
       return name.includes(q);
     });
-  }, [dms, query]);
+  }, [dms, query, typeFilter]);
 
   /* Subview inline do UserPicker. Quando `createView` está setado,
    * o painel hospeda o picker no lugar da lista de conversas —
@@ -269,12 +285,37 @@ export default function ConversationsSidebar({
         />
       </div>
 
+      {/* Filtros por tipo — dois chips pequenos. Click no chip ativo
+       * de novo limpa o filtro (volta pro estado "todos"). */}
+      <div className={styles.filterRow} role="group" aria-label="Filtrar por tipo">
+        <button
+          type="button"
+          className={`${styles.filterChip} ${typeFilter === 'dm' ? styles.filterChipActive : ''}`}
+          onClick={() => setTypeFilter((cur) => (cur === 'dm' ? null : 'dm'))}
+          aria-pressed={typeFilter === 'dm'}
+        >
+          Conversas
+        </button>
+        <button
+          type="button"
+          className={`${styles.filterChip} ${typeFilter === 'group' ? styles.filterChipActive : ''}`}
+          onClick={() => setTypeFilter((cur) => (cur === 'group' ? null : 'group'))}
+          aria-pressed={typeFilter === 'group'}
+        >
+          Grupos
+        </button>
+      </div>
+
       <div className={styles.list}>
         {filtered.length === 0 ? (
           <div className={styles.empty}>
             {query
               ? `Nenhuma conversa para "${query}".`
-              : 'Você ainda não tem conversas. Toque em + para começar.'}
+              : typeFilter === 'group'
+                ? 'Você ainda não está em nenhum grupo.'
+                : typeFilter === 'dm'
+                  ? 'Você ainda não tem conversas individuais.'
+                  : 'Você ainda não tem conversas. Toque em + para começar.'}
           </div>
         ) : (
           filtered.map((c) => {
