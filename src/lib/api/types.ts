@@ -52,6 +52,13 @@ export interface ApiConversationSummary {
   createdBy?: string | null;
   /** Requesting user's role inside this conversation. */
   myRole?: 'owner' | 'admin' | 'member';
+  /**
+   * Quando setado (ISO string), o user atual SAIU desse grupo
+   * (ou foi kickado). Pode continuar lendo o histórico em modo
+   * read-only, mas o composer fica desabilitado e um banner
+   * "Você saiu do grupo e não pode mais enviar mensagens" aparece.
+   */
+  myLeftAt?: string | null;
   /** Total participant count — drives the "X membros" line in the dock + panel header. */
   memberCount?: number;
   createdAt: string;

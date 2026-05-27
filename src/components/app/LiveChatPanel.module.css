@@ -576,6 +576,28 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
 }
+
+/* Read-only banner — usuário SAIU do grupo. Substitui o composer:
+ * o user pode ler o histórico, mas não posta. Mensagem em tom
+ * neutro pra não soar punitivo (é uma decisão do user, geralmente). */
+.leftBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.25) 100%);
+  color: rgba(245, 245, 247, 0.65);
+  font-size: 13px;
+  letter-spacing: -0.005em;
+  text-align: center;
+  flex-shrink: 0;
+}
+.leftBanner svg {
+  color: rgba(245, 245, 247, 0.45);
+  flex-shrink: 0;
+}
 .field {
   flex: 1;
   padding: 10px 14px;

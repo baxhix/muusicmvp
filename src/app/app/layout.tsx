@@ -21,6 +21,7 @@ import AnaCheckInPanel from '@/components/app/AnaCheckInPanel';
 import AnaFlightPanel from '@/components/app/AnaFlightPanel';
 import SameTrackToast from '@/components/app/SameTrackToast';
 import PointsToast from '@/components/app/PointsToast';
+import AppToast from '@/components/app/AppToast';
 import HeartsCascade from '@/components/app/HeartsCascade';
 import WaveReceiveOverlay from '@/components/app/WaveReceiveOverlay';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
@@ -509,6 +510,7 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  on. */}
       <SameTrackToast />
       <PointsToast />
+      <AppToast />
       <MilestoneNotification />
       <AchievementCelebration />
       <SocialAchievementToast />

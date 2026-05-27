@@ -8,6 +8,15 @@ import {
   users,
   type Message,
 } from '../db/schema';
+
+/**
+ * Conjunto de `kind`s que representam eventos de sistema (criação do
+ * grupo, entrada de membro, etc.). Mensagens com qualquer destes kinds
+ * NÃO podem ser apagadas — fazem parte do histórico imutável do
+ * grupo. `kind='deleted'` também entra aqui pra deixar a delete
+ * idempotente (tentar deletar uma mensagem já apagada vira no-op
+ * silencioso em vez de erro). */
+const NON_DELETABLE_KINDS = new Set(['system_created', 'system_join', 'deleted']);
 import { isNotificationEnabled } from '../notifications/settings';
 import {
   sendNewDmEmail,
@@ -188,6 +197,65 @@ export async function sendMessage(
     conversationType: (txResult.conv?.type ?? 'dm') as 'dm' | 'group',
     mentionedUserIds: txResult.validMentions,
   };
+}
+
+/**
+ * Soft-delete de uma mensagem. NÃO remove a row do banco — limpa o
+ * body e troca o `kind` pra 'deleted' pra que o frontend renderize
+ * uma pílula cinza "Mensagem apagada" no lugar da bolha.
+ *
+ * Regras de permissão:
+ *   - O actor TEM que ser participante da conversa.
+ *   - System kinds ('system_created' / 'system_join') NÃO podem ser
+ *     apagados — fazem parte do histórico imutável do grupo.
+ *   - Em DM: cada participante só pode apagar a PRÓPRIA mensagem.
+ *   - Em GROUP:
+ *       - Owner pode apagar QUALQUER mensagem (de qualquer membro).
+ *       - Membros / admins só podem apagar a PRÓPRIA mensagem.
+ *
+ * Throws com `Error('not_found' | 'forbidden' | 'not_deletable')`
+ * pra que a route HTTP mapeie pra 404 / 403 / 400.
+ */
+export async function deleteMessage(
+  messageId: string,
+  actorUserId: string,
+): Promise<void> {
+  const [row] = await db
+    .select({
+      messageId: messages.id,
+      conversationId: messages.conversationId,
+      senderId: messages.senderId,
+      kind: messages.kind,
+      convType: conversations.type,
+      convCreatedBy: conversations.createdBy,
+      actorRole: conversationParticipants.role,
+    })
+    .from(messages)
+    .innerJoin(conversations, eq(conversations.id, messages.conversationId))
+    .leftJoin(
+      conversationParticipants,
+      and(
+        eq(conversationParticipants.conversationId, messages.conversationId),
+        eq(conversationParticipants.userId, actorUserId),
+      ),
+    )
+    .where(eq(messages.id, messageId))
+    .limit(1);
+
+  if (!row) throw new Error('not_found');
+  if (row.actorRole === null) throw new Error('forbidden');
+  if (NON_DELETABLE_KINDS.has(row.kind)) throw new Error('not_deletable');
+
+  const isOwn = row.senderId === actorUserId;
+  const isGroupOwner =
+    row.convType === 'group' && row.convCreatedBy === actorUserId;
+
+  if (!isOwn && !isGroupOwner) throw new Error('forbidden');
+
+  await db
+    .update(messages)
+    .set({ body: '', kind: 'deleted' })
+    .where(eq(messages.id, messageId));
 }
 
 /**

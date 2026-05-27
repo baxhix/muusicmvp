@@ -155,27 +155,74 @@ export async function updateGroup(
     .where(eq(conversations.id, conversationId));
 }
 
-/** Add a single user to a group as a 'member'. Idempotent via the
- *  composite PK on conversation_participants — re-adding a member
- *  is a no-op.
+/** Add a single user to a group as a 'member'. Lida com 3 estados:
  *
- *  When `actorId` is provided AND the row was actually inserted
- *  (returning rowcount > 0), also writes a 'group_added' notification
- *  for the new user. The actor lookup powers the "X te adicionou ao
- *  grupo Y" message in the notification bell. */
+ *  1. user nunca foi membro    → INSERT (system_join + notif)
+ *  2. user é membro ativo      → no-op (idempotente)
+ *  3. user saiu antes (leftAt) → UPDATE leftAt=NULL (re-entry +
+ *     system_join + notif — re-entrada conta como novo evento
+ *     na timeline pros outros membros).
+ *
+ *  Quando `actorId` é passado E houve um evento real (insert OU
+ *  re-entry), grava notification 'group_added' pro user adicionado. */
 export async function addMember(
   conversationId: string,
   userId: string,
   actorId?: string,
 ): Promise<void> {
-  const inserted = await db
-    .insert(conversationParticipants)
-    .values({ conversationId, userId, role: 'member' })
-    .onConflictDoNothing()
-    .returning({ userId: conversationParticipants.userId });
+  /* Em vez de upsert+setWhere (que não roda confiável em todas as
+   * versões do drizzle), splittamos em SELECT → INSERT/UPDATE.
+   * 3 caminhos:
+   *   - row inexistente   → INSERT novo participant
+   *   - row com leftAt    → UPDATE leftAt = NULL (re-entry)
+   *   - row ativa         → no-op
+   * Em "ativa" retornamos cedo pra evitar system_join duplicado.
+   *
+   * Race-window pequena entre o SELECT e o INSERT é mitigada por
+   * ON CONFLICT DO NOTHING no INSERT — se outra request inseriu
+   * primeiro, esta vira no-op. */
+  const [existing] = await db
+    .select({
+      userId: conversationParticipants.userId,
+      leftAt: conversationParticipants.leftAt,
+    })
+    .from(conversationParticipants)
+    .where(
+      and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId),
+      ),
+    )
+    .limit(1);
 
-  // No system event / notification on no-op re-add.
-  if (inserted.length === 0) return;
+  if (existing && !existing.leftAt) {
+    // Membro ativo de novo (add idempotente) — nada a fazer.
+    return;
+  }
+
+  if (existing && existing.leftAt) {
+    // Re-entry: zera leftAt + atualiza joinedAt pra refletir a
+    // re-entrada como "novo joinedAt" (pode importar pra ordering
+    // futura em "ordem de chegada no grupo").
+    await db
+      .update(conversationParticipants)
+      .set({ leftAt: null, joinedAt: new Date() })
+      .where(
+        and(
+          eq(conversationParticipants.conversationId, conversationId),
+          eq(conversationParticipants.userId, userId),
+        ),
+      );
+  } else {
+    // Inserção normal pra quem nunca foi membro.
+    const inserted = await db
+      .insert(conversationParticipants)
+      .values({ conversationId, userId, role: 'member' })
+      .onConflictDoNothing()
+      .returning({ userId: conversationParticipants.userId });
+    // Race: alguém mais rápido inseriu primeiro. Não emite system event.
+    if (inserted.length === 0) return;
+  }
 
   // Timeline badge: "{userName} entrou no grupo". Visível pra todo
   // mundo na conversa (incluindo o próprio user adicionado, que vai
@@ -208,20 +255,83 @@ export async function addMember(
   });
 }
 
-/** Remove a user from a group. Used for both "kick" (admin removing
- *  another user) and "leave" (user removing themselves). Idempotent. */
+/** "Sair do grupo" ou "kick".
+ *
+ *  Em vez de DELETE do row, marcamos `leftAt = now()`. Mantém o
+ *  user como participant pra que ele AINDA enxergue o histórico
+ *  do grupo em modo read-only (a UI bloqueia o composer), mas a
+ *  rota POST de mensagens recusa porque cheka `leftAt IS NULL`.
+ *  Isso permite a UX pedida: "Você saiu do grupo e não pode mais
+ *  enviar mensagens".
+ *
+ *  Idempotente: chamar de novo num user já saído não regrava
+ *  system_leave nem recadastra leftAt.
+ *
+ *  Em DMs, system events ficariam estranhos ("X saiu do grupo"
+ *  sem grupo) — então pra DMs ainda fazemos hard-delete do row
+ *  (uso real desta função em DMs é zero hoje, mas a guarda fica
+ *  pro futuro). */
 export async function removeMember(
   conversationId: string,
   userId: string,
 ): Promise<void> {
-  await db
-    .delete(conversationParticipants)
+  const [participant] = await db
+    .select({
+      userId: conversationParticipants.userId,
+      leftAt: conversationParticipants.leftAt,
+    })
+    .from(conversationParticipants)
     .where(
       and(
         eq(conversationParticipants.conversationId, conversationId),
         eq(conversationParticipants.userId, userId),
       ),
-    );
+    )
+    .limit(1);
+  if (!participant) return;
+  // Já saiu — nada a fazer (idempotente).
+  if (participant.leftAt) return;
+
+  const [conv] = await db
+    .select({ type: conversations.type })
+    .from(conversations)
+    .where(eq(conversations.id, conversationId))
+    .limit(1);
+
+  await db.transaction(async (tx) => {
+    if (conv?.type === 'group') {
+      // Badge "X saiu do grupo" no histórico do grupo. Frontend
+      // resolve "Você saiu" pro próprio user (compara senderId
+      // com o user logado).
+      await tx.insert(messages).values({
+        conversationId,
+        senderId: userId,
+        body: 'saiu do grupo',
+        kind: 'system_leave',
+      });
+      // Soft-leave: row persiste com leftAt setado. Re-add via
+      // addMember zera leftAt de volta.
+      await tx
+        .update(conversationParticipants)
+        .set({ leftAt: new Date() })
+        .where(
+          and(
+            eq(conversationParticipants.conversationId, conversationId),
+            eq(conversationParticipants.userId, userId),
+          ),
+        );
+    } else {
+      // DM: comportamento legado (hard-delete).
+      await tx
+        .delete(conversationParticipants)
+        .where(
+          and(
+            eq(conversationParticipants.conversationId, conversationId),
+            eq(conversationParticipants.userId, userId),
+          ),
+        );
+    }
+  });
 }
 
 /** Hard-delete a group + cascade-delete its messages/reactions/etc.
@@ -249,8 +359,11 @@ export async function getUserRole(
   return (rows[0]?.role as 'owner' | 'admin' | 'member' | undefined) ?? null;
 }
 
-/** List the participants of a group — name + avatar + role for each.
- *  Used by the "Membros" panel + autocomplete for @mentions. */
+/** List the ATIVOS participants of a group — name + avatar + role
+ *  for each. Filtra quem saiu (`left_at IS NOT NULL`) — eles não
+ *  aparecem mais no roster, mesmo que a row ainda exista pra
+ *  preservar histórico. Usado pela "Membros" panel + autocomplete
+ *  de @mentions (não faz sentido mencionar quem saiu). */
 export async function listMembers(conversationId: string) {
   const rows = await db.execute(sql`
     SELECT
@@ -258,6 +371,7 @@ export async function listMembers(conversationId: string) {
     FROM conversation_participants cp
     JOIN users u ON u.id = cp.user_id
     WHERE cp.conversation_id = ${conversationId}
+      AND cp.left_at IS NULL
     ORDER BY
       CASE cp.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
       u.name NULLS LAST

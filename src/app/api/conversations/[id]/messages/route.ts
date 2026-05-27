@@ -17,12 +17,35 @@ const sendSchema = z.object({
 
 const uuid = z.string().uuid();
 
-async function checkAccess(conversationId: string, userId: string) {
+async function checkAccess(
+  conversationId: string,
+  userId: string,
+  opts: { requireActive?: boolean } = {},
+) {
   if (!uuid.safeParse(conversationId).success) {
     return { error: NextResponse.json({ error: 'invalid_id' }, { status: 400 }) };
   }
-  const inIt = await userIsInConversation(userId, conversationId);
-  if (!inIt) return { error: NextResponse.json({ error: 'forbidden' }, { status: 403 }) };
+  const inIt = await userIsInConversation(userId, conversationId, {
+    requireActive: opts.requireActive,
+  });
+  if (!inIt) {
+    /* Pra POST com requireActive=true, distinguimos "saiu do grupo"
+     * de "nunca foi membro". Front usa esse erro pra mostrar o
+     * banner "Você saiu do grupo e não pode mais enviar mensagens"
+     * em vez de um forbidden genérico. */
+    if (opts.requireActive) {
+      const everInIt = await userIsInConversation(userId, conversationId);
+      if (everInIt) {
+        return {
+          error: NextResponse.json(
+            { error: 'left_conversation' },
+            { status: 403 },
+          ),
+        };
+      }
+    }
+    return { error: NextResponse.json({ error: 'forbidden' }, { status: 403 }) };
+  }
   return { error: null };
 }
 
@@ -69,7 +92,11 @@ export async function POST(
   const user = auth;
 
   const { id } = await ctx.params;
-  const access = await checkAccess(id, user.id);
+  /* POST exige membro ATIVO — usuários que SAÍRAM do grupo
+   * (leftAt != null) recebem 403 com error='left_conversation'
+   * pra que o front renderize o banner read-only. GET continua
+   * permitindo leitura do histórico. */
+  const access = await checkAccess(id, user.id, { requireActive: true });
   if (access.error) return access.error;
 
   let parsed;

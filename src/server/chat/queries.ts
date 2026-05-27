@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { conversationParticipants, messages, users } from '../db/schema';
 import { listReactionsForMessages } from './reactions';
@@ -15,7 +15,7 @@ import { logger } from '@/server/log';
 export async function listConversationsForUser(userId: string) {
   const rows = await db.execute(sql`
     WITH user_convs AS (
-      SELECT conversation_id, last_read_message_id, role
+      SELECT conversation_id, last_read_message_id, role, left_at, hidden_at
       FROM conversation_participants
       WHERE user_id = ${userId}
     ),
@@ -41,6 +41,8 @@ export async function listConversationsForUser(userId: string) {
       c.created_by      AS conversation_created_by,
       c.created_at      AS conversation_created_at,
       uc.role           AS my_role,
+      uc.left_at        AS my_left_at,
+      uc.hidden_at      AS my_hidden_at,
       lm.id             AS last_message_id,
       lm.body           AS last_message_body,
       lm.sender_id      AS last_message_sender_id,
@@ -50,9 +52,12 @@ export async function listConversationsForUser(userId: string) {
       other.avatar_url  AS other_user_avatar,
       -- Cheap count for the dock badge — exact participants list is
       -- fetched on demand from /api/conversations/:id/members.
+      -- Filtra os que SAÍRAM (left_at != NULL): a contagem de
+      -- "X membros" mostra só quem está ativo no grupo agora.
       (
         SELECT COUNT(*)::int FROM conversation_participants cpc
         WHERE cpc.conversation_id = c.id
+          AND cpc.left_at IS NULL
       ) AS member_count,
       (
         -- Mesma exclusão de kind='user' que o last_msg CTE — system
@@ -79,6 +84,13 @@ export async function listConversationsForUser(userId: string) {
       WHERE cp2.conversation_id = c.id AND cp2.user_id <> ${userId}
       LIMIT 1
     ) AS other ON TRUE
+    /* "Apagar conversa pra mim": conversas com hidden_at ficam de
+     * fora — exceto quando a outra parte mandou mensagem NOVA
+     * (created_at > hidden_at), aí a conversa re-aparece com só
+     * essas mensagens novas em destaque. Pra grupos sem mensagem
+     * subsequente, escondido = invisível. */
+    WHERE uc.hidden_at IS NULL
+       OR (lm.created_at IS NOT NULL AND lm.created_at > uc.hidden_at)
     ORDER BY COALESCE(lm.created_at, c.created_at) DESC
   `);
 
@@ -90,6 +102,9 @@ export async function listConversationsForUser(userId: string) {
     createdBy: (r.conversation_created_by as string | null) ?? null,
     createdAt: r.conversation_created_at as Date,
     myRole: r.my_role as 'owner' | 'admin' | 'member',
+    /* Quando setado, o front renderiza o grupo em modo read-only +
+     * banner "Você saiu do grupo e não pode mais enviar mensagens". */
+    myLeftAt: (r.my_left_at as Date | null) ?? null,
     memberCount: (r.member_count as number) ?? 0,
     lastMessage: r.last_message_id
       ? {
@@ -108,6 +123,37 @@ export async function listConversationsForUser(userId: string) {
       : null,
     unreadCount: r.unread_count as number,
   }));
+}
+
+/**
+ * "Apagar conversa pra mim" — soft-hide por participante.
+ *
+ * Seta `hidden_at = now()` na row do `conversation_participants` do
+ * user. listConversationsForUser passa a filtrar conversas com
+ * `hidden_at IS NOT NULL` EXCETO quando uma mensagem nova chegou
+ * depois (created_at > hidden_at) — aí a conversa re-aparece.
+ *
+ * Não afeta a outra parte: ela continua vendo a conversa intacta
+ * com todo o histórico. É operação local do user.
+ *
+ * Retorna `false` se o user não é participante (404 mapping fica
+ * com a route).
+ */
+export async function hideConversationForUser(
+  conversationId: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .update(conversationParticipants)
+    .set({ hiddenAt: new Date() })
+    .where(
+      and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId),
+      ),
+    )
+    .returning({ userId: conversationParticipants.userId });
+  return result.length > 0;
 }
 
 /**
@@ -131,20 +177,32 @@ export async function markConversationRead(
   `);
 }
 
-/** Returns true if the user is a participant of the conversation. */
+/** Returns true if the user is a participant of the conversation.
+ *
+ *  Use `requireActive: true` pra exigir que o user esteja ATIVO
+ *  (leftAt IS NULL) — necessário pra POST /messages, mas não pra
+ *  GET. Usuários que SAÍRAM continuam podendo LER o histórico em
+ *  modo read-only, mas não postam nem reagem. */
 export async function userIsInConversation(
   userId: string,
   conversationId: string,
+  opts: { requireActive?: boolean } = {},
 ): Promise<boolean> {
+  const where = opts.requireActive
+    ? and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId),
+        isNull(conversationParticipants.leftAt),
+      )
+    : and(
+        eq(conversationParticipants.conversationId, conversationId),
+        eq(conversationParticipants.userId, userId),
+      );
+
   const row = await db
     .select({ x: sql`1` })
     .from(conversationParticipants)
-    .where(
-      and(
-        eq(conversationParticipants.conversationId, conversationId),
-        eq(conversationParticipants.userId, userId),
-      ),
-    )
+    .where(where)
     .limit(1);
   return row.length > 0;
 }

@@ -58,6 +58,10 @@ interface Props {
    *  grupo". Parent should open a confirm + call the DELETE
    *  /members/:userId endpoint. */
   onLeaveGroup?: () => void;
+  /** "Apagar conversa pra mim" — disparado pelo kebab, tanto em
+   *  DMs quanto em grupos. Parent chama POST /api/.../hide e
+   *  mostra toast + fecha o painel. */
+  onHideConversation?: () => void;
 }
 
 /** Fallback now-playing pool — picked deterministically by hashing
@@ -137,6 +141,7 @@ export default function LiveChatPanel({
   onReact,
   onOpenMembers,
   onLeaveGroup,
+  onHideConversation,
 }: Props) {
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
@@ -399,6 +404,11 @@ export default function LiveChatPanel({
 
   const isGroup = conversation?.type === 'group';
   const other = conversation?.otherUser;
+  /* Verdadeiro quando o user atual saiu (ou foi kickado) deste
+   * grupo. Drives o read-only banner + esconde o composer +
+   * influencia a renderização do system_leave message
+   * (badge "Você saiu" vs "{X} saiu do grupo"). */
+  const hasLeftGroup = isGroup && !!conversation?.myLeftAt;
   // Display identity is shape-dependent:
   //   DM    → conversation.otherUser.{name,avatar,verified}
   //   Group → conversation.{name,imageUrl} (no verified concept)
@@ -548,17 +558,22 @@ export default function LiveChatPanel({
                     >
                       Ver membros
                     </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onLeaveGroup?.();
-                      }}
-                    >
-                      Sair do grupo
-                    </button>
+                    {/* "Sair do grupo" só aparece pra membros AINDA
+                     * ativos. Quem já saiu cai no banner read-only,
+                     * sem precisar do botão. */}
+                    {!hasLeftGroup && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onLeaveGroup?.();
+                        }}
+                      >
+                        Sair do grupo
+                      </button>
+                    )}
                   </>
                 ) : (
                   <>
@@ -585,6 +600,23 @@ export default function LiveChatPanel({
                       Bloquear usuário
                     </button>
                   </>
+                )}
+                {/* "Apagar conversa pra mim" disponível em AMBOS os
+                 * modos (DM e grupo). Diferente do "Sair do grupo",
+                 * essa ação é local — não envia mensagem nem afeta
+                 * a outra parte. */}
+                {onHideConversation && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onHideConversation();
+                    }}
+                  >
+                    Apagar conversa
+                  </button>
                 )}
               </div>
             )}
@@ -622,22 +654,31 @@ export default function LiveChatPanel({
                 lastDay = k;
               }
 
-              // System events ("X criou o grupo", "Y entrou") render as
-              // a centered grey pill instead of the usual bubble. The
-              // body field carries the human-readable verb in PT-BR
-              // ("entrou no grupo"); we compose it with the sender name
-              // hydrated from the JOIN in listMessages.
+              // System events ("X criou o grupo", "Y entrou", "Z saiu")
+              // render as centered grey pill em vez de bubble normal.
+              // O body field carries o verbo em PT-BR; combinamos com
+              // o senderName hidratado pelo JOIN do listMessages.
+              //
+              // Caso especial: para o próprio user (senderId === user.id)
+              // em kind='system_leave', renderizamos só "Você saiu"
+              // (sem o "saiu do grupo" composto) per product feedback:
+              // "para o próprio usuário logado 'Você saiu'".
               if (m.kind && m.kind !== 'user') {
+                const isMe = m.senderId === user?.id;
                 const who =
-                  m.senderId === user?.id
+                  isMe
                     ? 'Você'
                     : m.senderName ??
                       m.senderEmail?.split('@')[0] ??
                       'Alguém';
+                const verb =
+                  isMe && m.kind === 'system_leave'
+                    ? 'saiu'
+                    : m.body;
                 nodes.push(
                   <div key={m.id} className={styles.systemMsg}>
                     <span className={styles.systemMsgPill}>
-                      <strong>{who}</strong> {m.body}
+                      <strong>{who}</strong> {verb}
                     </span>
                   </div>,
                 );
@@ -783,6 +824,19 @@ export default function LiveChatPanel({
         </div>
       )}
 
+      {hasLeftGroup ? (
+        /* Read-only banner — user saiu do grupo (ou foi kickado).
+         * Pode continuar lendo o histórico, mas o composer desaparece
+         * pra evitar tentativa de envio que renderia 403 no servidor.
+         * Per product feedback: "Você saiu do grupo e não pode mais
+         * enviar mensagens". */
+        <div className={styles.leftBanner}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M7 1v6M7 11v.01M7 13a6 6 0 1 0 0-12 6 6 0 0 0 0 12z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <span>Você saiu do grupo e não pode mais enviar mensagens</span>
+        </div>
+      ) : (
       <div className={styles.inputArea}>
         {/* Mention autocomplete — anchored above this input area.
             Only rendered when the user has an active "@" trigger
@@ -828,6 +882,7 @@ export default function LiveChatPanel({
           </svg>
         </button>
       </div>
+      )}
 
       {/* Report modal — mounted at the panel root so the scrim covers
           everything. `targetUserId` is the OTHER user in this DM. */}

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
+import { showAppToast } from './AppToast';
 import styles from './ConversationsSidebar.module.css';
 
 interface Props {
@@ -18,6 +19,10 @@ interface Props {
   onNewConversation: () => void;
   /** Fired when the user clicks "Novo grupo" — opens UserPicker in group mode. */
   onNewGroup: () => void;
+  /** Disparado depois que o user escolheu "Apagar conversa" no
+   *  kebab e o backend confirmou o hide. Parent deve refresh da
+   *  lista pra remover a row sumida. */
+  onConversationHidden?: (conversationId: string) => void;
 }
 
 /**
@@ -42,12 +47,72 @@ export default function ConversationsSidebar({
   onOpenConversation,
   onNewConversation,
   onNewGroup,
+  onConversationHidden,
 }: Props) {
   const [query, setQuery] = useState('');
   /* Estado do menu expansível do FAB. Per product feedback "Ao
    * clicar no botão flutuante, abre duas opções logo acima:
    * Nova conversa e Novo grupo". */
   const [fabOpen, setFabOpen] = useState(false);
+  /* Kebab por linha. Guardamos o id da conversa cujo menu está
+   * aberto — null significa "todos fechados". Click outside fecha
+   * via listener global; click em outra linha troca pra ela. */
+  const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
+  const [hidingId, setHidingId] = useState<string | null>(null);
+  const kebabMenuRef = useRef<HTMLDivElement>(null);
+
+  // Click fora do menu fecha-o. Listener global registrado só
+  // quando há menu aberto pra não dar overhead constante.
+  useEffect(() => {
+    if (!kebabOpenId) return;
+    const onDoc = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (kebabMenuRef.current && !kebabMenuRef.current.contains(target)) {
+        // Click em outro kebab trigger é detectado por outro
+        // handler na própria row — aqui só fechamos quando o
+        // click foi em algo COMPLETAMENTE fora.
+        setKebabOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [kebabOpenId]);
+
+  const handleHideConversation = async (id: string) => {
+    if (hidingId) return;
+    if (!window.confirm('Apagar essa conversa? Ela some apenas pra você; a outra parte continua vendo tudo.')) {
+      setKebabOpenId(null);
+      return;
+    }
+    setHidingId(id);
+    setKebabOpenId(null);
+    try {
+      const res = await fetch(`/api/conversations/${id}/hide`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        showAppToast({
+          message: 'Não foi possível apagar a conversa. Tente de novo.',
+          tone: 'error',
+        });
+        return;
+      }
+      showAppToast({
+        message: 'Conversa apagada.',
+        tone: 'success',
+      });
+      onConversationHidden?.(id);
+    } catch (err) {
+      console.error('hide conversation failed:', err);
+      showAppToast({
+        message: 'Falha de conexão. Tente de novo.',
+        tone: 'error',
+      });
+    } finally {
+      setHidingId(null);
+    }
+  };
 
   // Reset the search field whenever the sidebar opens — stale filter
   // text from a previous session would confuse the user.
@@ -184,10 +249,16 @@ export default function ConversationsSidebar({
             // user's actual last sentence, not the quoted block.
             const preview = previewRaw ? stripReplyPrefix(previewRaw) : '';
 
+            const isKebabOpen = kebabOpenId === c.id;
             return (
-              <button
+              /* Row é div (não button) pra que o kebab interno
+               * seja um sibling button — evita nested buttons
+               * (inválido HTML). Acessibilidade via role/tabIndex
+               * + keyboard handler em Enter/Space. */
+              <div
                 key={c.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
                 onClick={() => {
                   // Pick the conversation — DO NOT also fire onClose
@@ -204,6 +275,12 @@ export default function ConversationsSidebar({
                   // sidebar's onClose is now reserved strictly for
                   // the explicit close button at the top.
                   onOpenConversation(c.id);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onOpenConversation(c.id);
+                  }
                 }}
               >
                 <span className={styles.avatarWrap}>
@@ -257,7 +334,47 @@ export default function ConversationsSidebar({
                     {c.unreadCount > 9 ? '9+' : c.unreadCount}
                   </span>
                 )}
-              </button>
+
+                {/* Kebab: 3 dots verticais. stopPropagation pra que
+                 * o click NÃO abra a conversa. */}
+                <button
+                  type="button"
+                  className={styles.kebabBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setKebabOpenId((cur) => (cur === c.id ? null : c.id));
+                  }}
+                  aria-label="Mais opções da conversa"
+                  aria-haspopup="menu"
+                  aria-expanded={isKebabOpen}
+                  disabled={hidingId === c.id}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <circle cx="7" cy="3" r="1.3" fill="currentColor" />
+                    <circle cx="7" cy="7" r="1.3" fill="currentColor" />
+                    <circle cx="7" cy="11" r="1.3" fill="currentColor" />
+                  </svg>
+                </button>
+
+                {isKebabOpen && (
+                  <div
+                    ref={kebabMenuRef}
+                    className={styles.kebabMenu}
+                    role="menu"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
+                      role="menuitem"
+                      onClick={() => handleHideConversation(c.id)}
+                      disabled={hidingId === c.id}
+                    >
+                      Apagar conversa
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })
         )}

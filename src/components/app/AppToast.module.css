@@ -1,0 +1,67 @@
+/* AppToast — pílula flutuante de feedback de ações.
+ * Posicionada acima da BottomNav (mobile) / acima da área de
+ * conteúdo (desktop). 3 tones: info / success / error. */
+
+.toast {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(20, 20, 22, 0.95), rgba(8, 8, 10, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  box-shadow:
+    0 18px 40px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+  /* Anim de entrada: sobe + fade. Saída fica com pop simples
+   * porque o componente desmonta no fim do timer (CSS exit
+   * animation precisaria de framer/CSS @scope). */
+  animation: appToastRise 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes appToastRise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.tone_success {
+  border-color: rgba(61, 219, 116, 0.35);
+  color: #c5f5d4;
+}
+.tone_success svg {
+  color: var(--accent, #3ddb74);
+}
+
+.tone_error {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+.tone_error svg {
+  color: #f87171;
+}
+
+.tone_info svg {
+  color: rgba(245, 245, 247, 0.7);
+}
+
+@media (max-width: 768px) {
+  .toast {
+    bottom: 100px;
+  }
+}

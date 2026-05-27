@@ -6,6 +6,7 @@ import ConversationsSidebar from '@/components/app/ConversationsSidebar';
 import LiveChatPanel from '@/components/app/LiveChatPanel';
 import UserPicker from '@/components/app/UserPicker';
 import GroupMembersPanel from '@/components/app/GroupMembersPanel';
+import { showAppToast } from '@/components/app/AppToast';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useAuth } from '@/lib/auth/AuthContext';
 import {
@@ -80,6 +81,13 @@ export default function ChatPage() {
         onOpenConversation={chat.open}
         onNewConversation={() => setShowUserPicker(true)}
         onNewGroup={() => setShowGroupPicker(true)}
+        onConversationHidden={(hiddenId) => {
+          /* Se a conversa apagada estava aberta no detalhe, fecha
+           * o painel — ela vai sumir da lista no próximo refresh
+           * e ficar como zombie no panel seria confuso. */
+          if (chat.activeId === hiddenId) chat.close();
+          void chat.refreshConversations();
+        }}
       />
 
       <LiveChatPanel
@@ -100,12 +108,64 @@ export default function ChatPage() {
               { method: 'DELETE', credentials: 'include' },
             );
             if (!res.ok) {
-              window.alert('Não foi possível sair do grupo.');
+              showAppToast({
+                message: 'Não foi possível sair do grupo.',
+                tone: 'error',
+              });
               return;
             }
+            /* Não fechamos a conversa — o user permanece nela em
+             * modo read-only com o banner do composer per product
+             * feedback. O refresh abaixo atualiza `myLeftAt` na
+             * lista de conversas, fazendo o LiveChatPanel re-render
+             * com o composer desabilitado.
+             *
+             * A system_leave message gravada pelo servidor aparece
+             * automaticamente via socket (broadcast) OU na próxima
+             * abertura da conversa — pra ver imediatamente sem o
+             * round-trip do socket, reabrimos o grupo: close + open
+             * dispara o refetch de messages. */
+            const reopenId = activeConversation.id;
+            await chat.refreshConversations();
             chat.close();
+            // micro-delay pra que o close finalize antes do open
+            // (alguns estados do hook resetam no close).
+            setTimeout(() => chat.open(reopenId), 40);
           } catch (err) {
             console.error('leave group failed:', err);
+            showAppToast({
+              message: 'Falha de conexão. Tente de novo.',
+              tone: 'error',
+            });
+          }
+        }}
+        onHideConversation={async () => {
+          if (!activeConversation) return;
+          if (!window.confirm('Apagar essa conversa? Ela some apenas pra você; a outra parte continua vendo tudo.')) return;
+          try {
+            const res = await fetch(
+              `/api/conversations/${activeConversation.id}/hide`,
+              { method: 'POST', credentials: 'include' },
+            );
+            if (!res.ok) {
+              showAppToast({
+                message: 'Não foi possível apagar a conversa. Tente de novo.',
+                tone: 'error',
+              });
+              return;
+            }
+            showAppToast({
+              message: 'Conversa apagada.',
+              tone: 'success',
+            });
+            chat.close();
+            void chat.refreshConversations();
+          } catch (err) {
+            console.error('hide conversation failed:', err);
+            showAppToast({
+              message: 'Falha de conexão. Tente de novo.',
+              tone: 'error',
+            });
           }
         }}
       />

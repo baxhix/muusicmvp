@@ -731,6 +731,17 @@ export async function adminSoftDeleteComment(args: {
       })
       .where(eq(communityTopicComments.id, row.id));
 
+    /* Drop the comment's reactions on soft-delete. A `restore`
+     * recupera o comment mas NÃO recupera as reactions — quem
+     * tinha curtido antes precisaria curtir de novo (estilo
+     * Slack / iMessage). Sem essa limpeza as reactions ficavam
+     * órfãs no banco (mesmo bug do feed_comments). */
+    if (!restore) {
+      await tx
+        .delete(communityTopicCommentReactions)
+        .where(eq(communityTopicCommentReactions.commentId, row.id));
+    }
+
     // Keep topic.commentCount honest. Restore bumps up, delete
     // bumps down.
     await tx

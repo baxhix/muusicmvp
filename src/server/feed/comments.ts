@@ -501,10 +501,25 @@ export async function deleteComment(args: {
     return false;
   }
 
-  await db
-    .update(feedComments)
-    .set({ deletedAt: new Date(), body: '' })
-    .where(eq(feedComments.id, args.commentId));
+  /* Soft-delete + cleanup das reactions na mesma tx.
+   *
+   * Bug histórico: a FK em feedCommentReactions tem onDelete:'cascade',
+   * mas o cascade SÓ dispara em DELETE de verdade — não em UPDATE de
+   * soft-delete. Resultado prático: usuário comentava, dava like no
+   * próprio comentário, apagava o comentário, e o like permanecia na
+   * tabela (gerando contagem fantasma + pontos inflacionados).
+   *
+   * Cleanup explícito aqui resolve sem precisar virar hard-delete
+   * (que perderia o histórico de quem deletou o quê). */
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(feedCommentReactions)
+      .where(eq(feedCommentReactions.commentId, args.commentId));
+    await tx
+      .update(feedComments)
+      .set({ deletedAt: new Date(), body: '' })
+      .where(eq(feedComments.id, args.commentId));
+  });
 
   return true;
 }

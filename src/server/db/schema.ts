@@ -155,6 +155,16 @@ export const conversationParticipants = pgTable(
       .default('member'),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
     lastReadMessageId: uuid('last_read_message_id'),
+    /* Marcador de "usuário saiu do grupo". Não removemos a row
+     * porque queremos que o user ainda VEJA o histórico (read-only)
+     * com a badge "Você saiu" como última entrada. NULL = ativo,
+     * pode postar. */
+    leftAt: timestamp('left_at', { withTimezone: true }),
+    /* "Apagar conversa pra mim" — esconde a conversa da lista do
+     * user sem afetar a outra parte. Quando uma DM recebe nova
+     * mensagem com created_at > hidden_at, a conversa reaparece
+     * (comportamento estilo WhatsApp). NULL = visível. */
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }),
   },
   (t) => [
     primaryKey({ columns: [t.conversationId, t.userId] }),
