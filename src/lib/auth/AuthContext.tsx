@@ -25,17 +25,51 @@ interface AuthContextValue {
 
 const Ctx = createContext<AuthContextValue | null>(null);
 
+/* Rotas privadas que exigem usuário autenticado. Quando o
+ * /api/auth/me retorna 401 mid-session ESTANDO numa dessas
+ * rotas, o AuthContext força redirect pra /auth?expired=1 em
+ * vez de só zerar o `user` (que fazia a UI ficar num estado
+ * "fantasma" — email vazio, sem foto, 0 fanpoints — em vez de
+ * uma tela clara de logout). */
+const PRIVATE_ROUTE_PREFIXES = ['/app', '/admin'] as const;
+
+function isOnPrivateRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  return PRIVATE_ROUTE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ApiUser | null>(null);
   const [loading, setLoading] = useState(true);
+  /* Marca se a sessão JÁ chegou a estar autenticada nesta page
+   * load. Sem isso, um 401 no PRIMEIRO /api/auth/me (visitante
+   * anônimo em /app, ainda não logado) também redirecionaria,
+   * criando loop pra quem só queria visitar a landing. */
+  const [wasAuthed, setWasAuthed] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       const res = await api.get<{ user: ApiUser }>('/api/auth/me');
       setUser(res.user);
+      setWasAuthed(true);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setUser(null);
+        /* SAFETY NET: se o user JÁ estava autenticado nesta
+         * page load E está numa rota privada, força redirect
+         * pro /auth com flag ?expired=1 (a página de auth pode
+         * exibir uma mensagem "Sua sessão expirou"). Sem isso
+         * o user fica preso numa /app vazia sem entender o que
+         * aconteceu — exatamente o sintoma reportado:
+         * "perdeu meus dados, foi substituído por outro user
+         * sem aviso". */
+        if (wasAuthed && isOnPrivateRoute() && typeof window !== 'undefined') {
+          const expiredUrl = '/auth?expired=1';
+          if (window.location.pathname + window.location.search !== expiredUrl) {
+            window.location.href = expiredUrl;
+          }
+        }
       } else {
         // Network error: keep previous user state, but don't loop.
         console.error('auth refresh failed:', err);
@@ -43,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [wasAuthed]);
 
   useEffect(() => {
     refresh();
