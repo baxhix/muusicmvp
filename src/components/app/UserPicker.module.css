@@ -108,6 +108,10 @@
   color: rgba(245, 245, 247, 0.5);
 }
 
+/* .item virou <div> em vez de <button> — o click moveu pra
+ * componentes filhos (.addBtn no group mode, .singlePickBtn
+ * overlay no single mode). Isso permite ter o CTA "Adicionar"
+ * separado do row click target. */
 .item {
   display: flex;
   width: 100%;
@@ -116,14 +120,13 @@
   padding: 10px 16px;
   background: none;
   border: none;
-  cursor: pointer;
   text-align: left;
   transition: background 0.12s;
+  position: relative;
 }
 .item:hover { background: rgba(255, 255, 255, 0.04); }
 .itemSelected,
-.itemSelected:hover { background: rgba(61, 219, 116, 0.10); }
-.item:disabled { opacity: 0.45; cursor: not-allowed; }
+.itemSelected:hover { background: rgba(168, 85, 247, 0.10); }
 
 .itemAvatar {
   width: 36px;
@@ -188,23 +191,68 @@
 }
 .nameField::placeholder { color: rgba(245, 245, 247, 0.4); }
 
-.checkBox {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.02);
+/* CTA per row "Adicionar" / "Adicionado" — substitui o
+ * checkbox antigo per product feedback "um cta de adicionar
+ * os usuários no grupo". Pill lilás compacto na lateral
+ * direita do row. Estado .addBtnOn vira verde-success pra
+ * indicar membro já dentro do draft do grupo. */
+.addBtn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: transparent;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.10);
+  color: #d8b4fe;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+  white-space: nowrap;
+  transition: background 0.14s ease, color 0.14s ease,
+              border-color 0.14s ease, transform 0.14s ease;
 }
-.checkBoxOn {
-  background: var(--accent, #3ddb74);
-  border-color: var(--accent, #3ddb74);
-  color: #061110;
+.addBtn:hover {
+  background: rgba(168, 85, 247, 0.18);
+  color: #f5f5f7;
+  transform: translateY(-1px);
+}
+.addBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.addBtn.addBtnOn {
+  background: rgba(61, 219, 116, 0.14);
+  border-color: rgba(61, 219, 116, 0.45);
+  color: #6ee7a3;
+}
+.addBtn.addBtnOn:hover {
+  background: rgba(61, 219, 116, 0.22);
+}
+
+/* Single mode: overlay invisível sobre a row inteira pra
+ * receber o click (a row não é mais um <button>). Posicionado
+ * absoluto cobrindo todo o item; sem visual próprio. */
+.singlePickBtn {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.singlePickBtn:disabled {
+  cursor: not-allowed;
+}
+
+/* .checkBox legado — mantido pra qualquer importação externa
+ * que ainda referencie. O JSX da UserPicker não usa mais. */
+.checkBox {
+  display: none;
 }
 
 .footer {

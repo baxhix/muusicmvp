@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api/client';
-import type { ApiOnlineUser, ApiSearchUser } from '@/lib/api/types';
+import type {
+  ApiConversationSummary,
+  ApiOnlineUser,
+  ApiSearchUser,
+} from '@/lib/api/types';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
 import styles from './UserPicker.module.css';
 
@@ -27,12 +31,18 @@ interface SingleProps {
   onClose: () => void;
   mode?: 'single';
   onPick: (userId: string) => void;
+  /** Conversas recentes do usuário — quando passado, em modo
+   *  single elas continuam não sendo usadas (o default fica
+   *  sendo o online list). Em modo group, são a fonte default
+   *  da lista (DM partners ordenados por última mensagem). */
+  recentConversations?: ApiConversationSummary[];
 }
 interface GroupProps {
   open: boolean;
   onClose: () => void;
   mode: 'group';
   onCreateGroup: (args: { name: string; memberIds: string[] }) => void;
+  recentConversations?: ApiConversationSummary[];
 }
 type Props = SingleProps | GroupProps;
 
@@ -97,8 +107,20 @@ export default function UserPicker(props: Props) {
     };
   }, [query]);
 
-  // List shown: search results when query active, otherwise online users.
-  type Item = { id: string; name: string | null; avatarUrl: string | null; subtitle: string };
+  // List shown:
+  //   - Query ativa → results da API search.
+  //   - GROUP mode + sem query → DM partners com conversa
+  //     ABERTA (em recentConversations), ordenados pela última
+  //     mensagem desc. Per product feedback "liste abaixo os
+  //     usuários em ordem de que já tive conversas abertas".
+  //   - SINGLE mode + sem query → usuários online (comportamento
+  //     legado, não-impactado).
+  type Item = {
+    id: string;
+    name: string | null;
+    avatarUrl: string | null;
+    subtitle: string;
+  };
 
   const items: Item[] = useMemo(() => {
     if (searchResults !== null) {
@@ -109,13 +131,46 @@ export default function UserPicker(props: Props) {
         subtitle: u.email,
       }));
     }
+    if (isGroupMode && props.recentConversations) {
+      /* Pega DM partners das conversas recentes, deduplica por
+       * userId (segurança contra eventuais conversas duplicadas
+       * do MESMO par), ordena por createdAt da última mensagem
+       * desc (fallback: createdAt da conversa). Fora a lista
+       * vai mostrar quem TEM histórico, não quem tá online. */
+      const seen = new Set<string>();
+      const dmRows = props.recentConversations
+        .filter((c) => c.type === 'dm' && !!c.otherUser)
+        .sort((a, b) => {
+          const ta = a.lastMessage?.createdAt ?? a.createdAt;
+          const tb = b.lastMessage?.createdAt ?? b.createdAt;
+          return tb.localeCompare(ta);
+        });
+      const out: Item[] = [];
+      for (const c of dmRows) {
+        const u = c.otherUser!;
+        if (seen.has(u.id)) continue;
+        seen.add(u.id);
+        const last = c.lastMessage?.body
+          ? c.lastMessage.body.length > 48
+            ? `${c.lastMessage.body.slice(0, 48)}…`
+            : c.lastMessage.body
+          : 'Conversa iniciada';
+        out.push({
+          id: u.id,
+          name: u.name,
+          avatarUrl: u.avatarUrl,
+          subtitle: last,
+        });
+      }
+      return out;
+    }
     return liveUsers.map((u: ApiOnlineUser) => ({
       id: u.id,
       name: u.name,
       avatarUrl: u.avatarUrl,
       subtitle: [u.city, u.country].filter(Boolean).join(', ') || 'online',
     }));
-  }, [searchResults, liveUsers]);
+  }, [searchResults, liveUsers, isGroupMode, props]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((cur) =>
@@ -202,25 +257,18 @@ export default function UserPicker(props: Props) {
             <div className={styles.empty}>
               {searchResults !== null
                 ? 'Nenhum usuário encontrado'
-                : 'Ninguém online no momento'}
+                : isGroupMode
+                  ? 'Você ainda não tem conversas. Digite pra buscar usuários.'
+                  : 'Ninguém online no momento'}
             </div>
           ) : (
             items.slice(0, 50).map((u) => {
               const img = u.avatarUrl ?? '/avatar-placeholder.svg';
               const isSelected = selectedIds.includes(u.id);
               return (
-                <button
+                <div
                   key={u.id}
                   className={`${styles.item} ${isSelected ? styles.itemSelected : ''}`}
-                  onClick={() => {
-                    if (isGroupMode) {
-                      toggleSelect(u.id);
-                    } else {
-                      (props as SingleProps).onPick(u.id);
-                      onClose();
-                    }
-                  }}
-                  disabled={submitting}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={img} alt={u.name ?? ''} className={styles.itemAvatar} />
@@ -228,19 +276,50 @@ export default function UserPicker(props: Props) {
                     <span className={styles.itemName}>{u.name ?? 'Anônimo'}</span>
                     <span className={styles.itemSub}>{u.subtitle}</span>
                   </div>
-                  {isGroupMode && (
-                    <span
-                      className={`${styles.checkBox} ${isSelected ? styles.checkBoxOn : ''}`}
-                      aria-hidden="true"
+                  {isGroupMode ? (
+                    /* CTA explícito "Adicionar" / "Adicionado"
+                     * substitui o checkbox lateral antigo. Per
+                     * product feedback "um cta de adicionar os
+                     * usuários no grupo" — affordance clara em
+                     * vez de toggle implícito no row click. */
+                    <button
+                      type="button"
+                      className={`${styles.addBtn} ${isSelected ? styles.addBtnOn : ''}`}
+                      onClick={() => toggleSelect(u.id)}
+                      disabled={submitting}
+                      aria-pressed={isSelected}
                     >
-                      {isSelected && (
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M2 5l2 2 4-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      {isSelected ? (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                            <path d="M2 5l2 2 4-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Adicionado
+                        </>
+                      ) : (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                          </svg>
+                          Adicionar
+                        </>
                       )}
-                    </span>
+                    </button>
+                  ) : (
+                    /* Single mode: row inteira é um button (sem
+                     * CTA lateral) — click direto inicia a DM. */
+                    <button
+                      type="button"
+                      className={styles.singlePickBtn}
+                      onClick={() => {
+                        (props as SingleProps).onPick(u.id);
+                        onClose();
+                      }}
+                      disabled={submitting}
+                      aria-label={`Iniciar conversa com ${u.name ?? 'usuário'}`}
+                    />
                   )}
-                </button>
+                </div>
               );
             })
           )}

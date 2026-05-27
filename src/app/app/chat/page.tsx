@@ -143,6 +143,12 @@ export default function ChatPage() {
         open={showGroupPicker}
         mode="group"
         onClose={() => setShowGroupPicker(false)}
+        /* Lista default em group mode = DM partners das
+         * conversas recentes (ordenados por última mensagem
+         * desc) per product feedback "liste os usuários em
+         * ordem de que já tive conversas abertas, não somente
+         * os que estiverem online". */
+        recentConversations={chat.conversations}
         onCreateGroup={async ({ name, memberIds }) => {
           await chat.createGroup({ name, memberIds });
           setShowGroupPicker(false);
