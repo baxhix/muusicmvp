@@ -175,8 +175,13 @@
  * line-height 0 evita gap-baseline em volta do <canvas>. */
 .headerOrb {
   position: absolute;
-  top: 39px;
-  left: 14px;
+  /* Per product feedback "no mobile, deixe o orbe 10px mais
+   * abaixo e 20px mais à direita". Posições anteriores eram
+   * 39/14; agora 49/34 mantém a "presença esquerda" mas dá
+   * mais respiro pro topo do header e separa visualmente do
+   * edge esquerdo do viewport. */
+  top: 49px;
+  left: 34px;
   width: 70px;
   height: 70px;
   display: inline-block;
@@ -187,10 +192,12 @@
 
 @media (max-width: 360px) {
   /* Phones pequenos (<360px): encolhe ainda mais o orb pra que
-   * o logo central tenha respiro maior. 58×58 (70 × 0.83). */
+   * o logo central tenha respiro maior. 58×58 (70 × 0.83).
+   * Mesmo offset relativo do break maior: +10 top / +20 left.
+   * Valores anteriores: 45/8 → 55/28. */
   .headerOrb {
-    top: 45px;
-    left: 8px;
+    top: 55px;
+    left: 28px;
     width: 58px;
     height: 58px;
   }
