@@ -21,6 +21,13 @@ interface Props {
    * surface without going through the route shortcuts.
    */
   onOpenAll?: () => void;
+  /**
+   * Total agregado de mensagens não lidas em TODAS as conversas
+   * do user. Drives o badge vermelho com número branco no botão
+   * "+" — visível tanto desktop quanto mobile. Quando 0 (zero
+   * conversas com unread), o badge não renderiza.
+   */
+  totalUnreadCount?: number;
 }
 
 /** The dock now renders ONLY the 3 most recent conversations per
@@ -44,6 +51,7 @@ export default function LiveChatStack({
   onlineUserIds,
   onOpen,
   onOpenAll,
+  totalUnreadCount = 0,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -173,7 +181,11 @@ export default function LiveChatStack({
             type="button"
             className={styles.viewAllBtn}
             onClick={onOpenAll}
-            aria-label="Nova conversa ou grupo"
+            aria-label={
+              totalUnreadCount > 0
+                ? `Conversas, ${totalUnreadCount} ${totalUnreadCount === 1 ? 'mensagem não lida' : 'mensagens não lidas'}`
+                : 'Nova conversa ou grupo'
+            }
           >
             <svg
               viewBox="0 0 24 24"
@@ -185,6 +197,15 @@ export default function LiveChatStack({
             >
               <path d="M12 5v14M5 12h14" />
             </svg>
+            {/* Badge agregado: soma de unreadCount em TODAS as
+             * conversations. Branco em fundo vermelho, posicionado
+             * no canto superior direito do "+". Visível desktop +
+             * mobile (o "+" agora aparece nos dois). */}
+            {totalUnreadCount > 0 && (
+              <span className={styles.viewAllBadge} aria-hidden="true">
+                {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+              </span>
+            )}
           </button>
         )}
       </div>

@@ -339,6 +339,7 @@ function Shell({ children }: { children: React.ReactNode }) {
               router.push('/app/chat');
             }}
             onOpenAll={() => router.push('/app/chat')}
+            totalUnreadCount={chatUnreadCount}
           />
         </div>
       )}
