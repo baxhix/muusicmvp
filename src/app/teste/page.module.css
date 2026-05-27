@@ -21,19 +21,18 @@
   isolation: isolate;
 }
 
-/* Galaxy backdrop — múltiplas nebulae em radial-gradient
- * espalhadas ao longo do scroll. O pseudo ocupa a viewport
- * via `position: fixed; inset: 0` (cobre fundo conforme rola)
- * + `z-index: -1` (atrás de TODO o conteúdo do .page).
+/* Galaxy backdrop ESTÁTICO — pseudo com 7 nebulae em
+ * radial-gradient + base preta. Camada de fundo que NÃO
+ * responde ao scroll. A animação `galaxy-drift` continua
+ * gerando o ambient breathing (±3% em 60s), enquanto o
+ * `<GalaxyBackdrop />` (componente JSX, em
+ * src/components/teste/GalaxyBackdrop.tsx) adiciona uma
+ * camada ACIMA que se desloca com o scroll + um star field
+ * denso tipo Mapbox.
  *
- * 7 nebulae em posições/cores variadas: violeta, rosa, azul,
- * teal e âmbar. Cada uma com alpha baixa (0.06..0.10) pra
- * somar sem sobrecarregar — leitura final é "fundo preto
- * com hints sutis de gás colorido", evocando galáxia.
- *
- * Animação `galaxy-drift` 60s ease-in-out alternate transla
- * o pseudo de leve (±3%) — sensação de tudo respirando
- * lentamente sem chamar atenção pelo movimento. */
+ * z-index: -1 (atrás de todo o conteúdo). O `.root` do
+ * GalaxyBackdrop também é z:-1 mas paint-order o coloca
+ * ACIMA deste pseudo. */
 .page::before {
   content: '';
   position: fixed;
@@ -55,13 +54,18 @@
     radial-gradient(ellipse 32% 26% at 22% 78%,  rgba(220, 130, 30, 0.05) 0%, transparent 65%),
     /* Indigo (bottom-right). */
     radial-gradient(ellipse 45% 38% at 92% 78%,  rgba(70, 0, 180, 0.085) 0%, transparent 65%),
-    /* Base preta absoluta. */
-    radial-gradient(ellipse 160% 120% at 50% 50%, #050006 0%, #010002 60%, #000000 100%);
+    /* Base preta absoluta — mais escura agora pra dar mais
+     * contraste com as estrelas do GalaxyBackdrop (espelha
+     * o `space-color: #000005` do Mapbox no /app). */
+    radial-gradient(ellipse 160% 120% at 50% 50%, #020006 0%, #000002 60%, #000000 100%);
   background-attachment: fixed;
   will-change: transform;
   animation: galaxy-drift 60s ease-in-out infinite alternate;
 }
 
+/* Drift ambient — independe do scroll. Pequeno movimento
+ * contínuo pra "fazer a galáxia respirar". O parallax-com-
+ * scroll vive no componente GalaxyBackdrop. */
 @keyframes galaxy-drift {
   0%   { transform: translate3d(-2%, -1%, 0); }
   50%  { transform: translate3d(1.5%, 2%, 0); }

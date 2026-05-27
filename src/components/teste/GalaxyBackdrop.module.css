@@ -1,0 +1,108 @@
+/* GalaxyBackdrop — combina star field denso + camada de
+ * nebulae que responde ao scroll. Ambos position:fixed pra
+ * ancorar ao viewport. z-index: -1 (atrás de todo o
+ * conteúdo) mas ACIMA do `.page::before` da page.module.css
+ * (que é z:-2 efetivo via stacking-order — o pseudo da page
+ * usa z-index:-1 dentro do mesmo isolation context, mas o
+ * .root deste componente é renderizado DEPOIS do pseudo no
+ * order de pintura, então fica acima dele). */
+
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Nebula que move com o scroll — translada verticalmente
+ * conforme --galaxy-scroll (0..1) é atualizada pelo JS no
+ * documentElement. Quanto mais o user desce, mais a layer
+ * sobe (parallax inverso), revelando "novas regiões da
+ * galáxia". inset:-15% dá pano extra pro deslocamento sem
+ * mostrar bordas.
+ *
+ * As cores aqui complementam as do `.page::before` da
+ * page.module.css — quando ambas estão alinhadas (scroll=0),
+ * somam densidade. Quando scroll avança, essas saem do
+ * topo e revelam o gradiente base sozinho lá em cima. */
+.nebulaScroll {
+  position: absolute;
+  inset: -15%;
+  background:
+    /* Centro/superior — magenta profundo */
+    radial-gradient(
+      ellipse 55% 45% at 35% 25%,
+      rgba(165, 0, 220, 0.18) 0%,
+      transparent 65%
+    ),
+    /* Direita/meio — rosa neon */
+    radial-gradient(
+      ellipse 45% 35% at 78% 55%,
+      rgba(255, 40, 180, 0.16) 0%,
+      transparent 60%
+    ),
+    /* Esquerda/baixo — teal */
+    radial-gradient(
+      ellipse 50% 40% at 18% 78%,
+      rgba(0, 200, 220, 0.14) 0%,
+      transparent 65%
+    ),
+    /* Centro/baixo — indigo */
+    radial-gradient(
+      ellipse 60% 45% at 60% 88%,
+      rgba(60, 0, 200, 0.18) 0%,
+      transparent 65%
+    );
+  /* Translada ATÉ -70vh quando scroll=1 (full bottom). Em
+   * scroll=0 fica no lugar; conforme desce, a layer sobe. */
+  transform: translate3d(0, calc(var(--galaxy-scroll, 0) * -70vh), 0);
+  /* `transition` mantém movimento suave entre updates do rAF
+   * — sem isso, scrolls rápidos virariam saltos. */
+  transition: transform 220ms linear;
+  will-change: transform;
+}
+
+/* Star layer — contém os <span> stars renderizados pelo TSX.
+ * Não tem transform de scroll porque as estrelas devem ficar
+ * "ancoradas no espaço" (sensação de viajar contra elas, não
+ * com elas). */
+.starLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.star {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50%;
+  /* Halo MUITO sutil em volta da estrela — espelha o
+   * "glow" que o Mapbox dá nas estrelas com star-intensity
+   * 0.45. Box-shadow pequeno em vez de blur pra ficar
+   * leve no GPU. */
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.45);
+  animation: galaxy-star-twinkle var(--dur, 5s) ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Twinkle BEM sutil — opacidade base (vinda do inline style)
+ * → 1.0 → base, em durações longas (5..13s). Sem scale: o
+ * efeito-Mapbox é variação de brilho, não tamanho. */
+@keyframes galaxy-star-twinkle {
+  0%,
+  100% {
+    opacity: var(--o, 0.6);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star {
+    animation: none;
+  }
+  .nebulaScroll {
+    transition: none;
+  }
+}

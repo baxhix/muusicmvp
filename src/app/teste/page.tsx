@@ -10,6 +10,7 @@ import SectionSix from '@/components/teste/SectionSix';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
 import FanverseCore from '@/components/animations/FanverseCore';
+import GalaxyBackdrop from '@/components/teste/GalaxyBackdrop';
 import styles from './page.module.css';
 
 /**
@@ -35,6 +36,12 @@ import styles from './page.module.css';
 export default function TestePage() {
   return (
     <div className={styles.page}>
+      {/* Galaxy backdrop — star field denso (estilo Mapbox
+       *  star-intensity) + camada de nebulae que se desloca
+       *  conforme o scroll. Setando --galaxy-scroll no
+       *  documentElement, o pseudo `.page::before` também
+       *  responde ao scroll (em page.module.css). */}
+      <GalaxyBackdrop />
       <Navbar />
       {/* AvatarConstellation vive no nível da página: usa
        *  position: fixed pra ancorar ao viewport (não scrolla
