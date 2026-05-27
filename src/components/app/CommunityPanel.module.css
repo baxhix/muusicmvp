@@ -360,7 +360,13 @@
 .communityCard {
   width: 100%;
   display: flex;
-  align-items: center;
+  /* Alinha pelo TOPO per product feedback "posicione os três
+   * pontinhos para cima". Antes era center — o kebab ficava no
+   * meio vertical do card; agora segue o eixo do título/header.
+   * O thumbnail (64×64) e a coluna de texto continuam ocupando
+   * a altura natural; o kebab + botão Entrar ficam ancorados
+   * no topo via align-self herdado de flex-start. */
+  align-items: flex-start;
   gap: 6px;
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.025);
@@ -494,31 +500,39 @@
  * row) — sits between the card body and the kebab menu on
  * the right edge. `flex-shrink: 0` keeps it from getting
  * squeezed when the title text is long. */
+/* Botão "+ Entrar" — réplica do `.addMemberBtn` do
+ * GroupMembersPanel (chat) per product feedback "adicione o
+ * botão Entrar (mesmo estilo de Adicionar membros em um grupo
+ * de Chat)". Pill lilás 12%/40% com ícone "+" + label, font 13
+ * weight 600. Alinhado ao TOPO do card via align-self pra ficar
+ * na linha do kebab. */
 .cardJoinPill {
-  padding: 5px 11px;
-  border-radius: 999px;
-  background: rgba(168, 85, 247, 0.14);
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  color: rgba(245, 245, 247, 0.92);
-  font-size: 11px;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.005em;
+  letter-spacing: -0.005em;
   cursor: pointer;
   flex-shrink: 0;
-  font-family: inherit;
   white-space: nowrap;
-  transition:
-    background 0.14s ease,
-    border-color 0.14s ease,
-    color 0.14s ease;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
 }
 .cardJoinPill:hover {
-  background: rgba(168, 85, 247, 0.24);
-  border-color: rgba(168, 85, 247, 0.55);
-  color: #F5F5F7;
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.65);
+  color: #ffffff;
 }
-.cardJoinPill:active {
-  background: rgba(168, 85, 247, 0.32);
+.cardJoinPill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* Join pill — switches between violet "Participar" and a quiet
@@ -1094,6 +1108,11 @@
 .kebabRoot {
   position: relative;
   flex-shrink: 0;
+  /* Mesmo align-self do botão Entrar — pinta no topo do card
+   * per product feedback "posicione os três pontinhos para
+   * cima". Sem isso o kebab herdava o center do flex parent
+   * antigo. */
+  align-self: flex-start;
 }
 .kebabBtn {
   width: 28px;
