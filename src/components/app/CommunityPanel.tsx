@@ -145,12 +145,20 @@ function HeaderBar({
   onBack,
   onClose,
   trailing,
+  centerTitle,
 }: {
   title: string;
   onBack?: () => void;
   onClose: () => void;
   /** Optional trailing slot (kebab menu, etc.) shown left of the close button. */
   trailing?: React.ReactNode;
+  /** Quando true, o título recebe `text-align: center`. Usado pelas
+   *  subviews simétricas (back + título + close) — ex: "Nova
+   *  comunidade" — per product feedback "centralize o nome da
+   *  seção no centro do box no header". Default false porque a
+   *  view 'list' não tem back (assimétrico), e centralizar
+   *  deixaria o texto fora do centro visual. */
+  centerTitle?: boolean;
 }) {
   return (
     <header className={styles.header}>
@@ -166,7 +174,11 @@ function HeaderBar({
           </svg>
         </button>
       )}
-      <h2 className={styles.title}>{title}</h2>
+      <h2
+        className={`${styles.title} ${centerTitle ? styles.titleCentered : ''}`}
+      >
+        {title}
+      </h2>
       {trailing}
       <button
         type="button"
@@ -587,7 +599,12 @@ function CommunityCreateView({
 
   return (
     <>
-      <HeaderBar title="Nova comunidade" onBack={onBack} onClose={onClose} />
+      <HeaderBar
+        title="Nova comunidade"
+        onBack={onBack}
+        onClose={onClose}
+        centerTitle
+      />
       <form className={styles.body} onSubmit={handleSubmit}>
         <label className={styles.modalField}>
           <span>Nome</span>

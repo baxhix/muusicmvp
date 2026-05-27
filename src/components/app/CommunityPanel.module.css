@@ -87,6 +87,13 @@
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
+/* Centralização do título — usado pelas subviews simétricas
+ * (back btn 28px + título flex:1 + close btn 28px), como
+ * "Nova comunidade". Per product feedback "centralize o nome
+ * da seção no centro do box no header". */
+.titleCentered {
+  text-align: center;
+}
 .closeBtn {
   width: 28px; height: 28px;
   display: inline-flex;
