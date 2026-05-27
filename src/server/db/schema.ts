@@ -718,6 +718,43 @@ export const siteTags = pgTable('site_tags', {
 });
 
 /**
+ * Documentos legais (Termos de Uso, Política de Privacidade).
+ *
+ * Tabela com 2 rows fixas — uma por `kind`. Não é uma lista
+ * dinâmica de CRUD; o admin edita os 2 documentos existentes e
+ * pode publicar quando quiser. O seed inicial garante que as
+ * rows sempre existem (admin abre, edita e publica — nunca cria
+ * do zero).
+ *
+ * Convenção de publicação:
+ *   - `publishedAt` null = nunca publicado (ainda não aparece nas
+ *     páginas públicas /termos / /privacidade).
+ *   - `publishedAt` non-null = publicado; a data corresponde à
+ *     última publicação. `version` bumpa em CADA publicação pra
+ *     UI mostrar "v.X publicada em Y".
+ *
+ * Quando o LGPD exigir versionamento auditável (consentimento de
+ * usuário vinculado a versão específica), criar `legal_document_
+ * versions` como tabela append-only e relacionar via FK. Por
+ * enquanto, a "current row" + `version` cobre o caso comum.
+ */
+export const legalDocuments = pgTable('legal_documents', {
+  kind: text('kind', {
+    enum: ['terms_of_use', 'privacy_policy'],
+  }).primaryKey(),
+  title: text('title').notNull(),
+  body: text('body').notNull().default(''),
+  version: integer('version').notNull().default(1),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedBy: uuid('updated_by').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+});
+
+/**
  * FAQ entries — perguntas e respostas que aparecem na seção FAQ
  * pública do site. CRUD vive em /admin/site/faq; o backend lista
  * publicadas (publishedAt NOT NULL) pra render do site público.
