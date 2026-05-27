@@ -172,10 +172,13 @@ export default function MockToastRotator() {
   const realQueueRef = useRef<RealChatToastDetail[]>([]);
   const [currentReal, setCurrentReal] = useState<RealChatToastDetail | null>(null);
 
-  /* Listener do evento global. Apenas enfileira — a entrada
-   * na rotação é processada no advance() abaixo (gap→enter).
-   * Sem isso o toast atual saltaria abruptamente quando a msg
-   * chega. */
+  /* Listener do evento global. Enfileira + DÁ PRIORIDADE: per
+   * product feedback "notificações reais devem ter prioridade
+   * sobre as notificações mocadas", se um mock está em hold/enter
+   * no momento, corta pra `exit` imediatamente — assim a real
+   * entra logo no próximo gap (sub-segundo de espera). Mock que
+   * ia rodar fica perdido no ciclo (próxima volta da ROTATION
+   * pega ele de novo, ou não — é demo, perda OK). */
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<RealChatToastDetail>).detail;
@@ -193,12 +196,32 @@ export default function MockToastRotator() {
       }
       if (q.length >= 8) q.shift(); // drop o mais antigo
       q.push(detail);
+      /* Prioridade: força o toast atual a iniciar saída agora se
+       * estiver em hold/enter. NÃO interrompe um exit em progresso
+       * (já está saindo). NÃO interrompe um currentReal (deixa
+       * uma real anterior terminar antes da próxima). */
+      setPhase((p) => {
+        if (p === 'hold' || p === 'enter') {
+          // Só se NÃO for já um real em exibição — preserva o
+          // FIFO da fila pra reais consecutivas.
+          if (currentRealRef.current) return p;
+          return 'exit';
+        }
+        return p;
+      });
     };
     window.addEventListener('app:chat-message-toast', handler);
     return () => {
       window.removeEventListener('app:chat-message-toast', handler);
     };
   }, []);
+
+  /* Ref espelha o state pro listener acima conseguir checar sem
+   * recriar o handler a cada mudança de currentReal. */
+  const currentRealRef = useRef<RealChatToastDetail | null>(null);
+  useEffect(() => {
+    currentRealRef.current = currentReal;
+  }, [currentReal]);
 
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;

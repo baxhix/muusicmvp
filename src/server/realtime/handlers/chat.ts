@@ -119,11 +119,25 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
       // Poke each recipient's PERSONAL room so unread counts / dock badges
       // refresh even when they haven't opened the conversation yet.
+      //
+      // Payload enriquecido com `senderName`, `senderAvatarUrl` e
+      // `snippet` (truncado em 80 chars) pra que recipients que NÃO
+      // estão joined em room(convId) — caso comum: conv não aberta —
+      // consigam montar o toast "X enviou uma mensagem" no
+      // MockToastRotator sem precisar de round-trip extra.
       const mentionedSet = new Set(result.mentionedUserIds);
+      const snippet =
+        result.message.body.length > 80
+          ? `${result.message.body.slice(0, 80)}…`
+          : result.message.body;
       for (const recipientId of result.recipientIds) {
         io.to(userRoom(recipientId)).emit('chat:thread:update', {
           conversationId: parsed.data.conversationId,
           lastMessageId: result.message.id,
+          senderId: result.message.senderId,
+          senderName: result.message.senderName,
+          senderAvatarUrl: result.message.senderAvatarUrl,
+          snippet,
         });
         // notify:new push paths:
         //   - DMs: every recipient gets a 'message' notify (we

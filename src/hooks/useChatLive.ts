@@ -374,34 +374,13 @@ export function useChatLive(): UseChatLiveResult {
             messageId: msg.id,
           })
           .catch((err) => console.error('mark read (active) failed:', err));
-      } else if (!isOwn && (!msg.kind || msg.kind === 'user')) {
-        /* Notificação flutuante acima da bottombar (MockToastRotator)
-         * agora intercala mensagens reais — quando alguém manda msg
-         * pro user e ele NÃO está com a conv aberta, despachamos
-         * `app:chat-message-toast` com avatar + nome + snippet. O
-         * MockToastRotator escuta e prioriza essa entry na fila
-         * antes dos mocks cíclicos. Filtros:
-         *   - !isActive: já cobre o caso "vendo a conv" (não precisa)
-         *   - !isOwn: minha própria mensagem não vira notif
-         *   - kind === 'user': system events (entrou/saiu) não viram
-         *     notif "X mandou mensagem". */
-        const senderName =
-          msg.senderName?.trim() ||
-          msg.senderEmail?.split('@')[0] ||
-          'Alguém';
-        const snippet =
-          msg.body.length > 80 ? `${msg.body.slice(0, 80)}…` : msg.body;
-        window.dispatchEvent(
-          new CustomEvent('app:chat-message-toast', {
-            detail: {
-              senderName,
-              senderAvatarUrl: msg.senderAvatarUrl ?? null,
-              snippet,
-              conversationId: msg.conversationId,
-            },
-          }),
-        );
       }
+      /* O toast dinâmico vive no handler de `chat:thread:update`
+       * (abaixo) — esse evento chega no userRoom de TODOS os
+       * recipients, incluindo quem NÃO está joined no room
+       * conv:{id}. Antes tentei despachar daqui (chat:message),
+       * mas users sem a conv aberta nunca recebem chat:message
+       * — só thread:update. Single source of truth = thread:update. */
 
       // Patch local da row na lista de conversas. Sem hit ao servidor.
       setConversations((prev) => {
@@ -484,13 +463,51 @@ export function useChatLive(): UseChatLiveResult {
   // virão por canais que NÃO emitem chat:message.
   useEffect(() => {
     if (!socket) return;
-    const onThreadUpdate = (payload?: { conversationId?: string }) => {
+    const onThreadUpdate = (payload?: {
+      conversationId?: string;
+      senderId?: string;
+      senderName?: string | null;
+      senderAvatarUrl?: string | null;
+      snippet?: string;
+    }) => {
       /* P1.2: invalida cache de members da conversa tocada — pode
        * ter sido addMember/kick/rename/image upload. Forçar refetch
        * mantém GroupMembersPanel/mention autocomplete em sync.
        * Quando payload sem conversationId vier (broadcast legado),
        * invalidamos tudo defensivamente. */
       invalidateConversationMembers(payload?.conversationId);
+
+      /* Toast dinâmico no MockToastRotator: quando o thread:update
+       * traz `snippet` (msg nova) E a conv NÃO é a ativa, dispara
+       * o evento que o rotator escuta. Sem isso, recipients que
+       * NÃO estão joined em room(convId) (caso comum: conv não
+       * aberta) nunca recebiam o toast — porque `chat:message` só
+       * vai pro room, não pro userRoom.
+       *
+       * O sender é filtrado: o servidor só emite chat:thread:update
+       * pra `recipientIds` que JÁ exclui o sender, mas a guarda
+       * dupla aqui (senderId vs user.id) protege caso a broadcast
+       * mude futuramente. */
+      if (
+        payload?.snippet &&
+        payload.conversationId &&
+        payload.conversationId !== activeIdRef.current &&
+        payload.senderId !== user?.id
+      ) {
+        window.dispatchEvent(
+          new CustomEvent('app:chat-message-toast', {
+            detail: {
+              senderName:
+                payload.senderName?.trim() ||
+                'Alguém',
+              senderAvatarUrl: payload.senderAvatarUrl ?? null,
+              snippet: payload.snippet,
+              conversationId: payload.conversationId,
+            },
+          }),
+        );
+      }
+
       if (
         payload?.conversationId &&
         payload.conversationId === activeIdRef.current
@@ -503,7 +520,7 @@ export function useChatLive(): UseChatLiveResult {
     return () => {
       socket.off('chat:thread:update', onThreadUpdate);
     };
-  }, [socket, loadList]);
+  }, [socket, loadList, user]);
 
   // ── Open or create a DM with someone (e.g. clicking a user on the map) ─
   const openDmWith = useCallback(
