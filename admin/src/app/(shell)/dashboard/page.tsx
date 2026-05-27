@@ -450,67 +450,11 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Bottom row: posts by type · plan distribution · reports by reason */}
-        <div className={styles.row} style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-          <Card>
-            <CardHeader title="Posts por tipo" description="Conteúdo publicado nos últimos 30 dias" />
-            <div className={styles.bars}>
-              {(postsByType ?? []).map((b) => (
-                <div key={b.label} className={styles.barRow}>
-                  <span className={styles.barLabel}>{b.label}</span>
-                  <span className={styles.barTrack}>
-                    <span
-                      className={styles.barFill}
-                      style={{ width: `${(b.value / maxBar) * 100}%` }}
-                    />
-                  </span>
-                  <span className={styles.barValue}>{formatNumber(b.value)}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card>
-            <CardHeader title="Distribuição de planos" description="Base atual" />
-            <div className={styles.donut}>
-              {planDist && <Donut data={planDist} />}
-              <div className={styles.donutLegend}>
-                {(planDist ?? []).map((d) => (
-                  <div key={d.label} className={styles.donutLegendRow}>
-                    <span className={styles.donutDot} style={{ background: d.color }} />
-                    <span>{d.label}</span>
-                    <span className={styles.donutValue}>{formatCompact(d.value)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <CardHeader title="Denúncias por motivo" description="Últimos 30 dias" />
-            <div className={styles.donut}>
-              {reportsByReason && <Donut data={reportsByReason} />}
-              <div className={styles.donutLegend}>
-                {(reportsByReason ?? []).map((d) => (
-                  <div key={d.label} className={styles.donutLegendRow}>
-                    <span className={styles.donutDot} style={{ background: d.color }} />
-                    <span>{d.label}</span>
-                    <span className={styles.donutValue}>{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <Card>
-          <CardBody>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12.5, color: 'var(--text-mute)' }}>
-              <IconLink size={14} />
-              Camada mock ativa — todos os dados acima vêm de <code style={{ fontFamily: 'var(--font-mono)' }}>src/data/mock</code>. O ponto único de troca para a API real está em <code style={{ fontFamily: 'var(--font-mono)' }}>src/services/api.ts</code>.
-            </div>
-          </CardBody>
-        </Card>
+        {/* Bottom row removida per product feedback — saíram os
+         * cards "Posts por tipo", "Distribuição de planos",
+         * "Denúncias por motivo" e o aviso de mock layer. Quando
+         * for re-habilitar algum deles, o JSX antigo fica no
+         * histórico do git (commit anterior). */}
           </>
         )}
       </div>

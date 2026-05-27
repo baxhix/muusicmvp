@@ -65,27 +65,32 @@ type NavEntry = NavLeaf | NavGroup;
  *   Dashboard
  *   Usuários
  *
- *   Superfãs    (group)
+ *   Plataforma  (group)
  *     Feed
  *     Comunidades
- *     Superchat
+ *     Moderação
+ *     Notificações
+ *     E-mails
+ *     Músicas
+ *     Lives          (disabled — backlog)
+ *     Presave        (disabled — backlog)
+ *
+ *   Superfãs    (group)
  *     Materiais
  *     Fanpoints
+ *     Superchat
+ *     Níveis
  *
  *   Growth      (group)
  *     Convites
- *     Engajamento
  *     Aquisição
- *
- *   Plataforma  (group)
- *     Moderação
- *     Músicas
- *     E-mails
- *     Lives
- *     Presave
+ *     Engajamento    (disabled — backlog)
  *
  *   Site        (group)
  *     Blog
+ *     FAQ
+ *     LGPD
+ *     Footer
  *
  *   Sistema     (group)
  *     Configurações
@@ -107,15 +112,19 @@ const NAV: NavEntry[] = [
       /* Feed e Comunidades movidos de Superfãs pra cá conforme
        * reorg do produto — são features da plataforma como um
        * todo, não exclusivas do tier de superfãs. Ficam no topo
-       * por serem o conteúdo mais consultado. */
+       * por serem o conteúdo mais consultado.
+       *
+       * "Músicas" desceu pra logo abaixo de "E-mails" per product
+       * feedback. "Lives" e "Presave" ficaram disabled — features
+       * ainda em backlog, sem operação ativa. */
       { kind: 'leaf', href: '/feed',          label: 'Feed' },
       { kind: 'leaf', href: '/comunidades',   label: 'Comunidades' },
       { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
       { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
-      { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
       { kind: 'leaf', href: '/emails',        label: 'E-mails' },
-      { kind: 'leaf', href: '/live',          label: 'Lives' },
-      { kind: 'leaf', href: '/pre-save',      label: 'Presave' },
+      { kind: 'leaf', href: '/tracks',        label: 'Músicas' },
+      { kind: 'leaf', href: '/live',          label: 'Lives',   disabled: true },
+      { kind: 'leaf', href: '/pre-save',      label: 'Presave', disabled: true },
     ],
   },
 
@@ -124,11 +133,13 @@ const NAV: NavEntry[] = [
     id: 'superfans',
     label: 'Superfãs',
     icon: IconStar,
+    /* Reordenado per product feedback "Materiais primeiro,
+     * Fanpoints segundo, Superchat e Níveis depois". */
     children: [
-      { kind: 'leaf', href: '/superchat',    label: 'Superchat' },
-      { kind: 'leaf', href: '/materiais',    label: 'Materiais' },
-      { kind: 'leaf', href: '/fanpoints',    label: 'Fanpoints' },
-      { kind: 'leaf', href: '/niveis',       label: 'Níveis' },
+      { kind: 'leaf', href: '/materiais',     label: 'Materiais' },
+      { kind: 'leaf', href: '/fanpoints',     label: 'Fanpoints' },
+      { kind: 'leaf', href: '/superchat',     label: 'Superchat' },
+      { kind: 'leaf', href: '/niveis',        label: 'Níveis' },
     ],
   },
 
@@ -137,10 +148,12 @@ const NAV: NavEntry[] = [
     id: 'growth',
     label: 'Growth',
     icon: IconTrendingUp,
+    /* "Engajamento" agora vem DEPOIS de "Aquisição" e fica
+     * disabled per product feedback — feature ainda no roadmap. */
     children: [
       { kind: 'leaf', href: '/convites',   label: 'Convites' },
-      { kind: 'leaf', href: '/engagement', label: 'Engajamento' },
       { kind: 'leaf', href: '/aquisicao',  label: 'Aquisição' },
+      { kind: 'leaf', href: '/engagement', label: 'Engajamento', disabled: true },
     ],
   },
 
@@ -149,8 +162,15 @@ const NAV: NavEntry[] = [
     id: 'site',
     label: 'Site',
     icon: IconHome,
+    /* FAQ, LGPD e Footer adicionados como placeholders — cada um
+     * vira CRUD próprio numa fase seguinte (precisam de schema
+     * dedicado + endpoints + UI). Por enquanto os links vão pra
+     * stubs em admin/(shell)/site/. */
     children: [
-      { kind: 'leaf', href: '/blog', label: 'Blog' },
+      { kind: 'leaf', href: '/blog',           label: 'Blog' },
+      { kind: 'leaf', href: '/site/faq',       label: 'FAQ' },
+      { kind: 'leaf', href: '/site/lgpd',      label: 'LGPD' },
+      { kind: 'leaf', href: '/site/footer',    label: 'Footer' },
     ],
   },
 
