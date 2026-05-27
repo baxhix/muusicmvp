@@ -78,6 +78,10 @@ export async function createGroup(args: {
         name: trimmedName,
         imageUrl: args.imageUrl,
         createdBy: args.ownerId,
+        /* P0.2: já inicializa member_count com o total final
+         * (owner + N outros). Mantém consistência sem precisar
+         * de UPDATE separado após o INSERT dos participants. */
+        memberCount: 1 + otherMemberIds.length,
       })
       .returning({ id: conversations.id });
 
@@ -200,41 +204,55 @@ export async function addMember(
     return;
   }
 
-  if (existing && existing.leftAt) {
-    // Re-entry: zera leftAt + atualiza joinedAt pra refletir a
-    // re-entrada como "novo joinedAt" (pode importar pra ordering
-    // futura em "ordem de chegada no grupo").
-    await db
-      .update(conversationParticipants)
-      .set({ leftAt: null, joinedAt: new Date() })
-      .where(
-        and(
-          eq(conversationParticipants.conversationId, conversationId),
-          eq(conversationParticipants.userId, userId),
-        ),
-      );
-  } else {
-    // Inserção normal pra quem nunca foi membro.
-    const inserted = await db
-      .insert(conversationParticipants)
-      .values({ conversationId, userId, role: 'member' })
-      .onConflictDoNothing()
-      .returning({ userId: conversationParticipants.userId });
-    // Race: alguém mais rápido inseriu primeiro. Não emite system event.
-    if (inserted.length === 0) return;
-  }
+  /* INSERT/UPDATE do participant + bump do memberCount + system msg
+   * em UMA tx. Antes ficava espalhado em 2 awaits separados — se
+   * o primeiro commit acontecesse e o segundo falhasse, o contador
+   * ficava desincronizado.
+   *
+   * Wrappar tudo no `db.transaction` resolve a atomicidade. */
+  await db.transaction(async (tx) => {
+    if (existing && existing.leftAt) {
+      // Re-entry: zera leftAt + atualiza joinedAt + zera unreadCount
+      // (o user volta como "lido tudo" — a system message own dele
+      // serve de marco).
+      await tx
+        .update(conversationParticipants)
+        .set({ leftAt: null, joinedAt: new Date(), unreadCount: 0 })
+        .where(
+          and(
+            eq(conversationParticipants.conversationId, conversationId),
+            eq(conversationParticipants.userId, userId),
+          ),
+        );
+    } else {
+      // Inserção normal pra quem nunca foi membro.
+      const inserted = await tx
+        .insert(conversationParticipants)
+        .values({ conversationId, userId, role: 'member' })
+        .onConflictDoNothing()
+        .returning({ userId: conversationParticipants.userId });
+      // Race: alguém mais rápido inseriu primeiro. Sai cedo do tx
+      // SEM emitir system event ou bump no counter — outro fluxo já
+      // fez isso.
+      if (inserted.length === 0) {
+        return;
+      }
+    }
 
-  // Timeline badge: "{userName} entrou no grupo". Visível pra todo
-  // mundo na conversa (incluindo o próprio user adicionado, que vai
-  // ver o evento no histórico assim que abrir o grupo). Insert
-  // separado do `notifications` insert porque a bell notif só vai
-  // pra quando temos `actorId` (kick chamado pelo próprio user vs
-  // admin add).
-  await db.insert(messages).values({
-    conversationId,
-    senderId: userId,
-    body: 'entrou no grupo',
-    kind: 'system_join',
+    // Bump de memberCount (P0.2). Tanto INSERT novo quanto re-entry
+    // contam — ambos tornam o user ativo de novo.
+    await tx
+      .update(conversations)
+      .set({ memberCount: sql`${conversations.memberCount} + 1` })
+      .where(eq(conversations.id, conversationId));
+
+    // Timeline badge: "{userName} entrou no grupo".
+    await tx.insert(messages).values({
+      conversationId,
+      senderId: userId,
+      body: 'entrou no grupo',
+      kind: 'system_join',
+    });
   });
 
   if (!actorId) return;
@@ -320,6 +338,14 @@ export async function removeMember(
             eq(conversationParticipants.userId, userId),
           ),
         );
+      // Decrementa memberCount (P0.2). GREATEST evita valores
+      // negativos em caso de drift (defensivo).
+      await tx
+        .update(conversations)
+        .set({
+          memberCount: sql`GREATEST(${conversations.memberCount} - 1, 0)`,
+        })
+        .where(eq(conversations.id, conversationId));
     } else {
       // DM: comportamento legado (hard-delete).
       await tx

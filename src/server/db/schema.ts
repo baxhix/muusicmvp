@@ -133,8 +133,17 @@ export const conversations = pgTable(
       onDelete: 'set null',
     }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    /* Counters denormalizados (P0.2 da auditoria de chat) — mantidos
+     * pelo write-side em sendMessage / addMember / removeMember / etc.
+     * Substituem as subqueries correlacionadas no listConversationsForUser. */
+    lastMessageAt: timestamp('last_message_at', { withTimezone: true }),
+    lastMessageId: uuid('last_message_id'),
+    memberCount: integer('member_count').notNull().default(0),
   },
-  (t) => [unique('conversations_slug_unique').on(t.slug)],
+  (t) => [
+    unique('conversations_slug_unique').on(t.slug),
+    index('conv_last_message_at_idx').on(t.lastMessageAt),
+  ],
 );
 
 export const conversationParticipants = pgTable(
@@ -155,6 +164,10 @@ export const conversationParticipants = pgTable(
       .default('member'),
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
     lastReadMessageId: uuid('last_read_message_id'),
+    /* Counter denormalizado de mensagens não lidas (P0.2). Atualizado
+     * em sendMessage (incrementa para todos os outros), markRead
+     * (zera para o user), addMember (zera no entry/re-entry). */
+    unreadCount: integer('unread_count').notNull().default(0),
     /* Marcador de "usuário saiu do grupo". Não removemos a row
      * porque queremos que o user ainda VEJA o histórico (read-only)
      * com a badge "Você saiu" como última entrada. NULL = ativo,

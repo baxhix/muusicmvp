@@ -260,6 +260,20 @@
       "when": 1780900000000,
       "tag": "0037_conversation_state",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1781000000000,
+      "tag": "0038_messages_kind_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1781100000000,
+      "tag": "0039_denormalize_conversation_counters",
+      "breakpoints": true
     }
   ]
 }

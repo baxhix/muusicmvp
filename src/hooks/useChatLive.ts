@@ -201,6 +201,23 @@ export function useChatLive(): UseChatLiveResult {
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
             return;
           }
+          /* P0.5 da auditoria: promove o tmp-id pro id real assim
+           * que o ack chega. Isso garante que o handler de
+           * `chat:message` (que dedupa por id) consiga deduplicar
+           * a echo de broadcast em vez de comparar por `body` (que
+           * quebra com mensagens duplicadas iguais — "oi", "oi").
+           *
+           * Mantém o resto dos campos do optimistic local enquanto
+           * o broadcast não chega (createdAt, body, etc); na chegada
+           * do broadcast o handler `chat:message` faz no-op porque
+           * o id já casa. */
+          if (ack.messageId) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === tempId ? { ...m, id: ack.messageId! } : m,
+              ),
+            );
+          }
           // Resolve conversation type from the active conversation
           // in the local cache. The hook owns `conversations` (see
           // the list state above), so it's already in memory.
@@ -283,14 +300,32 @@ export function useChatLive(): UseChatLiveResult {
   }, [socket]);
 
   // ── Realtime: incoming chat messages (active thread) ───────────────────
+  //
+  // P0.1 da auditoria: NÃO chamar mais `loadList()` aqui. O handler
+  // antigo refazia GET /api/conversations a cada mensagem recebida —
+  // num grupo de 28 membros isso vira 28 round-trips por mensagem,
+  // que é o caminho mais rápido pra rebentar o connection pool do
+  // Postgres em prod quando o Superchat viralizar.
+  //
+  // Em vez disso, patchamos a row da conversa local: atualiza
+  // lastMessage + incrementa unreadCount quando NÃO é a conversa
+  // ativa nem o próprio user. A `chat:thread:update` continua sendo
+  // o canal pra mudanças de fora do hot-path (add member, rename
+  // group, image upload, etc).
   useEffect(() => {
     if (!socket) return;
     const onMessage = (msg: ApiMessage) => {
       const isActive = msg.conversationId === activeIdRef.current;
+      const isOwn = msg.senderId === user?.id;
+
       if (isActive) {
         setMessages((prev) => {
-          const filtered = prev.filter((m) => !m.id.startsWith('tmp-') || m.body !== msg.body);
-          if (filtered.some((m) => m.id === msg.id)) return filtered;
+          // Dedupe por id real (P0.5): tmp-id já foi promovido pro
+          // messageId real pelo ack. Se o broadcast chegar primeiro,
+          // o filter abaixo remove qualquer tmp- restante; se chegar
+          // depois, o id já existe e damos return prev.
+          if (prev.some((m) => m.id === msg.id)) return prev;
+          const filtered = prev.filter((m) => !m.id.startsWith('tmp-'));
           return [...filtered, msg];
         });
         // User is viewing this thread — keep the read marker fresh.
@@ -298,16 +333,56 @@ export function useChatLive(): UseChatLiveResult {
           .post(`/api/conversations/${msg.conversationId}/read`)
           .catch((err) => console.error('mark read (active) failed:', err));
       }
-      loadList();
+
+      // Patch local da row na lista de conversas. Sem hit ao servidor.
+      setConversations((prev) => {
+        const idx = prev.findIndex((c) => c.id === msg.conversationId);
+        if (idx === -1) {
+          /* Conversa não está em memória — pode ser DM nova criada
+           * pela outra parte. Único caso em que ainda precisamos do
+           * round-trip pra trazer a conversation summary completa
+           * (otherUser hidrado, role, member_count). */
+          loadList();
+          return prev;
+        }
+        const next = [...prev];
+        const cur = next[idx];
+        next[idx] = {
+          ...cur,
+          lastMessage: {
+            id: msg.id,
+            body: msg.body,
+            senderId: msg.senderId,
+            createdAt: msg.createdAt,
+          },
+          /* Só incrementa unread se NÃO for a conv ativa E não foi o
+           * próprio user que mandou. Quem está olhando a conversa
+           * leu na hora; o próprio sender não precisa de badge. */
+          unreadCount:
+            isActive || isOwn ? cur.unreadCount : cur.unreadCount + 1,
+        };
+        /* Re-sort por last message DESC pra manter a regra de
+         * ordering do dock/lista. Move só a row tocada pro topo —
+         * mais barato que sort completo. */
+        const updated = next[idx];
+        next.splice(idx, 1);
+        next.unshift(updated);
+        return next;
+      });
     };
     socket.on('chat:message', onMessage);
     return () => {
       socket.off('chat:message', onMessage);
     };
-  }, [socket, loadList]);
+  }, [socket, loadList, user]);
 
-  // ── Realtime: per-user thread update poke (fires for ALL conversations
-  // the user is in, even ones they haven't opened in this session) ────────
+  // ── Realtime: per-user thread update poke ───────────────────────────────
+  //
+  // Disparado pelo server pra eventos de FORA do hot-path de envio:
+  // add/remove member, rename group, image upload, hide conversation.
+  // Esses casos mudam a forma da conversation summary (memberCount,
+  // name, imageUrl, etc.) que o patch local do `chat:message` não
+  // cobre. Aqui sim refrescamos a lista do servidor.
   useEffect(() => {
     if (!socket) return;
     const onThreadUpdate = () => loadList();

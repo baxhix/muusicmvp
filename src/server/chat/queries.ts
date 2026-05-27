@@ -12,27 +12,34 @@ import { logger } from '@/server/log';
  * current user AND newer than `cp.last_read_message_id` (or all of them if the
  * marker is null). The dock-style chat avatars use this to render a red badge.
  */
-export async function listConversationsForUser(userId: string) {
+/**
+ * Lista as conversas do user.
+ *
+ * P0.2 da auditoria de chat: query agora lê APENAS dos contadores
+ * denormalizados (`conversations.last_message_*`, `member_count`,
+ * `conversation_participants.unread_count`) — sem subqueries
+ * correlacionadas. Performance vai de O(N × M) (N convs × M
+ * mensagens cada via DISTINCT ON) pra O(N) com index range scan.
+ *
+ * Ainda buscamos o `last_message_body` + `sender_id` via LEFT JOIN
+ * em `messages.id = c.last_message_id` (lookup PK O(1), uma vez por
+ * conversa). Isso preserva o preview "última mensagem" no dock sem
+ * voltar a varrer a tabela.
+ *
+ * Paginação opcional via `before` (cursor por last_message_at DESC)
+ * + `limit`. Default 100 — cobre 99% dos users (poucos têm > 100
+ * conversas ativas). Quando vier o frame de "ver mais", o cliente
+ * passa o último `last_message_at` que recebeu.
+ */
+export async function listConversationsForUser(
+  userId: string,
+  opts: { limit?: number; before?: Date } = {},
+) {
+  const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
+  const cursor = opts.before
+    ? sql`AND COALESCE(c.last_message_at, c.created_at) < ${opts.before.toISOString()}`
+    : sql``;
   const rows = await db.execute(sql`
-    WITH user_convs AS (
-      SELECT conversation_id, last_read_message_id, role, left_at, hidden_at
-      FROM conversation_participants
-      WHERE user_id = ${userId}
-    ),
-    last_msg AS (
-      -- Apenas mensagens de usuário (kind='user') alimentam o
-      -- preview do dock. Eventos de sistema (criou o grupo /
-      -- entrou no grupo) não devem aparecer como "última
-      -- mensagem" — caso contrário, um grupo recém-criado
-      -- mostraria "entrou no grupo" sem contexto até alguém
-      -- digitar de verdade.
-      SELECT DISTINCT ON (conversation_id)
-        conversation_id, id, body, sender_id, created_at
-      FROM messages
-      WHERE conversation_id IN (SELECT conversation_id FROM user_convs)
-        AND kind = 'user'
-      ORDER BY conversation_id, created_at DESC
-    )
     SELECT
       c.id              AS conversation_id,
       c.type            AS conversation_type,
@@ -40,43 +47,22 @@ export async function listConversationsForUser(userId: string) {
       c.image_url       AS conversation_image_url,
       c.created_by      AS conversation_created_by,
       c.created_at      AS conversation_created_at,
+      c.member_count    AS member_count,
+      c.last_message_id AS last_message_id,
+      c.last_message_at AS last_message_created_at,
       uc.role           AS my_role,
       uc.left_at        AS my_left_at,
-      uc.hidden_at      AS my_hidden_at,
-      lm.id             AS last_message_id,
+      uc.unread_count   AS unread_count,
       lm.body           AS last_message_body,
       lm.sender_id      AS last_message_sender_id,
-      lm.created_at     AS last_message_created_at,
       other.id          AS other_user_id,
       other.name        AS other_user_name,
-      other.avatar_url  AS other_user_avatar,
-      -- Cheap count for the dock badge — exact participants list is
-      -- fetched on demand from /api/conversations/:id/members.
-      -- Filtra os que SAÍRAM (left_at != NULL): a contagem de
-      -- "X membros" mostra só quem está ativo no grupo agora.
-      (
-        SELECT COUNT(*)::int FROM conversation_participants cpc
-        WHERE cpc.conversation_id = c.id
-          AND cpc.left_at IS NULL
-      ) AS member_count,
-      (
-        -- Mesma exclusão de kind='user' que o last_msg CTE — system
-        -- events não pingam o badge vermelho (não exigem ação do
-        -- usuário, só ficam visíveis no histórico do grupo).
-        SELECT COUNT(*)::int FROM messages m
-        WHERE m.conversation_id = c.id
-          AND m.sender_id <> ${userId}
-          AND m.kind = 'user'
-          AND (
-            uc.last_read_message_id IS NULL
-            OR m.created_at > (
-              SELECT created_at FROM messages WHERE id = uc.last_read_message_id
-            )
-          )
-      ) AS unread_count
+      other.avatar_url  AS other_user_avatar
     FROM conversations c
-    JOIN user_convs uc ON uc.conversation_id = c.id
-    LEFT JOIN last_msg lm ON lm.conversation_id = c.id
+    JOIN conversation_participants uc ON uc.conversation_id = c.id AND uc.user_id = ${userId}
+    /* Lookup PK no messages.id — único lookup por conversa pra
+     * trazer o preview body/sender. PK index = O(1). */
+    LEFT JOIN messages lm ON lm.id = c.last_message_id
     LEFT JOIN LATERAL (
       SELECT u.id, u.name, u.avatar_url
       FROM conversation_participants cp2
@@ -86,12 +72,12 @@ export async function listConversationsForUser(userId: string) {
     ) AS other ON TRUE
     /* "Apagar conversa pra mim": conversas com hidden_at ficam de
      * fora — exceto quando a outra parte mandou mensagem NOVA
-     * (created_at > hidden_at), aí a conversa re-aparece com só
-     * essas mensagens novas em destaque. Pra grupos sem mensagem
-     * subsequente, escondido = invisível. */
-    WHERE uc.hidden_at IS NULL
-       OR (lm.created_at IS NOT NULL AND lm.created_at > uc.hidden_at)
-    ORDER BY COALESCE(lm.created_at, c.created_at) DESC
+     * (last_message_at > hidden_at), aí a conversa re-aparece. */
+    WHERE (uc.hidden_at IS NULL
+       OR (c.last_message_at IS NOT NULL AND c.last_message_at > uc.hidden_at))
+    ${cursor}
+    ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
+    LIMIT ${limit}
   `);
 
   return rows.rows.map((r) => ({
@@ -158,7 +144,12 @@ export async function hideConversationForUser(
 
 /**
  * Mark the conversation read up to its latest message for the given user.
- * Idempotent — sets `last_read_message_id` to the most recent message id.
+ * Idempotent — sets `last_read_message_id` to the most recent message id
+ * AND zera o `unread_count` denormalizado (P0.2).
+ *
+ * O reset do counter é o passo crítico: sem isso o badge vermelho do
+ * dock continuaria mostrando o número antigo até a próxima mensagem
+ * (que disparava recálculo via subquery — agora eliminada).
  */
 export async function markConversationRead(
   conversationId: string,
@@ -166,12 +157,14 @@ export async function markConversationRead(
 ): Promise<void> {
   await db.execute(sql`
     UPDATE conversation_participants
-    SET last_read_message_id = (
-      SELECT id FROM messages
-      WHERE conversation_id = ${conversationId}
-      ORDER BY created_at DESC
-      LIMIT 1
-    )
+    SET
+      last_read_message_id = (
+        SELECT id FROM messages
+        WHERE conversation_id = ${conversationId}
+        ORDER BY created_at DESC
+        LIMIT 1
+      ),
+      unread_count = 0
     WHERE conversation_id = ${conversationId}
       AND user_id = ${userId}
   `);

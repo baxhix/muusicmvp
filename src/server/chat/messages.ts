@@ -1,4 +1,4 @@
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { db } from '../db';
 import {
   conversationParticipants,
@@ -98,6 +98,10 @@ export async function sendMessage(
     // Always fetch the other participants so the caller can broadcast to
     // their personal user rooms (covers users who haven't opened the
     // conversation room yet).
+    //
+    // Filtra quem SAIU do grupo (leftAt != null) — usuários inativos
+    // não devem receber notif, nem ter unread incrementado, nem
+    // figurar no fan-out de email/socket.
     const others = await tx
       .select({ userId: conversationParticipants.userId })
       .from(conversationParticipants)
@@ -105,8 +109,39 @@ export async function sendMessage(
         and(
           eq(conversationParticipants.conversationId, conversationId),
           ne(conversationParticipants.userId, senderId),
+          isNull(conversationParticipants.leftAt),
         ),
       );
+
+    /* P0.2: denormaliza last_message_* na conversa + incrementa
+     * unread_count pra cada outro participante ativo. Tudo na MESMA
+     * tx pra que listConversationsForUser (que agora lê esses
+     * counters direto, sem subqueries) seja sempre consistente.
+     *
+     * sql template é o caminho oficial do drizzle pra UPDATE com
+     * expressão (incrementar um counter). */
+    await tx
+      .update(conversations)
+      .set({
+        lastMessageAt: msg.createdAt,
+        lastMessageId: msg.id,
+      })
+      .where(eq(conversations.id, conversationId));
+
+    if (others.length > 0) {
+      await tx
+        .update(conversationParticipants)
+        .set({
+          unreadCount: sql`${conversationParticipants.unreadCount} + 1`,
+        })
+        .where(
+          and(
+            eq(conversationParticipants.conversationId, conversationId),
+            ne(conversationParticipants.userId, senderId),
+            isNull(conversationParticipants.leftAt),
+          ),
+        );
+    }
 
     // Notifications only for DMs; groups rely on realtime + unread-count via
     // last_read_message_id.
@@ -284,36 +319,33 @@ async function dispatchNewDmEmails(params: {
     const emailEnabled = await isNotificationEnabled('new_dm', 'email');
     if (!emailEnabled) return;
 
-    /* Pesca emails dos destinatários (exclui soft-deleted — deleted
-     * users têm email anonimizado pra @deleted.muusic.live e não
-     * devem receber). Loop individual com .limit(1) mantém compat
-     * com Drizzle sem `inArray`; pra DM (1 destinatário típico)
-     * o overhead é desprezível. */
-    const deliverable = await Promise.all(
-      params.recipientUserIds.map(async (id) => {
-        const rows = await db
-          .select({
-            id: users.id,
-            email: users.email,
-            deletedAt: users.deletedAt,
-          })
-          .from(users)
-          .where(eq(users.id, id))
-          .limit(1);
-        const row = rows[0];
-        if (!row || row.deletedAt) return null;
-        return row;
-      }),
-    );
+    /* SINGLE QUERY pra puxar todos os destinatários (P0.4 da
+     * auditoria de chat). O loop anterior fazia N SELECTs com
+     * .limit(1) — comportamento OK pra DM 1:1, mas se a função
+     * for chamada em group fan-out futuro vai vergar o pool.
+     *
+     * Mantém o filtro de soft-deleted no WHERE (deletedAt IS NULL)
+     * direto no SQL — antes filtrava em JS depois do return. */
+    const valid = await db
+      .select({
+        id: users.id,
+        email: users.email,
+      })
+      .from(users)
+      .where(
+        and(
+          inArray(users.id, params.recipientUserIds),
+          isNull(users.deletedAt),
+        ),
+      );
+
+    if (valid.length === 0) return;
 
     const snippet = snippetOf(params.messageBody);
     const conversationUrl = buildConversationUrl(params.conversationId);
 
     /* Dispara em paralelo — Resend aguenta. Falhas individuais não
      * afetam outras (Promise.allSettled). */
-    const valid = deliverable.filter(
-      (r): r is NonNullable<typeof r> => r !== null,
-    );
     const results = await Promise.allSettled(
       valid.map((r) =>
         sendNewDmEmail({
