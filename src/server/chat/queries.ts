@@ -227,12 +227,24 @@ export async function userIsInConversation(
  * aggregated reactions list (and a `mine` flag per emoji). Skipped
  * when the caller doesn't pass a viewer — keeps the query light
  * for paths that don't render reactions.
+ *
+ * P2.3: `hydrateSender` controla o JOIN com `users` pra hidratar
+ * name/email/avatar. Default `true` (grupos precisam pra mostrar
+ * "quem disse"). DMs 1:1 podem passar `false` — o cliente já tem
+ * o `otherUser` da conversation summary, então o JOIN é trabalho
+ * extra desnecessário (uma das hot paths mais frequentes).
  */
 export async function listMessages(
   conversationId: string,
-  opts: { limit?: number; before?: Date; viewerId?: string } = {},
+  opts: {
+    limit?: number;
+    before?: Date;
+    viewerId?: string;
+    hydrateSender?: boolean;
+  } = {},
 ) {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
+  const hydrateSender = opts.hydrateSender ?? true;
   const where = opts.before
     ? and(
         eq(messages.conversationId, conversationId),
@@ -240,29 +252,44 @@ export async function listMessages(
       )
     : eq(messages.conversationId, conversationId);
 
-  const rows = await db
-    .select({
-      id: messages.id,
-      conversationId: messages.conversationId,
-      senderId: messages.senderId,
-      body: messages.body,
-      createdAt: messages.createdAt,
-      // Discriminator for system events ('system_created' /
-      // 'system_join' / etc.). 'user' for typed messages — the
-      // front-end renders the system kinds as centered pills.
-      kind: messages.kind,
-      // Sender hydration for multi-user rooms (Superchat): each message
-      // arrives with the sender's display name + avatar so the UI can
-      // render 'who said this' without a per-message lookup.
-      senderName: users.name,
-      senderEmail: users.email,
-      senderAvatarUrl: users.avatarUrl,
-    })
-    .from(messages)
-    .leftJoin(users, eq(users.id, messages.senderId))
-    .where(where)
-    .orderBy(desc(messages.createdAt))
-    .limit(limit + 1);
+  const baseSelect = {
+    id: messages.id,
+    conversationId: messages.conversationId,
+    senderId: messages.senderId,
+    body: messages.body,
+    createdAt: messages.createdAt,
+    kind: messages.kind,
+    senderDeleted: messages.senderDeleted,
+  };
+
+  const rows = hydrateSender
+    ? await db
+        .select({
+          ...baseSelect,
+          senderName: users.name,
+          senderEmail: users.email,
+          senderAvatarUrl: users.avatarUrl,
+        })
+        .from(messages)
+        .leftJoin(users, eq(users.id, messages.senderId))
+        .where(where)
+        .orderBy(desc(messages.createdAt))
+        .limit(limit + 1)
+    : (await db
+        .select(baseSelect)
+        .from(messages)
+        .where(where)
+        .orderBy(desc(messages.createdAt))
+        .limit(limit + 1)
+      ).map((m) => ({
+        ...m,
+        // Mantém shape consistente com o branch hidratado pra que
+        // consumers a jusante (LiveChatPanel) nunca vejam undefined
+        // em senderName/senderEmail/senderAvatarUrl — só null.
+        senderName: null as string | null,
+        senderEmail: null as string | null,
+        senderAvatarUrl: null as string | null,
+      }));
 
   const hasMore = rows.length > limit;
   const page = rows.slice(0, limit);

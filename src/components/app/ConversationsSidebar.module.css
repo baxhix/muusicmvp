@@ -263,14 +263,21 @@
   color: #F5F5F7;
 }
 
-/* ── Search field ──────────────────────────────────────────── */
+/* ── Search field ──────────────────────────────────────────────
+ * Espaçamento alinhado 1:1 com CommunityPanel.body (16px laterais
+ * + 16px top + 12px bottom) per product feedback "deixe o
+ * espaçamento dos boxes Chat e Comunidade exatamente igual,
+ * principalmente em torno do input de busca logo após o header".
+ * Antes Chat usava 12px top + 18px lateral + 8px bottom — sutilmente
+ * diferente do Comunidade e isso era percebido side-by-side. */
 .searchWrap {
   position: relative;
-  padding: 12px 18px 8px;
+  padding: 16px 16px 12px;
   flex-shrink: 0;
 }
 .searchIcon {
   position: absolute;
+  /* 16px do padding do .searchWrap + 12px de offset dentro do input. */
   left: 28px;
   top: 50%;
   transform: translateY(calc(-50% + 2px));
@@ -298,11 +305,14 @@
 /* Hide the native ✕ that some browsers add to <input type=search>. */
 .searchInput::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
 
-/* ── List ──────────────────────────────────────────────────── */
+/* ── List ──────────────────────────────────────────────────────
+ * Padding laterais 16px alinhados com .searchWrap + .body do
+ * CommunityPanel pra o "espaçamento dos boxes Chat e Comunidade"
+ * ser idêntico de cima a baixo. */
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 8px 16px;
+  padding: 4px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -454,9 +464,15 @@
 }
 
 /* Group avatars use a rounded-square so they read distinctly from
-   the circular DM avatars at a glance. */
+   the circular DM avatars at a glance.
+   Per product feedback "remova o traço verde em torno do avatar de
+   miniatura de grupos de chat", overrides border + glow do
+   .avatarOnline (que é setado sempre em grupos porque eles "não
+   ficam offline"). Mantém o border neutro cinza. */
 .avatarGroup {
   border-radius: 12px !important;
+  border-color: rgba(160, 160, 165, 0.45) !important;
+  box-shadow: none !important;
 }
 
 /* Circular corner dot. Renamed from statusDash → kept the same

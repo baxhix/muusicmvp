@@ -8,6 +8,7 @@ import UserPicker from '@/components/app/UserPicker';
 import GroupMembersPanel from '@/components/app/GroupMembersPanel';
 import ChatErrorBoundary from '@/components/app/ChatErrorBoundary';
 import { showAppToast } from '@/components/app/AppToast';
+import { confirmDialog } from '@/components/app/ConfirmDialog';
 import { invalidateConversationMembers } from '@/hooks/useConversationMembers';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -109,7 +110,13 @@ export default function ChatPage() {
         onOpenMembers={() => setShowGroupMembers(true)}
         onLeaveGroup={async () => {
           if (!activeConversation || !authUser) return;
-          if (!window.confirm('Sair desse grupo? Você não receberá mais mensagens dele.')) return;
+          const ok = await confirmDialog({
+            title: 'Sair desse grupo?',
+            body: 'Você não receberá mais mensagens dele.',
+            confirmLabel: 'Sair',
+            tone: 'danger',
+          });
+          if (!ok) return;
           try {
             const res = await fetch(
               `/api/conversations/${activeConversation.id}/members/${authUser.id}`,
@@ -149,7 +156,13 @@ export default function ChatPage() {
         }}
         onHideConversation={async () => {
           if (!activeConversation) return;
-          if (!window.confirm('Apagar essa conversa? Ela some apenas pra você; a outra parte continua vendo tudo.')) return;
+          const ok = await confirmDialog({
+            title: 'Apagar essa conversa?',
+            body: 'Ela some apenas pra você; a outra parte continua vendo tudo.',
+            confirmLabel: 'Apagar',
+            tone: 'danger',
+          });
+          if (!ok) return;
           try {
             const res = await fetch(
               `/api/conversations/${activeConversation.id}/hide`,
@@ -262,11 +275,13 @@ export default function ChatPage() {
             );
             if (!res.ok) {
               const data = (await res.json().catch(() => ({}))) as { error?: string };
-              window.alert(
-                data.error === 'user_not_found'
-                  ? 'Usuário não encontrado.'
-                  : 'Não foi possível adicionar o membro.',
-              );
+              showAppToast({
+                message:
+                  data.error === 'user_not_found'
+                    ? 'Usuário não encontrado.'
+                    : 'Não foi possível adicionar o membro.',
+                tone: 'error',
+              });
               return;
             }
             setAddingMemberToGroup(null);

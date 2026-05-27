@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { buildReplyBody } from './MessageBody';
@@ -8,9 +9,18 @@ import MessageBubble, {
   SystemMessagePill,
   hashReactions,
 } from './MessageBubble';
+import { showAppToast } from './AppToast';
+import { confirmDialog } from './ConfirmDialog';
 import VerifiedBadge from './VerifiedBadge';
-import ReportModal from './ReportModal';
-import MentionAutocomplete from './MentionAutocomplete';
+/* P2.7 — code-split: ReportModal e MentionAutocomplete são usados
+ * só em paths secundários (kebab "Denunciar" + composer com @).
+ * Carregar lazy reduz o JS inicial do painel (~12KB gzip cada),
+ * que importa em mobile com network lenta. ssr:false porque
+ * ambos são interativos puros e dependem de window. */
+const ReportModal = dynamic(() => import('./ReportModal'), { ssr: false });
+const MentionAutocomplete = dynamic(() => import('./MentionAutocomplete'), {
+  ssr: false,
+});
 import {
   useConversationMembers,
   type MentionableMember,
@@ -31,9 +41,18 @@ function autoResizeChat(el: HTMLTextAreaElement | null): void {
 /** Block-user remains stubbed — the /api/block endpoint doesn't exist
  *  yet. Reporting (above) is wired to real /api/reports. */
 async function blockUser(userId: string, name: string | null): Promise<void> {
-  if (!window.confirm(`Bloquear ${name ?? 'este usuário'}? Vocês não vão mais conseguir trocar mensagens.`)) return;
+  const ok = await confirmDialog({
+    title: `Bloquear ${name ?? 'este usuário'}?`,
+    body: 'Vocês não vão mais conseguir trocar mensagens.',
+    confirmLabel: 'Bloquear',
+    tone: 'danger',
+  });
+  if (!ok) return;
   console.warn('[chat] TODO: POST /api/block', { targetUserId: userId });
-  window.alert(`${name ?? 'Usuário'} bloqueado.`);
+  showAppToast({
+    message: `${name ?? 'Usuário'} bloqueado.`,
+    tone: 'success',
+  });
 }
 
 /** Shape of the now-playing line shown under the user's name in the

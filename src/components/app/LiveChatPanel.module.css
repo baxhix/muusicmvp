@@ -355,15 +355,13 @@
   color: rgba(245, 245, 247, 0.65);
   font-size: 12px;
   letter-spacing: 0.01em;
-  /* Sempre UMA linha per product feedback "após um grupo ser
-   * criado, deixe a mensagem 'igor.moryama entrou no grupo' em
-   * apenas uma linha". Se o nome do user for absurdamente longo
-   * truncamos com ellipsis em vez de quebrar a pill em 2 linhas.
-   * max-width 92% (não 100%) preserva margem visual lateral. */
-  max-width: 92%;
+  /* Sempre UMA linha per product feedback "sempre em uma linha,
+   * jamais oculte alguma letra". Sem ellipsis nem max-width —
+   * a pill expande até onde precisar pra caber o nome inteiro,
+   * e o container .systemMsg permite overflow horizontal. Em
+   * casos extremos (nome com 80+ chars), prefere passar a borda
+   * direita a truncar uma letra. */
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   display: inline-block;
 }
 .systemMsgPill strong {

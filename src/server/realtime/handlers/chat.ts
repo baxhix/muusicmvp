@@ -76,6 +76,10 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       if (!ok) return ack?.({ ok: false, error: 'forbidden' });
 
       socket.join(room(parsed.data.conversationId));
+      logger.info('realtime.chat.joined', {
+        userId,
+        conversationId: parsed.data.conversationId,
+      });
       ack?.({ ok: true });
     } catch (err) {
       logger.error('realtime.chat.chatjoin-handler', err)
@@ -141,6 +145,18 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
           });
         }
       }
+
+      /* P2.8: log estruturado pra extrair métricas tipo
+       * messages_sent_total + p50 de tamanho de body + ratio
+       * dm vs group. Não inclui body por privacidade. */
+      logger.info('realtime.chat.sent', {
+        userId,
+        conversationId: parsed.data.conversationId,
+        conversationType: result.conversationType,
+        bodyLength: parsed.data.body.length,
+        recipientCount: result.recipientIds.length,
+        mentionCount: result.mentionedUserIds.length,
+      });
 
       ack?.({ ok: true, messageId: result.message.id });
     } catch (err) {
@@ -213,6 +229,11 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
           messageId: parsed.data.messageId,
         });
 
+        logger.info('realtime.chat.read', {
+          userId,
+          conversationId: parsed.data.conversationId,
+        });
+
         ack?.({ ok: true });
       } catch (err) {
         logger.error('realtime.chat.chatread-handler', err);
@@ -253,6 +274,14 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
           action,
           actorUserId: userId,
           reactions,
+        });
+
+        logger.info('realtime.chat.reacted', {
+          userId,
+          conversationId,
+          messageId: parsed.data.messageId,
+          emoji: parsed.data.emoji,
+          action,
         });
 
         ack?.({ ok: true });

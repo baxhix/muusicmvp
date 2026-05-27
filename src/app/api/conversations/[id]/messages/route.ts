@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { requireUser } from '@/server/auth/requireUser';
+import { db } from '@/server/db';
+import { conversations } from '@/server/db/schema';
 import { listMessages, userIsInConversation } from '@/server/chat/queries';
 import { sendMessage } from '@/server/chat/messages';
 
@@ -70,6 +73,18 @@ export async function GET(
     return NextResponse.json({ error: 'invalid_query' }, { status: 400 });
   }
 
+  /* P2.3: skip JOIN com `users` em DMs 1:1 — o cliente já tem o
+   * otherUser hidratado na conversation summary, então o
+   * senderName/email/avatar vindo da query é trabalho duplicado.
+   * Grupos continuam com hydrateSender=true (default) porque o
+   * front renderiza system messages compostas com o senderName. */
+  const [conv] = await db
+    .select({ type: conversations.type })
+    .from(conversations)
+    .where(eq(conversations.id, id))
+    .limit(1);
+  const isDm = conv?.type === 'dm';
+
   const { messages, hasMore } = await listMessages(id, {
     limit: parsed.data.limit,
     before: parsed.data.before ? new Date(parsed.data.before) : undefined,
@@ -78,6 +93,7 @@ export async function GET(
     // render reactions on initial load — was previously local-only
     // state that vanished when the user left and re-entered.
     viewerId: user.id,
+    hydrateSender: !isDm,
   });
 
   return NextResponse.json({ messages, hasMore });

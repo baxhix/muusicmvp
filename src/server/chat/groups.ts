@@ -113,7 +113,7 @@ export async function createGroup(args: {
       ...otherMemberIds.map((userId) => ({
         conversationId: conv.id,
         senderId: userId,
-        body: 'entrou no grupo',
+        body: 'entrou.',
         kind: 'system_join',
       })),
     ]);
@@ -250,7 +250,7 @@ export async function addMember(
     await tx.insert(messages).values({
       conversationId,
       senderId: userId,
-      body: 'entrou no grupo',
+      body: 'entrou.',
       kind: 'system_join',
     });
   });

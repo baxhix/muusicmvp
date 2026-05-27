@@ -1,0 +1,96 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 24px;
+  animation: scrimFadeIn 0.16s ease;
+}
+@keyframes scrimFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  width: min(380px, 100%);
+  background: linear-gradient(180deg, rgba(20, 20, 22, 0.98), rgba(8, 8, 10, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.85);
+  animation: modalPop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+
+.body {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.65);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cancelBtn,
+.confirmBtn {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.cancelBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.85);
+}
+.cancelBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.confirmBtn {
+  background: var(--accent, #3ddb74);
+  border: 1px solid transparent;
+  color: #061110;
+  font-weight: 700;
+}
+.confirmBtn:hover {
+  background: #4be086;
+}
+
+/* Tone "danger" — sem vermelho (per product feedback geral de chat
+ * "remova a cor vermelha"). Vira pill neutro escuro com tipografia
+ * forte; o título do dialog já carrega o peso da ação. */
+.confirmBtnDanger {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+.confirmBtnDanger:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

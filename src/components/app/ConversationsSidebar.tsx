@@ -5,6 +5,7 @@ import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
 import { showAppToast } from './AppToast';
+import { confirmDialog } from './ConfirmDialog';
 import styles from './ConversationsSidebar.module.css';
 
 interface Props {
@@ -80,10 +81,14 @@ export default function ConversationsSidebar({
 
   const handleHideConversation = async (id: string) => {
     if (hidingId) return;
-    if (!window.confirm('Apagar essa conversa? Ela some apenas pra você; a outra parte continua vendo tudo.')) {
-      setKebabOpenId(null);
-      return;
-    }
+    setKebabOpenId(null);
+    const ok = await confirmDialog({
+      title: 'Apagar essa conversa?',
+      body: 'Ela some apenas pra você; a outra parte continua vendo tudo.',
+      confirmLabel: 'Apagar',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setHidingId(id);
     setKebabOpenId(null);
     try {

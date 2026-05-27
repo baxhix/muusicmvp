@@ -192,9 +192,14 @@ export const messages = pgTable(
     conversationId: uuid('conversation_id')
       .notNull()
       .references(() => conversations.id, { onDelete: 'cascade' }),
-    senderId: uuid('sender_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    /* sender_id nullable + ON DELETE SET NULL (migration 0040 /
+     * P2.1) — em hard-delete LGPD do user, preservamos o body da
+     * mensagem mas zeramos o vínculo. Combinado com `senderDeleted`
+     * o front renderiza "Usuário removido" no nome em vez de pôr
+     * fora o histórico inteiro. */
+    senderId: uuid('sender_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     body: text('body').notNull(),
     // Discriminator for system events (group created, member joined,
     // group renamed). 'user' is the only kind that goes through the
@@ -205,6 +210,10 @@ export const messages = pgTable(
     // Kept open as `text` (not enum) so we can grow the catalog
     // without a schema migration each time.
     kind: text('kind').notNull().default('user'),
+    /* Sentinela pro front renderizar "Usuário removido" no
+     * sender name quando o user foi hard-deletado. NULL sender +
+     * sender_deleted=true = LGPD-respected. */
+    senderDeleted: boolean('sender_deleted').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('msg_conv_created_idx').on(t.conversationId, t.createdAt)],

@@ -10,6 +10,8 @@ import {
 import { api } from '@/lib/api/client';
 import type { ApiGroupMember } from '@/lib/api/types';
 import { invalidateConversationMembers } from '@/hooks/useConversationMembers';
+import { showAppToast } from './AppToast';
+import { confirmDialog } from './ConfirmDialog';
 import styles from './GroupMembersPanel.module.css';
 
 interface Props {
@@ -129,7 +131,12 @@ export default function GroupMembersPanel({
 
   const handleKick = async (userId: string) => {
     if (!conversationId || busy) return;
-    if (!window.confirm('Remover esse membro do grupo?')) return;
+    const ok = await confirmDialog({
+      title: 'Remover esse membro do grupo?',
+      confirmLabel: 'Remover',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch(
@@ -138,11 +145,13 @@ export default function GroupMembersPanel({
       );
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        window.alert(
-          data.error === 'cannot_kick_owner'
-            ? 'O dono do grupo não pode ser removido.'
-            : 'Não foi possível remover. Tente de novo.',
-        );
+        showAppToast({
+          message:
+            data.error === 'cannot_kick_owner'
+              ? 'O dono do grupo não pode ser removido.'
+              : 'Não foi possível remover. Tente de novo.',
+          tone: 'error',
+        });
         return;
       }
       // P1.2: invalida cache compartilhado pra que MentionAutocomplete
@@ -165,11 +174,14 @@ export default function GroupMembersPanel({
 
     // Mirror the server limits client-side for snappier feedback.
     if (file.size > 2 * 1024 * 1024) {
-      window.alert('Imagem muito grande (máx 2 MB).');
+      showAppToast({ message: 'Imagem muito grande (máx 2 MB).', tone: 'error' });
       return;
     }
     if (!/^image\/(jpe?g|png|webp|gif)$/i.test(file.type)) {
-      window.alert('Formato não suportado. Use JPG, PNG, WebP ou GIF.');
+      showAppToast({
+        message: 'Formato não suportado. Use JPG, PNG, WebP ou GIF.',
+        tone: 'error',
+      });
       return;
     }
 
@@ -183,20 +195,23 @@ export default function GroupMembersPanel({
       );
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        window.alert(
-          data.error === 'too_large'
-            ? 'Imagem muito grande (máx 2 MB).'
-            : data.error === 'unsupported_type'
-              ? 'Formato não suportado.'
-              : 'Falha no upload. Tente de novo.',
-        );
+        showAppToast({
+          message:
+            data.error === 'too_large'
+              ? 'Imagem muito grande (máx 2 MB).'
+              : data.error === 'unsupported_type'
+                ? 'Formato não suportado.'
+                : 'Falha no upload. Tente de novo.',
+          tone: 'error',
+        });
         return;
       }
       const data = (await res.json()) as { imageUrl: string };
       onImageUpdated?.(data.imageUrl);
+      showAppToast({ message: 'Imagem atualizada.', tone: 'success' });
     } catch (err) {
       console.error('group image upload failed:', err);
-      window.alert('Falha de conexão. Tente de novo.');
+      showAppToast({ message: 'Falha de conexão. Tente de novo.', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -206,12 +221,15 @@ export default function GroupMembersPanel({
     if (!conversationId || busy) return;
     const trimmed = nameDraft.trim();
     if (!trimmed) {
-      window.alert('Dê um nome ao grupo.');
+      showAppToast({ message: 'Dê um nome ao grupo.', tone: 'error' });
       return;
     }
     if (trimmed === (currentName ?? '')) return; // no-op
     if (trimmed.length > 80) {
-      window.alert('Nome muito longo (máx 80 caracteres).');
+      showAppToast({
+        message: 'Nome muito longo (máx 80 caracteres).',
+        tone: 'error',
+      });
       return;
     }
     setBusy(true);
@@ -224,21 +242,24 @@ export default function GroupMembersPanel({
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        window.alert(
-          data.error === 'forbidden'
-            ? 'Apenas o dono do grupo pode renomear.'
-            : data.error === 'empty_name'
-              ? 'Dê um nome ao grupo.'
-              : data.error === 'name_too_long'
-                ? 'Nome muito longo (máx 80 caracteres).'
-                : 'Não foi possível renomear. Tente de novo.',
-        );
+        showAppToast({
+          message:
+            data.error === 'forbidden'
+              ? 'Apenas o dono do grupo pode renomear.'
+              : data.error === 'empty_name'
+                ? 'Dê um nome ao grupo.'
+                : data.error === 'name_too_long'
+                  ? 'Nome muito longo (máx 80 caracteres).'
+                  : 'Não foi possível renomear. Tente de novo.',
+          tone: 'error',
+        });
         return;
       }
       onNameUpdated?.(trimmed);
+      showAppToast({ message: 'Nome atualizado.', tone: 'success' });
     } catch (err) {
       console.error('rename failed:', err);
-      window.alert('Falha de conexão. Tente de novo.');
+      showAppToast({ message: 'Falha de conexão. Tente de novo.', tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -246,9 +267,13 @@ export default function GroupMembersPanel({
 
   const handleLeave = async () => {
     if (!conversationId || busy) return;
-    if (!window.confirm('Sair desse grupo? Você não receberá mais mensagens dele.')) {
-      return;
-    }
+    const ok = await confirmDialog({
+      title: 'Sair desse grupo?',
+      body: 'Você não receberá mais mensagens dele.',
+      confirmLabel: 'Sair',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch(
@@ -256,7 +281,10 @@ export default function GroupMembersPanel({
         { method: 'DELETE', credentials: 'include' },
       );
       if (!res.ok) {
-        window.alert('Não foi possível sair do grupo. Tenta de novo.');
+        showAppToast({
+          message: 'Não foi possível sair do grupo. Tente de novo.',
+          tone: 'error',
+        });
         return;
       }
       onLeft();

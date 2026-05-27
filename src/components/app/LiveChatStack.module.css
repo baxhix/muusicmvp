@@ -216,9 +216,13 @@
    distinctly from circular DM avatars. Product feedback flipped
    that decision — fully round on both keeps the stack visually
    uniform and lets the contextual badge / member icon overlay
-   carry the "this is a group" signal instead. */
+   carry the "this is a group" signal instead.
+   Per product feedback "remova o traço verde em torno do avatar
+   de miniatura de grupos de chat", grupos NÃO levam o ring verde
+   do `.item:not(.itemOffline) .avatar` (grupos não têm presence). */
 .avatarGroup {
   border-radius: 50% !important;
+  border-color: rgba(160, 160, 165, 0.65) !important;
 }
 
 /* ── Presence dot ──────────────────────────────────────────────
