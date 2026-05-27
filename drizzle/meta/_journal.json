@@ -239,6 +239,13 @@
       "when": 1780600000000,
       "tag": "0034_community_notification_log",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1780700000000,
+      "tag": "0035_artist_signup_links",
+      "breakpoints": true
     }
   ]
 }
