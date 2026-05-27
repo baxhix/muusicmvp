@@ -4,7 +4,10 @@
 
 .footer {
   position: relative;
-  background: #000;
+  /* Transparente — galáxia da page (GalaxyBackdrop +
+   * .page::before) transparece através do footer também,
+   * mantendo a continuidade visual com as sections acima. */
+  background: transparent;
   color: #fff;
   /* Horizontal padding MATCH ao da navbar — clamp(20, 4vw, 56)
    * — pra que as colunas do footer fiquem ALINHADAS com o

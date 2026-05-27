@@ -5,7 +5,9 @@
   position: relative;
   min-height: 100dvh;
   width: 100%;
-  background: #000;
+  /* Transparente pra deixar a galáxia (GalaxyBackdrop + .page::before)
+   * transparecer. Antes era #000 sólido — cobria o backdrop. */
+  background: transparent;
   color: #fff;
   overflow: hidden;
   display: flex;

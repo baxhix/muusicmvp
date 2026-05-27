@@ -4,7 +4,11 @@
   position: relative;
   min-height: 100dvh;
   width: 100%;
-  background: #000;
+  /* background:#000 removido — a galáxia da page (GalaxyBackdrop
+   * + .page::before) precisa transparecer através das sections.
+   * Antes, este preto opaco cobria o backdrop e a galáxia só
+   * aparecia em buracos como a região do orbe pre-footer. */
+  background: transparent;
   color: #fff;
   overflow: hidden;
   display: flex;

@@ -4,7 +4,8 @@
   position: relative;
   min-height: 100dvh;
   width: 100%;
-  background: #000;
+  /* Transparente — galáxia da page transparece. */
+  background: transparent;
   color: #fff;
   overflow: hidden;
   display: flex;
