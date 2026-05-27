@@ -18,9 +18,9 @@
  *     atribuir signup_link_id se houver cookie válido
  */
 
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '../db';
-import { artistSignupLinks, users } from '../db/schema';
+import { artistSignupLinks } from '../db/schema';
 
 export interface ArtistSignupLink {
   id: string;
@@ -63,23 +63,13 @@ function rowToLink(row: typeof artistSignupLinks.$inferSelect): ArtistSignupLink
  * por criação desc — os mais novos no topo.
  */
 export async function listArtistLinks(): Promise<ArtistSignupLinkWithStats[]> {
-  /* JOIN agregado: cada link com o COUNT dos users que apontam
-   * pra ele. LEFT JOIN pra incluir links com 0 signups (sem
-   * isso, eles sumiriam do listing). */
+  /* HOTFIX: o JOIN agregado com users.signupLinkId foi REMOVIDO
+   * porque a coluna `users.signup_link_id` ainda não existe em
+   * prod (migração 0035 não rodou). signupCount fica fixado em
+   * 0 até a migração ser aplicada. */
   const rows = await db
-    .select({
-      id: artistSignupLinks.id,
-      slug: artistSignupLinks.slug,
-      artistName: artistSignupLinks.artistName,
-      label: artistSignupLinks.label,
-      createdAt: artistSignupLinks.createdAt,
-      createdBy: artistSignupLinks.createdBy,
-      archivedAt: artistSignupLinks.archivedAt,
-      signupCount: sql<number>`COUNT(${users.id})::int`.as('signup_count'),
-    })
+    .select()
     .from(artistSignupLinks)
-    .leftJoin(users, eq(users.signupLinkId, artistSignupLinks.id))
-    .groupBy(artistSignupLinks.id)
     .orderBy(desc(artistSignupLinks.createdAt));
 
   return rows.map((r) => ({
@@ -90,7 +80,7 @@ export async function listArtistLinks(): Promise<ArtistSignupLinkWithStats[]> {
     createdAt: r.createdAt.toISOString(),
     createdBy: r.createdBy,
     archivedAt: r.archivedAt?.toISOString() ?? null,
-    signupCount: r.signupCount ?? 0,
+    signupCount: 0,
   }));
 }
 
@@ -162,48 +152,14 @@ export async function getArtistLinkById(
  * detail page do admin (/admin/aquisicao/[id]).
  */
 export async function listUsersForLink(
-  linkId: string,
-  opts: { limit?: number; offset?: number } = {},
+  _linkId: string,
+  _opts: { limit?: number; offset?: number } = {},
 ): Promise<{ items: LinkUserRow[]; total: number }> {
-  const limit = Math.min(opts.limit ?? 50, 200);
-  const offset = opts.offset ?? 0;
-
-  const [items, totalRow] = await Promise.all([
-    db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        avatarUrl: users.avatarUrl,
-        createdAt: users.createdAt,
-        isOnboarded: users.isOnboarded,
-      })
-      .from(users)
-      .where(
-        and(eq(users.signupLinkId, linkId), isNull(users.deletedAt)),
-      )
-      .orderBy(desc(users.createdAt))
-      .limit(limit)
-      .offset(offset),
-    db
-      .select({ value: count() })
-      .from(users)
-      .where(
-        and(eq(users.signupLinkId, linkId), isNull(users.deletedAt)),
-      ),
-  ]);
-
-  return {
-    items: items.map((r) => ({
-      id: r.id,
-      email: r.email,
-      name: r.name,
-      avatarUrl: r.avatarUrl,
-      createdAt: r.createdAt.toISOString(),
-      isOnboarded: r.isOnboarded,
-    })),
-    total: totalRow[0]?.value ?? 0,
-  };
+  /* HOTFIX: query desabilitada — users.signupLinkId não existe
+   * em prod até a migration 0035 ser aplicada. Detail page do
+   * /admin/aquisicao/[id] vai mostrar "0 usuários atribuídos"
+   * até a coluna ser criada. Restaurar depois da migração. */
+  return { items: [], total: 0 };
 }
 
 /**

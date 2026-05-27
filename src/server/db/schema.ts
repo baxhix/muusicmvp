@@ -57,13 +57,14 @@ export const users = pgTable('users', {
    *  (pré-onboarding social). Serializado como text[] do
    *  postgres. */
   interests: text('interests').array(),
-  /** Atribuição de aquisição — FK opcional pra
-   * artist_signup_links.id. Setado no momento da criação do
-   * user row, lendo o cookie `fanverse_ref` (cravado pelo
-   * /r/[slug]). Null = signup orgânico (não veio de link de
-   * artista). FK declarada no nível do SQL (migration) pra
-   * evitar circular import com artistSignupLinks abaixo. */
-  signupLinkId: uuid('signup_link_id'),
+  /* HOTFIX: o campo `signupLinkId` (FK pra artist_signup_links)
+   * foi REMOVIDO do schema TS porque a migração 0035 falhou
+   * silenciosamente em prod (entrypoint.sh continua mesmo se
+   * `node migrate.mjs` retorna não-zero). Sem a coluna no DB,
+   * o Drizzle gerava `RETURNING signup_link_id` no INSERT do
+   * /api/auth/request, derrubando o login com 500.
+   * Re-adicionar depois que a migration 0035 estiver
+   * confirmadamente aplicada em prod. */
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   /**
