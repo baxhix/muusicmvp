@@ -64,11 +64,30 @@ export interface CronTriggerResponse {
   result: Record<string, unknown>;
 }
 
+/** Resposta do DELETE — quantas linhas saíram de cada tabela. */
+export interface DeleteNotificationResponse {
+  ok: boolean;
+  kind: string;
+  /** Linhas removidas de notification_settings (0 ou 1). */
+  settingsDeleted: number;
+  /** Instâncias entregues aos usuários removidas da tabela
+   * `notifications` (sino do app). Quantidade variável. */
+  instancesDeleted: number;
+}
+
 export const notificationsService = {
   list: () =>
     api.get<{ items: NotificationItem[] }>('/api/admin/notifications'),
   upsert: (input: UpsertNotificationInput) =>
     api.post<{ ok: boolean }>('/api/admin/notifications', input),
+  /** Apaga a notificação no banco — limpa o override de config +
+   *  todas as instâncias já entregues aos usuários (sino vazia).
+   *  Tipos hardcoded no catálogo ainda aparecem na listagem com
+   *  defaults, mas sem o override do admin. */
+  remove: (kind: string) =>
+    api.delete<DeleteNotificationResponse>(
+      `/api/admin/notifications?kind=${encodeURIComponent(kind)}`,
+    ),
   /** Dispara um cron job manualmente — usado pelo botão "Enviar
    *  teste agora" do editor. Backend valida que o `kind` está no
    *  registry; se não estiver, devolve 400 invalid/unknown_kind. */

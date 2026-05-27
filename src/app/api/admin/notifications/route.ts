@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import {
+  deleteNotification,
   listNotifications,
   upsertNotification,
 } from '@/server/notifications/settings';
@@ -89,6 +90,62 @@ export async function POST(req: Request) {
   } catch (err) {
     return handleApiError(err, {
       scope: 'admin.notifications.upsert',
+      ctx: { actorId: auth.id },
+    });
+  }
+}
+
+/**
+ * DELETE /api/admin/notifications?kind=<kind>
+ *
+ * Apaga uma notificação direto no banco — remove o override de
+ * configuração (notification_settings) E todas as instâncias já
+ * entregues aos usuários (notifications). O sino do app para de
+ * mostrar essas notificações imediatamente.
+ *
+ * Como o catálogo (KNOWN_NOTIFICATIONS) é hardcoded no código, o
+ * TIPO ainda vai aparecer na listagem do admin após o delete —
+ * mas com os defaults do catálogo, não mais o override do admin.
+ * Pra remover totalmente do catálogo é preciso editar o código.
+ */
+const deleteSchema = z.object({
+  kind: z.string().min(1).max(80).regex(/^[a-z0-9_]+$/),
+});
+
+export async function DELETE(req: Request) {
+  const auth = await requireAdmin();
+  if (auth instanceof NextResponse) return auth;
+
+  try {
+    /* Lê o kind do query param. Aceita também body JSON pra
+     * clients que preferem mandar via payload (alguns proxies
+     * stripam DELETE bodies). Query param tem prioridade. */
+    const url = new URL(req.url);
+    const kindFromQuery = url.searchParams.get('kind');
+    let kind = kindFromQuery;
+    if (!kind) {
+      try {
+        const body = await req.json();
+        kind = body?.kind ?? null;
+      } catch {
+        // body vazio é OK se o query param tava lá
+      }
+    }
+
+    const parsed = deleteSchema.safeParse({ kind });
+    if (!parsed.success) throw new ValidationError('invalid_kind');
+
+    const result = await deleteNotification(parsed.data.kind);
+
+    return NextResponse.json({
+      ok: true,
+      kind: parsed.data.kind,
+      settingsDeleted: result.settingsDeleted,
+      instancesDeleted: result.instancesDeleted,
+    });
+  } catch (err) {
+    return handleApiError(err, {
+      scope: 'admin.notifications.delete',
       ctx: { actorId: auth.id },
     });
   }

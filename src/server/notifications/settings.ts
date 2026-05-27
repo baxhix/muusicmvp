@@ -10,7 +10,7 @@
 
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { notificationSettings } from '../db/schema';
+import { notificationSettings, notifications } from '../db/schema';
 import {
   KNOWN_NOTIFICATIONS,
   getKnownNotification,
@@ -158,6 +158,56 @@ export async function upsertNotification(
     });
 
   invalidateCache();
+}
+
+/**
+ * Apaga uma notificação do banco — remove o override de
+ * configuração (notification_settings) E todas as instâncias
+ * já entregues aos usuários (notifications).
+ *
+ * Após esta chamada:
+ *   - O sino dos usuários (NotificationBell) para de mostrar
+ *     qualquer notificação desse kind imediatamente.
+ *   - A configuração no admin volta pros defaults do catálogo
+ *     (KNOWN_NOTIFICATIONS) — esses são hardcoded no código,
+ *     então o tipo ainda aparece na listagem com valores
+ *     padrão. Pra ocultar do catálogo, é preciso editar o
+ *     código + redeploy.
+ *
+ * Retorna a contagem de linhas removidas em cada tabela.
+ *
+ * NOTA: notifications.kind é um enum no DB, então remove só
+ * funciona pros kinds que estão nesse enum. Os 'system' kinds
+ * (boas_vindas, magic_link, etc) não têm instâncias na tabela
+ * notifications — eles vivem só em emails — então essa
+ * função só limpa o settings deles. Comportamento esperado.
+ */
+export async function deleteNotification(kind: string): Promise<{
+  settingsDeleted: number;
+  instancesDeleted: number;
+}> {
+  // Remove override do tipo em notification_settings.
+  const settingsResult = await db
+    .delete(notificationSettings)
+    .where(eq(notificationSettings.kind, kind))
+    .returning({ kind: notificationSettings.kind });
+
+  // Remove instâncias já entregues. O cast `as never` é
+  // necessário porque notifications.kind é tipado como union
+  // dos 10 literais do enum, e `kind: string` é mais largo.
+  // Em runtime o postgres simplesmente não encontra rows pra
+  // kinds fora do enum — comportamento OK.
+  const instancesResult = await db
+    .delete(notifications)
+    .where(eq(notifications.kind, kind as never))
+    .returning({ id: notifications.id });
+
+  invalidateCache();
+
+  return {
+    settingsDeleted: settingsResult.length,
+    instancesDeleted: instancesResult.length,
+  };
 }
 
 /* ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 'use client';
 
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -11,6 +11,7 @@ import Select from '@/components/ui/Select';
 import StatCard from '@/components/ui/StatCard';
 import Table, { type Column } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
+import { ConfirmDialog } from '@/components/ui/Dialog';
 import NewNotificationDialog from '@/components/admin/NewNotificationDialog';
 import Tabs from '@/components/ui/Tabs';
 import {
@@ -22,10 +23,12 @@ import {
   IconSearch,
   IconShield,
   IconPlus,
+  IconTrash,
 } from '@/components/icons';
 import {
   notificationsService,
   loadCustomDrafts,
+  deleteCustomDraft,
   isCustomDraftKind,
   CATEGORY_LABEL,
   CHANNEL_LABEL,
@@ -92,12 +95,17 @@ export default function NotificacoesPage() {
     wired: '' as '' | 'wired' | 'planned',
   });
   const [createOpen, setCreateOpen] = useState(false);
+  /* Notificação aguardando confirmação de delete — abre o
+   * ConfirmDialog. null = nenhum modal aberto. */
+  const [pendingDelete, setPendingDelete] = useState<NotificationItem | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
 
-  /* Drafts personalizados (localStorage) — merged com o catálogo
-   * do servidor. Os drafts ficam DEPOIS dos itens do catálogo na
-   * lista, pra preservar a ordem oficial e empurrar os custom pro
-   * fim da paginação. */
-  useEffect(() => {
+  /* Carga inicial extraída em callback pra que o `handleDelete`
+   * possa re-fetchar a lista depois de uma exclusão (custom drafts
+   * + catálogo merged). */
+  const loadAll = useCallback(() => {
     notificationsService
       .list()
       .then((res) => {
@@ -113,8 +121,61 @@ export default function NotificacoesPage() {
         /* Mesmo se a API falhar, tenta carregar drafts locais. */
         setItems(loadCustomDrafts());
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [push]);
+
+  /* Drafts personalizados (localStorage) — merged com o catálogo
+   * do servidor. Os drafts ficam DEPOIS dos itens do catálogo na
+   * lista, pra preservar a ordem oficial e empurrar os custom pro
+   * fim da paginação. */
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  /* Apaga a notificação:
+   *   - Custom draft (localStorage) → deleteCustomDraft (sem API)
+   *   - Catálogo → DELETE /api/admin/notifications (apaga
+   *     notification_settings + todas as instâncias do tipo na
+   *     tabela `notifications` do user-side). System kinds não
+   *     podem ser deletados — botão sai escondido pra eles. */
+  const handleDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      if (isCustomDraftKind(pendingDelete.kind)) {
+        deleteCustomDraft(pendingDelete.kind);
+        setItems((prev) =>
+          prev ? prev.filter((it) => it.kind !== pendingDelete.kind) : prev,
+        );
+        push({
+          type: 'success',
+          title: 'Notificação removida',
+          description: `${pendingDelete.label} (rascunho local).`,
+        });
+      } else {
+        const result = await notificationsService.remove(pendingDelete.kind);
+        push({
+          type: 'success',
+          title: 'Notificação apagada',
+          description:
+            result.instancesDeleted > 0
+              ? `${pendingDelete.label}: ${result.instancesDeleted} entrega(s) removida(s) do sino dos usuários.`
+              : `${pendingDelete.label}: override de config removido.`,
+        });
+        /* Re-fetcha pra refletir o estado atual — o tipo volta
+         * pros defaults do catálogo (hardcoded) automaticamente. */
+        loadAll();
+      }
+      setPendingDelete(null);
+    } catch (err: unknown) {
+      push({
+        type: 'error',
+        title: 'Erro ao apagar',
+        description: err instanceof Error ? err.message : '',
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }, [pendingDelete, push, loadAll]);
 
   function handleCreated(draft: NotificationItem) {
     setCreateOpen(false);
@@ -306,6 +367,37 @@ export default function NotificacoesPage() {
           ),
         width: 140,
       },
+      {
+        id: 'actions',
+        header: '',
+        cell: (i) => {
+          /* `system` kinds (boas_vindas, magic_link, etc) NÃO podem
+           * ser apagados — são críticos pra funcionamento da
+           * plataforma. Pra esses, renderiza um spacer 32px pra
+           * manter alinhamento da coluna sem mostrar o botão. */
+          if (i.system) {
+            return <span aria-hidden="true" style={{ display: 'inline-block', width: 32 }} />;
+          }
+          return (
+            <Button
+              variant="dangerGhost"
+              size="sm"
+              iconOnly
+              aria-label={`Apagar ${i.label}`}
+              title="Apagar notificação (banco + sino dos usuários)"
+              onClick={(e) => {
+                /* stopPropagation evita disparar o onRowClick
+                 * (openEditor) — o trash não deve abrir o editor. */
+                e.stopPropagation();
+                setPendingDelete(i);
+              }}
+            >
+              <IconTrash size={14} />
+            </Button>
+          );
+        },
+        width: 60,
+      },
     ],
     [],
   );
@@ -488,6 +580,29 @@ export default function NotificacoesPage() {
         /* Tab ativa determina o tipo de criação — Plataforma vs Push
          * têm dialogs distintos (título, copy, defaults, banner). */
         channel={channelTab}
+      />
+
+      {/* Confirma exclusão antes de chamar o DELETE — operação
+       *  destrutiva que também remove entregas do sino dos
+       *  usuários (sem rollback fácil). Para custom drafts é só
+       *  localStorage; pro catálogo bate na API. */}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onClose={() => !deleting && setPendingDelete(null)}
+        title={
+          pendingDelete ? `Apagar "${pendingDelete.label}"?` : 'Apagar'
+        }
+        description={
+          pendingDelete
+            ? isCustomDraftKind(pendingDelete.kind)
+              ? 'Esse é um rascunho local. Vai sair só da sua máquina — outros admins não viam mesmo.'
+              : 'A notificação some do sino de todos os usuários imediatamente, e o override de configuração no banco é apagado. Tipos do catálogo voltam aos defaults (não somem da listagem). Esta ação não pode ser desfeita.'
+            : ''
+        }
+        confirmLabel={deleting ? 'Apagando…' : 'Apagar'}
+        destructive
+        onConfirm={handleDelete}
+        loading={deleting}
       />
     </>
   );
