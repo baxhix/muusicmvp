@@ -374,6 +374,33 @@ export function useChatLive(): UseChatLiveResult {
             messageId: msg.id,
           })
           .catch((err) => console.error('mark read (active) failed:', err));
+      } else if (!isOwn && (!msg.kind || msg.kind === 'user')) {
+        /* Notificação flutuante acima da bottombar (MockToastRotator)
+         * agora intercala mensagens reais — quando alguém manda msg
+         * pro user e ele NÃO está com a conv aberta, despachamos
+         * `app:chat-message-toast` com avatar + nome + snippet. O
+         * MockToastRotator escuta e prioriza essa entry na fila
+         * antes dos mocks cíclicos. Filtros:
+         *   - !isActive: já cobre o caso "vendo a conv" (não precisa)
+         *   - !isOwn: minha própria mensagem não vira notif
+         *   - kind === 'user': system events (entrou/saiu) não viram
+         *     notif "X mandou mensagem". */
+        const senderName =
+          msg.senderName?.trim() ||
+          msg.senderEmail?.split('@')[0] ||
+          'Alguém';
+        const snippet =
+          msg.body.length > 80 ? `${msg.body.slice(0, 80)}…` : msg.body;
+        window.dispatchEvent(
+          new CustomEvent('app:chat-message-toast', {
+            detail: {
+              senderName,
+              senderAvatarUrl: msg.senderAvatarUrl ?? null,
+              snippet,
+              conversationId: msg.conversationId,
+            },
+          }),
+        );
       }
 
       // Patch local da row na lista de conversas. Sem hit ao servidor.

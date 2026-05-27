@@ -1,8 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import styles from './MockToastRotator.module.css';
+
+/** Mensagem real vinda do socket (chat:message) — disparada via
+ *  CustomEvent('app:chat-message-toast') pelo useChatLive sempre
+ *  que uma msg chega FORA da conv ativa, não-self, kind='user'. */
+export interface RealChatToastDetail {
+  senderName: string;
+  senderAvatarUrl: string | null;
+  snippet: string;
+  conversationId: string;
+}
 
 /* ============================================================
  * MOCK TOAST ROTATOR — cycling demo notifications
@@ -64,7 +74,11 @@ type MockToast =
   | { kind: 'ana_message' }
   /** New publication from the "Central de Fãs" account — brand-
    *  level feed announcement, also uses Ana's central portrait. */
-  | { kind: 'new_publication' };
+  | { kind: 'new_publication' }
+  /** Mensagem REAL vinda do socket. Quando essa entry é a próxima
+   *  a exibir, o rotator pula do mock e renderiza dados reais
+   *  (nome + avatar + snippet do remetente). */
+  | { kind: 'real_message'; data: RealChatToastDetail };
 
 /**
  * Pre-baked rotation order. Each tick advances by one; the array
@@ -145,6 +159,46 @@ function fireRankConfetti() {
 export default function MockToastRotator() {
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('enter');
+  /* Fila FIFO de mensagens REAIS que entraram via socket. Quando
+   * o cycling avança (gap → enter), se essa fila tem item, ele
+   * é desenfileirado e renderizado em vez do mock; senão segue o
+   * ROTATION padrão. Limite de 8 itens evita acúmulo em explosão
+   * de msgs (raro mas defensivo — o último ainda aparece).
+   *
+   * Per product feedback "deixe dinâmica o tipo de notificação
+   * que aparece logo acima da bottombar quando o usuário manda
+   * mensagem no Chat" — chat agora é a única "linha" do rotator
+   * que reflete atividade real; outros tipos seguem mockados. */
+  const realQueueRef = useRef<RealChatToastDetail[]>([]);
+  const [currentReal, setCurrentReal] = useState<RealChatToastDetail | null>(null);
+
+  /* Listener do evento global. Apenas enfileira — a entrada
+   * na rotação é processada no advance() abaixo (gap→enter).
+   * Sem isso o toast atual saltaria abruptamente quando a msg
+   * chega. */
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<RealChatToastDetail>).detail;
+      if (!detail?.senderName) return;
+      const q = realQueueRef.current;
+      // Dedupe consecutivos do mesmo sender com mesmo snippet
+      // (defensivo contra echo do socket no caso ímpar).
+      const last = q[q.length - 1];
+      if (
+        last &&
+        last.senderName === detail.senderName &&
+        last.snippet === detail.snippet
+      ) {
+        return;
+      }
+      if (q.length >= 8) q.shift(); // drop o mais antigo
+      q.push(detail);
+    };
+    window.addEventListener('app:chat-message-toast', handler);
+    return () => {
+      window.removeEventListener('app:chat-message-toast', handler);
+    };
+  }, []);
 
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
@@ -156,7 +210,15 @@ export default function MockToastRotator() {
       t = setTimeout(() => setPhase('gap'), EXIT_MS);
     } else {
       t = setTimeout(() => {
-        setIdx((i) => (i + 1) % ROTATION.length);
+        // Próximo toast: consome a fila real primeiro, senão
+        // avança no ROTATION mock.
+        const next = realQueueRef.current.shift();
+        if (next) {
+          setCurrentReal(next);
+        } else {
+          setCurrentReal(null);
+          setIdx((i) => (i + 1) % ROTATION.length);
+        }
         setPhase('enter');
       }, GAP_MS);
     }
@@ -169,6 +231,8 @@ export default function MockToastRotator() {
   // its normal hold/exit phases.
   useEffect(() => {
     if (phase !== 'enter') return;
+    // Real toasts não têm side effects (sem confetti, sem cascata).
+    if (currentReal) return;
     const current = ROTATION[idx];
     if (current.kind === 'top_20') {
       // Rank-up festive moment — same canvas-confetti recipe the
@@ -197,7 +261,11 @@ export default function MockToastRotator() {
   // so even the empty container can't intercept pointer events.
   if (phase === 'gap') return null;
 
-  const current = ROTATION[idx];
+  /* Decide a entry visível: se há um real_message ativo, ele
+   * roda neste ciclo; senão usa o mock indexado pelo idx. */
+  const current: MockToast = currentReal
+    ? { kind: 'real_message', data: currentReal }
+    : ROTATION[idx];
   const exiting = phase === 'exit';
 
   return (
@@ -272,6 +340,30 @@ function ToastBody({ toast }: { toast: MockToast }) {
           <div className={`${styles.info} ${styles.infoSingleLine}`}>
             <span className={styles.text}>
               <strong className={styles.strong}>{toast.user.name}</strong>{' '}
+              enviou uma mensagem
+            </span>
+          </div>
+        </>
+      );
+
+    case 'real_message':
+      /* Toast vindo do socket — dados reais do remetente. Mesmo
+       * layout do `message_sent` mockado mas com avatar dinâmico
+       * + snippet do body. Fallback do avatar pro silhouette
+       * padrão quando o user não tem foto. */
+      return (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={toast.data.senderAvatarUrl ?? '/avatar-placeholder.svg'}
+            alt=""
+            className={styles.avatar}
+          />
+          <div className={`${styles.info} ${styles.infoSingleLine}`}>
+            <span className={styles.text}>
+              <strong className={styles.strong}>
+                {toast.data.senderName}
+              </strong>{' '}
               enviou uma mensagem
             </span>
           </div>
