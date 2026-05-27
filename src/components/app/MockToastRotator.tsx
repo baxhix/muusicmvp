@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
+import { useAppShell } from '@/lib/app/AppShellContext';
 import styles from './MockToastRotator.module.css';
 
 /** Mensagem real vinda do socket (chat:message) — disparada via
@@ -290,16 +292,69 @@ export default function MockToastRotator() {
     ? { kind: 'real_message', data: currentReal }
     : ROTATION[idx];
   const exiting = phase === 'exit';
+  /* Pílulas de real_message são clicáveis — levam direto pra
+   * conversa que acabou de receber a mensagem. Mocks ficam
+   * decorativos (sem ação ao clique). */
+  const clickable = current.kind === 'real_message';
 
   return (
     <div className={styles.root} aria-live="polite">
-      <div
-        className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter}`}
-        role="status"
-      >
-        <ToastBody toast={current} />
-      </div>
+      {clickable ? (
+        <ClickableToast
+          conversationId={(current as { kind: 'real_message'; data: RealChatToastDetail }).data.conversationId}
+          exiting={exiting}
+        >
+          <ToastBody toast={current} />
+        </ClickableToast>
+      ) : (
+        <div
+          className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter}`}
+          role="status"
+        >
+          <ToastBody toast={current} />
+        </div>
+      )}
     </div>
+  );
+}
+
+/**
+ * Wrapper interativo pra toasts reais — ao clicar, abre a conv
+ * que originou a mensagem. `chat.open(id)` carrega messages +
+ * marca read; `router.push('/app/chat')` leva o user pra surface
+ * de detalhe. Funciona em desktop (chat panel desliza) e mobile
+ * (rota /app/chat renderiza o painel full-screen).
+ *
+ * Componente separado pra que o `useAppShell` + `useRouter` só
+ * sejam invocados no caminho clicável (mocks não precisam).
+ * `pointer-events: auto` no CSS sobrescreve o `.root` que tem
+ * pointer-events:none por default (pra que o pill mock não
+ * intercepte cliques no mapa abaixo).
+ */
+function ClickableToast({
+  conversationId,
+  exiting,
+  children,
+}: {
+  conversationId: string;
+  exiting: boolean;
+  children: React.ReactNode;
+}) {
+  const { chat } = useAppShell();
+  const router = useRouter();
+  const handleClick = () => {
+    chat.open(conversationId);
+    router.push('/app/chat');
+  };
+  return (
+    <button
+      type="button"
+      className={`${styles.toast} ${styles.toastClickable} ${exiting ? styles.toastExit : styles.toastEnter}`}
+      onClick={handleClick}
+      aria-label="Abrir conversa"
+    >
+      {children}
+    </button>
   );
 }
 

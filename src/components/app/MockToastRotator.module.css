@@ -32,15 +32,13 @@
 
 @media (max-width: 768px) {
   .root {
-    /* Mobile pill geometry: .nav padding-bottom 18 + pill
-     * height ~56 + 24 gap = 98px from viewport bottom.
-     *
-     * Bumped 98 → 156 pra clear o orb decorativo (FanverseCore)
-     * que vive em bottom-left no mobile (bottom:96 + 44 = topo
-     * em 140). 156 dá 16px de respiro acima do orb e alinha com
-     * o bottom mobile do SameTrackToast — consistência entre as
-     * duas filas de toast. */
-    bottom: 156px;
+    /* Mobile: posicionado logo acima da navbar per product
+     * feedback "deixe as notificações toast logo acima da
+     * navbar. e não muito acima". Cálculo: .nav padding-bottom
+     * 18 + pill height ~56 + 12 gap = 86px. Mantém o toast
+     * visível sem cobrir a navbar e sem ficar flutuando alto
+     * demais (era 156px = 70px acima da navbar). */
+    bottom: 86px;
   }
 }
 
@@ -92,8 +90,33 @@
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .toastExit  { animation: mockToastOut 0.38s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
+/* Variante clicável — usada APENAS pra real_message (toast vindo
+ * do socket). Sobrescreve o pointer-events:none herdado do
+ * .root pra capturar cliques, mantém o visual idêntico do pill
+ * mas adiciona affordance de hover sutil (lift + glow). Também
+ * zera o styling default de <button> (border, padding extra)
+ * pra que a pílula renderize idêntica aos toasts em <div>. */
+.toastClickable {
+  pointer-events: auto;
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease,
+              filter 0.18s ease;
+}
+.toastClickable:hover {
+  transform: translateY(-1px) scale(1.015);
+  filter: brightness(1.06);
+}
+.toastClickable:active {
+  transform: translateY(0) scale(0.985);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .toastEnter, .toastExit { animation-duration: 0.001s; }
+  .toastClickable { transition: none; }
 }
 
 /* Single-avatar slot — used by message_sent and waved. */
