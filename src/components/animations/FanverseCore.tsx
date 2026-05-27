@@ -272,6 +272,14 @@ export function FanverseCore({
     resize();
 
     const start = performance.now();
+    // Estado de pausa: o rAF só corre quando o canvas está VISÍVEL no
+    // viewport (IntersectionObserver) E o tab está em foreground
+    // (visibilitychange). Sem isso, instâncias off-screen (ex.: o
+    // FanverseCore do pre-footer enquanto o user está na hero)
+    // continuavam queimando GPU à toa.
+    let visible = false;
+    let tabHidden = document.hidden;
+
     const render = () => {
       const now = (performance.now() - start) / 1000;
 
@@ -283,10 +291,45 @@ export function FanverseCore({
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       rafRef.current = requestAnimationFrame(render);
     };
-    render();
+
+    const startLoop = () => {
+      if (rafRef.current != null) return;
+      rafRef.current = requestAnimationFrame(render);
+    };
+    const stopLoop = () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+    const refresh = () => {
+      if (visible && !tabHidden) startLoop();
+      else stopLoop();
+    };
+
+    // IntersectionObserver — pausa quando o canvas sai do viewport.
+    // rootMargin: 100px dá uma pequena margem pra resumir um pouco
+    // antes do canvas aparecer (evita flash de "primeira frame".
+    const io = new IntersectionObserver(
+      (entries) => {
+        visible = entries[0]?.isIntersecting ?? false;
+        refresh();
+      },
+      { rootMargin: "100px" },
+    );
+    io.observe(canvas);
+
+    // visibilitychange — pausa quando o tab sai pra background.
+    const onVisChange = () => {
+      tabHidden = document.hidden;
+      refresh();
+    };
+    document.addEventListener("visibilitychange", onVisChange);
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      stopLoop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisChange);
       ro.disconnect();
       gl.deleteProgram(prog);
       gl.deleteShader(vs);

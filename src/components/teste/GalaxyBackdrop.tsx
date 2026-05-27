@@ -1,22 +1,22 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import styles from './GalaxyBackdrop.module.css';
 
 /**
  * Galaxy backdrop pro /teste — duas responsabilidades:
  *
- *  1) Star field denso "tipo Mapbox" — 180 pontos brancos
- *     minúsculos (0.5..2px), distribuídos com seed
- *     determinístico (mesma posição entre SSR/CSR pra evitar
- *     hydration mismatch). Espelha o efeito do
- *     `setFog({ 'star-intensity': 0.45 })` que o Mapbox usa no
- *     /app, mas em DOM. Cada estrela tem opacidade base + um
- *     twinkle MUITO lento (5..12s) variando 0.5 → 1.0 — não é
- *     pisca-pisca, é "brilho de fundo respirando".
+ *  1) Star field denso "tipo Mapbox" — 180 estrelas brancas
+ *     minúsculas (0.5..2px) pintadas num ÚNICO <canvas> 2D.
+ *     Antes era 180 <span> com `animation` própria — cada um
+ *     virava um composited layer e o navegador fritava com 180
+ *     simultâneos. Agora é 1 layer só, pintado uma vez na
+ *     montagem + nos resizes. Sem rAF de twinkle: as estrelas
+ *     ficam ESTÁTICAS (igual o Mapbox no /app, que também não
+ *     anima `star-intensity`).
  *
- *  2) Layer de nebulae adicional que se move com o scroll.
- *     A `--galaxy-scroll` (0..1) é setada via JS no
+ *  2) Layer de nebulae que se move com o scroll. A
+ *     `--galaxy-scroll` (0..1) é setada via JS no
  *     documentElement; o CSS abaixo usa essa variável pra
  *     translatear as nebulae verticalmente. Combina com a
  *     animação `galaxy-drift` estática do `.page::before` (em
@@ -42,31 +42,84 @@ function makeRng(seed: number) {
 
 const STAR_COUNT = 180;
 
+interface Star {
+  // Posições normalizadas 0..1 — multiplicadas pela viewport
+  // size na hora de desenhar.
+  x: number;
+  y: number;
+  size: number;
+  alpha: number;
+}
+
 export default function GalaxyBackdrop() {
-  const stars = useMemo(() => {
-    const rng = makeRng(11);
-    return Array.from({ length: STAR_COUNT }, (_, i) => ({
-      id: i,
-      top: rng() * 100,
-      left: rng() * 100,
-      // Tamanho 0.5..2px — pinpoint, mesma faixa do que Mapbox
-      // gera com star-intensity ~0.45.
-      size: 0.5 + rng() * 1.5,
-      // Opacidade base 0.3..0.9 — variação garante densidade
-      // visual sem que todas leiam como brilho uniforme.
-      opacity: 0.3 + rng() * 0.6,
-      delay: rng() * 8,
-      // Twinkle BEM lento (5..13s) pra não distrair.
-      duration: 5 + rng() * 8,
-    }));
-  }, []);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // Lê o scroll e expõe progress (0..1) como CSS variable
-    // global. Usa rAF pra throttle natural — 1 update por frame
-    // de paint, mesmo em scrolls violentos no trackpad.
-    let raf = 0;
-    function update() {
+    const canvasMaybe = canvasRef.current;
+    if (!canvasMaybe) return;
+    const ctxMaybe = canvasMaybe.getContext('2d', { alpha: true });
+    if (!ctxMaybe) return;
+
+    // Re-bind em consts explicitamente tipadas pra preservar o
+    // narrowing dentro das closures (`draw`, `resize`). A CFA
+    // do TypeScript não estende narrowing pra dentro de
+    // closures por default.
+    const canvas: HTMLCanvasElement = canvasMaybe;
+    const ctx: CanvasRenderingContext2D = ctxMaybe;
+
+    // Gera o star field uma vez com seed determinístico (mesmas
+    // posições entre montagens, sem hydration concern porque é
+    // só client-side de qualquer forma).
+    const rng = makeRng(11);
+    const stars: Star[] = Array.from({ length: STAR_COUNT }, () => ({
+      x: rng(),
+      y: rng(),
+      size: 0.5 + rng() * 1.5,
+      alpha: 0.3 + rng() * 0.65,
+    }));
+
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function draw() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      // Glow halo via shadow — leve o suficiente pra não exigir
+      // composite passes pesados (raio 2px). Equivale ao
+      // box-shadow 0 0 3px que o <span> tinha antes.
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.45)';
+      ctx.shadowBlur = 2 * dpr;
+      ctx.fillStyle = '#ffffff';
+      for (const s of stars) {
+        ctx.globalAlpha = s.alpha;
+        ctx.beginPath();
+        ctx.arc(s.x * w, s.y * h, s.size * dpr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      draw();
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    // --galaxy-scroll: progresso 0..1 setado a cada scroll
+    // (rAF-throttled). É consumido pela CSS pra translatar a
+    // .nebulaScroll. Mantém no documentElement pra que outros
+    // componentes / pseudos possam consumir no futuro.
+    let scrollRaf = 0;
+    function updateScroll() {
       const sy = window.scrollY;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const progress = max > 0 ? Math.min(1, Math.max(0, sy / max)) : 0;
@@ -74,18 +127,18 @@ export default function GalaxyBackdrop() {
         '--galaxy-scroll',
         progress.toFixed(4),
       );
-      raf = 0;
+      scrollRaf = 0;
     }
     function onScroll() {
-      if (!raf) raf = requestAnimationFrame(update);
+      if (!scrollRaf) scrollRaf = requestAnimationFrame(updateScroll);
     }
-    update();
+    updateScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', update);
+
     return () => {
+      window.removeEventListener('resize', resize);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', update);
-      if (raf) cancelAnimationFrame(raf);
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
       document.documentElement.style.removeProperty('--galaxy-scroll');
     };
   }, []);
@@ -93,27 +146,11 @@ export default function GalaxyBackdrop() {
   return (
     <div className={styles.root} aria-hidden="true">
       {/* Camada de nebulae adicional — translada com o scroll
-       *  via --galaxy-scroll. Soma-se ao gradient estático do
-       *  .page::before (em page.module.css). */}
+       *  via --galaxy-scroll. */}
       <div className={styles.nebulaScroll} />
-      {/* Star field denso */}
-      <div className={styles.starLayer}>
-        {stars.map((s) => (
-          <span
-            key={s.id}
-            className={styles.star}
-            style={{
-              top: `${s.top}%`,
-              left: `${s.left}%`,
-              width: `${s.size}px`,
-              height: `${s.size}px`,
-              opacity: s.opacity,
-              animationDelay: `${s.delay}s`,
-              animationDuration: `${s.duration}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Star field em canvas — 1 layer composited em vez de
+       *  180 spans com animation própria. */}
+      <canvas ref={canvasRef} className={styles.starCanvas} />
     </div>
   );
 }
