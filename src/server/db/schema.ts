@@ -176,8 +176,16 @@ export const conversationParticipants = pgTable(
     /* "Apagar conversa pra mim" — esconde a conversa da lista do
      * user sem afetar a outra parte. Quando uma DM recebe nova
      * mensagem com created_at > hidden_at, a conversa reaparece
-     * (comportamento estilo WhatsApp). NULL = visível. */
+     * (comportamento estilo WhatsApp). Também limpado quando o
+     * user reabre a conv via search → openDmWith. NULL = visível. */
     hiddenAt: timestamp('hidden_at', { withTimezone: true }),
+    /* Corte permanente do timeline. Mensagens com
+     * `messages.created_at <= cleared_history_before` ficam
+     * ocultas pra esse user PERMANENTEMENTE — não voltam quando
+     * a conversa reaparece via search OU nova msg. Setado junto
+     * com hidden_at no "apagar conversa", mas NUNCA limpado.
+     * Equivale ao "clear history" do WhatsApp. */
+    clearedHistoryBefore: timestamp('cleared_history_before', { withTimezone: true }),
   },
   (t) => [
     primaryKey({ columns: [t.conversationId, t.userId] }),

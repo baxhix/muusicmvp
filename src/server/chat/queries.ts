@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { conversationParticipants, messages, users } from '../db/schema';
 import { listReactionsForMessages } from './reactions';
@@ -61,8 +61,14 @@ export async function listConversationsForUser(
     FROM conversations c
     JOIN conversation_participants uc ON uc.conversation_id = c.id AND uc.user_id = ${userId}
     /* Lookup PK no messages.id — único lookup por conversa pra
-     * trazer o preview body/sender. PK index = O(1). */
+     * trazer o preview body/sender. JOIN também filtra pelo
+     * cleared_history_before do user: se a última msg da conversa
+     * é anterior ao corte do user, NÃO mostramos preview (NULL
+     * fields) — Bug 2 evita leak da mensagem anterior ao "apagar"
+     * na lista de conversas. */
     LEFT JOIN messages lm ON lm.id = c.last_message_id
+      AND (uc.cleared_history_before IS NULL
+           OR lm.created_at > uc.cleared_history_before)
     LEFT JOIN LATERAL (
       SELECT u.id, u.name, u.avatar_url
       FROM conversation_participants cp2
@@ -92,7 +98,11 @@ export async function listConversationsForUser(
      * banner "Você saiu do grupo e não pode mais enviar mensagens". */
     myLeftAt: (r.my_left_at as Date | null) ?? null,
     memberCount: (r.member_count as number) ?? 0,
-    lastMessage: r.last_message_id
+    /* lastMessage só populado se o body sobreviveu ao filtro do
+     * cleared_history_before — caso contrário tratamos como
+     * "sem última mensagem visível" (preview da row fica vazio
+     * e a conversa só aparece se houver msg posterior ao corte). */
+    lastMessage: r.last_message_id && r.last_message_body !== null
       ? {
           id: r.last_message_id as string,
           body: r.last_message_body as string,
@@ -129,9 +139,16 @@ export async function hideConversationForUser(
   conversationId: string,
   userId: string,
 ): Promise<boolean> {
+  /* Seta AMBOS hidden_at + cleared_history_before pra now() na
+   * mesma operação. hidden_at controla a visibilidade NA LISTA
+   * (limpado quando o user reabre ou recebe msg nova).
+   * cleared_history_before é o CORTE PERMANENTE do timeline —
+   * nunca limpado, garantindo que o histórico anterior nunca
+   * mais aparece pra esse user, mesmo se a conv ressurgir. */
+  const now = new Date();
   const result = await db
     .update(conversationParticipants)
-    .set({ hiddenAt: new Date() })
+    .set({ hiddenAt: now, clearedHistoryBefore: now })
     .where(
       and(
         eq(conversationParticipants.conversationId, conversationId),
@@ -245,12 +262,34 @@ export async function listMessages(
 ) {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
   const hydrateSender = opts.hydrateSender ?? true;
-  const where = opts.before
-    ? and(
-        eq(messages.conversationId, conversationId),
-        lt(messages.createdAt, opts.before),
+
+  /* Bug 2 fix: filtra mensagens com created_at <= cleared_history_before
+   * do viewer. Resolve "apaguei a conversa, depois ela ressurgiu por
+   * msg nova — o histórico anterior continua oculto pra mim". Buscamos
+   * o corte uma vez aqui antes de montar o WHERE. */
+  let clearedBefore: Date | null = null;
+  if (opts.viewerId) {
+    const [participant] = await db
+      .select({
+        clearedHistoryBefore: conversationParticipants.clearedHistoryBefore,
+      })
+      .from(conversationParticipants)
+      .where(
+        and(
+          eq(conversationParticipants.conversationId, conversationId),
+          eq(conversationParticipants.userId, opts.viewerId),
+        ),
       )
-    : eq(messages.conversationId, conversationId);
+      .limit(1);
+    clearedBefore = participant?.clearedHistoryBefore ?? null;
+  }
+
+  const whereParts = [eq(messages.conversationId, conversationId)];
+  if (opts.before) whereParts.push(lt(messages.createdAt, opts.before));
+  if (clearedBefore) {
+    whereParts.push(gt(messages.createdAt, clearedBefore));
+  }
+  const where = whereParts.length === 1 ? whereParts[0] : and(...whereParts);
 
   const baseSelect = {
     id: messages.id,

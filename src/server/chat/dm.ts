@@ -37,7 +37,28 @@ export async function getOrCreateDm(
   `);
 
   const found = existing.rows[0]?.id as string | undefined;
-  if (found) return { id: found, created: false };
+  if (found) {
+    /* Bug 1 fix: se o caller (userIdA) tinha apagado essa conversa
+     * (hidden_at != null), reabri-la pelo /search → openDmWith
+     * deve trazê-la de volta pra lista. Limpamos APENAS o
+     * `hidden_at` — `cleared_history_before` (introduzido em 0041)
+     * permanece, mantendo o histórico anterior ao apagamento
+     * oculto. Resultado: conversa reaparece na lista, mas só as
+     * mensagens posteriores ao clear ficam visíveis pra esse user.
+     *
+     * Outra parte (userIdB) NÃO é afetada — preserva o histórico
+     * dela conforme o produto pediu. */
+    await db
+      .update(conversationParticipants)
+      .set({ hiddenAt: null })
+      .where(
+        and(
+          eq(conversationParticipants.conversationId, found),
+          eq(conversationParticipants.userId, userIdA),
+        ),
+      );
+    return { id: found, created: false };
+  }
 
   // Create a new DM. Must be transactional so the conversation row + both
   // participant rows go in atomically.

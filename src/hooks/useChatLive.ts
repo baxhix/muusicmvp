@@ -487,7 +487,6 @@ export function useChatLive(): UseChatLiveResult {
           { otherUserId },
         );
         if (res.created) {
-          await loadList();
           // Engagement reward (+3 FP) — server already inserted the
           // `chat_started` activity row inside POST /api/conversations
           // (see server/chat/dm.ts). This is the client-side toast +
@@ -497,6 +496,15 @@ export function useChatLive(): UseChatLiveResult {
             analyticsContext: { conversation_id: res.id },
           });
         }
+        /* Bug 1 fix: ALWAYS refresh a lista antes do open() —
+         * `created: false` cobre 2 casos: (a) conv existia ativa
+         * (loadList já tem ela; refresh é no-op cheap) E (b) conv
+         * existia mas estava hidden pra esse user (servidor acabou
+         * de limpar hidden_at). No caso (b), o loadList é
+         * obrigatório pra que activeConversation no /app/chat
+         * encontre a row no array — sem isso, o LiveChatPanel
+         * abria vazio. */
+        await loadList();
         open(res.id);
       } catch (err) {
         console.error('openDmWith failed:', err);
