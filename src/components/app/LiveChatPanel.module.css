@@ -331,6 +331,34 @@
    so it doesn't push the conversation way down on open. */
 .messages > .daySeparator:first-child { margin-top: 4px; }
 
+/* ── System events ───────────────────────────────────────────
+   "{X} criou o grupo", "{Y} entrou no grupo", etc. Renderizada
+   como pill centralizada (estilo dos daySeparators, leitura mais
+   neutra que uma bolha) com o nome do usuário em peso 700 + verbo
+   no peso normal. Não tem hover-actions nem reactions — eventos
+   de sistema são "metadata" do timeline, não mensagens. */
+.systemMsg {
+  align-self: center;
+  margin: 6px 0;
+  display: flex;
+  justify-content: center;
+}
+.systemMsgPill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.65);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  max-width: 80%;
+  text-align: center;
+}
+.systemMsgPill strong {
+  color: rgba(245, 245, 247, 0.85);
+  font-weight: 700;
+}
+
 /* ── Message hover actions (react + reply) ────────────────────
    Both actions share an identical pill button. The wrapper fades
    in on bubble hover and stays visible while either action is

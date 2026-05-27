@@ -113,6 +113,11 @@ export default function ChatPage() {
       <GroupMembersPanel
         open={showGroupMembers && activeConversation?.type === 'group'}
         conversationId={activeConversation?.type === 'group' ? activeConversation.id : null}
+        currentName={
+          activeConversation?.type === 'group'
+            ? activeConversation.name ?? null
+            : null
+        }
         currentUserId={authUser?.id ?? ''}
         myRole={activeConversation?.myRole ?? null}
         onClose={() => setShowGroupMembers(false)}
@@ -126,6 +131,13 @@ export default function ChatPage() {
           void chat.refreshConversations();
         }}
         onImageUpdated={() => {
+          void chat.refreshConversations();
+        }}
+        onNameUpdated={() => {
+          /* Refresh the conversations list so the header label,
+           * dock tile and sidebar row pick up the new name. The
+           * panel stays open so the user sees the input prefill
+           * with the new value via the `currentName` prop. */
           void chat.refreshConversations();
         }}
       />

@@ -3,6 +3,7 @@ import { db } from '../db';
 import {
   conversationParticipants,
   conversations,
+  messages,
   notifications,
   users,
 } from '../db/schema';
@@ -75,6 +76,30 @@ export async function createGroup(args: {
       })),
     ]);
 
+    // System events na timeline — uma "badge" inicial pra cada
+    // membro do grupo recém-criado. O owner ganha kind='system_created'
+    // ("X criou o grupo") e cada outro membro ganha kind='system_join'
+    // ("Y entrou"). Inserimos DENTRO da tx pra que, se a criação do
+    // grupo falhar, esses eventos não fiquem órfãos.
+    //
+    // body é a string canônica em PT-BR pra que a row faça sentido
+    // sozinha em dumps do banco; o front decide se renderiza usando
+    // o body bruto ou compõe a partir do senderName + kind.
+    await tx.insert(messages).values([
+      {
+        conversationId: conv.id,
+        senderId: args.ownerId,
+        body: 'criou o grupo',
+        kind: 'system_created',
+      },
+      ...otherMemberIds.map((userId) => ({
+        conversationId: conv.id,
+        senderId: userId,
+        body: 'entrou no grupo',
+        kind: 'system_join',
+      })),
+    ]);
+
     // Notify every newly-added member (everyone EXCEPT the owner)
     // that they were added to a group. The user's notification list
     // (poll via /api/notifications, the NotificationBell renders it)
@@ -135,8 +160,22 @@ export async function addMember(
     .onConflictDoNothing()
     .returning({ userId: conversationParticipants.userId });
 
-  // No notification on no-op re-add.
+  // No system event / notification on no-op re-add.
   if (inserted.length === 0) return;
+
+  // Timeline badge: "{userName} entrou no grupo". Visível pra todo
+  // mundo na conversa (incluindo o próprio user adicionado, que vai
+  // ver o evento no histórico assim que abrir o grupo). Insert
+  // separado do `notifications` insert porque a bell notif só vai
+  // pra quando temos `actorId` (kick chamado pelo próprio user vs
+  // admin add).
+  await db.insert(messages).values({
+    conversationId,
+    senderId: userId,
+    body: 'entrou no grupo',
+    kind: 'system_join',
+  });
+
   if (!actorId) return;
 
   // Fetch the group name for the payload — saves the bell a join.

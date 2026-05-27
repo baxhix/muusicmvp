@@ -20,10 +20,17 @@ export async function listConversationsForUser(userId: string) {
       WHERE user_id = ${userId}
     ),
     last_msg AS (
+      -- Apenas mensagens de usuário (kind='user') alimentam o
+      -- preview do dock. Eventos de sistema (criou o grupo /
+      -- entrou no grupo) não devem aparecer como "última
+      -- mensagem" — caso contrário, um grupo recém-criado
+      -- mostraria "entrou no grupo" sem contexto até alguém
+      -- digitar de verdade.
       SELECT DISTINCT ON (conversation_id)
         conversation_id, id, body, sender_id, created_at
       FROM messages
       WHERE conversation_id IN (SELECT conversation_id FROM user_convs)
+        AND kind = 'user'
       ORDER BY conversation_id, created_at DESC
     )
     SELECT
@@ -48,9 +55,13 @@ export async function listConversationsForUser(userId: string) {
         WHERE cpc.conversation_id = c.id
       ) AS member_count,
       (
+        -- Mesma exclusão de kind='user' que o last_msg CTE — system
+        -- events não pingam o badge vermelho (não exigem ação do
+        -- usuário, só ficam visíveis no histórico do grupo).
         SELECT COUNT(*)::int FROM messages m
         WHERE m.conversation_id = c.id
           AND m.sender_id <> ${userId}
+          AND m.kind = 'user'
           AND (
             uc.last_read_message_id IS NULL
             OR m.created_at > (
@@ -166,6 +177,10 @@ export async function listMessages(
       senderId: messages.senderId,
       body: messages.body,
       createdAt: messages.createdAt,
+      // Discriminator for system events ('system_created' /
+      // 'system_join' / etc.). 'user' for typed messages — the
+      // front-end renders the system kinds as centered pills.
+      kind: messages.kind,
       // Sender hydration for multi-user rooms (Superchat): each message
       // arrives with the sender's display name + avatar so the UI can
       // render 'who said this' without a per-message lookup.

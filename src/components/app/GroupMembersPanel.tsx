@@ -15,6 +15,8 @@ interface Props {
   open: boolean;
   /** Conversation id of the group. Null when closed. */
   conversationId: string | null;
+  /** Current group name — drives the prefilled rename input. */
+  currentName: string | null;
   /** Caller's own user id — used to mark "Você" + show the leave button. */
   currentUserId: string;
   /** Caller's role inside this group. Drives kick + admin-only actions. */
@@ -30,6 +32,10 @@ interface Props {
    *  imageUrl. Receives the new URL for any UI that wants to apply
    *  it optimistically. */
   onImageUpdated?: (newImageUrl: string) => void;
+  /** Fired after the group name is renamed successfully. Parent
+   *  should refresh the conversations list so the header + dock
+   *  reflect the new label. Receives the new name. */
+  onNameUpdated?: (newName: string) => void;
 }
 
 /**
@@ -47,18 +53,31 @@ interface Props {
 export default function GroupMembersPanel({
   open,
   conversationId,
+  currentName,
   currentUserId,
   myRole,
   onClose,
   onAddMember,
   onLeft,
   onImageUpdated,
+  onNameUpdated,
 }: Props) {
   const [members, setMembers] = useState<ApiGroupMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Rename UI — only mounted for owner/admin. We track the draft
+  // separately from `currentName` so the user can edit without the
+  // input snapping back if the parent re-renders mid-typing.
+  const [nameDraft, setNameDraft] = useState<string>(currentName ?? '');
+  // Reset the draft whenever the panel re-opens or the parent flushes
+  // a new name (e.g. after a successful save → list refresh). Without
+  // this, opening a different group would still show the previous
+  // group's name in the input.
+  useEffect(() => {
+    setNameDraft(currentName ?? '');
+  }, [currentName, conversationId, open]);
 
   const refresh = useCallback(async () => {
     if (!conversationId) return;
@@ -165,6 +184,48 @@ export default function GroupMembersPanel({
     }
   };
 
+  const handleRename = async () => {
+    if (!conversationId || busy) return;
+    const trimmed = nameDraft.trim();
+    if (!trimmed) {
+      window.alert('Dê um nome ao grupo.');
+      return;
+    }
+    if (trimmed === (currentName ?? '')) return; // no-op
+    if (trimmed.length > 80) {
+      window.alert('Nome muito longo (máx 80 caracteres).');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        window.alert(
+          data.error === 'forbidden'
+            ? 'Só admins e o dono podem renomear o grupo.'
+            : data.error === 'empty_name'
+              ? 'Dê um nome ao grupo.'
+              : data.error === 'name_too_long'
+                ? 'Nome muito longo (máx 80 caracteres).'
+                : 'Não foi possível renomear. Tente de novo.',
+        );
+        return;
+      }
+      onNameUpdated?.(trimmed);
+    } catch (err) {
+      console.error('rename failed:', err);
+      window.alert('Falha de conexão. Tente de novo.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleLeave = async () => {
     if (!conversationId || busy) return;
     if (!window.confirm('Sair desse grupo? Você não receberá mais mensagens dele.')) {
@@ -247,6 +308,38 @@ export default function GroupMembersPanel({
           </svg>
         </button>
       </header>
+
+      {canManage && (
+        <div className={styles.renameRow}>
+          <label className={styles.renameLabel} htmlFor="group-name-input">
+            Nome do grupo
+          </label>
+          <div className={styles.renameField}>
+            <input
+              id="group-name-input"
+              type="text"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              maxLength={80}
+              className={styles.renameInput}
+              placeholder="Nome do grupo"
+              disabled={busy}
+            />
+            <button
+              type="button"
+              className={styles.renameBtn}
+              onClick={handleRename}
+              disabled={
+                busy ||
+                !nameDraft.trim() ||
+                nameDraft.trim() === (currentName ?? '')
+              }
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={styles.list}>
         {loading && members.length === 0 ? (

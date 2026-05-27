@@ -173,6 +173,15 @@ export const messages = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     body: text('body').notNull(),
+    // Discriminator for system events (group created, member joined,
+    // group renamed). 'user' is the only kind that goes through the
+    // normal send pipeline + notifications; system kinds are injected
+    // by the server-side group lifecycle hooks (createGroup, addMember)
+    // and rendered as centered pill badges instead of bubbles.
+    //
+    // Kept open as `text` (not enum) so we can grow the catalog
+    // without a schema migration each time.
+    kind: text('kind').notNull().default('user'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('msg_conv_created_idx').on(t.conversationId, t.createdAt)],

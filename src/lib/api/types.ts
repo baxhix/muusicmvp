@@ -91,6 +91,13 @@ export interface ApiMessage {
   senderId: string;
   body: string;
   createdAt: string;
+  /**
+   * Discriminator for system events (group created, member joined,
+   * group renamed, etc.). Defaults to 'user' for normal messages
+   * typed by users — the front-end renders those as bubbles. Any
+   * other value triggers the centered-pill system-message branch.
+   */
+  kind?: string;
   /** Hydrated by listMessages / sendMessage via JOIN with users. */
   senderName?: string | null;
   senderEmail?: string | null;

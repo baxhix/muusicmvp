@@ -622,6 +622,28 @@ export default function LiveChatPanel({
                 lastDay = k;
               }
 
+              // System events ("X criou o grupo", "Y entrou") render as
+              // a centered grey pill instead of the usual bubble. The
+              // body field carries the human-readable verb in PT-BR
+              // ("entrou no grupo"); we compose it with the sender name
+              // hydrated from the JOIN in listMessages.
+              if (m.kind && m.kind !== 'user') {
+                const who =
+                  m.senderId === user?.id
+                    ? 'Você'
+                    : m.senderName ??
+                      m.senderEmail?.split('@')[0] ??
+                      'Alguém';
+                nodes.push(
+                  <div key={m.id} className={styles.systemMsg}>
+                    <span className={styles.systemMsgPill}>
+                      <strong>{who}</strong> {m.body}
+                    </span>
+                  </div>,
+                );
+                continue;
+              }
+
               const isMine = m.senderId === user?.id;
               const msgReactions = m.reactions ?? [];
               const pickerOpen = pickerOpenId === m.id;
