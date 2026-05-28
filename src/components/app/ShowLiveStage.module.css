@@ -118,50 +118,112 @@
   }
 }
 
-/* ── Spots laterais (luzes cênicas) ───────────────────────
+/* ── Spots laterais (luzes cênicas em movimento) ──────────
  *  Cones de luz vindos dos cantos superiores apontando pro
- *  centro. Implementação: divs com clip-path triangular e
- *  gradient rosa→transparente, blend mode screen pra que
- *  passem por cima da vinheta sem virar bloco opaco. */
-.stageSpotLeft, .stageSpotRight {
+ *  palco. Implementação: divs com clip-path triangular +
+ *  gradient rosa→transparente, mix-blend-mode: screen pra
+ *  somar luz sem virar bloco opaco.
+ *
+ *  3 animações combinadas dão sensação de show de verdade:
+ *    1. spotSweep* — rotate pendulando dentro de um range de
+ *       ~36deg, alternate. Os spots OSCILAM sobre o palco.
+ *    2. spotFlicker — opacity com 5 marcos por ciclo (não
+ *       metronômico), velocidade rápida (~2s). Pulso de luz
+ *       acompanhando o ritmo.
+ *    3. spotHueShift — filter hue-rotate lento (~10s) +
+ *       saturate up/down. Simula a roda de cores das luzes
+ *       cênicas migrando rosa → magenta → púrpura.
+ *
+ *  animation-delay negativo no spot direito desfasa o ciclo
+ *  pra que os dois lados não fiquem em lockstep — a sensação
+ *  é de duas luzes independentes operadas pelo mesmo rig.
+ *
+ *  will-change: transform/opacity/filter pro browser promover
+ *  pra GPU layer. Sem isso, animar transform+filter junto
+ *  pode causar jank em mobile.
+ *
+ *  @media prefers-reduced-motion: respeitamos a preferência
+ *  do usuário. Sweep e hue-shift são desligados, mantendo
+ *  só um flicker lento e suave. */
+.stageSpotLeft,
+.stageSpotRight {
   position: absolute;
   top: -10%;
   width: 320px;
   height: 80vh;
   pointer-events: none;
   mix-blend-mode: screen;
-  opacity: 0.55;
-  animation: spotFlicker 4.5s ease-in-out infinite;
+  will-change: transform, opacity, filter;
 }
 .stageSpotLeft {
   left: 8%;
   background: linear-gradient(
     160deg,
-    rgba(255, 0, 168, 0.6) 0%,
-    rgba(236, 72, 153, 0.25) 40%,
+    rgba(255, 0, 168, 0.62) 0%,
+    rgba(236, 72, 153, 0.28) 40%,
     transparent 80%
   );
   clip-path: polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%);
-  transform: rotate(-12deg);
   transform-origin: top center;
+  animation:
+    spotSweepLeft 4.2s ease-in-out infinite alternate,
+    spotFlicker 1.7s ease-in-out infinite,
+    spotHueShift 9s ease-in-out infinite;
 }
 .stageSpotRight {
   right: 8%;
   background: linear-gradient(
     -160deg,
-    rgba(168, 85, 247, 0.55) 0%,
-    rgba(236, 72, 153, 0.3) 40%,
+    rgba(168, 85, 247, 0.58) 0%,
+    rgba(236, 72, 153, 0.32) 40%,
     transparent 80%
   );
   clip-path: polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%);
-  transform: rotate(12deg);
   transform-origin: top center;
-  animation-delay: 1.5s;
+  animation:
+    spotSweepRight 3.8s ease-in-out infinite alternate,
+    spotFlicker 2.1s ease-in-out infinite,
+    spotHueShift 11s ease-in-out infinite;
+  /* Negative delays = começa no meio de cada animação, com
+   * offsets distintos. Resultado: o lado direito está sempre
+   * num ponto diferente do ciclo em relação ao esquerdo. */
+  animation-delay: -1.5s, -0.7s, -3s;
+}
+@keyframes spotSweepLeft {
+  /* Range: -28deg (apontando longe pra esquerda) →  +8deg
+   * (cruzando o centro do palco). Pendulum amplo. */
+  from { transform: rotate(-28deg); }
+  to   { transform: rotate(8deg); }
+}
+@keyframes spotSweepRight {
+  /* Mirror — cruza o centro vindo da esquerda → vai longe
+   * pra direita. */
+  from { transform: rotate(-8deg); }
+  to   { transform: rotate(28deg); }
 }
 @keyframes spotFlicker {
-  0%, 100% { opacity: 0.55; }
-  35%      { opacity: 0.75; }
-  68%      { opacity: 0.4; }
+  0%, 100% { opacity: 0.5; }
+  18%      { opacity: 0.88; }
+  42%      { opacity: 0.32; }
+  68%      { opacity: 0.78; }
+  88%      { opacity: 0.55; }
+}
+@keyframes spotHueShift {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+  33%      { filter: hue-rotate(-25deg) saturate(1.15); }
+  66%      { filter: hue-rotate(35deg) saturate(1.2); }
+}
+
+/* Accessibility — usuários com prefers-reduced-motion não
+ * recebem o sweep nem o hue-shift. Mantemos só um flicker
+ * suave pra que a sensação de "luz acesa" não se perca. */
+@media (prefers-reduced-motion: reduce) {
+  .stageSpotLeft,
+  .stageSpotRight {
+    animation: spotFlicker 5s ease-in-out infinite;
+  }
+  .stageSpotLeft  { transform: rotate(-12deg); }
+  .stageSpotRight { transform: rotate(12deg); animation-delay: 1.5s; }
 }
 
 /* ── Header (label + close button) ────────────────────────
