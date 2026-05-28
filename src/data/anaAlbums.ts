@@ -19,6 +19,19 @@ export type AnaAlbum = {
   /** Caminho relativo a /public (servido em runtime no mesmo path). */
   cover: string;
   trackYoutubeIds: string[];
+  /**
+   * Quando true, o álbum está em fase de pré-lançamento: o card no
+   * grid e o detalhe do álbum mostram a mensagem "(Em breve)" + a
+   * contagem de pré-saves em vez da lista de faixas. `trackYoutubeIds`
+   * deve ficar `[]` nesses casos.
+   */
+  comingSoon?: boolean;
+  /**
+   * Contagem de pré-saves exibida quando `comingSoon === true`. Número
+   * cru (175000) — a formatação localizada "175.000" acontece no
+   * render via `toLocaleString('pt-BR')`.
+   */
+  preSaveCount?: number;
 };
 
 export const ANA_ALBUMS: AnaAlbum[] = [
@@ -100,5 +113,16 @@ export const ANA_ALBUMS: AnaAlbum[] = [
       'Sphh4jO0bjw', // Mississipi
       'MEvt6OPB_3E', // Peão Apaixonado
     ],
+  },
+  {
+    // Próximo lançamento — DVD ao vivo gravado na Arena Fonte Nova
+    // (Salvador / BA). Sem tracklist ainda; aparece como "Em breve"
+    // com a contagem de pré-saves no grid de álbuns e no detalhe.
+    id: 'fire-arena',
+    name: 'Fire Arena',
+    cover: '/albuns/fire-arena.jpg',
+    trackYoutubeIds: [],
+    comingSoon: true,
+    preSaveCount: 175000,
   },
 ];

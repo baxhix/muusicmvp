@@ -220,6 +220,12 @@ export default function PlaylistModal({
       return `${filteredCount} resultado${filteredCount === 1 ? '' : 's'} de ${SONGS.length}`;
     }
     if (selectedAlbum) {
+      if (selectedAlbum.comingSoon) {
+        // Sem tracklist ainda — em vez de "0 faixas", esconde a
+        // contagem e deixa o bloco .comingSoon abaixo carregar a
+        // mensagem principal.
+        return 'Pré-lançamento · faça o pré-save';
+      }
       return `${filteredCount} faixa${filteredCount === 1 ? '' : 's'} · clique pra tocar`;
     }
     if (tab === 'albums') {
@@ -363,9 +369,30 @@ export default function PlaylistModal({
                 <img src={selectedAlbum.cover} alt="" className={styles.albumHeaderImg} />
               </div>
               <div className={styles.albumHeaderInfo}>
-                <span className={styles.albumHeaderEyebrow}>Álbum</span>
+                <span className={styles.albumHeaderEyebrow}>
+                  {selectedAlbum.comingSoon ? 'Pré-lançamento' : 'Álbum'}
+                </span>
                 <span className={styles.albumHeaderName}>{selectedAlbum.name}</span>
               </div>
+            </div>
+          )}
+
+          {/* Estado "Em breve" — substitui a lista de faixas quando o
+              álbum está em pré-lançamento. Mostra o badge rosa neon +
+              contagem de pré-saves formatada em pt-BR. */}
+          {selectedAlbum?.comingSoon && (
+            <div className={styles.comingSoon}>
+              <span className={styles.comingSoonBadge}>Em breve</span>
+              <p className={styles.comingSoonCount}>
+                <strong>
+                  {(selectedAlbum.preSaveCount ?? 0).toLocaleString('pt-BR')}
+                </strong>{' '}
+                pré-saves
+              </p>
+              <span className={styles.comingSoonHint}>
+                O álbum chega em breve. Faça o pré-save pra ouvir no
+                lançamento.
+              </span>
             </div>
           )}
 
@@ -375,25 +402,40 @@ export default function PlaylistModal({
                 <li key={album.id}>
                   <button
                     type="button"
-                    className={styles.albumCard}
+                    className={`${styles.albumCard} ${album.comingSoon ? styles.albumCardComing : ''}`}
                     onClick={() => setSelectedAlbumId(album.id)}
-                    aria-label={`Abrir álbum ${album.name}`}
+                    aria-label={
+                      album.comingSoon
+                        ? `Abrir álbum ${album.name} (em breve)`
+                        : `Abrir álbum ${album.name}`
+                    }
                   >
                     <div className={styles.albumCardCover}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={album.cover} alt="" className={styles.albumCardImg} />
+                      {album.comingSoon && (
+                        <span className={styles.albumCardFlag}>Em breve</span>
+                      )}
                     </div>
                     <span className={styles.albumCardMeta}>
                       <span className={styles.albumCardName}>{album.name}</span>
                       <span className={styles.albumCardCount}>
-                        {album.trackYoutubeIds.length}{' '}
-                        {album.trackYoutubeIds.length === 1 ? 'faixa' : 'faixas'}
+                        {album.comingSoon
+                          ? `${(album.preSaveCount ?? 0).toLocaleString('pt-BR')} pré-saves`
+                          : `${album.trackYoutubeIds.length} ${
+                              album.trackYoutubeIds.length === 1 ? 'faixa' : 'faixas'
+                            }`}
                       </span>
                     </span>
                   </button>
                 </li>
               ))}
             </ul>
+          ) : selectedAlbum?.comingSoon ? (
+            // O bloco .comingSoon acima já comunica o estado. Suprimimos
+            // o empty-state padrão pra evitar texto duplicado dentro do
+            // mesmo detalhe de álbum.
+            null
           ) : filteredCount === 0 ? (
             <div className={styles.emptyState}>
               <p>Nenhuma faixa encontrada</p>

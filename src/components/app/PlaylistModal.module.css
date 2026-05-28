@@ -376,6 +376,7 @@
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0,0,0,0.55);
   background: rgba(255,255,255,0.04);
+  position: relative;
 }
 .albumCardImg {
   width: 100%;
@@ -642,4 +643,86 @@
 .viewMoreBtn:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #F5F5F7;
+}
+
+/* ── Álbum em pré-lançamento ───────────────
+ * Badge rosa neon "Em breve" no canto da capa do grid + variante
+ * leve de elevação no card pra destacar do resto. O detalhe do
+ * álbum reusa esta paleta no bloco .comingSoon (badge + contagem
+ * de pré-saves). Mesmo magenta do Fire Arena (lettering rosa) que
+ * já aparece no ShowLiveTrigger / ShowLiveStage — mantém a marca
+ * coerente. */
+.albumCardComing .albumCardCover {
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 56, 188, 0.45),
+    0 0 18px rgba(255, 56, 188, 0.22);
+}
+.albumCardFlag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(20, 4, 14, 0.78);
+  border: 1px solid rgba(255, 56, 188, 0.55);
+  color: #ff8ad6;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 12px rgba(255, 56, 188, 0.35);
+  pointer-events: none;
+}
+
+/* Bloco "Em breve" no detalhe do álbum — substitui a lista de
+ * faixas. Center-aligned, hero-style, com badge magenta e número
+ * grande de pré-saves. */
+.comingSoon {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 32px 24px;
+  min-height: 0;
+}
+.comingSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 56, 188, 0.22), rgba(168, 50, 255, 0.18));
+  border: 1px solid rgba(255, 56, 188, 0.5);
+  color: #ff8ad6;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(255, 56, 188, 0.3);
+}
+.comingSoonCount {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: rgba(245, 245, 247, 0.75);
+  font-variant-numeric: tabular-nums;
+}
+.comingSoonCount strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #F5F5F7;
+  text-shadow: 0 0 24px rgba(255, 56, 188, 0.35);
+}
+.comingSoonHint {
+  max-width: 280px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.55);
 }
