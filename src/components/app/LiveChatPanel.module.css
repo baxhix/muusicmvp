@@ -605,6 +605,11 @@
 
 .inputArea {
   display: flex;
+  /* flex-wrap: wrap deixa a preview row de anexos ocupar uma
+   *  linha inteira acima do paperclip + textarea + send. Sem o
+   *  wrap, a preview row entrava na mesma linha e esmagava o
+   *  textarea em coluna vertical (bug visual reportado). */
+  flex-wrap: wrap;
   /* align flex-end pra que o sendBtn (altura fixa) fique alinhado
    * com a base do textarea quando ele cresce com shift+enter. */
   align-items: flex-end;
@@ -858,11 +863,18 @@
 .attachPreviewRow {
   display: flex;
   gap: 6px;
-  padding: 8px 0 4px;
+  padding: 4px 0;
   flex-wrap: wrap;
+  /* Combinação que garante linha própria acima do paperclip +
+   * textarea + send:
+   *   - width:100% empurra os outros itens flex pra próxima linha
+   *   - order:-1 força a preview a aparecer ANTES dos outros
+   *     itens mesmo que esteja no meio do source order do JSX
+   *   - flex-basis:100% reforça com clientes onde width:100%
+   *     interage diferente com align-items:flex-end. */
+  width: 100%;
   flex-basis: 100%;
-  /* Row entra como item de grid/flex no inputArea — o flex-basis 100%
-   * força que ela ocupe linha própria acima do paperclip + textarea. */
+  order: -1;
 }
 .attachPreviewItem {
   position: relative;
