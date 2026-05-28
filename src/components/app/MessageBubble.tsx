@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useRef, useState, type MutableRefObject } from 'react';
 import type {
   ApiMessage,
   ApiMessageAttachment,
@@ -44,6 +44,11 @@ interface Props {
   onTogglePicker: (messageId: string) => void;
   onToggleReaction: (messageId: string, emoji: string) => void;
   onDelete: (messageId: string) => void;
+  /** Long-press handler — disparado depois de 500ms de toque parado na
+   *  bubble. Em mobile (sem :hover), é o único caminho pra acessar
+   *  responder/reagir/apagar. Parent abre um action sheet com as
+   *  ações. */
+  onLongPress: (messageId: string) => void;
 }
 
 /** Resolve o nome de quem mandou — prioridade: senderName hidratado
@@ -78,8 +83,58 @@ function MessageBubbleImpl({
   onTogglePicker,
   onToggleReaction,
   onDelete,
+  onLongPress,
 }: Props) {
   const msgReactions = m.reactions ?? [];
+
+  /* Long-press detection — pattern padrão de mobile.
+   *
+   *  - touchstart inicia timer de 500ms + memoriza posição inicial
+   *  - touchmove >10px em qualquer eixo cancela (era scroll, não hold)
+   *  - touchend antes do timer cancela (tap normal)
+   *  - timer dispara → fire callback + haptic feedback (vibrate 40ms)
+   *
+   *  `longPressFiredRef` é passado pro MessageAttachments pra suprimir
+   *  o click do lightbox quando o long-press fechou em cima da imagem
+   *  — sem isso, o touchend que vem após o disparo abriria o lightbox
+   *  por trás do action sheet. */
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressFiredRef = useRef(false);
+
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartPosRef.current = null;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 1) return;
+    longPressFiredRef.current = false;
+    const t = e.touches[0];
+    longPressStartPosRef.current = { x: t.clientX, y: t.clientY };
+    longPressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      longPressTimerRef.current = null;
+      // Haptic — só dispara se o device suporta; desktop fica no-op.
+      if (typeof navigator.vibrate === 'function') {
+        try { navigator.vibrate(40); } catch { /* ignore */ }
+      }
+      onLongPress(m.id);
+    }, 500);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!longPressStartPosRef.current || !longPressTimerRef.current) return;
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - longPressStartPosRef.current.x);
+    const dy = Math.abs(t.clientY - longPressStartPosRef.current.y);
+    if (dx > 10 || dy > 10) clearLongPressTimer();
+  };
+
+  const handleTouchEnd = () => clearLongPressTimer();
 
   return (
     <div className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}>
@@ -99,14 +154,23 @@ function MessageBubbleImpl({
         </div>
       )}
       <div className={styles.bubbleRow}>
-        <div className={styles.bubble}>
+        <div
+          className={styles.bubble}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+        >
           {/* Anexos (imagens) — render dedicado, separado do
            *  URL-detected do MessageBody. Vem ANTES do body pra
            *  espelhar o padrão Instagram/WhatsApp: imagem grande
            *  em cima, legenda embaixo. Quando body é vazio (envio
            *  só de imagem), o MessageBody colapsa graciosamente. */}
           {m.attachments && m.attachments.length > 0 && (
-            <MessageAttachments items={m.attachments} />
+            <MessageAttachments
+              items={m.attachments}
+              longPressFiredRef={longPressFiredRef}
+            />
           )}
           {m.body && <MessageBody body={m.body} maxPreviewWidth={300} />}
         </div>
@@ -260,7 +324,8 @@ const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
     prev.onReply === next.onReply &&
     prev.onTogglePicker === next.onTogglePicker &&
     prev.onToggleReaction === next.onToggleReaction &&
-    prev.onDelete === next.onDelete
+    prev.onDelete === next.onDelete &&
+    prev.onLongPress === next.onLongPress
   );
 });
 
@@ -282,7 +347,17 @@ export default MessageBubble;
  * imagens podem aparecer fora do viewport — não há razão pra
  * baixar tudo no scroll inicial.
  * ────────────────────────────────────────────────────────────── */
-function MessageAttachments({ items }: { items: ApiMessageAttachment[] }) {
+function MessageAttachments({
+  items,
+  longPressFiredRef,
+}: {
+  items: ApiMessageAttachment[];
+  /** Ref controlada pelo MessageBubble pai — sinaliza que o long-press
+   *  acabou de disparar e o click subsequente NÃO deve abrir o lightbox.
+   *  Sem isso, segurar o dedo numa imagem 500ms abre o action sheet E
+   *  o lightbox por trás dele. */
+  longPressFiredRef?: MutableRefObject<boolean>;
+}) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const cols = items.length === 1 ? 1 : items.length <= 4 ? 2 : 3;
 
@@ -298,7 +373,15 @@ function MessageAttachments({ items }: { items: ApiMessageAttachment[] }) {
             key={a.url}
             type="button"
             className={styles.attachItem}
-            onClick={() => setLightboxIdx(idx)}
+            onClick={() => {
+              /* Long-press recém-disparado consome o click — evita
+               * lightbox abrindo atrás do action sheet do mobile. */
+              if (longPressFiredRef?.current) {
+                longPressFiredRef.current = false;
+                return;
+              }
+              setLightboxIdx(idx);
+            }}
             aria-label="Ver imagem em tamanho maior"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}

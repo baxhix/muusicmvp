@@ -8,7 +8,7 @@ import type {
   ApiMessageAttachment,
 } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { buildReplyBody } from './MessageBody';
+import { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import MessageBubble, {
   SystemMessagePill,
   hashReactions,
@@ -221,6 +221,10 @@ export default function LiveChatPanel({
     body: string;
   } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  /* Action sheet mobile — disparado por long-press na bubble. Conteúdo
+   * (responder, reagir, apagar) duplicaria o msgActions floating que
+   * só funciona em hover. Guarda o id da mensagem alvo; null = fechado. */
+  const [actionSheetMsgId, setActionSheetMsgId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -306,7 +310,19 @@ export default function LiveChatPanel({
     setMenuOpen(false);
     setPickerOpenId(null);
     setReplyingTo(null);
+    setActionSheetMsgId(null);
   }, [conversation?.id]);
+
+  /* Esc fecha o action sheet — mantém paridade com kebab + picker
+   * que também respondem a Esc. */
+  useEffect(() => {
+    if (!actionSheetMsgId) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') setActionSheetMsgId(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [actionSheetMsgId]);
 
   // Close the reaction picker on outside click / Escape, mirroring
   // the kebab menu's UX so both floating UIs feel consistent.
@@ -341,6 +357,14 @@ export default function LiveChatPanel({
 
   const handleTogglePicker = useCallback((msgId: string) => {
     setPickerOpenId((cur) => (cur === msgId ? null : msgId));
+  }, []);
+
+  /* Long-press → abre o action sheet com as ações da mensagem.
+   * Em desktop, o user-flow é hover + click no msgActions (3 ícones
+   * flutuantes); em mobile, hover não existe, então o long-press
+   * substitui esse caminho. */
+  const handleLongPress = useCallback((msgId: string) => {
+    setActionSheetMsgId(msgId);
   }, []);
 
   const handleReply = useCallback(
@@ -959,6 +983,7 @@ export default function LiveChatPanel({
                   onTogglePicker={handleTogglePicker}
                   onToggleReaction={toggleReaction}
                   onDelete={handleDelete}
+                  onLongPress={handleLongPress}
                 />,
               );
             }
@@ -1134,6 +1159,104 @@ export default function LiveChatPanel({
           onClose={() => setReportOpen(false)}
         />
       )}
+
+      {/* Action sheet mobile — disparado por long-press na bubble.
+       *  Substitui o msgActions floating que só funciona em :hover
+       *  (inacessível em touch). Aparece em desktop também — não há
+       *  prejuízo, e ajuda em casos de tablet ou trackpad sem hover. */}
+      {actionSheetMsgId && (() => {
+        const actionMsg = messages.find((m) => m.id === actionSheetMsgId);
+        if (!actionMsg) return null;
+        const isMineMsg = actionMsg.senderId === user?.id;
+        const isGroupOwnerCtx =
+          isGroup && conversation?.createdBy === user?.id;
+        const sheetCanDelete = isMineMsg || isGroupOwnerCtx;
+        const closeSheet = () => setActionSheetMsgId(null);
+        return (
+          <div
+            className={styles.sheetBackdrop}
+            onClick={closeSheet}
+            role="presentation"
+          >
+            <div
+              className={styles.sheet}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Ações da mensagem"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Emoji row inline — tap emoji = react + close. Mesma
+               *  shortlist do picker desktop. */}
+              <div className={styles.sheetEmojiRow}>
+                {REACTION_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    className={styles.sheetEmojiBtn}
+                    onClick={() => {
+                      toggleReaction(actionMsg.id, emoji);
+                      closeSheet();
+                    }}
+                    aria-label={`Reagir com ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className={styles.sheetItem}
+                onClick={() => {
+                  const senderName = isMineMsg
+                    ? 'Você'
+                    : other?.name ?? 'Conversa';
+                  handleReply({
+                    senderName,
+                    body: stripReplyPrefix(actionMsg.body),
+                  });
+                  closeSheet();
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M9 4L4 9l5 5" />
+                  <path d="M4 9h7a3 3 0 0 1 3 3v0" />
+                </svg>
+                Responder
+              </button>
+
+              {sheetCanDelete && (
+                <button
+                  type="button"
+                  className={`${styles.sheetItem} ${styles.sheetItemDanger}`}
+                  onClick={() => {
+                    closeSheet();
+                    /* handleDelete já abre o confirmDialog — fechamos
+                     * o sheet antes pra UX limpa (não fica empilhado). */
+                    void handleDelete(actionMsg.id);
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M2.5 4h11" />
+                    <path d="M6 4V2.5h4V4" />
+                    <path d="M3.5 4l.8 9a1 1 0 0 0 1 .9h5.4a1 1 0 0 0 1-.9l.8-9" />
+                    <path d="M6.5 7v4M9.5 7v4" />
+                  </svg>
+                  Apagar
+                </button>
+              )}
+
+              <button
+                type="button"
+                className={styles.sheetCancel}
+                onClick={closeSheet}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
