@@ -291,23 +291,31 @@ export default function ShowLiveStage({ open, onClose }: Props) {
       </div>
 
       {/* ── Sponsor pill (oferecimento) ─────────────────────────
-       *   Pílula preta arredondada abaixo do header com 3 "slots"
-       *   de logo. Placeholders estilizados (texto com tipografia
-       *   de marca) — substituir por <img> reais quando os SVGs
-       *   estiverem disponíveis. Cada slot tem largura máxima de
-       *   96px conforme spec. */}
+       *   Pílula preta arredondada abaixo do header com 3 logos
+       *   reais via <img>. Arquivos SVG em /public/sponsors/ —
+       *   trocar pelo asset oficial sem mudar nada de código.
+       *   Cada slot tem largura máxima de 96px conforme spec. */}
       <div className={styles.sponsorPill}>
         <span className={styles.sponsorLabel}>um oferecimento</span>
         <span className={styles.sponsorLogos}>
-          <span className={`${styles.sponsorLogo} ${styles.sponsorBrahma}`}>
-            Brahma
-          </span>
-          <span className={`${styles.sponsorLogo} ${styles.sponsorVivo}`}>
-            vivo
-          </span>
-          <span className={`${styles.sponsorLogo} ${styles.sponsorBallantine}`}>
-            BALLANTINE&apos;S
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sponsors/brahma.svg"
+            alt="Brahma"
+            className={styles.sponsorLogo}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sponsors/vivo.svg"
+            alt="Vivo"
+            className={styles.sponsorLogo}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sponsors/ballantines.svg"
+            alt="Ballantine's"
+            className={styles.sponsorLogo}
+          />
         </span>
       </div>
 
@@ -360,10 +368,9 @@ export default function ShowLiveStage({ open, onClose }: Props) {
             </div>
           </div>
 
-          <div className={styles.broadcastTitle}>FIRE ARENA</div>
-          <div className={styles.broadcastSubtitle}>
-            Ana Castela · Show de lançamento ao vivo
-          </div>
+          {/* Texto "FIRE ARENA" + "Ana Castela · Show de lançamento
+           *  ao vivo" removidos per feedback — frame agora é só vídeo
+           *  + anéis + chrome AO VIVO/viewers, sem caption redundante. */}
         </div>
       </div>
 

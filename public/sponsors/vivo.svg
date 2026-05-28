@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 96" preserveAspectRatio="xMidYMid meet">
+  <!-- Vivo — placeholder fiel ao logo enviado pelo product. "vivo"
+       em roxo + a estrelinha-mascote à direita. Substituir por SVG
+       oficial mantendo este path. -->
+  <g fill="#660099">
+    <text
+      x="0"
+      y="78"
+      font-family="Helvetica, 'Helvetica Neue', Arial, sans-serif"
+      font-size="92"
+      font-weight="700"
+      letter-spacing="-4"
+      textLength="195"
+      lengthAdjust="spacingAndGlyphs"
+    >vivo</text>
+    <!-- Mascote ginger-man estrela — cabeça circular + corpo com
+         braços e pernas abertos. Posicionada à direita do "vivo". -->
+    <circle cx="244" cy="32" r="13" />
+    <path d="M222 56
+             C 222 51 226 47 232 47
+             L 256 47
+             C 262 47 266 51 266 56
+             L 266 60
+             L 274 78
+             C 274 81 272 84 269 84
+             L 264 84
+             L 256 70
+             L 252 70
+             L 252 86
+             C 252 89 250 91 247 91
+             L 241 91
+             C 238 91 236 89 236 86
+             L 236 70
+             L 232 70
+             L 224 84
+             L 219 84
+             C 216 84 214 81 214 78
+             L 222 60 Z" />
+  </g>
+</svg>
