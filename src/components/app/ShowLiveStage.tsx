@@ -274,21 +274,30 @@ export default function ShowLiveStage({ open, onClose }: Props) {
             AO VIVO
           </span>
           <span className={styles.headerVenue}>
-            Transmissão ao vivo Ana Castela
+            <span className={styles.headerPrefix}>Transmissão ao vivo </span>
+            Ana Castela
             <span className={styles.headerCity}> | Fire Arena</span>
           </span>
         </div>
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label="Sair do show"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
       </div>
+
+      {/* ── Close button no canto superior direito ─────────────
+       *  Tirado de dentro do .header (que centraliza com
+       *  translateX(-50%)) e passado pra um sibling com position
+       *  absolute ancorado ao topo-direita da viewport. Em mobile
+       *  a header já não cabe o X dentro dela em uma linha só, e
+       *  o canto fica mais ergonômico pro polegar. No desktop fica
+       *  igualmente acessível e padrão de modais full-screen. */}
+      <button
+        type="button"
+        className={styles.closeBtn}
+        onClick={onClose}
+        aria-label="Sair do show"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
 
       {/* ── Sponsor pill (oferecimento) ─────────────────────────
        *   Pílula preta arredondada abaixo do header com 3 logos
