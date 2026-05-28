@@ -125,29 +125,12 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       const inIt = await userIsInConversation(userId, parsed.data.conversationId);
       if (!inIt) return ack?.({ ok: false, error: 'forbidden' });
 
-      /* DEBUG temporário: registra o que veio do cliente pra debug
-       * do "imagem não aparece" — remover quando o bug for resolvido. */
-      logger.info('realtime.chat.send.input', {
-        userId,
-        conversationId: parsed.data.conversationId,
-        bodyLength: parsed.data.body.length,
-        attachmentsLength: parsed.data.attachments?.length ?? 0,
-        attachmentsSample: parsed.data.attachments?.[0]
-          ? { url: parsed.data.attachments[0].url, size: parsed.data.attachments[0].size }
-          : null,
-      });
-
       const result = await sendMessage(
         parsed.data.conversationId,
         userId,
         parsed.data.body,
         parsed.data.attachments ?? null,
       );
-
-      logger.info('realtime.chat.send.result', {
-        messageId: result.message.id,
-        attachmentsLength: result.message.attachments?.length ?? 0,
-      });
 
       // Broadcast the message body to clients viewing the thread (joined room).
       io.to(room(parsed.data.conversationId)).emit('chat:message', result.message);

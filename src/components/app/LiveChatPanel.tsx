@@ -363,16 +363,6 @@ export default function LiveChatPanel({
   const submit = async () => {
     const text = draft.trim();
     const hasAttachments = pendingAttachments.length > 0;
-    /* DEBUG temporário: capturar estado no momento do click */
-    console.log('[chat-debug] submit triggered', {
-      textLength: text.length,
-      pendingAttachmentsLength: pendingAttachments.length,
-      pendingAttachmentsSample: pendingAttachments[0]
-        ? { url: pendingAttachments[0].url, size: pendingAttachments[0].size }
-        : null,
-      uploadingCount,
-      hasAttachments,
-    });
     /* Aceita envio só de imagem (body vazio + attachments). Bloqueia
      * envio totalmente vazio e enquanto há upload em curso. */
     if ((!text && !hasAttachments) || uploadingCount > 0) return;
@@ -393,17 +383,7 @@ export default function LiveChatPanel({
     /* Reseta altura do textarea — sem isso, depois de enviar uma
      * mensagem multi-linha o campo fica esticado com o draft vazio. */
     requestAnimationFrame(() => autoResizeChat(inputRef.current));
-    console.log('[chat-debug] about to call onSend', {
-      hasOnSend: typeof onSend,
-      bodyLength: body.length,
-      attachmentsArgLength: attachments?.length ?? 0,
-    });
-    try {
-      await onSend(body, attachments);
-      console.log('[chat-debug] onSend awaited OK');
-    } catch (err) {
-      console.error('[chat-debug] onSend threw', err);
-    }
+    await onSend(body, attachments);
   };
 
   /* ── Upload de imagens ────────────────────────────────────────

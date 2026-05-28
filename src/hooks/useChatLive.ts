@@ -213,18 +213,6 @@ export function useChatLive(): UseChatLiveResult {
     ) => {
       const text = body.trim();
       const hasAttachments = !!attachments && attachments.length > 0;
-      /* DEBUG temporário: capturar o que chega no send + estado do socket */
-      console.log('[chat-debug] useChatLive.send called', {
-        textLength: text.length,
-        attachmentsParamLength: attachments?.length ?? 0,
-        attachmentsParamSample: attachments?.[0]
-          ? { url: attachments[0].url, size: attachments[0].size }
-          : null,
-        hasAttachments,
-        hasSocket: !!socket,
-        socketConnected: socket?.connected ?? false,
-        activeId,
-      });
       /* Aceita envio só de imagem (body vazio + attachments). Bloqueia
        * envio totalmente vazio. */
       if (!text && !hasAttachments) return;
@@ -262,23 +250,14 @@ export function useChatLive(): UseChatLiveResult {
         return;
       }
 
-      const emitPayload = {
-        conversationId: activeId,
-        body: text,
-        ...(hasAttachments ? { attachments } : {}),
-      };
-      console.log('[chat-debug] socket.emit chat:send payload', {
-        hasAttachmentsKey: 'attachments' in emitPayload,
-        attachmentsInPayloadLength:
-          'attachments' in emitPayload
-            ? (emitPayload as { attachments?: unknown[] }).attachments?.length
-            : 0,
-      });
       socket.emit(
         'chat:send',
-        emitPayload,
+        {
+          conversationId: activeId,
+          body: text,
+          ...(hasAttachments ? { attachments } : {}),
+        },
         (ack: { ok: boolean; messageId?: string; error?: string } | undefined) => {
-          console.log('[chat-debug] socket.emit ack received', { ack });
           if (!ack?.ok) {
             console.error('chat:send rejected:', ack?.error);
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
