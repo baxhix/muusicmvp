@@ -387,10 +387,7 @@ export default function ShowLiveStage({ open, onClose }: Props) {
       >
         <div className={styles.stageMsgHeader}>
           <span className={styles.stageMsgTitle}>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="14" rx="2" />
-              <path d="M8 22h8M12 18v4" />
-            </svg>
+            {/* Ícone de monitor removido — só o texto agora */}
             Mande pro telão
           </span>
           <span className={styles.stageMsgLock}>
@@ -398,7 +395,7 @@ export default function ShowLiveStage({ open, onClose }: Props) {
               <rect x="4" y="11" width="16" height="10" rx="2" />
               <path d="M8 11V7a4 4 0 1 1 8 0v4" />
             </svg>
-            Top 10 Superfãs
+            Exclusivo para TOP 10 Superfãs
           </span>
         </div>
         <div className={styles.stageMsgRow}>
