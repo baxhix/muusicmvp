@@ -280,6 +280,11 @@
   border-radius: 4px;
   color: #fff;
   text-transform: uppercase;
+  /* Trava o badge em 1 linha — sem isso, em viewports estreitas
+   * (mobile especialmente) o parent flex squeezia o badge e o
+   * texto "AO VIVO" quebrava em 2 linhas ("AO" / "VIVO"). */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .liveDot {
   width: 6px;
