@@ -368,68 +368,59 @@ export default function ShowLiveStage({ open, onClose }: Props) {
             </div>
           </div>
 
-          {/* Texto "FIRE ARENA" + "Ana Castela · Show de lançamento
-           *  ao vivo" removidos per feedback — frame agora é só vídeo
-           *  + anéis + chrome AO VIVO/viewers, sem caption redundante. */}
+          {/* ── Caixa "Mande pro telão" — DENTRO do broadcast frame ──
+           *   Movido pra dentro do .broadcastInner per feedback "Inclua
+           *   a interação de Mande pro telão para dentro do box do
+           *   video". Vira parte do mesmo cartão do vídeo, abaixo do
+           *   iframe — UX coesa pro user "interagir com o show". */}
+          <form
+            className={`${styles.stageMsgBox} ${stageMsgFlash ? styles.stageMsgFlash : ''}`}
+            onSubmit={handleStageMsgSend}
+          >
+            <div className={styles.stageMsgHeader}>
+              <span className={styles.stageMsgTitle}>Mande pro telão</span>
+              <span className={styles.stageMsgLock}>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="4" y="11" width="16" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 1 1 8 0v4" />
+                </svg>
+                Exclusivo para TOP 10 Superfãs
+              </span>
+            </div>
+            <div className={styles.stageMsgRow}>
+              <input
+                type="text"
+                className={styles.stageMsgInput}
+                placeholder={
+                  stageMsgFlash
+                    ? 'Mensagem enviada — apareceu no telão!'
+                    : 'Sua mensagem aparece no estádio…'
+                }
+                value={stageMsg}
+                onChange={(e) => setStageMsg(e.target.value)}
+                maxLength={80}
+              />
+              <button
+                type="submit"
+                className={styles.stageMsgSend}
+                disabled={!stageMsg.trim()}
+                aria-label="Mandar mensagem pro telão"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-
-      {/* ── Caixa "Mande pro telão" ─────────────────────────────
-       *   Textbox de 420×76 que mocka o envio de mensagem pro
-       *   telão do estádio. Warning permanente sinalizando que a
-       *   feature é gated em Top 10 Superfãs — o submit ainda
-       *   funciona (mock) com flash visual, mas o aviso deixa
-       *   claro que em prod só os top fans efetivamente vão pro
-       *   telão. */}
-      <form
-        className={`${styles.stageMsgBox} ${stageMsgFlash ? styles.stageMsgFlash : ''}`}
-        onSubmit={handleStageMsgSend}
-      >
-        <div className={styles.stageMsgHeader}>
-          <span className={styles.stageMsgTitle}>
-            {/* Ícone de monitor removido — só o texto agora */}
-            Mande pro telão
-          </span>
-          <span className={styles.stageMsgLock}>
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="4" y="11" width="16" height="10" rx="2" />
-              <path d="M8 11V7a4 4 0 1 1 8 0v4" />
-            </svg>
-            Exclusivo para TOP 10 Superfãs
-          </span>
-        </div>
-        <div className={styles.stageMsgRow}>
-          <input
-            type="text"
-            className={styles.stageMsgInput}
-            placeholder={
-              stageMsgFlash
-                ? 'Mensagem enviada — apareceu no telão!'
-                : 'Sua mensagem aparece no estádio…'
-            }
-            value={stageMsg}
-            onChange={(e) => setStageMsg(e.target.value)}
-            maxLength={80}
-          />
-          <button
-            type="submit"
-            className={styles.stageMsgSend}
-            disabled={!stageMsg.trim()}
-            aria-label="Mandar mensagem pro telão"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z"
-                fill="currentColor"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </form>
 
       {/* ── Chat ao lado direito ───────────────────────────── */}
       <div className={styles.chatPanel}>

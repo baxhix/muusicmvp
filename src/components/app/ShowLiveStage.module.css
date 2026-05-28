@@ -176,10 +176,14 @@
 }
 .stageSpotRight {
   right: 22%;
+  /* Spot direito agora ROSA — left fica roxo (#a855f7 ≈
+   * 168,85,247), right fica rosa pink/magenta (#ec4899 ≈
+   * 236,72,153). Cria contraste de luzes cênicas no palco
+   * conforme feedback "um dos spots em rosa e outro roxo". */
   background: linear-gradient(
     -160deg,
-    rgba(168, 85, 247, 0.58) 0%,
-    rgba(168, 85, 247, 0.32) 40%,
+    rgba(236, 72, 153, 0.62) 0%,
+    rgba(236, 72, 153, 0.32) 40%,
     transparent 80%
   );
   clip-path: polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%);
@@ -700,13 +704,16 @@
   top: 66px;
   left: 50%;
   transform: translateX(-50%);
-  display: inline-flex;
+  /* Largura igual ao broadcastFrame (560px max) — cria coluna
+   * central coerente: sponsor em cima, vídeo+telão embaixo,
+   * todos alinhados na mesma horizontal-edge. Display flex
+   * justify-content center mantém logos centralizados na pill. */
+  display: flex;
   align-items: center;
-  /* Pill mais largo + gap maior entre logos pra acomodar slots
-   * de 90px confortavelmente (era gap:14px com logos limitados
-   * a 28px alto). */
-  gap: 22px;
-  padding: 10px 24px;
+  justify-content: center;
+  width: min(560px, calc(100vw - 32px));
+  gap: 28px;
+  padding: 12px 24px;
   background: #000;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -753,52 +760,29 @@
  * gated. Submit é mock — flash visual de "enviado".
  * ────────────────────────────────────────────────────────── */
 .stageMsgBox {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  /* Largura agora casa com o broadcastFrame (min 560 / 100vw-32)
-   * pra criar uma coluna central coerente: vídeo no topo, caixa
-   * de telão embaixo, mesma horizontal-edge. */
-  width: min(560px, calc(100vw - 32px));
-  /* Padding horizontal generoso pra acompanhar a largura de
-   * 560px (era 12px quando o box era 420). Vertical idem —
-   * dá ar entre o header label e o input row. Altura cresce
-   * proporcionalmente (76 → 92) absorvendo o padding novo + gap. */
-  height: 92px;
-  padding: 14px 20px;
+  /* AGORA inline DENTRO do .broadcastInner (era absolute no
+   * fundo da viewport). Sem position/bottom/left/transform —
+   * fica no fluxo natural depois do .broadcastVideo. width
+   * 100% pega largura total do frame, padding/altura cresce
+   * pra interface ter respiro consistente. */
+  width: 100%;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: linear-gradient(
-    180deg,
-    rgba(20, 8, 24, 0.92) 0%,
-    rgba(10, 4, 14, 0.95) 100%
-  );
-  /* Border removida — visual mais clean, alinha com o broadcast
-   * frame que tem só o glow sem stroke duro. */
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
   border: 0;
-  border-radius: 14px;
+  border-radius: 10px;
   pointer-events: auto;
-  z-index: 4;
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 24px rgba(168, 85, 247, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: stageMsgSlideIn 460ms cubic-bezier(0.2, 0.9, 0.3, 1) 200ms both;
-  transition: box-shadow 0.2s ease;
-}
-@keyframes stageMsgSlideIn {
-  from { opacity: 0; transform: translate(-50%, 12px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+  animation: stageMsgFadeIn 380ms ease-out 200ms both;
+  transition: background 0.2s ease;
 }
 .stageMsgFlash {
-  /* Border removida no .stageMsgBox base — flash agora só
-   * intensifica o box-shadow turquesa pra sinalizar o "enviado". */
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.55),
-    0 0 40px rgba(94, 234, 212, 0.55);
+  background: rgba(94, 234, 212, 0.12);
+}
+@keyframes stageMsgFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .stageMsgHeader {
   display: flex;
