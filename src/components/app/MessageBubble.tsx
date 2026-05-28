@@ -1,6 +1,7 @@
 'use client';
 
-import { memo, useRef, useState, type MutableRefObject } from 'react';
+import { memo, useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { createPortal } from 'react-dom';
 import type {
   ApiMessage,
   ApiMessageAttachment,
@@ -416,25 +417,33 @@ function AttachmentLightbox({
   attachment: ApiMessageAttachment;
   onClose: () => void;
 }) {
-  /* Esc fecha — listener registrado só enquanto o lightbox está
-   * montado. Click no backdrop também fecha; click na imagem
-   * stopPropagation pra não fechar acidentalmente. */
-  if (typeof window !== 'undefined') {
-    /* useEffect avoidado pra simplicidade do lightbox local — o
-     * fechar via Esc inline cuida do caso comum. Pode virar
-     * useEffect proper se ficar problema. */
-  }
-  return (
+  /* Esc fecha — listener global enquanto o lightbox está montado.
+   * useEffect proper agora pra cleanup correto (antes era inline
+   * e dependia do onKeyDown do backdrop que precisava de focus). */
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  /* SSR-safe portal: só monta quando document existe. Sem isso o
+   * Next.js quebra no server-side render (createPortal precisa de
+   * document.body). */
+  if (typeof document === 'undefined') return null;
+
+  /* React Portal pro document.body — escapa do stacking context
+   * do .panel (que tem backdrop-filter, criando contexto que
+   * aprisionava qualquer position:fixed dentro do panel à
+   * bounding box dele). Agora o lightbox cobre a viewport TODA. */
+  return createPortal(
     <div
       className={styles.lightboxBackdrop}
       onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
       role="dialog"
       aria-modal="true"
       aria-label="Imagem em tamanho maior"
-      tabIndex={-1}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -443,7 +452,8 @@ function AttachmentLightbox({
         className={styles.lightboxImage}
         onClick={(e) => e.stopPropagation()}
       />
-    </div>
+    </div>,
+    document.body,
   );
 }
 

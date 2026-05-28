@@ -361,15 +361,26 @@
   );
   border: 1.5px solid rgba(168, 85, 247, 0.45);
   border-radius: 16px;
-  /* Padding-top de 14 → 24 pra que o iframe do vídeo respire
-   * a partir do borde superior do cartão (em vez de quase
-   * encostar). Mantém o respiro entre vídeo e stageMsgBox
-   * via gap do flex container. */
-  padding: 24px 16px 16px;
+  /* Padding ajustado pra que o broadcastFrame fique com 470px
+   * (mesma altura do chat).
+   *
+   * Cálculo:
+   *   - vídeo 16:9 de 528px wide (560 - 32 padding) = 297px
+   *   - stageMsgBox altura ≈ 88px (padding 18/10 + header 16
+   *     + gap 8 + input row 36)
+   *   - border 1.5px × 2 = 3px
+   *   - Padding (top+bottom) + gap = 470 - 297 - 88 - 3 = 82
+   *   - Distribuição: padding-top 32 + gap 18 + padding-bottom 32
+   * Os 34px extras (vs 14/8/16 = 38 original) vão dar respiro
+   * generoso entre vídeo, telão e bordas do cartão. */
+  padding: 32px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  /* Gap 8 → 18 pra completar a altura de 470 do broadcastFrame.
+   * Vídeo (297) + gap (18) + stageMsgBox (~88) + padding (32+32)
+   * + border (3) ≈ 470. */
+  gap: 18px;
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.7),
     0 0 40px rgba(168, 85, 247, 0.25),
@@ -698,21 +709,26 @@
   height: 32px;
   border: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  /* Mesmo gradient do .stageMsgSend e do .fab do CommunityPanel —
+   * paleta unificada de CTAs primárias do sistema. */
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(236, 72, 153, 1) 50%,
+    rgba(168, 85, 247, 0.95) 100%
+  );
   color: #fff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: opacity 0.14s ease, transform 0.14s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.4);
 }
-.composerSend:hover:not(:disabled) {
+.composerSend:hover {
   transform: scale(1.05);
-}
-.composerSend:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  box-shadow: 0 6px 16px -4px rgba(236, 72, 153, 0.55);
 }
 
 /* ──────────────────────────────────────────────────────────

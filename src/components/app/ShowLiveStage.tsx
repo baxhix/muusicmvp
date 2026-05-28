@@ -403,7 +403,6 @@ export default function ShowLiveStage({ open, onClose }: Props) {
               <button
                 type="submit"
                 className={styles.stageMsgSend}
-                disabled={!stageMsg.trim()}
                 aria-label="Mandar mensagem pro telão"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -477,7 +476,6 @@ export default function ShowLiveStage({ open, onClose }: Props) {
           <button
             type="submit"
             className={styles.composerSend}
-            disabled={!draft.trim()}
             aria-label="Enviar"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
