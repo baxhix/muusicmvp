@@ -2,12 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import VerifiedBadge from './VerifiedBadge';
+import { globeStore } from '@/lib/globeStore';
 import {
   SUPERLIVE_FANS,
   SUPERLIVE_MESSAGES,
   type SuperliveFan,
 } from '@/lib/superliveFakeData';
 import styles from './ShowLiveStage.module.css';
+
+/* Arena Fonte Nova — Salvador, BA. Coordenadas + zoom + pitch
+ * que produzem o ângulo de "câmera baixa olhando pro palco"
+ * referência do álbum Fire Arena. */
+const ARENA_FONTE_NOVA = {
+  center: [-38.5042, -12.9789] as [number, number],
+  zoom: 16,
+  pitch: 65,
+  bearing: -12,
+  duration: 2400,
+};
+
+/* Vídeo de teste embed YouTube. nocookie domain pra cumprir o
+ * CSP report-only definido em next.config.ts. autoplay+mute pra
+ * evitar block do browser; loop via playlist=ID (workaround
+ * conhecido pra um único vídeo). */
+const YOUTUBE_EMBED_URL =
+  'https://www.youtube-nocookie.com/embed/SMXOwEe0gP0' +
+  '?autoplay=1&mute=1&controls=0&loop=1&playlist=SMXOwEe0gP0' +
+  '&modestbranding=1&playsinline=1&rel=0&showinfo=0';
 
 /* ==============================================================
  * SHOW AO VIVO — brainstorm stage experience
@@ -154,6 +175,19 @@ export default function ShowLiveStage({ open, onClose }: Props) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  /* Inclina o mapa pra Arena Fonte Nova quando o stage abre.
+   *  Globe salva o view atual antes de mover; ao fechar, exit
+   *  restaura 1:1 (mesmo center/zoom/pitch/bearing que o user
+   *  tinha antes de entrar no palco). Reentradas mantém o
+   *  snapshot original. */
+  useEffect(() => {
+    if (!open) return;
+    globeStore.enterCinematic(ARENA_FONTE_NOVA);
+    return () => {
+      globeStore.exitCinematic();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleSend = (e: React.FormEvent) => {
@@ -228,31 +262,17 @@ export default function ShowLiveStage({ open, onClose }: Props) {
         </button>
       </div>
 
-      {/* ── Frame de transmissão (top center) ──────────────────
-       *   Mock visual — sem player real. Conteúdo: AO VIVO badge
-       *   pulsante + Fire Arena lettering rosa neon + tagline +
-       *   contador de espectadores. */}
+      {/* ── Frame de transmissão (central) ──────────────────────
+       *   Substituiu o mock estático por um YouTube iframe real
+       *   (autoplay muted loop) com overlays de chrome em cima
+       *   (badge AO VIVO + viewer count + caption Fire Arena).
+       *   Posição central na tela pra ser o foco da experiência;
+       *   chat + map ficam ao redor. */}
       <div className={styles.broadcastFrame}>
         <div className={styles.broadcastInner}>
-          <div className={styles.broadcastBadgeRow}>
-            <span className={styles.broadcastLive}>
-              <span className={styles.liveDot} aria-hidden="true" />
-              AO VIVO
-            </span>
-            <span className={styles.broadcastViewers}>
-              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              {viewers.toLocaleString('pt-BR')}
-            </span>
-          </div>
-          <div className={styles.broadcastTitle}>FIRE ARENA</div>
-          <div className={styles.broadcastSubtitle}>
-            Ana Castela · Show de lançamento ao vivo
-          </div>
-          {/* SVG decorativo — simula o efeito do braço de luzes
-           *  com 3 anéis concêntricos rosa neon. */}
+          {/* Anéis SVG decorativos por TRÁS do vídeo — agora em
+           * rotateX 60deg (plano) pra parecer arena vista de
+           * câmera baixa, igual ao objeto Fire Arena do álbum. */}
           <svg
             className={styles.broadcastRings}
             viewBox="0 0 200 60"
@@ -263,6 +283,38 @@ export default function ShowLiveStage({ open, onClose }: Props) {
             <ellipse cx="100" cy="30" rx="60" ry="7" stroke="currentColor" strokeWidth="1.6" opacity="0.7" />
             <ellipse cx="100" cy="30" rx="40" ry="4.5" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
           </svg>
+
+          <div className={styles.broadcastVideo}>
+            <iframe
+              src={YOUTUBE_EMBED_URL}
+              title="Show ao vivo — Fire Arena"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              className={styles.broadcastVideoIframe}
+              loading="lazy"
+            />
+            {/* Chrome overlays — AO VIVO badge top-left,
+             * viewers count top-right. Posicionados ABSOLUTE
+             * sobre o iframe pra que o vídeo continue
+             * controlando pixel-perfect. */}
+            <div className={styles.broadcastVideoTopBar}>
+              <span className={styles.broadcastLive}>
+                <span className={styles.liveDot} aria-hidden="true" />
+                AO VIVO
+              </span>
+              <span className={styles.broadcastViewers}>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {viewers.toLocaleString('pt-BR')}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.broadcastTitle}>FIRE ARENA</div>
+          <div className={styles.broadcastSubtitle}>
+            Ana Castela · Show de lançamento ao vivo
+          </div>
         </div>
       </div>
 

@@ -45,16 +45,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* Intensidade reduzida (era 0.85/0.95 nas bordas) pra que o
+   * mapa por baixo fique mais visível — o palco-real tem que
+   * APARECER, não só o spot iluminado. Bordas a 0.55/0.65. */
   background: radial-gradient(
     ellipse 380px 380px at 50% 60%,
     rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.15) 30%,
-    rgba(0, 0, 0, 0.55) 55%,
-    rgba(0, 0, 0, 0.85) 75%,
-    rgba(0, 0, 0, 0.95) 100%
+    rgba(0, 0, 0, 0.1) 30%,
+    rgba(0, 0, 0, 0.35) 55%,
+    rgba(0, 0, 0, 0.55) 75%,
+    rgba(0, 0, 0, 0.65) 100%
   );
-  /* Backdrop blur leve nas bordas — dá sensação de profundidade
-   * sem mascarar o mapa central. */
   -webkit-mask-image: radial-gradient(
     ellipse 380px 380px at 50% 60%,
     transparent 30%,
@@ -65,8 +66,8 @@
     transparent 30%,
     black 70%
   );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  /* backdrop-filter removido — com o mapa visível por baixo,
+   * blur na borda confunde a leitura do mapa tiltado. */
 }
 
 /* ── Anéis de luz de palco ────────────────────────────────
@@ -305,24 +306,37 @@
 }
 
 /* ── Broadcast frame (cartão de transmissão) ──────────────
- *  Posicionado acima do palco (top: 80px). Largura 360px
- *  centralizado. Visual: cartão dark com bordas rosa neon,
- *  Fire Arena lettering em gradient rosa→roxo. */
+ *  Centralizado horizontalmente + verticalmente próximo do
+ *  meio-superior da viewport (top:14%). Largura 560px desktop
+ *  (16:9 ~315px de altura) — espaço pro YouTube iframe + chrome
+ *  + caption Fire Arena abaixo.
+ *
+ *  Visual: cartão dark com bordas rosa neon. Os anéis SVG dos
+ *  arcos ficam POR TRÁS do iframe (z-index do .broadcastVideo
+ *  > .broadcastRings) numa perspectiva tiltada — espelhando o
+ *  objeto Fire Arena do álbum. */
 .broadcastFrame {
   position: absolute;
-  top: 80px;
+  top: 14%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(420px, calc(100vw - 32px));
+  width: min(560px, calc(100vw - 32px));
   pointer-events: auto;
   z-index: 4;
   animation: broadcastSlideIn 480ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@media (max-width: 768px) {
+  .broadcastFrame {
+    top: 70px;
+    width: calc(100vw - 24px);
+  }
 }
 @keyframes broadcastSlideIn {
   from { opacity: 0; transform: translate(-50%, -12px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .broadcastInner {
+  position: relative;
   background: linear-gradient(
     180deg,
     rgba(20, 8, 24, 0.92) 0%,
@@ -330,17 +344,53 @@
   );
   border: 1.5px solid rgba(255, 0, 168, 0.45);
   border-radius: 16px;
-  padding: 14px 18px 16px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.7),
     0 0 40px rgba(255, 0, 168, 0.25),
     inset 0 0 24px rgba(255, 0, 168, 0.06);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Vídeo iframe (YouTube) ────────────────────────────
+ *  Aspect-ratio 16:9 com border-radius pra manter o
+ *  formato de tela. Iframe ocupa 100% do container. */
+.broadcastVideo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  /* Acima dos anéis (que estão no fundo do .broadcastInner). */
+  z-index: 2;
+}
+.broadcastVideoIframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+/* Top bar overlays — AO VIVO + viewers ficam sobre o
+ * vídeo via position absolute. pointer-events: none pra
+ * não bloquear cliques no iframe. */
+.broadcastVideoTopBar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 3;
 }
 .broadcastBadgeRow {
   display: flex;
@@ -393,15 +443,34 @@
   letter-spacing: -0.01em;
 }
 .broadcastRings {
-  width: 70%;
-  margin-top: 4px;
-  color: rgba(255, 0, 168, 0.7);
-  filter: drop-shadow(0 0 8px rgba(255, 0, 168, 0.5));
+  /* Anéis Fire Arena — posicionados ABSOLUTE no fundo do
+   * .broadcastInner pra ficarem por trás do vídeo, ocupando
+   * a área toda do cartão. rotateX 60deg estático cria a
+   * "planificação" do objeto Fire Arena (visto de câmera
+   * baixa, quase no nível do palco) — antes era 0-10deg
+   * que parecia só uma curva sutil; agora é projeção
+   * plana mesmo. Animação leve varia 55-65deg pra dar
+   * "respiração" do palco.
+   * z-index 1: por baixo do .broadcastVideo (z:2). */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120%;
+  height: auto;
+  z-index: 1;
+  pointer-events: none;
+  color: rgba(255, 0, 168, 0.55);
+  filter: drop-shadow(0 0 14px rgba(255, 0, 168, 0.45));
+  transform: translate(-50%, -50%) perspective(200px) rotateX(60deg);
   animation: ringsSwivel 6s ease-in-out infinite;
 }
 @keyframes ringsSwivel {
-  0%, 100% { transform: perspective(200px) rotateX(0deg); }
-  50%      { transform: perspective(200px) rotateX(10deg); }
+  0%, 100% {
+    transform: translate(-50%, -50%) perspective(200px) rotateX(55deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) perspective(200px) rotateX(68deg);
+  }
 }
 
 /* ── Chat panel (right side) ──────────────────────────────
@@ -448,15 +517,16 @@
   .broadcastFrame {
     top: 60px;
   }
-  /* E o buraco da vinheta fica mais alto também */
+  /* E o buraco da vinheta fica mais alto também — mesma
+   * paleta menos intensa do desktop pra revelar o mapa. */
   .vignette {
     background: radial-gradient(
       ellipse 260px 260px at 50% 38%,
       rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.15) 30%,
-      rgba(0, 0, 0, 0.55) 55%,
-      rgba(0, 0, 0, 0.85) 75%,
-      rgba(0, 0, 0, 0.95) 100%
+      rgba(0, 0, 0, 0.1) 30%,
+      rgba(0, 0, 0, 0.35) 55%,
+      rgba(0, 0, 0, 0.55) 75%,
+      rgba(0, 0, 0, 0.65) 100%
     );
     -webkit-mask-image: radial-gradient(
       ellipse 260px 260px at 50% 38%,

@@ -104,6 +104,28 @@ export interface AnaFlightPayload {
   hoursRemaining: number;
 }
 
+/**
+ * Cinematic flyTo — fly to a point with FULL camera control (pitch +
+ * bearing + zoom) and HOLD there until exitCinematic() is called.
+ * Difference vs the base `flyTo` is:
+ *   - Caller can specify pitch + bearing (the base flyTo hardcodes
+ *     them inside Globe)
+ *   - Globe SAVES the current view before flying, so exitCinematic
+ *     restores it 1:1 — no auto-resume timer, no zoom-out fallback
+ *
+ * Used by the ShowLiveStage brainstorm to tilt the map ~65deg toward
+ * Arena Fonte Nova while the immersive stage overlay is open.
+ */
+export interface CinematicTarget {
+  center: [number, number];
+  zoom: number;
+  pitch?: number;
+  bearing?: number;
+  duration?: number;
+}
+type EnterCinematicFn = (target: CinematicTarget) => void;
+type ExitCinematicFn = () => void;
+
 type SetUserLocationFn = (payload: UserLocationPayload | null) => void;
 type SetLiveUsersFn = (users: LiveMapUser[]) => void;
 type SetTotalRegisteredFn = (total: number) => void;
@@ -136,6 +158,8 @@ const _visibleUsersListeners = new Set<VisibleUsersListener>();
 let _visibleUserIds: ReadonlySet<string> = new Set();
 
 let _flyTo: FlyToFn | null = null;
+let _enterCinematic: EnterCinematicFn | null = null;
+let _exitCinematic: ExitCinematicFn | null = null;
 let _setUserLocation: SetUserLocationFn | null = null;
 let _setLiveUsers: SetLiveUsersFn | null = null;
 let _liveUsersBuffer: LiveMapUser[] | null = null;
@@ -154,6 +178,15 @@ let _openAnaFlight: OpenAnaFlightFn | null = null;
 export const globeStore = {
   register: (fn: FlyToFn) => { _flyTo = fn; },
   flyTo:    (center: [number, number], zoom: number) => { _flyTo?.(center, zoom); },
+
+  /** Globe registers a pair of handlers — enter saves+flies cinematically;
+   *  exit restores the saved view. See CinematicTarget docs above. */
+  registerCinematic: (enterFn: EnterCinematicFn, exitFn: ExitCinematicFn) => {
+    _enterCinematic = enterFn;
+    _exitCinematic = exitFn;
+  },
+  enterCinematic: (target: CinematicTarget) => { _enterCinematic?.(target); },
+  exitCinematic: () => { _exitCinematic?.(); },
 
   /** Globe registra um handler que cria/atualiza o marker do user logado. */
   registerUserLocation: (fn: SetUserLocationFn) => { _setUserLocation = fn; },
@@ -338,6 +371,8 @@ export const globeStore = {
    * paints it on the fresh map. No data loss, no crash. */
   unregisterMapCallbacks: () => {
     _flyTo = null;
+    _enterCinematic = null;
+    _exitCinematic = null;
     _setUserLocation = null;
     _setLiveUsers = null;
     _setTotalRegistered = null;

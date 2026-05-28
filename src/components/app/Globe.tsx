@@ -1818,6 +1818,63 @@ export default function Globe() {
         map.getCanvas().style.cursor = '';
       });
 
+      /* Cinematic pair — usado pelo ShowLiveStage (brainstorm).
+       * Diferente do `register` abaixo, este salva o view atual
+       * antes de mover e restaura no exit. Não tem auto-resume:
+       * a câmera fica no estado pedido até o caller chamar exit. */
+      let cinematicSavedView: {
+        center: [number, number];
+        zoom: number;
+        pitch: number;
+        bearing: number;
+      } | null = null;
+      globeStore.registerCinematic(
+        (target) => {
+          userInteracting = true;
+          cancelAnimationFrame(rafId);
+          if (resumeTimer) clearTimeout(resumeTimer);
+          /* Snapshot atual pra exit restaurar 1:1. Só sobrescreve
+           * se ainda não temos um — entradas re-entrantes mantêm o
+           * "view original" do primeiro enter. */
+          if (!cinematicSavedView) {
+            const c = map.getCenter();
+            cinematicSavedView = {
+              center: [c.lng, c.lat],
+              zoom: map.getZoom(),
+              pitch: map.getPitch(),
+              bearing: map.getBearing(),
+            };
+          }
+          map.flyTo({
+            center: target.center,
+            zoom: target.zoom,
+            pitch: target.pitch ?? 60,
+            bearing: target.bearing ?? 0,
+            duration: target.duration ?? 2500,
+            curve: 1.4,
+            essential: true,
+          });
+        },
+        () => {
+          if (!cinematicSavedView) {
+            // Sem snapshot — só reseta pitch/bearing.
+            map.easeTo({ pitch: 0, bearing: 0, duration: 1400 });
+            return;
+          }
+          const restore = cinematicSavedView;
+          cinematicSavedView = null;
+          map.flyTo({
+            center: restore.center,
+            zoom: restore.zoom,
+            pitch: restore.pitch,
+            bearing: restore.bearing,
+            duration: 1800,
+            curve: 1.4,
+            essential: true,
+          });
+        },
+      );
+
       globeStore.register((center, zoom) => {
         userInteracting = true;
         cancelAnimationFrame(rafId);
