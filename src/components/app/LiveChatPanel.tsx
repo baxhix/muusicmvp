@@ -393,7 +393,17 @@ export default function LiveChatPanel({
     /* Reseta altura do textarea — sem isso, depois de enviar uma
      * mensagem multi-linha o campo fica esticado com o draft vazio. */
     requestAnimationFrame(() => autoResizeChat(inputRef.current));
-    await onSend(body, attachments);
+    console.log('[chat-debug] about to call onSend', {
+      hasOnSend: typeof onSend,
+      bodyLength: body.length,
+      attachmentsArgLength: attachments?.length ?? 0,
+    });
+    try {
+      await onSend(body, attachments);
+      console.log('[chat-debug] onSend awaited OK');
+    } catch (err) {
+      console.error('[chat-debug] onSend threw', err);
+    }
   };
 
   /* ── Upload de imagens ────────────────────────────────────────
