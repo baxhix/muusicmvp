@@ -10,6 +10,10 @@
  * Hidden no mobile via `useIsMobile()` no JSX (não duplicamos a
  * regra em CSS porque o JSX já cuida do unmount completo). */
 
+/* Esconde o banner quando o ShowLiveStage está aberto. */
+:global(html[data-showlive="true"]) .banner {
+  display: none !important;
+}
 .banner {
   position: fixed;
   top: 16px;

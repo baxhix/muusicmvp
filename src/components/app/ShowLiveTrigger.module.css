@@ -15,6 +15,15 @@
  * Brainstorm-gated — só renderiza com flags.showLive === true.
  * ============================================================ */
 
+/* Esconde o próprio trigger quando o ShowLiveStage está aberto —
+ * user feedback "O banner para entrar deve desaparecer quando o
+ * show estiver aparecendo". Belt-and-suspenders: o componente
+ * TSX também faz return null quando open, mas o CSS guarantee
+ * cobre o caso de race entre toggle do state e o setAttribute
+ * no html. */
+:global(html[data-showlive="true"]) .card {
+  display: none !important;
+}
 .card {
   position: fixed;
   top: 76px;

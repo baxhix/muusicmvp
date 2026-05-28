@@ -4,6 +4,11 @@
   pointer-events: none;
 }
 
+/* Esconde o avatar quando o ShowLiveStage está aberto. */
+:global(html[data-showlive="true"]) .userMenu {
+  display: none !important;
+}
+
 /* Avatar trigger */
 .userMenu {
   position: fixed;

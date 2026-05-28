@@ -10,6 +10,10 @@
  * (see SuperliveTrigger.tsx).
  * ============================================================ */
 
+/* Esconde o trigger quando o ShowLiveStage está aberto. */
+:global(html[data-showlive="true"]) .card {
+  display: none !important;
+}
 .card {
   position: fixed;
   /* `top: 16` puts the pill on the same axis as the right-rail

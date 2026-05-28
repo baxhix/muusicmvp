@@ -27,6 +27,10 @@ export default function ShowLiveTrigger() {
 
   return (
     <>
+      {/* Pílula esconde quando o stage está aberto — o palco vira
+       *  a única UI visível. CSS também tem display:none gated
+       *  por html[data-showlive] como reforço (race-proof). */}
+      {!open && (
       <button
         type="button"
         className={styles.card}
@@ -59,6 +63,7 @@ export default function ShowLiveTrigger() {
           </svg>
         </span>
       </button>
+      )}
 
       <ShowLiveStage open={open} onClose={() => setOpen(false)} />
     </>

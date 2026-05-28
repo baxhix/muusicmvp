@@ -188,6 +188,34 @@ export default function ShowLiveStage({ open, onClose }: Props) {
     };
   }, [open]);
 
+  /* Anuncia o estado "show ao vivo" pro DOM via data-attribute
+   *  no <html>. Outros componentes (ArtistBox, TopBar, banner,
+   *  triggers de brainstorm) escutam via CSS selector
+   *  `html[data-showlive="true"] .root` e fazem display:none.
+   *  Mantém TODOS os outros chrome floaters do /app fora da
+   *  cena enquanto o palco está aberto — único caminho de
+   *  saída é o × ou Esc. */
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.dataset.showlive = 'true';
+    return () => {
+      delete document.documentElement.dataset.showlive;
+    };
+  }, [open]);
+
+  /* Textbox de "mande pro telão" — local-only mock; só feedback
+   * visual ao "enviar" mensagem mocks (gate de Top 10 Superfãs
+   * mostrado abaixo). */
+  const [stageMsg, setStageMsg] = useState('');
+  const [stageMsgFlash, setStageMsgFlash] = useState(false);
+  const handleStageMsgSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stageMsg.trim()) return;
+    setStageMsg('');
+    setStageMsgFlash(true);
+    window.setTimeout(() => setStageMsgFlash(false), 1400);
+  };
+
   if (!open) return null;
 
   const handleSend = (e: React.FormEvent) => {
@@ -246,8 +274,8 @@ export default function ShowLiveStage({ open, onClose }: Props) {
             AO VIVO
           </span>
           <span className={styles.headerVenue}>
-            Arena Fonte Nova
-            <span className={styles.headerCity}> · Salvador, BA</span>
+            Transmissão ao vivo Ana Castela
+            <span className={styles.headerCity}> | Fire Arena</span>
           </span>
         </div>
         <button
@@ -260,6 +288,27 @@ export default function ShowLiveStage({ open, onClose }: Props) {
             <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
+      </div>
+
+      {/* ── Sponsor pill (oferecimento) ─────────────────────────
+       *   Pílula preta arredondada abaixo do header com 3 "slots"
+       *   de logo. Placeholders estilizados (texto com tipografia
+       *   de marca) — substituir por <img> reais quando os SVGs
+       *   estiverem disponíveis. Cada slot tem largura máxima de
+       *   96px conforme spec. */}
+      <div className={styles.sponsorPill}>
+        <span className={styles.sponsorLabel}>um oferecimento</span>
+        <span className={styles.sponsorLogos}>
+          <span className={`${styles.sponsorLogo} ${styles.sponsorBrahma}`}>
+            Brahma
+          </span>
+          <span className={`${styles.sponsorLogo} ${styles.sponsorVivo}`}>
+            vivo
+          </span>
+          <span className={`${styles.sponsorLogo} ${styles.sponsorBallantine}`}>
+            BALLANTINE&apos;S
+          </span>
+        </span>
       </div>
 
       {/* ── Frame de transmissão (central) ──────────────────────
@@ -317,6 +366,66 @@ export default function ShowLiveStage({ open, onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── Caixa "Mande pro telão" ─────────────────────────────
+       *   Textbox de 420×76 que mocka o envio de mensagem pro
+       *   telão do estádio. Warning permanente sinalizando que a
+       *   feature é gated em Top 10 Superfãs — o submit ainda
+       *   funciona (mock) com flash visual, mas o aviso deixa
+       *   claro que em prod só os top fans efetivamente vão pro
+       *   telão. */}
+      <form
+        className={`${styles.stageMsgBox} ${stageMsgFlash ? styles.stageMsgFlash : ''}`}
+        onSubmit={handleStageMsgSend}
+      >
+        <div className={styles.stageMsgHeader}>
+          <span className={styles.stageMsgTitle}>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="14" rx="2" />
+              <path d="M8 22h8M12 18v4" />
+            </svg>
+            Mande pro telão
+          </span>
+          <span className={styles.stageMsgLock}>
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 1 1 8 0v4" />
+            </svg>
+            Top 10 Superfãs
+          </span>
+        </div>
+        <div className={styles.stageMsgRow}>
+          <input
+            type="text"
+            className={styles.stageMsgInput}
+            placeholder={
+              stageMsgFlash
+                ? 'Mensagem enviada — apareceu no telão!'
+                : 'Sua mensagem aparece no estádio…'
+            }
+            value={stageMsg}
+            onChange={(e) => setStageMsg(e.target.value)}
+            maxLength={80}
+          />
+          <button
+            type="submit"
+            className={styles.stageMsgSend}
+            disabled={!stageMsg.trim()}
+            aria-label="Mandar mensagem pro telão"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </form>
 
       {/* ── Chat ao lado direito ───────────────────────────── */}
       <div className={styles.chatPanel}>

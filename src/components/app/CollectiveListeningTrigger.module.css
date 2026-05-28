@@ -10,6 +10,10 @@
  * on (see CollectiveListeningTrigger.tsx).
  * ============================================================ */
 
+/* Esconde o trigger quando o ShowLiveStage está aberto. */
+:global(html[data-showlive="true"]) .pill {
+  display: none !important;
+}
 .pill {
   position: fixed;
   /* Desktop — anchored next to the Superchat trigger on the

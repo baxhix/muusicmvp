@@ -16,6 +16,12 @@
  * container is overflow:hidden + transitions max-height on the
  * `.dropdown` so the open/close animation is contained.
  */
+/* Esconde o box quando o ShowLiveStage está aberto — brainstorm
+ * "Show ao vivo" quer o palco como única UI visível no /app
+ * (data-showlive setado pelo ShowLiveStage no <html>). */
+:global(html[data-showlive="true"]) .box {
+  display: none !important;
+}
 .box {
   position: fixed;
   top: 16px;
