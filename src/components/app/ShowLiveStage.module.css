@@ -503,11 +503,10 @@
   position: absolute;
   /* Alinhado verticalmente com o broadcast frame (top:14%) +
    * acoplado AO LADO do vídeo via calc(50% + half-video +
-   * gap). Como o vídeo é 560 wide centrado, sua borda direita
-   * fica em 50% + 280. Chat começa em 50% + 288 (gap de 8).
-   * Antes ficava ancorado em right:16 (longe do vídeo). */
+   * gap). Vídeo é 560 wide centrado → borda direita em 50%+280.
+   * Gap de 24px → chat começa em 50% + 304. */
   top: 14%;
-  left: calc(50% + 288px);
+  left: calc(50% + 304px);
   right: auto;
   width: 280px;
   max-height: 420px;
@@ -863,22 +862,34 @@
 }
 .stageMsgSend {
   /* Pareia com o input 36px (era 32). Mesma proporção da
-   * pílula circular. */
+   * pílula circular.
+   * Gradient lilás→rosa→lilás horizontal — mesmo do FAB "+"
+   * do CommunityPanel (e dos botões "+" flutuantes no app
+   * em geral). Cria coerência visual entre as CTAs de "ação
+   * primária" do sistema. */
   width: 36px;
   height: 36px;
   border: 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.95) 0%,
+    rgba(236, 72, 153, 1) 50%,
+    rgba(168, 85, 247, 0.95) 100%
+  );
   color: #fff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: opacity 0.14s ease, transform 0.14s ease;
+  transition: opacity 0.14s ease, transform 0.14s ease,
+              box-shadow 0.14s ease;
+  box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.4);
 }
 .stageMsgSend:hover:not(:disabled) {
   transform: scale(1.05);
+  box-shadow: 0 6px 16px -4px rgba(236, 72, 153, 0.55);
 }
 .stageMsgSend:disabled {
   opacity: 0.4;
