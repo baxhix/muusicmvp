@@ -925,34 +925,79 @@
   transform: scale(1.08);
 }
 
-/* Botão paperclip — entre o textarea e o send. */
+/* Botão paperclip — entre o textarea e o send. Mesmo formato pill
+ * que o sendBtn pra parear visualmente. */
 .attachBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgba(245, 245, 247, 0.6);
+  color: rgba(245, 245, 247, 0.55);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 999px;
   flex-shrink: 0;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.12s ease;
+}
+/* Força tamanho do SVG — sem isso o browser fallback pode usar
+ * 300x150 (default de SVG inline sem width/height) e o ícone
+ * desaparece atrás do clipping do flex container. */
+.attachBtn > svg {
+  width: 18px;
+  height: 18px;
 }
 .attachBtn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: #f5f5f7;
+  transform: scale(1.04);
 }
 .attachBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 .attachSpinner {
-  width: 14px;
-  height: 14px;
   animation: attachSpinnerRotate 800ms linear infinite;
+}
+
+/* Drop overlay — aparece quando o user arrasta um arquivo de fora
+ * pro panel. pointer-events:none é CRÍTICO: o overlay precisa
+ * deixar os eventos de drag passarem direto pro panel-pai (que
+ * tem os handlers), senão dragLeave dispara assim que o cursor
+ * cruza a borda do overlay e o estado fica oscilando. */
+.dropOverlay {
+  position: absolute;
+  inset: 8px;
+  background: rgba(94, 234, 212, 0.06);
+  border: 2px dashed rgba(94, 234, 212, 0.55);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 80;
+  animation: dropOverlayFadeIn 120ms ease-out;
+}
+.dropPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: rgba(94, 234, 212, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  background: rgba(15, 15, 18, 0.7);
+  padding: 18px 28px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+@keyframes dropOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes attachSpinnerRotate {
   to { transform: rotate(360deg); }

@@ -186,6 +186,11 @@ export default function LiveChatPanel({
    * spinner no botão de paperclip enquanto sobe. */
   const [uploadingCount, setUploadingCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  /* Drag-and-drop: overlay visual + contador (dragenter/leave podem
+   * disparar várias vezes em nested children, então contamos pra
+   * que o overlay só some quando o counter zera de verdade). */
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   // @mention autocomplete state. `mentionStart` is the cursor
   // position where the active "@" sits; null means no autocomplete
   // is open right now. `mentionQuery` is the text typed AFTER the
@@ -460,6 +465,52 @@ export default function LiveChatPanel({
     setPendingAttachments((prev) => prev.filter((a) => a.url !== url));
   };
 
+  /* ── Drag-and-drop de arquivos ─────────────────────────────────
+   * Aceita arrastar imagem do desktop/explorer direto pro panel.
+   * Reaproveita `handleFilesPicked` pra que a validação (MIME +
+   * size + slots) seja idêntica ao caminho do paperclip. Overlay
+   * só aparece se a conv estiver aberta E o user não saiu do grupo
+   * (composer hidden = drop não faz sentido — o check `hasLeftGroup`
+   * roda dentro dos handlers em closure pra evitar TDZ porque ele
+   * é declarado mais abaixo no componente).
+   *
+   * dragCounter cuida do flicker de dragenter/dragleave que dispara
+   * em CADA child element do panel — incrementa na entrada, decre-
+   * menta na saída; overlay só some quando o counter zera. */
+  const onDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!conversation || conversation.myLeftAt) return;
+    if (!Array.from(e.dataTransfer.types).includes('Files')) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    setIsDragging(true);
+  };
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!conversation || conversation.myLeftAt) return;
+    e.preventDefault();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDragging(false);
+    }
+  };
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!conversation || conversation.myLeftAt) return;
+    /* preventDefault no dragover é OBRIGATÓRIO pra que o drop seja
+     * aceito pelo browser — sem ele, dropEffect vira 'none' e o
+     * cursor mostra o ícone de bloqueado. */
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!conversation || conversation.myLeftAt) return;
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    void handleFilesPicked(files);
+  };
+
   /** Inspect the input value + caret position to decide whether the
    *  mention autocomplete should be open. We open when there's an
    *  unfinished "@" token immediately to the left of the caret
@@ -583,7 +634,27 @@ export default function LiveChatPanel({
       style={panelInlineStyle}
       role="dialog"
       aria-label={`Chat com ${headerName}`}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
     >
+      {/* Drop overlay — só aparece enquanto arrastar arquivo de
+       *  fora do browser. pointer-events:none no CSS pra que o evento
+       *  de drag continue chegando no panel-pai (o overlay não
+       *  intercepta os handlers). */}
+      {isDragging && (
+        <div className={styles.dropOverlay} aria-hidden="true">
+          <div className={styles.dropPrompt}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>Solte para anexar</span>
+          </div>
+        </div>
+      )}
       <div className={styles.header}>
         {/* Back arrow — visible on mobile only (CSS-gated via
          *  the panel's media query). Anchors on the LEFT of the
@@ -948,13 +1019,17 @@ export default function LiveChatPanel({
           }
         >
           {uploadingCount > 0 ? (
-            <svg className={styles.attachSpinner} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.6" strokeOpacity="0.25" />
-              <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            <svg className={styles.attachSpinner} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" strokeOpacity="0.25" />
+              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           ) : (
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M11.5 5.5L6 11a2.5 2.5 0 0 1-3.5-3.5l6.5-6.5a4 4 0 0 1 5.5 5.5L7 13a5 5 0 0 1-7-7" />
+            /* Paperclip Lucide-style — viewBox 24×24 com path canônico
+             * (mesmo desenho usado em Slack/Linear). Antes era um path
+             * customizado que escapava do viewBox 16×16 e ficava
+             * deformado em renderização. */
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
             </svg>
           )}
         </button>
