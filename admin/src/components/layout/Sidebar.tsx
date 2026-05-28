@@ -68,6 +68,7 @@ type NavEntry = NavLeaf | NavGroup;
  *
  *   Plataforma  (group)
  *     Feed
+ *     Agenda
  *     Comunidades
  *     Moderação
  *     Notificações
@@ -119,6 +120,13 @@ const NAV: NavEntry[] = [
        * feedback. "Lives" e "Presave" ficaram disabled — features
        * ainda em backlog, sem operação ativa. */
       { kind: 'leaf', href: '/feed',          label: 'Feed' },
+      /* Agenda — vista calendário/agenda dos posts em status
+       * `scheduled`. Sobe direto após Feed porque é a outra face
+       * da mesma feature: editor (Feed) + visão temporal (Agenda).
+       * Per product feedback "Crie no admin, dentro de Plataforma
+       * o item Agenda. Nele, deverá aparecer os itens agendados
+       * para publicação no feed". */
+      { kind: 'leaf', href: '/agenda',        label: 'Agenda' },
       { kind: 'leaf', href: '/comunidades',   label: 'Comunidades' },
       { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
       { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
