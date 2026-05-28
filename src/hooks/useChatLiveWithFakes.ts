@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ApiConversationSummary,
   ApiMessage,
+  ApiMessageAttachment,
   ApiMessageReaction,
 } from '@/lib/api/types';
 import {
@@ -181,18 +182,30 @@ export function useChatLiveWithFakes() {
   }, [base, activeOverride]);
 
   const send = useCallback(
-    async (body: string) => {
+    async (
+      body: string,
+      attachments?: ApiMessageAttachment[] | null,
+    ) => {
       const text = body.trim();
-      if (!text) return;
+      const hasAttachments = !!attachments && attachments.length > 0;
+      /* Espelha o LiveChatPanel: aceita envio só de imagem (body
+       * vazio + attachments). Sem essa flexibilização, o composer
+       * mandava attachments mas o wrapper retornava silenciosamente
+       * aqui e nem o base.send chegava a ser chamado. */
+      if (!text && !hasAttachments) return;
 
       if (activeOverride === FAKE_ANA_CONVERSATION_ID) {
         // Ana branch — fan message appended locally + canned reply.
+        // Fake convs herdam attachments só pra echo local, sem
+        // round-trip: a imagem fica visível no fluxo mas o "envio"
+        // é puramente client-side.
         const fanMsg: ApiMessage = {
           id: `fake-ana-fan-${Date.now()}`,
           conversationId: FAKE_ANA_CONVERSATION_ID,
           senderId: user?.id ?? '',
           body: text,
           createdAt: new Date().toISOString(),
+          attachments: hasAttachments ? attachments! : undefined,
         };
         setAnaMessages((prev) => [...prev, fanMsg]);
         setTimeout(() => {
@@ -219,6 +232,7 @@ export function useChatLiveWithFakes() {
           senderId: user?.id ?? '',
           body: text,
           createdAt: new Date().toISOString(),
+          attachments: hasAttachments ? attachments! : undefined,
         };
         setCentralMessages((prev) => [...prev, fanMsg]);
         setTimeout(() => {
@@ -236,7 +250,12 @@ export function useChatLiveWithFakes() {
         return;
       }
 
-      return base.send(body);
+      /* Conversa real — repassa attachments pro base.send (que
+       * tem o caminho de socket + REST com a persistência JSONB
+       * em messages.attachments). Sem o segundo argumento aqui,
+       * a imagem ficava só no preview do composer e a bubble
+       * persistia como text-only. */
+      return base.send(body, attachments);
     },
     [activeOverride, base, user?.id],
   );
