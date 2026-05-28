@@ -1,12 +1,16 @@
 /* ── FANVERSE PILL (compact, header-anchored) ──
  *
- * Anchored to the top-left at `top:42px; left:14px` so it sits on
- * the same horizontal axis as the TopBar avatar (right:14px). In
- * resting state the box is just a slim pill — small artist photo
- * + name + Fanpoints + chevron — that frees up most of the map
- * for the user to explore. Click the pill to expand the dropdown
- * below, which reveals the full content (wallet row + discount
- * badge + missions + progress + footer).
+ * Anchored to the top-left at `top:16px; left:14px` so it sits na
+ * MESMA linha horizontal do banner promocional centralizado
+ * (DesktopTopBanner em top:16px) e do TopBar avatar (right:14px,
+ * agora também em top:16px). Antes ficava em top:42px e a régua
+ * superior dos 3 elementos quebrava visualmente.
+ *
+ * In resting state the box is just a slim pill — small artist
+ * photo + name + Fanpoints + chevron — that frees up most of the
+ * map for the user to explore. Click the pill to expand the
+ * dropdown below, which reveals the full content (wallet row +
+ * discount badge + missions + progress + footer).
  *
  * The dropdown sits BELOW the pill in normal flow; the `.box`
  * container is overflow:hidden + transitions max-height on the
@@ -14,7 +18,7 @@
  */
 .box {
   position: fixed;
-  top: 42px;
+  top: 16px;
   left: 14px;
   width: 280px;
   /* z-index bumped 15 → 60 so the box paints ABOVE the `.shell`
