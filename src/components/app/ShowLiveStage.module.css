@@ -753,19 +753,28 @@
 .sponsorLogos {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
+  /* Gap +10px (era 16 → 26) pra mais respiro entre os 3 logos
+   * — antes ficavam apertados especialmente quando o Brahma
+   * (vermelho) era do mesmo tamanho dos outros. */
+  gap: 26px;
 }
-/* Cada logo .svg vem do /public/sponsors/. width:90px fixo
- * conforme spec ("90px cada"). height: auto + max-height
- * proporcional pra que SVGs com aspect-ratio diferente não
- * forcem o pill alto demais (cada marca tem proporção
- * natural). object-fit:contain como segurança. */
+/* Cada logo vem do /public/sponsors/. width 90px default
+ * + height auto + max-height pra acomodar aspect-ratios
+ * diferentes. object-fit contain como segurança. */
 .sponsorLogo {
   display: inline-block;
   width: 90px;
   height: auto;
   max-height: 38px;
   object-fit: contain;
+}
+/* Brahma logo é -20% (72px) por feedback "diminua 20% o
+ * tamanho da logo Brahma" — o asset oficial tinha presença
+ * visual maior que os outros dois (bg vermelho saturado +
+ * tipografia condensada bold), o downsize equilibra a
+ * hierarquia visual da linha de sponsors. */
+.sponsorLogoBrahma {
+  width: 72px;
 }
 
 /* ──────────────────────────────────────────────────────────

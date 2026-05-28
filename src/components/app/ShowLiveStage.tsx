@@ -302,7 +302,7 @@ export default function ShowLiveStage({ open, onClose }: Props) {
           <img
             src="/sponsors/brahma.png"
             alt="Brahma"
-            className={styles.sponsorLogo}
+            className={`${styles.sponsorLogo} ${styles.sponsorLogoBrahma}`}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
