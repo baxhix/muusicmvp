@@ -8,6 +8,7 @@ import FeedPanel from '@/components/app/FeedPanel';
 import BrainstormPanel from '@/components/app/BrainstormPanel';
 import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
+import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 
 
@@ -105,6 +106,16 @@ export default function AppPage() {
           with a spinning vinyl + fake fan chat. Self-gates on
           `flags.collectiveListening`. */}
       <CollectiveListeningTrigger />
+
+      {/* Fire Arena · Show ao vivo (brainstorm-gated) — pílula
+          rosa neon abaixo dos outros triggers que abre o
+          ShowLiveStage: viewport vira palco com vinheta dark
+          ao redor, luzes pulsando sobre o estádio (mapa visível
+          por baixo), frame de transmissão acima e chat ao
+          lado. Pensado pro lançamento do álbum Fire Arena na
+          Arena Fonte Nova (Salvador, BA). Self-gates on
+          `flags.showLive`. */}
+      <ShowLiveTrigger />
     </>
   );
 }

@@ -109,4 +109,17 @@ export const ANA_SHOWS: AnaShow[] = [
     lng: -71.0954,
     lat: 42.3496,
   },
+  {
+    /* Fire Arena — show de lançamento do álbum. Pin acompanha a
+     * feature brainstorm "Show ao vivo" (ShowLiveStage): o pin
+     * marca o ponto no mapa e a pílula rosa neon no topo da home
+     * é o entrypoint pra abrir a experiência imersiva. */
+    id: 'show-fire-arena-fonte-nova-2026',
+    date: '2026-12-13',
+    venue: 'Fire Arena · Lançamento',
+    city: 'Salvador',
+    state: 'BA',
+    lng: -38.5042,
+    lat: -12.9789,
+  },
 ];

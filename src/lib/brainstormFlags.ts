@@ -35,7 +35,11 @@ import { useAuth } from '@/lib/auth/AuthContext';
 export const BRAINSTORM_OWNER_EMAIL = 'demari.lets@gmail.com';
 
 /** All known experimental-feature keys. */
-export type BrainstormFlagKey = 'anaFlight' | 'superlive' | 'collectiveListening';
+export type BrainstormFlagKey =
+  | 'anaFlight'
+  | 'superlive'
+  | 'collectiveListening'
+  | 'showLive';
 
 export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
 
@@ -48,6 +52,7 @@ const DEFAULTS: BrainstormFlags = {
   anaFlight: true,
   superlive: true,
   collectiveListening: true,
+  showLive: true,
 };
 
 /**
@@ -80,6 +85,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Audição coletiva (Fire Arena)',
     description:
       'Botão da Fire Arena que abre uma sessão de escuta colaborativa do álbum "Let\'s Go Rodeo" — vinil girando, capa do álbum e chat dos fãs comentando em tempo real.',
+  },
+  {
+    key: 'showLive',
+    title: 'Show ao vivo (Fire Arena)',
+    description:
+      'Pin neon na Arena Fonte Nova (Bahia) que transforma o mapa num palco — vinheta escura ao redor, luzes de palco rosa pulsando sobre o estádio, frame de transmissão acima e chat dos fãs ao lado. Pensado pro lançamento do álbum Fire Arena.',
   },
 ];
 
