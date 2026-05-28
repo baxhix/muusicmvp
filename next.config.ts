@@ -79,6 +79,13 @@ const CSP_REPORT_ONLY = [
   "img-src 'self' data: blob: https: https://api.mapbox.com https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
   "connect-src 'self' https://us.i.posthog.com https://api.mapbox.com wss://*.mapbox.com https://api.resend.com",
+  /* frame-src: explicito pros embeds do YouTube (feed post tipo
+   * youtube_video). Sem esse directive o CSP cai pro default-src
+   * 'self' e bloqueia o iframe (violation report-only no console).
+   * Usamos `youtube-nocookie.com` no embed pra reduzir tracking;
+   * `youtube.com` listado também porque o nocookie redireciona
+   * pra ele em alguns flows. */
+  "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
