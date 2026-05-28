@@ -18,9 +18,16 @@
 }
 .card {
   position: fixed;
-  top: 180px;
-  left: 14px;
-  width: 280px;
+  /* Coluna esquerda LOGO ABAIXO do ícone de Brainstorm (lâmpada
+   * em top:50% translateY(-50%), 40px de altura, left:18px). O
+   * 1º trigger começa 8px abaixo da borda inferior da lâmpada,
+   * que cai em (50% + 20 + 8) = 50% + 28. Os triggers
+   * subsequentes empilham em gaps de 48 (≈ altura do pill + gap).
+   * left:18 alinha com o eixo horizontal do ícone, formando uma
+   * coluna visual coerente. */
+  top: calc(50% + 28px);
+  left: 18px;
+  width: min(280px, calc(100vw - 36px));
   z-index: 60;
   display: inline-flex;
   align-items: center;
@@ -62,19 +69,15 @@
 
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 600px) {
+  /* Mobile: alinhado com a lâmpada do brainstorm em left:12. Largura
+   * limitada pra não cruzar o lado direito da viewport onde estão
+   * os avatares do LiveChatStack (também em top:50%, mas acima do
+   * midline). */
   .card {
-    top: 121px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: auto;
-    max-width: calc(100vw - 32px);
+    top: calc(50% + 28px);
+    left: 12px;
+    width: min(260px, calc(100vw - 24px));
     padding: 10px 18px;
-  }
-  .card:hover {
-    transform: translateX(-50%) translateY(-1px);
-  }
-  .card:active {
-    transform: translateX(-50%) scale(0.98);
   }
   .label {
     font-size: 13px;

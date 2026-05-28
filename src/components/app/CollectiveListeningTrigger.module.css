@@ -18,13 +18,12 @@
 }
 .pill {
   position: fixed;
-  /* Segundo item da coluna esquerda de triggers de brainstorm,
-   * abaixo do Box Fanverse Ana Castela (ArtistBox em top:34
-   * left:14 width:280) e logo abaixo do SuperliveTrigger
-   * (top:180). Gap de 8px → top:236. */
-  top: 236px;
-  left: 14px;
-  width: 280px;
+  /* Segundo item da coluna abaixo da lâmpada de Brainstorm.
+   * Slots de 48px (40 do pill + 8 gap). 1º (Superlive) em
+   * calc(50% + 28); este aqui em calc(50% + 76). */
+  top: calc(50% + 76px);
+  left: 18px;
+  width: min(280px, calc(100vw - 36px));
   z-index: 60;
   display: inline-flex;
   align-items: center;
@@ -67,21 +66,14 @@
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 600px) {
-  /* Mobile home — coluna esquerda de 280 não cabe, então a pílula
-   * volta a center-stack abaixo do SuperliveTrigger. */
+  /* Mobile: mesmo padrão do SuperliveTrigger — alinhado com a
+   * lâmpada do brainstorm em left:12 e width limitado pra não
+   * encavalar nos avatares do LiveChatStack (acima do midline). */
   .pill {
-    top: 177px;
-    right: auto;
-    left: 50%;
-    width: auto;
-    transform: translateX(-50%);
+    top: calc(50% + 76px);
+    left: 12px;
+    width: min(260px, calc(100vw - 24px));
     padding: 10px 18px;
-  }
-  .pill:hover {
-    transform: translateX(-50%) translateY(-1px);
-  }
-  .pill:active {
-    transform: translateX(-50%) scale(0.98);
   }
   .label {
     font-size: 13px;

@@ -22,9 +22,13 @@
 }
 .card {
   position: fixed;
-  top: 292px;
-  left: 14px;
-  width: 280px;
+  /* Terceiro item da coluna abaixo da lâmpada de Brainstorm.
+   * Stack: Superlive (50% + 28) → Audição (50% + 76) →
+   * ShowLive (50% + 124). Gap consistente de 48px (40 do
+   * pill + 8 do espaçamento). */
+  top: calc(50% + 124px);
+  left: 18px;
+  width: min(280px, calc(100vw - 36px));
   z-index: 60;
   display: inline-flex;
   align-items: center;
@@ -64,21 +68,13 @@
   text-overflow: ellipsis;
 }
 
-/* ── Mobile: empilha embaixo dos outros triggers ─────── */
+/* ── Mobile: terceiro item da coluna esquerda ──────── */
 @media (max-width: 600px) {
   .card {
-    top: 232px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: auto;
-    max-width: calc(100vw - 32px);
+    top: calc(50% + 124px);
+    left: 12px;
+    width: min(260px, calc(100vw - 24px));
     padding: 10px 18px;
-  }
-  .card:hover {
-    transform: translateX(-50%) translateY(-1px);
-  }
-  .card:active {
-    transform: translateX(-50%) scale(0.98);
   }
   .label {
     font-size: 13px;
