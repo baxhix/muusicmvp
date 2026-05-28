@@ -45,6 +45,12 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* z-index 3 (era auto) — fica ACIMA do broadcastFrame (z:2)
+   * pra que o vídeo apareça "atrás da camada escura". Os spots
+   * + rings da própria vinheta também ficam por cima do vídeo,
+   * dando profundidade cênica. Header (z:5), sponsor (z:5),
+   * chat (z:4) continuam por cima da vinheta. */
+  z-index: 3;
   /* Intensidade reduzida (era 0.85/0.95 nas bordas) pra que o
    * mapa por baixo fique mais visível — o palco-real tem que
    * APARECER, não só o spot iluminado. Bordas a 0.55/0.65. */
@@ -329,7 +335,11 @@
   transform: translateX(-50%);
   width: min(560px, calc(100vw - 32px));
   pointer-events: auto;
-  z-index: 4;
+  /* z:2 (era 4) — fica POR TRÁS da vignette (z:3) pra criar
+   * sensação de "telão no fundo do palco com camada de luz
+   * cênica entre ele e o usuário". Cabeçalho/sponsor/chat
+   * continuam acima da vignette via z-index maior. */
+  z-index: 2;
   animation: broadcastSlideIn 480ms cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 @media (max-width: 768px) {
@@ -351,7 +361,11 @@
   );
   border: 1.5px solid rgba(168, 85, 247, 0.45);
   border-radius: 16px;
-  padding: 14px 16px 16px;
+  /* Padding-top de 14 → 24 pra que o iframe do vídeo respire
+   * a partir do borde superior do cartão (em vez de quase
+   * encostar). Mantém o respiro entre vídeo e stageMsgBox
+   * via gap do flex container. */
+  padding: 24px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -488,11 +502,13 @@
 .chatPanel {
   position: absolute;
   /* Alinhado verticalmente com o broadcast frame (top:14%) +
-   * altura limitada pra ficar compacto. Antes era full-height
-   * com bottom:16; agora top + max-height casa com o tamanho
-   * do vídeo + caption. */
+   * acoplado AO LADO do vídeo via calc(50% + half-video +
+   * gap). Como o vídeo é 560 wide centrado, sua borda direita
+   * fica em 50% + 280. Chat começa em 50% + 288 (gap de 8).
+   * Antes ficava ancorado em right:16 (longe do vídeo). */
   top: 14%;
-  right: 16px;
+  left: calc(50% + 288px);
+  right: auto;
   width: 280px;
   max-height: 420px;
   display: flex;
@@ -713,7 +729,9 @@
   justify-content: center;
   width: min(560px, calc(100vw - 32px));
   gap: 28px;
-  padding: 12px 24px;
+  /* Padding-top maior pra separar visualmente os logos do
+   * borde superior do pill — antes ficavam quase encostados. */
+  padding: 18px 24px 14px;
   background: #000;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
