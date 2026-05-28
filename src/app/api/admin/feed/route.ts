@@ -135,6 +135,8 @@ export async function POST(req: Request) {
     const status =
       code === 'image_required' ||
       code === 'video_required' ||
+      code === 'youtube_url_required' ||
+      code === 'youtube_url_invalid' ||
       code === 'story_media_required' ||
       code === 'description_too_long' ||
       code === 'title_too_long' ||

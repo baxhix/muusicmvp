@@ -102,7 +102,25 @@ async function httpCall<T>(method: Method, path: string, body?: unknown): Promis
     credentials: 'include',
   });
   if (!res.ok) {
-    throw new Error(`[api] ${method} ${path} → ${res.status}`);
+    /* Extrai o code de erro do JSON body quando o servidor manda
+     * `{ error: 'some_code' }` — esse padrão é seguido por todos
+     * os endpoints de `/api/admin/*`. Permite que os toasts dos
+     * formulários (FeedComposerDrawer.humanError etc) mostrem
+     * mensagens específicas em vez do fallback genérico
+     * "Tente novamente em instantes".
+     *
+     * Fallback pra string sintética `[api] METHOD path → status`
+     * quando o body não é JSON OU não tem `error`. */
+    let code: string | null = null;
+    try {
+      const data = (await res.json()) as { error?: string } | null;
+      if (data && typeof data.error === 'string' && data.error.length > 0) {
+        code = data.error;
+      }
+    } catch {
+      /* body não é JSON — usa fallback abaixo */
+    }
+    throw new Error(code ?? `[api] ${method} ${path} → ${res.status}`);
   }
   return (await res.json()) as T;
 }
