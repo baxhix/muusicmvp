@@ -330,7 +330,10 @@
  *  objeto Fire Arena do álbum. */
 .broadcastFrame {
   position: absolute;
-  top: 14%;
+  /* top 14% → 17%: +3 percentage points (~27px em viewport
+   * 900px) pra dar mais respiro entre o sponsor pill e o
+   * topo do cartão do vídeo. */
+  top: 17%;
   left: 50%;
   transform: translateX(-50%);
   width: min(560px, calc(100vw - 32px));
@@ -512,20 +515,19 @@
  *  fixo abaixo do broadcast). */
 .chatPanel {
   position: absolute;
-  /* Alinhado verticalmente com o broadcast frame (top:14%) +
+  /* Alinhado verticalmente com o broadcast frame (top:17%) +
    * acoplado AO LADO do vídeo via calc(50% + half-video +
    * gap). Vídeo é 560 wide centrado → borda direita em 50%+280.
    * Gap de 24px → chat começa em 50% + 304.
    *
-   * Altura: broadcastFrame é dinâmica mas previsível:
-   *   - padding-top 24 + video 315 (16:9 de 560) + gap 8
-   *   - stageMsgBox altura ~88 (padding 18/10 + header 16 +
-   *     gap 8 + input row 36) + padding-bottom 16 + border 3
-   *   - total ≈ 470px
-   * Chat alinha em ALTURA exata pra dois cards ficarem
-   * pareados visualmente. Era max-height 420 (mais baixo
-   * que o frame). */
-  top: 14%;
+   * top:17% acompanha o broadcastFrame que subiu de 14% pra
+   * 17% por feedback "aumente a distância entre o box
+   * oferecimento e o box do video e consequentemente o box
+   * de chat".
+   *
+   * Altura: 470px = padding 32+32 + video 297 + gap 18 +
+   * stageMsg 88 + border 3. Cards pareados visualmente. */
+  top: 17%;
   left: calc(50% + 304px);
   right: auto;
   width: 280px;
@@ -742,21 +744,21 @@
  * ────────────────────────────────────────────────────────── */
 .sponsorPill {
   position: absolute;
-  top: 66px;
+  /* top 66 → 80: +14px de respiro abaixo do header pra
+   * separar visualmente a label "Transmissão ao vivo" da
+   * pílula de sponsors. */
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
-  /* Largura igual ao broadcastFrame (560px max) — cria coluna
-   * central coerente: sponsor em cima, vídeo+telão embaixo,
-   * todos alinhados na mesma horizontal-edge. Display flex
-   * justify-content center mantém logos centralizados na pill. */
+  /* Sponsor 20% menor proporcionalmente — width casa com o
+   * broadcastFrame quando ele tem 560, mas em 80% disso fica
+   * 448px. Mantém a coluna central coerente em escala menor. */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(560px, calc(100vw - 32px));
-  gap: 28px;
-  /* Padding-top maior pra separar visualmente os logos do
-   * borde superior do pill — antes ficavam quase encostados. */
-  padding: 18px 24px 14px;
+  width: min(448px, calc(100vw - 32px));
+  gap: 22px;
+  padding: 14px 20px 10px;
   background: #000;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -770,7 +772,9 @@
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .sponsorLabel {
-  font-size: 10.5px;
+  /* Tudo escalado a ~0.8 do tamanho anterior:
+   *  10.5 → 8.5px. */
+  font-size: 8.5px;
   font-weight: 500;
   letter-spacing: 0.08em;
   color: rgba(245, 245, 247, 0.55);
@@ -779,28 +783,20 @@
 .sponsorLogos {
   display: inline-flex;
   align-items: center;
-  /* Gap +10px (era 16 → 26) pra mais respiro entre os 3 logos
-   * — antes ficavam apertados especialmente quando o Brahma
-   * (vermelho) era do mesmo tamanho dos outros. */
-  gap: 26px;
+  /* Gap proporcionalmente menor 26 → 21. */
+  gap: 21px;
 }
-/* Cada logo vem do /public/sponsors/. width 90px default
- * + height auto + max-height pra acomodar aspect-ratios
- * diferentes. object-fit contain como segurança. */
+/* Logos escalados ~0.8: 90 → 72, max-height 38 → 30. */
 .sponsorLogo {
   display: inline-block;
-  width: 90px;
+  width: 72px;
   height: auto;
-  max-height: 38px;
+  max-height: 30px;
   object-fit: contain;
 }
-/* Brahma logo é -20% (72px) por feedback "diminua 20% o
- * tamanho da logo Brahma" — o asset oficial tinha presença
- * visual maior que os outros dois (bg vermelho saturado +
- * tipografia condensada bold), o downsize equilibra a
- * hierarquia visual da linha de sponsors. */
+/* Brahma mantém o -20% relativo aos outros: 72 → 58. */
 .sponsorLogoBrahma {
-  width: 72px;
+  width: 58px;
 }
 
 /* ──────────────────────────────────────────────────────────
