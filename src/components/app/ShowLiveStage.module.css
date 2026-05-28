@@ -587,12 +587,17 @@
     left: 12px;
     right: 12px;
     width: auto;
-    height: 38vh;
-    min-height: 240px;
+    height: 34vh;
+    min-height: 220px;
   }
-  /* Em mobile, sobe um pouco o frame pra não overlapar com chat */
+  /* Mobile: bloco vídeo+chat desce pra liberar espaço pro sponsor
+   * pill maior (label em cima + 3 logos centralizados de 64px).
+   * Sponsor pill em top:56, altura ~80 → fim em y:136. broadcast
+   * começa em top:152 com 16px de respiro. Per product feedback
+   * "posicione o bloco de video + chat mais abaixo pra explorar
+   * usar os logotipos maiores e centralizados". */
   .broadcastFrame {
-    top: 60px;
+    top: 152px;
   }
   /* E o buraco da vinheta fica mais alto também — mesma
    * paleta menos intensa do desktop pra revelar o mapa. */
@@ -1000,31 +1005,37 @@
     height: 32px;
   }
 
-  /* Sponsor pill — versão mobile mais compacta e simétrica.
-   * Per product feedback "encaixe o logotipo dos patrocinadores
-   * para ficar coerente no mobile". Largura passa a casar com a
-   * do broadcastFrame (`calc(100vw - 24px)` no mobile), gap
-   * uniforme, logos com mesma altura visível, label menor. */
+  /* Sponsor pill — versão mobile com label EM CIMA e os 3 logos
+   * centralizados embaixo numa única linha maior. Per product
+   * feedback "explorar usar os logotipos maiores e centralizados,
+   * os tres em uma mesma linha e 'um oferecimento' em cima".
+   *
+   * flex-direction:column empilha label (linha 1) + logos (linha 2).
+   * Logos passam a 64px (Brahma 52, mantém -20%), gap 18, max-h 30
+   * pra explorar a área disponível agora que o broadcastFrame
+   * desceu pra deixar respiro. */
   .sponsorPill {
-    top: 60px;
+    top: 56px;
     width: calc(100vw - 24px);
-    gap: 12px;
-    padding: 6px 12px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 14px 12px;
   }
-  .sponsorLabel { font-size: 7.5px; }
+  .sponsorLabel { font-size: 8.5px; }
   .sponsorLogos {
-    gap: 14px;
+    gap: 22px;
     /* Distribui horizontalmente em vez de empilhar — força os
      * 3 logos a ocuparem o espaço de forma uniforme. */
-    flex: 1;
+    flex: 0 0 auto;
+    width: 100%;
     justify-content: center;
   }
   .sponsorLogo {
-    width: 44px;
-    max-height: 20px;
+    width: 64px;
+    max-height: 30px;
   }
   .sponsorLogoBrahma {
-    width: 36px;
+    width: 52px;
   }
 
   .stageMsgBox {
