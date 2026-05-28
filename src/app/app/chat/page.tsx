@@ -115,6 +115,7 @@ export default function ChatPage() {
         onClose={chat.close}
         onSend={chat.send}
         onReact={chat.react}
+        onDeleteMessage={chat.deleteMessage}
         onOpenMembers={() => setShowGroupMembers(true)}
         onLeaveGroup={async () => {
           if (!activeConversation || !authUser) return;

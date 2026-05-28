@@ -290,6 +290,28 @@ export function useChatLiveWithFakes() {
     [base],
   );
 
+  /** Soft-delete uma mensagem. Convs fake (Ana/Central) tem delete
+   *  local — patcha o array de mensagens local pra kind='deleted'.
+   *  Convs reais delegam pro base.deleteMessage (socket/REST). */
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      const patchDeleted = (msg: ApiMessage): ApiMessage =>
+        msg.id === messageId
+          ? { ...msg, kind: 'deleted' as const, body: '', attachments: null }
+          : msg;
+      if (anaMessages.some((m) => m.id === messageId)) {
+        setAnaMessages((prev) => prev.map(patchDeleted));
+        return;
+      }
+      if (centralMessages.some((m) => m.id === messageId)) {
+        setCentralMessages((prev) => prev.map(patchDeleted));
+        return;
+      }
+      return base.deleteMessage(messageId);
+    },
+    [base, anaMessages, centralMessages],
+  );
+
   /** Toggle a reaction. For Ana/Central's fake messages this lives in
    *  local state on `*Messages[i].reactions`; for real messages it
    *  delegates to the base hook (socket round-trip). */
@@ -354,5 +376,6 @@ export function useChatLiveWithFakes() {
     createGroup: base.createGroup,
     refreshConversations: base.refreshConversations,
     markRead,
+    deleteMessage,
   };
 }

@@ -35,10 +35,15 @@ interface Props {
    *  no banner de reply. Em group cair pra "Conversa" — fluxo
    *  de mention/reply é único nesse panel. */
   otherName: string | null | undefined;
+  /** Permite apagar essa mensagem. Calculado no parent: true quando
+   *  é a própria msg (DM/group) OU quando o user é owner do grupo.
+   *  Servidor faz a checagem canônica — esse flag só drives a UI. */
+  canDelete: boolean;
   pickerRef: React.RefObject<HTMLDivElement | null>;
   onReply: (replyTo: { senderName: string; body: string }) => void;
   onTogglePicker: (messageId: string) => void;
   onToggleReaction: (messageId: string, emoji: string) => void;
+  onDelete: (messageId: string) => void;
 }
 
 /** Resolve o nome de quem mandou — prioridade: senderName hidratado
@@ -67,10 +72,12 @@ function MessageBubbleImpl({
   pickerOpen,
   showHead,
   otherName,
+  canDelete,
   pickerRef,
   onReply,
   onTogglePicker,
   onToggleReaction,
+  onDelete,
 }: Props) {
   const msgReactions = m.reactions ?? [];
 
@@ -138,6 +145,26 @@ function MessageBubbleImpl({
               <path d="M5.6 10c.7.9 1.6 1.3 2.4 1.3.9 0 1.7-.4 2.4-1.3" strokeLinecap="round" />
             </svg>
           </button>
+          {/* Botão Apagar — só aparece quando o parent passou
+           *  canDelete=true (própria msg ou owner do grupo). Confirmação
+           *  fica delegada pro parent (que mostra o dialog antes de
+           *  realmente chamar deleteMessage). */}
+          {canDelete && (
+            <button
+              type="button"
+              className={styles.actionBtn}
+              onClick={() => onDelete(m.id)}
+              aria-label="Apagar mensagem"
+              title="Apagar"
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M2.5 4h11" />
+                <path d="M6 4V2.5h4V4" />
+                <path d="M3.5 4l.8 9a1 1 0 0 0 1 .9h5.4a1 1 0 0 0 1-.9l.8-9" />
+                <path d="M6.5 7v4M9.5 7v4" />
+              </svg>
+            </button>
+          )}
         </span>
 
         {pickerOpen && (
@@ -229,9 +256,11 @@ const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
     prev.showHead === next.showHead &&
     prev.reactionsKey === next.reactionsKey &&
     prev.otherName === next.otherName &&
+    prev.canDelete === next.canDelete &&
     prev.onReply === next.onReply &&
     prev.onTogglePicker === next.onTogglePicker &&
-    prev.onToggleReaction === next.onToggleReaction
+    prev.onToggleReaction === next.onToggleReaction &&
+    prev.onDelete === next.onDelete
   );
 });
 

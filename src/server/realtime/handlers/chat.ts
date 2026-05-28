@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { sendMessage } from '../../chat/messages';
+import { eq } from 'drizzle-orm';
+import { db } from '../../db';
+import { messages } from '../../db/schema';
+import { deleteMessage, sendMessage } from '../../chat/messages';
 import { markConversationRead, userIsInConversation } from '../../chat/queries';
 import {
   getReactableConversation,
@@ -57,6 +60,10 @@ const reactSchema = z.object({
 const readSchema = z.object({
   conversationId: z.string().uuid(),
   messageId: z.string().uuid().optional(),
+});
+
+const deleteSchema = z.object({
+  messageId: z.string().uuid(),
 });
 
 type Ack = (res: { ok: boolean; error?: string; messageId?: string }) => void;
@@ -320,6 +327,75 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
       } catch (err) {
         logger.error('realtime.chat.chatreact-handler', err)
         ack?.({ ok: false, error: 'react_failed' });
+      }
+    },
+  );
+
+  /* chat:delete — soft-delete da mensagem + broadcast pro room
+   * pra que TODOS os clientes vendo a conversa atualizem o bubble
+   * pra pílula "Mensagem apagada" sem precisar de refetch.
+   *
+   * Reaproveita o `deleteMessage` server (regras de permissão já
+   * embedded: DM só dona, group owner pode tudo, outros só dona,
+   * system kinds bloqueados). Aqui só faz lookup do conversationId
+   * (pra saber em qual room emitir) antes do delete em si — o
+   * `deleteMessage` em sucesso zera a row, então precisamos pegar
+   * o conversationId ANTES. */
+  socket.on(
+    'chat:delete',
+    async (
+      input: unknown,
+      ack?: (res: { ok: boolean; error?: string }) => void,
+    ) => {
+      try {
+        const parsed = deleteSchema.safeParse(input);
+        if (!parsed.success) return ack?.({ ok: false, error: 'invalid_payload' });
+
+        /* Lookup do conversationId ANTES do delete — depois do
+         * deleteMessage a row continua na tabela (soft-delete) mas
+         * por consistência pegamos antes mesmo assim. */
+        const [row] = await db
+          .select({ conversationId: messages.conversationId })
+          .from(messages)
+          .where(eq(messages.id, parsed.data.messageId))
+          .limit(1);
+
+        if (!row) return ack?.({ ok: false, error: 'not_found' });
+
+        try {
+          await deleteMessage(parsed.data.messageId, userId);
+        } catch (delErr) {
+          const code =
+            delErr instanceof Error ? delErr.message : 'delete_failed';
+          if (
+            code === 'not_found' ||
+            code === 'forbidden' ||
+            code === 'not_deletable'
+          ) {
+            return ack?.({ ok: false, error: code });
+          }
+          throw delErr;
+        }
+
+        /* Broadcast pro room — TODOS os clientes joined recebem e
+         * atualizam o bubble localmente (vira pílula "Mensagem
+         * apagada"). Inclui o próprio sender (cobre cross-session:
+         * apagou na web, mobile aberto no msg vê sumir). */
+        io.to(room(row.conversationId)).emit('chat:message:deleted', {
+          conversationId: row.conversationId,
+          messageId: parsed.data.messageId,
+        });
+
+        logger.info('realtime.chat.deleted', {
+          userId,
+          conversationId: row.conversationId,
+          messageId: parsed.data.messageId,
+        });
+
+        ack?.({ ok: true });
+      } catch (err) {
+        logger.error('realtime.chat.chatdelete-handler', err);
+        ack?.({ ok: false, error: 'delete_failed' });
       }
     },
   );

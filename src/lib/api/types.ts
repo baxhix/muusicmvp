@@ -136,9 +136,11 @@ export interface ApiMessage {
   reactions?: ApiMessageReaction[];
   /**
    * Anexos da mensagem (imagens). Vazio/omitido em mensagens text-only.
-   * Renderer mostra grid de thumbnails abaixo do `body` no bubble.
+   * `null` indica mensagem soft-deletada (server zera attachments junto
+   * com o body quando kind vira 'deleted'). Renderer mostra grid de
+   * thumbnails abaixo do `body` no bubble.
    */
-  attachments?: ApiMessageAttachment[];
+  attachments?: ApiMessageAttachment[] | null;
 }
 
 /**

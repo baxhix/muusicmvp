@@ -81,6 +81,10 @@ interface Props {
   ) => Promise<void>;
   /** Toggle a reaction emoji on a message. Server-persisted via socket. */
   onReact: (messageId: string, emoji: string) => void;
+  /** Apaga uma mensagem (soft-delete server-side). Parent (chat/page.tsx)
+   *  delega pro hook `useChatLive.deleteMessage`. UI mostra confirmação
+   *  antes de chamar — não há undo. */
+  onDeleteMessage: (messageId: string) => Promise<void>;
   /** Fired from the kebab menu when the user clicks "Ver membros"
    *  in a group conversation. Parent should open GroupMembersPanel. */
   onOpenMembers?: () => void;
@@ -169,6 +173,7 @@ export default function LiveChatPanel({
   onClose,
   onSend,
   onReact,
+  onDeleteMessage,
   onOpenMembers,
   onLeaveGroup,
   onHideConversation,
@@ -343,6 +348,31 @@ export default function LiveChatPanel({
       setReplyingTo(replyTo);
     },
     [],
+  );
+
+  /* Confirmação antes de chamar onDeleteMessage. Não há undo —
+   * o soft-delete server-side zera body + attachments e o arquivo
+   * de imagem é unlinkado do disco. */
+  const handleDelete = useCallback(
+    async (messageId: string) => {
+      const ok = await confirmDialog({
+        title: 'Apagar mensagem?',
+        body: 'Essa ação não pode ser desfeita.',
+        confirmLabel: 'Apagar',
+        tone: 'danger',
+      });
+      if (!ok) return;
+      try {
+        await onDeleteMessage(messageId);
+      } catch (err) {
+        console.error('delete message failed:', err);
+        showAppToast({
+          message: 'Não foi possível apagar a mensagem.',
+          tone: 'error',
+        });
+      }
+    },
+    [onDeleteMessage],
   );
 
   /** Convert each picked mention's "@Display" occurrence in the
@@ -862,6 +892,21 @@ export default function LiveChatPanel({
                 lastDay = k;
               }
 
+              // Mensagem apagada (kind='deleted') — pílula neutra
+              // "Mensagem apagada" sem identificar autor. Cobre antes do
+              // branch system_* abaixo porque kind='deleted' É um system
+              // kind mas precisa de copy específico (não tem body).
+              if (m.kind === 'deleted') {
+                nodes.push(
+                  <SystemMessagePill
+                    key={m.id}
+                    who=""
+                    verb="Mensagem apagada"
+                  />,
+                );
+                continue;
+              }
+
               // System events: pílula cinza centralizada via memo'd
               // component (SystemMessagePill). Não tem hover-actions
               // nem reactions, então a memoization é trivial por
@@ -893,6 +938,12 @@ export default function LiveChatPanel({
                * do SuperchatPanel. Em DMs, dispensa porque 1:1 já
                * tem alignment esquerda/direita identificando autoria. */
               const showHead = isGroup && !isMine;
+              /* canDelete: própria msg sempre, OU owner do grupo
+               * pode apagar de qualquer um. Server faz a checagem
+               * canônica — flag aqui só drives a visibilidade da UI. */
+              const isGroupOwner =
+                isGroup && conversation?.createdBy === user?.id;
+              const canDelete = isMine || isGroupOwner;
               nodes.push(
                 <MessageBubble
                   key={m.id}
@@ -902,10 +953,12 @@ export default function LiveChatPanel({
                   pickerOpen={pickerOpen}
                   showHead={showHead}
                   otherName={other?.name}
+                  canDelete={canDelete}
                   pickerRef={pickerRef}
                   onReply={handleReply}
                   onTogglePicker={handleTogglePicker}
                   onToggleReaction={toggleReaction}
+                  onDelete={handleDelete}
                 />,
               );
             }

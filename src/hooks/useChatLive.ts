@@ -71,6 +71,16 @@ interface UseChatLiveResult {
    * full LiveChatPanel.
    */
   markRead: (conversationId: string) => Promise<void>;
+  /**
+   * Soft-delete uma mensagem. Sender (DM/group) ou owner (group) podem
+   * apagar — server faz a checagem; client só dispara. Caminho preferido
+   * é socket (chat:delete) pra broadcast cross-client; cai pra REST
+   * (DELETE /api/messages/:id) quando socket offline.
+   *
+   * Optimistic: marca local com kind='deleted' antes do round-trip;
+   * em erro, rollback pro estado anterior.
+   */
+  deleteMessage: (messageId: string) => Promise<void>;
 }
 
 /**
@@ -361,6 +371,38 @@ export function useChatLive(): UseChatLiveResult {
     };
   }, [socket]);
 
+  // ── Realtime: chat:message:deleted broadcast ──────────────────────────
+  //
+  // Server broadcastia pro room (conv:{id}) sempre que um delete é
+  // bem-sucedido. Cobre 3 cenários:
+  //   1. User apagou em outra session (web + mobile abertos): a session
+  //      ativa atualiza o bubble sem precisar refetch
+  //   2. Outra parte da DM apagou — viewer vê o bubble virar pílula
+  //   3. Owner do grupo apagou msg de outro membro — todos viewers veem
+  //
+  // Idempotente: se a msg já está kind='deleted' (porque o sender já
+  // optimistic-aplicou), o map retorna o mesmo objeto e React skipa.
+  useEffect(() => {
+    if (!socket) return;
+    const onDeleted = (payload: {
+      conversationId: string;
+      messageId: string;
+    }) => {
+      if (payload.conversationId !== activeIdRef.current) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === payload.messageId
+            ? { ...m, kind: 'deleted' as const, body: '', attachments: null }
+            : m,
+        ),
+      );
+    };
+    socket.on('chat:message:deleted', onDeleted);
+    return () => {
+      socket.off('chat:message:deleted', onDeleted);
+    };
+  }, [socket]);
+
   // ── Realtime: incoming chat messages (active thread) ───────────────────
   //
   // P0.1 da auditoria: NÃO chamar mais `loadList()` aqui. O handler
@@ -635,6 +677,71 @@ export function useChatLive(): UseChatLiveResult {
     }
   }, [loadList]);
 
+  /* ── Delete uma mensagem (soft-delete) ──────────────────────────
+   *
+   * Optimistic: marca a row com kind='deleted', body='', attachments=null
+   * antes do request. Mantém uma copia da row original em closure pra
+   * rollback caso o server rejeite (forbidden / not_deletable / 404).
+   *
+   * Caminho preferido = socket (chat:delete) — server broadcastia
+   * `chat:message:deleted` pro room, cobrindo TODOS os viewers
+   * (incluindo o próprio sender em outras sessions). Sem socket,
+   * cai pra REST DELETE — só esse cliente atualiza, outros vão
+   * descobrir no próximo refetch (aceitável pra fallback raro).
+   *
+   * Sucesso: o broadcast chat:message:deleted re-trigger o mesmo
+   * patch local, mas como já está em kind='deleted' o handler do
+   * broadcast vira no-op (idempotente). */
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      // Snapshot da row pra rollback
+      let snapshot: ApiMessage | null = null;
+      setMessages((prev) => {
+        const found = prev.find((m) => m.id === messageId);
+        if (found) snapshot = found;
+        return prev.map((m) =>
+          m.id === messageId
+            ? { ...m, kind: 'deleted' as const, body: '', attachments: null }
+            : m,
+        );
+      });
+      if (!snapshot) return; // mensagem não está em memória; no-op
+
+      const restoreSnapshot = () => {
+        const snap = snapshot;
+        if (!snap) return;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? snap : m)),
+        );
+      };
+
+      if (socket && socket.connected) {
+        socket.emit(
+          'chat:delete',
+          { messageId },
+          (ack: { ok: boolean; error?: string } | undefined) => {
+            if (!ack?.ok) {
+              console.error('chat:delete rejected:', ack?.error);
+              restoreSnapshot();
+            }
+            // Sucesso: broadcast chat:message:deleted chega no handler
+            // e re-aplica o patch (no-op porque já está deleted).
+          },
+        );
+        return;
+      }
+
+      // Fallback REST quando socket indisponível
+      try {
+        await api.delete(`/api/messages/${messageId}`);
+      } catch (err) {
+        console.error('deleteMessage (REST) failed:', err);
+        restoreSnapshot();
+      }
+    },
+    [socket],
+  );
+
   return {
     conversations,
     loadingList,
@@ -649,5 +756,6 @@ export function useChatLive(): UseChatLiveResult {
     createGroup,
     refreshConversations: loadList,
     markRead,
+    deleteMessage,
   };
 }
