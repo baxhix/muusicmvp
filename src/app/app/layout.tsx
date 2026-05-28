@@ -9,6 +9,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
 import ArtistBox from '@/components/app/ArtistBox';
+import DesktopTopBanner from '@/components/app/DesktopTopBanner';
 import FanverseCore from '@/components/animations/FanverseCore';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import MobileRouteHeader from '@/components/app/MobileRouteHeader';
@@ -199,13 +200,25 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
+        {/* Banner promocional fixo no topo (desktop-only, 640px
+         *  com sombra dark). Internamente usa `useIsMobile()`
+         *  pra retornar null no mobile, então não precisa de
+         *  gate adicional aqui. */}
+        {!hideShellChrome && (
+          <div className={fadeClass(5)}>
+            <DesktopTopBanner />
+          </div>
+        )}
+
         {/* Orb decorativo da marca — mesmo WebGL2 shader do /teste
-         *  e da landing. Desktop: top-left, alinhado ao topo da
-         *  navbar. Mobile: bottom-left, acima da BottomNav (CSS
-         *  decide via @media). aria-hidden + pointer-events:none
-         *  no wrapper porque é puramente decorativo (não-clicável).
-         *  Hidden em chat detail mobile (.hideShellChrome) pra
-         *  liberar a viewport do LiveChatPanel. */}
+         *  e da landing. Desktop: bottom-left, ao lado esquerdo
+         *  da BottomNav per product feedback ("o orbe deve ficar
+         *  na parte inferior ao lado esquerdo da bottom bar").
+         *  Mobile: já estava bottom-left, agora segue a mesma
+         *  ancoragem (gerenciado em MobileHomeChrome).
+         *  aria-hidden + pointer-events:none no wrapper porque é
+         *  puramente decorativo (não-clicável). Hidden em chat
+         *  detail mobile (.hideShellChrome). */}
         {!hideShellChrome && (
           <div className={`${styles.orbSlot} ${fadeClass(5)}`} aria-hidden="true">
             <FanverseCore />

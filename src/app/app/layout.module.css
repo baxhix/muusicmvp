@@ -315,11 +315,15 @@
  * pointer-events:none no wrapper porque é decorativo (a
  * animação não responde a click/hover). aria-hidden no JSX
  * pelos mesmos motivos. */
+/* Desktop: bottom-left, ao lado esquerdo da BottomNav per product
+ * feedback. A BottomNav pinned bottom:0 com padding 36/24 deixa o
+ * pill de 52px verticalmente centrado em ~50px do bottom da
+ * viewport; alinhamos o orb pela mesma linha vertical. Left 20px
+ * confortável da borda. */
 .orbSlot {
   position: fixed;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 14px;
+  left: 20px;
   z-index: 22;
   width: 100px;
   height: 100px;

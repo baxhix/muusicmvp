@@ -1,0 +1,52 @@
+/* Banner promocional fixo no topo da viewport desktop (Ana Castela
+ * / Fire Arena). 640px de largura, altura proporcional via
+ * `aspect-ratio` — sem precisar saber a altura exata da imagem,
+ * o browser preserva a proporção nativa.
+ *
+ * Sombra dark generosa pra criar profundidade sobre o background
+ * (mapa MapLibre) e dar a sensação de elemento flutuante per
+ * product feedback "aplique uma sombra dark para dar mais volume".
+ *
+ * Hidden no mobile via `useIsMobile()` no JSX (não duplicamos a
+ * regra em CSS porque o JSX já cuida do unmount completo). */
+
+.banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 640px;
+  max-width: calc(100vw - 32px);
+  /* `aspect-ratio` calculado da imagem original — aproximadamente
+   * 1620×242 = 6.69:1. Se a imagem mudar de proporção, ajustar
+   * aqui (ou trocar pra `height: auto` se o pai for sized). */
+  aspect-ratio: 1620 / 242;
+  height: auto;
+  z-index: 23; /* acima do orb (22) e do TopBar (~20) */
+  border-radius: 14px;
+  overflow: hidden;
+  /* Sombra dark generosa — duplas camadas pra dar volume sem
+   * borrão excessivo. A camada de cima é mais difusa pra
+   * suavizar a borda; a de baixo é mais escura e curta pra
+   * "anchorar" o banner no map. */
+  box-shadow:
+    0 28px 60px -10px rgba(0, 0, 0, 0.85),
+    0 16px 32px -8px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  /* Pequeno fade na entrada — discreto pra não competir com o
+   * welcome reveal global. */
+  animation: bannerIn 280ms ease 60ms both;
+  pointer-events: none; /* puramente decorativo — não bloqueia map drag */
+}
+
+@keyframes bannerIn {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to   { opacity: 1; transform: translate(-50%, 0);    }
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
