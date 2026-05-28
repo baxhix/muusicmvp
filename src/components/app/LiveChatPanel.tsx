@@ -1074,7 +1074,17 @@ export default function LiveChatPanel({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
+          /* `image/*` ao invés de listar MIMEs específicos —
+           * iOS Safari mostra a mesma sheet nativa em ambos os
+           * casos (Tirar Foto · Biblioteca · Arquivos), MAS o
+           * Android Chrome só inclui a câmera no intent quando
+           * o accept é wildcard. Com tipos específicos, o
+           * picker do Android cai pro browser de arquivos só.
+           * Allowlist canônica (jpeg/png/webp/gif) está no
+           * handleFilesPicked + no servidor — formatos
+           * indesejados (HEIC, AVIF etc.) viram toast "tipo
+           * não suportado" ao invés de subir. */
+          accept="image/*"
           multiple
           style={{ display: 'none' }}
           onChange={(e) => {
