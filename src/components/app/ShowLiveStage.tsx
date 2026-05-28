@@ -292,27 +292,27 @@ export default function ShowLiveStage({ open, onClose }: Props) {
 
       {/* ── Sponsor pill (oferecimento) ─────────────────────────
        *   Pílula preta arredondada abaixo do header com 3 logos
-       *   reais via <img>. Arquivos SVG em /public/sponsors/ —
-       *   trocar pelo asset oficial sem mudar nada de código.
-       *   Cada slot tem largura máxima de 96px conforme spec. */}
+       *   reais via <img>. Arquivos PNG em /public/sponsors/ —
+       *   o usuário cuida de drop nos paths. Width 90px conforme
+       *   spec, object-fit: contain preserva aspect-ratio. */}
       <div className={styles.sponsorPill}>
         <span className={styles.sponsorLabel}>um oferecimento</span>
         <span className={styles.sponsorLogos}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/sponsors/brahma.svg"
+            src="/sponsors/brahma.png"
             alt="Brahma"
             className={styles.sponsorLogo}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/sponsors/vivo.svg"
+            src="/sponsors/vivo.png"
             alt="Vivo"
             className={styles.sponsorLogo}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/sponsors/ballantines.svg"
+            src="/sponsors/ballantines.png"
             alt="Ballantine's"
             className={styles.sponsorLogo}
           />
