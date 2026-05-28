@@ -24,7 +24,23 @@ import styles from './FeedCelebration.module.css';
 interface CelebrateDetail {
   headline?: string;
   sub?: string;
+  /** Marco de Fanpoints atingido pelo usuário. Opcional — só é
+   *  usado pra decidir se o burst de confetti dispara
+   *  (≥ MIN_CONFETTI_POINTS). Eventos sem `points` (ex.: fim de
+   *  quiz) mostram a headline mas NÃO disparam confetti. */
+  points?: number;
 }
+
+/* Confetti agora é uma celebração rara — gated em 500k Fanpoints.
+ * Per product feedback "Deixe as animações de confetis aparecerem
+ * apenas quando os usuários atingirem 500k de fanpoints". Quiz,
+ * fim-de-missão e demais usuários do app:feed-celebrate continuam
+ * mostrando a headline + sub do detail, só não disparam confetti.
+ * Pra reativar o burst num futuro evento, é só passar
+ * `points: 500_000` (ou mais) no detail.
+ *
+ * Espelha o MIN_CONFETTI_POINTS de AchievementCelebration. */
+const MIN_CONFETTI_POINTS = 500_000;
 
 const HOLD_MS = 3600;
 const FADE_MS = 400;
@@ -63,17 +79,23 @@ export default function FeedCelebration() {
       setActive(true);
       setExiting(false);
 
-      // (Re)create the scoped confetti factory if needed. `resize:
-      // true` makes the canvas-confetti library auto-rescale to the
-      // canvas element's bounding box, which changes as the panel
-      // animates / the user resizes the viewport.
-      if (canvasRef.current && !fireRef.current) {
-        fireRef.current = confetti.create(canvasRef.current, {
-          resize: true,
-          useWorker: false,
-        });
+      // Gate de confetti: só dispara se o evento marcar `points
+      // >= MIN_CONFETTI_POINTS` (500k). Sem `points` no detail
+      // (ex.: fim de quiz), o headline + sub ainda aparecem mas
+      // sem burst. Lazy-create da factory também só roda nesse
+      // caminho — o canvas continua montado mas o `confetti.create`
+      // (que cria worker/contextos) só roda quando vai disparar.
+      const shouldFireConfetti =
+        typeof detail.points === 'number' && detail.points >= MIN_CONFETTI_POINTS;
+      if (shouldFireConfetti) {
+        if (canvasRef.current && !fireRef.current) {
+          fireRef.current = confetti.create(canvasRef.current, {
+            resize: true,
+            useWorker: false,
+          });
+        }
+        fireBurst();
       }
-      fireBurst();
 
       // Schedule fade-out + unmount-ish state cleanup.
       if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);

@@ -20,6 +20,15 @@ const CONFETTI_COLORS = [
   '#3DDB74', // accent
 ];
 
+/* Confetti agora é uma celebração rara — sai só no marco de
+ * 500k Fanpoints (e marcos superiores, se vierem a existir).
+ * Per product feedback "Deixe as animações de confetis aparecerem
+ * apenas quando os usuários atingirem 500k de fanpoints". A
+ * mensagem visual ("Você atingiu X Fanpoints. Parabéns!") continua
+ * aparecendo pros marcos menores, só o burst de confetti fica
+ * gated. */
+const MIN_CONFETTI_POINTS = 500_000;
+
 /**
  * Format a point milestone into the human-friendly phrase the user
  * sees on screen. 500 stays as "500"; 1000+ collapses to "X mil".
@@ -85,17 +94,24 @@ function CelebrationFrame({ item }: { item: MyAchievement }) {
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    fireConfettiBurst();
-    // Re-burst at 900ms (metade do antigo 1800) pra acompanhar o
-    // lifetime reduzido pela metade do hook.
-    const t2 = window.setTimeout(fireConfettiBurst, 900);
+    // Confetti gated em MIN_CONFETTI_POINTS — só atira no marco
+    // de 500k Fanpoints (ou superior). A mensagem visual abaixo
+    // continua aparecendo pra qualquer marco; só o burst é raro.
+    const shouldFireConfetti = item.points >= MIN_CONFETTI_POINTS;
+    let t2: number | null = null;
+    if (shouldFireConfetti) {
+      fireConfettiBurst();
+      // Re-burst at 900ms (metade do antigo 1800) pra acompanhar o
+      // lifetime reduzido pela metade do hook.
+      t2 = window.setTimeout(fireConfettiBurst, 900);
+    }
     // Fade-out 300ms antes do hook desmontar (lifetime 3500ms).
     const t3 = window.setTimeout(() => setExiting(true), 3200);
     return () => {
-      window.clearTimeout(t2);
+      if (t2 !== null) window.clearTimeout(t2);
       window.clearTimeout(t3);
     };
-  }, []);
+  }, [item.points]);
 
   return (
     <div className={`${styles.frame} ${exiting ? styles.frameExit : ''}`}>
