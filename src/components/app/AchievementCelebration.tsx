@@ -20,14 +20,21 @@ const CONFETTI_COLORS = [
   '#3DDB74', // accent
 ];
 
-/* Confetti agora é uma celebração rara — sai só no marco de
- * 500k Fanpoints (e marcos superiores, se vierem a existir).
- * Per product feedback "Deixe as animações de confetis aparecerem
- * apenas quando os usuários atingirem 500k de fanpoints". A
- * mensagem visual ("Você atingiu X Fanpoints. Parabéns!") continua
- * aparecendo pros marcos menores, só o burst de confetti fica
- * gated. */
-const MIN_CONFETTI_POINTS = 500_000;
+/* A celebração inteira (mensagem "Você atingiu X Fanpoints" +
+ * confetti) agora só aparece a cada 500k em 500k de Fanpoints.
+ * Per product feedback "Remova a mensagem 'Você atingiu X
+ * Fanpoints. Parabéns!' para os marcos (500, 1k, 50k, etc.).
+ * Mantenha apenas a cada 500k em 500k." Marcos menores que o
+ * server eventualmente dispare (500, 1k, 5k, 50k, 100k…) chegam
+ * pelo socket me:achievement mas são silenciados aqui — a UI
+ * não renderiza, então não aparece mensagem nem burst.
+ *
+ * Filtro: ponto válido = >= 500k E múltiplo de 500k. Cobre 500k,
+ * 1M, 1.5M, 2M, etc. Marcos avulsos como 750k não passam. */
+const MILESTONE_STEP = 500_000;
+function isCelebratable(points: number): boolean {
+  return points >= MILESTONE_STEP && points % MILESTONE_STEP === 0;
+}
 
 /**
  * Format a point milestone into the human-friendly phrase the user
@@ -71,8 +78,11 @@ export default function AchievementCelebration() {
   const { myAchievements } = useAchievements();
   // Take the most recent — overlay shows one at a time. Subsequent
   // milestones queue naturally as the current one expires from the
-  // hook's state.
-  const current = myAchievements[myAchievements.length - 1] ?? null;
+  // hook's state. Filtramos pra pegar SÓ marcos múltiplos de 500k
+  // (isCelebratable acima); o que o server dispara abaixo desse
+  // limiar (500, 1k, 50k, etc.) cai aqui silenciosamente.
+  const current =
+    [...myAchievements].reverse().find((a) => isCelebratable(a.points)) ?? null;
   // While a celebration is active, dim the rest of the screen by
   // toggling .rootActive on the wrapper — pure CSS opacity transition
   // on the wrapper's background, no extra DOM. pointer-events stay
@@ -94,24 +104,20 @@ function CelebrationFrame({ item }: { item: MyAchievement }) {
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    // Confetti gated em MIN_CONFETTI_POINTS — só atira no marco
-    // de 500k Fanpoints (ou superior). A mensagem visual abaixo
-    // continua aparecendo pra qualquer marco; só o burst é raro.
-    const shouldFireConfetti = item.points >= MIN_CONFETTI_POINTS;
-    let t2: number | null = null;
-    if (shouldFireConfetti) {
-      fireConfettiBurst();
-      // Re-burst at 900ms (metade do antigo 1800) pra acompanhar o
-      // lifetime reduzido pela metade do hook.
-      t2 = window.setTimeout(fireConfettiBurst, 900);
-    }
+    // Chega aqui já filtrado por isCelebratable — todo frame que
+    // monta É um marco múltiplo de 500k, então mensagem +
+    // confetti rodam juntos sem ramificação adicional.
+    fireConfettiBurst();
+    // Re-burst at 900ms (metade do antigo 1800) pra acompanhar o
+    // lifetime reduzido pela metade do hook.
+    const t2 = window.setTimeout(fireConfettiBurst, 900);
     // Fade-out 300ms antes do hook desmontar (lifetime 3500ms).
     const t3 = window.setTimeout(() => setExiting(true), 3200);
     return () => {
-      if (t2 !== null) window.clearTimeout(t2);
+      window.clearTimeout(t2);
       window.clearTimeout(t3);
     };
-  }, [item.points]);
+  }, []);
 
   return (
     <div className={`${styles.frame} ${exiting ? styles.frameExit : ''}`}>
