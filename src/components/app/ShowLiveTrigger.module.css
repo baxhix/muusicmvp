@@ -175,14 +175,28 @@
   .card:active {
     transform: translateX(-50%) scale(0.98);
   }
+  /* No mobile, o botão estava quebrando layout: a label de venue
+   * "Arena Fonte Nova · BA" + o nome FIRE ARENA + CTA "Entrar
+   * no palco" não cabiam num único row de ~328px. Resolve em
+   * 3 passos: a) venue some (o nome FIRE ARENA + AO VIVO já
+   * comunicam a feature); b) o texto "Entrar no palco" some
+   * mas o chevron permanece como affordance; c) tipografia
+   * reduzida pra acabar com qualquer wrap residual. */
   .name {
     font-size: 12px;
   }
   .venue {
-    font-size: 10px;
+    display: none;
   }
   .cta {
-    padding: 6px 10px 6px 12px;
-    font-size: 12px;
+    padding: 6px 10px;
+    font-size: 0;
+    margin-left: 4px;
+  }
+  /* O SVG dentro do CTA tem width fixo no HTML — o `font-size: 0`
+   * no parent some o texto "Entrar no palco" sem afetar o ícone. */
+  .cta svg {
+    width: 14px;
+    height: 14px;
   }
 }

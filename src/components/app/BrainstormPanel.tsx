@@ -45,6 +45,25 @@ export default function BrainstormPanel() {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
+  /* Marca o documento com `html[data-brainstorm-open="true"]`
+   * enquanto o painel está aberto. O LiveChatStack escuta esse
+   * sinal e some pra que os avatares fixos do chat não cubram
+   * os toggles do brainstorm no mobile — z-index sozinho não
+   * resolve quando há stacking contexts isolados em volta dos
+   * floaters. Mesmo padrão usado pelo ShowLiveStage com
+   * `data-showlive`. */
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (open) {
+      document.documentElement.setAttribute('data-brainstorm-open', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-brainstorm-open');
+    }
+    return () => {
+      document.documentElement.removeAttribute('data-brainstorm-open');
+    };
+  }, [open]);
+
   // Active count — when one or more experimental features are
   // enabled, the lightbulb gets a tiny glow ring + dot so the
   // team can see at a glance that something experimental is

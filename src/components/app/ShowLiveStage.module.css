@@ -750,15 +750,16 @@
   top: 80px;
   left: 50%;
   transform: translateX(-50%);
-  /* Sponsor 20% menor proporcionalmente — width casa com o
-   * broadcastFrame quando ele tem 560, mas em 80% disso fica
-   * 448px. Mantém a coluna central coerente em escala menor. */
+  /* Box Oferecimento -18% pra ficar mais discreto e não competir
+   * com o frame de broadcast — 448 → 368, gap 22 → 16, padding
+   * 14 20 → 10 16. Per product feedback "AJuste o tamanho do
+   * box Oferecimento". */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(448px, calc(100vw - 32px));
-  gap: 22px;
-  padding: 14px 20px 10px;
+  width: min(368px, calc(100vw - 32px));
+  gap: 16px;
+  padding: 10px 16px 8px;
   background: #000;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -772,9 +773,8 @@
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .sponsorLabel {
-  /* Tudo escalado a ~0.8 do tamanho anterior:
-   *  10.5 → 8.5px. */
-  font-size: 8.5px;
+  /* Escala -18% adicional: 8.5 → 7px. */
+  font-size: 7px;
   font-weight: 500;
   letter-spacing: 0.08em;
   color: rgba(245, 245, 247, 0.55);
@@ -783,20 +783,20 @@
 .sponsorLogos {
   display: inline-flex;
   align-items: center;
-  /* Gap proporcionalmente menor 26 → 21. */
-  gap: 21px;
+  /* Gap proporcionalmente menor: 21 → 16. */
+  gap: 16px;
 }
-/* Logos escalados ~0.8: 90 → 72, max-height 38 → 30. */
+/* Logos escalados -18%: 72 → 58, max-height 30 → 24. */
 .sponsorLogo {
   display: inline-block;
-  width: 72px;
+  width: 58px;
   height: auto;
-  max-height: 30px;
+  max-height: 24px;
   object-fit: contain;
 }
-/* Brahma mantém o -20% relativo aos outros: 72 → 58. */
+/* Brahma mantém o -20% relativo aos outros: 58 → 46. */
 .sponsorLogoBrahma {
-  width: 58px;
+  width: 46px;
 }
 
 /* ──────────────────────────────────────────────────────────

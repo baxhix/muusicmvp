@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import CollectiveListeningModal from './CollectiveListeningModal';
 import styles from './CollectiveListeningTrigger.module.css';
@@ -23,6 +23,20 @@ import styles from './CollectiveListeningTrigger.module.css';
 export default function CollectiveListeningTrigger() {
   const { flags } = useBrainstormFlags();
   const [open, setOpen] = useState(false);
+
+  /* Esconde os avatares fixos do LiveChatStack enquanto o modal
+   * estiver aberto — mesmo padrão dos demais brainstorms. */
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (open) {
+      document.documentElement.setAttribute('data-collective-open', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-collective-open');
+    }
+    return () => {
+      document.documentElement.removeAttribute('data-collective-open');
+    };
+  }, [open]);
 
   if (!flags.collectiveListening) return null;
 

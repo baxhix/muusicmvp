@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import SuperliveModal from './SuperliveModal';
 import styles from './SuperliveTrigger.module.css';
@@ -23,6 +23,22 @@ import styles from './SuperliveTrigger.module.css';
 export default function SuperliveTrigger() {
   const { flags } = useBrainstormFlags();
   const [open, setOpen] = useState(false);
+
+  /* Esconde os avatares fixos do LiveChatStack enquanto o modal
+   * estiver aberto — mesmo padrão usado pelo Brainstorm / Show ao
+   * vivo, pra que as miniaturas do chat não cubram a UI do modal
+   * no mobile. */
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (open) {
+      document.documentElement.setAttribute('data-superlive-open', 'true');
+    } else {
+      document.documentElement.removeAttribute('data-superlive-open');
+    }
+    return () => {
+      document.documentElement.removeAttribute('data-superlive-open');
+    };
+  }, [open]);
 
   if (!flags.superlive) return null;
 

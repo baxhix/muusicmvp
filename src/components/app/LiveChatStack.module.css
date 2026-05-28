@@ -1,3 +1,17 @@
+/* Esconde os avatares fixos do chat quando QUALQUER modal de
+ * brainstorm está aberto (painel de Features em teste, Superlive,
+ * Audição coletiva, Show ao vivo). Sem isso, os avatares ficavam
+ * cobrindo os toggles no mobile e bloqueando os cliques, mesmo
+ * com o scrim em z:320 — stacking contexts isolados dos floaters
+ * roubavam pointer-events. Mesmo padrão do ShowLiveStage com
+ * data-showlive já consolidado. */
+:global(html[data-brainstorm-open="true"]) .dock,
+:global(html[data-superlive-open="true"]) .dock,
+:global(html[data-collective-open="true"]) .dock,
+:global(html[data-showlive="true"]) .dock {
+  display: none !important;
+}
+
 .dock {
   position: fixed;
   right: 18px;
