@@ -363,6 +363,16 @@ export default function LiveChatPanel({
   const submit = async () => {
     const text = draft.trim();
     const hasAttachments = pendingAttachments.length > 0;
+    /* DEBUG temporário: capturar estado no momento do click */
+    console.log('[chat-debug] submit triggered', {
+      textLength: text.length,
+      pendingAttachmentsLength: pendingAttachments.length,
+      pendingAttachmentsSample: pendingAttachments[0]
+        ? { url: pendingAttachments[0].url, size: pendingAttachments[0].size }
+        : null,
+      uploadingCount,
+      hasAttachments,
+    });
     /* Aceita envio só de imagem (body vazio + attachments). Bloqueia
      * envio totalmente vazio e enquanto há upload em curso. */
     if ((!text && !hasAttachments) || uploadingCount > 0) return;
