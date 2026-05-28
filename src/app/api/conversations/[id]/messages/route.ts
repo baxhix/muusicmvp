@@ -14,8 +14,23 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
+/* Espelha `attachmentSchema` do socket handler em
+ * server/realtime/handlers/chat.ts — mantemos duplicado pra evitar
+ * import de zod schema entre módulos de surface diferentes. */
+const restAttachmentSchema = z.object({
+  url: z.string().startsWith('/api/chat/images/').max(300),
+  mimeType: z.string().max(80),
+  size: z.number().int().min(0).max(8 * 1024 * 1024),
+  width: z.number().int().min(1).max(20_000).nullable().optional(),
+  height: z.number().int().min(1).max(20_000).nullable().optional(),
+});
+
 const sendSchema = z.object({
-  body: z.string().min(1).max(4000),
+  /* body pode ser vazio QUANDO houver attachments — o
+   * sendMessage() valida "uma das duas" server-side. Aqui só
+   * limite máximo. */
+  body: z.string().max(4000),
+  attachments: z.array(restAttachmentSchema).max(6).optional(),
 });
 
 const uuid = z.string().uuid();
@@ -122,6 +137,27 @@ export async function POST(
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const result = await sendMessage(id, user.id, parsed.body);
-  return NextResponse.json({ message: result.message }, { status: 201 });
+  try {
+    const result = await sendMessage(
+      id,
+      user.id,
+      parsed.body,
+      parsed.attachments ?? null,
+    );
+    return NextResponse.json({ message: result.message }, { status: 201 });
+  } catch (err) {
+    /* `empty_message` quando nem body nem attachments;
+     * `attachments_*` quando o payload de anexo é inválido. Tudo
+     * é erro do client → 400. */
+    const code = err instanceof Error ? err.message : 'send_failed';
+    if (
+      code === 'empty_message' ||
+      code === 'message_too_long' ||
+      code === 'attachments_invalid' ||
+      code === 'attachments_too_many'
+    ) {
+      return NextResponse.json({ error: code }, { status: 400 });
+    }
+    throw err;
+  }
 }

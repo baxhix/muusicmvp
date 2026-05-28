@@ -222,6 +222,17 @@ export const messages = pgTable(
      * sender name quando o user foi hard-deletado. NULL sender +
      * sender_deleted=true = LGPD-respected. */
     senderDeleted: boolean('sender_deleted').notNull().default(false),
+    /* Anexos da mensagem (imagens). Array de `MessageAttachment`:
+     *   { url, mimeType, size, width?, height? }
+     *
+     *   - `url`         path relativo servido pelo Next (`/uploads/chat/...`)
+     *   - `mimeType`    MIME validado no upload (image/jpeg|png|webp|gif)
+     *   - `size`        bytes
+     *   - `width|height` dimensions em px (sniffed server-side no upload)
+     *
+     * NULL = mensagem text-only (caso comum). JSONB permite array
+     * vazio também — defensivo no leitor que normaliza pra []. */
+    attachments: jsonb('attachments'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('msg_conv_created_idx').on(t.conversationId, t.createdAt)],

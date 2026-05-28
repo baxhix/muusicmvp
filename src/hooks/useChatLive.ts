@@ -32,7 +32,13 @@ interface UseChatLiveResult {
   /** messages of the active conversation, oldest → newest */
   messages: ApiMessage[];
   loadingMessages: boolean;
-  send: (body: string) => Promise<void>;
+  /* `attachments` opcional — quando vier, o body pode ser vazio
+   * ("envia só a imagem"). O sendMessage do server cobre a regra
+   * "body OR attachments". */
+  send: (
+    body: string,
+    attachments?: import('@/lib/api/types').ApiMessageAttachment[] | null,
+  ) => Promise<void>;
   /**
    * Toggle a reaction emoji on a message. Sends `chat:react` over the
    * socket and waits for the broadcast `chat:reaction` event to update
@@ -199,9 +205,18 @@ export function useChatLive(): UseChatLiveResult {
 
   // ── Send a message via socket (server persists + broadcasts) ───────────
   const send = useCallback(
-    async (body: string) => {
+    async (
+      body: string,
+      attachments?:
+        | import('@/lib/api/types').ApiMessageAttachment[]
+        | null,
+    ) => {
       const text = body.trim();
-      if (!text || !activeId) return;
+      const hasAttachments = !!attachments && attachments.length > 0;
+      /* Aceita envio só de imagem (body vazio + attachments). Bloqueia
+       * envio totalmente vazio. */
+      if (!text && !hasAttachments) return;
+      if (!activeId) return;
 
       // Optimistic — also gets replaced when the broadcast arrives.
       const tempId = `tmp-${Date.now()}`;
@@ -211,6 +226,7 @@ export function useChatLive(): UseChatLiveResult {
         senderId: user?.id ?? '',
         body: text,
         createdAt: new Date().toISOString(),
+        attachments: hasAttachments ? attachments! : undefined,
       };
       setMessages((prev) => [...prev, optimistic]);
 
@@ -219,7 +235,10 @@ export function useChatLive(): UseChatLiveResult {
         try {
           const res = await api.post<{ message: ApiMessage }>(
             `/api/conversations/${activeId}/messages`,
-            { body: text },
+            {
+              body: text,
+              ...(hasAttachments ? { attachments } : {}),
+            },
           );
           setMessages((prev) =>
             prev.map((m) => (m.id === tempId ? res.message : m)),
@@ -233,7 +252,11 @@ export function useChatLive(): UseChatLiveResult {
 
       socket.emit(
         'chat:send',
-        { conversationId: activeId, body: text },
+        {
+          conversationId: activeId,
+          body: text,
+          ...(hasAttachments ? { attachments } : {}),
+        },
         (ack: { ok: boolean; messageId?: string; error?: string } | undefined) => {
           if (!ack?.ok) {
             console.error('chat:send rejected:', ack?.error);

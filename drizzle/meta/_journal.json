@@ -316,6 +316,13 @@
       "when": 1781700000000,
       "tag": "0045_feed_youtube_type",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1781800000000,
+      "tag": "0046_message_attachments",
+      "breakpoints": true
     }
   ]
 }

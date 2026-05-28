@@ -24,6 +24,25 @@ import {
   buildConversationUrl,
 } from '../email/newDm';
 import { logger } from '../log';
+import { chatImageFilenameFromUrl, deleteChatImage } from './storage';
+
+/**
+ * Anexo (imagem) atrelado a uma mensagem. Persistido em
+ * `messages.attachments` JSONB (migration 0046). Aqui só normalizamos
+ * a validação no caminho de envio — o upload em si vive em
+ * `src/server/chat/storage.ts` (`saveChatImage`).
+ */
+export interface MessageAttachment {
+  url: string;
+  mimeType: string;
+  size: number;
+  width?: number | null;
+  height?: number | null;
+}
+
+/** Limite de anexos por mensagem. 6 cobre o caso "compartilhe esses
+ *  prints" sem permitir spam de 50 imagens num único bubble. */
+const MAX_ATTACHMENTS = 6;
 
 /**
  * Message enriched with the sender's display name + avatar. Used by both
@@ -34,6 +53,7 @@ export interface HydratedMessage extends Message {
   senderName: string | null;
   senderEmail: string | null;
   senderAvatarUrl: string | null;
+  attachments: MessageAttachment[] | null;
 }
 
 export interface SendMessageResult {
@@ -74,19 +94,77 @@ function parseMentions(body: string): string[] {
   return Array.from(new Set(ids));
 }
 
+/**
+ * Sanitiza + valida o array de attachments recebido do client.
+ *
+ *   - Hard cap em MAX_ATTACHMENTS (defense em profundidade — o
+ *     composer já limita).
+ *   - Cada item precisa de url + mimeType + size; campos
+ *     desconhecidos são strippados pra não vazar pro JSONB.
+ *   - URL precisa começar com `/api/chat/images/` — defesa
+ *     contra ataque tipo "anexa URL externa pra exfiltrar IP"
+ *     OU "anexa URL absoluta forjada". O upload é o único caminho
+ *     legítimo de produzir URLs assim.
+ */
+function normalizeAttachments(
+  input: unknown,
+): MessageAttachment[] | null {
+  if (input === null || input === undefined) return null;
+  if (!Array.isArray(input)) throw new Error('attachments_invalid');
+  if (input.length === 0) return null;
+  if (input.length > MAX_ATTACHMENTS) throw new Error('attachments_too_many');
+  const out: MessageAttachment[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== 'object') {
+      throw new Error('attachments_invalid');
+    }
+    const r = raw as Record<string, unknown>;
+    if (typeof r.url !== 'string' || !r.url.startsWith('/api/chat/images/')) {
+      throw new Error('attachments_invalid');
+    }
+    if (typeof r.mimeType !== 'string') throw new Error('attachments_invalid');
+    if (typeof r.size !== 'number' || r.size < 0) {
+      throw new Error('attachments_invalid');
+    }
+    const w = typeof r.width === 'number' ? r.width : null;
+    const h = typeof r.height === 'number' ? r.height : null;
+    out.push({
+      url: r.url,
+      mimeType: r.mimeType,
+      size: r.size,
+      width: w,
+      height: h,
+    });
+  }
+  return out;
+}
+
 export async function sendMessage(
   conversationId: string,
   senderId: string,
   body: string,
+  /* Opcional pra preservar compat — chamadas existentes sem
+   * anexos não precisam mudar. Quando vem definido, passa pela
+   * validação de `normalizeAttachments`. */
+  attachments?: MessageAttachment[] | null,
 ): Promise<SendMessageResult> {
   const trimmed = body.trim();
-  if (!trimmed) throw new Error('empty_message');
+  const normalizedAttachments = normalizeAttachments(attachments);
+  /* `empty_message` agora aceita mensagem sem texto SE houver
+   * pelo menos um anexo — "envia só a imagem" é fluxo válido.
+   * Limite de length continua se cobrindo. */
+  if (!trimmed && !normalizedAttachments) throw new Error('empty_message');
   if (trimmed.length > 4000) throw new Error('message_too_long');
 
   const txResult = await db.transaction(async (tx) => {
     const [msg] = await tx
       .insert(messages)
-      .values({ conversationId, senderId, body: trimmed })
+      .values({
+        conversationId,
+        senderId,
+        body: trimmed,
+        attachments: normalizedAttachments,
+      })
       .returning();
 
     const [conv] = await tx
@@ -227,6 +305,10 @@ export async function sendMessage(
       senderName: sender?.name ?? null,
       senderEmail: sender?.email ?? null,
       senderAvatarUrl: sender?.avatarUrl ?? null,
+      /* Normaliza pra `null` quando o array é vazio — economiza
+       * bytes no payload do socket e simplifica o check no
+       * front-end (`if (attachments) {...}` em vez de `length>0`). */
+      attachments: normalizedAttachments,
     },
     recipientIds: txResult.others.map((p) => p.userId),
     conversationType: (txResult.conv?.type ?? 'dm') as 'dm' | 'group',
@@ -261,6 +343,7 @@ export async function deleteMessage(
       conversationId: messages.conversationId,
       senderId: messages.senderId,
       kind: messages.kind,
+      attachments: messages.attachments,
       convType: conversations.type,
       convCreatedBy: conversations.createdBy,
       actorRole: conversationParticipants.role,
@@ -287,10 +370,35 @@ export async function deleteMessage(
 
   if (!isOwn && !isGroupOwner) throw new Error('forbidden');
 
+  /* Soft-delete: limpa body, troca kind, E zera attachments. O
+   * frontend não precisa mais saber dos anexos da mensagem
+   * apagada (pílula "Mensagem apagada" cobre o slot). */
   await db
     .update(messages)
-    .set({ body: '', kind: 'deleted' })
+    .set({ body: '', kind: 'deleted', attachments: null })
     .where(eq(messages.id, messageId));
+
+  /* Storage cleanup — unlink fire-and-forget dos arquivos que
+   * estavam atrelados. Faz best-effort: se o disco der erro o
+   * delete da mensagem em si já foi commitado (idempotente).
+   * `chatImageFilenameFromUrl` valida o pattern do URL antes de
+   * permitir o unlink, defendendo contra payloads forjados. */
+  if (Array.isArray(row.attachments)) {
+    void Promise.all(
+      row.attachments
+        .map((a) => {
+          if (!a || typeof a !== 'object') return null;
+          const url = (a as { url?: unknown }).url;
+          return typeof url === 'string' ? url : null;
+        })
+        .map(async (url) => {
+          if (!url) return;
+          const fname = chatImageFilenameFromUrl(url);
+          if (!fname) return;
+          await deleteChatImage(fname);
+        }),
+    ).catch((err) => logger.error('chat.delete.unlink', err));
+  }
 }
 
 /**

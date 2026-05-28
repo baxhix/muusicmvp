@@ -14,9 +14,26 @@ import {
 } from '../rateLimit';
 import type { AppServer, AppSocket } from '../types';
 
+/* Attachment shape espelhando `MessageAttachment` (server/chat/messages.ts).
+ * URL precisa começar com /api/chat/images/ — `normalizeAttachments`
+ * faz a checagem final no momento do INSERT, mas validar aqui dá
+ * feedback rápido pro client. */
+const attachmentSchema = z.object({
+  url: z.string().startsWith('/api/chat/images/').max(300),
+  mimeType: z.string().max(80),
+  size: z.number().int().min(0).max(8 * 1024 * 1024),
+  width: z.number().int().min(1).max(20_000).nullable().optional(),
+  height: z.number().int().min(1).max(20_000).nullable().optional(),
+});
+
 const sendSchema = z.object({
   conversationId: z.string().uuid(),
-  body: z.string().min(1).max(4000),
+  /* body pode ser vazio QUANDO houver attachments — a regra
+   * "uma das duas" é aplicada no `sendMessage()` server-side
+   * (throw 'empty_message' se ambos vazios). Aqui só validamos
+   * tamanho máximo. */
+  body: z.string().max(4000),
+  attachments: z.array(attachmentSchema).max(6).optional(),
 });
 
 const joinSchema = z.object({
@@ -112,6 +129,7 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
         parsed.data.conversationId,
         userId,
         parsed.data.body,
+        parsed.data.attachments ?? null,
       );
 
       // Broadcast the message body to clients viewing the thread (joined room).

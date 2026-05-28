@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import type { ApiConversationSummary, ApiMessage } from '@/lib/api/types';
+import type {
+  ApiConversationSummary,
+  ApiMessage,
+  ApiMessageAttachment,
+} from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { buildReplyBody } from './MessageBody';
 import MessageBubble, {
@@ -71,7 +75,10 @@ interface Props {
   /** Optional live now-playing for the other user (from useLiveUsers). */
   otherNowPlaying?: ChatNowPlaying | null;
   onClose: () => void;
-  onSend: (body: string) => Promise<void>;
+  onSend: (
+    body: string,
+    attachments?: ApiMessageAttachment[] | null,
+  ) => Promise<void>;
   /** Toggle a reaction emoji on a message. Server-persisted via socket. */
   onReact: (messageId: string, emoji: string) => void;
   /** Fired from the kebab menu when the user clicks "Ver membros"
@@ -168,6 +175,17 @@ export default function LiveChatPanel({
 }: Props) {
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
+  /* Anexos pendentes — imagens já uploadadas mas ainda não enviadas
+   * com a próxima mensagem. Cada item = { url, mimeType, size,
+   * width, height } vindo do POST /api/conversations/:id/upload.
+   * Limite client-side de 6 espelha o server (MAX_ATTACHMENTS). */
+  const [pendingAttachments, setPendingAttachments] = useState<
+    ApiMessageAttachment[]
+  >([]);
+  /* Estado de upload em curso. Bloqueia o submit + mostra um
+   * spinner no botão de paperclip enquanto sobe. */
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   // @mention autocomplete state. `mentionStart` is the cursor
   // position where the active "@" sits; null means no autocomplete
   // is open right now. `mentionQuery` is the text typed AFTER the
@@ -344,7 +362,10 @@ export default function LiveChatPanel({
 
   const submit = async () => {
     const text = draft.trim();
-    if (!text) return;
+    const hasAttachments = pendingAttachments.length > 0;
+    /* Aceita envio só de imagem (body vazio + attachments). Bloqueia
+     * envio totalmente vazio e enquanto há upload em curso. */
+    if ((!text && !hasAttachments) || uploadingCount > 0) return;
     const mentioned = serializeMentions(text);
     // If the user is replying to a message, wrap the body in the
     // shared reply-prefix format BEFORE sending so both sides see
@@ -352,7 +373,9 @@ export default function LiveChatPanel({
     const body = replyingTo
       ? buildReplyBody(replyingTo.senderName, replyingTo.body, mentioned)
       : mentioned;
+    const attachments = hasAttachments ? pendingAttachments : null;
     setDraft('');
+    setPendingAttachments([]);
     setReplyingTo(null);
     setPickedMentions([]);
     setMentionStart(null);
@@ -360,7 +383,81 @@ export default function LiveChatPanel({
     /* Reseta altura do textarea — sem isso, depois de enviar uma
      * mensagem multi-linha o campo fica esticado com o draft vazio. */
     requestAnimationFrame(() => autoResizeChat(inputRef.current));
-    await onSend(body);
+    await onSend(body, attachments);
+  };
+
+  /* ── Upload de imagens ────────────────────────────────────────
+   * Disparado pelo input[type=file] hidden. Sobe cada arquivo em
+   * paralelo (sequencial seria UX ruim no caso comum de N=1) e
+   * acumula no `pendingAttachments`. Erros viram toast individual
+   * — falha de 1 arquivo não bloqueia os outros.
+   *
+   * Validação client-side leve (size + MIME) pra dar feedback
+   * antes do round-trip. Servidor faz a validação canônica em
+   * `saveChatImage` (cobre o caso de cliente forjar payload). */
+  const handleFilesPicked = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !conversation) return;
+    const remainingSlots = 6 - pendingAttachments.length;
+    if (remainingSlots <= 0) {
+      showAppToast({
+        message: 'Limite de 6 imagens por mensagem.',
+        tone: 'error',
+      });
+      return;
+    }
+    const list = Array.from(files).slice(0, remainingSlots);
+    const ALLOWED = new Set([
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+    ]);
+    const MAX = 8 * 1024 * 1024;
+    for (const file of list) {
+      if (!ALLOWED.has(file.type)) {
+        showAppToast({
+          message: `"${file.name}": tipo não suportado.`,
+          tone: 'error',
+        });
+        continue;
+      }
+      if (file.size > MAX) {
+        showAppToast({
+          message: `"${file.name}": maior que 8MB.`,
+          tone: 'error',
+        });
+        continue;
+      }
+      setUploadingCount((n) => n + 1);
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch(
+          `/api/conversations/${conversation.id}/upload`,
+          { method: 'POST', body: form, credentials: 'include' },
+        );
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          throw new Error(data.error ?? `http_${res.status}`);
+        }
+        const data = (await res.json()) as ApiMessageAttachment;
+        setPendingAttachments((prev) => [...prev, data]);
+      } catch (err) {
+        console.error('chat upload failed:', err);
+        showAppToast({
+          message: `"${file.name}": falha no upload.`,
+          tone: 'error',
+        });
+      } finally {
+        setUploadingCount((n) => n - 1);
+      }
+    }
+  };
+
+  const removeAttachment = (url: string) => {
+    setPendingAttachments((prev) => prev.filter((a) => a.url !== url));
   };
 
   /** Inspect the input value + caret position to decide whether the
@@ -798,6 +895,70 @@ export default function LiveChatPanel({
           />
         )}
 
+        {/* Preview de anexos pendentes — só aparece se há alguma
+         *  imagem já uploadada esperando o envio. Cada item tem
+         *  thumbnail + X pra remover. */}
+        {pendingAttachments.length > 0 && (
+          <div className={styles.attachPreviewRow}>
+            {pendingAttachments.map((a) => (
+              <div key={a.url} className={styles.attachPreviewItem}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.url} alt="" className={styles.attachPreviewImg} />
+                <button
+                  type="button"
+                  className={styles.attachPreviewRemove}
+                  onClick={() => removeAttachment(a.url)}
+                  aria-label="Remover imagem"
+                >
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                    <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Input file invisível — o paperclip dispara o picker via
+         *  click(). multiple=true permite escolher várias de uma vez;
+         *  a checagem de slots livres é client-side em handleFilesPicked. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          multiple
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            void handleFilesPicked(e.target.files);
+            /* Limpa o input pra que escolher o MESMO arquivo de novo
+             * (ex: depois de remover) dispare o onChange de novo. */
+            e.target.value = '';
+          }}
+        />
+        <button
+          type="button"
+          className={styles.attachBtn}
+          onClick={() => fileInputRef.current?.click()}
+          aria-label="Anexar imagem"
+          disabled={uploadingCount > 0 || pendingAttachments.length >= 6}
+          title={
+            pendingAttachments.length >= 6
+              ? 'Limite de 6 imagens'
+              : 'Anexar imagem'
+          }
+        >
+          {uploadingCount > 0 ? (
+            <svg className={styles.attachSpinner} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.6" strokeOpacity="0.25" />
+              <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11.5 5.5L6 11a2.5 2.5 0 0 1-3.5-3.5l6.5-6.5a4 4 0 0 1 5.5 5.5L7 13a5 5 0 0 1-7-7" />
+            </svg>
+          )}
+        </button>
+
         <textarea
           ref={inputRef}
           className={styles.field}
@@ -820,7 +981,12 @@ export default function LiveChatPanel({
           className={styles.sendBtn}
           onClick={submit}
           aria-label="Enviar"
-          disabled={!draft.trim()}
+          /* Envia se houver texto OU anexos; bloqueia durante upload
+           * pra não enviar mensagem com anexo incompleto. */
+          disabled={
+            (!draft.trim() && pendingAttachments.length === 0) ||
+            uploadingCount > 0
+          }
         >
           <svg viewBox="0 0 14 14" fill="none">
             <path d="M1.5 7.5L12.5 2.5 8.5 12.5 7 8 1.5 7.5z" fill="currentColor" />

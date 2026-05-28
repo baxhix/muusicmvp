@@ -299,6 +299,9 @@ export async function listMessages(
     createdAt: messages.createdAt,
     kind: messages.kind,
     senderDeleted: messages.senderDeleted,
+    /* Anexos (imagens) — JSONB nullable. O leitor a jusante
+     * normaliza pra array vazio quando null. */
+    attachments: messages.attachments,
   };
 
   const rows = hydrateSender

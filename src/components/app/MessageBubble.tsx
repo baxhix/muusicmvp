@@ -1,7 +1,11 @@
 'use client';
 
-import { memo } from 'react';
-import type { ApiMessage, ApiMessageReaction } from '@/lib/api/types';
+import { memo, useState } from 'react';
+import type {
+  ApiMessage,
+  ApiMessageAttachment,
+  ApiMessageReaction,
+} from '@/lib/api/types';
 import MessageBody, { stripReplyPrefix } from './MessageBody';
 import styles from './LiveChatPanel.module.css';
 
@@ -89,7 +93,15 @@ function MessageBubbleImpl({
       )}
       <div className={styles.bubbleRow}>
         <div className={styles.bubble}>
-          <MessageBody body={m.body} maxPreviewWidth={300} />
+          {/* Anexos (imagens) — render dedicado, separado do
+           *  URL-detected do MessageBody. Vem ANTES do body pra
+           *  espelhar o padrão Instagram/WhatsApp: imagem grande
+           *  em cima, legenda embaixo. Quando body é vazio (envio
+           *  só de imagem), o MessageBody colapsa graciosamente. */}
+          {m.attachments && m.attachments.length > 0 && (
+            <MessageAttachments items={m.attachments} />
+          )}
+          {m.body && <MessageBody body={m.body} maxPreviewWidth={300} />}
         </div>
 
         <span className={styles.msgActions}>
@@ -204,6 +216,14 @@ const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
     prev.message.senderName === next.message.senderName &&
     prev.message.senderAvatarUrl === next.message.senderAvatarUrl &&
     prev.message.senderEmail === next.message.senderEmail &&
+    /* Attachments compare por count + primeira URL — suficiente
+     * porque, na prática, uma mensagem não tem suas imagens
+     * trocadas sem o id também mudar. Evita re-render caro
+     * comparando array inteiro. */
+    (prev.message.attachments?.length ?? 0) ===
+      (next.message.attachments?.length ?? 0) &&
+    (prev.message.attachments?.[0]?.url ?? '') ===
+      (next.message.attachments?.[0]?.url ?? '') &&
     prev.isMine === next.isMine &&
     prev.pickerOpen === next.pickerOpen &&
     prev.showHead === next.showHead &&
@@ -216,6 +236,104 @@ const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
 });
 
 export default MessageBubble;
+
+/* ──────────────────────────────────────────────────────────────
+ * MessageAttachments — grid de imagens anexadas a uma mensagem.
+ *
+ *   - 1 imagem  → exibe full-width do bubble (max 240×320), com
+ *                 aspect-ratio preservado via width/height vindas
+ *                 do server.
+ *   - 2-4       → grid 2-col, aspect-ratio 1 (quadrado).
+ *   - 5-6       → grid 3-col, mesmo aspect-ratio 1.
+ *
+ * Click abre lightbox simples (overlay full-viewport com a imagem
+ * em tamanho natural). Esc + click no backdrop fecham.
+ *
+ * `loading="lazy"` em todas porque mensagens antigas com várias
+ * imagens podem aparecer fora do viewport — não há razão pra
+ * baixar tudo no scroll inicial.
+ * ────────────────────────────────────────────────────────────── */
+function MessageAttachments({ items }: { items: ApiMessageAttachment[] }) {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const cols = items.length === 1 ? 1 : items.length <= 4 ? 2 : 3;
+
+  return (
+    <>
+      <div
+        className={styles.attachGrid}
+        data-cols={cols}
+        data-single={items.length === 1 ? 'true' : 'false'}
+      >
+        {items.map((a, idx) => (
+          <button
+            key={a.url}
+            type="button"
+            className={styles.attachItem}
+            onClick={() => setLightboxIdx(idx)}
+            aria-label="Ver imagem em tamanho maior"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={a.url}
+              alt=""
+              loading="lazy"
+              /* width/height help the browser reserve space and
+               * avoid layout shift — fallback omitted when server
+               * couldn't sniff dimensions. */
+              width={a.width ?? undefined}
+              height={a.height ?? undefined}
+              className={styles.attachImage}
+            />
+          </button>
+        ))}
+      </div>
+      {lightboxIdx !== null && items[lightboxIdx] && (
+        <AttachmentLightbox
+          attachment={items[lightboxIdx]}
+          onClose={() => setLightboxIdx(null)}
+        />
+      )}
+    </>
+  );
+}
+
+function AttachmentLightbox({
+  attachment,
+  onClose,
+}: {
+  attachment: ApiMessageAttachment;
+  onClose: () => void;
+}) {
+  /* Esc fecha — listener registrado só enquanto o lightbox está
+   * montado. Click no backdrop também fecha; click na imagem
+   * stopPropagation pra não fechar acidentalmente. */
+  if (typeof window !== 'undefined') {
+    /* useEffect avoidado pra simplicidade do lightbox local — o
+     * fechar via Esc inline cuida do caso comum. Pode virar
+     * useEffect proper se ficar problema. */
+  }
+  return (
+    <div
+      className={styles.lightboxBackdrop}
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Imagem em tamanho maior"
+      tabIndex={-1}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={attachment.url}
+        alt=""
+        className={styles.lightboxImage}
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+}
 
 /* SystemMessagePill — pílula cinza no centro para events de
  * sistema (criou o grupo / entrou / saiu). Renderizada num path

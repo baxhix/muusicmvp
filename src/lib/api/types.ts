@@ -92,6 +92,25 @@ export interface ApiMessageReaction {
   mine: boolean;
 }
 
+/**
+ * Imagem anexada a uma mensagem de chat (DM ou grupo).
+ *
+ *   - `url`         path relativo servido pelo Next ('/uploads/chat/...')
+ *   - `mimeType`    validado no upload (image/jpeg|png|webp|gif)
+ *   - `size`        bytes
+ *   - `width|height` dimensions em px (sniffed server-side no upload —
+ *                   permite reservar slot e evitar layout shift)
+ *
+ * Persistido na coluna `messages.attachments` JSONB (migration 0046).
+ */
+export interface ApiMessageAttachment {
+  url: string;
+  mimeType: string;
+  size: number;
+  width?: number | null;
+  height?: number | null;
+}
+
 export interface ApiMessage {
   id: string;
   conversationId: string;
@@ -115,6 +134,11 @@ export interface ApiMessage {
    * a freshly-broadcast message before anyone reacts).
    */
   reactions?: ApiMessageReaction[];
+  /**
+   * Anexos da mensagem (imagens). Vazio/omitido em mensagens text-only.
+   * Renderer mostra grid de thumbnails abaixo do `body` no bubble.
+   */
+  attachments?: ApiMessageAttachment[];
 }
 
 /**

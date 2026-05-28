@@ -768,3 +768,167 @@
     font-size: 16px;
   }
 }
+
+/* ── Anexos (imagens nas mensagens) ────────────────────────────
+ * Grid de thumbnails dentro do bubble. 1 imagem ocupa width
+ * largo; 2-4 em grid quadrado 2-col; 5-6 em grid 3-col.
+ * `aspect-ratio` mantém os tiles consistentes sem JS. */
+.attachGrid {
+  display: grid;
+  gap: 4px;
+  margin: -2px -4px 0;
+  /* When the bubble has a body too, give a separator below the grid. */
+}
+.attachGrid[data-cols='1'] {
+  grid-template-columns: 1fr;
+}
+.attachGrid[data-cols='2'] {
+  grid-template-columns: 1fr 1fr;
+}
+.attachGrid[data-cols='3'] {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.attachItem {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: zoom-in;
+  /* Multi-image (2+): força quadrado pra consistência visual. */
+  aspect-ratio: 1 / 1;
+}
+.attachGrid[data-single='true'] .attachItem {
+  /* Image única: respeita a proporção natural, mas limita a
+   * altura pra não esticar bubbles verticais demais. */
+  aspect-ratio: auto;
+  max-height: 320px;
+}
+.attachImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.attachGrid[data-single='true'] .attachImage {
+  height: auto;
+  max-height: 320px;
+  object-fit: contain;
+}
+
+/* Bubble com anexos + corpo de texto: separa visualmente. */
+.bubble .attachGrid + * {
+  margin-top: 6px;
+}
+
+/* Lightbox — overlay full viewport quando clica numa imagem. */
+.lightboxBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  cursor: zoom-out;
+  animation: lightboxFadeIn 160ms ease both;
+}
+@keyframes lightboxFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.lightboxImage {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
+
+/* ── Composer: preview de anexos pendentes ────────────────────
+ * Linha horizontal acima do textarea com thumbnails 56x56 das
+ * imagens já uploadadas mas ainda não enviadas. Cada thumbnail
+ * tem um X pequeno pra remover sem afetar as outras. */
+.attachPreviewRow {
+  display: flex;
+  gap: 6px;
+  padding: 8px 0 4px;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+  /* Row entra como item de grid/flex no inputArea — o flex-basis 100%
+   * força que ela ocupe linha própria acima do paperclip + textarea. */
+}
+.attachPreviewItem {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+}
+.attachPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.attachPreviewRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.14s ease, transform 0.14s ease;
+}
+.attachPreviewRemove:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.08);
+}
+
+/* Botão paperclip — entre o textarea e o send. */
+.attachBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.6);
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.attachBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+}
+.attachBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.attachSpinner {
+  width: 14px;
+  height: 14px;
+  animation: attachSpinnerRotate 800ms linear infinite;
+}
+@keyframes attachSpinnerRotate {
+  to { transform: rotate(360deg); }
+}
