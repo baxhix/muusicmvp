@@ -761,11 +761,15 @@
    * pra criar uma coluna central coerente: vídeo no topo, caixa
    * de telão embaixo, mesma horizontal-edge. */
   width: min(560px, calc(100vw - 32px));
-  height: 76px;
-  padding: 8px 12px;
+  /* Padding horizontal generoso pra acompanhar a largura de
+   * 560px (era 12px quando o box era 420). Vertical idem —
+   * dá ar entre o header label e o input row. Altura cresce
+   * proporcionalmente (76 → 92) absorvendo o padding novo + gap. */
+  height: 92px;
+  padding: 14px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   background: linear-gradient(
     180deg,
     rgba(20, 8, 24, 0.92) 0%,
@@ -829,17 +833,19 @@
 .stageMsgRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .stageMsgInput {
   flex: 1;
-  height: 32px;
-  padding: 0 12px;
+  /* Input 36px (era 32) acompanha o resize do box — fica menos
+   * espremido no width 560 e tap-target mais confortável. */
+  height: 36px;
+  padding: 0 14px;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: #f5f5f7;
-  font-size: 13px;
+  font-size: 13.5px;
   outline: none;
   font-family: inherit;
 }
@@ -850,8 +856,10 @@
   background: rgba(255, 255, 255, 0.12);
 }
 .stageMsgSend {
-  width: 32px;
-  height: 32px;
+  /* Pareia com o input 36px (era 32). Mesma proporção da
+   * pílula circular. */
+  width: 36px;
+  height: 36px;
   border: 0;
   border-radius: 50%;
   background: linear-gradient(135deg, #a855f7, #9333ea);
