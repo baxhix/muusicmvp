@@ -16,14 +16,14 @@
 }
 .pill {
   position: fixed;
-  /* Desktop — anchored next to the Superchat trigger on the
-   * top-right. Superchat's button is ~190px wide (icon + "Entre
-   * no Superchat!" label + padding) and lives at right:104, so
-   * its LEFT edge sits at right:294. `right: 320` puts the
-   * Audição pill's right edge 26px to the left of Superchat's
-   * left edge — comfortable visual breathing without overlap. */
-  top: 42px;
-  right: 320px;
+  /* Segundo item da coluna esquerda de triggers de brainstorm,
+   * abaixo do Box Fanverse Ana Castela (ArtistBox em top:34
+   * left:14 width:280) e logo abaixo do SuperliveTrigger
+   * (top:180). Gap de 8px → top:236. Mesma largura de 280 pra
+   * formar uma coluna visual coerente. */
+  top: 236px;
+  left: 14px;
+  width: 280px;
   z-index: 60;
   display: inline-flex;
   align-items: center;
@@ -90,29 +90,15 @@
 
 /* ── Responsive ──────────────────────────────────────────── */
 
-/* Narrow desktops / large tablets (769–1024px). Both
- * Superchat and the Audição pill are visible (the right-rail
- * cluster doesn't unmount until <769) but there's no longer
- * enough horizontal room to fit them on the same row — the
- * Audição pill stacks directly BELOW Superchat instead, sharing
- * its right anchor. */
-@media (max-width: 1024px) and (min-width: 769px) {
-  .pill {
-    top: 88px;
-    right: 104px;
-  }
-}
-
 @media (max-width: 600px) {
-  /* Mobile home — Superchat slot is hidden, so the pill goes
-   * back to being centered horizontally below the Superlive
-   * trigger. SuperliveTrigger sits at top:121 (below the
-   * MobileHomeChrome info bar); the Fire Arena pill follows
-   * 8px below it (top:121 + ~48px height + 8 gap = 177). */
+  /* Mobile home — coluna esquerda de 280 não cabe, então a pílula
+   * volta a center-stack abaixo do SuperliveTrigger
+   * (SuperliveTrigger em top:121 + ~48 altura + 8 gap = 177). */
   .pill {
     top: 177px;
     right: auto;
     left: 50%;
+    width: auto;
     transform: translateX(-50%);
     padding: 5px 14px 5px 5px;
     gap: 9px;

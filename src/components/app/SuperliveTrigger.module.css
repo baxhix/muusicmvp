@@ -16,20 +16,21 @@
 }
 .card {
   position: fixed;
-  /* `top: 16` puts the pill on the same axis as the right-rail
-   * cluster (top:21) and just above the home-header strip.
-   * Centered horizontally; widths are clamped so it never
-   * crowds the ArtistBox on the left (right edge 100px on
-   * mobile, 280px on desktop) or the cluster on the right. */
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Stack vertical na lateral esquerda, abaixo do Box Fanverse
+   * Ana Castela (ArtistBox em top:34 left:14 width:280). Os 3
+   * triggers de brainstorm (Superlive / Audição coletiva / Show
+   * ao vivo) compartilham essa coluna de 280px de largura per
+   * product feedback "os botões de ação para abrir o modal devem
+   * ficar na lateral, abaixo do box Fanverse Ana Castela". Ordem
+   * de pilha: Superlive (top:180) → CollectiveListening (top:236)
+   * → ShowLive (top:292). */
+  top: 180px;
+  left: 14px;
   z-index: 60;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  width: auto;
-  max-width: calc(100vw - 240px);
+  width: 280px;
   padding: 6px 6px 6px 12px;
   border: none;
   border-radius: 999px;
@@ -48,13 +49,13 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 .card:hover {
-  transform: translateX(-50%) translateY(-1px);
+  transform: translateY(-1px);
   box-shadow:
     0 18px 40px -8px rgba(239, 68, 68, 0.65),
     0 0 0 1px rgba(255, 255, 255, 0.22) inset;
 }
 .card:active {
-  transform: translateX(-50%) scale(0.98);
+  transform: scale(0.98);
 }
 
 /* Outward pulse ring — telegraphs "live, ongoing" without
@@ -165,13 +166,23 @@
     /* Mobile home chrome occupies y:0 → 68 (header band) +
      * 1px divider + y:69 → 105 (info bar) = 105px total.
      * The live pill slips below that with a 16px gap, at
-     * y:121. Wide enough to fit all four elements at the
-     * compressed 12px font sizes; the viewer-count number
-     * trims to "k" so the row never wraps. */
+     * y:121. Centra horizontalmente porque no mobile a
+     * coluna esquerda de 280 do ArtistBox/triggers não
+     * cabe — width:auto + transform translateX(-50%) volta
+     * a regra de center-stack original. */
     top: 121px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
     max-width: calc(100vw - 32px);
     padding: 5px 5px 5px 10px;
     gap: 8px;
+  }
+  .card:hover {
+    transform: translateX(-50%) translateY(-1px);
+  }
+  .card:active {
+    transform: translateX(-50%) scale(0.98);
   }
   .avatar {
     width: 28px;
