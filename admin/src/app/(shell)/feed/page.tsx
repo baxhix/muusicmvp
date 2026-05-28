@@ -67,26 +67,28 @@ const STATUS_OPTIONS = [
 ];
 
 const TYPE_OPTIONS = [
-  { value: 'all',       label: 'Todos os tipos' },
-  { value: 'image',     label: 'Imagem' },
-  { value: 'video',     label: 'Vídeo' },
-  { value: 'carousel',  label: 'Carrossel' },
-  { value: 'story',     label: 'Story' },
-  { value: 'poll',      label: 'Enquete' },
-  { value: 'sponsored', label: 'Patrocinado' },
-  { value: 'broadcast', label: 'Transmissão' },
+  { value: 'all',            label: 'Todos os tipos' },
+  { value: 'image',          label: 'Imagem' },
+  { value: 'video',          label: 'Vídeo' },
+  { value: 'youtube_video',  label: 'YouTube' },
+  { value: 'carousel',       label: 'Carrossel' },
+  { value: 'story',          label: 'Story' },
+  { value: 'poll',           label: 'Enquete' },
+  { value: 'sponsored',      label: 'Patrocinado' },
+  { value: 'broadcast',      label: 'Transmissão' },
 ];
 
 function typeLabel(t: FeedItemType | null): { label: string; icon: React.ReactNode } {
   switch (t) {
-    case 'image':     return { label: 'Imagem',      icon: <IconImage size={12} /> };
-    case 'video':     return { label: 'Vídeo',       icon: <IconVideo size={12} /> };
-    case 'carousel':  return { label: 'Carrossel',   icon: <IconImage size={12} /> };
-    case 'story':     return { label: 'Story',       icon: <IconFeed size={12} /> };
-    case 'poll':      return { label: 'Enquete',     icon: <IconCheckCircle size={12} /> };
-    case 'sponsored': return { label: 'Patrocinado', icon: <IconStar size={12} /> };
-    case 'broadcast': return { label: 'Transmissão', icon: <IconEye size={12} /> };
-    default:          return { label: '—',           icon: null };
+    case 'image':          return { label: 'Imagem',      icon: <IconImage size={12} /> };
+    case 'video':          return { label: 'Vídeo',       icon: <IconVideo size={12} /> };
+    case 'youtube_video':  return { label: 'YouTube',     icon: <IconVideo size={12} /> };
+    case 'carousel':       return { label: 'Carrossel',   icon: <IconImage size={12} /> };
+    case 'story':          return { label: 'Story',       icon: <IconFeed size={12} /> };
+    case 'poll':           return { label: 'Enquete',     icon: <IconCheckCircle size={12} /> };
+    case 'sponsored':      return { label: 'Patrocinado', icon: <IconStar size={12} /> };
+    case 'broadcast':      return { label: 'Transmissão', icon: <IconEye size={12} /> };
+    default:               return { label: '—',           icon: null };
   }
 }
 

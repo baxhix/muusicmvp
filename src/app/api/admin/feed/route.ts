@@ -25,7 +25,7 @@ export const runtime = 'nodejs';
  *   Returns the hydrated row so the listing can prepend it
  *   optimistically.
  */
-const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio'] as const;
+const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio', 'youtube_video'] as const;
 const FEED_STATUSES = ['published', 'scheduled', 'draft', 'inactive'] as const;
 
 const listQuerySchema = z.object({
@@ -45,7 +45,10 @@ const listQuerySchema = z.object({
 const mediaItemSchema = z.object({
   url:    z.string().min(1).max(500),
   alt:    z.string().max(300).nullish(),
-  kind:   z.enum(['image', 'video']).optional(),
+  /* 'youtube' adicionado pra suportar o type 'youtube_video' — a
+   * url nesse caso é a URL externa do YouTube (não passa pelo
+   * pipeline de upload). */
+  kind:   z.enum(['image', 'video', 'youtube']).optional(),
   poster: z.string().min(1).max(500).nullish(),
 });
 

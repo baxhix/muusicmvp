@@ -22,7 +22,7 @@ export const runtime = 'nodejs';
  * Side-effect: each call sweeps due `scheduled` posts → `published`
  * so the feed never lags behind the schedule by more than one read.
  */
-const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio'] as const;
+const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio', 'youtube_video'] as const;
 const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).optional(),

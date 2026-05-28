@@ -51,7 +51,58 @@ export type CarouselPostData = BasePost & {
   /** Ordered list of slides — first one is shown by default. */
   items: { src: string; alt?: string }[];
 };
-export type MediaPostData    = ImagePostData | VideoPostData | CarouselPostData;
+/** YouTube post — `youtubeId` é o videoId extraído da URL no admin.
+ *  O renderer embute via iframe nocookie pra reduzir tracking
+ *  (privacy-enhanced mode). `youtubeUrl` mantida pra fallback /
+ *  link "Abrir no YouTube". */
+export type YoutubePostData  = BasePost & {
+  type: 'youtube_video';
+  youtubeId: string;
+  youtubeUrl: string;
+};
+export type MediaPostData    =
+  | ImagePostData
+  | VideoPostData
+  | CarouselPostData
+  | YoutubePostData;
+
+/**
+ * Extrai o videoId de uma URL de YouTube. Cobre os 3 formatos
+ * canônicos:
+ *   - https://www.youtube.com/watch?v=VIDEOID
+ *   - https://youtu.be/VIDEOID
+ *   - https://www.youtube.com/embed/VIDEOID
+ *
+ * Retorna null pra qualquer URL malformada — o renderer cai num
+ * fallback de link em vez de iframe quebrado.
+ */
+export function extractYoutubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'youtu.be') {
+      const id = u.pathname.slice(1).split('/')[0];
+      return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+    }
+    if (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'youtube-nocookie.com'
+    ) {
+      const v = u.searchParams.get('v');
+      if (v && /^[A-Za-z0-9_-]{6,}$/.test(v)) return v;
+      /* /embed/VIDEOID e /shorts/VIDEOID. */
+      const parts = u.pathname.split('/').filter(Boolean);
+      if (parts.length >= 2 && (parts[0] === 'embed' || parts[0] === 'shorts')) {
+        const id = parts[1];
+        return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : null;
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
 
 /* ── Icons ── */
 const HeartIcon = () => (
@@ -141,6 +192,7 @@ function postKeyFor(data: MediaPostData): string {
   if (data.dbId) return `feed:${data.dbId}`;
   if (data.type === 'image') return `media:image:${data.src}`;
   if (data.type === 'video') return `media:video:${data.src ?? data.poster}`;
+  if (data.type === 'youtube_video') return `media:youtube:${data.youtubeId}`;
   // For carousels, the first slide's src is stable across rerenders.
   const first = data.items[0]?.src ?? data.user;
   return `media:carousel:${first}`;
@@ -223,6 +275,22 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           index={slideIdx}
           onChange={setSlideIdx}
         />
+      ) : data.type === 'youtube_video' ? (
+        /* YouTube embed via iframe (nocookie). Wrapper mantém o
+         * aspect ratio 16:9 sem precisar de JS — `aspect-ratio` CSS
+         * resolve. Reusa `.videoWrap` pro bg preto enquanto o
+         * iframe ainda não carregou. */
+        <div className={`${styles.videoWrap} ${styles.youtubeWrap}`}>
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${data.youtubeId}?rel=0&modestbranding=1`}
+            title={data.description ?? 'YouTube video'}
+            className={styles.youtubeFrame}
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
       ) : (
         <div className={styles.videoWrap}>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}

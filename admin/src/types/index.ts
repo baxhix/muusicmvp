@@ -76,17 +76,18 @@ export type FeedItemType =
   | 'poll'
   | 'sponsored'
   | 'broadcast'
-  | 'audio';
+  | 'audio'
+  | 'youtube_video';
 
 export type FeedItemStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 
 export interface FeedMediaItem {
   url: string;
   alt?: string | null;
-  /** 'video' on uploaded clips; absent (or 'image') for stills.
-   *  Used by the renderer to pick `<video>` vs `<img>` and by the
-   *  admin to badge each tile. */
-  kind?: 'image' | 'video';
+  /** 'video'   — clip uploaded via the /upload pipeline.
+   *  'youtube' — URL externa de YouTube (embed iframe no client).
+   *  absent ou 'image' — still image. */
+  kind?: 'image' | 'video' | 'youtube';
   /** Optional poster (thumbnail) for video items. URL points to an
    *  image stored via the regular image upload pipeline. */
   poster?: string | null;

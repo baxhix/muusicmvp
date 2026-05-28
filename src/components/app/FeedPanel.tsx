@@ -5,7 +5,7 @@ import { useAppShell } from '@/lib/app/AppShellContext';
 import Stories from './Stories';
 import AudioPost from './AudioPost';
 import ActivityCard, { type ActivityCardData } from './ActivityCard';
-import MediaPost, { type MediaPostData } from './MediaPost';
+import MediaPost, { extractYoutubeId, type MediaPostData } from './MediaPost';
 import PollPost, { type PollPostData } from './PollPost';
 import QuizPost, { type QuizPostData } from './QuizPost';
 import FeedCelebration from './FeedCelebration';
@@ -209,6 +209,25 @@ function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
         src: video.url,
         poster: video.poster ?? undefined,
       };
+    }
+  }
+
+  /* YouTube — extrai o videoId da URL (que veio do admin) pra
+   * que o renderer embute o iframe nocookie. Se a URL não
+   * casar com nenhum formato conhecido, cai pro fallback de
+   * imagem/carousel abaixo — não tenta render do iframe vazio. */
+  if (p.type === 'youtube_video') {
+    const yt = p.media.find((m) => m.kind === 'youtube');
+    if (yt) {
+      const id = extractYoutubeId(yt.url);
+      if (id) {
+        return {
+          ...base,
+          type: 'youtube_video' as const,
+          youtubeId: id,
+          youtubeUrl: yt.url,
+        };
+      }
     }
   }
 

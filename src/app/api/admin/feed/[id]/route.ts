@@ -10,7 +10,7 @@ import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
-const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio'] as const;
+const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio', 'youtube_video'] as const;
 
 /** Mirror of the createSchema's media descriptor. Kept inline (vs
  *  imported) because the two routes are deliberately independent
@@ -18,7 +18,7 @@ const FEED_TYPES = ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 
 const mediaItemSchema = z.object({
   url:    z.string().min(1).max(500),
   alt:    z.string().max(300).nullish(),
-  kind:   z.enum(['image', 'video']).optional(),
+  kind:   z.enum(['image', 'video', 'youtube']).optional(),
   poster: z.string().min(1).max(500).nullish(),
 });
 

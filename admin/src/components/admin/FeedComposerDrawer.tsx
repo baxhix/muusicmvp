@@ -65,14 +65,33 @@ const TYPE_OPTIONS: Array<{
   hint: string;
   enabled: boolean;
 }> = [
-  { value: 'image',     label: 'Imagem',      hint: 'Uma ou várias imagens',   enabled: true  },
-  { value: 'video',     label: 'Vídeo',       hint: 'Clipe único até 100 MB',  enabled: true  },
-  { value: 'audio',     label: 'Áudio',       hint: 'Faixa ou álbum em áudio', enabled: true  },
-  { value: 'story',     label: 'Story',       hint: 'Conteúdo efêmero por 24h', enabled: true  },
-  { value: 'poll',      label: 'Enquete',     hint: 'Em breve',                  enabled: false },
-  { value: 'sponsored', label: 'Patrocinado', hint: 'Em breve',                  enabled: false },
-  { value: 'broadcast', label: 'Transmissão', hint: 'Em breve',                  enabled: false },
+  { value: 'image',          label: 'Imagem',      hint: 'Uma ou várias imagens',   enabled: true  },
+  { value: 'video',          label: 'Vídeo',       hint: 'Clipe único até 100 MB',  enabled: true  },
+  { value: 'youtube_video',  label: 'YouTube',     hint: 'Link de vídeo do YouTube', enabled: true  },
+  { value: 'audio',          label: 'Áudio',       hint: 'Faixa ou álbum em áudio', enabled: true  },
+  { value: 'story',          label: 'Story',       hint: 'Conteúdo efêmero por 24h', enabled: true  },
+  { value: 'poll',           label: 'Enquete',     hint: 'Em breve',                  enabled: false },
+  { value: 'sponsored',      label: 'Patrocinado', hint: 'Em breve',                  enabled: false },
+  { value: 'broadcast',      label: 'Transmissão', hint: 'Em breve',                  enabled: false },
 ];
+
+/** Validador leve de URL do YouTube — mesma lógica do server em
+ *  `src/server/feed/admin.ts:isYoutubeUrl`. Mantida duplicada aqui
+ *  pro feedback inline no composer (sem round-trip). */
+function isYoutubeUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    const host = u.hostname.toLowerCase().replace(/^www\./, '');
+    return (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'youtu.be' ||
+      host === 'youtube-nocookie.com'
+    );
+  } catch {
+    return false;
+  }
+}
 
 type Mode = 'publish' | 'schedule' | 'draft';
 
@@ -145,9 +164,17 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
     const prev = prevTypeRef.current;
     prevTypeRef.current = type;
     if (prev === type) return;
-    const prevIsVideo = prev === 'video';
-    const nextIsVideo = type === 'video';
-    if (prevIsVideo !== nextIsVideo) setMedia([]);
+    /* Limpa media quando troca entre "shapes" diferentes:
+     *   - image/story/carousel  → multi-image uploader
+     *   - video                 → upload de clipe
+     *   - youtube_video         → input de URL externa
+     * Trocar entre essas famílias deixa items legacy no array, então
+     * reseta. Mantemos as mudanças DENTRO da mesma família (ex:
+     * image ↔ story) porque o uploader é o mesmo. */
+    type Shape = 'media' | 'video' | 'youtube';
+    const shapeOf = (t: FeedItemType): Shape =>
+      t === 'video' ? 'video' : t === 'youtube_video' ? 'youtube' : 'media';
+    if (shapeOf(prev) !== shapeOf(type)) setMedia([]);
   }, [open, type]);
 
   const action: FeedItemAction = mode;
@@ -162,6 +189,10 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
     if (!description.trim()) return 'description';
     if (type === 'image' && media.length === 0) return 'media';
     if (type === 'video' && !media.some((m) => m.kind === 'video')) return 'media';
+    if (type === 'youtube_video') {
+      const yt = media.find((m) => m.kind === 'youtube');
+      if (!yt || !isYoutubeUrl(yt.url)) return 'youtube';
+    }
     if (type === 'story' && media.length === 0) return 'media';
     if (mode === 'schedule' && (!scheduledAt || scheduleInPast)) return 'schedule';
     if (type === 'story' && expiresAt) {
@@ -281,9 +312,45 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
         {/* ── Mídia ────────────────────────────────────── */}
         <div className={styles.section}>
           <span className={styles.sectionTitle}>
-            Mídia {type === 'image' || type === 'video' || type === 'story' ? '*' : ''}
+            {type === 'youtube_video' ? 'URL do YouTube *' : (
+              <>Mídia {type === 'image' || type === 'video' || type === 'story' ? '*' : ''}</>
+            )}
           </span>
-          {type === 'video' ? (
+          {type === 'youtube_video' ? (
+            (() => {
+              /* Pega o primeiro item kind='youtube' (criamos se não
+               * existir ao editar). Único campo: URL. O renderer
+               * extrai o videoId do URL — sem precisar guardar id
+               * separado. */
+              const current = media.find((m) => m.kind === 'youtube');
+              const value = current?.url ?? '';
+              const isValid = value === '' || isYoutubeUrl(value);
+              return (
+                <>
+                  <Input
+                    inputSize="md"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={value}
+                    onChange={(e) => {
+                      const url = e.target.value;
+                      /* Substitui o array inteiro pela row YouTube —
+                       * youtube_video só usa 1 item; manter outros
+                       * confundiria o backend. */
+                      setMedia(url ? [{ url, kind: 'youtube' }] : []);
+                    }}
+                    maxLength={500}
+                    disabled={submitting}
+                    invalid={value !== '' && !isValid}
+                    helperText={
+                      value && !isValid
+                        ? 'URL precisa ser do YouTube (youtube.com, youtu.be).'
+                        : 'Cole o link do vídeo do YouTube. O player aparece embutido no feed.'
+                    }
+                  />
+                </>
+              );
+            })()
+          ) : type === 'video' ? (
             <FeedVideoUploader
               value={media}
               onChange={setMedia}
@@ -415,6 +482,8 @@ function humanError(code: string): string {
   switch (code) {
     case 'image_required':        return 'Adicione pelo menos uma imagem.';
     case 'video_required':        return 'Envie um vídeo para publicar.';
+    case 'youtube_url_required':  return 'Cole a URL do vídeo do YouTube.';
+    case 'youtube_url_invalid':   return 'A URL precisa ser do YouTube (youtube.com, youtu.be).';
     case 'story_media_required':  return 'Adicione pelo menos um slide ao story.';
     case 'description_too_long':  return 'A descrição passou de 2.200 caracteres.';
     case 'title_too_long':        return 'O título passou de 200 caracteres.';

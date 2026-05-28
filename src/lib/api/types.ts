@@ -273,16 +273,18 @@ export type ApiFeedPostType =
   | 'poll'
   | 'sponsored'
   | 'broadcast'
-  | 'audio';
+  | 'audio'
+  | 'youtube_video';
 
 export type ApiFeedPostStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 
 export interface ApiFeedMediaItem {
   url: string;
   alt?: string | null;
-  /** 'video' on uploaded clips; absent or 'image' for stills. The
-   *  public renderer keys off this to pick <video> vs <img>. */
-  kind?: 'image' | 'video';
+  /** 'video'   — clip uploaded via /upload pipeline (<video src>).
+   *  'youtube' — URL externa de YouTube (renderer embute via iframe).
+   *  absent ou 'image' — still. */
+  kind?: 'image' | 'video' | 'youtube';
   /** Optional poster (thumbnail) for video items. Falls back to the
    *  video's first frame in the browser when absent. */
   poster?: string | null;

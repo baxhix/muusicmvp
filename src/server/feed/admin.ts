@@ -55,16 +55,17 @@ export type FeedType =
   | 'poll'
   | 'sponsored'
   | 'broadcast'
-  | 'audio';
+  | 'audio'
+  | 'youtube_video';
 export type FeedStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 
 export interface FeedMediaItem {
   url: string;
   alt?: string | null;
-  /** 'video' on uploaded clips; absent (or 'image') for stills. Used
-   *  by the public renderer to pick `<video>` vs `<img>` and by the
-   *  admin to badge each tile. */
-  kind?: 'image' | 'video';
+  /** 'video'   — clip subido via upload pipeline (<video src>).
+   *  'youtube' — URL externa de YouTube (renderer embute via iframe).
+   *  absent / 'image' — still image. */
+  kind?: 'image' | 'video' | 'youtube';
   /** Optional poster (thumbnail) for video items. URL points to an
    *  image stored via the regular image upload pipeline. */
   poster?: string | null;
@@ -123,6 +124,27 @@ export interface FeedPostInput {
 
 // ── Helpers ──────────────────────────────────────────────────────
 
+/**
+ * Validador frouxo de URL do YouTube — aceita os 3 formatos canônicos
+ * (watch, youtu.be, embed). Não tenta resolver / fetchar — só checa
+ * que o host bate. O renderer extrai o videoId via regex; URLs
+ * malformadas viram render do raw link em vez de embed.
+ */
+export function isYoutubeUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    const host = u.hostname.toLowerCase().replace(/^www\./, '');
+    return (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'youtu.be' ||
+      host === 'youtube-nocookie.com'
+    );
+  } catch {
+    return false;
+  }
+}
+
 function asMedia(value: unknown): FeedMediaItem[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -131,8 +153,10 @@ function asMedia(value: unknown): FeedMediaItem[] {
     )
     .map((v) => {
       const kindRaw = v.kind;
-      const kind: 'image' | 'video' | undefined =
-        kindRaw === 'video' || kindRaw === 'image' ? kindRaw : undefined;
+      const kind: 'image' | 'video' | 'youtube' | undefined =
+        kindRaw === 'video' || kindRaw === 'image' || kindRaw === 'youtube'
+          ? kindRaw
+          : undefined;
       return {
         url: v.url as string,
         alt: typeof v.alt === 'string' ? v.alt : null,
@@ -289,6 +313,14 @@ export async function createFeedPost(
   if (input.type === 'video') {
     const video = media.find((m) => m.kind === 'video');
     if (!video) throw new Error('video_required');
+  }
+  if (input.type === 'youtube_video') {
+    /* Posts do tipo YouTube precisam de pelo menos UM media item
+     * com kind='youtube' + url válida do YouTube. O renderer no
+     * cliente extrai o videoId da url e embute via iframe. */
+    const yt = media.find((m) => m.kind === 'youtube');
+    if (!yt) throw new Error('youtube_url_required');
+    if (!isYoutubeUrl(yt.url)) throw new Error('youtube_url_invalid');
   }
   if (input.type === 'story' && media.length === 0) {
     throw new Error('story_media_required');
