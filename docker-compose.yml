@@ -65,6 +65,9 @@ services:
       # único captura tudo. Default do storage.ts coincide com
       # esse path, mas declarar aqui torna explícito.
       MATERIAIS_DIR: /app/uploads/materiais
+      # Chat — imagens anexadas a mensagens (DMs + grupos).
+      # Mesmo volume `uploads`, subdir dedicada pra GC fácil.
+      CHAT_UPLOADS_DIR: /app/uploads/chat
     volumes:
       # Avatar + report-evidence uploads persist across container
       # rebuilds. Both directories live under the same `uploads`
