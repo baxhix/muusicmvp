@@ -53,6 +53,11 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-muusic}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-muusic}
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY is required}
+      # Secret compartilhado pros endpoints de cron (manager report,
+      # daily digest, etc) — server compara Authorization Bearer ===
+      # CRON_SECRET. Não tem `:?` porque cron pode ficar opcional
+      # em dev (rotas só checam quando o valor está setado).
+      CRON_SECRET: ${CRON_SECRET}
       EMAIL_FROM: ${EMAIL_FROM:?EMAIL_FROM is required}
       MAPBOX_TOKEN: ${MAPBOX_TOKEN:?MAPBOX_TOKEN is required}
       NEXT_PUBLIC_SOCKET_URL: ${SOCKET_URL:-${APP_URL}}
@@ -94,6 +99,10 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       # Required by env validation but unused by the realtime process.
       RESEND_API_KEY: ${RESEND_API_KEY}
+      # Mesmo motivo: env validation no socket carrega o schema do
+      # web. CRON_SECRET fica disponível mas o socket não atende
+      # rotas de cron.
+      CRON_SECRET: ${CRON_SECRET}
       EMAIL_FROM: ${EMAIL_FROM}
       MAPBOX_TOKEN: ${MAPBOX_TOKEN}
       SOCKET_PORT: 3002
