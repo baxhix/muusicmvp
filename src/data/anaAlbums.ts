@@ -36,6 +36,18 @@ export type AnaAlbum = {
 
 export const ANA_ALBUMS: AnaAlbum[] = [
   {
+    // Próximo lançamento — DVD ao vivo gravado na Arena Fonte Nova
+    // (Salvador / BA). Sem tracklist ainda; aparece em primeiro
+    // lugar no grid de álbuns com prefixo "(Em breve)" no nome e
+    // a contagem de pré-saves.
+    id: 'fire-arena',
+    name: 'Fire Arena',
+    cover: '/albuns/firearena.jpg',
+    trackYoutubeIds: [],
+    comingSoon: true,
+    preSaveCount: 175000,
+  },
+  {
     id: 'lets-go-rodeo',
     name: "Let's Go Rodeo",
     cover: '/albuns/lets-go-rodeo.jpg',
@@ -113,16 +125,5 @@ export const ANA_ALBUMS: AnaAlbum[] = [
       'Sphh4jO0bjw', // Mississipi
       'MEvt6OPB_3E', // Peão Apaixonado
     ],
-  },
-  {
-    // Próximo lançamento — DVD ao vivo gravado na Arena Fonte Nova
-    // (Salvador / BA). Sem tracklist ainda; aparece como "Em breve"
-    // com a contagem de pré-saves no grid de álbuns e no detalhe.
-    id: 'fire-arena',
-    name: 'Fire Arena',
-    cover: '/albuns/fire-arena.jpg',
-    trackYoutubeIds: [],
-    comingSoon: true,
-    preSaveCount: 175000,
   },
 ];

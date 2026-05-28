@@ -646,35 +646,14 @@
 }
 
 /* ── Álbum em pré-lançamento ───────────────
- * Badge rosa neon "Em breve" no canto da capa do grid + variante
- * leve de elevação no card pra destacar do resto. O detalhe do
- * álbum reusa esta paleta no bloco .comingSoon (badge + contagem
- * de pré-saves). Mesmo magenta do Fire Arena (lettering rosa) que
- * já aparece no ShowLiveTrigger / ShowLiveStage — mantém a marca
- * coerente. */
-.albumCardComing .albumCardCover {
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 56, 188, 0.45),
-    0 0 18px rgba(255, 56, 188, 0.22);
-}
-.albumCardFlag {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgba(20, 4, 14, 0.78);
-  border: 1px solid rgba(255, 56, 188, 0.55);
+ * Prefixo inline "(Em breve)" em rosa neon, antes do nome do álbum
+ * — no card do grid e no header do detalhe. Mantém a paleta do
+ * Fire Arena (mesmo magenta do ShowLiveTrigger / ShowLiveStage)
+ * sem badge sobre a capa nem glow magenta na borda da arte. */
+.albumCardComingTag {
   color: #ff8ad6;
-  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 0 12px rgba(255, 56, 188, 0.35);
-  pointer-events: none;
+  letter-spacing: -0.005em;
 }
 
 /* Bloco "Em breve" no detalhe do álbum — substitui a lista de

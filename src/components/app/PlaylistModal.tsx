@@ -372,7 +372,14 @@ export default function PlaylistModal({
                 <span className={styles.albumHeaderEyebrow}>
                   {selectedAlbum.comingSoon ? 'Pré-lançamento' : 'Álbum'}
                 </span>
-                <span className={styles.albumHeaderName}>{selectedAlbum.name}</span>
+                <span className={styles.albumHeaderName}>
+                  {selectedAlbum.comingSoon && (
+                    <span className={styles.albumCardComingTag}>
+                      (Em breve){' '}
+                    </span>
+                  )}
+                  {selectedAlbum.name}
+                </span>
               </div>
             </div>
           )}
@@ -402,7 +409,7 @@ export default function PlaylistModal({
                 <li key={album.id}>
                   <button
                     type="button"
-                    className={`${styles.albumCard} ${album.comingSoon ? styles.albumCardComing : ''}`}
+                    className={styles.albumCard}
                     onClick={() => setSelectedAlbumId(album.id)}
                     aria-label={
                       album.comingSoon
@@ -413,12 +420,16 @@ export default function PlaylistModal({
                     <div className={styles.albumCardCover}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={album.cover} alt="" className={styles.albumCardImg} />
-                      {album.comingSoon && (
-                        <span className={styles.albumCardFlag}>Em breve</span>
-                      )}
                     </div>
                     <span className={styles.albumCardMeta}>
-                      <span className={styles.albumCardName}>{album.name}</span>
+                      <span className={styles.albumCardName}>
+                        {album.comingSoon && (
+                          <span className={styles.albumCardComingTag}>
+                            (Em breve){' '}
+                          </span>
+                        )}
+                        {album.name}
+                      </span>
                       <span className={styles.albumCardCount}>
                         {album.comingSoon
                           ? `${(album.preSaveCount ?? 0).toLocaleString('pt-BR')} pré-saves`
