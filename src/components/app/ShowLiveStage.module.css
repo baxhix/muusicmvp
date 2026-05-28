@@ -763,10 +763,14 @@
   /* AGORA inline DENTRO do .broadcastInner (era absolute no
    * fundo da viewport). Sem position/bottom/left/transform —
    * fica no fluxo natural depois do .broadcastVideo. width
-   * 100% pega largura total do frame, padding/altura cresce
-   * pra interface ter respiro consistente. */
+   * 100% pega largura total do frame.
+   *
+   * Padding-top maior (18px vs 10px nas outras direções)
+   * pra criar respiro vertical entre o iframe do vídeo e
+   * o cabeçalho "Mande pro telão" — antes os dois ficavam
+   * encostados, agora a hierarquia fica clara. */
   width: 100%;
-  padding: 10px 12px;
+  padding: 18px 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
