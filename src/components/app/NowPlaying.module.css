@@ -5,6 +5,14 @@
   to   { transform: scaleY(1);    opacity: 1; }
 }
 
+/* Esconde o NowPlaying quando o ShowLiveStage está aberto —
+ * per feedback "O video que deve ficar por trás é o do player",
+ * o player de música precisa sumir da tela durante o palco
+ * pro vídeo do show ser o foco visual. */
+:global(html[data-showlive="true"]) .player {
+  display: none !important;
+}
+
 /* ── Container ── */
 .player {
   position: fixed;
