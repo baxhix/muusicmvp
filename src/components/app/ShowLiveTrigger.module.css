@@ -1,27 +1,22 @@
 /* ============================================================
- * SHOW LIVE TRIGGER — pílula Fire Arena no topo do /app
+ * SHOW LIVE TRIGGER — pill minimalista
  *
- * Mesma anatomia do SuperliveTrigger (badge AO VIVO · identity ·
- * Entrar) mas com a paleta do álbum Fire Arena — gradient rosa
- * profundo → magenta → púrpura, lettering "FIRE ARENA" em
- * itálico com text-shadow neon.
+ * Mesmo visual da CollectiveListeningTrigger / SuperliveTrigger:
+ * pill preta arredondada com o nome da feature centralizado.
+ * Sem badge AO VIVO, sem venue, sem CTA — per product feedback
+ * "sem imagem nenhuma apenas com o nome da funcionalidade".
  *
- * Stacking vertical na coluna esquerda, abaixo do Box Fanverse
- * Ana Castela (ArtistBox em top:34 left:14 width:280):
- *   - SuperliveTrigger  →  top: 180  (Ana ao vivo)
- *   - CollectiveListen  →  top: 236  (Audição coletiva)
- *   - ShowLiveTrigger   →  top: 292  (Fire Arena - este aqui)
+ * Terceiro item da coluna esquerda de triggers de brainstorm,
+ * abaixo do CollectiveListeningTrigger (top:236, gap 8 → top:292).
  *
- * Mobile equivalente volta a center-stack abaixo das outras pills.
- * Brainstorm-gated — só renderiza com flags.showLive === true.
+ * Brainstorm-gated — só renderiza com flags.showLive.
+ * Esconde-se quando o ShowLiveStage está aberto.
  * ============================================================ */
 
 /* Esconde o próprio trigger quando o ShowLiveStage está aberto —
  * user feedback "O banner para entrar deve desaparecer quando o
- * show estiver aparecendo". Belt-and-suspenders: o componente
- * TSX também faz return null quando open, mas o CSS guarantee
- * cobre o caso de race entre toggle do state e o setAttribute
- * no html. */
+ * show estiver aparecendo". Belt-and-suspenders: o componente TSX
+ * também faz return null quando open. */
 :global(html[data-showlive="true"]) .card {
   display: none !important;
 }
@@ -29,145 +24,55 @@
   position: fixed;
   top: 292px;
   left: 14px;
+  width: 280px;
   z-index: 60;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  width: 280px;
-  padding: 6px 6px 6px 12px;
-  border: none;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  /* Paleta Fire Arena — rosa neon → magenta → púrpura */
-  background:
-    linear-gradient(135deg,
-      rgba(255, 0, 102, 0.96) 0%,
-      rgba(255, 0, 168, 0.96) 50%,
-      rgba(168, 85, 247, 0.96) 100%);
+  background: #000000;
   color: #ffffff;
   cursor: pointer;
   font-family: inherit;
-  text-align: left;
-  isolation: isolate;
+  text-align: center;
   box-shadow:
-    0 14px 36px -8px rgba(255, 0, 168, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.14) inset;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+    0 10px 28px -10px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 .card:hover {
   transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 18px 40px -8px rgba(255, 0, 168, 0.65),
-    0 0 0 1px rgba(255, 255, 255, 0.22) inset;
+    0 14px 32px -10px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 .card:active {
   transform: scale(0.98);
 }
 
-/* Pulse ring rosa atrás do card */
-.pulse {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: rgba(255, 0, 168, 0.4);
-  z-index: -1;
-  animation: showlive-card-pulse 2.2s ease-out infinite;
-  pointer-events: none;
-}
-@keyframes showlive-card-pulse {
-  0%   { opacity: 0.55; transform: scale(1); }
-  100% { opacity: 0;    transform: scale(1.18); }
-}
-
-/* ── LIVE badge ───────────────────────────────────────── */
-.liveBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 8px 4px 7px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.34);
+.label {
+  font-size: 13.5px;
+  font-weight: 700;
   color: #ffffff;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  flex-shrink: 0;
-}
-.liveDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #ffffff;
-  animation: showlive-card-livedot 1.2s ease-in-out infinite;
-}
-@keyframes showlive-card-livedot {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.35; }
-}
-
-/* ── Identity (Fire Arena title + venue) ──────────────── */
-.identity {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  line-height: 1.1;
-}
-.name {
-  /* Lettering Fire Arena — bold com letter-spacing pra dar
-   * peso de festival. Tipografia parecida com a do banner
-   * promocional já existente. */
-  font-size: 13px;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 0.06em;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  letter-spacing: -0.005em;
+  line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.venue {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  letter-spacing: 0.005em;
-}
-
-/* ── CTA "Entrar no palco" ────────────────────────────── */
-.cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 7px 12px 7px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.24);
-  color: #ffffff;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22) inset;
-  margin-left: 6px;
-  transition: background 0.15s ease;
-  flex-shrink: 0;
-}
-.card:hover .cta {
-  background: rgba(255, 255, 255, 0.34);
 }
 
 /* ── Mobile: empilha embaixo dos outros triggers ─────── */
 @media (max-width: 600px) {
   .card {
-    /* Stack mobile: Superlive top:121 + CL top:177 + Show top:232.
-     * Volta a center-stack porque a coluna esquerda de 280 não cabe. */
     top: 232px;
     left: 50%;
     transform: translateX(-50%);
     width: auto;
     max-width: calc(100vw - 32px);
-    padding: 5px 5px 5px 10px;
-    gap: 8px;
+    padding: 10px 18px;
   }
   .card:hover {
     transform: translateX(-50%) translateY(-1px);
@@ -175,28 +80,7 @@
   .card:active {
     transform: translateX(-50%) scale(0.98);
   }
-  /* No mobile, o botão estava quebrando layout: a label de venue
-   * "Arena Fonte Nova · BA" + o nome FIRE ARENA + CTA "Entrar
-   * no palco" não cabiam num único row de ~328px. Resolve em
-   * 3 passos: a) venue some (o nome FIRE ARENA + AO VIVO já
-   * comunicam a feature); b) o texto "Entrar no palco" some
-   * mas o chevron permanece como affordance; c) tipografia
-   * reduzida pra acabar com qualquer wrap residual. */
-  .name {
-    font-size: 12px;
-  }
-  .venue {
-    display: none;
-  }
-  .cta {
-    padding: 6px 10px;
-    font-size: 0;
-    margin-left: 4px;
-  }
-  /* O SVG dentro do CTA tem width fixo no HTML — o `font-size: 0`
-   * no parent some o texto "Entrar no palco" sem afetar o ícone. */
-  .cta svg {
-    width: 14px;
-    height: 14px;
+  .label {
+    font-size: 13px;
   }
 }

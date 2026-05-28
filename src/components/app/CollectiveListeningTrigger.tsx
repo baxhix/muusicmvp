@@ -46,20 +46,10 @@ export default function CollectiveListeningTrigger() {
         type="button"
         className={styles.pill}
         onClick={() => setOpen(true)}
-        aria-label="Entrar na audição coletiva da Fire Arena — Let's Go Rodeo"
-        title="Fire Arena · Audição coletiva às 20h"
+        aria-label="Entrar na audição coletiva"
+        title="Audição coletiva"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/single.png"
-          alt=""
-          className={styles.cover}
-          aria-hidden="true"
-        />
-        <span className={styles.text}>
-          <span className={styles.title}>Fire Arena</span>
-          <span className={styles.subtitle}>Audição coletiva às 20h</span>
-        </span>
+        <span className={styles.label}>Audição coletiva</span>
       </button>
 
       <CollectiveListeningModal open={open} onClose={() => setOpen(false)} />

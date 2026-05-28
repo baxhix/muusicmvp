@@ -35,33 +35,10 @@ export default function ShowLiveTrigger() {
         type="button"
         className={styles.card}
         onClick={() => setOpen(true)}
-        aria-label="Entrar no show ao vivo da Arena Fonte Nova"
-        title="Show ao vivo · Fire Arena"
+        aria-label="Entrar no show ao vivo"
+        title="Show ao vivo"
       >
-        <span className={styles.pulse} aria-hidden="true" />
-
-        <span className={styles.liveBadge}>
-          <span className={styles.liveDot} aria-hidden="true" />
-          AO VIVO
-        </span>
-
-        <span className={styles.identity}>
-          <span className={styles.name}>FIRE ARENA</span>
-          <span className={styles.venue}>
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 22s-7-5.5-7-12a7 7 0 0 1 14 0c0 6.5-7 12-7 12z" />
-              <circle cx="12" cy="10" r="2.5" />
-            </svg>
-            Arena Fonte Nova · BA
-          </span>
-        </span>
-
-        <span className={styles.cta}>
-          Entrar no palco
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </span>
+        <span className={styles.label}>Show ao vivo</span>
       </button>
       )}
 
