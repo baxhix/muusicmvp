@@ -1,0 +1,139 @@
+/* Modal in-app pra Termos de Uso + Política de Privacidade.
+ * Visual sóbrio (texto longo de leitura), max-width 600px per
+ * product feedback. Scrim/blur do fundo replicam o `.scrim` da
+ * NotificationBell pra que abrir o modal do drawer pareça parte
+ * do MESMO sistema de overlays.
+ *
+ * z-index 300 — acima do TopBar drawer (que abre o trigger) e do
+ * resto do app shell. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: legalScrimIn 160ms ease both;
+}
+@keyframes legalScrimIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel {
+  width: 100%;
+  max-width: 600px;
+  max-height: min(720px, calc(100vh - 64px));
+  background: linear-gradient(180deg, rgba(11, 11, 13, 0.98), rgba(2, 2, 3, 0.99));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: legalPanelIn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes legalPanelIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Header (título centralizado + close à direita) ────────
+ * Centralização via grid 3-col: left spacer (28px pra balancear
+ * o close à direita), title (centro), close (right). Padrão
+ * adotado nos modais inline de novo grupo / nova conversa. */
+.header {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+.headerSpacer { width: 28px; }
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.closeBtn {
+  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+
+/* ── Body (conteúdo scrollável) ───────────────────────────── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 24px 28px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: rgba(245, 245, 247, 0.88);
+  letter-spacing: -0.003em;
+  /* `pre-wrap` preserva quebras de linha do textarea admin sem
+   * precisar de markdown parser. */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.meta {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.5);
+  letter-spacing: -0.005em;
+  margin: 0 0 18px;
+}
+.meta strong {
+  color: rgba(245, 245, 247, 0.78);
+  font-weight: 600;
+}
+
+/* ── Estados loading / empty ──────────────────────────────── */
+.loading,
+.placeholder {
+  padding: 60px 24px;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.55);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.placeholder h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+}
+.placeholder p { margin: 0; max-width: 380px; margin: 0 auto; }
+
+.errorBanner {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(248, 113, 113, 0.10);
+  border: 1px solid rgba(248, 113, 113, 0.32);
+  color: #f87171;
+  font-size: 13px;
+}

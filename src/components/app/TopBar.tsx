@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
+import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
 import styles from './TopBar.module.css';
 
 // Official store URL — same one previously hosted in SideBar's
@@ -235,6 +236,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SubScreen>(null);
+  /* Modal in-app pra Termos / Privacidade. Aberto via item do
+   * drawer (seção Legal). null = fechado. Mantido fora do drawer
+   * pra que fechar o drawer não desmonte o modal involuntariamente. */
+  const [legalModalKind, setLegalModalKind] = useState<LegalKind | null>(null);
   // Gate for the portal below. We can't render createPortal during
   // SSR (no document) but `typeof window !== 'undefined'` evaluates
   // DIFFERENTLY on server (false) vs client first render (true) —
@@ -559,28 +564,37 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Legal</span>
-                    {/* Termos + Privacidade abrem as páginas públicas
-                     *  /termos e /privacidade. O conteúdo vem do admin
-                     *  em /admin/site/lgpd (LGPD CRUD). Antes esses
-                     *  botões eram `disabled` + "Em breve". */}
-                    <Link
-                      href="/termos"
+                    {/* Termos + Privacidade abrem como MODAL dentro do
+                     *  app (LegalDocumentModal) — não navegam pras
+                     *  páginas públicas /termos /privacidade. Mesmo
+                     *  efeito de scrim/blur das Notificações na
+                     *  bottombar per product feedback. Conteúdo vem
+                     *  de GET /api/legal/:kind (publicado em
+                     *  /admin/site/lgpd). */}
+                    <button
+                      type="button"
                       className={styles.drawerItem}
-                      onClick={() => closeAll()}
+                      onClick={() => {
+                        closeAll();
+                        setLegalModalKind('terms_of_use');
+                      }}
                     >
                       <DrawerItemIcon name="file" />
                       <span>Termos de Uso</span>
                       <DrawerChevron />
-                    </Link>
-                    <Link
-                      href="/privacidade"
+                    </button>
+                    <button
+                      type="button"
                       className={styles.drawerItem}
-                      onClick={() => closeAll()}
+                      onClick={() => {
+                        closeAll();
+                        setLegalModalKind('privacy_policy');
+                      }}
                     >
                       <DrawerItemIcon name="shield" />
                       <span>Política de Privacidade</span>
                       <DrawerChevron />
-                    </Link>
+                    </button>
                     <button
                       className={`${styles.drawerItem} ${styles.drawerItemDelete} ${styles.drawerItemDisabled}`}
                       disabled
@@ -823,6 +837,16 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         </>,
         document.body
       )}
+
+      {/* Modal in-app de Termos / Privacidade — fica fora do
+       *  createPortal acima pra que fechar o drawer (closeAll) NÃO
+       *  desmonte o modal. Disparado por dois items da seção Legal
+       *  do drawer. Conteúdo via GET /api/legal/:kind. */}
+      <LegalDocumentModal
+        open={legalModalKind !== null}
+        kind={legalModalKind ?? 'terms_of_use'}
+        onClose={() => setLegalModalKind(null)}
+      />
     </>
   );
 }
