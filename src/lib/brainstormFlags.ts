@@ -28,11 +28,30 @@ import { useAuth } from '@/lib/auth/AuthContext';
  *   4. Read the flag wherever the feature renders / publishes.
  * ============================================================ */
 
-/** Email of the only user allowed to see + control brainstorm
- *  features. Exported so any consumer can apply the same gate
- *  if needed; the most common path is to just call
- *  `useBrainstormFlags()`, which already enforces this. */
+/** Email of the primary brainstorm owner — kept exported for any
+ *  legacy consumer that still imports it (back-compat). The actual
+ *  allowlist lives in `BRAINSTORM_ALLOWED_EMAILS` below; new code
+ *  should reference `isBrainstormOwner(email)` instead of comparing
+ *  to this constant directly. */
 export const BRAINSTORM_OWNER_EMAIL = 'demari.lets@gmail.com';
+
+/** Allowlist of emails that can see + control brainstorm features
+ *  (lightbulb panel, experimental triggers, etc.). All lowercase —
+ *  the comparison normalizes the user's email before checking.
+ *
+ *  Add stakeholders here when product wants them to preview a
+ *  feature live before it's rolled out to everyone. */
+export const BRAINSTORM_ALLOWED_EMAILS: readonly string[] = [
+  BRAINSTORM_OWNER_EMAIL,
+  'raphasoareslr@gmail.com',
+];
+
+/** Case-insensitive membership check against the allowlist. */
+export function isBrainstormOwner(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return BRAINSTORM_ALLOWED_EMAILS.some((e) => e.toLowerCase() === normalized);
+}
 
 /** All known experimental-feature keys. */
 export type BrainstormFlagKey =
@@ -155,8 +174,7 @@ export function useBrainstormFlags(): {
   setFlag: (key: BrainstormFlagKey, value: boolean) => void;
 } {
   const { user } = useAuth();
-  const isOwner =
-    user?.email?.trim().toLowerCase() === BRAINSTORM_OWNER_EMAIL;
+  const isOwner = isBrainstormOwner(user?.email);
 
   /* Initial render uses ALL_OFF for EVERYONE — was `DEFAULTS`
    * which leaks brainstorm features to non-owners (including

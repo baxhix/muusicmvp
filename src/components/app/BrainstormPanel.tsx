@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import {
-  BRAINSTORM_OWNER_EMAIL,
   FLAG_DESCRIPTORS,
+  isBrainstormOwner,
   useBrainstormFlags,
 } from '@/lib/brainstormFlags';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -13,8 +13,8 @@ import styles from './BrainstormPanel.module.css';
  * "Brainstorm" lightbulb trigger + toggle panel.
  *
  * Lives mid-left rail of /app home and ONLY mounts when the
- * authenticated user matches `BRAINSTORM_OWNER_EMAIL` — every
- * other viewer sees nothing. The lightbulb opens a small
+ * authenticated user's email is in `BRAINSTORM_ALLOWED_EMAILS`
+ * — every other viewer sees nothing. The lightbulb opens a small
  * floating sheet listing every registered experimental feature;
  * each row carries a switch that flips a flag in localStorage
  * via `lib/brainstormFlags`.
@@ -28,11 +28,10 @@ export default function BrainstormPanel() {
   const { flags, setFlag } = useBrainstormFlags();
   const { user } = useAuth();
 
-  // Gate: only the brainstorm owner sees this surface. Email
-  // compared case-insensitively + trimmed so capitalization
-  // variants don't leak through.
-  const isOwner =
-    user?.email?.trim().toLowerCase() === BRAINSTORM_OWNER_EMAIL;
+  // Gate: only allowlisted brainstorm viewers see this surface.
+  // Email comparison is normalized (lowercase + trim) inside
+  // `isBrainstormOwner` so capitalization variants don't leak.
+  const isOwner = isBrainstormOwner(user?.email);
 
   // Dismiss on Escape so the sheet feels like the other floating
   // surfaces (PlaylistModal, kebab menus). Click-outside closes
