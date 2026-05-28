@@ -511,10 +511,16 @@
  * GroupMembersPanel (chat) per product feedback "adicione o
  * botão Entrar (mesmo estilo de Adicionar membros em um grupo
  * de Chat)". Pill lilás 12%/40% com ícone "+" + label, font 13
- * weight 600. Alinhado ao TOPO do card via align-self pra ficar
- * na linha do kebab. */
+ * weight 600.
+ *
+ * align-self: center pra que o botão fique no MEIO vertical do
+ * card (alinhamento horizontal com avatar + título), ao invés
+ * de no topo. O `.communityCard` herda `align-items: flex-start`
+ * pra manter o kebab no topo (per feedback anterior "posicione
+ * os três pontinhos para cima"), então o Entrar precisa do
+ * override explícito aqui pra não pegar a mesma regra. */
 .cardJoinPill {
-  align-self: flex-start;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 6px;
