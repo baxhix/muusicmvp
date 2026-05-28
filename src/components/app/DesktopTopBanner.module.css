@@ -16,7 +16,11 @@
 }
 .banner {
   position: fixed;
-  top: 16px;
+  /* Régua horizontal compartilhada com ArtistBox (esquerda) e
+   * TopBar avatar (direita) — todos descem 18px (16→34) per product
+   * feedback "Posicione 18px mais abaixo o banner Ana Castela, Box
+   * Fanverse Ana Castela e a imagem de perfil no topo direito". */
+  top: 34px;
   left: 50%;
   transform: translateX(-50%);
   width: 640px;

@@ -234,6 +234,21 @@ export default function NotificationBell({
     if (!open) return;
     const onDocClick = (e: MouseEvent) => {
       if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        // Skip the close when the user is clicking the BottomNav's
+        // own notifications toggle (or any other surface marked as
+        // an overlay toggle for this panel). Without this guard, the
+        // `mousedown` here fires BEFORE the BottomNav's `click`,
+        // closing the panel via parent state → the click then reads
+        // `activeOverlay='notifications'` from stale state and
+        // toggles it back to 'notifications', re-opening the panel.
+        // Net effect: clicking the navbar item twice produces the
+        // "desce e sobe novamente, num looping eterno" symptom. The
+        // toggle button itself manages its own state — we just need
+        // to stay out of the way.
+        const target = e.target as Element | null;
+        if (target?.closest('[data-overlay-toggle="notifications"]')) {
+          return;
+        }
         setOpen(false);
       }
     };

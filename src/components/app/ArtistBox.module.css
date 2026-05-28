@@ -24,7 +24,12 @@
 }
 .box {
   position: fixed;
-  top: 16px;
+  /* Régua horizontal compartilhada com DesktopTopBanner (centro)
+   * e TopBar avatar (direita) — todos descem 18px (16→34) per
+   * product feedback "Posicione 18px mais abaixo o banner Ana
+   * Castela, Box Fanverse Ana Castela e a imagem de perfil no
+   * topo direito". */
+  top: 34px;
   left: 14px;
   width: 280px;
   /* z-index bumped 15 → 60 so the box paints ABOVE the `.shell`
@@ -389,7 +394,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-top: 0;
+  /* +8px de respiro vertical entre o título "Fanverse Ana Castela"
+   * e a contagem de Fanpoints per product feedback "abaixe 8px o
+   * texto 374.399 Fanpoints do título". */
+  margin-top: 8px;
   font-family: var(--sans);
   white-space: nowrap;
 }

@@ -12,12 +12,14 @@
 /* Avatar trigger */
 .userMenu {
   position: fixed;
-  /* Alinhado em top:16px com o banner promocional (DesktopTopBanner)
-     e o ArtistBox no canto oposto. Os 3 elementos formam uma única
+  /* Alinhado com o banner promocional (DesktopTopBanner) e o
+     ArtistBox no canto oposto. Os 3 elementos formam uma única
      régua horizontal no topo da viewport: ArtistBox esquerda,
-     banner central, avatar direita. Antes estava em top:42px
-     desalinhado do banner (que sempre foi top:16px). */
-  top: 16px;
+     banner central, avatar direita. Régua descida 18px (16→34)
+     per product feedback "Posicione 18px mais abaixo o banner
+     Ana Castela, Box Fanverse Ana Castela e a imagem de perfil
+     no topo direito". */
+  top: 34px;
   right: 14px;
   /* High z-index + dedicated stacking context so the avatar isn't
      dimmed by the Globe's edge vignette (.vignette z=1) which

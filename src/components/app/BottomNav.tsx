@@ -549,6 +549,17 @@ export default function BottomNav() {
           <button
             type="button"
             className={`${styles.item} ${activeOverlay === 'notifications' ? styles.itemActive : ''}`}
+            /* `data-overlay-toggle="notifications"` é o marker que o
+             * NotificationBell usa pro outside-click ignorar este
+             * botão. Sem isso, o handler de `mousedown` dentro do
+             * NotificationBell fechava o painel ANTES do click chegar
+             * aqui, e o toggle aqui (lendo activeOverlay='notifications'
+             * via state stale) re-abria — loop visual de desce/sobe
+             * descrito no feedback "ele desce e sobe novamente, num
+             * looping eterno". Com o marker, mousedown do
+             * NotificationBell sai cedo, e este onClick decide
+             * sozinho o toggle. */
+            data-overlay-toggle="notifications"
             onClick={() => {
               setActiveOverlay((curr) =>
                 curr === 'notifications' ? null : 'notifications',
