@@ -10,6 +10,7 @@ import {
   IconTrendingUp,
   IconGrid,
   IconHome,
+  IconShield,
   IconSettings,
   IconLogo,
   IconLogout,
@@ -167,17 +168,20 @@ const NAV: NavEntry[] = [
     id: 'site',
     label: 'Site',
     icon: IconHome,
-    /* FAQ, LGPD e Footer adicionados como placeholders — cada um
-     * vira CRUD próprio numa fase seguinte (precisam de schema
-     * dedicado + endpoints + UI). Por enquanto os links vão pra
-     * stubs em admin/(shell)/site/. */
+    /* FAQ e Footer ficam dentro de "Site" porque são features do
+     * marketing site. LGPD virou top-level porque cobre 3 surfaces
+     * (site, app, plataforma) — não pertence só ao site. */
     children: [
       { kind: 'leaf', href: '/blog',           label: 'Blog' },
       { kind: 'leaf', href: '/site/faq',       label: 'FAQ' },
-      { kind: 'leaf', href: '/site/lgpd',      label: 'LGPD' },
       { kind: 'leaf', href: '/site/footer',    label: 'Footer' },
     ],
   },
+
+  /* LGPD como entry top-level (não dentro de Site). Cobre 3
+   * surfaces — site, app e plataforma — com cada combinação
+   * (kind, surface) tendo seu próprio fluxo de publicação. */
+  { kind: 'leaf', href: '/lgpd', label: 'LGPD', icon: IconShield },
 
   {
     kind: 'group',

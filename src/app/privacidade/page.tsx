@@ -16,6 +16,7 @@ export default function PrivacidadePage() {
   return (
     <LegalDocumentPage
       kind="privacy_policy"
+      surface="site"
       fallbackTitle="Política de Privacidade"
     />
   );

@@ -718,41 +718,55 @@ export const siteTags = pgTable('site_tags', {
 });
 
 /**
- * Documentos legais (Termos de Uso, Política de Privacidade).
+ * Documentos legais (Termos de Uso, Política de Privacidade)
+ * por surface (site público, app, plataforma web).
  *
- * Tabela com 2 rows fixas — uma por `kind`. Não é uma lista
- * dinâmica de CRUD; o admin edita os 2 documentos existentes e
- * pode publicar quando quiser. O seed inicial garante que as
- * rows sempre existem (admin abre, edita e publica — nunca cria
- * do zero).
+ * Schema com PK composta `(kind, surface)` — uma row por
+ * combinação. Total: 6 rows fixas seeded (2 kinds × 3 surfaces).
+ * O admin edita cada documento individualmente porque cada
+ * surface costuma ter pequenas variações de copy (ex: termos do
+ * app citam loja de aplicativos, termos da plataforma citam
+ * artistas/criadores, termos do site cobrem visitantes).
  *
- * Convenção de publicação:
- *   - `publishedAt` null = nunca publicado (ainda não aparece nas
- *     páginas públicas /termos / /privacidade).
- *   - `publishedAt` non-null = publicado; a data corresponde à
- *     última publicação. `version` bumpa em CADA publicação pra
- *     UI mostrar "v.X publicada em Y".
+ *   - `surface`:
+ *     - 'site'      — site público (/termos, /privacidade)
+ *     - 'app'       — app (modal in-app no drawer do TopBar)
+ *     - 'platform'  — plataforma web (artistas / criadores)
  *
- * Quando o LGPD exigir versionamento auditável (consentimento de
- * usuário vinculado a versão específica), criar `legal_document_
- * versions` como tabela append-only e relacionar via FK. Por
- * enquanto, a "current row" + `version` cobre o caso comum.
+ *   - `publishedAt` null = rascunho (não aparece no consumidor
+ *     daquela surface). Cada surface tem fluxo de publicação
+ *     independente — o admin pode publicar site sem mexer no app.
+ *
+ *   - `version` bumpa por publicação. Mostra "v.X publicada em Y"
+ *     no admin UI.
+ *
+ * Migração 0044 trocou a PK simples (`kind`) por composta. As
+ * 2 rows que existiam viraram surface='site' (default histórico).
  */
-export const legalDocuments = pgTable('legal_documents', {
-  kind: text('kind', {
-    enum: ['terms_of_use', 'privacy_policy'],
-  }).primaryKey(),
-  title: text('title').notNull(),
-  body: text('body').notNull().default(''),
-  version: integer('version').notNull().default(1),
-  publishedAt: timestamp('published_at', { withTimezone: true }),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedBy: uuid('updated_by').references(() => users.id, {
-    onDelete: 'set null',
+export const legalDocuments = pgTable(
+  'legal_documents',
+  {
+    kind: text('kind', {
+      enum: ['terms_of_use', 'privacy_policy'],
+    }).notNull(),
+    surface: text('surface', {
+      enum: ['site', 'app', 'platform'],
+    }).notNull(),
+    title: text('title').notNull(),
+    body: text('body').notNull().default(''),
+    version: integer('version').notNull().default(1),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedBy: uuid('updated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.kind, t.surface] }),
   }),
-});
+);
 
 /**
  * FAQ entries — perguntas e respostas que aparecem na seção FAQ

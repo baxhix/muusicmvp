@@ -1,39 +1,54 @@
 /**
  * Admin helpers para `legal_documents` — Termos de Uso + Política
- * de Privacidade. Diferente do FAQ, NÃO é uma lista — são 2 rows
- * fixas (uma por `kind`) seeded na migration 0043.
+ * de Privacidade, POR surface (site / app / platform).
  *
- * Operações:
- *   - `getLegalDocument(kind)` — lê o documento atual.
- *   - `saveLegalDocument(kind, ...)` — atualiza body/title SEM
- *     publicar. Permite o admin trabalhar em rascunho sem expor
- *     mudanças no site público.
- *   - `publishLegalDocument(kind, ...)` — atualiza body/title E
- *     publica (bump version + grava `publishedAt = now()`).
+ * Tabela com 6 rows fixas (2 kinds × 3 surfaces) seeded nas
+ * migrations 0043 + 0044. Admin nunca cria do zero — só edita e
+ * publica cada documento individualmente.
  *
- * O site público lê os mesmos rows mas filtra por `publishedAt
- * IS NOT NULL` (rascunhos nunca aparecem). Atualizar o body sem
- * publicar só afeta o admin — o público continua vendo a versão
- * anterior.
+ * Surfaces:
+ *   - 'site'      — site público de marketing (linkado em /termos,
+ *                   /privacidade e no footer da landing)
+ *   - 'app'       — app (modal in-app no drawer do TopBar)
+ *   - 'platform'  — plataforma web (artistas, criadores)
+ *
+ * Operações sempre tomam `(kind, surface)` — não há operação que
+ * afete várias surfaces ao mesmo tempo. Isso é proposital: o
+ * fluxo "Salvar e publicar" é uma decisão consciente por
+ * documento, não em massa.
  */
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { legalDocuments } from '../db/schema';
 
 export type LegalDocumentKind = 'terms_of_use' | 'privacy_policy';
+export type LegalDocumentSurface = 'site' | 'app' | 'platform';
 
 export const LEGAL_DOCUMENT_KINDS: readonly LegalDocumentKind[] = [
   'terms_of_use',
   'privacy_policy',
 ] as const;
 
+export const LEGAL_DOCUMENT_SURFACES: readonly LegalDocumentSurface[] = [
+  'site',
+  'app',
+  'platform',
+] as const;
+
 export function isLegalDocumentKind(value: string): value is LegalDocumentKind {
   return (LEGAL_DOCUMENT_KINDS as readonly string[]).includes(value);
 }
 
+export function isLegalDocumentSurface(
+  value: string,
+): value is LegalDocumentSurface {
+  return (LEGAL_DOCUMENT_SURFACES as readonly string[]).includes(value);
+}
+
 export interface LegalDocumentRow {
   kind: LegalDocumentKind;
+  surface: LegalDocumentSurface;
   title: string;
   body: string;
   version: number;
@@ -44,6 +59,7 @@ export interface LegalDocumentRow {
 function toRow(r: typeof legalDocuments.$inferSelect): LegalDocumentRow {
   return {
     kind: r.kind as LegalDocumentKind,
+    surface: r.surface as LegalDocumentSurface,
     title: r.title,
     body: r.body,
     version: r.version,
@@ -52,57 +68,79 @@ function toRow(r: typeof legalDocuments.$inferSelect): LegalDocumentRow {
   };
 }
 
+const DEFAULT_TITLES: Record<LegalDocumentKind, string> = {
+  terms_of_use: 'Termos de Uso',
+  privacy_policy: 'Política de Privacidade',
+};
+
 /**
- * Garante que a row existe (idempotente). Útil pra ambientes onde
- * a migration rodou mas o seed pode ter sido pulado (testes locais,
- * staging recriado, etc). O admin UI chama sempre — primeira
- * abertura de cada `kind` é a oportunidade ideal de criar a row
- * default se ela ainda não existir.
+ * Garante que a row (kind, surface) existe (idempotente). Útil
+ * pra ambientes onde a migration rodou mas o seed pode ter sido
+ * pulado. Primeira abertura de cada combinação cria a row default
+ * se faltar.
  */
-async function ensureExists(kind: LegalDocumentKind): Promise<void> {
-  const defaults: Record<LegalDocumentKind, string> = {
-    terms_of_use: 'Termos de Uso',
-    privacy_policy: 'Política de Privacidade',
-  };
+async function ensureExists(
+  kind: LegalDocumentKind,
+  surface: LegalDocumentSurface,
+): Promise<void> {
   await db
     .insert(legalDocuments)
     .values({
       kind,
-      title: defaults[kind],
+      surface,
+      title: DEFAULT_TITLES[kind],
       body: '',
       version: 1,
       publishedAt: null,
     })
-    .onConflictDoNothing({ target: legalDocuments.kind });
+    .onConflictDoNothing({
+      target: [legalDocuments.kind, legalDocuments.surface],
+    });
 }
 
 export async function getLegalDocument(
   kind: LegalDocumentKind,
+  surface: LegalDocumentSurface,
 ): Promise<LegalDocumentRow> {
-  await ensureExists(kind);
+  await ensureExists(kind, surface);
   const [row] = await db
     .select()
     .from(legalDocuments)
-    .where(eq(legalDocuments.kind, kind))
+    .where(
+      and(
+        eq(legalDocuments.kind, kind),
+        eq(legalDocuments.surface, surface),
+      ),
+    )
     .limit(1);
-  /* Após ensureExists, a row sempre existe — o non-null assertion
-   * é seguro. Se algo der errado aqui (race condition extrema), a
-   * query principal falharia antes desse acesso. */
   return toRow(row);
 }
 
+/**
+ * Lista TODOS os documentos (6 rows). Usado pelo admin pra
+ * popular o estado inicial das tabs surface × kind.
+ */
 export async function listLegalDocuments(): Promise<LegalDocumentRow[]> {
-  /* Side-effect: garante que ambas as rows existem antes de
-   * listar. Em produção, o seed da migration já cobre isso; o
-   * ensure cobre testes locais e ambientes onde o seed pulou. */
-  await ensureExists('terms_of_use');
-  await ensureExists('privacy_policy');
+  /* Garante que TODAS as 6 combinações existem antes de listar —
+   * cobre ambientes onde o seed pulou ou tabela foi recriada
+   * sem rodar a migration 0044. */
+  for (const kind of LEGAL_DOCUMENT_KINDS) {
+    for (const surface of LEGAL_DOCUMENT_SURFACES) {
+      await ensureExists(kind, surface);
+    }
+  }
   const rows = await db.select().from(legalDocuments);
-  /* Ordem fixa: terms_of_use primeiro, privacy_policy depois.
-   * O SELECT sem ORDER BY não tem garantia de ordem, então
-   * ordenamos por hand. */
-  const byKind = new Map(rows.map((r) => [r.kind as LegalDocumentKind, r]));
-  return LEGAL_DOCUMENT_KINDS.map((k) => toRow(byKind.get(k)!));
+  /* Ordem determinística: surface (site, app, platform), depois
+   * kind (terms_of_use, privacy_policy). Ajuda o admin a sempre
+   * ver os mesmos itens na mesma sequência. */
+  const orderKey = (r: typeof rows[number]) => {
+    const sIdx = LEGAL_DOCUMENT_SURFACES.indexOf(
+      r.surface as LegalDocumentSurface,
+    );
+    const kIdx = LEGAL_DOCUMENT_KINDS.indexOf(r.kind as LegalDocumentKind);
+    return sIdx * 10 + kIdx;
+  };
+  return rows.sort((a, b) => orderKey(a) - orderKey(b)).map(toRow);
 }
 
 export interface SaveLegalInput {
@@ -111,15 +149,16 @@ export interface SaveLegalInput {
 }
 
 /**
- * Salva alterações (rascunho). NÃO publica — o site público
- * continua vendo a versão anterior (que foi a última publicação).
+ * Salva rascunho — não publica. Site/app/plataforma continuam
+ * vendo a última versão publicada (ou nada, se nunca publicado).
  */
 export async function saveLegalDocument(
   kind: LegalDocumentKind,
+  surface: LegalDocumentSurface,
   input: SaveLegalInput,
   actorId: string,
 ): Promise<LegalDocumentRow> {
-  await ensureExists(kind);
+  await ensureExists(kind, surface);
   const patch: Partial<typeof legalDocuments.$inferInsert> = {
     body: input.body,
     updatedAt: new Date(),
@@ -129,35 +168,41 @@ export async function saveLegalDocument(
   const [row] = await db
     .update(legalDocuments)
     .set(patch)
-    .where(eq(legalDocuments.kind, kind))
+    .where(
+      and(
+        eq(legalDocuments.kind, kind),
+        eq(legalDocuments.surface, surface),
+      ),
+    )
     .returning();
   return toRow(row);
 }
 
 /**
- * Publica a versão atual — grava `publishedAt = now()` E
- * incrementa `version`. UI mostra "v.X publicada em Y" depois disso.
+ * Publica — bumpa version + grava publishedAt. Site/app/plataforma
+ * passam a renderizar o conteúdo novo na próxima requisição.
  *
- * Aceita os mesmos inputs que save (title/body) pra que o admin
- * possa "editar + publicar" em um único POST sem race condition
- * entre os dois requests.
+ * Publica APENAS o (kind, surface) dado — não cascateia pra outras
+ * surfaces. Isso é proposital: cada surface tem fluxo de aprovação
+ * independente. Pra propagar copy de uma pra outra, o admin precisa
+ * editar e publicar cada uma.
  */
 export async function publishLegalDocument(
   kind: LegalDocumentKind,
+  surface: LegalDocumentSurface,
   input: SaveLegalInput,
   actorId: string,
 ): Promise<LegalDocumentRow> {
-  await ensureExists(kind);
-  /* Lê a version atual pra bumpar — UPDATE … SET version = version + 1
-   * funcionaria com `sql\`...\``, mas optamos pelo padrão drizzle
-   * + um SELECT pra simplicidade e logs mais claros. Race entre
-   * 2 admins publicando ao mesmo tempo é cenário improvável e
-   * o pior caso é uma versão "saltar" — não há corrupção de
-   * dados. */
+  await ensureExists(kind, surface);
   const [current] = await db
     .select({ version: legalDocuments.version })
     .from(legalDocuments)
-    .where(eq(legalDocuments.kind, kind))
+    .where(
+      and(
+        eq(legalDocuments.kind, kind),
+        eq(legalDocuments.surface, surface),
+      ),
+    )
     .limit(1);
   const nextVersion = (current?.version ?? 0) + 1;
   const patch: Partial<typeof legalDocuments.$inferInsert> = {
@@ -171,30 +216,37 @@ export async function publishLegalDocument(
   const [row] = await db
     .update(legalDocuments)
     .set(patch)
-    .where(eq(legalDocuments.kind, kind))
+    .where(
+      and(
+        eq(legalDocuments.kind, kind),
+        eq(legalDocuments.surface, surface),
+      ),
+    )
     .returning();
   return toRow(row);
 }
 
 /**
- * Leitor público — usado pelas páginas `/termos` e `/privacidade`.
- * Retorna a row APENAS se `publishedAt IS NOT NULL`; rascunhos
- * jamais aparecem no site público.
+ * Leitor público — usado por /termos /privacidade (surface=site),
+ * pelo modal in-app (surface=app), e pela futura página da
+ * plataforma web (surface=platform).
  *
- * Retorna `null` quando o documento ainda não foi publicado — a
- * página renderiza um placeholder informando "em breve".
- *
- * NÃO chama `ensureExists` — pra essa surface, "row inexistente"
- * é equivalente a "não publicado", e criar uma row vazia em hot
- * path de read público seria desperdício.
+ * Retorna `null` quando o documento ainda não foi publicado pra
+ * AQUELA surface — UI mostra placeholder "em breve" em vez de erro.
  */
 export async function getPublishedLegalDocument(
   kind: LegalDocumentKind,
+  surface: LegalDocumentSurface,
 ): Promise<LegalDocumentRow | null> {
   const [row] = await db
     .select()
     .from(legalDocuments)
-    .where(eq(legalDocuments.kind, kind))
+    .where(
+      and(
+        eq(legalDocuments.kind, kind),
+        eq(legalDocuments.surface, surface),
+      ),
+    )
     .limit(1);
   if (!row || row.publishedAt === null) return null;
   return toRow(row);

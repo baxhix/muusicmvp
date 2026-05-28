@@ -15,6 +15,10 @@ export const metadata: Metadata = {
  */
 export default function TermosPage() {
   return (
-    <LegalDocumentPage kind="terms_of_use" fallbackTitle="Termos de Uso" />
+    <LegalDocumentPage
+      kind="terms_of_use"
+      surface="site"
+      fallbackTitle="Termos de Uso"
+    />
   );
 }

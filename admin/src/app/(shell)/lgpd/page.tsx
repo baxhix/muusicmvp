@@ -9,31 +9,36 @@ import Input from '@/components/ui/Input';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import { IconAlert, IconCheck, IconSend } from '@/components/icons';
 import {
-  LEGAL_LABELS,
+  LEGAL_KIND_LABELS,
+  LEGAL_KINDS_ORDER,
+  LEGAL_SURFACE_DESCRIPTIONS,
+  LEGAL_SURFACE_LABELS,
+  LEGAL_SURFACES_ORDER,
   legalService,
   type LegalDocument,
   type LegalDocumentKind,
+  type LegalDocumentSurface,
 } from '@/services/legal';
 import styles from './page.module.css';
 
 /**
- * /admin/site/lgpd — editor de Termos de Uso + Política de
- * Privacidade.
+ * /admin/lgpd — editor de Termos de Uso + Política de Privacidade
+ * POR surface (site, app, plataforma web).
  *
- * Tabs alternam entre os 2 documentos. Cada um tem:
- *   - Título editável (default "Termos de Uso" / "Política de
- *     Privacidade").
- *   - Body em textarea monoespaçado (markdown plano por enquanto;
- *     editor rich-text fica pra v2).
- *   - Status badge: Publicado v.X / Rascunho (mudanças salvas
- *     mas não publicadas) / Nunca publicado.
- *   - Salvar — guarda em rascunho (não altera site público).
- *   - Salvar e publicar — bumpa version + grava publishedAt;
- *     site público pega na próxima requisição.
+ * Dois eixos:
  *
- * O "dirty" indicator avisa quando há mudanças não salvas, e o
- * Publicar exige confirmação porque é a ação que afeta páginas
- * legais que usuários consentem.
+ *   - Surface row (chips lilás no topo): "Site", "App",
+ *     "Plataforma web". Cada chip representa onde o documento
+ *     aparece pro usuário final. Cada surface tem fluxo de
+ *     publicação independente.
+ *
+ *   - Kind tabs (bordered abaixo): "Termos de Uso" / "Política
+ *     de Privacidade". Trocar kind preserva o draft da surface
+ *     atual; trocar surface preserva o draft naquele kind.
+ *
+ * Total: 6 documentos editáveis (2 kinds × 3 surfaces). State
+ * de draft é mantido em memória por chave `kind:surface`, então
+ * trocar de aba não perde edições não salvas.
  */
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', {
@@ -45,47 +50,70 @@ function formatDate(iso: string): string {
   });
 }
 
+type DraftKey = `${LegalDocumentKind}:${LegalDocumentSurface}`;
+type DraftState = { title: string; body: string };
+
+function key(
+  kind: LegalDocumentKind,
+  surface: LegalDocumentSurface,
+): DraftKey {
+  return `${kind}:${surface}`;
+}
+
 export default function LgpdAdminPage() {
-  const [activeTab, setActiveTab] = useState<LegalDocumentKind>('terms_of_use');
-  const [docs, setDocs] = useState<Record<LegalDocumentKind, LegalDocument | null>>({
-    terms_of_use: null,
-    privacy_policy: null,
+  const [activeSurface, setActiveSurface] =
+    useState<LegalDocumentSurface>('site');
+  const [activeKind, setActiveKind] =
+    useState<LegalDocumentKind>('terms_of_use');
+
+  const [docs, setDocs] = useState<Record<DraftKey, LegalDocument | null>>(
+    () => {
+      const init: Record<string, LegalDocument | null> = {};
+      for (const s of LEGAL_SURFACES_ORDER) {
+        for (const k of LEGAL_KINDS_ORDER) init[key(k, s)] = null;
+      }
+      return init as Record<DraftKey, LegalDocument | null>;
+    },
+  );
+  const [drafts, setDrafts] = useState<Record<DraftKey, DraftState>>(() => {
+    const init: Record<string, DraftState> = {};
+    for (const s of LEGAL_SURFACES_ORDER) {
+      for (const k of LEGAL_KINDS_ORDER) {
+        init[key(k, s)] = { title: '', body: '' };
+      }
+    }
+    return init as Record<DraftKey, DraftState>;
   });
+
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  /* ── Draft state (não-persistido até o user clicar Salvar) ── */
-  type DraftState = { title: string; body: string };
-  const [drafts, setDrafts] = useState<Record<LegalDocumentKind, DraftState>>({
-    terms_of_use: { title: '', body: '' },
-    privacy_policy: { title: '', body: '' },
-  });
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
 
-  /* ── Initial load ──────────────────────────────────────── */
+  /* ── Initial load — lista todos os 6 documentos ─────────── */
   useEffect(() => {
     let alive = true;
     void (async () => {
       try {
         const { items } = await legalService.list();
         if (!alive) return;
-        const next: Record<LegalDocumentKind, LegalDocument | null> = {
-          terms_of_use: null,
-          privacy_policy: null,
-        };
-        const nextDrafts: Record<LegalDocumentKind, DraftState> = {
-          terms_of_use: { title: '', body: '' },
-          privacy_policy: { title: '', body: '' },
-        };
-        for (const item of items) {
-          next[item.kind] = item;
-          nextDrafts[item.kind] = { title: item.title, body: item.body };
+        const nextDocs: Record<string, LegalDocument | null> = {};
+        const nextDrafts: Record<string, DraftState> = {};
+        for (const s of LEGAL_SURFACES_ORDER) {
+          for (const k of LEGAL_KINDS_ORDER) {
+            nextDocs[key(k, s)] = null;
+            nextDrafts[key(k, s)] = { title: '', body: '' };
+          }
         }
-        setDocs(next);
-        setDrafts(nextDrafts);
+        for (const item of items) {
+          const dk = key(item.kind, item.surface);
+          nextDocs[dk] = item;
+          nextDrafts[dk] = { title: item.title, body: item.body };
+        }
+        setDocs(nextDocs as Record<DraftKey, LegalDocument | null>);
+        setDrafts(nextDrafts as Record<DraftKey, DraftState>);
       } catch (err) {
         console.error('legal load failed:', err);
         if (alive) setLoadError('Não foi possível carregar os documentos.');
@@ -98,10 +126,10 @@ export default function LgpdAdminPage() {
     };
   }, []);
 
-  const current = docs[activeTab];
-  const draft = drafts[activeTab];
+  const currentKey = key(activeKind, activeSurface);
+  const current = docs[currentKey];
+  const draft = drafts[currentKey];
 
-  /* dirty = draft difere da row persistida */
   const isDirty = useMemo(() => {
     if (!current) return false;
     return draft.title !== current.title || draft.body !== current.body;
@@ -111,10 +139,10 @@ export default function LgpdAdminPage() {
     (next: Partial<DraftState>) => {
       setDrafts((cur) => ({
         ...cur,
-        [activeTab]: { ...cur[activeTab], ...next },
+        [currentKey]: { ...cur[currentKey], ...next },
       }));
     },
-    [activeTab],
+    [currentKey],
   );
 
   /* ── Save (rascunho) ───────────────────────────────────── */
@@ -123,16 +151,18 @@ export default function LgpdAdminPage() {
     setSaving(true);
     setActionError(null);
     try {
-      const { document } = await legalService.save(activeTab, {
-        title: draft.title.trim() || undefined,
-        body: draft.body,
-      });
-      setDocs((cur) => ({ ...cur, [activeTab]: document }));
-      /* Reset draft pra refletir o que voltou do servidor — title
-       * pode ter sofrido .trim() no backend, body sempre confere. */
+      const { document } = await legalService.save(
+        activeSurface,
+        activeKind,
+        {
+          title: draft.title.trim() || undefined,
+          body: draft.body,
+        },
+      );
+      setDocs((cur) => ({ ...cur, [currentKey]: document }));
       setDrafts((cur) => ({
         ...cur,
-        [activeTab]: { title: document.title, body: document.body },
+        [currentKey]: { title: document.title, body: document.body },
       }));
     } catch (err) {
       console.error('legal save failed:', err);
@@ -140,23 +170,27 @@ export default function LgpdAdminPage() {
     } finally {
       setSaving(false);
     }
-  }, [current, saving, activeTab, draft]);
+  }, [current, saving, activeSurface, activeKind, draft, currentKey]);
 
-  /* ── Publish (bumpa version + grava publishedAt) ────────── */
+  /* ── Publish ───────────────────────────────────────────── */
   const handlePublish = useCallback(async () => {
     if (!current || publishing) return;
     setPublishing(true);
     setActionError(null);
     setConfirmPublishOpen(false);
     try {
-      const { document } = await legalService.publish(activeTab, {
-        title: draft.title.trim() || undefined,
-        body: draft.body,
-      });
-      setDocs((cur) => ({ ...cur, [activeTab]: document }));
+      const { document } = await legalService.publish(
+        activeSurface,
+        activeKind,
+        {
+          title: draft.title.trim() || undefined,
+          body: draft.body,
+        },
+      );
+      setDocs((cur) => ({ ...cur, [currentKey]: document }));
       setDrafts((cur) => ({
         ...cur,
-        [activeTab]: { title: document.title, body: document.body },
+        [currentKey]: { title: document.title, body: document.body },
       }));
     } catch (err) {
       console.error('legal publish failed:', err);
@@ -164,7 +198,14 @@ export default function LgpdAdminPage() {
     } finally {
       setPublishing(false);
     }
-  }, [current, publishing, activeTab, draft]);
+  }, [
+    current,
+    publishing,
+    activeSurface,
+    activeKind,
+    draft,
+    currentKey,
+  ]);
 
   const statusBadge = useMemo(() => {
     if (!current) return null;
@@ -193,7 +234,7 @@ export default function LgpdAdminPage() {
     <>
       <PageHeader
         title="LGPD"
-        description="Termos de uso e política de privacidade — documentos legais publicados nas páginas públicas /termos e /privacidade."
+        description="Termos de uso e política de privacidade por surface — site, app e plataforma web. Cada combinação tem fluxo de publicação independente."
       />
       <div className={styles.body}>
         {loadError && (
@@ -202,19 +243,44 @@ export default function LgpdAdminPage() {
           </div>
         )}
 
+        {/* Surface picker — chips lilás. Trocar surface preserva
+         *  drafts de outras surfaces (state por chave kind:surface). */}
+        <div
+          className={styles.surfaceRow}
+          role="group"
+          aria-label="Selecionar surface"
+        >
+          {LEGAL_SURFACES_ORDER.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`${styles.surfaceChip} ${activeSurface === s ? styles.surfaceChipActive : ''}`}
+              onClick={() => {
+                setActiveSurface(s);
+                setActionError(null);
+              }}
+              aria-pressed={activeSurface === s}
+            >
+              <span className={styles.surfaceChipLabel}>
+                {LEGAL_SURFACE_LABELS[s]}
+              </span>
+              <span className={styles.surfaceChipDesc}>
+                {LEGAL_SURFACE_DESCRIPTIONS[s]}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Kind tabs — Termos / Privacidade pra surface ativa. */}
         <div className={styles.tabsRow}>
           <Tabs<LegalDocumentKind>
-            items={[
-              { id: 'terms_of_use', label: LEGAL_LABELS.terms_of_use },
-              { id: 'privacy_policy', label: LEGAL_LABELS.privacy_policy },
-            ]}
-            value={activeTab}
+            items={LEGAL_KINDS_ORDER.map((k) => ({
+              id: k,
+              label: LEGAL_KIND_LABELS[k],
+            }))}
+            value={activeKind}
             onChange={(id) => {
-              /* Se o user tem rascunho não salvo na tab atual,
-               * NÃO perde — o state dos drafts é por-kind então
-               * trocar de tab preserva. Só restauramos do server
-               * em casos explícitos (descartar via Reload). */
-              setActiveTab(id);
+              setActiveKind(id);
               setActionError(null);
             }}
             variant="bordered"
@@ -228,7 +294,10 @@ export default function LgpdAdminPage() {
             <div className={styles.docCard}>
               <div className={styles.docHeader}>
                 <div className={styles.docTitleBlock}>
-                  <h3 className={styles.docTitle}>{LEGAL_LABELS[activeTab]}</h3>
+                  <h3 className={styles.docTitle}>
+                    {LEGAL_KIND_LABELS[activeKind]} ·{' '}
+                    {LEGAL_SURFACE_LABELS[activeSurface]}
+                  </h3>
                   <span className={styles.docMeta}>
                     {current.publishedAt ? (
                       <>
@@ -236,7 +305,9 @@ export default function LgpdAdminPage() {
                         <strong>{formatDate(current.publishedAt)}</strong>
                       </>
                     ) : (
-                      <>Atualizado: <strong>{formatDate(current.updatedAt)}</strong></>
+                      <>
+                        Atualizado: <strong>{formatDate(current.updatedAt)}</strong>
+                      </>
                     )}
                   </span>
                 </div>
@@ -254,14 +325,14 @@ export default function LgpdAdminPage() {
                 value={draft.title}
                 onChange={(e) => setDraft({ title: e.target.value })}
                 maxLength={160}
-                placeholder={LEGAL_LABELS[activeTab]}
+                placeholder={LEGAL_KIND_LABELS[activeKind]}
                 disabled={saving || publishing}
-                helperText="Aparece como título da página pública."
+                helperText="Aparece como título do documento publicado."
               />
 
               <div>
                 <label
-                  htmlFor={`legal-body-${activeTab}`}
+                  htmlFor={`legal-body-${activeSurface}-${activeKind}`}
                   style={{
                     display: 'block',
                     fontSize: 13,
@@ -273,21 +344,21 @@ export default function LgpdAdminPage() {
                   Conteúdo
                 </label>
                 <textarea
-                  id={`legal-body-${activeTab}`}
+                  id={`legal-body-${activeSurface}-${activeKind}`}
                   className={styles.editor}
                   value={draft.body}
                   onChange={(e) => setDraft({ body: e.target.value })}
                   placeholder={
-                    activeTab === 'terms_of_use'
-                      ? 'Termos de Uso — defina as regras de uso da plataforma…'
-                      : 'Política de Privacidade — explique quais dados são coletados, como são usados…'
+                    activeKind === 'terms_of_use'
+                      ? `Termos de Uso (${LEGAL_SURFACE_LABELS[activeSurface]}) — defina as regras de uso…`
+                      : `Política de Privacidade (${LEGAL_SURFACE_LABELS[activeSurface]}) — explique quais dados são coletados, como são usados…`
                   }
                   disabled={saving || publishing}
                   maxLength={200_000}
                 />
                 <p className={styles.editorHint}>
-                  Texto plano por enquanto (Markdown será renderizado nas páginas
-                  públicas em uma fase seguinte). Quebras de linha são preservadas.
+                  Texto plano por enquanto (Markdown será renderizado em uma
+                  fase seguinte). Quebras de linha são preservadas.
                 </p>
               </div>
 
@@ -329,11 +400,11 @@ export default function LgpdAdminPage() {
         open={confirmPublishOpen}
         onClose={() => setConfirmPublishOpen(false)}
         onConfirm={() => void handlePublish()}
-        title={`Publicar ${LEGAL_LABELS[activeTab]}?`}
+        title={`Publicar ${LEGAL_KIND_LABELS[activeKind]} de ${LEGAL_SURFACE_LABELS[activeSurface]}?`}
         description={
           current?.publishedAt
-            ? `O conteúdo atual virará a versão ${current.version + 1} e aparecerá imediatamente na página pública. Usuários verão a versão nova ao próximo acesso.`
-            : `Isso publica a primeira versão e a página pública passa a renderizar o conteúdo. Garanta que está revisado antes de confirmar.`
+            ? `O conteúdo atual virará a versão ${current.version + 1} e aparecerá imediatamente em ${LEGAL_SURFACE_LABELS[activeSurface]}. Usuários verão a versão nova ao próximo acesso.`
+            : `Isso publica a primeira versão em ${LEGAL_SURFACE_LABELS[activeSurface]}. Garanta que está revisado antes de confirmar.`
         }
         confirmLabel="Publicar agora"
         cancelLabel="Cancelar"

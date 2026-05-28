@@ -4,6 +4,7 @@ import { requireAdmin } from '@/server/auth/requireAdmin';
 import {
   getLegalDocument,
   isLegalDocumentKind,
+  isLegalDocumentSurface,
   saveLegalDocument,
 } from '@/server/admin/legal';
 import { logger } from '@/server/log';
@@ -11,26 +12,29 @@ import { logger } from '@/server/log';
 export const runtime = 'nodejs';
 
 /**
- * GET /api/admin/legal/:kind
+ * GET /api/admin/legal/:surface/:kind
  *
- * Retorna o documento (terms_of_use ou privacy_policy). Não 404
- * — `getLegalDocument` cria a row default se faltar, então a
- * resposta SEMPRE existe.
+ * Retorna o documento de uma combinação específica. Não 404 —
+ * `getLegalDocument` cria a row default se faltar, então a
+ * resposta sempre existe.
  */
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ kind: string }> },
+  { params }: { params: Promise<{ surface: string; kind: string }> },
 ) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
 
-  const { kind } = await params;
+  const { surface, kind } = await params;
+  if (!isLegalDocumentSurface(surface)) {
+    return NextResponse.json({ error: 'invalid_surface' }, { status: 400 });
+  }
   if (!isLegalDocumentKind(kind)) {
     return NextResponse.json({ error: 'invalid_kind' }, { status: 400 });
   }
 
   try {
-    const document = await getLegalDocument(kind);
+    const document = await getLegalDocument(kind, surface);
     return NextResponse.json({ document });
   } catch (err) {
     logger.error('admin.legal.get', err);
@@ -39,13 +43,12 @@ export async function GET(
 }
 
 /**
- * PATCH /api/admin/legal/:kind
+ * PATCH /api/admin/legal/:surface/:kind
  *
  * Body: { body: string, title?: string }
  *
- * Salva o documento (rascunho). NÃO publica — o site público
- * continua vendo a última versão publicada. Pra publicar, use
- * POST /api/admin/legal/:kind/publish.
+ * Salva rascunho. NÃO publica — o consumidor daquela surface
+ * continua vendo a última versão publicada (ou nada).
  */
 const saveSchema = z.object({
   body: z.string().max(200_000),
@@ -54,13 +57,16 @@ const saveSchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ kind: string }> },
+  { params }: { params: Promise<{ surface: string; kind: string }> },
 ) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
   const admin = auth;
 
-  const { kind } = await params;
+  const { surface, kind } = await params;
+  if (!isLegalDocumentSurface(surface)) {
+    return NextResponse.json({ error: 'invalid_surface' }, { status: 400 });
+  }
   if (!isLegalDocumentKind(kind)) {
     return NextResponse.json({ error: 'invalid_kind' }, { status: 400 });
   }
@@ -77,7 +83,12 @@ export async function PATCH(
   }
 
   try {
-    const document = await saveLegalDocument(kind, parsed.data, admin.id);
+    const document = await saveLegalDocument(
+      kind,
+      surface,
+      parsed.data,
+      admin.id,
+    );
     return NextResponse.json({ document });
   } catch (err) {
     logger.error('admin.legal.save', err);

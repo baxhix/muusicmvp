@@ -70,7 +70,12 @@ export default function LegalDocumentModal({ open, kind, onClose }: Props) {
     setDoc(null);
     void (async () => {
       try {
-        const res = await fetch(`/api/legal/${kind}`, { credentials: 'include' });
+        /* Hardcoda surface='app' — esse modal vive DENTRO do app.
+         * Site e plataforma têm consumers próprios (página /termos
+         * pra site; futuro consumer da plataforma web). */
+        const res = await fetch(`/api/legal/app/${kind}`, {
+          credentials: 'include',
+        });
         if (!alive) return;
         if (res.status === 404) {
           setNotFound(true);

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAdmin } from '@/server/auth/requireAdmin';
 import {
   isLegalDocumentKind,
+  isLegalDocumentSurface,
   publishLegalDocument,
 } from '@/server/admin/legal';
 import { logger } from '@/server/log';
@@ -10,18 +11,16 @@ import { logger } from '@/server/log';
 export const runtime = 'nodejs';
 
 /**
- * POST /api/admin/legal/:kind/publish
+ * POST /api/admin/legal/:surface/:kind/publish
  *
  * Body: { body: string, title?: string }
  *
- * Publica a versão atual — grava `body`/`title`, bumpa `version`
- * e seta `publishedAt = now()`. A partir desse momento o site
- * público (/termos ou /privacidade) passa a renderizar o
- * conteúdo novo.
+ * Publica a versão atual da combinação (surface, kind) — bumpa
+ * `version`, grava `publishedAt = now()`, atualiza o body/title
+ * num único request (evita race entre PATCH e POST).
  *
- * Aceita `body` no payload pra que o admin possa "editar +
- * publicar" em um único POST (evita race entre PATCH de save e
- * POST de publish, e simplifica o fluxo "Salvar e publicar" do UI).
+ * Cada surface é publicada independentemente — publicar termos
+ * do app NÃO afeta termos do site nem da plataforma.
  */
 const publishSchema = z.object({
   body: z.string().max(200_000),
@@ -30,13 +29,16 @@ const publishSchema = z.object({
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ kind: string }> },
+  { params }: { params: Promise<{ surface: string; kind: string }> },
 ) {
   const auth = await requireAdmin();
   if (auth instanceof NextResponse) return auth;
   const admin = auth;
 
-  const { kind } = await params;
+  const { surface, kind } = await params;
+  if (!isLegalDocumentSurface(surface)) {
+    return NextResponse.json({ error: 'invalid_surface' }, { status: 400 });
+  }
   if (!isLegalDocumentKind(kind)) {
     return NextResponse.json({ error: 'invalid_kind' }, { status: 400 });
   }
@@ -53,7 +55,12 @@ export async function POST(
   }
 
   try {
-    const document = await publishLegalDocument(kind, parsed.data, admin.id);
+    const document = await publishLegalDocument(
+      kind,
+      surface,
+      parsed.data,
+      admin.id,
+    );
     return NextResponse.json({ document });
   } catch (err) {
     logger.error('admin.legal.publish', err);

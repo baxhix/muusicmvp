@@ -302,6 +302,13 @@
       "when": 1781500000000,
       "tag": "0043_legal_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1781600000000,
+      "tag": "0044_legal_documents_surface",
+      "breakpoints": true
     }
   ]
 }

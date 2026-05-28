@@ -2,11 +2,16 @@ import Link from 'next/link';
 import {
   getPublishedLegalDocument,
   type LegalDocumentKind,
+  type LegalDocumentSurface,
 } from '@/server/admin/legal';
 import styles from './LegalDocumentPage.module.css';
 
 interface Props {
   kind: LegalDocumentKind;
+  /** Surface do documento — pra esse component (páginas
+   *  públicas /termos e /privacidade) sempre é 'site'. App e
+   *  plataforma têm consumers próprios. */
+  surface: LegalDocumentSurface;
   /** Fallback exibido no header (e no placeholder) quando ainda
    *  não há nenhuma versão publicada. */
   fallbackTitle: string;
@@ -27,8 +32,12 @@ interface Props {
  * uma publicação no admin aparece imediatamente no site público
  * sem invalidação manual de cache.
  */
-export default async function LegalDocumentPage({ kind, fallbackTitle }: Props) {
-  const doc = await getPublishedLegalDocument(kind);
+export default async function LegalDocumentPage({
+  kind,
+  surface,
+  fallbackTitle,
+}: Props) {
+  const doc = await getPublishedLegalDocument(kind, surface);
 
   if (!doc) {
     return (
