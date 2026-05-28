@@ -778,11 +778,16 @@
  * Grid de thumbnails dentro do bubble. 1 imagem ocupa width
  * largo; 2-4 em grid quadrado 2-col; 5-6 em grid 3-col.
  * `aspect-ratio` mantém os tiles consistentes sem JS. */
+/* Width explícita: sem isso o grid `1fr` colapsava pra 0 porque o
+ * .bubble não tem width definido e o grid herda min-content do
+ * pai. Resultado anterior: bubble renderizava mas as imagens
+ * ficavam invisíveis (0x0). */
 .attachGrid {
   display: grid;
   gap: 4px;
   margin: -2px -4px 0;
-  /* When the bubble has a body too, give a separator below the grid. */
+  width: 240px;
+  max-width: 100%;
 }
 .attachGrid[data-cols='1'] {
   grid-template-columns: 1fr;
@@ -792,6 +797,14 @@
 }
 .attachGrid[data-cols='3'] {
   grid-template-columns: 1fr 1fr 1fr;
+  width: 280px; /* 3 cols precisam de um pouco mais de largura */
+}
+.attachGrid[data-single='true'] {
+  /* Imagem única: width fixa pra evitar layout pequeno demais
+   * com images quadradas. Altura adapta via aspect-ratio do
+   * img (width/height vindo do server). */
+  width: 240px;
+  max-width: 100%;
 }
 .attachItem {
   display: block;
