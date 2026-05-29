@@ -10,11 +10,11 @@
  *     (8-12km); cidades médias: 5-8km; sertão/interior: σ maior
  *     (40-80km) pra ralear naturalmente.
  *
- * Distribuição total (per product spec):
- *   Sudeste:      27% → 810 users
- *   Centro-Oeste: 32% → 960 users
- *   Sul:          22% → 660 users
- *   Norte:        19% → 570 users
+ * Distribuição total (per product spec — bumped 3000 → 7000):
+ *   Sudeste:      27% → 1890 users
+ *   Centro-Oeste: 32% → 2240 users
+ *   Sul:          22% → 1540 users
+ *   Norte:        19% → 1330 users
  * ============================================================ */
 
 export type Region = 'sudeste' | 'centro-oeste' | 'sul' | 'norte';
@@ -79,10 +79,10 @@ export const CITY_SEEDS: CitySeed[] = [
 
 /** Totais por região — locked-in per product spec. */
 export const REGION_TOTALS: Record<Region, number> = {
-  'sudeste':       810,
-  'centro-oeste':  960,
-  'sul':           660,
-  'norte':         570,
+  'sudeste':       1890,
+  'centro-oeste':  2240,
+  'sul':           1540,
+  'norte':         1330,
 };
 
-export const TOTAL_USERS = 3000;
+export const TOTAL_USERS = 7000;

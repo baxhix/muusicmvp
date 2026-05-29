@@ -132,14 +132,15 @@ export default function MapSimulationLayer() {
       currentMap = map;
 
       /* Dataset subsamplado pra GPU móvel — sample determinística
-       * (cada 2º point). Cobertura geográfica preserva (cada
-       * cidade contribui ~metade), mas o trabalho de heatmap +
-       * cluster cai pela metade no device. Desktop mantém os
-       * 3000 originais. */
+       * (cada 3º point). Com 7.000 users desktop, mobile fica em
+       * ~2.333 features, próximo do que rodava bem na primeira
+       * versão (3000 sem subsample, mas aquilo já esquentava).
+       * Cobertura geográfica preservada — cada cidade ainda
+       * contribui 1/3 dos seus users. */
       const sourceData = mobile
         ? {
             ...data.geojson,
-            features: data.geojson.features.filter((_, i) => i % 2 === 0),
+            features: data.geojson.features.filter((_, i) => i % 3 === 0),
           }
         : data.geojson;
 

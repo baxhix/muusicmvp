@@ -1,5 +1,5 @@
 /* ============================================================
- * MAP SIMULATION — Gerador determinístico de 3.000 mock users.
+ * MAP SIMULATION — Gerador determinístico de 7.000 mock users.
  *
  * Roda client-side uma vez, memoizado pelo hook. Determinístico
  * (seed fixa) — re-runs produzem o mesmo dataset, facilitando QA.
@@ -67,10 +67,10 @@ function kmToLng(km: number, lat: number): number {
 /* Curva inspirada em comunidades reais: poucos superfãs no topo
  * + cauda longa de fans casuais. Soma = 1.0. */
 const TIER_PROBS: { tier: Tier; p: number }[] = [
-  { tier: 'superfan', p: 0.02 },   // 60 superfãs / 3000
-  { tier: 'top100',   p: 0.08 },   // 240
-  { tier: 'top1000',  p: 0.30 },   // 900
-  { tier: 'fan',      p: 0.60 },   // 1800
+  { tier: 'superfan', p: 0.02 },   // ~140 superfãs / 7000
+  { tier: 'top100',   p: 0.08 },   // ~560
+  { tier: 'top1000',  p: 0.30 },   // ~2100
+  { tier: 'fan',      p: 0.60 },   // ~4200
 ];
 
 function sampleTier(rng: () => number): Tier {

@@ -115,9 +115,9 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
   },
   {
     key: 'mapSimulation',
-    title: 'Simulação 3.000 usuários no mapa',
+    title: 'Simulação 7.000 usuários no mapa',
     description:
-      'Camada sandbox que rende 3.000 fãs mock distribuídos pelo Brasil (Sudeste, Centro-Oeste, Sul e Norte) com heatmap, clusters e pontos coloridos por tier. HUD com contador de online agora + cidade bombando. Pra testar escala visual e fluidez sem tocar dados reais.',
+      'Camada sandbox que rende 7.000 fãs mock distribuídos pelo Brasil (Sudeste, Centro-Oeste, Sul e Norte) com heatmap, clusters e pontos coloridos por tier (verde quando online). HUD com contador de online agora + cidade bombando. Pra testar escala visual e fluidez sem tocar dados reais. Mobile faz subsample automático pra ~2.300 features.',
   },
 ];
 
