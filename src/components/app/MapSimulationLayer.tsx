@@ -718,14 +718,26 @@ export default function MapSimulationLayer() {
       const REVEAL_CYCLE_MS        = 5000;
       const REVEAL_STAGGER_MIN_MS  = 1000;
       const REVEAL_STAGGER_MAX_MS  = 2200;
-      const REVEAL_LIFETIME_MS     = 7000;   // antes 3000 — per feedback
-      const REVEAL_EXIT_MS         = 400;
-      /* Limite de avatares simultâneos. Com lifetime 7s + ciclos
-       * de 5s, sem cap acumularíamos picos de 6-9 visíveis. O
-       * usuário pediu "não devem aparecer mais de 6" — usamos esse
-       * número como cap rígido; spawns que estourariam são pulados. */
+      const REVEAL_LIFETIME_MS     = 10000;  // per feedback "aumente para 10s"
+      const REVEAL_EXIT_MS         = 500;    // saída também mais suave (era 400)
       const REVEAL_MAX_ACTIVE      = 6;
+      /* Margem de segurança pra evitar que o avatar nasça grudado
+       * na borda da tela. O ponto pode estar tecnicamente dentro
+       * do bounds geográfico mas o avatar (38px alto + nome + box
+       * de reaction de 112px) ficaria cortado. Padding em PIXELS
+       * é mais previsível que graus (que variam com latitude). */
+      const REVEAL_VIEWPORT_PADDING_PX = 80;
       const REACTION_EMOJIS = ['❤️', '👋', '💬', '👀'] as const;
+
+      /* Detecta capacidade de hover (desktop com mouse, não touch).
+       * Per feedback "para aparecer os emojis, no desktop, basta o
+       * hover". Em touch devices o hover é simulado depois do tap
+       * e geralmente confunde — então só ativamos em devices com
+       * mouse real. */
+      const supportsHover =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(hover: hover)').matches;
 
       /* Candidatos: online + não-superfan. Superfã já tem avatar
        * permanente; o efeito é pra "revelar" que os pontinhos
@@ -865,13 +877,11 @@ export default function MapSimulationLayer() {
           revealTimers.push(exitT, removeT);
         };
 
-        /* Click no photo abre/fecha o reaction box. stopPropagation
-         * impede que o map.on('click') zere o hover acima. */
-        photo.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          /* Decide lado da paleta DINAMICAMENTE: se o photo tá
-           * perto da borda direita da viewport, a paleta pula pro
-           * lado esquerdo pra não sair da tela. */
+        /* Helpers únicos pra abrir/fechar o reaction box —
+         * unificam o comportamento de click (mobile) e hover
+         * (desktop). Ambos cancelam/reagendam o exit pra que o
+         * usuário possa interagir sem perder o avatar. */
+        const computeSide = () => {
           const rect = photo.getBoundingClientRect();
           const spaceRight = window.innerWidth - rect.right;
           if (spaceRight < 80) {
@@ -879,20 +889,45 @@ export default function MapSimulationLayer() {
           } else {
             actions.classList.remove('mapsim-reveal-actions-left');
           }
-          const willOpen = !el.classList.contains('mapsim-reveal-open');
-          if (willOpen) {
-            /* Abrindo o box → suspende o timer de saída.
-             * O usuário tem tempo livre pra ler o nome e escolher
-             * a reaction. */
-            cancelExit();
-            el.classList.add('mapsim-reveal-open');
+        };
+        const openBox = () => {
+          computeSide();
+          cancelExit();
+          el.classList.add('mapsim-reveal-open');
+        };
+        const closeBox = (lifetimeMs: number = 1500) => {
+          el.classList.remove('mapsim-reveal-open');
+          scheduleExit(lifetimeMs);
+        };
+
+        /* Click no photo abre/fecha o reaction box (mobile +
+         * fallback desktop). stopPropagation impede que o
+         * map.on('click') zere o hover acima. */
+        photo.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (el.classList.contains('mapsim-reveal-open')) {
+            closeBox();
           } else {
-            /* Fechando o box (toggle off pelo mesmo botão) →
-             * dá tempo curto e some. */
-            el.classList.remove('mapsim-reveal-open');
-            scheduleExit(1500);
+            openBox();
           }
         });
+
+        /* Hover-to-open NO DESKTOP. Per feedback "para aparecer
+         * os emojis, no desktop, basta o hover". Em touch devices
+         * o hover é simulado depois do tap e atrapalha — então
+         * só anexamos esses listeners se `(hover: hover)` matches.
+         *
+         * Eventos no `photoWrap` (que contém photo + reaction box)
+         * pra que ao mover o mouse DA foto PRO emoji o mouseleave
+         * não dispare (o destino ainda está dentro do wrap). */
+        if (supportsHover) {
+          photoWrap.addEventListener('mouseenter', () => {
+            openBox();
+          });
+          photoWrap.addEventListener('mouseleave', () => {
+            closeBox();
+          });
+        }
 
         /* Trigger animação de entrada no próximo frame (CSS transition
          * só funciona se houver mudança de estado APÓS o elemento estar
@@ -913,15 +948,28 @@ export default function MapSimulationLayer() {
             revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
             return;
           }
-          const bounds = map.getBounds();
-          if (!bounds) {
-            revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
-            return;
-          }
+          /* Filtra candidatos pela viewport em PIXELS com padding
+           * de 80px nas bordas. Antes usávamos só `bounds.contains`
+           * geográfico — funcionava, mas avatares podiam nascer
+           * grudados na borda da tela (com nome + reaction box
+           * cortados). Per feedback "mostre os usuários dentro do
+           * ponto de visão do usuário", agora projetamos cada
+           * candidato em pixels e validamos contra a viewport
+           * subtraída do padding. */
+          const canvas = map.getCanvas();
+          const w = canvas.clientWidth;
+          const h = canvas.clientHeight;
+          const pad = REVEAL_VIEWPORT_PADDING_PX;
           const inView = candidates.filter((f) => {
             if (f.geometry.type !== 'Point') return false;
             const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
-            return bounds.contains([lng, lat]);
+            const p = map.project([lng, lat]);
+            return (
+              p.x >= pad &&
+              p.x <= w - pad &&
+              p.y >= pad &&
+              p.y <= h - pad
+            );
           });
           if (inView.length === 0) {
             revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));

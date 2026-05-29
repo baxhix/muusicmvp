@@ -29,12 +29,13 @@
    * "atrás" da pílula do nome. */
   pointer-events: none;
   user-select: none;
-  /* Per feedback "Os usuários ainda parecem se mover" — removido
-   * TODO transform (era scale 0.7→1, que dava sensação de
-   * expansão). Agora a entrada/saída é puro fade, sem qualquer
-   * movimento visual. */
+  /* Per feedback "A entrada e saída deles devem ser suaves" —
+   * fade puro (sem transform) com duração mais longa (700ms) e
+   * curva ease-in-out, que tem ramp lento no início e no fim.
+   * Resultado: avatar emerge e desvanece como se "respirasse"
+   * em vez do antigo cut com 380ms ease padrão. */
   opacity: 0;
-  transition: opacity 380ms ease;
+  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 5;
 }
 .mapsim-reveal-in {
@@ -42,7 +43,9 @@
 }
 .mapsim-reveal-out {
   opacity: 0;
-  transition: opacity 320ms ease;
+  /* Saída ligeiramente mais curta (500ms) que a entrada (700ms) —
+   * sutil dosa o "ele já foi" sem cortar abrupto. */
+  transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Wrapper relativo da foto — referência pra paleta absoluta. */
@@ -162,6 +165,37 @@
 .mapsim-reveal-react:focus-visible {
   outline: 2px solid #3DDB74;
   outline-offset: 2px;
+}
+
+/* ── Mobile: reaction box mais alto + tap targets de 44px ───
+ * Per feedback "no mobile, aumente a distância entre um emoji e
+ * outro, para no mobile ser confortável o tap". Apple HIG
+ * recomenda 44×44px mínimo pra tap target. Aumentamos a altura
+ * total do box pra 188px (4 slots × 47px) e cada slot pra
+ * 44×44 com gap natural via justify-content: space-around.
+ *
+ * `(hover: none) and (pointer: coarse)` casa com touch devices
+ * sem mouse — desktops com tela touch (que ainda têm mouse) não
+ * caem aqui. */
+@media (hover: none) and (pointer: coarse) {
+  .mapsim-reveal-actions {
+    width: 56px;
+    height: 188px;
+    border-radius: 28px;
+    padding: 10px 0;
+    /* Mais distância no lado horizontal pra dedo não pegar a
+     * foto sem querer. */
+    left: calc(100% + 12px);
+  }
+  .mapsim-reveal-actions-left {
+    right: calc(100% + 12px);
+  }
+  .mapsim-reveal-react {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+    border-radius: 12px;
+  }
 }
 
 /* Respeita prefers-reduced-motion — sem o scale do reaction box. */
