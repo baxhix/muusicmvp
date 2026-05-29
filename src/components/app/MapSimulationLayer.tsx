@@ -120,171 +120,6 @@ function generateAmbientPoints(): GeoJSON.Feature[] {
       });
     }
   }
-  // Acrescenta os pontos globais (Europa + África + China + EUA)
-  features.push(...generateGlobalAmbientPoints());
-  return features;
-}
-
-/* ── Pontos sintéticos globais (sandbox de escala) ───────
- *
- * Per feedback "Para que eu avalie o tamanho e performance,
- * adicione de forma randômica, mas em cidades, 2k de pontos
- * na Europa, 3.5k na África (3x px), 2k na china (1x1 px),
- * 4k nos EUA (2x2px)".
- *
- * Total: 11.500 features sintéticas adicionais (sobre os
- * 7.000 do dataset principal + 77 do AMBIENT da AmSul).
- *
- * Distribuição: cada região tem um pool de 10-15 cidades
- * com [lng, lat, sigmaKm]. Cada um dos N pontos da região
- * sorteia uma cidade (PRNG mulberry32 com seed por região)
- * e ganha deslocamento gaussiano de até `sigmaKm` em volta
- * do centro. Resultado: clusters orgânicos em cima das
- * capitais reais, não grid.
- *
- * Mesma source que LAYER_AMBIENT (size lido de
- * `circle-radius: ['get', 'size']`).
- *
- * Como esses dots ficam no mesmo SOURCE_AMBIENT, eles
- * herdam o maxzoom: 7 do LAYER_AMBIENT — somem quando o
- * usuário entra no zoom de cidade.
- */
-type GlobalRegion = {
-  name: string;
-  sizePx: number;            // raio do circle (0.5 = 1px, 1 = 2px, 1.5 = 3px)
-  count: number;
-  seed: number;
-  cities: Array<[number, number, number]>;  // [lng, lat, sigmaKm]
-};
-
-const GLOBAL_REGIONS: GlobalRegion[] = [
-  /* EUROPA — 2k pontos, 2px diameter */
-  {
-    name: 'europe',
-    sizePx: 1,
-    count: 2000,
-    seed: 0xE0,
-    cities: [
-      [-0.1278, 51.5074, 18],   // London
-      [2.3522, 48.8566, 14],    // Paris
-      [13.4050, 52.5200, 12],   // Berlin
-      [-3.7038, 40.4168, 12],   // Madrid
-      [12.4964, 41.9028, 10],   // Roma
-      [-9.1393, 38.7223, 10],   // Lisboa
-      [4.9041, 52.3676, 10],    // Amsterdam
-      [18.0686, 59.3293, 10],   // Estocolmo
-      [16.3738, 48.2082, 9],    // Viena
-      [23.7275, 37.9838, 9],    // Atenas
-    ],
-  },
-  /* ÁFRICA — 3.5k pontos, 3px diameter (raio 1.5) */
-  {
-    name: 'africa',
-    sizePx: 1.5,
-    count: 3500,
-    seed: 0xA0,
-    cities: [
-      [31.2357, 30.0444, 16],   // Cairo
-      [3.3792, 6.5244, 14],     // Lagos
-      [36.8219, -1.2921, 12],   // Nairóbi
-      [28.0473, -26.2041, 14],  // Joanesburgo
-      [-7.5898, 33.5731, 12],   // Casablanca
-      [-0.1869, 5.6037, 10],    // Acra
-      [38.7578, 9.0179, 10],    // Adis Abeba
-      [3.0588, 36.7538, 9],     // Argel
-      [18.4241, -33.9249, 11],  // Cape Town
-      [-17.4441, 14.7167, 10],  // Dakar
-    ],
-  },
-  /* CHINA — 2k pontos, 1px diameter (raio 0.5) */
-  {
-    name: 'china',
-    sizePx: 0.5,
-    count: 2000,
-    seed: 0xC0,
-    cities: [
-      [116.4074, 39.9042, 18],  // Beijing
-      [121.4737, 31.2304, 16],  // Shanghai
-      [114.0579, 22.5431, 12],  // Shenzhen
-      [113.2644, 23.1291, 12],  // Guangzhou
-      [104.0668, 30.5728, 12],  // Chengdu
-      [117.2008, 39.0842, 10],  // Tianjin
-      [114.1694, 22.3193, 8],   // Hong Kong
-      [114.3055, 30.5928, 10],  // Wuhan
-      [108.9398, 34.3416, 10],  // Xi'an
-      [120.1551, 30.2741, 10],  // Hangzhou
-    ],
-  },
-  /* EUA — 4k pontos, 2px diameter */
-  {
-    name: 'usa',
-    sizePx: 1,
-    count: 4000,
-    seed: 0xF0,
-    cities: [
-      [-74.0060, 40.7128, 16],  // NYC
-      [-118.2437, 34.0522, 18], // LA
-      [-87.6298, 41.8781, 14],  // Chicago
-      [-95.3698, 29.7604, 14],  // Houston
-      [-112.0740, 33.4484, 12], // Phoenix
-      [-75.1652, 39.9526, 10],  // Philadelphia
-      [-98.4936, 29.4241, 10],  // San Antonio
-      [-117.1611, 32.7157, 10], // San Diego
-      [-96.7970, 32.7767, 12],  // Dallas
-      [-122.4194, 37.7749, 12], // San Francisco
-      [-122.3321, 47.6062, 12], // Seattle
-      [-71.0589, 42.3601, 10],  // Boston
-      [-80.1918, 25.7617, 12],  // Miami
-      [-84.3880, 33.7490, 10],  // Atlanta
-      [-115.1398, 36.1699, 9],  // Las Vegas
-    ],
-  },
-];
-
-/* Mini PRNG mulberry32 inline + Box-Muller pra gaussiana —
- * mesma técnica do generator principal mas auto-contido. */
-function mb32(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6D2B79F5) >>> 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function gauss(rng: () => number): number {
-  let u = 0;
-  let v = 0;
-  while (u === 0) u = rng();
-  while (v === 0) v = rng();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
-
-function generateGlobalAmbientPoints(): GeoJSON.Feature[] {
-  const features: GeoJSON.Feature[] = [];
-  for (const region of GLOBAL_REGIONS) {
-    const rng = mb32(region.seed);
-    for (let i = 0; i < region.count; i += 1) {
-      const cityIdx = Math.floor(rng() * region.cities.length);
-      const [lng0, lat0, sigmaKm] = region.cities[cityIdx];
-      const dLat = gauss(rng) * (sigmaKm / 111);
-      const cosLat = Math.cos((lat0 * Math.PI) / 180);
-      const dLng = gauss(rng) * (sigmaKm / (111 * Math.max(cosLat, 0.05)));
-      features.push({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [lng0 + dLng, lat0 + dLat],
-        },
-        properties: {
-          size: region.sizePx,
-          ambient: true,
-          region: region.name,
-        },
-      });
-    }
-  }
   return features;
 }
 
@@ -580,11 +415,7 @@ export default function MapSimulationLayer() {
           id: LAYER_AMBIENT,
           type: 'circle',
           source: SOURCE_AMBIENT,
-          /* Extendido maxzoom de 7 → 8 pra que os pontos globais
-           * (EU/AF/CN/USA) continuem visíveis quando o usuário
-           * navega de zoom continente pro zoom país — facilita
-           * avaliar densidade visual em diferentes níveis. */
-          maxzoom: 8,
+          maxzoom: 7,
           paint: {
             'circle-radius': ['get', 'size'] as unknown as number,
             'circle-color': '#3DDB74',
@@ -593,10 +424,9 @@ export default function MapSimulationLayer() {
               'interpolate', ['linear'], ['zoom'],
               3,   0.55,
               4,   0.55,
-              5,   0.50,
-              6,   0.40,
-              7,   0.25,
-              8,   0,
+              5,   0.45,
+              6,   0.25,
+              7,   0,
             ],
           },
         });
