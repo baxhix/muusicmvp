@@ -469,13 +469,16 @@ function Shell({ children }: { children: React.ReactNode }) {
       <ConfirmDialog />
       <MilestoneNotification />
       <AchievementCelebration />
-      <SocialAchievementToast />
-      {/* Falling hearts overlay — fires on `app:hearts-cascade`
-       *  events. Emitters today: the MockToastRotator's "waved"
-       *  notification (detail-less) AND `useNotificationsLive`
-       *  on incoming `notify:new` with `kind: 'waved'` (carries
-       *  the sender's id + name in the detail). */}
-      <HeartsCascade />
+      {/* SocialAchievementToast e HeartsCascade desmontados per
+       *  product feedback (opção B "Equilibrado"): manter só
+       *  AchievementCelebration em marcos de 500k + o overlay
+       *  simples "X mandou corações". O toast de marcos de OUTROS
+       *  usuários e a cascata de corações caindo na tela ficam
+       *  silenciados pra reduzir ruído visual. Componentes
+       *  continuam no codebase — basta restaurar os mounts pra
+       *  ligar de novo. */}
+      {/* <SocialAchievementToast /> */}
+      {/* <HeartsCascade /> */}
       {/* Companion overlay to HeartsCascade — paints a soft
        *  black dim + a centered "<sender> enviou corações para
        *  você" message with the sender's name as a clickable

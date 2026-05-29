@@ -260,10 +260,13 @@ export default function MockToastRotator() {
     if (currentReal) return;
     const current = ROTATION[idx];
     if (current.kind === 'top_20') {
-      // Rank-up festive moment — same canvas-confetti recipe the
-      // quiz-win uses (see FeedCelebration), just unscoped to the
-      // viewport since this toast lives outside the feed.
-      fireRankConfetti();
+      // Confetti em rank-up DESATIVADO per product feedback
+      // "Estão ocorrendo muitas e eram pra ser poucas" (opção B
+      // Equilibrado). O toast textual "Você está no TOP 20!"
+      // continua aparecendo, só não vem mais com burst de
+      // canvas-confetti. fireRankConfetti() permanece definido
+      // pra ser fácil religar gated num futuro marco específico.
+      // fireRankConfetti();
     } else if (current.kind === 'waved') {
       // Falling 👋 cascade — fires the global overlay (mounted
       // in app/app/layout.tsx) with `icon: 'hand'` in the

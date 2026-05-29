@@ -525,15 +525,14 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
-/* Hoje no Week: substitui o número pelo label "(Hoje)" em
- * gradient text, sem pill. */
+/* Hoje no Week: substitui o número pelo label "(Hoje)" — branco
+ * sólido na mesma cor do dia normal (--text). Per product
+ * feedback "a palavra (Hoje) deve ser na cor branca, da mesma
+ * cor que o texto que está escrito o dia". */
 .weekDayToday {
   font-size: 13px;
   font-weight: 700;
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
   letter-spacing: -0.005em;
 }
 .weekDayColSelected {
