@@ -36,6 +36,9 @@ export interface MockUserProps {
   /** Weight pra heatmap: 2× pra ativos (<5min), 1× pros demais. */
   weight: number;
   lastActiveSec: number;
+  /** Bool denormalizado pra Mapbox expressions baratas — evita
+   *  ['<', ['get', 'lastActiveSec'], 300] em cada paint. */
+  online: number;       // 1 = online, 0 = offline (Mapbox expressions não fazem bool nativo, int é mais barato)
   city: string;
   avatarSeed: number;
 }
@@ -46,19 +49,23 @@ let _cache: SimulationData | null = null;
 export function getSimulationData(): SimulationData {
   if (_cache) return _cache;
   const users = generateMockUsers();
-  const features: GeoJSON.Feature<GeoJSON.Point, MockUserProps>[] = users.map((u) => ({
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: [u.lng, u.lat] },
-    properties: {
-      id: u.id,
-      name: u.name,
-      tier: u.tier,
-      weight: u.lastActiveSec < 300 ? 2 : 1,
-      lastActiveSec: u.lastActiveSec,
-      city: u.city,
-      avatarSeed: u.avatarSeed,
-    },
-  }));
+  const features: GeoJSON.Feature<GeoJSON.Point, MockUserProps>[] = users.map((u) => {
+    const isOnline = u.lastActiveSec < 300;
+    return {
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [u.lng, u.lat] },
+      properties: {
+        id: u.id,
+        name: u.name,
+        tier: u.tier,
+        weight: isOnline ? 2 : 1,
+        lastActiveSec: u.lastActiveSec,
+        online: isOnline ? 1 : 0,
+        city: u.city,
+        avatarSeed: u.avatarSeed,
+      },
+    };
+  });
   const cities = aggregateByCity(users);
   const activeNow = users.filter((u) => u.lastActiveSec < 300).length;
   _cache = {

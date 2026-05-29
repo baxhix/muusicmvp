@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
-import type { Map as MapboxMap } from 'mapbox-gl';
+import { useEffect, useRef, useState } from 'react';
+import type { Map as MapboxMap, MapLayerMouseEvent, MapMouseEvent } from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { useSimulationData } from '@/lib/mapSimulation';
+import styles from './SimulationHUD.module.css';
 
 /**
  * MapSimulationLayer — camada sandbox que renderiza mock users no
@@ -46,14 +47,27 @@ const LAYER_CL_T = 'mapsim-cluster-count';
 const LAYER_DOT  = 'mapsim-dot';
 const LAYER_HALO = 'mapsim-superfan-halo';
 
-/** Cor do dot por tier — paleta da marca + amber pra topo. */
-const TIER_COLOR_EXPR = [
-  'match',
-  ['get', 'tier'],
-  'superfan', '#fbbf24',  // amber
-  'top100',   '#a855f7',  // magenta-violet
-  'top1000',  '#6366f1',  // indigo
-  /* fan default */       '#9ca3af',
+/* Cor do dot:
+ *  - online (lastActiveSec < 300, denormalizado em `online === 1`):
+ *    VERDE (#3DDB74) — sinal forte de "tá aqui agora", per
+ *    product feedback "o que representar usuário online deixe na
+ *    cor verde".
+ *  - offline: cor por tier (paleta da marca + amber pra topo).
+ *
+ * Tier ainda comunicado via size do dot + halo (desktop).
+ */
+const DOT_COLOR_EXPR = [
+  'case',
+  ['==', ['get', 'online'], 1],
+  '#3DDB74',                       // online = verde
+  /* offline → cor por tier */
+  ['match',
+    ['get', 'tier'],
+    'superfan', '#fbbf24',         // amber
+    'top100',   '#a855f7',         // magenta-violet
+    'top1000',  '#6366f1',         // indigo
+    /* fan default */              '#9ca3af',
+  ],
 ] as unknown[];
 
 /** Raio do dot por tier — superfãs são maiores. */
@@ -62,18 +76,30 @@ const TIER_RADIUS_EXPR = [
   ['get', 'tier'],
   'superfan', 6,
   'top100',   5,
-  'top1000',  4,
-  /* fan default */ 3.2,
+  'top1000',  4.2,
+  /* fan default */ 3.5,
 ] as unknown[];
+
+interface HoverInfo {
+  id: string;
+  name: string;
+  city: string;
+  tier: 'superfan' | 'top100' | 'top1000' | 'fan';
+  online: boolean;
+  lastActiveSec: number;
+  /** Posição em screen pixels onde renderizar o card. */
+  clientX: number;
+  clientY: number;
+}
 
 export default function MapSimulationLayer() {
   const { flags } = useBrainstormFlags();
   const enabled = flags.mapSimulation;
-  // Hook ALWAYS chamado (regras de Hooks) — geração só roda quando
-  // a função interna é executada. Com enabled=false a função retorna
-  // imediatamente sem usar `data` no efeito; e se já gerou uma vez,
-  // o cache global reusa. Custo do hook em si: zero.
   const data = useSimulationData();
+  const [hover, setHover] = useState<HoverInfo | null>(null);
+  /* Timer de auto-dismiss do hover card no mobile — desktop usa
+   * mouseleave que zera o state na hora. */
+  const dismissTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -249,7 +275,8 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 4) DOTS — pontos individuais (não-clusterizados) por tier.
+      // 4) DOTS — pontos individuais (não-clusterizados).
+      //    Cor: VERDE pra online, cor por tier pra offline.
       if (!map.getLayer(LAYER_DOT)) {
         map.addLayer({
           id: LAYER_DOT,
@@ -258,7 +285,7 @@ export default function MapSimulationLayer() {
           filter: ['!', ['has', 'point_count']],
           minzoom: 7,
           paint: {
-            'circle-color': TIER_COLOR_EXPR as unknown as string,
+            'circle-color': DOT_COLOR_EXPR as unknown as string,
             'circle-radius': TIER_RADIUS_EXPR as unknown as number,
             'circle-stroke-width': 1.2,
             'circle-stroke-color': 'rgba(0, 0, 0, 0.45)',
@@ -301,16 +328,164 @@ export default function MapSimulationLayer() {
           },
         }, LAYER_DOT);
       }
+
+      /* ── Hover/click handlers no LAYER_DOT ────────────────
+       * Desktop: mousemove sobre dot → seta hover info, cursor
+       * pointer, mouseleave volta. Mobile: click sobre dot →
+       * seta info + timer de 4s pra auto-dismiss. Click em map
+       * vazio dismissa.
+       */
+      const onPointerOver = (e: MapLayerMouseEvent) => {
+        if (!e.features || e.features.length === 0) return;
+        const f = e.features[0];
+        const p = f.properties ?? {};
+        if (dismissTimerRef.current) {
+          window.clearTimeout(dismissTimerRef.current);
+          dismissTimerRef.current = null;
+        }
+        setHover({
+          id: String(p.id ?? ''),
+          name: String(p.name ?? '—'),
+          city: String(p.city ?? ''),
+          tier: (p.tier as HoverInfo['tier']) || 'fan',
+          online: p.online === 1 || p.online === true,
+          lastActiveSec: Number(p.lastActiveSec ?? 0),
+          clientX: e.originalEvent.clientX,
+          clientY: e.originalEvent.clientY,
+        });
+        map.getCanvas().style.cursor = 'pointer';
+      };
+
+      const onPointerOut = () => {
+        setHover(null);
+        map.getCanvas().style.cursor = '';
+      };
+
+      const onDotClick = (e: MapLayerMouseEvent) => {
+        onPointerOver(e);
+        // No mobile não tem mouseleave — auto-dismiss em 4s
+        if (dismissTimerRef.current) window.clearTimeout(dismissTimerRef.current);
+        dismissTimerRef.current = window.setTimeout(() => {
+          setHover(null);
+          map.getCanvas().style.cursor = '';
+          dismissTimerRef.current = null;
+        }, 4000);
+        // stopPropagation impede o click global abaixo de dismissar
+        // o card que acabamos de abrir.
+        (e as unknown as { _dotHandled?: boolean })._dotHandled = true;
+      };
+
+      const onMapClick = (e: MapMouseEvent) => {
+        // Se o click foi tratado pelo handler do LAYER_DOT acima,
+        // não fechamos o card.
+        if ((e as unknown as { _dotHandled?: boolean })._dotHandled) return;
+        setHover(null);
+        if (dismissTimerRef.current) {
+          window.clearTimeout(dismissTimerRef.current);
+          dismissTimerRef.current = null;
+        }
+      };
+
+      map.on('mousemove', LAYER_DOT, onPointerOver);
+      map.on('mouseleave', LAYER_DOT, onPointerOut);
+      map.on('click', LAYER_DOT, onDotClick);
+      map.on('click', onMapClick);
+
+      // Cleanup desses handlers ao desligar a layer.
+      const offEvents = () => {
+        try {
+          map.off('mousemove', LAYER_DOT, onPointerOver);
+          map.off('mouseleave', LAYER_DOT, onPointerOut);
+          map.off('click', LAYER_DOT, onDotClick);
+          map.off('click', onMapClick);
+        } catch { /* map destruído */ }
+      };
+      // Substitui o cleanup original armazenando-o num closure.
+      const originalCleanup = cleanup;
+      cleanupRef.current = () => { offEvents(); originalCleanup(); };
     };
+
+    /* Closure helper pra que o cleanup do useEffect rode tanto o
+     * cleanup de layers quanto o de event listeners, mesmo que
+     * `attach` substitua a função no meio. */
+    const cleanupRef: { current: () => void } = { current: cleanup };
 
     // Subscribe pro map instance atual + futuros
     unsubscribe = globeStore.subscribeMapInstance(attach);
 
     return () => {
       if (unsubscribe) unsubscribe();
-      cleanup();
+      cleanupRef.current();
+      if (dismissTimerRef.current) {
+        window.clearTimeout(dismissTimerRef.current);
+        dismissTimerRef.current = null;
+      }
     };
   }, [enabled, data.geojson]);
 
-  return null;
+  if (!hover) return null;
+
+  return <HoverCard info={hover} />;
+}
+
+/* ── Hover card ─────────────────────────────────────────── */
+
+const TIER_LABEL: Record<HoverInfo['tier'], string> = {
+  superfan: 'Superfã',
+  top100:   'Top 100',
+  top1000:  'Top 1000',
+  fan:      'Fã',
+};
+
+const TIER_COLOR_CSS: Record<HoverInfo['tier'], string> = {
+  superfan: '#fbbf24',
+  top100:   '#a855f7',
+  top1000:  '#6366f1',
+  fan:      '#9ca3af',
+};
+
+function relativeTime(sec: number): string {
+  if (sec < 60) return 'agora';
+  if (sec < 3600) return `há ${Math.floor(sec / 60)} min`;
+  if (sec < 86400) return `há ${Math.floor(sec / 3600)} h`;
+  return `há ${Math.floor(sec / 86400)} d`;
+}
+
+function HoverCard({ info }: { info: HoverInfo }) {
+  /* Posiciona com transform pra cair logo acima do cursor.
+   * pointer-events:none pra cursor sobre o card não disparar
+   * mouseleave do layer (que escondia o card numa fração de
+   * segundo no desktop). */
+  return (
+    <div
+      className={styles.hoverCard}
+      style={{
+        left: `${info.clientX}px`,
+        top:  `${info.clientY}px`,
+      }}
+      role="status"
+      aria-live="polite"
+    >
+      <div className={styles.hoverHead}>
+        <span
+          className={`${styles.hoverDot} ${info.online ? '' : styles.hoverDotOff}`}
+          aria-hidden="true"
+        />
+        <span className={styles.hoverName}>{info.name}</span>
+      </div>
+      <div className={styles.hoverMeta}>
+        <span
+          className={styles.hoverTierPill}
+          style={{ color: TIER_COLOR_CSS[info.tier], borderColor: TIER_COLOR_CSS[info.tier] }}
+        >
+          {TIER_LABEL[info.tier]}
+        </span>
+        <span className={styles.hoverCity}>{info.city}</span>
+        <span className={styles.hoverSep} aria-hidden="true">·</span>
+        <span className={styles.hoverWhen}>
+          {info.online ? 'online agora' : relativeTime(info.lastActiveSec)}
+        </span>
+      </div>
+    </div>
+  );
 }

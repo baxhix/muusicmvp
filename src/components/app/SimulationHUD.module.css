@@ -173,3 +173,101 @@
   .cityName { font-size: 13px; }
   .cityStats { font-size: 11.5px; }
 }
+
+/* ── Hover card sobre dot individual ─────────────────────
+ * Aparece ao passar mouse / tap sobre um dot. position fixed
+ * em relação à viewport, transform translate ancora ele logo
+ * acima do cursor. pointer-events:none pra cursor sobre o
+ * card não esconder o próprio card.
+ */
+.hoverCard {
+  position: fixed;
+  z-index: 22;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 14px));
+  min-width: 180px;
+  max-width: 260px;
+  padding: 10px 12px 9px;
+  background: rgba(11, 11, 14, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #f5f5f7;
+  font-family: var(--sans), system-ui, sans-serif;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+  animation: hoverIn 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes hoverIn {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - 10px)); }
+  to   { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
+}
+.hoverHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.hoverDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3DDB74;
+  box-shadow: 0 0 6px rgba(61, 219, 116, 0.55);
+  flex-shrink: 0;
+}
+.hoverDotOff {
+  background: rgba(245, 245, 247, 0.35);
+  box-shadow: none;
+}
+.hoverName {
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hoverMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.65);
+}
+.hoverTierPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid currentColor;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.hoverCity {
+  color: rgba(245, 245, 247, 0.85);
+}
+.hoverSep {
+  color: rgba(245, 245, 247, 0.35);
+}
+.hoverWhen {
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mobile — hover card ancora bottom-center pra não disputar
+ * com o dedo que fez o tap. */
+@media (max-width: 640px) {
+  .hoverCard {
+    left: 50% !important;
+    top: auto !important;
+    bottom: 160px;
+    transform: translate(-50%, 0);
+  }
+  @keyframes hoverIn {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+}
