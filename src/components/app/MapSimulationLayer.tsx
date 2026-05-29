@@ -926,13 +926,14 @@ function HoverCard({ info }: { info: UserHoverInfo }) {
 
 /* ── Cluster hover card ────────────────────────────────────
  * Aparece quando o mouse passa sobre o blob verde de um cluster.
- * Mostra a contagem de usuários representada por aquele blob.
- * Reaproveita o mesmo estilo do hover card de user pra consistência.
+ * Mostra apenas a contagem em um pill totalmente arredondado e
+ * com largura flexível (per feedback: remover "nesta região" e
+ * deixar o box responsivo, totalmente arredondado).
  */
 function ClusterHoverCard({ info }: { info: ClusterHoverInfo }) {
   return (
     <div
-      className={styles.hoverCard}
+      className={styles.clusterPill}
       style={{
         left: `${info.clientX}px`,
         top:  `${info.clientY}px`,
@@ -940,15 +941,10 @@ function ClusterHoverCard({ info }: { info: ClusterHoverInfo }) {
       role="status"
       aria-live="polite"
     >
-      <div className={styles.hoverHead}>
-        <span className={styles.hoverDot} aria-hidden="true" />
-        <span className={styles.hoverName}>
-          {info.count.toLocaleString('pt-BR')} fãs online
-        </span>
-      </div>
-      <div className={styles.hoverMeta}>
-        <span className={styles.hoverCity}>nesta região</span>
-      </div>
+      <span className={styles.hoverDot} aria-hidden="true" />
+      <span className={styles.clusterPillText}>
+        {info.count.toLocaleString('pt-BR')} fãs online
+      </span>
     </div>
   );
 }

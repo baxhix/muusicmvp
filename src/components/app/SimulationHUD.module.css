@@ -272,6 +272,56 @@
   }
 }
 
+/* ── Cluster pill (hover sobre blob verde) ──────────────
+ * Pill totalmente arredondado, largura ditada pelo conteúdo —
+ * sem min/max-width, sem quebra de linha. Per feedback "deixe
+ * o box responsivo, ou seja, com a largura flexível de acordo
+ * com o tamanho do conteúdo e totalmente arredondado". */
+.clusterPill {
+  position: fixed;
+  z-index: 22;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  /* anchor logo acima do cursor, igual ao .hoverCard */
+  transform: translate(-50%, calc(-100% - 14px));
+  padding: 7px 14px 7px 12px;
+  background: rgba(11, 11, 14, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: #f5f5f7;
+  font-family: var(--sans), system-ui, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+  animation: clusterPillIn 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes clusterPillIn {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - 10px)); }
+  to   { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
+}
+.clusterPillText {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mobile — pill ancora bottom-center pra não disputar com o dedo. */
+@media (max-width: 640px) {
+  .clusterPill {
+    left: 50% !important;
+    top: auto !important;
+    bottom: 160px;
+    transform: translate(-50%, 0);
+  }
+  @keyframes clusterPillIn {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+}
+
 /* ── REAL PEOPLE REVEAL ───────────────────────────────────
  * Avatares que borbulham efêmeros dos pontos verdes pra
  * comunicar "esses pontos são pessoas reais". DOM injetado
