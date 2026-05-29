@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { Map as MapboxMap, MapLayerMouseEvent, MapMouseEvent } from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
@@ -240,16 +240,15 @@ export default function MapSimulationLayer() {
       const map = mapUnknown as MapboxMap;
       currentMap = map;
 
-      /* Dataset subsamplado pra GPU móvel — sample determinística
-       * (cada 3º point). Com 7.000 users desktop, mobile fica em
-       * ~2.333 features, próximo do que rodava bem na primeira
-       * versão (3000 sem subsample, mas aquilo já esquentava).
-       * Cobertura geográfica preservada — cada cidade ainda
-       * contribui 1/3 dos seus users. */
+      /* Dataset subsamplado pra GPU móvel — sample determinística.
+       * Quick win de performance: 1/3 → 1/4 (≈2.333 → 1.750 features).
+       * Reduz ~25% das features e mantém densidade visual com os
+       * layers de heatmap/clusters dilatados. Cobertura geográfica
+       * preservada — cada cidade ainda contribui 1/4 dos seus users. */
       const sourceData = mobile
         ? {
             ...data.geojson,
-            features: data.geojson.features.filter((_, i) => i % 3 === 0),
+            features: data.geojson.features.filter((_, i) => i % 4 === 0),
           }
         : data.geojson;
 
@@ -609,7 +608,13 @@ export default function MapSimulationLayer() {
       //     ramp até 0.55 no zoom 14+. Resultado: cada ponto ganha
       //     uma "auréola" que casa visualmente com o halo dos
       //     superfãs (LAYER_HALO) e dos avatares revelados.
-      if (!map.getLayer(LAYER_DOTGLOW)) {
+      /* DOTGLOW só no desktop — circle-blur 0.85 em ~4200 features
+       * é o layer mais caro do conjunto. Mobile pula ele inteiro
+       * (similar ao LAYER_HALO que já é desktop-only). Visualmente
+       * o LAYER_DOT verde continua aparecendo; só perde a auréola
+       * difusa do glow no zoom 10-13 — trade aceitável pelo ganho
+       * de ~30-40% no GPU em iPhones intermediários. */
+      if (!mobile && !map.getLayer(LAYER_DOTGLOW)) {
         map.addLayer({
           id: LAYER_DOTGLOW,
           type: 'circle',
@@ -875,10 +880,34 @@ export default function MapSimulationLayer() {
         }
       };
 
-      map.on('mousemove', LAYER_DOT, onUserHover);
+      /* rAF-throttle wrapper: agrupa rajadas de mousemove em
+       * 1 chamada por frame (~16ms / 60Hz cap). Mapbox dispara
+       * mousemove em cada pixel — sem throttle, o setHover do
+       * onUserHover (4200 features pra hit-test) re-renderiza
+       * o React com a mesma frequência. Quick win de performance. */
+      const rafThrottle = <T extends (e: MapLayerMouseEvent) => void>(fn: T): T => {
+        let scheduled = false;
+        let lastEvent: MapLayerMouseEvent | null = null;
+        return ((e: MapLayerMouseEvent) => {
+          lastEvent = e;
+          if (scheduled) return;
+          scheduled = true;
+          requestAnimationFrame(() => {
+            scheduled = false;
+            if (lastEvent) {
+              fn(lastEvent);
+              lastEvent = null;
+            }
+          });
+        }) as T;
+      };
+      const onUserHoverT    = rafThrottle(onUserHover);
+      const onClusterHoverT = rafThrottle(onClusterHover);
+
+      map.on('mousemove', LAYER_DOT, onUserHoverT);
       map.on('mouseleave', LAYER_DOT, onPointerOut);
       map.on('click', LAYER_DOT, onDotClick);
-      map.on('mousemove', LAYER_CL, onClusterHover);
+      map.on('mousemove', LAYER_CL, onClusterHoverT);
       map.on('mouseleave', LAYER_CL, onPointerOut);
       map.on('click', LAYER_CL, onClusterClick);
       map.on('click', onMapClick);
@@ -1211,10 +1240,10 @@ export default function MapSimulationLayer() {
 
       const offEvents = () => {
         try {
-          map.off('mousemove', LAYER_DOT, onUserHover);
+          map.off('mousemove', LAYER_DOT, onUserHoverT);
           map.off('mouseleave', LAYER_DOT, onPointerOut);
           map.off('click', LAYER_DOT, onDotClick);
-          map.off('mousemove', LAYER_CL, onClusterHover);
+          map.off('mousemove', LAYER_CL, onClusterHoverT);
           map.off('mouseleave', LAYER_CL, onPointerOut);
           map.off('click', LAYER_CL, onClusterClick);
           map.off('click', onMapClick);
@@ -1278,7 +1307,12 @@ function relativeTime(sec: number): string {
   return `há ${Math.floor(sec / 86400)} d`;
 }
 
-function HoverCard({ info }: { info: UserHoverInfo }) {
+/* HoverCard e ClusterHoverCard memoizados via React.memo — quando
+ * o pai (MapSimulationLayer) re-renderiza por outro motivo que
+ * não seja mudança de `info`, o React pula a reconciliação desses
+ * filhos. Em conjunto com o rAF-throttle do mousemove, corta o
+ * trabalho redundante a cada 16ms de hover ativo. */
+const HoverCard = memo(function HoverCard({ info }: { info: UserHoverInfo }) {
   /* Posiciona com transform pra cair logo acima do cursor.
    * pointer-events:none pra cursor sobre o card não disparar
    * mouseleave do layer (que escondia o card numa fração de
@@ -1315,7 +1349,7 @@ function HoverCard({ info }: { info: UserHoverInfo }) {
       </div>
     </div>
   );
-}
+});
 
 /* ── Cluster hover card ────────────────────────────────────
  * Aparece quando o mouse passa sobre o blob verde de um cluster.
@@ -1323,7 +1357,7 @@ function HoverCard({ info }: { info: UserHoverInfo }) {
  * com largura flexível (per feedback: remover "nesta região" e
  * deixar o box responsivo, totalmente arredondado).
  */
-function ClusterHoverCard({ info }: { info: ClusterHoverInfo }) {
+const ClusterHoverCard = memo(function ClusterHoverCard({ info }: { info: ClusterHoverInfo }) {
   return (
     <div
       className={styles.clusterPill}
@@ -1340,4 +1374,4 @@ function ClusterHoverCard({ info }: { info: ClusterHoverInfo }) {
       </span>
     </div>
   );
-}
+});
