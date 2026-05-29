@@ -7,9 +7,8 @@ import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { useSimulationData } from '@/lib/mapSimulation';
 
 /**
- * MapSimulationLayer — camada sandbox que renderiza 3.000 mock
- * users no mapa via Mapbox layers (heatmap + clusters + circles
- * coloridos por tier).
+ * MapSimulationLayer — camada sandbox que renderiza mock users no
+ * mapa via Mapbox layers (heatmap + clusters + circles por tier).
  *
  * Não tem JSX visível — só side-effects no map instance.
  * Mounted como qualquer componente React, gated pelo flag de
@@ -17,13 +16,28 @@ import { useSimulationData } from '@/lib/mapSimulation';
  * todas as sources/layers — zero leak.
  *
  * Bandas de zoom (LOD):
- *   - zoom 3-5   → só heatmap; clusters/dots ocultos
+ *   - zoom 3-6   → só heatmap; clusters/dots ocultos
  *   - zoom 5-8   → clusters + heatmap esmaecido
  *   - zoom 8-11  → clusters + dots por tier
  *   - zoom 11+   → dots por tier, halo em superfãs visíveis
  *
+ * Otimizações de GPU/bateria (per feedback "celular esquentando"):
+ *   - Heatmap radius/intensity reduzidos vs primeira iteração
+ *   - Heatmap maxzoom 7 (era 9) — fade-out mais cedo
+ *   - Mobile: dataset subsampleado pra 1.500 (era 3000); halo
+ *     layer desligado; cluster radius maior (menos clusters
+ *     simultâneos no viewport)
+ *
  * Não há drift de movimento — dataset estático per product spec.
  */
+
+/** Detecta mobile via viewport. Capacidade GPU em iPhones/Androids
+ *  intermediários é ~3-5× menor que MacBook M-series — vale a
+ *  pena pagar o custo de uma checagem pra cortar layers caros. */
+function isMobileViewport(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < 768;
+}
 
 const SOURCE_ID  = 'mapsim-users';
 const LAYER_HEAT = 'mapsim-heatmap';
@@ -80,6 +94,8 @@ export default function MapSimulationLayer() {
       currentMap = null;
     };
 
+    const mobile = isMobileViewport();
+
     const attach = (mapUnknown: unknown | null) => {
       // Mapa desmontou — limpa
       if (!mapUnknown) {
@@ -89,16 +105,29 @@ export default function MapSimulationLayer() {
       const map = mapUnknown as MapboxMap;
       currentMap = map;
 
+      /* Dataset subsamplado pra GPU móvel — sample determinística
+       * (cada 2º point). Cobertura geográfica preserva (cada
+       * cidade contribui ~metade), mas o trabalho de heatmap +
+       * cluster cai pela metade no device. Desktop mantém os
+       * 3000 originais. */
+      const sourceData = mobile
+        ? {
+            ...data.geojson,
+            features: data.geojson.features.filter((_, i) => i % 2 === 0),
+          }
+        : data.geojson;
+
       // Source clusterizada — Mapbox Supercluster nativo.
       if (!map.getSource(SOURCE_ID)) {
         map.addSource(SOURCE_ID, {
           type: 'geojson',
-          data: data.geojson as GeoJSON.FeatureCollection,
+          data: sourceData as GeoJSON.FeatureCollection,
           cluster: true,
-          clusterRadius: 50,
+          /* Cluster radius maior no mobile = menos clusters
+           * simultâneos no viewport = menos symbol/text layers
+           * pintando por frame. */
+          clusterRadius: mobile ? 70 : 50,
           clusterMaxZoom: 10,
-          // `weight` pesa pra heatmap mas Supercluster cluster_count
-          // ignora — sum a parte:
           clusterProperties: {
             sum_weight: ['+', ['get', 'weight']],
             superfans:  ['+', ['case', ['==', ['get', 'tier'], 'superfan'], 1, 0]],
@@ -106,45 +135,44 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 1) HEATMAP — atmosférico, mais forte em zoom baixo.
+      // 1) HEATMAP — atmosférico, peak agora em zoom 5-6 (era 7).
+      //    Radius/intensity reduzidos pra cortar GPU em ~40%.
       if (!map.getLayer(LAYER_HEAT)) {
         map.addLayer({
           id: LAYER_HEAT,
           type: 'heatmap',
           source: SOURCE_ID,
-          maxzoom: 9,
+          maxzoom: 7,
           paint: {
             'heatmap-weight': ['get', 'weight'],
             'heatmap-intensity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.6,
-              5, 1,
-              7, 1.4,
-              9, 0.8,
+              3, 0.5,
+              5, 0.85,
+              6, 0.9,
+              7, 0.4,
             ],
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0,   'rgba(0, 0, 0, 0)',
-              0.2, 'rgba(99, 102, 241, 0.35)',     // indigo
-              0.5, 'rgba(168, 85, 247, 0.55)',     // magenta
-              0.8, 'rgba(236, 72, 153, 0.75)',     // pink
-              1,   'rgba(251, 191, 36, 0.85)',     // amber (hot)
+              0.2, 'rgba(99, 102, 241, 0.32)',     // indigo
+              0.5, 'rgba(168, 85, 247, 0.50)',     // magenta
+              0.8, 'rgba(236, 72, 153, 0.70)',     // pink
+              1,   'rgba(251, 191, 36, 0.80)',     // amber (hot)
             ],
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
-              3, 14,
-              5, 22,
-              7, 30,
-              9, 18,
+              3, 10,
+              5, 16,
+              6, 20,
+              7, 12,
             ],
-            // Fade-out a partir de zoom 7 (clusters/dots assumem)
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.95,
-              6, 0.85,
-              7, 0.5,
-              8, 0.25,
-              9, 0,
+              3, 0.9,
+              5, 0.85,
+              6, 0.55,
+              7, 0,
             ],
           },
         });
@@ -244,10 +272,11 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 5) HALO em superfãs — anel pulsante feito via 2º circle layer
-      //    com raio maior e opacity baixa (animação leve via CSS é
-      //    impossível em layer Mapbox; aqui é estático mas brilha).
-      if (!map.getLayer(LAYER_HALO)) {
+      // 5) HALO em superfãs — anel estático em volta de cada dot
+      //    superfan. SÓ desktop; mobile pula esse layer pra economizar
+      //    GPU (alpha-blended circle render é caro com muitos
+      //    superfãs no viewport). Per feedback "celular esquentando".
+      if (!mobile && !map.getLayer(LAYER_HALO)) {
         map.addLayer({
           id: LAYER_HALO,
           type: 'circle',
@@ -257,17 +286,17 @@ export default function MapSimulationLayer() {
             ['!', ['has', 'point_count']],
             ['==', ['get', 'tier'], 'superfan'],
           ],
-          minzoom: 7,
+          minzoom: 9,
           paint: {
-            'circle-radius': 14,
+            'circle-radius': 11,
             'circle-color': 'rgba(251, 191, 36, 0.0)',
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': 'rgba(251, 191, 36, 0.55)',
+            'circle-stroke-width': 1.2,
+            'circle-stroke-color': 'rgba(251, 191, 36, 0.5)',
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              7,  0,
-              8,  0.6,
-              14, 0.9,
+              9,  0,
+              10, 0.5,
+              14, 0.85,
             ],
           },
         }, LAYER_DOT);
