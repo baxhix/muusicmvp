@@ -129,6 +129,28 @@
     transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 6;
 }
+/* "Bridge" invisível via pseudo-element — cobre o gap de 8px
+ * entre a foto e a paleta. Sem isso o mouseleave do photoWrap
+ * disparava no instante em que o cursor atravessava o gap,
+ * fechando a paleta antes do usuário conseguir clicar nos
+ * emojis. Per feedback "ao passar o mouse sobre o avatar,
+ * deixe mais 'estável'".
+ * Só ativo quando a paleta está aberta — assim o pseudo não
+ * captura ponteiros quando o reveal não tá em modo open. */
+.mapsim-reveal-open .mapsim-reveal-actions::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 80%;
+  /* Captura o ponteiro — herda pointer-events: auto do parent. */
+}
+.mapsim-reveal-open .mapsim-reveal-actions-left::before {
+  right: auto;
+  left: 100%;
+}
 .mapsim-reveal-actions-left {
   left: auto;
   right: calc(100% + 8px);

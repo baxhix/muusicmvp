@@ -1172,13 +1172,45 @@ export default function MapSimulationLayer() {
          *
          * Eventos no `photoWrap` (que contém photo + reaction box)
          * pra que ao mover o mouse DA foto PRO emoji o mouseleave
-         * não dispare (o destino ainda está dentro do wrap). */
+         * não dispare (o destino ainda está dentro do wrap).
+         *
+         * Adicionalmente, anexamos enter/leave no próprio `actions`:
+         * quando o mouse entra na paleta, cancelamos qualquer timer
+         * de fechamento em curso. Combinado com o pseudo-bridge no
+         * CSS e o delay de 200ms abaixo, o usuário tem tempo
+         * folgado pra atravessar do avatar até os emojis. */
         if (supportsHover) {
+          const HOVER_CLOSE_DELAY = 200;
+          let hoverCloseTimer: number | null = null;
+
+          const cancelHoverClose = () => {
+            if (hoverCloseTimer !== null) {
+              window.clearTimeout(hoverCloseTimer);
+              hoverCloseTimer = null;
+            }
+          };
+          const scheduleHoverClose = () => {
+            cancelHoverClose();
+            hoverCloseTimer = window.setTimeout(() => {
+              hoverCloseTimer = null;
+              if (el.classList.contains('mapsim-reveal-open')) {
+                closeBox();
+              }
+            }, HOVER_CLOSE_DELAY);
+          };
+
           photoWrap.addEventListener('mouseenter', () => {
+            cancelHoverClose();
             openBox();
           });
           photoWrap.addEventListener('mouseleave', () => {
-            closeBox();
+            scheduleHoverClose();
+          });
+          actions.addEventListener('mouseenter', () => {
+            cancelHoverClose();
+          });
+          actions.addEventListener('mouseleave', () => {
+            scheduleHoverClose();
           });
         }
 
