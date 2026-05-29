@@ -7,6 +7,10 @@ import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { useSimulationData } from '@/lib/mapSimulation';
 import styles from './SimulationHUD.module.css';
+/* Estilos globais dos avatares do reveal (DOM injetado por
+ * Mapbox Marker fora da árvore React) — precisa ser CSS plain
+ * porque CSS Modules + :global() puro falham no build do Next. */
+import './MapSimulation.globals.css';
 
 /**
  * MapSimulationLayer — camada sandbox que renderiza mock users no

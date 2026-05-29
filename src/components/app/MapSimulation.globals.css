@@ -1,0 +1,89 @@
+/* ============================================================
+ * MAP SIMULATION — Estilos GLOBAIS pro DOM injetado pelos
+ * Mapbox Markers do reveal de pessoas reais.
+ *
+ * Esses elementos são criados via `document.createElement` no
+ * MapSimulationLayer e mexidos com Mapbox Marker — não passam
+ * pela árvore React, então CSS Modules (que rasheiam o nome
+ * da classe) não funcionam aqui. Por isso esse arquivo é CSS
+ * plain (sem `.module.css` no nome).
+ *
+ * Tentativa anterior usava `:global()` dentro do
+ * SimulationHUD.module.css, mas o CSS Modules do Next.js 15
+ * exige que toda regra contenha pelo menos uma classe local —
+ * `:global(.mapsim-reveal) { ... }` sozinho falha o build com
+ * "pure selectors must contain at least one local class or id".
+ *
+ * Importado uma vez por MapSimulationLayer.tsx; Next bundla
+ * normalmente no CSS global da página.
+ * ============================================================ */
+
+.mapsim-reveal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  /* Estado inicial: invisível + um pouco abaixo + encolhido.
+   * Anchor 'bottom' do Marker já posiciona a base no ponto;
+   * o translateY positivo aqui faz o avatar começar "dentro"
+   * do dot. A classe -in joga ele pra cima e revela. */
+  opacity: 0;
+  transform: translateY(10px) scale(0.55);
+  transition:
+    opacity 380ms ease,
+    transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* z-index alto pra ficar acima de qualquer overlay do mapa
+   * que esteja na faixa de Marker default. */
+  z-index: 5;
+}
+.mapsim-reveal-in {
+  opacity: 1;
+  transform: translateY(-6px) scale(1);
+}
+.mapsim-reveal-out {
+  opacity: 0;
+  transform: translateY(-14px) scale(0.85);
+  /* Saída mais rápida que a entrada — sensação de "ele já foi". */
+  transition:
+    opacity 320ms ease,
+    transform 380ms ease-in;
+}
+.mapsim-reveal-photo {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(11, 11, 14, 0.6);   /* fallback enquanto a imagem carrega */
+  /* Borda verde + halo: reforça que é o "online" ganhando rosto. */
+  border: 2px solid #3DDB74;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.55),
+    0 0 0 3px rgba(61, 219, 116, 0.20);
+}
+.mapsim-reveal-name {
+  margin-top: 6px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(11, 11, 14, 0.92);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  font-family: var(--sans), system-ui, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* Respeita prefers-reduced-motion: avatares ainda aparecem,
+ * mas sem o "bounce" — só fade. */
+@media (prefers-reduced-motion: reduce) {
+  .mapsim-reveal {
+    transform: none;
+    transition: opacity 380ms ease;
+  }
+  .mapsim-reveal-in { transform: none; }
+  .mapsim-reveal-out { transform: none; }
+}
