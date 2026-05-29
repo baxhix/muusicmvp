@@ -20,21 +20,19 @@
   padding-inline: 4px;
 }
 
-/* ── Toolbar topo: período (esq) + tabs select (dir) ───── */
+/* ── Toolbar: período + tabs em coluna, ambos centralizados ── */
 .toolbar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
-  flex-wrap: wrap;
-  /* Padding-top no respiro acima do label do mês — separa do
-   * PageHeader logo acima. */
+  gap: var(--s-2);
   padding-top: var(--s-3);
 }
 
 .periodRow {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-2);
 }
 .periodLabel {
@@ -85,15 +83,15 @@
   border-color: var(--border-strong);
 }
 
-/* ── Tabs (Mês / Semana / Lista) — pill-select estilo
- *    dark/light picker do macOS/iOS Settings. Container com fundo
- *    sutil + borda; opção ativa "raised" (surface mais claro +
- *    shadow xs) com pílula deslizante via custom props. ──── */
+/* ── Tabs (Mês / Semana / Lista) — pill-select compacta,
+ *    centralizada abaixo do label do mês. Versão "pequenina"
+ *    per product feedback "Deixe a tab pequenina abaixo do mês
+ *    e ambos centralizados". ──── */
 .tabs {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 3px;
+  padding: 2px;
   gap: 0;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -106,14 +104,14 @@
   z-index: 1;
   background: transparent;
   border: 0;
-  padding: 7px 18px;
+  padding: 4px 12px;
   border-radius: var(--r-full);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--text-mute);
   cursor: pointer;
-  min-width: 70px;
+  min-width: 56px;
   transition: color var(--dur-fast) var(--ease-out);
 }
 .tab:hover {
@@ -123,15 +121,15 @@
   color: var(--text);
   font-weight: 600;
 }
-/* Pílula deslizante atrás do tab ativo — estilo Apple Appearance
- * picker. surface (mais claro que o container surface-2) +
- * shadow xs pra dar a sensação "raised". */
+/* Pílula deslizante atrás do tab ativo — surface (mais claro
+ * que o container surface-2) + shadow xs pra dar a sensação
+ * "raised" mesmo no tamanho compacto. */
 .tabsIndicator {
   position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: var(--tab-x, 3px);
-  width: var(--tab-w, 70px);
+  top: 2px;
+  bottom: 2px;
+  left: var(--tab-x, 2px);
+  width: var(--tab-w, 56px);
   background: var(--surface);
   border-radius: var(--r-full);
   box-shadow: var(--shadow-xs), 0 0 0 1px var(--border);
