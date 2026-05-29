@@ -311,19 +311,20 @@ export default function AdminAgendaPage() {
     return 'Lista';
   }, [view, cursor]);
 
-  // Calcula posição/largura da pílula do segmented control com
+  // Calcula posição/largura do underline indicator das tabs com
   // base no botão ativo. useRef pra medir, useState pra triggar
-  // re-render quando view muda.
-  const segRef = useRef<HTMLDivElement | null>(null);
-  const [pill, setPill] = useState<{ x: number; w: number } | null>(null);
+  // re-render quando view muda. Mesmo padrão do segmented que tinha
+  // antes, só que aplicado a tabs (com underline em vez de pílula).
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null);
   useEffect(() => {
-    const container = segRef.current;
+    const container = tabsRef.current;
     if (!container) return;
     const active = container.querySelector<HTMLButtonElement>(`button[data-active="true"]`);
     if (!active) return;
     const containerRect = container.getBoundingClientRect();
     const activeRect = active.getBoundingClientRect();
-    setPill({
+    setIndicator({
       x: activeRect.left - containerRect.left,
       w: activeRect.width,
     });
@@ -347,9 +348,11 @@ export default function AdminAgendaPage() {
       />
 
       <div className={styles.root}>
-        {/* Toolbar: navegação de período (esq) + segmented (dir) */}
+        {/* Toolbar — duas linhas centralizadas:
+         *   1) [◀ Período corrente ▶] [Hoje]
+         *   2) [Mês] [Semana] [Lista]  ← tabs com underline */}
         <div className={styles.toolbar}>
-          <div className={styles.periodNav}>
+          <div className={styles.periodRow}>
             <button
               type="button"
               className={styles.navBtn}
@@ -377,17 +380,19 @@ export default function AdminAgendaPage() {
           </div>
 
           <div
-            ref={segRef}
-            className={styles.segmented}
+            ref={tabsRef}
+            className={styles.tabs}
             role="tablist"
             aria-label="Visualização"
             style={
-              pill
-                ? ({ '--pill-x': `${pill.x}px`, '--pill-w': `${pill.w}px` } as React.CSSProperties)
+              indicator
+                ? ({
+                    '--tab-x': `${indicator.x}px`,
+                    '--tab-w': `${indicator.w}px`,
+                  } as React.CSSProperties)
                 : undefined
             }
           >
-            <span className={styles.segmentedPill} aria-hidden="true" />
             {(['month', 'week', 'list'] as ViewMode[]).map((v) => (
               <button
                 key={v}
@@ -395,12 +400,13 @@ export default function AdminAgendaPage() {
                 role="tab"
                 data-active={view === v}
                 aria-selected={view === v}
-                className={`${styles.segmentBtn} ${view === v ? styles.segmentBtnActive : ''}`}
+                className={`${styles.tab} ${view === v ? styles.tabActive : ''}`}
                 onClick={() => setView(v)}
               >
                 {v === 'month' ? 'Mês' : v === 'week' ? 'Semana' : 'Lista'}
               </button>
             ))}
+            <span className={styles.tabsIndicator} aria-hidden="true" />
           </div>
         </div>
 

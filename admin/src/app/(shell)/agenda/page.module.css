@@ -1,17 +1,18 @@
 /* ============================================================
-   AGENDA — calendário editorial inspirado no Calendar.app do iOS.
+   AGENDA — calendário editorial estilo iOS Calendar.app.
 
-   Tom da experiência: elegante, minimalista, fluida. Generous
-   whitespace, sem cartões pesados, hierarquia tipográfica clara.
-   Três modos: Mês (default visual, grid com dots), Semana
-   (timeline 7-day stripe), Lista (vista compacta cronológica).
+   Tokens em uso (admin design system):
+     --bg, --surface, --surface-2, --surface-hover
+     --text, --text-soft, --text-mute, --text-faint
+     --border, --border-soft, --border-strong
+     --dur-fast, --ease-out
 
-   Microinterações no padrão da casa: transitions com
-   --dur-fast/--ease-out, hover lift +1px, fade-in stagger no
-   mount, segmented control com pílula deslizante (estilo iOS).
+   Layout: toolbar centralizada (período + Hoje em cima, tabs
+   Mês/Semana/Lista logo abaixo com underline). Conteúdo: Mês
+   (grid 6×7), Semana (stripe 7-day) ou Lista (dia-a-dia com
+   divisores cinza leve).
    ============================================================ */
 
-/* ── Container raiz ─────────────────────────────────────── */
 .root {
   display: flex;
   flex-direction: column;
@@ -19,78 +20,28 @@
   padding-inline: 4px;
 }
 
-/* ── Toolbar (segmented + navegação) ────────────────────── */
+/* ── Toolbar topo: período centralizado + Hoje ──────────── */
 .toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--s-3);
-  flex-wrap: wrap;
 }
 
-/* Segmented control estilo iOS: pílula deslizante sobre track. */
-.segmented {
-  position: relative;
-  display: inline-flex;
-  padding: 3px;
-  gap: 0;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--r-full);
-  isolation: isolate;
-}
-.segmentBtn {
-  appearance: none;
-  position: relative;
-  z-index: 1;
-  background: transparent;
-  border: 0;
-  padding: 7px 18px;
-  border-radius: var(--r-full);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-out);
-  min-width: 76px;
-}
-.segmentBtn:hover {
-  color: var(--color-fg);
-}
-.segmentBtnActive {
-  color: var(--color-fg);
-}
-/* Pílula deslizante — uma camada absoluta atrás do botão ativo.
- * A posição é controlada via custom prop --pill-x do parent. */
-.segmentedPill {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: var(--pill-x, 3px);
-  width: var(--pill-w, 76px);
-  background: var(--color-bg);
-  border-radius: var(--r-full);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06),
-              0 0 0 1px var(--color-border);
-  z-index: 0;
-  transition: left 240ms var(--ease-out),
-              width 240ms var(--ease-out);
-}
-
-/* Navegação de período (◀ Mês ▶) à esquerda da toolbar. */
-.periodNav {
-  display: inline-flex;
+.periodRow {
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--s-2);
 }
 .periodLabel {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-fg);
+  color: var(--text);
   text-transform: capitalize;
-  min-width: 180px;
+  min-width: 200px;
+  text-align: center;
 }
 .navBtn {
   appearance: none;
@@ -102,36 +53,81 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
 .navBtn:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-fg);
+  background: var(--surface-hover);
+  color: var(--text);
 }
 .todayBtn {
   appearance: none;
   height: 32px;
   padding: 0 14px;
+  margin-left: var(--s-2);
   border-radius: var(--r-full);
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-fg);
+  color: var(--text);
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out),
               border-color var(--dur-fast) var(--ease-out);
 }
 .todayBtn:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
 }
 
-/* ── Surface (mês/semana/lista) ─────────────────────────── */
+/* ── Tabs (Mês / Semana / Lista) — underline animado ──── */
+.tabs {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding-inline: var(--s-2);
+}
+.tab {
+  appearance: none;
+  position: relative;
+  background: transparent;
+  border: 0;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-mute);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.tab:hover {
+  color: var(--text);
+}
+.tabActive {
+  color: var(--text);
+  font-weight: 600;
+}
+/* Underline animado — pseudo absoluto na tab bar, posição/largura
+ * controladas via custom props que vêm do JS (mede o tab ativo). */
+.tabsIndicator {
+  position: absolute;
+  bottom: -1px;
+  left: var(--tab-x, 0);
+  width: var(--tab-w, 0);
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  transition: left 260ms var(--ease-out),
+              width 260ms var(--ease-out);
+  pointer-events: none;
+}
+
+/* ── Surface — wrapper que fade-in quando troca de view ─ */
 .surface {
   animation: surfaceIn 280ms var(--ease-out) both;
 }
@@ -140,13 +136,12 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Mês: weekday header + grid ─────────────────────────── */
+/* ── MÊS ────────────────────────────────────────────────── */
 .monthWrap {
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
 }
-
 .weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -158,18 +153,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   text-align: center;
 }
-
 .monthGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
-
-/* Cada célula do mês — clean, sem borda no estado normal pra
- * deixar a grid airy estilo iOS. Borda só aparece em hover/today. */
 .cell {
   appearance: none;
   position: relative;
@@ -188,22 +179,16 @@
   transition: background var(--dur-fast) var(--ease-out);
 }
 .cell:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-}
-.cell:disabled {
-  cursor: default;
+  background: var(--surface-hover);
 }
 .cell:focus-visible {
-  outline: 2px solid var(--color-accent, #a855f7);
+  outline: 2px solid #a855f7;
   outline-offset: -2px;
 }
-
 .cellOut .cellDay {
-  color: var(--color-fg-muted);
-  opacity: 0.5;
+  color: var(--text-faint);
+  opacity: 0.55;
 }
-
-/* Dia: número em uma pílula. Today fica em magenta→indigo. */
 .cellDay {
   display: inline-flex;
   align-items: center;
@@ -214,7 +199,7 @@
   border-radius: var(--r-full);
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-fg);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   transition: background var(--dur-fast) var(--ease-out),
@@ -226,14 +211,11 @@
   box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
 }
 .cellSelected .cellDay {
-  background: var(--color-bg-elevated);
-  box-shadow: 0 0 0 1.5px var(--color-fg);
+  box-shadow: inset 0 0 0 1.5px var(--text);
 }
 .cellToday.cellSelected .cellDay {
   box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4);
 }
-
-/* Dots — pontinhos coloridos sob o dia indicando publicações. */
 .cellDots {
   display: flex;
   align-items: center;
@@ -249,25 +231,25 @@
   background: linear-gradient(135deg, #a855f7, #6366f1);
 }
 .cellDotPast {
-  background: var(--color-fg-muted);
+  background: var(--text-mute);
   opacity: 0.5;
 }
 .cellMore {
   margin-left: 2px;
   font-size: 9.5px;
   font-weight: 600;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   font-variant-numeric: tabular-nums;
 }
 
-/* Painel inferior do mês — eventos do dia selecionado. */
+/* Painel inferior — eventos do dia selecionado em Mês/Semana */
 .dayPanel {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
   padding-top: var(--s-3);
   margin-top: var(--s-2);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--border);
   animation: panelIn 280ms var(--ease-out) both;
 }
 @keyframes panelIn {
@@ -284,21 +266,21 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--color-fg);
+  color: var(--text);
 }
 .dayPanelSub {
   font-size: 12px;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   text-transform: capitalize;
 }
 .dayPanelEmpty {
   padding: var(--s-5) var(--s-3);
   text-align: center;
   font-size: 13px;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
 }
 
-/* ── Semana: timeline horizontal ─────────────────────────── */
+/* ── SEMANA ────────────────────────────────────────────── */
 .weekWrap {
   display: flex;
   flex-direction: column;
@@ -317,17 +299,21 @@
   padding: var(--s-2) var(--s-1);
   border-radius: var(--r-md);
   cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  color: inherit;
   transition: background var(--dur-fast) var(--ease-out);
 }
 .weekDayCol:hover {
-  background: var(--color-bg-hover);
+  background: var(--surface-hover);
 }
 .weekDayLabel {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
 }
 .weekDayNum {
   display: inline-flex;
@@ -339,9 +325,11 @@
   border-radius: var(--r-full);
   font-size: 17px;
   font-weight: 700;
-  color: var(--color-fg);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
 }
 .weekDayColToday .weekDayNum {
   background: linear-gradient(135deg, #a855f7, #6366f1);
@@ -349,7 +337,7 @@
   box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
 }
 .weekDayColSelected .weekDayNum {
-  box-shadow: 0 0 0 1.5px var(--color-fg);
+  box-shadow: inset 0 0 0 1.5px var(--text);
 }
 .weekDayColToday.weekDayColSelected .weekDayNum {
   box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4);
@@ -357,17 +345,16 @@
 .weekDayCount {
   font-size: 11px;
   font-weight: 500;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Lista ──────────────────────────────────────────────── */
+/* ── LISTA ──────────────────────────────────────────────── */
 .list {
   display: flex;
   flex-direction: column;
-  /* Gap=0 porque cada `.day + .day` recebe sua própria border-top
-   * + padding-top — o divisor cinza leve entre grupos faz o papel
-   * do gap e da linha estilo iOS Calendar de uma vez só. */
+  /* Gap=0 porque cada `.day + .day` traz seu próprio divisor +
+   * padding-top — controle de espaço fica na regra do divisor. */
   gap: 0;
   padding-inline: var(--s-1);
 }
@@ -375,40 +362,35 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  padding-bottom: var(--s-3);
+  padding-bottom: var(--s-4);
   animation: dayIn 320ms var(--ease-out) both;
-}
-/* Divisor cinza leve entre grupos de dias — referência visual do
- * iOS Calendar list view. Aplicado a partir do 2º grupo
- * (`.day + .day`) pra não pintar uma borda solta acima do
- * primeiro grupo. Padding-top de --s-3 dá respiro entre a linha
- * e o header do dia seguinte. */
-.day + .day {
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--s-3);
-  margin-top: var(--s-1);
 }
 @keyframes dayIn {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* Divisor cinza leve entre grupos de dias — referência visual
+ * do iOS Calendar list view. `--border-strong` em vez de
+ * `--border` pra dar 1 ponto de contraste a mais (a linha
+ * estava invisível usando --border simples). */
+.day + .day {
+  border-top: 1px solid var(--border-strong);
+  padding-top: var(--s-4);
+  margin-top: var(--s-1);
+}
 
 .dayHeader {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
-  padding: var(--s-3) var(--s-1) var(--s-2);
-  background: var(--color-bg);
+  padding: var(--s-1) var(--s-1) var(--s-2);
   margin-bottom: var(--s-1);
 }
 .dayBig {
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--color-fg);
+  color: var(--text);
 }
 .dayBigToday {
   background: linear-gradient(135deg, #a855f7, #6366f1);
@@ -419,18 +401,17 @@
 .dayWeekday {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   text-transform: capitalize;
 }
 .dayCount {
   margin-left: auto;
   font-size: 12px;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   font-variant-numeric: tabular-nums;
 }
 
-/* Card de cada post agendado. Versão mais clean estilo iOS:
- * sem borda full, só uma divisória inferior sutil. */
+/* ── PostCard compartilhado ─────────────────────────────── */
 .card {
   position: relative;
   display: flex;
@@ -450,7 +431,7 @@
   animation: cardIn 360ms var(--ease-out) both;
 }
 .card:hover {
-  background: var(--color-bg-hover);
+  background: var(--surface-hover);
   transform: translateY(-1px);
 }
 .card:active {
@@ -465,8 +446,8 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Barra colorida vertical de 3px à esquerda — estilo iOS Calendar.
- * Cor diferente conforme status (agendado / publicado). */
+/* Barra accent vertical de 3px à esquerda — gradient se
+ * scheduled, cinza neutro se published. */
 .cardAccent {
   position: absolute;
   top: 14px;
@@ -477,7 +458,7 @@
   background: linear-gradient(180deg, #a855f7, #6366f1);
 }
 .cardAccentPublished {
-  background: var(--color-fg-muted);
+  background: var(--text-mute);
   opacity: 0.6;
 }
 
@@ -493,29 +474,28 @@
 .timeBig {
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-fg);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
   line-height: 1;
 }
 .timeRel {
   font-size: 11px;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   font-variant-numeric: tabular-nums;
 }
-
 .thumb {
   width: 40px;
   height: 40px;
   border-radius: var(--r-sm);
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--color-bg-elevated);
+  background: var(--surface-2);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   transition: transform var(--dur-fast) var(--ease-out);
 }
 .card:hover .thumb {
@@ -527,7 +507,6 @@
   object-fit: cover;
   display: block;
 }
-
 .body {
   flex: 1;
   min-width: 0;
@@ -538,7 +517,7 @@
 .cardTitle {
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-fg);
+  color: var(--text);
   letter-spacing: -0.005em;
   line-height: 1.25;
   overflow: hidden;
@@ -552,7 +531,7 @@
   align-items: center;
   gap: var(--s-2);
   font-size: 12px;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   min-width: 0;
 }
 .typePill {
@@ -561,10 +540,10 @@
   gap: 4px;
   padding: 2px 8px;
   border-radius: var(--r-full);
-  background: var(--color-bg-elevated);
+  background: var(--surface-2);
   font-size: 11px;
   font-weight: 500;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
 }
 .publishedPill {
   display: inline-flex;
@@ -572,8 +551,8 @@
   gap: 4px;
   padding: 2px 8px;
   border-radius: var(--r-full);
-  background: rgba(34, 197, 94, 0.12);
-  color: rgb(22, 163, 74);
+  background: var(--success-soft);
+  color: var(--success);
   font-size: 10.5px;
   font-weight: 600;
 }
@@ -581,7 +560,7 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: var(--color-fg-muted);
+  background: var(--text-mute);
   opacity: 0.4;
   flex-shrink: 0;
 }
@@ -590,10 +569,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .chevron {
   flex-shrink: 0;
-  color: var(--color-fg-muted);
+  color: var(--text-mute);
   opacity: 0.5;
   transition: transform var(--dur-fast) var(--ease-out),
               opacity var(--dur-fast) var(--ease-out);
@@ -601,7 +579,7 @@
 .card:hover .chevron {
   transform: translateX(2px);
   opacity: 1;
-  color: var(--color-fg);
+  color: var(--text);
 }
 
 /* ── Skeleton ────────────────────────────────────────────── */
@@ -616,9 +594,9 @@
   border-radius: var(--r-md);
   background: linear-gradient(
     90deg,
-    var(--color-bg-elevated) 0%,
-    var(--color-bg-hover) 50%,
-    var(--color-bg-elevated) 100%
+    var(--surface-2) 0%,
+    var(--surface-hover) 50%,
+    var(--surface-2) 100%
   );
   background-size: 200% 100%;
   animation: skeletonShimmer 1.4s linear infinite;
@@ -628,25 +606,24 @@
   100% { background-position: -200% 0; }
 }
 
-/* ── Mobile (<= 720px) ──────────────────────────────────── */
+/* ── Mobile ────────────────────────────────────────────── */
 @media (max-width: 720px) {
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--s-2);
-  }
-  .periodNav {
-    justify-content: space-between;
-    width: 100%;
-  }
   .periodLabel {
     min-width: 0;
     flex: 1;
     text-align: center;
     font-size: 16px;
   }
-  .segmented {
-    align-self: center;
+  .todayBtn {
+    margin-left: 0;
+  }
+  .tabs {
+    padding-inline: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
   }
   .cell {
     min-height: 64px;
