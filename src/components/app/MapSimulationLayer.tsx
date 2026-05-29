@@ -333,52 +333,45 @@ export default function MapSimulationLayer() {
             ],
             'heatmap-intensity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.22,   // bem mais suave per "suavize consideravelmente"
-              5, 0.30,
-              6, 0.35,
-              7, 0.42,
+              3, 0.16,   // ainda mais suave per "formas ainda evidentes"
+              5, 0.22,
+              6, 0.28,
+              7, 0.38,
               9, 0.42,
               11, 0.30,
               12, 0.16,
             ],
-            /* Paleta VERDE com bordas dissolvidas — per feedback
-             * "Não há necessidade de ter a região bem delimitada
-             * como formas geométricas, deixe... suavizada mais leve".
+            /* Paleta com cauda BEM longa de transparência —
+             * iteração após feedback "formas ainda estão evidentes".
              *
-             * Mudanças vs versão anterior:
-             *   - Stop bem cedo (density 0.04) com alpha 0.06 cria
-             *     uma "cauda" tênue que faz a borda do blob fade
-             *     pro preto organicamente, sem corte abrupto.
-             *   - Alphas gerais reduzidos (~30%) pra blobs ficarem
-             *     translúcidos, deixando o relevo do mapa por baixo
-             *     se misturar com o verde.
-             *   - Stops redistribuídos pra que o gradient passe
-             *     mais tempo no "verde fraco" (até 0.50) antes de
-             *     começar a saturar. */
+             * O segredo da bordas dissolvendo está na cauda inicial:
+             * de density 0 até 0.30 a cor é praticamente transparente.
+             * Só a partir de 0.55 o verde começa a ter substância.
+             * Resultado: as bordas dos blobs ficam invisíveis pro
+             * olho humano e só o "core" interno (onde a densidade
+             * acumula features) ganha alguma cor. */
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0,    'rgba(0, 0, 0, 0)',
-              0.04, 'rgba(20, 83, 45, 0.06)',      // bordas dissolvem aqui
-              0.20, 'rgba(34, 139, 75, 0.22)',     // verde médio translúcido
-              0.50, 'rgba(61, 219, 116, 0.42)',    // verde marca
-              0.80, 'rgba(120, 220, 140, 0.55)',
-              1,    'rgba(150, 230, 160, 0.62)',   // peak BEM suave
+              0.05, 'rgba(20, 83, 45, 0.03)',      // praticamente invisível
+              0.30, 'rgba(34, 139, 75, 0.14)',     // verde levíssimo
+              0.60, 'rgba(61, 219, 116, 0.30)',    // verde marca
+              0.85, 'rgba(120, 220, 140, 0.42)',
+              1,    'rgba(150, 230, 160, 0.50)',   // peak ainda suave
             ],
-            /* Raio MAIOR no zoom out pra blobs perderem aresta —
-             * features se sobrepõem mais, criando manchas orgânicas
-             * que se dissolvem nas bordas em vez de virar círculos
-             * geométricos.
-             *
-             * Trade-off: radius maior + intensity menor = mesmo
-             * "footprint visual" mas com bordas muito mais suaves. */
+            /* Raio bem maior no zoom out — features se fundem em
+             * um wash contínuo sem core definido. Combinado com a
+             * cauda longa de transparency na paleta e intensity
+             * reduzida, o heatmap pinta uma "aura verde difusa"
+             * sobre o Brasil sem círculos discretos. */
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
-              3, 28,     // antes 18
-              5, 42,     // antes 28
-              6, 42,     // antes 30
-              7, 40,     // antes 35
-              9, 45,     // antes 40
-              11, 55,    // antes 50
+              3, 42,     // antes 28
+              5, 60,     // antes 42
+              6, 58,     // antes 42
+              7, 50,
+              9, 48,
+              11, 55,
               12, 32,
             ],
             'heatmap-opacity': [
@@ -543,32 +536,31 @@ export default function MapSimulationLayer() {
           minzoom: 5,
           paint: {
             'circle-color': '#3DDB74',
+            /* Raio ~50% maior + blur 1.4 (> 1.0): cada cluster vira
+             * um halo MUITO difuso, sem core sólido. Junto com a
+             * opacity drasticamente reduzida, o LAYER_CL deixa de
+             * pintar "círculos verdes" e vira só um leve adicional
+             * sobre o heatmap. */
             'circle-radius': [
               'step', ['get', 'point_count'],
-              24,                              // < 50
-              50,  34,
-              200, 48,
-              500, 64,
+              36,                              // < 50  (era 24)
+              50,  52,                         //       (era 34)
+              200, 72,                         //       (era 48)
+              500, 96,                         //       (era 64)
             ],
             'circle-stroke-width': 0,
-            /* Blur 1.0 = perfeitamente difuso. O Mapbox aplica um
-             * gradient radial automaticamente (centro alpha 1, borda
-             * alpha 0). Resultado: blob orgânico com fade, sem aresta. */
-            'circle-blur': 1.0,
-            /* Opacity reduzida no zoom 8-11 — nessa faixa o LAYER_HEAT
-             * (heatmap radius grande) já está pintando as manchas
-             * inorgânicas grandes que o usuário pediu. Se os clusters
-             * individuais aparecessem fortes em cima, viraria 30 blobs
-             * separados redondos novamente. Aqui eles só "afiam" o
-             * centro das manchas. Em zoom 5-7 (transição do globo
-             * pro detalhe) eles ainda lideram a comunicação. */
+            'circle-blur': 1.4,                // era 1.0 — mais difuso
+            /* Opacity DRASTICAMENTE reduzida em todos os zooms.
+             * Per feedback "as formas ainda estão bem evidentes" — o
+             * heatmap deve dominar a comunicação visual, o LAYER_CL
+             * passa a ser ornamento mínimo (max 0.15). */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               5,   0,
-              5.5, 0.55,
-              7,   0.50,
-              8,   0.25,
-              10,  0.18,
+              5.5, 0.12,                       // era 0.55
+              7,   0.15,                       // era 0.50
+              8,   0.12,                       // era 0.25
+              10,  0.10,                       // era 0.18
               11,  0,
               12,  0,
             ],
