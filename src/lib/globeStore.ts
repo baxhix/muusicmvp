@@ -175,6 +175,16 @@ let _setAnaFlight: SetAnaFlightFn | null = null;
 let _anaFlightBuffer: AnaFlightPayload | null = null;
 let _openAnaFlight: OpenAnaFlightFn | null = null;
 
+/* Map instance pub/sub — Globe publica a referência do Mapbox map
+ * após o load. Consumers (ex.: MapSimulationLayer) se inscrevem
+ * pra anexar suas próprias sources/layers sem precisar viver
+ * dentro do Globe.tsx. Tipo unknown porque mapbox-gl não é
+ * importado neste módulo (cliente-only); o consumer cast pro tipo
+ * real (mapboxgl.Map). */
+type MapInstanceListener = (map: unknown | null) => void;
+let _mapInstance: unknown | null = null;
+const _mapInstanceListeners = new Set<MapInstanceListener>();
+
 export const globeStore = {
   register: (fn: FlyToFn) => { _flyTo = fn; },
   flyTo:    (center: [number, number], zoom: number) => { _flyTo?.(center, zoom); },
@@ -386,5 +396,27 @@ export const globeStore = {
       _visibleUserIds = new Set();
       for (const fn of _visibleUsersListeners) fn(_visibleUserIds);
     }
+    // Limpa o map instance + notifica listeners ativos que perderam
+    // a referência (eles vão remover suas sources/layers nesse caso).
+    if (_mapInstance) {
+      _mapInstance = null;
+      for (const fn of _mapInstanceListeners) fn(null);
+    }
+  },
+
+  /* Map instance pub/sub — usado por overlays que precisam anexar
+   * sources/layers Mapbox sem viver dentro do Globe.tsx (ex.:
+   * MapSimulationLayer). Cast pra mapboxgl.Map no consumer. */
+  setMapInstance: (map: unknown | null) => {
+    _mapInstance = map;
+    for (const fn of _mapInstanceListeners) fn(map);
+  },
+  subscribeMapInstance: (fn: MapInstanceListener) => {
+    _mapInstanceListeners.add(fn);
+    // Emite o valor atual imediatamente — listener entrando depois
+    // do Globe ter carregado já recebe a referência sem precisar
+    // esperar próximo set.
+    fn(_mapInstance);
+    return () => { _mapInstanceListeners.delete(fn); };
   },
 };

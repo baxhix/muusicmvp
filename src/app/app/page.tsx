@@ -10,6 +10,8 @@ import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
 import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
+import MapSimulationLayer from '@/components/app/MapSimulationLayer';
+import SimulationHUD from '@/components/app/SimulationHUD';
 
 
 /**
@@ -116,6 +118,14 @@ export default function AppPage() {
           Arena Fonte Nova (Salvador, BA). Self-gates on
           `flags.showLive`. */}
       <ShowLiveTrigger />
+
+      {/* Sandbox de simulação de 3.000 usuários no mapa do Brasil
+       *  (brainstorm-gated). Camada visual com heatmap + clusters +
+       *  dots coloridos por tier + HUD com contador online + cidade
+       *  bombando. Toggle via Features em teste. NUNCA toca backend
+       *  real — dataset gerado client-side determinístico. */}
+      <MapSimulationLayer />
+      <SimulationHUD />
     </>
   );
 }

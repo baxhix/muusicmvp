@@ -1093,6 +1093,13 @@ export default function Globe() {
       // already sized roughly correctly.
       map.resize();
 
+      /* Publica o map instance via globeStore pra que overlays
+       * sandbox (MapSimulationLayer, etc.) possam anexar suas
+       * próprias sources/layers sem viver dentro do Globe.tsx.
+       * Cleanup do unregister no globeStore zera essa referência
+       * automaticamente no unmount. */
+      globeStore.setMapInstance(map);
+
       // Welcome flow: depois de validar o magic link / OTP, o
       // usuário cai aqui com isWelcome=true. O Map foi
       // inicializado em vista global (Europa/África, zoom 1.5,

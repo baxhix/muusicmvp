@@ -58,7 +58,8 @@ export type BrainstormFlagKey =
   | 'anaFlight'
   | 'superlive'
   | 'collectiveListening'
-  | 'showLive';
+  | 'showLive'
+  | 'mapSimulation';
 
 export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
 
@@ -72,6 +73,7 @@ const DEFAULTS: BrainstormFlags = {
   superlive: true,
   collectiveListening: true,
   showLive: true,
+  mapSimulation: false,
 };
 
 /**
@@ -110,6 +112,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Show ao vivo (Fire Arena)',
     description:
       'Pin neon na Arena Fonte Nova (Bahia) que transforma o mapa num palco — vinheta escura ao redor, luzes de palco rosa pulsando sobre o estádio, frame de transmissão acima e chat dos fãs ao lado. Pensado pro lançamento do álbum Fire Arena.',
+  },
+  {
+    key: 'mapSimulation',
+    title: 'Simulação 3.000 usuários no mapa',
+    description:
+      'Camada sandbox que rende 3.000 fãs mock distribuídos pelo Brasil (Sudeste, Centro-Oeste, Sul e Norte) com heatmap, clusters e pontos coloridos por tier. HUD com contador de online agora + cidade bombando. Pra testar escala visual e fluidez sem tocar dados reais.',
   },
 ];
 
