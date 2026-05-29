@@ -58,36 +58,42 @@ function isMobileViewport(): boolean {
  *     Brasil. Fix per feedback "quase não tenho a percepção WOW".
  *   Custo: dataset duplica em memória (~1.5MB total pra 7k features),
  *   trade aceitável pelo ganho visual. */
-const SOURCE_ID   = 'mapsim-users';
-const SOURCE_HEAT = 'mapsim-users-heat';
-const LAYER_HEAT  = 'mapsim-heatmap';
-const LAYER_CL    = 'mapsim-clusters';
-const LAYER_CL_T  = 'mapsim-cluster-count';
-const LAYER_DOT   = 'mapsim-dot';
-const LAYER_HALO  = 'mapsim-superfan-halo';
+const SOURCE_ID    = 'mapsim-users';
+const SOURCE_HEAT  = 'mapsim-users-heat';
+const LAYER_HEAT   = 'mapsim-heatmap';
+const LAYER_CL     = 'mapsim-clusters';
+const LAYER_CL_T   = 'mapsim-cluster-count';
+const LAYER_DOT    = 'mapsim-dot';
+const LAYER_HALO   = 'mapsim-superfan-halo';
+const LAYER_SF_PIC = 'mapsim-superfan-pic';
 
-/* Cor do dot:
- *  - online (lastActiveSec < 300, denormalizado em `online === 1`):
- *    VERDE (#3DDB74) — sinal forte de "tá aqui agora", per
- *    product feedback "o que representar usuário online deixe na
- *    cor verde".
- *  - offline: cor por tier (paleta da marca + amber pra topo).
+/* Pool de avatares Pravatar (i.pravatar.cc) — 12 fotos de pessoas
+ * reais, IDs escolhidos pra diversidade visual. Pré-carregados como
+ * Mapbox images no map.load, depois referenciados via
+ * `icon-image: ['concat', 'avatar-', ['%', ['get', 'avatarSeed'], 12]]`.
+ * O mock user já carrega `avatarSeed` 0-63 — fazemos modulo 12 pra
+ * mapear no pool. Determinístico (mesma seed → mesma foto sempre).
  *
- * Tier ainda comunicado via size do dot + halo (desktop).
+ * Por que Pravatar e não asset local: 12 binários adicionais no repo
+ * pra um feature de simulação sandbox = ruído. CDN externo simplifica;
+ * se cair, o dot verde por baixo continua sendo o fallback. */
+const PRAVATAR_IDS = [1, 5, 11, 13, 17, 23, 29, 33, 41, 47, 53, 61];
+
+/* Cor do dot: TODOS verdes.
+ *
+ * Per feedback "deixe todos verdes, se a pessoa está offline num
+ * primeiro momento não interessa muito". A lógica de cor por tier
+ * foi removida — o dot agora é o sinal puro de "presença online".
+ * A diferenciação de tier sobrevive em:
+ *   - tamanho do dot (TIER_RADIUS_EXPR abaixo)
+ *   - halo dourado em superfãs (LAYER_HALO, desktop)
+ *   - mini avatar de foto real em superfãs (LAYER_SF_PIC)
+ *
+ * O LAYER_DOT também recebe filtro `online === 1` mais abaixo —
+ * offline simplesmente não pinta. Mantemos os offline no source
+ * porque o heatmap usa o dataset completo (com peso menor).
  */
-const DOT_COLOR_EXPR = [
-  'case',
-  ['==', ['get', 'online'], 1],
-  '#3DDB74',                       // online = verde
-  /* offline → cor por tier */
-  ['match',
-    ['get', 'tier'],
-    'superfan', '#fbbf24',         // amber
-    'top100',   '#a855f7',         // magenta-violet
-    'top1000',  '#6366f1',         // indigo
-    /* fan default */              '#9ca3af',
-  ],
-] as unknown[];
+const DOT_COLOR_EXPR = '#3DDB74';
 
 /** Raio do dot por tier — superfãs são maiores. */
 const TIER_RADIUS_EXPR = [
@@ -129,11 +135,14 @@ export default function MapSimulationLayer() {
     const cleanup = () => {
       if (!currentMap) return;
       try {
-        for (const id of [LAYER_HALO, LAYER_DOT, LAYER_CL_T, LAYER_CL, LAYER_HEAT]) {
+        for (const id of [LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_CL_T, LAYER_CL, LAYER_HEAT]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
         if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
         if (currentMap.getSource(SOURCE_ID)) currentMap.removeSource(SOURCE_ID);
+        /* Avatares ficam carregados no map mesmo após o flag
+         * desligar — map.removeImage é caro em iOS e o conjunto
+         * é pequeno (12 imgs). Próximo enable reaproveita o cache. */
       } catch {
         /* mapa pode estar sendo destruído — ignorar */
       }
@@ -336,17 +345,24 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 4) DOTS — pontos individuais (não-clusterizados).
-      //    Cor: VERDE pra online, cor por tier pra offline.
+      // 4) DOTS — pontos individuais (não-clusterizados), TODOS
+      //    verdes. Filtro online=1 esconde offline do display por
+      //    completo (per feedback "se a pessoa está offline num
+      //    primeiro momento não interessa muito"). Offline continua
+      //    contribuindo pro heatmap, só não aparece como dot.
       if (!map.getLayer(LAYER_DOT)) {
         map.addLayer({
           id: LAYER_DOT,
           type: 'circle',
           source: SOURCE_ID,
-          filter: ['!', ['has', 'point_count']],
+          filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'online'], 1],
+          ],
           minzoom: 7,
           paint: {
-            'circle-color': DOT_COLOR_EXPR as unknown as string,
+            'circle-color': DOT_COLOR_EXPR,
             'circle-radius': TIER_RADIUS_EXPR as unknown as number,
             'circle-stroke-width': 1.2,
             'circle-stroke-color': 'rgba(0, 0, 0, 0.45)',
@@ -360,10 +376,11 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 5) HALO em superfãs — anel estático em volta de cada dot
-      //    superfan. SÓ desktop; mobile pula esse layer pra economizar
-      //    GPU (alpha-blended circle render é caro com muitos
-      //    superfãs no viewport). Per feedback "celular esquentando".
+      // 5) HALO em superfãs ONLINE — anel verde em volta. SÓ desktop;
+      //    mobile pula esse layer pra economizar GPU (alpha-blended
+      //    circle render é caro com muitos superfãs no viewport).
+      //    Halo agora é VERDE (não mais amber) pra alinhar com a
+      //    paleta "tudo online é verde".
       if (!mobile && !map.getLayer(LAYER_HALO)) {
         map.addLayer({
           id: LAYER_HALO,
@@ -373,21 +390,95 @@ export default function MapSimulationLayer() {
             'all',
             ['!', ['has', 'point_count']],
             ['==', ['get', 'tier'], 'superfan'],
+            ['==', ['get', 'online'], 1],
           ],
           minzoom: 9,
           paint: {
-            'circle-radius': 11,
-            'circle-color': 'rgba(251, 191, 36, 0.0)',
-            'circle-stroke-width': 1.2,
-            'circle-stroke-color': 'rgba(251, 191, 36, 0.5)',
+            'circle-radius': 14,
+            'circle-color': 'rgba(61, 219, 116, 0.0)',
+            'circle-stroke-width': 1.4,
+            'circle-stroke-color': 'rgba(61, 219, 116, 0.65)',
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               9,  0,
-              10, 0.5,
-              14, 0.85,
+              10, 0.6,
+              14, 0.95,
             ],
           },
         }, LAYER_DOT);
+      }
+
+      // 6) MINI AVATAR de SUPERFÃS ONLINE — foto real (Pravatar).
+      //
+      //    Per feedback "Superfã online simule sempre com um mini
+      //    avatar de foto real". Carregamos 12 fotos no map.images
+      //    cache (idempotente — addImage só roda se ainda não existe)
+      //    e a expressão `icon-image` mapeia cada superfã pra um
+      //    slot via `avatarSeed % 12` — determinístico (mesmo user
+      //    sempre aparece com a mesma cara).
+      //
+      //    A imagem aparece SOBRE o dot verde + halo, que continuam
+      //    como fallback caso a foto não carregue (CORS, offline,
+      //    Pravatar caindo).
+      const preloadAvatars = () => {
+        PRAVATAR_IDS.forEach((picId, idx) => {
+          const imgId = `mapsim-avatar-${idx}`;
+          if (map.hasImage(imgId)) return;
+          map.loadImage(
+            `https://i.pravatar.cc/80?img=${picId}`,
+            (err, image) => {
+              if (err || !image) return;
+              if (!map.hasImage(imgId)) {
+                try {
+                  map.addImage(imgId, image as HTMLImageElement | ImageBitmap);
+                } catch {
+                  /* race: outra chamada pode ter adicionado já */
+                }
+              }
+            },
+          );
+        });
+      };
+      preloadAvatars();
+
+      if (!map.getLayer(LAYER_SF_PIC)) {
+        map.addLayer({
+          id: LAYER_SF_PIC,
+          type: 'symbol',
+          source: SOURCE_ID,
+          filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'tier'], 'superfan'],
+            ['==', ['get', 'online'], 1],
+          ],
+          minzoom: 8,
+          layout: {
+            'icon-image': [
+              'concat',
+              'mapsim-avatar-',
+              ['to-string', ['%', ['get', 'avatarSeed'], PRAVATAR_IDS.length]],
+            ],
+            /* icon-size: Pravatar retorna 80×80. No mapa queremos
+             * ~22px no zoom 10 e ~32px no zoom 14. icon-size 0.4
+             * = 32px, 0.275 = 22px. Interpolamos. */
+            'icon-size': [
+              'interpolate', ['linear'], ['zoom'],
+              8,  0.22,
+              10, 0.30,
+              14, 0.42,
+            ],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+          },
+          paint: {
+            'icon-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              8,   0,
+              8.5, 1,
+            ],
+          },
+        });
       }
 
       /* ── Hover/click handlers no LAYER_DOT ────────────────
