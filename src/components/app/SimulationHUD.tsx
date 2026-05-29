@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { useSimulationData } from '@/lib/mapSimulation';
+import HeartsCascade from './HeartsCascade';
 import styles from './SimulationHUD.module.css';
 
 /**
@@ -54,6 +55,13 @@ export default function SimulationHUD() {
 
   return (
     <>
+      {/* HeartsCascade montado SÓ no contexto da simulação (gated
+       * pelo flag mapSimulation). Necessário pro efeito de envio
+       * de reaction (❤️ 👋 💬 👀) disparado pelo click no avatar
+       * do reveal. A instância global em /app/layout segue
+       * desmontada pra não dispar cascatas em eventos não-mocados. */}
+      <HeartsCascade />
+
       <div className={styles.counter} role="status" aria-live="polite">
         <span className={styles.counterDot} aria-hidden="true" />
         <span className={styles.counterNum}>{fmt(data.activeNow)}</span>

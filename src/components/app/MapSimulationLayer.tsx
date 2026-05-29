@@ -693,8 +693,14 @@ export default function MapSimulationLayer() {
       const REVEAL_CYCLE_MS        = 5000;
       const REVEAL_STAGGER_MIN_MS  = 1000;
       const REVEAL_STAGGER_MAX_MS  = 2200;
-      const REVEAL_LIFETIME_MS     = 3000;
+      const REVEAL_LIFETIME_MS     = 7000;   // antes 3000 — per feedback
       const REVEAL_EXIT_MS         = 400;
+      /* Limite de avatares simultâneos. Com lifetime 7s + ciclos
+       * de 5s, sem cap acumularíamos picos de 6-9 visíveis. O
+       * usuário pediu "não devem aparecer mais de 6" — usamos esse
+       * número como cap rígido; spawns que estourariam são pulados. */
+      const REVEAL_MAX_ACTIVE      = 6;
+      const REACTION_EMOJIS = ['❤️', '👋', '💬', '👀'] as const;
 
       /* Candidatos: online + não-superfan. Superfã já tem avatar
        * permanente; o efeito é pra "revelar" que os pontinhos
@@ -717,30 +723,92 @@ export default function MapSimulationLayer() {
 
       const spawnReveal = (feature: GeoJSON.Feature) => {
         if (feature.geometry.type !== 'Point') return;
+        /* Cap rígido: se já temos 6 ativos, esse spawn é descartado.
+         * O ciclo continua, então o próximo batch tem chance. */
+        if (activeMarkers.length >= REVEAL_MAX_ACTIVE) return;
+
         const [lng, lat] = (feature.geometry as GeoJSON.Point).coordinates;
         const p = (feature.properties ?? {}) as FeatureProps;
         const picIdx = ((p.avatarSeed ?? 0) % PRAVATAR_IDS.length + PRAVATAR_IDS.length) % PRAVATAR_IDS.length;
         const picId = PRAVATAR_IDS[picIdx];
         const firstName = String(p.name ?? '').split(' ')[0] || 'Fã';
 
-        /* Estrutura do DOM:
+        /* DOM:
          *   <div .mapsim-reveal>
-         *     <div .mapsim-reveal-photo />
+         *     <div .mapsim-reveal-photo-wrap>
+         *       <button .mapsim-reveal-photo />   ← clicável
+         *       <div   .mapsim-reveal-actions>    ← reaction box, hidden
+         *         <button .mapsim-reveal-react>❤️</button>
+         *         <button .mapsim-reveal-react>👋</button>
+         *         <button .mapsim-reveal-react>💬</button>
+         *         <button .mapsim-reveal-react>👀</button>
+         *       </div>
+         *     </div>
          *     <div .mapsim-reveal-name>{firstName}</div>
          *   </div>
          */
         const el = document.createElement('div');
         el.className = 'mapsim-reveal';
 
-        const photo = document.createElement('div');
+        const photoWrap = document.createElement('div');
+        photoWrap.className = 'mapsim-reveal-photo-wrap';
+        el.appendChild(photoWrap);
+
+        const photo = document.createElement('button');
+        photo.type = 'button';
         photo.className = 'mapsim-reveal-photo';
         photo.style.backgroundImage = `url('https://i.pravatar.cc/80?img=${picId}')`;
-        el.appendChild(photo);
+        photo.setAttribute('aria-label', `Reagir para ${firstName}`);
+        photoWrap.appendChild(photo);
+
+        const actions = document.createElement('div');
+        actions.className = 'mapsim-reveal-actions';
+        REACTION_EMOJIS.forEach((emoji) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'mapsim-reveal-react';
+          btn.textContent = emoji;
+          btn.setAttribute('aria-label', `Enviar ${emoji} para ${firstName}`);
+          btn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            /* Dispara a cascata mocada do emoji escolhido. O
+             * HeartsCascade montado pelo SimulationHUD escuta esse
+             * evento. `text` sobrescreve `icon` — qualquer emoji
+             * cai como glyph. */
+            try {
+              window.dispatchEvent(
+                new CustomEvent('app:hearts-cascade', { detail: { text: emoji } }),
+              );
+            } catch { /* SSR / detached — ignorar */ }
+            /* Fecha o reaction box; deixa o avatar visível pelo
+             * tempo restante do lifetime. */
+            el.classList.remove('mapsim-reveal-open');
+          });
+          actions.appendChild(btn);
+        });
+        photoWrap.appendChild(actions);
 
         const name = document.createElement('div');
         name.className = 'mapsim-reveal-name';
         name.textContent = firstName;
         el.appendChild(name);
+
+        /* Click no photo abre/fecha o reaction box. stopPropagation
+         * impede que o map.on('click') zere o hover acima. */
+        photo.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          /* Decide lado da paleta DINAMICAMENTE: se o photo tá
+           * perto da borda direita da viewport, a paleta pula pro
+           * lado esquerdo pra não sair da tela. */
+          const rect = photo.getBoundingClientRect();
+          const spaceRight = window.innerWidth - rect.right;
+          if (spaceRight < 80) {
+            actions.classList.add('mapsim-reveal-actions-left');
+          } else {
+            actions.classList.remove('mapsim-reveal-actions-left');
+          }
+          el.classList.toggle('mapsim-reveal-open');
+        });
 
         const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -8] })
           .setLngLat([lng, lat])
@@ -756,9 +824,11 @@ export default function MapSimulationLayer() {
           });
         });
 
-        /* Saída: classList troca pra fade out, depois remove. */
+        /* Saída: classList troca pra fade out, depois remove.
+         * Também fecha o reaction box se ainda estiver aberto. */
         const exitT = window.setTimeout(() => {
           el.classList.remove('mapsim-reveal-in');
+          el.classList.remove('mapsim-reveal-open');
           el.classList.add('mapsim-reveal-out');
         }, REVEAL_LIFETIME_MS);
 

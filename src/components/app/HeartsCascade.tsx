@@ -46,6 +46,10 @@ interface CascadeParticle {
 interface Batch {
   id: number;
   icon: CascadeIcon;
+  /** Glyph customizado opcional — quando presente, sobrescreve
+   *  `icon` e renderiza o text como emoji. Usado pela paleta de
+   *  reactions do MapSimulation reveal (❤️, 👋, 💬, 👀). */
+  text?: string;
   particles: CascadeParticle[];
 }
 
@@ -73,13 +77,18 @@ export default function HeartsCascade() {
   useEffect(() => {
     let nextBatchId = 1;
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ icon?: CascadeIcon } | undefined>)
-        .detail;
+      const detail = (
+        e as CustomEvent<{ icon?: CascadeIcon; text?: string } | undefined>
+      ).detail;
       const icon: CascadeIcon = detail?.icon === 'hand' ? 'hand' : 'heart';
+      /* `text` é opcional e quando presente vence sobre `icon` —
+       * deixa o callsite usar qualquer emoji (ex: 💬 ou 👀) sem
+       * precisar estender o union CascadeIcon a cada novo glyph. */
+      const customText = detail?.text;
 
       const id = nextBatchId++;
       const particles = buildBatch(id);
-      setBatches((prev) => [...prev, { id, icon, particles }]);
+      setBatches((prev) => [...prev, { id, icon, text: customText, particles }]);
 
       // Worst-case lifetime: max(delay + duration) across the
       // batch + a small buffer. Conservative — use the upper
@@ -108,12 +117,11 @@ export default function HeartsCascade() {
             ['--heart-drift' as string]: `${p.drift}deg`,
           } as React.CSSProperties;
 
-          if (batch.icon === 'hand') {
-            // 👋 rendered as a text glyph in a span — the
-            // emoji's native font rendering carries the wave
-            // affordance better than any SVG path approximation.
-            // Font-size matches the particle's pixel size so the
-            // glyph fills the same box the heart SVG would.
+          /* `batch.text` vence: glyph arbitrário (❤️ 👋 💬 👀 …).
+           * Caso contrário, `icon === 'hand'` cai no fallback do
+           * emoji 👋. Em ambos os casos renderizamos um <span>
+           * com fontSize igual ao tamanho da partícula. */
+          if (batch.text || batch.icon === 'hand') {
             return (
               <span
                 key={p.id}
@@ -125,7 +133,7 @@ export default function HeartsCascade() {
                 }}
                 aria-hidden="true"
               >
-                👋
+                {batch.text ?? '👋'}
               </span>
             );
           }
