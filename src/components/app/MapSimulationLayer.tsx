@@ -63,15 +63,16 @@ function isMobileViewport(): boolean {
  *     Brasil. Fix per feedback "quase não tenho a percepção WOW".
  *   Custo: dataset duplica em memória (~1.5MB total pra 7k features),
  *   trade aceitável pelo ganho visual. */
-const SOURCE_ID    = 'mapsim-users';
-const SOURCE_HEAT  = 'mapsim-users-heat';
-const LAYER_HEAT   = 'mapsim-heatmap';
-const LAYER_DOTFAR = 'mapsim-dot-far';      // pontos 2px verdes visíveis no zoom out
-const LAYER_CL     = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
-const LAYER_CL_T   = 'mapsim-cluster-count'; // texto só no hover
-const LAYER_DOT    = 'mapsim-dot';
-const LAYER_HALO   = 'mapsim-superfan-halo';
-const LAYER_SF_PIC = 'mapsim-superfan-pic';
+const SOURCE_ID     = 'mapsim-users';
+const SOURCE_HEAT   = 'mapsim-users-heat';
+const LAYER_HEAT    = 'mapsim-heatmap';
+const LAYER_DOTFAR  = 'mapsim-dot-far';      // pontos 2px verdes visíveis no zoom out
+const LAYER_CL      = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
+const LAYER_CL_T    = 'mapsim-cluster-count'; // texto só no hover
+const LAYER_DOTGLOW = 'mapsim-dot-glow';     // halo verde difuso em volta dos dots (zoom alto)
+const LAYER_DOT     = 'mapsim-dot';
+const LAYER_HALO    = 'mapsim-superfan-halo';
+const LAYER_SF_PIC  = 'mapsim-superfan-pic';
 
 /* Pool de avatares Pravatar (i.pravatar.cc) — 12 fotos de pessoas
  * reais, IDs escolhidos pra diversidade visual. Pré-carregados como
@@ -165,8 +166,8 @@ export default function MapSimulationLayer() {
       if (!currentMap) return;
       try {
         for (const id of [
-          LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_CL_T, LAYER_CL,
-          LAYER_DOTFAR, LAYER_HEAT,
+          LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
+          LAYER_CL_T, LAYER_CL, LAYER_DOTFAR, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
@@ -450,11 +451,62 @@ export default function MapSimulationLayer() {
         });
       }
 
+      // 4a) DOT GLOW — halo verde difuso embaixo de cada dot online.
+      //
+      //     Per feedback "no zoom máximo, deixe esse tipo de
+      //     intensidade verde ao redor dos pontos" (referenciando
+      //     o halo brilhante dos avatares revelados).
+      //
+      //     Camada extra ANTES do LAYER_DOT pra ficar por baixo.
+      //     Raio bem maior que o dot real (8-18px) + circle-blur
+      //     0.85 cria fade gradient orgânico. Cor verde sólida +
+      //     opacity controlada por zoom: invisível em zoom 7,
+      //     ramp até 0.55 no zoom 14+. Resultado: cada ponto ganha
+      //     uma "auréola" que casa visualmente com o halo dos
+      //     superfãs (LAYER_HALO) e dos avatares revelados.
+      if (!map.getLayer(LAYER_DOTGLOW)) {
+        map.addLayer({
+          id: LAYER_DOTGLOW,
+          type: 'circle',
+          source: SOURCE_ID,
+          filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'online'], 1],
+          ],
+          minzoom: 9,
+          paint: {
+            'circle-color': '#3DDB74',
+            /* Raio por tier — superfã ganha glow maior (alinha com
+             * o halo permanente que ele tem). */
+            'circle-radius': [
+              'match', ['get', 'tier'],
+              'superfan', 18,
+              'top100',   12,
+              'top1000',  10,
+              /* fan default */ 9,
+            ],
+            'circle-blur': 0.85,
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              9,   0,
+              11,  0.30,
+              14,  0.55,
+              16,  0.65,
+            ],
+          },
+        });
+      }
+
       // 4) DOTS — pontos individuais (não-clusterizados), TODOS
       //    verdes. Filtro online=1 esconde offline do display por
       //    completo (per feedback "se a pessoa está offline num
       //    primeiro momento não interessa muito"). Offline continua
       //    contribuindo pro heatmap, só não aparece como dot.
+      //    Stroke preto foi removido — em raios pequenos (1.75)
+      //    ele engolia a cor verde. Agora o dot é verde puro e
+      //    ganha contorno pelo LAYER_DOTGLOW logo abaixo.
       if (!map.getLayer(LAYER_DOT)) {
         map.addLayer({
           id: LAYER_DOT,
@@ -469,8 +521,7 @@ export default function MapSimulationLayer() {
           paint: {
             'circle-color': DOT_COLOR_EXPR,
             'circle-radius': TIER_RADIUS_EXPR as unknown as number,
-            'circle-stroke-width': 1.2,
-            'circle-stroke-color': 'rgba(0, 0, 0, 0.45)',
+            'circle-stroke-width': 0,
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               7,    0,
