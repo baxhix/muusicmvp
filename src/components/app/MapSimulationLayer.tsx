@@ -333,53 +333,62 @@ export default function MapSimulationLayer() {
             ],
             'heatmap-intensity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.32,   // suavizado mais ainda per "tons mais intensos
-              5, 0.45,   // bem mais suave"
-              6, 0.50,
-              7, 0.55,
-              9, 0.45,
-              11, 0.32,
-              12, 0.18,
+              3, 0.22,   // bem mais suave per "suavize consideravelmente"
+              5, 0.30,
+              6, 0.35,
+              7, 0.42,
+              9, 0.42,
+              11, 0.30,
+              12, 0.16,
             ],
-            /* Paleta VERDE suave — per feedback "deixe bem mais suave
-             * os tons mais intensos". Tirei o pico amarelo-limão (que
-             * dava sensação de "fervura") e estendi o range no verde
-             * marca. O peak agora é um verde claro discreto em vez
-             * de limão saturado, então mesmo onde a densidade é alta
-             * a cor não chama atenção excessiva. */
+            /* Paleta VERDE com bordas dissolvidas — per feedback
+             * "Não há necessidade de ter a região bem delimitada
+             * como formas geométricas, deixe... suavizada mais leve".
+             *
+             * Mudanças vs versão anterior:
+             *   - Stop bem cedo (density 0.04) com alpha 0.06 cria
+             *     uma "cauda" tênue que faz a borda do blob fade
+             *     pro preto organicamente, sem corte abrupto.
+             *   - Alphas gerais reduzidos (~30%) pra blobs ficarem
+             *     translúcidos, deixando o relevo do mapa por baixo
+             *     se misturar com o verde.
+             *   - Stops redistribuídos pra que o gradient passe
+             *     mais tempo no "verde fraco" (até 0.50) antes de
+             *     começar a saturar. */
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0,    'rgba(0, 0, 0, 0)',
-              0.15, 'rgba(20, 83, 45, 0.30)',      // verde escuro (sertão)
-              0.40, 'rgba(34, 139, 75, 0.50)',     // verde médio
-              0.65, 'rgba(61, 219, 116, 0.65)',    // verde vivo (marca)
-              0.90, 'rgba(120, 220, 140, 0.75)',   // verde claro discreto
-              1,    'rgba(150, 230, 160, 0.80)',   // peak sutil (sem amarelo)
+              0.04, 'rgba(20, 83, 45, 0.06)',      // bordas dissolvem aqui
+              0.20, 'rgba(34, 139, 75, 0.22)',     // verde médio translúcido
+              0.50, 'rgba(61, 219, 116, 0.42)',    // verde marca
+              0.80, 'rgba(120, 220, 140, 0.55)',
+              1,    'rgba(150, 230, 160, 0.62)',   // peak BEM suave
             ],
-            /* Raio explode no zoom 9-11 — é o que cria as "manchas
-             * inorgânicas grandes". Per feedback "deixe a cama verde
-             * nesse nível de zoom muito mais suave", radius foi
-             * reduzido de 65/90 → 40/50, e opacity de 0.65/0.50 →
-             * 0.30/0.20. As manchas continuam aparecendo (a sensação
-             * de "presença" segue lá) mas sem dominar a tela toda. */
+            /* Raio MAIOR no zoom out pra blobs perderem aresta —
+             * features se sobrepõem mais, criando manchas orgânicas
+             * que se dissolvem nas bordas em vez de virar círculos
+             * geométricos.
+             *
+             * Trade-off: radius maior + intensity menor = mesmo
+             * "footprint visual" mas com bordas muito mais suaves. */
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
-              3, 18,
-              5, 28,
-              6, 30,
-              7, 35,
-              9, 40,
-              11, 50,
-              12, 28,
+              3, 28,     // antes 18
+              5, 42,     // antes 28
+              6, 42,     // antes 30
+              7, 40,     // antes 35
+              9, 45,     // antes 40
+              11, 55,    // antes 50
+              12, 32,
             ],
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.40,   // suavizado mais
-              5,   0.50,
-              6,   0.50,
-              7,   0.45,
+              3,   0.32,  // reduzido mais ainda
+              5,   0.40,
+              6,   0.42,
+              7,   0.40,
               9,   0.30,
-              11,  0.22,
+              11,  0.20,
               12,  0,
             ],
           },
