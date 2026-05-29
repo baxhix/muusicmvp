@@ -63,17 +63,61 @@ function isMobileViewport(): boolean {
  *     Brasil. Fix per feedback "quase não tenho a percepção WOW".
  *   Custo: dataset duplica em memória (~1.5MB total pra 7k features),
  *   trade aceitável pelo ganho visual. */
-const SOURCE_ID     = 'mapsim-users';
-const SOURCE_HEAT   = 'mapsim-users-heat';
-const LAYER_HEAT    = 'mapsim-heatmap';
-const LAYER_DOTFAR  = 'mapsim-dot-far';      // pontos 2px verdes (zoom out, sample 1/16)
-const LAYER_DOTFAR2 = 'mapsim-dot-far-2';    // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
-const LAYER_CL      = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
-const LAYER_CL_T    = 'mapsim-cluster-count'; // texto só no hover
-const LAYER_DOTGLOW = 'mapsim-dot-glow';     // halo verde difuso em volta dos dots (zoom alto)
-const LAYER_DOT     = 'mapsim-dot';
-const LAYER_HALO    = 'mapsim-superfan-halo';
-const LAYER_SF_PIC  = 'mapsim-superfan-pic';
+const SOURCE_ID      = 'mapsim-users';
+const SOURCE_HEAT    = 'mapsim-users-heat';
+const SOURCE_AMBIENT = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
+const LAYER_HEAT     = 'mapsim-heatmap';
+const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
+const LAYER_DOTFAR   = 'mapsim-dot-far';      // pontos 2px verdes (zoom out, sample 1/16)
+const LAYER_DOTFAR2  = 'mapsim-dot-far-2';    // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
+const LAYER_CL       = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
+const LAYER_CL_T     = 'mapsim-cluster-count'; // texto só no hover
+const LAYER_DOTGLOW  = 'mapsim-dot-glow';     // halo verde difuso em volta dos dots (zoom alto)
+const LAYER_DOT      = 'mapsim-dot';
+const LAYER_HALO     = 'mapsim-superfan-halo';
+const LAYER_SF_PIC   = 'mapsim-superfan-pic';
+
+/* Pontos AMBIENT — distribuição sintética sobre a América do Sul.
+ *
+ * Per feedback "distribua alguns pontos de 1 e 2 px na área. Esses
+ * pontos com o zoom bem afastado podem ser mocados e não
+ * necessariamente um ponto atrelado a um usuário."
+ *
+ * O dataset principal (CITY_SEEDS) concentra os 7k users em ~35
+ * polos urbanos. No zoom Brasil isso deixa vácuos visuais entre as
+ * cidades (Amazônia, Cerrado, Sertão). Esses pontos sintéticos
+ * preenchem esses vácuos com uma "constelação" de presença leve.
+ *
+ * Geração: grid 14×9 sobre o retângulo [-73°W, -36°W] × [-32°S, +4°N]
+ * com perturbação determinística por índices (sem Math.random pra
+ * ser reprodutível em SSR / cache). Alguns pontos caem no oceano
+ * mas são poucos e ficam discretos com a opacity baixa. */
+function generateAmbientPoints(): GeoJSON.Feature[] {
+  const W = -73;
+  const E = -36;
+  const S = -32;
+  const N = 4;
+  const cols = 14;
+  const rows = 9;
+  const features: GeoJSON.Feature[] = [];
+  for (let i = 0; i < cols; i += 1) {
+    for (let j = 0; j < rows; j += 1) {
+      // Perturbação determinística — não-grid sem PRNG.
+      const dx = (((i * 17 + j * 23) % 100) / 100 - 0.5) * 1.6;
+      const dy = (((i * 31 + j * 13) % 100) / 100 - 0.5) * 1.4;
+      const lng = W + (E - W) * (i / cols) + dx;
+      const lat = S + (N - S) * (j / rows) + dy;
+      // Alterna entre 1px (size 0.5) e 2px (size 1) por paridade.
+      const size = (i + j) % 2 === 0 ? 1 : 0.5;
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: { size, ambient: true },
+      });
+    }
+  }
+  return features;
+}
 
 /* Pool de avatares Pravatar (i.pravatar.cc) — 12 fotos de pessoas
  * reais, IDs escolhidos pra diversidade visual. Pré-carregados como
@@ -168,10 +212,12 @@ export default function MapSimulationLayer() {
       try {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
-          LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR, LAYER_HEAT,
+          LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR,
+          LAYER_AMBIENT, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
+        if (currentMap.getSource(SOURCE_AMBIENT)) currentMap.removeSource(SOURCE_AMBIENT);
         if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
         if (currentMap.getSource(SOURCE_ID)) currentMap.removeSource(SOURCE_ID);
         /* Avatares ficam carregados no map mesmo após o flag
@@ -218,6 +264,20 @@ export default function MapSimulationLayer() {
         map.addSource(SOURCE_HEAT, {
           type: 'geojson',
           data: sourceData as GeoJSON.FeatureCollection,
+        });
+      }
+
+      // Source AMBIENT — pontos sintéticos pra densidade no zoom out.
+      // Per feedback "esses pontos com o zoom bem afastado podem ser
+      // mocados". Gera ~126 features uma vez (determinístico) e injeta
+      // como GeoJSON estático.
+      if (!map.getSource(SOURCE_AMBIENT)) {
+        map.addSource(SOURCE_AMBIENT, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: generateAmbientPoints(),
+          } as GeoJSON.FeatureCollection,
         });
       }
 
@@ -273,25 +333,28 @@ export default function MapSimulationLayer() {
             ],
             'heatmap-intensity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.50,   // antes 0.85 — per feedback "substitua a intensidade
-              5, 0.70,   // antes 1.40   no zoom out máximo pela intensidade
-              6, 0.65,   // antes 1.30   da imagem capturada"
+              3, 0.32,   // suavizado mais ainda per "tons mais intensos
+              5, 0.45,   // bem mais suave"
+              6, 0.50,
               7, 0.55,
               9, 0.45,
               11, 0.32,
               12, 0.18,
             ],
-            /* Paleta VERDE puro — per feedback "na mancha com a área
-             * populosa, use a cor verde". Sai do escuro semi-transparente
-             * (sertão) até verde-limão denso (capital fervilhando). */
+            /* Paleta VERDE suave — per feedback "deixe bem mais suave
+             * os tons mais intensos". Tirei o pico amarelo-limão (que
+             * dava sensação de "fervura") e estendi o range no verde
+             * marca. O peak agora é um verde claro discreto em vez
+             * de limão saturado, então mesmo onde a densidade é alta
+             * a cor não chama atenção excessiva. */
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0,    'rgba(0, 0, 0, 0)',
-              0.10, 'rgba(20, 83, 45, 0.35)',      // verde escuro (sertão)
-              0.30, 'rgba(34, 139, 75, 0.55)',     // verde médio
-              0.55, 'rgba(61, 219, 116, 0.75)',    // verde vivo (marca)
-              0.80, 'rgba(134, 239, 172, 0.88)',   // verde claro
-              1,    'rgba(190, 242, 100, 0.95)',   // verde-limão (hot)
+              0.15, 'rgba(20, 83, 45, 0.30)',      // verde escuro (sertão)
+              0.40, 'rgba(34, 139, 75, 0.50)',     // verde médio
+              0.65, 'rgba(61, 219, 116, 0.65)',    // verde vivo (marca)
+              0.90, 'rgba(120, 220, 140, 0.75)',   // verde claro discreto
+              1,    'rgba(150, 230, 160, 0.80)',   // peak sutil (sem amarelo)
             ],
             /* Raio explode no zoom 9-11 — é o que cria as "manchas
              * inorgânicas grandes". Per feedback "deixe a cama verde
@@ -311,13 +374,50 @@ export default function MapSimulationLayer() {
             ],
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.55,   // antes 0.95 — soft glow, não cobertor sólido
-              5,   0.60,   // antes 0.95
-              6,   0.55,
+              3,   0.40,   // suavizado mais
+              5,   0.50,
+              6,   0.50,
               7,   0.45,
               9,   0.30,
               11,  0.22,
               12,  0,
+            ],
+          },
+        });
+      }
+
+      // 1b) AMBIENT DOTS — pontinhos sintéticos espalhados pela
+      //     América do Sul, ativos só no zoom out (3-6).
+      //
+      //     Per feedback "distribua alguns pontos de 1 e 2 px na
+      //     área. Esses pontos com o zoom bem afastado podem ser
+      //     mocados". Os 7k users mock estão concentrados em 35
+      //     polos — entre eles fica vácuo. Esses ~126 pontos
+      //     adicionais (grid 14×9 com perturbação determinística)
+      //     enchem os vácuos sem virar massa, dando a sensação de
+      //     "presença em todo lugar".
+      //
+      //     Alterna entre raio 0.5 (1px) e raio 1 (2px) por paridade
+      //     de índice — mistura de tamanhos cria textura visual
+      //     natural. Fade-out no zoom 6+ pra ceder lugar pros dots
+      //     reais do dataset.
+      if (!map.getLayer(LAYER_AMBIENT)) {
+        map.addLayer({
+          id: LAYER_AMBIENT,
+          type: 'circle',
+          source: SOURCE_AMBIENT,
+          maxzoom: 7,
+          paint: {
+            'circle-radius': ['get', 'size'] as unknown as number,
+            'circle-color': '#3DDB74',
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              3,   0.55,
+              4,   0.55,
+              5,   0.45,
+              6,   0.25,
+              7,   0,
             ],
           },
         });
