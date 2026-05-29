@@ -423,7 +423,14 @@ export default function FeedPanel() {
         <div className={styles.storiesDivider} />
 
         <AudioPost />
-        <ActivityCard data={ACTIVITIES[0]} />
+        {/* Removido o card "co_listening" (Camila também ouvindo
+         *  Boiadeira) per product feedback "No feed, remova as
+         *  notificações do tipo 'Camila também ouvindo Boiadeira'".
+         *  ACTIVITIES[0] (co_listening) deixa de aparecer nas duas
+         *  posições onde estava (aqui e mais abaixo no loop do
+         *  scroll). A entrada continua no array porque outras
+         *  referências numéricas dependem dos índices estáveis
+         *  — só não renderiza mais. */}
 
         {/* Admin-CMS posts published from /admin/feed lead the feed.
             Falls back to nothing while loading so the mock content
@@ -451,7 +458,6 @@ export default function FeedPanel() {
         <AudioPost />
         <ActivityCard data={ACTIVITIES[2]} />
         <MediaPost data={MEDIA[2]} />
-        <ActivityCard data={ACTIVITIES[0]} />
         <MediaPost data={MEDIA[1]} />
         <ActivityCard data={ACTIVITIES[3]} />
         <MediaPost data={MEDIA[0]} />

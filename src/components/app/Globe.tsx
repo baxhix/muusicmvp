@@ -680,34 +680,33 @@ export default function Globe() {
       rafId = requestAnimationFrame(rotate);
     };
 
-    /** Marca atividade do usuário: desliga rotação e re-arma timer de 6s.
-     *
-     *  On mobile we skip the re-arm entirely. The ambient
-     *  rotation is a desktop-only flourish — running a 60Hz
-     *  RAF that updates the camera every frame on a phone
-     *  drove continuous CPU + GPU work for an effect the
-     *  small viewport doesn't really showcase. No timer
-     *  scheduled = no rotation = idle map stays idle. */
+    /** Idle rotation DESATIVADA per product feedback "Após a
+     *  inatividade, o mapa está sendo movimentado de forma muito
+     *  rápida" + "apenas para ter de 500 em 500 mil pontos". O
+     *  spin contínuo a 0.04 lng/frame (≈ 2.4°/s) deixava o mapa
+     *  agitado e cobria a UI; agora o mapa só se move quando o
+     *  usuário explicitamente interage (flyTo via locationSync,
+     *  zoom, drag) ou quando o app dispara um cinematic (Show ao
+     *  vivo). Mantemos toda a infra de `rotate`/`startRotation`/
+     *  `handleActivity` desligada via comentário pra ser fácil
+     *  re-habilitar gated num momento futuro (ex.: cinematic spin
+     *  num marco de 500k Fanpoints) — basta restaurar o setTimeout
+     *  abaixo + hook num me:achievement filtrado por
+     *  isCelebratable. */
     const handleActivity = () => {
-      rotationEnabled = false;
+      // Mantém a função pra futura re-habilitação gated; por ora,
+      // só limpa qualquer timer pendente (defensive).
       if (inactivityTimer) clearTimeout(inactivityTimer);
-      if (isMobileViewport) return;
-      inactivityTimer = setTimeout(() => {
-        rotationEnabled = true;
-        inactivityTimer = null;
-        startRotation();
-      }, INACTIVITY_DELAY_MS);
+      inactivityTimer = null;
+      rotationEnabled = false;
     };
-
-    // Eventos page-level cobrem mouse, teclado, touch, wheel — tudo o que o
-    // usuário pode fazer no app, não só no canvas do mapa.
+    // Mantém o listener pra captura de atividade — necessário pra
+    // outros sistemas que dependem desse sinal evoluírem; só não
+    // arma mais o timer de rotação.
     const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart', 'touchmove'] as const;
     ACTIVITY_EVENTS.forEach((ev) => {
       document.addEventListener(ev, handleActivity, { passive: true });
     });
-
-    // Inicia o relógio de inatividade no mount — sem atividade por 6s, gira.
-    handleActivity();
 
     /**
      * Build the "Title — Artist" inner markup. Title in semibold white,
