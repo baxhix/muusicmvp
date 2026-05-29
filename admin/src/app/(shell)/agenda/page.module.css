@@ -29,11 +29,23 @@
   padding-top: var(--s-3);
 }
 
+/* 3 colunas: spacer | nav group (centro) | Hoje (direita).
+ * Spacer ocupa o mesmo grid track de "Hoje" → o grupo central
+ * de navegação (◀ mês ▶) fica matematicamente centralizado no
+ * espaço disponível, sem o Hoje empurrar visualmente pra
+ * esquerda. */
 .periodRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
   gap: var(--s-2);
+  width: 100%;
+}
+.periodNavGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  justify-self: center;
 }
 .periodLabel {
   font-size: 18px;
@@ -42,6 +54,7 @@
   color: var(--text);
   text-transform: capitalize;
   min-width: 180px;
+  text-align: center;
 }
 .navBtn {
   appearance: none;
@@ -66,7 +79,8 @@
   appearance: none;
   height: 32px;
   padding: 0 14px;
-  margin-left: var(--s-2);
+  /* margin-left removido — grid já posiciona via justify-self. */
+  justify-self: end;
   border-radius: var(--r-full);
   background: transparent;
   border: 1px solid var(--border);
@@ -249,7 +263,6 @@
   background: linear-gradient(135deg, #a855f7, #6366f1);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
 }
 .cellOut .cellPlusBtn {
   display: none;
@@ -299,20 +312,30 @@
   min-width: 0;
   overflow: hidden;
 }
+/* Cores por status — comunicação visual rápida no calendário:
+ *   - Rascunho   → amber (atenção neutra, "ainda em rascunho")
+ *   - Agendado   → magenta/indigo (cor da marca, "no pipeline")
+ *   - Publicado  → verde (success, "ao vivo")
+ *   - Inativo/past → cinza (desaturado, contexto histórico)
+ *
+ * A regra base (.cellEvent) é o agendado. Modificadores
+ * sobrescrevem bg + cor da borda lateral. */
 .cellEvent {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
   width: 100%;
-  padding: 2px 5px;
+  padding: 2px 5px 2px 8px;
   border-radius: var(--r-xs);
   font-size: 10.5px;
   font-weight: 500;
   color: var(--text);
+  /* Agendado (default) — gradient brand magenta→indigo */
   background: linear-gradient(
     135deg,
-    rgba(168, 85, 247, 0.12),
-    rgba(99, 102, 241, 0.10)
+    rgba(168, 85, 247, 0.14),
+    rgba(99, 102, 241, 0.12)
   );
   white-space: nowrap;
   overflow: hidden;
@@ -322,19 +345,62 @@
   font-family: inherit;
   transition: background var(--dur-fast) var(--ease-out);
 }
+/* Barra colorida vertical à esquerda — reforço visual do status
+ * com mais saturação que o bg do chip. */
+.cellEvent::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 2px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #a855f7, #6366f1);
+}
 .cellEvent:hover {
   background: linear-gradient(
     135deg,
-    rgba(168, 85, 247, 0.22),
-    rgba(99, 102, 241, 0.18)
+    rgba(168, 85, 247, 0.24),
+    rgba(99, 102, 241, 0.20)
   );
 }
+
+/* Rascunho — amber. */
+.cellEventDraft {
+  background: rgba(252, 183, 107, 0.14);
+}
+.cellEventDraft:hover {
+  background: rgba(252, 183, 107, 0.24);
+}
+.cellEventDraft::before {
+  background: var(--warning);
+}
+
+/* Publicado — verde. */
+.cellEventPublished {
+  background: var(--success-soft);
+}
+.cellEventPublished:hover {
+  background: rgba(34, 197, 94, 0.20);
+}
+.cellEventPublished::before {
+  background: var(--success);
+}
+
+/* Past (publicações/agendamentos no passado) ou status inativo —
+ * cinza desaturado pra empurrar visualmente o item pra contexto
+ * histórico. Vence draft/published em especificidade quando
+ * combinado (`cellEvent cellEventPublished cellEventPast`). */
 .cellEventPast {
   background: var(--surface-2);
   color: var(--text-mute);
 }
 .cellEventPast:hover {
   background: var(--surface-hover);
+}
+.cellEventPast::before {
+  background: var(--text-mute);
+  opacity: 0.5;
 }
 .cellEventTime {
   font-variant-numeric: tabular-nums;
@@ -560,8 +626,9 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Barra accent vertical de 3px à esquerda — gradient se
- * scheduled, cinza neutro se published. */
+/* Barra accent vertical de 3px à esquerda — mesma comunicação
+ * cromática do calendário (.cellEvent): agendado magenta/indigo,
+ * rascunho amber, publicado verde, inativo cinza. */
 .cardAccent {
   position: absolute;
   top: 14px;
@@ -571,7 +638,13 @@
   border-radius: var(--r-full);
   background: linear-gradient(180deg, #a855f7, #6366f1);
 }
+.cardAccentDraft {
+  background: var(--warning);
+}
 .cardAccentPublished {
+  background: var(--success);
+}
+.cardAccentInactive {
   background: var(--text-mute);
   opacity: 0.6;
 }
@@ -659,16 +732,63 @@
   font-weight: 500;
   color: var(--text-mute);
 }
-.publishedPill {
+/* Pills de status (PostCard meta line) — paleta espelhada com
+ * .cellEvent e .cardAccent: amber/magenta/green/gray. */
+.statusPill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
   border-radius: var(--r-full);
-  background: var(--success-soft);
-  color: var(--success);
   font-size: 10.5px;
   font-weight: 600;
+  text-transform: lowercase;
+}
+.statusPillScheduled {
+  background: rgba(168, 85, 247, 0.14);
+  color: #a855f7;
+}
+.statusPillDraft {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.statusPillPublished {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.statusPillInactive {
+  background: var(--neutral-soft);
+  color: var(--text-mute);
+}
+
+/* Legenda de status (lê-se uma vez, fica numa linha discreta
+ * abaixo das tabs). 3 dots coloridos + label cada. */
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: 11px;
+  color: var(--text-mute);
+}
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legendDotDraft {
+  background: var(--warning);
+}
+.legendDotScheduled {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+.legendDotPublished {
+  background: var(--success);
 }
 .metaSep {
   width: 3px;

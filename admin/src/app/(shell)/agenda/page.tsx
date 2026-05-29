@@ -135,6 +135,35 @@ function timeRelative(iso: string, now: Date): string {
   return isPast ? `há ${d} dias` : `em ${d} dias`;
 }
 
+/* Comunicação por cor dos status — espelhada entre
+ *   .cellEvent  (chips no calendário Mês)
+ *   .cardAccent (barra vertical no PostCard)
+ *   .statusPill (pill na linha de meta do PostCard)
+ * pra que o operador identifique o status do post a partir da
+ * cor independente de onde está olhando.
+ *
+ * Mapping:
+ *   draft     → amber  (rascunho, ainda não foi pra fila)
+ *   scheduled → magenta/indigo (cor da marca, no pipeline)
+ *   published → green  (ao vivo no feed)
+ *   inactive  → cinza  (soft-hide pelo admin)
+ */
+type StatusVisual = 'scheduled' | 'draft' | 'published' | 'inactive';
+function statusVisual(status: FeedItem['status']): StatusVisual {
+  if (status === 'draft') return 'draft';
+  if (status === 'published') return 'published';
+  if (status === 'inactive') return 'inactive';
+  return 'scheduled';
+}
+function statusLabel(s: StatusVisual): string {
+  switch (s) {
+    case 'draft':     return 'rascunho';
+    case 'published': return 'publicado';
+    case 'inactive':  return 'inativo';
+    default:          return 'agendado';
+  }
+}
+
 function typeInfo(t: FeedItemType | null): { label: string; icon: React.ReactNode } {
   switch (t) {
     case 'image':         return { label: 'Imagem',      icon: <IconImage size={11} /> };
@@ -391,23 +420,29 @@ export default function AdminAgendaPage() {
          *   2) [Mês] [Semana] [Lista]  ← tabs com underline */}
         <div className={styles.toolbar}>
           <div className={styles.periodRow}>
-            <button
-              type="button"
-              className={styles.navBtn}
-              onClick={navPrev}
-              aria-label="Período anterior"
-            >
-              <IconChevronLeft size={16} />
-            </button>
-            <span className={styles.periodLabel}>{periodLabel}</span>
-            <button
-              type="button"
-              className={styles.navBtn}
-              onClick={navNext}
-              aria-label="Próximo período"
-            >
-              <IconChevronRight size={16} />
-            </button>
+            {/* Spacer invisível na coluna 1 do grid — ocupa o
+             *  mesmo track-size que o "Hoje" pra centralizar
+             *  matematicamente o nav group no meio. */}
+            <span aria-hidden="true" />
+            <div className={styles.periodNavGroup}>
+              <button
+                type="button"
+                className={styles.navBtn}
+                onClick={navPrev}
+                aria-label="Período anterior"
+              >
+                <IconChevronLeft size={16} />
+              </button>
+              <span className={styles.periodLabel}>{periodLabel}</span>
+              <button
+                type="button"
+                className={styles.navBtn}
+                onClick={navNext}
+                aria-label="Próximo período"
+              >
+                <IconChevronRight size={16} />
+              </button>
+            </div>
             <button
               type="button"
               className={styles.todayBtn}
@@ -445,6 +480,23 @@ export default function AdminAgendaPage() {
               </button>
             ))}
             <span className={styles.tabsIndicator} aria-hidden="true" />
+          </div>
+
+          {/* Legenda de cores — referência rápida pra status dos
+           *  itens no calendário e na lista. */}
+          <div className={styles.legend} aria-hidden="true">
+            <span className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${styles.legendDotDraft}`} />
+              Rascunho
+            </span>
+            <span className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${styles.legendDotScheduled}`} />
+              Agendado
+            </span>
+            <span className={styles.legendItem}>
+              <span className={`${styles.legendDot} ${styles.legendDotPublished}`} />
+              Publicado
+            </span>
           </div>
         </div>
 
@@ -677,13 +729,27 @@ function MonthView({
                   {visible.map((p) => {
                     const iso = postDateIso(p);
                     const isPast = iso ? new Date(iso).getTime() < now.getTime() : false;
+                    const sv = statusVisual(p.status);
+                    /* Cor do chip = cor do status quando NÃO está no
+                     * passado. Past tem precedência visual (cinza)
+                     * porque indica "isso já aconteceu" — sobrescreve
+                     * a paleta de status. */
+                    const statusClass = isPast
+                      ? styles.cellEventPast
+                      : sv === 'draft'
+                        ? styles.cellEventDraft
+                        : sv === 'published'
+                          ? styles.cellEventPublished
+                          : sv === 'inactive'
+                            ? styles.cellEventPast
+                            : '';
                     return (
                       <span
                         key={p.id}
-                        className={`${styles.cellEvent} ${isPast ? styles.cellEventPast : ''}`}
+                        className={`${styles.cellEvent} ${statusClass}`}
                         role="button"
                         tabIndex={-1}
-                        aria-label={`Abrir ${p.title?.trim() || 'publicação'}`}
+                        aria-label={`${statusLabel(sv)}: ${p.title?.trim() || 'publicação'}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onPickPost(p);
@@ -909,7 +975,7 @@ interface PostCardProps {
 function PostCard({ post, now, animDelay, onClick }: PostCardProps) {
   const t = typeInfo(post.type);
   const iso = postDateIso(post);
-  const isPublished = post.status === 'published';
+  const sv = statusVisual(post.status);
   const cover = post.media.find((m) => m.kind !== 'youtube')?.url ?? null;
   const yt = post.media.find((m) => m.kind === 'youtube');
   const thumbSrc = cover ? resolveAssetUrl(cover) : null;
@@ -917,6 +983,25 @@ function PostCard({ post, now, animDelay, onClick }: PostCardProps) {
     post.author?.name?.trim() ||
     post.author?.email?.split('@')[0] ||
     'Sem autor';
+
+  /* Accent vertical + pill seguem o status visual — paleta
+   * espelhada com os chips do calendário Mês. */
+  const accentClass =
+    sv === 'draft'
+      ? styles.cardAccentDraft
+      : sv === 'published'
+        ? styles.cardAccentPublished
+        : sv === 'inactive'
+          ? styles.cardAccentInactive
+          : '';
+  const pillClass =
+    sv === 'draft'
+      ? styles.statusPillDraft
+      : sv === 'published'
+        ? styles.statusPillPublished
+        : sv === 'inactive'
+          ? styles.statusPillInactive
+          : styles.statusPillScheduled;
 
   return (
     <button
@@ -927,7 +1012,7 @@ function PostCard({ post, now, animDelay, onClick }: PostCardProps) {
       aria-label={`Abrir detalhe de ${post.title || 'publicação'}`}
     >
       <span
-        className={`${styles.cardAccent} ${isPublished ? styles.cardAccentPublished : ''}`}
+        className={`${styles.cardAccent} ${accentClass}`}
         aria-hidden="true"
       />
       <div className={styles.time}>
@@ -954,14 +1039,14 @@ function PostCard({ post, now, animDelay, onClick }: PostCardProps) {
           {post.title?.trim() || '(sem título)'}
         </span>
         <span className={styles.cardMeta}>
-          {isPublished ? (
-            <span className={styles.publishedPill}>Publicado</span>
-          ) : (
-            <span className={styles.typePill}>
-              {t.icon}
-              {t.label}
-            </span>
-          )}
+          <span className={`${styles.statusPill} ${pillClass}`}>
+            {statusLabel(sv)}
+          </span>
+          <span className={styles.metaSep} aria-hidden="true" />
+          <span className={styles.typePill}>
+            {t.icon}
+            {t.label}
+          </span>
           <span className={styles.metaSep} aria-hidden="true" />
           <span className={styles.cardAuthor} title={author}>
             {author}
