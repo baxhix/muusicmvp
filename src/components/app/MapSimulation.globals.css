@@ -29,29 +29,20 @@
    * "atrás" da pílula do nome. */
   pointer-events: none;
   user-select: none;
-  /* Estado inicial: invisível + ligeiramente encolhido.
-   * Per feedback "faça com que eles não se movam após aparecerem"
-   * — removido translateY do estado inicial e dos -in/-out.
-   * Animação fica fade + scale leve no centro, SEM bounce ou
-   * deslocamento vertical. */
+  /* Per feedback "Os usuários ainda parecem se mover" — removido
+   * TODO transform (era scale 0.7→1, que dava sensação de
+   * expansão). Agora a entrada/saída é puro fade, sem qualquer
+   * movimento visual. */
   opacity: 0;
-  transform: scale(0.7);
-  transform-origin: center bottom;
-  transition:
-    opacity 380ms ease,
-    transform 380ms ease;
+  transition: opacity 380ms ease;
   z-index: 5;
 }
 .mapsim-reveal-in {
   opacity: 1;
-  transform: scale(1);
 }
 .mapsim-reveal-out {
   opacity: 0;
-  transform: scale(0.85);
-  transition:
-    opacity 320ms ease,
-    transform 320ms ease-in;
+  transition: opacity 320ms ease;
 }
 
 /* Wrapper relativo da foto — referência pra paleta absoluta. */
@@ -173,14 +164,8 @@
   outline-offset: 2px;
 }
 
-/* Respeita prefers-reduced-motion. */
+/* Respeita prefers-reduced-motion — sem o scale do reaction box. */
 @media (prefers-reduced-motion: reduce) {
-  .mapsim-reveal {
-    transform: none;
-    transition: opacity 380ms ease;
-  }
-  .mapsim-reveal-in { transform: none; }
-  .mapsim-reveal-out { transform: none; }
   .mapsim-reveal-actions {
     transform: translateY(-50%);
     transition: opacity 200ms ease;

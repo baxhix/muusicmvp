@@ -259,7 +259,7 @@ export default function MapSimulationLayer() {
           id: LAYER_HEAT,
           type: 'heatmap',
           source: SOURCE_HEAT,
-          maxzoom: 8,
+          maxzoom: 12,
           paint: {
             /* Peso 2.5× pra online — eles dominam o gradiente
              * e dão a sensação de "presença AGORA" em vez de
@@ -274,8 +274,10 @@ export default function MapSimulationLayer() {
               3, 0.85,
               5, 1.40,
               6, 1.30,
-              7, 0.80,
-              8, 0.30,
+              7, 1.20,
+              9, 1.10,
+              11, 0.85,
+              12, 0.35,
             ],
             /* Paleta VERDE puro — per feedback "na mancha com a área
              * populosa, use a cor verde". Sai do escuro semi-transparente
@@ -289,21 +291,31 @@ export default function MapSimulationLayer() {
               0.80, 'rgba(134, 239, 172, 0.88)',   // verde claro
               1,    'rgba(190, 242, 100, 0.95)',   // verde-limão (hot)
             ],
+            /* Raio explode no zoom 9-11 — é o que cria as "manchas
+             * inorgânicas grandes" que o usuário pediu. Em zoom 10
+             * (cidade) cada feature pinga sua densidade num raio
+             * de 80px, então as features próximas se sobrepõem
+             * organicamente em 2-3 manchas grandes em vez de
+             * 30 blobs discretos. */
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
               3, 18,
               5, 28,
               6, 30,
-              7, 26,
-              8, 18,
+              7, 40,
+              9, 65,
+              11, 90,
+              12, 40,
             ],
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
               3,   0.95,
               5,   0.95,
               6,   0.80,
-              7,   0.45,
-              8,   0,
+              7,   0.70,
+              9,   0.65,
+              11,  0.50,
+              12,  0,
             ],
           },
         });
@@ -389,13 +401,21 @@ export default function MapSimulationLayer() {
              * gradient radial automaticamente (centro alpha 1, borda
              * alpha 0). Resultado: blob orgânico com fade, sem aresta. */
             'circle-blur': 1.0,
+            /* Opacity reduzida no zoom 8-11 — nessa faixa o LAYER_HEAT
+             * (heatmap radius grande) já está pintando as manchas
+             * inorgânicas grandes que o usuário pediu. Se os clusters
+             * individuais aparecessem fortes em cima, viraria 30 blobs
+             * separados redondos novamente. Aqui eles só "afiam" o
+             * centro das manchas. Em zoom 5-7 (transição do globo
+             * pro detalhe) eles ainda lideram a comunicação. */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               5,   0,
               5.5, 0.55,
-              8,   0.70,
-              10,  0.65,
-              11,  0.45,
+              7,   0.50,
+              8,   0.25,
+              10,  0.18,
+              11,  0,
               12,  0,
             ],
           },
@@ -785,9 +805,11 @@ export default function MapSimulationLayer() {
                 new CustomEvent('app:hearts-cascade', { detail: { text: emoji } }),
               );
             } catch { /* SSR / detached — ignorar */ }
-            /* Fecha o reaction box; deixa o avatar visível pelo
-             * tempo restante do lifetime. */
+            /* Após escolher uma reaction, fecha o box e reagenda
+             * a saída pra 1.5s (tempo curto pra usuário ver o
+             * efeito completar antes do avatar sumir). */
             el.classList.remove('mapsim-reveal-open');
+            scheduleExit(1500);
           });
           actions.appendChild(btn);
         });
@@ -797,6 +819,51 @@ export default function MapSimulationLayer() {
         name.className = 'mapsim-reveal-name';
         name.textContent = firstName;
         el.appendChild(name);
+
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -8] })
+          .setLngLat([lng, lat])
+          .addTo(map);
+        activeMarkers.push(marker);
+
+        /* ── Lifecycle de saída controlado por handles dinâmicas ──
+         * Per feedback "Quando eu clicar no usuário e o box de
+         * reações aparecer, o tempo para ele desaparecer deve ser
+         * desconsiderado". Antes os timeouts eram fire-and-forget
+         * (setTimeout direto no scope do spawn) → impossível
+         * cancelar. Agora guardamos as handles em `exitT` e
+         * `removeT` e oferecemos `cancelExit()` / `scheduleExit()`
+         * pra suspender e re-agendar conforme o usuário interage.
+         */
+        let exitT: number | null = null;
+        let removeT: number | null = null;
+
+        const cancelExit = () => {
+          if (exitT !== null) {
+            window.clearTimeout(exitT);
+            exitT = null;
+          }
+          if (removeT !== null) {
+            window.clearTimeout(removeT);
+            removeT = null;
+          }
+        };
+
+        const scheduleExit = (lifetimeMs: number = REVEAL_LIFETIME_MS) => {
+          cancelExit();
+          exitT = window.setTimeout(() => {
+            el.classList.remove('mapsim-reveal-in');
+            el.classList.remove('mapsim-reveal-open');
+            el.classList.add('mapsim-reveal-out');
+            exitT = null;
+          }, lifetimeMs);
+          removeT = window.setTimeout(() => {
+            try { marker.remove(); } catch { /* já removido */ }
+            const idx = activeMarkers.indexOf(marker);
+            if (idx >= 0) activeMarkers.splice(idx, 1);
+            removeT = null;
+          }, lifetimeMs + REVEAL_EXIT_MS);
+          revealTimers.push(exitT, removeT);
+        };
 
         /* Click no photo abre/fecha o reaction box. stopPropagation
          * impede que o map.on('click') zere o hover acima. */
@@ -812,13 +879,20 @@ export default function MapSimulationLayer() {
           } else {
             actions.classList.remove('mapsim-reveal-actions-left');
           }
-          el.classList.toggle('mapsim-reveal-open');
+          const willOpen = !el.classList.contains('mapsim-reveal-open');
+          if (willOpen) {
+            /* Abrindo o box → suspende o timer de saída.
+             * O usuário tem tempo livre pra ler o nome e escolher
+             * a reaction. */
+            cancelExit();
+            el.classList.add('mapsim-reveal-open');
+          } else {
+            /* Fechando o box (toggle off pelo mesmo botão) →
+             * dá tempo curto e some. */
+            el.classList.remove('mapsim-reveal-open');
+            scheduleExit(1500);
+          }
         });
-
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -8] })
-          .setLngLat([lng, lat])
-          .addTo(map);
-        activeMarkers.push(marker);
 
         /* Trigger animação de entrada no próximo frame (CSS transition
          * só funciona se houver mudança de estado APÓS o elemento estar
@@ -829,21 +903,8 @@ export default function MapSimulationLayer() {
           });
         });
 
-        /* Saída: classList troca pra fade out, depois remove.
-         * Também fecha o reaction box se ainda estiver aberto. */
-        const exitT = window.setTimeout(() => {
-          el.classList.remove('mapsim-reveal-in');
-          el.classList.remove('mapsim-reveal-open');
-          el.classList.add('mapsim-reveal-out');
-        }, REVEAL_LIFETIME_MS);
-
-        const removeT = window.setTimeout(() => {
-          try { marker.remove(); } catch { /* já removido */ }
-          const idx = activeMarkers.indexOf(marker);
-          if (idx >= 0) activeMarkers.splice(idx, 1);
-        }, REVEAL_LIFETIME_MS + REVEAL_EXIT_MS);
-
-        revealTimers.push(exitT, removeT);
+        // Agenda o primeiro lifecycle de saída com o lifetime padrão.
+        scheduleExit();
       };
 
       const tick = () => {
