@@ -95,14 +95,27 @@ const PRAVATAR_IDS = [1, 5, 11, 13, 17, 23, 29, 33, 41, 47, 53, 61];
  */
 const DOT_COLOR_EXPR = '#3DDB74';
 
-/** Raio do dot por tier — superfãs são maiores. */
+/** Raio do dot por tier.
+ *
+ *  Superfã mantém o tamanho original (6) — eles também recebem o
+ *  mini avatar de foto real por cima (LAYER_SF_PIC), então o dot
+ *  é a "moldura verde" embaixo da foto.
+ *
+ *  Os demais tiers foram cortados pela metade per feedback —
+ *  buscando uma malha mais densa e menos pesada visualmente quando
+ *  o mapa tem milhares de pontos verdes simultâneos. Tamanhos antes
+ *  vs depois:
+ *    top100   5    → 2.5
+ *    top1000  4.2  → 2.1
+ *    fan      3.5  → 1.75
+ */
 const TIER_RADIUS_EXPR = [
   'match',
   ['get', 'tier'],
   'superfan', 6,
-  'top100',   5,
-  'top1000',  4.2,
-  /* fan default */ 3.5,
+  'top100',   2.5,
+  'top1000',  2.1,
+  /* fan default */ 1.75,
 ] as unknown[];
 
 interface HoverInfo {
