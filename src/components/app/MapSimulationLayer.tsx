@@ -66,7 +66,8 @@ function isMobileViewport(): boolean {
 const SOURCE_ID     = 'mapsim-users';
 const SOURCE_HEAT   = 'mapsim-users-heat';
 const LAYER_HEAT    = 'mapsim-heatmap';
-const LAYER_DOTFAR  = 'mapsim-dot-far';      // pontos 2px verdes visíveis no zoom out
+const LAYER_DOTFAR  = 'mapsim-dot-far';      // pontos 2px verdes (zoom out, sample 1/16)
+const LAYER_DOTFAR2 = 'mapsim-dot-far-2';    // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
 const LAYER_CL      = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
 const LAYER_CL_T    = 'mapsim-cluster-count'; // texto só no hover
 const LAYER_DOTGLOW = 'mapsim-dot-glow';     // halo verde difuso em volta dos dots (zoom alto)
@@ -167,7 +168,7 @@ export default function MapSimulationLayer() {
       try {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
-          LAYER_CL_T, LAYER_CL, LAYER_DOTFAR, LAYER_HEAT,
+          LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
@@ -360,9 +361,52 @@ export default function MapSimulationLayer() {
               'interpolate', ['linear'], ['zoom'],
               3,   0.75,
               5,   0.90,
-              8,   0.95,    // plateau alto na zona do feedback
-              10,  0.85,
-              11,  0.45,    // começa a ceder lugar pros dots individuais
+              8,   0.95,
+              10,  0.95,
+              11,  0.80,
+              12,  0,
+            ],
+          },
+        });
+      }
+
+      // 2b) DOTS-FAR-2 — pontinhos 1px ADICIONAIS no zoom intermediário.
+      //
+      //     Per feedback "nesse tipo de zoom, deixe pontos de 1px e
+      //     2px visíveis também" — o screenshot do zoom Brasília
+      //     mostrava poucos pontos espalhados; sentia falta de
+      //     densidade. Esse layer dobra a quantidade de dots na
+      //     faixa zoom 9-12, mas com raio menor (0.5 = 1px diâmetro)
+      //     pra criar uma textura mista (2px + 1px) sem virar massa.
+      //
+      //     Filter `avatarSeed % 8 == 0 AND % 16 != 0` pega 4 valores
+      //     do mod 8 (8, 24, 40, 56) que NÃO estão no LAYER_DOTFAR
+      //     (que usa mod 16). Resultado: outros ~437 dots adicionais
+      //     → total ~874 nessa zona. minzoom 9 = só aparece quando
+      //     o zoom já é alto o suficiente pra pontos de 1px serem
+      //     perceptíveis.
+      if (!map.getLayer(LAYER_DOTFAR2)) {
+        map.addLayer({
+          id: LAYER_DOTFAR2,
+          type: 'circle',
+          source: SOURCE_HEAT,
+          minzoom: 9,
+          maxzoom: 12,
+          filter: [
+            'all',
+            ['==', ['get', 'online'], 1],
+            ['==', ['%', ['get', 'avatarSeed'], 8], 0],
+            ['!=', ['%', ['get', 'avatarSeed'], 16], 0],
+          ],
+          paint: {
+            'circle-radius': 0.5,                    // 1px diameter
+            'circle-color': '#3DDB74',
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              9,   0,
+              10,  0.75,
+              11,  0.85,
               12,  0,
             ],
           },
