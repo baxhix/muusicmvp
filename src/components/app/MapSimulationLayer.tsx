@@ -17,17 +17,25 @@ import styles from './SimulationHUD.module.css';
  * todas as sources/layers — zero leak.
  *
  * Bandas de zoom (LOD):
- *   - zoom 3-6   → só heatmap; clusters/dots ocultos
- *   - zoom 5-8   → clusters + heatmap esmaecido
+ *   - zoom 3-7   → heatmap dominante; clusters começam a aparecer
+ *                  em 5 mas convivem com o cobertor de calor
+ *   - zoom 7-8   → cross-fade heatmap → clusters/dots
  *   - zoom 8-11  → clusters + dots por tier
  *   - zoom 11+   → dots por tier, halo em superfãs visíveis
  *
+ * Heatmap arquitetura: lê de SOURCE_HEAT (não-clusterizada) pra
+ * que cada um dos 7k usuários contribua individualmente pra
+ * convolução de densidade. Tentativa anterior usava a source
+ * clusterizada — features de cluster têm `sum_weight` mas NÃO
+ * `weight`, então a `heatmap-weight: ['get', 'weight']` lia
+ * undefined → renderia com peso 0 → "quase invisível no zoom
+ * Brasil" (reportado pelo usuário).
+ *
  * Otimizações de GPU/bateria (per feedback "celular esquentando"):
- *   - Heatmap radius/intensity reduzidos vs primeira iteração
- *   - Heatmap maxzoom 7 (era 9) — fade-out mais cedo
- *   - Mobile: dataset subsampleado pra 1.500 (era 3000); halo
- *     layer desligado; cluster radius maior (menos clusters
- *     simultâneos no viewport)
+ *   - Mobile: dataset subsampleado pra ~2.333 features (i % 3)
+ *   - Halo layer desligado no mobile
+ *   - Cluster radius maior no mobile (70 vs 50)
+ *   - HUD sem backdrop-filter (era major source of GPU thrash)
  *
  * Não há drift de movimento — dataset estático per product spec.
  */
@@ -40,12 +48,23 @@ function isMobileViewport(): boolean {
   return window.innerWidth < 768;
 }
 
-const SOURCE_ID  = 'mapsim-users';
-const LAYER_HEAT = 'mapsim-heatmap';
-const LAYER_CL   = 'mapsim-clusters';
-const LAYER_CL_T = 'mapsim-cluster-count';
-const LAYER_DOT  = 'mapsim-dot';
-const LAYER_HALO = 'mapsim-superfan-halo';
+/* Duas sources sobre o MESMO dataset:
+ *   - SOURCE_ID: clusterizada via Supercluster, alimenta clusters
+ *     + dots no zoom alto.
+ *   - SOURCE_HEAT: NÃO-clusterizada, alimenta o heatmap. Sem essa
+ *     separação, a `heatmap-weight: ['get', 'weight']` lia do
+ *     CLUSTER FEATURE (que não tem `weight`, só `sum_weight`) e
+ *     a heatmap renderizava com peso 0 — quase invisível no zoom
+ *     Brasil. Fix per feedback "quase não tenho a percepção WOW".
+ *   Custo: dataset duplica em memória (~1.5MB total pra 7k features),
+ *   trade aceitável pelo ganho visual. */
+const SOURCE_ID   = 'mapsim-users';
+const SOURCE_HEAT = 'mapsim-users-heat';
+const LAYER_HEAT  = 'mapsim-heatmap';
+const LAYER_CL    = 'mapsim-clusters';
+const LAYER_CL_T  = 'mapsim-cluster-count';
+const LAYER_DOT   = 'mapsim-dot';
+const LAYER_HALO  = 'mapsim-superfan-halo';
 
 /* Cor do dot:
  *  - online (lastActiveSec < 300, denormalizado em `online === 1`):
@@ -113,6 +132,7 @@ export default function MapSimulationLayer() {
         for (const id of [LAYER_HALO, LAYER_DOT, LAYER_CL_T, LAYER_CL, LAYER_HEAT]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
+        if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
         if (currentMap.getSource(SOURCE_ID)) currentMap.removeSource(SOURCE_ID);
       } catch {
         /* mapa pode estar sendo destruído — ignorar */
@@ -144,7 +164,22 @@ export default function MapSimulationLayer() {
           }
         : data.geojson;
 
-      // Source clusterizada — Mapbox Supercluster nativo.
+      // Source NÃO-clusterizada — exclusiva pro heatmap. Cada
+      // feature individual entra na convolução de densidade do
+      // Mapbox, gerando o "cobertor" contínuo que pinta o Brasil
+      // todo. Se reaproveitássemos a source clusterizada abaixo,
+      // o heatmap leria features de CLUSTER (cujo `weight` é
+      // undefined; só `sum_weight` existe) → renderia com peso 0
+      // → quase invisível. Esse era o bug visual reportado.
+      if (!map.getSource(SOURCE_HEAT)) {
+        map.addSource(SOURCE_HEAT, {
+          type: 'geojson',
+          data: sourceData as GeoJSON.FeatureCollection,
+        });
+      }
+
+      // Source clusterizada — Mapbox Supercluster nativo. Alimenta
+      // clusters numerados e dots individuais (LOD por zoom).
       if (!map.getSource(SOURCE_ID)) {
         map.addSource(SOURCE_ID, {
           type: 'geojson',
@@ -162,44 +197,69 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 1) HEATMAP — atmosférico, peak agora em zoom 5-6 (era 7).
-      //    Radius/intensity reduzidos pra cortar GPU em ~40%.
+      // 1) HEATMAP — o "cobertor" de presença que vende o WOW.
+      //
+      //    Bombamos vs iteração anterior porque o usuário reportou
+      //    "quase não tenho percepção WOW da quantidade de online".
+      //    A causa raiz era o source clusterizado (corrigido acima);
+      //    aqui amplificamos params pra que, com os pontos certos
+      //    chegando à heatmap, o Brasil fique visualmente vivo:
+      //      - Intensity +60% no peak (1.4 vs 0.9 antes)
+      //      - Radius +30% (28 vs 22) — borrões maiores, conectando
+      //        cidades vizinhas num lençol contínuo
+      //      - Opacity peak 0.95 (era 0.9) — mais punch
+      //      - maxzoom 8 (era 7) — heatmap persiste enquanto rola
+      //        para o zoom dos clusters, suavizando a transição
+      //      - online amplifica: features online (lastActiveSec<300)
+      //        recebem peso 2.5× via expressão case — o "vivo"
+      //        domina o gradiente, não a contagem total.
       if (!map.getLayer(LAYER_HEAT)) {
         map.addLayer({
           id: LAYER_HEAT,
           type: 'heatmap',
-          source: SOURCE_ID,
-          maxzoom: 7,
+          source: SOURCE_HEAT,
+          maxzoom: 8,
           paint: {
-            'heatmap-weight': ['get', 'weight'],
+            /* Peso 2.5× pra online — eles dominam o gradiente
+             * e dão a sensação de "presença AGORA" em vez de
+             * "histórico de uso". */
+            'heatmap-weight': [
+              'case',
+              ['==', ['get', 'online'], 1], 2.5,
+              1,
+            ],
             'heatmap-intensity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.5,
-              5, 0.85,
-              6, 0.9,
-              7, 0.4,
+              3, 0.85,
+              5, 1.40,
+              6, 1.30,
+              7, 0.80,
+              8, 0.30,
             ],
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
-              0,   'rgba(0, 0, 0, 0)',
-              0.2, 'rgba(99, 102, 241, 0.32)',     // indigo
-              0.5, 'rgba(168, 85, 247, 0.50)',     // magenta
-              0.8, 'rgba(236, 72, 153, 0.70)',     // pink
-              1,   'rgba(251, 191, 36, 0.80)',     // amber (hot)
+              0,    'rgba(0, 0, 0, 0)',
+              0.10, 'rgba(99, 102, 241, 0.32)',    // indigo (sertão)
+              0.30, 'rgba(168, 85, 247, 0.55)',    // magenta
+              0.55, 'rgba(236, 72, 153, 0.75)',    // pink
+              0.80, 'rgba(251, 146, 60, 0.85)',    // orange
+              1,    'rgba(251, 191, 36, 0.92)',    // amber (hot — capital fervilhando)
             ],
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
-              3, 10,
-              5, 16,
-              6, 20,
-              7, 12,
+              3, 18,
+              5, 28,
+              6, 30,
+              7, 26,
+              8, 18,
             ],
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.9,
-              5, 0.85,
-              6, 0.55,
-              7, 0,
+              3,   0.95,
+              5,   0.95,
+              6,   0.80,
+              7,   0.45,
+              8,   0,
             ],
           },
         });
