@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import FeedComposerDrawer from '@/components/admin/FeedComposerDrawer';
+import { useRouter } from 'next/navigation';
 import {
   IconCalendar,
   IconChevronLeft,
@@ -17,6 +18,7 @@ import {
   IconEye,
   IconCheckCircle,
   IconPlus,
+  IconBell,
 } from '@/components/icons';
 import { feedService } from '@/services/feed';
 import { resolveAssetUrl } from '@/lib/utils';
@@ -151,12 +153,17 @@ function typeInfo(t: FeedItemType | null): { label: string; icon: React.ReactNod
 
 export default function AdminAgendaPage() {
   const { push } = useToast();
+  const router = useRouter();
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [view, setView] = useState<ViewMode>('month');
   const [cursor, setCursor] = useState<Date>(() => startOfDay(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date>(() => startOfDay(new Date()));
   const [editingPost, setEditingPost] = useState<FeedItem | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  /* Chooser de "criar algo neste dia" — aparece quando o usuário
+   * clica no botão "+" que surge no hover de uma célula. Estado
+   * = data alvo (a UI infere "abrir"). */
+  const [chooserDay, setChooserDay] = useState<Date | null>(null);
 
   // `now` re-renderiza a cada 30s pra labels relativos ("em 3h")
   // não congelarem se a aba ficar aberta.
@@ -268,6 +275,37 @@ export default function AdminAgendaPage() {
     setCursor(today);
     setSelectedDay(today);
   }, []);
+
+  /* ── Chooser de "criar algo neste dia" ────────────────── */
+
+  const openChooser = useCallback((date: Date) => {
+    setChooserDay(startOfDay(date));
+  }, []);
+  const closeChooser = useCallback(() => setChooserDay(null), []);
+
+  const chooseCreatePost = useCallback(() => {
+    setChooserDay(null);
+    setEditingPost(null);
+    setComposerOpen(true);
+  }, []);
+  const chooseCreateNotification = useCallback(() => {
+    setChooserDay(null);
+    /* Sem suporte ainda de prefill de data no editor de
+     * notificações — leva o operador pra lista de notificações
+     * pra criar a partir de lá. Quando o editor aceitar `?date=`,
+     * passamos via query. */
+    router.push('/notificacoes');
+  }, [router]);
+
+  // Esc fecha o chooser.
+  useEffect(() => {
+    if (!chooserDay) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeChooser();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [chooserDay, closeChooser]);
 
   /* ── Navegação de período ───────────────────────────── */
 
@@ -440,6 +478,7 @@ export default function AdminAgendaPage() {
                 now={now}
                 onSelectDay={setSelectedDay}
                 onPickPost={openDetail}
+                onCreateForDay={openChooser}
               />
             )}
             {view === 'week' && (
@@ -465,6 +504,84 @@ export default function AdminAgendaPage() {
         )}
       </div>
 
+      {/* Chooser de "criar algo neste dia" — aparece quando o
+       *  usuário clica no botão "+" que surge no hover de uma
+       *  célula do mês. Dois caminhos de criação por enquanto:
+       *  publicação no feed (abre o composer) e notificação
+       *  (navega pra /notificacoes pra criar lá). */}
+      {chooserDay && (
+        <div
+          className={styles.chooserScrim}
+          onClick={closeChooser}
+          role="presentation"
+        >
+          <div
+            className={styles.chooserCard}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Criar algo neste dia"
+          >
+            <div className={styles.chooserHeader}>
+              <span className={styles.chooserTitle}>Criar em</span>
+              <span className={styles.chooserSub}>
+                {(() => {
+                  const lbl = dayLabel(chooserDay, today);
+                  return lbl.isToday ? 'hoje' : lbl.big.toLowerCase();
+                })()} · {WEEKDAYS_LONG[chooserDay.getDay()].toLowerCase()}
+              </span>
+            </div>
+            <div className={styles.chooserOptions}>
+              <button
+                type="button"
+                className={styles.chooserOpt}
+                onClick={chooseCreatePost}
+              >
+                <span className={styles.chooserOptIcon}>
+                  <IconFeed size={18} />
+                </span>
+                <span className={styles.chooserOptBody}>
+                  <span className={styles.chooserOptTitle}>Publicação no feed</span>
+                  <span className={styles.chooserOptDesc}>
+                    Foto, vídeo, story, enquete ou YouTube — agendado para este dia.
+                  </span>
+                </span>
+                <span className={styles.chooserOptArrow}>
+                  <IconChevronRight size={16} />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={styles.chooserOpt}
+                onClick={chooseCreateNotification}
+              >
+                <span className={styles.chooserOptIcon}>
+                  <IconBell size={18} />
+                </span>
+                <span className={styles.chooserOptBody}>
+                  <span className={styles.chooserOptTitle}>Notificação</span>
+                  <span className={styles.chooserOptDesc}>
+                    Envio em massa ou push pro app — abre o editor de notificações.
+                  </span>
+                </span>
+                <span className={styles.chooserOptArrow}>
+                  <IconChevronRight size={16} />
+                </span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className={styles.chooserCancel}
+              onClick={closeChooser}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <FeedComposerDrawer
         open={composerOpen}
         post={editingPost}
@@ -485,8 +602,20 @@ interface MonthViewProps {
   now: Date;
   onSelectDay: (d: Date) => void;
   onPickPost: (p: FeedItem) => void;
+  /** Disparado quando o usuário clica no botão "+" que aparece no
+   *  hover de uma célula in-month. Abre o chooser de criação. */
+  onCreateForDay: (date: Date) => void;
 }
-function MonthView({ cursor, today, selectedDay, byDay, now, onSelectDay, onPickPost }: MonthViewProps) {
+function MonthView({
+  cursor,
+  today,
+  selectedDay,
+  byDay,
+  now,
+  onSelectDay,
+  onPickPost,
+  onCreateForDay,
+}: MonthViewProps) {
   const cells = useMemo(() => {
     const year = cursor.getFullYear();
     const month = cursor.getMonth();
@@ -544,6 +673,34 @@ function MonthView({ cursor, today, selectedDay, byDay, now, onSelectDay, onPick
                 })}
                 {overflow > 0 && <span className={styles.cellMore}>+{overflow}</span>}
               </span>
+              {inMonth && (
+                /* "+" no canto superior direito visível só no hover
+                 *  da célula. Renderizado como span (não button) pra
+                 *  não aninhar button dentro de button (HTML inválido).
+                 *  role+tabIndex+onKeyDown dão acessibilidade
+                 *  equivalente. stopPropagation impede o onClick
+                 *  da célula de também rodar (que selecionaria o
+                 *  dia). */
+                <span
+                  className={styles.cellPlusBtn}
+                  role="button"
+                  tabIndex={-1}
+                  aria-label={`Criar algo em ${date.getDate()} de ${MONTHS_LONG[date.getMonth()].toLowerCase()}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateForDay(date);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onCreateForDay(date);
+                    }
+                  }}
+                >
+                  <IconPlus size={14} />
+                </span>
+              )}
             </button>
           );
         })}
