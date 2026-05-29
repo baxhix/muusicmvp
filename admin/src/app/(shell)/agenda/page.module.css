@@ -195,7 +195,12 @@
   transition: background var(--dur-fast) var(--ease-out);
 }
 .cell:hover:not(:disabled) {
-  background: var(--surface-hover);
+  /* Hover bem sutil — `--surface-hover` (que era usado antes)
+   * gera contraste forte demais em dark mode. Cinza neutro com
+   * alpha baixo funciona em ambos os temas: claro o suficiente
+   * pra dar feedback de hover, leve o suficiente pra não
+   * "marcar" a célula visualmente. */
+  background: rgba(127, 127, 127, 0.06);
 }
 .cell:focus-visible {
   outline: 2px solid #a855f7;
