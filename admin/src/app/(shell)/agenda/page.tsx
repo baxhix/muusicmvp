@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
+import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import FeedComposerDrawer from '@/components/admin/FeedComposerDrawer';
@@ -15,6 +16,7 @@ import {
   IconStar,
   IconEye,
   IconCheckCircle,
+  IconPlus,
 } from '@/components/icons';
 import { feedService } from '@/services/feed';
 import { resolveAssetUrl } from '@/lib/utils';
@@ -22,62 +24,59 @@ import type { FeedItem, FeedItemType } from '@/types';
 import styles from './page.module.css';
 
 /**
- * AGENDA — vista temporal dos posts agendados (status === 'scheduled')
- * no feed do app.
+ * AGENDA — calendário editorial estilo iOS Calendar.app.
  *
- * Existe pra dar ao operador de conteúdo uma visão "calendário" do
- * pipeline editorial — algo que a lista CRUD do /feed não entrega
- * bem porque mistura todos os status (publicado, agendado, rascunho,
- * inativo) numa tabela só.
+ * 3 visualizações compartilham o mesmo dataset:
+ *   - Mês   : grid 6×7 + painel inferior com eventos do dia selecionado
+ *   - Semana: 7-day stripe com dia selecionado abrindo lista abaixo
+ *   - Lista : agrupado por dia, ordem cronológica
  *
- * Duas visualizações:
- *   - "Próximos" (default): lista agrupada por dia, ordem cronológica,
- *     headers sticky no scroll. Cada item mostra hora · thumb · tipo ·
- *     título · autor. Clique abre o FeedComposerDrawer em modo edição
- *     (mesmo drawer da página /feed — reaproveitado).
- *   - "Mês": calendário grid com dots indicando dias que têm posts
- *     agendados. Clicar num dia leva pra primeira publicação dele
- *     dentro da visualização Próximos.
+ * O DOM mostra posts agendados (status='scheduled', tempo
+ * `scheduledAt`) + posts recém-publicados via o composer desta
+ * página (status='published'). Posts publicados antigos NÃO
+ * aparecem — o objetivo da Agenda é cobrir o pipeline FUTURO +
+ * confirmar a ação imediata "Publicar agora" do operador. Per
+ * product feedback "Isso deve ocorrer inclusive quando a opção
+ * selecionada for 'Publicar agora'".
  *
- * Microinterações no padrão da casa:
- *   - hover lift +1px + sombra ganhando profundidade
- *   - stagger fade-in dos cards no mount
- *   - chevron à direita translada +2px no hover
- *   - thumb cresce 4% no hover do card
- *   - badge "Próximo" sobre o primeiro item futuro com gradient
- *     magenta→indigo (mesma paleta do CTA Meu Fanverse)
+ * Drawer de composição (FeedComposerDrawer) é o mesmo da página
+ * /feed — abre em modo criar (botão "+ Nova publicação" na
+ * toolbar do PageHeader) ou em modo editar (clique num card).
+ *
+ * Microinterações:
+ *   - Segmented control com pílula que desliza entre opções
+ *     (Mês/Semana/Lista) via transição CSS de left+width
+ *   - Stagger fade-in nos cards (40ms/grupo + 30ms/card)
+ *   - Today em magenta→indigo (gradient da marca)
+ *   - Card barra-vertical accent à esquerda (3px) como iOS
  */
 
-type ViewMode = 'list' | 'month';
+type ViewMode = 'month' | 'week' | 'list';
 
-/* ── Helpers ─────────────────────────────────────────────── */
+/* ── Helpers de data ─────────────────────────────────────── */
 
 const WEEKDAYS_LONG = [
   'Domingo', 'Segunda', 'Terça', 'Quarta',
   'Quinta', 'Sexta', 'Sábado',
 ];
-const WEEKDAYS_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const WEEKDAYS_SHORT_3 = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const WEEKDAYS_SHORT_1 = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const MONTHS_LONG = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
+const MONTHS_SHORT = MONTHS_LONG.map((m) => m.slice(0, 3).toLowerCase());
 
-/** Inicia o `Date` no início do dia local (00:00:00). */
 function startOfDay(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
-
-/** YYYY-MM-DD da data, pra usar como chave de agrupamento. */
-function dayKey(iso: string): string {
-  const d = new Date(iso);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
+function addDays(d: Date, n: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
 }
-
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -85,50 +84,42 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getDate() === b.getDate()
   );
 }
-
-/** "14:30" */
+function dayKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
 function hhmm(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-/** "Hoje", "Amanhã", "Sex 14" — relativo à data corrente. */
-function dayLabel(date: Date, today: Date): { big: string; weekday: string } {
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+/** Retorna a data principal de exibição do post (scheduled prioriza
+ *  scheduledAt; publicado usa publishedAt). */
+function postDateIso(p: FeedItem): string | null {
+  if (p.status === 'scheduled' && p.scheduledAt) return p.scheduledAt;
+  return p.publishedAt ?? p.scheduledAt;
+}
 
-  if (isSameDay(date, today)) {
-    return {
-      big: 'Hoje',
-      weekday: WEEKDAYS_LONG[date.getDay()].toLowerCase(),
-    };
-  }
-  if (isSameDay(date, tomorrow)) {
-    return {
-      big: 'Amanhã',
-      weekday: WEEKDAYS_LONG[date.getDay()].toLowerCase(),
-    };
-  }
-  // Default: "DD de Mês" + dia da semana
-  const dd = date.getDate();
-  const monthShort = MONTHS_LONG[date.getMonth()].slice(0, 3).toLowerCase();
+/** Label do dia: "Hoje", "Amanhã", "Ontem", senão "12 de jun." */
+function dayLabel(date: Date, today: Date): { big: string; weekday: string; isToday: boolean } {
+  const weekday = WEEKDAYS_LONG[date.getDay()].toLowerCase();
+  if (isSameDay(date, today)) return { big: 'Hoje', weekday, isToday: true };
+  if (isSameDay(date, addDays(today, 1))) return { big: 'Amanhã', weekday, isToday: false };
+  if (isSameDay(date, addDays(today, -1))) return { big: 'Ontem', weekday, isToday: false };
   return {
-    big: `${dd} de ${monthShort}.`,
-    weekday: WEEKDAYS_LONG[date.getDay()].toLowerCase(),
+    big: `${date.getDate()} de ${MONTHS_SHORT[date.getMonth()]}.`,
+    weekday,
+    isToday: false,
   };
 }
 
-/**
- * Relativo "em 3h", "em 2 dias", "agora", "há 1h".
- * Usado pra dar contexto rápido sem o usuário precisar fazer matemática
- * mental olhando pra horários.
- */
+/** "em 3h", "agora", "há 1 dia". */
 function timeRelative(iso: string, now: Date): string {
-  const target = new Date(iso).getTime();
-  const diffMs = target - now.getTime();
+  const diffMs = new Date(iso).getTime() - now.getTime();
   const absMin = Math.abs(diffMs) / 60_000;
   const isPast = diffMs < 0;
-
   if (absMin < 1) return 'agora';
   if (absMin < 60) {
     const m = Math.round(absMin);
@@ -142,53 +133,47 @@ function timeRelative(iso: string, now: Date): string {
   return isPast ? `há ${d} dias` : `em ${d} dias`;
 }
 
-/** Ícone + label do tipo do post. Mesma paleta visual do /feed. */
 function typeInfo(t: FeedItemType | null): { label: string; icon: React.ReactNode } {
   switch (t) {
-    case 'image':          return { label: 'Imagem',      icon: <IconImage size={11} /> };
-    case 'video':          return { label: 'Vídeo',       icon: <IconVideo size={11} /> };
-    case 'youtube_video':  return { label: 'YouTube',     icon: <IconVideo size={11} /> };
-    case 'carousel':       return { label: 'Carrossel',   icon: <IconImage size={11} /> };
-    case 'story':          return { label: 'Story',       icon: <IconFeed size={11} /> };
-    case 'poll':           return { label: 'Enquete',     icon: <IconCheckCircle size={11} /> };
-    case 'sponsored':      return { label: 'Patrocinado', icon: <IconStar size={11} /> };
-    case 'broadcast':      return { label: 'Transmissão', icon: <IconEye size={11} /> };
-    default:               return { label: 'Post',        icon: <IconFeed size={11} /> };
+    case 'image':         return { label: 'Imagem',      icon: <IconImage size={11} /> };
+    case 'video':         return { label: 'Vídeo',       icon: <IconVideo size={11} /> };
+    case 'youtube_video': return { label: 'YouTube',     icon: <IconVideo size={11} /> };
+    case 'carousel':      return { label: 'Carrossel',   icon: <IconImage size={11} /> };
+    case 'story':         return { label: 'Story',       icon: <IconFeed size={11} /> };
+    case 'poll':          return { label: 'Enquete',     icon: <IconCheckCircle size={11} /> };
+    case 'sponsored':     return { label: 'Patrocinado', icon: <IconStar size={11} /> };
+    case 'broadcast':     return { label: 'Transmissão', icon: <IconEye size={11} /> };
+    default:              return { label: 'Post',        icon: <IconFeed size={11} /> };
   }
 }
 
-/* ── Componente principal ────────────────────────────────── */
+/* ── Página ──────────────────────────────────────────────── */
 
 export default function AdminAgendaPage() {
   const { push } = useToast();
   const [items, setItems] = useState<FeedItem[] | null>(null);
-  const [view, setView] = useState<ViewMode>('list');
-  const [calCursor, setCalCursor] = useState<Date>(() => startOfDay(new Date()));
+  const [view, setView] = useState<ViewMode>('month');
+  const [cursor, setCursor] = useState<Date>(() => startOfDay(new Date()));
+  const [selectedDay, setSelectedDay] = useState<Date>(() => startOfDay(new Date()));
   const [editingPost, setEditingPost] = useState<FeedItem | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
 
-  // `now` é fixo no mount + atualiza a cada 30s pra "em 3h" não
-  // ficar estagnado se a aba ficar aberta. 30s é o sweet spot —
-  // re-render barato, label não fica preso.
+  // `now` re-renderiza a cada 30s pra labels relativos ("em 3h")
+  // não congelarem se a aba ficar aberta.
   const [now, setNow] = useState<Date>(() => new Date());
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30_000);
     return () => window.clearInterval(id);
   }, []);
 
-  /* ── Fetch ─────────────────────────────────────────── */
+  /* ── Fetch ──────────────────────────────────────────── */
 
   const refetch = useCallback(async () => {
     try {
-      // Limite generoso (200) pra cobrir 1-2 meses de agenda
-      // mesmo em produção com cadência diária pesada. Se a
-      // operação crescer muito, paginar por mês.
       const res = await feedService.list({ status: 'scheduled', limit: 200 });
-      // Ordena cronologicamente — o backend pode não garantir
-      // ordem específica em todos os filtros.
       const sorted = [...res.items].sort((a, b) => {
-        const aT = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
-        const bT = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+        const aT = postDateIso(a) ? new Date(postDateIso(a)!).getTime() : 0;
+        const bT = postDateIso(b) ? new Date(postDateIso(b)!).getTime() : 0;
         return aT - bT;
       });
       setItems(sorted);
@@ -207,62 +192,28 @@ export default function AdminAgendaPage() {
     refetch();
   }, [refetch]);
 
-  /* ── Derivados ─────────────────────────────────────── */
+  /* ── Index por dia ──────────────────────────────────── */
 
-  const grouped = useMemo<{ key: string; date: Date; items: FeedItem[] }[]>(() => {
-    if (!items) return [];
+  const byDay = useMemo(() => {
     const map = new Map<string, FeedItem[]>();
+    if (!items) return map;
     for (const p of items) {
-      if (!p.scheduledAt) continue;
-      const k = dayKey(p.scheduledAt);
+      const iso = postDateIso(p);
+      if (!iso) continue;
+      const k = dayKey(new Date(iso));
       const arr = map.get(k);
       if (arr) arr.push(p);
       else map.set(k, [p]);
     }
-    return Array.from(map.entries())
-      .map(([key, arr]) => ({
-        key,
-        date: new Date(arr[0].scheduledAt as string),
-        items: arr,
-      }))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+    return map;
   }, [items]);
 
-  // ID do "próximo" item — primeiro agendamento futuro a partir do
-  // momento atual. Usado pra destacar o card com badge "Próximo".
-  const nextId = useMemo<string | null>(() => {
-    if (!items) return null;
-    const future = items.find(
-      (p) => p.scheduledAt && new Date(p.scheduledAt).getTime() >= now.getTime(),
-    );
-    return future?.id ?? null;
-  }, [items, now]);
+  /* ── Actions ────────────────────────────────────────── */
 
-  // Stats no topo:
-  //   - Total agendado
-  //   - Próxima publicação (label relativo)
-  //   - Esta semana (próximos 7 dias)
-  const stats = useMemo(() => {
-    if (!items) {
-      return { total: 0, nextLabel: '—', week: 0 };
-    }
-    const total = items.length;
-    const nextItem = items.find(
-      (p) => p.scheduledAt && new Date(p.scheduledAt).getTime() >= now.getTime(),
-    );
-    const nextLabel = nextItem?.scheduledAt
-      ? timeRelative(nextItem.scheduledAt, now)
-      : '—';
-    const weekEnd = now.getTime() + 7 * 24 * 60 * 60 * 1000;
-    const week = items.filter((p) => {
-      if (!p.scheduledAt) return false;
-      const t = new Date(p.scheduledAt).getTime();
-      return t >= now.getTime() && t <= weekEnd;
-    }).length;
-    return { total, nextLabel, week };
-  }, [items, now]);
-
-  /* ── Actions ───────────────────────────────────────── */
+  const openCreate = useCallback(() => {
+    setEditingPost(null);
+    setComposerOpen(true);
+  }, []);
 
   const openDetail = useCallback((post: FeedItem) => {
     setEditingPost(post);
@@ -270,92 +221,192 @@ export default function AdminAgendaPage() {
   }, []);
 
   const onSaved = useCallback((post: FeedItem) => {
-    // O composer pode editar título/data/status etc. Se o status
-    // mudou de "scheduled" pra outra coisa, ele sai da agenda.
+    /* Merge optimista: posts novos vão pra lista local
+     * imediatamente, posts editados são substituídos. Inclui
+     * status='published' (quando o usuário escolheu "Publicar
+     * agora") — o operador vê o registro aparecer na agenda no
+     * dia/hora em que o post está, confirmando a ação. */
     setItems((prev) => {
-      if (!prev) return prev;
-      const filtered = prev.filter((p) => p.id !== post.id);
-      if (post.status === 'scheduled') {
-        // Re-inserir respeitando ordem cronológica.
-        const next = [...filtered, post];
-        next.sort((a, b) => {
-          const aT = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
-          const bT = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
-          return aT - bT;
-        });
-        return next;
-      }
-      return filtered;
+      const base = prev ? prev.filter((p) => p.id !== post.id) : [];
+      // Aceita scheduled SEMPRE; aceita published só se for de
+      // hoje ou futuro (não puxar histórico antigo de publicações
+      // pra Agenda).
+      const acceptable =
+        post.status === 'scheduled' ||
+        (post.status === 'published' &&
+          !!post.publishedAt &&
+          new Date(post.publishedAt).getTime() >= startOfDay(new Date()).getTime());
+      const next = acceptable ? [...base, post] : base;
+      next.sort((a, b) => {
+        const aT = postDateIso(a) ? new Date(postDateIso(a)!).getTime() : 0;
+        const bT = postDateIso(b) ? new Date(postDateIso(b)!).getTime() : 0;
+        return aT - bT;
+      });
+      return next;
     });
     push({
       type: 'success',
-      title: 'Agendamento atualizado',
-      description: post.title || 'Publicação salva.',
+      title:
+        post.status === 'scheduled'
+          ? 'Agendamento salvo'
+          : 'Publicação ao ar',
+      description: post.title?.trim() || 'Post salvo com sucesso.',
     });
+
+    // Pula a navegação pro dia do post recém-criado/editado pra
+    // ele aparecer destacado nos modos Mês/Semana.
+    const iso = postDateIso(post);
+    if (iso) {
+      const target = startOfDay(new Date(iso));
+      setSelectedDay(target);
+      setCursor(target);
+    }
   }, [push]);
 
-  /* ── Render: empty / loading / content ─────────────── */
+  const goToday = useCallback(() => {
+    const today = startOfDay(new Date());
+    setCursor(today);
+    setSelectedDay(today);
+  }, []);
+
+  /* ── Navegação de período ───────────────────────────── */
+
+  const navPrev = useCallback(() => {
+    setCursor((c) => {
+      const next = new Date(c);
+      if (view === 'month') next.setMonth(next.getMonth() - 1);
+      else if (view === 'week') next.setDate(next.getDate() - 7);
+      else next.setDate(next.getDate() - 14);
+      return next;
+    });
+  }, [view]);
+
+  const navNext = useCallback(() => {
+    setCursor((c) => {
+      const next = new Date(c);
+      if (view === 'month') next.setMonth(next.getMonth() + 1);
+      else if (view === 'week') next.setDate(next.getDate() + 7);
+      else next.setDate(next.getDate() + 14);
+      return next;
+    });
+  }, [view]);
+
+  /* ── Label do período + cálculo da pílula do segmented ─ */
+
+  const periodLabel = useMemo(() => {
+    if (view === 'month') {
+      return `${MONTHS_LONG[cursor.getMonth()]} ${cursor.getFullYear()}`;
+    }
+    if (view === 'week') {
+      const week = weekRange(cursor);
+      const sameMonth = week.start.getMonth() === week.end.getMonth();
+      const dStart = week.start.getDate();
+      const dEnd = week.end.getDate();
+      const mStart = MONTHS_SHORT[week.start.getMonth()];
+      const mEnd = MONTHS_SHORT[week.end.getMonth()];
+      return sameMonth
+        ? `${dStart} – ${dEnd} ${mStart}.`
+        : `${dStart} ${mStart}. – ${dEnd} ${mEnd}.`;
+    }
+    return 'Lista';
+  }, [view, cursor]);
+
+  // Calcula posição/largura da pílula do segmented control com
+  // base no botão ativo. useRef pra medir, useState pra triggar
+  // re-render quando view muda.
+  const segRef = useRef<HTMLDivElement | null>(null);
+  const [pill, setPill] = useState<{ x: number; w: number } | null>(null);
+  useEffect(() => {
+    const container = segRef.current;
+    if (!container) return;
+    const active = container.querySelector<HTMLButtonElement>(`button[data-active="true"]`);
+    if (!active) return;
+    const containerRect = container.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    setPill({
+      x: activeRect.left - containerRect.left,
+      w: activeRect.width,
+    });
+  }, [view]);
 
   const today = startOfDay(now);
+
+  /* ── Render ─────────────────────────────────────────── */
 
   return (
     <>
       <PageHeader
         title="Agenda"
-        description="Publicações agendadas no feed — visão temporal do pipeline editorial."
+        description="Calendário editorial — publicações agendadas e recém-publicadas."
+        actions={
+          <Button variant="primary" onClick={openCreate}>
+            <IconPlus size={14} />
+            Nova publicação
+          </Button>
+        }
       />
 
       <div className={styles.root}>
-        {/* Stats no topo */}
-        <div className={styles.stats}>
-          <div className={styles.stat}>
-            <span className={styles.statLabel}>Total agendado</span>
-            <span className={styles.statValue}>{stats.total}</span>
-            <span className={styles.statHint}>
-              {stats.total === 1 ? 'publicação' : 'publicações'} em fila
-            </span>
-          </div>
-          <div className={`${styles.stat} ${styles.statNext}`}>
-            <span className={styles.statLabel}>Próxima publicação</span>
-            <span className={styles.statValue}>{stats.nextLabel}</span>
-            <span className={styles.statHint}>
-              {nextId ? 'no topo da lista abaixo' : 'sem agendamentos futuros'}
-            </span>
-          </div>
-          <div className={styles.stat}>
-            <span className={styles.statLabel}>Esta semana</span>
-            <span className={styles.statValue}>{stats.week}</span>
-            <span className={styles.statHint}>próximos 7 dias</span>
-          </div>
-        </div>
-
-        {/* Toolbar de visualização */}
+        {/* Toolbar: navegação de período (esq) + segmented (dir) */}
         <div className={styles.toolbar}>
-          <div className={styles.viewToggle} role="tablist" aria-label="Visualização">
+          <div className={styles.periodNav}>
             <button
               type="button"
-              role="tab"
-              aria-selected={view === 'list'}
-              className={`${styles.viewBtn} ${view === 'list' ? styles.viewBtnActive : ''}`}
-              onClick={() => setView('list')}
+              className={styles.navBtn}
+              onClick={navPrev}
+              aria-label="Período anterior"
             >
-              Próximos
+              <IconChevronLeft size={16} />
+            </button>
+            <span className={styles.periodLabel}>{periodLabel}</span>
+            <button
+              type="button"
+              className={styles.navBtn}
+              onClick={navNext}
+              aria-label="Próximo período"
+            >
+              <IconChevronRight size={16} />
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={view === 'month'}
-              className={`${styles.viewBtn} ${view === 'month' ? styles.viewBtnActive : ''}`}
-              onClick={() => setView('month')}
+              className={styles.todayBtn}
+              onClick={goToday}
             >
-              Mês
+              Hoje
             </button>
+          </div>
+
+          <div
+            ref={segRef}
+            className={styles.segmented}
+            role="tablist"
+            aria-label="Visualização"
+            style={
+              pill
+                ? ({ '--pill-x': `${pill.x}px`, '--pill-w': `${pill.w}px` } as React.CSSProperties)
+                : undefined
+            }
+          >
+            <span className={styles.segmentedPill} aria-hidden="true" />
+            {(['month', 'week', 'list'] as ViewMode[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                data-active={view === v}
+                aria-selected={view === v}
+                className={`${styles.segmentBtn} ${view === v ? styles.segmentBtnActive : ''}`}
+                onClick={() => setView(v)}
+              >
+                {v === 'month' ? 'Mês' : v === 'week' ? 'Semana' : 'Lista'}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Conteúdo */}
         {items === null ? (
-          <div className={styles.skeleton} aria-busy="true" aria-label="Carregando agenda">
+          <div className={styles.skeleton} aria-busy="true">
             <div className={styles.skeletonRow} />
             <div className={styles.skeletonRow} />
             <div className={styles.skeletonRow} />
@@ -363,30 +414,51 @@ export default function AdminAgendaPage() {
         ) : items.length === 0 ? (
           <EmptyState
             icon={<IconCalendar size={28} />}
-            title="Nenhuma publicação agendada"
-            description="Quando você agendar um post no feed, ele aparece aqui em ordem cronológica."
-          />
-        ) : view === 'list' ? (
-          <AgendaList
-            groups={grouped}
-            today={today}
-            now={now}
-            nextId={nextId}
-            onPickPost={openDetail}
+            title="Nada agendado por enquanto"
+            description="Quando você agendar ou publicar um post, ele aparece aqui."
+            actions={
+              <Button variant="primary" onClick={openCreate}>
+                <IconPlus size={14} />
+                Nova publicação
+              </Button>
+            }
           />
         ) : (
-          <MonthCalendar
-            cursor={calCursor}
-            today={today}
-            grouped={grouped}
-            onCursorChange={setCalCursor}
-            onPickPost={openDetail}
-          />
+          <div className={styles.surface} key={view}>
+            {view === 'month' && (
+              <MonthView
+                cursor={cursor}
+                today={today}
+                selectedDay={selectedDay}
+                byDay={byDay}
+                now={now}
+                onSelectDay={setSelectedDay}
+                onPickPost={openDetail}
+              />
+            )}
+            {view === 'week' && (
+              <WeekView
+                cursor={cursor}
+                today={today}
+                selectedDay={selectedDay}
+                byDay={byDay}
+                now={now}
+                onSelectDay={setSelectedDay}
+                onPickPost={openDetail}
+              />
+            )}
+            {view === 'list' && (
+              <ListView
+                items={items}
+                today={today}
+                now={now}
+                onPickPost={openDetail}
+              />
+            )}
+          </div>
         )}
       </div>
 
-      {/* Composer drawer reaproveitado da página /feed — abre em modo
-       *  edição quando o usuário clica num card. */}
       <FeedComposerDrawer
         open={composerOpen}
         post={editingPost}
@@ -397,21 +469,210 @@ export default function AdminAgendaPage() {
   );
 }
 
-/* ── Sub-componente: lista agrupada por dia ──────────────── */
+/* ── Sub-componentes ─────────────────────────────────────── */
 
-interface AgendaListProps {
-  groups: { key: string; date: Date; items: FeedItem[] }[];
+interface MonthViewProps {
+  cursor: Date;
   today: Date;
+  selectedDay: Date;
+  byDay: Map<string, FeedItem[]>;
   now: Date;
-  nextId: string | null;
+  onSelectDay: (d: Date) => void;
   onPickPost: (p: FeedItem) => void;
 }
+function MonthView({ cursor, today, selectedDay, byDay, now, onSelectDay, onPickPost }: MonthViewProps) {
+  const cells = useMemo(() => {
+    const year = cursor.getFullYear();
+    const month = cursor.getMonth();
+    const first = new Date(year, month, 1);
+    const start = addDays(first, -first.getDay());
+    return Array.from({ length: 42 }, (_, i) => {
+      const d = addDays(start, i);
+      return { date: d, inMonth: d.getMonth() === month };
+    });
+  }, [cursor]);
 
-function AgendaList({ groups, today, now, nextId, onPickPost }: AgendaListProps) {
+  const selectedItems = byDay.get(dayKey(selectedDay)) ?? [];
+  const sl = dayLabel(selectedDay, today);
+
+  return (
+    <div className={styles.monthWrap}>
+      <div className={styles.weekdays} aria-hidden="true">
+        {WEEKDAYS_SHORT_1.map((w, i) => (
+          <span key={i} className={styles.weekday}>{w}</span>
+        ))}
+      </div>
+      <div className={styles.monthGrid} role="grid">
+        {cells.map(({ date, inMonth }, i) => {
+          const k = dayKey(date);
+          const posts = byDay.get(k) ?? [];
+          const isToday = isSameDay(date, today);
+          const isSelected = isSameDay(date, selectedDay);
+          const visible = posts.slice(0, 3);
+          const overflow = posts.length - visible.length;
+          return (
+            <button
+              key={i}
+              type="button"
+              role="gridcell"
+              className={[
+                styles.cell,
+                !inMonth && styles.cellOut,
+                isToday && styles.cellToday,
+                isSelected && styles.cellSelected,
+              ].filter(Boolean).join(' ')}
+              onClick={() => onSelectDay(date)}
+              aria-label={`${date.getDate()} de ${MONTHS_LONG[date.getMonth()].toLowerCase()}${posts.length ? ` — ${posts.length} publicações` : ''}`}
+            >
+              <span className={styles.cellDay}>{date.getDate()}</span>
+              <span className={styles.cellDots} aria-hidden="true">
+                {visible.map((p) => {
+                  const iso = postDateIso(p);
+                  const isPast = iso ? new Date(iso).getTime() < now.getTime() : false;
+                  return (
+                    <span
+                      key={p.id}
+                      className={`${styles.cellDot} ${isPast ? styles.cellDotPast : ''}`}
+                    />
+                  );
+                })}
+                {overflow > 0 && <span className={styles.cellMore}>+{overflow}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Painel do dia selecionado — eventos abaixo do grid. */}
+      <div className={styles.dayPanel}>
+        <div className={styles.dayPanelHeader}>
+          <span className={`${styles.dayPanelTitle} ${sl.isToday ? styles.dayBigToday : ''}`}>
+            {sl.big}
+          </span>
+          <span className={styles.dayPanelSub}>· {sl.weekday}</span>
+        </div>
+        {selectedItems.length === 0 ? (
+          <div className={styles.dayPanelEmpty}>Nenhuma publicação neste dia.</div>
+        ) : (
+          selectedItems.map((p, i) => (
+            <PostCard
+              key={p.id}
+              post={p}
+              now={now}
+              animDelay={i * 30}
+              onClick={() => onPickPost(p)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface WeekViewProps {
+  cursor: Date;
+  today: Date;
+  selectedDay: Date;
+  byDay: Map<string, FeedItem[]>;
+  now: Date;
+  onSelectDay: (d: Date) => void;
+  onPickPost: (p: FeedItem) => void;
+}
+function WeekView({ cursor, today, selectedDay, byDay, now, onSelectDay, onPickPost }: WeekViewProps) {
+  const week = useMemo(() => weekRange(cursor), [cursor]);
+  const days = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => addDays(week.start, i));
+  }, [week]);
+
+  const selectedItems = byDay.get(dayKey(selectedDay)) ?? [];
+  const sl = dayLabel(selectedDay, today);
+
+  return (
+    <div className={styles.weekWrap}>
+      <div className={styles.weekHeader}>
+        {days.map((d, i) => {
+          const k = dayKey(d);
+          const count = byDay.get(k)?.length ?? 0;
+          const isToday = isSameDay(d, today);
+          const isSelected = isSameDay(d, selectedDay);
+          return (
+            <button
+              key={i}
+              type="button"
+              className={[
+                styles.weekDayCol,
+                isToday && styles.weekDayColToday,
+                isSelected && styles.weekDayColSelected,
+              ].filter(Boolean).join(' ')}
+              onClick={() => onSelectDay(d)}
+            >
+              <span className={styles.weekDayLabel}>
+                {WEEKDAYS_SHORT_3[d.getDay()]}
+              </span>
+              <span className={styles.weekDayNum}>{d.getDate()}</span>
+              <span className={styles.weekDayCount}>
+                {count > 0 ? `${count}` : '·'}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className={styles.dayPanel}>
+        <div className={styles.dayPanelHeader}>
+          <span className={`${styles.dayPanelTitle} ${sl.isToday ? styles.dayBigToday : ''}`}>
+            {sl.big}
+          </span>
+          <span className={styles.dayPanelSub}>· {sl.weekday}</span>
+        </div>
+        {selectedItems.length === 0 ? (
+          <div className={styles.dayPanelEmpty}>Nenhuma publicação neste dia.</div>
+        ) : (
+          selectedItems.map((p, i) => (
+            <PostCard
+              key={p.id}
+              post={p}
+              now={now}
+              animDelay={i * 30}
+              onClick={() => onPickPost(p)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface ListViewProps {
+  items: FeedItem[];
+  today: Date;
+  now: Date;
+  onPickPost: (p: FeedItem) => void;
+}
+function ListView({ items, today, now, onPickPost }: ListViewProps) {
+  const groups = useMemo(() => {
+    const map = new Map<string, FeedItem[]>();
+    for (const p of items) {
+      const iso = postDateIso(p);
+      if (!iso) continue;
+      const k = dayKey(new Date(iso));
+      const arr = map.get(k);
+      if (arr) arr.push(p);
+      else map.set(k, [p]);
+    }
+    return Array.from(map.entries())
+      .map(([key, arr]) => ({
+        key,
+        date: new Date(postDateIso(arr[0])!),
+        items: arr,
+      }))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [items]);
+
   return (
     <div className={styles.list}>
       {groups.map((g, gi) => {
-        const label = dayLabel(g.date, today);
+        const lbl = dayLabel(g.date, today);
         return (
           <div
             key={g.key}
@@ -419,74 +680,23 @@ function AgendaList({ groups, today, now, nextId, onPickPost }: AgendaListProps)
             style={{ animationDelay: `${gi * 40}ms` }}
           >
             <div className={styles.dayHeader}>
-              <span className={styles.dayBig}>{label.big}</span>
-              <span className={styles.dayWeekday}>· {label.weekday}</span>
+              <span className={`${styles.dayBig} ${lbl.isToday ? styles.dayBigToday : ''}`}>
+                {lbl.big}
+              </span>
+              <span className={styles.dayWeekday}>· {lbl.weekday}</span>
               <span className={styles.dayCount}>
                 {g.items.length} {g.items.length === 1 ? 'item' : 'itens'}
               </span>
             </div>
-            {g.items.map((p, idx) => {
-              const t = typeInfo(p.type);
-              const isNext = p.id === nextId;
-              const cover = p.media.find((m) => m.kind !== 'youtube')?.url ?? null;
-              const yt = p.media.find((m) => m.kind === 'youtube');
-              const ytThumb = yt ? '/icon-youtube.svg' : null;
-              const thumbSrc = cover ? resolveAssetUrl(cover) : null;
-              const author = p.author?.name?.trim() || p.author?.email?.split('@')[0] || 'Sem autor';
-
-              return (
-                <div className={styles.cardWrap} key={p.id}>
-                  <button
-                    type="button"
-                    className={`${styles.card} ${isNext ? styles.cardNext : ''}`}
-                    style={{ animationDelay: `${gi * 40 + idx * 30}ms` }}
-                    onClick={() => onPickPost(p)}
-                    aria-label={`Abrir detalhe de ${p.title || 'publicação'}`}
-                  >
-                    <div className={styles.time}>
-                      <span className={styles.timeBig}>
-                        {p.scheduledAt ? hhmm(p.scheduledAt) : '—'}
-                      </span>
-                      <span className={styles.timeRel}>
-                        {p.scheduledAt ? timeRelative(p.scheduledAt, now) : ''}
-                      </span>
-                    </div>
-
-                    <div className={styles.thumb}>
-                      {thumbSrc ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={thumbSrc} alt="" />
-                      ) : ytThumb ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={ytThumb} alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                      ) : (
-                        t.icon
-                      )}
-                    </div>
-
-                    <div className={styles.body}>
-                      <span className={styles.cardTitle}>
-                        {p.title?.trim() || '(sem título)'}
-                      </span>
-                      <span className={styles.cardMeta}>
-                        <span className={styles.typePill}>
-                          {t.icon}
-                          {t.label}
-                        </span>
-                        <span className={styles.metaSep} aria-hidden="true" />
-                        <span className={styles.cardAuthor} title={author}>
-                          {author}
-                        </span>
-                      </span>
-                    </div>
-
-                    <span className={styles.chevron} aria-hidden="true">
-                      <IconChevronRight size={16} />
-                    </span>
-                  </button>
-                </div>
-              );
-            })}
+            {g.items.map((p, idx) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                now={now}
+                animDelay={gi * 40 + idx * 30}
+                onClick={() => onPickPost(p)}
+              />
+            ))}
           </div>
         );
       })}
@@ -494,132 +704,89 @@ function AgendaList({ groups, today, now, nextId, onPickPost }: AgendaListProps)
   );
 }
 
-/* ── Sub-componente: calendário mensal ──────────────────── */
+/* ── PostCard compartilhado ─────────────────────────────── */
 
-interface MonthCalendarProps {
-  cursor: Date;
-  today: Date;
-  grouped: { key: string; date: Date; items: FeedItem[] }[];
-  onCursorChange: (next: Date) => void;
-  onPickPost: (p: FeedItem) => void;
+interface PostCardProps {
+  post: FeedItem;
+  now: Date;
+  animDelay: number;
+  onClick: () => void;
 }
-
-function MonthCalendar({
-  cursor,
-  today,
-  grouped,
-  onCursorChange,
-  onPickPost,
-}: MonthCalendarProps) {
-  // Constrói o array de 42 células (6 linhas × 7 colunas) cobrindo
-  // o mês visível. Dias do mês anterior/posterior aparecem
-  // esmaecidos pra preencher o grid.
-  const cells = useMemo(() => {
-    const year = cursor.getFullYear();
-    const month = cursor.getMonth();
-    const firstOfMonth = new Date(year, month, 1);
-    const startDow = firstOfMonth.getDay(); // 0=Dom
-    const start = new Date(year, month, 1 - startDow);
-    const arr: { date: Date; inMonth: boolean }[] = [];
-    for (let i = 0; i < 42; i += 1) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      arr.push({ date: d, inMonth: d.getMonth() === month });
-    }
-    return arr;
-  }, [cursor]);
-
-  // Mapa rápido dia → lista de posts agendados nesse dia.
-  const byDay = useMemo(() => {
-    const m = new Map<string, FeedItem[]>();
-    for (const g of grouped) {
-      m.set(g.key, g.items);
-    }
-    return m;
-  }, [grouped]);
-
-  const prevMonth = () => {
-    const next = new Date(cursor);
-    next.setMonth(next.getMonth() - 1);
-    onCursorChange(next);
-  };
-  const nextMonth = () => {
-    const next = new Date(cursor);
-    next.setMonth(next.getMonth() + 1);
-    onCursorChange(next);
-  };
+function PostCard({ post, now, animDelay, onClick }: PostCardProps) {
+  const t = typeInfo(post.type);
+  const iso = postDateIso(post);
+  const isPublished = post.status === 'published';
+  const cover = post.media.find((m) => m.kind !== 'youtube')?.url ?? null;
+  const yt = post.media.find((m) => m.kind === 'youtube');
+  const thumbSrc = cover ? resolveAssetUrl(cover) : null;
+  const author =
+    post.author?.name?.trim() ||
+    post.author?.email?.split('@')[0] ||
+    'Sem autor';
 
   return (
-    <div className={styles.calendar}>
-      <div className={styles.calNav}>
-        <button
-          type="button"
-          className={styles.calNavBtn}
-          onClick={prevMonth}
-          aria-label="Mês anterior"
-        >
-          <IconChevronLeft size={14} />
-        </button>
-        <span className={styles.calMonth}>
-          {MONTHS_LONG[cursor.getMonth()]} {cursor.getFullYear()}
+    <button
+      type="button"
+      className={styles.card}
+      style={{ animationDelay: `${animDelay}ms` }}
+      onClick={onClick}
+      aria-label={`Abrir detalhe de ${post.title || 'publicação'}`}
+    >
+      <span
+        className={`${styles.cardAccent} ${isPublished ? styles.cardAccentPublished : ''}`}
+        aria-hidden="true"
+      />
+      <div className={styles.time}>
+        <span className={styles.timeBig}>{iso ? hhmm(iso) : '—'}</span>
+        <span className={styles.timeRel}>
+          {iso ? timeRelative(iso, now) : ''}
         </span>
-        <button
-          type="button"
-          className={styles.calNavBtn}
-          onClick={nextMonth}
-          aria-label="Próximo mês"
-        >
-          <IconChevronRight size={14} />
-        </button>
       </div>
 
-      <div className={styles.calWeekdays} aria-hidden="true">
-        {WEEKDAYS_SHORT.map((w) => (
-          <span key={w} className={styles.calWeekday}>{w}</span>
-        ))}
+      <div className={styles.thumb}>
+        {thumbSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={thumbSrc} alt="" />
+        ) : yt ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/icon-youtube.svg" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+        ) : (
+          t.icon
+        )}
       </div>
 
-      <div className={styles.calGrid} role="grid">
-        {cells.map(({ date, inMonth }, i) => {
-          const k = dayKey(date.toISOString());
-          const dayPosts = byDay.get(k) ?? [];
-          const isToday = isSameDay(date, today);
-          const visibleDots = dayPosts.slice(0, 4);
-          const overflow = dayPosts.length - visibleDots.length;
-          // Cell clicável só se tem posts; o callback abre o primeiro.
-          const hasPosts = dayPosts.length > 0;
-          return (
-            <button
-              type="button"
-              key={i}
-              className={[
-                styles.calCell,
-                !inMonth && styles.calCellOut,
-                isToday && styles.calCellToday,
-              ].filter(Boolean).join(' ')}
-              onClick={() => hasPosts && onPickPost(dayPosts[0])}
-              disabled={!inMonth || !hasPosts}
-              aria-label={
-                hasPosts
-                  ? `${date.getDate()} de ${MONTHS_LONG[date.getMonth()].toLowerCase()} — ${dayPosts.length} publicações`
-                  : `${date.getDate()} de ${MONTHS_LONG[date.getMonth()].toLowerCase()}`
-              }
-            >
-              <span className={styles.calDay}>{date.getDate()}</span>
-              {hasPosts && (
-                <div className={styles.calDots}>
-                  {visibleDots.map((p) => (
-                    <span key={p.id} className={styles.calDot} aria-hidden="true" />
-                  ))}
-                  {overflow > 0 && (
-                    <span className={styles.calMore}>+{overflow}</span>
-                  )}
-                </div>
-              )}
-            </button>
-          );
-        })}
+      <div className={styles.body}>
+        <span className={styles.cardTitle}>
+          {post.title?.trim() || '(sem título)'}
+        </span>
+        <span className={styles.cardMeta}>
+          {isPublished ? (
+            <span className={styles.publishedPill}>Publicado</span>
+          ) : (
+            <span className={styles.typePill}>
+              {t.icon}
+              {t.label}
+            </span>
+          )}
+          <span className={styles.metaSep} aria-hidden="true" />
+          <span className={styles.cardAuthor} title={author}>
+            {author}
+          </span>
+        </span>
       </div>
-    </div>
+
+      <span className={styles.chevron} aria-hidden="true">
+        <IconChevronRight size={16} />
+      </span>
+    </button>
   );
+}
+
+/* ── Util: range da semana que contém uma data (domingo→sábado) ── */
+
+function weekRange(d: Date): { start: Date; end: Date } {
+  const start = startOfDay(d);
+  start.setDate(start.getDate() - start.getDay());
+  const end = addDays(start, 6);
+  return { start, end };
 }

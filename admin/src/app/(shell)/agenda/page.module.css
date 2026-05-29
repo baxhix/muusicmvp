@@ -1,88 +1,25 @@
 /* ============================================================
-   AGENDA — Lista temporal dos posts agendados no feed.
+   AGENDA — calendário editorial inspirado no Calendar.app do iOS.
 
-   Layout = stat-strip + view-toggle + (lista agrupada por dia
-   ou calendário mensal). Microinterações no padrão da casa:
-   transitions com --dur-fast/--ease-out, hover lift +1px,
-   sombra que ganha profundidade no hover, fade-in stagger no
-   mount dos cards.
+   Tom da experiência: elegante, minimalista, fluida. Generous
+   whitespace, sem cartões pesados, hierarquia tipográfica clara.
+   Três modos: Mês (default visual, grid com dots), Semana
+   (timeline 7-day stripe), Lista (vista compacta cronológica).
+
+   Microinterações no padrão da casa: transitions com
+   --dur-fast/--ease-out, hover lift +1px, fade-in stagger no
+   mount, segmented control com pílula deslizante (estilo iOS).
    ============================================================ */
 
-/* ── Container ──────────────────────────────────────────── */
+/* ── Container raiz ─────────────────────────────────────── */
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  gap: var(--s-4);
+  padding-inline: 4px;
 }
 
-/* ── Strip de stats no topo ────────────────────────────── */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-3);
-}
-@media (max-width: 768px) {
-  .stats {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stat {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  padding: var(--s-4) var(--s-5);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  transition: border-color var(--dur-fast) var(--ease-out),
-              transform var(--dur-fast) var(--ease-out);
-}
-.stat:hover {
-  border-color: var(--color-border-strong);
-  transform: translateY(-1px);
-}
-.statLabel {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-fg-muted);
-}
-.statValue {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--color-fg);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-.statHint {
-  font-size: 12px;
-  color: var(--color-fg-muted);
-}
-/* Acento sutil no card "Próximo" — barra colorida vertical à
- * esquerda + pulse suave. Pulsa sem chamar atenção demais. */
-.statNext::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: linear-gradient(180deg, #a855f7, #6366f1);
-  opacity: 0.85;
-}
-.statNext .statValue {
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ── Toolbar (toggle de visualização + refresh) ────────── */
+/* ── Toolbar (segmented + navegação) ────────────────────── */
 .toolbar {
   display: flex;
   align-items: center;
@@ -90,46 +27,347 @@
   gap: var(--s-3);
   flex-wrap: wrap;
 }
-.viewToggle {
+
+/* Segmented control estilo iOS: pílula deslizante sobre track. */
+.segmented {
+  position: relative;
   display: inline-flex;
   padding: 3px;
-  gap: 2px;
+  gap: 0;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-full);
+  isolation: isolate;
 }
-.viewBtn {
+.segmentBtn {
   appearance: none;
+  position: relative;
+  z-index: 1;
   background: transparent;
   border: 0;
-  padding: 6px 14px;
-  border-radius: var(--r-sm);
+  padding: 7px 18px;
+  border-radius: var(--r-full);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-fg-muted);
   cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+  min-width: 76px;
+}
+.segmentBtn:hover {
+  color: var(--color-fg);
+}
+.segmentBtnActive {
+  color: var(--color-fg);
+}
+/* Pílula deslizante — uma camada absoluta atrás do botão ativo.
+ * A posição é controlada via custom prop --pill-x do parent. */
+.segmentedPill {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: var(--pill-x, 3px);
+  width: var(--pill-w, 76px);
+  background: var(--color-bg);
+  border-radius: var(--r-full);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06),
+              0 0 0 1px var(--color-border);
+  z-index: 0;
+  transition: left 240ms var(--ease-out),
+              width 240ms var(--ease-out);
+}
+
+/* Navegação de período (◀ Mês ▶) à esquerda da toolbar. */
+.periodNav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.periodLabel {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-fg);
+  text-transform: capitalize;
+  min-width: 180px;
+}
+.navBtn {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-full);
+  background: transparent;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg-muted);
+  cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
-.viewBtn:hover {
+.navBtn:hover {
+  background: var(--color-bg-hover);
   color: var(--color-fg);
 }
-.viewBtnActive {
-  background: var(--color-bg);
+.todayBtn {
+  appearance: none;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-full);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--color-fg);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06),
-              0 0 0 1px var(--color-border);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.todayBtn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
 }
 
-/* ── Lista (Agenda view) ───────────────────────────────── */
+/* ── Surface (mês/semana/lista) ─────────────────────────── */
+.surface {
+  animation: surfaceIn 280ms var(--ease-out) both;
+}
+@keyframes surfaceIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mês: weekday header + grid ─────────────────────────── */
+.monthWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding-block: var(--s-2);
+}
+.weekday {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-fg-muted);
+  text-align: center;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+/* Cada célula do mês — clean, sem borda no estado normal pra
+ * deixar a grid airy estilo iOS. Borda só aparece em hover/today. */
+.cell {
+  appearance: none;
+  position: relative;
+  min-height: 84px;
+  padding: 8px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.cell:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+}
+.cell:disabled {
+  cursor: default;
+}
+.cell:focus-visible {
+  outline: 2px solid var(--color-accent, #a855f7);
+  outline-offset: -2px;
+}
+
+.cellOut .cellDay {
+  color: var(--color-fg-muted);
+  opacity: 0.5;
+}
+
+/* Dia: número em uma pílula. Today fica em magenta→indigo. */
+.cellDay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.cellToday .cellDay {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+}
+.cellSelected .cellDay {
+  background: var(--color-bg-elevated);
+  box-shadow: 0 0 0 1.5px var(--color-fg);
+}
+.cellToday.cellSelected .cellDay {
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4);
+}
+
+/* Dots — pontinhos coloridos sob o dia indicando publicações. */
+.cellDots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  min-height: 8px;
+}
+.cellDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+.cellDotPast {
+  background: var(--color-fg-muted);
+  opacity: 0.5;
+}
+.cellMore {
+  margin-left: 2px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Painel inferior do mês — eventos do dia selecionado. */
+.dayPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  margin-top: var(--s-2);
+  border-top: 1px solid var(--color-border);
+  animation: panelIn 280ms var(--ease-out) both;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dayPanelHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding-inline: var(--s-2);
+}
+.dayPanelTitle {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-fg);
+}
+.dayPanelSub {
+  font-size: 12px;
+  color: var(--color-fg-muted);
+  text-transform: capitalize;
+}
+.dayPanelEmpty {
+  padding: var(--s-5) var(--s-3);
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-fg-muted);
+}
+
+/* ── Semana: timeline horizontal ─────────────────────────── */
+.weekWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.weekHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.weekDayCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--s-2) var(--s-1);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.weekDayCol:hover {
+  background: var(--color-bg-hover);
+}
+.weekDayLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-fg-muted);
+}
+.weekDayNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--r-full);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.weekDayColToday .weekDayNum {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+}
+.weekDayColSelected .weekDayNum {
+  box-shadow: 0 0 0 1.5px var(--color-fg);
+}
+.weekDayColToday.weekDayColSelected .weekDayNum {
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4);
+}
+.weekDayCount {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Lista ──────────────────────────────────────────────── */
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--s-5);
+  padding-inline: var(--s-1);
 }
-
-/* Cada dia é um bloco. Sticky no scroll pra ajudar a navegação. */
 .day {
   display: flex;
   flex-direction: column;
@@ -147,20 +385,25 @@
   z-index: 1;
   display: flex;
   align-items: baseline;
-  gap: var(--s-3);
-  padding: var(--s-2) 0 var(--s-2);
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-1) var(--s-2);
   background: var(--color-bg);
-  border-bottom: 1px solid var(--color-border);
   margin-bottom: var(--s-1);
 }
 .dayBig {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--color-fg);
   letter-spacing: -0.01em;
+  color: var(--color-fg);
+}
+.dayBigToday {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 .dayWeekday {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--color-fg-muted);
   text-transform: capitalize;
@@ -172,57 +415,73 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Card de cada post agendado dentro do dia. */
+/* Card de cada post agendado. Versão mais clean estilo iOS:
+ * sem borda full, só uma divisória inferior sutil. */
 .card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--s-4);
-  padding: var(--s-3) var(--s-4);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
+  padding: var(--s-3) var(--s-3);
+  background: transparent;
+  border: 0;
   border-radius: var(--r-md);
   cursor: pointer;
   text-align: left;
   width: 100%;
   font-family: inherit;
   color: inherit;
-  transition: transform var(--dur-fast) var(--ease-out),
-              box-shadow var(--dur-fast) var(--ease-out),
-              border-color var(--dur-fast) var(--ease-out);
+  transition: background var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
   animation: cardIn 360ms var(--ease-out) both;
 }
 .card:hover {
+  background: var(--color-bg-hover);
   transform: translateY(-1px);
-  border-color: var(--color-border-strong);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 .card:active {
   transform: translateY(0) scale(0.997);
 }
 .card:focus-visible {
   outline: 2px solid #a855f7;
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 @keyframes cardIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Hora à esquerda — coluna fixa pra alinhar todos os cards. */
+/* Barra colorida vertical de 3px à esquerda — estilo iOS Calendar.
+ * Cor diferente conforme status (agendado / publicado). */
+.cardAccent {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 3px;
+  border-radius: var(--r-full);
+  background: linear-gradient(180deg, #a855f7, #6366f1);
+}
+.cardAccentPublished {
+  background: var(--color-fg-muted);
+  opacity: 0.6;
+}
+
 .time {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
   flex-shrink: 0;
-  min-width: 64px;
+  min-width: 60px;
+  padding-left: var(--s-2);
 }
 .timeBig {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--color-fg);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   line-height: 1;
 }
 .timeRel {
@@ -231,15 +490,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Thumb quadrado opcional. */
 .thumb {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--r-sm);
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
   position: relative;
   display: flex;
   align-items: center;
@@ -257,7 +514,6 @@
   display: block;
 }
 
-/* Corpo do card. */
 .body {
   flex: 1;
   min-width: 0;
@@ -291,11 +547,21 @@
   gap: 4px;
   padding: 2px 8px;
   border-radius: var(--r-full);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
   font-size: 11px;
   font-weight: 500;
   color: var(--color-fg-muted);
+}
+.publishedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: rgba(34, 197, 94, 0.12);
+  color: rgb(22, 163, 74);
+  font-size: 10.5px;
+  font-weight: 600;
 }
 .metaSep {
   width: 3px;
@@ -311,36 +577,10 @@
   white-space: nowrap;
 }
 
-/* Indicador de "próximo a publicar". */
-.cardNext {
-  border-color: rgba(168, 85, 247, 0.4);
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.18);
-}
-.cardNext::before {
-  content: 'Próximo';
-  position: absolute;
-  top: -8px;
-  left: 16px;
-  padding: 2px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #fff;
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  border-radius: var(--r-full);
-  box-shadow: 0 2px 6px rgba(168, 85, 247, 0.4);
-  /* `position: absolute` num card flex requer position: relative no card. */
-}
-.cardWrap {
-  position: relative;
-}
-
-/* Chevron à direita — indica que o card é clicável e leva a um detalhe. */
 .chevron {
   flex-shrink: 0;
   color: var(--color-fg-muted);
-  opacity: 0.6;
+  opacity: 0.5;
   transition: transform var(--dur-fast) var(--ease-out),
               opacity var(--dur-fast) var(--ease-out);
 }
@@ -350,151 +590,12 @@
   color: var(--color-fg);
 }
 
-/* ── Calendário mensal ─────────────────────────────────── */
-.calendar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  padding: var(--s-4);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--r-md);
-  animation: dayIn 320ms var(--ease-out) both;
-}
-.calNav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-}
-.calMonth {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-fg);
-  letter-spacing: -0.01em;
-  text-transform: capitalize;
-}
-.calNavBtn {
-  appearance: none;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-sm);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-fg-muted);
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out),
-              color var(--dur-fast) var(--ease-out),
-              border-color var(--dur-fast) var(--ease-out);
-}
-.calNavBtn:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
-  color: var(--color-fg);
-}
-
-.calWeekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  padding-bottom: var(--s-2);
-  border-bottom: 1px solid var(--color-border);
-}
-.calWeekday {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-fg-muted);
-  text-align: center;
-  padding: var(--s-1) 0;
-}
-
-.calGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-.calCell {
-  appearance: none;
-  position: relative;
-  aspect-ratio: 1 / 1;
-  min-height: 64px;
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  font-family: inherit;
-  color: inherit;
-  transition: background var(--dur-fast) var(--ease-out),
-              border-color var(--dur-fast) var(--ease-out),
-              transform var(--dur-fast) var(--ease-out);
-}
-.calCell:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
-  transform: translateY(-1px);
-}
-.calCell:focus-visible {
-  outline: 2px solid #a855f7;
-  outline-offset: 1px;
-}
-.calCellOut {
-  opacity: 0.35;
-  cursor: default;
-  pointer-events: none;
-}
-.calCellToday .calDay {
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  color: #fff;
-  border-color: transparent;
-}
-.calDay {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: var(--r-full);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-fg);
-  font-variant-numeric: tabular-nums;
-}
-.calDots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-top: auto;
-}
-.calDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  box-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
-}
-.calMore {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-fg-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Skeleton de loading ───────────────────────────────── */
+/* ── Skeleton ────────────────────────────────────────────── */
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-2);
+  padding-inline: var(--s-2);
 }
 .skeletonRow {
   height: 64px;
@@ -511,4 +612,40 @@
 @keyframes skeletonShimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* ── Mobile (<= 720px) ──────────────────────────────────── */
+@media (max-width: 720px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-2);
+  }
+  .periodNav {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .periodLabel {
+    min-width: 0;
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+  }
+  .segmented {
+    align-self: center;
+  }
+  .cell {
+    min-height: 64px;
+    padding: 6px 4px 8px;
+  }
+  .cellDay {
+    min-width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+  .weekDayNum {
+    min-width: 28px;
+    height: 28px;
+    font-size: 15px;
+  }
 }
