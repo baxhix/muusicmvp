@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
 import type { Map as MapboxMap, MapLayerMouseEvent, MapMouseEvent } from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
@@ -648,6 +649,173 @@ export default function MapSimulationLayer() {
       map.on('click', LAYER_CL, onClusterClick);
       map.on('click', onMapClick);
 
+      /* ── REAL PEOPLE REVEAL LOOP ──────────────────────────
+       * Per feedback: "De forma aleatória, a cada 3s surgem, a partir
+       * de um ponto verde, 3 avatares, não ao mesmo tempo, com 1 ou
+       * 2s de diferença, permanecem por 3s e somem. Para mostrar para
+       * o usuário que os pontos são pessoas reais e que estão ali
+       * para se conectarem."
+       *
+       * Mecânica:
+       *   - Loop dispara em ciclos de ~5s.
+       *   - Cada ciclo: pega 3 features online + não-superfan dentro
+       *     do viewport atual, e spawna um Mapbox Marker (DOM) com
+       *     foto da Pravatar + primeiro nome em pílula.
+       *   - Stagger interno: 1.0-2.2s entre spawns dentro do ciclo.
+       *   - Lifetime: 3s visível + 400ms de fade-out → remove do DOM.
+       *
+       * Gates:
+       *   - Zoom < 10 → loop pula esse ciclo (zoom Brasil/região
+       *     não tem detalhe suficiente pra um avatar de 38px fazer
+       *     sentido visual).
+       *   - Nenhuma feature no viewport → pula.
+       *   - Superfãs excluídos (eles já têm avatar permanente via
+       *     LAYER_SF_PIC).
+       *
+       * Por que Mapbox Marker (DOM) em vez de symbol layer dinâmico?
+       *   - Marker reposiciona AUTOMATICAMENTE durante pan/zoom — o
+       *     avatar "gruda" no ponto verde correspondente sem que a
+       *     gente precise calcular project()/unproject() em cada
+       *     frame de mexida.
+       *   - CSS livre pra animação de borbulhar (scale + translateY
+       *     com cubic-bezier de bounce). Symbol layer não consegue
+       *     fazer fade orgânico com bounce.
+       */
+      const revealTimers: number[] = [];
+      const activeMarkers: mapboxgl.Marker[] = [];
+
+      const REVEAL_MIN_ZOOM        = 10;
+      const REVEAL_BATCH_SIZE      = 3;
+      const REVEAL_CYCLE_MS        = 5000;
+      const REVEAL_STAGGER_MIN_MS  = 1000;
+      const REVEAL_STAGGER_MAX_MS  = 2200;
+      const REVEAL_LIFETIME_MS     = 3000;
+      const REVEAL_EXIT_MS         = 400;
+
+      /* Candidatos: online + não-superfan. Superfã já tem avatar
+       * permanente; o efeito é pra "revelar" que os pontinhos
+       * anônimos também são pessoas. */
+      type FeatureProps = {
+        id?: string;
+        name?: string;
+        tier?: string;
+        online?: number;
+        avatarSeed?: number;
+      };
+      const candidates = (data.geojson.features as GeoJSON.Feature[]).filter((f) => {
+        const p = (f.properties ?? {}) as FeatureProps;
+        return (
+          p.online === 1 &&
+          p.tier !== 'superfan' &&
+          f.geometry?.type === 'Point'
+        );
+      });
+
+      const spawnReveal = (feature: GeoJSON.Feature) => {
+        if (feature.geometry.type !== 'Point') return;
+        const [lng, lat] = (feature.geometry as GeoJSON.Point).coordinates;
+        const p = (feature.properties ?? {}) as FeatureProps;
+        const picIdx = ((p.avatarSeed ?? 0) % PRAVATAR_IDS.length + PRAVATAR_IDS.length) % PRAVATAR_IDS.length;
+        const picId = PRAVATAR_IDS[picIdx];
+        const firstName = String(p.name ?? '').split(' ')[0] || 'Fã';
+
+        /* Estrutura do DOM:
+         *   <div .mapsim-reveal>
+         *     <div .mapsim-reveal-photo />
+         *     <div .mapsim-reveal-name>{firstName}</div>
+         *   </div>
+         */
+        const el = document.createElement('div');
+        el.className = 'mapsim-reveal';
+
+        const photo = document.createElement('div');
+        photo.className = 'mapsim-reveal-photo';
+        photo.style.backgroundImage = `url('https://i.pravatar.cc/80?img=${picId}')`;
+        el.appendChild(photo);
+
+        const name = document.createElement('div');
+        name.className = 'mapsim-reveal-name';
+        name.textContent = firstName;
+        el.appendChild(name);
+
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -8] })
+          .setLngLat([lng, lat])
+          .addTo(map);
+        activeMarkers.push(marker);
+
+        /* Trigger animação de entrada no próximo frame (CSS transition
+         * só funciona se houver mudança de estado APÓS o elemento estar
+         * no DOM com o estado inicial). */
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            el.classList.add('mapsim-reveal-in');
+          });
+        });
+
+        /* Saída: classList troca pra fade out, depois remove. */
+        const exitT = window.setTimeout(() => {
+          el.classList.remove('mapsim-reveal-in');
+          el.classList.add('mapsim-reveal-out');
+        }, REVEAL_LIFETIME_MS);
+
+        const removeT = window.setTimeout(() => {
+          try { marker.remove(); } catch { /* já removido */ }
+          const idx = activeMarkers.indexOf(marker);
+          if (idx >= 0) activeMarkers.splice(idx, 1);
+        }, REVEAL_LIFETIME_MS + REVEAL_EXIT_MS);
+
+        revealTimers.push(exitT, removeT);
+      };
+
+      const tick = () => {
+        try {
+          if (map.getZoom() < REVEAL_MIN_ZOOM) {
+            revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
+            return;
+          }
+          const bounds = map.getBounds();
+          if (!bounds) {
+            revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
+            return;
+          }
+          const inView = candidates.filter((f) => {
+            if (f.geometry.type !== 'Point') return false;
+            const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
+            return bounds.contains([lng, lat]);
+          });
+          if (inView.length === 0) {
+            revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
+            return;
+          }
+
+          /* Stagger: cada um dos 3 spawns com delay random entre
+           * 1.0-2.2s × posição. Resultado: 1º imediato, 2º entre
+           * 1-2.2s, 3º entre 2-4.4s. */
+          for (let i = 0; i < REVEAL_BATCH_SIZE; i++) {
+            const delay =
+              i === 0
+                ? 0
+                : i * (REVEAL_STAGGER_MIN_MS + Math.random() * (REVEAL_STAGGER_MAX_MS - REVEAL_STAGGER_MIN_MS));
+            const t = window.setTimeout(() => {
+              const f = inView[Math.floor(Math.random() * inView.length)];
+              spawnReveal(f);
+            }, delay);
+            revealTimers.push(t);
+          }
+
+          /* Próximo ciclo: ~5s + duração do stagger pra não sobrepor
+           * a saída dos atuais com a chegada dos próximos. */
+          const nextDelay = REVEAL_CYCLE_MS + REVEAL_STAGGER_MAX_MS;
+          revealTimers.push(window.setTimeout(tick, nextDelay));
+        } catch {
+          /* map removido entre verificações — encerra o loop. */
+        }
+      };
+
+      // Kick off no próximo frame pra dar tempo dos layers
+      // assentarem antes do primeiro spawn.
+      revealTimers.push(window.setTimeout(tick, 1500));
+
       const offEvents = () => {
         try {
           map.off('mousemove', LAYER_DOT, onUserHover);
@@ -658,6 +826,13 @@ export default function MapSimulationLayer() {
           map.off('click', LAYER_CL, onClusterClick);
           map.off('click', onMapClick);
         } catch { /* map destruído */ }
+        /* Limpa todos os timers pendentes e remove markers ativos. */
+        revealTimers.forEach((t) => window.clearTimeout(t));
+        revealTimers.length = 0;
+        activeMarkers.forEach((m) => {
+          try { m.remove(); } catch { /* já removido */ }
+        });
+        activeMarkers.length = 0;
       };
       // Substitui o cleanup original armazenando-o num closure.
       const originalCleanup = cleanup;
