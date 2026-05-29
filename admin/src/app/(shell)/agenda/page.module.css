@@ -365,14 +365,28 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  /* Gap=0 porque cada `.day + .day` recebe sua própria border-top
+   * + padding-top — o divisor cinza leve entre grupos faz o papel
+   * do gap e da linha estilo iOS Calendar de uma vez só. */
+  gap: 0;
   padding-inline: var(--s-1);
 }
 .day {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
+  padding-bottom: var(--s-3);
   animation: dayIn 320ms var(--ease-out) both;
+}
+/* Divisor cinza leve entre grupos de dias — referência visual do
+ * iOS Calendar list view. Aplicado a partir do 2º grupo
+ * (`.day + .day`) pra não pintar uma borda solta acima do
+ * primeiro grupo. Padding-top de --s-3 dá respiro entre a linha
+ * e o header do dia seguinte. */
+.day + .day {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--s-3);
+  margin-top: var(--s-1);
 }
 @keyframes dayIn {
   from { opacity: 0; transform: translateY(4px); }
