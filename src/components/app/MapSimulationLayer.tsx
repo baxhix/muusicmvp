@@ -309,28 +309,31 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 2) DOTS-FAR — pontinhos 2px verdes visíveis no ZOOM OUT.
+      // 2) DOTS-FAR — pontinhos 2px verdes visíveis em todo zoom
+      //    onde existe heatmap/blob (zoom 3-11).
       //
-      //    Per feedback "mesmo com o zoom out, distribua pontos de
-      //    2px verdes no mapa para dar a sensação de grandeza". Sem
-      //    este layer, o zoom Brasil mostraria só o heatmap + clusters
-      //    sumindo conforme o zoom diminui — perdia a sensação de
-      //    "presença individual" espalhada.
+      //    Per feedback original ("mesmo com o zoom out, distribua
+      //    pontos de 2px verdes no mapa para dar a sensação de
+      //    grandeza") + feedback novo ("Nesse tipo de visualização
+      //    já podem aparecer pontos de 2px distribuídos pelo perímetro
+      //    com 'mancha', mantendo a mancha, mas com pontos também").
+      //
+      //    Antes o maxzoom era 8 → na faixa de zoom 8-10 (que mostra
+      //    blobs verdes em cidades) os pontos sumiam e a mancha
+      //    ficava "vazia". Agora estende até zoom 11, fade-out
+      //    suave em 11-12 (cede lugar pros dots individuais por
+      //    tier que dominam no zoom alto).
       //
       //    Usamos SOURCE_HEAT (não-clusterizada) com filtro 1/16 via
       //    `avatarSeed % 16 === 0` — ~437 dots espalhados pelo Brasil.
-      //    Suficiente pra dar a "constelação" sem virar massa
-      //    pesada. Filtro online=1 + tier!=superfan (superfãs
-      //    aparecem como mini avatar real no zoom alto).
-      //
-      //    maxzoom 8 — desaparecem quando o LAYER_DOT (individual,
-      //    por tier) entra em cena no zoom 8+.
+      //    Filtro online=1 + tier!=superfan (superfãs aparecem como
+      //    mini avatar real no zoom alto).
       if (!map.getLayer(LAYER_DOTFAR)) {
         map.addLayer({
           id: LAYER_DOTFAR,
           type: 'circle',
           source: SOURCE_HEAT,
-          maxzoom: 8,
+          maxzoom: 12,
           filter: [
             'all',
             ['==', ['get', 'online'], 1],
@@ -343,9 +346,11 @@ export default function MapSimulationLayer() {
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               3,   0.75,
-              5,   0.85,
-              7,   0.55,
-              8,   0,
+              5,   0.90,
+              8,   0.95,    // plateau alto na zona do feedback
+              10,  0.85,
+              11,  0.45,    // começa a ceder lugar pros dots individuais
+              12,  0,
             ],
           },
         });
