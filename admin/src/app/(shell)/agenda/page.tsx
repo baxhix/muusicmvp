@@ -643,6 +643,10 @@ function MonthView({
           const posts = byDay.get(k) ?? [];
           const isToday = isSameDay(date, today);
           const isSelected = isSameDay(date, selectedDay);
+          /* Até 3 mini-chips dentro da célula; o resto vira "+N
+           * mais" no rodapé. Ler todos não cabe em ~70px de altura
+           * abaixo da data — usuário precisaria abrir o painel
+           * inferior pra ver detalhe. */
           const visible = posts.slice(0, 3);
           const overflow = posts.length - visible.length;
           return (
@@ -660,19 +664,46 @@ function MonthView({
               aria-label={`${date.getDate()} de ${MONTHS_LONG[date.getMonth()].toLowerCase()}${posts.length ? ` — ${posts.length} publicações` : ''}`}
             >
               <span className={styles.cellDay}>{date.getDate()}</span>
-              <span className={styles.cellDots} aria-hidden="true">
-                {visible.map((p) => {
-                  const iso = postDateIso(p);
-                  const isPast = iso ? new Date(iso).getTime() < now.getTime() : false;
-                  return (
-                    <span
-                      key={p.id}
-                      className={`${styles.cellDot} ${isPast ? styles.cellDotPast : ''}`}
-                    />
-                  );
-                })}
-                {overflow > 0 && <span className={styles.cellMore}>+{overflow}</span>}
-              </span>
+
+              {/* Lista de eventos dentro do card do dia. Cada chip
+               *  é clicável (via span role=button + stopPropagation
+               *  pra não disparar o onSelectDay do parent button).
+               *  Foco/teclado: tabIndex={-1} pra ficar fora do tab
+               *  flow — o usuário tab-eia entre células, depois
+               *  abre o painel inferior pra navegar nos eventos
+               *  com leitor de tela / teclado. */}
+              {visible.length > 0 && (
+                <span className={styles.cellEvents}>
+                  {visible.map((p) => {
+                    const iso = postDateIso(p);
+                    const isPast = iso ? new Date(iso).getTime() < now.getTime() : false;
+                    return (
+                      <span
+                        key={p.id}
+                        className={`${styles.cellEvent} ${isPast ? styles.cellEventPast : ''}`}
+                        role="button"
+                        tabIndex={-1}
+                        aria-label={`Abrir ${p.title?.trim() || 'publicação'}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPickPost(p);
+                        }}
+                      >
+                        <span className={styles.cellEventTime}>
+                          {iso ? hhmm(iso) : ''}
+                        </span>
+                        <span className={styles.cellEventTitle}>
+                          {p.title?.trim() || '(sem título)'}
+                        </span>
+                      </span>
+                    );
+                  })}
+                  {overflow > 0 && (
+                    <span className={styles.cellEventMore}>+{overflow} mais</span>
+                  )}
+                </span>
+              )}
+
               {inMonth && (
                 /* "+" no canto superior direito visível só no hover
                  *  da célula. Renderizado como span (não button) pra
