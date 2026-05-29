@@ -272,13 +272,13 @@ export default function MapSimulationLayer() {
             ],
             'heatmap-intensity': [
               'interpolate', ['linear'], ['zoom'],
-              3, 0.85,
-              5, 1.40,
-              6, 1.30,
-              7, 0.90,
-              9, 0.55,   // suavizado per feedback "cama verde muito mais suave"
-              11, 0.35,
-              12, 0.20,
+              3, 0.50,   // antes 0.85 — per feedback "substitua a intensidade
+              5, 0.70,   // antes 1.40   no zoom out máximo pela intensidade
+              6, 0.65,   // antes 1.30   da imagem capturada"
+              7, 0.55,
+              9, 0.45,
+              11, 0.32,
+              12, 0.18,
             ],
             /* Paleta VERDE puro — per feedback "na mancha com a área
              * populosa, use a cor verde". Sai do escuro semi-transparente
@@ -310,12 +310,12 @@ export default function MapSimulationLayer() {
             ],
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.95,
-              5,   0.95,
-              6,   0.75,
-              7,   0.50,
+              3,   0.55,   // antes 0.95 — soft glow, não cobertor sólido
+              5,   0.60,   // antes 0.95
+              6,   0.55,
+              7,   0.45,
               9,   0.30,
-              11,  0.20,
+              11,  0.22,
               12,  0,
             ],
           },
