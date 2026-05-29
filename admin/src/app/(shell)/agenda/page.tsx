@@ -852,26 +852,85 @@ function WeekView({ cursor, today, selectedDay, byDay, now, onSelectDay, onPickP
       <div className={styles.weekHeader}>
         {days.map((d, i) => {
           const k = dayKey(d);
-          const count = byDay.get(k)?.length ?? 0;
+          const posts = byDay.get(k) ?? [];
           const isToday = isSameDay(d, today);
           const isSelected = isSameDay(d, selectedDay);
+          /* Mostra até 3 chips por coluna na Semana — depois disso
+           * o usuário usa o painel inferior pra ver detalhe completo
+           * do dia. Numero proporcional ao espaço vertical de 120px
+           * que cada coluna ocupa. */
+          const visible = posts.slice(0, 3);
+          const overflow = posts.length - visible.length;
           return (
             <button
               key={i}
               type="button"
               className={[
                 styles.weekDayCol,
-                isToday && styles.weekDayColToday,
                 isSelected && styles.weekDayColSelected,
               ].filter(Boolean).join(' ')}
               onClick={() => onSelectDay(d)}
             >
-              <span className={styles.weekDayLabel}>
-                {WEEKDAYS_SHORT_3[d.getDay()]}
-              </span>
-              <span className={styles.weekDayNum}>{d.getDate()}</span>
-              <span className={styles.weekDayCount}>
-                {count > 0 ? `${count}` : '·'}
+              <div className={styles.weekDayHeader}>
+                <span className={styles.weekDayLabel}>
+                  {WEEKDAYS_SHORT_3[d.getDay()]}
+                </span>
+                {isToday ? (
+                  /* Per product feedback "Remova a identificação 29
+                   * na data de hoje, apenas coloque entre parenteses
+                   * na frente (Hoje)". Hoje aparece como "(Hoje)"
+                   * em gradient text — sem o pill mostrando o número
+                   * "29". */
+                  <span className={styles.weekDayToday}>(Hoje)</span>
+                ) : (
+                  <span className={styles.weekDayNum}>{d.getDate()}</span>
+                )}
+              </div>
+
+              <span className={styles.weekDayEvents}>
+                {visible.length === 0 ? (
+                  <span className={styles.weekDayEmpty}>—</span>
+                ) : (
+                  <>
+                    {visible.map((p) => {
+                      const iso = postDateIso(p);
+                      const isPast = iso ? new Date(iso).getTime() < now.getTime() : false;
+                      const sv = statusVisual(p.status);
+                      const statusClass = isPast
+                        ? styles.cellEventPast
+                        : sv === 'draft'
+                          ? styles.cellEventDraft
+                          : sv === 'published'
+                            ? styles.cellEventPublished
+                            : sv === 'inactive'
+                              ? styles.cellEventPast
+                              : '';
+                      return (
+                        <span
+                          key={p.id}
+                          className={`${styles.cellEvent} ${statusClass}`}
+                          role="button"
+                          tabIndex={-1}
+                          aria-label={`${statusLabel(sv)}: ${p.title?.trim() || 'publicação'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPickPost(p);
+                          }}
+                        >
+                          <span className={styles.cellEventTime}>
+                            {iso ? hhmm(iso) : ''}
+                          </span>
+                          <span className={styles.cellEventTitle}>
+                            {p.title?.trim() || '(sem título)'}
+                          </span>
+                        </span>
+                      );
+                    })}
+                    {overflow > 0 && (
+                      <span className={styles.cellEventMore}>+{overflow} mais</span>
+                    )}
+                  </>
+                )}
               </span>
             </button>
           );

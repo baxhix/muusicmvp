@@ -14,10 +14,18 @@
    ============================================================ */
 
 .root {
+  /* Container padrão das outras páginas admin (fanpoints,
+   * comunidades, chat…): padding 24, max-width --content-max
+   * (1280px), margin auto pra centralizar quando a viewport
+   * cresce. Per product feedback "Compacte a agenda no
+   * container padrão que utilizamos em outras páginas". */
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
-  padding-inline: 4px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* ── Toolbar: período + tabs em coluna, ambos centralizados ── */
@@ -460,7 +468,14 @@
   color: var(--text-mute);
 }
 
-/* ── SEMANA ────────────────────────────────────────────── */
+/* ── SEMANA ──────────────────────────────────────────────
+ * Cada coluna do header agora se comporta como mini-card de
+ * dia: weekday label + número da data (left-aligned, sem pill)
+ * + lista de eventos chips abaixo. Hoje recebe "(Hoje)" no
+ * lugar do número, sem o gradient pill — per product feedback
+ * "Remova a identificação 29 na data de hoje, apenas coloque
+ * entre parenteses na frente (Hoje)".
+ */
 .weekWrap {
   display: flex;
   flex-direction: column;
@@ -469,64 +484,78 @@
 .weekHeader {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 4px;
 }
 .weekDayCol {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 4px;
-  padding: var(--s-2) var(--s-1);
+  padding: var(--s-2) var(--s-2) var(--s-2);
+  min-height: 120px;
   border-radius: var(--r-md);
   cursor: pointer;
   background: transparent;
   border: 0;
   font-family: inherit;
   color: inherit;
+  text-align: left;
   transition: background var(--dur-fast) var(--ease-out);
 }
 .weekDayCol:hover {
-  background: var(--surface-hover);
+  background: rgba(127, 127, 127, 0.06);
+}
+.weekDayHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 2px;
 }
 .weekDayLabel {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-mute);
 }
 .weekDayNum {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border-radius: var(--r-full);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  transition: background var(--dur-fast) var(--ease-out),
-              color var(--dur-fast) var(--ease-out);
 }
-.weekDayColToday .weekDayNum {
+/* Hoje no Week: substitui o número pelo label "(Hoje)" em
+ * gradient text, sem pill. */
+.weekDayToday {
+  font-size: 13px;
+  font-weight: 700;
   background: linear-gradient(135deg, #a855f7, #6366f1);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.005em;
 }
-.weekDayColSelected .weekDayNum {
-  box-shadow: inset 0 0 0 1.5px var(--text);
+.weekDayColSelected {
+  background: rgba(127, 127, 127, 0.05);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
-.weekDayColToday.weekDayColSelected .weekDayNum {
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4);
+/* Lista de eventos dentro da coluna da semana — mesmos chips
+ * .cellEvent (com cores por status), mas em layout otimizado
+ * pra coluna mais estreita. */
+.weekDayEvents {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
-.weekDayCount {
+.weekDayEmpty {
   font-size: 11px;
-  font-weight: 500;
-  color: var(--text-mute);
-  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  padding: 4px 0;
+  opacity: 0.7;
 }
 
 /* ── LISTA ──────────────────────────────────────────────── */
