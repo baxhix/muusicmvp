@@ -61,8 +61,9 @@ function isMobileViewport(): boolean {
 const SOURCE_ID    = 'mapsim-users';
 const SOURCE_HEAT  = 'mapsim-users-heat';
 const LAYER_HEAT   = 'mapsim-heatmap';
-const LAYER_CL     = 'mapsim-clusters';
-const LAYER_CL_T   = 'mapsim-cluster-count';
+const LAYER_DOTFAR = 'mapsim-dot-far';      // pontos 2px verdes visíveis no zoom out
+const LAYER_CL     = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
+const LAYER_CL_T   = 'mapsim-cluster-count'; // texto só no hover
 const LAYER_DOT    = 'mapsim-dot';
 const LAYER_HALO   = 'mapsim-superfan-halo';
 const LAYER_SF_PIC = 'mapsim-superfan-pic';
@@ -118,7 +119,8 @@ const TIER_RADIUS_EXPR = [
   /* fan default */ 1.75,
 ] as unknown[];
 
-interface HoverInfo {
+interface UserHoverInfo {
+  kind: 'user';
   id: string;
   name: string;
   city: string;
@@ -129,6 +131,15 @@ interface HoverInfo {
   clientX: number;
   clientY: number;
 }
+
+interface ClusterHoverInfo {
+  kind: 'cluster';
+  count: number;
+  clientX: number;
+  clientY: number;
+}
+
+type HoverInfo = UserHoverInfo | ClusterHoverInfo;
 
 export default function MapSimulationLayer() {
   const { flags } = useBrainstormFlags();
@@ -148,7 +159,10 @@ export default function MapSimulationLayer() {
     const cleanup = () => {
       if (!currentMap) return;
       try {
-        for (const id of [LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_CL_T, LAYER_CL, LAYER_HEAT]) {
+        for (const id of [
+          LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_CL_T, LAYER_CL,
+          LAYER_DOTFAR, LAYER_HEAT,
+        ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
         if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
@@ -258,14 +272,17 @@ export default function MapSimulationLayer() {
               7, 0.80,
               8, 0.30,
             ],
+            /* Paleta VERDE puro — per feedback "na mancha com a área
+             * populosa, use a cor verde". Sai do escuro semi-transparente
+             * (sertão) até verde-limão denso (capital fervilhando). */
             'heatmap-color': [
               'interpolate', ['linear'], ['heatmap-density'],
               0,    'rgba(0, 0, 0, 0)',
-              0.10, 'rgba(99, 102, 241, 0.32)',    // indigo (sertão)
-              0.30, 'rgba(168, 85, 247, 0.55)',    // magenta
-              0.55, 'rgba(236, 72, 153, 0.75)',    // pink
-              0.80, 'rgba(251, 146, 60, 0.85)',    // orange
-              1,    'rgba(251, 191, 36, 0.92)',    // amber (hot — capital fervilhando)
+              0.10, 'rgba(20, 83, 45, 0.35)',      // verde escuro (sertão)
+              0.30, 'rgba(34, 139, 75, 0.55)',     // verde médio
+              0.55, 'rgba(61, 219, 116, 0.75)',    // verde vivo (marca)
+              0.80, 'rgba(134, 239, 172, 0.88)',   // verde claro
+              1,    'rgba(190, 242, 100, 0.95)',   // verde-limão (hot)
             ],
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
@@ -287,7 +304,60 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 2) CLUSTERS — começam em zoom 5, atrelado ao Supercluster.
+      // 2) DOTS-FAR — pontinhos 2px verdes visíveis no ZOOM OUT.
+      //
+      //    Per feedback "mesmo com o zoom out, distribua pontos de
+      //    2px verdes no mapa para dar a sensação de grandeza". Sem
+      //    este layer, o zoom Brasil mostraria só o heatmap + clusters
+      //    sumindo conforme o zoom diminui — perdia a sensação de
+      //    "presença individual" espalhada.
+      //
+      //    Usamos SOURCE_HEAT (não-clusterizada) com filtro 1/16 via
+      //    `avatarSeed % 16 === 0` — ~437 dots espalhados pelo Brasil.
+      //    Suficiente pra dar a "constelação" sem virar massa
+      //    pesada. Filtro online=1 + tier!=superfan (superfãs
+      //    aparecem como mini avatar real no zoom alto).
+      //
+      //    maxzoom 8 — desaparecem quando o LAYER_DOT (individual,
+      //    por tier) entra em cena no zoom 8+.
+      if (!map.getLayer(LAYER_DOTFAR)) {
+        map.addLayer({
+          id: LAYER_DOTFAR,
+          type: 'circle',
+          source: SOURCE_HEAT,
+          maxzoom: 8,
+          filter: [
+            'all',
+            ['==', ['get', 'online'], 1],
+            ['==', ['%', ['get', 'avatarSeed'], 16], 0],
+          ],
+          paint: {
+            'circle-radius': 1,                      // 2px diameter
+            'circle-color': '#3DDB74',
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              3,   0.75,
+              5,   0.85,
+              7,   0.55,
+              8,   0,
+            ],
+          },
+        });
+      }
+
+      // 3) CLUSTERS — BLOB orgânico verde (não mais círculo numerado).
+      //
+      //    Per feedback "mude o círculo azul, com o número dentro
+      //    por uma camada verde, sem borda, com o centro mais denso
+      //    e perdendo força nas bordas, de forma inorgânica". Em
+      //    Mapbox isso é alcançado com:
+      //      - cor verde única (sem step por point_count)
+      //      - SEM stroke (`circle-stroke-width: 0`)
+      //      - `circle-blur: 1.0` → o círculo fica difuso, sem borda
+      //        nítida, com centro mais denso e desbotando organicamente
+      //      - tamanho ainda escalado por point_count, mas maior pra
+      //        parecer "mancha de presença", não disco
       if (!map.getLayer(LAYER_CL)) {
         map.addLayer({
           id: LAYER_CL,
@@ -296,34 +366,40 @@ export default function MapSimulationLayer() {
           filter: ['has', 'point_count'],
           minzoom: 5,
           paint: {
-            'circle-color': [
-              'step', ['get', 'point_count'],
-              'rgba(99, 102, 241, 0.95)',   // < 50
-              50,  'rgba(168, 85, 247, 0.95)',
-              200, 'rgba(236, 72, 153, 0.95)',
-              500, 'rgba(251, 191, 36, 0.95)',
-            ],
+            'circle-color': '#3DDB74',
             'circle-radius': [
               'step', ['get', 'point_count'],
-              16,                            // < 50
-              50,  20,
-              200, 26,
-              500, 32,
+              24,                              // < 50
+              50,  34,
+              200, 48,
+              500, 64,
             ],
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': 'rgba(255, 255, 255, 0.25)',
+            'circle-stroke-width': 0,
+            /* Blur 1.0 = perfeitamente difuso. O Mapbox aplica um
+             * gradient radial automaticamente (centro alpha 1, borda
+             * alpha 0). Resultado: blob orgânico com fade, sem aresta. */
+            'circle-blur': 1.0,
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               5,   0,
-              5.5, 1,
-              11,  1,
+              5.5, 0.55,
+              8,   0.70,
+              10,  0.65,
+              11,  0.45,
               12,  0,
             ],
           },
         });
       }
 
-      // 3) CLUSTER COUNT — texto branco grande sobre o cluster.
+      // 4) CLUSTER COUNT — texto SÓ aparece no hover.
+      //
+      //    Per feedback "Remova os círculos com a quantidade, mostre
+      //    essa informação apenas se passar o mouse por cima". O layer
+      //    existe (pra estar pronto se precisarmos) mas com opacity 0
+      //    permanente. O número real aparece via React overlay
+      //    (ClusterHoverCard) ancorado no cursor — mais legível e
+      //    independente da escala do mapa.
       if (!map.getLayer(LAYER_CL_T)) {
         map.addLayer({
           id: LAYER_CL_T,
@@ -333,27 +409,13 @@ export default function MapSimulationLayer() {
           minzoom: 5,
           layout: {
             'text-field': ['number-format', ['get', 'point_count'], {}],
-            'text-size': [
-              'step', ['get', 'point_count'],
-              12,
-              50,  13,
-              200, 14,
-              500, 16,
-            ],
+            'text-size': 12,
             'text-font': ['Inter Semibold', 'Arial Unicode MS Bold'],
             'text-allow-overlap': true,
           },
           paint: {
             'text-color': '#ffffff',
-            'text-halo-color': 'rgba(0, 0, 0, 0.6)',
-            'text-halo-width': 1,
-            'text-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              5,   0,
-              5.5, 1,
-              11,  1,
-              12,  0,
-            ],
+            'text-opacity': 0,    // sempre invisível — número vai via React overlay
           },
         });
       }
@@ -494,13 +556,14 @@ export default function MapSimulationLayer() {
         });
       }
 
-      /* ── Hover/click handlers no LAYER_DOT ────────────────
-       * Desktop: mousemove sobre dot → seta hover info, cursor
-       * pointer, mouseleave volta. Mobile: click sobre dot →
-       * seta info + timer de 4s pra auto-dismiss. Click em map
-       * vazio dismissa.
+      /* ── Hover/click handlers ─────────────────────────────
+       * LAYER_DOT: mousemove sobre dot → seta hover info (user).
+       * LAYER_CL : mousemove sobre blob → seta hover info (cluster
+       *            com point_count). Per feedback "mostre essa
+       *            informação apenas se passar o mouse por cima".
+       * Mobile usa click + auto-dismiss 4s; click no map vazio limpa.
        */
-      const onPointerOver = (e: MapLayerMouseEvent) => {
+      const onUserHover = (e: MapLayerMouseEvent) => {
         if (!e.features || e.features.length === 0) return;
         const f = e.features[0];
         const p = f.properties ?? {};
@@ -509,12 +572,32 @@ export default function MapSimulationLayer() {
           dismissTimerRef.current = null;
         }
         setHover({
+          kind: 'user',
           id: String(p.id ?? ''),
           name: String(p.name ?? '—'),
           city: String(p.city ?? ''),
-          tier: (p.tier as HoverInfo['tier']) || 'fan',
+          tier: (p.tier as UserHoverInfo['tier']) || 'fan',
           online: p.online === 1 || p.online === true,
           lastActiveSec: Number(p.lastActiveSec ?? 0),
+          clientX: e.originalEvent.clientX,
+          clientY: e.originalEvent.clientY,
+        });
+        map.getCanvas().style.cursor = 'pointer';
+      };
+
+      const onClusterHover = (e: MapLayerMouseEvent) => {
+        if (!e.features || e.features.length === 0) return;
+        const f = e.features[0];
+        const p = f.properties ?? {};
+        const count = Number(p.point_count ?? 0);
+        if (!count) return;
+        if (dismissTimerRef.current) {
+          window.clearTimeout(dismissTimerRef.current);
+          dismissTimerRef.current = null;
+        }
+        setHover({
+          kind: 'cluster',
+          count,
           clientX: e.originalEvent.clientX,
           clientY: e.originalEvent.clientY,
         });
@@ -527,22 +610,28 @@ export default function MapSimulationLayer() {
       };
 
       const onDotClick = (e: MapLayerMouseEvent) => {
-        onPointerOver(e);
-        // No mobile não tem mouseleave — auto-dismiss em 4s
+        onUserHover(e);
         if (dismissTimerRef.current) window.clearTimeout(dismissTimerRef.current);
         dismissTimerRef.current = window.setTimeout(() => {
           setHover(null);
           map.getCanvas().style.cursor = '';
           dismissTimerRef.current = null;
         }, 4000);
-        // stopPropagation impede o click global abaixo de dismissar
-        // o card que acabamos de abrir.
+        (e as unknown as { _dotHandled?: boolean })._dotHandled = true;
+      };
+
+      const onClusterClick = (e: MapLayerMouseEvent) => {
+        onClusterHover(e);
+        if (dismissTimerRef.current) window.clearTimeout(dismissTimerRef.current);
+        dismissTimerRef.current = window.setTimeout(() => {
+          setHover(null);
+          map.getCanvas().style.cursor = '';
+          dismissTimerRef.current = null;
+        }, 3000);
         (e as unknown as { _dotHandled?: boolean })._dotHandled = true;
       };
 
       const onMapClick = (e: MapMouseEvent) => {
-        // Se o click foi tratado pelo handler do LAYER_DOT acima,
-        // não fechamos o card.
         if ((e as unknown as { _dotHandled?: boolean })._dotHandled) return;
         setHover(null);
         if (dismissTimerRef.current) {
@@ -551,17 +640,22 @@ export default function MapSimulationLayer() {
         }
       };
 
-      map.on('mousemove', LAYER_DOT, onPointerOver);
+      map.on('mousemove', LAYER_DOT, onUserHover);
       map.on('mouseleave', LAYER_DOT, onPointerOut);
       map.on('click', LAYER_DOT, onDotClick);
+      map.on('mousemove', LAYER_CL, onClusterHover);
+      map.on('mouseleave', LAYER_CL, onPointerOut);
+      map.on('click', LAYER_CL, onClusterClick);
       map.on('click', onMapClick);
 
-      // Cleanup desses handlers ao desligar a layer.
       const offEvents = () => {
         try {
-          map.off('mousemove', LAYER_DOT, onPointerOver);
+          map.off('mousemove', LAYER_DOT, onUserHover);
           map.off('mouseleave', LAYER_DOT, onPointerOut);
           map.off('click', LAYER_DOT, onDotClick);
+          map.off('mousemove', LAYER_CL, onClusterHover);
+          map.off('mouseleave', LAYER_CL, onPointerOut);
+          map.off('click', LAYER_CL, onClusterClick);
           map.off('click', onMapClick);
         } catch { /* map destruído */ }
       };
@@ -589,20 +683,20 @@ export default function MapSimulationLayer() {
   }, [enabled, data.geojson]);
 
   if (!hover) return null;
-
+  if (hover.kind === 'cluster') return <ClusterHoverCard info={hover} />;
   return <HoverCard info={hover} />;
 }
 
 /* ── Hover card ─────────────────────────────────────────── */
 
-const TIER_LABEL: Record<HoverInfo['tier'], string> = {
+const TIER_LABEL: Record<UserHoverInfo['tier'], string> = {
   superfan: 'Superfã',
   top100:   'Top 100',
   top1000:  'Top 1000',
   fan:      'Fã',
 };
 
-const TIER_COLOR_CSS: Record<HoverInfo['tier'], string> = {
+const TIER_COLOR_CSS: Record<UserHoverInfo['tier'], string> = {
   superfan: '#fbbf24',
   top100:   '#a855f7',
   top1000:  '#6366f1',
@@ -616,7 +710,7 @@ function relativeTime(sec: number): string {
   return `há ${Math.floor(sec / 86400)} d`;
 }
 
-function HoverCard({ info }: { info: HoverInfo }) {
+function HoverCard({ info }: { info: UserHoverInfo }) {
   /* Posiciona com transform pra cair logo acima do cursor.
    * pointer-events:none pra cursor sobre o card não disparar
    * mouseleave do layer (que escondia o card numa fração de
@@ -650,6 +744,35 @@ function HoverCard({ info }: { info: HoverInfo }) {
         <span className={styles.hoverWhen}>
           {info.online ? 'online agora' : relativeTime(info.lastActiveSec)}
         </span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Cluster hover card ────────────────────────────────────
+ * Aparece quando o mouse passa sobre o blob verde de um cluster.
+ * Mostra a contagem de usuários representada por aquele blob.
+ * Reaproveita o mesmo estilo do hover card de user pra consistência.
+ */
+function ClusterHoverCard({ info }: { info: ClusterHoverInfo }) {
+  return (
+    <div
+      className={styles.hoverCard}
+      style={{
+        left: `${info.clientX}px`,
+        top:  `${info.clientY}px`,
+      }}
+      role="status"
+      aria-live="polite"
+    >
+      <div className={styles.hoverHead}>
+        <span className={styles.hoverDot} aria-hidden="true" />
+        <span className={styles.hoverName}>
+          {info.count.toLocaleString('pt-BR')} fãs online
+        </span>
+      </div>
+      <div className={styles.hoverMeta}>
+        <span className={styles.hoverCity}>nesta região</span>
       </div>
     </div>
   );
