@@ -274,10 +274,10 @@ export default function MapSimulationLayer() {
               3, 0.85,
               5, 1.40,
               6, 1.30,
-              7, 1.20,
-              9, 1.10,
-              11, 0.85,
-              12, 0.35,
+              7, 0.90,
+              9, 0.55,   // suavizado per feedback "cama verde muito mais suave"
+              11, 0.35,
+              12, 0.20,
             ],
             /* Paleta VERDE puro — per feedback "na mancha com a área
              * populosa, use a cor verde". Sai do escuro semi-transparente
@@ -292,29 +292,29 @@ export default function MapSimulationLayer() {
               1,    'rgba(190, 242, 100, 0.95)',   // verde-limão (hot)
             ],
             /* Raio explode no zoom 9-11 — é o que cria as "manchas
-             * inorgânicas grandes" que o usuário pediu. Em zoom 10
-             * (cidade) cada feature pinga sua densidade num raio
-             * de 80px, então as features próximas se sobrepõem
-             * organicamente em 2-3 manchas grandes em vez de
-             * 30 blobs discretos. */
+             * inorgânicas grandes". Per feedback "deixe a cama verde
+             * nesse nível de zoom muito mais suave", radius foi
+             * reduzido de 65/90 → 40/50, e opacity de 0.65/0.50 →
+             * 0.30/0.20. As manchas continuam aparecendo (a sensação
+             * de "presença" segue lá) mas sem dominar a tela toda. */
             'heatmap-radius': [
               'interpolate', ['linear'], ['zoom'],
               3, 18,
               5, 28,
               6, 30,
-              7, 40,
-              9, 65,
-              11, 90,
-              12, 40,
+              7, 35,
+              9, 40,
+              11, 50,
+              12, 28,
             ],
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
               3,   0.95,
               5,   0.95,
-              6,   0.80,
-              7,   0.70,
-              9,   0.65,
-              11,  0.50,
+              6,   0.75,
+              7,   0.50,
+              9,   0.30,
+              11,  0.20,
               12,  0,
             ],
           },
