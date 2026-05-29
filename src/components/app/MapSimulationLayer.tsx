@@ -644,12 +644,12 @@ export default function MapSimulationLayer() {
             ['==', ['get', 'online'], 1],
           ],
           minzoom: 9,
-          /* Maxzoom 15 — per feedback "no zoom máximo, remova o
-           * blur ao redor dos pontos". O glow é útil no zoom
-           * intermediário pra dar presença aos dots pequenos,
-           * mas no zoom alto cada ponto já tem raio próprio
-           * suficiente e a auréola começa a poluir. */
-          maxzoom: 15,
+          /* Maxzoom 13 — per feedback "no zoom máximo, remova a
+           * sombra dos pontos únicos". O glow servia no zoom 10-12
+           * pra dar presença aos pontos pequenos, mas a partir do
+           * zoom 13 cada dot já tem raio próprio suficiente. Acima
+           * disso o dot aparece NU, sem qualquer halo. */
+          maxzoom: 13,
           paint: {
             'circle-color': '#3DDB74',
             /* Raio por tier — superfã ganha glow maior (alinha com
@@ -663,15 +663,15 @@ export default function MapSimulationLayer() {
             ],
             'circle-blur': 0.85,
             'circle-stroke-width': 0,
-            /* Opacity faz peak no zoom 12-13 e cai pra zero em 15.
-             * No zoom 15+ os pontos ficam limpos, sem blur. */
+            /* Peak no zoom 11-12 e cai pra zero antes do 13.
+             * No zoom 13+ os pontos ficam limpos, sem qualquer
+             * halo/sombra ao redor. */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
               9,    0,
               11,   0.35,
-              13,   0.45,
-              14,   0.20,
-              15,   0,
+              12,   0.30,
+              13,   0,
             ],
           },
         });
