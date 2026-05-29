@@ -97,8 +97,12 @@ function generateAmbientPoints(): GeoJSON.Feature[] {
   const E = -36;
   const S = -32;
   const N = 4;
-  const cols = 14;
-  const rows = 9;
+  /* Grid 11×7 = 77 pontos (era 14×9 = 126) — per feedback
+   * "menos pontos de 2px e 1px espalhados" no zoom out.
+   * Visual mais limpo, deixa as cidades reais (DOTFAR/CL)
+   * comunicarem onde a presença concentra. */
+  const cols = 11;
+  const rows = 7;
   const features: GeoJSON.Feature[] = [];
   for (let i = 0; i < cols; i += 1) {
     for (let j = 0; j < rows; j += 1) {
@@ -373,13 +377,17 @@ export default function MapSimulationLayer() {
               11, 55,
               12, 32,
             ],
+            /* Heatmap REMOVIDO no zoom out (3-6) per feedback
+             * "remova a camada em verde nesse nível de zoom".
+             * Entra suavemente a partir do zoom 7 (cidade) onde
+             * a presença em manchas faz sentido como contexto. */
             'heatmap-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.32,  // reduzido mais ainda
-              5,   0.40,
-              6,   0.42,
-              7,   0.40,
-              9,   0.30,
+              3,   0,
+              5,   0,
+              6,   0.05,
+              7,   0.22,
+              9,   0.28,
               11,  0.20,
               12,  0,
             ],
@@ -458,10 +466,14 @@ export default function MapSimulationLayer() {
             'circle-radius': 1,                      // 2px diameter
             'circle-color': '#3DDB74',
             'circle-stroke-width': 0,
+            /* Opacity progressiva conforme zoom — soft no continente
+             * (continentes pequenos pra ver muito ponto), full no
+             * zoom de cidade. Per feedback "conforme o zoom avança
+             * os pontos se aproximam". */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.75,
-              5,   0.90,
+              3,   0.45,    // soft no zoom out
+              5,   0.75,
               8,   0.95,
               10,  0.95,
               11,  0.80,
@@ -491,7 +503,12 @@ export default function MapSimulationLayer() {
           id: LAYER_DOTFAR2,
           type: 'circle',
           source: SOURCE_HEAT,
-          minzoom: 9,
+          /* Antes minzoom 9 — agora 7 com ramp progressivo
+           * per feedback "conforme o zoom vai ocorrendo, vai
+           * espalhando e mostrando novos pontos de 1px".
+           * Cada incremento de zoom revela mais pontos: zoom 7
+           * já mostra 30%, zoom 9 mostra 65%, peak em 10-11. */
+          minzoom: 7,
           maxzoom: 12,
           filter: [
             'all',
@@ -505,8 +522,10 @@ export default function MapSimulationLayer() {
             'circle-stroke-width': 0,
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              9,   0,
-              10,  0.75,
+              7,   0,
+              8,   0.30,    // começam tímidos
+              9,   0.65,    // mais visíveis
+              10,  0.85,    // peak
               11,  0.85,
               12,  0,
             ],
