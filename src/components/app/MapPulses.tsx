@@ -38,11 +38,17 @@ import { useSimulationData, type CityStats } from '@/lib/mapSimulation';
  *     entre zoom 8 e 9 pra dar lugar pros dots/clusters detalhados
  * ============================================================ */
 
-/** Decide o tier de pulse pra cada cidade pela contagem de ativos. */
-function pulseSize(active: number): 'xl' | 'l' | 'm' | null {
-  if (active >= 700) return 'xl';
-  if (active >= 400) return 'l';
-  if (active >= 200) return 'm';
+/** Decide o tier de pulse pra cada cidade pela contagem de ativos.
+ *
+ *  Tier S é forçado em Manaus e Belém per feedback "Adicione mais
+ *  uma área pulsante menor em Belém e Manaus". Essas duas cidades
+ *  não atingiriam o threshold M consistentemente (active varia
+ *  por sampling) — forçar S garante presença visual sempre. */
+function pulseSize(city: CityStats): 'xl' | 'l' | 'm' | 's' | null {
+  if (city.city === 'Manaus' || city.city === 'Belém') return 's';
+  if (city.active >= 700) return 'xl';
+  if (city.active >= 400) return 'l';
+  if (city.active >= 200) return 'm';
   return null;
 }
 
@@ -77,34 +83,30 @@ export default function MapPulses() {
     };
 
     const applyZoomVisibility = (map: MapboxMap) => {
-      /* Lógica em duas faixas:
+      /* Lógica em três faixas:
        *   zoom < 5  → modo XXL (~200px) pros polos XL/L originais.
-       *               Polos M são escondidos (zoom continente não
+       *               Polos M/S são escondidos (zoom continente não
        *               precisa de info detalhada).
-       *   zoom 5-8  → modo normal (tier XL/L/M original guardado
-       *               em data-size-original).
+       *   zoom 5-8  → modo normal (tier XL/L/M/S original).
        *   zoom 8-9  → fade-out gradual.
-       *   zoom 9+   → hidden.
-       * Per feedback "tamanho ~200px quando o zoom está bem afastado". */
+       *   zoom 9+   → hidden. */
       const z = map.getZoom();
       const visible = z < 9;
       const opacity = z < 8 ? 1 : Math.max(0, 1 - (z - 8));
       markers.forEach((m) => {
         const el = m.getElement();
-        const original = el.dataset.sizeOriginal as 'xl' | 'l' | 'm' | undefined;
+        const original = el.dataset.sizeOriginal as 'xl' | 'l' | 'm' | 's' | undefined;
         if (!original) return;
 
-        // Limpa todas as classes de tier antes de aplicar a correta.
         el.classList.remove(
           'mapsim-pulse-xxl',
           'mapsim-pulse-xl',
           'mapsim-pulse-l',
           'mapsim-pulse-m',
+          'mapsim-pulse-s',
         );
 
         if (z < 5) {
-          // Zoom continente — só XL/L originais ganham o XXL.
-          // M não comunica em escala continental, fica hidden.
           if (original === 'xl' || original === 'l') {
             el.classList.add('mapsim-pulse-xxl');
             el.style.visibility = 'visible';
@@ -140,9 +142,9 @@ export default function MapPulses() {
        * feedback "no mobile talvez 3 sejam suficientes") —
        * tela pequena + 3 anéis cada = melhor manter discreto. */
       const mobile = isMobileViewport();
-      const candidates: Array<{ city: CityStats; size: 'xl' | 'l' | 'm' }> = [];
+      const candidates: Array<{ city: CityStats; size: 'xl' | 'l' | 'm' | 's' }> = [];
       for (const city of data.cities) {
-        const size = pulseSize(city.active);
+        const size = pulseSize(city);
         if (!size) continue;
         candidates.push({ city, size });
       }
@@ -150,20 +152,24 @@ export default function MapPulses() {
         ? candidates.slice(0, MAX_PULSES_MOBILE)
         : candidates;
 
+      const fmt = (n: number) => n.toLocaleString('pt-BR');
+
       finalList.forEach(({ city, size }) => {
-        /* Estrutura:
-         *   <div .mapsim-pulse .mapsim-pulse-{size}>
+        /* Estrutura final:
+         *   <div .mapsim-pulse>
          *     <span .mapsim-pulse-ring />  (×3, com delays diferentes)
          *     <span .mapsim-pulse-core />
+         *     <span .mapsim-pulse-hit />   ← área invisível 60×60 que
+         *                                    captura mouseover
+         *     <span .mapsim-pulse-badge>{count} ouvintes</span>
+         *                                  ← pill mostrado no hover
          *   </div>
-         */
+         * Per feedback "adicione o hover nas áreas pulsantes com o
+         * badge de quantidade de ouvintes". */
         const el = document.createElement('div');
-        /* Classe de tier NÃO é definida aqui — `applyZoomVisibility`
-         * decide ao vivo entre o tier original e o XXL conforme o
-         * zoom. Guardamos o tier original em data-attribute. */
         el.className = 'mapsim-pulse';
         el.dataset.sizeOriginal = size;
-        el.setAttribute('aria-hidden', 'true');
+        // Não usamos aria-hidden mais — o badge tem info útil.
 
         for (let i = 0; i < 3; i += 1) {
           const ring = document.createElement('span');
@@ -173,6 +179,27 @@ export default function MapPulses() {
         const core = document.createElement('span');
         core.className = 'mapsim-pulse-core';
         el.appendChild(core);
+
+        /* Hit-area invisível pra capturar hover. CSS aplica
+         * pointer-events: auto só nesse element (o wrapper continua
+         * pointer-events: none pra não bloquear pan do mapa). */
+        const hit = document.createElement('span');
+        hit.className = 'mapsim-pulse-hit';
+        hit.setAttribute('aria-label', `${city.city}: ${fmt(city.active)} ouvintes`);
+        el.appendChild(hit);
+
+        /* Badge — pill com cidade + contagem de ouvintes. */
+        const badge = document.createElement('span');
+        badge.className = 'mapsim-pulse-badge';
+        const cityName = document.createElement('strong');
+        cityName.className = 'mapsim-pulse-badge-city';
+        cityName.textContent = city.city;
+        const cityCount = document.createElement('span');
+        cityCount.className = 'mapsim-pulse-badge-count';
+        cityCount.textContent = `${fmt(city.active)} ouvintes`;
+        badge.appendChild(cityName);
+        badge.appendChild(cityCount);
+        el.appendChild(badge);
 
         const marker = new mapboxgl.Marker({
           element: el,

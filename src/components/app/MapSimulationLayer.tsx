@@ -420,12 +420,14 @@ export default function MapSimulationLayer() {
             'circle-radius': ['get', 'size'] as unknown as number,
             'circle-color': '#3DDB74',
             'circle-stroke-width': 0,
+            /* Hidden em zoom < 5 per feedback "Zoom < 5: não
+             * mostra pins de 1px". Entra a partir do zoom 5. */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.55,
-              4,   0.55,
-              5,   0.45,
-              6,   0.25,
+              3,   0,
+              4.5, 0,
+              5,   0.50,
+              6,   0.35,
               7,   0,
             ],
           },
@@ -463,17 +465,27 @@ export default function MapSimulationLayer() {
             ['==', ['%', ['get', 'avatarSeed'], 16], 0],
           ],
           paint: {
-            'circle-radius': 1,                      // 2px diameter
+            /* Raio interpolado per feedback "Zoom 5-7: mostra pins
+             * maiores. Conforme o zoom avança, eles se aproximam"
+             * (pins grandes no zoom intermediário, voltam pro 2px
+             * quando o zoom chega na escala de cidade). */
+            'circle-radius': [
+              'interpolate', ['linear'], ['zoom'],
+              5,   3,        // 6px diameter — pins grandes no zoom 5
+              7,   2,        // 4px
+              9,   1.2,      // 2.4px
+              12,  1,        // 2px (volta ao tamanho original)
+            ],
             'circle-color': '#3DDB74',
             'circle-stroke-width': 0,
-            /* Opacity progressiva conforme zoom — soft no continente
-             * (continentes pequenos pra ver muito ponto), full no
-             * zoom de cidade. Per feedback "conforme o zoom avança
-             * os pontos se aproximam". */
+            /* Hidden em zoom < 5 per feedback "Zoom < 5: não mostra
+             * pins de 1px". Entra com força no zoom 5 e mantém
+             * presença até começar a ceder pros dots individuais. */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0.45,    // soft no zoom out
-              5,   0.75,
+              3,   0,        // hidden no continente
+              4.5, 0,
+              5,   0.90,     // pin grande aparece
               8,   0.95,
               10,  0.95,
               11,  0.80,
