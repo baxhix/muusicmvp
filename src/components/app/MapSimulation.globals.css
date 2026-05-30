@@ -293,7 +293,28 @@
 }
 
 /* Tamanhos — controlam diâmetro final dos anéis. Margem negativa
- * = -size/2 pra centrar sobre o ponto. */
+ * = -size/2 pra centrar sobre o ponto.
+ *
+ * XXL é o tier especial pro ZOOM BEM AFASTADO (zoom 3-5, vista
+ * continente/globo). Per feedback "talvez o tamanho atual seja
+ * o Small. Crie um agora, para ser mostrado quando o zoom está
+ * bem afastado, com cerca de 200x200px". Quando o zoom passa
+ * de ~5, o JS troca a classe pro tier original (XL/L/M). */
+.mapsim-pulse-xxl .mapsim-pulse-ring {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  /* Em XXL o anel cobre uma área enorme — ajustamos o gradient
+   * pra ficar ainda mais sutil (alpha menor) e evitar dominar
+   * a tela toda. */
+  background: radial-gradient(
+    circle,
+    rgba(61, 219, 116, 0.16) 0%,
+    rgba(61, 219, 116, 0.06) 50%,
+    transparent 78%
+  );
+  border-color: rgba(61, 219, 116, 0.28);
+}
 .mapsim-pulse-xl .mapsim-pulse-ring {
   width: 140px;
   height: 140px;

@@ -77,17 +77,45 @@ export default function MapPulses() {
     };
 
     const applyZoomVisibility = (map: MapboxMap) => {
-      /* Visível em zoom 3-8, fade entre 8-9, hidden a partir de 9.
-       * Usamos uma classe no .mapsim-pulse via attribute do
-       * elemento root (toggled aqui em vez de CSS query @media,
-       * que não tem como ler zoom do Mapbox). */
+      /* Lógica em duas faixas:
+       *   zoom < 5  → modo XXL (~200px) pros polos XL/L originais.
+       *               Polos M são escondidos (zoom continente não
+       *               precisa de info detalhada).
+       *   zoom 5-8  → modo normal (tier XL/L/M original guardado
+       *               em data-size-original).
+       *   zoom 8-9  → fade-out gradual.
+       *   zoom 9+   → hidden.
+       * Per feedback "tamanho ~200px quando o zoom está bem afastado". */
       const z = map.getZoom();
       const visible = z < 9;
       const opacity = z < 8 ? 1 : Math.max(0, 1 - (z - 8));
       markers.forEach((m) => {
         const el = m.getElement();
+        const original = el.dataset.sizeOriginal as 'xl' | 'l' | 'm' | undefined;
+        if (!original) return;
+
+        // Limpa todas as classes de tier antes de aplicar a correta.
+        el.classList.remove(
+          'mapsim-pulse-xxl',
+          'mapsim-pulse-xl',
+          'mapsim-pulse-l',
+          'mapsim-pulse-m',
+        );
+
+        if (z < 5) {
+          // Zoom continente — só XL/L originais ganham o XXL.
+          // M não comunica em escala continental, fica hidden.
+          if (original === 'xl' || original === 'l') {
+            el.classList.add('mapsim-pulse-xxl');
+            el.style.visibility = 'visible';
+          } else {
+            el.style.visibility = 'hidden';
+          }
+        } else {
+          el.classList.add(`mapsim-pulse-${original}`);
+          el.style.visibility = visible ? 'visible' : 'hidden';
+        }
         el.style.opacity = String(opacity);
-        el.style.visibility = visible ? 'visible' : 'hidden';
       });
     };
 
@@ -130,7 +158,11 @@ export default function MapPulses() {
          *   </div>
          */
         const el = document.createElement('div');
-        el.className = `mapsim-pulse mapsim-pulse-${size}`;
+        /* Classe de tier NÃO é definida aqui — `applyZoomVisibility`
+         * decide ao vivo entre o tier original e o XXL conforme o
+         * zoom. Guardamos o tier original em data-attribute. */
+        el.className = 'mapsim-pulse';
+        el.dataset.sizeOriginal = size;
         el.setAttribute('aria-hidden', 'true');
 
         for (let i = 0; i < 3; i += 1) {
