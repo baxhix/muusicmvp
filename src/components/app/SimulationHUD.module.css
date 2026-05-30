@@ -328,15 +328,19 @@
  * "pure selectors must contain at least one local class or id". */
 
 /* ── Zoom indicator (debug HUD) ──────────────────────────
- * Pill discreto top-left mostrando o nível de zoom + label da
- * faixa. Renderizado pelo componente MapZoomIndicator, gated
- * pelo mesmo flag mapSimulation — só aparece pro brainstorm
- * owner. Mantém footprint visual mínimo pra não competir com
- * o resto. */
+ * Pill discreto LOGO ACIMA DO PLAYER (bottom-left) mostrando o
+ * nível de zoom + label da faixa. Per feedback "deixe logo acima
+ * do player" — a posição inicial no topo ficava atrás do banner
+ * Ana Castela e era invisível.
+ *
+ * Renderizado pelo componente MapZoomIndicator, gated pelo mesmo
+ * flag mapSimulation — só aparece pro brainstorm owner. */
 .zoomIndicator {
   position: fixed;
-  top: 80px;
-  left: 16px;
+  /* O NowPlaying ocupa ~180px do bottom no desktop. Colocamos o
+   * indicator 8px acima dele. */
+  bottom: 200px;
+  left: 24px;
   z-index: 21;
   display: inline-flex;
   flex-direction: column;
@@ -370,10 +374,9 @@
 
 @media (max-width: 640px) {
   .zoomIndicator {
-    /* No mobile o counter top-center desce pra y:121 (passa pelo
-     * MobileHomeChrome). Mantemos o zoom indicator no canto sup
-     * esquerdo abaixo do TopBar — não conflita. */
-    top: 121px;
+    /* No mobile o player ocupa menos altura — ajustamos o
+     * bottom proporcionalmente. */
+    bottom: 180px;
     left: 12px;
     padding: 5px 10px 6px;
   }
