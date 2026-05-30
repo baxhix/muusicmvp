@@ -12,6 +12,7 @@ import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 import MapSimulationLayer from '@/components/app/MapSimulationLayer';
 import MapPulses from '@/components/app/MapPulses';
+import MapZoomIndicator from '@/components/app/MapZoomIndicator';
 import SimulationHUD from '@/components/app/SimulationHUD';
 
 
@@ -127,6 +128,7 @@ export default function AppPage() {
        *  real — dataset gerado client-side determinístico. */}
       <MapSimulationLayer />
       <MapPulses />
+      <MapZoomIndicator />
       <SimulationHUD />
     </>
   );

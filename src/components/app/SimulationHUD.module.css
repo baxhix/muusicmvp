@@ -326,3 +326,57 @@
  * MapSimulation.globals.css (CSS plain) — CSS Modules do
  * Next.js 15 rejeita regras :global() puras com
  * "pure selectors must contain at least one local class or id". */
+
+/* ── Zoom indicator (debug HUD) ──────────────────────────
+ * Pill discreto top-left mostrando o nível de zoom + label da
+ * faixa. Renderizado pelo componente MapZoomIndicator, gated
+ * pelo mesmo flag mapSimulation — só aparece pro brainstorm
+ * owner. Mantém footprint visual mínimo pra não competir com
+ * o resto. */
+.zoomIndicator {
+  position: fixed;
+  top: 80px;
+  left: 16px;
+  z-index: 21;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 12px 7px;
+  background: rgba(11, 11, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  pointer-events: none;
+  font-family: var(--sans), system-ui, sans-serif;
+  /* Anti-flicker no scroll: força layer próprio na GPU sem
+   * impactar conteúdo abaixo. */
+  will-change: contents;
+}
+.zoomNum {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.1;
+}
+.zoomTier {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 640px) {
+  .zoomIndicator {
+    /* No mobile o counter top-center desce pra y:121 (passa pelo
+     * MobileHomeChrome). Mantemos o zoom indicator no canto sup
+     * esquerdo abaixo do TopBar — não conflita. */
+    top: 121px;
+    left: 12px;
+    padding: 5px 10px 6px;
+  }
+  .zoomNum { font-size: 13px; }
+  .zoomTier { font-size: 9px; }
+}
