@@ -230,3 +230,106 @@
     transform: translateY(-50%);
   }
 }
+
+/* ── PULSES — ondas pulsantes em polos urbanos ─────────────
+ * Per feedback "ondas pulsantes, bem moderada, transparência
+ * suave e 3 camadas em movimento". Cada polo tem 3 anéis +
+ * 1 core; os anéis disparam staggered (0s / 1.17s / 2.34s)
+ * dentro de um ciclo de 3.5s, então sempre tem onda ativa.
+ *
+ * Performance: animação 100% CSS, roda em GPU compositor
+ * (transform + opacity), zero reflow, zero JS por frame.
+ * Apenas ~5-10 markers no Brasil = ~30 elementos animados —
+ * neglígivel vs os layers de mapa. */
+.mapsim-pulse {
+  position: relative;
+  pointer-events: none;
+  user-select: none;
+  /* Marker já posiciona via transform; o wrapper só serve
+   * de ancoragem pros rings absolutos. width/height = 0
+   * porque os filhos têm margin negativo pra se centrar. */
+  width: 0;
+  height: 0;
+  /* Fade global controlado pelo JS via inline style.opacity
+   * conforme o zoom — não pisamos nessa propriedade aqui. */
+  transition: opacity 360ms ease;
+}
+
+.mapsim-pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(61, 219, 116, 0.22) 0%,
+    rgba(61, 219, 116, 0.08) 45%,
+    transparent 75%
+  );
+  border: 1px solid rgba(61, 219, 116, 0.35);
+  opacity: 0;
+  /* willChange força layer próprio na GPU pra animação ficar
+   * suave sem disputar com outros elementos. */
+  will-change: transform, opacity;
+  animation: mapsimPulseRing 3.5s ease-out infinite;
+}
+.mapsim-pulse-ring-1 { animation-delay: 0s; }
+.mapsim-pulse-ring-2 { animation-delay: 1.17s; }
+.mapsim-pulse-ring-3 { animation-delay: 2.34s; }
+
+/* Core: pingo verde discreto no centro do polo, sem animação
+ * (já tem o LAYER_DOTFAR fazendo o ponto no mapa, esse só
+ * "afia" o centro com leve glow). */
+.mapsim-pulse-core {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #3DDB74;
+  box-shadow: 0 0 8px rgba(61, 219, 116, 0.55);
+}
+
+/* Tamanhos — controlam diâmetro final dos anéis. Margem negativa
+ * = -size/2 pra centrar sobre o ponto. */
+.mapsim-pulse-xl .mapsim-pulse-ring {
+  width: 140px;
+  height: 140px;
+  margin: -70px 0 0 -70px;
+}
+.mapsim-pulse-l .mapsim-pulse-ring {
+  width: 90px;
+  height: 90px;
+  margin: -45px 0 0 -45px;
+}
+.mapsim-pulse-m .mapsim-pulse-ring {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+}
+
+@keyframes mapsimPulseRing {
+  0% {
+    transform: scale(0.25);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Respeita prefers-reduced-motion: anéis ficam estáticos
+ * no estado de meio-ciclo, sem animação. */
+@media (prefers-reduced-motion: reduce) {
+  .mapsim-pulse-ring {
+    animation: none;
+    opacity: 0.18;
+    transform: scale(0.7);
+  }
+}

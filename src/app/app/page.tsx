@@ -11,6 +11,7 @@ import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrig
 import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 import MapSimulationLayer from '@/components/app/MapSimulationLayer';
+import MapPulses from '@/components/app/MapPulses';
 import SimulationHUD from '@/components/app/SimulationHUD';
 
 
@@ -125,6 +126,7 @@ export default function AppPage() {
        *  bombando. Toggle via Features em teste. NUNCA toca backend
        *  real — dataset gerado client-side determinístico. */}
       <MapSimulationLayer />
+      <MapPulses />
       <SimulationHUD />
     </>
   );
