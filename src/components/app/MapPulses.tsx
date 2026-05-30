@@ -46,6 +46,17 @@ function pulseSize(active: number): 'xl' | 'l' | 'm' | null {
   return null;
 }
 
+/** Detecta mobile via viewport — mesma heurística do MapSimulationLayer. */
+function isMobileViewport(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < 768;
+}
+
+/** Cap de pulses no mobile per feedback "no mobile talvez 3 sejam
+ *  suficientes" — mantém só os 3 polos mais densos pra não poluir
+ *  a tela pequena nem dividir GPU à toa. */
+const MAX_PULSES_MOBILE = 3;
+
 export default function MapPulses() {
   const { flags } = useBrainstormFlags();
   const enabled = flags.mapSimulation;
@@ -97,15 +108,21 @@ export default function MapPulses() {
       clearMarkers();
 
       /* Seleciona top cidades com pulse. data.cities já vem
-       * ordenado por active desc. */
+       * ordenado por active desc. No mobile, cap em 3 (per
+       * feedback "no mobile talvez 3 sejam suficientes") —
+       * tela pequena + 3 anéis cada = melhor manter discreto. */
+      const mobile = isMobileViewport();
       const candidates: Array<{ city: CityStats; size: 'xl' | 'l' | 'm' }> = [];
       for (const city of data.cities) {
         const size = pulseSize(city.active);
         if (!size) continue;
         candidates.push({ city, size });
       }
+      const finalList = mobile
+        ? candidates.slice(0, MAX_PULSES_MOBILE)
+        : candidates;
 
-      candidates.forEach(({ city, size }) => {
+      finalList.forEach(({ city, size }) => {
         /* Estrutura:
          *   <div .mapsim-pulse .mapsim-pulse-{size}>
          *     <span .mapsim-pulse-ring />  (×3, com delays diferentes)
