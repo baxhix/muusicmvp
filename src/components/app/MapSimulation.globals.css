@@ -260,13 +260,19 @@
   top: 0;
   left: 0;
   border-radius: 50%;
+  /* Intensidades subidas per feedback "deixe as ondas mais
+   * intensas e não tão suaves":
+   *   center alpha:  0.22 → 0.45 (mais saturado no núcleo)
+   *   meio alpha:    0.08 → 0.22
+   *   border alpha:  0.35 → 0.70 (linha do anel bem mais visível)
+   *   border width:  1 → 1.5px */
   background: radial-gradient(
     circle,
-    rgba(61, 219, 116, 0.22) 0%,
-    rgba(61, 219, 116, 0.08) 45%,
+    rgba(61, 219, 116, 0.45) 0%,
+    rgba(61, 219, 116, 0.22) 45%,
     transparent 75%
   );
-  border: 1px solid rgba(61, 219, 116, 0.35);
+  border: 1.5px solid rgba(61, 219, 116, 0.70);
   opacity: 0;
   /* willChange força layer próprio na GPU pra animação ficar
    * suave sem disputar com outros elementos. */
@@ -304,16 +310,19 @@
   width: 200px;
   height: 200px;
   margin: -100px 0 0 -100px;
-  /* Em XXL o anel cobre uma área enorme — ajustamos o gradient
-   * pra ficar ainda mais sutil (alpha menor) e evitar dominar
-   * a tela toda. */
+  /* XXL ainda fica um pouco mais translúcido que os tiers
+   * menores (área muito maior = senão cobre meio mundo), mas
+   * subiu junto com os outros per feedback de intensidade:
+   *   center:  0.16 → 0.32
+   *   meio:    0.06 → 0.15
+   *   border:  0.28 → 0.55 */
   background: radial-gradient(
     circle,
-    rgba(61, 219, 116, 0.16) 0%,
-    rgba(61, 219, 116, 0.06) 50%,
+    rgba(61, 219, 116, 0.32) 0%,
+    rgba(61, 219, 116, 0.15) 50%,
     transparent 78%
   );
-  border-color: rgba(61, 219, 116, 0.28);
+  border-color: rgba(61, 219, 116, 0.55);
 }
 .mapsim-pulse-xl .mapsim-pulse-ring {
   width: 140px;
@@ -336,8 +345,10 @@
     transform: scale(0.25);
     opacity: 0;
   }
+  /* Pico de opacity subiu 0.55 → 0.85 — ondas chegam mais
+   * presentes antes do fade-out. */
   15% {
-    opacity: 0.55;
+    opacity: 0.85;
   }
   100% {
     transform: scale(1);
