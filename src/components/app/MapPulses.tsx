@@ -154,7 +154,7 @@ export default function MapPulses() {
 
       const fmt = (n: number) => n.toLocaleString('pt-BR');
 
-      finalList.forEach(({ city, size }) => {
+      finalList.forEach(({ city, size }, idx) => {
         /* Estrutura final:
          *   <div .mapsim-pulse>
          *     <span .mapsim-pulse-ring />  (×3, com delays diferentes)
@@ -171,9 +171,26 @@ export default function MapPulses() {
         el.dataset.sizeOriginal = size;
         // Não usamos aria-hidden mais — o badge tem info útil.
 
+        /* Phase offset POR POLO via animation-delay negativo.
+         * Per feedback "façam com que as ondas pulsantes não
+         * iniciem ao mesmo tempo. Devem ser intercaladas para
+         * ter um o aspecto de individualidade".
+         *
+         * Ciclo total = 3.5s. Multiplicamos idx por 0.83 (não
+         * múltiplo de 1.17 dos delays internos) e modulo 3.5
+         * pra distribuir as fases ao longo do ciclo inteiro.
+         * Delay negativo faz a animação "começar no passado",
+         * então o polo já entra em meio-pulso em vez de esperar.
+         *
+         * Cada um dos 3 anéis ganha esse phase + seu próprio
+         * delay interno (0 / 1.17 / 2.34) pra manter o stagger
+         * dentro do polo. Sobrescreve a regra CSS estática
+         * .mapsim-pulse-ring-N. */
+        const polePhase = -((idx * 0.83) % 3.5);
         for (let i = 0; i < 3; i += 1) {
           const ring = document.createElement('span');
           ring.className = `mapsim-pulse-ring mapsim-pulse-ring-${i + 1}`;
+          ring.style.animationDelay = `${polePhase + i * 1.17}s`;
           el.appendChild(ring);
         }
         const core = document.createElement('span');
