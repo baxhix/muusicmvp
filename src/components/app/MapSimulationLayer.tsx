@@ -68,8 +68,9 @@ const SOURCE_HEAT    = 'mapsim-users-heat';
 const SOURCE_AMBIENT = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
-const LAYER_DOTFAR   = 'mapsim-dot-far';      // pontos 2px verdes (zoom out, sample 1/16)
-const LAYER_DOTFAR2  = 'mapsim-dot-far-2';    // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
+const LAYER_DOTSPARSE = 'mapsim-dot-sparse';  // pontos esparsos zoom 5-7 (sample 1/32, raio menor)
+const LAYER_DOTFAR    = 'mapsim-dot-far';     // pontos 2px verdes (sample 1/16, zoom 7-11)
+const LAYER_DOTFAR2   = 'mapsim-dot-far-2';   // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
 const LAYER_CL       = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
 const LAYER_CL_T     = 'mapsim-cluster-count'; // texto só no hover
 const LAYER_DOTGLOW  = 'mapsim-dot-glow';     // halo verde difuso em volta dos dots (zoom alto)
@@ -217,7 +218,7 @@ export default function MapSimulationLayer() {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
           LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR,
-          LAYER_AMBIENT, LAYER_HEAT,
+          LAYER_DOTSPARSE, LAYER_AMBIENT, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
@@ -453,6 +454,46 @@ export default function MapSimulationLayer() {
       //    `avatarSeed % 16 === 0` — ~437 dots espalhados pelo Brasil.
       //    Filtro online=1 + tier!=superfan (superfãs aparecem como
       //    mini avatar real no zoom alto).
+      /* LAYER_DOTSPARSE — pontos pequenos e afastados pra zoom 5-7.
+       * Per feedback "na visualização onde consigo ver estados
+       * inteiros, deixe os pontos menores e afastados um dos outros".
+       *
+       * Filter mais ralo (% 32 → ~131 dots vs ~262 do DOTFAR) +
+       * raio menor (1.5px vs 3px do DOTFAR antigo nessa faixa).
+       * No zoom 7-7.5 cede pro LAYER_DOTFAR que tem densidade
+       * normal pra escala de cidade. */
+      if (!map.getLayer(LAYER_DOTSPARSE)) {
+        map.addLayer({
+          id: LAYER_DOTSPARSE,
+          type: 'circle',
+          source: SOURCE_HEAT,
+          minzoom: 5,
+          maxzoom: 7.5,
+          filter: [
+            'all',
+            ['==', ['get', 'online'], 1],
+            ['==', ['%', ['get', 'avatarSeed'], 32], 0],
+          ],
+          paint: {
+            'circle-radius': [
+              'interpolate', ['linear'], ['zoom'],
+              5,   1.5,    // 3px diameter — menor que antes
+              6.5, 1.4,
+              7.5, 0,
+            ],
+            'circle-color': '#3DDB74',
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              5,   0.85,
+              6.5, 0.75,
+              7,   0.45,
+              7.5, 0,
+            ],
+          },
+        });
+      }
+
       if (!map.getLayer(LAYER_DOTFAR)) {
         map.addLayer({
           id: LAYER_DOTFAR,
@@ -465,27 +506,25 @@ export default function MapSimulationLayer() {
             ['==', ['%', ['get', 'avatarSeed'], 16], 0],
           ],
           paint: {
-            /* Raio interpolado per feedback "Zoom 5-7: mostra pins
-             * maiores. Conforme o zoom avança, eles se aproximam"
-             * (pins grandes no zoom intermediário, voltam pro 2px
-             * quando o zoom chega na escala de cidade). */
+            /* Raio agora começa em 2 (não mais 3) — cede o pin
+             * "grande" pro LAYER_DOTSPARSE que tem visual mais
+             * arejado em zoom 5-7. DOTFAR entra a partir do
+             * zoom 7 onde a escala já tolera mais densidade. */
             'circle-radius': [
               'interpolate', ['linear'], ['zoom'],
-              5,   3,        // 6px diameter — pins grandes no zoom 5
               7,   2,        // 4px
               9,   1.2,      // 2.4px
-              12,  1,        // 2px (volta ao tamanho original)
+              12,  1,        // 2px
             ],
             'circle-color': '#3DDB74',
             'circle-stroke-width': 0,
-            /* Hidden em zoom < 5 per feedback "Zoom < 5: não mostra
-             * pins de 1px". Entra com força no zoom 5 e mantém
-             * presença até começar a ceder pros dots individuais. */
+            /* Hidden em zoom < 6.5 — cede a faixa de "estado"
+             * pro DOTSPARSE. Entra com força a partir do zoom 7. */
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              3,   0,        // hidden no continente
-              4.5, 0,
-              5,   0.90,     // pin grande aparece
+              3,   0,
+              6.5, 0,
+              7,   0.85,
               8,   0.95,
               10,  0.95,
               11,  0.80,
