@@ -763,21 +763,20 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // Sources mock de Maringá — 12 dots (peak z8.6) e 24 dots
-      // (peak z10.6) pra avaliar transição visual entre dois
-      // 24 pontos mock em Maringá, visíveis em todo o range
-      // zoom 8-12. Per feedback "deixe com 24 pontos cada ponto
-      // verde de 4px na região de Maringá" — consolidamos os
-      // dois layers (12 + 24) em apenas o de 24.
-      if (!map.getSource(SOURCE_MARINGA_24)) {
-        map.addSource(SOURCE_MARINGA_24, {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: generateMaringaPoints(24, 0x4D413234),  // 'MA24'
-          } as GeoJSON.FeatureCollection,
-        });
-      }
+      /* SOURCE_MARINGA_24 + LAYER_MARINGA_24 REMOVIDOS per feedback
+       * "Remova os pontos que parecem fixos no mapa próximo à Curitiba,
+       * Ponta Grossa, Guarapuava, União da Vitória, Cascavel, Maringá,
+       * Londrina e Ciudad del Este".
+       *
+       * Esse mock de 24 dots em Maringá era debug temporário pra validar
+       * a transição visual entre layers — já cumpriu seu papel. Quando
+       * o user enquadrava essa região do PR, os 24 dots fixos em Maringá
+       * destoavam dos pontos aleatórios das quotas. As cidades vizinhas
+       * (Curitiba/Cascavel/Ponta Grossa etc) também ficavam no viewport
+       * e o user percebia como "pontos fixos espalhados pela região".
+       *
+       * As quotas (continent/state/region/cityMid/cityPeak) — ligadas
+       * ao teste de volume de usuários — ficam preservadas. */
 
       // Source clusterizada — Mapbox Supercluster nativo. Alimenta
       // clusters numerados e dots individuais (LOD por zoom).
@@ -917,31 +916,8 @@ export default function MapSimulationLayer() {
        * efeito colateral se algum outro consumer precisar. Sem o
        * layer renderizando, o source fica idle. */
 
-      // LAYER_MARINGA_24 — 24 dots verdes de 4px em Maringá.
-      // Per feedback "deixe com 24 pontos cada ponto verde de 4px
-      // na região de Maringá". Visível em todo zoom 8-12 (não
-      // mais peak em 10.6, mas plateau em 9-11). Em z8/z12 faz fade.
-      if (!map.getLayer(LAYER_MARINGA_24)) {
-        map.addLayer({
-          id: LAYER_MARINGA_24,
-          type: 'circle',
-          source: SOURCE_MARINGA_24,
-          minzoom: 8,
-          maxzoom: 12,
-          paint: {
-            'circle-radius': 2,           // 4px diameter
-            'circle-color': '#3DDB74',
-            'circle-stroke-width': 0,
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              8,    0,
-              8.5,  0.95,
-              11.5, 0.95,
-              12,   0,
-            ],
-          },
-        });
-      }
+      // LAYER_MARINGA_24 REMOVIDO (mock de debug temporário que já
+      // cumpriu seu papel — veja comentário no addSource acima).
 
       // 2) DOTS-FAR — pontinhos 2px verdes visíveis em todo zoom
       //    onde existe heatmap/blob (zoom 3-11).
