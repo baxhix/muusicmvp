@@ -66,13 +66,11 @@ function isMobileViewport(): boolean {
 const SOURCE_ID      = 'mapsim-users';
 const SOURCE_HEAT    = 'mapsim-users-heat';
 const SOURCE_AMBIENT  = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
-const SOURCE_MARINGA_12 = 'mapsim-maringa-12'; // 12 pontos mock em Maringá (peak zoom 8.6)
-const SOURCE_MARINGA_24 = 'mapsim-maringa-24'; // 24 pontos mock em Maringá (peak zoom 10.6)
+const SOURCE_MARINGA_24 = 'mapsim-maringa-24'; // 24 pontos mock em Maringá (zoom 8-12)
 const SOURCE_QUOTAS  = 'mapsim-quotas';       // pontos visuais por cidade × range de zoom
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
-const LAYER_MARINGA_12 = 'mapsim-maringa-12';  // 12 dots em Maringá (peak zoom 8.6) — debug temporário
-const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (peak zoom 10.6) — debug temporário
+const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (zoom 8-12, 4px diameter)
 const LAYER_QUOTAS_STATE  = 'mapsim-quotas-state';  // dots zoom 5-7
 const LAYER_QUOTAS_REGION = 'mapsim-quotas-region'; // dots zoom 7-9
 const LAYER_QUOTAS_CITY   = 'mapsim-quotas-city';   // dots zoom 9-12
@@ -377,14 +375,13 @@ export default function MapSimulationLayer() {
           LAYER_SF_PIC, LAYER_HALO,
           LAYER_QUOTAS_CITY, LAYER_QUOTAS_REGION, LAYER_QUOTAS_STATE,
           LAYER_CL_T, LAYER_CL,
-          LAYER_MARINGA_24, LAYER_MARINGA_12,
+          LAYER_MARINGA_24,
           LAYER_AMBIENT, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
         if (currentMap.getSource(SOURCE_QUOTAS)) currentMap.removeSource(SOURCE_QUOTAS);
         if (currentMap.getSource(SOURCE_MARINGA_24)) currentMap.removeSource(SOURCE_MARINGA_24);
-        if (currentMap.getSource(SOURCE_MARINGA_12)) currentMap.removeSource(SOURCE_MARINGA_12);
         if (currentMap.getSource(SOURCE_AMBIENT)) currentMap.removeSource(SOURCE_AMBIENT);
         if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
         if (currentMap.getSource(SOURCE_ID)) currentMap.removeSource(SOURCE_ID);
@@ -450,17 +447,10 @@ export default function MapSimulationLayer() {
 
       // Sources mock de Maringá — 12 dots (peak z8.6) e 24 dots
       // (peak z10.6) pra avaliar transição visual entre dois
-      // níveis de zoom. Seeds diferentes → posicionamento
-      // independente entre os dois.
-      if (!map.getSource(SOURCE_MARINGA_12)) {
-        map.addSource(SOURCE_MARINGA_12, {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: generateMaringaPoints(12, 0x4D413132),  // 'MA12'
-          } as GeoJSON.FeatureCollection,
-        });
-      }
+      // 24 pontos mock em Maringá, visíveis em todo o range
+      // zoom 8-12. Per feedback "deixe com 24 pontos cada ponto
+      // verde de 4px na região de Maringá" — consolidamos os
+      // dois layers (12 + 24) em apenas o de 24.
       if (!map.getSource(SOURCE_MARINGA_24)) {
         map.addSource(SOURCE_MARINGA_24, {
           type: 'geojson',
@@ -621,40 +611,16 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // LAYER_MARINGA_12 — 12 dots com peak em zoom 8.6.
-      // Faixa: entra em z8, peak 8.5-8.7, fade-out até z9.5
-      // (cede pro range do _24 que entra em z10).
-      if (!map.getLayer(LAYER_MARINGA_12)) {
-        map.addLayer({
-          id: LAYER_MARINGA_12,
-          type: 'circle',
-          source: SOURCE_MARINGA_12,
-          minzoom: 8,
-          maxzoom: 10,
-          paint: {
-            'circle-radius': 2,           // 4px diameter
-            'circle-color': '#3DDB74',
-            'circle-stroke-width': 0,
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              8,    0,
-              8.4,  0.85,
-              8.6,  1,          // peak
-              8.8,  0.95,
-              9.5,  0.40,
-              10,   0,
-            ],
-          },
-        });
-      }
-
-      // LAYER_MARINGA_24 — 24 dots com peak em zoom 10.6.
+      // LAYER_MARINGA_24 — 24 dots verdes de 4px em Maringá.
+      // Per feedback "deixe com 24 pontos cada ponto verde de 4px
+      // na região de Maringá". Visível em todo zoom 8-12 (não
+      // mais peak em 10.6, mas plateau em 9-11). Em z8/z12 faz fade.
       if (!map.getLayer(LAYER_MARINGA_24)) {
         map.addLayer({
           id: LAYER_MARINGA_24,
           type: 'circle',
           source: SOURCE_MARINGA_24,
-          minzoom: 10,
+          minzoom: 8,
           maxzoom: 12,
           paint: {
             'circle-radius': 2,           // 4px diameter
@@ -662,12 +628,10 @@ export default function MapSimulationLayer() {
             'circle-stroke-width': 0,
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              10,    0,
-              10.4,  0.85,
-              10.6,  1,         // peak
-              10.8,  0.95,
-              11.5,  0.40,
-              12,    0,
+              8,    0,
+              8.5,  0.95,
+              11.5, 0.95,
+              12,   0,
             ],
           },
         });
