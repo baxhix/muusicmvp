@@ -168,6 +168,17 @@ export default function MapPulses() {
           el.classList.add(`mapsim-pulse-${original}`);
           el.style.visibility = visible ? 'visible' : 'hidden';
         }
+        /* Per feedback "diminua os pontos verdes em z 2.5-7": o
+         * "ponto grosso" reportado é o `.mapsim-pulse-core` (6×6px
+         * DOM fixo no centro de cada pulse, 74 cidades). Não é
+         * controlado por SIZE_BY_RANGE (que mexe nas circles do
+         * Mapbox). Aqui aplicamos a classe `mapsim-pulse-tight-core`
+         * em z < 7 — o CSS encolhe o core pra 3×3px nessa faixa. */
+        if (z < 7) {
+          el.classList.add('mapsim-pulse-tight-core');
+        } else {
+          el.classList.remove('mapsim-pulse-tight-core');
+        }
         el.style.opacity = String(opacity);
       });
     };
