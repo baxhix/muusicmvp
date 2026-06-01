@@ -38,17 +38,26 @@ import { useSimulationData, type CityStats } from '@/lib/mapSimulation';
  *     entre zoom 8 e 9 pra dar lugar pros dots/clusters detalhados
  * ============================================================ */
 
-/** Decide o tier de pulse pra cada cidade pela contagem de ativos.
+/** Decide o tier de pulse pra cada cidade pelo RANK ordinal no
+ *  dataset (não mais por threshold de active count, que ficaria
+ *  desbalanceado no CSV onde top-5 dominam massivamente).
  *
- *  Tier S é forçado em Manaus e Belém per feedback "Adicione mais
- *  uma área pulsante menor em Belém e Manaus". Essas duas cidades
- *  não atingiriam o threshold M consistentemente (active varia
- *  por sampling) — forçar S garante presença visual sempre. */
-function pulseSize(city: CityStats): 'xl' | 'l' | 'm' | 's' | null {
-  if (city.city === 'Manaus' || city.city === 'Belém') return 's';
-  if (city.active >= 700) return 'xl';
-  if (city.active >= 400) return 'l';
-  if (city.active >= 200) return 'm';
+ *  Per feedback "adicione ondas pulsantes menores nas cidades que há
+ *  registros. Não todas ao mesmo tempo. Intercale para a página não
+ *  ficar carregada":
+ *    - rank 1-5  → xl (mega-polos: SP, BH, Curitiba, Brasília, Campinas)
+ *    - rank 6-15 → m  (top capitais brasileiras)
+ *    - rank 16-30 → s
+ *    - rank 31+   → xs (presença simbólica em todas as cidades)
+ *
+ *  TODAS as cidades do CSV ganham pulse — a intercalação visual
+ *  (alguns ativos, outros em pausa) vem do ciclo de animation
+ *  alongado no CSS + phase offsets distribuídos abaixo. */
+function pulseSize(rank: number): 'xl' | 'l' | 'm' | 's' | 'xs' | null {
+  if (rank <= 5)  return 'xl';
+  if (rank <= 15) return 'm';
+  if (rank <= 30) return 's';
+  if (rank <= 60) return 'xs';
   return null;
 }
 
@@ -58,10 +67,9 @@ function isMobileViewport(): boolean {
   return window.innerWidth < 768;
 }
 
-/** Cap de pulses no mobile per feedback "no mobile talvez 3 sejam
- *  suficientes" — mantém só os 3 polos mais densos pra não poluir
- *  a tela pequena nem dividir GPU à toa. */
-const MAX_PULSES_MOBILE = 3;
+/** Cap de pulses no mobile — todas as 50 cidades teriam custo de
+ *  GPU alto na tela pequena. Mantém top 12 (os 5 xl + 7 m). */
+const MAX_PULSES_MOBILE = 12;
 
 export default function MapPulses() {
   const { flags } = useBrainstormFlags();
@@ -96,7 +104,8 @@ export default function MapPulses() {
       const opacity = z < 8 ? 1 : Math.max(0, 1 - (z - 8));
       markers.forEach((m) => {
         const el = m.getElement();
-        const original = el.dataset.sizeOriginal as 'xl' | 'l' | 'm' | 's' | undefined;
+        const original = el.dataset.sizeOriginal as
+          | 'xl' | 'l' | 'm' | 's' | 'xs' | undefined;
         if (!original) return;
 
         el.classList.remove(
@@ -105,6 +114,7 @@ export default function MapPulses() {
           'mapsim-pulse-l',
           'mapsim-pulse-m',
           'mapsim-pulse-s',
+          'mapsim-pulse-xs',
         );
 
         if (z < 7) {
@@ -143,12 +153,15 @@ export default function MapPulses() {
        * feedback "no mobile talvez 3 sejam suficientes") —
        * tela pequena + 3 anéis cada = melhor manter discreto. */
       const mobile = isMobileViewport();
-      const candidates: Array<{ city: CityStats; size: 'xl' | 'l' | 'm' | 's' }> = [];
-      for (const city of data.cities) {
-        const size = pulseSize(city);
-        if (!size) continue;
+      const candidates: Array<{ city: CityStats; size: 'xl' | 'l' | 'm' | 's' | 'xs' }> = [];
+      data.cities.forEach((city, idx) => {
+        // rank ordinal (1-based) baseado na ordem de data.cities,
+        // que já vem sorted por active desc — top cidades ganham
+        // pulse maior, cauda longa fica em 'xs'.
+        const size = pulseSize(idx + 1);
+        if (!size) return;
         candidates.push({ city, size });
-      }
+      });
       const finalList = mobile
         ? candidates.slice(0, MAX_PULSES_MOBILE)
         : candidates;
@@ -172,26 +185,22 @@ export default function MapPulses() {
         el.dataset.sizeOriginal = size;
         // Não usamos aria-hidden mais — o badge tem info útil.
 
-        /* Phase offset POR POLO via animation-delay negativo.
-         * Per feedback "façam com que as ondas pulsantes não
-         * iniciem ao mesmo tempo. Devem ser intercaladas para
-         * ter um o aspecto de individualidade".
+        /* Phase offset POR POLO via animation-delay negativo, com
+         * ciclo TOTAL de 8s (3 ondas em ~3s + 5s de pausa idle).
+         * Per feedback "Intercale ... vamos pensar em algo bem
+         * natural" — só ~37% das cidades estão "no ciclo ativo" a
+         * qualquer momento, criando a sensação de cidades pulsando
+         * em momentos diferentes.
          *
-         * Ciclo total = 3.5s. Multiplicamos idx por 0.83 (não
-         * múltiplo de 1.17 dos delays internos) e modulo 3.5
-         * pra distribuir as fases ao longo do ciclo inteiro.
-         * Delay negativo faz a animação "começar no passado",
-         * então o polo já entra em meio-pulso em vez de esperar.
-         *
-         * Cada um dos 3 anéis ganha esse phase + seu próprio
-         * delay interno (0 / 1.17 / 2.34) pra manter o stagger
-         * dentro do polo. Sobrescreve a regra CSS estática
-         * .mapsim-pulse-ring-N. */
-        const polePhase = -((idx * 0.83) % 3.5);
+         * Multiplicamos idx por 1.31 (golden-ratio-ish, não múltiplo
+         * dos delays internos 0/1.0/2.0) e modulo 8 pra distribuir
+         * as 50 fases uniformemente. Cada um dos 3 anéis ganha
+         * esse phase + delay interno pro stagger intra-cidade. */
+        const polePhase = -((idx * 1.31) % 8);
         for (let i = 0; i < 3; i += 1) {
           const ring = document.createElement('span');
           ring.className = `mapsim-pulse-ring mapsim-pulse-ring-${i + 1}`;
-          ring.style.animationDelay = `${polePhase + i * 1.17}s`;
+          ring.style.animationDelay = `${polePhase + i * 1.0}s`;
           el.appendChild(ring);
         }
         const core = document.createElement('span');

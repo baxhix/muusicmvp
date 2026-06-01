@@ -350,7 +350,13 @@
   /* willChange força layer próprio na GPU pra animação ficar
    * suave sem disputar com outros elementos. */
   will-change: transform, opacity;
-  animation: mapsimPulseRing 3.5s ease-out infinite;
+  /* Ciclo TOTAL de 8s — pulse visível só nos primeiros ~3s (38%),
+   * 5s de idle. Combinado com phase offsets variados por cidade
+   * (polePhase no JS), só ~38% das cidades estão "pulsando" em
+   * qualquer momento — sensação de cidades acordando/dormindo
+   * alternadamente. Per feedback "intercale pra a página não ficar
+   * carregada ... algo bem natural". */
+  animation: mapsimPulseRing 8s ease-out infinite;
 }
 .mapsim-pulse-ring-1 { animation-delay: 0s; }
 .mapsim-pulse-ring-2 { animation-delay: 1.17s; }
@@ -412,13 +418,35 @@
   height: 56px;
   margin: -28px 0 0 -28px;
 }
-/* Tier S — usado em Manaus e Belém (per feedback "adicione mais
- * uma área pulsante menor em Belém e Manaus"). 40px, anel mais
- * discreto pra dar presença na região Norte sem dominar. */
+/* Tier S — cidades rank 16-30 do CSV. 40px, anel discreto. */
 .mapsim-pulse-s .mapsim-pulse-ring {
   width: 40px;
   height: 40px;
   margin: -20px 0 0 -20px;
+}
+
+/* Tier XS — cauda longa (cidades rank 31+ no CSV). Anel bem
+ * pequeno (24px) — só pra marcar presença sem competir com os
+ * polos maiores. Per feedback "adicione ondas pulsantes menores
+ * nas cidades que há registros". */
+.mapsim-pulse-xs .mapsim-pulse-ring {
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+}
+/* Gradient mais sutil pro XS — não compete com os polos maiores */
+.mapsim-pulse-xs .mapsim-pulse-ring {
+  background: radial-gradient(
+    circle,
+    rgba(61, 219, 116, 0.35) 0%,
+    rgba(61, 219, 116, 0.15) 50%,
+    transparent 78%
+  );
+}
+.mapsim-pulse-xs .mapsim-pulse-core {
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
 }
 
 /* Hit-area invisível pra capturar mouseover. Tamanho generoso
@@ -492,16 +520,24 @@
 }
 
 @keyframes mapsimPulseRing {
+  /* Ciclo de 8s. Pulse VISÍVEL nos primeiros 38% (~3s), depois
+   * IDLE nos 5s restantes (opacity travada em 0, transform em
+   * scale final). Permite que phases diferentes entre cidades
+   * gerem o efeito de "umas pulsam, outras descansam". */
   0% {
     transform: scale(0.25);
     opacity: 0;
   }
-  /* Pico de opacity subiu 0.55 → 0.85 — ondas chegam mais
-   * presentes antes do fade-out. */
-  15% {
+  4% {
     opacity: 0.85;
   }
+  38% {
+    transform: scale(1);
+    opacity: 0;
+  }
   100% {
+    /* Idle window: continua invisível, mantém o transform final
+     * pra próximo ciclo começar do scale 0.25 sem flash. */
     transform: scale(1);
     opacity: 0;
   }
