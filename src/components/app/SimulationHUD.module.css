@@ -337,15 +337,21 @@
  * flag mapSimulation — só aparece pro brainstorm owner. */
 .zoomIndicator {
   position: fixed;
-  /* Per feedback "No desktop, posicione o globe logo ao lado esquerdo
-   * da bottom bar". NowPlaying está em bottom: 24px / left: 42px —
-   * alinhamos o pill na MESMA altura, ancorado mais à esquerda (24px)
-   * pra ficar "ao lado esquerdo" dele.
+  /* Per feedback "Posicione o globe e o indicador de nivel de zoom
+   * abaixo do botão de features, sem sobreposição".
    *
-   * Antes era bottom 340px (acima do player), per feedback antigo de
-   * separar do player. Feedback atual reverte essa decisão. */
-  bottom: 24px;
-  left: 24px;
+   * O botão de features (Brainstorm trigger) fica em:
+   *   top: 50% / left: 18px / height: 40px (centrado verticalmente)
+   * → bottom do botão = 50vh + 20px.
+   *
+   * Posicionamos esse pill logo abaixo com gap 8px:
+   *   top = 50% + 20px (metade da altura do botão) + 8px (gap) = +28px
+   *   left: 18px (alinhado com o botão).
+   *
+   * Antes ficava em bottom 24px (ao lado do player NowPlaying) — agora
+   * sobe pro left rail logo abaixo do botão de Brainstorm. */
+  top: calc(50% + 28px);
+  left: 18px;
   z-index: 25;
   display: inline-flex;
   flex-direction: column;
@@ -379,9 +385,9 @@
 
 @media (max-width: 640px) {
   .zoomIndicator {
-    /* +40px per feedback "no mobile, posicione 40px acima"
-     * (180 → 220). */
-    bottom: 220px;
+    /* Mobile: mesma lógica (logo abaixo do botão Brainstorm), só com
+     * gutter um pouco menor pra economizar largura. */
+    top: calc(50% + 28px);
     left: 12px;
     padding: 5px 10px 6px;
   }
