@@ -229,9 +229,15 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
  * Per feedback "cabem os pontos máximos dentro da tela ... conforme
  * vai diminuindo o zoom, aí sim diminui proporcionalmente":
  *
- *   cityPeak / cityMid:  CAP FIXO igual pra TODAS as cidades
- *     (840 / 294 dots). Niterói preenche a tela igual SP quando
- *     o user zoma nela.
+ *   cityPeak / cityMid:  CAP ESCALONADO POR RANK ordinal (1-10 do
+ *     CSV recebe full cap, 11-30 médio, 31-50 reduzido). Otimização
+ *     de performance — preenchimento visual quando focado mas sem
+ *     pagar 840 × 50 features se a maioria das cidades nunca é
+ *     foco do user:
+ *       rank  1-10 → cityPeak 840 / cityMid 294
+ *       rank 11-30 → cityPeak 300 / cityMid 150
+ *       rank 31-50 → cityPeak 100 / cityMid  60
+ *     Mobile: subsample 1/2 em ambos pra cortar mais.
  *
  *   region / state / continent:  PROPORCIONAL ao monthlyListeners
  *     da cidade. Sqrt scale pra amortecer desbalanço extremo do
@@ -395,10 +401,29 @@ const MAX_MONTHLY_LISTENERS = 2074181;
  *    dataset (SP=2M vs RJ=508 → linear seria 0.025% → invisível).
  *    sqrt(508/2.07M) = 0.0157 vs sqrt(1) = 1.0 → ainda dominante
  *    mas RJ não some completamente. */
-function quotaFor(monthlyListeners: number, range: QuotaRange): number {
-  // Caps fixos: quando o user zoma na cidade, preenche a tela igual
-  if (range === 'cityPeak') return 840;
-  if (range === 'cityMid')  return 294;
+function quotaFor(
+  monthlyListeners: number,
+  range: QuotaRange,
+  rank: number,  // 1-based rank por monthlyListeners (1 = SP)
+): number {
+  /* Caps cityPeak/cityMid escalonados por rank — per feedback de
+   * otimização "em produção real a atualização desses dados pode
+   * ocorrer de forma espaçada". Como não precisamos de 840 dots em
+   * todas as 50 cidades simultaneamente:
+   *   rank 1-10  → 840 (preenchimento total na tela quando focado)
+   *   rank 11-30 → 300 (denso mas sem custar 840 × 20 features)
+   *   rank 31-50 → 100 (presença adequada, cauda longa)
+   * Reduz total cityPeak de 42k → ~16.4k features (-61%). */
+  if (range === 'cityPeak') {
+    if (rank <= 10) return 840;
+    if (rank <= 30) return 300;
+    return 100;
+  }
+  if (range === 'cityMid') {
+    if (rank <= 10) return 294;
+    if (rank <= 30) return 150;
+    return 60;
+  }
 
   // Demais ranges: proporcional ao tamanho da cidade (sqrt scale)
   const scale = Math.sqrt(
@@ -410,10 +435,7 @@ function quotaFor(monthlyListeners: number, range: QuotaRange): number {
     continent:  30,
   };
   /* Piso de 5 dots por cidade per feedback "pequenos pontos de 4px
-   * ao redor para não ficar um único ponto isolado". Sem o piso,
-   * cidades pequenas (RJ 508 ouvintes → scale 0.016) renderizavam
-   * só 1 dot — visual "isolado". Com 5 dots ao redor de cada pulse,
-   * sensação de "cluster mínimo" em qualquer cidade do dataset. */
+   * ao redor para não ficar um único ponto isolado". */
   const MIN_DOTS_PER_CITY = 5;
   return Math.max(MIN_DOTS_PER_CITY, Math.round(baseQuota[range] * scale));
 }
@@ -697,22 +719,28 @@ function generateAllQuotaPoints(
     sigmaKm: number;
     monthlyListeners: number;
   }>,
+  opts: { mobile?: boolean } = {},
 ): GeoJSON.Feature[] {
   const stateRaw: GeoJSON.Feature[] = [];
   const others:   GeoJSON.Feature[] = [];
   const ranges: QuotaRange[] = ['continent', 'state', 'region', 'cityMid', 'cityPeak'];
-  for (const c of cities) {
+  cities.forEach((c, idx) => {
+    const rank = idx + 1;  // 1-based — assume cities sorted desc por ml
     for (const r of ranges) {
-      // quotaFor agora usa monthlyListeners (peso real do CSV) ao
-      // invés de active count — cityPeak/cityMid são cap fixo,
-      // ranges externos escalam proporcionalmente.
-      const n = quotaFor(c.monthlyListeners, r);
+      let n = quotaFor(c.monthlyListeners, r, rank);
+      /* Mobile subsample 1/2 nos ranges densos (cityMid/cityPeak).
+       * Per feedback "em produção real a atualização desses dados
+       * pode ocorrer de forma espaçada" — UI mock, perda de
+       * densidade aceitável pra ganho de frame budget no mobile. */
+      if (opts.mobile && (r === 'cityMid' || r === 'cityPeak')) {
+        n = Math.max(5, Math.round(n / 2));
+      }
       if (n <= 0) continue;
       const features = generateCityQuotaPoints(c, r, n);
       if (r === 'state') stateRaw.push(...features);
       else               others.push(...features);
     }
-  }
+  });
   /* Poisson-disk thinning REMOVIDO per feedback "Remova totalmente
    * a regra dos 24px de distanciamento". O thinning estava
    * descartando ~80% dos dots de SP no state porque o spacing 24px
@@ -1050,7 +1078,7 @@ export default function MapSimulationLayer() {
        * uma vez no generateCityQuotaPoints com sigma fixo (piso 150km).
        * As funções sigmaKmForStateAtZoom / recomputeStateCoords ficam
        * declaradas mas inertes (preservadas pra reuso futuro). */
-      const quotaFeatures = generateAllQuotaPoints(data.cities);
+      const quotaFeatures = generateAllQuotaPoints(data.cities, { mobile });
 
       if (!map.getSource(SOURCE_QUOTAS)) {
         map.addSource(SOURCE_QUOTAS, {
@@ -1128,8 +1156,13 @@ export default function MapSimulationLayer() {
        * Per feedback "com a leve sombra verde ao redor". Mesma source
        * + filter, mas com raio maior, blur alto e opacity baixa —
        * cria a sensação de "sombra" verde envolvendo cada dot sem
-       * sacrificar a nitidez do core 4x4px. */
-      if (!map.getLayer(LAYER_QUOTAS_CITYPEAK_GLOW)) {
+       * sacrificar a nitidez do core 4x4px.
+       *
+       * SKIP NO MOBILE: blur 1.0 sobre 8k+ features (cityPeak já
+       * subsamplado) é o layer mais caro do app — mobile médio
+       * cai pra ~40fps. Per feedback de otimização, removemos
+       * no mobile sem perder a funcionalidade. */
+      if (!mobile && !map.getLayer(LAYER_QUOTAS_CITYPEAK_GLOW)) {
         map.addLayer({
           id: LAYER_QUOTAS_CITYPEAK_GLOW,
           /* Per feedback "No zoom 10.1 ao 10.7 remova a mancha verde
