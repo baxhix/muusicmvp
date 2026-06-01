@@ -314,13 +314,18 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
  *             no z 9-11, mesma escala visual do cityPeak)
  *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
-  continent: 0.4,  // 0.8px diameter — pontos quase invisíveis no zoom
-                   //  continental, só pra marcar localizações sem
-                   //  competir com os pulses. Per feedback "Os pontos
-                   //  que estão no zoom 2.5 ainda estão grandes.
-                   //  Gostaria que fosse diminuído pela metade" (era
-                   //  0.75 = 1.5px, agora 0.4 = 0.8px).
-  state:    1.5,   // 3px diameter (piso: nenhum dot abaixo disso)
+  /* Per feedback iterativo: "pontos verdes no zoom 2.5 estão
+   * grossos, diminua eles pela metade até o zoom 7.5".
+   *
+   * As faixas que cobrem z 2.5 → 7.5 são continent (2.5-5.8) e
+   * state (5.5-7.5). Ambas reduzidas pela metade — continent 0.4
+   * → 0.2 (0.4px diâm.), state 1.5 → 0.75 (1.5px diâm.). region/
+   * cityMid/cityPeak mantidos em 2 (4px diâm.) porque dominam
+   * acima de 7.5 e o feedback explicitamente limita o ajuste até
+   * lá. Histórico: continent já tinha sido cortado de 0.75 → 0.4
+   * num round anterior; agora vai pra 0.2. */
+  continent: 0.2,  // 0.4px diameter
+  state:    0.75,  // 1.5px diameter
   region:   2,     // 4px diameter — per feedback "pequenos pontos de
                    //  4px ao redor" pra dar consistência visual com
                    //  cityMid/cityPeak no zoom intermediário (7-8).

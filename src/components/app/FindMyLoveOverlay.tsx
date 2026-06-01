@@ -87,6 +87,26 @@ function pickInternationalMatch(): MatchInfo {
 const SRC_LINE   = 'fml-line';
 const LAYER_LINE = 'fml-line-layer';
 
+/* Quantos passos discretos compõem o LineString animado. Mais
+ * passos = curva mais suave durante o trace. 80 é mais que
+ * suficiente pra distâncias intercontinentais sem sobrecarregar
+ * o setData() do source a cada frame. */
+const LINE_TRACE_STEPS = 80;
+/* Duração do trace progressivo da linha (user → match). */
+const LINE_TRACE_DURATION_MS = 1600;
+
+/* Interpolação linear simples entre dois lng/lat. Pra distâncias
+ * intercontinentais um great-circle daria curva mais elegante,
+ * mas o efeito visual com linha tracejada cinza claro num mapa
+ * plano-Mercator já lê bem como "rota". */
+function interpolateLngLat(
+  a: [number, number],
+  b: [number, number],
+  t: number,
+): [number, number] {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+
 export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>('searching');
   const [phraseIdx, setPhraseIdx] = useState(0);
@@ -94,6 +114,10 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
+  /* rAF id do trace da linha. Mantido em ref pra que o cleanup
+   * do useEffect possa cancelar caso o overlay seja fechado no
+   * meio da animação. */
+  const lineRafRef = useRef<number | null>(null);
 
   if (!matchRef.current) {
     matchRef.current = pickInternationalMatch();
@@ -158,11 +182,14 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
     const t1 = window.setTimeout(() => {
       const midLng = (USER_ORIGIN[0] + match.center[0]) / 2;
       const midLat = (USER_ORIGIN[1] + match.center[1]) / 2;
-      // Distância determina zoom: cidades muito distantes precisam zoom out maior
+      // Distância determina zoom: cidades muito distantes precisam zoom out maior.
+      // CLAMP em 2.5: abaixo disso a linha (minzoom 2.5) some — bug
+      // reportado "no mobile o traçado não está aparecendo" quando
+      // a heurística antiga retornava 1.6 pra intercontinentais.
       const dx = Math.abs(USER_ORIGIN[0] - match.center[0]);
       const dy = Math.abs(USER_ORIGIN[1] - match.center[1]);
       const dist = Math.max(dx, dy);
-      const targetZoom = dist > 90 ? 1.6 : dist > 50 ? 2.2 : 2.8;
+      const targetZoom = dist > 90 ? 2.5 : dist > 50 ? 2.6 : 2.8;
 
       map.easeTo({
         center: [midLng, midLat],
@@ -174,9 +201,12 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
       });
     }, 1600);
 
-    // Stage 3 (after 3.4s): adiciona linha + markers + vai pra 'matched'
+    // Stage 3 (after 3.4s): traça progressivamente a linha
+    // do user até o match, e ao chegar revela o avatar do match.
     const t2 = window.setTimeout(() => {
-      // Source + layer da linha
+      /* Inicializa o source com apenas o ponto de origem. O rAF
+       * abaixo vai acrescentando pontos interpolados até alcançar
+       * match.center — efeito de "rota sendo desenhada". */
       if (!map.getSource(SRC_LINE)) {
         map.addSource(SRC_LINE, {
           type: 'geojson',
@@ -184,7 +214,7 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
             type: 'Feature',
             geometry: {
               type: 'LineString',
-              coordinates: [USER_ORIGIN, match.center],
+              coordinates: [USER_ORIGIN],
             },
             properties: {},
           },
@@ -196,7 +226,9 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
           type: 'line',
           source: SRC_LINE,
           /* minzoom 2.5 — per feedback "no zoom abaixo de 2.5,
-           * oculte os elementos plotados no mapa". */
+           * oculte os elementos plotados no mapa". O Stage 2 acima
+           * clamp targetZoom em ≥ 2.5 pra garantir que o trace
+           * apareça no mobile. */
           minzoom: 2.5,
           paint: {
             /* Discreto: cinza claro com leve tracejado. Antes era
@@ -209,23 +241,17 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         });
       }
 
-      // Marker pin no user (origem)
+      // Marker pin no user (origem) — aparece já no início do trace
       const userEl = document.createElement('div');
       userEl.className = `${styles.endpoint} ${styles.userEndpoint}`;
       userMarkerRef.current = new mapboxgl.Marker({ element: userEl, anchor: 'center' })
         .setLngLat(USER_ORIGIN)
         .addTo(map);
 
-      // Marker avatar no match
-      const el = document.createElement('div');
-      el.className = styles.matchAvatar;
-      el.style.backgroundImage = `url('https://i.pravatar.cc/100?img=${match.picId}')`;
-      markerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat(match.center)
-        .addTo(map);
-
       /* Hide markers em z<2.5 per feedback "oculte elementos
-       * plotados no mapa abaixo de 2.5". */
+       * plotados no mapa abaixo de 2.5". Definido aqui pra ser
+       * reutilizado no final do trace (após o match marker
+       * aparecer). */
       const applyMarkerVisibility = () => {
         const z = map.getZoom();
         const hide = z < 2.5;
@@ -241,18 +267,69 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
       (map as unknown as { _fmlZoomHandler?: () => void })._fmlZoomHandler =
         applyMarkerVisibility;
 
-      setPhase('matched');
+      /* Anima a linha crescendo em rAF. setData() é o caminho
+       * idiomático no Mapbox pra geometrias dinâmicas — substitui
+       * o GeoJSON inteiro do source a cada frame, e o renderer
+       * cuida do diff. */
+      const startTs = performance.now();
+      const tickTrace = (now: number) => {
+        const elapsed = now - startTs;
+        const t = Math.min(1, elapsed / LINE_TRACE_DURATION_MS);
+        // ease-out quad — começa rápido, desacelera no fim
+        const eased = 1 - Math.pow(1 - t, 2);
+
+        const upTo = Math.max(1, Math.floor(eased * LINE_TRACE_STEPS));
+        const coords: [number, number][] = [USER_ORIGIN];
+        for (let i = 1; i <= upTo; i++) {
+          coords.push(interpolateLngLat(USER_ORIGIN, match.center, i / LINE_TRACE_STEPS));
+        }
+
+        const src = map.getSource(SRC_LINE) as mapboxgl.GeoJSONSource | undefined;
+        try {
+          src?.setData({
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: coords },
+            properties: {},
+          });
+        } catch { /* map descartado mid-frame */ }
+
+        if (t < 1) {
+          lineRafRef.current = requestAnimationFrame(tickTrace);
+        } else {
+          // Trace concluído — avatar do match surge na ponta
+          lineRafRef.current = null;
+          const el = document.createElement('div');
+          el.className = styles.matchAvatar;
+          el.style.backgroundImage = `url('https://i.pravatar.cc/100?img=${match.picId}')`;
+          markerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
+            .setLngLat(match.center)
+            .addTo(map);
+          applyMarkerVisibility();
+          setPhase('matched');
+        }
+      };
+      lineRafRef.current = requestAnimationFrame(tickTrace);
     }, 3400);
 
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
+      /* Aborta o trace se a phase mudar antes de completar
+       * (ex.: user fecha o overlay mid-animation). */
+      if (lineRafRef.current !== null) {
+        cancelAnimationFrame(lineRafRef.current);
+        lineRafRef.current = null;
+      }
     };
   }, [phase, match]);
 
   // Cleanup ao fechar
   useEffect(() => {
     return () => {
+      if (lineRafRef.current !== null) {
+        cancelAnimationFrame(lineRafRef.current);
+        lineRafRef.current = null;
+      }
       const map = mapRef.current;
       if (map) {
         try {
