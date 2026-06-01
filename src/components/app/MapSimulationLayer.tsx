@@ -219,21 +219,22 @@ function tierFor(active: number): CityTier {
  *  comunica volume nesses zooms é o pulse + heatmap. Os dots aqui
  *  são "tempero". */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 6, region: 32, cityMid: 32, cityPeak: 840 },  // 280 × 3 per feedback "Triplique em SP no zoom 12"
-  l:  { state: 4, region: 24, cityMid: 24, cityPeak: 180 },
-  m:  { state: 3, region: 14, cityMid: 16, cityPeak: 100 },
-  s:  { state: 0, region:  6, cityMid:  8, cityPeak:  50 },
+  xl: { state: 6, region: 32, cityMid: 44, cityPeak: 840 },  // SP: 44 em z9-11, 840 em z12
+  l:  { state: 4, region: 24, cityMid: 32, cityPeak: 180 },
+  m:  { state: 3, region: 14, cityMid: 20, cityPeak: 100 },
+  s:  { state: 0, region:  6, cityMid: 10, cityPeak:  50 },
 };
 
 /** Tamanho do dot (raio em px) por range.
  *  state    = 1.5 → 3px diâmetro (per feedback "no zoom 6 ... com 3px")
  *  region   = 1.25 → 2.5px (intermediário)
- *  cityMid  = 1 → 2px (discreto antes do peak)
- *  cityPeak = 2 → 4px diam (per feedback "pontos 4x4px no zoom máximo") */
+ *  cityMid  = 2 → 4px diâmetro (per feedback "Deixe os pontos com 4x4px"
+ *             no z 9-11, mesma escala visual do cityPeak)
+ *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
   state:    1.5,   // 3px diameter
   region:   1.25,  // 2.5px
-  cityMid:  1,     // 2px
+  cityMid:  2,     // 4px diameter
   cityPeak: 2,     // 4px diameter
 };
 
@@ -267,8 +268,15 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
 const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
   state:    { min: 4.7,  peakStart: 5,    peakEnd: 6.5,  max: 7    },
   region:   { min: 6.5,  peakStart: 7,    peakEnd: 9,    max: 9.5  },
-  cityMid:  { min: 9.3,  peakStart: 9.7,  peakEnd: 11,   max: 11.4 },
-  cityPeak: { min: 11.2, peakStart: 11.5, peakEnd: 12.5, max: 13   },
+  /* cityMid: peak total em z 9–11 (per feedback "no zoom 9 a 11"),
+   * fade-out longo até z 11.9 — sobrepõe com cityPeak no z 11–11.9
+   * pra transição "legal" dos 44 → 840 dots sem salto. */
+  cityMid:  { min: 9.0,  peakStart: 9.3,  peakEnd: 11,   max: 11.9 },
+  /* cityPeak: fade-in longo de z 11 até 11.9 (faixa de 0.9 zoom),
+   * peak em 11.9–12.5. Os 840 dots aparecem GRADUALMENTE durante
+   * o pinch enquanto os 44 do cityMid vão saindo — efeito de
+   * "densidade crescendo" em vez de "flash de 800 dots novos". */
+  cityPeak: { min: 11.0, peakStart: 11.9, peakEnd: 12.5, max: 13   },
 };
 
 /** Quota efetiva pra (city, range). XS tem regra dinâmica especial. */
