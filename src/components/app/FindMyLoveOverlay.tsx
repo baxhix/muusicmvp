@@ -366,7 +366,11 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
   }, []);
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true">
+    <div
+      className={`${styles.overlay} ${phase === 'searching' ? styles.overlayLifted : ''}`}
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Camada escura — opacity vária por fase */}
       <div
         className={`${styles.dim} ${phase !== 'searching' ? styles.dimLight : ''}`}

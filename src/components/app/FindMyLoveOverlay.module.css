@@ -16,6 +16,21 @@
   font-family: var(--sans), system-ui, sans-serif;
 }
 
+/* Phase 'searching' — o overlay sobe acima de TODOS os elementos
+ * da viewport: player NowPlaying, LiveChatStack, ArtistBox (pílula
+ * "Fanverse Ana Castela"), Brainstorm/Superlive/Show panels,
+ * HeartsCascade (z:9000), etc. Per feedback "enquanto o orbe está
+ * carregando, o orbe e os textos devem ficar por cima de todos os
+ * elementos da página".
+ *
+ * 9500 escolhido pra ficar acima do HeartsCascade (9000), que é o
+ * maior z-index legítimo do app. Phases revealing/matched NÃO usam
+ * esse boost — o overlay volta pro z:95 porque é importante que
+ * o player + chat continuem clicáveis depois do match. */
+.overlayLifted {
+  z-index: 9500;
+}
+
 /* Dimmer escuro — opacity vária por fase. */
 .dim {
   position: absolute;
