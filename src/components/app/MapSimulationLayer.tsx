@@ -195,12 +195,23 @@ type CityTier = 'xl' | 'l' | 'm' | 's' | 'xs';
  *   - zoom 6   : pontos de 3px ao redor da pulse (state — size 1.5) */
 type QuotaRange = 'state' | 'region' | 'cityMid' | 'cityPeak';
 
-/** Tier de cada cidade pela contagem de ativos (mesma escala dos pulses). */
+/** Tier de cada cidade pela contagem de ativos.
+ *
+ *  Thresholds calibrados ao dataset real:
+ *    - SP    ≈ 488 ativos (43% × 1890 SE × 60% active rate) → XL
+ *    - RJ    ≈ 250 ativos → M
+ *    - BH    ≈ 125 ativos → S
+ *    - Demais → XS
+ *
+ *  Antes o threshold XL era 700, mas SP nunca atingia (a maior cidade
+ *  do dataset bate ~490). Resultado: tier='l' com cityPeak=180,
+ *  visualmente esparso quando o usuário esperava densidade alta.
+ *  Bumpamos thresholds pra que pelo menos a cidade líder vire XL. */
 function tierFor(active: number): CityTier {
-  if (active >= 700) return 'xl';
-  if (active >= 400) return 'l';
-  if (active >= 200) return 'm';
-  if (active >= 100) return 's';
+  if (active >= 400) return 'xl';
+  if (active >= 250) return 'l';
+  if (active >= 130) return 'm';
+  if (active >= 70)  return 's';
   return 'xs';
 }
 
@@ -252,11 +263,13 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
   state:    1.10,  // halo amplo, "ao redor da área pulsante"
   region:   0.90,  // pulse area, "área que aparece a camada verde"
   cityMid:  0.55,  // perímetro real da cidade
-  cityPeak: 1.10,  // PREENCHE A TELA — per feedback "os pontos verdes
-                   // devem preencher a tela toda". Sigma expande além
-                   // do perímetro real pra cobrir o viewport em z=12.
-                   // Crossfade z=11.2-11.4 fica como "respiração radial"
-                   // dos dots saindo do centro pra todas as direções.
+  cityPeak: 0.55,  // mesmo perímetro da cidade real. Antes era 1.10 (
+                   // "espalhar pra preencher tela"), mas com sigma maior
+                   // que o raio do viewport, ~85% dos dots caíam FORA
+                   // do que o usuário vê. Em SP (sigmaKm=14×0.55=7.7km)
+                   // o viewport z=12 cobre ~1σ → 68%² ≈ 46% dos dots
+                   // visíveis. Com 840 dots, ~386 caem no viewport
+                   // (densidade real de "preencher tela").
 };
 
 /** Range zooms — overlap pequeno entre adjacentes pro crossfade.
