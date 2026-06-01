@@ -965,15 +965,12 @@ export default function MapSimulationLayer() {
        * Cada feature carrega `properties.range` ('state'|'region'|'city')
        * + `properties.size` (raio em px). Os 3 layers filtram por range
        * + têm zoom/opacity próprios pra crossfade entre faixas. */
-      /* Features cache pro recompute dinâmico do range `state`.
-       * Generamos UMA VEZ e mantemos referência (mesma array) no
-       * escopo do useEffect; o hook `map.on('zoom', ...)` muta os
-       * coordinates das state features e chama setData. Os outros
-       * ranges (region/cityMid/cityPeak) ficam imutáveis. */
+      /* Animação on-zoom REMOVIDA per feedback "Remova a animação".
+       * Os dots do state agora ficam estáticos — coords pre-calculadas
+       * uma vez no generateCityQuotaPoints com sigma fixo (piso 150km).
+       * As funções sigmaKmForStateAtZoom / recomputeStateCoords ficam
+       * declaradas mas inertes (preservadas pra reuso futuro). */
       const quotaFeatures = generateAllQuotaPoints(data.cities);
-      // Aplica sigma inicial pro zoom atual antes do addSource pra
-      // evitar flash de "salto" no primeiro render.
-      recomputeStateCoords(quotaFeatures, map.getZoom());
 
       if (!map.getSource(SOURCE_QUOTAS)) {
         map.addSource(SOURCE_QUOTAS, {
@@ -984,34 +981,6 @@ export default function MapSimulationLayer() {
           } as GeoJSON.FeatureCollection,
         });
       }
-
-      /* Hook on zoom: recalcula coords das state features baseado
-       * no zoom atual e re-setData. Per feedback "Conforme o zoom
-       * vai avançando, aplique uma 'animação' para eles se
-       * aproximando da área do zoom". Throttle via rAF — não roda
-       * mais de 1× por frame mesmo durante pinch contínuo. */
-      let zoomRafId = 0;
-      const onZoomQuotas = () => {
-        if (zoomRafId) return;
-        zoomRafId = requestAnimationFrame(() => {
-          zoomRafId = 0;
-          recomputeStateCoords(quotaFeatures, map.getZoom());
-          const src = map.getSource(SOURCE_QUOTAS);
-          if (src && src.type === 'geojson') {
-            (src as mapboxgl.GeoJSONSource).setData({
-              type: 'FeatureCollection',
-              features: quotaFeatures,
-            });
-          }
-        });
-      };
-      map.on('zoom', onZoomQuotas);
-      // Registra cleanup junto com os outros — o useEffect cleanup
-      // só remove o source, então adicionamos esse off explícito.
-      const detachZoomQuotas = () => {
-        try { map.off('zoom', onZoomQuotas); } catch { /* destroyed */ }
-        if (zoomRafId) cancelAnimationFrame(zoomRafId);
-      };
 
       const quotaLayerPaint = (
         range: QuotaRange,
@@ -1116,46 +1085,18 @@ export default function MapSimulationLayer() {
       //        nítida, com centro mais denso e desbotando organicamente
       //      - tamanho ainda escalado por point_count, mas maior pra
       //        parecer "mancha de presença", não disco
-      if (!map.getLayer(LAYER_CL)) {
-        map.addLayer({
-          id: LAYER_CL,
-          type: 'circle',
-          source: SOURCE_ID,
-          filter: ['has', 'point_count'],
-          minzoom: 5,
-          paint: {
-            'circle-color': '#3DDB74',
-            /* Raio ~50% maior + blur 1.4 (> 1.0): cada cluster vira
-             * um halo MUITO difuso, sem core sólido. Junto com a
-             * opacity drasticamente reduzida, o LAYER_CL deixa de
-             * pintar "círculos verdes" e vira só um leve adicional
-             * sobre o heatmap. */
-            'circle-radius': [
-              'step', ['get', 'point_count'],
-              36,                              // < 50  (era 24)
-              50,  52,                         //       (era 34)
-              200, 72,                         //       (era 48)
-              500, 96,                         //       (era 64)
-            ],
-            'circle-stroke-width': 0,
-            'circle-blur': 1.4,                // era 1.0 — mais difuso
-            /* Opacity DRASTICAMENTE reduzida em todos os zooms.
-             * Per feedback "as formas ainda estão bem evidentes" — o
-             * heatmap deve dominar a comunicação visual, o LAYER_CL
-             * passa a ser ornamento mínimo (max 0.15). */
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              5,   0,
-              5.5, 0.12,                       // era 0.55
-              7,   0.15,                       // era 0.50
-              8,   0.12,                       // era 0.25
-              10,  0.10,                       // era 0.18
-              11,  0,
-              12,  0,
-            ],
-          },
-        });
-      }
+      /* LAYER_CL (blob orgânico verde sobre clusters de users reais)
+       * REMOVIDO per feedback "Pontos verdes maiores associados aos
+       * usuários reais — remova esses pontos maiores do mapa".
+       * O SOURCE_ID continua existindo (alimenta LAYER_CL_T, LAYER_HALO,
+       * LAYER_SF_PIC), mas o circle layer que pintava as machas verdes
+       * dos clusters não renderiza mais. Heatmap + pulses + quotas
+       * continuam comunicando a presença visual.
+       *
+       * Hover de cluster (mousemove em LAYER_CL) preservado nas linhas
+       * abaixo, mas como o layer não existe os handlers viram no-op
+       * silencioso — sem error porque Mapbox map.on aceita layer ids
+       * que ainda vão ser adicionados ou que não existem. */
 
       // 4) CLUSTER COUNT — texto SÓ aparece no hover.
       //
@@ -1197,36 +1138,11 @@ export default function MapSimulationLayer() {
       //    circle render é caro com muitos superfãs no viewport).
       //    Halo agora é VERDE (não mais amber) pra alinhar com a
       //    paleta "tudo online é verde".
-      if (!mobile && !map.getLayer(LAYER_HALO)) {
-        map.addLayer({
-          id: LAYER_HALO,
-          type: 'circle',
-          source: SOURCE_ID,
-          filter: [
-            'all',
-            ['!', ['has', 'point_count']],
-            ['==', ['get', 'tier'], 'superfan'],
-            ['==', ['get', 'online'], 1],
-          ],
-          minzoom: 9,
-          paint: {
-            'circle-radius': 14,
-            'circle-color': 'rgba(61, 219, 116, 0.0)',
-            'circle-stroke-width': 1.4,
-            'circle-stroke-color': 'rgba(61, 219, 116, 0.65)',
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              9,  0,
-              10, 0.6,
-              14, 0.95,
-            ],
-          },
-        });
-        /* nota: anteriormente o HALO era inserido com 2º arg LAYER_DOT
-         * pra ficar abaixo dele. Como LAYER_DOT foi removido, agora
-         * fica no topo da pilha — o SF_PIC adicionado depois cobre
-         * por cima naturalmente. */
-      }
+      /* LAYER_HALO (anel verde 14px ao redor de cada superfã online)
+       * REMOVIDO per feedback "Pontos verdes maiores associados aos
+       * usuários reais — remova esses pontos maiores do mapa". O
+       * superfã continua com mini avatar (LAYER_SF_PIC) sem o anel
+       * verde envolvente. */
 
       // 6) MINI AVATAR de SUPERFÃS ONLINE — foto real (Pravatar).
       //
@@ -1849,7 +1765,6 @@ export default function MapSimulationLayer() {
           map.off('click', LAYER_CL, onClusterClick);
           map.off('click', onMapClick);
         } catch { /* map destruído */ }
-        detachZoomQuotas();
         /* Limpa todos os timers pendentes e remove markers ativos. */
         revealTimers.forEach((t) => window.clearTimeout(t));
         revealTimers.length = 0;
