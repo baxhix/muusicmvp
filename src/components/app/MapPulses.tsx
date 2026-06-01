@@ -83,11 +83,12 @@ export default function MapPulses() {
     };
 
     const applyZoomVisibility = (map: MapboxMap) => {
-      /* Lógica em três faixas:
-       *   zoom < 5  → modo XXL (~200px) pros polos XL/L originais.
-       *               Polos M/S são escondidos (zoom continente não
-       *               precisa de info detalhada).
-       *   zoom 5-8  → modo normal (tier XL/L/M/S original).
+      /* Lógica em três faixas (per feedback "No zoom 5.2 até o 7
+       * deixe a onda pulsante do mesmo tamanho que tem no 4.3"):
+       *   zoom < 7  → modo XXL (~200px) pros polos XL/L originais.
+       *               Polos M/S escondidos (mesma regra do z<5 antes —
+       *               estendida até 7).
+       *   zoom 7-8  → modo normal (tier XL/L/M/S original).
        *   zoom 8-9  → fade-out gradual.
        *   zoom 9+   → hidden. */
       const z = map.getZoom();
@@ -106,7 +107,7 @@ export default function MapPulses() {
           'mapsim-pulse-s',
         );
 
-        if (z < 5) {
+        if (z < 7) {
           if (original === 'xl' || original === 'l') {
             el.classList.add('mapsim-pulse-xxl');
             el.style.visibility = 'visible';
