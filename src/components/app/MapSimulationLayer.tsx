@@ -71,10 +71,11 @@ const SOURCE_QUOTAS  = 'mapsim-quotas';       // pontos visuais por cidade × ra
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
 const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (zoom 8-12, 4px diameter)
-const LAYER_QUOTAS_STATE     = 'mapsim-quotas-state';     // dots zoom 5-7  (3px diam)
-const LAYER_QUOTAS_REGION    = 'mapsim-quotas-region';    // dots zoom 7-9  (espalha pela pulse)
-const LAYER_QUOTAS_CITYMID   = 'mapsim-quotas-city-mid';  // dots zoom 9.5-11 (32 pela cidade real)
-const LAYER_QUOTAS_CITYPEAK  = 'mapsim-quotas-city-peak'; // dots zoom 11-12.5 (cap "preencher tela")
+const LAYER_QUOTAS_STATE          = 'mapsim-quotas-state';          // dots zoom 5-7  (3px diam)
+const LAYER_QUOTAS_REGION         = 'mapsim-quotas-region';         // dots zoom 7-9  (espalha pela pulse)
+const LAYER_QUOTAS_CITYMID        = 'mapsim-quotas-city-mid';       // dots zoom 9.5-11 (32 pela cidade real)
+const LAYER_QUOTAS_CITYPEAK_GLOW  = 'mapsim-quotas-city-peak-glow'; // halo verde difuso por baixo do peak
+const LAYER_QUOTAS_CITYPEAK       = 'mapsim-quotas-city-peak';      // dots zoom 11-12.5 (preenche tela)
 const LAYER_CL       = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
 const LAYER_CL_T     = 'mapsim-cluster-count'; // texto só no hover
 const LAYER_HALO     = 'mapsim-superfan-halo';
@@ -218,21 +219,22 @@ function tierFor(active: number): CityTier {
  *  comunica volume nesses zooms é o pulse + heatmap. Os dots aqui
  *  são "tempero". */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 6, region: 32, cityMid: 32, cityPeak: 140 },
-  l:  { state: 4, region: 24, cityMid: 24, cityPeak:  80 },
-  m:  { state: 3, region: 14, cityMid: 16, cityPeak:  40 },
-  s:  { state: 0, region:  6, cityMid:  8, cityPeak:  20 },
+  xl: { state: 6, region: 32, cityMid: 32, cityPeak: 280 },
+  l:  { state: 4, region: 24, cityMid: 24, cityPeak: 180 },
+  m:  { state: 3, region: 14, cityMid: 16, cityPeak: 100 },
+  s:  { state: 0, region:  6, cityMid:  8, cityPeak:  50 },
 };
 
 /** Tamanho do dot (raio em px) por range.
- *  state = 1.5 → 3px diâmetro (per feedback "no zoom 6 ... com 3px").
- *  region = 1.25 → 2.5px (intermediário).
- *  cityMid/cityPeak = 1 → 2px (discreto, alta densidade). */
+ *  state    = 1.5 → 3px diâmetro (per feedback "no zoom 6 ... com 3px")
+ *  region   = 1.25 → 2.5px (intermediário)
+ *  cityMid  = 1 → 2px (discreto antes do peak)
+ *  cityPeak = 2 → 4px diam (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
   state:    1.5,   // 3px diameter
   region:   1.25,  // 2.5px
   cityMid:  1,     // 2px
-  cityPeak: 1,     // 2px
+  cityPeak: 2,     // 4px diameter
 };
 
 /** Fator de multiplicação aplicado ao sigmaKm da cidade pra
@@ -249,7 +251,11 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
   state:    1.10,  // halo amplo, "ao redor da área pulsante"
   region:   0.90,  // pulse area, "área que aparece a camada verde"
   cityMid:  0.55,  // perímetro real da cidade
-  cityPeak: 0.55,  // mesmo perímetro, mais densidade
+  cityPeak: 1.10,  // PREENCHE A TELA — per feedback "os pontos verdes
+                   // devem preencher a tela toda". Sigma expande além
+                   // do perímetro real pra cobrir o viewport em z=12.
+                   // Crossfade z=11.2-11.4 fica como "respiração radial"
+                   // dos dots saindo do centro pra todas as direções.
 };
 
 /** Range zooms — overlap pequeno entre adjacentes pro crossfade.
@@ -429,7 +435,7 @@ export default function MapSimulationLayer() {
       try {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO,
-          LAYER_QUOTAS_CITYPEAK, LAYER_QUOTAS_CITYMID, LAYER_QUOTAS_REGION, LAYER_QUOTAS_STATE,
+          LAYER_QUOTAS_CITYPEAK, LAYER_QUOTAS_CITYPEAK_GLOW, LAYER_QUOTAS_CITYMID, LAYER_QUOTAS_REGION, LAYER_QUOTAS_STATE,
           LAYER_CL_T, LAYER_CL,
           LAYER_MARINGA_24,
           LAYER_AMBIENT, LAYER_HEAT,
@@ -783,6 +789,34 @@ export default function MapSimulationLayer() {
           maxzoom: RANGE_ZOOMS.cityMid.max,
           filter: ['==', ['get', 'range'], 'cityMid'],
           paint: quotaLayerPaint('cityMid'),
+        });
+      }
+      /* GLOW layer (halo verde difuso) por BAIXO do cityPeak.
+       * Per feedback "com a leve sombra verde ao redor". Mesma source
+       * + filter, mas com raio maior, blur alto e opacity baixa —
+       * cria a sensação de "sombra" verde envolvendo cada dot sem
+       * sacrificar a nitidez do core 4x4px. */
+      if (!map.getLayer(LAYER_QUOTAS_CITYPEAK_GLOW)) {
+        map.addLayer({
+          id: LAYER_QUOTAS_CITYPEAK_GLOW,
+          type: 'circle',
+          source: SOURCE_QUOTAS,
+          minzoom: RANGE_ZOOMS.cityPeak.min,
+          maxzoom: RANGE_ZOOMS.cityPeak.max,
+          filter: ['==', ['get', 'range'], 'cityPeak'],
+          paint: {
+            'circle-color': '#3DDB74',
+            'circle-radius': 6,         // 12px diameter — 3x o core
+            'circle-stroke-width': 0,
+            'circle-blur': 1.0,         // borrado total → vira halo
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              RANGE_ZOOMS.cityPeak.min,       0,
+              RANGE_ZOOMS.cityPeak.peakStart, 0.22,
+              RANGE_ZOOMS.cityPeak.peakEnd,   0.22,
+              RANGE_ZOOMS.cityPeak.max,       0,
+            ],
+          },
         });
       }
       if (!map.getLayer(LAYER_QUOTAS_CITYPEAK)) {
