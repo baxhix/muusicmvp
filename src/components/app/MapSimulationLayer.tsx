@@ -215,7 +215,7 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
  *
  *   FAIXA      ZOOM         DOTS (xl)  SIGMA      SHAPE
  *   ─────────  ───────────  ─────────  ─────────  ──────────────────
- *   continent  3.3 – 5.4      30       700 km     halo continental
+ *   continent  3.3 – 5.4      30       350 km     halo continental
  *   state      6   – 7        59       150 km     ao redor do pulse
  *   region     7   – 8       143        18 km     área da pulse
  *   cityMid    9   – 10      294       7.7 km     cidade real
@@ -316,9 +316,9 @@ const SIZE_BY_RANGE: Record<QuotaRange, number> = {
  *  cityMid/cityPeak usam factor menor pra ficar "espalhado pela
  *  cidade" (geografia real). */
 const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
-  continent: 50.0,  // raio 700km via piso absoluto no generateCityQuotaPoints
+  continent: 25.0,  // raio 350km via piso absoluto no generateCityQuotaPoints
                     // (não é factor × sigmaKm; o piso domina). SP sigmaKm
-                    // 14 × 50 = 700 — o factor existe só pra cidades
+                    // 14 × 25 = 350 — o factor existe só pra cidades
                     // grandes não ficarem MENORES que o piso.
   state:    8.00,  // espalhamento amplo (era 4.00). 59 dots c/ spacing
                    // 24px @ z5 precisa de área grande — sigma maior
@@ -458,11 +458,12 @@ function generateCityQuotaPoints(
    * consiga manter spacing 24px @ z5. */
   const factor = SIGMA_FACTOR_BY_RANGE[range];
   /* Pisos absolutos por range:
-   *   - continent: 700km per feedback "raio de 700km" no z 3.3-5.4
+   *   - continent: 350km per feedback "Diminua para 350 e irei avaliar"
+   *     (antes era 700km — espalhamento exagerado)
    *   - state: 150km (envelope 3σ ≈ 184px @ z5, halo do pulse XL)
    *   - outros: 2km (factor × sigmaKm da cidade já é adequado) */
   const minSigmaKm =
-    range === 'continent' ? 700 :
+    range === 'continent' ? 350 :
     range === 'state'     ? 150 :
     2;
   const sigmaKm = Math.max(minSigmaKm, city.sigmaKm * factor);
