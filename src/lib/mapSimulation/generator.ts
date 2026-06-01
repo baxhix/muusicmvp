@@ -181,6 +181,11 @@ export interface CityStats {
   active: number;        // lastActiveSec < 300s
   superfans: number;
   center: [number, number];
+  /** Desvio padrão geográfico em km (espalhamento real da cidade).
+   *  Consumido pelos layers de quota pra dimensionar o spread dos
+   *  dots gerados — SP (sigmaKm=14) espalha muito mais que Sorocaba
+   *  (sigmaKm=5). Vem do CITY_SEEDS, copiado aqui pra evitar lookup. */
+  sigmaKm: number;
 }
 
 export function aggregateByCity(users: MockUser[]): CityStats[] {
@@ -197,6 +202,7 @@ export function aggregateByCity(users: MockUser[]): CityStats[] {
         active: 0,
         superfans: 0,
         center: seed.center,
+        sigmaKm: seed.sigmaKm,
       };
       map.set(u.city, entry);
     }

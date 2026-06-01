@@ -196,12 +196,18 @@ function tierFor(active: number): CityTier {
   return 'xs';
 }
 
-/** Quotas por tier × range. XS é dinâmica e SÓ no range city. */
+/** Quotas por tier × range. XS é dinâmica e SÓ no range city.
+ *
+ *  city range tem quotas BOMBADAS per feedback "no zoom máximo (12),
+ *  em São Paulo, não está aparecendo nenhum ponto verde. Deveria
+ *  aparecer muitos pontos, como estava antes". A escala antiga
+ *  (32 xl / 20 l / 12 m / 6 s) era conservadora demais — voltamos
+ *  pra densidade pré-refactor mas mantendo controle por tier. */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 8, region: 16, city: 32 },
-  l:  { state: 4, region: 10, city: 20 },
-  m:  { state: 2, region: 5,  city: 12 },
-  s:  { state: 0, region: 2,  city: 6  },
+  xl: { state: 8, region: 18, city: 70 },
+  l:  { state: 4, region: 12, city: 40 },
+  m:  { state: 2, region: 6,  city: 20 },
+  s:  { state: 0, region: 2,  city: 10 },
 };
 
 /** Tamanho do dot (raio em px) por range — pin maior em zoom out
@@ -213,11 +219,19 @@ const SIZE_BY_RANGE: Record<QuotaRange, number> = {
   city:   1,    // 2px
 };
 
-/** Range zooms — minzoom/maxzoom com 0.3 de overlap pra crossfade. */
+/** Range zooms — minzoom/maxzoom com 0.3 de overlap pra crossfade.
+ *
+ *  city.max = 13 (não 12) é DELIBERADO: Mapbox usa maxzoom como
+ *  EXCLUSIVO (renderiza pra zoom < maxzoom). O mapa real é cappado
+ *  em 12 (Globe.tsx), então o usuário nunca passa daí; setar 13
+ *  garante que em zoom 12.0 exato o layer continua renderizando.
+ *  Bug anterior: `maxzoom: 12` + `map.maxZoom: 12` → dots somem no
+ *  pinch máximo (reportado em SP zoom 12). Mesma técnica usada
+ *  pelo LAYER_MARINGA_24 que estava com a mesma armadilha. */
 const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
-  state:  { min: 4.7, peakStart: 5,  peakEnd: 7,  max: 7.3 },
-  region: { min: 6.7, peakStart: 7,  peakEnd: 9,  max: 9.3 },
-  city:   { min: 8.7, peakStart: 9,  peakEnd: 12, max: 12  },
+  state:  { min: 4.7, peakStart: 5,    peakEnd: 7,    max: 7.3 },
+  region: { min: 6.7, peakStart: 7,    peakEnd: 9,    max: 9.3 },
+  city:   { min: 8.7, peakStart: 9,    peakEnd: 12.5, max: 13  },
 };
 
 /** Quota efetiva pra (city, range). XS tem regra dinâmica especial. */
@@ -247,15 +261,26 @@ function strHash(s: string): number {
  *  Reutiliza a mesma técnica do generateMaringaPoints (Box-Muller +
  *  mulberry32 inline). Determinístico — mesma seed = mesmas posições. */
 function generateCityQuotaPoints(
-  city: { city: string; center: [number, number] },
+  city: { city: string; center: [number, number]; sigmaKm: number },
   range: QuotaRange,
   count: number,
 ): GeoJSON.Feature[] {
   if (count <= 0) return [];
   const [cx, cy] = city.center;
-  // sigma proporcional ao range — pin maior precisa de spread maior
-  // pra não amontoar todos no centro.
-  const sigmaKm = range === 'state' ? 6 : range === 'region' ? 4.5 : 3.5;
+  /* Sigma proporcional ao porte REAL da cidade × factor por range.
+   * Antes usávamos sigma fixo (state 6 / region 4.5 / city 3.5km),
+   * que ignorava o tamanho real — SP (sigmaKm=14) acabava com 70
+   * dots empilhados num raio de 3.5km do centro (irreconhecível
+   * como "São Paulo"). Agora multiplicamos o sigmaKm da cidade
+   * por um factor que respeita a hierarquia visual:
+   *   - state  × 0.85 → spread quase total (vê o "halo" da cidade)
+   *   - region × 0.55 → metade do raio (centro denso + borda)
+   *   - city   × 0.40 → mais concentrado mas ainda proporcional
+   * SP fica com ~5.6km no city range (vs 3.5 antes) — dots visíveis
+   * em ~10km do viewport zoom 12. Sorocaba (sigmaKm=5) fica com
+   * 2km, mais discreto. */
+  const factor = range === 'state' ? 0.85 : range === 'region' ? 0.55 : 0.40;
+  const sigmaKm = Math.max(2, city.sigmaKm * factor);
   const cosLat = Math.cos((cy * Math.PI) / 180);
   const sigmaLat = sigmaKm / 111;
   const sigmaLng = sigmaKm / (111 * Math.max(cosLat, 0.05));
@@ -299,7 +324,7 @@ function generateCityQuotaPoints(
  *  numa única FeatureCollection. Os layers depois filtram por
  *  `properties.range`. */
 function generateAllQuotaPoints(
-  cities: Array<{ city: string; active: number; center: [number, number] }>,
+  cities: Array<{ city: string; active: number; center: [number, number]; sigmaKm: number }>,
 ): GeoJSON.Feature[] {
   const out: GeoJSON.Feature[] = [];
   const ranges: QuotaRange[] = ['state', 'region', 'city'];
