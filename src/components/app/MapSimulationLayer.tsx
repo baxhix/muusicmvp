@@ -219,7 +219,7 @@ function tierFor(active: number): CityTier {
  *  comunica volume nesses zooms é o pulse + heatmap. Os dots aqui
  *  são "tempero". */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 6, region: 32, cityMid: 32, cityPeak: 280 },
+  xl: { state: 6, region: 32, cityMid: 32, cityPeak: 840 },  // 280 × 3 per feedback "Triplique em SP no zoom 12"
   l:  { state: 4, region: 24, cityMid: 24, cityPeak: 180 },
   m:  { state: 3, region: 14, cityMid: 16, cityPeak: 100 },
   s:  { state: 0, region:  6, cityMid:  8, cityPeak:  50 },
