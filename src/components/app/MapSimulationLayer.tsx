@@ -1255,7 +1255,9 @@ export default function MapSimulationLayer() {
       const revealTimers: number[] = [];
       const activeMarkers: mapboxgl.Marker[] = [];
 
-      const REVEAL_MIN_ZOOM        = 10;
+      /* REVEAL_MIN_ZOOM removido per feedback "Os avatares que surgem
+       * simulando enviar mensagem devem aparecer em qualquer tipo de
+       * zoom". Antes era 10, gating a feature pra zoom de cidade só. */
       /* BATCH 2 + MAX 3 per feedback "Reduza pela metade a
        * quantidade de miniaturas dos usuário que vão aparecendo
        * na tela" (eram 3 e 6 respectivamente). */
@@ -1624,10 +1626,9 @@ export default function MapSimulationLayer() {
 
       const tick = () => {
         try {
-          if (map.getZoom() < REVEAL_MIN_ZOOM) {
-            revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
-            return;
-          }
+          /* Gate de zoom removido — avatares spawn em qualquer
+           * zoom (per feedback). A filtragem por viewport-in-pixels
+           * abaixo já garante que só nascem dentro da área visível. */
           /* Filtra candidatos pela viewport em PIXELS com padding
            * de 80px nas bordas. Antes usávamos só `bounds.contains`
            * geográfico — funcionava, mas avatares podiam nascer
