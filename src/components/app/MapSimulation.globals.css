@@ -350,13 +350,12 @@
   /* willChange força layer próprio na GPU pra animação ficar
    * suave sem disputar com outros elementos. */
   will-change: transform, opacity;
-  /* Ciclo TOTAL de 8s — pulse visível só nos primeiros ~3s (38%),
-   * 5s de idle. Combinado com phase offsets variados por cidade
-   * (polePhase no JS), só ~38% das cidades estão "pulsando" em
-   * qualquer momento — sensação de cidades acordando/dormindo
-   * alternadamente. Per feedback "intercale pra a página não ficar
-   * carregada ... algo bem natural". */
-  animation: mapsimPulseRing 8s ease-out infinite;
+  /* Ciclo TOTAL de 14s — pulse visível ~32% (4.5s), idle ~68% (9.5s).
+   * Per feedback "Nem todas as ondas pulsantes devem ser mostradas
+   * simultaneamente. Podem ocultar e aparecer depois de um tempo".
+   * Ciclo mais longo + idle maior = cidades inteiras "desligadas"
+   * por períodos de 9s, criando intervalos entre suas pulses. */
+  animation: mapsimPulseRing 14s ease-out infinite;
 }
 .mapsim-pulse-ring-1 { animation-delay: 0s; }
 .mapsim-pulse-ring-2 { animation-delay: 1.17s; }
@@ -520,19 +519,18 @@
 }
 
 @keyframes mapsimPulseRing {
-  /* Ciclo de 8s. Pulse VISÍVEL nos primeiros 58% (~4.6s), idle nos
-   * 3.4s restantes. Aumentamos a janela visível (era 38%) pra que
-   * cada cidade pulse com mais frequência — combinado com phases
-   * diferentes (idx × 1.31 % 8), mais cidades estão "acordadas" a
-   * qualquer momento sem deixar de intercalar. */
+  /* Ciclo de 14s. Pulse VISÍVEL nos primeiros 32% (~4.5s), idle nos
+   * 9.5s restantes. Janela idle longa garante que cidades "dormem"
+   * por períodos perceptíveis — combinado com phases distribuídos,
+   * só ~32% das cidades pulsando a qualquer momento. */
   0% {
     transform: scale(0.25);
     opacity: 0;
   }
-  4% {
+  3% {
     opacity: 0.85;
   }
-  58% {
+  32% {
     transform: scale(1);
     opacity: 0;
   }

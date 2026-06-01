@@ -71,6 +71,40 @@ function isMobileViewport(): boolean {
  *  GPU alto na tela pequena. Mantém top 12 (os 5 xl + 7 m). */
 const MAX_PULSES_MOBILE = 12;
 
+/** Hash FNV-1a leve pra gerar números determinísticos por cidade
+ *  (mesmo nome → mesma quantidade simulada de ouvintes). */
+function cityHash(s: string): number {
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+/** Listeners exibidos no badge "X ouvintes" do hover do pulse.
+ *
+ *  Top 5 cidades: usa `active` real (proporcional ao dataset 10k →
+ *  SP terá ~2400 ativos). Cidades fora do top 5: o dataset tem 0-1
+ *  user real, então o badge mostraria "1 ouvinte" — feio. Per
+ *  feedback "Simule com números randômicos na casa de centenas".
+ *
+ *  Geramos um número determinístico (hash do nome) entre 120 e 880,
+ *  com leve correlação ao monthlyListeners do CSV pra cidades
+ *  maiores mostrarem números um pouco maiores. */
+function simulatedListeners(city: CityStats, rank: number): number {
+  if (rank <= 5) return city.active;
+  const seed = cityHash(city.city);
+  const base = 120 + (seed % 760);  // 120 - 879
+  // Bias suave pelo monthlyListeners: cidades com ml ~400-500 (rank
+  // 6-15) somam +50, cidades ml < 280 (rank 30+) subtraem -30.
+  const bias =
+    city.monthlyListeners > 350 ? 50 :
+    city.monthlyListeners < 280 ? -30 :
+    0;
+  return Math.max(80, base + bias);
+}
+
 export default function MapPulses() {
   const { flags } = useBrainstormFlags();
   const enabled = flags.mapSimulation;
@@ -174,6 +208,9 @@ export default function MapPulses() {
       const fmt = (n: number) => n.toLocaleString('pt-BR');
 
       finalList.forEach(({ city, size }, idx) => {
+        // Listeners exibidos no badge — top 5 usa active real, demais
+        // usam número simulado na casa de centenas (per feedback).
+        const displayCount = simulatedListeners(city, idx + 1);
         /* Estrutura final:
          *   <div .mapsim-pulse>
          *     <span .mapsim-pulse-ring />  (×3, com delays diferentes)
@@ -191,17 +228,18 @@ export default function MapPulses() {
         // Não usamos aria-hidden mais — o badge tem info útil.
 
         /* Phase offset POR POLO via animation-delay negativo, com
-         * ciclo TOTAL de 8s (3 ondas em ~3s + 5s de pausa idle).
-         * Per feedback "Intercale ... vamos pensar em algo bem
-         * natural" — só ~37% das cidades estão "no ciclo ativo" a
-         * qualquer momento, criando a sensação de cidades pulsando
-         * em momentos diferentes.
+         * ciclo TOTAL de 14s (3 ondas em ~3s + ~10s de pausa idle).
+         * Per feedback "Nem todas as ondas pulsantes devem ser
+         * mostradas simultaneamente. Podem ocultar e aparecer depois
+         * de um tempo".
          *
-         * Multiplicamos idx por 1.31 (golden-ratio-ish, não múltiplo
-         * dos delays internos 0/1.0/2.0) e modulo 8 pra distribuir
-         * as 50 fases uniformemente. Cada um dos 3 anéis ganha
-         * esse phase + delay interno pro stagger intra-cidade. */
-        const polePhase = -((idx * 1.31) % 8);
+         * Multiplicamos idx por 2.29 (golden-ratio-ish em base 14)
+         * e modulo 14 pra distribuir as 50 fases uniformemente no
+         * ciclo. Resultado: só ~32% das cidades estão "no ciclo
+         * ativo" a qualquer momento; o restante está dormindo.
+         * Delay interno entre os 3 anéis: 0/1.0/2.0s pro stagger
+         * intra-cidade. */
+        const polePhase = -((idx * 2.29) % 14);
         for (let i = 0; i < 3; i += 1) {
           const ring = document.createElement('span');
           ring.className = `mapsim-pulse-ring mapsim-pulse-ring-${i + 1}`;
@@ -217,7 +255,7 @@ export default function MapPulses() {
          * pointer-events: none pra não bloquear pan do mapa). */
         const hit = document.createElement('span');
         hit.className = 'mapsim-pulse-hit';
-        hit.setAttribute('aria-label', `${city.city}: ${fmt(city.active)} ouvintes`);
+        hit.setAttribute('aria-label', `${city.city}: ${fmt(displayCount)} ouvintes`);
         el.appendChild(hit);
 
         /* Badge — pill com cidade + contagem de ouvintes. */
@@ -228,7 +266,7 @@ export default function MapPulses() {
         cityName.textContent = city.city;
         const cityCount = document.createElement('span');
         cityCount.className = 'mapsim-pulse-badge-count';
-        cityCount.textContent = `${fmt(city.active)} ouvintes`;
+        cityCount.textContent = `${fmt(displayCount)} ouvintes`;
         badge.appendChild(cityName);
         badge.appendChild(cityCount);
         el.appendChild(badge);

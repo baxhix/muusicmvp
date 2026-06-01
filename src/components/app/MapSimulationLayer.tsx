@@ -1930,6 +1930,33 @@ export default function MapSimulationLayer() {
             };
           };
 
+          /* Anti-overlap: rejeita spawn que cairia a < MIN_DISTANCE_PX
+           * de qualquer marker ativo. Per feedback "Eles não devem
+           * se sobrepor". MIN é grande o suficiente pra que avatar
+           * (~38px) + nome + balão de direct não invadam o anterior. */
+          const MIN_DISTANCE_PX = 140;
+          const tryPick = (): GeoJSON.Feature | null => {
+            for (let attempt = 0; attempt < 8; attempt += 1) {
+              const f = pickFeature();
+              if (!f) return null;
+              if (f.geometry.type !== 'Point') continue;
+              const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+              const proj = map.project([lng, lat]);
+              // Verifica distância pra cada marker ativo (em px)
+              let tooClose = false;
+              for (const m of activeMarkers) {
+                const mPos = m.getLngLat();
+                const mProj = map.project([mPos.lng, mPos.lat]);
+                if (Math.hypot(proj.x - mProj.x, proj.y - mProj.y) < MIN_DISTANCE_PX) {
+                  tooClose = true;
+                  break;
+                }
+              }
+              if (!tooClose) return f;
+            }
+            return null;  // 8 tentativas falharam — skip esse spawn
+          };
+
           /* Stagger: cada um dos 3 spawns com delay random entre
            * 1.0-2.2s × posição. Resultado: 1º imediato, 2º entre
            * 1-2.2s, 3º entre 2-4.4s. */
@@ -1939,7 +1966,7 @@ export default function MapSimulationLayer() {
                 ? 0
                 : i * (REVEAL_STAGGER_MIN_MS + Math.random() * (REVEAL_STAGGER_MAX_MS - REVEAL_STAGGER_MIN_MS));
             const t = window.setTimeout(() => {
-              const f = pickFeature();
+              const f = tryPick();
               if (f) spawnReveal(f);
             }, delay);
             revealTimers.push(t);
