@@ -117,12 +117,12 @@ export default function Globe() {
       center: initialCenter,
       bearing: initialBearing,
       pitch: initialPitch,
-      // Limites de zoom: máximo 12.0 (per feedback "o zoom máximo
-       // tanto no desktop e mobile deve ser 12.0"). Antes 14 levava
-       // até vista de rua individual — 12 já entrega o zoom de
-       // bairro/cluster sem perder contexto.
+      // Limites de zoom: 2.5 — 12.0 (per feedback "os limites do zoom
+      // devem ser 2.5 até o 12"). Antes era 1.5 — 12; o cap inferior
+      // mais alto evita que o globo afaste demais e mostre buracos
+      // sobre os pólos / outros continentes em vez do Brasil.
       maxZoom: 12,
-      minZoom: 1.5,
+      minZoom: 2.5,
       interactive: true,
       attributionControl: false,
       // ── Mobile-tuned perf knobs ──
