@@ -1,20 +1,29 @@
 /* ============================================================
- * MAP SIMULATION — Gerador determinístico de 7.000 mock users.
+ * MAP SIMULATION — Gerador determinístico de 10.000 mock users.
  *
- * Roda client-side uma vez, memoizado pelo hook. Determinístico
- * (seed fixa) — re-runs produzem o mesmo dataset, facilitando QA.
+ * Per feedback (com CSV distribuicao.csv anexado): "iremos simular
+ * 10k de usuários online, distribuídos proporcionalmente pelas
+ * cidades de acordo com o arquivo em anexo".
  *
- * Sample weighted por polo urbano (cities.ts), com perturbação
- * gaussiana ao redor do centro pra criar aglomerados ORGÂNICOS
- * (sem grid). σ ajustado por cidade reflete densidade urbana
- * (capital: σ menor, sertão: σ maior).
+ * Distribuição: cada cidade recebe
+ *   `round(TOTAL_USERS × monthlyListeners / SUM_MONTHLY_LISTENERS)`
+ * usuários, com resíduo redistribuído pelo top-list pra fechar
+ * exatamente em TOTAL_USERS.
  *
- * Sem persistência. Sem chamada de socket. Sem analytics.
- * Cada mock user carrega `__simulated: true` pra que consumidores
- * downstream possam filtrar / pular acidentes.
+ * Sample direto por cidade (não mais por região como antes).
+ * Pra cada user, gaussiana ao redor do centro da cidade × sigmaKm.
+ *
+ * Determinístico (seed fixa) — re-runs produzem o mesmo dataset.
+ * Cada mock user carrega `__simulated: true`.
  * ============================================================ */
 
-import { CITY_SEEDS, REGION_TOTALS, type Region } from './cities';
+import {
+  CITY_SEEDS,
+  SUM_MONTHLY_LISTENERS,
+  TOTAL_USERS,
+  type CitySeed,
+  type Region,
+} from './cities';
 
 export type Tier = 'superfan' | 'top100' | 'top1000' | 'fan';
 
@@ -94,20 +103,26 @@ function sampleLastActive(rng: () => number): number {
   return 3600 + Math.floor(rng() * (86400 - 3600));             // 1h-24h
 }
 
-/* ── Sample weighted city dentro da região ──────────────── */
-function sampleCityForRegion(
-  region: Region,
-  rng: () => number,
-): typeof CITY_SEEDS[number] {
-  const candidates = CITY_SEEDS.filter((c) => c.region === region);
-  const totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0);
-  const r = rng() * totalWeight;
-  let acc = 0;
-  for (const c of candidates) {
-    acc += c.weight;
-    if (r < acc) return c;
+/* ── Quota proporcional de users por cidade ──────────────
+ * Pré-calcula quantos users cada cidade recebe baseado em
+ * monthlyListeners (do CSV) e TOTAL_USERS (10000). Resíduo da
+ * rounding (até 50 users a distribuir) vai pras cidades com
+ * maior fração decimal, garantindo soma exata = TOTAL_USERS. */
+function computeUsersPerCity(): Array<{ city: CitySeed; count: number }> {
+  type Entry = { city: CitySeed; raw: number; floor: number; frac: number };
+  const entries: Entry[] = CITY_SEEDS.map((city) => {
+    const raw = (TOTAL_USERS * city.monthlyListeners) / SUM_MONTHLY_LISTENERS;
+    const floor = Math.floor(raw);
+    return { city, raw, floor, frac: raw - floor };
+  });
+  const allocated = entries.reduce((acc, e) => acc + e.floor, 0);
+  const remainder = TOTAL_USERS - allocated;
+  // Distribui o resíduo pras cidades com maior frac (Largest Remainder)
+  const sortedByFrac = [...entries].sort((a, b) => b.frac - a.frac);
+  for (let i = 0; i < remainder; i += 1) {
+    sortedByFrac[i].floor += 1;
   }
-  return candidates[candidates.length - 1];
+  return entries.map((e) => ({ city: e.city, count: e.floor }));
 }
 
 /* ── Pool de nomes pra display ────────────────────────────
@@ -146,9 +161,11 @@ export function generateMockUsers(opts: GeneratorOptions = {}): MockUser[] {
   const users: MockUser[] = [];
   let uid = 0;
 
-  (Object.entries(REGION_TOTALS) as [Region, number][]).forEach(([region, total]) => {
-    for (let i = 0; i < total; i += 1) {
-      const city = sampleCityForRegion(region, rng);
+  /* Distribuição proporcional aos monthlyListeners do CSV.
+   * Pre-computado pra exatamente 10000 users com Largest Remainder. */
+  const quota = computeUsersPerCity();
+  for (const { city, count } of quota) {
+    for (let i = 0; i < count; i += 1) {
       const dLat = gaussian(rng) * kmToLat(city.sigmaKm);
       const dLng = gaussian(rng) * kmToLng(city.sigmaKm, city.center[1]);
       uid += 1;
@@ -161,11 +178,11 @@ export function generateMockUsers(opts: GeneratorOptions = {}): MockUser[] {
         tier: sampleTier(rng),
         lastActiveSec: sampleLastActive(rng),
         city: city.name,
-        region,
+        region: city.region,
         __simulated: true,
       });
     }
-  });
+  }
 
   return users;
 }

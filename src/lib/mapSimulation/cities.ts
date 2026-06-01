@@ -1,88 +1,151 @@
 /* ============================================================
- * MAP SIMULATION — Catálogo de polos urbanos brasileiros.
+ * MAP SIMULATION — Catálogo de polos urbanos da artista.
+ *
+ * Per feedback "iremos simular 10k de usuários online, distribuídos
+ * proporcionalmente pelas cidades de acordo com o arquivo em anexo"
+ * (distribuicao.csv), as 50 cidades aqui vêm do top de ouvintes
+ * mensais reais. A coluna `monthlyListeners` é o peso bruto usado
+ * pra distribuir o TOTAL_USERS (10k) proporcionalmente.
+ *
+ * Observação importante: os top-5 (SP, BH, Curitiba, Brasília,
+ * Campinas) somam ~5 milhões e dominam massivamente sobre os 45
+ * restantes (~12k somados). Distribuição literal proporcional gera:
+ *   - SP    ≈ 4106 users  (41% do total)
+ *   - BH    ≈ 1648 users
+ *   - Curitiba ≈ 1448
+ *   - Brasília ≈ 1395
+ *   - Campinas ≈ 1378
+ *   - RJ    ≈ 1 user      (508 ÷ 5,05M × 10k)
+ *   - resto ≈ 0-1 user cada
+ *
+ * Isso reflete fielmente o desbalanço do dataset original. Tier
+ * `tierFor` continua determinando o que aparece visualmente — só
+ * top-5 cairão em XL/L; resto em XS (presença simbólica).
  *
  * Cada cidade tem:
  *   - center [lng, lat] real
- *   - weight: proporção de usuários do total da REGIÃO que cai
- *     nesse polo (somatório por região = 1.0)
+ *   - monthlyListeners: peso pra distribuição (do CSV)
  *   - sigmaKm: desvio padrão da gaussiana usada pra espalhar os
- *     usuários ao redor do centro. Capitais densas: σ pequeno
- *     (8-12km); cidades médias: 5-8km; sertão/interior: σ maior
- *     (40-80km) pra ralear naturalmente.
- *
- * Distribuição total (per product spec — bumped 3000 → 7000):
- *   Sudeste:      27% → 1890 users
- *   Centro-Oeste: 32% → 2240 users
- *   Sul:          22% → 1540 users
- *   Norte:        19% → 1330 users
+ *     usuários ao redor do centro
+ *   - region: agrupamento geográfico (sudeste/sul/norte/nordeste/
+ *     centro-oeste/internacional)
+ *   - country: BR / PT / PY / CL
  * ============================================================ */
 
-export type Region = 'sudeste' | 'centro-oeste' | 'sul' | 'norte';
+export type Region =
+  | 'sudeste'
+  | 'centro-oeste'
+  | 'sul'
+  | 'norte'
+  | 'nordeste'
+  | 'internacional';
+
+export type Country = 'BR' | 'PT' | 'PY' | 'CL';
 
 export interface CitySeed {
   name: string;
   center: [number, number]; // [lng, lat]
-  weight: number;            // 0..1 within region
+  monthlyListeners: number;  // peso bruto do CSV
   sigmaKm: number;
   region: Region;
+  country: Country;
 }
 
 export const CITY_SEEDS: CitySeed[] = [
-  /* ── SUDESTE (27% — 810 usuários) ───────────────────── */
-  { name: 'São Paulo',          center: [-46.6333, -23.5505], weight: 0.43, sigmaKm: 14, region: 'sudeste' },
-  { name: 'Rio de Janeiro',     center: [-43.1729, -22.9068], weight: 0.22, sigmaKm: 12, region: 'sudeste' },
-  { name: 'Belo Horizonte',     center: [-43.9542, -19.9167], weight: 0.11, sigmaKm: 10, region: 'sudeste' },
-  { name: 'Campinas',           center: [-47.0608, -22.9099], weight: 0.06, sigmaKm: 7,  region: 'sudeste' },
-  { name: 'Vitória',            center: [-40.3097, -20.3155], weight: 0.04, sigmaKm: 6,  region: 'sudeste' },
-  { name: 'Sorocaba',           center: [-47.4585, -23.5015], weight: 0.04, sigmaKm: 5,  region: 'sudeste' },
-  { name: 'Santos',             center: [-46.3322, -23.9608], weight: 0.03, sigmaKm: 5,  region: 'sudeste' },
-  { name: 'Niterói',            center: [-43.0939, -22.8833], weight: 0.03, sigmaKm: 5,  region: 'sudeste' },
-  { name: 'Ribeirão Preto',     center: [-47.8103, -21.1775], weight: 0.02, sigmaKm: 5,  region: 'sudeste' },
-  { name: 'Juiz de Fora',       center: [-43.3503, -21.7642], weight: 0.02, sigmaKm: 5,  region: 'sudeste' },
+  // ── TOP 5 (mega-polos) ────────────────────────────────────
+  { name: 'São Paulo',              center: [-46.6333, -23.5505], monthlyListeners: 2074181, sigmaKm: 14, region: 'sudeste',      country: 'BR' },
+  { name: 'Belo Horizonte',         center: [-43.9542, -19.9167], monthlyListeners:  832561, sigmaKm: 11, region: 'sudeste',      country: 'BR' },
+  { name: 'Curitiba',               center: [-49.2733, -25.4284], monthlyListeners:  731427, sigmaKm: 11, region: 'sul',          country: 'BR' },
+  { name: 'Brasília',               center: [-47.9292, -15.7801], monthlyListeners:  704891, sigmaKm: 11, region: 'centro-oeste', country: 'BR' },
+  { name: 'Campinas',               center: [-47.0608, -22.9099], monthlyListeners:  696250, sigmaKm:  9, region: 'sudeste',      country: 'BR' },
 
-  /* ── CENTRO-OESTE (32% — 960 usuários) ───────────────
-   * Distribuição "anormal" vs população real — concentração
-   * intencional pra testar densidade na faixa Brasília-Goiás-MS.
-   */
-  { name: 'Brasília',           center: [-47.9292, -15.7801], weight: 0.40, sigmaKm: 11, region: 'centro-oeste' },
-  { name: 'Goiânia',            center: [-49.2532, -16.6864], weight: 0.23, sigmaKm: 9,  region: 'centro-oeste' },
-  { name: 'Campo Grande',       center: [-54.6464, -20.4486], weight: 0.13, sigmaKm: 8,  region: 'centro-oeste' },
-  { name: 'Cuiabá',             center: [-56.0974, -15.6014], weight: 0.11, sigmaKm: 8,  region: 'centro-oeste' },
-  { name: 'Anápolis',           center: [-48.9525, -16.3281], weight: 0.05, sigmaKm: 6,  region: 'centro-oeste' },
-  { name: 'Rondonópolis',       center: [-54.6356, -16.4708], weight: 0.03, sigmaKm: 5,  region: 'centro-oeste' },
-  { name: 'Várzea Grande',      center: [-56.1322, -15.6486], weight: 0.03, sigmaKm: 5,  region: 'centro-oeste' },
-  { name: 'Dourados',           center: [-54.8059, -22.2236], weight: 0.02, sigmaKm: 4,  region: 'centro-oeste' },
+  // ── 6-15 ──────────────────────────────────────────────────
+  { name: 'Rio de Janeiro',         center: [-43.1729, -22.9068], monthlyListeners:     508, sigmaKm: 12, region: 'sudeste',      country: 'BR' },
+  { name: 'Porto Alegre',           center: [-51.2177, -30.0346], monthlyListeners:     464, sigmaKm: 11, region: 'sul',          country: 'BR' },
+  { name: 'Fortaleza',              center: [-38.5267,  -3.7172], monthlyListeners:     434, sigmaKm: 10, region: 'nordeste',     country: 'BR' },
+  { name: 'Salvador',               center: [-38.5014, -12.9714], monthlyListeners:     410, sigmaKm: 10, region: 'nordeste',     country: 'BR' },
+  { name: 'Goiânia',                center: [-49.2532, -16.6864], monthlyListeners:     388, sigmaKm:  9, region: 'centro-oeste', country: 'BR' },
+  { name: 'Manaus',                 center: [-60.0217,  -3.1190], monthlyListeners:     372, sigmaKm: 10, region: 'norte',        country: 'BR' },
+  { name: 'Florianópolis',          center: [-48.5482, -27.5954], monthlyListeners:     360, sigmaKm:  7, region: 'sul',          country: 'BR' },
+  { name: 'Recife',                 center: [-34.8770,  -8.0476], monthlyListeners:     350, sigmaKm:  9, region: 'nordeste',     country: 'BR' },
+  { name: 'Belém',                  center: [-48.5022,  -1.4554], monthlyListeners:     340, sigmaKm:  9, region: 'norte',        country: 'BR' },
+  { name: 'Campo Grande',           center: [-54.6464, -20.4486], monthlyListeners:     331, sigmaKm:  8, region: 'centro-oeste', country: 'BR' },
 
-  /* ── SUL (22% — 660 usuários) ────────────────────────── */
-  { name: 'Porto Alegre',       center: [-51.2177, -30.0346], weight: 0.27, sigmaKm: 11, region: 'sul' },
-  { name: 'Curitiba',           center: [-49.2733, -25.4284], weight: 0.26, sigmaKm: 11, region: 'sul' },
-  { name: 'Florianópolis',      center: [-48.5482, -27.5954], weight: 0.13, sigmaKm: 8,  region: 'sul' },
-  { name: 'Caxias do Sul',      center: [-51.1794, -29.1678], weight: 0.07, sigmaKm: 5,  region: 'sul' },
-  { name: 'Londrina',           center: [-51.1626, -23.3045], weight: 0.07, sigmaKm: 5,  region: 'sul' },
-  { name: 'Joinville',          center: [-48.8489, -26.3044], weight: 0.07, sigmaKm: 5,  region: 'sul' },
-  { name: 'Maringá',            center: [-51.9382, -23.4205], weight: 0.05, sigmaKm: 4,  region: 'sul' },
-  { name: 'Pelotas',            center: [-52.3372, -31.7654], weight: 0.04, sigmaKm: 4,  region: 'sul' },
-  { name: 'Blumenau',           center: [-49.0667, -26.9194], weight: 0.04, sigmaKm: 4,  region: 'sul' },
+  // ── 16-30 ─────────────────────────────────────────────────
+  { name: 'Joinville',              center: [-48.8489, -26.3044], monthlyListeners:     322, sigmaKm:  6, region: 'sul',          country: 'BR' },
+  { name: 'Cuiabá',                 center: [-56.0974, -15.6014], monthlyListeners:     316, sigmaKm:  8, region: 'centro-oeste', country: 'BR' },
+  { name: 'Lisboa',                 center: [ -9.1393,  38.7223], monthlyListeners:     311, sigmaKm:  7, region: 'internacional', country: 'PT' },
+  { name: 'Uberlândia',             center: [-48.2772, -18.9186], monthlyListeners:     306, sigmaKm:  6, region: 'sudeste',      country: 'BR' },
+  { name: 'São Luís',               center: [-44.3068,  -2.5391], monthlyListeners:     302, sigmaKm:  7, region: 'nordeste',     country: 'BR' },
+  { name: 'Ribeirão Preto',         center: [-47.8103, -21.1775], monthlyListeners:     297, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'Bauru',                  center: [-49.0606, -22.3147], monthlyListeners:     293, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'São José dos Campos',    center: [-45.8841, -23.2237], monthlyListeners:     290, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'Natal',                  center: [-35.2090,  -5.7945], monthlyListeners:     287, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
+  { name: 'Maringá',                center: [-51.9382, -23.4205], monthlyListeners:     284, sigmaKm:  5, region: 'sul',          country: 'BR' },
+  { name: 'Guarulhos',              center: [-46.5333, -23.4628], monthlyListeners:     282, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'Sorocaba',               center: [-47.4585, -23.5015], monthlyListeners:     280, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'João Pessoa',            center: [-34.8631,  -7.1195], monthlyListeners:     278, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
+  { name: 'Vitória',                center: [-40.3097, -20.3155], monthlyListeners:     275, sigmaKm:  6, region: 'sudeste',      country: 'BR' },
+  { name: 'Maceió',                 center: [-35.7350,  -9.6498], monthlyListeners:     273, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
 
-  /* ── NORTE (19% — 570 usuários) ──────────────────────
-   * Norte é vasto e ralo — σ maiores em algumas pra dar a
-   * sensação de "espalhado pela floresta" sem grids artificiais.
-   */
-  { name: 'Manaus',             center: [-60.0212, -3.1190],  weight: 0.39, sigmaKm: 13, region: 'norte' },
-  { name: 'Belém',              center: [-48.5039, -1.4554],  weight: 0.31, sigmaKm: 11, region: 'norte' },
-  { name: 'Porto Velho',        center: [-63.9039, -8.7619],  weight: 0.09, sigmaKm: 8,  region: 'norte' },
-  { name: 'Macapá',             center: [-51.0664, 0.0356],   weight: 0.07, sigmaKm: 7,  region: 'norte' },
-  { name: 'Rio Branco',         center: [-67.8243, -9.9747],  weight: 0.05, sigmaKm: 6,  region: 'norte' },
-  { name: 'Boa Vista',          center: [-60.6753, 2.8235],   weight: 0.05, sigmaKm: 7,  region: 'norte' },
-  { name: 'Palmas',             center: [-48.3603, -10.2491], weight: 0.04, sigmaKm: 6,  region: 'norte' },
+  // ── 31-50 ─────────────────────────────────────────────────
+  { name: 'Londrina',               center: [-51.1626, -23.3045], monthlyListeners:     272, sigmaKm:  5, region: 'sul',          country: 'BR' },
+  { name: 'Teresina',               center: [-42.8042,  -5.0892], monthlyListeners:     269, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
+  { name: 'Santo André',            center: [-46.5383, -23.6633], monthlyListeners:     268, sigmaKm:  4, region: 'sudeste',      country: 'BR' },
+  { name: 'Blumenau',               center: [-49.0667, -26.9194], monthlyListeners:     266, sigmaKm:  4, region: 'sul',          country: 'BR' },
+  { name: 'Osasco',                 center: [-46.7917, -23.5325], monthlyListeners:     265, sigmaKm:  4, region: 'sudeste',      country: 'BR' },
+  { name: 'Serra',                  center: [-40.3072, -20.1216], monthlyListeners:     264, sigmaKm:  4, region: 'sudeste',      country: 'BR' },
+  { name: 'Santos',                 center: [-46.3322, -23.9608], monthlyListeners:     263, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'Ponta Grossa',           center: [-50.1626, -25.0950], monthlyListeners:     262, sigmaKm:  5, region: 'sul',          country: 'BR' },
+  { name: 'Aracaju',                center: [-37.0731, -10.9472], monthlyListeners:     260, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
+  { name: 'Porto',                  center: [ -8.6291,  41.1579], monthlyListeners:     259, sigmaKm:  6, region: 'internacional', country: 'PT' },
+  { name: 'Porto Velho',            center: [-63.9039,  -8.7619], monthlyListeners:     258, sigmaKm:  7, region: 'norte',        country: 'BR' },
+  { name: 'Palmas',                 center: [-48.3603, -10.2491], monthlyListeners:     257, sigmaKm:  6, region: 'norte',        country: 'BR' },
+  { name: 'Niterói',                center: [-43.0939, -22.8833], monthlyListeners:     254, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+  { name: 'Feira de Santana',       center: [-38.9663, -12.2664], monthlyListeners:     253, sigmaKm:  5, region: 'nordeste',     country: 'BR' },
+  { name: 'São Bernardo do Campo',  center: [-46.5650, -23.6914], monthlyListeners:     253, sigmaKm:  4, region: 'sudeste',      country: 'BR' },
+  { name: 'Caxias do Sul',          center: [-51.1794, -29.1678], monthlyListeners:     252, sigmaKm:  5, region: 'sul',          country: 'BR' },
+  { name: 'Asunción',               center: [-57.5759, -25.2637], monthlyListeners:     251, sigmaKm:  9, region: 'internacional', country: 'PY' },
+  { name: 'Itajaí',                 center: [-48.6614, -26.9070], monthlyListeners:     249, sigmaKm:  4, region: 'sul',          country: 'BR' },
+  { name: 'Santiago',               center: [-70.6483, -33.4569], monthlyListeners:     249, sigmaKm: 10, region: 'internacional', country: 'CL' },
+  { name: 'Juiz de Fora',           center: [-43.3503, -21.7642], monthlyListeners:     248, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
 ];
 
-/** Totais por região — locked-in per product spec. */
-export const REGION_TOTALS: Record<Region, number> = {
-  'sudeste':       1890,
-  'centro-oeste':  2240,
-  'sul':           1540,
-  'norte':         1330,
-};
+/** Total de usuários simulados — per feedback "simular 10k usuários online". */
+export const TOTAL_USERS = 10000;
 
-export const TOTAL_USERS = 7000;
+/** Soma dos ouvintes mensais — usada pra normalizar a distribuição
+ *  proporcional. Pre-calculada pra evitar recomputo. */
+export const SUM_MONTHLY_LISTENERS = CITY_SEEDS.reduce(
+  (acc, c) => acc + c.monthlyListeners,
+  0,
+);
+
+/** REGION_TOTALS mantido pra retrocompatibilidade — agora é derivado
+ *  da soma de monthlyListeners por região, escalado pro TOTAL_USERS.
+ *  Consumers que ainda dependem disso (legacy) continuam funcionando. */
+export const REGION_TOTALS: Record<Region, number> = (() => {
+  const byRegion: Record<Region, number> = {
+    'sudeste': 0,
+    'centro-oeste': 0,
+    'sul': 0,
+    'norte': 0,
+    'nordeste': 0,
+    'internacional': 0,
+  };
+  CITY_SEEDS.forEach((c) => {
+    byRegion[c.region] += c.monthlyListeners;
+  });
+  const totals: Record<Region, number> = {
+    'sudeste': 0,
+    'centro-oeste': 0,
+    'sul': 0,
+    'norte': 0,
+    'nordeste': 0,
+    'internacional': 0,
+  };
+  (Object.keys(byRegion) as Region[]).forEach((r) => {
+    totals[r] = Math.round((byRegion[r] / SUM_MONTHLY_LISTENERS) * TOTAL_USERS);
+  });
+  return totals;
+})();
