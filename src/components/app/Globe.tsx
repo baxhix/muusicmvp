@@ -117,8 +117,11 @@ export default function Globe() {
       center: initialCenter,
       bearing: initialBearing,
       pitch: initialPitch,
-      // Limites de zoom: máximo 14 = vista de ruas com labels (street level)
-      maxZoom: 14,
+      // Limites de zoom: máximo 12.0 (per feedback "o zoom máximo
+       // tanto no desktop e mobile deve ser 12.0"). Antes 14 levava
+       // até vista de rua individual — 12 já entrega o zoom de
+       // bairro/cluster sem perder contexto.
+      maxZoom: 12,
       minZoom: 1.5,
       interactive: true,
       attributionControl: false,
