@@ -1041,9 +1041,23 @@ export default function MapSimulationLayer() {
       if (!map.getLayer(LAYER_QUOTAS_CITYPEAK_GLOW)) {
         map.addLayer({
           id: LAYER_QUOTAS_CITYPEAK_GLOW,
+          /* Per feedback "No zoom 10.1 ao 10.7 remova a mancha verde
+           * ao redor dos pontos. Como existe uma transição, o blur
+           * fica com uma visão desagradável".
+           *
+           * Causa: o glow tem circle-blur 1.0 + radius 6 (12px) × 840
+           * dots. Mesmo com opacity baixa (0.02-0.10 em z 10.1-10.7),
+           * a soma alpha das 840 instâncias borradas vira uma mancha
+           * verde difusa em toda a área de SP durante a transição
+           * cityMid → cityPeak.
+           *
+           * Fix: minzoom 10.7 + opacity 0 até 10.7. O glow só entra
+           * quando o cityMid já está bem fading out (sigma 21km → 7.7km
+           * em curso) e os dots cityPeak começam a ser visualmente
+           * dominantes — aí o glow soma sem virar "mancha". */
           type: 'circle',
           source: SOURCE_QUOTAS,
-          minzoom: RANGE_ZOOMS.cityPeak.min,
+          minzoom: 10.7,
           maxzoom: RANGE_ZOOMS.cityPeak.max,
           filter: ['==', ['get', 'range'], 'cityPeak'],
           paint: {
@@ -1053,7 +1067,7 @@ export default function MapSimulationLayer() {
             'circle-blur': 1.0,         // borrado total → vira halo
             'circle-opacity': [
               'interpolate', ['linear'], ['zoom'],
-              RANGE_ZOOMS.cityPeak.min,       0,
+              10.7,                           0,
               RANGE_ZOOMS.cityPeak.peakStart, 0.22,
               RANGE_ZOOMS.cityPeak.peakEnd,   0.22,
               RANGE_ZOOMS.cityPeak.max,       0,
