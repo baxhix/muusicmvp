@@ -525,7 +525,7 @@ export default function MapSimulationLayer() {
           minzoom: 8,
           maxzoom: 10,
           paint: {
-            'circle-radius': 1,           // 2px diameter
+            'circle-radius': 2,           // 4px diameter
             'circle-color': '#3DDB74',
             'circle-stroke-width': 0,
             'circle-opacity': [
@@ -550,7 +550,7 @@ export default function MapSimulationLayer() {
           minzoom: 10,
           maxzoom: 12,
           paint: {
-            'circle-radius': 1,           // 2px diameter
+            'circle-radius': 2,           // 4px diameter
             'circle-color': '#3DDB74',
             'circle-stroke-width': 0,
             'circle-opacity': [
