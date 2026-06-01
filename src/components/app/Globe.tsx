@@ -120,15 +120,15 @@ export default function Globe() {
       // Limites de zoom:
       //   - maxZoom: 12.0 (zoom de bairro/cluster)
       //   - minZoom desktop: 2.5 — globo focado no Brasil com folga
-      //   - minZoom MOBILE: 1.5 — permite afastar mais pra ver o globo
-      //     inteiro/continentes. Per feedback "quero no mobile, em
-      //     zoom menor que 2.5, oculte qualquer elemento sobre o mapa.
-      //     A visualização de dados começa a partir do 2.5".
-      //     Quotas/pulses/heatmap ficam hidden em z<2.5 via gates de
-      //     min do próprio Mapbox (RANGE_ZOOMS.continent.min=2.5) +
-      //     MapPulses.applyZoomVisibility (regra explícita).
+      //   - minZoom MOBILE: 0.5 — permite pinch-out até o globo
+      //     ficar bem pequeno no centro da viewport, vendo o
+      //     planeta como esfera completa flutuando. Era 1.5 antes;
+      //     per feedback "Diminua o zoom ainda mais no mobile".
+      //     Quotas/pulses/heatmap ficam hidden em z<2.5 (gates de
+      //     minzoom + MapPulses.applyZoomVisibility), então o globo
+      //     fica nu no zoom out — só esfera Mapbox, sem overlays.
       maxZoom: 12,
-      minZoom: isMobileViewport ? 1.5 : 2.5,
+      minZoom: isMobileViewport ? 0.5 : 2.5,
       interactive: true,
       attributionControl: false,
       // ── Mobile-tuned perf knobs ──
