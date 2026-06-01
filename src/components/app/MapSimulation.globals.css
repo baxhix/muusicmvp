@@ -444,11 +444,17 @@
 .mapsim-pulse-badge {
   position: absolute;
   bottom: 26px;
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
+  /* Alinhamento à esquerda do polo per feedback "Nos badges de
+   * 'São Paulo 483 ouvintes' alinhe à esquerda". Antes era centrado
+   * (left: 50% / translateX(-50%)) — agora ancorado em left: 0 com
+   * pequeno offset positivo, e os labels internos alinhados pra
+   * margem esquerda do card. */
+  left: 0;
+  transform: translateX(-6px) translateY(4px);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  text-align: left;
   gap: 2px;
   padding: 7px 12px 8px;
   border-radius: 12px;
@@ -481,7 +487,8 @@
  * depender de hover no parent (que tem pointer-events: none). */
 .mapsim-pulse-hit:hover ~ .mapsim-pulse-badge {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  /* Ajustado pro novo anchor à esquerda (era translateX(-50%)). */
+  transform: translateX(-6px) translateY(0);
 }
 
 @keyframes mapsimPulseRing {

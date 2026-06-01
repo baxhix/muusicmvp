@@ -905,29 +905,17 @@ export default function MapSimulationLayer() {
       //     de índice — mistura de tamanhos cria textura visual
       //     natural. Fade-out no zoom 6+ pra ceder lugar pros dots
       //     reais do dataset.
-      if (!map.getLayer(LAYER_AMBIENT)) {
-        map.addLayer({
-          id: LAYER_AMBIENT,
-          type: 'circle',
-          source: SOURCE_AMBIENT,
-          maxzoom: 7,
-          paint: {
-            'circle-radius': ['get', 'size'] as unknown as number,
-            'circle-color': '#3DDB74',
-            'circle-stroke-width': 0,
-            /* Hidden em zoom < 5 per feedback "Zoom < 5: não
-             * mostra pins de 1px". Entra a partir do zoom 5. */
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              3,   0,
-              4.5, 0,
-              5,   0.50,
-              6,   0.35,
-              7,   0,
-            ],
-          },
-        });
-      }
+      /* LAYER_AMBIENT REMOVIDO per feedback "Remova os pontos que não
+       * fazem parte do experimento de 7.000 usuários". Esses 77 dots
+       * eram sintéticos em grid uniforme pelo Brasil (gerados via
+       * generateAmbientPoints), sem vínculo com cidade real. O range
+       * `continent` (z 3.3-5.4, raio 700km) agora cobre a função de
+       * "vida no zoom afastado", mas concentrado em torno dos núcleos
+       * de cidades reais.
+       *
+       * SOURCE_AMBIENT ainda é criado acima — preservamos pra evitar
+       * efeito colateral se algum outro consumer precisar. Sem o
+       * layer renderizando, o source fica idle. */
 
       // LAYER_MARINGA_24 — 24 dots verdes de 4px em Maringá.
       // Per feedback "deixe com 24 pontos cada ponto verde de 4px
