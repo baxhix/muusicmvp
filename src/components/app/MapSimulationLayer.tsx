@@ -353,19 +353,12 @@ function generateCityQuotaPoints(
    * garante espalhamento regional pra que o pós-processamento Poisson
    * consiga manter spacing 24px @ z5. */
   const factor = SIGMA_FACTOR_BY_RANGE[range];
-  /* Piso state: 300km. Cálculo:
-   *   - Spacing mínimo 24px @ z5 → área quadrada por dot = 576px²
-   *   - 59 dots ⇒ área mínima total ≈ 184x184px @ z5
-   *   - Pra ~70% dos dots caírem nessa área (1σ envelope),
-   *     sigma_px @ z5 ≈ 92px → ≈ 450km
-   *   - Mas 70% basta — vamos com piso 300km (sigma_px ≈ 61px),
-   *     que dá envelope 3σ ≈ 366px @ z5 com folga pros 59 dots
-   *
-   * Sem esse piso, o sigma efetivo de SP (14km × 8.0 = 112km)
-   * gerava só ~23px de envelope @ z5 — o Poisson thinning
-   * descartava ~80% dos candidates e sobrava ~10 dots visíveis
-   * em SP (bug: "no zoom 6.0 aparece apenas a onda pulsante"). */
-  const minSigmaKm = range === 'state' ? 300 : 2;
+  /* Piso state: 150km. Sem o Poisson thinning (removido por feedback),
+   * não precisamos da área extra — sigma 150km dá envelope 3σ ≈ 184px
+   * @ z5, suficiente pros 59 dots se espalharem visualmente pelo halo
+   * do pulse sem sobreposição perceptível. Cidades pequenas
+   * (sigmaKm 4-7) × factor 8 = 32-56km < 150 → usam o piso. */
+  const minSigmaKm = range === 'state' ? 150 : 2;
   const sigmaKm = Math.max(minSigmaKm, city.sigmaKm * factor);
   const cosLat = Math.cos((cy * Math.PI) / 180);
   const sigmaLat = sigmaKm / 111;
@@ -487,9 +480,18 @@ function generateAllQuotaPoints(
       else               others.push(...features);
     }
   }
-  // 24px @ zoom 5 é o requisito de spacing mínimo do feedback.
-  const stateThinned = thinByMinPxDist(stateRaw, 24, 5);
-  return [...stateThinned, ...others];
+  /* Poisson-disk thinning REMOVIDO per feedback "Remova totalmente
+   * a regra dos 24px de distanciamento". O thinning estava
+   * descartando ~80% dos dots de SP no state porque o spacing 24px
+   * @ z5 era agressivo demais pro sigma — resultado: SP em z6
+   * mostrava apenas a onda pulsante.
+   *
+   * Sem o thinning, os 59 dots de SP entram todos no source. O
+   * espalhamento natural pela gaussiana (sigma 150km) já evita
+   * sobreposição perceptível em z 5-7. As funções `geoPxDistance`
+   * e `thinByMinPxDist` ficam declaradas mas não são chamadas —
+   * preservadas pro caso de precisarmos voltar. */
+  return [...stateRaw, ...others];
 }
 
 /* Pool de avatares Pravatar (i.pravatar.cc) — 12 fotos de pessoas
