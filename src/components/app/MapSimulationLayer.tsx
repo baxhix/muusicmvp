@@ -322,6 +322,50 @@ function quotaFor(active: number, range: QuotaRange): number {
   return QUOTAS_BY_TIER[tier][range];
 }
 
+/** Land mask aproximada do Brasil continental.
+ *  Per feedback "No zoom 6, coloque os pontos dentro do continente
+ *  e não no oceano".
+ *
+ *  Estratégia: bounding box ampla + curva da costa leste/sul como
+ *  piecewise-linear interp (lng_max em função da lat). Pontos a
+ *  leste da curva caem no Atlântico — rejeitados.
+ *
+ *  Calibração visual com a costa real (não cartograficamente
+ *  exata, mas suficiente pra esconder dots no mar). */
+function isOnBrazilLand(lng: number, lat: number): boolean {
+  // Bounding box do território continental
+  if (lat > 5.5 || lat < -34) return false;
+  if (lng < -73.5 || lng > -33) return false;
+
+  // Costa leste/sul — pontos-chave (lat, lng_max) do norte ao sul.
+  // lng_max define o ponto mais a leste que ainda é terra naquela lat.
+  const coast: Array<[number, number]> = [
+    [  5,   -50  ], // Cabo Orange (AP)
+    [  0,   -49  ], // boca do Amazonas
+    [ -3,   -41  ], // Maranhão NE
+    [ -5,   -35.5], // Natal (RN)
+    [-10,   -34.5], // Recife/Maceió
+    [-13,   -38.5], // Salvador
+    [-20,   -39.5], // Vitória
+    [-23.5, -42  ], // Cabo Frio (RJ)
+    [-25,   -47.5], // Paranaguá (PR)
+    [-29,   -49.5], // Tramandaí (RS)
+    [-34,   -52  ], // Chuí (RS)
+  ];
+
+  let lngMax = -33;
+  for (let i = 0; i < coast.length - 1; i += 1) {
+    const [lat1, lng1] = coast[i];
+    const [lat2, lng2] = coast[i + 1];
+    if (lat <= lat1 && lat >= lat2) {
+      const t = (lat1 - lat) / (lat1 - lat2);
+      lngMax = lng1 + (lng2 - lng1) * t;
+      break;
+    }
+  }
+  return lng <= lngMax;
+}
+
 /** Hash string → uint32 (FNV-1a leve), pra derivar seed determinística
  *  por (cityName + range) sem dependência externa. */
 function strHash(s: string): number {
@@ -389,21 +433,94 @@ function generateCityQuotaPoints(
   };
 
   const features: GeoJSON.Feature[] = [];
+  const MAX_TRIES_PER_DOT = 20;
   for (let i = 0; i < count; i += 1) {
+    let gX = 0;
+    let gY = 0;
+    let lng = cx;
+    let lat = cy;
+    let tries = 0;
+    /* Rejection sampling: pro range `state` pontos podem cair no oceano
+     * (sigma 150km a partir de SP, RJ, Salvador etc), per feedback "No
+     * zoom 6, coloque os pontos dentro do continente". Retentamos até
+     * MAX_TRIES; se esgotar (rara, mas possível pra cidades costeiras),
+     * o ponto fica no centro da cidade (offset zero) — visualmente
+     * indistinguível do cluster denso na cidade. */
+    do {
+      gX = gauss();
+      gY = gauss();
+      lng = cx + gX * sigmaLng;
+      lat = cy + gY * sigmaLat;
+      tries += 1;
+      if (range !== 'state') break; // rejection só pro state
+    } while (!isOnBrazilLand(lng, lat) && tries < MAX_TRIES_PER_DOT);
+
+    /* Pro range `state` armazenamos gX/gY/cityLng/cityLat nas
+     * properties — habilita o recompute dinâmico das coords baseado
+     * no zoom (efeito "se aproximando da cidade" conforme zoom in,
+     * via map.on('zoom', ...) que aplica setData com sigma decrescente).
+     * Os outros ranges ficam estáticos (sigma proporcional já é
+     * adequado em todos os zooms da faixa). */
+    const props: GeoJSON.GeoJsonProperties =
+      range === 'state'
+        ? {
+            range,
+            size,
+            city: city.city,
+            gX,
+            gY,
+            cityLng: cx,
+            cityLat: cy,
+            baseSigmaKm: sigmaKm,
+          }
+        : { range, size, city: city.city };
+
     features.push({
       type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [cx + gauss() * sigmaLng, cy + gauss() * sigmaLat],
-      },
-      properties: {
-        range,
-        size,
-        city: city.city,
-      },
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+      properties: props,
     });
   }
   return features;
+}
+
+/** Sigma efetivo (km) do range `state` em função do zoom — usado pelo
+ *  recompute on zoom pra criar a "animação de aproximação".
+ *
+ *  z 5  → 250km (espalhado pelo continente, halo amplo do pulse)
+ *  z 6  → 170km (cobre região do pulse XL)
+ *  z 7  → 90km  (perto da cidade, antes do region tomar conta)
+ *
+ *  Linear interp entre os keypoints. Fora do range [5, 7] usa o
+ *  valor da extremidade (clamp). */
+function sigmaKmForStateAtZoom(zoom: number): number {
+  if (zoom <= 5) return 250;
+  if (zoom >= 7) return 90;
+  if (zoom <= 6) return 250 + (170 - 250) * (zoom - 5); // 5→250, 6→170
+  return 170 + (90 - 170) * (zoom - 6);                  // 6→170, 7→90
+}
+
+/** Recalcula as coordinates de features `range==='state'` baseado no
+ *  sigma efetivo no zoom atual. Mutação in-place — o caller chama
+ *  setData() pro source refletir. Features sem gX/gY (outros ranges)
+ *  são ignoradas. */
+function recomputeStateCoords(features: GeoJSON.Feature[], zoom: number): void {
+  const sigmaKm = sigmaKmForStateAtZoom(zoom);
+  for (const f of features) {
+    const p = f.properties as Record<string, unknown> | null;
+    if (!p || p.range !== 'state') continue;
+    const cityLng = p.cityLng as number;
+    const cityLat = p.cityLat as number;
+    const gX = p.gX as number;
+    const gY = p.gY as number;
+    const cosLat = Math.cos((cityLat * Math.PI) / 180);
+    const dLat = sigmaKm / 111;
+    const dLng = sigmaKm / (111 * Math.max(cosLat, 0.05));
+    (f.geometry as GeoJSON.Point).coordinates = [
+      cityLng + gX * dLng,
+      cityLat + gY * dLat,
+    ];
+  }
 }
 
 /** Distância em pixels entre dois pontos geográficos no zoom dado.
@@ -848,15 +965,53 @@ export default function MapSimulationLayer() {
        * Cada feature carrega `properties.range` ('state'|'region'|'city')
        * + `properties.size` (raio em px). Os 3 layers filtram por range
        * + têm zoom/opacity próprios pra crossfade entre faixas. */
+      /* Features cache pro recompute dinâmico do range `state`.
+       * Generamos UMA VEZ e mantemos referência (mesma array) no
+       * escopo do useEffect; o hook `map.on('zoom', ...)` muta os
+       * coordinates das state features e chama setData. Os outros
+       * ranges (region/cityMid/cityPeak) ficam imutáveis. */
+      const quotaFeatures = generateAllQuotaPoints(data.cities);
+      // Aplica sigma inicial pro zoom atual antes do addSource pra
+      // evitar flash de "salto" no primeiro render.
+      recomputeStateCoords(quotaFeatures, map.getZoom());
+
       if (!map.getSource(SOURCE_QUOTAS)) {
         map.addSource(SOURCE_QUOTAS, {
           type: 'geojson',
           data: {
             type: 'FeatureCollection',
-            features: generateAllQuotaPoints(data.cities),
+            features: quotaFeatures,
           } as GeoJSON.FeatureCollection,
         });
       }
+
+      /* Hook on zoom: recalcula coords das state features baseado
+       * no zoom atual e re-setData. Per feedback "Conforme o zoom
+       * vai avançando, aplique uma 'animação' para eles se
+       * aproximando da área do zoom". Throttle via rAF — não roda
+       * mais de 1× por frame mesmo durante pinch contínuo. */
+      let zoomRafId = 0;
+      const onZoomQuotas = () => {
+        if (zoomRafId) return;
+        zoomRafId = requestAnimationFrame(() => {
+          zoomRafId = 0;
+          recomputeStateCoords(quotaFeatures, map.getZoom());
+          const src = map.getSource(SOURCE_QUOTAS);
+          if (src && src.type === 'geojson') {
+            (src as mapboxgl.GeoJSONSource).setData({
+              type: 'FeatureCollection',
+              features: quotaFeatures,
+            });
+          }
+        });
+      };
+      map.on('zoom', onZoomQuotas);
+      // Registra cleanup junto com os outros — o useEffect cleanup
+      // só remove o source, então adicionamos esse off explícito.
+      const detachZoomQuotas = () => {
+        try { map.off('zoom', onZoomQuotas); } catch { /* destroyed */ }
+        if (zoomRafId) cancelAnimationFrame(zoomRafId);
+      };
 
       const quotaLayerPaint = (
         range: QuotaRange,
@@ -1694,6 +1849,7 @@ export default function MapSimulationLayer() {
           map.off('click', LAYER_CL, onClusterClick);
           map.off('click', onMapClick);
         } catch { /* map destruído */ }
+        detachZoomQuotas();
         /* Limpa todos os timers pendentes e remove markers ativos. */
         revealTimers.forEach((t) => window.clearTimeout(t));
         revealTimers.length = 0;
