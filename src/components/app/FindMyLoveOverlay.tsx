@@ -3,20 +3,24 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { Map as MapboxMap } from 'mapbox-gl';
+import FanverseCore from '@/components/animations/FanverseCore';
 import { globeStore } from '@/lib/globeStore';
 import { CITY_SEEDS } from '@/lib/mapSimulation/cities';
 import styles from './FindMyLoveOverlay.module.css';
 
 /* ============================================================
  * Estados:
- *   - searching (4s): globo gigante centralizado + texto "Em busca
- *     pelo mundo". Mapa atrás permanece quieto.
- *   - revealing (~2.5s): globo do overlay faz fade-out, mapa real
- *     anima: zoom-out + bearing 40° (giro), pitch leve, depois
- *     volta pro centro entre user e match. Overlay vira só o
- *     dimmer escuro com texto "Encontrando seu match...".
+ *   - searching (10s): orbe FanverseCore centralizado + dimmer
+ *     escuro + frases que ciclam em loop ("Lendo suas preferências
+ *     musicais", "Seu histórico de fã", etc). Mapa atrás permanece
+ *     quieto. Per feedback "substitua o globo atual pelo orbe, dure
+ *     10s, e cicle as frases".
+ *   - revealing (~3.4s): orbe faz fade-out, mapa real anima:
+ *     zoom-out + bearing 40° (giro), pitch leve, depois volta
+ *     pro centro entre user e match. Overlay vira só o dimmer
+ *     com texto "Encontrando seu match…".
  *   - matched (sticky): linha verde + avatar do match no mapa,
- *     card mostrando "X em [cidade, país]" + ações.
+ *     CARD CENTRALIZADO na página com info de afinidade musical.
  * ============================================================ */
 
 type Phase = 'searching' | 'revealing' | 'matched';
@@ -24,7 +28,6 @@ type Phase = 'searching' | 'revealing' | 'matched';
 /* Origin = SP (placeholder pro user atual). Em produção viria
  * do perfil do usuário (cidade de login). */
 const USER_ORIGIN: [number, number] = [-46.6333, -23.5505];
-const USER_CITY_LABEL = 'São Paulo, BR';
 
 const PRAVATAR_IDS = [1, 5, 11, 13, 17, 23, 29, 33, 41, 47, 53, 61];
 const FIRST_NAMES = [
@@ -32,12 +35,31 @@ const FIRST_NAMES = [
   'Yara', 'Theo', 'Sora', 'Léa', 'Anya', 'Felix', 'Iris', 'Milo',
 ];
 
+/* Frases ciclando durante o SEARCHING. Última ("Pronto!") aparece
+ * brevemente antes da transição pro REVEALING — funciona como
+ * "click" de fim da busca. */
+const SEARCH_PHRASES = [
+  'Lendo suas preferências musicais.',
+  'Seu histórico de fã',
+  'Procurando afinidades musicais',
+  'Encontrando...',
+  'Pronto!',
+];
+/* Duração total do SEARCHING = 10s, dividida igualmente pelas 5
+ * frases (2s cada). Pronto! aparece no último slot e logo em
+ * seguida vem o REVEALING. */
+const SEARCHING_DURATION_MS = 10000;
+const PHRASE_INTERVAL_MS = SEARCHING_DURATION_MS / SEARCH_PHRASES.length;
+
 interface MatchInfo {
   name: string;
   city: string;
   country: string;
   center: [number, number];
   picId: number;
+  /* Métricas simuladas pra card de afinidade. */
+  affinity: number;       // % afinidade musical
+  sameMomentCount: number; // vezes que ouviram a mesma música no mesmo momento
 }
 
 function pickInternationalMatch(): MatchInfo {
@@ -45,12 +67,19 @@ function pickInternationalMatch(): MatchInfo {
   const city = intl[Math.floor(Math.random() * intl.length)];
   const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
   const picId = PRAVATAR_IDS[Math.floor(Math.random() * PRAVATAR_IDS.length)];
+  /* Affinity em faixa alta (88-99%) — narrativa de "match", não
+   * dado real. sameMoment 3-9 (números plausíveis pro tempo de
+   * uso de um fã). */
+  const affinity = 88 + Math.floor(Math.random() * 12);
+  const sameMomentCount = 3 + Math.floor(Math.random() * 7);
   return {
     name: firstName,
     city: city.name,
     country: city.country,
     center: city.center,
     picId,
+    affinity,
+    sameMomentCount,
   };
 }
 
@@ -60,6 +89,7 @@ const LAYER_LINE = 'fml-line-layer';
 
 export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>('searching');
+  const [phraseIdx, setPhraseIdx] = useState(0);
   const matchRef = useRef<MatchInfo | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -78,11 +108,28 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
     return unsubscribe;
   }, []);
 
-  // SEARCHING (4s) → REVEALING
+  // SEARCHING (10s) → cicla frases a cada 2s → REVEALING
   useEffect(() => {
     if (phase !== 'searching') return;
-    const t = window.setTimeout(() => setPhase('revealing'), 4000);
-    return () => window.clearTimeout(t);
+
+    setPhraseIdx(0);
+    const phraseInterval = window.setInterval(() => {
+      setPhraseIdx((i) => {
+        // Trava no último ("Pronto!") até o switch pro revealing
+        if (i >= SEARCH_PHRASES.length - 1) return i;
+        return i + 1;
+      });
+    }, PHRASE_INTERVAL_MS);
+
+    const done = window.setTimeout(
+      () => setPhase('revealing'),
+      SEARCHING_DURATION_MS,
+    );
+
+    return () => {
+      window.clearInterval(phraseInterval);
+      window.clearTimeout(done);
+    };
   }, [phase]);
 
   // REVEALING: anima mapa
@@ -149,15 +196,15 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
           type: 'line',
           source: SRC_LINE,
           /* minzoom 2.5 — per feedback "no zoom abaixo de 2.5,
-           * oculte os elementos plotados no mapa". Mobile pode
-           * pinch-out até 0.5; em z<2.5 a linha some junto com
-           * heatmap/pulses/dots. */
+           * oculte os elementos plotados no mapa". */
           minzoom: 2.5,
           paint: {
-            'line-color': '#ec4899',  // pink-500
-            'line-width': 2,
-            'line-opacity': 0.85,
-            'line-dasharray': [2, 2],
+            /* Discreto: cinza claro com leve tracejado. Antes era
+             * pink-500 sólido — chamava muita atenção. */
+            'line-color': 'rgba(245, 245, 247, 0.55)',
+            'line-width': 1,
+            'line-opacity': 0.7,
+            'line-dasharray': [3, 3],
           },
         });
       }
@@ -178,8 +225,7 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         .addTo(map);
 
       /* Hide markers em z<2.5 per feedback "oculte elementos
-       * plotados no mapa abaixo de 2.5". DOM markers não respeitam
-       * minzoom de layer — precisam de visibility manual via JS. */
+       * plotados no mapa abaixo de 2.5". */
       const applyMarkerVisibility = () => {
         const z = map.getZoom();
         const hide = z < 2.5;
@@ -192,7 +238,6 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
       };
       map.on('zoom', applyMarkerVisibility);
       applyMarkerVisibility();
-      // Store on map ref pra cleanup do useEffect detachar
       (map as unknown as { _fmlZoomHandler?: () => void })._fmlZoomHandler =
         applyMarkerVisibility;
 
@@ -233,13 +278,16 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         onClick={phase === 'matched' ? onClose : undefined}
       />
 
-      {/* SEARCHING: globo gigante + texto */}
+      {/* SEARCHING: orbe FanverseCore + frase rotativa */}
       {phase === 'searching' && (
         <div className={styles.searchStage}>
-          <div className={styles.globe} aria-hidden="true">🌍</div>
-          <div className={styles.searchText}>Em busca pelo mundo</div>
-          <div className={styles.searchDots}>
-            <span /><span /><span />
+          <div className={styles.orb} aria-hidden="true">
+            <FanverseCore />
+          </div>
+          {/* Frase com key={phraseIdx} pra forçar remount → fadeIn
+           * a cada troca. */}
+          <div className={styles.searchText} key={phraseIdx}>
+            {SEARCH_PHRASES[phraseIdx]}
           </div>
         </div>
       )}
@@ -249,9 +297,12 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         <div className={styles.revealText}>Encontrando seu match…</div>
       )}
 
-      {/* MATCHED: card com info do match + ações */}
+      {/* MATCHED: card CENTRALIZADO com info de afinidade.
+       * Sem bordas/cores fortes, segue design system (dark glass
+       * com text-secondary). */}
       {phase === 'matched' && (
         <div className={styles.matchCard}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://i.pravatar.cc/120?img=${match.picId}`}
             alt={match.name}
@@ -261,9 +312,19 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
           <div className={styles.matchCardCity}>
             {match.city}, {match.country}
           </div>
-          <div className={styles.matchCardLine}>
-            ↔ {USER_CITY_LABEL}
+
+          <div className={styles.matchFacts}>
+            <div className={styles.matchFact}>
+              {match.name} ouve as mesmas músicas que você todos os dias.
+            </div>
+            <div className={styles.matchFact}>
+              Vocês têm <strong>{match.affinity}%</strong> de afinidade musical
+            </div>
+            <div className={styles.matchFact}>
+              Já ouviram a mesma música no mesmo momento <strong>{match.sameMomentCount}x</strong>
+            </div>
           </div>
+
           <div className={styles.matchActions}>
             <button
               type="button"
@@ -291,7 +352,7 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
                 onClose();
               }}
             >
-              Mandar oi 💜
+              Mandar oi
             </button>
           </div>
         </div>

@@ -315,18 +315,25 @@
  * pointer-events:none no wrapper porque é decorativo (a
  * animação não responde a click/hover). aria-hidden no JSX
  * pelos mesmos motivos. */
-/* Desktop: bottom-left, ao lado esquerdo da BottomNav per product
- * feedback. A BottomNav pinned bottom:0 com padding 36/24 deixa o
- * pill de 52px verticalmente centrado em ~50px do bottom da
- * viewport; alinhamos o orb pela mesma linha vertical. Left 20px
- * confortável da borda. */
+/* Desktop: LEFT RAIL stack per product feedback "posicione o orbe
+ * abaixo do box de nivel de zoom e o coração logo abaixo".
+ *
+ * O rail ficou organizado verticalmente em volta de top:50%:
+ *   - Brainstorm trigger     top: 50%             (40px alto)
+ *   - Zoom indicator         top: calc(50%+28px)  (~32px alto)
+ *   - Orb (este)             top: calc(50%+68px)  (56×56)
+ *   - Find my love (coração) top: calc(50%+132px) (40px)
+ *
+ * Antes ficava bottom-left 100×100 ao lado da BottomNav. Foi
+ * reduzido pra 56×56 pra encaixar discreto no rail e seguir a
+ * mesma largura visual dos outros itens. */
 .orbSlot {
   position: fixed;
-  bottom: 14px;
-  left: 20px;
+  top: calc(50% + 68px);
+  left: 10px;
   z-index: 22;
-  width: 100px;
-  height: 100px;
+  width: 56px;
+  height: 56px;
   pointer-events: none;
 }
 

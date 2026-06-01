@@ -1,16 +1,23 @@
 /* ============================================================
  * Find my love — botão flutuante de coração no left rail.
  *
- * Posicionado abaixo do Brainstorm trigger (que está em top: 50%).
- * Mesmo estilo dark glass pill mas com accent magenta/pink no SVG
- * pra comunicar "love".
+ * Empilhado no rail vertical centrado em top:50%, abaixo do
+ * Brainstorm → Zoom indicator → Orb. Per feedback "tudo discreto,
+ * sem bordas/cores fortes, siga o design system".
+ *
+ * Antes tinha border violeta, glow rosa e ícone pink-500 — agora
+ * segue o mesmo dark-glass do Brainstorm trigger (background
+ * rgba(11,11,14,0.85), border-subtle, ícone branco/cinza).
  * ============================================================ */
 
 .trigger {
   position: fixed;
-  /* Brainstorm trigger fica em top: 50% / left: 18px (40px altura).
-   * Posicionamos esse logo abaixo, mesma left rail. */
-  top: calc(50% + 56px);
+  /* Stack vertical do left rail (todos com left: 10/18px):
+   *   Brainstorm  top: 50%             (40px)
+   *   Zoom        top: calc(50%+28px)  (~32px)
+   *   Orb         top: calc(50%+68px)  (56px)
+   *   Heart       top: calc(50%+132px) (40px)  ← este */
+  top: calc(50% + 132px);
   left: 18px;
   z-index: 60;
   width: 40px;
@@ -19,28 +26,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  color: #ec4899;  /* pink-500 — coração rosa */
+  background: rgba(11, 11, 14, 0.85);
+  color: rgba(245, 245, 247, 0.78);
   cursor: pointer;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition:
     transform 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
-  box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.45),
-    0 0 0 0 rgba(236, 72, 153, 0);
+    color 160ms ease,
+    border-color 160ms ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 .trigger:hover {
   transform: scale(1.06);
-  border-color: rgba(236, 72, 153, 0.6);
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.55),
-    0 0 0 4px rgba(236, 72, 153, 0.18);
+  color: rgba(245, 245, 247, 1);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .trigger:active {
@@ -48,8 +51,11 @@
 }
 
 @media (max-width: 640px) {
+  /* Mobile: o orbe vive no header (MobileHomeChrome), NÃO no rail.
+   * Então o coração sobe pra logo abaixo do zoom indicator, sem
+   * deixar o gap de 56px que reservaríamos no desktop pro orbe. */
   .trigger {
     left: 12px;
-    top: calc(50% + 56px);
+    top: calc(50% + 68px);
   }
 }
