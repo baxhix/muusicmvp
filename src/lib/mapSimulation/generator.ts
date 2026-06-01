@@ -212,27 +212,39 @@ export interface CityStats {
 }
 
 export function aggregateByCity(users: MockUser[]): CityStats[] {
+  /* Inicializa map com TODAS as 50 cidades do CITY_SEEDS, mesmo as
+   * que não receberam users no sampling proporcional (cidades
+   * pequenas como Campo Grande, Niterói etc com round(10000 ×
+   * ml/sum) = 0). Sem isso, essas cidades sumiam de data.cities
+   * → nem pulse nem quotas renderizavam por elas. Per feedback
+   * "Os pontos das cidades fora do top 5 não estão aparecendo no
+   * mapa ... isso deve aparecer em todos os níveis de zoom". */
   const map = new Map<string, CityStats>();
+  for (const seed of CITY_SEEDS) {
+    map.set(seed.name, {
+      city: seed.name,
+      region: seed.region,
+      total: 0,
+      active: 0,
+      superfans: 0,
+      center: seed.center,
+      sigmaKm: seed.sigmaKm,
+      monthlyListeners: seed.monthlyListeners,
+    });
+  }
+  // Agrega os users do dataset gerado nas cidades correspondentes
   for (const u of users) {
-    const seed = CITY_SEEDS.find((c) => c.name === u.city);
-    if (!seed) continue;
-    let entry = map.get(u.city);
-    if (!entry) {
-      entry = {
-        city: u.city,
-        region: u.region,
-        total: 0,
-        active: 0,
-        superfans: 0,
-        center: seed.center,
-        sigmaKm: seed.sigmaKm,
-        monthlyListeners: seed.monthlyListeners,
-      };
-      map.set(u.city, entry);
-    }
+    const entry = map.get(u.city);
+    if (!entry) continue;
     entry.total += 1;
     if (u.lastActiveSec < 300) entry.active += 1;
     if (u.tier === 'superfan') entry.superfans += 1;
   }
-  return Array.from(map.values()).sort((a, b) => b.active - a.active);
+  /* Sort por monthlyListeners DESC pra garantir ordem determinística
+   * do CSV (não depende de active count que oscila por sampling).
+   * O rank ordinal em data.cities passa a ser idêntico ao do CSV →
+   * MapPulses.pulseSize(rank) consistente. */
+  return Array.from(map.values()).sort(
+    (a, b) => b.monthlyListeners - a.monthlyListeners,
+  );
 }
