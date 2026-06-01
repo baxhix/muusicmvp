@@ -66,10 +66,12 @@ function isMobileViewport(): boolean {
 const SOURCE_ID      = 'mapsim-users';
 const SOURCE_HEAT    = 'mapsim-users-heat';
 const SOURCE_AMBIENT  = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
-const SOURCE_MARINGA  = 'mapsim-maringa';     // 24 pontos mock distribuídos em Maringá (zoom ~10.6)
+const SOURCE_MARINGA_12 = 'mapsim-maringa-12'; // 12 pontos mock em Maringá (peak zoom 8.6)
+const SOURCE_MARINGA_24 = 'mapsim-maringa-24'; // 24 pontos mock em Maringá (peak zoom 10.6)
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
-const LAYER_MARINGA  = 'mapsim-maringa-dots'; // 24 dots 2px verdes em Maringá (peak zoom 10.6)
+const LAYER_MARINGA_12 = 'mapsim-maringa-12';  // 12 dots em Maringá (peak zoom 8.6)
+const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (peak zoom 10.6)
 const LAYER_DOTSPARSE = 'mapsim-dot-sparse';  // pontos esparsos zoom 5-7 (sample 1/32, raio menor)
 const LAYER_DOTFAR    = 'mapsim-dot-far';     // pontos 2px verdes (sample 1/16, zoom 7-11)
 const LAYER_DOTFAR2   = 'mapsim-dot-far-2';   // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
@@ -126,16 +128,18 @@ function generateAmbientPoints(): GeoJSON.Feature[] {
   return features;
 }
 
-/* ── 24 pontos sintéticos distribuídos em Maringá ──────────
+/* ── Pontos sintéticos distribuídos em Maringá ──────────
  *
- * Per feedback "No nível de zoom 10.6, no mobile e desktop simule
- * 24 pontos de 2px verdes distribuídos na região de Maringá".
+ * Per feedback: testar transição visual entre dois níveis de
+ * zoom com quantidades diferentes de pontos.
+ *   - 12 pontos no peak zoom 8.6
+ *   - 24 pontos no peak zoom 10.6
  *
  * Maringá center: [-51.9382, -23.4205] (do CITY_SEEDS).
- * Distribuição gaussiana com sigma 5km via mulberry32 inline
- * (sem dependência das funções globais — geração determinística
- * roda 1× no map.load). */
-function generateMaringaPoints(): GeoJSON.Feature[] {
+ * Distribuição gaussiana com sigma 5km via mulberry32 inline.
+ * `seed` diferente por chamada → 12 e 24 não compartilham
+ * posicionamento (variação visual entre os dois "estados"). */
+function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
   const cx = -51.9382;
   const cy = -23.4205;
   const sigmaKm = 5;
@@ -143,8 +147,7 @@ function generateMaringaPoints(): GeoJSON.Feature[] {
   const sigmaLat = sigmaKm / 111;
   const sigmaLng = sigmaKm / (111 * cosLat);
 
-  // Mulberry32 PRNG inline com seed determinística
-  let s = 0x4D41524E >>> 0; // 'MARN' em ASCII hex
+  let s = seed >>> 0;
   const rnd = () => {
     s = (s + 0x6D2B79F5) >>> 0;
     let t = s;
@@ -152,7 +155,6 @@ function generateMaringaPoints(): GeoJSON.Feature[] {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  // Box-Muller pra gaussiana padrão
   const gauss = () => {
     let u = 0;
     let v = 0;
@@ -162,7 +164,7 @@ function generateMaringaPoints(): GeoJSON.Feature[] {
   };
 
   const features: GeoJSON.Feature[] = [];
-  for (let i = 0; i < 24; i += 1) {
+  for (let i = 0; i < count; i += 1) {
     features.push({
       type: 'Feature',
       geometry: {
@@ -269,11 +271,13 @@ export default function MapSimulationLayer() {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
           LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR,
-          LAYER_DOTSPARSE, LAYER_MARINGA, LAYER_AMBIENT, LAYER_HEAT,
+          LAYER_DOTSPARSE, LAYER_MARINGA_24, LAYER_MARINGA_12,
+          LAYER_AMBIENT, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
-        if (currentMap.getSource(SOURCE_MARINGA)) currentMap.removeSource(SOURCE_MARINGA);
+        if (currentMap.getSource(SOURCE_MARINGA_24)) currentMap.removeSource(SOURCE_MARINGA_24);
+        if (currentMap.getSource(SOURCE_MARINGA_12)) currentMap.removeSource(SOURCE_MARINGA_12);
         if (currentMap.getSource(SOURCE_AMBIENT)) currentMap.removeSource(SOURCE_AMBIENT);
         if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
         if (currentMap.getSource(SOURCE_ID)) currentMap.removeSource(SOURCE_ID);
@@ -337,14 +341,25 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // Source mock de 24 pontos em Maringá — visível em zoom ~10.6
-      // per feedback. Gerado uma vez, totalmente determinístico.
-      if (!map.getSource(SOURCE_MARINGA)) {
-        map.addSource(SOURCE_MARINGA, {
+      // Sources mock de Maringá — 12 dots (peak z8.6) e 24 dots
+      // (peak z10.6) pra avaliar transição visual entre dois
+      // níveis de zoom. Seeds diferentes → posicionamento
+      // independente entre os dois.
+      if (!map.getSource(SOURCE_MARINGA_12)) {
+        map.addSource(SOURCE_MARINGA_12, {
           type: 'geojson',
           data: {
             type: 'FeatureCollection',
-            features: generateMaringaPoints(),
+            features: generateMaringaPoints(12, 0x4D413132),  // 'MA12'
+          } as GeoJSON.FeatureCollection,
+        });
+      }
+      if (!map.getSource(SOURCE_MARINGA_24)) {
+        map.addSource(SOURCE_MARINGA_24, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: generateMaringaPoints(24, 0x4D413234),  // 'MA24'
           } as GeoJSON.FeatureCollection,
         });
       }
@@ -499,16 +514,39 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // LAYER_MARINGA — 24 dots 2px com peak em zoom 10.6.
-      // Per feedback "no nível de zoom 10.6, no mobile e desktop
-      // simule 24 pontos de 2px verdes distribuídos na região de
-      // Maringá". Faixa de visibilidade centrada em 10.6: entra
-      // em z10, peak 10.5-10.7, fade-out em z11.5.
-      if (!map.getLayer(LAYER_MARINGA)) {
+      // LAYER_MARINGA_12 — 12 dots com peak em zoom 8.6.
+      // Faixa: entra em z8, peak 8.5-8.7, fade-out até z9.5
+      // (cede pro range do _24 que entra em z10).
+      if (!map.getLayer(LAYER_MARINGA_12)) {
         map.addLayer({
-          id: LAYER_MARINGA,
+          id: LAYER_MARINGA_12,
           type: 'circle',
-          source: SOURCE_MARINGA,
+          source: SOURCE_MARINGA_12,
+          minzoom: 8,
+          maxzoom: 10,
+          paint: {
+            'circle-radius': 1,           // 2px diameter
+            'circle-color': '#3DDB74',
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              8,    0,
+              8.4,  0.85,
+              8.6,  1,          // peak
+              8.8,  0.95,
+              9.5,  0.40,
+              10,   0,
+            ],
+          },
+        });
+      }
+
+      // LAYER_MARINGA_24 — 24 dots com peak em zoom 10.6.
+      if (!map.getLayer(LAYER_MARINGA_24)) {
+        map.addLayer({
+          id: LAYER_MARINGA_24,
+          type: 'circle',
+          source: SOURCE_MARINGA_24,
           minzoom: 10,
           maxzoom: 12,
           paint: {
