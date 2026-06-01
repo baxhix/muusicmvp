@@ -9,6 +9,7 @@ import BrainstormPanel from '@/components/app/BrainstormPanel';
 import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
 import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
+import FindMyLoveTrigger from '@/components/app/FindMyLoveTrigger';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 import MapSimulationLayer from '@/components/app/MapSimulationLayer';
 import MapPulses from '@/components/app/MapPulses';
@@ -120,6 +121,14 @@ export default function AppPage() {
           Arena Fonte Nova (Salvador, BA). Self-gates on
           `flags.showLive`. */}
       <ShowLiveTrigger />
+
+      {/* Find my love (brainstorm-gated) — botão flutuante de coração
+          que dispara a experiência: globo gigante centralizado +
+          "Em busca pelo mundo", depois mapa anima zoom-out + giro,
+          traça linha até um fã aleatório em outro país, revela card
+          com avatar do match e CTA "Mandar oi". Self-gates on
+          `flags.findMyLove`. */}
+      <FindMyLoveTrigger />
 
       {/* Sandbox de simulação de 3.000 usuários no mapa do Brasil
        *  (brainstorm-gated). Camada visual com heatmap + clusters +

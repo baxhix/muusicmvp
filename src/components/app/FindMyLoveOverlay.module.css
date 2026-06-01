@@ -1,0 +1,253 @@
+/* ============================================================
+ * Find my love — overlay full-screen com 3 fases.
+ * ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  pointer-events: none;
+  font-family: var(--sans), system-ui, sans-serif;
+}
+
+/* Dimmer escuro — opacity vária por fase. */
+.dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  transition: background 600ms ease;
+  pointer-events: auto;
+}
+.dimLight {
+  background: rgba(0, 0, 0, 0.42);
+}
+
+/* ── SEARCHING stage ──────────────────────────────────────── */
+.searchStage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  pointer-events: auto;
+  animation: fmlFadeIn 420ms ease-out;
+}
+
+.globe {
+  font-size: 220px;
+  line-height: 1;
+  filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.55));
+  animation: fmlSpin 8s linear infinite, fmlBreathe 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.searchText {
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.searchDots {
+  display: flex;
+  gap: 8px;
+}
+.searchDots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  animation: fmlDotPulse 1.2s ease-in-out infinite;
+}
+.searchDots span:nth-child(2) { animation-delay: 0.2s; }
+.searchDots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── REVEALING stage ──────────────────────────────────────── */
+.revealText {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(11, 11, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  animation: fmlFadeIn 320ms ease-out;
+}
+
+/* ── MATCHED stage ────────────────────────────────────────── */
+.matchCard {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  width: min(360px, calc(100vw - 32px));
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  background: rgba(11, 11, 14, 0.95);
+  border: 1px solid rgba(168, 85, 247, 0.30);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(168, 85, 247, 0.15);
+  color: #ffffff;
+  text-align: center;
+  pointer-events: auto;
+  animation: fmlCardIn 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.matchCardAvatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid #ec4899;
+  box-shadow: 0 0 24px rgba(236, 72, 153, 0.55);
+  margin: -56px auto 12px;
+  display: block;
+  object-fit: cover;
+}
+
+.matchCardName {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.matchCardCity {
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.75);
+  font-weight: 500;
+}
+
+.matchCardLine {
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(168, 85, 247, 0.85);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.matchActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btnSecondary,
+.btnPrimary {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 0;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.btnSecondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.btnSecondary:hover { background: rgba(255, 255, 255, 0.14); }
+
+.btnPrimary {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(236, 72, 153, 0.40);
+}
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(236, 72, 153, 0.55);
+}
+
+/* ── Endpoints no mapa (markers DOM) ──────────────────────── */
+.endpoint {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.7);
+}
+.userEndpoint {
+  background: #a855f7;
+}
+
+.matchAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid #ec4899;
+  box-shadow: 0 0 24px rgba(236, 72, 153, 0.65);
+  background-size: cover;
+  background-position: center;
+  background-color: #0b0b0e;
+  animation: fmlMatchAvatarIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Keyframes ────────────────────────────────────────────── */
+@keyframes fmlFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fmlSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes fmlBreathe {
+  0%, 100% { font-size: 220px; }
+  50%      { font-size: 240px; }
+}
+
+@keyframes fmlDotPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50%      { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes fmlCardIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes fmlMatchAvatarIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .globe {
+    font-size: 160px;
+  }
+  @keyframes fmlBreathe {
+    0%, 100% { font-size: 160px; }
+    50%      { font-size: 175px; }
+  }
+  .searchText {
+    font-size: 18px;
+  }
+}

@@ -59,7 +59,8 @@ export type BrainstormFlagKey =
   | 'superlive'
   | 'collectiveListening'
   | 'showLive'
-  | 'mapSimulation';
+  | 'mapSimulation'
+  | 'findMyLove';
 
 export type BrainstormFlags = Record<BrainstormFlagKey, boolean>;
 
@@ -74,6 +75,7 @@ const DEFAULTS: BrainstormFlags = {
   collectiveListening: true,
   showLive: true,
   mapSimulation: false,
+  findMyLove: false,
 };
 
 /**
@@ -112,6 +114,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Show ao vivo (Fire Arena)',
     description:
       'Pin neon na Arena Fonte Nova (Bahia) que transforma o mapa num palco — vinheta escura ao redor, luzes de palco rosa pulsando sobre o estádio, frame de transmissão acima e chat dos fãs ao lado. Pensado pro lançamento do álbum Fire Arena.',
+  },
+  {
+    key: 'findMyLove',
+    title: 'Find my love',
+    description:
+      'Botão flutuante de coração — ao clicar, globo gigante centralizado com "Em busca pelo mundo...", depois zoom-out + giro do mapa, traça uma linha até um fã aleatório em outro país, revela o match com avatar. Experiência de descoberta surpresa.',
   },
   {
     key: 'mapSimulation',
