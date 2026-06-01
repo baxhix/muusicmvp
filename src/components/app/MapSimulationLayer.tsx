@@ -314,7 +314,11 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
  *             no z 9-11, mesma escala visual do cityPeak)
  *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
-  continent: 1.5,  // 3px diameter (mesmo piso global)
+  continent: 0.75, // 1.5px diameter — per feedback "No zoom de 2.5 até
+                   //  5.5, diminua pela metade o tamanho dos pontos
+                   //  nas cidades-marco". Era 1.5 (3px). Dots quase
+                   //  imperceptíveis no zoom continental — papel é
+                   //  só ser "marcadores tênues" próximos aos pulses.
   state:    1.5,   // 3px diameter (piso: nenhum dot abaixo disso)
   region:   2,     // 4px diameter — per feedback "pequenos pontos de
                    //  4px ao redor" pra dar consistência visual com
@@ -499,7 +503,7 @@ function strHash(s: string): number {
  *  Reutiliza a mesma técnica do generateMaringaPoints (Box-Muller +
  *  mulberry32 inline). Determinístico — mesma seed = mesmas posições. */
 function generateCityQuotaPoints(
-  city: { city: string; center: [number, number]; sigmaKm: number },
+  city: { city: string; center: [number, number]; sigmaKm: number; country?: string },
   range: QuotaRange,
   count: number,
 ): GeoJSON.Feature[] {
@@ -563,12 +567,13 @@ function generateCityQuotaPoints(
   const features: GeoJSON.Feature[] = [];
   const MAX_TRIES_PER_DOT = 30;
   /* Rejection sampling pra ranges `continent` e `state`: pontos podem
-   * cair no oceano (sigma 700km / 150km a partir de cidades costeiras).
-   * Per feedback "do continente pra dentro" e "No zoom 6, coloque os
-   * pontos dentro do continente". Outros ranges (region/cityMid/peak)
-   * têm sigma menor, geralmente dentro do perímetro real da cidade,
-   * então rejection é desnecessária. */
-  const needsLandMask = range === 'continent' || range === 'state';
+   * cair no oceano (sigma 350km / 150km a partir de cidades costeiras).
+   * SÓ pra cidades BR — internacionais (Londres, Pequim, etc) usam
+   * gaussiana livre porque `isOnBrazilLand` rejeitaria 100% dos
+   * pontos delas. */
+  const isBrazilian = !city.country || city.country === 'BR';
+  const needsLandMask =
+    isBrazilian && (range === 'continent' || range === 'state');
   for (let i = 0; i < count; i += 1) {
     let gX = 0;
     let gY = 0;
@@ -718,6 +723,7 @@ function generateAllQuotaPoints(
     center: [number, number];
     sigmaKm: number;
     monthlyListeners: number;
+    country?: string;
   }>,
   opts: { mobile?: boolean } = {},
 ): GeoJSON.Feature[] {

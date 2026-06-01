@@ -22,6 +22,7 @@ import {
   SUM_MONTHLY_LISTENERS,
   TOTAL_USERS,
   type CitySeed,
+  type Country,
   type Region,
 } from './cities';
 
@@ -209,6 +210,11 @@ export interface CityStats {
    *  ignoram esse valor — todas as cidades preenchem a tela igual
    *  quando focadas. */
   monthlyListeners: number;
+  /** País — BR ou países internacionais. Consumido pelo
+   *  generateCityQuotaPoints pra decidir se aplica land mask
+   *  brasileira (só BR; cidades internacionais aceitam qualquer
+   *  coord da gaussiana). */
+  country: Country;
 }
 
 export function aggregateByCity(users: MockUser[]): CityStats[] {
@@ -230,6 +236,7 @@ export function aggregateByCity(users: MockUser[]): CityStats[] {
       center: seed.center,
       sigmaKm: seed.sigmaKm,
       monthlyListeners: seed.monthlyListeners,
+      country: seed.country,
     });
   }
   // Agrega os users do dataset gerado nas cidades correspondentes

@@ -40,7 +40,10 @@ export type Region =
   | 'nordeste'
   | 'internacional';
 
-export type Country = 'BR' | 'PT' | 'PY' | 'CL';
+export type Country =
+  | 'BR' | 'PT' | 'PY' | 'CL'
+  | 'UK' | 'DE' | 'IT' | 'FR' | 'ES'
+  | 'CN' | 'AU' | 'RU' | 'BD' | 'TH';
 
 export interface CitySeed {
   name: string;
@@ -109,6 +112,21 @@ export const CITY_SEEDS: CitySeed[] = [
   { name: 'Itajaí',                 center: [-48.6614, -26.9070], monthlyListeners:     249, sigmaKm:  4, region: 'sul',          country: 'BR' },
   { name: 'Santiago',               center: [-70.6483, -33.4569], monthlyListeners:     249, sigmaKm: 10, region: 'internacional', country: 'CL' },
   { name: 'Juiz de Fora',           center: [-43.3503, -21.7642], monthlyListeners:     248, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
+
+  // ── INTERNACIONAIS (mocadas, ~290-320 ouvintes) ──────────
+  // Adicionadas pra simular alcance global da artista, com volume
+  // próximo ao de Uberlândia (306 ouvintes mensais).
+  { name: 'Londres',                center: [ -0.1276,  51.5074], monthlyListeners:     320, sigmaKm: 10, region: 'internacional', country: 'UK' },
+  { name: 'Paris',                  center: [  2.3522,  48.8566], monthlyListeners:     312, sigmaKm:  9, region: 'internacional', country: 'FR' },
+  { name: 'Bangkok',                center: [100.5018,  13.7563], monthlyListeners:     311, sigmaKm: 11, region: 'internacional', country: 'TH' },
+  { name: 'Berlim',                 center: [ 13.4050,  52.5200], monthlyListeners:     308, sigmaKm:  8, region: 'internacional', country: 'DE' },
+  { name: 'Shanghai',               center: [121.4737,  31.2304], monthlyListeners:     305, sigmaKm: 12, region: 'internacional', country: 'CN' },
+  { name: 'Melbourne',              center: [144.9631, -37.8136], monthlyListeners:     304, sigmaKm:  9, region: 'internacional', country: 'AU' },
+  { name: 'Barcelona',              center: [  2.1734,  41.3851], monthlyListeners:     301, sigmaKm:  7, region: 'internacional', country: 'ES' },
+  { name: 'Pequim',                 center: [116.4074,  39.9042], monthlyListeners:     296, sigmaKm: 12, region: 'internacional', country: 'CN' },
+  { name: 'Roma',                   center: [ 12.4964,  41.9028], monthlyListeners:     295, sigmaKm:  8, region: 'internacional', country: 'IT' },
+  { name: 'Moscou',                 center: [ 37.6173,  55.7558], monthlyListeners:     290, sigmaKm: 11, region: 'internacional', country: 'RU' },
+  { name: 'Dhaka',                  center: [ 90.4125,  23.8103], monthlyListeners:     287, sigmaKm: 10, region: 'internacional', country: 'BD' },
 ];
 
 /** Total de usuários simulados — per feedback "simular 10k usuários online". */
