@@ -224,16 +224,26 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
  * Tamanho do dot: 3px (state/region) → 4px (cityMid/cityPeak).
  * Glow halo verde de 12px difuso entra a partir de z=10.7 só no peak.
  *
- * ─── ESCALA PROPORCIONAL POR TIER ───
+ * ─── ESCALA PROPORCIONAL POR CIDADE ───
  *
- * Tier definido pela contagem de ativos (`tierFor`):
- *   xl ≥ 400  /  l ≥ 250  /  m ≥ 130  /  s ≥ 70  /  xs <70
+ * Per feedback "cabem os pontos máximos dentro da tela ... conforme
+ * vai diminuindo o zoom, aí sim diminui proporcionalmente":
  *
- * Cidade XL no dataset atual: SP. Tiers menores (RJ, BH, etc) seguem
- * a mesma curva mas em escala reduzida — proporção fixa contra o
- * cityPeak de cada tier (QUOTAS_BY_TIER abaixo). XS especial: só 2
- * dots no continent + 1-2 no cityPeak (presença simbólica pra
- * cidade pequena ficar visível em todos os zooms).
+ *   cityPeak / cityMid:  CAP FIXO igual pra TODAS as cidades
+ *     (840 / 294 dots). Niterói preenche a tela igual SP quando
+ *     o user zoma nela.
+ *
+ *   region / state / continent:  PROPORCIONAL ao monthlyListeners
+ *     da cidade. Sqrt scale pra amortecer desbalanço extremo do
+ *     CSV (SP=2M vs RJ=508).
+ *
+ *     scale = sqrt(ml / 2074181)
+ *
+ *   Exemplos:
+ *     SP   → scale 1.000 → region 143 / state 59 / continent 30
+ *     BH   → scale 0.633 → region  91 / state 37 / continent 19
+ *     RJ   → scale 0.016 → region   2 / state  1 / continent  1
+ *     Niter→ scale 0.011 → region   2 / state  1 / continent  1
  *
  * ─── ONDE AJUSTAR ───
  * Tudo nas TABELAS abaixo (QUOTAS_BY_TIER / SIZE_BY_RANGE /
@@ -363,23 +373,42 @@ const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd:
   cityPeak: { min: 10,   peakStart: 11.5, peakEnd: 12.5, max: 13   },
 };
 
-/** Quota efetiva pra (city, range). XS tem regra dinâmica especial. */
-function quotaFor(active: number, range: QuotaRange): number {
-  const tier = tierFor(active);
-  if (tier === 'xs') {
-    // Cidade pequena: 1-2 dots simbólicos no cityPeak (zoom máximo)
-    // e também no continent (per feedback "sempre manter visíveis
-    // pontos"). Ranges intermediários (state/region/cityMid) ficam
-    // vazios — a presença dela é só pelo heatmap/ambient ali.
-    if (range === 'cityPeak') {
-      return Math.min(2, Math.max(1, Math.floor(active / 80)));
-    }
-    if (range === 'continent') {
-      return 2;
-    }
-    return 0;
-  }
-  return QUOTAS_BY_TIER[tier][range];
+/** Maior monthlyListeners do dataset (SP). Usado como referência
+ *  pra escala proporcional dos ranges externos. Hardcoded pra não
+ *  depender de import circular — atualizar se o top mudar. */
+const MAX_MONTHLY_LISTENERS = 2074181;
+
+/** Quota efetiva pra (city, range).
+ *
+ *  Per feedback "vamos simular dados reais dessas cidades MENOS que
+ *  cabem os pontos máximos dentro da tela, e conforme vai diminuindo
+ *  o zoom, aí sim diminui proporcionalmente":
+ *
+ *  - cityPeak (z 11-12) e cityMid (z 9-10): CAP FIXO igual pra
+ *    TODAS as cidades — quando o user zoma numa cidade, ela
+ *    "preenche a tela" independente do tamanho real. SP, BH, RJ,
+ *    Niterói — todas mostram 840 dots no peak quando focadas.
+ *
+ *  - region/state/continent: PROPORCIONAL ao monthlyListeners da
+ *    cidade. Usa sqrt scale pra amortecer o desbalanço extremo do
+ *    dataset (SP=2M vs RJ=508 → linear seria 0.025% → invisível).
+ *    sqrt(508/2.07M) = 0.0157 vs sqrt(1) = 1.0 → ainda dominante
+ *    mas RJ não some completamente. */
+function quotaFor(monthlyListeners: number, range: QuotaRange): number {
+  // Caps fixos: quando o user zoma na cidade, preenche a tela igual
+  if (range === 'cityPeak') return 840;
+  if (range === 'cityMid')  return 294;
+
+  // Demais ranges: proporcional ao tamanho da cidade (sqrt scale)
+  const scale = Math.sqrt(
+    Math.max(0, monthlyListeners) / MAX_MONTHLY_LISTENERS,
+  );
+  const baseQuota: Record<'continent' | 'state' | 'region', number> = {
+    region:    143,
+    state:      59,
+    continent:  30,
+  };
+  return Math.max(1, Math.round(baseQuota[range] * scale));
 }
 
 /** Land mask aproximada do Brasil continental.
@@ -654,14 +683,23 @@ function thinByMinPxDist(
  *  o state, per feedback "não precisam respeitar a distância mínima a
  *  partir do zoom 7". */
 function generateAllQuotaPoints(
-  cities: Array<{ city: string; active: number; center: [number, number]; sigmaKm: number }>,
+  cities: Array<{
+    city: string;
+    active: number;
+    center: [number, number];
+    sigmaKm: number;
+    monthlyListeners: number;
+  }>,
 ): GeoJSON.Feature[] {
   const stateRaw: GeoJSON.Feature[] = [];
   const others:   GeoJSON.Feature[] = [];
   const ranges: QuotaRange[] = ['continent', 'state', 'region', 'cityMid', 'cityPeak'];
   for (const c of cities) {
     for (const r of ranges) {
-      const n = quotaFor(c.active, r);
+      // quotaFor agora usa monthlyListeners (peso real do CSV) ao
+      // invés de active count — cityPeak/cityMid são cap fixo,
+      // ranges externos escalam proporcionalmente.
+      const n = quotaFor(c.monthlyListeners, r);
       if (n <= 0) continue;
       const features = generateCityQuotaPoints(c, r, n);
       if (r === 'state') stateRaw.push(...features);

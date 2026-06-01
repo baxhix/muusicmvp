@@ -203,6 +203,12 @@ export interface CityStats {
    *  dots gerados — SP (sigmaKm=14) espalha muito mais que Sorocaba
    *  (sigmaKm=5). Vem do CITY_SEEDS, copiado aqui pra evitar lookup. */
   sigmaKm: number;
+  /** Ouvintes mensais do CSV original (peso bruto). Usado pelo
+   *  quotaFor() pra escalar densidade visual proporcionalmente nos
+   *  ranges externos (continent/state/region). cityPeak/cityMid
+   *  ignoram esse valor — todas as cidades preenchem a tela igual
+   *  quando focadas. */
+  monthlyListeners: number;
 }
 
 export function aggregateByCity(users: MockUser[]): CityStats[] {
@@ -220,6 +226,7 @@ export function aggregateByCity(users: MockUser[]): CityStats[] {
         superfans: 0,
         center: seed.center,
         sigmaKm: seed.sigmaKm,
+        monthlyListeners: seed.monthlyListeners,
       };
       map.set(u.city, entry);
     }
