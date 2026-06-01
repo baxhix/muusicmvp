@@ -1039,13 +1039,32 @@ export default function MapSimulationLayer() {
       const activeMarkers: mapboxgl.Marker[] = [];
 
       const REVEAL_MIN_ZOOM        = 10;
-      const REVEAL_BATCH_SIZE      = 3;
+      /* BATCH 2 + MAX 3 per feedback "Reduza pela metade a
+       * quantidade de miniaturas dos usuário que vão aparecendo
+       * na tela" (eram 3 e 6 respectivamente). */
+      const REVEAL_BATCH_SIZE      = 2;
       const REVEAL_CYCLE_MS        = 5000;
       const REVEAL_STAGGER_MIN_MS  = 1000;
       const REVEAL_STAGGER_MAX_MS  = 2200;
       const REVEAL_LIFETIME_MS     = 10000;  // per feedback "aumente para 10s"
       const REVEAL_EXIT_MS         = 500;    // saída também mais suave (era 400)
-      const REVEAL_MAX_ACTIVE      = 6;
+      const REVEAL_MAX_ACTIVE      = 3;
+      /* Mensagens mock pro balão "direct" que sai do avatar.
+       * Per feedback: "Simule uma caixa de mensagem ... saindo
+       * de um avatar com uma mensagem/direct que o usuário
+       * enviou". Pool curto de mensagens típicas de fan-chat;
+       * o índice é determinístico por avatarSeed pra não trocar
+       * a mensagem entre re-renders do mesmo usuário. */
+      const MOCK_DIRECTS = [
+        'Oi, tudo bem?',
+        'viu o show ontem?',
+        'que demais o álbum 🔥',
+        'me passa o setlist?',
+        'ana é tudo!!!',
+        'fui no fanmeet ontem',
+        'qm tá ouvindo aí?',
+        'curtiu a nova faixa?',
+      ] as const;
       /* Margem de segurança pra evitar que o avatar nasça grudado
        * na borda da tela. O ponto pode estar tecnicamente dentro
        * do bounds geográfico mas o avatar (38px alto + nome + box
@@ -1111,6 +1130,71 @@ export default function MapSimulationLayer() {
          */
         const el = document.createElement('div');
         el.className = 'mapsim-reveal';
+
+        /* ── BALÃO DE DIRECT MOCK (acima do avatar) ─────────────
+         * Per feedback "Simule uma caixa de mensagem, preta,
+         * totalmente arredondada, responsiva ... saindo de um
+         * avatar com uma mensagem/direct que o usuário enviou:
+         * escreveu: (cinza pequeno) / Oi, tudo bem? (branco).
+         * Ao clicar abre detalhe de chat. Visível por 10s e ao
+         * sumir vira mensagem não lida mocada."
+         *
+         * Implementação: button preto rounded acima da foto.
+         * Width auto + max-width 220px → caixa "responsiva ao
+         * tamanho da mensagem" como pedido.
+         *
+         * Click dispara `app:mock-direct-open` (consumidor abre
+         * o chat detail). Quando o avatar sai sem o usuário ter
+         * clicado, dispara `app:mock-direct-unread` pro contador
+         * de não lidas. As duas dispatches são "hooks" — o
+         * consumer (se existir) decide o que fazer. */
+        const msgIdx =
+          ((((p.avatarSeed ?? 0) + picIdx) % MOCK_DIRECTS.length) + MOCK_DIRECTS.length) %
+          MOCK_DIRECTS.length;
+        const directText = MOCK_DIRECTS[msgIdx];
+
+        const msg = document.createElement('button');
+        msg.type = 'button';
+        msg.className = 'mapsim-reveal-msg';
+        msg.setAttribute('aria-label', `Abrir conversa com ${firstName}: ${directText}`);
+
+        const msgPrefix = document.createElement('span');
+        msgPrefix.className = 'mapsim-reveal-msg-prefix';
+        msgPrefix.textContent = 'escreveu:';
+        msg.appendChild(msgPrefix);
+
+        const msgTextEl = document.createElement('span');
+        msgTextEl.className = 'mapsim-reveal-msg-text';
+        msgTextEl.textContent = directText;
+        msg.appendChild(msgTextEl);
+
+        el.appendChild(msg);
+
+        // Flag pra distinguir "clicado/lido" vs "expirou sem ler"
+        // na hora do cleanup do marker.
+        let msgClicked = false;
+
+        msg.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          msgClicked = true;
+          try {
+            window.dispatchEvent(
+              new CustomEvent('app:mock-direct-open', {
+                detail: {
+                  name:    firstName,
+                  picId,
+                  text:    directText,
+                  sourceId: (p as FeatureProps).id,
+                },
+              }),
+            );
+          } catch { /* SSR / detached — ignorar */ }
+          // Some o balão (já "lido"). Photo + nome continuam
+          // até o lifecycle natural do avatar.
+          msg.style.opacity = '0';
+          msg.style.transform = 'scale(0.92) translateY(-2px)';
+          msg.style.pointerEvents = 'none';
+        });
 
         const photoWrap = document.createElement('div');
         photoWrap.className = 'mapsim-reveal-photo-wrap';
@@ -1198,6 +1282,23 @@ export default function MapSimulationLayer() {
             const idx = activeMarkers.indexOf(marker);
             if (idx >= 0) activeMarkers.splice(idx, 1);
             removeT = null;
+            /* Se o balão expirou sem ser clicado, ele "vira
+             * mensagem não lida" — dispatch pro contador mockar
+             * o badge de unread. */
+            if (!msgClicked) {
+              try {
+                window.dispatchEvent(
+                  new CustomEvent('app:mock-direct-unread', {
+                    detail: {
+                      name:     firstName,
+                      picId,
+                      text:     directText,
+                      sourceId: (p as FeatureProps).id,
+                    },
+                  }),
+                );
+              } catch { /* ignore */ }
+            }
           }, lifetimeMs + REVEAL_EXIT_MS);
           revealTimers.push(exitT, removeT);
         };
