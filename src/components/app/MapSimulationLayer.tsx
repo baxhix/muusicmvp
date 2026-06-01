@@ -351,7 +351,7 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
  *   cityMid:  z 9–10 → 294 dots (35%, 70% da tela)
  *   cityPeak: z 10–12 → preenche até 840 dots (100%, tela toda) */
 const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
-  continent: { min: 3.0,  peakStart: 3.3,  peakEnd: 5.4,  max: 5.8  },
+  continent: { min: 2.5,  peakStart: 2.5,  peakEnd: 5.4,  max: 5.8  },
   state:    { min: 5.5,  peakStart: 6,    peakEnd: 7,    max: 7.5  },
   region:   { min: 7,    peakStart: 7.3,  peakEnd: 8,    max: 9    },
   cityMid:  { min: 8.5,  peakStart: 9,    peakEnd: 10,   max: 11   },
