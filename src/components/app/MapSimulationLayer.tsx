@@ -353,7 +353,19 @@ function generateCityQuotaPoints(
    * garante espalhamento regional pra que o pós-processamento Poisson
    * consiga manter spacing 24px @ z5. */
   const factor = SIGMA_FACTOR_BY_RANGE[range];
-  const minSigmaKm = range === 'state' ? 150 : 2;
+  /* Piso state: 300km. Cálculo:
+   *   - Spacing mínimo 24px @ z5 → área quadrada por dot = 576px²
+   *   - 59 dots ⇒ área mínima total ≈ 184x184px @ z5
+   *   - Pra ~70% dos dots caírem nessa área (1σ envelope),
+   *     sigma_px @ z5 ≈ 92px → ≈ 450km
+   *   - Mas 70% basta — vamos com piso 300km (sigma_px ≈ 61px),
+   *     que dá envelope 3σ ≈ 366px @ z5 com folga pros 59 dots
+   *
+   * Sem esse piso, o sigma efetivo de SP (14km × 8.0 = 112km)
+   * gerava só ~23px de envelope @ z5 — o Poisson thinning
+   * descartava ~80% dos candidates e sobrava ~10 dots visíveis
+   * em SP (bug: "no zoom 6.0 aparece apenas a onda pulsante"). */
+  const minSigmaKm = range === 'state' ? 300 : 2;
   const sigmaKm = Math.max(minSigmaKm, city.sigmaKm * factor);
   const cosLat = Math.cos((cy * Math.PI) / 180);
   const sigmaLat = sigmaKm / 111;
