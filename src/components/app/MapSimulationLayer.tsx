@@ -275,14 +275,16 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
                    // Piso absoluto 150km via generateCityQuotaPoints.
   region:   1.30,  // espalha pela área do pulse (era 0.90, bumpado pra
                    // acomodar 143 dots sem amontoar no centro)
-  cityMid:  1.50,  // per feedback "espalhados por 70% da tela" no z9-10.
-                   // SP (sigmaKm=14×1.5=21km) cria 3σ envelope de ~126km
-                   // — viewport @ z9.5 ≈ 100km, então cobre >70% da tela.
-                   // Antes 0.55 dava só ~46km (~30% da tela).
+  cityMid:  0.55,  // perímetro real da cidade — IGUAL ao cityPeak per
+                   // feedback "Remova a transição/animação dos pontos
+                   // próximos à São Paulo". Antes era 1.5 (spread amplo
+                   // pra "70% da tela"), mas como cityPeak compartilha
+                   // a seed, sigma diferente fazia os 294 dots "saltarem"
+                   // de spread amplo pra concentrado no crossfade z10-11.5.
+                   // Agora os 294 do cityMid e os 294 primeiros do
+                   // cityPeak ficam EXATAMENTE nas mesmas coords →
+                   // crossfade é puro fade de opacity, sem movimento.
   cityPeak: 0.55,  // perímetro real da cidade — concentra os 840 dots.
-                   // No crossfade z10-11.5 cityMid (sigma 21km) → cityPeak
-                   // (sigma 7.7km): pontos "contraem" do spread amplo
-                   // pra área concentrada — efeito "respiração inversa".
 };
 
 /** Range zooms — overlap pequeno entre adjacentes pro crossfade.
