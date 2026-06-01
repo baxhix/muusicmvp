@@ -322,19 +322,17 @@
   top: 0;
   left: 0;
   border-radius: 50%;
-  /* Intensidades subidas per feedback "deixe as ondas mais
-   * intensas e não tão suaves":
-   *   center alpha:  0.22 → 0.45 (mais saturado no núcleo)
-   *   meio alpha:    0.08 → 0.22
-   *   border alpha:  0.35 → 0.70 (linha do anel bem mais visível)
-   *   border width:  1 → 1.5px */
+  /* Per feedback "Remova a borda/traço sólido das ondas pulsantes".
+   * O border 1.5px solid foi removido — só o gradient radial faz o
+   * desenho da onda agora. Bordas internas do gradient compensadas
+   * (alpha center +5pts, meio +3pts) pra manter intensidade visual
+   * sem o aro nítido. */
   background: radial-gradient(
     circle,
-    rgba(61, 219, 116, 0.45) 0%,
-    rgba(61, 219, 116, 0.22) 45%,
+    rgba(61, 219, 116, 0.50) 0%,
+    rgba(61, 219, 116, 0.25) 45%,
     transparent 75%
   );
-  border: 1.5px solid rgba(61, 219, 116, 0.70);
   opacity: 0;
   /* willChange força layer próprio na GPU pra animação ficar
    * suave sem disputar com outros elementos. */
