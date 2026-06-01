@@ -231,11 +231,18 @@ function tierFor(active: number): CityTier {
  *  region (zoom ~8.6) e state (zoom ~6) ficam discretos — quem
  *  comunica volume nesses zooms é o pulse + heatmap. Os dots aqui
  *  são "tempero". */
+/* Per feedback: progressão escalonada em SP (% do total no z12=840):
+ *   z 6-7  →  7% =  59 dots (state)
+ *   z 7-8  → 17% = 143 dots (region)
+ *   z 9-10 → 35% = 294 dots (cityMid)
+ *   z 10-12 → preenche até 100% = 840 dots (cityPeak)
+ *
+ * Tiers menores escalonados na mesma proporção contra seu cityPeak. */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 18, region: 32, cityMid: 44, cityPeak: 840 },  // state TRIPLICADO (era 6) per feedback
-  l:  { state: 12, region: 24, cityMid: 32, cityPeak: 180 },  // state TRIPLICADO (era 4)
-  m:  { state:  9, region: 14, cityMid: 20, cityPeak: 100 },  // state TRIPLICADO (era 3)
-  s:  { state:  0, region:  6, cityMid: 10, cityPeak:  50 },
+  xl: { state: 59, region: 143, cityMid: 294, cityPeak: 840 },
+  l:  { state: 13, region:  31, cityMid:  63, cityPeak: 180 },
+  m:  { state:  7, region:  17, cityMid:  35, cityPeak: 100 },
+  s:  { state:  4, region:   9, cityMid:  18, cityPeak:  50 },
 };
 
 /** Tamanho do dot (raio em px) por range.
@@ -262,21 +269,20 @@ const SIZE_BY_RANGE: Record<QuotaRange, number> = {
  *  cityMid/cityPeak usam factor menor pra ficar "espalhado pela
  *  cidade" (geografia real). */
 const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
-  state:    4.00,  // espalhamento bem amplo — per feedback z5-7 "mesmo
-                   // que não estejam na região exata". Os pontos saem
-                   // do raio da cidade pra respeitar o spacing 24px @ z5.
-                   // Combinado com um piso absoluto de 80km no
-                   // generateCityQuotaPoints (cidades pequenas espalham
-                   // pela região, não ficam coladas no centro).
-  region:   0.90,  // pulse area, "área que aparece a camada verde"
-  cityMid:  0.55,  // perímetro real da cidade
-  cityPeak: 0.55,  // mesmo perímetro da cidade real. Antes era 1.10 (
-                   // "espalhar pra preencher tela"), mas com sigma maior
-                   // que o raio do viewport, ~85% dos dots caíam FORA
-                   // do que o usuário vê. Em SP (sigmaKm=14×0.55=7.7km)
-                   // o viewport z=12 cobre ~1σ → 68%² ≈ 46% dos dots
-                   // visíveis. Com 840 dots, ~386 caem no viewport
-                   // (densidade real de "preencher tela").
+  state:    8.00,  // espalhamento amplo (era 4.00). 59 dots c/ spacing
+                   // 24px @ z5 precisa de área grande — sigma maior
+                   // dá espaço pro Poisson-disk acomodar todos.
+                   // Piso absoluto 150km via generateCityQuotaPoints.
+  region:   1.30,  // espalha pela área do pulse (era 0.90, bumpado pra
+                   // acomodar 143 dots sem amontoar no centro)
+  cityMid:  1.50,  // per feedback "espalhados por 70% da tela" no z9-10.
+                   // SP (sigmaKm=14×1.5=21km) cria 3σ envelope de ~126km
+                   // — viewport @ z9.5 ≈ 100km, então cobre >70% da tela.
+                   // Antes 0.55 dava só ~46km (~30% da tela).
+  cityPeak: 0.55,  // perímetro real da cidade — concentra os 840 dots.
+                   // No crossfade z10-11.5 cityMid (sigma 21km) → cityPeak
+                   // (sigma 7.7km): pontos "contraem" do spread amplo
+                   // pra área concentrada — efeito "respiração inversa".
 };
 
 /** Range zooms — overlap pequeno entre adjacentes pro crossfade.
@@ -285,18 +291,22 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
  *  EXCLUSIVO. O mapa cap em 12 (Globe.tsx), então o usuário nunca
  *  passa daí; setar 13 garante render em z=12 exato. Bug anterior:
  *  `maxzoom: 12` + `map.maxZoom: 12` → dots somem no pinch máximo. */
+/* Per feedback (5/jun/2026): faixas redefinidas pra escalonar SP em
+ * 7% → 17% → 35% → 100% do z12 conforme o zoom in:
+ *   state:    z 6–7  → 59 dots (7%)
+ *   region:   z 7–8  → 143 dots (17%)
+ *   cityMid:  z 9–10 → 294 dots (35%, 70% da tela)
+ *   cityPeak: z 10–12 → preenche até 840 dots (100%, tela toda) */
 const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
-  state:    { min: 4.7,  peakStart: 5,    peakEnd: 6.5,  max: 7    },
-  region:   { min: 6.5,  peakStart: 7,    peakEnd: 9,    max: 9.5  },
-  /* cityMid: peak total em z 9–11 (per feedback "no zoom 9 a 11"),
-   * fade-out longo até z 11.9 — sobrepõe com cityPeak no z 11–11.9
-   * pra transição "legal" dos 44 → 840 dots sem salto. */
-  cityMid:  { min: 9.0,  peakStart: 9.3,  peakEnd: 11,   max: 11.9 },
-  /* cityPeak: fade-in longo de z 11 até 11.9 (faixa de 0.9 zoom),
-   * peak em 11.9–12.5. Os 840 dots aparecem GRADUALMENTE durante
-   * o pinch enquanto os 44 do cityMid vão saindo — efeito de
-   * "densidade crescendo" em vez de "flash de 800 dots novos". */
-  cityPeak: { min: 11.0, peakStart: 11.9, peakEnd: 12.5, max: 13   },
+  state:    { min: 5.5,  peakStart: 6,    peakEnd: 7,    max: 7.5  },
+  region:   { min: 7,    peakStart: 7.3,  peakEnd: 8,    max: 9    },
+  cityMid:  { min: 8.5,  peakStart: 9,    peakEnd: 10,   max: 11   },
+  /* cityPeak: fade-in longo de z 10 até 11.5, peak em 11.5–12.5
+   * (per feedback "Do zoom 10 até 12 vai preenchendo com o total").
+   * No z 10-11.5 cityMid sai (sigma 21km → spread amplo) e cityPeak
+   * entra (sigma 7.7km → concentrado), criando a sensação de
+   * "preencher a tela" gradual. */
+  cityPeak: { min: 10,   peakStart: 11.5, peakEnd: 12.5, max: 13   },
 };
 
 /** Quota efetiva pra (city, range). XS tem regra dinâmica especial. */
@@ -343,7 +353,7 @@ function generateCityQuotaPoints(
    * garante espalhamento regional pra que o pós-processamento Poisson
    * consiga manter spacing 24px @ z5. */
   const factor = SIGMA_FACTOR_BY_RANGE[range];
-  const minSigmaKm = range === 'state' ? 80 : 2;
+  const minSigmaKm = range === 'state' ? 150 : 2;
   const sigmaKm = Math.max(minSigmaKm, city.sigmaKm * factor);
   const cosLat = Math.cos((cy * Math.PI) / 180);
   const sigmaLat = sigmaKm / 111;
