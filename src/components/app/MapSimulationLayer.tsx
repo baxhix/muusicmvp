@@ -314,21 +314,26 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
  *             no z 9-11, mesma escala visual do cityPeak)
  *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
-  /* Per feedback iterativo: "pontos verdes no zoom 2.5 estão
-   * grossos, diminua eles pela metade até o zoom 7.5".
+  /* Per feedback iterativo (3a rodada): "pontos verdes no zoom 2.5
+   * estão grossos, diminua eles pela metade até o zoom 7.5".
    *
-   * As faixas que cobrem z 2.5 → 7.5 são continent (2.5-5.8) e
-   * state (5.5-7.5). Ambas reduzidas pela metade — continent 0.4
-   * → 0.2 (0.4px diâm.), state 1.5 → 0.75 (1.5px diâm.). region/
-   * cityMid/cityPeak mantidos em 2 (4px diâm.) porque dominam
-   * acima de 7.5 e o feedback explicitamente limita o ajuste até
-   * lá. Histórico: continent já tinha sido cortado de 0.75 → 0.4
-   * num round anterior; agora vai pra 0.2. */
-  continent: 0.2,  // 0.4px diameter
-  state:    0.75,  // 1.5px diameter
-  region:   2,     // 4px diameter — per feedback "pequenos pontos de
-                   //  4px ao redor" pra dar consistência visual com
-                   //  cityMid/cityPeak no zoom intermediário (7-8).
+   * As faixas que cobrem z 2.5 → 7.5 são continent (2.5-5.8), state
+   * (5.5-7.5) e o lead-in de region (7-9, mas z 7-7.5 também conta).
+   * Todas reduzidas pela metade DE NOVO neste round; region entra
+   * no corte porque o feedback se repetiu mesmo após o ajuste do
+   * round anterior, sinalizando que o problema também vive na faixa
+   * de z 7-7.5 (region).
+   *
+   * Histórico:
+   *   continent: 0.75 → 0.4 → 0.2 → 0.1   (0.2px diâm. agora)
+   *   state:    1.5  → 0.75 → 0.375        (0.75px diâm. agora)
+   *   region:   2    → 1                    (2px diâm. agora)
+   *
+   * cityMid/cityPeak intocados (dominam acima de z 7.5/8, fora do
+   * intervalo que o feedback ataca). */
+  continent: 0.1,  // 0.2px diameter
+  state:    0.375, // 0.75px diameter
+  region:   1,     // 2px diameter
   cityMid:  2,     // 4px diameter
   cityPeak: 2,     // 4px diameter
 };
