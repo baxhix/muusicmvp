@@ -337,11 +337,13 @@
  * flag mapSimulation — só aparece pro brainstorm owner. */
 .zoomIndicator {
   position: fixed;
-  /* O NowPlaying ocupa ~180px do bottom no desktop. Colocamos o
-   * indicator 8px acima dele. */
-  bottom: 200px;
+  /* No desktop o NowPlaying ocupa até ~220px do bottom. Subimos
+   * pra 240px pra garantir que o indicator fique acima do player
+   * e não seja coberto. z-index 25 pra ficar acima de overlays
+   * intermediários (player tem z-index ~22). */
+  bottom: 240px;
   left: 24px;
-  z-index: 21;
+  z-index: 25;
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -374,9 +376,9 @@
 
 @media (max-width: 640px) {
   .zoomIndicator {
-    /* No mobile o player ocupa menos altura — ajustamos o
-     * bottom proporcionalmente. */
-    bottom: 180px;
+    /* +40px per feedback "no mobile, posicione 40px acima"
+     * (180 → 220). */
+    bottom: 220px;
     left: 12px;
     padding: 5px 10px 6px;
   }
