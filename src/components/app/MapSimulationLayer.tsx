@@ -1199,69 +1199,72 @@ export default function MapSimulationLayer() {
         el.className = 'mapsim-reveal';
 
         /* ── BALÃO DE DIRECT MOCK (acima do avatar) ─────────────
-         * Per feedback "Simule uma caixa de mensagem, preta,
-         * totalmente arredondada, responsiva ... saindo de um
-         * avatar com uma mensagem/direct que o usuário enviou:
-         * escreveu: (cinza pequeno) / Oi, tudo bem? (branco).
-         * Ao clicar abre detalhe de chat. Visível por 10s e ao
-         * sumir vira mensagem não lida mocada."
-         *
-         * Implementação: button preto rounded acima da foto.
-         * Width auto + max-width 220px → caixa "responsiva ao
-         * tamanho da mensagem" como pedido.
+         * Per feedback original "Simule uma caixa de mensagem,
+         * preta, totalmente arredondada, responsiva ... saindo
+         * de um avatar com uma mensagem/direct". Iteração atual:
+         *   - Intercala: aparece em ~50% dos avatares (não em
+         *     todos). Decisão via `avatarSeed % 2` pra ser
+         *     determinístico — mesmo user → mesmo comportamento.
+         *   - Texto fixo "Mandou para você" (era "escreveu:").
+         *   - Tamanho um pouco maior (CSS).
          *
          * Click dispara `app:mock-direct-open` (consumidor abre
          * o chat detail). Quando o avatar sai sem o usuário ter
          * clicado, dispara `app:mock-direct-unread` pro contador
-         * de não lidas. As duas dispatches são "hooks" — o
-         * consumer (se existir) decide o que fazer. */
+         * de não lidas. */
+        const seedNum = p.avatarSeed ?? 0;
+        const showMsg = (seedNum % 2) === 0;
         const msgIdx =
-          ((((p.avatarSeed ?? 0) + picIdx) % MOCK_DIRECTS.length) + MOCK_DIRECTS.length) %
+          (((seedNum + picIdx) % MOCK_DIRECTS.length) + MOCK_DIRECTS.length) %
           MOCK_DIRECTS.length;
         const directText = MOCK_DIRECTS[msgIdx];
-
-        const msg = document.createElement('button');
-        msg.type = 'button';
-        msg.className = 'mapsim-reveal-msg';
-        msg.setAttribute('aria-label', `Abrir conversa com ${firstName}: ${directText}`);
-
-        const msgPrefix = document.createElement('span');
-        msgPrefix.className = 'mapsim-reveal-msg-prefix';
-        msgPrefix.textContent = 'escreveu:';
-        msg.appendChild(msgPrefix);
-
-        const msgTextEl = document.createElement('span');
-        msgTextEl.className = 'mapsim-reveal-msg-text';
-        msgTextEl.textContent = directText;
-        msg.appendChild(msgTextEl);
-
-        el.appendChild(msg);
 
         // Flag pra distinguir "clicado/lido" vs "expirou sem ler"
         // na hora do cleanup do marker.
         let msgClicked = false;
+        let msg: HTMLButtonElement | null = null;
 
-        msg.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          msgClicked = true;
-          try {
-            window.dispatchEvent(
-              new CustomEvent('app:mock-direct-open', {
-                detail: {
-                  name:    firstName,
-                  picId,
-                  text:    directText,
-                  sourceId: (p as FeatureProps).id,
-                },
-              }),
-            );
-          } catch { /* SSR / detached — ignorar */ }
-          // Some o balão (já "lido"). Photo + nome continuam
-          // até o lifecycle natural do avatar.
-          msg.style.opacity = '0';
-          msg.style.transform = 'scale(0.92) translateY(-2px)';
-          msg.style.pointerEvents = 'none';
-        });
+        if (showMsg) {
+          msg = document.createElement('button');
+          msg.type = 'button';
+          msg.className = 'mapsim-reveal-msg';
+          msg.setAttribute('aria-label', `Abrir conversa com ${firstName}: ${directText}`);
+
+          const msgPrefix = document.createElement('span');
+          msgPrefix.className = 'mapsim-reveal-msg-prefix';
+          msgPrefix.textContent = 'Mandou para você';
+          msg.appendChild(msgPrefix);
+
+          const msgTextEl = document.createElement('span');
+          msgTextEl.className = 'mapsim-reveal-msg-text';
+          msgTextEl.textContent = directText;
+          msg.appendChild(msgTextEl);
+
+          el.appendChild(msg);
+
+          const msgEl = msg;
+          msg.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            msgClicked = true;
+            try {
+              window.dispatchEvent(
+                new CustomEvent('app:mock-direct-open', {
+                  detail: {
+                    name:    firstName,
+                    picId,
+                    text:    directText,
+                    sourceId: (p as FeatureProps).id,
+                  },
+                }),
+              );
+            } catch { /* SSR / detached — ignorar */ }
+            // Some o balão (já "lido"). Photo + nome continuam
+            // até o lifecycle natural do avatar.
+            msgEl.style.opacity = '0';
+            msgEl.style.transform = 'scale(0.92) translateY(-2px)';
+            msgEl.style.pointerEvents = 'none';
+          });
+        }
 
         const photoWrap = document.createElement('div');
         photoWrap.className = 'mapsim-reveal-photo-wrap';
@@ -1351,8 +1354,10 @@ export default function MapSimulationLayer() {
             removeT = null;
             /* Se o balão expirou sem ser clicado, ele "vira
              * mensagem não lida" — dispatch pro contador mockar
-             * o badge de unread. */
-            if (!msgClicked) {
+             * o badge de unread. Só se o balão chegou a aparecer
+             * (showMsg true) — avatares sem balão não geram
+             * unread fantasma. */
+            if (showMsg && !msgClicked) {
               try {
                 window.dispatchEvent(
                   new CustomEvent('app:mock-direct-unread', {
