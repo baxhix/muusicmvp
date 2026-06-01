@@ -45,7 +45,7 @@ export type Country =
   | 'UK' | 'DE' | 'IT' | 'FR' | 'ES'
   | 'CN' | 'AU' | 'RU' | 'BD' | 'TH'
   | 'CD' | 'SD' | 'IQ' | 'ZA' | 'AF' | 'NG'
-  | 'EC' | 'CO' | 'VE' | 'US';
+  | 'EC' | 'CO' | 'VE' | 'US' | 'IE';
 
 /** Override do pulse da cidade — pra simular "burst de crescimento"
  *  em cidades menores (forçar XL mesmo com poucos ouvintes) e/ou
@@ -156,6 +156,9 @@ export const CITY_SEEDS: CitySeed[] = [
   { name: 'Khartoum',               center: [ 32.5599,  15.5007], monthlyListeners:     230, sigmaKm:  9, region: 'internacional', country: 'SD', pulseOverride: { color: 'pink' } },
   { name: 'Kabul',                  center: [ 69.2075,  34.5553], monthlyListeners:     218, sigmaKm:  8, region: 'internacional', country: 'AF', pulseOverride: { color: 'pink' } },
   { name: 'Kisangani',              center: [ 25.1900,   0.5167], monthlyListeners:     215, sigmaKm:  7, region: 'internacional', country: 'CD', pulseOverride: { color: 'pink' } },
+  /* Dublin (IE) — adicionado pra cobrir o exemplo do feedback
+   * "Sua afinidade musical está em Dublin, na Irlanda". */
+  { name: 'Dublin',                 center: [ -6.2603,  53.3498], monthlyListeners:     210, sigmaKm:  7, region: 'internacional', country: 'IE' },
 ];
 
 /** Total de usuários simulados — per feedback "simular 10k usuários online". */

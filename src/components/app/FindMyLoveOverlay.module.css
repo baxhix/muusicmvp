@@ -109,15 +109,15 @@
 }
 
 /* ── MATCHED stage ────────────────────────────────────────── */
-/* Card CENTRALIZADO na página per feedback. Antes era bottom: 32px;
- * agora vai 100% no centro com translate dos dois eixos. */
+/* Card CENTRALIZADO na página per feedback. Largura reduzida
+ * (380 → 300px) per round atual "deixe o card menor na largura". */
 .matchCard {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(380px, calc(100vw - 32px));
-  padding: 18px 22px 18px;
+  width: min(300px, calc(100vw - 32px));
+  padding: 18px 20px 16px;
   border-radius: 16px;
   background: rgba(11, 11, 14, 0.92);
   /* Borda quase invisível — só pra "encerrar" o card sobre o
@@ -176,6 +176,28 @@
   background: rgba(255, 255, 255, 0.03);
 }
 .matchFact strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Copy de afinidade musical — 2 parágrafos centralizados.
+ * Per feedback "Sua afinidade musical está em Dublin, na Irlanda /
+ * Vocês são superfãs de Ana Castela e adoram o álbum Lets Go
+ * Rodeo!". Sem tiles/cards aninhados — só texto puro no card
+ * (mais limpo, mais discreto). */
+.matchAffinityCopy {
+  margin: 14px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.85);
+}
+.matchAffinityCopy p {
+  margin: 0;
+}
+.matchAffinityCopy strong {
   color: #ffffff;
   font-weight: 600;
 }

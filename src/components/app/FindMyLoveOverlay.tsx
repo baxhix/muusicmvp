@@ -4,9 +4,47 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import FanverseCore from '@/components/animations/FanverseCore';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { globeStore } from '@/lib/globeStore';
-import { CITY_SEEDS } from '@/lib/mapSimulation/cities';
+import { CITY_SEEDS, type Country } from '@/lib/mapSimulation/cities';
 import styles from './FindMyLoveOverlay.module.css';
+
+/* Display em PT-BR de cada code de país — formato "{preposição}
+ * {nome}" pra encaixar direto na frase "Sua afinidade musical está
+ * em {city}, {COUNTRY_DISPLAY[country]}". Ex.: IE → "na Irlanda"
+ * resulta em "...está em Dublin, na Irlanda."
+ *
+ * Preposições escolhidas pela regra padrão de gênero/número do
+ * Português: "na" pra feminino singular, "no" pra masculino, "nos"
+ * pra plural. Bangladesh/Catar costumam ser tratados sem artigo,
+ * por isso "em" — soa natural em "está em Daca, em Bangladesh." */
+const COUNTRY_DISPLAY: Record<Country, string> = {
+  BR: 'no Brasil',
+  PT: 'em Portugal',
+  PY: 'no Paraguai',
+  CL: 'no Chile',
+  UK: 'no Reino Unido',
+  DE: 'na Alemanha',
+  IT: 'na Itália',
+  FR: 'na França',
+  ES: 'na Espanha',
+  CN: 'na China',
+  AU: 'na Austrália',
+  RU: 'na Rússia',
+  BD: 'em Bangladesh',
+  TH: 'na Tailândia',
+  CD: 'no Congo',
+  SD: 'no Sudão',
+  IQ: 'no Iraque',
+  ZA: 'na África do Sul',
+  AF: 'no Afeganistão',
+  NG: 'na Nigéria',
+  EC: 'no Equador',
+  CO: 'na Colômbia',
+  VE: 'na Venezuela',
+  US: 'nos Estados Unidos',
+  IE: 'na Irlanda',
+};
 
 /* ============================================================
  * Estados:
@@ -54,7 +92,7 @@ const PHRASE_INTERVAL_MS = SEARCHING_DURATION_MS / SEARCH_PHRASES.length;
 interface MatchInfo {
   name: string;
   city: string;
-  country: string;
+  country: Country;
   center: [number, number];
   picId: number;
   /* Métricas simuladas pra card de afinidade. */
@@ -110,6 +148,7 @@ function interpolateLngLat(
 export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<Phase>('searching');
   const [phraseIdx, setPhraseIdx] = useState(0);
+  const isMobile = useIsMobile();
   const matchRef = useRef<MatchInfo | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
@@ -166,10 +205,57 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
       return () => window.clearTimeout(t);
     }
 
+    /* ╔══════════════════════════════════════════════════════════╗
+     * ║  MOBILE: zoom out no máximo (0.5 — Globe.minZoom) + pan/  ║
+     * ║  rotate na visão de planeta. NÃO desenha trace nem        ║
+     * ║  marker do match (ficam abaixo do gate z 2.5 mesmo).      ║
+     * ║  O card centralizado já comunica a informação do match.   ║
+     * ║  Per feedback "No mobile, quando o mapa for animado para  ║
+     * ║  encontrar o match, faça com que ele vá para o zoom out   ║
+     * ║  no máximo e se movimente nessa posição".                 ║
+     * ╚══════════════════════════════════════════════════════════╝ */
+    if (isMobile) {
+      // Stage 1: zoom out total + leve giro + pitch (1500ms)
+      map.easeTo({
+        zoom: 0.5,
+        bearing: 50,
+        pitch: 30,
+        duration: 1500,
+        essential: true,
+      });
+
+      // Stage 2: continua girando + pan suave em direção ao match
+      // (mantém zoom 0.5 — fica no "planeta inteiro"), 1800ms.
+      const tMobile = window.setTimeout(() => {
+        map.easeTo({
+          center: match.center,
+          zoom: 0.5,
+          bearing: -20,
+          pitch: 15,
+          duration: 1800,
+          essential: true,
+        });
+      }, 1600);
+
+      // Stage 3: vai direto pra MATCHED após a animação (3400ms
+      // depois do início, igual ao desktop). Sem trace de linha
+      // porque o LAYER_LINE tem minzoom 2.5 e estamos em z 0.5.
+      const tMatchedMobile = window.setTimeout(() => {
+        setPhase('matched');
+      }, 3500);
+
+      return () => {
+        window.clearTimeout(tMobile);
+        window.clearTimeout(tMatchedMobile);
+      };
+    }
+
+    /* ╔══════════════════════════════════════════════════════════╗
+     * ║  DESKTOP: fluxo original em 3 stages (zoom-out + giro,    ║
+     * ║  pan pro midpoint user↔match, trace progressivo).         ║
+     * ╚══════════════════════════════════════════════════════════╝ */
+
     // Stage 1: zoom out + bearing rotation (1.5s)
-    // Zoom mínimo 2.5 — abaixo disso os outros gates do app
-    // (LAYER_HEAT minzoom 2.5, MapPulses tooFarOut) escondem tudo,
-    // então preservamos o teto inferior pra mesma sequência funcionar.
     map.easeTo({
       zoom: 2.5,
       bearing: 40,
@@ -183,9 +269,7 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
       const midLng = (USER_ORIGIN[0] + match.center[0]) / 2;
       const midLat = (USER_ORIGIN[1] + match.center[1]) / 2;
       // Distância determina zoom: cidades muito distantes precisam zoom out maior.
-      // CLAMP em 2.5: abaixo disso a linha (minzoom 2.5) some — bug
-      // reportado "no mobile o traçado não está aparecendo" quando
-      // a heurística antiga retornava 1.6 pra intercontinentais.
+      // CLAMP em 2.5: abaixo disso a linha (minzoom 2.5) some.
       const dx = Math.abs(USER_ORIGIN[0] - match.center[0]);
       const dy = Math.abs(USER_ORIGIN[1] - match.center[1]);
       const dist = Math.max(dx, dy);
@@ -339,7 +423,7 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         lineRafRef.current = null;
       }
     };
-  }, [phase, match]);
+  }, [phase, match, isMobile]);
 
   // Cleanup ao fechar
   useEffect(() => {
@@ -396,9 +480,12 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         <div className={styles.revealText}>Encontrando seu match…</div>
       )}
 
-      {/* MATCHED: card CENTRALIZADO com info de afinidade.
-       * Sem bordas/cores fortes, segue design system (dark glass
-       * com text-secondary). */}
+      {/* MATCHED: card CENTRALIZADO com info de afinidade musical.
+       * Per feedback "deixe o card menor na largura, com a frase:
+       * Sua afinidade musical está em Dublin, na Irlanda; na linha
+       * de baixo: Vocês são superfãs de Ana Castela e adoram o
+       * álbum Lets Go Rodeo!". A pílula "X% afinidade" segue no
+       * pin do mapa (não duplica no card). */}
       {phase === 'matched' && (
         <div className={styles.matchCard}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -408,20 +495,15 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
             className={styles.matchCardAvatar}
           />
           <div className={styles.matchCardName}>{match.name}</div>
-          <div className={styles.matchCardCity}>
-            {match.city}, {match.country}
-          </div>
 
-          <div className={styles.matchFacts}>
-            <div className={styles.matchFact}>
-              {match.name} ouve as mesmas músicas que você todos os dias.
-            </div>
-            <div className={styles.matchFact}>
-              Vocês têm <strong>{match.affinity}%</strong> de afinidade musical
-            </div>
-            <div className={styles.matchFact}>
-              Já ouviram a mesma música no mesmo momento <strong>{match.sameMomentCount}x</strong>
-            </div>
+          <div className={styles.matchAffinityCopy}>
+            <p>
+              Sua afinidade musical está em {match.city}, {COUNTRY_DISPLAY[match.country]}.
+            </p>
+            <p>
+              Vocês são superfãs de Ana Castela e adoram o álbum{' '}
+              <strong>Let&apos;s Go Rodeo!</strong>
+            </p>
           </div>
 
           <div className={styles.matchActions}>
