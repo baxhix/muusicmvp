@@ -65,9 +65,11 @@ function isMobileViewport(): boolean {
  *   trade aceitável pelo ganho visual. */
 const SOURCE_ID      = 'mapsim-users';
 const SOURCE_HEAT    = 'mapsim-users-heat';
-const SOURCE_AMBIENT = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
+const SOURCE_AMBIENT  = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
+const SOURCE_MARINGA  = 'mapsim-maringa';     // 24 pontos mock distribuídos em Maringá (zoom ~10.6)
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
+const LAYER_MARINGA  = 'mapsim-maringa-dots'; // 24 dots 2px verdes em Maringá (peak zoom 10.6)
 const LAYER_DOTSPARSE = 'mapsim-dot-sparse';  // pontos esparsos zoom 5-7 (sample 1/32, raio menor)
 const LAYER_DOTFAR    = 'mapsim-dot-far';     // pontos 2px verdes (sample 1/16, zoom 7-11)
 const LAYER_DOTFAR2   = 'mapsim-dot-far-2';   // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
@@ -120,6 +122,55 @@ function generateAmbientPoints(): GeoJSON.Feature[] {
         properties: { size, ambient: true },
       });
     }
+  }
+  return features;
+}
+
+/* ── 24 pontos sintéticos distribuídos em Maringá ──────────
+ *
+ * Per feedback "No nível de zoom 10.6, no mobile e desktop simule
+ * 24 pontos de 2px verdes distribuídos na região de Maringá".
+ *
+ * Maringá center: [-51.9382, -23.4205] (do CITY_SEEDS).
+ * Distribuição gaussiana com sigma 5km via mulberry32 inline
+ * (sem dependência das funções globais — geração determinística
+ * roda 1× no map.load). */
+function generateMaringaPoints(): GeoJSON.Feature[] {
+  const cx = -51.9382;
+  const cy = -23.4205;
+  const sigmaKm = 5;
+  const cosLat = Math.cos((cy * Math.PI) / 180);
+  const sigmaLat = sigmaKm / 111;
+  const sigmaLng = sigmaKm / (111 * cosLat);
+
+  // Mulberry32 PRNG inline com seed determinística
+  let s = 0x4D41524E >>> 0; // 'MARN' em ASCII hex
+  const rnd = () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  // Box-Muller pra gaussiana padrão
+  const gauss = () => {
+    let u = 0;
+    let v = 0;
+    while (u === 0) u = rnd();
+    while (v === 0) v = rnd();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  };
+
+  const features: GeoJSON.Feature[] = [];
+  for (let i = 0; i < 24; i += 1) {
+    features.push({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [cx + gauss() * sigmaLng, cy + gauss() * sigmaLat],
+      },
+      properties: { mockMaringa: true },
+    });
   }
   return features;
 }
@@ -218,10 +269,11 @@ export default function MapSimulationLayer() {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
           LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR,
-          LAYER_DOTSPARSE, LAYER_AMBIENT, LAYER_HEAT,
+          LAYER_DOTSPARSE, LAYER_MARINGA, LAYER_AMBIENT, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
+        if (currentMap.getSource(SOURCE_MARINGA)) currentMap.removeSource(SOURCE_MARINGA);
         if (currentMap.getSource(SOURCE_AMBIENT)) currentMap.removeSource(SOURCE_AMBIENT);
         if (currentMap.getSource(SOURCE_HEAT)) currentMap.removeSource(SOURCE_HEAT);
         if (currentMap.getSource(SOURCE_ID)) currentMap.removeSource(SOURCE_ID);
@@ -281,6 +333,18 @@ export default function MapSimulationLayer() {
           data: {
             type: 'FeatureCollection',
             features: generateAmbientPoints(),
+          } as GeoJSON.FeatureCollection,
+        });
+      }
+
+      // Source mock de 24 pontos em Maringá — visível em zoom ~10.6
+      // per feedback. Gerado uma vez, totalmente determinístico.
+      if (!map.getSource(SOURCE_MARINGA)) {
+        map.addSource(SOURCE_MARINGA, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: generateMaringaPoints(),
           } as GeoJSON.FeatureCollection,
         });
       }
@@ -430,6 +494,35 @@ export default function MapSimulationLayer() {
               5,   0.50,
               6,   0.35,
               7,   0,
+            ],
+          },
+        });
+      }
+
+      // LAYER_MARINGA — 24 dots 2px com peak em zoom 10.6.
+      // Per feedback "no nível de zoom 10.6, no mobile e desktop
+      // simule 24 pontos de 2px verdes distribuídos na região de
+      // Maringá". Faixa de visibilidade centrada em 10.6: entra
+      // em z10, peak 10.5-10.7, fade-out em z11.5.
+      if (!map.getLayer(LAYER_MARINGA)) {
+        map.addLayer({
+          id: LAYER_MARINGA,
+          type: 'circle',
+          source: SOURCE_MARINGA,
+          minzoom: 10,
+          maxzoom: 12,
+          paint: {
+            'circle-radius': 1,           // 2px diameter
+            'circle-color': '#3DDB74',
+            'circle-stroke-width': 0,
+            'circle-opacity': [
+              'interpolate', ['linear'], ['zoom'],
+              10,    0,
+              10.4,  0.85,
+              10.6,  1,         // peak
+              10.8,  0.95,
+              11.5,  0.40,
+              12,    0,
             ],
           },
         });
