@@ -69,7 +69,18 @@ export default function Globe() {
     const WELCOME_GLOBAL_ZOOM = 1.5;
     const WELCOME_GLOBAL_BEARING = -45; // rotacionado pra dar movimento ao flyTo
 
-    const initialZoom = isWelcome ? WELCOME_GLOBAL_ZOOM : (persisted?.zoom ?? 1.8);
+    /* Zoom de boas-vindas (sem persisted): 2.3 no desktop, 1.8 no
+     * mobile. Per feedback "vamos definir que o zoom começa no
+     * nível 2.3 no desktop" — tela larga acomoda continente com
+     * mais detalhe que mobile. Persisted (returning user que já
+     * navegou no mapa) continua tendo prioridade. */
+    const isMobileInitialViewport =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 768px)').matches;
+    const defaultInitialZoom = isMobileInitialViewport ? 1.8 : 2.3;
+    const initialZoom = isWelcome
+      ? WELCOME_GLOBAL_ZOOM
+      : (persisted?.zoom ?? defaultInitialZoom);
     const initialCenter: [number, number] = isWelcome
       ? WELCOME_GLOBAL_CENTER
       : persisted
