@@ -194,10 +194,12 @@ export default function MapPulses() {
       const mobile = isMobileViewport();
       const candidates: Array<{ city: CityStats; size: 'xl' | 'l' | 'm' | 's' | 'xs' }> = [];
       data.cities.forEach((city, idx) => {
-        // rank ordinal (1-based) baseado na ordem de data.cities,
-        // que já vem sorted por active desc — top cidades ganham
-        // pulse maior, cauda longa fica em 'xs'.
-        const size = pulseSize(idx + 1);
+        // rank ordinal (1-based) — top cidades ganham pulse maior,
+        // cauda longa fica em 'xs'. pulseOverride.tier força um tier
+        // específico (usado pra simular "burst de crescimento" em
+        // cidades menores per feedback).
+        const defaultSize = pulseSize(idx + 1);
+        const size = city.pulseOverride?.tier ?? defaultSize;
         if (!size) return;
         candidates.push({ city, size });
       });
@@ -224,6 +226,11 @@ export default function MapPulses() {
          * badge de quantidade de ouvintes". */
         const el = document.createElement('div');
         el.className = 'mapsim-pulse';
+        // Variante de cor pink/roxo per feedback "Teste ondas
+        // pulsantes em 4 outros locais com outra cor".
+        if (city.pulseOverride?.color === 'pink') {
+          el.classList.add('mapsim-pulse-alt');
+        }
         el.dataset.sizeOriginal = size;
         // Não usamos aria-hidden mais — o badge tem info útil.
 

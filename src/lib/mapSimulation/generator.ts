@@ -23,6 +23,7 @@ import {
   TOTAL_USERS,
   type CitySeed,
   type Country,
+  type PulseOverride,
   type Region,
 } from './cities';
 
@@ -215,6 +216,8 @@ export interface CityStats {
    *  brasileira (só BR; cidades internacionais aceitam qualquer
    *  coord da gaussiana). */
   country: Country;
+  /** Override do pulse (force tier maior ou cor pink). */
+  pulseOverride?: PulseOverride;
 }
 
 export function aggregateByCity(users: MockUser[]): CityStats[] {
@@ -237,6 +240,7 @@ export function aggregateByCity(users: MockUser[]): CityStats[] {
       sigmaKm: seed.sigmaKm,
       monthlyListeners: seed.monthlyListeners,
       country: seed.country,
+      pulseOverride: seed.pulseOverride,
     });
   }
   // Agrega os users do dataset gerado nas cidades correspondentes

@@ -424,6 +424,27 @@
   margin: -20px 0 0 -20px;
 }
 
+/* ── Variante PINK/ROXO ────────────────────────────────────
+ * Per feedback "Teste ondas pulsantes em 4 outros locais com outra
+ * cor. O rosa/roxo que estamos usando no sistema".
+ *
+ * Cor: #a855f7 (purple-500, mesmo magenta/indigo do gradient da
+ * landing CTA "Meu Fanverse"). Aplicado em cidades selecionadas
+ * via classList.add('mapsim-pulse-alt') quando pulseOverride.color
+ * === 'pink'. Sobrescreve gradient + core + badge accent. */
+.mapsim-pulse-alt .mapsim-pulse-ring {
+  background: radial-gradient(
+    circle,
+    rgba(168, 85, 247, 0.50) 0%,
+    rgba(168, 85, 247, 0.25) 45%,
+    transparent 75%
+  );
+}
+.mapsim-pulse-alt .mapsim-pulse-core {
+  background: #a855f7;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.55);
+}
+
 /* Tier XS — cauda longa (cidades rank 31+ no CSV). Anel bem
  * pequeno (24px) — só pra marcar presença sem competir com os
  * polos maiores. Per feedback "adicione ondas pulsantes menores

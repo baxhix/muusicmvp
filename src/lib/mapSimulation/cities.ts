@@ -43,7 +43,17 @@ export type Region =
 export type Country =
   | 'BR' | 'PT' | 'PY' | 'CL'
   | 'UK' | 'DE' | 'IT' | 'FR' | 'ES'
-  | 'CN' | 'AU' | 'RU' | 'BD' | 'TH';
+  | 'CN' | 'AU' | 'RU' | 'BD' | 'TH'
+  | 'CD' | 'SD' | 'IQ' | 'ZA' | 'AF' | 'NG'
+  | 'EC' | 'CO' | 'VE' | 'US';
+
+/** Override do pulse da cidade — pra simular "burst de crescimento"
+ *  em cidades menores (forçar XL mesmo com poucos ouvintes) e/ou
+ *  testar variante de cor (pink/roxo) em locais selecionados. */
+export interface PulseOverride {
+  tier?: 'xl' | 'l' | 'm' | 's' | 'xs';
+  color?: 'pink';
+}
 
 export interface CitySeed {
   name: string;
@@ -52,6 +62,9 @@ export interface CitySeed {
   sigmaKm: number;
   region: Region;
   country: Country;
+  /** Override opcional do pulse — força tier visual maior (XL/L)
+   *  em cidades menores, ou troca cor pra variante pink. */
+  pulseOverride?: PulseOverride;
 }
 
 export const CITY_SEEDS: CitySeed[] = [
@@ -69,14 +82,14 @@ export const CITY_SEEDS: CitySeed[] = [
   { name: 'Salvador',               center: [-38.5014, -12.9714], monthlyListeners:     410, sigmaKm: 10, region: 'nordeste',     country: 'BR' },
   { name: 'Goiânia',                center: [-49.2532, -16.6864], monthlyListeners:     388, sigmaKm:  9, region: 'centro-oeste', country: 'BR' },
   { name: 'Manaus',                 center: [-60.0217,  -3.1190], monthlyListeners:     372, sigmaKm: 10, region: 'norte',        country: 'BR' },
-  { name: 'Florianópolis',          center: [-48.5482, -27.5954], monthlyListeners:     360, sigmaKm:  7, region: 'sul',          country: 'BR' },
+  { name: 'Florianópolis',          center: [-48.5482, -27.5954], monthlyListeners:     360, sigmaKm:  7, region: 'sul',          country: 'BR', pulseOverride: { tier: 'xl' } },
   { name: 'Recife',                 center: [-34.8770,  -8.0476], monthlyListeners:     350, sigmaKm:  9, region: 'nordeste',     country: 'BR' },
   { name: 'Belém',                  center: [-48.5022,  -1.4554], monthlyListeners:     340, sigmaKm:  9, region: 'norte',        country: 'BR' },
   { name: 'Campo Grande',           center: [-54.6464, -20.4486], monthlyListeners:     331, sigmaKm:  8, region: 'centro-oeste', country: 'BR' },
 
   // ── 16-30 ─────────────────────────────────────────────────
   { name: 'Joinville',              center: [-48.8489, -26.3044], monthlyListeners:     322, sigmaKm:  6, region: 'sul',          country: 'BR' },
-  { name: 'Cuiabá',                 center: [-56.0974, -15.6014], monthlyListeners:     316, sigmaKm:  8, region: 'centro-oeste', country: 'BR' },
+  { name: 'Cuiabá',                 center: [-56.0974, -15.6014], monthlyListeners:     316, sigmaKm:  8, region: 'centro-oeste', country: 'BR', pulseOverride: { tier: 'xl' } },
   { name: 'Lisboa',                 center: [ -9.1393,  38.7223], monthlyListeners:     311, sigmaKm:  7, region: 'internacional', country: 'PT' },
   { name: 'Uberlândia',             center: [-48.2772, -18.9186], monthlyListeners:     306, sigmaKm:  6, region: 'sudeste',      country: 'BR' },
   { name: 'São Luís',               center: [-44.3068,  -2.5391], monthlyListeners:     302, sigmaKm:  7, region: 'nordeste',     country: 'BR' },
@@ -84,10 +97,10 @@ export const CITY_SEEDS: CitySeed[] = [
   { name: 'Bauru',                  center: [-49.0606, -22.3147], monthlyListeners:     293, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
   { name: 'São José dos Campos',    center: [-45.8841, -23.2237], monthlyListeners:     290, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
   { name: 'Natal',                  center: [-35.2090,  -5.7945], monthlyListeners:     287, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
-  { name: 'Maringá',                center: [-51.9382, -23.4205], monthlyListeners:     284, sigmaKm:  5, region: 'sul',          country: 'BR' },
+  { name: 'Maringá',                center: [-51.9382, -23.4205], monthlyListeners:     284, sigmaKm:  5, region: 'sul',          country: 'BR', pulseOverride: { tier: 'xl' } },
   { name: 'Guarulhos',              center: [-46.5333, -23.4628], monthlyListeners:     282, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
   { name: 'Sorocaba',               center: [-47.4585, -23.5015], monthlyListeners:     280, sigmaKm:  5, region: 'sudeste',      country: 'BR' },
-  { name: 'João Pessoa',            center: [-34.8631,  -7.1195], monthlyListeners:     278, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
+  { name: 'João Pessoa',            center: [-34.8631,  -7.1195], monthlyListeners:     278, sigmaKm:  6, region: 'nordeste',     country: 'BR', pulseOverride: { tier: 'xl' } },
   { name: 'Vitória',                center: [-40.3097, -20.3155], monthlyListeners:     275, sigmaKm:  6, region: 'sudeste',      country: 'BR' },
   { name: 'Maceió',                 center: [-35.7350,  -9.6498], monthlyListeners:     273, sigmaKm:  6, region: 'nordeste',     country: 'BR' },
 
@@ -127,6 +140,22 @@ export const CITY_SEEDS: CitySeed[] = [
   { name: 'Roma',                   center: [ 12.4964,  41.9028], monthlyListeners:     295, sigmaKm:  8, region: 'internacional', country: 'IT' },
   { name: 'Moscou',                 center: [ 37.6173,  55.7558], monthlyListeners:     290, sigmaKm: 11, region: 'internacional', country: 'RU' },
   { name: 'Dhaka',                  center: [ 90.4125,  23.8103], monthlyListeners:     287, sigmaKm: 10, region: 'internacional', country: 'BD' },
+
+  // ── INTERNACIONAIS extras (África, Oriente Médio, Latam, US) ──
+  // 4 cidades com pulseColor: 'pink' pra testar variante de cor.
+  { name: 'Joanesburgo',            center: [ 28.0473, -26.2041], monthlyListeners:     295, sigmaKm: 11, region: 'internacional', country: 'ZA' },
+  { name: 'Bogotá',                 center: [-74.0721,   4.7110], monthlyListeners:     285, sigmaKm: 11, region: 'internacional', country: 'CO' },
+  { name: 'Boston',                 center: [-71.0589,  42.3601], monthlyListeners:     280, sigmaKm:  8, region: 'internacional', country: 'US' },
+  { name: 'Quito',                  center: [-78.4678,  -0.1807], monthlyListeners:     270, sigmaKm:  8, region: 'internacional', country: 'EC' },
+  { name: 'Austin',                 center: [-97.7431,  30.2672], monthlyListeners:     270, sigmaKm:  8, region: 'internacional', country: 'US' },
+  { name: 'Abuja',                  center: [  7.4951,   9.0765], monthlyListeners:     265, sigmaKm:  8, region: 'internacional', country: 'NG' },
+  { name: 'Denver',                 center: [-104.9903, 39.7392], monthlyListeners:     260, sigmaKm:  8, region: 'internacional', country: 'US' },
+  { name: 'Sacramento',             center: [-121.4944, 38.5816], monthlyListeners:     255, sigmaKm:  7, region: 'internacional', country: 'US' },
+  { name: 'Baghdad',                center: [ 44.3661,  33.3152], monthlyListeners:     245, sigmaKm:  9, region: 'internacional', country: 'IQ', pulseOverride: { color: 'pink' } },
+  { name: 'Caracas',                center: [-66.9036,  10.4806], monthlyListeners:     240, sigmaKm:  9, region: 'internacional', country: 'VE' },
+  { name: 'Khartoum',               center: [ 32.5599,  15.5007], monthlyListeners:     230, sigmaKm:  9, region: 'internacional', country: 'SD', pulseOverride: { color: 'pink' } },
+  { name: 'Kabul',                  center: [ 69.2075,  34.5553], monthlyListeners:     218, sigmaKm:  8, region: 'internacional', country: 'AF', pulseOverride: { color: 'pink' } },
+  { name: 'Kisangani',              center: [ 25.1900,   0.5167], monthlyListeners:     215, sigmaKm:  7, region: 'internacional', country: 'CD', pulseOverride: { color: 'pink' } },
 ];
 
 /** Total de usuários simulados — per feedback "simular 10k usuários online". */
