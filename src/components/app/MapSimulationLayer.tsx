@@ -1882,6 +1882,54 @@ export default function MapSimulationLayer() {
             return;
           }
 
+          /* Picker: em zoom OUT (z < 8) escolhe uma CIDADE aleatória
+           * das top 50 (uniforme) e gera feature ad-hoc no centro
+           * dela com pequeno offset. Per feedback "Quando estiver
+           * com o zoom out, faça surgir um usuário ... de forma
+           * aleatória nas cidades top 50".
+           *
+           * Por que não samplear inView direto: o dataset 7000 é
+           * proporcional aos ouvintes mensais — SP tem 41% dos users,
+           * então 41% dos spawns seriam de SP. Samplear por cidade
+           * primeiro garante distribuição uniforme entre top 50,
+           * incluindo Niterói, Itajaí etc — todas com igual chance
+           * de aparecer. */
+          const z = map.getZoom();
+          const pickFeature = (): GeoJSON.Feature | null => {
+            if (z >= 8) {
+              return inView[Math.floor(Math.random() * inView.length)] ?? null;
+            }
+            // Zoom out: sample por cidade uniforme das top 50
+            if (data.cities.length === 0) return null;
+            const city = data.cities[Math.floor(Math.random() * data.cities.length)];
+            // Verifica se a cidade está no viewport projetando o centro
+            const cp = map.project(city.center as [number, number]);
+            if (cp.x < pad || cp.x > w - pad || cp.y < pad || cp.y > h - pad) {
+              // Cidade fora do viewport, fallback pra sample uniforme
+              return inView[Math.floor(Math.random() * inView.length)] ?? null;
+            }
+            // Offset pequeno em ~5km pra avatar não nascer EXATAMENTE
+            // no centro (visualmente menos rígido).
+            const offsetDeg = 0.045;
+            const lng = city.center[0] + (Math.random() - 0.5) * offsetDeg;
+            const lat = city.center[1] + (Math.random() - 0.5) * offsetDeg;
+            // Reaproveita nome de um candidate random (pool de nomes
+            // do dataset). Avatar seed também random.
+            const sampleProps = candidates.length > 0
+              ? (candidates[Math.floor(Math.random() * candidates.length)].properties ?? {}) as FeatureProps
+              : ({} as FeatureProps);
+            return {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [lng, lat] },
+              properties: {
+                id:         `simr-${city.city}-${Math.random().toString(36).slice(2, 8)}`,
+                name:       sampleProps.name ?? 'Fã',
+                avatarSeed: Math.floor(Math.random() * 64),
+                online:     1,
+              } as FeatureProps,
+            };
+          };
+
           /* Stagger: cada um dos 3 spawns com delay random entre
            * 1.0-2.2s × posição. Resultado: 1º imediato, 2º entre
            * 1-2.2s, 3º entre 2-4.4s. */
@@ -1891,8 +1939,8 @@ export default function MapSimulationLayer() {
                 ? 0
                 : i * (REVEAL_STAGGER_MIN_MS + Math.random() * (REVEAL_STAGGER_MAX_MS - REVEAL_STAGGER_MIN_MS));
             const t = window.setTimeout(() => {
-              const f = inView[Math.floor(Math.random() * inView.length)];
-              spawnReveal(f);
+              const f = pickFeature();
+              if (f) spawnReveal(f);
             }, delay);
             revealTimers.push(t);
           }
