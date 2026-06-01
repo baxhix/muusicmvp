@@ -71,6 +71,7 @@ const SOURCE_QUOTAS  = 'mapsim-quotas';       // pontos visuais por cidade × ra
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
 const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (zoom 8-12, 4px diameter)
+const LAYER_QUOTAS_CONTINENT      = 'mapsim-quotas-continent';      // dots zoom 3.3-5.4 (raio 700km)
 const LAYER_QUOTAS_STATE          = 'mapsim-quotas-state';          // dots zoom 5-7  (3px diam)
 const LAYER_QUOTAS_REGION         = 'mapsim-quotas-region';         // dots zoom 7-9  (espalha pela pulse)
 const LAYER_QUOTAS_CITYMID        = 'mapsim-quotas-city-mid';       // dots zoom 9.5-11 (32 pela cidade real)
@@ -189,13 +190,16 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
  * Edite os valores aqui pra ajustar densidade — nenhum filter/opacity
  * em layer separado precisa ser tocado. */
 type CityTier = 'xl' | 'l' | 'm' | 's' | 'xs';
-/* Renomeação importante: o range "city" virou DOIS sub-ranges,
- * cityMid e cityPeak, pra atender o feedback:
- *   - zoom 10.6: 32 pontos pela cidade real (cityMid)
- *   - zoom 12  : MUITOS pontos pra "preencher a tela" (cityPeak)
- *   - zoom 8.6 : 32 pontos pela ÁREA DA PULSE (region — sigma maior)
- *   - zoom 6   : pontos de 3px ao redor da pulse (state — size 1.5) */
-type QuotaRange = 'state' | 'region' | 'cityMid' | 'cityPeak';
+/* Ranges progressivos do zoom afastado pro zoom de cidade:
+ *   - continent (z 3.3-5.4): raio 700km, espalha das cidades pro
+ *     continente — feedback "sempre manter visíveis pontos e
+ *     conforme o zoom vai acontecendo, eles vão se agrupando
+ *     nos núcleos de concentração"
+ *   - state     (z 6-7)    : pontos 3px ao redor da pulse
+ *   - region    (z 7-8)    : 32 pontos pela ÁREA DA PULSE
+ *   - cityMid   (z 9-10)   : 32 pontos pela cidade real
+ *   - cityPeak  (z 11-12)  : MUITOS pontos "preenche a tela" */
+type QuotaRange = 'continent' | 'state' | 'region' | 'cityMid' | 'cityPeak';
 
 /** Tier de cada cidade pela contagem de ativos.
  *
@@ -239,10 +243,10 @@ function tierFor(active: number): CityTier {
  *
  * Tiers menores escalonados na mesma proporção contra seu cityPeak. */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 59, region: 143, cityMid: 294, cityPeak: 840 },
-  l:  { state: 13, region:  31, cityMid:  63, cityPeak: 180 },
-  m:  { state:  7, region:  17, cityMid:  35, cityPeak: 100 },
-  s:  { state:  4, region:   9, cityMid:  18, cityPeak:  50 },
+  xl: { continent: 30, state: 59, region: 143, cityMid: 294, cityPeak: 840 },
+  l:  { continent: 20, state: 13, region:  31, cityMid:  63, cityPeak: 180 },
+  m:  { continent: 10, state:  7, region:  17, cityMid:  35, cityPeak: 100 },
+  s:  { continent:  5, state:  4, region:   9, cityMid:  18, cityPeak:  50 },
 };
 
 /** Tamanho do dot (raio em px) por range.
@@ -252,6 +256,7 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
  *             no z 9-11, mesma escala visual do cityPeak)
  *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
+  continent: 1.5,  // 3px diameter (mesmo piso global)
   state:    1.5,   // 3px diameter (piso: nenhum dot abaixo disso)
   region:   1.5,   // 3px diameter (era 1.25 = 2.5px, abaixo do piso)
   cityMid:  2,     // 4px diameter
@@ -269,6 +274,10 @@ const SIZE_BY_RANGE: Record<QuotaRange, number> = {
  *  cityMid/cityPeak usam factor menor pra ficar "espalhado pela
  *  cidade" (geografia real). */
 const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
+  continent: 50.0,  // raio 700km via piso absoluto no generateCityQuotaPoints
+                    // (não é factor × sigmaKm; o piso domina). SP sigmaKm
+                    // 14 × 50 = 700 — o factor existe só pra cidades
+                    // grandes não ficarem MENORES que o piso.
   state:    8.00,  // espalhamento amplo (era 4.00). 59 dots c/ spacing
                    // 24px @ z5 precisa de área grande — sigma maior
                    // dá espaço pro Poisson-disk acomodar todos.
@@ -300,6 +309,7 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
  *   cityMid:  z 9–10 → 294 dots (35%, 70% da tela)
  *   cityPeak: z 10–12 → preenche até 840 dots (100%, tela toda) */
 const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
+  continent: { min: 3.0,  peakStart: 3.3,  peakEnd: 5.4,  max: 5.8  },
   state:    { min: 5.5,  peakStart: 6,    peakEnd: 7,    max: 7.5  },
   region:   { min: 7,    peakStart: 7.3,  peakEnd: 8,    max: 9    },
   cityMid:  { min: 8.5,  peakStart: 9,    peakEnd: 10,   max: 11   },
@@ -315,11 +325,17 @@ const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd:
 function quotaFor(active: number, range: QuotaRange): number {
   const tier = tierFor(active);
   if (tier === 'xs') {
-    // Cidade pequena: só no cityPeak (zoom máximo), 1-2 dots simbólicos.
-    // Em zooms menores nem aparece — a presença dela é só pelo
-    // heatmap/ambient.
-    if (range !== 'cityPeak') return 0;
-    return Math.min(2, Math.max(1, Math.floor(active / 80)));
+    // Cidade pequena: 1-2 dots simbólicos no cityPeak (zoom máximo)
+    // e também no continent (per feedback "sempre manter visíveis
+    // pontos"). Ranges intermediários (state/region/cityMid) ficam
+    // vazios — a presença dela é só pelo heatmap/ambient ali.
+    if (range === 'cityPeak') {
+      return Math.min(2, Math.max(1, Math.floor(active / 80)));
+    }
+    if (range === 'continent') {
+      return 2;
+    }
+    return 0;
   }
   return QUOTAS_BY_TIER[tier][range];
 }
@@ -399,12 +415,14 @@ function generateCityQuotaPoints(
    * garante espalhamento regional pra que o pós-processamento Poisson
    * consiga manter spacing 24px @ z5. */
   const factor = SIGMA_FACTOR_BY_RANGE[range];
-  /* Piso state: 150km. Sem o Poisson thinning (removido por feedback),
-   * não precisamos da área extra — sigma 150km dá envelope 3σ ≈ 184px
-   * @ z5, suficiente pros 59 dots se espalharem visualmente pelo halo
-   * do pulse sem sobreposição perceptível. Cidades pequenas
-   * (sigmaKm 4-7) × factor 8 = 32-56km < 150 → usam o piso. */
-  const minSigmaKm = range === 'state' ? 150 : 2;
+  /* Pisos absolutos por range:
+   *   - continent: 700km per feedback "raio de 700km" no z 3.3-5.4
+   *   - state: 150km (envelope 3σ ≈ 184px @ z5, halo do pulse XL)
+   *   - outros: 2km (factor × sigmaKm da cidade já é adequado) */
+  const minSigmaKm =
+    range === 'continent' ? 700 :
+    range === 'state'     ? 150 :
+    2;
   const sigmaKm = Math.max(minSigmaKm, city.sigmaKm * factor);
   const cosLat = Math.cos((cy * Math.PI) / 180);
   const sigmaLat = sigmaKm / 111;
@@ -435,26 +453,27 @@ function generateCityQuotaPoints(
   };
 
   const features: GeoJSON.Feature[] = [];
-  const MAX_TRIES_PER_DOT = 20;
+  const MAX_TRIES_PER_DOT = 30;
+  /* Rejection sampling pra ranges `continent` e `state`: pontos podem
+   * cair no oceano (sigma 700km / 150km a partir de cidades costeiras).
+   * Per feedback "do continente pra dentro" e "No zoom 6, coloque os
+   * pontos dentro do continente". Outros ranges (region/cityMid/peak)
+   * têm sigma menor, geralmente dentro do perímetro real da cidade,
+   * então rejection é desnecessária. */
+  const needsLandMask = range === 'continent' || range === 'state';
   for (let i = 0; i < count; i += 1) {
     let gX = 0;
     let gY = 0;
     let lng = cx;
     let lat = cy;
     let tries = 0;
-    /* Rejection sampling: pro range `state` pontos podem cair no oceano
-     * (sigma 150km a partir de SP, RJ, Salvador etc), per feedback "No
-     * zoom 6, coloque os pontos dentro do continente". Retentamos até
-     * MAX_TRIES; se esgotar (rara, mas possível pra cidades costeiras),
-     * o ponto fica no centro da cidade (offset zero) — visualmente
-     * indistinguível do cluster denso na cidade. */
     do {
       gX = gauss();
       gY = gauss();
       lng = cx + gX * sigmaLng;
       lat = cy + gY * sigmaLat;
       tries += 1;
-      if (range !== 'state') break; // rejection só pro state
+      if (!needsLandMask) break;
     } while (!isOnBrazilLand(lng, lat) && tries < MAX_TRIES_PER_DOT);
 
     /* Pro range `state` armazenamos gX/gY/cityLng/cityLat nas
@@ -589,7 +608,7 @@ function generateAllQuotaPoints(
 ): GeoJSON.Feature[] {
   const stateRaw: GeoJSON.Feature[] = [];
   const others:   GeoJSON.Feature[] = [];
-  const ranges: QuotaRange[] = ['state', 'region', 'cityMid', 'cityPeak'];
+  const ranges: QuotaRange[] = ['continent', 'state', 'region', 'cityMid', 'cityPeak'];
   for (const c of cities) {
     for (const r of ranges) {
       const n = quotaFor(c.active, r);
@@ -672,7 +691,7 @@ export default function MapSimulationLayer() {
       try {
         for (const id of [
           LAYER_SF_PIC, LAYER_HALO,
-          LAYER_QUOTAS_CITYPEAK, LAYER_QUOTAS_CITYPEAK_GLOW, LAYER_QUOTAS_CITYMID, LAYER_QUOTAS_REGION, LAYER_QUOTAS_STATE,
+          LAYER_QUOTAS_CITYPEAK, LAYER_QUOTAS_CITYPEAK_GLOW, LAYER_QUOTAS_CITYMID, LAYER_QUOTAS_REGION, LAYER_QUOTAS_STATE, LAYER_QUOTAS_CONTINENT,
           LAYER_CL_T, LAYER_CL,
           LAYER_MARINGA_24,
           LAYER_AMBIENT, LAYER_HEAT,
@@ -1002,6 +1021,17 @@ export default function MapSimulationLayer() {
         };
       };
 
+      if (!map.getLayer(LAYER_QUOTAS_CONTINENT)) {
+        map.addLayer({
+          id: LAYER_QUOTAS_CONTINENT,
+          type: 'circle',
+          source: SOURCE_QUOTAS,
+          minzoom: RANGE_ZOOMS.continent.min,
+          maxzoom: RANGE_ZOOMS.continent.max,
+          filter: ['==', ['get', 'range'], 'continent'],
+          paint: quotaLayerPaint('continent'),
+        });
+      }
       if (!map.getLayer(LAYER_QUOTAS_STATE)) {
         map.addLayer({
           id: LAYER_QUOTAS_STATE,
