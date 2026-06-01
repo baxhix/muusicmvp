@@ -96,8 +96,11 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
     }
 
     // Stage 1: zoom out + bearing rotation (1.5s)
+    // Zoom mínimo 2.5 — abaixo disso os outros gates do app
+    // (LAYER_HEAT minzoom 2.5, MapPulses tooFarOut) escondem tudo,
+    // então preservamos o teto inferior pra mesma sequência funcionar.
     map.easeTo({
-      zoom: 1.8,
+      zoom: 2.5,
       bearing: 40,
       pitch: 25,
       duration: 1500,
@@ -145,6 +148,11 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
           id: LAYER_LINE,
           type: 'line',
           source: SRC_LINE,
+          /* minzoom 2.5 — per feedback "no zoom abaixo de 2.5,
+           * oculte os elementos plotados no mapa". Mobile pode
+           * pinch-out até 0.5; em z<2.5 a linha some junto com
+           * heatmap/pulses/dots. */
+          minzoom: 2.5,
           paint: {
             'line-color': '#ec4899',  // pink-500
             'line-width': 2,
@@ -169,6 +177,25 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         .setLngLat(match.center)
         .addTo(map);
 
+      /* Hide markers em z<2.5 per feedback "oculte elementos
+       * plotados no mapa abaixo de 2.5". DOM markers não respeitam
+       * minzoom de layer — precisam de visibility manual via JS. */
+      const applyMarkerVisibility = () => {
+        const z = map.getZoom();
+        const hide = z < 2.5;
+        if (markerRef.current) {
+          markerRef.current.getElement().style.visibility = hide ? 'hidden' : 'visible';
+        }
+        if (userMarkerRef.current) {
+          userMarkerRef.current.getElement().style.visibility = hide ? 'hidden' : 'visible';
+        }
+      };
+      map.on('zoom', applyMarkerVisibility);
+      applyMarkerVisibility();
+      // Store on map ref pra cleanup do useEffect detachar
+      (map as unknown as { _fmlZoomHandler?: () => void })._fmlZoomHandler =
+        applyMarkerVisibility;
+
       setPhase('matched');
     }, 3400);
 
@@ -186,6 +213,11 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         try {
           if (map.getLayer(LAYER_LINE))  map.removeLayer(LAYER_LINE);
           if (map.getSource(SRC_LINE))   map.removeSource(SRC_LINE);
+          const handler = (map as unknown as { _fmlZoomHandler?: () => void })._fmlZoomHandler;
+          if (handler) {
+            map.off('zoom', handler);
+            (map as unknown as { _fmlZoomHandler?: () => void })._fmlZoomHandler = undefined;
+          }
         } catch { /* map destruído */ }
       }
       try { markerRef.current?.remove(); } catch { /* já removido */ }
