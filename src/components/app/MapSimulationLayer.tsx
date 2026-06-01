@@ -68,17 +68,16 @@ const SOURCE_HEAT    = 'mapsim-users-heat';
 const SOURCE_AMBIENT  = 'mapsim-ambient';     // pontos sintéticos pra densidade no zoom out
 const SOURCE_MARINGA_12 = 'mapsim-maringa-12'; // 12 pontos mock em Maringá (peak zoom 8.6)
 const SOURCE_MARINGA_24 = 'mapsim-maringa-24'; // 24 pontos mock em Maringá (peak zoom 10.6)
+const SOURCE_QUOTAS  = 'mapsim-quotas';       // pontos visuais por cidade × range de zoom
 const LAYER_HEAT     = 'mapsim-heatmap';
 const LAYER_AMBIENT  = 'mapsim-ambient-dots'; // dots 1px/2px espalhados (zoom 3-6)
-const LAYER_MARINGA_12 = 'mapsim-maringa-12';  // 12 dots em Maringá (peak zoom 8.6)
-const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (peak zoom 10.6)
-const LAYER_DOTSPARSE = 'mapsim-dot-sparse';  // pontos esparsos zoom 5-7 (sample 1/32, raio menor)
-const LAYER_DOTFAR    = 'mapsim-dot-far';     // pontos 2px verdes (sample 1/16, zoom 7-11)
-const LAYER_DOTFAR2   = 'mapsim-dot-far-2';   // pontos 1px adicionais (zoom intermediário, sample 1/8 extra)
+const LAYER_MARINGA_12 = 'mapsim-maringa-12';  // 12 dots em Maringá (peak zoom 8.6) — debug temporário
+const LAYER_MARINGA_24 = 'mapsim-maringa-24';  // 24 dots em Maringá (peak zoom 10.6) — debug temporário
+const LAYER_QUOTAS_STATE  = 'mapsim-quotas-state';  // dots zoom 5-7
+const LAYER_QUOTAS_REGION = 'mapsim-quotas-region'; // dots zoom 7-9
+const LAYER_QUOTAS_CITY   = 'mapsim-quotas-city';   // dots zoom 9-12
 const LAYER_CL       = 'mapsim-clusters';     // BLOB orgânico verde (sem borda, blur alto)
 const LAYER_CL_T     = 'mapsim-cluster-count'; // texto só no hover
-const LAYER_DOTGLOW  = 'mapsim-dot-glow';     // halo verde difuso em volta dos dots (zoom alto)
-const LAYER_DOT      = 'mapsim-dot';
 const LAYER_HALO     = 'mapsim-superfan-halo';
 const LAYER_SF_PIC   = 'mapsim-superfan-pic';
 
@@ -177,6 +176,146 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
   return features;
 }
 
+/* ── Quotas visuais de dots por cidade × range de zoom ─────
+ *
+ * Per feedback: desacoplar "ver" de "ser". O dataset de 7k users
+ * continua existindo (alimenta cluster numbers, heatmap, contadores),
+ * mas a camada VISUAL de dots passa a ser quotas determinísticas
+ * controladas por essas tabelas — UX-first, sem amostragem fragile
+ * via `avatarSeed % N`.
+ *
+ * Edite os valores aqui pra ajustar densidade — nenhum filter/opacity
+ * em layer separado precisa ser tocado. */
+type CityTier = 'xl' | 'l' | 'm' | 's' | 'xs';
+type QuotaRange = 'state' | 'region' | 'city';
+
+/** Tier de cada cidade pela contagem de ativos (mesma escala dos pulses). */
+function tierFor(active: number): CityTier {
+  if (active >= 700) return 'xl';
+  if (active >= 400) return 'l';
+  if (active >= 200) return 'm';
+  if (active >= 100) return 's';
+  return 'xs';
+}
+
+/** Quotas por tier × range. XS é dinâmica e SÓ no range city. */
+const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
+  xl: { state: 8, region: 16, city: 32 },
+  l:  { state: 4, region: 10, city: 20 },
+  m:  { state: 2, region: 5,  city: 12 },
+  s:  { state: 0, region: 2,  city: 6  },
+};
+
+/** Tamanho do dot (raio em px) por range — pin maior em zoom out
+ *  (poucos polos = cada um precisa de presença), menor em zoom in
+ *  (densidade alta = cada um discreto). */
+const SIZE_BY_RANGE: Record<QuotaRange, number> = {
+  state:  2,    // 4px diameter
+  region: 1.5,  // 3px
+  city:   1,    // 2px
+};
+
+/** Range zooms — minzoom/maxzoom com 0.3 de overlap pra crossfade. */
+const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
+  state:  { min: 4.7, peakStart: 5,  peakEnd: 7,  max: 7.3 },
+  region: { min: 6.7, peakStart: 7,  peakEnd: 9,  max: 9.3 },
+  city:   { min: 8.7, peakStart: 9,  peakEnd: 12, max: 12  },
+};
+
+/** Quota efetiva pra (city, range). XS tem regra dinâmica especial. */
+function quotaFor(active: number, range: QuotaRange): number {
+  const tier = tierFor(active);
+  if (tier === 'xs') {
+    // Só no range "city" — cidade pequena ganha 1 dot simbólico
+    // proporcional ao active. Cap em 2 pra não poluir.
+    if (range !== 'city') return 0;
+    return Math.min(2, Math.max(1, Math.floor(active / 80)));
+  }
+  return QUOTAS_BY_TIER[tier][range];
+}
+
+/** Hash string → uint32 (FNV-1a leve), pra derivar seed determinística
+ *  por (cityName + range) sem dependência externa. */
+function strHash(s: string): number {
+  let h = 0x811c9dc5 >>> 0;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+/** Gera N pontos com gaussiana ao redor de city.center pra um range.
+ *  Reutiliza a mesma técnica do generateMaringaPoints (Box-Muller +
+ *  mulberry32 inline). Determinístico — mesma seed = mesmas posições. */
+function generateCityQuotaPoints(
+  city: { city: string; center: [number, number] },
+  range: QuotaRange,
+  count: number,
+): GeoJSON.Feature[] {
+  if (count <= 0) return [];
+  const [cx, cy] = city.center;
+  // sigma proporcional ao range — pin maior precisa de spread maior
+  // pra não amontoar todos no centro.
+  const sigmaKm = range === 'state' ? 6 : range === 'region' ? 4.5 : 3.5;
+  const cosLat = Math.cos((cy * Math.PI) / 180);
+  const sigmaLat = sigmaKm / 111;
+  const sigmaLng = sigmaKm / (111 * Math.max(cosLat, 0.05));
+  const size = SIZE_BY_RANGE[range];
+
+  let s = strHash(`${city.city}|${range}`) >>> 0;
+  const rnd = () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const gauss = () => {
+    let u = 0;
+    let v = 0;
+    while (u === 0) u = rnd();
+    while (v === 0) v = rnd();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  };
+
+  const features: GeoJSON.Feature[] = [];
+  for (let i = 0; i < count; i += 1) {
+    features.push({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [cx + gauss() * sigmaLng, cy + gauss() * sigmaLat],
+      },
+      properties: {
+        range,
+        size,
+        city: city.city,
+      },
+    });
+  }
+  return features;
+}
+
+/** Gera TODAS as features de quota (todas as cidades × todos os ranges)
+ *  numa única FeatureCollection. Os layers depois filtram por
+ *  `properties.range`. */
+function generateAllQuotaPoints(
+  cities: Array<{ city: string; active: number; center: [number, number] }>,
+): GeoJSON.Feature[] {
+  const out: GeoJSON.Feature[] = [];
+  const ranges: QuotaRange[] = ['state', 'region', 'city'];
+  for (const c of cities) {
+    for (const r of ranges) {
+      const n = quotaFor(c.active, r);
+      if (n > 0) {
+        out.push(...generateCityQuotaPoints(c, r, n));
+      }
+    }
+  }
+  return out;
+}
+
 /* Pool de avatares Pravatar (i.pravatar.cc) — 12 fotos de pessoas
  * reais, IDs escolhidos pra diversidade visual. Pré-carregados como
  * Mapbox images no map.load, depois referenciados via
@@ -189,44 +328,10 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
  * se cair, o dot verde por baixo continua sendo o fallback. */
 const PRAVATAR_IDS = [1, 5, 11, 13, 17, 23, 29, 33, 41, 47, 53, 61];
 
-/* Cor do dot: TODOS verdes.
- *
- * Per feedback "deixe todos verdes, se a pessoa está offline num
- * primeiro momento não interessa muito". A lógica de cor por tier
- * foi removida — o dot agora é o sinal puro de "presença online".
- * A diferenciação de tier sobrevive em:
- *   - tamanho do dot (TIER_RADIUS_EXPR abaixo)
- *   - halo dourado em superfãs (LAYER_HALO, desktop)
- *   - mini avatar de foto real em superfãs (LAYER_SF_PIC)
- *
- * O LAYER_DOT também recebe filtro `online === 1` mais abaixo —
- * offline simplesmente não pinta. Mantemos os offline no source
- * porque o heatmap usa o dataset completo (com peso menor).
- */
-const DOT_COLOR_EXPR = '#3DDB74';
-
-/** Raio do dot por tier.
- *
- *  Superfã mantém o tamanho original (6) — eles também recebem o
- *  mini avatar de foto real por cima (LAYER_SF_PIC), então o dot
- *  é a "moldura verde" embaixo da foto.
- *
- *  Os demais tiers foram cortados pela metade per feedback —
- *  buscando uma malha mais densa e menos pesada visualmente quando
- *  o mapa tem milhares de pontos verdes simultâneos. Tamanhos antes
- *  vs depois:
- *    top100   5    → 2.5
- *    top1000  4.2  → 2.1
- *    fan      3.5  → 1.75
- */
-const TIER_RADIUS_EXPR = [
-  'match',
-  ['get', 'tier'],
-  'superfan', 6,
-  'top100',   2.5,
-  'top1000',  2.1,
-  /* fan default */ 1.75,
-] as unknown[];
+/* DOT_COLOR_EXPR e TIER_RADIUS_EXPR foram removidos com a
+ * eliminação dos layers LAYER_DOT/LAYER_DOTGLOW. A coloração e
+ * o tamanho dos dots quota agora vêm direto das tabelas
+ * SIZE_BY_RANGE / QUOTAS_BY_TIER lá no topo. */
 
 interface UserHoverInfo {
   kind: 'user';
@@ -269,13 +374,15 @@ export default function MapSimulationLayer() {
       if (!currentMap) return;
       try {
         for (const id of [
-          LAYER_SF_PIC, LAYER_HALO, LAYER_DOT, LAYER_DOTGLOW,
-          LAYER_CL_T, LAYER_CL, LAYER_DOTFAR2, LAYER_DOTFAR,
-          LAYER_DOTSPARSE, LAYER_MARINGA_24, LAYER_MARINGA_12,
+          LAYER_SF_PIC, LAYER_HALO,
+          LAYER_QUOTAS_CITY, LAYER_QUOTAS_REGION, LAYER_QUOTAS_STATE,
+          LAYER_CL_T, LAYER_CL,
+          LAYER_MARINGA_24, LAYER_MARINGA_12,
           LAYER_AMBIENT, LAYER_HEAT,
         ]) {
           if (currentMap.getLayer(id)) currentMap.removeLayer(id);
         }
+        if (currentMap.getSource(SOURCE_QUOTAS)) currentMap.removeSource(SOURCE_QUOTAS);
         if (currentMap.getSource(SOURCE_MARINGA_24)) currentMap.removeSource(SOURCE_MARINGA_24);
         if (currentMap.getSource(SOURCE_MARINGA_12)) currentMap.removeSource(SOURCE_MARINGA_12);
         if (currentMap.getSource(SOURCE_AMBIENT)) currentMap.removeSource(SOURCE_AMBIENT);
@@ -585,133 +692,77 @@ export default function MapSimulationLayer() {
       //    `avatarSeed % 16 === 0` — ~437 dots espalhados pelo Brasil.
       //    Filtro online=1 + tier!=superfan (superfãs aparecem como
       //    mini avatar real no zoom alto).
-      /* LAYER_DOTSPARSE — pontos pequenos e afastados pra zoom 5-7.
-       * Per feedback "na visualização onde consigo ver estados
-       * inteiros, deixe os pontos menores e afastados um dos outros".
+      /* ── SOURCE_QUOTAS + 3 layers de dots por range de zoom ──
        *
-       * Filter mais ralo (% 32 → ~131 dots vs ~262 do DOTFAR) +
-       * raio menor (1.5px vs 3px do DOTFAR antigo nessa faixa).
-       * No zoom 7-7.5 cede pro LAYER_DOTFAR que tem densidade
-       * normal pra escala de cidade. */
-      if (!map.getLayer(LAYER_DOTSPARSE)) {
-        map.addLayer({
-          id: LAYER_DOTSPARSE,
-          type: 'circle',
-          source: SOURCE_HEAT,
-          minzoom: 5,
-          maxzoom: 7.5,
-          filter: [
-            'all',
-            ['==', ['get', 'online'], 1],
-            ['==', ['%', ['get', 'avatarSeed'], 32], 0],
-          ],
-          paint: {
-            'circle-radius': [
-              'interpolate', ['linear'], ['zoom'],
-              5,   1.5,    // 3px diameter — menor que antes
-              6.5, 1.4,
-              7.5, 0,
-            ],
-            'circle-color': '#3DDB74',
-            'circle-stroke-width': 0,
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              5,   0.85,
-              6.5, 0.75,
-              7,   0.45,
-              7.5, 0,
-            ],
-          },
+       * Refatoração arquitetural: substituímos LAYER_DOTSPARSE +
+       * LAYER_DOTFAR + LAYER_DOTFAR2 (que sampleavam features reais
+       * via `avatarSeed % N`) por quotas determinísticas controladas
+       * pelas tabelas QUOTAS_BY_TIER / SIZE_BY_RANGE / RANGE_ZOOMS no
+       * topo do arquivo.
+       *
+       * Source: GeoJSON estático gerado 1× a partir de data.cities.
+       * Cada feature carrega `properties.range` ('state'|'region'|'city')
+       * + `properties.size` (raio em px). Os 3 layers filtram por range
+       * + têm zoom/opacity próprios pra crossfade entre faixas. */
+      if (!map.getSource(SOURCE_QUOTAS)) {
+        map.addSource(SOURCE_QUOTAS, {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: generateAllQuotaPoints(data.cities),
+          } as GeoJSON.FeatureCollection,
         });
       }
 
-      if (!map.getLayer(LAYER_DOTFAR)) {
-        map.addLayer({
-          id: LAYER_DOTFAR,
-          type: 'circle',
-          source: SOURCE_HEAT,
-          maxzoom: 12,
-          filter: [
-            'all',
-            ['==', ['get', 'online'], 1],
-            ['==', ['%', ['get', 'avatarSeed'], 16], 0],
+      const quotaLayerPaint = (
+        range: QuotaRange,
+      ): mapboxgl.CirclePaint => {
+        const z = RANGE_ZOOMS[range];
+        return {
+          'circle-color': '#3DDB74',
+          'circle-stroke-width': 0,
+          'circle-radius': ['get', 'size'] as unknown as number,
+          'circle-opacity': [
+            'interpolate', ['linear'], ['zoom'],
+            z.min,        0,
+            z.peakStart,  0.95,
+            z.peakEnd,    0.95,
+            z.max,        0,
           ],
-          paint: {
-            /* Raio agora começa em 2 (não mais 3) — cede o pin
-             * "grande" pro LAYER_DOTSPARSE que tem visual mais
-             * arejado em zoom 5-7. DOTFAR entra a partir do
-             * zoom 7 onde a escala já tolera mais densidade. */
-            'circle-radius': [
-              'interpolate', ['linear'], ['zoom'],
-              7,   2,        // 4px
-              9,   1.2,      // 2.4px
-              12,  1,        // 2px
-            ],
-            'circle-color': '#3DDB74',
-            'circle-stroke-width': 0,
-            /* Hidden em zoom < 6.5 — cede a faixa de "estado"
-             * pro DOTSPARSE. Entra com força a partir do zoom 7. */
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              3,   0,
-              6.5, 0,
-              7,   0.85,
-              8,   0.95,
-              10,  0.95,
-              11,  0.80,
-              12,  0,
-            ],
-          },
+        };
+      };
+
+      if (!map.getLayer(LAYER_QUOTAS_STATE)) {
+        map.addLayer({
+          id: LAYER_QUOTAS_STATE,
+          type: 'circle',
+          source: SOURCE_QUOTAS,
+          minzoom: RANGE_ZOOMS.state.min,
+          maxzoom: RANGE_ZOOMS.state.max,
+          filter: ['==', ['get', 'range'], 'state'],
+          paint: quotaLayerPaint('state'),
         });
       }
-
-      // 2b) DOTS-FAR-2 — pontinhos 1px ADICIONAIS no zoom intermediário.
-      //
-      //     Per feedback "nesse tipo de zoom, deixe pontos de 1px e
-      //     2px visíveis também" — o screenshot do zoom Brasília
-      //     mostrava poucos pontos espalhados; sentia falta de
-      //     densidade. Esse layer dobra a quantidade de dots na
-      //     faixa zoom 9-12, mas com raio menor (0.5 = 1px diâmetro)
-      //     pra criar uma textura mista (2px + 1px) sem virar massa.
-      //
-      //     Filter `avatarSeed % 8 == 0 AND % 16 != 0` pega 4 valores
-      //     do mod 8 (8, 24, 40, 56) que NÃO estão no LAYER_DOTFAR
-      //     (que usa mod 16). Resultado: outros ~437 dots adicionais
-      //     → total ~874 nessa zona. minzoom 9 = só aparece quando
-      //     o zoom já é alto o suficiente pra pontos de 1px serem
-      //     perceptíveis.
-      if (!map.getLayer(LAYER_DOTFAR2)) {
+      if (!map.getLayer(LAYER_QUOTAS_REGION)) {
         map.addLayer({
-          id: LAYER_DOTFAR2,
+          id: LAYER_QUOTAS_REGION,
           type: 'circle',
-          source: SOURCE_HEAT,
-          /* Antes minzoom 9 — agora 7 com ramp progressivo
-           * per feedback "conforme o zoom vai ocorrendo, vai
-           * espalhando e mostrando novos pontos de 1px".
-           * Cada incremento de zoom revela mais pontos: zoom 7
-           * já mostra 30%, zoom 9 mostra 65%, peak em 10-11. */
-          minzoom: 7,
-          maxzoom: 12,
-          filter: [
-            'all',
-            ['==', ['get', 'online'], 1],
-            ['==', ['%', ['get', 'avatarSeed'], 8], 0],
-            ['!=', ['%', ['get', 'avatarSeed'], 16], 0],
-          ],
-          paint: {
-            'circle-radius': 0.5,                    // 1px diameter
-            'circle-color': '#3DDB74',
-            'circle-stroke-width': 0,
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              7,   0,
-              8,   0.30,    // começam tímidos
-              9,   0.65,    // mais visíveis
-              10,  0.85,    // peak
-              11,  0.85,
-              12,  0,
-            ],
-          },
+          source: SOURCE_QUOTAS,
+          minzoom: RANGE_ZOOMS.region.min,
+          maxzoom: RANGE_ZOOMS.region.max,
+          filter: ['==', ['get', 'range'], 'region'],
+          paint: quotaLayerPaint('region'),
+        });
+      }
+      if (!map.getLayer(LAYER_QUOTAS_CITY)) {
+        map.addLayer({
+          id: LAYER_QUOTAS_CITY,
+          type: 'circle',
+          source: SOURCE_QUOTAS,
+          minzoom: RANGE_ZOOMS.city.min,
+          maxzoom: RANGE_ZOOMS.city.max,
+          filter: ['==', ['get', 'range'], 'city'],
+          paint: quotaLayerPaint('city'),
         });
       }
 
@@ -796,101 +847,12 @@ export default function MapSimulationLayer() {
         });
       }
 
-      // 4a) DOT GLOW — halo verde difuso embaixo de cada dot online.
-      //
-      //     Per feedback "no zoom máximo, deixe esse tipo de
-      //     intensidade verde ao redor dos pontos" (referenciando
-      //     o halo brilhante dos avatares revelados).
-      //
-      //     Camada extra ANTES do LAYER_DOT pra ficar por baixo.
-      //     Raio bem maior que o dot real (8-18px) + circle-blur
-      //     0.85 cria fade gradient orgânico. Cor verde sólida +
-      //     opacity controlada por zoom: invisível em zoom 7,
-      //     ramp até 0.55 no zoom 14+. Resultado: cada ponto ganha
-      //     uma "auréola" que casa visualmente com o halo dos
-      //     superfãs (LAYER_HALO) e dos avatares revelados.
-      /* DOTGLOW só no desktop — circle-blur 0.85 em ~4200 features
-       * é o layer mais caro do conjunto. Mobile pula ele inteiro
-       * (similar ao LAYER_HALO que já é desktop-only). Visualmente
-       * o LAYER_DOT verde continua aparecendo; só perde a auréola
-       * difusa do glow no zoom 10-13 — trade aceitável pelo ganho
-       * de ~30-40% no GPU em iPhones intermediários. */
-      if (!mobile && !map.getLayer(LAYER_DOTGLOW)) {
-        map.addLayer({
-          id: LAYER_DOTGLOW,
-          type: 'circle',
-          source: SOURCE_ID,
-          filter: [
-            'all',
-            ['!', ['has', 'point_count']],
-            ['==', ['get', 'online'], 1],
-          ],
-          minzoom: 9,
-          /* Maxzoom 13 — per feedback "no zoom máximo, remova a
-           * sombra dos pontos únicos". O glow servia no zoom 10-12
-           * pra dar presença aos pontos pequenos, mas a partir do
-           * zoom 13 cada dot já tem raio próprio suficiente. Acima
-           * disso o dot aparece NU, sem qualquer halo. */
-          maxzoom: 13,
-          paint: {
-            'circle-color': '#3DDB74',
-            /* Raio por tier — superfã ganha glow maior (alinha com
-             * o halo permanente que ele tem). */
-            'circle-radius': [
-              'match', ['get', 'tier'],
-              'superfan', 18,
-              'top100',   12,
-              'top1000',  10,
-              /* fan default */ 9,
-            ],
-            'circle-blur': 0.85,
-            'circle-stroke-width': 0,
-            /* Peak no zoom 11-12 e cai pra zero antes do 13.
-             * No zoom 13+ os pontos ficam limpos, sem qualquer
-             * halo/sombra ao redor. */
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              9,    0,
-              11,   0.35,
-              12,   0.30,
-              13,   0,
-            ],
-          },
-        });
-      }
-
-      // 4) DOTS — pontos individuais (não-clusterizados), TODOS
-      //    verdes. Filtro online=1 esconde offline do display por
-      //    completo (per feedback "se a pessoa está offline num
-      //    primeiro momento não interessa muito"). Offline continua
-      //    contribuindo pro heatmap, só não aparece como dot.
-      //    Stroke preto foi removido — em raios pequenos (1.75)
-      //    ele engolia a cor verde. Agora o dot é verde puro e
-      //    ganha contorno pelo LAYER_DOTGLOW logo abaixo.
-      if (!map.getLayer(LAYER_DOT)) {
-        map.addLayer({
-          id: LAYER_DOT,
-          type: 'circle',
-          source: SOURCE_ID,
-          filter: [
-            'all',
-            ['!', ['has', 'point_count']],
-            ['==', ['get', 'online'], 1],
-          ],
-          minzoom: 7,
-          paint: {
-            'circle-color': DOT_COLOR_EXPR,
-            'circle-radius': TIER_RADIUS_EXPR as unknown as number,
-            'circle-stroke-width': 0,
-            'circle-opacity': [
-              'interpolate', ['linear'], ['zoom'],
-              7,    0,
-              8,    0.9,
-              16,   1,
-            ],
-          },
-        });
-      }
+      // LAYER_DOT, LAYER_DOTGLOW removidos — substituídos pelas
+      // 3 layers LAYER_QUOTAS_* acima. A diferenciação por tier
+      // não é mais visual (todos os dots são verdes puros do mesmo
+      // tamanho dentro de cada range). Superfãs continuam ganhando
+      // mini avatar de foto real via LAYER_SF_PIC e halo verde via
+      // LAYER_HALO — ambos preservados abaixo.
 
       // 5) HALO em superfãs ONLINE — anel verde em volta. SÓ desktop;
       //    mobile pula esse layer pra economizar GPU (alpha-blended
@@ -921,7 +883,11 @@ export default function MapSimulationLayer() {
               14, 0.95,
             ],
           },
-        }, LAYER_DOT);
+        });
+        /* nota: anteriormente o HALO era inserido com 2º arg LAYER_DOT
+         * pra ficar abaixo dele. Como LAYER_DOT foi removido, agora
+         * fica no topo da pilha — o SF_PIC adicionado depois cobre
+         * por cima naturalmente. */
       }
 
       // 6) MINI AVATAR de SUPERFÃS ONLINE — foto real (Pravatar).
@@ -998,34 +964,12 @@ export default function MapSimulationLayer() {
       }
 
       /* ── Hover/click handlers ─────────────────────────────
-       * LAYER_DOT: mousemove sobre dot → seta hover info (user).
-       * LAYER_CL : mousemove sobre blob → seta hover info (cluster
-       *            com point_count). Per feedback "mostre essa
-       *            informação apenas se passar o mouse por cima".
-       * Mobile usa click + auto-dismiss 4s; click no map vazio limpa.
+       * LAYER_CL: mousemove sobre blob → seta hover info (cluster
+       *           com point_count).
+       * Hover de USER individual foi removido junto com o LAYER_DOT
+       * (dots agora são quotas determinísticas sem identidade real).
+       * Mobile usa click + auto-dismiss 3s; click no map vazio limpa.
        */
-      const onUserHover = (e: MapLayerMouseEvent) => {
-        if (!e.features || e.features.length === 0) return;
-        const f = e.features[0];
-        const p = f.properties ?? {};
-        if (dismissTimerRef.current) {
-          window.clearTimeout(dismissTimerRef.current);
-          dismissTimerRef.current = null;
-        }
-        setHover({
-          kind: 'user',
-          id: String(p.id ?? ''),
-          name: String(p.name ?? '—'),
-          city: String(p.city ?? ''),
-          tier: (p.tier as UserHoverInfo['tier']) || 'fan',
-          online: p.online === 1 || p.online === true,
-          lastActiveSec: Number(p.lastActiveSec ?? 0),
-          clientX: e.originalEvent.clientX,
-          clientY: e.originalEvent.clientY,
-        });
-        map.getCanvas().style.cursor = 'pointer';
-      };
-
       const onClusterHover = (e: MapLayerMouseEvent) => {
         if (!e.features || e.features.length === 0) return;
         const f = e.features[0];
@@ -1050,17 +994,6 @@ export default function MapSimulationLayer() {
         map.getCanvas().style.cursor = '';
       };
 
-      const onDotClick = (e: MapLayerMouseEvent) => {
-        onUserHover(e);
-        if (dismissTimerRef.current) window.clearTimeout(dismissTimerRef.current);
-        dismissTimerRef.current = window.setTimeout(() => {
-          setHover(null);
-          map.getCanvas().style.cursor = '';
-          dismissTimerRef.current = null;
-        }, 4000);
-        (e as unknown as { _dotHandled?: boolean })._dotHandled = true;
-      };
-
       const onClusterClick = (e: MapLayerMouseEvent) => {
         onClusterHover(e);
         if (dismissTimerRef.current) window.clearTimeout(dismissTimerRef.current);
@@ -1082,10 +1015,7 @@ export default function MapSimulationLayer() {
       };
 
       /* rAF-throttle wrapper: agrupa rajadas de mousemove em
-       * 1 chamada por frame (~16ms / 60Hz cap). Mapbox dispara
-       * mousemove em cada pixel — sem throttle, o setHover do
-       * onUserHover (4200 features pra hit-test) re-renderiza
-       * o React com a mesma frequência. Quick win de performance. */
+       * 1 chamada por frame (~16ms / 60Hz cap). */
       const rafThrottle = <T extends (e: MapLayerMouseEvent) => void>(fn: T): T => {
         let scheduled = false;
         let lastEvent: MapLayerMouseEvent | null = null;
@@ -1102,12 +1032,8 @@ export default function MapSimulationLayer() {
           });
         }) as T;
       };
-      const onUserHoverT    = rafThrottle(onUserHover);
       const onClusterHoverT = rafThrottle(onClusterHover);
 
-      map.on('mousemove', LAYER_DOT, onUserHoverT);
-      map.on('mouseleave', LAYER_DOT, onPointerOut);
-      map.on('click', LAYER_DOT, onDotClick);
       map.on('mousemove', LAYER_CL, onClusterHoverT);
       map.on('mouseleave', LAYER_CL, onPointerOut);
       map.on('click', LAYER_CL, onClusterClick);
@@ -1473,9 +1399,6 @@ export default function MapSimulationLayer() {
 
       const offEvents = () => {
         try {
-          map.off('mousemove', LAYER_DOT, onUserHoverT);
-          map.off('mouseleave', LAYER_DOT, onPointerOut);
-          map.off('click', LAYER_DOT, onDotClick);
           map.off('mousemove', LAYER_CL, onClusterHoverT);
           map.off('mouseleave', LAYER_CL, onPointerOut);
           map.off('click', LAYER_CL, onClusterClick);
