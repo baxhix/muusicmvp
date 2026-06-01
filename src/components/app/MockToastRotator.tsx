@@ -90,11 +90,16 @@ type MockToast =
  * types (ana_message, new_publication) are sprinkled in so they
  * surface alongside the user-level ones at a comfortable cadence.
  */
+/* Per feedback "Remova a simulação de aceno automático da plataforma":
+ * todas as entries `{ kind: 'waved' }` foram retiradas da ROTATION.
+ * O type 'waved' continua definido em MockToast pra não quebrar tipos,
+ * mas não rota mais — sem toast textual "X te acenou" mocado, sem
+ * cascata de 👋 disparada por timer. Acenos reais (via socket /
+ * useNotificationsLive) continuam funcionando normalmente. */
 const ROTATION: MockToast[] = [
   { kind: 'listening_together', count: 455 },
   { kind: 'ana_message' },
   { kind: 'message_sent', user: MOCK_USERS[0] },
-  { kind: 'waved', user: MOCK_USERS[2] },
   { kind: 'listening_together', count: 482 },
   { kind: 'new_publication' },
   { kind: 'top_track', track: MOCK_TRACKS[0] },
@@ -102,13 +107,11 @@ const ROTATION: MockToast[] = [
   { kind: 'top_20', rank: 18 },
   { kind: 'listening_together', count: 471 },
   { kind: 'ana_message' },
-  { kind: 'waved', user: MOCK_USERS[4] },
   { kind: 'top_track', track: MOCK_TRACKS[1] },
   { kind: 'message_sent', user: MOCK_USERS[3] },
   { kind: 'listening_together', count: 493 },
   { kind: 'new_publication' },
   { kind: 'top_20', rank: 12 },
-  { kind: 'waved', user: MOCK_USERS[5] },
   { kind: 'top_track', track: MOCK_TRACKS[2] },
 ];
 
@@ -267,22 +270,12 @@ export default function MockToastRotator() {
       // canvas-confetti. fireRankConfetti() permanece definido
       // pra ser fácil religar gated num futuro marco específico.
       // fireRankConfetti();
-    } else if (current.kind === 'waved') {
-      // Falling 👋 cascade — fires the global overlay (mounted
-      // in app/app/layout.tsx) with `icon: 'hand'` in the
-      // detail so HeartsCascade swaps the flat red heart SVG
-      // for a 👋 emoji glyph on each particle. Per product
-      // feedback "Nas notificação mocada que determinado
-      // usuário Acenou, use os emojis em cascata da mão e não
-      // de coração." Real socket-driven wave-send events
-      // (handled in `useNotificationsLive`) still default to
-      // the heart cascade for the receiver's love confirmation.
-      window.dispatchEvent(
-        new CustomEvent('app:hearts-cascade', {
-          detail: { icon: 'hand' },
-        }),
-      );
     }
+    /* Dispatch `app:hearts-cascade` com icon:'hand' REMOVIDO per
+     * feedback "Remova a simulação de aceno automático da plataforma".
+     * Cascata de 👋 não cai mais por timer; só rola em interação
+     * real do user (botão 👋 do reveal avatar dispatcha cascade,
+     * mas é input explícito). */
   }, [phase, idx]);
 
   // During the gap, the pill is fully off-screen — render nothing
