@@ -429,13 +429,20 @@ function generateCityQuotaPoints(
   const sigmaLng = sigmaKm / (111 * Math.max(cosLat, 0.05));
   const size = SIZE_BY_RANGE[range];
 
-  /* Seed: cityMid e cityPeak COMPARTILHAM a mesma sequência —
-   * cityPeak começa com os mesmos 32 dots do cityMid e ADICIONA o
-   * resto até atingir o tier cap. Resultado no crossfade z11.2-11.4:
-   * os 32 dots ficam parados e novos dots vão aparecendo ao redor,
-   * sem "salto" de posição. state e region têm seeds próprias. */
-  const seedKey =
-    range === 'cityPeak' ? `${city.city}|cityMid` : `${city.city}|${range}`;
+  /* Seed: TODOS os ranges da mesma cidade COMPARTILHAM a mesma
+   * sequência PRNG (per feedback "Não utilize pontos aleatórios no
+   * mapa ... conforme o zoom acontece, a experiência é que os pontos
+   * apenas mudam de lugar ou se expandem").
+   *
+   * Como cada range avança o gauss() o mesmo número de vezes pra
+   * seus N primeiros pontos, o ponto i é o MESMO gauss em TODOS os
+   * ranges — só o sigma muda. Sequência de sigmas no peak (em SP,
+   * sigmaKm=14):
+   *   continent 700km → state 150km → region 18km → cityMid 7.7km → cityPeak 7.7km
+   * Resultado: durante crossfade entre layers, ponto i "se aproxima"
+   * radialmente do centro da cidade conforme zoom in (sigma decresce).
+   * Sem "salto" — só contração suave + adição de novos pontos. */
+  const seedKey = `${city.city}`;
   let s = strHash(seedKey) >>> 0;
   const rnd = () => {
     s = (s + 0x6D2B79F5) >>> 0;

@@ -357,54 +357,19 @@ export default function Globe() {
         data: { type: 'FeatureCollection', features: [] },
       });
 
-      // Subtle glow halo. Bigger, blurred, low opacity — gives a soft
-      // "warm zone" feel at lower zooms, then fades into the dot at
-      // street zoom so it doesn't dominate the rua-level view.
-      map.addLayer({
-        id: 'parana-fans-glow',
-        type: 'circle',
-        source: 'parana-fans',
-        paint: {
-          'circle-radius': [
-            'interpolate', ['linear'], ['zoom'],
-            1, 4,
-            5, 7,
-            9, 11,
-            14, 14,
-          ],
-          'circle-color': '#3ddb74',
-          'circle-blur': 1.2,
-          'circle-opacity': [
-            'interpolate', ['linear'], ['zoom'],
-            1, 0.18,
-            5, 0.32,
-            9, 0.4,
-            14, 0.22,
-          ],
-        },
-      });
-
-      // Hard dot in the center of each glow. Stays small but visible
-      // at every zoom level — that's the "every dot is a registered
-      // fan" affordance the user can rely on at street view too.
-      map.addLayer({
-        id: 'parana-fans-dot',
-        type: 'circle',
-        source: 'parana-fans',
-        paint: {
-          'circle-radius': [
-            'interpolate', ['linear'], ['zoom'],
-            1, 1.4,
-            5, 2.2,
-            9, 3.2,
-            14, 4,
-          ],
-          'circle-color': '#5dffa1',
-          'circle-opacity': 0.95,
-          'circle-stroke-color': 'rgba(0,0,0,0.55)',
-          'circle-stroke-width': 0.5,
-        },
-      });
+      /* `parana-fans-glow` + `parana-fans-dot` REMOVIDOS per feedback
+       * "Remova definitivamente todos os pontos que tem o tamanho maior
+       * e que aparecem também quando eu desabilito a feature de 7.000
+       * usuários".
+       *
+       * Esses dois layers renderizavam pontos verdes (glow radius 4-14px
+       * + core nítido) sobre cidades do PR (Curitiba, Maringá, Londrina,
+       * Cascavel, Ponta Grossa, Guarapuava etc), populados via
+       * registerTotalRegistered. Eram fora do flag mapSimulation então
+       * apareciam mesmo desabilitando a feature do brainstorm.
+       *
+       * SOURCE 'parana-fans' preservado abaixo pra não quebrar o
+       * setData callback existente — fica idle sem layers consumindo. */
 
       // ── Ana shows: black-circle-with-ticket pins ──────────────
       //
