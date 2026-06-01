@@ -115,8 +115,10 @@ function generateAmbientPoints(): GeoJSON.Feature[] {
       const dy = (((i * 31 + j * 13) % 100) / 100 - 0.5) * 1.4;
       const lng = W + (E - W) * (i / cols) + dx;
       const lat = S + (N - S) * (j / rows) + dy;
-      // Alterna entre 1px (size 0.5) e 2px (size 1) por paridade.
-      const size = (i + j) % 2 === 0 ? 1 : 0.5;
+      /* Tamanho fixo 1.5 (3px diâmetro) per feedback "em todos os
+       * níveis de zoom, não use pontos verdes menores de 3px". Antes
+       * alternava 1px/2px (sizes 0.5 e 1.0), o que violava o piso. */
+      const size = 1.5;
       features.push({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [lng, lat] },
@@ -230,10 +232,10 @@ function tierFor(active: number): CityTier {
  *  comunica volume nesses zooms é o pulse + heatmap. Os dots aqui
  *  são "tempero". */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { state: 6, region: 32, cityMid: 44, cityPeak: 840 },  // SP: 44 em z9-11, 840 em z12
-  l:  { state: 4, region: 24, cityMid: 32, cityPeak: 180 },
-  m:  { state: 3, region: 14, cityMid: 20, cityPeak: 100 },
-  s:  { state: 0, region:  6, cityMid: 10, cityPeak:  50 },
+  xl: { state: 18, region: 32, cityMid: 44, cityPeak: 840 },  // state TRIPLICADO (era 6) per feedback
+  l:  { state: 12, region: 24, cityMid: 32, cityPeak: 180 },  // state TRIPLICADO (era 4)
+  m:  { state:  9, region: 14, cityMid: 20, cityPeak: 100 },  // state TRIPLICADO (era 3)
+  s:  { state:  0, region:  6, cityMid: 10, cityPeak:  50 },
 };
 
 /** Tamanho do dot (raio em px) por range.
@@ -243,8 +245,8 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
  *             no z 9-11, mesma escala visual do cityPeak)
  *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
-  state:    1.5,   // 3px diameter
-  region:   1.25,  // 2.5px
+  state:    1.5,   // 3px diameter (piso: nenhum dot abaixo disso)
+  region:   1.5,   // 3px diameter (era 1.25 = 2.5px, abaixo do piso)
   cityMid:  2,     // 4px diameter
   cityPeak: 2,     // 4px diameter
 };
@@ -260,7 +262,12 @@ const SIZE_BY_RANGE: Record<QuotaRange, number> = {
  *  cityMid/cityPeak usam factor menor pra ficar "espalhado pela
  *  cidade" (geografia real). */
 const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
-  state:    1.10,  // halo amplo, "ao redor da área pulsante"
+  state:    4.00,  // espalhamento bem amplo — per feedback z5-7 "mesmo
+                   // que não estejam na região exata". Os pontos saem
+                   // do raio da cidade pra respeitar o spacing 24px @ z5.
+                   // Combinado com um piso absoluto de 80km no
+                   // generateCityQuotaPoints (cidades pequenas espalham
+                   // pela região, não ficam coladas no centro).
   region:   0.90,  // pulse area, "área que aparece a camada verde"
   cityMid:  0.55,  // perímetro real da cidade
   cityPeak: 0.55,  // mesmo perímetro da cidade real. Antes era 1.10 (
@@ -329,9 +336,15 @@ function generateCityQuotaPoints(
   /* Sigma = sigmaKm REAL da cidade × factor por range (tabela
    * SIGMA_FACTOR_BY_RANGE no topo). Ranges externos têm factor > 1
    * pra "fugir da região da cidade" (per feedback), ranges internos
-   * (cityMid/cityPeak) ficam dentro do perímetro real. */
+   * (cityMid/cityPeak) ficam dentro do perímetro real.
+   *
+   * `state` tem piso absoluto de 80km: cidades pequenas (sigmaKm 4-7)
+   * × factor 4 dariam só 16-28km, ainda concentrado no centro. 80km
+   * garante espalhamento regional pra que o pós-processamento Poisson
+   * consiga manter spacing 24px @ z5. */
   const factor = SIGMA_FACTOR_BY_RANGE[range];
-  const sigmaKm = Math.max(2, city.sigmaKm * factor);
+  const minSigmaKm = range === 'state' ? 80 : 2;
+  const sigmaKm = Math.max(minSigmaKm, city.sigmaKm * factor);
   const cosLat = Math.cos((cy * Math.PI) / 180);
   const sigmaLat = sigmaKm / 111;
   const sigmaLng = sigmaKm / (111 * Math.max(cosLat, 0.05));
@@ -378,23 +391,83 @@ function generateCityQuotaPoints(
   return features;
 }
 
+/** Distância em pixels entre dois pontos geográficos no zoom dado.
+ *  Usa projeção Web Mercator (mesma do Mapbox), retorna pixels Euclidean.
+ *  O(1) por par. Usado pelo filtro Poisson-disk abaixo. */
+function geoPxDistance(
+  lng1: number, lat1: number,
+  lng2: number, lat2: number,
+  zoom: number,
+): number {
+  const scale = (1 << zoom) * 256;
+  const x1 = ((lng1 + 180) / 360) * scale;
+  const x2 = ((lng2 + 180) / 360) * scale;
+  const radLat1 = (lat1 * Math.PI) / 180;
+  const radLat2 = (lat2 * Math.PI) / 180;
+  const mercY = (rad: number) =>
+    (1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2;
+  const y1 = mercY(radLat1) * scale;
+  const y2 = mercY(radLat2) * scale;
+  return Math.hypot(x1 - x2, y1 - y2);
+}
+
+/** Poisson-disk thinning: percorre features na ordem dada e mantém só
+ *  as que estão a pelo menos `minPx` pixels (medidos no `refZoom`) de
+ *  todas as já aceitas. Greedy O(N²) — aceitável pra N≤200. Os pontos
+ *  primeiros (cidades mais ativas, pela ordem do iterator) têm
+ *  prioridade. */
+function thinByMinPxDist(
+  features: GeoJSON.Feature[],
+  minPx: number,
+  refZoom: number,
+): GeoJSON.Feature[] {
+  const accepted: GeoJSON.Feature[] = [];
+  for (const f of features) {
+    if (f.geometry.type !== 'Point') continue;
+    const [lng, lat] = f.geometry.coordinates as [number, number];
+    let tooClose = false;
+    for (const a of accepted) {
+      const [alng, alat] = (a.geometry as GeoJSON.Point).coordinates as [number, number];
+      if (geoPxDistance(lng, lat, alng, alat, refZoom) < minPx) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (!tooClose) accepted.push(f);
+  }
+  return accepted;
+}
+
 /** Gera TODAS as features de quota (todas as cidades × todos os ranges)
  *  numa única FeatureCollection. Os layers depois filtram por
- *  `properties.range`. */
+ *  `properties.range`.
+ *
+ *  Pós-processamento: features do range `state` passam por Poisson-disk
+ *  filter com spacing mínimo 24px @ zoom 5 (per feedback "Mantenha uma
+ *  distância mínima de 24px entre eles" no zoom 5-7). Conforme o zoom
+ *  in pra 7, os pontos ficam ainda mais distantes em pixels — então
+ *  ancorar no zoom 5 garante o piso pra toda a faixa do range state.
+ *  Os outros ranges (region/cityMid/cityPeak) NÃO são thinados — só
+ *  o state, per feedback "não precisam respeitar a distância mínima a
+ *  partir do zoom 7". */
 function generateAllQuotaPoints(
   cities: Array<{ city: string; active: number; center: [number, number]; sigmaKm: number }>,
 ): GeoJSON.Feature[] {
-  const out: GeoJSON.Feature[] = [];
+  const stateRaw: GeoJSON.Feature[] = [];
+  const others:   GeoJSON.Feature[] = [];
   const ranges: QuotaRange[] = ['state', 'region', 'cityMid', 'cityPeak'];
   for (const c of cities) {
     for (const r of ranges) {
       const n = quotaFor(c.active, r);
-      if (n > 0) {
-        out.push(...generateCityQuotaPoints(c, r, n));
-      }
+      if (n <= 0) continue;
+      const features = generateCityQuotaPoints(c, r, n);
+      if (r === 'state') stateRaw.push(...features);
+      else               others.push(...features);
     }
   }
-  return out;
+  // 24px @ zoom 5 é o requisito de spacing mínimo do feedback.
+  const stateThinned = thinByMinPxDist(stateRaw, 24, 5);
+  return [...stateThinned, ...others];
 }
 
 /* Pool de avatares Pravatar (i.pravatar.cc) — 12 fotos de pessoas
