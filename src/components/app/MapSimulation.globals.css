@@ -520,10 +520,11 @@
 }
 
 @keyframes mapsimPulseRing {
-  /* Ciclo de 8s. Pulse VISÍVEL nos primeiros 38% (~3s), depois
-   * IDLE nos 5s restantes (opacity travada em 0, transform em
-   * scale final). Permite que phases diferentes entre cidades
-   * gerem o efeito de "umas pulsam, outras descansam". */
+  /* Ciclo de 8s. Pulse VISÍVEL nos primeiros 58% (~4.6s), idle nos
+   * 3.4s restantes. Aumentamos a janela visível (era 38%) pra que
+   * cada cidade pulse com mais frequência — combinado com phases
+   * diferentes (idx × 1.31 % 8), mais cidades estão "acordadas" a
+   * qualquer momento sem deixar de intercalar. */
   0% {
     transform: scale(0.25);
     opacity: 0;
@@ -531,7 +532,7 @@
   4% {
     opacity: 0.85;
   }
-  38% {
+  58% {
     transform: scale(1);
     opacity: 0;
   }

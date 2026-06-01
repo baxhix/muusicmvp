@@ -118,12 +118,17 @@ export default function MapPulses() {
         );
 
         if (z < 7) {
+          /* Per feedback "Isso deve aparecer em todos os níveis de
+           * zoom": pulses M/S/XS NÃO somem mais em z<7 (antes ficavam
+           * hidden). XL/L viram XXL (~200px pros polos grandes);
+           * M/S/XS mantêm o tamanho original — Campo Grande,
+           * Florianópolis etc continuam pulsando no zoom afastado. */
           if (original === 'xl' || original === 'l') {
             el.classList.add('mapsim-pulse-xxl');
-            el.style.visibility = 'visible';
           } else {
-            el.style.visibility = 'hidden';
+            el.classList.add(`mapsim-pulse-${original}`);
           }
+          el.style.visibility = 'visible';
         } else {
           el.classList.add(`mapsim-pulse-${original}`);
           el.style.visibility = visible ? 'visible' : 'hidden';
