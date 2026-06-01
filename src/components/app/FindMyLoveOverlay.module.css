@@ -45,13 +45,22 @@
  * "presença" central durante a busca de 10s). FanverseCore tem
  * canvas WebGL2 com ResizeObserver, então respeita esse tamanho
  * automaticamente. Drop-shadow sutil pra dar profundidade contra
- * o dimmer escuro. */
+ * o dimmer escuro.
+ *
+ * mask radial gradient: o shader do FanverseCore faz halo + wide
+ * halo que se estendem até as bordas do canvas. Contra um dimmer
+ * preto 78% opacity, o halo cortado nas bordas lê como um quadrado
+ * escuro em volta do orbe (per feedback "remova esse quadrado").
+ * O mask radial fade pra transparente entre 55% e 80% do raio mata
+ * essa borda dura. */
 .orb {
   width: 280px;
   height: 280px;
   position: relative;
   filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.35));
   animation: fmlOrbBreathe 4.2s ease-in-out infinite;
+  -webkit-mask: radial-gradient(circle at center, #000 55%, transparent 80%);
+  mask: radial-gradient(circle at center, #000 55%, transparent 80%);
 }
 
 /* Frase rotativa — key={phraseIdx} no JSX força remount a cada
@@ -212,6 +221,19 @@
   background: rgba(245, 245, 247, 0.85);
 }
 
+/* Pin do match no mapa: avatar + badge "X% afinidade" empilhados.
+ * Flex column-reverse pro badge ficar ACIMA do avatar (mantém o
+ * `anchor: 'center'` do Mapbox apontando pra coordenada exata,
+ * com o badge crescendo pra cima sem deslocar o ponto de ancoragem). */
+.matchPin {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  animation: fmlMatchAvatarIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .matchAvatar {
   width: 52px;
   height: 52px;
@@ -221,7 +243,38 @@
   background-size: cover;
   background-position: center;
   background-color: #0b0b0e;
-  animation: fmlMatchAvatarIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Badge "98% afinidade" — pill discreta acima do avatar do match.
+ * Dark glass, sem cor de acento, segue o mesmo design system dos
+ * outros pills do app (rgba(11,11,14,0.92) + borda branca 8%). */
+.matchAffinityBadge {
+  padding: 3px 8px 4px;
+  border-radius: 999px;
+  background: rgba(11, 11, 14, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  /* Cauda visual conectando badge ao avatar — pequeno triângulo
+   * formado por um pseudo elemento. */
+  position: relative;
+}
+.matchAffinityBadge::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 6px;
+  height: 6px;
+  background: rgba(11, 11, 14, 0.92);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 /* ── Keyframes ────────────────────────────────────────────── */

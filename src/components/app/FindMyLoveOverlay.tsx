@@ -296,12 +296,30 @@ export default function FindMyLoveOverlay({ onClose }: { onClose: () => void }) 
         if (t < 1) {
           lineRafRef.current = requestAnimationFrame(tickTrace);
         } else {
-          // Trace concluído — avatar do match surge na ponta
+          // Trace concluído — pin do match (avatar + badge de
+          // afinidade) surge na ponta.
           lineRafRef.current = null;
-          const el = document.createElement('div');
-          el.className = styles.matchAvatar;
-          el.style.backgroundImage = `url('https://i.pravatar.cc/100?img=${match.picId}')`;
-          markerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
+          /* Pin = wrapper flex column-reverse com:
+           *   [badge "X% afinidade"]  ← acima
+           *   [avatar circular]       ← anchor: 'center' do Mapbox
+           * Estrutura DOM em vez de innerHTML pra evitar XSS via
+           * match.affinity (mesmo sendo gerado client-side, mantém
+           * o padrão seguro). */
+          const pin = document.createElement('div');
+          pin.className = styles.matchPin;
+
+          const badge = document.createElement('div');
+          badge.className = styles.matchAffinityBadge;
+          badge.textContent = `${match.affinity}% afinidade`;
+
+          const avatar = document.createElement('div');
+          avatar.className = styles.matchAvatar;
+          avatar.style.backgroundImage = `url('https://i.pravatar.cc/100?img=${match.picId}')`;
+
+          pin.appendChild(badge);
+          pin.appendChild(avatar);
+
+          markerRef.current = new mapboxgl.Marker({ element: pin, anchor: 'center' })
             .setLngLat(match.center)
             .addTo(map);
           applyMarkerVisibility();
