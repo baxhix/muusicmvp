@@ -179,26 +179,68 @@ function generateMaringaPoints(count: number, seed: number): GeoJSON.Feature[] {
   return features;
 }
 
-/* ── Quotas visuais de dots por cidade × range de zoom ─────
+/* ═══════════════════════════════════════════════════════════════════
+ * ★ PADRÃO DE DISTRIBUIÇÃO DE USUÁRIOS POR CIDADE × ZOOM ★
+ * ═══════════════════════════════════════════════════════════════════
  *
- * Per feedback: desacoplar "ver" de "ser". O dataset de 7k users
- * continua existindo (alimenta cluster numbers, heatmap, contadores),
- * mas a camada VISUAL de dots passa a ser quotas determinísticas
- * controladas por essas tabelas — UX-first, sem amostragem fragile
- * via `avatarSeed % N`.
+ * Esse é o FORMATO PADRÃO da feature de simulação visual de usuários:
+ * proporcional ao volume real (active count) da cidade, escalonando
+ * em 5 faixas de zoom — do continente ao detalhe de cidade.
  *
- * Edite os valores aqui pra ajustar densidade — nenhum filter/opacity
- * em layer separado precisa ser tocado. */
+ * ─── PRINCÍPIOS ───
+ * 1. DESACOPLAR "VER" DE "SER"
+ *    O dataset de 7k users (SOURCE_HEAT/SOURCE_ID) alimenta heatmap,
+ *    clusters e contadores. Mas os DOTS VISUAIS vêm das tabelas
+ *    abaixo, NÃO de amostragem fragile do dataset. UX-first.
+ *
+ * 2. CONTINUIDADE ENTRE FAIXAS (sem saltos)
+ *    Todos os ranges da mesma cidade COMPARTILHAM a mesma seed PRNG.
+ *    O ponto i é o mesmo gauss em todos os ranges — só o sigma muda.
+ *    Cada range superior ADICIONA novos pontos depois dos primeiros
+ *    N (que continuam alinhados em angle com o range inferior).
+ *    Resultado: conforme zoom in, pontos "se contraem" radialmente
+ *    em direção ao centro e novos vão aparecendo ao redor.
+ *
+ * 3. LAND MASK
+ *    Ranges `continent` e `state` (com sigma grande) usam rejection
+ *    sampling pra garantir que dots fiquem dentro do território
+ *    continental do Brasil (não no oceano).
+ *
+ * 4. CAP VISUAL, NÃO 1:1 COM REAL
+ *    Cidade XL com 3000 ativos NÃO mostra 3000 dots — mostra o cap
+ *    do tier (840 no peak). O dataset real continua disponível pra
+ *    heatmap/contadores via "X ouvintes" no badge do pulse.
+ *
+ * ─── ESCALA POR FAIXA DE ZOOM (cidade XL como SP) ───
+ *
+ *   FAIXA      ZOOM         DOTS (xl)  SIGMA      SHAPE
+ *   ─────────  ───────────  ─────────  ─────────  ──────────────────
+ *   continent  3.3 – 5.4      30       700 km     halo continental
+ *   state      6   – 7        59       150 km     ao redor do pulse
+ *   region     7   – 8       143        18 km     área da pulse
+ *   cityMid    9   – 10      294       7.7 km     cidade real
+ *   cityPeak  11   – 12      840       7.7 km     preenche tela
+ *
+ * Tamanho do dot: 3px (state/region) → 4px (cityMid/cityPeak).
+ * Glow halo verde de 12px difuso entra a partir de z=10.7 só no peak.
+ *
+ * ─── ESCALA PROPORCIONAL POR TIER ───
+ *
+ * Tier definido pela contagem de ativos (`tierFor`):
+ *   xl ≥ 400  /  l ≥ 250  /  m ≥ 130  /  s ≥ 70  /  xs <70
+ *
+ * Cidade XL no dataset atual: SP. Tiers menores (RJ, BH, etc) seguem
+ * a mesma curva mas em escala reduzida — proporção fixa contra o
+ * cityPeak de cada tier (QUOTAS_BY_TIER abaixo). XS especial: só 2
+ * dots no continent + 1-2 no cityPeak (presença simbólica pra
+ * cidade pequena ficar visível em todos os zooms).
+ *
+ * ─── ONDE AJUSTAR ───
+ * Tudo nas TABELAS abaixo (QUOTAS_BY_TIER / SIZE_BY_RANGE /
+ * SIGMA_FACTOR_BY_RANGE / RANGE_ZOOMS). NENHUM addLayer / paint /
+ * filter precisa ser editado pra mexer em densidade ou faixa.
+ * ═══════════════════════════════════════════════════════════════════ */
 type CityTier = 'xl' | 'l' | 'm' | 's' | 'xs';
-/* Ranges progressivos do zoom afastado pro zoom de cidade:
- *   - continent (z 3.3-5.4): raio 700km, espalha das cidades pro
- *     continente — feedback "sempre manter visíveis pontos e
- *     conforme o zoom vai acontecendo, eles vão se agrupando
- *     nos núcleos de concentração"
- *   - state     (z 6-7)    : pontos 3px ao redor da pulse
- *   - region    (z 7-8)    : 32 pontos pela ÁREA DA PULSE
- *   - cityMid   (z 9-10)   : 32 pontos pela cidade real
- *   - cityPeak  (z 11-12)  : MUITOS pontos "preenche a tela" */
 type QuotaRange = 'continent' | 'state' | 'region' | 'cityMid' | 'cityPeak';
 
 /** Tier de cada cidade pela contagem de ativos.
