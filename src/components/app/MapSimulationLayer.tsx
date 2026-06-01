@@ -310,7 +310,9 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
   continent: 1.5,  // 3px diameter (mesmo piso global)
   state:    1.5,   // 3px diameter (piso: nenhum dot abaixo disso)
-  region:   1.5,   // 3px diameter (era 1.25 = 2.5px, abaixo do piso)
+  region:   2,     // 4px diameter — per feedback "pequenos pontos de
+                   //  4px ao redor" pra dar consistência visual com
+                   //  cityMid/cityPeak no zoom intermediário (7-8).
   cityMid:  2,     // 4px diameter
   cityPeak: 2,     // 4px diameter
 };
@@ -407,7 +409,13 @@ function quotaFor(monthlyListeners: number, range: QuotaRange): number {
     state:      59,
     continent:  30,
   };
-  return Math.max(1, Math.round(baseQuota[range] * scale));
+  /* Piso de 5 dots por cidade per feedback "pequenos pontos de 4px
+   * ao redor para não ficar um único ponto isolado". Sem o piso,
+   * cidades pequenas (RJ 508 ouvintes → scale 0.016) renderizavam
+   * só 1 dot — visual "isolado". Com 5 dots ao redor de cada pulse,
+   * sensação de "cluster mínimo" em qualquer cidade do dataset. */
+  const MIN_DOTS_PER_CITY = 5;
+  return Math.max(MIN_DOTS_PER_CITY, Math.round(baseQuota[range] * scale));
 }
 
 /** Land mask aproximada do Brasil continental.
