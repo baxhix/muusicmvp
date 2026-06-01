@@ -1509,21 +1509,47 @@ export default function MapSimulationLayer() {
           btn.type = 'button';
           btn.className = 'mapsim-reveal-react';
           btn.textContent = emoji;
-          btn.setAttribute('aria-label', `Enviar ${emoji} para ${firstName}`);
+          /* aria-label muda pro 💬 ("Mandar mensagem") já que esse
+           * botão tem comportamento diferente dos outros — abre chat
+           * em vez de disparar cascata de reaction. */
+          btn.setAttribute(
+            'aria-label',
+            emoji === '💬'
+              ? `Mandar mensagem para ${firstName}`
+              : `Enviar ${emoji} para ${firstName}`,
+          );
           btn.addEventListener('click', (ev) => {
             ev.stopPropagation();
-            /* Dispara a cascata mocada do emoji escolhido. O
-             * HeartsCascade montado pelo SimulationHUD escuta esse
-             * evento. `text` sobrescreve `icon` — qualquer emoji
-             * cai como glyph. */
-            try {
-              window.dispatchEvent(
-                new CustomEvent('app:hearts-cascade', { detail: { text: emoji } }),
-              );
-            } catch { /* SSR / detached — ignorar */ }
-            /* Após escolher uma reaction, fecha o box e reagenda
-             * a saída pra 1.5s (tempo curto pra usuário ver o
-             * efeito completar antes do avatar sumir). */
+            if (emoji === '💬') {
+              /* 💬 abre o detalhe do chat com o usuário (per feedback
+               * "faça com que eu consiga enviar uma mensagem pra eles
+               * clicando no ícone de chat"). Dispatch o mesmo evento
+               * que o balão de direct usa — consumer pode abrir o
+               * LiveChatPanel pré-fillado com o destinatário. */
+              try {
+                window.dispatchEvent(
+                  new CustomEvent('app:mock-direct-open', {
+                    detail: {
+                      name:     firstName,
+                      picId,
+                      text:     '',  // sem mensagem pre-fill — user vai redigir
+                      sourceId: (p as FeatureProps).id,
+                    },
+                  }),
+                );
+              } catch { /* SSR / detached — ignorar */ }
+            } else {
+              /* Outros emojis (❤️ 👋 👀) → cascata mocada via
+               * HeartsCascade (SimulationHUD escuta esse evento). */
+              try {
+                window.dispatchEvent(
+                  new CustomEvent('app:hearts-cascade', { detail: { text: emoji } }),
+                );
+              } catch { /* SSR / detached — ignorar */ }
+            }
+            /* Após qualquer reaction, fecha o box e reagenda a saída
+             * pra 1.5s (tempo curto pro usuário ver o efeito completar
+             * antes do avatar sumir). */
             el.classList.remove('mapsim-reveal-open');
             scheduleExit(1500);
           });
@@ -1616,6 +1642,12 @@ export default function MapSimulationLayer() {
         const openBox = () => {
           computeSide();
           cancelExit();
+          /* Estabilização visual per feedback "ao passar o mouse pelo
+           * avatar ele deve parar de se movimentar". Se o avatar estava
+           * em fade-out quando o user veio interagir, revertemos pra
+           * fade-in pra ele não ficar semi-transparente / fugindo. */
+          el.classList.remove('mapsim-reveal-out');
+          el.classList.add('mapsim-reveal-in');
           el.classList.add('mapsim-reveal-open');
         };
         const closeBox = (lifetimeMs: number = 1500) => {
@@ -1634,6 +1666,21 @@ export default function MapSimulationLayer() {
             openBox();
           }
         });
+
+        /* Touch START em mobile cancela exit IMEDIATAMENTE — sem
+         * esperar o click se completar (que pode levar 300ms). Per
+         * feedback "ao passar o mouse pelo avatar ele deve parar de
+         * se movimentar ... tanto desktop quanto mobile". Em touch
+         * devices, o equivalente a "passar o mouse" é encostar o
+         * dedo. passive: true pra não bloquear o gesture do mapa
+         * (pan/pinch continuam funcionando). */
+        photoWrap.addEventListener('touchstart', () => {
+          cancelExit();
+          el.classList.remove('mapsim-reveal-out');
+          if (!el.classList.contains('mapsim-reveal-in')) {
+            el.classList.add('mapsim-reveal-in');
+          }
+        }, { passive: true });
 
         /* Hover-to-open NO DESKTOP. Per feedback "para aparecer
          * os emojis, no desktop, basta o hover". Em touch devices

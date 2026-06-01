@@ -47,6 +47,19 @@
    * sutil dosa o "ele já foi" sem cortar abrupto. */
   transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Pause-on-hover/interact per feedback "ao passar o mouse pelo
+ * avatar ele deve parar de se movimentar". Quando o reaction box
+ * está aberto (.open) ou o mouse está em hover, cancelamos
+ * qualquer transição de opacity em curso — opacity trava em 1.
+ *
+ * Funciona pra desktop (hover) E mobile (.open via tap/touch).
+ * No mouseleave/closeBox, .open sai → transição volta a fluir
+ * normalmente pro scheduleExit. */
+.mapsim-reveal:hover,
+.mapsim-reveal-open {
+  opacity: 1 !important;
+  transition: none !important;
+}
 
 /* Wrapper relativo da foto — referência pra paleta absoluta. */
 .mapsim-reveal-photo-wrap {
