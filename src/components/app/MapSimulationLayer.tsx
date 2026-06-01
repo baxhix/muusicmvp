@@ -948,6 +948,11 @@ export default function MapSimulationLayer() {
           id: LAYER_HEAT,
           type: 'heatmap',
           source: SOURCE_HEAT,
+          /* minzoom 2.5 per feedback "no mobile, em zoom menor que
+           * 2.5, oculte qualquer elemento sobre o mapa". Desktop
+           * nem pode ir abaixo de 2.5 (minZoom Globe), então gate
+           * é efetivo só pro mobile (que tem minZoom 1.5). */
+          minzoom: 2.5,
           maxzoom: 12,
           paint: {
             /* Peso 2.5× pra online — eles dominam o gradiente
@@ -1891,9 +1896,14 @@ export default function MapSimulationLayer() {
 
       const tick = () => {
         try {
-          /* Gate de zoom removido — avatares spawn em qualquer
-           * zoom (per feedback). A filtragem por viewport-in-pixels
-           * abaixo já garante que só nascem dentro da área visível. */
+          /* Gate em z<2.5: per feedback "no mobile, em zoom menor
+           * que 2.5, oculte qualquer elemento sobre o mapa".
+           * Avatares de reveal não spawnam no globo afastado;
+           * próximo tick tenta de novo quando user dá zoom in. */
+          if (map.getZoom() < 2.5) {
+            revealTimers.push(window.setTimeout(tick, REVEAL_CYCLE_MS));
+            return;
+          }
           /* Filtra candidatos pela viewport em PIXELS com padding
            * de 80px nas bordas. Antes usávamos só `bounds.contains`
            * geográfico — funcionava, mas avatares podiam nascer

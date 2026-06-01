@@ -125,17 +125,18 @@ export default function MapPulses() {
     };
 
     const applyZoomVisibility = (map: MapboxMap) => {
-      /* Lógica em três faixas (per feedback "No zoom 5.2 até o 7
-       * deixe a onda pulsante do mesmo tamanho que tem no 4.3"):
-       *   zoom < 7  → modo XXL (~200px) pros polos XL/L originais.
-       *               Polos M/S escondidos (mesma regra do z<5 antes —
-       *               estendida até 7).
-       *   zoom 7-8  → modo normal (tier XL/L/M/S original).
-       *   zoom 8-9  → fade-out gradual.
-       *   zoom 9+   → hidden. */
+      /* Lógica de visibilidade dos pulses por zoom:
+       *   z < 2.5  → TODOS hidden (mobile pode ir até 1.5; per
+       *              feedback "no mobile, em zoom menor que 2.5,
+       *              oculte qualquer elemento sobre o mapa").
+       *   z < 7    → XL/L como XXL (~200px), M/S/XS no tamanho original
+       *   z 7-8    → modo normal (tier XL/L/M/S/XS original)
+       *   z 8-9    → fade-out gradual
+       *   z 9+     → hidden (zoom de cidade não precisa de pulse) */
       const z = map.getZoom();
-      const visible = z < 9;
-      const opacity = z < 8 ? 1 : Math.max(0, 1 - (z - 8));
+      const tooFarOut = z < 2.5;
+      const visible = !tooFarOut && z < 9;
+      const opacity = tooFarOut ? 0 : (z < 8 ? 1 : Math.max(0, 1 - (z - 8)));
       markers.forEach((m) => {
         const el = m.getElement();
         const original = el.dataset.sizeOriginal as
