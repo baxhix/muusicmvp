@@ -194,58 +194,16 @@ export default function BottomNav() {
           <span className={styles.label}>Mapa</span>
         </button>
 
-        {/* Feed — toggles the bottom-sheet directly via the shell's
-            `feedOpen` state. The state survives the navigation gap
-            so opening Feed from a non-/app route lands the user on
-            /app WITH the panel expanded; previously we dispatched
-            an `app:toggle-feed` CustomEvent that FeedPanel had to
-            already be mounted to receive, which silently dropped
-            the intent when crossing a route boundary. */}
-        <button
-          type="button"
-          className={`${styles.item} ${feedOpen ? styles.itemActive : ''}`}
-          onClick={() => {
-            // Open the feed unconditionally — the navbar Feed slot
-            // is "show me the feed", not "toggle". Closing happens
-            // via the panel header's tap-to-minimize.
-            // dismissShellOverlays primeiro pra qualquer Playlist/
-            // EditProfile/hamburger aberto sumir, e só depois
-            // setFeedOpen(true) — o reset de `feedOpen` que o
-            // helper faz é batched com a abertura, então o net
-            // state é feed aberto, demais fechados.
-            dismissShellOverlays();
-            setFeedOpen(true);
-            // If we're not on /app, route there so FeedPanel actually
-            // mounts and reads the now-true `feedOpen` flag.
-            if (pathname !== '/app') {
-              router.push('/app');
-            }
-          }}
-          aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
-          data-tooltip={feedOpen ? 'Fechar feed' : 'Feed'}
-        >
-          <svg viewBox="0 0 22 22" fill="none">
-            <rect x="4" y="4" width="14" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.6" />
-            <path d="M7.5 9h7M7.5 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-          </svg>
-          <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Feed</span>
-        </button>
-
-        {/* Center slot — Superfã crown on BOTH viewports.
+        {/* Superfã crown — slot 2 per feedback "inverta a ordem dos
+         * ícones de superfã e feed na bottom bar" (antes era slot 3
+         * com `itemCenter`; agora promovido pra slot 2 como item
+         * normal, com label igual aos demais).
          *
          * Mobile: routes to /app/ranking (toggleNav back to /app
          *   on re-tap).
-         * Desktop: toggles the layered `superfans` overlay so the
-         *   Feed (and anything else mounted on /app/page.tsx)
-         *   stays visible behind the leaderboard — same shape as
-         *   Notificações + Playlist.
-         *
-         * Chat displaced from this slot is reachable via the dock
-         * (3 latest on the right rail) and the new chat button in
-         * the right-rail cluster (desktop) / hamburger menu
-         * (mobile). The `itemActive` source is derived per-mode:
-         * pathname on mobile, the overlay flag on desktop. */}
+         * Desktop: toggles the layered `superfans` overlay so o
+         *   Feed (e o resto montado em /app/page.tsx) fica visível
+         *   atrás do leaderboard. */}
         {(() => {
           const superfansActive = isMobile
             ? pathname.startsWith('/app/ranking')
@@ -253,7 +211,7 @@ export default function BottomNav() {
           return (
             <button
               type="button"
-              className={`${styles.item} ${styles.itemCenter} ${superfansActive ? styles.itemActive : ''}`}
+              className={`${styles.item} ${superfansActive ? styles.itemActive : ''}`}
               onClick={() => {
                 if (isMobile) {
                   dismissShellOverlays();
@@ -270,21 +228,47 @@ export default function BottomNav() {
               aria-pressed={!isMobile ? superfansActive : undefined}
               data-tooltip={superfansActive ? 'Fechar' : 'Superfãs'}
             >
-              <span className={styles.iconWrap}>
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                </svg>
-              </span>
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+                <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
               <span className={styles.dot} aria-hidden="true" />
+              <span className={styles.label}>Superfãs</span>
             </button>
           );
         })()}
+
+        {/* Feed — slot 3 (centro), promovido do slot 2 per feedback
+         * "inverta a ordem". Toggles a bottom-sheet via shell's
+         * `feedOpen` state. State survives navigation gap. */}
+        <button
+          type="button"
+          className={`${styles.item} ${feedOpen ? styles.itemActive : ''}`}
+          onClick={() => {
+            // Open the feed unconditionally — the navbar Feed slot
+            // é "show me the feed", não toggle. Fechar é via header
+            // do panel (tap-to-minimize).
+            dismissShellOverlays();
+            setFeedOpen(true);
+            if (pathname !== '/app') {
+              router.push('/app');
+            }
+          }}
+          aria-label={feedOpen ? 'Fechar feed' : 'Abrir feed'}
+          data-tooltip={feedOpen ? 'Fechar feed' : 'Feed'}
+        >
+          <svg viewBox="0 0 22 22" fill="none">
+            <rect x="4" y="4" width="14" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M7.5 9h7M7.5 13h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <span className={styles.dot} aria-hidden="true" />
+          <span className={styles.label}>Feed</span>
+        </button>
 
         {/* 4th slot — Chat. Per product feedback "inverta o ícone
          * chat e comunidades na bottom bar" (Chat era 5º, Comunidade
