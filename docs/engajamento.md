@@ -9,6 +9,25 @@
 > Criticidade indica peso na decisão de priorização; Categoria
 > ajuda a balancear o sprint entre eixos.
 
+## O que é e como impacta
+
+Este roadmap consolida as alavancas de produto que movem **ativação**
+(usuário novo vira usuário recorrente), **retenção** (D1, D7, D30) e
+**crescimento** (share, referral, novos canais) da plataforma de
+superfãs. Cada item tem `effort`, `criticidade` e `categoria`
+explícitos pra que decisões de sprint sejam tomadas em segundos —
+priorizar deixa de ser conversa subjetiva e vira leitura de tabela.
+
+O impacto é direto e mensurável: P0 destrava o lançamento (sem
+activation event não dá pra medir nada do resto; sem pipeline de
+conteúdo diário a retenção desmorona; sem decisão multi-artist a
+arquitetura de spending/feed/creator tools fica em limbo). P1
+empurra retenção e growth no próximo sprint via streak, daily drop,
+share e referral. P2 é o vetor de status/monetização/comunidade que
+sustenta o produto no médio prazo. Executar nessa ordem evita
+construir P1/P2 em cima de fundação faltando — economiza retrabalho
+e acelera o time-to-validate de cada hipótese.
+
 ---
 
 ## P0 — Críticos (bloqueadores de lançamento / impacto imediato)
