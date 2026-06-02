@@ -148,7 +148,9 @@
 }
 .foldTitleLabel,
 .foldTitleName {
-  font-size: 26px;
+  /* Per product feedback "aumente 6 pontos o nome Ana Castela"
+   * — 26px → 32px. */
+  font-size: 32px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.02em;
