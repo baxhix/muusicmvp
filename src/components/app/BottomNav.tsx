@@ -286,59 +286,37 @@ export default function BottomNav() {
           );
         })()}
 
-        {/* 4th slot — Comunidade across BOTH viewports.
-         *
-         * Per product feedback, Chat is no longer in the mobile
-         * navbar — Comunidade takes the slot on phones too. Chat
-         * stays reachable on mobile via the floating right-rail
-         * Send icon (in app/app/layout.tsx, aligned with the
-         * Fanpoints chip in the home header). The hamburger menu
-         * also still surfaces it.
-         *
-         * Desktop label is shown via `.label`; mobile hides
-         * `.label` globally so only the icon renders there. */}
+        {/* 4th slot — Chat. Per product feedback "inverta o ícone
+         * chat e comunidades na bottom bar" (Chat era 5º, Comunidade
+         * era 4º; agora trocados). Toggle pattern: dismiss outras
+         * overlays e navega pra /app/chat. Re-tap em /app/chat
+         * volta pra /app via toggleNav. Badge usa chatUnreadCount. */}
         <button
           type="button"
-          className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
-          onClick={() => { dismissShellOverlays(); toggleNav('/app/comunidades'); }}
-          onPointerEnter={() => prefetch('/app/comunidades')}
-          onFocus={() => prefetch('/app/comunidades')}
-          aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
-          aria-pressed={!isMobile ? onCommunity : undefined}
-          data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
+          className={`${styles.item} ${pathname.startsWith('/app/chat') ? styles.itemActive : ''}`}
+          onClick={() => { dismissShellOverlays(); toggleNav('/app/chat'); }}
+          onPointerEnter={() => prefetch('/app/chat')}
+          onFocus={() => prefetch('/app/chat')}
+          aria-label={pathname.startsWith('/app/chat') ? 'Fechar chat' : 'Abrir chat'}
+          aria-pressed={!isMobile ? pathname.startsWith('/app/chat') : undefined}
+          data-tooltip={pathname.startsWith('/app/chat') ? 'Fechar' : 'Chat'}
         >
-          <span className={styles.iconWrap}>
-            <svg viewBox="0 0 24 24" fill="none">
-              <circle
-                cx="9"
-                cy="8"
-                r="3.5"
-                stroke="currentColor"
-                strokeWidth="1.6"
-              />
-              <path
-                d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <circle
-                cx="17"
-                cy="9.5"
-                r="2.5"
-                stroke="currentColor"
-                strokeWidth="1.6"
-              />
-              <path
-                d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
+          <svg viewBox="0 0 22 22" fill="none">
+            <path
+              d="M3 11l16-7-7 16-2-7-7-2z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {chatUnreadCount > 0 && (
+            <span className={styles.badge} aria-label={`${chatUnreadCount} não lidas`}>
+              {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+            </span>
+          )}
           <span className={styles.dot} aria-hidden="true" />
-          <span className={styles.label}>Comunidade</span>
+          <span className={styles.label}>Chat</span>
         </button>
 
         {/* Profile slot — diverges by viewport.
@@ -538,44 +516,39 @@ export default function BottomNav() {
             )}
           </div>
         ) : (
-          /* Desktop 5th slot = Chat (paper-airplane).
-           *
-           * Per product feedback "na bottom bar, substitua o ícone
-           * de notificações pelo ícone de send que será o chat. As
-           * notificações vão para cima, ao lado esquerdo da imagem
-           * do usuário no topo superior direito."
-           *
-           * Toggle pattern: dismiss other overlays e navega pra
-           * /app/chat. Re-tap (já em /app/chat) volta pra /app via
-           * `toggleNav`. Badge usa chatUnreadCount do shell. */
+          /* Desktop 5th slot = Comunidade. Antes era Chat (slot 4
+           * agora) — invertido per feedback "inverta o ícone chat
+           * e comunidades na bottom bar". */
           <button
             type="button"
-            className={`${styles.item} ${pathname.startsWith('/app/chat') ? styles.itemActive : ''}`}
-            onClick={() => { dismissShellOverlays(); toggleNav('/app/chat'); }}
-            onPointerEnter={() => prefetch('/app/chat')}
-            onFocus={() => prefetch('/app/chat')}
-            aria-label={pathname.startsWith('/app/chat') ? 'Fechar chat' : 'Abrir chat'}
-            aria-pressed={pathname.startsWith('/app/chat')}
-            data-tooltip={pathname.startsWith('/app/chat') ? 'Fechar' : 'Chat'}
+            className={`${styles.item} ${onCommunity ? styles.itemActive : ''}`}
+            onClick={() => { dismissShellOverlays(); toggleNav('/app/comunidades'); }}
+            onPointerEnter={() => prefetch('/app/comunidades')}
+            onFocus={() => prefetch('/app/comunidades')}
+            aria-label={onCommunity ? 'Fechar comunidades' : 'Abrir comunidades'}
+            aria-pressed={onCommunity}
+            data-tooltip={onCommunity ? 'Fechar' : 'Comunidade'}
           >
-            {/* Paper-airplane (send) icon — substituiu o bell.
-             * Mesma forma usada no mobile send-icon do shell. */}
-            <svg viewBox="0 0 22 22" fill="none">
-              <path
-                d="M3 11l16-7-7 16-2-7-7-2z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {chatUnreadCount > 0 && (
-              <span className={styles.badge} aria-label={`${chatUnreadCount} não lidas`}>
-                {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
-              </span>
-            )}
+            <span className={styles.iconWrap}>
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+                <path
+                  d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+                <circle cx="17" cy="9.5" r="2.5" stroke="currentColor" strokeWidth="1.6" />
+                <path
+                  d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
             <span className={styles.dot} aria-hidden="true" />
-            <span className={styles.label}>Chat</span>
+            <span className={styles.label}>Comunidade</span>
           </button>
         )}
       </div>
