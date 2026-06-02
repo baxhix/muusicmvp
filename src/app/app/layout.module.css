@@ -129,11 +129,11 @@
    * edge on the same outer margin the Fanpoints chip uses on
    * the left. */
   .topBar {
-    /* top 60 → 39 (-21px) acompanhando a subida do logo brand
-     * quando o .infoBar do MobileHomeChrome (greeting + Fanpoints)
-     * foi removido. Mantém alinhamento horizontal com o logo
-     * central. */
-    top: 39px;
+    /* top 39 → 34 (-5px) per product feedback "posicione 5px
+     * mais acima apenas o logotipo, o orbe e o ícone de
+     * chat/mensagens". Sincroniza com o brand e orb do
+     * MobileHomeChrome que também subiram 5px. */
+    top: 34px;
     right: 18px;
     transform: none;
     flex-direction: row;

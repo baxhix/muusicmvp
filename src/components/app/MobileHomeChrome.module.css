@@ -177,11 +177,9 @@
  * line-height 0 evita gap-baseline em volta do <canvas>. */
 .headerOrb {
   position: absolute;
-  /* Subiu -21px (49 → 28) acompanhando o brand center que
-   * automigrou pra y:51.5 quando o chrome encolheu pra 91px
-   * (remoção do .infoBar). Mantém o alinhamento orb-center ≈
-   * logo-center que tínhamos antes. */
-  top: 28px;
+  /* 28 → 23 (-5px) acompanha a subida do brand (top calc agora
+   * usa +1 em vez de +6). Mantém o orb-center ≈ logo-center. */
+  top: 23px;
   left: 34px;
   width: 70px;
   height: 70px;
@@ -192,9 +190,10 @@
 }
 
 @media (max-width: 360px) {
-  /* Phones pequenos (<360px): mesma subida -21px (55 → 34). */
+  /* Phones pequenos (<360px): mesma subida adicional -5px
+   * (34 → 29) acompanhando o brand. */
   .headerOrb {
-    top: 34px;
+    top: 29px;
     left: 28px;
     width: 58px;
     height: 58px;
@@ -229,7 +228,10 @@
    * the info bar at top:6 (height 36 → covers y:6-42) and the
    * chrome at 133px, the chrome center sits at y:66.5; after
    * the nudge the brand center lands at y:72.5. */
-  top: calc(50% + 6px);
+  /* Nudge -5px per product feedback "posicione 5px mais acima
+   * apenas o logotipo, o orbe e o ícone de chat/mensagens".
+   * Era +6, agora +1. Os 3 elementos sobem juntos. */
+  top: calc(50% + 1px);
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
