@@ -354,25 +354,6 @@
   height: 22px;
 }
 
-.unreadBadge {
-  position: absolute;
-  top: -5px;
-  right: -7px;
-  min-width: 15px;
-  height: 15px;
-  border-radius: 999px;
-  background: #f87171;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  font-family: var(--sans);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-  line-height: 1;
-  border: 1.5px solid rgba(0,0,0,0.6);
-}
 
 .itemCenter {
   width: 36px; height: 36px;

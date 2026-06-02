@@ -48,6 +48,12 @@ const MISSION_META: MissionMeta[] = [
 
 const TOTAL = MISSION_META.length;
 
+/* Index estável pros 5 sparkles do burst de celebração. Extraído
+ * pra fora do render porque o `[0,1,2,3,4]` inline criava array
+ * novo a cada paint do componente, invalidando React.memo internos
+ * potenciais. */
+const SPARKLE_INDICES = [0, 1, 2, 3, 4] as const;
+
 /** Sum of XP across only the missions currently completed. */
 function sumEarnedXp(
   meta: MissionMeta[],
@@ -88,11 +94,6 @@ export default function ArtistBox() {
    * pelo botão pill "4 convites" ao lado de 402.299 Fanpoints
    * no header do box. Per product feedback. */
   const [inviteOpen, setInviteOpen] = useState(false);
-  // contentRef is retained because the inner missions list still
-  // references it via ref (legacy — kept so the layout doesn't
-  // collapse to 0 if the missions container is queried for
-  // scrollHeight by any future feature like auto-scroll).
-  const contentRef = useRef<HTMLDivElement>(null);
 
   // Logged-in user's current Fanpoints balance — fetched live via
   // useUserProfile so it stays accurate when the user earns/spends
@@ -405,7 +406,7 @@ export default function ArtistBox() {
        *  inner maxHeight clipper anymore. Mission rows are always
        *  laid out when the dropdown is open. */}
       <div className={styles.content}>
-        <div ref={contentRef}>
+        <div>
           <div className={styles.divider} />
           {/* Body switch por tab. */}
           {activeTab === 'ranking' && <RankingTabContent />}
@@ -439,7 +440,7 @@ export default function ArtistBox() {
                       `.sparkle` in the module CSS. */}
                   {isCelebrating && (
                     <div className={styles.missionSparkles} aria-hidden="true">
-                      {[0, 1, 2, 3, 4].map((i) => (
+                      {SPARKLE_INDICES.map((i) => (
                         <span
                           key={i}
                           className={styles.sparkle}
@@ -677,7 +678,12 @@ function RankingTabContent() {
    * real do user, mas o user pediu mock visual em ½. */
   const meProgressPct = 50;
 
-  const visible = showAll ? ranking : ranking.slice(0, 6);
+  /* Memoizado pra que o slice não recrie array a cada render
+   * (ex.: cada update do hook useLiveUsers dispara render). */
+  const visible = useMemo(
+    () => (showAll ? ranking : ranking.slice(0, 6)),
+    [showAll, ranking],
+  );
 
   return (
     <div className={styles.tabRanking}>
