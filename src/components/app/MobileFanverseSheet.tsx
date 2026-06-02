@@ -152,7 +152,7 @@ export default function MobileFanverseSheet({
       <div className={sheetStyles.hero}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/ana-castela-box.jpg"
+          src="/ana-castela-fanverse-hero.jpg"
           alt="Ana Castela"
           className={sheetStyles.heroImg}
         />
@@ -184,8 +184,10 @@ export default function MobileFanverseSheet({
        *  próximos das palavras Fanverse Ana Castela" — título
        *  + meta row dentro do mesmo bloco, com gap apertado. */}
       <div className={sheetStyles.fold}>
+        {/* Título — apenas "Ana Castela" per product feedback
+         *  "deixe apenas o nome Ana Castela". O label "Fanverse"
+         *  saiu daqui. */}
         <div className={sheetStyles.foldTitle}>
-          <span className={sheetStyles.foldTitleLabel}>Fanverse</span>
           <span className={sheetStyles.foldTitleName}>Ana Castela</span>
         </div>
         <div className={sheetStyles.metaRow}>
