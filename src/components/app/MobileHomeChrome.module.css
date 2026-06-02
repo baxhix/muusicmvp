@@ -180,10 +180,10 @@
  * line-height 0 evita gap-baseline em volta do <canvas>. */
 .headerOrb {
   position: absolute;
-  /* 28 → 23 (-5px) acompanha a subida do brand (top calc agora
-   * usa +1 em vez de +6). Mantém o orb-center ≈ logo-center. */
+  /* Top inalterado (23). left 34 → 28 (-6px) per product feedback
+   * "o orbe levemente mais à esquerda". */
   top: 23px;
-  left: 34px;
+  left: 28px;
   width: 70px;
   height: 70px;
   display: inline-block;
@@ -193,11 +193,11 @@
 }
 
 @media (max-width: 360px) {
-  /* Phones pequenos (<360px): mesma subida adicional -5px
-   * (34 → 29) acompanhando o brand. */
+  /* Phones pequenos (<360px): left 28 → 22 (-6px) acompanhando
+   * o nudge do break maior. */
   .headerOrb {
     top: 29px;
-    left: 28px;
+    left: 22px;
     width: 58px;
     height: 58px;
   }
