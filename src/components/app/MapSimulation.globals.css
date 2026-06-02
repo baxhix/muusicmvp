@@ -364,29 +364,19 @@
 /* Core: pingo verde discreto no centro do polo, sem animação
  * (já tem o LAYER_DOTFAR fazendo o ponto no mapa, esse só
  * "afia" o centro com leve glow). */
+/* Per feedback "deve ficar com 3px" — antes era 6×6, conditional
+ * em z<7. Agora 3×3 sempre, em qualquer zoom. O glow caiu de
+ * `0 0 8px / 0.55` pra `0 0 4px / 0.45` proporcionalmente, pra
+ * não parecer halo sobre um ponto pequeno. */
 .mapsim-pulse-core {
   position: absolute;
   top: 0;
   left: 0;
-  width: 6px;
-  height: 6px;
-  margin: -3px 0 0 -3px;
-  border-radius: 50%;
-  background: #3DDB74;
-  box-shadow: 0 0 8px rgba(61, 219, 116, 0.55);
-}
-
-/* Core encolhido pela metade (6×6 → 3×3) quando o zoom está em
- * 2.5-7. MapPulses.applyZoomVisibility adiciona esta classe via
- * JS quando z < 7. Per feedback "diminua os pontos verdes no
- * zoom 2.5-7" — o que está grosso nessa faixa não é o circle do
- * Mapbox (já cortado em SIZE_BY_RANGE), é este core DOM fixo. */
-.mapsim-pulse-tight-core .mapsim-pulse-core {
   width: 3px;
   height: 3px;
   margin: -1.5px 0 0 -1.5px;
-  /* Glow proporcionalmente menor pra não parecer um halo grande
-   * sobre um ponto pequeno. */
+  border-radius: 50%;
+  background: #3DDB74;
   box-shadow: 0 0 4px rgba(61, 219, 116, 0.45);
 }
 
