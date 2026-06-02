@@ -363,6 +363,34 @@ export default function ArtistBox() {
         </div>
       </div>
 
+      {/* Affordance "expandir" — visível APENAS quando o box está
+       *  fechado, per product feedback "com o box fechado, aumente
+       *  um pouco a altura para inserir a seta para baixo e
+       *  indicar que ao clicar o box se expande". Faixa fina com
+       *  chevron pulsante apontando pra baixo; clique expande. Some
+       *  quando abre porque o footer da dropdown já carrega o
+       *  chevron oposto (apontando pra cima → fechar). */}
+      {!open && (
+        <button
+          type="button"
+          className={styles.expandHint}
+          onClick={() => setOpen(true)}
+          aria-label="Expandir Fanverse"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 9l7 7 7-7" />
+          </svg>
+        </button>
+      )}
+
       {/* Drop-down body — collapsed by default, animates open via
        *  the .boxOpen modifier on the wrapper above. Now hosts
        *  ONLY the missions list + progress + footer. The artist
