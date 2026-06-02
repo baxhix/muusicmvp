@@ -780,10 +780,9 @@
   min-width: 0;
 }
 .tabRankingName:hover {
+  /* Per product feedback "remova o underline no hover do nome
+   * do usuário" — só troca de cor pra sinalizar afordance. */
   color: #c084fc;
-  text-decoration: underline;
-  text-decoration-color: rgba(192, 132, 252, 0.55);
-  text-underline-offset: 2px;
 }
 
 /* Subline = Fanpoints + " · " + Cidade. Mesma linha,
@@ -800,7 +799,9 @@
   line-height: 1.25;
 }
 .tabRankingPoints {
-  color: #fbbf24;
+  /* Per product feedback "deixe a quantidade de Fanpoints dos
+   * usuários no ranking na cor branca" — era amber #fbbf24. */
+  color: #ffffff;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
   flex-shrink: 0;
