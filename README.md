@@ -74,6 +74,12 @@ Magic link + OTP fallback de 6 dígitos. Sessão via cookie httpOnly
 compartilhado entre subdomínios. Detalhes em
 [`docs/auth-flow.md`](docs/auth-flow.md).
 
+## Roadmap de engajamento
+
+Lista priorizada (P0/P1/P2) dos itens que movem retenção,
+ativação e crescimento. Vide
+[`docs/engajamento.md`](docs/engajamento.md).
+
 ## CI/CD
 
 GitHub Actions roda na branch `main`:
