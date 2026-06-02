@@ -442,26 +442,20 @@
   .label {
     display: none;
   }
-  /* Mobile avatars bumped another ~15% (46 → 53px) per product
-   * feedback. Cluster moved to the top-right header on mobile,
-   * so the dock now has the right rail middle-area to itself
-   * and the larger avatars have plenty of room — and at 53px
-   * they're approaching the same visual weight as the BottomNav
-   * icons, which keeps the right rail feeling like a primary
-   * affordance rather than secondary chrome. */
+  /* Mobile avatars: 53 → 50 (-5%) per product feedback
+   * "diminua 5% o tamanho das miniaturas dos avatares do chat
+   * que ficam flutuando na lateral". O `.viewAllBtn` acompanha
+   * pra preservar o peer-sizing. */
   .item {
-    width: 53px;
-    height: 53px;
+    width: 50px;
+    height: 50px;
   }
   .item:hover {
     transform: scale(1.18) translateX(-2px);
   }
-  /* No mobile o `.viewAllBtn` cresce pra 53×53 (peer-sized com
-   * os avatares) per product feedback "mesmo tamanho que os
-   * avatares". O SVG do "+" também ganha um respiro vertical. */
   .viewAllBtn {
-    width: 53px;
-    height: 53px;
+    width: 50px;
+    height: 50px;
   }
   .viewAllBtn svg {
     width: 22px;

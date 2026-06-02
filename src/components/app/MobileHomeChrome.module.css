@@ -21,10 +21,12 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Height 140 → 133 (-5%) per the latest trim. Brand row is
-   * bottom-anchored so the height reduction comes off the
-   * BOTTOM of the chrome — info bar (top: 6) stays put. */
-  height: 133px;
+  /* Height 133 → 91 (-42px) per product feedback "remova o Olá +
+   * Fanpoints; logotipo + ícone de mensagens + orbe devem subir".
+   * Os 42px removidos = altura do antigo .infoBar (36px) + offset
+   * top (6px). Brand permanece centrado via `top: calc(50% + 6px)`
+   * — auto-sobe -21px com a metade da redução. */
+  height: 91px;
   z-index: 5;
   pointer-events: none;
   /* Frosted-glass header per product feedback: the chrome
@@ -175,12 +177,11 @@
  * line-height 0 evita gap-baseline em volta do <canvas>. */
 .headerOrb {
   position: absolute;
-  /* Per product feedback "no mobile, deixe o orbe 10px mais
-   * abaixo e 20px mais à direita". Posições anteriores eram
-   * 39/14; agora 49/34 mantém a "presença esquerda" mas dá
-   * mais respiro pro topo do header e separa visualmente do
-   * edge esquerdo do viewport. */
-  top: 49px;
+  /* Subiu -21px (49 → 28) acompanhando o brand center que
+   * automigrou pra y:51.5 quando o chrome encolheu pra 91px
+   * (remoção do .infoBar). Mantém o alinhamento orb-center ≈
+   * logo-center que tínhamos antes. */
+  top: 28px;
   left: 34px;
   width: 70px;
   height: 70px;
@@ -191,12 +192,9 @@
 }
 
 @media (max-width: 360px) {
-  /* Phones pequenos (<360px): encolhe ainda mais o orb pra que
-   * o logo central tenha respiro maior. 58×58 (70 × 0.83).
-   * Mesmo offset relativo do break maior: +10 top / +20 left.
-   * Valores anteriores: 45/8 → 55/28. */
+  /* Phones pequenos (<360px): mesma subida -21px (55 → 34). */
   .headerOrb {
-    top: 55px;
+    top: 34px;
     left: 28px;
     width: 58px;
     height: 58px;

@@ -1,8 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/AuthContext';
-import { useUserProfile } from '@/hooks/useUserProfile';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileHomeChrome.module.css';
@@ -29,26 +26,10 @@ import styles from './MobileHomeChrome.module.css';
  */
 export default function MobileHomeChrome() {
   const isMobile = useIsMobile();
-  const router = useRouter();
-  const { user } = useAuth();
-  const { profile } = useUserProfile(user?.id ?? null);
-  const fanpoints = profile?.fanpoints ?? 0;
-  // Display-name fallback chain: persisted `user.name` (server
-  // now seeds this from email local part at signup) → email local
-  // part for any legacy account that predates that seeding step →
-  // generic "fã". Per product feedback ("Para o nome, use as
-  // primeiros caracteres do email") brand-new accounts greet the
-  // user by their email prefix instead of a generic "fã" or any
-  // mock display name.
-  const firstName =
-    user?.name?.trim().split(/\s+/)[0] ||
-    user?.email?.split('@')[0] ||
-    'fã';
-  // Avatar source — uses the auth user's uploaded avatar if any,
-  // otherwise falls back to the generic placeholder we ship at
-  // /public/avatar-placeholder.svg. Same fallback the rest of
-  // the app uses for new accounts.
-  const avatarSrc = user?.avatarUrl ?? '/avatar-placeholder.svg';
+  /* router/useAuth/useUserProfile foram retirados quando o info-bar
+   * (greeting + fanpoints chip) saiu do JSX. O componente agora só
+   * desenha o chrome de fundo + brand + orbe — nenhuma data layer
+   * é necessária. */
 
   if (!isMobile) return null;
 
@@ -89,68 +70,11 @@ export default function MobileHomeChrome() {
           FANVERSE
         </span>
       </div>
-      <div
-        className={styles.infoBar}
-        role="status"
-        aria-label={`Olá, ${firstName}. Você tem ${fanpoints.toLocaleString('pt-BR')} Fanpoints`}
-      >
-        {/* Greeting row on the LEFT — now a clickable button that
-          * routes to the settings / profile surface. Carries a
-          * profile-photo miniature (24×24, same size as the
-          * listening_together stack avatars) + the "Olá, X!"
-          * greeting. The dedicated /app/configuracoes route
-          * doesn't exist yet so the click goes to /app/perfil,
-          * matching the BottomNav hamburger's "Configurações"
-          * entry. */}
-        <button
-          type="button"
-          className={styles.greetingBtn}
-          onClick={() => router.push('/app/perfil')}
-          aria-label={`Olá, ${firstName} — abrir configurações`}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={avatarSrc}
-            alt=""
-            className={styles.greetingAvatar}
-          />
-          {/* "Olá, X" wrapped in a single inline-flow span — the
-            * `.greetingBtn` flex gap only separates the AVATAR
-            * from the text now, not "Olá," from the name. Inside
-            * the wrapper a literal space character produces the
-            * natural word-space between label and name. */}
-          <span className={styles.greetingText}>
-            <span className={styles.greetingLabel}>Olá,</span>{' '}
-            <span className={styles.greetingName}>{firstName}!</span>
-          </span>
-        </button>
-        {/* Fanpoints chip on the RIGHT — now a clickable button
-          * that routes to the Superfãs / Ranking surface. */}
-        <button
-          type="button"
-          className={styles.fanpointsChip}
-          onClick={() => router.push('/app/ranking')}
-          aria-label={`Você tem ${fanpoints.toLocaleString('pt-BR')} Fanpoints — abrir Superfãs`}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M2.5 19h19l-1.5-9-5 3.5L12 6l-3 7.5L4 10l-1.5 9z" />
-          </svg>
-          <span className={styles.fanpointsValue}>
-            {fanpoints.toLocaleString('pt-BR')}
-          </span>
-          <span className={styles.fanpointsLabel}>Fanpoints</span>
-        </button>
-      </div>
+      {/* Info bar (greeting "Olá, X" + Fanpoints chip) REMOVIDA per
+       *  product feedback. O chrome encolheu -42px e o logo + ícone
+       *  de mensagens + orbe subiram pra reocupar o espaço. CSS
+       *  antigo (.infoBar/.greetingBtn/.fanpointsChip) mantido
+       *  como dead code — sem efeito visual sem o JSX. */}
     </div>
   );
 }
