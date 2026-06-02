@@ -31,11 +31,11 @@ interface Props {
   totalUnreadCount?: number;
 }
 
-/** Limites por viewport, per product feedback "no mobile, mostre
- *  até 5 miniaturas de conversas recentes. No desktop, mostre
- *  até 7" — antes era 3 em ambos. */
-const DOCK_LIMIT_MOBILE = 5;
-const DOCK_LIMIT_DESKTOP = 7;
+/** Limites por viewport, per product feedback "no desktop deixe
+ *  apenas 6 usuários recentes ... no mobile, mantenha apenas 4"
+ *  (antes 5 mobile / 7 desktop). */
+const DOCK_LIMIT_MOBILE = 4;
+const DOCK_LIMIT_DESKTOP = 6;
 
 /**
  * Right-edge stack of the 3 latest conversation avatars. Click an

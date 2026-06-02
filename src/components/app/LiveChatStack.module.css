@@ -15,15 +15,14 @@
 .dock {
   position: fixed;
   right: 18px;
-  /* Anchored to top: 50% then translated UP by 100% of own height
-   * + 8px gap, so the avatars stack sits with its BOTTOM edge 8px
-   * above the viewport vertical center. The chat/feed/comunidade
-   * shortcuts (page.module.css `.topBar`) anchor at the same
-   * top: 50% but translated DOWN by 8px, so both groups read as
-   * a single right-rail column with the avatars on top and the
-   * action shortcuts directly below. Combined gap = 16px. */
+  /* Centralizado verticalmente — per product feedback
+   * "centralize-os à direita. Não no topo". Antes o stack
+   * ficava acima do centro (translateY(-100% - 8px) ancorava
+   * a BOTTOM edge 8px acima do meio, jogando todo o stack pra
+   * metade superior). Agora translateY(-50%) deixa o stack
+   * REALMENTE no centro vertical da viewport. */
   top: 50%;
-  transform: translateY(calc(-100% - 8px));
+  transform: translateY(-50%);
   /* The right edge of the viewport sits inside the dark band of
      .vignette (Globe.module.css), so even at z-index 100 the chat
      avatars felt "opaque" — the surrounding wash dragged their
