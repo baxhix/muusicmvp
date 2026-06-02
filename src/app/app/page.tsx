@@ -5,17 +5,13 @@ import { useEffect } from 'react';
 import MockToastRotator from '@/components/app/MockToastRotator';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
-import BrainstormPanel from '@/components/app/BrainstormPanel';
-import SuperliveTrigger from '@/components/app/SuperliveTrigger';
-import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
-import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
-import FindMyLoveTrigger from '@/components/app/FindMyLoveTrigger';
-import BrainstormGate from '@/components/app/BrainstormGate';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
-import MapSimulationLayer from '@/components/app/MapSimulationLayer';
-import MapPulses from '@/components/app/MapPulses';
-import MapZoomIndicator from '@/components/app/MapZoomIndicator';
-import SimulationHUD from '@/components/app/SimulationHUD';
+/* Brainstorm + Map Simulation (BrainstormGate, BrainstormPanel,
+ * Superlive/CollectiveListening/ShowLive/FindMyLove triggers,
+ * MapSimulationLayer, MapPulses, SimulationHUD, MapZoomIndicator)
+ * subiram pro /app/layout.tsx pra persistir em TODAS as rotas
+ * /app/*, per product feedback "se ativado, deve sempre
+ * aparecer; se desativado, não deve aparecer". */
 
 
 /**
@@ -92,38 +88,11 @@ export default function AppPage() {
           `app:toggle-feed` CustomEvent. */}
       <FeedPanel />
 
-      {/* Brainstorm — lightbulb trigger + toggle sheet for any
-          experimental feature we want to preview without
-          committing to. Mounted on /app only because every flag
-          in the current registry decorates this surface (e.g.
-          Tour Portugal lives on the globe); subpages have no
-          experimental UI today. */}
-      {/* Só os TRIGGERS (ícones no mapa) ficam dentro de
-       *  <BrainstormGate>. Per product feedback "ao optar por
-       *  ocultar Recursos em teste, não oculte a funcionalidade,
-       *  oculte apenas o ícone do mapa e mantenha a funcionalidade
-       *  visível": desligar o toggle remove os botões de acesso,
-       *  mas qualquer feature que já estava ON (Map Simulation,
-       *  Pulses, HUD, Tour Portugal, etc.) continua renderizando.
-       *  Pra reativar os triggers basta ligar o toggle de novo. */}
-      <BrainstormGate>
-        <BrainstormPanel />
-        <SuperliveTrigger />
-        <CollectiveListeningTrigger />
-        <ShowLiveTrigger />
-        <FindMyLoveTrigger />
-      </BrainstormGate>
-      {/* Layers/HUD da Map Simulation ficam FORA do gate. Cada
-       *  componente já tem checagem interna (`flags.mapSimulation`)
-       *  e retorna null se a feature estiver off — então o gate
-       *  duplicaria a verificação e impediria o "manter visível
-       *  mesmo sem o ícone". */}
-      <MapSimulationLayer />
-      <MapPulses />
-      <SimulationHUD />
-      {/* MapZoomIndicator fica FORA do gate — tem toggle próprio
-       *  (Configurações → Exibição → Indicador de zoom). */}
-      <MapZoomIndicator />
+      {/* Brainstorm + Map Simulation foram movidos pro shell
+       *  (/app/layout.tsx) per product feedback "se ativado, deve
+       *  sempre aparecer; se desativado, não deve aparecer".
+       *  Mantendo aqui o componente desmontaria os ícones a cada
+       *  navegação entre feed/comunidade/chat. */}
     </>
   );
 }

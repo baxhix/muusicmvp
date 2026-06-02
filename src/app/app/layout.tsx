@@ -30,6 +30,16 @@ import MilestoneNotification from '@/components/app/MilestoneNotification';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 import { useFanpointMilestones } from '@/hooks/useFanpointMilestones';
+import BrainstormGate from '@/components/app/BrainstormGate';
+import BrainstormPanel from '@/components/app/BrainstormPanel';
+import SuperliveTrigger from '@/components/app/SuperliveTrigger';
+import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
+import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
+import FindMyLoveTrigger from '@/components/app/FindMyLoveTrigger';
+import MapSimulationLayer from '@/components/app/MapSimulationLayer';
+import MapPulses from '@/components/app/MapPulses';
+import MapZoomIndicator from '@/components/app/MapZoomIndicator';
+import SimulationHUD from '@/components/app/SimulationHUD';
 import styles from './layout.module.css';
 
 /**
@@ -489,6 +499,42 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  feedback "a tela do usuário que receber, além dos
        *  corações caindo, deverá ficar com uma camada preta". */}
       <WaveReceiveOverlay />
+
+      {/* ── Brainstorm + Map Simulation ──
+       *
+       *  Subiu pro shell per product feedback "quando o toggle de
+       *  mostrar a feature de brainstorm está ativada, nem sempre
+       *  é visível no mapa conforme eu clico em feed, comunidade,
+       *  chat. Se ativado, deve sempre aparecer. Se desativado,
+       *  não deve aparecer".
+       *
+       *  Antes ficava em /app/page.tsx (mount só em /app), então
+       *  navegar pra subrota desmontava tudo. Agora persiste em
+       *  todo /app/*, com o gate sendo apenas:
+       *    - Toggle `DISPLAY_KEYS.brainstormTriggers` (ícones)
+       *    - Flag interna `flags.mapSimulation` (features)
+       *    - `hideShellChrome` em chat detail mobile (LiveChatPanel
+       *      cobre o viewport, então não faz sentido pintar ícones
+       *      do brainstorm em cima do chat).
+       *
+       *  Mobile sem Globe (subrota) — MapSimulationLayer subscribe
+       *  via globeStore: quando Globe desmonta, attach(null) limpa
+       *  layers; quando remonta, attach(map) reanexa. Sem leak. */}
+      {!hideShellChrome && (
+        <div className={fadeClass(5)}>
+          <BrainstormGate>
+            <BrainstormPanel />
+            <SuperliveTrigger />
+            <CollectiveListeningTrigger />
+            <ShowLiveTrigger />
+            <FindMyLoveTrigger />
+          </BrainstormGate>
+          <MapSimulationLayer />
+          <MapPulses />
+          <SimulationHUD />
+          <MapZoomIndicator />
+        </div>
+      )}
       {/* FireArenaBanner (countdown do lançamento Fire Arena)
        *  REMOVIDO da home per product feedback "remova o banner
        *  do novo album". O componente continua existindo em
