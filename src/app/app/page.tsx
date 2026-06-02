@@ -98,22 +98,29 @@ export default function AppPage() {
           in the current registry decorates this surface (e.g.
           Tour Portugal lives on the globe); subpages have no
           experimental UI today. */}
-      {/* Todos os triggers de brainstorm + camadas de simulação
-       *  vivem dentro de <BrainstormGate>. Esconde tudo de uma
-       *  vez quando o user desativa em Configurações → Exibição →
-       *  "Recursos em teste". Per product feedback "os itens de
-       *  brainstorm devem ter o mesmo comportamento [do zoom
-       *  indicator] para sairem da tela inicial". */}
+      {/* Só os TRIGGERS (ícones no mapa) ficam dentro de
+       *  <BrainstormGate>. Per product feedback "ao optar por
+       *  ocultar Recursos em teste, não oculte a funcionalidade,
+       *  oculte apenas o ícone do mapa e mantenha a funcionalidade
+       *  visível": desligar o toggle remove os botões de acesso,
+       *  mas qualquer feature que já estava ON (Map Simulation,
+       *  Pulses, HUD, Tour Portugal, etc.) continua renderizando.
+       *  Pra reativar os triggers basta ligar o toggle de novo. */}
       <BrainstormGate>
         <BrainstormPanel />
         <SuperliveTrigger />
         <CollectiveListeningTrigger />
         <ShowLiveTrigger />
         <FindMyLoveTrigger />
-        <MapSimulationLayer />
-        <MapPulses />
-        <SimulationHUD />
       </BrainstormGate>
+      {/* Layers/HUD da Map Simulation ficam FORA do gate. Cada
+       *  componente já tem checagem interna (`flags.mapSimulation`)
+       *  e retorna null se a feature estiver off — então o gate
+       *  duplicaria a verificação e impediria o "manter visível
+       *  mesmo sem o ícone". */}
+      <MapSimulationLayer />
+      <MapPulses />
+      <SimulationHUD />
       {/* MapZoomIndicator fica FORA do gate — tem toggle próprio
        *  (Configurações → Exibição → Indicador de zoom). */}
       <MapZoomIndicator />
