@@ -304,6 +304,17 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
     return () => document.removeEventListener('keydown', handler);
   }, [open, section]);
 
+  /* Listener pro CustomEvent disparado pelo hamburger menu do
+   * BottomNav (mobile) — item "Configurações" abre o mesmo drawer
+   * que o avatar abre no desktop. Per product feedback "no mobile
+   * o item Configurações deve ir para a tela que na versão desktop
+   * abre detalhes da Conta, Privacidade, Segurança, Legal e Sair". */
+  useEffect(() => {
+    const onOpenDrawer = () => setOpen(true);
+    window.addEventListener('app:open-account-drawer', onOpenDrawer);
+    return () => window.removeEventListener('app:open-account-drawer', onOpenDrawer);
+  }, []);
+
   const goBack = () => setSection(null);
   const closeAll = () => { setSection(null); setOpen(false); };
 

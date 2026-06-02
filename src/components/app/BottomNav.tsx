@@ -365,75 +365,13 @@ export default function BottomNav() {
                   onClick={() => setMoreOpen(false)}
                 />
               <div className={styles.moreMenu} role="menu">
-                {/* Comunidades — demoted from the navbar's 4th slot
-                 *  on mobile (Chat takes that slot now). Communities
-                 *  is more of a destination users head to on purpose,
-                 *  so it lives one tap deeper than the inbox-style
-                 *  Chat. The standard users glyph mirrors the icon
-                 *  that used to sit on the navbar. */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    router.push('/app/comunidades');
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="17" cy="9.5" r="2.5" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  Comunidades
-                </button>
-                {/* Playlist — opens the PlaylistModal (videos /
-                  * tracks the user can scrub through). The
-                  * shortcut already exists on the desktop
-                  * right-rail; per product feedback the mobile
-                  * hamburger now surfaces it too so users on
-                  * phones don't have to round-trip through the
-                  * NowPlaying mini-bar to reach the queue. */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    setShowPlaylist(true);
-                  }}
-                >
-                  {/* Music-note + bullet-list combo signals
-                    * "playlist of media". Two notes on the left
-                    * with a small queue indicator on the right. */}
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M3 5h11M3 10h11M3 15h7" />
-                    <path d="M17 6v9" />
-                    <circle cx="15.5" cy="16.5" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="20.5" cy="14.5" r="1.6" fill="currentColor" stroke="none" />
-                    <path d="M17 6l4-1" />
-                  </svg>
-                  Playlist
-                </button>
+                {/* Per product feedback "remova Comunidades, substitua
+                 * Minha Conta por Meu Perfil, ordem: Perfil → Playlist
+                 * → Configurações. Configurações abre o drawer do
+                 * TopBar (Conta, Privacidade, Segurança, Legal, Sair)
+                 * via CustomEvent 'app:open-account-drawer'." */}
+
+                {/* 1. Meu Perfil — vai pra /app/perfil. */}
                 <button
                   type="button"
                   role="menuitem"
@@ -452,19 +390,49 @@ export default function BottomNav() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  Minha Conta
+                  Meu Perfil
                 </button>
+
+                {/* 2. Playlist — abre PlaylistModal. */}
                 <button
                   type="button"
                   role="menuitem"
                   className={styles.moreItem}
                   onClick={() => {
                     setMoreOpen(false);
-                    // No dedicated /app/configuracoes route yet —
-                    // ProfilePanel hosts the editable account + the
-                    // destructive actions today. Re-aim here when
-                    // the settings route lands.
-                    router.push('/app/perfil');
+                    setShowPlaylist(true);
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 5h11M3 10h11M3 15h7" />
+                    <path d="M17 6v9" />
+                    <circle cx="15.5" cy="16.5" r="1.6" fill="currentColor" stroke="none" />
+                    <circle cx="20.5" cy="14.5" r="1.6" fill="currentColor" stroke="none" />
+                    <path d="M17 6l4-1" />
+                  </svg>
+                  Playlist
+                </button>
+
+                {/* 3. Configurações — dispara o event que abre o
+                 * drawer do TopBar (mesma surface do desktop, com
+                 * Conta, Privacidade, Segurança, Legal, Sair). */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    try {
+                      window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
+                    } catch { /* SSR — ignore */ }
                   }}
                 >
                   {/* Sliders icon — three horizontal tracks each

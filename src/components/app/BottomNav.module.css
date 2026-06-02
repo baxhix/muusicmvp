@@ -532,7 +532,11 @@
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(14px) saturate(1.2);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  z-index: 79;
+  /* z-index 250 (era 79) per product feedback "esse pequeno modal
+   * deve ficar por cima dos avatares de chat flutuantes". O
+   * LiveChatStack vive em z:200, então o backdrop precisa ficar
+   * acima pra borrar/atingir a área dos avatares também. */
+  z-index: 250;
   pointer-events: auto;
   animation: moreBackdropIn 0.18s ease-out;
 }
@@ -543,6 +547,9 @@
 
 .moreMenu {
   position: fixed;
+  /* Acima do .moreBackdrop (z:250) e dos avatares de chat
+   * flutuantes do LiveChatStack (z:200). Per product feedback. */
+  z-index: 251;
   /* Desktop default: pill bottom-padding 24 + pill height 56 +
    * 20px gap = 100px from viewport bottom. */
   bottom: 100px;
