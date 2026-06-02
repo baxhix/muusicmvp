@@ -205,9 +205,17 @@ export default function BottomNav() {
          *   Feed (e o resto montado em /app/page.tsx) fica visível
          *   atrás do leaderboard. */}
         {(() => {
+          /* Desktop: dispatcha CustomEvent que o ArtistBox escuta
+           * pra abrir o box + ativar a tab "Ranking" — per product
+           * feedback "ao clicar no ícone de coroa no bottom bar,
+           * deve abrir a tab ranking do Box Fanverse". Aria-pressed
+           * fica false (não temos signal global de "ArtistBox
+           * aberto em ranking"); o usuário sempre re-clicar abre
+           * de novo no ranking (idempotente). Mobile: comportamento
+           * anterior preservado — toggle /app/ranking. */
           const superfansActive = isMobile
             ? pathname.startsWith('/app/ranking')
-            : activeOverlay === 'superfans';
+            : false;
           return (
             <button
               type="button"
@@ -217,8 +225,11 @@ export default function BottomNav() {
                   dismissShellOverlays();
                   toggleNav('/app/ranking');
                 } else {
-                  setActiveOverlay((curr) =>
-                    curr === 'superfans' ? null : 'superfans',
+                  /* Sair de qualquer overlay desktop conflitante e
+                   * sinalizar pro ArtistBox abrir no ranking. */
+                  dismissShellOverlays();
+                  window.dispatchEvent(
+                    new CustomEvent('app:open-fanverse-ranking'),
                   );
                 }
               }}

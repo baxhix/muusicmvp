@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import VerifiedBadge from './VerifiedBadge';
 import styles from './LiveChatStack.module.css';
 
@@ -30,14 +31,11 @@ interface Props {
   totalUnreadCount?: number;
 }
 
-/** The dock now renders ONLY the 3 most recent conversations per
- *  product feedback. The chat / feed / comunidade action shortcuts
- *  that used to live at the bottom of this column (and the
- *  hover-reveal of the next 4 conversations) were retired together
- *  — the shortcuts moved to a horizontal row in the page's topBar,
- *  and the full conversations list is reachable from the chat
- *  panel that the topBar shortcut opens. */
-const DOCK_LIMIT = 3;
+/** Limites por viewport, per product feedback "no mobile, mostre
+ *  até 5 miniaturas de conversas recentes. No desktop, mostre
+ *  até 7" — antes era 3 em ambos. */
+const DOCK_LIMIT_MOBILE = 5;
+const DOCK_LIMIT_DESKTOP = 7;
 
 /**
  * Right-edge stack of the 3 latest conversation avatars. Click an
@@ -54,6 +52,8 @@ export default function LiveChatStack({
   totalUnreadCount = 0,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  const dockLimit = isMobile ? DOCK_LIMIT_MOBILE : DOCK_LIMIT_DESKTOP;
 
   // Include DMs (resolvable other user) AND user-created groups.
   // O grupo "Superchat" (com ícone do chapéu Ana Castela) está
@@ -67,7 +67,7 @@ export default function LiveChatStack({
     if (c.name === 'Superchat') return false;
     return true;
   });
-  const items = dockable.slice(0, DOCK_LIMIT);
+  const items = dockable.slice(0, dockLimit);
 
   return (
     <div className={styles.dock}>

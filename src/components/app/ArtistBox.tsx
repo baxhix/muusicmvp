@@ -174,6 +174,23 @@ export default function ArtistBox() {
     };
   }, [missions, doneById]);
 
+  // ── Open at Ranking tab via BottomNav crown (desktop) ──
+  //
+  // Per product feedback "ao clicar no ícone de coroa no bottom
+  // bar, deve abrir a tab ranking do Box Fanverse". O BottomNav
+  // desktop dispara `app:open-fanverse-ranking`; aqui abrimos o
+  // box (caso esteja fechado) e ativamos a tab Ranking.
+  // Idempotente: re-clicar no mesmo state mantém aberto + ranking.
+  useEffect(() => {
+    const onOpenRanking = () => {
+      setActiveTab('ranking');
+      setOpen(true);
+    };
+    window.addEventListener('app:open-fanverse-ranking', onOpenRanking);
+    return () =>
+      window.removeEventListener('app:open-fanverse-ranking', onOpenRanking);
+  }, []);
+
   // ── Pulse the chevron when the user earns Fanpoints ──
   //
   // The `app:points-awarded` CustomEvent fires anywhere
