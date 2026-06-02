@@ -314,28 +314,26 @@ const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>
  *             no z 9-11, mesma escala visual do cityPeak)
  *  cityPeak = 2 → 4px diâmetro (per feedback "pontos 4x4px no zoom máximo") */
 const SIZE_BY_RANGE: Record<QuotaRange, number> = {
-  /* Per feedback iterativo (3a rodada): "pontos verdes no zoom 2.5
-   * estão grossos, diminua eles pela metade até o zoom 7.5".
+  /* Tabela final per feedback explícito:
+   *   2.5–5.4  → mantém (continent 0.1 = 0.2px)
+   *   5.4–7    → 2px (state)
+   *   7.0–7.5  → 2px (region — todo o range fica em 2px)
+   *   9.0–13   → 3px (cityMid + cityPeak)
    *
-   * As faixas que cobrem z 2.5 → 7.5 são continent (2.5-5.8), state
-   * (5.5-7.5) e o lead-in de region (7-9, mas z 7-7.5 também conta).
-   * Todas reduzidas pela metade DE NOVO neste round; region entra
-   * no corte porque o feedback se repetiu mesmo após o ajuste do
-   * round anterior, sinalizando que o problema também vive na faixa
-   * de z 7-7.5 (region).
+   * Mapeamento direto pras 5 ranges:
+   *   continent (2.5-5.8):  0.1   → 0.2px diâm.
+   *   state    (5.5-7.5):   1     → 2px diâm.
+   *   region   (7-9):       1     → 2px diâm.
+   *   cityMid  (8.5-11):    1.5   → 3px diâm.
+   *   cityPeak (10-13):     1.5   → 3px diâm.
    *
-   * Histórico:
-   *   continent: 0.75 → 0.4 → 0.2 → 0.1   (0.2px diâm. agora)
-   *   state:    1.5  → 0.75 → 0.375        (0.75px diâm. agora)
-   *   region:   2    → 1                    (2px diâm. agora)
-   *
-   * cityMid/cityPeak intocados (dominam acima de z 7.5/8, fora do
-   * intervalo que o feedback ataca). */
-  continent: 0.1,  // 0.2px diameter
-  state:    0.375, // 0.75px diameter
+   * Histórico do continent: 0.75 → 0.4 → 0.2 → 0.1 (parou nesse round).
+   * Histórico do cityMid/cityPeak: 2 → 1.5 (1a redução). */
+  continent: 0.1,  // 0.2px diameter (mantido)
+  state:    1,     // 2px diameter
   region:   1,     // 2px diameter
-  cityMid:  2,     // 4px diameter
-  cityPeak: 2,     // 4px diameter
+  cityMid:  1.5,   // 3px diameter
+  cityPeak: 1.5,   // 3px diameter
 };
 
 /** Fator de multiplicação aplicado ao sigmaKm da cidade pra
