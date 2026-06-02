@@ -1,36 +1,34 @@
 /* ============================================================
- * MobileFanverseSheet — overlay fullscreen mobile que carrega
- * o conteúdo do ArtistBox (Fanverse Ana Castela).
+ * MobileFanverseSheet — Box Fanverse Ana Castela mobile.
  *
- * Estilos próprios desse arquivo só cobrem o envelope (panel
- * full viewport + slide-in + close button + paddings do body).
- * Os elementos internos (header, tabs, missions, rankings,
- * benefits) reusam as classes de ArtistBox.module.css via
- * named import — paridade visual exata sem duplicação.
+ * Estrutura:
+ *   .sheet (fullscreen, scrollable)
+ *     .hero (100% width image) + .closeBtn flutuante
+ *     .titleRow (Nome | Fanpoints)
+ *     .invitesRow (pill "4 convites")
+ *     .tabsRow (Missões | Ranking | Conquistas — reusa boxStyles)
+ *     .body (conteúdo da tab)
+ *
+ * Padrão mobile: tap targets ≥ 44dp, tipografia 14-16px corpo,
+ * spacing generoso (gap 8-12), padding 14-16 nos cards.
  * ============================================================ */
 
 .sheet {
   position: fixed;
   inset: 0;
-  /* Acima do BottomNav (z:70) + LiveChatStack; abaixo de
-   * modais bloqueadores (Invite z:800) que abrem em cima. */
   z-index: 240;
   display: flex;
   flex-direction: column;
-  /* Mesmo gradient + blur do ArtistBox.box pra que o sheet
-   * leia como uma "versão maximizada" do mesmo box. */
   background:
     radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
     linear-gradient(180deg,
-      rgba(11,11,13,0.97) 0%,
-      rgba(5,5,7,0.97) 50%,
-      rgba(2,2,3,0.98) 100%);
+      rgba(11,11,13,0.98) 0%,
+      rgba(5,5,7,0.98) 50%,
+      rgba(2,2,3,0.99) 100%);
   backdrop-filter: blur(30px) brightness(0.7) saturate(1.3);
   -webkit-backdrop-filter: blur(30px) brightness(0.7) saturate(1.3);
-  /* Padding-bottom maior pra liberar espaço pra BottomNav. */
-  padding: 0 0 calc(72px + env(safe-area-inset-bottom, 0px));
-  /* Safe area no topo (notch). */
-  padding-top: env(safe-area-inset-top, 0px);
+  /* Espaço pra BottomNav (~72px + safe area). */
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   animation: sheetIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -43,60 +41,484 @@
   .sheet { animation: none; }
 }
 
-/* Close button — top-right floater. O MobileRouteHeader do
- * shell já dá um back via seta esquerda; esse botão aqui é
- * redundância intencional pra UX. */
+/* ── Hero image ──
+ *
+ * Per product feedback "imagem cobre 100% da largura da tela".
+ * aspect-ratio 16/9 como default conservador; quando o user
+ * mandar a imagem na proporção certa basta mudar essa var. */
+.hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #0a0a14;
+  /* Respeita safe area no topo (notch). */
+  margin-top: env(safe-area-inset-top, 0px);
+  overflow: hidden;
+}
+.heroImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .closeBtn {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  top: 14px;
   right: 14px;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: none;
-  color: rgba(245, 245, 247, 0.85);
+  color: #ffffff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
-  transition: background 140ms ease, color 140ms ease;
+  transition: background 140ms ease;
 }
-.closeBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
+.closeBtn:hover { background: rgba(0, 0, 0, 0.75); }
+.closeBtn svg { width: 18px; height: 18px; }
+
+/* ── Title row ──
+ *
+ * Nome à esquerda, Fanpoints à direita. Mesma linha. */
+.titleRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18px 6px;
+}
+.titleText {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  flex: 1;
+}
+.titleLabel {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+.titleName {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.95);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.titleRight {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.titlePoints {
+  font-size: 18px;
+  font-weight: 700;
   color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  font-family: var(--sans);
 }
-.closeBtn svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Header override — apenas reservamos espaço à direita pro
- * close button, sem perder o gap original do ArtistBox.header.
- * O resto do header (foto + name + Fanpoints + invite pill) já
- * vem com as classes originais. */
-.headerOverride {
-  padding-right: 60px;
-  /* Top um pouco maior no mobile pra escapar do MobileRouteHeader
-   * que vive no shell (~56px de altura). */
-  padding-top: 64px;
+.titlePointsLabel {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  font-family: var(--sans);
 }
 
-/* Body — wrapper do conteúdo da tab ativa. Padding inferior
- * solto pra rolagem confortável. */
+/* ── Invites pill ── */
+.invitesRow {
+  padding: 0 18px 12px;
+}
+.invitesBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
+  border: 1.5px solid transparent;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  user-select: none;
+  transition: filter 140ms ease, transform 140ms ease;
+}
+.invitesBtn:hover {
+  filter: brightness(1.18);
+}
+.invitesBtn:active {
+  transform: scale(0.97);
+  filter: brightness(0.92);
+}
+
+/* ── Tabs ──
+ *
+ * Padding maior + tabs com altura confortável pra tap. Reusa
+ * .tabs/.tab/.tabActive do ArtistBox.module.css mas sobreescreve
+ * altura via descendant inside .tabsRow (Specificity bump via
+ * global selector). Mantive paridade visual; só relaxei o
+ * padding interno do tab pra acomodar 44dp. */
+.tabsRow {
+  padding: 4px 16px 14px;
+}
+.tabsRow :global([class*="tab"]) {
+  /* Boost altura geral dos botões dentro do tabs container. */
+}
+.tabsRow > div > button {
+  /* Aumenta o tap target pra 40px no mobile (era 28). */
+  padding: 11px 8px !important;
+  font-size: 13px !important;
+}
+
+/* ── Body wrapper ── */
 .body {
   display: flex;
   flex-direction: column;
-  padding-bottom: 24px;
+  padding: 0 0 24px;
 }
 
-/* "Missões do Dia · X Fanpoints" — footer da tab Missões.
- * Mesma tipografia (.missionsTitle / .xpTotal) do ArtistBox,
- * só ajustamos o layout do contêiner pra esse contexto sheet. */
+/* ===== MISSÕES MOBILE ===========================================
+ *
+ * Override do .mission/.missionIcon/.missionName/.missionXp/
+ * .missionCheck via classes ADICIONAIS (specificity wins por ser
+ * última no cascade). Tap target ≥ 56px, tipografia maior. */
+.missionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 16px 8px;
+}
+.missionMobile {
+  /* Padding 14×14 garante tap area de ~56px de altura
+   * (icon 22 + 14×2 + line-height). */
+  padding: 14px 14px !important;
+  gap: 12px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.03);
+}
+.missionMobile:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+.missionIconMobile {
+  font-size: 20px !important;
+  width: 28px !important;
+}
+.missionNameMobile {
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 1.3 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+.missionXpMobile {
+  font-size: 11.5px !important;
+  padding: 4px 9px !important;
+  border-radius: 999px !important;
+}
+.missionCheckMobile {
+  width: 22px !important;
+  height: 22px !important;
+}
+.missionCheckMobile svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Progress bar — bigger label. */
+.missionsProgress {
+  padding: 10px 16px 8px;
+}
+.missionsProgressLabel {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.7);
+  font-family: var(--sans);
+  letter-spacing: -0.005em;
+}
+
+/* "Missões do Dia · X Fanpoints" — footer da tab missões. */
 .missionsTotal {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px 4px;
+  padding: 16px 16px 4px;
+}
+.missionsTotalLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.45);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-family: var(--sans);
+}
+.missionsTotalXp {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: var(--sans);
+  letter-spacing: 0.02em;
+}
+
+/* ===== RANKING MOBILE ===========================================
+ *
+ * Estilos próprios (não herda do ArtistBox.module.css) — layout
+ * tem coluna direita pros Fanpoints, então a estrutura é
+ * essencialmente diferente. */
+.rankingWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 16px 8px;
+}
+
+.rankingProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0 4px;
+}
+.rankingProgressLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: -0.005em;
+}
+
+.rankingEmpty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.50);
+}
+
+.rankingList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Card do user — altura confortável, padding generoso, gap
+ * razoável entre rank/avatar/info/pontos. */
+.rankingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: background 140ms ease;
+  min-height: 64px;
+}
+.rankingRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.rankingRowMe {
+  background: rgba(168, 85, 247, 0.12);
+}
+.rankingRowMe:hover {
+  background: rgba(168, 85, 247, 0.18);
+}
+.rankingRowTop3 {
+  background: rgba(251, 191, 36, 0.07);
+}
+.rankingRowTop3:hover {
+  background: rgba(251, 191, 36, 0.12);
+}
+
+/* Rank column — 32×32 quadrado pra acomodar texto "#100"
+ * e medal igualmente. */
+.rankingRank {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.78);
+  font-variant-numeric: tabular-nums;
+}
+.rankingRankMedal {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1f1500;
+  line-height: 1;
+}
+.rankingRankGold {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
+}
+.rankingRankSilver {
+  background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%);
+  box-shadow: 0 0 6px rgba(229, 231, 235, 0.30);
+}
+.rankingRankBronze {
+  background: linear-gradient(135deg, #fbbf77 0%, #b45309 100%);
+  box-shadow: 0 0 6px rgba(180, 83, 9, 0.35);
+}
+
+/* Avatar — 44×44 (+30% vs desktop) com presence dot 11×11. */
+.rankingAvatarWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-block;
+  line-height: 0;
+}
+.rankingAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: block;
+}
+.rankingPresence {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #6b7280;
+  border: 1.8px solid #0a0a14;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+.rankingPresenceOn {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.55);
+}
+
+/* Info column (nome + cidade). flex:1 pra ocupar o espaço
+ * restante; min-width:0 garante text-overflow funcionar. */
+.rankingInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rankingName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+.rankingName:hover {
+  color: #c084fc;
+}
+.rankingCity {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Fanpoints column — direita do card. */
+.rankingPoints {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.rankingPointsValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  font-family: var(--sans);
+}
+.rankingPointsLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.02em;
+}
+
+/* ===== CONQUISTAS MOBILE ========================================
+ *
+ * BenefitsTabContent é shared — wrappa num scope mobile que
+ * sobrescreve os tamanhos via descendant selector (:global pra
+ * alcançar as classes hashed do ArtistBox.module.css). */
+.benefitsScope {
+  padding: 0 8px 12px;
+}
+.benefitsScope :global([class*="tabBenefitsScroll"]) {
+  max-height: none !important;
+}
+.benefitsScope :global([class*="tabBenefits"]) {
+  gap: 8px !important;
+  padding: 4px 8px 12px !important;
+}
+.benefitsScope :global([class*="tabBenefitRow"]) {
+  padding: 14px 14px !important;
+  gap: 12px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  min-height: 56px;
+}
+.benefitsScope :global([class*="tabBenefitIcon"]) {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 9px !important;
+}
+.benefitsScope :global([class*="tabBenefitIcon"]) svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+.benefitsScope :global([class*="tabBenefitTitle"]) {
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+}
+.benefitsScope :global([class*="tabBenefitDesc"]) {
+  font-size: 12.5px !important;
+}
+.benefitsScope :global([class*="tabBenefitLock"]) {
+  width: 20px !important;
+  height: 20px !important;
+}
+.benefitsScope :global([class*="tabBenefitLock"]) svg {
+  width: 18px !important;
+  height: 18px !important;
 }

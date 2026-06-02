@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
+import { useRanking } from '@/hooks/useRanking';
+import { useLiveUsers } from '@/hooks/useLiveUsers';
 import {
   MISSION_META,
   TOTAL_MISSIONS,
   SPARKLE_INDICES,
   sumEarnedXp,
   InviteFriendsModal,
-  RankingTabContent,
   BenefitsTabContent,
 } from './ArtistBox';
 import sheetStyles from './MobileFanverseSheet.module.css';
@@ -19,31 +21,40 @@ import boxStyles from './ArtistBox.module.css';
 /* ============================================================
  * MobileFanverseSheet
  *
- * Painel mobile fullscreen que mostra EXATAMENTE o mesmo
- * conteúdo do ArtistBox (Fanverse Ana Castela) — header com
- * foto + nome + Fanpoints + botão de convites, tab bar
- * Missões/Ranking/Conquistas, e o body da tab ativa.
+ * Layout mobile do Box Fanverse Ana Castela. Estrutura:
  *
- * Per product feedback "no mobile, refatore o bloco que aparece
- * ao clicar no ícone de coroa na navbar para ser inserido o
- * conteúdo que tem no box Fanverse Ana Castela com extamente as
- * mesmas informações, hierarquia de dados, etc."
+ *   ┌────────────────────────────────┐
+ *   │       HERO IMAGE (100%)        │ ← /ana-castela-box.jpg
+ *   ├────────────────────────────────┤
+ *   │ Fanverse Ana Castela    402 FP │ ← title row
+ *   │ [4 convites]                   │
+ *   ├────────────────────────────────┤
+ *   │ Missões | Ranking | Conquistas │ ← tab bar
+ *   ├────────────────────────────────┤
+ *   │       <tab content>            │ ← body
+ *   └────────────────────────────────┘
  *
- * Reusa via named imports do ArtistBox os 3 tab content
- * components + dados de missions, evitando duplicação. Os
- * estilos de tab/header também vêm do ArtistBox.module.css —
- * o módulo deste arquivo só layouts próprios do panel
- * (envelope fullscreen + animação slide-up + close button).
+ * Per product feedback: imagem cobre 100% da largura, nome +
+ * pontos numa linha logo abaixo, tabs depois, conteúdo com
+ * tipografia / spacing / tap-targets ajustados pra mobile
+ * (mínimo 44dp por tap target).
+ *
+ * Reusa componentes shared do ArtistBox (BenefitsTabContent,
+ * InviteFriendsModal, MISSION_META, SPARKLE_INDICES,
+ * sumEarnedXp). Ranking é re-implementado inline pra mover
+ * Fanpoints pra coluna da direita e carregar até 100 users
+ * sem botão "Carregar mais" (per product feedback).
  * ============================================================ */
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Tab inicial. Default 'ranking' (porque a entrada principal
-   *  é o crown do BottomNav, que conceitualmente leva pro
-   *  Ranking de Superfãs). */
   defaultTab?: 'missoes' | 'ranking' | 'beneficios';
 }
+
+/* Quantos users do ranking aparecem antes de truncar.
+ * Per product feedback "carregue até o usuário 100". */
+const RANKING_LIMIT_MOBILE = 100;
 
 export default function MobileFanverseSheet({
   open,
@@ -68,9 +79,9 @@ export default function MobileFanverseSheet({
   const progress = Math.round((completed / TOTAL_MISSIONS) * 100);
   const fpEarned = sumEarnedXp(MISSION_META, doneById);
 
-  /* Mission celebration burst — mesma mecânica do ArtistBox.
-   * Quando uma missão vira "done" enquanto o sheet está aberto,
-   * dispara o sparkle por 1.6s. */
+  /* Mission celebration burst — espelha mecânica do desktop:
+   * quando a missão transita pra "done" enquanto o sheet está
+   * aberto, dispara sparkle por 1.6s. */
   const [celebratingIds, setCelebratingIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -110,7 +121,7 @@ export default function MobileFanverseSheet({
     };
   }, [missions, doneById]);
 
-  /* ESC fecha o sheet. */
+  /* ESC fecha. */
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -120,8 +131,7 @@ export default function MobileFanverseSheet({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  /* Reset tab pra defaultTab toda vez que o sheet (re)abrir.
-   * Evita ficar travado numa tab anterior quando re-abre. */
+  /* Reset tab pra defaultTab toda vez que (re)abrir. */
   useEffect(() => {
     if (open) setActiveTab(defaultTab);
   }, [open, defaultTab]);
@@ -130,62 +140,60 @@ export default function MobileFanverseSheet({
 
   return (
     <div className={sheetStyles.sheet} role="dialog" aria-modal="true">
-      {/* Botão close — fica no canto superior direito. O
-       *  MobileRouteHeader (que vive no shell) também dá um back,
-       *  mas redundância proposital pra UX. */}
-      <button
-        type="button"
-        className={sheetStyles.closeBtn}
-        onClick={onClose}
-        aria-label="Fechar"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-
-      {/* Header — mesma hierarquia do ArtistBox.header: foto +
-       *  (label "Fanverse" + name "Ana Castela") + Fanpoints +
-       *  Convites pill. Classes vêm do ArtistBox.module.css pra
-       *  garantir paridade visual exata. */}
-      <div className={`${boxStyles.header} ${sheetStyles.headerOverride}`}>
+      {/* ── Hero image — 100% da largura ──
+       *  Per product feedback "imagem cobre 100% da largura da
+       *  tela (irei enviar a foto correta na proporção correta)".
+       *  Placeholder: ana-castela-box.jpg. Aspect-ratio loose
+       *  pra acomodar qualquer proporção futura. Close btn
+       *  flutua por cima no canto superior direito. */}
+      <div className={sheetStyles.hero}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/ana-castela-box.jpg" alt="Ana Castela" className={boxStyles.photo} />
-        <div className={boxStyles.info}>
-          <div className={boxStyles.nameLine}>
-            <span className={boxStyles.label}>Fanverse</span>
-            <span className={boxStyles.name}>Ana Castela</span>
-          </div>
-          <div className={boxStyles.fanpointsInline}>
-            <span className={boxStyles.fanpointsInlineValue}>
-              {fanpoints.toLocaleString('pt-BR')}
-            </span>
-            <span className={boxStyles.fanpointsInlineLabel}>Fanpoints</span>
-            <span
-              role="button"
-              tabIndex={0}
-              className={boxStyles.invitesBtn}
-              onClick={(e) => {
-                e.stopPropagation();
-                setInviteOpen(true);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setInviteOpen(true);
-                }
-              }}
-            >
-              4 convites
-            </span>
-          </div>
+        <img
+          src="/ana-castela-box.jpg"
+          alt="Ana Castela"
+          className={sheetStyles.heroImg}
+        />
+        <button
+          type="button"
+          className={sheetStyles.closeBtn}
+          onClick={onClose}
+          aria-label="Fechar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ── Title row — Nome + Fanpoints à direita ── */}
+      <div className={sheetStyles.titleRow}>
+        <div className={sheetStyles.titleText}>
+          <span className={sheetStyles.titleLabel}>Fanverse</span>
+          <span className={sheetStyles.titleName}>Ana Castela</span>
+        </div>
+        <div className={sheetStyles.titleRight}>
+          <span className={sheetStyles.titlePoints}>
+            {fanpoints.toLocaleString('pt-BR')}
+          </span>
+          <span className={sheetStyles.titlePointsLabel}>Fanpoints</span>
         </div>
       </div>
 
-      {/* Tab bar — mesmas 3 tabs em mesma ordem. */}
-      <div className={boxStyles.discountRow}>
+      {/* Invite pill — abaixo do title row. Per product feedback
+       *  original do desktop, mantém disponível no mobile. */}
+      <div className={sheetStyles.invitesRow}>
+        <button
+          type="button"
+          className={sheetStyles.invitesBtn}
+          onClick={() => setInviteOpen(true)}
+        >
+          4 convites
+        </button>
+      </div>
+
+      {/* ── Tab bar — mesmas 3 tabs em mesma ordem ── */}
+      <div className={sheetStyles.tabsRow}>
         <div className={boxStyles.tabs} role="tablist">
           <button
             type="button"
@@ -217,80 +225,212 @@ export default function MobileFanverseSheet({
         </div>
       </div>
 
-      {/* Body — mesma hierarquia do ArtistBox.dropdown.content:
-       *  divisor + conteúdo da tab + (só na Missões) progress. */}
+      {/* ── Body ── */}
       <div className={sheetStyles.body}>
-        <div className={boxStyles.divider} />
-        {activeTab === 'ranking' && <RankingTabContent />}
-        {activeTab === 'beneficios' && <BenefitsTabContent />}
+        {activeTab === 'ranking' && <MobileRankingList />}
+
+        {activeTab === 'beneficios' && (
+          <div className={sheetStyles.benefitsScope}>
+            <BenefitsTabContent />
+          </div>
+        )}
+
         {activeTab === 'missoes' && (
-          <div className={boxStyles.missionsList}>
-            {MISSION_META.map((m) => {
-              const isDone = doneById[m.id] ?? false;
-              const isCelebrating = celebratingIds.has(m.id);
-              return (
-                <div
-                  key={m.id}
-                  className={`${boxStyles.mission} ${isDone ? boxStyles.missionDone : ''} ${isCelebrating ? boxStyles.missionJustDone : ''}`}
-                >
-                  <span className={boxStyles.missionIcon}>{m.icon}</span>
-                  <div className={boxStyles.missionText}>
-                    <span className={boxStyles.missionName}>{m.name}</span>
-                  </div>
-                  <span className={boxStyles.missionXp}>{m.xp}</span>
-                  <div className={boxStyles.missionCheck}>
-                    <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1.5 4l2 2 3-3.5" />
-                    </svg>
-                  </div>
-                  {isCelebrating && (
-                    <div className={boxStyles.missionSparkles} aria-hidden="true">
-                      {SPARKLE_INDICES.map((i) => (
-                        <span
-                          key={i}
-                          className={boxStyles.sparkle}
-                          style={
-                            {
-                              ['--sp-x' as string]: `${(i - 2) * 14}px`,
-                              ['--sp-delay' as string]: `${i * 60}ms`,
-                            } as React.CSSProperties
-                          }
-                        >
-                          <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                            <path d="M6 0 L7 5 L12 6 L7 7 L6 12 L5 7 L0 6 L5 5 Z" />
-                          </svg>
-                        </span>
-                      ))}
+          <>
+            <div className={sheetStyles.missionsList}>
+              {MISSION_META.map((m) => {
+                const isDone = doneById[m.id] ?? false;
+                const isCelebrating = celebratingIds.has(m.id);
+                return (
+                  <div
+                    key={m.id}
+                    className={`${boxStyles.mission} ${sheetStyles.missionMobile} ${isDone ? boxStyles.missionDone : ''} ${isCelebrating ? boxStyles.missionJustDone : ''}`}
+                  >
+                    <span className={`${boxStyles.missionIcon} ${sheetStyles.missionIconMobile}`}>{m.icon}</span>
+                    <div className={boxStyles.missionText}>
+                      <span className={`${boxStyles.missionName} ${sheetStyles.missionNameMobile}`}>{m.name}</span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {activeTab === 'missoes' && (
-          <div className={boxStyles.progressWrap}>
-            <div className={boxStyles.progressLabel}>
-              <span className={boxStyles.progressText}>{completed}/{TOTAL_MISSIONS} missões</span>
-              <span className={boxStyles.progressText}>{progress}%</span>
+                    <span className={`${boxStyles.missionXp} ${sheetStyles.missionXpMobile}`}>{m.xp}</span>
+                    <div className={`${boxStyles.missionCheck} ${sheetStyles.missionCheckMobile}`}>
+                      <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1.5 4l2 2 3-3.5" />
+                      </svg>
+                    </div>
+                    {isCelebrating && (
+                      <div className={boxStyles.missionSparkles} aria-hidden="true">
+                        {SPARKLE_INDICES.map((i) => (
+                          <span
+                            key={i}
+                            className={boxStyles.sparkle}
+                            style={
+                              {
+                                ['--sp-x' as string]: `${(i - 2) * 14}px`,
+                                ['--sp-delay' as string]: `${i * 60}ms`,
+                              } as React.CSSProperties
+                            }
+                          >
+                            <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                              <path d="M6 0 L7 5 L12 6 L7 7 L6 12 L5 7 L0 6 L5 5 Z" />
+                            </svg>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className={boxStyles.progressTrack}>
-              <div className={boxStyles.progressFill} style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        )}
 
-        {activeTab === 'missoes' && (
-          <div className={sheetStyles.missionsTotal}>
-            <span className={boxStyles.missionsTitle}>Missões do Dia</span>
-            <span className={boxStyles.xpTotal}>{fpEarned} Fanpoints</span>
-          </div>
+            <div className={sheetStyles.missionsProgress}>
+              <div className={sheetStyles.missionsProgressLabel}>
+                <span>{completed}/{TOTAL_MISSIONS} missões</span>
+                <span>{progress}%</span>
+              </div>
+              <div className={boxStyles.progressTrack}>
+                <div className={boxStyles.progressFill} style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+
+            <div className={sheetStyles.missionsTotal}>
+              <span className={sheetStyles.missionsTotalLabel}>Missões do Dia</span>
+              <span className={sheetStyles.missionsTotalXp}>{fpEarned} Fanpoints</span>
+            </div>
+          </>
         )}
       </div>
 
       {inviteOpen && (
         <InviteFriendsModal onClose={() => setInviteOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * MobileRankingList — variante mobile do ranking.
+ *
+ * Diferenças vs RankingTabContent (desktop):
+ *  - Card maior (padding 14px, altura mínima 64px)
+ *  - Avatar maior (44×44 vs 34)
+ *  - Tipografia maior (nome 15px, subline 13px)
+ *  - Fanpoints na COLUNA DA DIREITA do card (não no subline)
+ *  - Carrega até 100 users (sem botão "Carregar mais")
+ *  - Mesma mecânica: presence dot, top3 medal, nome → /app/u/[id]
+ * ──────────────────────────────────────────────────────────── */
+function MobileRankingList() {
+  const { user } = useAuth();
+  const { ranking, loading, error } = useRanking(true);
+  const { users: liveUsers } = useLiveUsers();
+  const onlineIds = useMemo(
+    () => new Set(liveUsers.map((u) => u.id)),
+    [liveUsers],
+  );
+
+  /* Threshold pra entrar no top 10 + posição do user atual.
+   * Mesma lógica do RankingTabContent. */
+  const top10Threshold = ranking.length >= 10 ? ranking[9].points : null;
+  const myRow = user ? ranking.find((r) => r.userId === user.id) ?? null : null;
+  const myPoints = myRow?.points ?? 0;
+  const myRank = myRow
+    ? ranking.findIndex((r) => r.userId === user!.id) + 1
+    : ranking.length + 1;
+  const meInTop10 = myRow ? myRank <= 10 : false;
+  const pointsToTop10 =
+    myRow && top10Threshold !== null
+      ? Math.max(0, top10Threshold + 1 - myPoints)
+      : 0;
+  const meProgressPct = 50;
+
+  /* Top 100 — per product feedback "carregue até o usuário 100". */
+  const visible = useMemo(
+    () => ranking.slice(0, RANKING_LIMIT_MOBILE),
+    [ranking],
+  );
+
+  return (
+    <div className={sheetStyles.rankingWrap}>
+      {/* Progress bar do user atual — mesmo header do desktop. */}
+      <div className={sheetStyles.rankingProgress}>
+        <div className={sheetStyles.rankingProgressLabel}>
+          {meInTop10
+            ? 'Você está no Top 10!'
+            : top10Threshold === null
+              ? 'Continue ouvindo pra entrar no ranking'
+              : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
+        </div>
+        <div className={boxStyles.tabRankingProgressTrack}>
+          <div
+            className={boxStyles.tabRankingProgressFill}
+            style={{ width: `${meProgressPct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Lista. */}
+      {error ? (
+        <div className={sheetStyles.rankingEmpty}>Não consegui carregar agora.</div>
+      ) : ranking.length === 0 ? (
+        <div className={sheetStyles.rankingEmpty}>
+          {loading ? 'Carregando…' : 'Sem fãs ainda.'}
+        </div>
+      ) : (
+        <div className={sheetStyles.rankingList}>
+          {visible.map((r, idx) => {
+            const rank = idx + 1;
+            const isMe = r.userId === user?.id;
+            const isTop3 = rank <= 3;
+            const name = r.name?.trim() || r.email.split('@')[0];
+            const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
+            const isOnline = isMe || onlineIds.has(r.userId);
+            return (
+              <div
+                key={r.userId}
+                className={`${sheetStyles.rankingRow} ${isMe ? sheetStyles.rankingRowMe : ''} ${isTop3 ? sheetStyles.rankingRowTop3 : ''}`}
+              >
+                {/* Rank: medal (top3) ou "#X". */}
+                <span className={`${sheetStyles.rankingRank} ${isTop3 ? sheetStyles.rankingRankMedal : ''} ${rank === 1 ? sheetStyles.rankingRankGold : rank === 2 ? sheetStyles.rankingRankSilver : rank === 3 ? sheetStyles.rankingRankBronze : ''}`}>
+                  {isTop3 ? rank : `#${rank}`}
+                </span>
+
+                {/* Avatar + presence dot. */}
+                <span className={sheetStyles.rankingAvatarWrap}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatar}
+                    alt=""
+                    className={sheetStyles.rankingAvatar}
+                  />
+                  <span
+                    className={`${sheetStyles.rankingPresence} ${isOnline ? sheetStyles.rankingPresenceOn : ''}`}
+                    aria-label={isOnline ? 'Online' : 'Offline'}
+                  />
+                </span>
+
+                {/* Info: nome (link) + cidade. */}
+                <div className={sheetStyles.rankingInfo}>
+                  <Link
+                    href={`/app/u/${r.userId}`}
+                    className={sheetStyles.rankingName}
+                    prefetch={false}
+                  >
+                    {name}
+                  </Link>
+                  {r.city && (
+                    <span className={sheetStyles.rankingCity}>{r.city}</span>
+                  )}
+                </div>
+
+                {/* Fanpoints — coluna da direita do card. */}
+                <div className={sheetStyles.rankingPoints}>
+                  <span className={sheetStyles.rankingPointsValue}>
+                    {r.points.toLocaleString('pt-BR')}
+                  </span>
+                  <span className={sheetStyles.rankingPointsLabel}>FP</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
