@@ -49,19 +49,26 @@
   .sheet { animation: none; }
 }
 
-/* ── Hero image ──
+/* ── Hero image — STICKY no topo ──
  *
- * Per product feedback "imagem cobre 100% da largura da tela".
- * aspect-ratio 16/9 como default conservador; quando o user
- * mandar a imagem na proporção certa basta mudar essa var. */
+ * Per product feedback "ao fazer o scroll, a imagem fica fixa
+ * e conteúdo sobe por cima (sticky)". `position: sticky;
+ * top: 0; z-index: 0` faz o hero ficar parado no topo do
+ * container scrollável; o conteúdo abaixo tem z-index: 1 +
+ * bg opaco e sobe por cima do hero conforme o user scrolla.
+ *
+ * Aspect 16/9 default — basta trocar quando o user mandar a
+ * foto na proporção correta. */
 .hero {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 0;
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #0a0a14;
-  /* Respeita safe area no topo (notch). */
-  margin-top: env(safe-area-inset-top, 0px);
   overflow: hidden;
+  /* Respeita safe area no topo (notch). */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .heroImg {
   width: 100%;
@@ -70,10 +77,31 @@
   display: block;
 }
 
-.closeBtn {
+/* Gradient overlay — escurece o bottom da imagem pra garantir
+ * leitura do título Fanverse Ana Castela sobre qualquer foto.
+ * Per product feedback "adicione um gradiente para que as
+ * palavras Fanverse Ana Castela fique por cima da imagem e a
+ * leitura fique boa". */
+.heroOverlay {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.45) 75%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+/* Back arrow — top-left. Substitui o X anterior per product
+ * feedback "substitua o X de fechar pela seta à esquerda
+ * para voltar". */
+.backBtn {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 14px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -89,53 +117,68 @@
   z-index: 2;
   transition: background 140ms ease;
 }
-.closeBtn:hover { background: rgba(0, 0, 0, 0.75); }
-.closeBtn svg { width: 18px; height: 18px; }
+.backBtn:hover { background: rgba(0, 0, 0, 0.75); }
+.backBtn svg { width: 18px; height: 18px; }
 
-/* ── Title row ──
- *
- * Nome à esquerda, Fanpoints à direita. Mesma linha. */
-.titleRow {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 18px 6px;
-}
-.titleText {
-  display: flex;
-  flex-direction: row;
+/* Title overlay — bottom-left da imagem, Borscha bold,
+ * text-shadow + gradient overlay = leitura garantida. */
+.heroTitle {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  z-index: 2;
+  display: inline-flex;
   align-items: baseline;
   gap: 7px;
-  min-width: 0;
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  flex: 1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
 }
-.titleLabel {
-  font-size: 22px;
+.heroTitleLabel,
+.heroTitleName {
+  font-size: 26px;
   font-weight: 700;
-  color: rgba(245, 245, 247, 0.95);
+  color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.1;
-  flex-shrink: 0;
 }
-.titleName {
-  font-size: 22px;
-  font-weight: 700;
-  color: rgba(245, 245, 247, 0.95);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+.heroTitleLabel { flex-shrink: 0; }
+.heroTitleName {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.titleRight {
+
+/* ── Meta row ──
+ *
+ * Fanpoints (esquerda) + Convites pill (direita). Per product
+ * feedback "a quantidade de Fanpoints deve ficar abaixo do
+ * lado esquerdo e os convites do lado direito".
+ *
+ * z-index: 1 + bg opaco herdado do .sheet pra que essa row
+ * (e tudo abaixo) cubra o hero quando o user scrolla — efeito
+ * sticky. */
+.metaRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 12px;
+  /* Bg opaco pra cobrir o hero ao scrollar. Mesma fórmula do
+   * .sheet base pra continuidade visual. */
+  background:
+    linear-gradient(180deg,
+      rgba(11, 11, 13, 0.98) 0%,
+      rgba(8, 8, 14, 0.98) 100%);
+}
+.metaPoints {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  flex-shrink: 0;
 }
-.titlePoints {
+.metaPointsValue {
   font-size: 18px;
   font-weight: 700;
   color: #ffffff;
@@ -143,7 +186,7 @@
   letter-spacing: -0.005em;
   font-family: var(--sans);
 }
-.titlePointsLabel {
+.metaPointsLabel {
   font-size: 12.5px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
@@ -151,9 +194,6 @@
 }
 
 /* ── Invites pill ── */
-.invitesRow {
-  padding: 0 18px 12px;
-}
 .invitesBtn {
   display: inline-flex;
   align-items: center;
@@ -189,10 +229,14 @@
  * global selector). Mantive paridade visual; só relaxei o
  * padding interno do tab pra acomodar 44dp. */
 .tabsRow {
+  /* z-index + bg opaco pra cobrir o hero ao scrollar (sticky). */
+  position: relative;
+  z-index: 1;
   padding: 4px 16px 14px;
-}
-.tabsRow :global([class*="tab"]) {
-  /* Boost altura geral dos botões dentro do tabs container. */
+  background:
+    linear-gradient(180deg,
+      rgba(8, 8, 14, 0.98) 0%,
+      rgba(5, 5, 12, 0.99) 100%);
 }
 .tabsRow > div > button {
   /* Aumenta o tap target pra 40px no mobile (era 28). */
@@ -202,9 +246,21 @@
 
 /* ── Body wrapper ── */
 .body {
-  display: flex;
-  flex-direction: column;
+  /* z-index + bg opaco também — body é o último conteúdo a
+   * cobrir o hero ao scrollar. Mesma fórmula sólida pra que a
+   * transição visual entre metaRow → tabsRow → body seja
+   * imperceptível. */
+  position: relative;
+  z-index: 1;
+  display: block;
   padding: 0 0 24px;
+  background:
+    linear-gradient(180deg,
+      rgba(5, 5, 12, 0.99) 0%,
+      rgba(2, 2, 4, 1) 100%);
+  /* min-height garante que mesmo com pouco conteúdo o bg cubra
+   * o hero até o final do viewport. */
+  min-height: calc(100vh - 100px);
 }
 
 /* ===== MISSÕES MOBILE ===========================================

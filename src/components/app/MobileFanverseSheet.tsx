@@ -140,12 +140,16 @@ export default function MobileFanverseSheet({
 
   return (
     <div className={sheetStyles.sheet} role="dialog" aria-modal="true">
-      {/* ── Hero image — 100% da largura ──
-       *  Per product feedback "imagem cobre 100% da largura da
-       *  tela (irei enviar a foto correta na proporção correta)".
-       *  Placeholder: ana-castela-box.jpg. Aspect-ratio loose
-       *  pra acomodar qualquer proporção futura. Close btn
-       *  flutua por cima no canto superior direito. */}
+      {/* ── Hero image — 100% width, sticky no topo ──
+       *  Per product feedback "ao fazer o scroll, a imagem fica
+       *  fixa e conteúdo sobe por cima (sticky)". Hero usa
+       *  `position: sticky; top: 0; z-index: 0` no CSS; o
+       *  conteúdo abaixo tem `z-index: 1` + bg opaco e sobe
+       *  por cima conforme o user scrolla.
+       *
+       *  Overlay gradient escurece o bottom da imagem pra
+       *  garantir leitura do título "Fanverse Ana Castela"
+       *  que fica ancorado no canto inferior esquerdo. */}
       <div className={sheetStyles.hero}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -153,36 +157,41 @@ export default function MobileFanverseSheet({
           alt="Ana Castela"
           className={sheetStyles.heroImg}
         />
+        <div className={sheetStyles.heroOverlay} aria-hidden="true" />
+
+        {/* Back arrow — top-left. Per product feedback
+         *  "substitua o X de fechar pela seta à esquerda
+         *  para voltar". */}
         <button
           type="button"
-          className={sheetStyles.closeBtn}
+          className={sheetStyles.backBtn}
           onClick={onClose}
-          aria-label="Fechar"
+          aria-label="Voltar"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
           </svg>
         </button>
+
+        {/* Título sobreposto à imagem — Borscha bold, bottom-left
+         *  com text-shadow + gradient overlay garantem leitura
+         *  contra qualquer foto. */}
+        <div className={sheetStyles.heroTitle}>
+          <span className={sheetStyles.heroTitleLabel}>Fanverse</span>
+          <span className={sheetStyles.heroTitleName}>Ana Castela</span>
+        </div>
       </div>
 
-      {/* ── Title row — Nome + Fanpoints à direita ── */}
-      <div className={sheetStyles.titleRow}>
-        <div className={sheetStyles.titleText}>
-          <span className={sheetStyles.titleLabel}>Fanverse</span>
-          <span className={sheetStyles.titleName}>Ana Castela</span>
-        </div>
-        <div className={sheetStyles.titleRight}>
-          <span className={sheetStyles.titlePoints}>
+      {/* Meta row — Fanpoints (esquerda) + Convites (direita).
+       *  Mesma linha, abaixo da imagem. Per product feedback. */}
+      <div className={sheetStyles.metaRow}>
+        <div className={sheetStyles.metaPoints}>
+          <span className={sheetStyles.metaPointsValue}>
             {fanpoints.toLocaleString('pt-BR')}
           </span>
-          <span className={sheetStyles.titlePointsLabel}>Fanpoints</span>
+          <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
         </div>
-      </div>
-
-      {/* Invite pill — abaixo do title row. Per product feedback
-       *  original do desktop, mantém disponível no mobile. */}
-      <div className={sheetStyles.invitesRow}>
         <button
           type="button"
           className={sheetStyles.invitesBtn}
