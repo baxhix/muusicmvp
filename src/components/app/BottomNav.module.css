@@ -452,15 +452,32 @@
     width: calc(100% - 32px);
     max-width: 320px;
   }
-  /* Menu tracks .inner's responsive width exactly: same calc +
-   * same max so the two surfaces always have identical outer
-   * widths on phone viewports. Vertical bottom drops 100 → 94
-   * because the .nav padding-bottom shrinks 24 → 18 here too,
-   * keeping the 20px visual gap above the pill consistent. */
+  /* Mobile drawer — per product feedback "os itens devem abrir
+   * estilo um drawer, deixando o fundo mais escuro e com blur".
+   * Antes era um popover estreito centralizado; agora vira sheet
+   * full-width ancorado ao bottom, com cantos arredondados só no
+   * topo. Anima de baixo pra cima (slideUp). */
   .moreMenu {
-    width: calc(100% - 32px);
-    max-width: 320px;
-    bottom: 94px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
+    border-radius: 24px 24px 0 0;
+    /* Safe area no bottom (home indicator iOS). */
+    padding: 16px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+    animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes moreMenuMobileIn {
+    from { opacity: 0; transform: translateY(100%); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* Items dentro do drawer ganham mais respiro vertical pra tap. */
+  .moreItem {
+    padding: 16px 14px;
+    font-size: 15px;
   }
 }
 
@@ -510,9 +527,11 @@
 .moreBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  /* Per product feedback mobile "deixando o fundo mais escuro e
+   * com blur" — opacity 0.45 → 0.72, blur 14 → 22. */
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
   /* z-index 250 (era 79) per product feedback "esse pequeno modal
    * deve ficar por cima dos avatares de chat flutuantes". O
    * LiveChatStack vive em z:200, então o backdrop precisa ficar
@@ -610,10 +629,13 @@
   transform: scale(0.99);
 }
 .moreItem svg {
+  /* Per product feedback "os ícones devem ser cinzas e não
+   * brancos" — opacity 0.78 → cinza puro 0.5. Hover/active
+   * continuam branco pra feedback visual. */
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  color: rgba(245, 245, 247, 0.78);
+  color: rgba(245, 245, 247, 0.5);
 }
 .moreItem:hover svg,
 .moreItem:active svg {

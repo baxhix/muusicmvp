@@ -377,35 +377,70 @@ export default function BottomNav() {
                   onClick={() => setMoreOpen(false)}
                 />
               <div className={styles.moreMenu} role="menu">
-                {/* Per product feedback "remova Comunidades, substitua
-                 * Minha Conta por Meu Perfil, ordem: Perfil → Playlist
-                 * → Configurações. Configurações abre o drawer do
-                 * TopBar (Conta, Privacidade, Segurança, Legal, Sair)
-                 * via CustomEvent 'app:open-account-drawer'." */}
+                {/* Per product feedback "ordem de baixo pra cima:
+                 *  Meu Perfil, Playlist, Loja Oficial, Configurações"
+                 * — em JSX a ordem top-down fica invertida pra que
+                 * visualmente Meu Perfil apareça por último (mais
+                 * próximo do hamburger). */}
 
-                {/* 1. Meu Perfil — vai pra /app/perfil. */}
+                {/* 1. Configurações — abre drawer do TopBar via event. */}
                 <button
                   type="button"
                   role="menuitem"
                   className={styles.moreItem}
                   onClick={() => {
                     setMoreOpen(false);
-                    router.push('/app/perfil');
+                    try {
+                      window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
+                    } catch { /* SSR — ignore */ }
                   }}
                 >
-                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                    <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="4" y1="7" x2="20" y2="7" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="17" x2="20" y2="17" />
+                    <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
                   </svg>
-                  Meu Perfil
+                  Configurações
                 </button>
 
-                {/* 2. Playlist — abre PlaylistModal. */}
+                {/* 2. Loja Oficial — abre Loja da Boiadeira em nova
+                 * aba. Per product feedback "Loja Oficial na ordem". */}
+                <a
+                  role="menuitem"
+                  className={styles.moreItem}
+                  href="https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    {/* Shopping bag — cabo arqueado + corpo retangular */}
+                    <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z" />
+                    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+                  </svg>
+                  Loja Oficial
+                </a>
+
+                {/* 3. Playlist — abre PlaylistModal. */}
                 <button
                   type="button"
                   role="menuitem"
@@ -433,47 +468,27 @@ export default function BottomNav() {
                   Playlist
                 </button>
 
-                {/* 3. Configurações — dispara o event que abre o
-                 * drawer do TopBar (mesma surface do desktop, com
-                 * Conta, Privacidade, Segurança, Legal, Sair). */}
+                {/* 4. Meu Perfil — vai pra /app/perfil. Último na
+                 * ordem JSX = mais próximo do hamburger no mobile. */}
                 <button
                   type="button"
                   role="menuitem"
                   className={styles.moreItem}
                   onClick={() => {
                     setMoreOpen(false);
-                    try {
-                      window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
-                    } catch { /* SSR — ignore */ }
+                    router.push('/app/perfil');
                   }}
                 >
-                  {/* Sliders icon — three horizontal tracks each
-                    * carrying a filled knob at a different x
-                    * position. Replaces the 8-prong gear per
-                    * product feedback "mude o ícone de
-                    * configurações". The sliders glyph reads
-                    * as "preferences / tune" which fits the
-                    * Configurações destination better than the
-                    * traditional cog, AND it's a tiny path set
-                    * (3 lines + 3 circles) so iOS Safari has
-                    * nothing complex to rasterize. */}
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="4" y1="7" x2="20" y2="7" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="17" x2="20" y2="17" />
-                    <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
+                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
                   </svg>
-                  Configurações
+                  Meu Perfil
                 </button>
               </div>
               </>
