@@ -504,15 +504,17 @@
   background: rgba(168, 85, 247, 0.14);
 }
 .tabRankingRank {
-  /* Per product feedback "alinhe o top 3 com os demais": rank
-   * vira um flex box centralizado, garantindo que tanto o
-   * "#5" (texto puro) quanto o medal pill 28×28 fiquem
-   * exatamente na mesma posição horizontal e vertical. Antes
-   * usava `text-align: center` que centraliza só inline boxes
-   * — o medal `inline-flex` ficava ligeiramente off-axis vs
-   * o numeral solto. */
+  /* Per product feedback "alinhe os nomes e a foto de avatar
+   * dos top3 com o restante dos usuários" — width unificado
+   * em 28px (era 32) pra bater EXATAMENTE com o medal pill
+   * top3, que tem .tabRankingRankMedal { width: 28px }
+   * sobrescrevendo. Antes a diferença de 4px deslocava avatar
+   * + nome 4px à esquerda nas linhas top3.
+   *
+   * Texto "#10"/"#11" continua cabendo em 28px @ font-size
+   * 12px tabular-nums (≈3 chars × ~7px). */
   flex-shrink: 0;
-  width: 32px;
+  width: 28px;
   height: 28px;
   display: inline-flex;
   align-items: center;
