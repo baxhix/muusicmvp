@@ -29,14 +29,14 @@ const STORE_URL =
  * `xp` is the reward awarded once the mission is complete — same
  * semantics as the old mock, but now stitched by id.
  */
-interface MissionMeta {
+export interface MissionMeta {
   id: DailyMissionId;
   icon: string;
   name: string;
   xp: string;
 }
 
-const MISSION_META: MissionMeta[] = [
+export const MISSION_META: MissionMeta[] = [
   { id: 'listen_5',     icon: '🎵', name: 'Ouça 5 músicas hoje',     xp: '+50 FP'  },
   { id: 'like_track',   icon: '❤️', name: 'Curtir uma música',        xp: '+30 FP'  },
   { id: 'start_chat',   icon: '💬', name: 'Inicie uma conversa',      xp: '+40 FP'  },
@@ -46,16 +46,19 @@ const MISSION_META: MissionMeta[] = [
   { id: 'follow_artist', icon: '⭐', name: 'Siga um artista',         xp: '+35 FP'  },
 ];
 
-const TOTAL = MISSION_META.length;
+export const TOTAL_MISSIONS = MISSION_META.length;
+/* Local alias mantido pro código existente do ArtistBox que
+ * usa TOTAL — não vale a pena rebatizar 5 sites. */
+const TOTAL = TOTAL_MISSIONS;
 
 /* Index estável pros 5 sparkles do burst de celebração. Extraído
  * pra fora do render porque o `[0,1,2,3,4]` inline criava array
  * novo a cada paint do componente, invalidando React.memo internos
  * potenciais. */
-const SPARKLE_INDICES = [0, 1, 2, 3, 4] as const;
+export const SPARKLE_INDICES = [0, 1, 2, 3, 4] as const;
 
 /** Sum of XP across only the missions currently completed. */
-function sumEarnedXp(
+export function sumEarnedXp(
   meta: MissionMeta[],
   doneById: Record<string, boolean>,
 ): number {
@@ -567,7 +570,7 @@ const INVITE_CODES = [
   'FANV-YH6JD',
 ];
 
-function InviteFriendsModal({ onClose }: { onClose: () => void }) {
+export function InviteFriendsModal({ onClose }: { onClose: () => void }) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -668,7 +671,7 @@ function InviteFriendsModal({ onClose }: { onClose: () => void }) {
  * SuperfansPanel ajustado pro box, sem pontuação, sem foto,
  * mantém barra de progresso, deve ter botão carregar mais".
  * ──────────────────────────────────────────────────────────── */
-function RankingTabContent() {
+export function RankingTabContent() {
   const { user } = useAuth();
   const { ranking, loading, error } = useRanking(true);
   /* Lista de online ao vivo — usada pra renderizar o dot
@@ -830,7 +833,7 @@ function RankingTabContent() {
  * linha (`.tabBenefitDesc` usa ellipsis) pra caber mais itens
  * sem aumentar altura.
  * ──────────────────────────────────────────────────────────── */
-function BenefitsTabContent() {
+export function BenefitsTabContent() {
   /* Per product feedback iterativo:
    *  - "deixe apenas 3 itens desbloqueados" → slice(0, 3)
    *  - "remova a linha descritiva" → renderiza só title (sem desc)
