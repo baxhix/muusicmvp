@@ -94,9 +94,9 @@ Daily Drop, Feed algorítmico) → **Growth** (Share, Referral) →
 
 ---
 
-## Detalhamento técnico
+## Detalhamento dos P0
 
-Specs de implementação, critérios de aceite e métricas pros itens
-do P0 vivem (parcialmente) nos transcripts da sessão de origem.
-Quando um item for puxado pra sprint, extrair os specs e criar um
-issue/branch dedicado.
+Cada item P0 tem 2 parágrafos (o que é + como impacta) em
+[`engajamento-detalhe-p0.md`](./engajamento-detalhe-p0.md).
+Detalhes finos de implementação (specs técnicos, critérios de
+aceite, métricas) ficam pra quando o item entra em sprint.
