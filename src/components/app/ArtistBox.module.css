@@ -426,12 +426,15 @@
  * directly under the artist name. */
 .fanpointsInline {
   display: inline-flex;
-  align-items: center;
+  /* `baseline` alinha o número 402.299 (12.5px) e a palavra
+   * Fanpoints (11.5px) pela linha de base comum, per product
+   * feedback "alinhe na base de ambos os textos (402.299 e
+   * Fanpoints)". */
+  align-items: baseline;
   gap: 5px;
-  /* +8px de respiro vertical entre o título "Fanverse Ana Castela"
-   * e a contagem de Fanpoints per product feedback "abaixe 8px o
-   * texto 374.399 Fanpoints do título". */
-  margin-top: 8px;
+  /* margin-top 8 → 2 per product feedback "aproxime um pouco as
+   * palavras 402.299 Fanpoints do nome Fanverse Ana Castela". */
+  margin-top: 2px;
   font-family: var(--sans);
   white-space: nowrap;
 }
@@ -1011,8 +1014,12 @@
 }
 .mission:hover { background: rgba(255,255,255,0.04); }
 
+/* `.missionDone` removido `opacity: 0.45` per product feedback
+ * "deixe o check box preenchido totalmente verde e não opaco".
+ * O cue de "concluído" agora fica só no checkbox verde + no
+ * line-through + cor fade da label (gerenciados abaixo). */
 .missionDone {
-  opacity: 0.45;
+  opacity: 1;
 }
 
 /* Festive completion burst — applied to a mission row for ~1.6s
@@ -1158,20 +1165,30 @@
   background: rgba(255,255,255,0.04);
 }
 
+/* Per product feedback "remova os círculos que não estão como
+ * checkbox ativo. Isso induz o usuário ao click". Circle só
+ * aparece quando a missão está concluída — pra missões abertas
+ * ele fica `visibility: hidden` (mantém o espaço de layout pra
+ * que a linha não pule quando concluir). */
 .missionCheck {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255,255,255,0.18);
+  border: none;
+  background: transparent;
   display: grid;
   place-items: center;
+  visibility: hidden;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .missionDone .missionCheck {
-  background: #3ddb74;
-  border-color: #3ddb74;
+  /* Verde sólido + totalmente opaco per product feedback "deixe
+   * o check box preenchido totalmente verde e não opaco". */
+  visibility: visible;
+  background: #22c55e;
+  border-color: #22c55e;
 }
 
 .missionCheck svg {
@@ -1208,6 +1225,91 @@
   letter-spacing: 0.07em;
   text-transform: uppercase;
   font-family: var(--sans);
+  /* Inline-flex pra acomodar o ícone Info à direita do texto
+   * sem quebrar o flexbox do .footerRow. */
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Caracter Info ao lado de "Missões do Dia" com tooltip
+ * personalizado per product feedback "inclua um caracter de
+ * Info na palavra Missões do dia com um tooltip personalizado
+ * que informa: Cada dia uma missão diferente. Aproveite!".
+ * Tooltip é puro CSS via `data-tooltip` + ::after; aparece no
+ * hover do ícone. position: relative ancora o ::after; o
+ * tooltip flutua acima do ícone com setinha. */
+.missionsInfo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: help;
+  transition: color 0.15s ease;
+}
+.missionsInfo:hover {
+  color: rgba(245, 245, 247, 0.95);
+}
+.missionsInfo svg {
+  width: 13px;
+  height: 13px;
+}
+/* Tooltip pop — aparece no hover/focus. white-space: normal pra
+ * permitir wrap em viewports estreitos; max-width segura largura. */
+.missionsInfo::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #14141c;
+  color: #f5f5f7;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sans);
+  letter-spacing: -0.005em;
+  text-transform: none;
+  line-height: 1.3;
+  padding: 7px 10px;
+  border-radius: 8px;
+  white-space: normal;
+  width: max-content;
+  max-width: 200px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  z-index: 10;
+}
+/* Seta apontando pro ícone. */
+.missionsInfo::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #14141c;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 10;
+}
+.missionsInfo:hover::after,
+.missionsInfo:focus-visible::after,
+.missionsInfo:hover::before,
+.missionsInfo:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .xpTotal {
@@ -1381,4 +1483,191 @@
   .compactChevron {
     display: none;
   }
+}
+
+/* ── Pill "4 convites" ──
+ *
+ * Vive dentro de .fanpointsInline, à direita do label
+ * "Fanpoints". Per product feedback "botão totalmente
+ * arredondado, preto com a borda gradiente roxa/roxo já usado
+ * em outros locais". Técnica de borda gradiente: dois
+ * backgrounds empilhados — `padding-box` preto sólido +
+ * `border-box` gradiente roxo — com `border: 1.5px solid
+ * transparent` revelando só o gradiente nas bordas. */
+.invitesBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  /* Conteúdo preto + borda gradiente roxa (mesma paleta do
+   * .tabRankingProgressFill e do Stories ring). */
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
+  border: 1.5px solid transparent;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 140ms ease, filter 140ms ease;
+  /* baseline align — invitesBtn fica visual nivelado com 402.299
+   * + "Fanpoints" mesmo com border de 1.5px. */
+  align-self: center;
+  line-height: 1;
+}
+.invitesBtn:hover {
+  filter: brightness(1.18);
+  transform: translateY(-0.5px);
+}
+.invitesBtn:active {
+  transform: translateY(0);
+  filter: brightness(0.92);
+}
+
+/* ── Modal "Convide seus amigos" ──
+ *
+ * Fixed full-viewport backdrop com card central, z-index
+ * acima da BottomNav (z:70) e do LiveChatPanel (z:250) pra
+ * garantir foco visual. ESC ou click no backdrop fecha. */
+.inviteBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: inviteBackdropIn 0.18s ease-out;
+}
+@keyframes inviteBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.inviteModal {
+  width: 100%;
+  max-width: 380px;
+  background:
+    linear-gradient(160deg,
+      rgba(12, 12, 22, 0.98) 0%,
+      rgba(8, 8, 18, 0.98) 100%);
+  border-radius: 18px;
+  /* Borda gradiente roxa mesma técnica do botão. */
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(12,12,22,0.98) 0%, rgba(8,8,18,0.98) 100%) padding-box,
+    linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
+  padding: 22px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+  animation: inviteModalIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes inviteModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.inviteHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.inviteTitle {
+  margin: 0;
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: #f5f5f7;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.inviteClose {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 140ms ease, color 140ms ease;
+}
+.inviteClose:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+.inviteClose svg {
+  width: 14px;
+  height: 14px;
+}
+.inviteSubtitle {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.62);
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+}
+.inviteList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inviteRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.inviteCode {
+  flex: 1;
+  font-family: var(--mono, ui-monospace);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+.inviteCopyBtn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+  border: none;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: filter 140ms ease, transform 140ms ease;
+}
+.inviteCopyBtn:hover {
+  filter: brightness(1.15);
+}
+.inviteCopyBtn:active {
+  transform: scale(0.97);
+}
+.inviteCopyBtnDone {
+  background: #22c55e;
 }

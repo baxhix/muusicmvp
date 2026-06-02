@@ -81,6 +81,11 @@ export default function ArtistBox() {
    * (implementação completa fica pro próximo round). */
   type BoxTab = 'missoes' | 'ranking' | 'beneficios';
   const [activeTab, setActiveTab] = useState<BoxTab>('missoes');
+
+  /* Modal "Convide seus amigos" — 4 códigos copiáveis. Triggered
+   * pelo botão pill "4 convites" ao lado de 402.299 Fanpoints
+   * no header do box. Per product feedback. */
+  const [inviteOpen, setInviteOpen] = useState(false);
   // contentRef is retained because the inner missions list still
   // references it via ref (legacy — kept so the layout doesn't
   // collapse to 0 if the missions container is queried for
@@ -281,12 +286,39 @@ export default function ArtistBox() {
               space-between on `.info`) was retired — the row now
               flows naturally under the name with a tight gap. */}
           {/* Crown icon removido per product feedback "remova o
-           * ícone de coroa ao lado dos Fanpoints". Só valor + label. */}
+           * ícone de coroa ao lado dos Fanpoints". Só valor + label.
+           * `align-items: baseline` no container alinha 402.299 +
+           * Fanpoints pela mesma linha de base, mesmo com font-sizes
+           * diferentes. Botão "4 convites" à direita per product
+           * feedback "à frente de 402.299 Fanpoints adicione um
+           * botão totalmente arredondado, preto com a borda
+           * gradiente roxa, ao clicar abre um modal com 4 códigos". */}
           <div className={styles.fanpointsInline}>
             <span className={styles.fanpointsInlineValue}>
               {fanpoints.toLocaleString('pt-BR')}
             </span>
             <span className={styles.fanpointsInlineLabel}>Fanpoints</span>
+            <span
+              role="button"
+              tabIndex={0}
+              className={styles.invitesBtn}
+              onClick={(e) => {
+                /* Header inteiro é o trigger do dropdown; aqui paramos
+                 * a propagação pra que o clique NO botão de convites
+                 * só abra o modal, sem colapsar/expandir o box. */
+                e.stopPropagation();
+                setInviteOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setInviteOpen(true);
+                }
+              }}
+            >
+              4 convites
+            </span>
           </div>
         </div>
       </button>
@@ -419,7 +451,32 @@ export default function ArtistBox() {
       {/* Dropdown footer — closes the dropdown (toggle). */}
       <div className={styles.footer} onClick={() => setOpen(o => !o)}>
         <div className={styles.footerRow}>
-          <span className={styles.missionsTitle}>Missões do Dia</span>
+          <span className={styles.missionsTitle}>
+            Missões do Dia
+            {/* Info character com tooltip CSS custom per product
+             * feedback "inclua um caracter de Info na palavra
+             * Missões do dia com um tooltip personalizado". O
+             * conteúdo do tooltip vive na pseudo-class via
+             * data-tooltip pra ficar acessível ao CSS hover. */}
+            <span
+              className={styles.missionsInfo}
+              data-tooltip="Cada dia uma missão diferente. Aproveite!"
+              role="img"
+              aria-label="Cada dia uma missão diferente. Aproveite!"
+              onClick={(e) => {
+                /* O footer inteiro toggle a dropdown — paramos
+                 * a propagação no info pra que tooltip mobile
+                 * (tap) não cause toggle indesejado. */
+                e.stopPropagation();
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+            </span>
+          </span>
           <span className={styles.xpTotal}>{fpEarned} Fanpoints</span>
         </div>
         <div className={styles.footerArrow}>
@@ -434,6 +491,114 @@ export default function ArtistBox() {
       </div>
 
       </div>  {/* /dropdown */}
+
+      {/* Modal "Convide seus amigos" — render fora do dropdown
+       *  (mesmo tree do .box, mas overlay full-viewport via
+       *  position:fixed no CSS). Renderiza condicionalmente. */}
+      {inviteOpen && (
+        <InviteFriendsModal onClose={() => setInviteOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * Modal "Convide seus amigos" — 4 códigos pre-gerados com
+ * botão "Copiar" por linha. Per product feedback "ao clicar,
+ * abre um modal com 4 códigos, botão de copiar. Título do
+ * modal: Convide seus amigos". Click no backdrop ou na X fecha.
+ * ──────────────────────────────────────────────────────────── */
+const INVITE_CODES = [
+  'FANV-9K2X4',
+  'FANV-MT7Q8',
+  'FANV-B5RP3',
+  'FANV-YH6JD',
+];
+
+function InviteFriendsModal({ onClose }: { onClose: () => void }) {
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ESC fecha o modal. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  /* Cleanup do timer ao desmontar pra não disparar setState
+   * num componente já fora da tree. */
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
+
+  function handleCopy(code: string, idx: number) {
+    /* navigator.clipboard pode falhar em contexts não-secure;
+     * fallback via execCommand. */
+    const onDone = () => {
+      setCopiedIdx(idx);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedIdx(null), 1600);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(code).then(onDone).catch(() => {
+        // fallback silencioso
+        onDone();
+      });
+    } else {
+      onDone();
+    }
+  }
+
+  return (
+    <div
+      className={styles.inviteBackdrop}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Convide seus amigos"
+    >
+      <div
+        className={styles.inviteModal}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={styles.inviteHeader}>
+          <h3 className={styles.inviteTitle}>Convide seus amigos.</h3>
+          <button
+            type="button"
+            className={styles.inviteClose}
+            onClick={onClose}
+            aria-label="Fechar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <p className={styles.inviteSubtitle}>
+          Compartilhe um dos códigos abaixo. Cada amigo que entrar
+          rende Fanpoints pra você.
+        </p>
+        <div className={styles.inviteList}>
+          {INVITE_CODES.map((code, idx) => (
+            <div key={code} className={styles.inviteRow}>
+              <span className={styles.inviteCode}>{code}</span>
+              <button
+                type="button"
+                className={`${styles.inviteCopyBtn} ${copiedIdx === idx ? styles.inviteCopyBtnDone : ''}`}
+                onClick={() => handleCopy(code, idx)}
+              >
+                {copiedIdx === idx ? 'Copiado!' : 'Copiar'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
