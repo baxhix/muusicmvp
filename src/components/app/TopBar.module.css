@@ -493,6 +493,41 @@
   padding-top: 14px;
 }
 
+/* Linha de toggle inline dentro de uma drawerSection — usada por
+ * "Exibição" (zoom indicator + brainstorm triggers). Layout flex
+ * com texto à esquerda + Toggle à direita, espaçamento similar
+ * aos drawerItem buttons. */
+.drawerToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 6px;
+  border-radius: 8px;
+}
+.drawerToggleRow + .drawerToggleRow {
+  margin-top: 2px;
+}
+.drawerToggleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.drawerToggleTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.005em;
+}
+.drawerToggleDesc {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  line-height: 1.35;
+}
+
 .drawerEyebrow {
   font-size: 9.5px;
   letter-spacing: 0.18em;

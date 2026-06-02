@@ -191,7 +191,7 @@ export default function ArtistBox() {
   }, []);
 
   return (
-    <div className={`${styles.box} ${open ? styles.boxOpen : ''} ${activeTab !== 'missoes' ? styles.boxTallTab : ''}`}>
+    <div className={`${styles.box} ${open ? styles.boxOpen : ''}`}>
 
       {/* Compact header pill — always visible. Pinned to the
        *  top-left so it shares the same horizontal axis as the

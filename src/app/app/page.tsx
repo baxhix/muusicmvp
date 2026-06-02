@@ -10,6 +10,7 @@ import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
 import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
 import FindMyLoveTrigger from '@/components/app/FindMyLoveTrigger';
+import BrainstormGate from '@/components/app/BrainstormGate';
 import MobileHomeChrome from '@/components/app/MobileHomeChrome';
 import MapSimulationLayer from '@/components/app/MapSimulationLayer';
 import MapPulses from '@/components/app/MapPulses';
@@ -97,48 +98,25 @@ export default function AppPage() {
           in the current registry decorates this surface (e.g.
           Tour Portugal lives on the globe); subpages have no
           experimental UI today. */}
-      <BrainstormPanel />
-
-      {/* Superlive (brainstorm-gated) — floating "AO VIVO" pill
-          + modal with the simulated transmission + fake fan
-          chat. Self-gates on `flags.superlive` and unmounts
-          entirely when the toggle is off. */}
-      <SuperliveTrigger />
-
-      {/* Fire Arena · Audição coletiva (brainstorm-gated) —
-          black pill below the Superlive trigger that opens a
-          collaborative listening session for "Let's Go Rodeo"
-          with a spinning vinyl + fake fan chat. Self-gates on
-          `flags.collectiveListening`. */}
-      <CollectiveListeningTrigger />
-
-      {/* Fire Arena · Show ao vivo (brainstorm-gated) — pílula
-          rosa neon abaixo dos outros triggers que abre o
-          ShowLiveStage: viewport vira palco com vinheta dark
-          ao redor, luzes pulsando sobre o estádio (mapa visível
-          por baixo), frame de transmissão acima e chat ao
-          lado. Pensado pro lançamento do álbum Fire Arena na
-          Arena Fonte Nova (Salvador, BA). Self-gates on
-          `flags.showLive`. */}
-      <ShowLiveTrigger />
-
-      {/* Find my love (brainstorm-gated) — botão flutuante de coração
-          que dispara a experiência: globo gigante centralizado +
-          "Em busca pelo mundo", depois mapa anima zoom-out + giro,
-          traça linha até um fã aleatório em outro país, revela card
-          com avatar do match e CTA "Mandar oi". Self-gates on
-          `flags.findMyLove`. */}
-      <FindMyLoveTrigger />
-
-      {/* Sandbox de simulação de 3.000 usuários no mapa do Brasil
-       *  (brainstorm-gated). Camada visual com heatmap + clusters +
-       *  dots coloridos por tier + HUD com contador online + cidade
-       *  bombando. Toggle via Features em teste. NUNCA toca backend
-       *  real — dataset gerado client-side determinístico. */}
-      <MapSimulationLayer />
-      <MapPulses />
+      {/* Todos os triggers de brainstorm + camadas de simulação
+       *  vivem dentro de <BrainstormGate>. Esconde tudo de uma
+       *  vez quando o user desativa em Configurações → Exibição →
+       *  "Recursos em teste". Per product feedback "os itens de
+       *  brainstorm devem ter o mesmo comportamento [do zoom
+       *  indicator] para sairem da tela inicial". */}
+      <BrainstormGate>
+        <BrainstormPanel />
+        <SuperliveTrigger />
+        <CollectiveListeningTrigger />
+        <ShowLiveTrigger />
+        <FindMyLoveTrigger />
+        <MapSimulationLayer />
+        <MapPulses />
+        <SimulationHUD />
+      </BrainstormGate>
+      {/* MapZoomIndicator fica FORA do gate — tem toggle próprio
+       *  (Configurações → Exibição → Indicador de zoom). */}
       <MapZoomIndicator />
-      <SimulationHUD />
     </>
   );
 }

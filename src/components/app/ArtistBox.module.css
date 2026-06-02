@@ -176,17 +176,16 @@
   transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .boxOpen .dropdown {
-  /* Generous enough to fit the full content + footer comfortably
-   * across viewport sizes. The wrapper hides overflow so any extra
-   * space is harmless. */
-  max-height: 560px;
-}
-
-/* Tabs Ranking / Meus benefícios precisam de +160px pra caber a
- * barra de progresso + lista de usuários (com botão "carregar mais")
- * ou a listagem completa de benefícios. Per product feedback "o
- * tamanho deve aumentar 160 px para caber mais informações". */
-.boxOpen.boxTallTab .dropdown {
+  /* Altura unificada per product feedback "ajuste para os itens
+   * do box Fanverse ficarem do mesmo tamanho na altura quando
+   * abertos, mesmo que oculte algo". 720px = teto antigo da
+   * tab Ranking/Conquistas. Mission tab pode ter espaço vazio
+   * abaixo (6 missões + progress + footer cabem em ~480px); o
+   * trade-off é consistência visual no toggle entre tabs.
+   *
+   * `.boxTallTab` mantida como alias inerte pra evitar quebrar
+   * qualquer consumer de classname externo (sem efeito visual
+   * agora que a altura é única). */
   max-height: 720px;
 }
 

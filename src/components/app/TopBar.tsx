@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
+import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
 import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
 import styles from './TopBar.module.css';
 
@@ -234,6 +235,20 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
    * pra abrir/fechar o painel correspondente. */
   const { activeOverlay, setActiveOverlay } = useAppShell();
   const notifOpen = activeOverlay === 'notifications';
+
+  /* Toggles de exibição (persistidos via useDisplaySetting →
+   * localStorage + CustomEvent). Per product feedback "controle
+   * de exibição do card de nível de zoom + itens de brainstorm
+   * dentro de Configurações". Defaults: zoom indicator visível,
+   * brainstorm triggers visíveis. */
+  const [showZoomIndicator, setShowZoomIndicator] = useDisplaySetting(
+    DISPLAY_KEYS.zoomIndicator,
+    true,
+  );
+  const [showBrainstormTriggers, setShowBrainstormTriggers] = useDisplaySetting(
+    DISPLAY_KEYS.brainstormTriggers,
+    true,
+  );
   const userLabel = displayName(user);
   const userEmail = user?.email ?? '';
   // Generic placeholder silhouette for brand-new users who
@@ -577,6 +592,47 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       <span>Minha atividade</span>
                       <DrawerChevron />
                     </button>
+                  </div>
+
+                  {/* Per product feedback "crie um controle de exibição
+                   *  do card de nível de zoom e coloque dentro de
+                   *  Configurações como toggle, tanto no desktop como
+                   *  no mobile. Quero remover ele da tela. Os itens de
+                   *  brainstorm devem ter o mesmo comportamento". 2
+                   *  toggles inline (estado persistido em localStorage
+                   *  via useDisplaySetting). */}
+                  <div className={styles.drawerSection}>
+                    <span className={styles.drawerEyebrow}>Exibição</span>
+                    <div className={styles.drawerToggleRow}>
+                      <div className={styles.drawerToggleText}>
+                        <span className={styles.drawerToggleTitle}>
+                          Indicador de zoom
+                        </span>
+                        <span className={styles.drawerToggleDesc}>
+                          Mostra o nível de zoom atual sobre o mapa
+                        </span>
+                      </div>
+                      <Toggle
+                        checked={showZoomIndicator}
+                        onChange={setShowZoomIndicator}
+                        ariaLabel="Exibir indicador de zoom"
+                      />
+                    </div>
+                    <div className={styles.drawerToggleRow}>
+                      <div className={styles.drawerToggleText}>
+                        <span className={styles.drawerToggleTitle}>
+                          Recursos em teste
+                        </span>
+                        <span className={styles.drawerToggleDesc}>
+                          Esconde os botões de brainstorm na tela inicial
+                        </span>
+                      </div>
+                      <Toggle
+                        checked={showBrainstormTriggers}
+                        onChange={setShowBrainstormTriggers}
+                        ariaLabel="Exibir recursos em teste"
+                      />
+                    </div>
                   </div>
 
                   <div className={styles.drawerSection}>

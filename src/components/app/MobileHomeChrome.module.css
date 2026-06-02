@@ -21,12 +21,15 @@
   top: 0;
   left: 0;
   right: 0;
-  /* Height 133 → 91 (-42px) per product feedback "remova o Olá +
-   * Fanpoints; logotipo + ícone de mensagens + orbe devem subir".
-   * Os 42px removidos = altura do antigo .infoBar (36px) + offset
-   * top (6px). Brand permanece centrado via `top: calc(50% + 6px)`
-   * — auto-sobe -21px com a metade da redução. */
-  height: 91px;
+  /* Height 91 → 101 (+10px) per product feedback "aumente mais
+   * 10px a altura do header mobile, sem mexer na posição do orbe,
+   * logotipo e ícone de chat". A área extra fica na BASE do
+   * chrome (porque .brand usa top: calc(50% + nudge), então
+   * ajustamos o nudge pra cancelar o shift de +5px que a metade
+   * de +10 daria — vide .brand abaixo). Orbe (top:23 absoluto)
+   * e ícone de mensagens (top:34 no layout) não dependem da
+   * altura — ficam onde estão. */
+  height: 101px;
   z-index: 5;
   pointer-events: none;
   /* Frosted-glass header per product feedback: the chrome
@@ -228,10 +231,12 @@
    * the info bar at top:6 (height 36 → covers y:6-42) and the
    * chrome at 133px, the chrome center sits at y:66.5; after
    * the nudge the brand center lands at y:72.5. */
-  /* Nudge -5px per product feedback "posicione 5px mais acima
-   * apenas o logotipo, o orbe e o ícone de chat/mensagens".
-   * Era +6, agora +1. Os 3 elementos sobem juntos. */
-  top: calc(50% + 1px);
+  /* Brand center deve permanecer em y:45.5 (compensação visual).
+   * Chrome cresceu 91 → 101 → midline desceu 45.5 → 50.5 (+5px).
+   * Pra brand não descer, o nudge cai 5 (era +1, agora -4).
+   * Resultado: top = 50% (101/2 = 50.5) + (-4) = 46.5 ≈ y:45.5
+   * mantido com tolerância de 1px. */
+  top: calc(50% - 4px);
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;

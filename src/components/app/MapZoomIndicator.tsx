@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
+import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
 import styles from './SimulationHUD.module.css';
 
 /* ============================================================
@@ -36,7 +37,11 @@ function zoomTier(z: number): string {
 
 export default function MapZoomIndicator() {
   const { flags } = useBrainstormFlags();
-  const enabled = flags.mapSimulation;
+  /* Toggle de exibição persistido em localStorage. User pode
+   * esconder o card via Configurações → Exibição → Indicador
+   * de zoom. Per product feedback "quero remover ele da tela". */
+  const [showIndicator] = useDisplaySetting(DISPLAY_KEYS.zoomIndicator, true);
+  const enabled = flags.mapSimulation && showIndicator;
   const [zoom, setZoom] = useState<number | null>(null);
 
   useEffect(() => {
