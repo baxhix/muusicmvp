@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api, ApiError } from '@/lib/api/client';
 import type {
   ApiCommunityCard,
@@ -1367,6 +1368,23 @@ function CommentRow({
  * `CommunityCreateView` mais acima neste arquivo, dirigido pelo
  * view-state machine do CommunityPanel. */
 
+/* Wrapper que renderiza os modais via React Portal direto no
+ * document.body. Necessário porque o CommunityPanel `.panel`
+ * usa `transform` (slide-in animation), o que cria um containing
+ * block — qualquer `position: fixed` filho fica relativo ao
+ * panel (398px) ao invés da viewport, resultando em modais
+ * cortados / mal posicionados no desktop. Portal escapa esse
+ * contexto e pinta no body, onde `position: fixed` se comporta
+ * como esperado. SSR-safe via guard `typeof document`. */
+function ModalPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted || typeof document === 'undefined') return null;
+  return createPortal(children, document.body);
+}
+
 function RenameCommunityModal({
   slug,
   initialName,
@@ -1403,6 +1421,7 @@ function RenameCommunityModal({
   };
 
   return (
+    <ModalPortal>
     <div className={styles.modalBackdrop} onClick={onClose}>
       <form
         className={styles.modal}
@@ -1442,6 +1461,7 @@ function RenameCommunityModal({
         </div>
       </form>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -1483,6 +1503,7 @@ function CreateTopicModal({
   };
 
   return (
+    <ModalPortal>
     <div className={styles.modalBackdrop} onClick={onClose}>
       <form className={styles.modal} onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
         <h3 className={styles.modalTitle}>Novo tópico</h3>
@@ -1523,6 +1544,7 @@ function CreateTopicModal({
         </div>
       </form>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -1555,6 +1577,7 @@ function MembersModal({
   }, [slug]);
 
   return (
+    <ModalPortal>
     <div className={styles.modalBackdrop} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h3 className={styles.modalTitle}>Participantes</h3>
@@ -1587,5 +1610,6 @@ function MembersModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
