@@ -301,10 +301,20 @@ function tierFor(active: number): CityTier {
  *
  * Tiers menores escalonados na mesma proporção contra seu cityPeak. */
 const QUOTAS_BY_TIER: Record<Exclude<CityTier, 'xs'>, Record<QuotaRange, number>> = {
-  xl: { continent: 30, state: 59, region: 143, cityMid: 294, cityPeak: 840 },
-  l:  { continent: 20, state: 13, region:  31, cityMid:  63, cityPeak: 180 },
-  m:  { continent: 10, state:  7, region:  17, cityMid:  35, cityPeak: 100 },
-  s:  { continent:  5, state:  4, region:   9, cityMid:  18, cityPeak:  50 },
+  /* state cortado pela metade per feedback "a partir do 5.5 comece
+   * a mostrar 1/2 dos pontos fixos no tamanho 2x2px". O range
+   * `state` cobre z 5.5-7.5 e o tamanho já está em 2px (radius 1
+   * em SIZE_BY_RANGE). Só a contagem caiu — mantém a mesma escala
+   * proporcional entre tiers:
+   *   xl  59 → 30
+   *   l   13 → 7
+   *   m    7 → 4
+   *   s    4 → 2
+   * Demais ranges (continent/region/cityMid/cityPeak) intocados. */
+  xl: { continent: 30, state: 30, region: 143, cityMid: 294, cityPeak: 840 },
+  l:  { continent: 20, state:  7, region:  31, cityMid:  63, cityPeak: 180 },
+  m:  { continent: 10, state:  4, region:  17, cityMid:  35, cityPeak: 100 },
+  s:  { continent:  5, state:  2, region:   9, cityMid:  18, cityPeak:  50 },
 };
 
 /** Tamanho do dot (raio em px) por range.
