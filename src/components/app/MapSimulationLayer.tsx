@@ -1500,7 +1500,23 @@ export default function MapSimulationLayer() {
        *     fazer fade orgânico com bounce.
        */
       const revealTimers: number[] = [];
-      const activeMarkers: mapboxgl.Marker[] = [];
+      /* Per feedback "mantenha os usuários que surgem no mapa em um
+       * ponto fixo e não se mexam no mapa": substituímos mapboxgl.Marker
+       * (que recalcula posição a cada move/zoom) por um DOM div absoluto
+       * dentro do map.getContainer(). A posição na tela (screenX/screenY)
+       * é calculada UMA VEZ via map.project() no spawn e nunca mais
+       * atualizada. Quando o usuário pana/zooma o mapa, o avatar
+       * permanece exatamente onde nasceu na tela.
+       *
+       * activeMarkers vira um array de structs com { el, screenX,
+       * screenY, remove } pra unificar cleanup + anti-overlap. */
+      interface ScreenMarker {
+        el: HTMLDivElement;
+        screenX: number;
+        screenY: number;
+        remove: () => void;
+      }
+      const activeMarkers: ScreenMarker[] = [];
 
       /* REVEAL_MIN_ZOOM removido per feedback "Os avatares que surgem
        * simulando enviar mensagem devem aparecer em qualquer tipo de
@@ -1736,10 +1752,30 @@ export default function MapSimulationLayer() {
         name.textContent = firstName;
         el.appendChild(name);
 
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -8] })
-          .setLngLat([lng, lat])
-          .addTo(map);
-        activeMarkers.push(marker);
+        /* Posicionamento screen-fixed: projeta lng/lat → pixels UMA
+         * VEZ no spawn e cola o div absoluto no map container. Pan/zoom
+         * subsequente NÃO move o avatar (vide comentário na declaração
+         * de activeMarkers acima). transform = translate(-50%, -100%)
+         * + marginTop -8px replica o anchor:'bottom' offset:[0,-8]
+         * do mapboxgl.Marker antigo. */
+        const point = map.project([lng, lat]);
+        el.style.position = 'absolute';
+        el.style.left = `${point.x}px`;
+        el.style.top = `${point.y}px`;
+        el.style.transform = 'translate(-50%, -100%)';
+        el.style.marginTop = '-8px';
+        /* z-index acima do canvas Mapbox (~0) mas abaixo de pílulas
+         * de UI globais (NowPlaying, etc.). */
+        el.style.zIndex = '5';
+        map.getContainer().appendChild(el);
+
+        const screenMarker: ScreenMarker = {
+          el,
+          screenX: point.x,
+          screenY: point.y,
+          remove: () => { try { el.remove(); } catch { /* já removido */ } },
+        };
+        activeMarkers.push(screenMarker);
 
         /* ── Lifecycle de saída controlado por handles dinâmicas ──
          * Per feedback "Quando eu clicar no usuário e o box de
@@ -1773,8 +1809,8 @@ export default function MapSimulationLayer() {
             exitT = null;
           }, lifetimeMs);
           removeT = window.setTimeout(() => {
-            try { marker.remove(); } catch { /* já removido */ }
-            const idx = activeMarkers.indexOf(marker);
+            screenMarker.remove();
+            const idx = activeMarkers.indexOf(screenMarker);
             if (idx >= 0) activeMarkers.splice(idx, 1);
             removeT = null;
             /* Se o balão expirou sem ser clicado, ele "vira
@@ -2016,12 +2052,13 @@ export default function MapSimulationLayer() {
               if (f.geometry.type !== 'Point') continue;
               const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates as [number, number];
               const proj = map.project([lng, lat]);
-              // Verifica distância pra cada marker ativo (em px)
+              // Verifica distância pra cada marker ativo (em px).
+              // Como os markers agora são screen-fixed (não tracking
+              // lng/lat), comparamos contra screenX/screenY salvos no
+              // spawn — não reprojetamos.
               let tooClose = false;
               for (const m of activeMarkers) {
-                const mPos = m.getLngLat();
-                const mProj = map.project([mPos.lng, mPos.lat]);
-                if (Math.hypot(proj.x - mProj.x, proj.y - mProj.y) < MIN_DISTANCE_PX) {
+                if (Math.hypot(proj.x - m.screenX, proj.y - m.screenY) < MIN_DISTANCE_PX) {
                   tooClose = true;
                   break;
                 }

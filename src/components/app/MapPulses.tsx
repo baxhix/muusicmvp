@@ -6,6 +6,7 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { useSimulationData, type CityStats } from '@/lib/mapSimulation';
+import type { Country } from '@/lib/mapSimulation/cities';
 
 /* ============================================================
  * MAP PULSES — Ondas pulsantes em polos urbanos com movimento.
@@ -53,7 +54,21 @@ import { useSimulationData, type CityStats } from '@/lib/mapSimulation';
  *  TODAS as cidades do CSV ganham pulse — a intercalação visual
  *  (alguns ativos, outros em pausa) vem do ciclo de animation
  *  alongado no CSS + phase offsets distribuídos abaixo. */
-function pulseSize(rank: number): 'xl' | 'l' | 'm' | 's' | 'xs' | null {
+function pulseSize(
+  rank: number,
+  country: Country,
+): 'xl' | 'l' | 'm' | 's' | 'xs' | null {
+  /* Cidades internacionais SEMPRE ganham pulse 'xs' independente do
+   * rank. Razão: quando data.cities é ordenado por `active` desc,
+   * as 25 internacionais (monthlyListeners 200-320 vs BR em milhões)
+   * caem pra rank 50+ e várias passavam de 60 — onde o gate antigo
+   * retornava null e nenhum pulse era emitido.
+   *
+   * Per feedback "Fora do Brasil, adicione as ondas pulsantes nos
+   * pontos de concentração de ouvintes também". Cobrindo via gate
+   * dedicado por país: BR mantém a escala XL/M/S/XS por rank;
+   * não-BR vira xs garantido. */
+  if (country !== 'BR') return 'xs';
   if (rank <= 5)  return 'xl';
   if (rank <= 15) return 'm';
   if (rank <= 30) return 's';
@@ -203,7 +218,7 @@ export default function MapPulses() {
         // cauda longa fica em 'xs'. pulseOverride.tier força um tier
         // específico (usado pra simular "burst de crescimento" em
         // cidades menores per feedback).
-        const defaultSize = pulseSize(idx + 1);
+        const defaultSize = pulseSize(idx + 1, city.country);
         const size = city.pulseOverride?.tier ?? defaultSize;
         if (!size) return;
         candidates.push({ city, size });
