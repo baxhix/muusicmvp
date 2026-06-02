@@ -66,6 +66,16 @@ export default function ArtistBox() {
   // existing @media block), so this initial value is a no-op
   // there.
   const [open, setOpen] = useState(true);
+
+  /* Tab ativa no corpo do box, per product feedback "no lugar do
+   * badge 15% OFF, adicionar três tabs: Missões, Ranking, Meus
+   * benefícios". Tab bar segue o mesmo padrão visual do
+   * SuperfansPanel (.tabs/.tab/.tabActive). Default: 'missoes' —
+   * preserva o comportamento atual de mostrar a lista de missões
+   * + progresso. Outras tabs mostram placeholder "Em breve"
+   * (implementação completa fica pro próximo round). */
+  type BoxTab = 'missoes' | 'ranking' | 'beneficios';
+  const [activeTab, setActiveTab] = useState<BoxTab>('missoes');
   // contentRef is retained because the inner missions list still
   // references it via ref (legacy — kept so the layout doesn't
   // collapse to 0 if the missions container is queried for
@@ -308,24 +318,39 @@ export default function ArtistBox() {
             <path d="M5 9l7 7 7-7" />
           </svg>
         </button>
-        <div className={styles.discountBadge}>
-          <span className={styles.discountIcon} aria-hidden="true">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="7.5" width="10" height="6.5" rx="1.4" />
-              <path d="M5.2 7.5V5.2a2.8 2.8 0 0 1 5.4-1" />
-            </svg>
-          </span>
-          <span className={styles.discountText}>
-            <strong>15% OFF</strong> Ativado na{' '}
-            <a
-              className={styles.discountStoreLink}
-              href={STORE_URL}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              Loja da Boiadeira
-            </a>
-          </span>
+        {/* Tab bar — substitui o antigo badge "15% OFF Ativado na
+         * Loja da Boiadeira" per product feedback. Mesmo padrão
+         * visual do SuperfansPanel (segmented control inset com
+         * .tabs/.tab/.tabActive). Switch do conteúdo do dropdown
+         * acontece abaixo, no body. */}
+        <div className={styles.tabs} role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'missoes'}
+            className={`${styles.tab} ${activeTab === 'missoes' ? styles.tabActive : ''}`}
+            onClick={() => { setActiveTab('missoes'); if (!open) setOpen(true); }}
+          >
+            Missões
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'ranking'}
+            className={`${styles.tab} ${activeTab === 'ranking' ? styles.tabActive : ''}`}
+            onClick={() => { setActiveTab('ranking'); if (!open) setOpen(true); }}
+          >
+            Ranking
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'beneficios'}
+            className={`${styles.tab} ${activeTab === 'beneficios' ? styles.tabActive : ''}`}
+            onClick={() => { setActiveTab('beneficios'); if (!open) setOpen(true); }}
+          >
+            Meus benefícios
+          </button>
         </div>
       </div>
 
@@ -343,6 +368,18 @@ export default function ArtistBox() {
       <div className={styles.content}>
         <div ref={contentRef}>
           <div className={styles.divider} />
+          {/* Body switch por tab. 'missoes' = lista atual; demais
+           * mostram placeholder "Em breve" até conteúdo real ser
+           * implementado. */}
+          {activeTab !== 'missoes' && (
+            <div className={styles.tabPlaceholder}>
+              <span className={styles.tabPlaceholderTitle}>
+                {activeTab === 'ranking' ? 'Ranking' : 'Meus benefícios'}
+              </span>
+              <span className={styles.tabPlaceholderHint}>Em breve</span>
+            </div>
+          )}
+          {activeTab === 'missoes' && (
           <div className={styles.missionsList}>
             {MISSION_META.map((m) => {
               const isDone = doneById[m.id] ?? false;
@@ -393,10 +430,12 @@ export default function ArtistBox() {
               );
             })}
           </div>
+          )}
         </div>
       </div>
 
-      {/* Progress bar — always visible */}
+      {/* Progress bar — só na tab Missões (mede missões do dia). */}
+      {activeTab === 'missoes' && (
       <div className={styles.progressWrap}>
         <div className={styles.progressLabel}>
           <span className={styles.progressText}>{completed}/{TOTAL} missões</span>
@@ -406,6 +445,7 @@ export default function ArtistBox() {
           <div className={styles.progressFill} style={{ width: `${progress}%` }} />
         </div>
       </div>
+      )}
 
       {/* Dropdown footer — closes the dropdown (toggle). */}
       <div className={styles.footer} onClick={() => setOpen(o => !o)}>

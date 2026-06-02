@@ -547,8 +547,67 @@
 .discountRow {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   margin: 0 16px 12px;
+}
+
+/* Tab bar — substitui o antigo discountBadge. Padrão visual
+ * espelhado do SuperfansPanel (inset segmented control), pra
+ * que o usuário sinta o mesmo affordance em ambas surfaces.
+ * Per product feedback "tab bar semelhante à da aba Superfãs". */
+.tabs {
+  display: flex;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  min-width: 0;
+}
+.tab {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.tab:hover {
+  color: #f5f5f7;
+}
+.tabActive {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Placeholder mostrado nas tabs Ranking / Meus benefícios
+ * enquanto o conteúdo real não está implementado. */
+.tabPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 36px 16px;
+  text-align: center;
+}
+.tabPlaceholderTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.85);
+}
+.tabPlaceholderHint {
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.45);
+  font-weight: 500;
 }
 
 .discountBadge {
