@@ -335,7 +335,7 @@ export default function ArtistBox() {
             className={`${styles.tab} ${activeTab === 'beneficios' ? styles.tabActive : ''}`}
             onClick={() => { setActiveTab('beneficios'); if (!open) setOpen(true); }}
           >
-            Meus benefícios
+            Conquistas
           </button>
         </div>
       </div>
@@ -550,23 +550,23 @@ function RankingTabContent() {
 }
 
 /* ────────────────────────────────────────────────────────────
- * Tab Meus benefícios — mesma listagem do SuperfansPanel mas
- * SEM o bg roxo dos cards desbloqueados per product feedback
- * "mesma coisa: listagem dos benefícios mas sem o bg dos cards
- * roxo". Reusa BENEFITS + BenefitIcon do SuperfansPanel.
+ * Tab Conquistas — listagem das BENEFITS (reusa SuperfansPanel)
+ * com split FIXO por índice em vez de threshold de Fanpoints,
+ * per product feedback "nos 4 primeiros itens deixe ativos com
+ * cadeado desbloqueado; demais bloqueados com cadeado + o que
+ * precisa ser feito abaixo". Linha de descrição truncada em 1
+ * linha (`.tabBenefitDesc` usa ellipsis) pra caber mais itens
+ * sem aumentar altura.
  * ──────────────────────────────────────────────────────────── */
 function BenefitsTabContent() {
-  const { user } = useAuth();
-  const { profile } = useUserProfile(user?.id ?? null);
-  const mePts = profile?.fanpoints ?? 0;
-  const unlocked = BENEFITS.filter((b) => mePts >= b.threshold);
-  const locked = BENEFITS.filter((b) => mePts < b.threshold);
+  /* Primeiros 4 itens ATIVOS, restante BLOQUEADO — split fixo
+   * por índice (não depende de Fanpoints). */
+  const unlocked = BENEFITS.slice(0, 4);
+  const locked = BENEFITS.slice(4);
 
   return (
     <div className={styles.tabBenefits}>
       {unlocked.map((b) => (
-        /* Sem .benefitUnlocked (que adiciona o bg roxo no
-         * SuperfansPanel). Aqui é só o row neutro. */
         <div key={b.id} className={styles.tabBenefitRow}>
           <span className={styles.tabBenefitIcon} aria-hidden="true">
             <BenefitIcon kind={b.icon} />
@@ -575,32 +575,58 @@ function BenefitsTabContent() {
             <span className={styles.tabBenefitTitle}>{b.title}</span>
             <span className={styles.tabBenefitDesc}>{b.description}</span>
           </div>
+          {/* Cadeado desbloqueado (item ativo). */}
+          <LockIcon variant="unlocked" />
         </div>
       ))}
       {locked.length > 0 && (
         <>
-          <h3 className={styles.tabBenefitsSectionTitle}>Próximos níveis</h3>
-          {locked.map((b) => {
-            const missing = Math.max(0, b.threshold - mePts);
-            return (
-              <div
-                key={b.id}
-                className={`${styles.tabBenefitRow} ${styles.tabBenefitRowLocked}`}
-              >
-                <span className={styles.tabBenefitIcon} aria-hidden="true">
-                  <BenefitIcon kind={b.icon} />
+          <h3 className={styles.tabBenefitsSectionTitle}>Bloqueadas</h3>
+          {locked.map((b) => (
+            <div
+              key={b.id}
+              className={`${styles.tabBenefitRow} ${styles.tabBenefitRowLocked}`}
+            >
+              <span className={styles.tabBenefitIcon} aria-hidden="true">
+                <BenefitIcon kind={b.icon} />
+              </span>
+              <div className={styles.tabBenefitInfo}>
+                <span className={styles.tabBenefitTitle}>{b.title}</span>
+                <span className={styles.tabBenefitDesc}>
+                  Acumule {b.threshold.toLocaleString('pt-BR')} Fanpoints para desbloquear
                 </span>
-                <div className={styles.tabBenefitInfo}>
-                  <span className={styles.tabBenefitTitle}>{b.title}</span>
-                  <span className={styles.tabBenefitDesc}>
-                    Faltam {missing.toLocaleString('pt-BR')} pontos para desbloquear
-                  </span>
-                </div>
               </div>
-            );
-          })}
+              {/* Cadeado fechado (item bloqueado). */}
+              <LockIcon variant="locked" />
+            </div>
+          ))}
         </>
       )}
     </div>
+  );
+}
+
+/* Cadeado inline — duas variantes (aberto/fechado). Tamanho
+ * 14×14, cor herdada via currentColor pra adaptar ao estado
+ * unlocked (rgba branco) ou locked (já com opacity reduzida no
+ * row). */
+function LockIcon({ variant }: { variant: 'locked' | 'unlocked' }) {
+  return (
+    <span
+      className={`${styles.tabBenefitLock} ${variant === 'unlocked' ? styles.tabBenefitLockOpen : ''}`}
+      aria-label={variant === 'unlocked' ? 'Desbloqueado' : 'Bloqueado'}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="4" y="11" width="16" height="10" rx="2" />
+        {variant === 'locked' ? (
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        ) : (
+          /* Aro saindo pra direita (cadeado aberto) — mesma origem
+           * vertical, mas o lado direito do aro "puxa pra cima
+           * e pra fora" indicando o destrancado. */
+          <path d="M8 11V8a4 4 0 0 1 7.6-1.8" />
+        )}
+      </svg>
+    </span>
   );
 }
