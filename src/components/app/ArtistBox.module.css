@@ -198,6 +198,33 @@
   padding: 14px 16px 8px;
 }
 
+/* Quando o header é renderizado como <button> (toggle do dropdown
+ * — substituiu o chevron `.headerToggle` que vivia em .discountRow,
+ * per feedback "deixe o comportamento de expandir ao clicar na
+ * imagem da Ana Castela/nome"), zeramos o styling nativo do button
+ * e adicionamos cursor:pointer + leve highlight no hover. */
+.headerBtn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 140ms ease;
+}
+.headerBtn:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.headerBtn:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+.headerBtn:focus-visible {
+  outline: 2px solid rgba(168, 85, 247, 0.55);
+  outline-offset: -2px;
+}
+
 /* Toggle chevron — now leads the discount row (sits IN FRONT
  * of the 15% off coupon) per product feedback "a seta a frente
  * do cupom de 15% off". Was previously anchored to the right

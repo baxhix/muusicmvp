@@ -250,7 +250,19 @@ export default function ArtistBox() {
        *  desktop-hidden), guaranteeing the collapsed view
        *  always shows photo + name + Fanpoints + the discount
        *  pill before any toggle. */}
-      <div className={styles.header}>
+      {/* Header AGORA é o toggle do dropdown — per product feedback
+       *  "remova a seta do lado esquerdo do box para ter mais espaço
+       *  para as tabs. Deixe o comportamento de expandir ao clicar
+       *  na imagem da Ana Castela/nome". O chevron `.headerToggle`
+       *  que vivia em `.discountRow` foi removido — `.discountRow`
+       *  agora só hospeda o tab bar. */}
+      <button
+        type="button"
+        className={`${styles.header} ${styles.headerBtn}`}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/ana-castela-box.jpg" alt="Ana Castela" className={styles.photo} />
         <div className={styles.info}>
@@ -284,40 +296,12 @@ export default function ArtistBox() {
             <span className={styles.fanpointsInlineLabel}>Fanpoints</span>
           </div>
         </div>
-        {/* Chevron moved OUT of the header row per product
-            feedback "a seta a frente do cupom de 15% off" — it
-            now leads the discount-badge row below this header
-            instead of sitting alone in the top-right corner. */}
-      </div>
+      </button>
 
-      {/* Discount row — chevron toggle lives at the LEFT (in
-       *  front of the coupon pill) per product feedback "a seta
-       *  a frente do cupom de 15% off". The expand/collapse
-       *  control thereby reads as the entry point into the
-       *  collapsible content below, and the header row becomes
-       *  cleaner (just photo + name + fanpoints, no trailing
-       *  affordance). */}
+      {/* Discount row — agora hospeda APENAS o tab bar. O chevron
+       *  toggle foi removido (header virou o trigger do dropdown)
+       *  pra abrir espaço pras 3 tabs sem aperto. */}
       <div className={styles.discountRow}>
-        <button
-          type="button"
-          className={`${styles.headerToggle} ${pulsing ? styles.headerTogglePulsing : ''}`}
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
-        >
-          <svg
-            className={`${styles.headerToggleChevron} ${open ? styles.headerToggleChevronOpen : ''}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M5 9l7 7 7-7" />
-          </svg>
-        </button>
         {/* Tab bar — substitui o antigo badge "15% OFF Ativado na
          * Loja da Boiadeira" per product feedback. Mesmo padrão
          * visual do SuperfansPanel (segmented control inset com
