@@ -518,16 +518,25 @@
   50%      { transform: scaleY(1);    opacity: 1;   }
 }
 
+/* Per product feedback "remova a animação de áudio no avatar
+ * circular. Deixe visível apenas quando o box se abre". O chip
+ * equalizer fica oculto enquanto o badge está em compact mode
+ * (só avatar circular). Quando o badge expande no hover,
+ * trazemos ele de volta. Em telas touch o badge nunca expande
+ * sem tap, então o chip só aparece quando o usuário abre o
+ * card — exatamente o comportamento pedido.
+ *
+ * Dentro da forma expandida (badge sem .badgeCompact), o
+ * .audioBars inline ao lado do nome da música já é o cue de
+ * "está tocando" — então não temos perda de informação
+ * removendo o chip do compact.
+ */
 .badgeCompact .compactBarsBadge {
-  display: inline-flex;
+  display: none;
 }
-/* Hide the equalizer chip ONLY when the badge actually expands on
- * hover (gated to real pointers — see the `@media (hover: hover)`
- * block above). On touch the badge stays collapsed, so the chip
- * stays visible. */
 @media (hover: hover) and (pointer: fine) {
   .badgeCompact:hover .compactBarsBadge {
-    display: none;
+    display: inline-flex;
   }
 }
 
