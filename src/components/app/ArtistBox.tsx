@@ -296,7 +296,10 @@ export default function ArtistBox() {
            * feedback "à frente de 402.299 Fanpoints adicione um
            * botão totalmente arredondado, preto com a borda
            * gradiente roxa, ao clicar abre um modal com 4 códigos". */}
-          <div className={styles.fanpointsInline}>
+          <div
+            className={styles.fanpointsInline}
+            data-onboarding-anchor="fanpoints"
+          >
             <span className={styles.fanpointsInlineValue}>
               {fanpoints.toLocaleString('pt-BR')}
             </span>
@@ -351,6 +354,7 @@ export default function ArtistBox() {
             aria-selected={activeTab === 'ranking'}
             className={`${styles.tab} ${activeTab === 'ranking' ? styles.tabActive : ''}`}
             onClick={() => { setActiveTab('ranking'); if (!open) setOpen(true); }}
+            data-onboarding-anchor="ranking"
           >
             Ranking
           </button>

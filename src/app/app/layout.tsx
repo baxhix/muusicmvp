@@ -40,6 +40,7 @@ import MapSimulationLayer from '@/components/app/MapSimulationLayer';
 import MapPulses from '@/components/app/MapPulses';
 import MapZoomIndicator from '@/components/app/MapZoomIndicator';
 import SimulationHUD from '@/components/app/SimulationHUD';
+import OnboardingTooltips from '@/components/app/OnboardingTooltips';
 import styles from './layout.module.css';
 
 /**
@@ -499,6 +500,13 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  feedback "a tela do usuário que receber, além dos
        *  corações caindo, deverá ficar com uma camada preta". */}
       <WaveReceiveOverlay />
+
+      {/* Onboarding tooltips — P0.3 do roadmap. 3 tooltips
+       *  sequenciais pós welcome flyTo cobrindo Fanpoints,
+       *  Chat/Comunidades e Ranking. Auto-portaled via
+       *  createPortal(document.body) — pode ficar em qualquer
+       *  lugar do tree sem se preocupar com transform ancestors. */}
+      <OnboardingTooltips />
 
       {/* ── Brainstorm + Map Simulation ──
        *

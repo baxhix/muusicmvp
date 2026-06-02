@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
+import { resetOnboarding } from '@/lib/onboarding';
 import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
 import styles from './TopBar.module.css';
 
@@ -41,7 +42,7 @@ function BackArrow() {
 }
 
 /** Ícones lineares discretos para os itens do drawer */
-function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' }) {
+function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' }) {
   const props = {
     viewBox: '0 0 24 24',
     fill: 'none' as const,
@@ -59,6 +60,14 @@ function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'ma
         <svg {...props}>
           <path d="M12 20h9" />
           <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+        </svg>
+      );
+    case 'info':
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
       );
     case 'activity':
@@ -633,6 +642,22 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                         ariaLabel="Exibir recursos em teste"
                       />
                     </div>
+                    {/* Refazer tour de onboarding — apaga o flag
+                     *  localStorage e re-dispara os 3 tooltips
+                     *  (Fanpoints / Chat / Ranking). Útil pra
+                     *  rever a tour ou pra QA. */}
+                    <button
+                      type="button"
+                      className={styles.drawerItem}
+                      onClick={() => {
+                        resetOnboarding();
+                        setActiveOverlay(null);
+                      }}
+                    >
+                      <DrawerItemIcon name="info" />
+                      <span>Refazer tour de onboarding</span>
+                      <DrawerChevron />
+                    </button>
                   </div>
 
                   <div className={styles.drawerSection}>

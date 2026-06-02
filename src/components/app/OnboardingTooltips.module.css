@@ -1,0 +1,215 @@
+/* ============================================================
+ * Onboarding Tooltips — P0.3 do roadmap de engajamento.
+ *
+ * Overlay full-viewport com:
+ *  - Dim escuro discreto (clicar fora pula tudo)
+ *  - Spotlight ring em volta da âncora (recorte simulado via
+ *    box-shadow inset gigante)
+ *  - Card flutuante com borda gradiente roxa (mesma paleta dos
+ *    outros modais/CTA da plataforma)
+ *  - Setinha apontando pra âncora
+ * ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  /* Acima do BottomNav (z:70), ArtistBox (z:60), LiveChatStack;
+   * abaixo de modais bloqueadores (z:800). */
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: overlayIn 220ms ease-out;
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Spotlight = "buraco" no overlay focando a âncora.
+ *
+ * Truque: position:fixed posicionado em cima da âncora, com
+ * box-shadow inset gigante (10000px) na cor do overlay — a
+ * sombra invade tudo ao redor desse elemento, simulando que a
+ * área dele "escapa" do dim. Vantagem: zero SVG, zero canvas,
+ * GPU compositor handle. */
+.spotlight {
+  position: fixed;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 10000px rgba(0, 0, 0, 0.55);
+  /* Anel sutil pra destacar visualmente a área alvo. */
+  outline: 2px solid rgba(192, 132, 252, 0.6);
+  outline-offset: 0;
+  animation: spotlightPulse 2.4s ease-in-out infinite;
+}
+@keyframes spotlightPulse {
+  0%, 100% {
+    outline-color: rgba(192, 132, 252, 0.45);
+  }
+  50% {
+    outline-color: rgba(192, 132, 252, 0.85);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight {
+    animation: none;
+    outline-color: rgba(192, 132, 252, 0.65);
+  }
+  .overlay { animation: none; }
+}
+
+/* ── Card ──
+ *
+ * `position: fixed`; o controller seta top OU bottom + left
+ * inline. Borda gradiente roxa via padding-box/border-box
+ * (mesma técnica do botão "4 convites" e do modal Convide). */
+.card {
+  position: fixed;
+  padding: 18px 18px 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(160deg,
+      rgba(12, 12, 22, 0.98) 0%,
+      rgba(8, 8, 18, 0.98) 100%) padding-box,
+    linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
+  border: 1.5px solid transparent;
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #f5f5f7;
+  font-family: var(--sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  animation: cardIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.cardBottom {
+  animation-name: cardInBottom;
+}
+.cardTop {
+  animation-name: cardInTop;
+}
+@keyframes cardInBottom {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes cardInTop {
+  from { opacity: 0; transform: translateY(8px)  scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .cardBottom,
+  .cardTop {
+    animation: none;
+  }
+}
+
+/* Setinha — triângulo apontando pra âncora. Direção depende do
+ * placement: bottom (card abaixo) → arrow points up; top → arrow
+ * points down. Implementado via dois ::before/::after triângulos
+ * empilhados, um menor sobre o outro pra simular borda gradiente. */
+.arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.cardBottom .arrow {
+  top: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #a855f7;
+  transform: translateX(-8px);
+}
+.cardTop .arrow {
+  bottom: -8px;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #a855f7;
+  transform: translateX(-8px);
+}
+
+/* ── Conteúdo ── */
+.counter {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c084fc;
+}
+.title {
+  margin: 0;
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  color: #ffffff;
+}
+.body {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, 0.78);
+  letter-spacing: -0.005em;
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+.skip {
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.55);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  letter-spacing: -0.005em;
+  transition: color 0.14s ease, background 0.14s ease;
+}
+.skip:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+.next {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: filter 0.14s ease, transform 0.14s ease;
+}
+.next:hover {
+  filter: brightness(1.15);
+}
+.next:active {
+  transform: scale(0.97);
+}
+.next:focus-visible {
+  outline: 2px solid rgba(192, 132, 252, 0.65);
+  outline-offset: 2px;
+}
+
+/* Mobile — card pode ser mais estreito; clamp já cuida via JS
+ * (left + width). Aqui só ajustamos copy tamanho e padding. */
+@media (max-width: 480px) {
+  .card {
+    padding: 16px 16px 12px;
+  }
+  .title { font-size: 15.5px; }
+  .body  { font-size: 12px; }
+}
