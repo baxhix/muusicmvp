@@ -67,11 +67,12 @@
 
 @media (max-width: 640px) {
   .counter {
-    /* Posicionado bem no topo da viewport com 16px de padding
-     * per product feedback "posicione o badge X online agora,
-     * mais ao topo com 16px de padding". Antes ficava em y:121
-     * (abaixo do chrome mobile); agora sobe pro topo. */
-    top: 16px;
+    /* Per product feedback "no mobile, o badge X online agora
+     * deve ficar 12px do header e não do topo da página".
+     * MobileHomeChrome vai do top:0 até top:101 (chrome height).
+     * Counter desce pra 101 + 12 = 113, garantindo o gap fixo
+     * de 12px abaixo da borda inferior do header. */
+    top: 113px;
     padding: 6px 12px 6px 10px;
   }
   .counterNum { font-size: 12.5px; }

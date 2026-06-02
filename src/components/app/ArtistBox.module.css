@@ -688,9 +688,19 @@
   background: rgba(168, 85, 247, 0.14);
 }
 .tabRankingRank {
+  /* Per product feedback "alinhe o top 3 com os demais": rank
+   * vira um flex box centralizado, garantindo que tanto o
+   * "#5" (texto puro) quanto o medal pill 28×28 fiquem
+   * exatamente na mesma posição horizontal e vertical. Antes
+   * usava `text-align: center` que centraliza só inline boxes
+   * — o medal `inline-flex` ficava ligeiramente off-axis vs
+   * o numeral solto. */
   flex-shrink: 0;
-  width: 30px;
-  text-align: center;
+  width: 32px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   font-weight: 700;
   color: rgba(245, 245, 247, 0.78);
@@ -875,13 +885,16 @@
 
 /* ── Ranking: realces extras pro top 3 + avatar ────────── */
 .tabRankingAvatar {
+  /* Per product feedback "aumente o tamanho dos avatares" —
+   * bump 26 → 34. Bordo + tint mais densos pra que o avatar
+   * maior ainda sinalize "ring" sem ofuscar foto. */
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 /* Top-3 row: leve bg dourado/translúcido pra destacar. */
 .tabRankingRowTop3 {
@@ -893,13 +906,15 @@
 /* Rank medal pillorada: bg gradiente + texto numerado em vez de
  * só o emoji solto. Comunica top 3 com peso visual. */
 .tabRankingRankMedal {
+  /* Bumpou 22 → 28 acompanhando o avatar maior (26 → 34) pra
+   * manter equilíbrio visual da linha. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   color: #1f1500;
   text-align: center;
