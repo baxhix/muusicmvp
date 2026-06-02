@@ -1145,11 +1145,19 @@ export default function MapSimulationLayer() {
       };
 
       if (!map.getLayer(LAYER_QUOTAS_CONTINENT)) {
+        /* Per product feedback "no mobile, não mostre os pontos
+         * verdes no mapa até que o zoom chegue em 2.0". Desktop
+         * mantém o gate em z 2.5 (RANGE_ZOOMS.continent.min);
+         * mobile sobe um pouco o threshold pra `max(2.0, ...)`
+         * — equivalente a ABRIR um pouco a janela: dots começam
+         * a aparecer em z 2.0 em vez de 2.5 (efeito: dots ficam
+         * visíveis numa faixa de zoom-out um pouco maior). */
+        const continentMin = mobile ? 2.0 : RANGE_ZOOMS.continent.min;
         map.addLayer({
           id: LAYER_QUOTAS_CONTINENT,
           type: 'circle',
           source: SOURCE_QUOTAS,
-          minzoom: RANGE_ZOOMS.continent.min,
+          minzoom: continentMin,
           maxzoom: RANGE_ZOOMS.continent.max,
           filter: ['==', ['get', 'range'], 'continent'],
           paint: quotaLayerPaint('continent'),
