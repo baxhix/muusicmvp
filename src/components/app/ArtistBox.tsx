@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useRanking } from '@/hooks/useRanking';
+import { BENEFITS, BenefitIcon } from './SuperfansPanel';
 import {
   type DailyMissionId,
   useDailyMissions,
@@ -186,7 +188,7 @@ export default function ArtistBox() {
   }, []);
 
   return (
-    <div className={`${styles.box} ${open ? styles.boxOpen : ''}`}>
+    <div className={`${styles.box} ${open ? styles.boxOpen : ''} ${activeTab !== 'missoes' ? styles.boxTallTab : ''}`}>
 
       {/* Compact header pill — always visible. Pinned to the
        *  top-left so it shares the same horizontal axis as the
@@ -352,17 +354,9 @@ export default function ArtistBox() {
       <div className={styles.content}>
         <div ref={contentRef}>
           <div className={styles.divider} />
-          {/* Body switch por tab. 'missoes' = lista atual; demais
-           * mostram placeholder "Em breve" até conteúdo real ser
-           * implementado. */}
-          {activeTab !== 'missoes' && (
-            <div className={styles.tabPlaceholder}>
-              <span className={styles.tabPlaceholderTitle}>
-                {activeTab === 'ranking' ? 'Ranking' : 'Meus benefícios'}
-              </span>
-              <span className={styles.tabPlaceholderHint}>Em breve</span>
-            </div>
-          )}
+          {/* Body switch por tab. */}
+          {activeTab === 'ranking' && <RankingTabContent />}
+          {activeTab === 'beneficios' && <BenefitsTabContent />}
           {activeTab === 'missoes' && (
           <div className={styles.missionsList}>
             {MISSION_META.map((m) => {
@@ -449,6 +443,164 @@ export default function ArtistBox() {
       </div>
 
       </div>  {/* /dropdown */}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * Tab Ranking — espelha o conteúdo do SuperfansPanel mas
+ * compactado pro footprint do ArtistBox: SEM foto e SEM pontos
+ * por linha. Mantém:
+ *   - rank
+ *   - nome
+ *   - cidade
+ *   - barra de progresso ("X pontos para entrar no top 10")
+ *   - botão "Carregar mais usuários" (top 6 → full)
+ * Per product feedback "ranking deve ter o conteúdo do
+ * SuperfansPanel ajustado pro box, sem pontuação, sem foto,
+ * mantém barra de progresso, deve ter botão carregar mais".
+ * ──────────────────────────────────────────────────────────── */
+function RankingTabContent() {
+  const { user } = useAuth();
+  const { ranking, loading, error } = useRanking(true);
+  const [showAll, setShowAll] = useState(false);
+
+  /* Threshold pra entrar no top 10 = fanpoints do rank-10. Se a
+   * lista tem menos de 10 fãs, threshold é null e o copy muda. */
+  const top10Threshold = ranking.length >= 10 ? ranking[9].points : null;
+  const myRow = user ? ranking.find((r) => r.userId === user.id) ?? null : null;
+  const myPoints = myRow?.points ?? 0;
+  const myRank = myRow
+    ? ranking.findIndex((r) => r.userId === user!.id) + 1
+    : ranking.length + 1;
+  const meInTop10 = myRow ? myRank <= 10 : false;
+  const pointsToTop10 =
+    myRow && top10Threshold !== null
+      ? Math.max(0, top10Threshold + 1 - myPoints)
+      : 0;
+  const meProgressPct =
+    meInTop10 || top10Threshold === null
+      ? 100
+      : Math.min(100, Math.max(0, Math.round((myPoints / Math.max(1, top10Threshold)) * 100)));
+
+  const visible = showAll ? ranking : ranking.slice(0, 6);
+
+  return (
+    <div className={styles.tabRanking}>
+      {/* Barra de progresso top-10. Sem mostrar pontuação do user
+       * — apenas a distância até o top 10. */}
+      <div className={styles.tabRankingProgress}>
+        <div className={styles.tabRankingProgressTrack}>
+          <div
+            className={styles.tabRankingProgressFill}
+            style={{ width: `${meProgressPct}%` }}
+          />
+        </div>
+        <div className={styles.tabRankingProgressLabel}>
+          {meInTop10
+            ? 'Você está no Top 10!'
+            : top10Threshold === null
+              ? 'Continue ouvindo pra entrar no ranking'
+              : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
+        </div>
+      </div>
+
+      {/* Lista (sem foto, sem pontos). */}
+      {error ? (
+        <div className={styles.tabEmpty}>Não consegui carregar agora.</div>
+      ) : ranking.length === 0 ? (
+        <div className={styles.tabEmpty}>
+          {loading ? 'Carregando…' : 'Sem fãs ainda.'}
+        </div>
+      ) : (
+        <div className={styles.tabRankingList}>
+          {visible.map((r, idx) => {
+            const rank = idx + 1;
+            const isMe = r.userId === user?.id;
+            const name = r.name?.trim() || r.email.split('@')[0];
+            return (
+              <div
+                key={r.userId}
+                className={`${styles.tabRankingRow} ${isMe ? styles.tabRankingRowMe : ''}`}
+              >
+                <span className={styles.tabRankingRank}>
+                  {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                </span>
+                <div className={styles.tabRankingInfo}>
+                  <span className={styles.tabRankingName}>{name}</span>
+                  {r.city && <span className={styles.tabRankingCity}>{r.city}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!showAll && ranking.length > 6 && (
+        <button
+          type="button"
+          className={styles.tabRankingLoadMore}
+          onClick={() => setShowAll(true)}
+        >
+          Carregar mais usuários
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * Tab Meus benefícios — mesma listagem do SuperfansPanel mas
+ * SEM o bg roxo dos cards desbloqueados per product feedback
+ * "mesma coisa: listagem dos benefícios mas sem o bg dos cards
+ * roxo". Reusa BENEFITS + BenefitIcon do SuperfansPanel.
+ * ──────────────────────────────────────────────────────────── */
+function BenefitsTabContent() {
+  const { user } = useAuth();
+  const { profile } = useUserProfile(user?.id ?? null);
+  const mePts = profile?.fanpoints ?? 0;
+  const unlocked = BENEFITS.filter((b) => mePts >= b.threshold);
+  const locked = BENEFITS.filter((b) => mePts < b.threshold);
+
+  return (
+    <div className={styles.tabBenefits}>
+      {unlocked.map((b) => (
+        /* Sem .benefitUnlocked (que adiciona o bg roxo no
+         * SuperfansPanel). Aqui é só o row neutro. */
+        <div key={b.id} className={styles.tabBenefitRow}>
+          <span className={styles.tabBenefitIcon} aria-hidden="true">
+            <BenefitIcon kind={b.icon} />
+          </span>
+          <div className={styles.tabBenefitInfo}>
+            <span className={styles.tabBenefitTitle}>{b.title}</span>
+            <span className={styles.tabBenefitDesc}>{b.description}</span>
+          </div>
+        </div>
+      ))}
+      {locked.length > 0 && (
+        <>
+          <h3 className={styles.tabBenefitsSectionTitle}>Próximos níveis</h3>
+          {locked.map((b) => {
+            const missing = Math.max(0, b.threshold - mePts);
+            return (
+              <div
+                key={b.id}
+                className={`${styles.tabBenefitRow} ${styles.tabBenefitRowLocked}`}
+              >
+                <span className={styles.tabBenefitIcon} aria-hidden="true">
+                  <BenefitIcon kind={b.icon} />
+                </span>
+                <div className={styles.tabBenefitInfo}>
+                  <span className={styles.tabBenefitTitle}>{b.title}</span>
+                  <span className={styles.tabBenefitDesc}>
+                    Faltam {missing.toLocaleString('pt-BR')} pontos para desbloquear
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }

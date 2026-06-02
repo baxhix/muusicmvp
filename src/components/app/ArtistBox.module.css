@@ -182,6 +182,14 @@
   max-height: 560px;
 }
 
+/* Tabs Ranking / Meus benefícios precisam de +160px pra caber a
+ * barra de progresso + lista de usuários (com botão "carregar mais")
+ * ou a listagem completa de benefícios. Per product feedback "o
+ * tamanho deve aumentar 160 px para caber mais informações". */
+.boxOpen.boxTallTab .dropdown {
+  max-height: 720px;
+}
+
 /* ── Artist header row — always visible ──
  *
  * Per product feedback "A versão retraída do box Fanverse Ana
@@ -615,26 +623,196 @@
   color: #ffffff;
 }
 
-/* Placeholder mostrado nas tabs Ranking / Meus benefícios
- * enquanto o conteúdo real não está implementado. */
-.tabPlaceholder {
+/* ── Tab Ranking ─────────────────────────────────────────
+ * Conteúdo do SuperfansPanel adaptado pro footprint do box:
+ * SEM foto e SEM pontos por linha. Per product feedback. */
+.tabRanking {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  padding: 0 16px 8px;
+}
+
+/* Barra de progresso top-10 (mantida do SuperfansPanel). */
+.tabRankingProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0 4px;
+}
+.tabRankingProgressTrack {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.tabRankingProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7 0%, #c084fc 100%);
+  border-radius: 999px;
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tabRankingProgressLabel {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.70);
+  letter-spacing: -0.005em;
+}
+
+/* Lista compacta. Sem foto, sem pontos — apenas rank + nome +
+ * cidade. Linhas finas pra caber mais usuários no footprint. */
+.tabRankingList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tabRankingRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: transparent;
+  transition: background 140ms ease;
+}
+.tabRankingRow:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.tabRankingRowMe {
+  background: rgba(168, 85, 247, 0.10);
+}
+.tabRankingRowMe:hover {
+  background: rgba(168, 85, 247, 0.14);
+}
+.tabRankingRank {
+  flex-shrink: 0;
+  width: 30px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.78);
+  font-variant-numeric: tabular-nums;
+}
+.tabRankingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.tabRankingName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tabRankingCity {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.50);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Botão "Carregar mais usuários" — per product feedback. */
+.tabRankingLoadMore {
+  margin-top: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.82);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: center;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.tabRankingLoadMore:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.tabEmpty {
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(245, 245, 247, 0.50);
+}
+
+/* ── Tab Meus benefícios ────────────────────────────────
+ * Listagem dos benefícios SEM bg roxo dos cards desbloqueados
+ * (per product feedback "mesma coisa: listagem dos benefícios
+ *  mas sem o bg dos cards roxo"). */
+.tabBenefits {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px 8px;
+}
+.tabBenefitRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: transparent;
+  transition: background 140ms ease;
+}
+.tabBenefitRow:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.tabBenefitRowLocked {
+  opacity: 0.55;
+}
+.tabBenefitIcon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 36px 16px;
-  text-align: center;
-}
-.tabPlaceholderTitle {
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
   color: rgba(245, 245, 247, 0.85);
 }
-.tabPlaceholderHint {
-  font-size: 12px;
-  color: rgba(245, 245, 247, 0.45);
+.tabBenefitIcon svg {
+  width: 16px;
+  height: 16px;
+}
+.tabBenefitInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.tabBenefitTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.005em;
+}
+.tabBenefitDesc {
+  font-size: 11px;
   font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  line-height: 1.35;
+}
+.tabBenefitsSectionTitle {
+  margin: 14px 0 4px;
+  padding: 0 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(245, 245, 247, 0.45);
 }
 
 .discountBadge {

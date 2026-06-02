@@ -84,7 +84,9 @@ const formatPoints = (n: number) => n.toLocaleString('pt-BR');
  *
  * Replace this hard-coded list with the live benefits API
  * response when the backend grows one. */
-type BenefitIconKind =
+/* Exportados pra que outras surfaces (ex.: ArtistBox no desktop)
+ * consumam a mesma fonte de verdade dos benefícios sem duplicar. */
+export type BenefitIconKind =
   | 'chat'
   | 'community'
   | 'discount'
@@ -92,7 +94,7 @@ type BenefitIconKind =
   | 'crown'
   | 'ticket';
 
-interface Benefit {
+export interface Benefit {
   id: string;
   title: string;
   description: string;
@@ -100,7 +102,7 @@ interface Benefit {
   threshold: number;
   icon: BenefitIconKind;
 }
-const BENEFITS: Benefit[] = [
+export const BENEFITS: Benefit[] = [
   {
     id: 'b1',
     title: 'Superchat global',
@@ -148,7 +150,7 @@ const BENEFITS: Benefit[] = [
 /** Renders the contextual SVG for each benefit. Centralized here
  *  so the JSX inside the benefits list stays focused on layout
  *  rather than icon path data. */
-function BenefitIcon({ kind }: { kind: BenefitIconKind }) {
+export function BenefitIcon({ kind }: { kind: BenefitIconKind }) {
   const common = {
     viewBox: '0 0 24 24',
     fill: 'none',
