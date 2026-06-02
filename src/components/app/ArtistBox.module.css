@@ -760,6 +760,10 @@
   min-width: 0;
   flex: 1;
 }
+/* Nome — agora é <Link href="/app/u/{id}"> per product feedback
+ * "o nome do usuário deve ser clicável e aparecer o perfil de
+ * usuário". text-decoration none + hover underline pra que pareça
+ * um link sem competir com a estética compacta da linha. */
 .tabRankingName {
   font-size: 12.5px;
   font-weight: 600;
@@ -767,14 +771,51 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+  /* Display block pra que o text-overflow funcione dentro do
+   * flex column `.tabRankingInfo`. */
+  display: block;
+  min-width: 0;
+}
+.tabRankingName:hover {
+  color: #c084fc;
+  text-decoration: underline;
+  text-decoration-color: rgba(192, 132, 252, 0.55);
+  text-underline-offset: 2px;
+}
+
+/* Subline = Fanpoints + " · " + Cidade. Mesma linha,
+ * subtítulo discreto abaixo do nome. */
+.tabRankingSubline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.tabRankingPoints {
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  flex-shrink: 0;
+}
+.tabRankingSep {
+  color: rgba(245, 245, 247, 0.30);
+  flex-shrink: 0;
 }
 .tabRankingCity {
-  font-size: 10.5px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.50);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 /* Botão "Carregar mais usuários" — per product feedback. */
@@ -931,17 +972,51 @@
 }
 
 /* ── Ranking: realces extras pro top 3 + avatar ────────── */
+/* Avatar wrap — ancora o presence dot no canto inferior direito.
+ * `position: relative` + tamanho explícito = 34×34 garantem que
+ * o dot fique fixo no canto do avatar mesmo com o avatar em
+ * `object-fit: cover`. */
+.tabRankingAvatarWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: inline-block;
+  line-height: 0;
+}
 .tabRankingAvatar {
   /* Per product feedback "aumente o tamanho dos avatares" —
    * bump 26 → 34. Bordo + tint mais densos pra que o avatar
    * maior ainda sinalize "ring" sem ofuscar foto. */
-  flex-shrink: 0;
   width: 34px;
   height: 34px;
   border-radius: 50%;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
+  display: block;
+}
+
+/* Presence dot — círculo pequeno no canto inferior direito do
+ * avatar, com ring escuro pra destacar contra a foto. Verde
+ * (#22c55e) quando online; cinza (#6b7280) quando offline. Igual
+ * padrão dos avatares de chat — per product feedback "inclua
+ * também um pequeno círculo verde, igual ao avatar do chat, com
+ * a identificação de online/offline". */
+.tabRankingPresence {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6b7280;
+  border: 1.5px solid #0a0a14;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+.tabRankingPresenceOn {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.55);
 }
 /* Top-3 row: leve bg dourado/translúcido pra destacar. */
 .tabRankingRowTop3 {

@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
+import { useLiveUsers } from '@/hooks/useLiveUsers';
 import { BENEFITS, BenefitIcon } from './SuperfansPanel';
 import {
   type DailyMissionId,
@@ -647,6 +649,14 @@ function InviteFriendsModal({ onClose }: { onClose: () => void }) {
 function RankingTabContent() {
   const { user } = useAuth();
   const { ranking, loading, error } = useRanking(true);
+  /* Lista de online ao vivo — usada pra renderizar o dot
+   * verde/cinza ao lado do avatar de cada linha. Recarrega
+   * a cada 30s + on socket `presence:batch`. */
+  const { users: liveUsers } = useLiveUsers();
+  const onlineIds = useMemo(
+    () => new Set(liveUsers.map((u) => u.id)),
+    [liveUsers],
+  );
   const [showAll, setShowAll] = useState(false);
 
   /* Threshold pra entrar no top 10 = fanpoints do rank-10. Se a
@@ -705,6 +715,12 @@ function RankingTabContent() {
             const isTop3 = rank <= 3;
             const name = r.name?.trim() || r.email.split('@')[0];
             const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
+            /* Online = presença ao vivo (lista do useLiveUsers).
+             * O "Você" sempre conta como online — o backend só
+             * inclui o próprio user no payload quando o socket está
+             * ativo, mas o usuário lendo o ranking obviamente está
+             * online. */
+            const isOnline = isMe || onlineIds.has(r.userId);
             return (
               <div
                 key={r.userId}
@@ -716,17 +732,48 @@ function RankingTabContent() {
                 <span className={`${styles.tabRankingRank} ${isTop3 ? styles.tabRankingRankMedal : ''} ${rank === 1 ? styles.tabRankingRankGold : rank === 2 ? styles.tabRankingRankSilver : rank === 3 ? styles.tabRankingRankBronze : ''}`}>
                   {isTop3 ? rank : `#${rank}`}
                 </span>
-                {/* Per product feedback "na lista de usuários,
-                 * carregue a foto de cada um". 26×26 round. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={avatar}
-                  alt=""
-                  className={styles.tabRankingAvatar}
-                />
+                {/* Avatar wrap — hospeda o dot de online/offline no
+                 * canto inferior direito. Mesmo padrão visual dos
+                 * avatares do chat (verde sólido + ring preto). */}
+                <span className={styles.tabRankingAvatarWrap}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatar}
+                    alt=""
+                    className={styles.tabRankingAvatar}
+                  />
+                  <span
+                    className={`${styles.tabRankingPresence} ${isOnline ? styles.tabRankingPresenceOn : ''}`}
+                    aria-label={isOnline ? 'Online' : 'Offline'}
+                    title={isOnline ? 'Online' : 'Offline'}
+                  />
+                </span>
                 <div className={styles.tabRankingInfo}>
-                  <span className={styles.tabRankingName}>{name}</span>
-                  {r.city && <span className={styles.tabRankingCity}>{r.city}</span>}
+                  {/* Nome agora é Link → /app/u/{id} per product
+                   * feedback "o nome do usuário deve ser clicável e
+                   * aparecer o perfil de usuário". */}
+                  <Link
+                    href={`/app/u/${r.userId}`}
+                    className={styles.tabRankingName}
+                    prefetch={false}
+                  >
+                    {name}
+                  </Link>
+                  {/* Per product feedback "inclua a quantidade de
+                   * fanpoints de cada usuário antes do nome da
+                   * cidade". Fanpoints + cidade na MESMA linha
+                   * subtítulo separados por um dot. */}
+                  <span className={styles.tabRankingSubline}>
+                    <span className={styles.tabRankingPoints}>
+                      {r.points.toLocaleString('pt-BR')} FP
+                    </span>
+                    {r.city && (
+                      <>
+                        <span className={styles.tabRankingSep} aria-hidden="true">·</span>
+                        <span className={styles.tabRankingCity}>{r.city}</span>
+                      </>
+                    )}
+                  </span>
                 </div>
               </div>
             );
