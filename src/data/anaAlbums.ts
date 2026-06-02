@@ -36,16 +36,26 @@ export type AnaAlbum = {
 
 export const ANA_ALBUMS: AnaAlbum[] = [
   {
-    // Próximo lançamento — DVD ao vivo gravado na Arena Fonte Nova
-    // (Salvador / BA). Sem tracklist ainda; aparece em primeiro
-    // lugar no grid de álbuns com prefixo "(Em breve)" no nome e
-    // a contagem de pré-saves.
+    // DVD ao vivo gravado na Arena Fonte Nova (Salvador/BA).
+    // Tracklist oficial (8 faixas) — fonte: playlist YouTube
+    // OLAK5uy_nGL4j53N8jnD9s5LRqadYM53bQKc6tXT8. Antes era
+    // pré-lançamento (`comingSoon: true` + preSaveCount); per
+    // product feedback "adicione as faixas... removendo os
+    // conteúdos de em breve" o álbum agora é tratado como
+    // released, com tracklist regular.
     id: 'fire-arena',
     name: 'Fire Arena',
     cover: '/albuns/firearena.jpg',
-    trackYoutubeIds: [],
-    comingSoon: true,
-    preSaveCount: 175000,
+    trackYoutubeIds: [
+      'qTVbdTffP5k', // É Que Eu Não Te Esqueci 💔
+      'FmT4Iv_ie_Y', // Eu Não Vou Mudar
+      'tX7-EVaP_RY', // Hoje Tem Rodeio
+      'uSCzsJjBAIk', // Vou Vender o Meu Chapéu
+      'dJCsIJSPNh0', // Não Depende Só de Mim
+      'gBWwUxtiAMY', // É Bom Demais
+      'Y-0tqsIKF2E', // Meu Erro
+      'okcTumne028', // Rodeio Acabou
+    ],
   },
   {
     id: 'lets-go-rodeo',

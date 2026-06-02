@@ -91,6 +91,22 @@ export const TRACKS_CATALOG: CatalogTrack[] = [
   { title: 'Mississipi',                                    artist: 'Ana Castela', year: 2026, youtubeId: 'Sphh4jO0bjw', album: 'Herança Boiadeira Ao Vivo' },
   { title: 'Peão Apaixonado',                               artist: 'Ana Castela', year: 2026, youtubeId: 'MEvt6OPB_3E', album: 'Herança Boiadeira Ao Vivo' },
 
+  // ── Álbum: Fire Arena ─────────────────────────────────────────────
+  //   DVD ao vivo gravado na Arena Fonte Nova (Salvador/BA). Tracklist
+  //   oficial (8 faixas) — fonte: playlist YouTube
+  //   OLAK5uy_nGL4j53N8jnD9s5LRqadYM53bQKc6tXT8 — adicionado per
+  //   product feedback "adicione as faixas abaixo no Álbum Fire Arena
+  //   removendo os conteúdos de em breve". Year 2026 placeholder
+  //   alinhado com os demais álbuns futuros.
+  { title: 'É Que Eu Não Te Esqueci 💔',  artist: 'Ana Castela', year: 2026, youtubeId: 'qTVbdTffP5k', album: 'Fire Arena' },
+  { title: 'Eu Não Vou Mudar',           artist: 'Ana Castela', year: 2026, youtubeId: 'FmT4Iv_ie_Y', album: 'Fire Arena' },
+  { title: 'Hoje Tem Rodeio',            artist: 'Ana Castela', year: 2026, youtubeId: 'tX7-EVaP_RY', album: 'Fire Arena' },
+  { title: 'Vou Vender o Meu Chapéu',    artist: 'Ana Castela', year: 2026, youtubeId: 'uSCzsJjBAIk', album: 'Fire Arena' },
+  { title: 'Não Depende Só de Mim',      artist: 'Ana Castela', year: 2026, youtubeId: 'dJCsIJSPNh0', album: 'Fire Arena' },
+  { title: 'É Bom Demais',               artist: 'Ana Castela', year: 2026, youtubeId: 'gBWwUxtiAMY', album: 'Fire Arena' },
+  { title: 'Meu Erro',                   artist: 'Ana Castela', year: 2026, youtubeId: 'Y-0tqsIKF2E', album: 'Fire Arena' },
+  { title: 'Rodeio Acabou',              artist: 'Ana Castela', year: 2026, youtubeId: 'okcTumne028', album: 'Fire Arena' },
+
   // ── Test additions (extreme metal / hardcore — diferentes do catálogo
   //     principal pra exercitar a detecção de "mesma música" entre
   //     usuários com gostos muito distintos)
