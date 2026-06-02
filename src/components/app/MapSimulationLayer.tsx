@@ -392,7 +392,13 @@ const SIGMA_FACTOR_BY_RANGE: Record<QuotaRange, number> = {
  *   cityPeak: z 10–12 → preenche até 840 dots (100%, tela toda) */
 const RANGE_ZOOMS: Record<QuotaRange, { min: number; peakStart: number; peakEnd: number; max: number }> = {
   continent: { min: 2.5,  peakStart: 2.5,  peakEnd: 5.4,  max: 5.8  },
-  state:    { min: 5.5,  peakStart: 6,    peakEnd: 7,    max: 7.5  },
+  /* state.min: 5.5 → 4.0 per feedback "a partir do 4.0 já mostre
+   * pontos 2x2px próximos às áreas onde tem cidades". O tamanho
+   * já está em 2px (SIZE_BY_RANGE.state = 1) e o sigma é largo
+   * (SIGMA_FACTOR_BY_RANGE.state = 8.0) → dots se espalham em
+   * volta das cidades, não em cima. peakStart desceu pra 5.0 pra
+   * dar fade-in suave de 4.0 → 5.0. */
+  state:    { min: 4.0,  peakStart: 5.0,  peakEnd: 7,    max: 7.5  },
   region:   { min: 7,    peakStart: 7.3,  peakEnd: 8,    max: 9    },
   cityMid:  { min: 8.5,  peakStart: 9,    peakEnd: 10,   max: 11   },
   /* cityPeak: fade-in longo de z 10 até 11.5, peak em 11.5–12.5
