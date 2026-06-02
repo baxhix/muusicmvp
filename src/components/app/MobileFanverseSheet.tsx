@@ -141,15 +141,14 @@ export default function MobileFanverseSheet({
   return (
     <div className={sheetStyles.sheet} role="dialog" aria-modal="true">
       {/* ── Hero image — 100% width, sticky no topo ──
-       *  Per product feedback "ao fazer o scroll, a imagem fica
-       *  fixa e conteúdo sobe por cima (sticky)". Hero usa
-       *  `position: sticky; top: 0; z-index: 0` no CSS; o
-       *  conteúdo abaixo tem `z-index: 1` + bg opaco e sobe
-       *  por cima conforme o user scrolla.
+       *  `position: sticky; top: 0; z-index: 0` no CSS. Imagem
+       *  fica fixa atrás enquanto o conteúdo (gradient + título +
+       *  meta row + tabs + body) sobe por cima.
        *
-       *  Overlay gradient escurece o bottom da imagem pra
-       *  garantir leitura do título "Fanverse Ana Castela"
-       *  que fica ancorado no canto inferior esquerdo. */}
+       *  Per product feedback "a camada de gradiente e o texto
+       *  deve se movimentar por cima", título + gradiente NÃO
+       *  estão mais dentro do hero — saíram pra `.fold` abaixo,
+       *  que scrolla naturalmente. */}
       <div className={sheetStyles.hero}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -157,11 +156,9 @@ export default function MobileFanverseSheet({
           alt="Ana Castela"
           className={sheetStyles.heroImg}
         />
-        <div className={sheetStyles.heroOverlay} aria-hidden="true" />
 
-        {/* Back arrow — top-left. Per product feedback
-         *  "substitua o X de fechar pela seta à esquerda
-         *  para voltar". */}
+        {/* Back arrow — top-left. Sticky dentro do hero pra
+         *  ficar visível no topo enquanto o user scrolla. */}
         <button
           type="button"
           className={sheetStyles.backBtn}
@@ -173,32 +170,39 @@ export default function MobileFanverseSheet({
             <polyline points="12 19 5 12 12 5" />
           </svg>
         </button>
-
-        {/* Título sobreposto à imagem — Borscha bold, bottom-left
-         *  com text-shadow + gradient overlay garantem leitura
-         *  contra qualquer foto. */}
-        <div className={sheetStyles.heroTitle}>
-          <span className={sheetStyles.heroTitleLabel}>Fanverse</span>
-          <span className={sheetStyles.heroTitleName}>Ana Castela</span>
-        </div>
       </div>
 
-      {/* Meta row — Fanpoints (esquerda) + Convites (direita).
-       *  Mesma linha, abaixo da imagem. Per product feedback. */}
-      <div className={sheetStyles.metaRow}>
-        <div className={sheetStyles.metaPoints}>
-          <span className={sheetStyles.metaPointsValue}>
-            {fanpoints.toLocaleString('pt-BR')}
-          </span>
-          <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
+      {/* ── Fold ──
+       *  Bloco scrollável que SOBE por cima do hero sticky.
+       *  Negative margin-top faz começar antes do fim do hero
+       *  (overlap visual); gradient forte transparent →
+       *  rgba(8,8,14,1) mistura visualmente com a imagem e
+       *  funde com o bg sólido do resto do sheet, como o user
+       *  pediu ("mesclasse com o box abaixo").
+       *
+       *  Per product feedback "Fanpoints devem ficar mais
+       *  próximos das palavras Fanverse Ana Castela" — título
+       *  + meta row dentro do mesmo bloco, com gap apertado. */}
+      <div className={sheetStyles.fold}>
+        <div className={sheetStyles.foldTitle}>
+          <span className={sheetStyles.foldTitleLabel}>Fanverse</span>
+          <span className={sheetStyles.foldTitleName}>Ana Castela</span>
         </div>
-        <button
-          type="button"
-          className={sheetStyles.invitesBtn}
-          onClick={() => setInviteOpen(true)}
-        >
-          4 convites
-        </button>
+        <div className={sheetStyles.metaRow}>
+          <div className={sheetStyles.metaPoints}>
+            <span className={sheetStyles.metaPointsValue}>
+              {fanpoints.toLocaleString('pt-BR')}
+            </span>
+            <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
+          </div>
+          <button
+            type="button"
+            className={sheetStyles.invitesBtn}
+            onClick={() => setInviteOpen(true)}
+          >
+            4 convites
+          </button>
+        </div>
       </div>
 
       {/* ── Tab bar — mesmas 3 tabs em mesma ordem ── */}

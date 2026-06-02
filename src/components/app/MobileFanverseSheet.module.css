@@ -77,24 +77,6 @@
   display: block;
 }
 
-/* Gradient overlay — escurece o bottom da imagem pra garantir
- * leitura do título Fanverse Ana Castela sobre qualquer foto.
- * Per product feedback "adicione um gradiente para que as
- * palavras Fanverse Ana Castela fique por cima da imagem e a
- * leitura fique boa". */
-.heroOverlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 40%,
-    rgba(0, 0, 0, 0.45) 75%,
-    rgba(0, 0, 0, 0.85) 100%
-  );
-  pointer-events: none;
-}
-
 /* Back arrow — top-left. Substitui o X anterior per product
  * feedback "substitua o X de fechar pela seta à esquerda
  * para voltar". */
@@ -120,30 +102,60 @@
 .backBtn:hover { background: rgba(0, 0, 0, 0.75); }
 .backBtn svg { width: 18px; height: 18px; }
 
-/* Title overlay — bottom-left da imagem, Borscha bold,
- * text-shadow + gradient overlay = leitura garantida. */
-.heroTitle {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 16px;
-  z-index: 2;
+/* ── Fold ──
+ *
+ * Bloco scrollável que sobe por cima do hero sticky. Negative
+ * margin-top faz começar antes do fim do hero (overlap visual);
+ * gradient forte transparent → opaco mistura com a imagem e
+ * funde com o bg sólido do resto do sheet — per product
+ * feedback "aumente a intensidade do gradiente por cima da
+ * imagem como se mesclasse com o box abaixo".
+ *
+ * z-index: 1 garante que o fold passe ON TOP do hero (z:0)
+ * ao scrollar. */
+.fold {
+  position: relative;
+  z-index: 1;
+  margin-top: -150px;
+  /* Gradiente forte: transparente no topo (deixa a imagem
+   * passar atrás do título), evolui rápido pra preto opaco
+   * mesclando perfeitamente com o bg do .tabsRow / .body
+   * abaixo. */
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(2, 2, 4, 0.35) 18%,
+    rgba(4, 4, 8, 0.75) 45%,
+    rgba(8, 8, 14, 0.96) 75%,
+    rgba(11, 11, 13, 1) 100%
+  );
+  /* Padding top empurra o título pra DENTRO do gradiente —
+   * fica sobre a imagem mas com gradiente já escurecendo
+   * a área pra leitura. */
+  padding: 90px 18px 12px;
+}
+
+/* Title — Borscha bold, dentro do fold (não do hero). Text-
+ * shadow extra pra reforçar leitura. */
+.foldTitle {
   display: inline-flex;
   align-items: baseline;
   gap: 7px;
+  width: 100%;
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+  margin-bottom: 6px;
 }
-.heroTitleLabel,
-.heroTitleName {
+.foldTitleLabel,
+.foldTitleName {
   font-size: 26px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
-.heroTitleLabel { flex-shrink: 0; }
-.heroTitleName {
+.foldTitleLabel { flex-shrink: 0; }
+.foldTitleName {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -151,27 +163,17 @@
 
 /* ── Meta row ──
  *
- * Fanpoints (esquerda) + Convites pill (direita). Per product
- * feedback "a quantidade de Fanpoints deve ficar abaixo do
- * lado esquerdo e os convites do lado direito".
- *
- * z-index: 1 + bg opaco herdado do .sheet pra que essa row
- * (e tudo abaixo) cubra o hero quando o user scrolla — efeito
- * sticky. */
+ * Fanpoints (esquerda) + Convites pill (direita), dentro do
+ * fold logo abaixo do título. Per product feedback "os
+ * Fanpoints devem ficar mais próximos das palavras Fanverse
+ * Ana Castela" — sem padding/margem extra entre title e
+ * metaRow; o gap de 6px no .foldTitle já dá o respiro mínimo. */
 .metaRow {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px 12px;
-  /* Bg opaco pra cobrir o hero ao scrollar. Mesma fórmula do
-   * .sheet base pra continuidade visual. */
-  background:
-    linear-gradient(180deg,
-      rgba(11, 11, 13, 0.98) 0%,
-      rgba(8, 8, 14, 0.98) 100%);
+  padding: 0;
 }
 .metaPoints {
   display: inline-flex;
