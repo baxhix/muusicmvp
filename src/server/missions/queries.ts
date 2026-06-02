@@ -14,8 +14,14 @@ export type DailyMissionId =
   | 'listen_5'      // listen to 5 distinct tracks today
   | 'like_track'    // like (heart) at least 1 track today
   | 'start_chat'    // start a new DM today
-  | 'daily_login'; // be present today (auto-completed: they hit
+  | 'daily_login'   // be present today (auto-completed: they hit
                     // the endpoint, so they ARE logged in today)
+  /* IDs display-only no ArtistBox (mock visual, sem tracking
+   * server-side ainda). Adicionados no union pra alinhar tipos
+   * entre client/server; queries que mapeiam por id simplesmente
+   * não vão encontrá-los e os retornam como não-completados. */
+  | 'share_song'
+  | 'follow_artist';
 
 export interface DailyMission {
   id: DailyMissionId;

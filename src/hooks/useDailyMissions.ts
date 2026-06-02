@@ -8,7 +8,13 @@ export type DailyMissionId =
   | 'listen_5'
   | 'like_track'
   | 'start_chat'
-  | 'daily_login';
+  | 'daily_login'
+  /* Per product feedback "deixe 6 missões no total". Estes 2
+   * ainda são display-only (sem tracking real no backend); o hook
+   * devolve done=false por default pra IDs que o servidor não
+   * conhece, então mostra como pendente sem quebrar nada. */
+  | 'share_song'
+  | 'follow_artist';
 
 export interface DailyMission {
   id: DailyMissionId;

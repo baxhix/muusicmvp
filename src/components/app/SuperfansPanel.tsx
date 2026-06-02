@@ -145,6 +145,65 @@ export const BENEFITS: Benefit[] = [
     threshold: 10000,
     icon: 'ticket',
   },
+  /* +8 conquistas adicionais per product feedback "adicione mais
+   * 8 itens com scroll". Thresholds escalonados pra cima do top
+   * atual (10k) pra reforçar a sensação de progressão longa. */
+  {
+    id: 'b7',
+    title: 'Acesso ao Fan Council',
+    description: 'Participe das decisões de produto da Fanverse',
+    threshold: 15000,
+    icon: 'community',
+  },
+  {
+    id: 'b8',
+    title: 'Bastidores de gravação',
+    description: 'Conteúdo making-of antes do lançamento oficial',
+    threshold: 20000,
+    icon: 'crown',
+  },
+  {
+    id: 'b9',
+    title: 'Meet & greet anual',
+    description: 'Concorra a um encontro presencial com a artista',
+    threshold: 30000,
+    icon: 'ticket',
+  },
+  {
+    id: 'b10',
+    title: 'Mensagem em vídeo personalizada',
+    description: 'Vídeo gravado especialmente pra você no aniversário',
+    threshold: 40000,
+    icon: 'send',
+  },
+  {
+    id: 'b11',
+    title: 'Camarote exclusivo nos shows',
+    description: 'Acesso à área VIP em todos os eventos do ano',
+    threshold: 50000,
+    icon: 'ticket',
+  },
+  {
+    id: 'b12',
+    title: 'Edição limitada de merchandise',
+    description: 'Produtos numerados exclusivos pra superfãs Top 100',
+    threshold: 70000,
+    icon: 'discount',
+  },
+  {
+    id: 'b13',
+    title: 'Faixa exclusiva no app',
+    description: 'Demo inédita disponível só pra você ouvir',
+    threshold: 100000,
+    icon: 'crown',
+  },
+  {
+    id: 'b14',
+    title: 'Convite pra after-party',
+    description: 'Festa privada com a artista após os shows principais',
+    threshold: 150000,
+    icon: 'community',
+  },
 ];
 
 /** Renders the contextual SVG for each benefit. Centralized here

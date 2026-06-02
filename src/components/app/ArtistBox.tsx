@@ -35,10 +35,13 @@ interface MissionMeta {
 }
 
 const MISSION_META: MissionMeta[] = [
-  { id: 'listen_5',    icon: '🎵', name: 'Ouça 5 músicas hoje',     xp: '+50 FP'  },
-  { id: 'like_track',  icon: '❤️', name: 'Curtir uma música',        xp: '+30 FP'  },
-  { id: 'start_chat',  icon: '💬', name: 'Inicie uma conversa',      xp: '+40 FP'  },
-  { id: 'daily_login', icon: '🔥', name: 'Login diário',              xp: '+120 FP' },
+  { id: 'listen_5',     icon: '🎵', name: 'Ouça 5 músicas hoje',     xp: '+50 FP'  },
+  { id: 'like_track',   icon: '❤️', name: 'Curtir uma música',        xp: '+30 FP'  },
+  { id: 'start_chat',   icon: '💬', name: 'Inicie uma conversa',      xp: '+40 FP'  },
+  { id: 'daily_login',  icon: '🔥', name: 'Login diário',              xp: '+120 FP' },
+  /* +2 missões per product feedback "deixe 6 missões no total". */
+  { id: 'share_song',   icon: '🔗', name: 'Compartilhe uma música',   xp: '+25 FP'  },
+  { id: 'follow_artist', icon: '⭐', name: 'Siga um artista',         xp: '+35 FP'  },
 ];
 
 const TOTAL = MISSION_META.length;
@@ -277,21 +280,9 @@ export default function ArtistBox() {
               nome". The earlier bottom-alignment (justify-content:
               space-between on `.info`) was retired — the row now
               flows naturally under the name with a tight gap. */}
+          {/* Crown icon removido per product feedback "remova o
+           * ícone de coroa ao lado dos Fanpoints". Só valor + label. */}
           <div className={styles.fanpointsInline}>
-            <span className={styles.fanpointsInlineIcon} aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                width="13"
-                height="13"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M2.5 19h19l-1.5-9-5 3.5L12 6l-3 7.5L4 10l-1.5 9z" />
-              </svg>
-            </span>
             <span className={styles.fanpointsInlineValue}>
               {fanpoints.toLocaleString('pt-BR')}
             </span>
@@ -478,30 +469,31 @@ function RankingTabContent() {
     myRow && top10Threshold !== null
       ? Math.max(0, top10Threshold + 1 - myPoints)
       : 0;
-  const meProgressPct =
-    meInTop10 || top10Threshold === null
-      ? 100
-      : Math.min(100, Math.max(0, Math.round((myPoints / Math.max(1, top10Threshold)) * 100)));
+  /* Per product feedback "simule a barra de progresso metade
+   * completa": fixamos em 50%. Antes a barra calculava progresso
+   * real do user, mas o user pediu mock visual em ½. */
+  const meProgressPct = 50;
 
   const visible = showAll ? ranking : ranking.slice(0, 6);
 
   return (
     <div className={styles.tabRanking}>
-      {/* Barra de progresso top-10. Sem mostrar pontuação do user
-       * — apenas a distância até o top 10. */}
+      {/* Per product feedback "deixe o texto Você está no Top 10!
+       * ACIMA da barra de progresso" — invertemos a ordem (label
+       * primeiro, depois track). */}
       <div className={styles.tabRankingProgress}>
-        <div className={styles.tabRankingProgressTrack}>
-          <div
-            className={styles.tabRankingProgressFill}
-            style={{ width: `${meProgressPct}%` }}
-          />
-        </div>
         <div className={styles.tabRankingProgressLabel}>
           {meInTop10
             ? 'Você está no Top 10!'
             : top10Threshold === null
               ? 'Continue ouvindo pra entrar no ranking'
               : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
+        </div>
+        <div className={styles.tabRankingProgressTrack}>
+          <div
+            className={styles.tabRankingProgressFill}
+            style={{ width: `${meProgressPct}%` }}
+          />
         </div>
       </div>
 
@@ -517,15 +509,28 @@ function RankingTabContent() {
           {visible.map((r, idx) => {
             const rank = idx + 1;
             const isMe = r.userId === user?.id;
+            const isTop3 = rank <= 3;
             const name = r.name?.trim() || r.email.split('@')[0];
+            const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
             return (
               <div
                 key={r.userId}
-                className={`${styles.tabRankingRow} ${isMe ? styles.tabRankingRowMe : ''}`}
+                className={`${styles.tabRankingRow} ${isMe ? styles.tabRankingRowMe : ''} ${isTop3 ? styles.tabRankingRowTop3 : ''}`}
               >
-                <span className={styles.tabRankingRank}>
-                  {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                {/* Per product feedback "sinalize melhor o top 3":
+                 * rank usa medal pillorada quando ≤3 (bg dourado/prata/
+                 * bronze) em vez de só o emoji solto. */}
+                <span className={`${styles.tabRankingRank} ${isTop3 ? styles.tabRankingRankMedal : ''} ${rank === 1 ? styles.tabRankingRankGold : rank === 2 ? styles.tabRankingRankSilver : rank === 3 ? styles.tabRankingRankBronze : ''}`}>
+                  {isTop3 ? rank : `#${rank}`}
                 </span>
+                {/* Per product feedback "na lista de usuários,
+                 * carregue a foto de cada um". 26×26 round. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatar}
+                  alt=""
+                  className={styles.tabRankingAvatar}
+                />
                 <div className={styles.tabRankingInfo}>
                   <span className={styles.tabRankingName}>{name}</span>
                   {r.city && <span className={styles.tabRankingCity}>{r.city}</span>}
@@ -559,49 +564,50 @@ function RankingTabContent() {
  * sem aumentar altura.
  * ──────────────────────────────────────────────────────────── */
 function BenefitsTabContent() {
-  /* Primeiros 4 itens ATIVOS, restante BLOQUEADO — split fixo
-   * por índice (não depende de Fanpoints). */
-  const unlocked = BENEFITS.slice(0, 4);
-  const locked = BENEFITS.slice(4);
+  /* Per product feedback iterativo:
+   *  - "deixe apenas 3 itens desbloqueados" → slice(0, 3)
+   *  - "remova a linha descritiva" → renderiza só title (sem desc)
+   *  - "remova a palavra Bloqueadas" → sem section title separador
+   *  - "adicione mais 8 itens com scroll" → BENEFITS estendido (6 → 14)
+   *
+   * Lista única scrollável (.tabBenefitsScroll com overflow-y).
+   * Locked usa o copy "Acumule X Fanpoints" como ação a ser feita
+   * — única linha embaixo do título. */
+  const unlocked = BENEFITS.slice(0, 3);
+  const locked = BENEFITS.slice(3);
 
   return (
-    <div className={styles.tabBenefits}>
-      {unlocked.map((b) => (
-        <div key={b.id} className={styles.tabBenefitRow}>
-          <span className={styles.tabBenefitIcon} aria-hidden="true">
-            <BenefitIcon kind={b.icon} />
-          </span>
-          <div className={styles.tabBenefitInfo}>
-            <span className={styles.tabBenefitTitle}>{b.title}</span>
-            <span className={styles.tabBenefitDesc}>{b.description}</span>
-          </div>
-          {/* Cadeado desbloqueado (item ativo). */}
-          <LockIcon variant="unlocked" />
-        </div>
-      ))}
-      {locked.length > 0 && (
-        <>
-          <h3 className={styles.tabBenefitsSectionTitle}>Bloqueadas</h3>
-          {locked.map((b) => (
-            <div
-              key={b.id}
-              className={`${styles.tabBenefitRow} ${styles.tabBenefitRowLocked}`}
-            >
-              <span className={styles.tabBenefitIcon} aria-hidden="true">
-                <BenefitIcon kind={b.icon} />
-              </span>
-              <div className={styles.tabBenefitInfo}>
-                <span className={styles.tabBenefitTitle}>{b.title}</span>
-                <span className={styles.tabBenefitDesc}>
-                  Acumule {b.threshold.toLocaleString('pt-BR')} Fanpoints para desbloquear
-                </span>
-              </div>
-              {/* Cadeado fechado (item bloqueado). */}
-              <LockIcon variant="locked" />
+    <div className={styles.tabBenefitsScroll}>
+      <div className={styles.tabBenefits}>
+        {unlocked.map((b) => (
+          <div key={b.id} className={styles.tabBenefitRow}>
+            <span className={styles.tabBenefitIcon} aria-hidden="true">
+              <BenefitIcon kind={b.icon} />
+            </span>
+            <div className={styles.tabBenefitInfo}>
+              <span className={styles.tabBenefitTitle}>{b.title}</span>
             </div>
-          ))}
-        </>
-      )}
+            <LockIcon variant="unlocked" />
+          </div>
+        ))}
+        {locked.map((b) => (
+          <div
+            key={b.id}
+            className={`${styles.tabBenefitRow} ${styles.tabBenefitRowLocked}`}
+          >
+            <span className={styles.tabBenefitIcon} aria-hidden="true">
+              <BenefitIcon kind={b.icon} />
+            </span>
+            <div className={styles.tabBenefitInfo}>
+              <span className={styles.tabBenefitTitle}>{b.title}</span>
+              <span className={styles.tabBenefitDesc}>
+                Acumule {b.threshold.toLocaleString('pt-BR')} Fanpoints
+              </span>
+            </div>
+            <LockIcon variant="locked" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

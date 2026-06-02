@@ -848,6 +848,74 @@
   color: rgba(245, 245, 247, 0.45);
 }
 
+/* Wrapper scrollável da tab Conquistas — per product feedback
+ * "adicione mais 8 itens com scroll. O scroll deve ir por baixo
+ * do Header do box". A scroll vive aqui (NÃO no .dropdown global)
+ * pra que o header do box (foto + nome + Fanpoints + tabs) fique
+ * fixo enquanto a lista de conquistas rola. */
+.tabBenefitsScroll {
+  max-height: 360px;
+  overflow-y: auto;
+  /* Scrollbar discreta no padrão dark do app. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.tabBenefitsScroll::-webkit-scrollbar {
+  width: 4px;
+}
+.tabBenefitsScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tabBenefitsScroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+/* ── Ranking: realces extras pro top 3 + avatar ────────── */
+.tabRankingAvatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+/* Top-3 row: leve bg dourado/translúcido pra destacar. */
+.tabRankingRowTop3 {
+  background: rgba(251, 191, 36, 0.07);
+}
+.tabRankingRowTop3:hover {
+  background: rgba(251, 191, 36, 0.12);
+}
+/* Rank medal pillorada: bg gradiente + texto numerado em vez de
+ * só o emoji solto. Comunica top 3 com peso visual. */
+.tabRankingRankMedal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  color: #1f1500;
+  text-align: center;
+  line-height: 1;
+}
+.tabRankingRankGold {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.45);
+}
+.tabRankingRankSilver {
+  background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 100%);
+  box-shadow: 0 0 6px rgba(229, 231, 235, 0.30);
+}
+.tabRankingRankBronze {
+  background: linear-gradient(135deg, #fbbf77 0%, #b45309 100%);
+  box-shadow: 0 0 6px rgba(180, 83, 9, 0.35);
+}
+
 .discountBadge {
   display: inline-flex;
   align-items: center;
@@ -1073,12 +1141,15 @@
 }
 
 .missionXp {
+  /* Per product feedback "mude a cor de textos laranjados pela
+   * cor branca". Era texto #f59e0b (orange-500) + bg
+   * rgba(245,158,11,0.1) — agora branco em pill white-on-white-low. */
   font-size: 9.5px;
   font-weight: 700;
-  color: #f59e0b;
+  color: #ffffff;
   font-family: var(--mono);
   flex-shrink: 0;
-  background: rgba(245,158,11,0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 100px;
   padding: 2px 6px;
 }
@@ -1141,9 +1212,11 @@
 }
 
 .xpTotal {
+  /* Per product feedback "mude a cor de textos laranjados pela
+   * cor branca". Era #f59e0b (orange-500), agora branco. */
   font-size: 9.5px;
   font-weight: 700;
-  color: #f59e0b;
+  color: #ffffff;
   font-family: var(--sans);
   letter-spacing: 0.02em;
 }
@@ -1195,9 +1268,12 @@
 }
 
 .progressFill {
+  /* Gradient violeta→branco (era violeta→laranja) per product
+   * feedback "mude a cor de textos laranjados pela cor branca".
+   * Mantém a entrada violet pro brand mas tira o laranja final. */
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #9333ea 0%, #f59e0b 100%);
+  background: linear-gradient(90deg, #9333ea 0%, #ffffff 100%);
   transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
 }
 
