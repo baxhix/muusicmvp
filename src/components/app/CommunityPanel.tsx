@@ -96,6 +96,39 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, view, onClose]);
 
+  /* Per feedback "quando eu entro em um tópico de comunidade e
+   * clico na seta de voltar, ele volta para a home e não ao item
+   * anterior": no mobile a back arrow visível é a do
+   * MobileRouteHeader (a `.header` interna do panel está hidden
+   * via media query). Esse handler intercepta o CustomEvent
+   * `app:route-back` que o MobileRouteHeader dispatcha, e em views
+   * nested (topic/detail/create) chama preventDefault pra que o
+   * back do header não navegue pra `/app`, e em vez disso volte
+   * 1 nível no view-state machine — espelhando o handler de
+   * Escape acima.
+   *
+   * Em view 'list' deixa passar (sem preventDefault) — o
+   * MobileRouteHeader cai pro fallback router.push('/app'). */
+  useEffect(() => {
+    if (!open) return;
+    const onRouteBack = (e: Event) => {
+      if (view.kind === 'topic') {
+        e.preventDefault();
+        setView({ kind: 'detail', slug: view.slug });
+      } else if (view.kind === 'detail') {
+        e.preventDefault();
+        setView({ kind: 'list' });
+      } else if (view.kind === 'create') {
+        e.preventDefault();
+        setView({ kind: 'list' });
+      }
+      /* view.kind === 'list': não intercepta, deixa o
+       * MobileRouteHeader rotear pra /app naturalmente. */
+    };
+    window.addEventListener('app:route-back', onRouteBack);
+    return () => window.removeEventListener('app:route-back', onRouteBack);
+  }, [open, view]);
+
   return (
     <aside
       className={`${styles.panel} ${open ? styles.panelOpen : ''}`}

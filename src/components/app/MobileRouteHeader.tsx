@@ -65,7 +65,19 @@ export default function MobileRouteHeader() {
   const [dragY, setDragY] = useState(0);
   const startY = useRef<number | null>(null);
 
-  const goHome = () => router.push('/app');
+  /* Per feedback "quando eu entro em um tópico de comunidade e
+   * clico na seta de voltar, ele volta para a home e não ao item
+   * anterior": panéis com estado interno (CommunityPanel, etc.)
+   * agora podem interceptar o back. Dispatchamos um CustomEvent
+   * cancelável e só fazemos push('/app') se NINGUÉM cancelar via
+   * preventDefault. Quem precisa interceptar (CommunityPanel em
+   * view nested) escuta `app:route-back` e chama e.preventDefault()
+   * pra evitar a navegação raiz. */
+  const goHome = () => {
+    const evt = new CustomEvent('app:route-back', { cancelable: true });
+    const notPrevented = window.dispatchEvent(evt);
+    if (notPrevented) router.push('/app');
+  };
 
   const onTouchStart = (e: React.TouchEvent) => {
     startY.current = e.touches[0].clientY;
