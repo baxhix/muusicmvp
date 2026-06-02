@@ -80,6 +80,47 @@
   line-height: 1;
 }
 
+/* Bell de notificações — pílula compacta ANTES do avatar dentro
+ * do userMenu (flex row). Per product feedback "as notificações
+ * vão para cima, ao lado esquerdo da imagem do usuário".
+ * Tamanho 36×36 pra alinhar com a régua do header (avatar 52
+ * domina; bell discreto ao lado). */
+.notifBtn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(11, 11, 14, 0.85);
+  color: rgba(245, 245, 247, 0.82);
+  cursor: pointer;
+  padding: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+.notifBtn:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+.notifBtn:active {
+  transform: translateY(0);
+}
+.notifBtn svg {
+  width: 18px;
+  height: 18px;
+}
+.notifBtnActive {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
 .avatar {
   position: relative;
   width: 52px;

@@ -42,6 +42,7 @@ export default function BottomNav() {
     setActiveOverlay,
     setShowPlaylist,
     setShowEditProfile,
+    chatUnreadCount,
   } = useAppShell();
   const isMobile = useIsMobile();
 
@@ -537,61 +538,44 @@ export default function BottomNav() {
             )}
           </div>
         ) : (
-          /* Desktop 5th slot = Notificações. The Perfil slot was
-           * promoted out of the navbar per product feedback —
-           * profile access is still one click away via the TopBar
-           * avatar menu (which calls `onProfileOpen` to route to
-           * /app/perfil). The Notificações button toggles the
-           * `notifications` overlay just like the right-rail entry
-           * used to; the NotificationBell component listens to
-           * `activeOverlay` from AppShellContext, so toggling here
-           * lights up the same dropdown. */
+          /* Desktop 5th slot = Chat (paper-airplane).
+           *
+           * Per product feedback "na bottom bar, substitua o ícone
+           * de notificações pelo ícone de send que será o chat. As
+           * notificações vão para cima, ao lado esquerdo da imagem
+           * do usuário no topo superior direito."
+           *
+           * Toggle pattern: dismiss other overlays e navega pra
+           * /app/chat. Re-tap (já em /app/chat) volta pra /app via
+           * `toggleNav`. Badge usa chatUnreadCount do shell. */
           <button
             type="button"
-            className={`${styles.item} ${activeOverlay === 'notifications' ? styles.itemActive : ''}`}
-            /* `data-overlay-toggle="notifications"` é o marker que o
-             * NotificationBell usa pro outside-click ignorar este
-             * botão. Sem isso, o handler de `mousedown` dentro do
-             * NotificationBell fechava o painel ANTES do click chegar
-             * aqui, e o toggle aqui (lendo activeOverlay='notifications'
-             * via state stale) re-abria — loop visual de desce/sobe
-             * descrito no feedback "ele desce e sobe novamente, num
-             * looping eterno". Com o marker, mousedown do
-             * NotificationBell sai cedo, e este onClick decide
-             * sozinho o toggle. */
-            data-overlay-toggle="notifications"
-            onClick={() => {
-              setActiveOverlay((curr) =>
-                curr === 'notifications' ? null : 'notifications',
-              );
-            }}
-            aria-label={
-              activeOverlay === 'notifications'
-                ? 'Fechar notificações'
-                : 'Abrir notificações'
-            }
-            aria-pressed={activeOverlay === 'notifications'}
-            data-tooltip={
-              activeOverlay === 'notifications' ? 'Fechar' : 'Notificações'
-            }
+            className={`${styles.item} ${pathname.startsWith('/app/chat') ? styles.itemActive : ''}`}
+            onClick={() => { dismissShellOverlays(); toggleNav('/app/chat'); }}
+            onPointerEnter={() => prefetch('/app/chat')}
+            onFocus={() => prefetch('/app/chat')}
+            aria-label={pathname.startsWith('/app/chat') ? 'Fechar chat' : 'Abrir chat'}
+            aria-pressed={pathname.startsWith('/app/chat')}
+            data-tooltip={pathname.startsWith('/app/chat') ? 'Fechar' : 'Chat'}
           >
+            {/* Paper-airplane (send) icon — substituiu o bell.
+             * Mesma forma usada no mobile send-icon do shell. */}
             <svg viewBox="0 0 22 22" fill="none">
               <path
-                d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z"
+                d="M3 11l16-7-7 16-2-7-7-2z"
                 stroke="currentColor"
                 strokeWidth="1.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <path
-                d="M9 18a2 2 0 0 0 4 0"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
             </svg>
+            {chatUnreadCount > 0 && (
+              <span className={styles.badge} aria-label={`${chatUnreadCount} não lidas`}>
+                {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+              </span>
+            )}
             <span className={styles.dot} aria-hidden="true" />
-            <span className={styles.label}>Notificações</span>
+            <span className={styles.label}>Chat</span>
           </button>
         )}
       </div>

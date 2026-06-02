@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useAppShell } from '@/lib/app/AppShellContext';
 import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
 import styles from './TopBar.module.css';
 
@@ -225,6 +226,14 @@ interface TopBarProps {
 
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
   const { user, logout } = useAuth();
+  /* Per product feedback "as notificações vão para cima, ao lado
+   * esquerdo da imagem do usuário no topo superior direito" —
+   * trazemos o bell pro topo. Toggle do mesmo flag
+   * `activeOverlay === 'notifications'` que o BottomNav usava antes;
+   * o NotificationBell component continua escutando esse flag
+   * pra abrir/fechar o painel correspondente. */
+  const { activeOverlay, setActiveOverlay } = useAppShell();
+  const notifOpen = activeOverlay === 'notifications';
   const userLabel = displayName(user);
   const userEmail = user?.email ?? '';
   // Generic placeholder silhouette for brand-new users who
@@ -336,6 +345,41 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         aria-expanded={open}
         aria-label="Menu do usuário"
       >
+        {/* Bell de notificações — à esquerda do avatar per product
+         * feedback. stopPropagation no click impede que o handler
+         * do userMenu wrapper (abrir drawer) dispare junto.
+         * `data-overlay-toggle="notifications"` é o marker que o
+         * NotificationBell escuta pra ignorar outside-click neste
+         * trigger (evita flap aberto/fechado). */}
+        <button
+          type="button"
+          className={`${styles.notifBtn} ${notifOpen ? styles.notifBtnActive : ''}`}
+          data-overlay-toggle="notifications"
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveOverlay((curr) =>
+              curr === 'notifications' ? null : 'notifications',
+            );
+          }}
+          aria-label={notifOpen ? 'Fechar notificações' : 'Abrir notificações'}
+          aria-pressed={notifOpen}
+        >
+          <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path
+              d="M5 9a6 6 0 0 1 12 0v3.4l1.4 2.6H3.6L5 12.4Z"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9 18a2 2 0 0 0 4 0"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
         <div className={`${styles.avatar} ${online ? styles.avatarOnline : ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
