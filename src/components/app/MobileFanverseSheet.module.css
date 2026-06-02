@@ -17,8 +17,16 @@
   position: fixed;
   inset: 0;
   z-index: 240;
-  display: flex;
-  flex-direction: column;
+  /* Block layout (NÃO flex column) — per bugfix: com flex column
+   * + overflow-y:auto, quando o conteúdo total (hero 220px +
+   * title 50 + invite 50 + tabs 60 + body variável) ultrapassa
+   * a altura da viewport, flex encolhe os filhos pelo
+   * flex-shrink:1 default. O .hero (aspect-ratio mas sem altura
+   * rígida) colapsa pra 0 — a "piscada" reportada era o re-
+   * render mostrando o hero brevemente antes do flex recalcular.
+   * Block layout deixa cada filho renderizar na altura
+   * intrínseca + sheet rola naturalmente. */
+  display: block;
   background:
     radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
     linear-gradient(180deg,
