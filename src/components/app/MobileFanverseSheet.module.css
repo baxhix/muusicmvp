@@ -553,11 +553,12 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   display: block;
 }
-/* Foto do #1 bem maior pra reforçar o destaque per product
- * feedback "aumente a imagem do top 1". */
+/* Foto do #1 maior que as outras pra reforçar o destaque, mas
+ * sem dominar o card. Iterações: 72 → 96 → 80 per product feedback
+ * "diminua a imagem do top1 em Superfãs". */
 .podiumPhoto1 {
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
 }
 .podiumPhotoSm {
   width: 56px;
