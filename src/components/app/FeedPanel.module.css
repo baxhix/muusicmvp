@@ -339,6 +339,11 @@
     width: auto;
     height: 60vh;
     border-radius: 16px;
+    /* z-index sobe (15 → 100) pra ficar ACIMA das miniaturas
+     * flutuantes do LiveChatStack (z:90 mobile). Per product
+     * feedback "Quando o feed mobile estiver ativo, deve ficar
+     * acima das minuaturas do chat flutuantes". */
+    z-index: 100;
   }
   .panelMinimized {
     /* Push fully off-screen on mobile — no peeking header. The

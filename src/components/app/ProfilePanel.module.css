@@ -323,6 +323,15 @@
   color: rgba(245,245,247,0.55);
   font-weight: 400;
 }
+/* Posição (#N) ao lado dos Fanpoints. Per product feedback
+ * "Logo à frente de 452 Fanpoints, coloque (#56) que é a posição
+ * atual dele". */
+.userRankPos {
+  color: rgba(245,245,247,0.55);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
 
 /* ── Report menu (three-dot affordance, other-user only) ───── */
 

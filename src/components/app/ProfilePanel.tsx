@@ -6,6 +6,7 @@ import NowPlayingPreview from './NowPlayingPreview';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useRanking } from '@/hooks/useRanking';
 import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
 import styles from './ProfilePanel.module.css';
 
@@ -217,6 +218,14 @@ export default function ProfilePanel({
       setTab(visibleTabs[0]?.id ?? 'atividade');
     }
   }, [visibleTabs, tab]);
+  /* Posição atual do user no ranking pra mostrar "(#N)" ao lado
+   * dos Fanpoints no mobile, per product feedback "Logo à frente
+   * de 452 Fanpoints, coloque (#56) que é a posição atual dele". */
+  const { ranking } = useRanking(true);
+  const userRankPosition = useMemo(() => {
+    const idx = ranking.findIndex((r) => r.userId === user.id);
+    return idx >= 0 ? idx + 1 : null;
+  }, [ranking, user.id]);
   const [online, setOnline] = useState<boolean>(user.isOnline);
   const [reportMenuOpen, setReportMenuOpen] = useState(false);
   const reportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -291,6 +300,9 @@ export default function ProfilePanel({
               {user.fanpoints.toLocaleString('pt-BR')}
             </span>{' '}
             <span className={styles.userFanpointsLabel}>FP</span>
+            {userRankPosition !== null && (
+              <span className={styles.userRankPos}>(#{userRankPosition})</span>
+            )}
           </p>
         </div>
 

@@ -434,7 +434,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 4px 16px 8px;
+  /* Padding vertical igual em cima e embaixo (16px) — match com o
+   * margin-bottom: 0 do .podium, que delega o espaço ao gap: 12 do
+   * wrapper. Net: tab → podium e podium → lista têm a MESMA
+   * distância (~16px de cima + 12 gap em cima + 12 gap embaixo do
+   * podium). Per product feedback "deixe igual e padronizado a
+   * distância dos top 3 para a tab e to top 3 para a listagem". */
+  padding: 16px 16px;
 }
 
 .rankingProgress {
@@ -504,10 +510,15 @@
  * lista plana abaixo. */
 .podium {
   display: flex;
+  /* align-items: flex-end mantém os 3 cards alinhados pela
+   * BASELINE inferior (a base do #2 e #3 menores fica colada na
+   * base do #1, com altura escalonada projetando-se pra cima). */
   align-items: flex-end;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 16px;
+  /* margin-bottom: 0 — distância pra lista vem do .rankingWrap
+   * gap: 12 + padding-top equivalentes (ver .rankingWrap acima). */
+  margin-bottom: 0;
   padding: 0 2px;
 }
 .podiumCard {
@@ -538,18 +549,19 @@
 /* Alturas escalonadas — o #1 mais alto, #2 médio, #3 menor.
  * Min-height garante o desenho do pódio mesmo quando o conteúdo
  * for igualmente curto entre os três. */
-/* Alturas com diferenças menores per product feedback "diminua a
- * diferença de altura entre o primeiro, segundo e terceiro
- * colocado". 1=180 / 2=170 / 3=160 = step de 10px (era ~46px
- * entre #1 e #3). */
+/* Alturas escalonadas — #1 mantém altura do conteúdo natural
+ * (~150px), #2 e #3 reduzidos pra criar efeito de pódio per
+ * product feedback "diminua a altura dos cards do segundo e
+ * terceiro colocado. Alinhando os 3 pela baseline". align-items:
+ * flex-end no .podium gruda a base dos 3 cards. */
 .podiumCard1 {
-  min-height: 180px;
+  min-height: 160px;
 }
 .podiumCard2 {
-  min-height: 170px;
+  min-height: 130px;
 }
 .podiumCard3 {
-  min-height: 160px;
+  min-height: 115px;
 }
 
 /* Rank chip — vive no FUNDO do card per product feedback "o 1,2

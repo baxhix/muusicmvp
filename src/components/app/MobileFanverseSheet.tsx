@@ -261,13 +261,9 @@ export default function MobileFanverseSheet({
 
         {activeTab === 'beneficios' && (
           <div className={sheetStyles.benefitsScope}>
-            {/* Per product feedback "Deixe a barra de progresso de
-             * Top 10 na aba de conquistas" — Top10ProgressBar
-             * também aparece aqui, encabeçando a aba como uma meta
-             * visível antes da lista de benefícios. */}
-            <div className={sheetStyles.benefitsProgressWrap}>
-              <Top10ProgressBar />
-            </div>
+            {/* Top10ProgressBar removido daqui per product feedback
+             * "Remova a barra de progresso". A aba Conquistas mobile
+             * vai direto pra lista de benefícios. */}
             <BenefitsTabContent />
           </div>
         )}
@@ -591,10 +587,11 @@ function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
               </span>
               <span className={sheetStyles.podiumPointsLabel}>FP</span>
             </div>
-            {/* Badges "Lendário/Elite/VIP" removidas per product
-             * feedback "Remova as badges Elite, Lendário e VIP dos
-             * top3". O rank chip embaixo é o único cue de posição. */}
-            <span className={sheetStyles.podiumRank}>{rank}</span>
+            {/* Badges Lendário/Elite/VIP + chip de rank (1/2/3)
+             * removidos per product feedback "Remova o 1,2 3 do
+             * top 3". A hierarquia agora se comunica apenas pela
+             * altura escalonada dos cards (#1 mais alto, #2 médio,
+             * #3 menor) com baseline alignment. */}
           </div>
         );
       })}
