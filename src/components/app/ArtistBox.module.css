@@ -497,11 +497,15 @@
 .tabRankingRow:hover {
   background: rgba(255, 255, 255, 0.03);
 }
+/* Per product feedback "deixe o fundo do card do usuário logado
+ * em cinza também" — fundo deixa de ser tinted roxo e passa pro
+ * mesmo branco baixíssima opacidade dos demais (porém um pouco
+ * mais visível pra continuar reconhecível como "você"). */
 .tabRankingRowMe {
-  background: rgba(168, 85, 247, 0.10);
+  background: rgba(255, 255, 255, 0.06);
 }
 .tabRankingRowMe:hover {
-  background: rgba(168, 85, 247, 0.14);
+  background: rgba(255, 255, 255, 0.09);
 }
 .tabRankingRank {
   /* Per product feedback "alinhe os nomes e a foto de avatar
@@ -570,9 +574,11 @@
   line-height: 1.25;
 }
 .tabRankingPoints {
-  /* Per product feedback "deixe a quantidade de Fanpoints dos
-   * usuários no ranking na cor branca" — era amber #fbbf24. */
-  color: #ffffff;
+  /* Per product feedback "deixe o número de fanpoints também em
+   * cinza" — branco recua pra um cinza médio, parecido com o
+   * resto da subline (cidade). Continua tabular-nums pra
+   * alinhar verticalmente entre rows. */
+  color: rgba(245, 245, 247, 0.55);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
   flex-shrink: 0;
@@ -590,12 +596,15 @@
   min-width: 0;
 }
 
-/* Botão "Carregar mais usuários" — per product feedback. */
+/* Botão "Carregar mais usuários" — per product feedback "remova
+ * a borda do botão Carregar mais usuários". Continua como pill
+ * cinza claro porém SEM border — separation vem só do bg
+ * rgba(255,255,255,0.04). */
 .tabRankingLoadMore {
   margin-top: 6px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: none;
   background: rgba(255, 255, 255, 0.04);
   color: rgba(245, 245, 247, 0.82);
   font-family: inherit;
@@ -603,12 +612,11 @@
   font-weight: 600;
   cursor: pointer;
   align-self: center;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  transition: background 140ms ease, color 140ms ease;
 }
 .tabRankingLoadMore:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .tabEmpty {
@@ -1338,25 +1346,28 @@
   align-items: center;
   justify-content: center;
   margin-left: 8px;
-  padding: 3px 9px;
+  /* Per product feedback "deixe o botão de 4 convites no desktop
+   * no mesmo estilo que no mobile, com padding levemente maior" —
+   * adota o mesmo tratamento do MobileFanverseSheet.invitesBtn
+   * (pill 999px, gradient border roxa, fonte 700) mas com padding
+   * um tique maior (10×16 vs 8×14 no mobile) e fonte 12.5px
+   * pra encaixar no compasso visual do box desktop. */
+  padding: 10px 16px;
   border-radius: 999px;
-  /* Conteúdo preto + borda gradiente roxa (mesma paleta do
-   * .tabRankingProgressFill e do Stories ring). */
   background:
     linear-gradient(#000, #000) padding-box,
     linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
   border: 1.5px solid transparent;
   color: #ffffff;
   font-family: var(--sans);
-  font-size: 10.5px;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.005em;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
   transition: transform 140ms ease, filter 140ms ease;
-  /* baseline align — invitesBtn fica visual nivelado com 402.299
-   * + "Fanpoints" mesmo com border de 1.5px. */
+  /* baseline align com "402.299 Fanpoints" mesmo com border de 1.5px. */
   align-self: center;
   line-height: 1;
 }
