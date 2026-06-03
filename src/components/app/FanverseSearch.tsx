@@ -48,25 +48,22 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-/* Posições semi-aleatórias dos 12 avatares orbitando o orbe.
- * Calculadas pra parecerem inorgânicas (sem grid, sem círculo
- * perfeito) — top/left em %, transform translate(-50%, -50%)
- * centra cada avatar no ponto. As 4 primeiras posições ficam
- * mais perto do orbe (raio menor); as 8 últimas espalham pelas
- * bordas da hero section. */
+/* Posições semi-aleatórias dos 8 avatares orbitando o orbe.
+ * Per product feedback "Diminua para 8 avatares" — reduzido de
+ * 12 → 8 pra dar mais respiro ao orbe + cada um com path de
+ * movimento longo (definido nas keyframes do CSS), evitando o
+ * micro-tremor que o array anterior dava. As posições aqui são
+ * só o ponto de partida; o keyframe fsFloatRoam roda eles em
+ * loops largos a partir daí. */
 const FLOATING_POSITIONS = [
-  { top: '12%', left: '22%' },
-  { top: '8%',  left: '68%' },
-  { top: '20%', left: '88%' },
-  { top: '30%', left: '6%' },
-  { top: '48%', left: '14%' },
-  { top: '52%', left: '92%' },
-  { top: '72%', left: '20%' },
-  { top: '78%', left: '74%' },
-  { top: '5%',  left: '42%' },
-  { top: '38%', left: '95%' },
-  { top: '88%', left: '50%' },
-  { top: '64%', left: '52%' },
+  { top: '14%', left: '20%' },
+  { top: '10%', left: '72%' },
+  { top: '32%', left: '6%'  },
+  { top: '28%', left: '92%' },
+  { top: '58%', left: '12%' },
+  { top: '52%', left: '88%' },
+  { top: '78%', left: '32%' },
+  { top: '82%', left: '70%' },
 ];
 
 export default function FanverseSearch() {
@@ -105,12 +102,12 @@ export default function FanverseSearch() {
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
-  /* 4 frases rotacionando a cada 4s. Cada uma traz um render
-   * (com bold/regular mix) + filter pra user list abaixo. */
+  /* 4 frases rotacionando a cada 4s. Per product feedback "Ao
+   * mudar a frase, não mude a lista de usuários. Deixe a fixa"
+   * o filter foi removido — a lista abaixo é sempre a mesma. */
   type Phrase = {
     key: string;
     render: ReactNode;
-    filter: (u: FanverseSearchUser) => boolean;
   };
   const PHRASES: Phrase[] = useMemo(() => [
     {
@@ -123,7 +120,6 @@ export default function FanverseSearch() {
           <span className={styles.headlineMuted}>com você!</span>
         </>
       ),
-      filter: () => true,
     },
     {
       key: 'song',
@@ -134,7 +130,6 @@ export default function FanverseSearch() {
           <strong>mesma música</strong>
         </>
       ),
-      filter: (u: FanverseSearchUser) => u.isListening,
     },
     {
       key: 'album',
@@ -145,7 +140,6 @@ export default function FanverseSearch() {
           <strong>mesmo álbum</strong>
         </>
       ),
-      filter: (u: FanverseSearchUser) => u.role !== 'curioso',
     },
     {
       key: 'countries',
@@ -156,7 +150,6 @@ export default function FanverseSearch() {
           <strong>agora</strong>
         </>
       ),
-      filter: () => true,
     },
   ], [snapshot]);
 
@@ -170,10 +163,6 @@ export default function FanverseSearch() {
   }, [open, revealed, PHRASES.length]);
 
   const currentPhrase = PHRASES[phraseIdx];
-  const filteredUsers = useMemo(
-    () => snapshot.users.filter(currentPhrase.filter),
-    [snapshot.users, currentPhrase],
-  );
 
   if (!open) return null;
 
@@ -181,7 +170,9 @@ export default function FanverseSearch() {
     <div className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.bg} aria-hidden="true" />
 
-      {/* Topbar */}
+      {/* Topbar — só back arrow. Thumb da Ana Castela removido per
+       * product feedback "Remova a imagem da Ana Castela do topo
+       * direito superior". */}
       <div className={styles.topbar}>
         <button
           type="button"
@@ -194,29 +185,24 @@ export default function FanverseSearch() {
             <polyline points="12 19 5 12 12 5" />
           </svg>
         </button>
-        <div className={styles.artistThumb}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/ana-castela-fanverse-desktop.jpg"
-            alt="Ana Castela"
-            className={styles.artistThumbImg}
-          />
-        </div>
       </div>
 
       {/* Hero — orbe + avatares orbitando + texto loading */}
       <div className={styles.hero}>
-        {/* Floating avatars — posições semi-aleatórias ao redor do
-         * orbe. Aparecem com fade staggered (animation-delay
-         * incremental). */}
-        {snapshot.topListeners.slice(0, 12).map((l, i) => (
+        {/* Floating avatars — 8 avatares fazendo loops largos ao
+         * redor do orbe per product feedback "Diminua para 8
+         * avatares e os deixe flutuando e se movimentando ao redor
+         * do globo em movimentos longos e não micromovimentos".
+         * Cada um pega um path único (fsRoamN no CSS) via nth-child,
+         * com duração 14-22s pra dar deslocamento amplo + lento. */}
+        {snapshot.topListeners.slice(0, 8).map((l, i) => (
           <span
             key={l.id}
             className={styles.floatingAvatar}
             style={{
               top: FLOATING_POSITIONS[i].top,
               left: FLOATING_POSITIONS[i].left,
-              animationDelay: `${i * 0.08}s`,
+              animationDelay: `${i * 0.12}s, ${i * -2.3}s`,
             }}
             title={l.name}
           >
@@ -262,13 +248,11 @@ export default function FanverseSearch() {
           ))}
         </div>
 
-        {/* User list — muda com phraseIdx */}
-        <section className={styles.userList} key={currentPhrase.key + ':list'}>
-          {filteredUsers.length === 0 ? (
-            <p className={styles.emptyState}>Sem usuários nessa categoria agora.</p>
-          ) : (
-            filteredUsers.map((u) => <UserRow key={u.id} user={u} />)
-          )}
+        {/* User list — fixa per product feedback "Ao mudar a frase,
+         * não mude a lista de usuários. Deixe a fixa". Não tem mais
+         * remount via key — todos os mocked users sempre renderizam. */}
+        <section className={styles.userList}>
+          {snapshot.users.map((u) => <UserRow key={u.id} user={u} />)}
         </section>
       </div>
     </div>
@@ -294,11 +278,9 @@ function UserRow({ user }: { user: FanverseSearchUser }) {
         </span>
       </div>
       <div className={styles.userActions}>
-        {user.isListening && (
-          <span className={styles.userBars} aria-label="ouvindo agora">
-            <i></i><i></i><i></i><i></i>
-          </span>
-        )}
+        {/* Barras "ouvindo agora" removidas per product feedback
+         * "remova a animação de audio de todos os usuários". A user
+         * list agora mostra só o coração no actions slot. */}
         <button
           type="button"
           className={`${styles.userHeart} ${user.isLiked ? styles.userHeartActive : ''}`}

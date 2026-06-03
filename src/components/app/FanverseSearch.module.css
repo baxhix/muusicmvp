@@ -59,20 +59,9 @@
 .backBtn:hover { background: rgba(255, 255, 255, 0.06); }
 .backBtn svg   { width: 22px; height: 22px; }
 
-.artistThumb {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #1a1a1f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.artistThumbImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+/* .artistThumb foi removido do JSX per product feedback "Remova a
+ * imagem da Ana Castela do topo direito superior". Mantenho a
+ * regra ausente — sem renderização não cria peso visual. */
 
 /* ── Hero loading ──────────────────────────────────────────── */
 /* Per product feedback "miniatura dos usuários deve ficar
@@ -133,15 +122,19 @@
 }
 
 /* ── Floating avatars (orbitam o orbe) ─────────────────────── */
-/* 12 avatares posicionados absolutamente dentro do .hero, com
- * top/left em % (definidos inline no JSX a partir do array
- * FLOATING_POSITIONS). Animação `fsFloat` faz cada um drift
- * suave vertical pra dar sensação de "vivos"; animation-delay
- * incremental (definido inline) dá o stagger de entrada. */
+/* 8 avatares posicionados absolutamente dentro do .hero, com
+ * top/left em % (definidos inline no JSX). Per product feedback
+ * "movimentos longos e não micromovimentos" — cada um pega um
+ * dos 4 paths longos (fsRoam1-4) com duração 14-22s, percorrendo
+ * deslocamentos de até ±55px horizontal/vertical do ponto base.
+ *
+ * O fade-in continua via fsAvatarIn (600ms forwards) mas com
+ * o transform final neutro (sem scale) pra evitar conflito com
+ * fsRoam que assume durante o resto do ciclo. */
 .floatingAvatar {
   position: absolute;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   overflow: hidden;
   background: #1a1a1f;
@@ -151,13 +144,24 @@
   z-index: 3;
   opacity: 0;
   animation:
-    fsAvatarIn 600ms ease-out forwards,
-    fsFloat 6s ease-in-out infinite 600ms;
+    fsAvatarIn 700ms ease-out forwards,
+    fsRoam1 18s ease-in-out infinite;
 }
-.floatingAvatar:nth-child(2n)   { width: 34px; height: 34px; }
-.floatingAvatar:nth-child(3n)   { width: 46px; height: 46px; }
-.floatingAvatar:nth-child(4n+1) { animation-duration: 600ms, 7.5s; }
-.floatingAvatar:nth-child(5n+2) { animation-duration: 600ms, 5.2s; }
+.floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
+.floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
+
+/* Assigna paths variados pra evitar 8 avatares fazendo o mesmo
+ * loop simultâneo. Duração entre 14-22s + offset negativo via
+ * inline style (animation-delay segundo valor) garante que cada
+ * um entra no path em fase diferente. */
+.floatingAvatar:nth-child(2) { animation-name: fsAvatarIn, fsRoam2; animation-duration: 700ms, 14s; }
+.floatingAvatar:nth-child(3) { animation-name: fsAvatarIn, fsRoam3; animation-duration: 700ms, 22s; }
+.floatingAvatar:nth-child(4) { animation-name: fsAvatarIn, fsRoam4; animation-duration: 700ms, 16s; }
+.floatingAvatar:nth-child(5) { animation-name: fsAvatarIn, fsRoam2; animation-duration: 700ms, 20s; }
+.floatingAvatar:nth-child(6) { animation-name: fsAvatarIn, fsRoam3; animation-duration: 700ms, 15s; }
+.floatingAvatar:nth-child(7) { animation-name: fsAvatarIn, fsRoam4; animation-duration: 700ms, 19s; }
+.floatingAvatar:nth-child(8) { animation-name: fsAvatarIn, fsRoam1; animation-duration: 700ms, 17s; }
+
 .floatingAvatar img {
   width: 100%;
   height: 100%;
@@ -168,9 +172,37 @@
   from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
   to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
-@keyframes fsFloat {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-  50%      { transform: translate(-50%, -50%) translateY(-8px); }
+/* 4 paths de roaming longos. Cada keyframe nudga a transform
+ * extra de até ±55px em x/y sobre o translate(-50%, -50%) base.
+ * Vai e volta pro 0,0 no 100% pra loop seamless. */
+@keyframes fsRoam1 {
+  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  20%  { transform: translate(-50%, -50%) translate(42px,  -26px); }
+  45%  { transform: translate(-50%, -50%) translate(55px,  24px);  }
+  70%  { transform: translate(-50%, -50%) translate(10px,  48px);  }
+  90%  { transform: translate(-50%, -50%) translate(-34px, 18px);  }
+  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+}
+@keyframes fsRoam2 {
+  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  25%  { transform: translate(-50%, -50%) translate(-48px, 32px);  }
+  50%  { transform: translate(-50%, -50%) translate(-20px, -42px); }
+  75%  { transform: translate(-50%, -50%) translate(38px,  -18px); }
+  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+}
+@keyframes fsRoam3 {
+  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  30%  { transform: translate(-50%, -50%) translate(50px,  42px);  }
+  60%  { transform: translate(-50%, -50%) translate(-30px, 52px);  }
+  85%  { transform: translate(-50%, -50%) translate(-52px, -22px); }
+  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+}
+@keyframes fsRoam4 {
+  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  20%  { transform: translate(-50%, -50%) translate(-30px, -44px); }
+  50%  { transform: translate(-50%, -50%) translate(32px,  34px);  }
+  80%  { transform: translate(-50%, -50%) translate(-44px, 10px);  }
+  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
 }
 
 /* ── Body ──────────────────────────────────────────────────── */
@@ -300,23 +332,13 @@
 .matchHeart svg { width: 16px; height: 16px; }
 
 /* ── User list ─────────────────────────────────────────────── */
+/* Lista fixa per product feedback "Ao mudar a frase, não mude a
+ * lista de usuários. Deixe a fixa" — sem animação de remount;
+ * todos os mocked users sempre renderizam. */
 .userList {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  /* Re-anima a lista quando o phrase troca (key={phrase.key:list}
-   * no JSX força remount). */
-  animation: fsListIn 420ms ease-out;
-}
-@keyframes fsListIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.emptyState {
-  margin: 12px 0;
-  font-size: 13px;
-  color: rgba(245, 245, 247, 0.5);
-  text-align: center;
 }
 
 .userRow {
@@ -377,28 +399,9 @@
   flex-shrink: 0;
 }
 
-/* Bars animadas — indicador "ouvindo agora". */
-.userBars {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 16px;
-}
-.userBars i {
-  display: inline-block;
-  width: 3px;
-  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
-  border-radius: 2px;
-  animation: fsBars 1.1s ease-in-out infinite;
-}
-.userBars i:nth-child(1) { height: 30%; animation-delay: 0s; }
-.userBars i:nth-child(2) { height: 70%; animation-delay: 0.15s; }
-.userBars i:nth-child(3) { height: 50%; animation-delay: 0.3s; }
-.userBars i:nth-child(4) { height: 90%; animation-delay: 0.45s; }
-@keyframes fsBars {
-  0%, 100% { transform: scaleY(0.4); }
-  50%      { transform: scaleY(1);   }
-}
+/* Barras "ouvindo agora" (.userBars) removidas per product
+ * feedback "remova a animação de audio de todos os usuários".
+ * O slot de actions agora hospeda só o coração. */
 
 .userHeart {
   width: 32px;
