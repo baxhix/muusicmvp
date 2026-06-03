@@ -238,10 +238,10 @@
   justify-content: space-between;
   gap: 16px;
   padding: 0;
-  /* Cancel-out do +8 atual do .foldEyebrow (originalmente -30 do
-   * +30; agora -8 do +8) — mantém Fanpoints + invite na MESMA
-   * posição visual independente do shift do título acima. */
-  margin-top: -8px;
+  /* Per product feedback "No mobile, aproxime os Fanpoints da
+   * palavra Ana Castela" — margin-top mais negativo (-8 → -18)
+   * puxa o bloco de Fanpoints pra mais perto da linha de título. */
+  margin-top: -18px;
 }
 .metaPoints {
   display: inline-flex;

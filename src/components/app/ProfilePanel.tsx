@@ -7,6 +7,8 @@ import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useRanking } from '@/hooks/useRanking';
+import { useCommunities } from '@/hooks/useCommunities';
+import { useRouter } from 'next/navigation';
 import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
 import styles from './ProfilePanel.module.css';
 
@@ -204,20 +206,15 @@ export default function ProfilePanel({
   onReport,
 }: Props) {
   const isMobile = useIsMobile();
-  /* Tabs visíveis variam por viewport: mobile remove "Histórico" +
-   * "Ídolos" per product feedback iterativo ("Remova o Histórico" +
-   * "Remova a parte de Ídolos"). Default tab passa pra 'atividade'
-   * no mobile (era 'historico' que não existe mais). */
+  /* Tabs visíveis em DESKTOP e MOBILE iguais — apenas Atividade +
+   * Comunidades. Per product feedback "Deixe as mesmas tabs:
+   * Atividade e Comunidades" (no desktop) + "Remova o Histórico"
+   * / "Remova a parte de Ídolos" (mobile). */
   const visibleTabs = useMemo(
-    () =>
-      isMobile
-        ? TABS.filter((t) => t.id !== 'historico' && t.id !== 'idolos')
-        : TABS,
-    [isMobile],
+    () => TABS.filter((t) => t.id !== 'historico' && t.id !== 'idolos'),
+    [],
   );
-  const [tab, setTab] = useState<TabId>(
-    isMobile ? 'atividade' : 'historico',
-  );
+  const [tab, setTab] = useState<TabId>('atividade');
   // Se o user troca de viewport (raro mas possível) e a tab atual
   // sumiu, cai pra primeira tab visível pra não ficar limbo.
   useEffect(() => {
@@ -229,6 +226,13 @@ export default function ProfilePanel({
    * dos Fanpoints no mobile, per product feedback "Logo à frente
    * de 452 Fanpoints, coloque (#56) que é a posição atual dele". */
   const { ranking } = useRanking(true);
+  /* Comunidades existentes da plataforma — substitui o mock COMMUNITIES
+   * por dados reais per product feedback "Na aba Comunidades (desk
+   * e mobile), liste as comunidades existentes na plataforma".
+   * `enabled: true` SEMPRE — perfil sempre carrega lista pra que a
+   * aba Comunidades já tenha o cache quando clicada. */
+  const { items: communitiesList } = useCommunities({ enabled: true });
+  const navRouter = useRouter();
   const userRankPosition = useMemo(() => {
     const idx = ranking.findIndex((r) => r.userId === user.id);
     return idx >= 0 ? idx + 1 : null;
@@ -336,17 +340,24 @@ export default function ProfilePanel({
         <div className={styles.userInfo}>
           <p className={styles.userName}>{user.name}</p>
           <p className={styles.userMetaLine}>
-            {/* Cidade só renderiza se houver algum valor — per
-             * product feedback "Quando não tiver cidade registrada,
-             * não mostre nada". Separador depois também sai junto. */}
-            {user.city && (
-              <>
-                <span className={styles.userMetaCity}>
-                  {user.city}{user.state ? `, ${user.state}` : ''}
-                </span>
-                <span className={`${styles.userMetaSep} ${styles.userMetaSepCity}`}>·</span>
-              </>
-            )}
+            {/* Cidade + estado só renderizam se tiverem valor real
+             * (trim pra ignorar strings vazias/whitespace). Per
+             * product feedback "Quando não tiver o registro da
+             * cidade, não deixe nada nem os caracteres de
+             * separação". Quando ambos vazios, nem city nem o
+             * separador depois saem na linha. */}
+            {(() => {
+              const c = (user.city ?? '').trim();
+              const s = (user.state ?? '').trim();
+              const cityLine = [c, s].filter(Boolean).join(', ');
+              if (!cityLine) return null;
+              return (
+                <>
+                  <span className={styles.userMetaCity}>{cityLine}</span>
+                  <span className={`${styles.userMetaSep} ${styles.userMetaSepCity}`}>·</span>
+                </>
+              );
+            })()}
             {/* Streams agrupados num bloco que o @media mobile
              * esconde via .userStreamsBlock { display: none },
              * incluindo o separador antes — per product feedback
@@ -612,16 +623,46 @@ export default function ProfilePanel({
             )
           )}
 
-          {tab === 'comunidades' && COMMUNITIES.map(c => (
-            <div key={c.id} className={styles.communityItem}>
-              <div className={styles.communityEmoji}>{c.emoji}</div>
-              <div className={styles.communityInfo}>
-                <span className={styles.communityName}>{c.name}</span>
-                <span className={styles.communityMembers}>{c.members} membros</span>
+          {tab === 'comunidades' && (
+            communitiesList.length === 0 ? (
+              <div className={styles.historyEmpty}>
+                Nenhuma comunidade ainda.
               </div>
-              <button className={styles.joinBtn}>Entrar</button>
-            </div>
-          ))}
+            ) : (
+              communitiesList.map((c) => (
+                <div key={c.id} className={styles.communityItem}>
+                  <div className={styles.communityEmoji}>
+                    {c.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.imageUrl}
+                        alt=""
+                        style={{ width: '100%', height: '100%', borderRadius: 'inherit', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      '👥'
+                    )}
+                  </div>
+                  <div className={styles.communityInfo}>
+                    <span className={styles.communityName}>{c.name}</span>
+                    <span className={styles.communityMembers}>
+                      {c.memberCount.toLocaleString('pt-BR')} {c.memberCount === 1 ? 'membro' : 'membros'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.joinBtn}
+                    onClick={() => {
+                      navRouter.push(`/app/comunidades/${c.slug}`);
+                      onClose?.();
+                    }}
+                  >
+                    {c.isMember ? 'Abrir' : 'Entrar'}
+                  </button>
+                </div>
+              ))
+            )
+          )}
 
           {tab === 'idolos' && (
             <div className={styles.idolGrid}>

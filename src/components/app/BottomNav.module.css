@@ -552,53 +552,51 @@
   /* Acima do .moreBackdrop (z:250) e dos avatares de chat
    * flutuantes do LiveChatStack (z:200). Per product feedback. */
   z-index: 251;
-  /* Desktop default: pill bottom-padding 24 + pill height 56 +
-   * 20px gap = 100px from viewport bottom. */
-  bottom: 100px;
-  /* Centered horizontally — transform translateX(-50%) is also
-   * the rest position of the keyframes below, which preserves
-   * the horizontal center while animating opacity + translateY. */
-  left: 50%;
-  transform: translateX(-50%);
-  /* Desktop default: matches .inner's fixed 280px width. The
-   * mobile @media block below overrides for the responsive
-   * `calc(100% - 32px)` rule .inner follows there. */
-  width: 280px;
+  /* Side drawer per product feedback "A abertura do menu hamburger
+   * deve ser uma barra lateral, que ocupe toda a altura e dê um
+   * blur no resto do site." Drawer encosta na borda direita,
+   * ocupa 100vh (com safe-area top/bottom), largura ~min(320px,
+   * 86vw) — frequentemente usado item fica acessível ao polegar
+   * porque o drawer toca a base. */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: min(320px, 86vw);
+  height: 100vh;
+  height: 100dvh;
   /* Match the navbar inner's material exactly so the menu feels
    * like the same surface stretched vertically: identical dark
    * gradient, identical blur/saturate, identical hairline border. */
   background: linear-gradient(160deg,
-    rgba(11, 11, 13, 0.78) 0%,
-    rgba(5, 5, 7, 0.74) 50%,
-    rgba(2, 2, 3, 0.76) 100%);
-  border: 3px solid rgba(255, 255, 255, 0.12);
+    rgba(11, 11, 13, 0.92) 0%,
+    rgba(5, 5, 7, 0.9) 50%,
+    rgba(2, 2, 3, 0.92) 100%);
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  /* Softer radius than the pill (999px) since this is a vertical
-   * stack — full pill would only round the top + bottom and look
-   * out of proportion. 24px reads as "same family, different
-   * orientation" with the pill. */
-  border-radius: 24px;
-  padding: 10px;
-  /* Native flex gap separates the items by a fixed 4px in addition
-   * to each row's own vertical padding — gives noticeable breathing
-   * room between rows compared to the previous tightly-stacked
-   * version. */
+  /* Corner radius só na borda esquerda — encosta na direita full
+   * bleed pra leitura de "barra lateral colada". */
+  border-radius: 24px 0 0 24px;
+  /* Padding-top respeita safe-area do notch; bottom respeita home
+   * indicator + adiciona breathing pra o último item. */
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) 14px
+           calc(env(safe-area-inset-bottom, 0px) + 110px) 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-  z-index: 80;
-  animation: moreMenuIn 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Scroll interno se a lista crescer (futuro proof). */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: -18px 0 40px rgba(0, 0, 0, 0.55);
+  animation: moreMenuIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
-/* Keyframe transforms must INCLUDE `translateX(-50%)` — that's
- * the horizontal centering applied via the rest transform on
- * .moreMenu. If the keyframes only animate translateY, the
- * browser blends in only translateY for the keyframe duration,
- * leaving the menu uncentered while animating. */
+/* Slide-in da direita pra esquerda, sem scale/translateY do
+ * antigo pill animation (não fazem sentido pra drawer). */
 @keyframes moreMenuIn {
-  from { opacity: 0; transform: translate(-50%, 8px) scale(0.985); }
-  to   { opacity: 1; transform: translate(-50%, 0)   scale(1);     }
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0);    }
 }
 .moreItem {
   display: flex;

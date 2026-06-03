@@ -377,7 +377,11 @@
    * top edge to minimize and creates a quieter cap at the top
    * of the panel since the dot + title are both hidden now. */
   .header {
-    padding: 28px 20px 22px;
+    /* Per product feedback "Aumente a altura do header do feed
+     * mobile, chat mobile" — padding-top sobe pra 36px e bottom
+     * pra 26px (efetivo ~70px), dando ainda mais área de drag e
+     * presença visual ao cap do painel. */
+    padding: 36px 20px 26px;
   }
   /* ── Mobile blur reduction (perf) ──
    * The full-bleed mobile panel sits over a moving map; a 40px

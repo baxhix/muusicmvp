@@ -733,7 +733,10 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    padding: 14px 14px 12px;
+    /* Header alto no mobile per product feedback "Aumente a altura
+     * do header do feed mobile, chat mobile" — padding-top dobrou
+     * (14 → 22) e respeita safe-area do notch via env(). */
+    padding: calc(env(safe-area-inset-top, 0px) + 22px) 14px 18px;
     gap: 10px;
     background: rgba(11, 11, 13, 0.97);
     backdrop-filter: blur(14px);
