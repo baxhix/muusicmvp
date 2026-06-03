@@ -311,6 +311,11 @@
   gap: 7px;
   white-space: nowrap;
   overflow: hidden;
+  /* Per product feedback "Posicione 30px mais abaixo somente as
+   * palavras Fanverse Ana Castela + selo verificado" — empurra
+   * só o nameLine pra baixo. fanpointsInline tem margin-top: -30
+   * pra ficar na mesma posição que antes (não acompanha o nome). */
+  margin-top: 30px;
   /* Tipografia "Fanverse Ana Castela" passa pra Borscha bold
    * per product feedback "deixe a palavra Fanverse Ana Castela
    * com o fonte Borcha Bold". font-family aplicada no parent
@@ -356,9 +361,12 @@
    * Fanpoints)". */
   align-items: baseline;
   gap: 5px;
-  /* margin-top 8 → 2 per product feedback "aproxime um pouco as
-   * palavras 402.299 Fanpoints do nome Fanverse Ana Castela". */
-  margin-top: 2px;
+  /* margin-top 8 → 2 per "aproxime um pouco as palavras 402.299
+   * Fanpoints do nome", agora -28 (2 - 30) pra anular o +30 que o
+   * .nameLine ganhou e manter os Fanpoints na MESMA posição que
+   * antes (per "somente as palavras Fanverse Ana Castela + selo
+   * verificado" descem). */
+  margin-top: -28px;
   font-family: var(--sans);
   white-space: nowrap;
 }

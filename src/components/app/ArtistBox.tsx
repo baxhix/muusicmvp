@@ -671,6 +671,44 @@ export function InviteFriendsModal({ onClose }: { onClose: () => void }) {
  * SuperfansPanel ajustado pro box, sem pontuação, sem foto,
  * mantém barra de progresso, deve ter botão carregar mais".
  * ──────────────────────────────────────────────────────────── */
+/* Top10ProgressBar — barra reusável extraída do RankingTabContent.
+ * Per product feedback "mova a barra de progresso 'Você está no
+ * top 10' e a coroa para a aba conquista" — vive agora SÓ na
+ * aba Conquistas (desktop). Hosta useRanking + useAuth próprios. */
+function Top10ProgressBarDesktop() {
+  const { user } = useAuth();
+  const { ranking } = useRanking(true);
+  const top10Threshold = ranking.length >= 10 ? ranking[9].points : null;
+  const myRow = user ? ranking.find((r) => r.userId === user.id) ?? null : null;
+  const myPoints = myRow?.points ?? 0;
+  const myRank = myRow
+    ? ranking.findIndex((r) => r.userId === user!.id) + 1
+    : ranking.length + 1;
+  const meInTop10 = myRow ? myRank <= 10 : false;
+  const pointsToTop10 =
+    myRow && top10Threshold !== null
+      ? Math.max(0, top10Threshold + 1 - myPoints)
+      : 0;
+  const meProgressPct = 50;
+  return (
+    <div className={styles.tabRankingProgress}>
+      <div className={styles.tabRankingProgressLabel}>
+        {meInTop10
+          ? '👑 Você está no Top 10!'
+          : top10Threshold === null
+            ? '👑 Continue ouvindo pra entrar no ranking'
+            : `👑 ${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
+      </div>
+      <div className={styles.tabRankingProgressTrack}>
+        <div
+          className={styles.tabRankingProgressFill}
+          style={{ width: `${meProgressPct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function RankingTabContent() {
   const { user } = useAuth();
   const { ranking, loading, error } = useRanking(true);
@@ -684,24 +722,6 @@ export function RankingTabContent() {
   );
   const [showAll, setShowAll] = useState(false);
 
-  /* Threshold pra entrar no top 10 = fanpoints do rank-10. Se a
-   * lista tem menos de 10 fãs, threshold é null e o copy muda. */
-  const top10Threshold = ranking.length >= 10 ? ranking[9].points : null;
-  const myRow = user ? ranking.find((r) => r.userId === user.id) ?? null : null;
-  const myPoints = myRow?.points ?? 0;
-  const myRank = myRow
-    ? ranking.findIndex((r) => r.userId === user!.id) + 1
-    : ranking.length + 1;
-  const meInTop10 = myRow ? myRank <= 10 : false;
-  const pointsToTop10 =
-    myRow && top10Threshold !== null
-      ? Math.max(0, top10Threshold + 1 - myPoints)
-      : 0;
-  /* Per product feedback "simule a barra de progresso metade
-   * completa": fixamos em 50%. Antes a barra calculava progresso
-   * real do user, mas o user pediu mock visual em ½. */
-  const meProgressPct = 50;
-
   /* Memoizado pra que o slice não recrie array a cada render
    * (ex.: cada update do hook useLiveUsers dispara render). */
   const visible = useMemo(
@@ -711,24 +731,10 @@ export function RankingTabContent() {
 
   return (
     <div className={styles.tabRanking}>
-      {/* Per product feedback "deixe o texto Você está no Top 10!
-       * ACIMA da barra de progresso" — invertemos a ordem (label
-       * primeiro, depois track). */}
-      <div className={styles.tabRankingProgress}>
-        <div className={styles.tabRankingProgressLabel}>
-          {meInTop10
-            ? 'Você está no Top 10!'
-            : top10Threshold === null
-              ? 'Continue ouvindo pra entrar no ranking'
-              : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
-        </div>
-        <div className={styles.tabRankingProgressTrack}>
-          <div
-            className={styles.tabRankingProgressFill}
-            style={{ width: `${meProgressPct}%` }}
-          />
-        </div>
-      </div>
+      {/* Progress bar do top 10 foi MOVIDA pra aba Conquistas
+       * (Top10ProgressBarDesktop dentro de BenefitsTabContent),
+       * per product feedback "mova a barra de progresso 'Você está
+       * no top 10' e a coroa para a aba conquista". */}
 
       {/* Lista (sem foto, sem pontos). */}
       {error ? (
@@ -848,6 +854,12 @@ export function BenefitsTabContent() {
 
   return (
     <div className={styles.tabBenefitsScroll}>
+      {/* Top10ProgressBar reposicionado aqui — antes vivia em
+       * RankingTabContent, agora abre Conquistas como meta visível
+       * antes da lista de benefícios. Per product feedback
+       * "mova a barra de progresso 'Você está no top 10' e a coroa
+       * para a aba conquista". */}
+      <Top10ProgressBarDesktop />
       <div className={styles.tabBenefits}>
         {unlocked.map((b) => (
           <div key={b.id} className={styles.tabBenefitRow}>

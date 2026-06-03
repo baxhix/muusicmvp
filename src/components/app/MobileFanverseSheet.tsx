@@ -426,10 +426,10 @@ function MobileRankingList() {
 
   return (
     <div className={sheetStyles.rankingWrap}>
-      {/* Progress bar do user atual — extraído pra componente
-       * reusável (Top10ProgressBar) per product feedback
-       * "Deixe a barra de progresso de Top 10 na aba de conquistas". */}
-      <Top10ProgressBar />
+      {/* Top10ProgressBar foi MOVIDO daqui pra aba Conquistas
+       * exclusivamente, per product feedback "mova a barra de
+       * progresso 'Você está no top 10' e a coroa para a aba
+       * conquista". A aba Superfãs entra direto na lista. */}
 
       {/* Lista. */}
       {error ? (
