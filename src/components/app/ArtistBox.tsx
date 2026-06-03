@@ -434,7 +434,18 @@ export default function ArtistBox() {
           <div className={styles.divider} />
           {/* Body switch por tab. */}
           {activeTab === 'ranking' && <RankingTabContent />}
-          {activeTab === 'beneficios' && <BenefitsTabContent />}
+          {activeTab === 'beneficios' && (
+            <>
+              {/* Top10ProgressBarDesktop renderizado AQUI fora do
+               * BenefitsTabContent — mobile usa sua própria barra
+               * fina via wrapper no MobileFanverseSheet, então não
+               * deve ver a versão desktop pra evitar bar dupla.
+               * Per product feedback "tem duas barras de progresso.
+               * Deixe apenas a mais fina". */}
+              <Top10ProgressBarDesktop />
+              <BenefitsTabContent />
+            </>
+          )}
           {activeTab === 'missoes' && (
           <div className={styles.missionsList}>
             {MISSION_META.map((m) => {
@@ -854,12 +865,13 @@ export function BenefitsTabContent() {
 
   return (
     <div className={styles.tabBenefitsScroll}>
-      {/* Top10ProgressBar reposicionado aqui — antes vivia em
-       * RankingTabContent, agora abre Conquistas como meta visível
-       * antes da lista de benefícios. Per product feedback
-       * "mova a barra de progresso 'Você está no top 10' e a coroa
-       * para a aba conquista". */}
-      <Top10ProgressBarDesktop />
+      {/* Top10ProgressBarDesktop NÃO vive mais aqui — fora do
+       * BenefitsTabContent. Mobile renderiza sua própria barra
+       * fina via wrapper (.benefitsProgressWrap) no
+       * MobileFanverseSheet; desktop renderiza Top10ProgressBarDesktop
+       * adjacente ao <BenefitsTabContent /> no ArtistBox tab body.
+       * Per product feedback "tem duas barras de progresso. Deixe
+       * apenas a mais fina" — evita o double-bar no mobile. */}
       <div className={styles.tabBenefits}>
         {unlocked.map((b) => (
           <div key={b.id} className={styles.tabBenefitRow}>

@@ -841,27 +841,37 @@
  * sobrescreve os tamanhos via descendant selector (:global pra
  * alcançar as classes hashed do ArtistBox.module.css). */
 .benefitsScope {
-  padding: 0 8px 12px;
+  /* Padding horizontal 16px = mesmo do .tabsRow + .rankingWrap,
+   * fazendo os cards alinharem exatamente com o tab bar de cima.
+   * Per product feedback "Aumente o tamanho dos cards para que se
+   * alinhem com a tab bar e fiquem padronizados de acordo com os
+   * outros cards das outras tabs". */
+  padding: 0 16px 12px;
 }
-/* Wrapper pra Top10ProgressBar no topo da aba Conquistas — um
- * pouco mais de padding horizontal (16px) pra alinhar com o resto
- * da lista de benefícios + respiro vertical antes do conteúdo. */
+/* Wrapper pra Top10ProgressBar no topo da aba Conquistas — usa
+ * padding 0 horizontal pra herdar o 16px do .benefitsScope (não
+ * dobra). Só dá respiro vertical antes da lista. */
 .benefitsProgressWrap {
-  padding: 4px 8px 8px;
+  padding: 4px 0 8px;
 }
 .benefitsScope :global([class*="tabBenefitsScroll"]) {
   max-height: none !important;
 }
 .benefitsScope :global([class*="tabBenefits"]) {
   gap: 8px !important;
-  padding: 4px 8px 12px !important;
+  /* Sem padding horizontal — herda os 16px do .benefitsScope.
+   * Vertical apenas pra dar respiro entre top10 bar e lista. */
+  padding: 4px 0 12px !important;
 }
 .benefitsScope :global([class*="tabBenefitRow"]) {
-  padding: 14px 14px !important;
+  /* Padding + min-height equivalente ao .rankingRow (14px×12px /
+   * 64px) per "padronizados de acordo com os outros cards das
+   * outras tabs". */
+  padding: 14px 12px !important;
   gap: 12px !important;
   border-radius: 12px !important;
   background: rgba(255, 255, 255, 0.03) !important;
-  min-height: 56px;
+  min-height: 64px;
 }
 .benefitsScope :global([class*="tabBenefitIcon"]) {
   width: 36px !important;
