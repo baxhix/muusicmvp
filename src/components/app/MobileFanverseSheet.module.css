@@ -283,8 +283,10 @@
       rgba(5, 5, 12, 0.99) 100%);
 }
 .tabsRow > div > button {
-  /* Aumenta o tap target pra 40px no mobile (era 28). */
-  padding: 11px 8px !important;
+  /* Tap target confortável mas levemente mais baixo per product
+   * feedback "diminua levemente a altura das tabs" — 11px → 9px
+   * (tira ~4px da altura total da row sem comer o tap target). */
+  padding: 9px 8px !important;
   font-size: 13px !important;
 }
 
@@ -416,6 +418,32 @@
   font-weight: 600;
   color: rgba(245, 245, 247, 0.78);
   letter-spacing: -0.005em;
+}
+
+/* Row que junta track + emoji de coroa no fim da barra. O track
+ * herda as cores do `tabRankingProgressTrack` (gradient roxo do
+ * fill), mas no mobile ele fica mais fino (3px) per product
+ * feedback "diminua pela metade a altura da barra de progresso e
+ * ao fim dela, insira o emoji de coroa". */
+.rankingProgressBarRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Override do height do track (era 6px no desktop) — !important
+ * pra ganhar do hash-namespaced do CSS Module original. */
+.rankingProgressTrack {
+  height: 3px !important;
+  flex: 1;
+  min-width: 0;
+}
+/* Coroa visual no fim da barra. Tamanho calibrado pra ler como
+ * "meta" do progresso sem competir com o label de cima. */
+.rankingProgressCrown {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.45));
 }
 
 .rankingEmpty {

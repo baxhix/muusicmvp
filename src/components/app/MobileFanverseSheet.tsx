@@ -394,11 +394,26 @@ function MobileRankingList() {
               ? 'Continue ouvindo pra entrar no ranking'
               : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
         </div>
-        <div className={boxStyles.tabRankingProgressTrack}>
+        {/* Track + emoji de coroa no fim — per product feedback
+         * "diminua pela metade a altura da barra de progresso e
+         * ao fim dela, insira o emoji de coroa". O track ganha
+         * altura 3px (metade do 6px desktop) via override local
+         * e a coroa fica logo à direita, como meta visual. */}
+        <div className={sheetStyles.rankingProgressBarRow}>
           <div
-            className={boxStyles.tabRankingProgressFill}
-            style={{ width: `${meProgressPct}%` }}
-          />
+            className={`${boxStyles.tabRankingProgressTrack} ${sheetStyles.rankingProgressTrack}`}
+          >
+            <div
+              className={boxStyles.tabRankingProgressFill}
+              style={{ width: `${meProgressPct}%` }}
+            />
+          </div>
+          <span
+            className={sheetStyles.rankingProgressCrown}
+            aria-hidden="true"
+          >
+            👑
+          </span>
         </div>
       </div>
 
