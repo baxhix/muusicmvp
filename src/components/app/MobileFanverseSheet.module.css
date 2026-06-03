@@ -127,14 +127,13 @@
 .fold {
   position: relative;
   z-index: 1;
-  /* Per product feedback "Aumente a área visível da imagem do
-   * Fanverse Ana Castela" — overlap reduzido novamente (-90 →
-   * -60), liberando +30px de foto visível antes do gradient. O
-   * padding-top sobe (48 → 64) pra "posicione mais abaixo a
-   * palavra Fanverse", deixando o texto bem próximo do limite
-   * inferior do hero. Net: a foto ganha 30px de área + o título
-   * desce ~38px. */
-  margin-top: -60px;
+  /* Per product feedback "Posicione todo o conteúdo 140px acima
+   * de onde está atualmente" — overlap salta de -60 → -200 (140px
+   * a mais), puxando fold + tabs + body 140px pra cima. O hero
+   * agora fica encoberto pelo gradient do fold a partir dos
+   * primeiros 200px, mas o ganho de "conteúdo mais alto" prevalece
+   * per pedido do usuário. */
+  margin-top: -200px;
   background: linear-gradient(
     180deg,
     transparent 0%,
