@@ -116,12 +116,13 @@
 .fold {
   position: relative;
   z-index: 1;
-  /* Per product feedback "posicione mais acima o conteúdo do
-   * Fanverse" — overlap aumentado (-60 → -130) + padding-top
-   * reduzido (140 → 70) pra trazer o título + meta de volta
-   * pra cima da viewport. Mantém o gradient mix forte com a
-   * imagem (overlap dobrado). */
-  margin-top: -130px;
+  /* Per product feedback "Aumente a área da foto para baixo" —
+   * overlap reduzido (-130 → -90) faz com que a foto ganhe 40px
+   * de área visível antes do gradient começar a mesclar com o
+   * fold. Combinado com o padding-top abaixo, o texto cai 18px
+   * a mais que antes ("posicione 18px mais abaixo"), preservando
+   * o ganho líquido da foto. */
+  margin-top: -90px;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -130,7 +131,9 @@
     rgba(8, 8, 14, 0.96) 75%,
     rgba(11, 11, 13, 1) 100%
   );
-  padding: 70px 18px 12px;
+  /* padding-top calibrado: -90 + 48 = início do texto 18px
+   * MAIS BAIXO que o anterior (-130 + 70 = -60). */
+  padding: 48px 18px 12px;
 }
 
 /* Eyebrow "Fanverse" — Inter 14, acima do nome. Per product
@@ -144,7 +147,12 @@
   letter-spacing: 0.02em;
   color: rgba(245, 245, 247, 0.75);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-  margin-bottom: 4px;
+  /* Per product feedback "diminua a distância da palavra Fanverse
+   * e Ana Castela" — gap eyebrow ↔ título praticamente zerado
+   * (era 4px). O texto já tem line-height próprio que dá uma
+   * respiração mínima entre as duas linhas. */
+  margin-bottom: 0;
+  line-height: 1;
 }
 
 /* Title row — nome + verified à esquerda, convites pill à
