@@ -5,21 +5,41 @@
  * border.
  * ============================================================ */
 
+/* Mobile-first: overlay full-screen com fundo preto sólido + um
+ * único .modal wrapper que vira "card flutuante" só no desktop. */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 8500;
-  background: #000;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   font-family: var(--sans), system-ui, sans-serif;
   color: #fff;
   animation: fsOverlayIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes fsOverlayIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Backdrop com blur — fica ATRÁS do modal. No mobile a cor sólida
+ * domina; no desktop o blur fica perceptível porque o modal é
+ * card centrado e deixa as bordas do shell aparecerem por trás. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+
+/* Modal wrapper — full-screen no mobile, card centrado no desktop
+ * (regras desktop no @media min-width:769 abaixo). */
+.modal {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .bg {
@@ -96,30 +116,10 @@
   50%      { transform: scale(1.04); filter: drop-shadow(0 0 80px rgba(168, 85, 247, 0.55)); }
 }
 
-.loadingText {
-  font-size: 15.5px;
-  font-weight: 500;
-  color: rgba(245, 245, 247, 0.78);
-  letter-spacing: -0.005em;
-  text-align: center;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 2px;
-  position: relative;
-  z-index: 2;
-}
-.dots { display: inline-flex; gap: 2px; }
-.dots span {
-  display: inline-block;
-  animation: fsDotPulse 1.4s ease-in-out infinite;
-  opacity: 0.4;
-}
-.dots span:nth-child(2) { animation-delay: 0.18s; }
-.dots span:nth-child(3) { animation-delay: 0.36s; }
-@keyframes fsDotPulse {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  40%      { opacity: 1;   transform: translateY(-2px); }
-}
+/* .loadingText e .dots foram removidos do JSX per product feedback
+ * "Remova Analisando atividade do mundo" — orbe + avatares
+ * orbitando já comunicam o aspecto de "atividade" sem precisar
+ * de copy textual. */
 
 /* ── Floating avatars (orbitam o orbe) ─────────────────────── */
 /* 8 avatares posicionados absolutamente dentro do .hero, com
@@ -141,26 +141,38 @@
   border: 2px solid #000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   transform: translate(-50%, -50%);
+  /* z-index 3 garante que os avatares passem POR CIMA do orbe
+   * (z:1) per product feedback "Os avatares flutuantes podem e
+   * devem passar por cima do orbe". As paths agora têm amplitude
+   * grande (até ±120px) pra de fato cruzarem o centro. */
   z-index: 3;
   opacity: 0;
+  /* 3 animações empilhadas:
+   *  1. fsAvatarIn (700ms forwards) → entrada com fade + scale
+   *  2. fsRoamN (8-11s infinite) → trajetória ampla cruzando o
+   *     orbe; mais rápido que antes (era 14-22s) per "aumentar
+   *     a velocidade dos avatares"
+   *  3. fsBlink (9s infinite) → fade out/in cíclico; cada avatar
+   *     usa delay negativo diferente (definido inline no JSX)
+   *     pra não sumirem todos juntos */
   animation:
     fsAvatarIn 700ms ease-out forwards,
-    fsRoam1 18s ease-in-out infinite;
+    fsRoam1 9s ease-in-out infinite,
+    fsBlink 9s ease-in-out infinite;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Assigna paths variados pra evitar 8 avatares fazendo o mesmo
- * loop simultâneo. Duração entre 14-22s + offset negativo via
- * inline style (animation-delay segundo valor) garante que cada
- * um entra no path em fase diferente. */
-.floatingAvatar:nth-child(2) { animation-name: fsAvatarIn, fsRoam2; animation-duration: 700ms, 14s; }
-.floatingAvatar:nth-child(3) { animation-name: fsAvatarIn, fsRoam3; animation-duration: 700ms, 22s; }
-.floatingAvatar:nth-child(4) { animation-name: fsAvatarIn, fsRoam4; animation-duration: 700ms, 16s; }
-.floatingAvatar:nth-child(5) { animation-name: fsAvatarIn, fsRoam2; animation-duration: 700ms, 20s; }
-.floatingAvatar:nth-child(6) { animation-name: fsAvatarIn, fsRoam3; animation-duration: 700ms, 15s; }
-.floatingAvatar:nth-child(7) { animation-name: fsAvatarIn, fsRoam4; animation-duration: 700ms, 19s; }
-.floatingAvatar:nth-child(8) { animation-name: fsAvatarIn, fsRoam1; animation-duration: 700ms, 17s; }
+/* Assigna paths variados + durações rápidas (6-11s vs 14-22s
+ * antes) pra cada avatar ter velocidade própria. Mantém o
+ * fsBlink na terceira posição. */
+.floatingAvatar:nth-child(2) { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 700ms,  7s, 9s; }
+.floatingAvatar:nth-child(3) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 700ms, 11s, 9s; }
+.floatingAvatar:nth-child(4) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 700ms,  8s, 9s; }
+.floatingAvatar:nth-child(5) { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 700ms, 10s, 9s; }
+.floatingAvatar:nth-child(6) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 700ms,  7.5s, 9s; }
+.floatingAvatar:nth-child(7) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 700ms,  9.5s, 9s; }
+.floatingAvatar:nth-child(8) { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 700ms,  8.5s, 9s; }
 
 .floatingAvatar img {
   width: 100%;
@@ -172,37 +184,54 @@
   from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
   to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
-/* 4 paths de roaming longos. Cada keyframe nudga a transform
- * extra de até ±55px em x/y sobre o translate(-50%, -50%) base.
- * Vai e volta pro 0,0 no 100% pra loop seamless. */
+
+/* 4 paths de roaming AMPLOS. Amplitude aumentada de ±55 → até
+ * ±120px em x e ±110px em y pra os avatares de fato cruzarem
+ * o centro do hero (onde fica o orbe). Em pontos como (90px,
+ * -80px) o avatar do canto top-left passa visualmente sobre o
+ * orbe, e como z-index dele é 3 (orbe 1), renderiza por cima. */
 @keyframes fsRoam1 {
-  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
-  20%  { transform: translate(-50%, -50%) translate(42px,  -26px); }
-  45%  { transform: translate(-50%, -50%) translate(55px,  24px);  }
-  70%  { transform: translate(-50%, -50%) translate(10px,  48px);  }
-  90%  { transform: translate(-50%, -50%) translate(-34px, 18px);  }
-  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  0%   { transform: translate(-50%, -50%) translate(0,     0);     }
+  25%  { transform: translate(-50%, -50%) translate(90px,  -60px); }
+  50%  { transform: translate(-50%, -50%) translate(110px, 50px);  }
+  75%  { transform: translate(-50%, -50%) translate(20px,  100px); }
+  100% { transform: translate(-50%, -50%) translate(0,     0);     }
 }
 @keyframes fsRoam2 {
-  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
-  25%  { transform: translate(-50%, -50%) translate(-48px, 32px);  }
-  50%  { transform: translate(-50%, -50%) translate(-20px, -42px); }
-  75%  { transform: translate(-50%, -50%) translate(38px,  -18px); }
-  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
+  25%  { transform: translate(-50%, -50%) translate(-100px, 70px);  }
+  50%  { transform: translate(-50%, -50%) translate(-40px,  -95px); }
+  75%  { transform: translate(-50%, -50%) translate(80px,   -40px); }
+  100% { transform: translate(-50%, -50%) translate(0,      0);     }
 }
 @keyframes fsRoam3 {
-  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
-  30%  { transform: translate(-50%, -50%) translate(50px,  42px);  }
-  60%  { transform: translate(-50%, -50%) translate(-30px, 52px);  }
-  85%  { transform: translate(-50%, -50%) translate(-52px, -22px); }
-  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
+  30%  { transform: translate(-50%, -50%) translate(105px,  85px);  }
+  60%  { transform: translate(-50%, -50%) translate(-65px,  100px); }
+  85%  { transform: translate(-50%, -50%) translate(-110px, -45px); }
+  100% { transform: translate(-50%, -50%) translate(0,      0);     }
 }
 @keyframes fsRoam4 {
-  0%   { transform: translate(-50%, -50%) translate(0px,   0px);   }
-  20%  { transform: translate(-50%, -50%) translate(-30px, -44px); }
-  50%  { transform: translate(-50%, -50%) translate(32px,  34px);  }
-  80%  { transform: translate(-50%, -50%) translate(-44px, 10px);  }
-  100% { transform: translate(-50%, -50%) translate(0px,   0px);   }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
+  20%  { transform: translate(-50%, -50%) translate(-65px,  -95px); }
+  50%  { transform: translate(-50%, -50%) translate(75px,   75px);  }
+  80%  { transform: translate(-50%, -50%) translate(-95px,  25px);  }
+  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+}
+
+/* Fade cyclic — per product feedback "após determinado tempo,
+ * eles podem sumir com um fade e depois surgem novamente. Mas
+ * faça isso de forma gradativa para não sumirem todos ao mesmo
+ * tempo". 9s loop com 60% visível + 25% fade-out + 15% fade-in;
+ * o animation-delay terceiro slot (inline JSX) põe cada avatar
+ * em fase diferente, garantindo que pelo menos a maioria fica
+ * visível enquanto 1-2 estão em fade. */
+@keyframes fsBlink {
+  0%,
+  60%   { opacity: 1; }
+  78%   { opacity: 0; }
+  90%   { opacity: 0; }
+  100%  { opacity: 1; }
 }
 
 /* ── Body ──────────────────────────────────────────────────── */
@@ -425,6 +454,33 @@
 }
 .userHeart svg { width: 20px; height: 20px; }
 
+/* ── Desktop modal (>768px) ───────────────────────────────── */
+/* Per product feedback "NO desktop deixe essa animação em um
+ * modal com o fundo com blur" — overlay deixa de ser tela
+ * inteira e vira um card centrado, com o backdrop blur aparecendo
+ * em volta. O conteúdo dentro fica idêntico ao mobile. */
+@media (min-width: 769px) {
+  .modal {
+    /* Card centrado — top/bottom 5vh, left/right auto. */
+    top: 5vh;
+    bottom: 5vh;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(640px, 92vw);
+    max-height: 90vh;
+    border-radius: 24px;
+    box-shadow:
+      0 32px 80px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.06);
+    animation: fsModalIn 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes fsModalIn {
+    from { opacity: 0; transform: translate(-50%, 12px) scale(0.97); }
+    to   { opacity: 1; transform: translate(-50%, 0)    scale(1);    }
+  }
+}
+
 /* ── Mobile breakpoint ────────────────────────────────────── */
 @media (max-width: 768px) {
   .orb {
@@ -434,9 +490,6 @@
   .hero {
     padding: 8px 24px 22px;
     min-height: 300px;
-  }
-  .loadingText {
-    font-size: 14.5px;
   }
   .headline {
     font-size: 22px;

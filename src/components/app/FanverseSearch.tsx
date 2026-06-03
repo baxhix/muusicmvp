@@ -102,9 +102,10 @@ export default function FanverseSearch() {
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
-  /* 4 frases rotacionando a cada 4s. Per product feedback "Ao
-   * mudar a frase, não mude a lista de usuários. Deixe a fixa"
-   * o filter foi removido — a lista abaixo é sempre a mesma. */
+  /* 4 frases rotacionando a cada 4s. Per product feedback "nas
+   * frases quebre a linha em: Ana Castela com você / Mesma
+   * música / Mesmo álbum" — `<br />` força o destaque branco
+   * bold cair pra segunda linha em cada caso. */
   type Phrase = {
     key: string;
     render: ReactNode;
@@ -115,9 +116,9 @@ export default function FanverseSearch() {
       render: (
         <>
           <strong>{snapshot.peopleCount.toLocaleString('pt-BR')}</strong>{' '}
-          <span className={styles.headlineMuted}>pessoas curtindo</span>{' '}
-          <strong>Ana Castela</strong>{' '}
-          <span className={styles.headlineMuted}>com você!</span>
+          <span className={styles.headlineMuted}>pessoas curtindo</span>
+          <br />
+          <strong>Ana Castela com você</strong>
         </>
       ),
     },
@@ -126,8 +127,9 @@ export default function FanverseSearch() {
       render: (
         <>
           <strong>{snapshot.sameSongCount.toLocaleString('pt-BR')}</strong>{' '}
-          <span className={styles.headlineMuted}>pessoas ouvindo a</span>{' '}
-          <strong>mesma música</strong>
+          <span className={styles.headlineMuted}>pessoas ouvindo a</span>
+          <br />
+          <strong>Mesma música</strong>
         </>
       ),
     },
@@ -136,8 +138,9 @@ export default function FanverseSearch() {
       render: (
         <>
           <strong>{snapshot.sameAlbumCount.toLocaleString('pt-BR')}</strong>{' '}
-          <span className={styles.headlineMuted}>pessoas ouvindo o</span>{' '}
-          <strong>mesmo álbum</strong>
+          <span className={styles.headlineMuted}>pessoas ouvindo o</span>
+          <br />
+          <strong>Mesmo álbum</strong>
         </>
       ),
     },
@@ -168,33 +171,52 @@ export default function FanverseSearch() {
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
-      <div className={styles.bg} aria-hidden="true" />
+      {/* Backdrop blur — visível no desktop quando o overlay vira
+       * modal centrado; mobile fica edge-to-edge sem blur. Click
+       * fecha. */}
+      <div
+        className={styles.backdrop}
+        aria-hidden="true"
+        onClick={() => setOpen(false)}
+      />
 
-      {/* Topbar — só back arrow. Thumb da Ana Castela removido per
-       * product feedback "Remova a imagem da Ana Castela do topo
-       * direito superior". */}
-      <div className={styles.topbar}>
-        <button
-          type="button"
-          className={styles.backBtn}
-          onClick={() => setOpen(false)}
-          aria-label="Voltar"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-        </button>
-      </div>
+      {/* Modal — wrapper que recebe radius + max-width no desktop
+       * e ocupa full-screen no mobile. */}
+      <div className={styles.modal}>
+        <div className={styles.bg} aria-hidden="true" />
 
-      {/* Hero — orbe + avatares orbitando + texto loading */}
+        {/* Topbar — só back arrow. */}
+        <div className={styles.topbar}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => setOpen(false)}
+            aria-label="Voltar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </button>
+        </div>
+
+      {/* Hero — orbe + avatares orbitando.
+       *
+       *  Per product feedback "Remova Analisando atividade do
+       *  mundo" — texto loading + dots foram removidos; o orbe
+       *  + os avatares orbitando já comunicam o aspecto de
+       *  "atividade" sem precisar de copy.
+       *
+       *  Avatares passam por cima do orbe per "Os avatares
+       *  flutuantes podem e devem passar por cima do orbe" — o
+       *  z-index dos avatares (3) já era maior que o do orbe (1),
+       *  e os paths agora têm amplitude maior pra que de fato
+       *  cruzem o centro visualmente.
+       *
+       *  Velocidade aumentada e ciclo de fade-out/fade-in
+       *  staggered pra "aparecem novamente" sem todos sumindo
+       *  juntos — tudo gerenciado nos keyframes do CSS. */}
       <div className={styles.hero}>
-        {/* Floating avatars — 8 avatares fazendo loops largos ao
-         * redor do orbe per product feedback "Diminua para 8
-         * avatares e os deixe flutuando e se movimentando ao redor
-         * do globo em movimentos longos e não micromovimentos".
-         * Cada um pega um path único (fsRoamN no CSS) via nth-child,
-         * com duração 14-22s pra dar deslocamento amplo + lento. */}
         {snapshot.topListeners.slice(0, 8).map((l, i) => (
           <span
             key={l.id}
@@ -202,7 +224,13 @@ export default function FanverseSearch() {
             style={{
               top: FLOATING_POSITIONS[i].top,
               left: FLOATING_POSITIONS[i].left,
-              animationDelay: `${i * 0.12}s, ${i * -2.3}s`,
+              /* 3 animation-delays:
+               *   1. fsAvatarIn entry: stagger por i (0.10s gap)
+               *   2. fsRoam* path: negative pra entrar em fase
+               *   3. fsBlink fade in/out: -2s por i (gap maior)
+               *      pra cada avatar aparecer/sumir em momento
+               *      diferente */
+              animationDelay: `${i * 0.10}s, ${i * -1.7}s, ${i * -2.4}s`,
             }}
             title={l.name}
           >
@@ -213,12 +241,6 @@ export default function FanverseSearch() {
 
         <div className={styles.orb} aria-hidden="true">
           <FanverseCore />
-        </div>
-        <div className={styles.loadingText}>
-          Analisando atividade do mundo
-          <span className={styles.dots} aria-hidden="true">
-            <span>.</span><span>.</span><span>.</span>
-          </span>
         </div>
       </div>
 
@@ -254,6 +276,7 @@ export default function FanverseSearch() {
         <section className={styles.userList}>
           {snapshot.users.map((u) => <UserRow key={u.id} user={u} />)}
         </section>
+      </div>
       </div>
     </div>
   );
