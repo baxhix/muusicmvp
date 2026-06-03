@@ -64,7 +64,13 @@
   top: 0;
   z-index: 0;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  /* Per product feedback "a imagem destaque Fanverse Ana Castela
+   * parece estar com sprite na parte de baixo, com parte dela
+   * sendo ocultada. Faça com que seja totalmente exibida." A
+   * imagem é 1080×1080 (quadrada); com aspect-ratio 16/9 o cover
+   * cortava topo e fundo. Trocando pro 1:1 a foto inteira cabe
+   * sem crop. */
+  aspect-ratio: 1 / 1;
   background: #0a0a14;
   overflow: hidden;
   /* Respeita safe area no topo (notch). */
