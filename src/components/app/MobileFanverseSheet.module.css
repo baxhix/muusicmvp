@@ -116,12 +116,12 @@
 .fold {
   position: relative;
   z-index: 1;
-  /* Per product feedback "posicione o conteúdo desta tela mais
-   * abaixo da tela, exceto a foto" — overlap reduzido (-150 →
-   * -60) + padding-top maior (90 → 140) empurra o título +
-   * meta visualmente pra baixo da viewport, mantendo só ~60px
-   * de overlap com a imagem pra preservar o mix do gradiente. */
-  margin-top: -60px;
+  /* Per product feedback "posicione mais acima o conteúdo do
+   * Fanverse" — overlap aumentado (-60 → -130) + padding-top
+   * reduzido (140 → 70) pra trazer o título + meta de volta
+   * pra cima da viewport. Mantém o gradient mix forte com a
+   * imagem (overlap dobrado). */
+  margin-top: -130px;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -130,7 +130,7 @@
     rgba(8, 8, 14, 0.96) 75%,
     rgba(11, 11, 13, 1) 100%
   );
-  padding: 140px 18px 12px;
+  padding: 70px 18px 12px;
 }
 
 /* Eyebrow "Fanverse" — Inter 14, acima do nome. Per product
