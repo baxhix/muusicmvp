@@ -11,6 +11,8 @@ import {
   type DailyMissionId,
   useDailyMissions,
 } from '@/hooks/useDailyMissions';
+import VerifiedBadge from './VerifiedBadge';
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './ArtistBox.module.css';
 
 // Loja da Boiadeira — official Ana Castela store. Same URL the
@@ -288,7 +290,14 @@ export default function ArtistBox() {
        *  para as tabs. Deixe o comportamento de expandir ao clicar
        *  na imagem da Ana Castela/nome". O chevron `.headerToggle`
        *  que vivia em `.discountRow` foi removido — `.discountRow`
-       *  agora só hospeda o tab bar. */}
+       *  agora só hospeda o tab bar.
+       *
+       *  Layout REFEITO per product feedback "Adapte o header do box
+       *  Fanverse Ana Castela desktop par algo semelhante ao layout
+       *  que temos no mobile" — agora segue o padrão hero image
+       *  full-width + fold overlapping com gradient + eyebrow
+       *  "Fanverse" + nome grande + verified badge + orb decorativo
+       *  + meta row com Fanpoints, mesmo do MobileFanverseSheet. */}
       <button
         type="button"
         className={`${styles.header} ${styles.headerBtn}`}
@@ -296,38 +305,47 @@ export default function ArtistBox() {
         aria-expanded={open}
         aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/ana-castela-fanverse-hero.jpg" alt="Ana Castela" className={styles.photo} />
-        <div className={styles.info}>
-          <div className={styles.nameLine}>
-            <span className={styles.label}>Fanverse</span>
-            <span className={styles.name}>Ana Castela</span>
+        {/* Hero image — full width do box; aspect-ratio igual ao
+         * mobile (1080/969) pra mesma proporção visual. */}
+        <div className={styles.hero}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/ana-castela-fanverse-hero.jpg"
+            alt="Ana Castela"
+            className={styles.heroImg}
+          />
+        </div>
+
+        {/* Fold — overlap com gradient sobre o hero. Eyebrow + nome +
+         * verified + orb à direita, depois meta row com Fanpoints. */}
+        <div className={styles.fold}>
+          <span className={styles.foldEyebrow}>Fanverse</span>
+          <div className={styles.foldTitleRow}>
+            <div className={styles.foldTitle}>
+              <span className={styles.foldTitleName}>Ana Castela</span>
+              <VerifiedBadge size={18} className={styles.foldVerified} />
+            </div>
+            {/* Orb decorativo — mesmo elemento do mobile (FanverseCore
+             * WebGL canvas). aria-hidden + line-height:0 evitam
+             * ghosting/baseline gap; pointer-events:none deixa o
+             * clique passar pro botão de toggle. */}
+            <span className={styles.foldOrb} aria-hidden="true">
+              <FanverseCore />
+            </span>
           </div>
-          {/* Fanpoints sits IMMEDIATELY below the name per product
-              feedback "deixe o número de fanpoints logo abaixo do
-              nome". The earlier bottom-alignment (justify-content:
-              space-between on `.info`) was retired — the row now
-              flows naturally under the name with a tight gap. */}
-          {/* Crown icon removido per product feedback "remova o
-           * ícone de coroa ao lado dos Fanpoints". Só valor + label.
-           * `align-items: baseline` no container alinha 402.299 +
-           * Fanpoints pela mesma linha de base, mesmo com font-sizes
-           * diferentes. Botão "4 convites" à direita per product
-           * feedback "à frente de 402.299 Fanpoints adicione um
-           * botão totalmente arredondado, preto com a borda
-           * gradiente roxa, ao clicar abre um modal com 4 códigos". */}
           <div
-            className={styles.fanpointsInline}
+            className={styles.metaRow}
             data-onboarding-anchor="fanpoints"
           >
-            <span className={styles.fanpointsInlineValue}>
-              {fanpoints.toLocaleString('pt-BR')}
-            </span>
-            <span className={styles.fanpointsInlineLabel}>Fanpoints</span>
+            <div className={styles.metaPoints}>
+              <span className={styles.metaPointsValue}>
+                {fanpoints.toLocaleString('pt-BR')}
+              </span>
+              <span className={styles.metaPointsLabel}>Fanpoints</span>
+            </div>
             {/* Botão "4 convites" removido per product feedback
-             * "Remova o botão 4 convites" (desktop). InviteFriendsModal
-             * permanece importado caso outro surface ainda dispare
-             * setInviteOpen, mas a entrada visual aqui não existe mais. */}
+             * anterior. InviteFriendsModal permanece disponível via
+             * outros surfaces. */}
           </div>
         </div>
       </button>

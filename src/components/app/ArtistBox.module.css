@@ -245,11 +245,16 @@
  * paired with the discount badge below it. Together they form
  * the "always visible" upper region of the box; the dropdown
  * below only wraps the missions list / progress / footer. */
+/* Header REFEITO per product feedback "Adapte o header do box
+ * Fanverse Ana Castela desktop par algo semelhante ao layout que
+ * temos no mobile" — agora é um stack vertical com hero image
+ * full-width no topo + fold com gradient overlap + eyebrow + título
+ * + verified + orb + meta row, espelhando o MobileFanverseSheet
+ * (mesmo asset, mesma proporção, mesmas classes-irmãs). */
 .header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px 8px;
+  display: block;
+  padding: 0;
+  position: relative;
 }
 
 /* Quando o header é renderizado como <button> (toggle do dropdown
@@ -265,120 +270,153 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 14px 14px 0 0;
   transition: background 140ms ease;
+  /* overflow hidden garante que o gradient do fold + a imagem do
+   * hero respeitem o radius superior do box. */
+  overflow: hidden;
 }
-.headerBtn:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-.headerBtn:active {
-  background: rgba(255, 255, 255, 0.05);
+.headerBtn:hover .heroImg {
+  transform: scale(1.02);
 }
 .headerBtn:focus-visible {
   outline: 2px solid rgba(168, 85, 247, 0.55);
   outline-offset: -2px;
 }
 
-/* Artist photo — bumped 30% (48 → 62px) per product
- * feedback "Aumente 30% o tamanho da imagem da Ana Castela".
- * Border-radius nudged proportionally so the rounded corner
- * stays consistent with the new size. */
-.photo {
-  width: 62px;
-  height: 62px;
-  border-radius: 8px;
-  object-fit: cover;
-  flex-shrink: 0;
-  display: block;
-}
-
-/* Text group — flows top-down with the Fanpoints chip sitting
- * IMMEDIATELY under the name per product feedback "deixe o
- * número de fanpoints logo abaixo do nome". The earlier
- * `align-self: stretch` + `justify-content: space-between`
- * pushed the chip to the photo's lower edge; that's been
- * retired so name and Fanpoints read as a tight stacked pair. */
-.info {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: 0;
-}
-
-.nameLine {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  white-space: nowrap;
+/* ── Hero image ──
+ * Aspect-ratio 1080/969 igual ao mobile pro mesmo enquadramento
+ * (320×287 nas regras desktop). object-position: bottom joga o
+ * overflow vertical pro topo, idêntico ao crop do mobile. */
+.hero {
+  width: 100%;
+  aspect-ratio: 1080 / 969;
   overflow: hidden;
-  /* Tipografia "Fanverse Ana Castela" passa pra Borscha bold
-   * per product feedback "deixe a palavra Fanverse Ana Castela
-   * com o fonte Borcha Bold". font-family aplicada no parent
-   * pra que os dois spans filhos (.label + .name) herdem
-   * automaticamente. weight 700 = peso 'Bold' do kit
-   * self-hosted (weights 300/400/700 carregados em globals.css). */
+  background: #0a0a14;
+  position: relative;
+}
+.heroImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 0 100%;
+  display: block;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Fold ──
+ * Bloco que sobe por cima do hero via margin-top negativo.
+ * Gradient transparent → opaco mistura visualmente com a imagem e
+ * funde no bg sólido do box. z-index:1 garante overlap.
+ *
+ * Tamanhos reduzidos vs. mobile pra acomodar a largura menor do
+ * box (~280-320px vs. tela cheia). Padding lateral 16 alinha com
+ * o .discountRow logo abaixo. */
+.fold {
+  position: relative;
+  z-index: 1;
+  margin-top: -150px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(2, 2, 4, 0.35) 25%,
+    rgba(4, 4, 8, 0.75) 55%,
+    rgba(8, 8, 14, 0.96) 82%,
+    rgba(11, 11, 13, 1) 100%
+  );
+  padding: 70px 16px 8px;
+}
+
+/* Eyebrow "Fanverse" — Inter, pequeno, acima do nome. */
+.foldEyebrow {
+  display: block;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.75);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  margin: 0 0 2px;
+  line-height: 1;
+}
+
+/* Title row — nome + verified à esquerda, orb decorativo à direita.
+ * Mesma estrutura do MobileFanverseSheet (mesma class semantics:
+ * foldTitleRow → foldTitle → foldTitleName + foldVerified). */
+.foldTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.foldTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
 }
-
-.label {
-  font-size: 17px;
-  /* 700 = peso bold registrado no @font-face da Borscha.
-   * 800 sintetizaria bold acima do glyph real, distorcendo. */
+.foldTitleName {
+  /* 26px — escala compatível com a largura de 280-320px do box. No
+   * mobile o nome é 38px (tela inteira); aqui fica proporcional. */
+  font-size: 26px;
   font-weight: 700;
-  color: rgba(245,245,247,0.97);
+  color: #ffffff;
   letter-spacing: -0.02em;
-  line-height: 1.15;
-  flex-shrink: 0;
-}
-
-.name {
-  font-size: 17px;
-  font-weight: 700;
-  color: rgba(245,245,247,0.97);
-  letter-spacing: -0.02em;
+  line-height: 1.05;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.15;
-}
-
-/* Inline Fanpoints chip in the header — replaced the previous
- * "Membro desde Maio de 2026" line per product feedback
- * "Remova o texto 'Membro desde Maio de 2026' e coloque o
- * '53.743 Fanpoints' e substitua a estrela pela coroa." The
- * old `.memberSince` rule was retired; this row carries a
- * crown icon + amber-emphasized number + muted label, sitting
- * directly under the artist name. */
-.fanpointsInline {
-  display: inline-flex;
-  /* `baseline` alinha o número 402.299 (12.5px) e a palavra
-   * Fanpoints (11.5px) pela linha de base comum, per product
-   * feedback "alinhe na base de ambos os textos (402.299 e
-   * Fanpoints)". */
-  align-items: baseline;
-  gap: 5px;
-  /* margin-top 8 → 2 per product feedback "aproxime um pouco as
-   * palavras 402.299 Fanpoints do nome Fanverse Ana Castela". */
-  margin-top: 2px;
-  font-family: var(--sans);
   white-space: nowrap;
 }
-.fanpointsInlineValue {
+.foldVerified {
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+}
+
+/* Orb decorativo — FanverseCore WebGL canvas. Menor que no mobile
+ * (48 vs 72) pra ficar proporcional ao nome reduzido. */
+.foldOrb {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: inline-block;
+  line-height: 0;
+  pointer-events: none;
+}
+
+/* ── Meta row ──
+ * Fanpoints (valor + label) logo abaixo do título. Mesmas regras
+ * do mobile (baseline align, fonte sans, valor branco bold, label
+ * cinza médio). */
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0;
+  margin-top: -4px;
+}
+.metaPoints {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.metaPointsValue {
   font-size: 12.5px;
   font-weight: 700;
-  /* White per product feedback "A palavra 53.853 deve ser na
-   * cor branca no Box Fanverse". The crown glyph next to it
-   * keeps the amber accent on its own; isolating the color
-   * cue on the icon lets the number read as the primary value
-   * without competing with it. */
   color: #ffffff;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
+  font-family: var(--sans);
 }
-.fanpointsInlineLabel {
-  font-size: 11.5px;
+.metaPointsLabel {
+  font-size: 12.5px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
-  letter-spacing: 0.01em;
+  font-family: var(--sans);
 }
 
 /* ── "15% OFF na Loja da Boiadeira" CTA badge ──
