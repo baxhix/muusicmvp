@@ -127,18 +127,17 @@ export default function BottomNav() {
   };
 
   const handleMapClick = () => {
-    // Feed is a bottom-sheet overlay over /app. If it's open, the
-    // user is technically already on /app but the map is hidden
-    // by the sheet — tapping the Map slot should mean "give me
-    // the map back", which requires closing the Feed first.
-    const wasFeedOpen = feedOpen;
-    dismissShellOverlays();
-    if (wasFeedOpen) {
-      // Don't fall through to flyTo / route push — the user's
-      // intent was "show the map", not also re-center. The next
-      // tap on Map (when feed is already closed) handles centering.
-      return;
-    }
+    // Per product feedback "ao clicar no ícone de mundo na bottom
+    // bar, o feed não deve ser retraído" — o map slot NÃO toca
+    // mais no feedOpen. O usuário pode ter o feed aberto + tocar
+    // no globo só pra centralizar o mapa por baixo ou navegar pra
+    // /app sem perder o que estava lendo. Os demais overlays
+    // (EditProfile, more popover, activeOverlay como Superfãs /
+    // Notificações) continuam sendo fechados — o globo é o ato de
+    // "voltar pra base".
+    setActiveOverlay(null);
+    setShowEditProfile(false);
+    setMoreOpen(false);
     // If we're not on /app, go there first. Otherwise center the
     // map on the user (or ask for location if we don't have it).
     if (pathname !== '/app') {
