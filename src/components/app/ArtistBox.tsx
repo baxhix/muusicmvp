@@ -234,7 +234,7 @@ export default function ArtistBox() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/ana-castela-box.jpg"
+          src="/ana-castela-fanverse-hero.jpg"
           alt=""
           className={styles.compactPhoto}
         />
@@ -297,7 +297,7 @@ export default function ArtistBox() {
         aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/ana-castela-box.jpg" alt="Ana Castela" className={styles.photo} />
+        <img src="/ana-castela-fanverse-hero.jpg" alt="Ana Castela" className={styles.photo} />
         <div className={styles.info}>
           <div className={styles.nameLine}>
             <span className={styles.label}>Fanverse</span>

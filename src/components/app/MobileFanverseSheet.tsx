@@ -387,33 +387,34 @@ function MobileRankingList() {
     <div className={sheetStyles.rankingWrap}>
       {/* Progress bar do user atual — mesmo header do desktop. */}
       <div className={sheetStyles.rankingProgress}>
-        <div className={sheetStyles.rankingProgressLabel}>
-          {meInTop10
-            ? 'Você está no Top 10!'
-            : top10Threshold === null
-              ? 'Continue ouvindo pra entrar no ranking'
-              : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
-        </div>
-        {/* Track + emoji de coroa no fim — per product feedback
-         * "diminua pela metade a altura da barra de progresso e
-         * ao fim dela, insira o emoji de coroa". O track ganha
-         * altura 3px (metade do 6px desktop) via override local
-         * e a coroa fica logo à direita, como meta visual. */}
-        <div className={sheetStyles.rankingProgressBarRow}>
-          <div
-            className={`${boxStyles.tabRankingProgressTrack} ${sheetStyles.rankingProgressTrack}`}
-          >
-            <div
-              className={boxStyles.tabRankingProgressFill}
-              style={{ width: `${meProgressPct}%` }}
-            />
-          </div>
+        {/* Header row: label "Você está no Top 10!" à esquerda +
+         * coroa 👑 alinhada no eixo do texto à direita, per
+         * product feedback "deixe a coroa alinhada ao texto Você
+         * está no Top 10!". A barra fina vem logo abaixo, com gap
+         * menor pra "aproximar o texto da barra". */}
+        <div className={sheetStyles.rankingProgressHeader}>
+          <span className={sheetStyles.rankingProgressLabel}>
+            {meInTop10
+              ? 'Você está no Top 10!'
+              : top10Threshold === null
+                ? 'Continue ouvindo pra entrar no ranking'
+                : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
+          </span>
           <span
             className={sheetStyles.rankingProgressCrown}
             aria-hidden="true"
           >
             👑
           </span>
+        </div>
+        {/* Track fino (3px) — altura metade do desktop. */}
+        <div
+          className={`${boxStyles.tabRankingProgressTrack} ${sheetStyles.rankingProgressTrack}`}
+        >
+          <div
+            className={boxStyles.tabRankingProgressFill}
+            style={{ width: `${meProgressPct}%` }}
+          />
         </div>
       </div>
 
@@ -553,7 +554,9 @@ function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
             key={row.userId}
             className={`${sheetStyles.podiumCard} ${cardClass} ${isMe ? sheetStyles.podiumCardMe : ''}`}
           >
-            <span className={sheetStyles.podiumRank}>{rank}</span>
+            {/* Ordem dos elementos per product feedback: primeiro a
+             * FOTO, depois nome / fanpoints / selo, e o número de
+             * rank (1/2/3) POR ÚLTIMO, no rodapé do card. */}
             <span className={sheetStyles.podiumAvatarWrap}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -582,6 +585,7 @@ function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
             <span className={sheetStyles.podiumBadge}>
               {PODIUM_BADGES[rank]}
             </span>
+            <span className={sheetStyles.podiumRank}>{rank}</span>
           </div>
         );
       })}

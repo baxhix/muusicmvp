@@ -410,8 +410,20 @@
 .rankingProgress {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* Per product feedback "aproxime o texto da barra" — gap
+   * 8 → 3px junta label e track praticamente colados. */
+  gap: 3px;
   padding: 6px 0 4px;
+}
+/* Header com label "Você está no Top 10!" à esquerda + coroa 👑
+ * à direita, alinhados pela mesma baseline (eixo do texto), per
+ * product feedback "deixe a coroa alinhada ao texto Você está
+ * no Top 10!". */
+.rankingProgressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .rankingProgressLabel {
   font-size: 12.5px;
@@ -419,26 +431,14 @@
   color: rgba(245, 245, 247, 0.78);
   letter-spacing: -0.005em;
 }
-
-/* Row que junta track + emoji de coroa no fim da barra. O track
- * herda as cores do `tabRankingProgressTrack` (gradient roxo do
- * fill), mas no mobile ele fica mais fino (3px) per product
- * feedback "diminua pela metade a altura da barra de progresso e
- * ao fim dela, insira o emoji de coroa". */
-.rankingProgressBarRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 /* Override do height do track (era 6px no desktop) — !important
  * pra ganhar do hash-namespaced do CSS Module original. */
 .rankingProgressTrack {
   height: 3px !important;
-  flex: 1;
-  min-width: 0;
 }
-/* Coroa visual no fim da barra. Tamanho calibrado pra ler como
- * "meta" do progresso sem competir com o label de cima. */
+/* Coroa visual à direita do label de cima — alinhada no eixo do
+ * texto, não na barra. Tamanho calibrado pra ler como "meta" do
+ * progresso sem competir com o label. */
 .rankingProgressCrown {
   font-size: 16px;
   line-height: 1;
@@ -487,7 +487,10 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 14px 10px 14px;
+  /* Padding-top reduzido (era 14) per product feedback "deixe a
+   * imagem do top 1 mais no topo" — foto fica próxima da borda
+   * superior do card. */
+  padding: 8px 10px 14px;
   border-radius: 14px;
   background: linear-gradient(180deg,
     rgba(255, 255, 255, 0.045) 0%,
@@ -506,18 +509,21 @@
  * Min-height garante o desenho do pódio mesmo quando o conteúdo
  * for igualmente curto entre os três. */
 .podiumCard1 {
-  min-height: 226px;
-  padding-top: 18px;
+  min-height: 246px;
+  /* Top1 ganha um pouco mais de cabeça pra acomodar a foto maior
+   * e ainda assim ficar bem alto no card. */
+  padding-top: 6px;
 }
 .podiumCard2 {
-  min-height: 196px;
+  min-height: 200px;
 }
 .podiumCard3 {
-  min-height: 176px;
+  min-height: 180px;
 }
 
-/* Rank chip — gradiente rosa/roxo igual ao resto do app, sem
- * borda. Pequeno e centralizado no topo do card. */
+/* Rank chip — vive no FUNDO do card per product feedback "o 1,2
+ * e 3 por último". margin-top:0 + position via order de DOM
+ * fazem ele aparecer abaixo do badge. */
 .podiumRank {
   width: 26px;
   height: 26px;
@@ -547,10 +553,11 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   display: block;
 }
-/* Foto do #1 levemente maior pra reforçar o destaque. */
+/* Foto do #1 bem maior pra reforçar o destaque per product
+ * feedback "aumente a imagem do top 1". */
 .podiumPhoto1 {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
 }
 .podiumPhotoSm {
   width: 56px;
@@ -572,7 +579,10 @@
   box-shadow: 0 0 6px rgba(34, 197, 94, 0.55);
 }
 
-/* Nome — truncado se for grande demais pro card. */
+/* Nome — pode quebrar em 2 linhas se não couber per product
+ * feedback "Nomes que não caibam em uma linha, quebre na linha
+ * de baixo". Limitamos a 2 linhas via line-clamp pra evitar que
+ * nomes longos arrasem o layout do card. */
 .podiumName {
   width: 100%;
   text-align: center;
@@ -580,13 +590,16 @@
   font-weight: 600;
   color: #ffffff;
   letter-spacing: -0.005em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
   transition: color 140ms ease;
   padding: 0 2px;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 .podiumName:hover {
   color: #c084fc;
@@ -615,7 +628,9 @@
 
 /* Selo adicional — chip pequeno em cinza/preto, sem cor
  * chamativa. Mostra rótulo aspiracional ("Lendário" / "Elite"
- * / "VIP") pra dar peso simbólico ao card. */
+ * / "VIP") pra dar peso simbólico ao card. margin-top:auto
+ * empurra badge + rank pro rodapé do card; rank chip vem logo
+ * depois (último elemento no DOM) e fica abaixo do badge. */
 .podiumBadge {
   margin-top: auto;
   font-size: 10px;
