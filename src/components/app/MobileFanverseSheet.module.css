@@ -116,13 +116,14 @@
 .fold {
   position: relative;
   z-index: 1;
-  /* Per product feedback "Aumente a área da foto para baixo" —
-   * overlap reduzido (-130 → -90) faz com que a foto ganhe 40px
-   * de área visível antes do gradient começar a mesclar com o
-   * fold. Combinado com o padding-top abaixo, o texto cai 18px
-   * a mais que antes ("posicione 18px mais abaixo"), preservando
-   * o ganho líquido da foto. */
-  margin-top: -90px;
+  /* Per product feedback "Aumente a área visível da imagem do
+   * Fanverse Ana Castela" — overlap reduzido novamente (-90 →
+   * -60), liberando +30px de foto visível antes do gradient. O
+   * padding-top sobe (48 → 64) pra "posicione mais abaixo a
+   * palavra Fanverse", deixando o texto bem próximo do limite
+   * inferior do hero. Net: a foto ganha 30px de área + o título
+   * desce ~38px. */
+  margin-top: -60px;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -131,9 +132,9 @@
     rgba(8, 8, 14, 0.96) 75%,
     rgba(11, 11, 13, 1) 100%
   );
-  /* padding-top calibrado: -90 + 48 = início do texto 18px
-   * MAIS BAIXO que o anterior (-130 + 70 = -60). */
-  padding: 48px 18px 12px;
+  /* padding-top 64: texto inicia em (heroH - 60 + 64) = heroH + 4
+   * (~no limite inferior do hero, gradient já bem mesclado). */
+  padding: 64px 18px 12px;
 }
 
 /* Eyebrow "Fanverse" — Inter 14, acima do nome. Per product
