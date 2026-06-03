@@ -285,21 +285,19 @@
 }
 
 /* ── Hero image ──
- * Per product feedback "Diminua a largura do header e substitua
- * pela imagem em anexo somente no desktop" — hero saiu de
- * full-bleed pra contido com gutter lateral (14px de cada lado),
- * radius próprio + aspect-ratio landscape (16/9) que combina com
- * o crop horizontal do novo asset (chapéu rosa em perfil).
- *
- * `object-position: center` mantém o rosto + chapéu sempre
- * visíveis quando o container muda de tamanho. */
+ * Per product feedback "Adicione o gradient, remova o border
+ * radius e a imagem deve ocupar 100% da largura e colar no topo"
+ * — hero voltou pra full-bleed (sem gutter lateral, sem radius
+ * próprio), colando no topo do box. Aspect-ratio 16/9 segue do
+ * crop landscape do asset (chapéu rosa). object-position: center
+ * mantém o rosto enquadrado. */
 .hero {
-  width: auto;
-  margin: 12px 14px 0;
+  width: 100%;
+  margin: 0;
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background: #0a0a14;
-  border-radius: 12px;
+  border-radius: 0;
   position: relative;
 }
 .heroImg {
@@ -313,25 +311,24 @@
 
 /* ── Fold ──
  * Bloco que sobe por cima do hero via margin-top negativo.
- * Gradient transparent → opaco mistura visualmente com a imagem e
- * funde no bg sólido do box. z-index:1 garante overlap.
- *
- * Margin-top reduzido (era -150) porque o hero agora é
- * landscape/menor + contido — overlap exagerado escondia metade
- * da foto. -50 deixa só a base da imagem coberta pelo gradient
- * pra fundir com o bloco abaixo. */
+ * Gradient transparent → opaco mistura com a imagem e funde no
+ * bg sólido do box. Per product feedback "Adicione o gradient" —
+ * overlap reforçado (-120) e padding-top maior (64) pra o
+ * gradient ter respiro pra fundir suavemente da imagem pro título,
+ * mesmo padrão visual do MobileFanverseSheet. */
 .fold {
   position: relative;
   z-index: 1;
-  margin-top: -50px;
+  margin-top: -120px;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(2, 2, 4, 0.45) 35%,
-    rgba(8, 8, 14, 0.92) 70%,
+    rgba(2, 2, 4, 0.35) 22%,
+    rgba(4, 4, 8, 0.75) 52%,
+    rgba(8, 8, 14, 0.96) 80%,
     rgba(11, 11, 13, 1) 100%
   );
-  padding: 32px 16px 8px;
+  padding: 64px 16px 8px;
 }
 
 /* Eyebrow "Fanverse" — Inter, pequeno, acima do nome. */
