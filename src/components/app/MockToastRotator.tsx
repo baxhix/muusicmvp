@@ -502,7 +502,7 @@ function ToastBody({ toast }: { toast: MockToast }) {
         <>
           {/* Direct-from-the-artist DM notification per product
             * feedback. Avatar is the personal Ana Castela
-            * headshot (/ana-castela-fanverse-hero.jpg), distinct from the
+            * headshot (/ana-castela.png), distinct from the
             * Central de Fãs brand portrait used by the
             * new_publication case so the two notification
             * types read as different surfaces. Strong name
@@ -510,7 +510,7 @@ function ToastBody({ toast }: { toast: MockToast }) {
             * "Ana" — more recognizable across the platform. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/ana-castela-fanverse-hero.jpg"
+            src="/ana-castela.png"
             alt=""
             className={styles.avatar}
             aria-hidden="true"
