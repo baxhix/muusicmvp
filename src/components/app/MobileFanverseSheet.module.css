@@ -184,6 +184,21 @@
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
 }
 
+/* Orb decorativo no slot que era do botão "4 convites" no
+ * foldTitleRow (direita do nome). Mesma vibe do orbe do
+ * header mobile (FanverseCore renderiza o canvas WebGL2 e se
+ * auto-redimensiona via ResizeObserver). pointer-events:none +
+ * line-height:0 evitam ghosting e gap-baseline em volta do canvas.
+ * Sem drop-shadow chamativo — o orbe já tem brilho próprio. */
+.foldOrb {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  display: inline-block;
+  line-height: 0;
+  pointer-events: none;
+}
+
 /* ── Meta row ──
  *
  * Fanpoints (esquerda) + Convites pill (direita), dentro do

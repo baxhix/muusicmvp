@@ -17,6 +17,7 @@ import {
   BenefitsTabContent,
 } from './ArtistBox';
 import VerifiedBadge from './VerifiedBadge';
+import FanverseCore from '@/components/animations/FanverseCore';
 import sheetStyles from './MobileFanverseSheet.module.css';
 import boxStyles from './ArtistBox.module.css';
 
@@ -198,13 +199,14 @@ export default function MobileFanverseSheet({
             <span className={sheetStyles.foldTitleName}>Ana Castela</span>
             <VerifiedBadge size={22} className={sheetStyles.foldVerified} />
           </div>
-          <button
-            type="button"
-            className={sheetStyles.invitesBtn}
-            onClick={() => setInviteOpen(true)}
-          >
-            4 convites
-          </button>
+          {/* Orb decorativo da marca — assume o slot que era do botão
+           * "4 convites" per product feedback "insira o orbe no lugar
+           * que estava o botão 4 convites". O botão foi movido pra
+           * metaRow (alinhado aos Fanpoints) abaixo. aria-hidden +
+           * pointer-events:none porque é puramente decorativo. */}
+          <span className={sheetStyles.foldOrb} aria-hidden="true">
+            <FanverseCore />
+          </span>
         </div>
         <div className={sheetStyles.metaRow}>
           <div className={sheetStyles.metaPoints}>
@@ -213,6 +215,16 @@ export default function MobileFanverseSheet({
             </span>
             <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
           </div>
+          {/* Botão "4 convites" — vive aqui agora, alinhado ao bloco
+           * de Fanpoints à esquerda, per product feedback "posicione
+           * o botão de 4 convites abaixo, alinhado aos Fanpoints". */}
+          <button
+            type="button"
+            className={sheetStyles.invitesBtn}
+            onClick={() => setInviteOpen(true)}
+          >
+            4 convites
+          </button>
         </div>
       </div>
 

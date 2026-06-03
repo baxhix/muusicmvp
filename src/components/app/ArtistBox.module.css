@@ -977,8 +977,11 @@
   text-overflow: ellipsis;
 }
 
+/* Per product feedback "Nas missões cumpridas, remova o tachado
+ * das palavras" — line-through retirado. O cue de "concluído"
+ * agora vive apenas no checkbox verde + na cor fade da label
+ * (sem strike). */
 .missionDone .missionName {
-  text-decoration: line-through;
   color: rgba(245,245,247,0.4);
 }
 
