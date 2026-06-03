@@ -13,7 +13,7 @@ import {
   TOTAL_MISSIONS,
   SPARKLE_INDICES,
   sumEarnedXp,
-  InviteFriendsModal,
+  // InviteFriendsModal removido — botão "4 convites" sai do mobile.
   BenefitsTabContent,
 } from './ArtistBox';
 import VerifiedBadge from './VerifiedBadge';
@@ -66,7 +66,7 @@ export default function MobileFanverseSheet({
 }: Props) {
   type BoxTab = 'missoes' | 'ranking' | 'beneficios';
   const [activeTab, setActiveTab] = useState<BoxTab>(defaultTab);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  // inviteOpen state removida — botão "4 convites" foi tirado do mobile.
 
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
@@ -215,16 +215,10 @@ export default function MobileFanverseSheet({
             </span>
             <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
           </div>
-          {/* Botão "4 convites" — vive aqui agora, alinhado ao bloco
-           * de Fanpoints à esquerda, per product feedback "posicione
-           * o botão de 4 convites abaixo, alinhado aos Fanpoints". */}
-          <button
-            type="button"
-            className={sheetStyles.invitesBtn}
-            onClick={() => setInviteOpen(true)}
-          >
-            4 convites
-          </button>
+          {/* Botão "4 convites" removido do mobile per product
+           * feedback "Remova o botão de 4 convites do mobile".
+           * InviteFriendsModal continua disponível via outros
+           * surfaces (ex.: desktop ArtistBox). */}
         </div>
       </div>
 
@@ -342,9 +336,8 @@ export default function MobileFanverseSheet({
         )}
       </div>
 
-      {inviteOpen && (
-        <InviteFriendsModal onClose={() => setInviteOpen(false)} />
-      )}
+      {/* InviteFriendsModal removido junto com o botão de 4 convites
+       * per product feedback "Remova o botão de 4 convites do mobile". */}
     </div>
   );
 }
@@ -595,9 +588,9 @@ function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
               </span>
               <span className={sheetStyles.podiumPointsLabel}>FP</span>
             </div>
-            <span className={sheetStyles.podiumBadge}>
-              {PODIUM_BADGES[rank]}
-            </span>
+            {/* Badges "Lendário/Elite/VIP" removidas per product
+             * feedback "Remova as badges Elite, Lendário e VIP dos
+             * top3". O rank chip embaixo é o único cue de posição. */}
             <span className={sheetStyles.podiumRank}>{rank}</span>
           </div>
         );

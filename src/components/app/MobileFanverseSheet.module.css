@@ -64,15 +64,12 @@
   top: 0;
   z-index: 0;
   width: 100%;
-  /* Per product feedback "agora na parte superior, dê um crop no
-   * topo de 96px na imagem e posicione a imagem no topo". A
-   * imagem é 1080×1080. Removendo 96px do topo sobra 1080×984,
-   * razão 1080/984 ≈ 1.098. O container adota esse aspect-ratio
-   * pra que TODO o restante (984px de altura source) caiba e o
-   * topo seja o único pedaço escondido. object-position: bottom
-   * no .heroImg garante que o overflow vá pra cima — clip no
-   * topo, imagem alinhada ao topo da região visível. */
-  aspect-ratio: 1080 / 984;
+  /* Crop atualizado pra 111px do topo (96 + 15) per product feedback
+   * "Faça mais um crop de 15px na imagem destaque do Fanverse Ana
+   * Castela". Imagem 1080×1080 - 111 source-px = 1080×969 visível,
+   * razão 1080/969. object-position: bottom continua jogando o
+   * overflow pro topo (= clip nos 111px superiores). */
+  aspect-ratio: 1080 / 969;
   background: #0a0a14;
   overflow: hidden;
   /* Respeita safe area no topo (notch). */
@@ -127,13 +124,11 @@
 .fold {
   position: relative;
   z-index: 1;
-  /* Per product feedback "Posicione todo o conteúdo 140px acima
-   * de onde está atualmente" — overlap salta de -60 → -200 (140px
-   * a mais), puxando fold + tabs + body 140px pra cima. O hero
-   * agora fica encoberto pelo gradient do fold a partir dos
-   * primeiros 200px, mas o ganho de "conteúdo mais alto" prevalece
-   * per pedido do usuário. */
-  margin-top: -200px;
+  /* Per product feedback "suba mais 15px o restante do conteúdo
+   * também" — overlap salta de -200 → -215 (mais 15 pra cima),
+   * acompanhando o crop adicional do hero pra manter a posição
+   * relativa do conteúdo dentro do hero novo. */
+  margin-top: -215px;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -543,17 +538,18 @@
 /* Alturas escalonadas — o #1 mais alto, #2 médio, #3 menor.
  * Min-height garante o desenho do pódio mesmo quando o conteúdo
  * for igualmente curto entre os três. */
+/* Alturas com diferenças menores per product feedback "diminua a
+ * diferença de altura entre o primeiro, segundo e terceiro
+ * colocado". 1=180 / 2=170 / 3=160 = step de 10px (era ~46px
+ * entre #1 e #3). */
 .podiumCard1 {
-  min-height: 246px;
-  /* Top1 ganha um pouco mais de cabeça pra acomodar a foto maior
-   * e ainda assim ficar bem alto no card. */
-  padding-top: 6px;
+  min-height: 180px;
 }
 .podiumCard2 {
-  min-height: 200px;
+  min-height: 170px;
 }
 .podiumCard3 {
-  min-height: 180px;
+  min-height: 160px;
 }
 
 /* Rank chip — vive no FUNDO do card per product feedback "o 1,2
@@ -588,12 +584,12 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   display: block;
 }
-/* Foto do #1 maior que as outras pra reforçar o destaque, mas
- * sem dominar o card. Iterações: 72 → 96 → 80 per product feedback
- * "diminua a imagem do top1 em Superfãs". */
+/* Foto do #1 IGUAL ao #2 e #3 per product feedback "Deixe do mesmo
+ * tamanho o tamanho da foto do top 1". Os 3 cards agora têm
+ * fotos padronizadas em 56×56. */
 .podiumPhoto1 {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
 }
 .podiumPhotoSm {
   width: 56px;

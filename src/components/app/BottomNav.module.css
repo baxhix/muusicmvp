@@ -21,10 +21,12 @@
   bottom: 0;
   left: 0;
   right: 0;
-  /* Above the full-screen route panels (z:60) so the nav stays
-   * tappable on every route. Panels' mobile breakpoint leaves a
-   * 76px gap at the bottom so they don't sit under the pill. */
-  z-index: 70;
+  /* Above the full-screen route panels (z:60) AND o MobileFanverseSheet
+   * (z:240) so a nav stays visível e fixa mesmo quando o sheet está
+   * aberto, per product feedback "a nav bar devem se manter visível
+   * e fixa". 245 fica abaixo dos modais top-end (LiveChatPanel z:250
+   * etc), que continuam cobrindo o nav quando abertos. */
+  z-index: 245;
   display: flex;
   justify-content: center;
   padding: 36px 0 24px;
