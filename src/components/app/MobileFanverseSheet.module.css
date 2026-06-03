@@ -132,9 +132,13 @@
     rgba(8, 8, 14, 0.96) 75%,
     rgba(11, 11, 13, 1) 100%
   );
-  /* padding-top 64: texto inicia em (heroH - 60 + 64) = heroH + 4
-   * (~no limite inferior do hero, gradient já bem mesclado). */
-  padding: 64px 18px 12px;
+  /* padding-top 80 (era 64) per product feedback "posicione 16px
+   * mais abaixo as palavras Fanverse e Ana Castela" — texto desce
+   * +16px sem mexer no overlap (foto continua com a mesma área
+   * visível). Novo cálculo: heroH - 60 + 80 = heroH + 20 (texto
+   * inicia 20px abaixo do limite inferior do hero, sobre o bg
+   * sólido). */
+  padding: 80px 18px 12px;
 }
 
 /* Eyebrow "Fanverse" — Inter 14, acima do nome. Per product
