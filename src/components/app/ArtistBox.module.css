@@ -488,8 +488,11 @@
 .tabRankingRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 8px;
+  /* Per product feedback "Aumente levemente os espaçamentos, mesmo
+   * que for preciso aumentar a largura do bloco". gap 10 → 14,
+   * padding 7×8 → 10×12. */
+  gap: 14px;
+  padding: 10px 12px;
   border-radius: 8px;
   background: transparent;
   transition: background 140ms ease;
@@ -508,15 +511,11 @@
   background: rgba(255, 255, 255, 0.09);
 }
 .tabRankingRank {
-  /* Per product feedback "alinhe os nomes e a foto de avatar
-   * dos top3 com o restante dos usuários" — width unificado
-   * em 28px (era 32) pra bater EXATAMENTE com o medal pill
-   * top3, que tem .tabRankingRankMedal { width: 28px }
-   * sobrescrevendo. Antes a diferença de 4px deslocava avatar
-   * + nome 4px à esquerda nas linhas top3.
-   *
-   * Texto "#10"/"#11" continua cabendo em 28px @ font-size
-   * 12px tabular-nums (≈3 chars × ~7px). */
+  /* Per product feedback "#4 (número) mesmo tom de cinza que a
+   * pontuação" + "fonte 12, cinza, regular" — cor passa pro mesmo
+   * rgba(0.55) do tabRankingPoints, font-weight 700 → 400 (regular).
+   * Top3 (.tabRankingRankMedal) continua sobrescrevendo essas
+   * regras com o gradient rosa/roxo + bold. */
   flex-shrink: 0;
   width: 28px;
   height: 28px;
@@ -524,14 +523,16 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 700;
-  color: rgba(245, 245, 247, 0.78);
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
   font-variant-numeric: tabular-nums;
 }
 .tabRankingInfo {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  /* gap 1 → 3 pra dar respiro entre nome e cidade (city agora é
+   * linha separada, não subline inline). */
+  gap: 3px;
   min-width: 0;
   flex: 1;
 }
@@ -560,40 +561,43 @@
   color: #c084fc;
 }
 
-/* Subline = Fanpoints + " · " + Cidade. Mesma linha,
- * subtítulo discreto abaixo do nome. */
+/* .tabRankingSubline retirada — cidade agora é filha direta de
+ * .tabRankingInfo (linha separada abaixo do nome), pontuação
+ * mora à DIREITA do .tabRankingRow, fora do .tabRankingInfo.
+ * Per product feedback "Deixe o nome da cidade logo abaixo e a
+ * pontuação à direita, como no mobile". Mantemos a classe
+ * declarada (no-op) caso outro componente compartilhado ainda
+ * a referencie via global selector. */
 .tabRankingSubline {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: 10.5px;
-  font-weight: 500;
-  line-height: 1.25;
+  /* legado — sem efeito visual */
 }
 .tabRankingPoints {
-  /* Per product feedback "deixe o número de fanpoints também em
-   * cinza" — branco recua pra um cinza médio, parecido com o
-   * resto da subline (cidade). Continua tabular-nums pra
-   * alinhar verticalmente entre rows. */
+  /* Pontuação à direita, fonte 12px cinza regular (= padrão do
+   * .tabRankingRank e .tabRankingCity) per product feedback
+   * "Deixe #4, nome da cidade, FP tudo em fonte 12 cinza, regular". */
+  font-size: 12px;
+  font-weight: 400;
   color: rgba(245, 245, 247, 0.55);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
   flex-shrink: 0;
+  /* Empurra pra direita da row (info ocupa flex:1). */
+  margin-left: auto;
 }
 .tabRankingSep {
-  color: rgba(245, 245, 247, 0.30);
-  flex-shrink: 0;
+  /* legado — sem uso após split city/points. */
+  display: none;
 }
 .tabRankingCity {
-  font-weight: 500;
-  color: rgba(245, 245, 247, 0.50);
+  /* Fonte 12px cinza regular pra bater com #N e FP. */
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  line-height: 1.25;
 }
 
 /* Botão "Carregar mais usuários" — per product feedback "remova

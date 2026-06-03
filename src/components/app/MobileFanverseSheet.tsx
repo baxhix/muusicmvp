@@ -287,12 +287,15 @@ export default function MobileFanverseSheet({
                     <div className={boxStyles.missionText}>
                       <span className={`${boxStyles.missionName} ${sheetStyles.missionNameMobile}`}>{m.name}</span>
                     </div>
-                    <span className={`${boxStyles.missionXp} ${sheetStyles.missionXpMobile}`}>{m.xp}</span>
+                    {/* Per product feedback "Missões, inverta a
+                     * ordem do check e do badge FP" — check vem
+                     * antes, badge FP depois (mesmo que desktop). */}
                     <div className={`${boxStyles.missionCheck} ${sheetStyles.missionCheckMobile}`}>
                       <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M1.5 4l2 2 3-3.5" />
                       </svg>
                     </div>
+                    <span className={`${boxStyles.missionXp} ${sheetStyles.missionXpMobile}`}>{m.xp}</span>
                     {isCelebrating && (
                       <div className={boxStyles.missionSparkles} aria-hidden="true">
                         {SPARKLE_INDICES.map((i) => (

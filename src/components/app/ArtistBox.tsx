@@ -460,12 +460,15 @@ export default function ArtistBox() {
                   <div className={styles.missionText}>
                     <span className={styles.missionName}>{m.name}</span>
                   </div>
-                  <span className={styles.missionXp}>{m.xp}</span>
+                  {/* Per product feedback "Missões, inverta a ordem
+                   * do check e do badge FP" — check VEM ANTES, badge
+                   * FP DEPOIS na linha. */}
                   <div className={styles.missionCheck}>
                     <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1.5 4l2 2 3-3.5"/>
                     </svg>
                   </div>
+                  <span className={styles.missionXp}>{m.xp}</span>
                   {/* Sparkle burst overlay — appears for ~1.6s
                       after a mission transitions to done. 5
                       small particles scatter horizontally with
@@ -796,9 +799,10 @@ export function RankingTabContent() {
                   />
                 </span>
                 <div className={styles.tabRankingInfo}>
-                  {/* Nome agora é Link → /app/u/{id} per product
-                   * feedback "o nome do usuário deve ser clicável e
-                   * aparecer o perfil de usuário". */}
+                  {/* Nome (clicável → /app/u/{id}) + cidade ABAIXO
+                   * em linha separada. Per product feedback "Deixe
+                   * o nome da cidade logo abaixo e a pontuação à
+                   * direita, como no mobile". */}
                   <Link
                     href={`/app/u/${r.userId}`}
                     className={styles.tabRankingName}
@@ -806,22 +810,15 @@ export function RankingTabContent() {
                   >
                     {name}
                   </Link>
-                  {/* Per product feedback "inclua a quantidade de
-                   * fanpoints de cada usuário antes do nome da
-                   * cidade". Fanpoints + cidade na MESMA linha
-                   * subtítulo separados por um dot. */}
-                  <span className={styles.tabRankingSubline}>
-                    <span className={styles.tabRankingPoints}>
-                      {r.points.toLocaleString('pt-BR')} FP
-                    </span>
-                    {r.city && (
-                      <>
-                        <span className={styles.tabRankingSep} aria-hidden="true">·</span>
-                        <span className={styles.tabRankingCity}>{r.city}</span>
-                      </>
-                    )}
-                  </span>
+                  {r.city && (
+                    <span className={styles.tabRankingCity}>{r.city}</span>
+                  )}
                 </div>
+                {/* Pontuação na DIREITA do card, fora do bloco de
+                 * info — mesmo padrão do mobile. */}
+                <span className={styles.tabRankingPoints}>
+                  {r.points.toLocaleString('pt-BR')} FP
+                </span>
               </div>
             );
           })}
