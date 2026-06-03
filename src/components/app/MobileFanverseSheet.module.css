@@ -116,11 +116,12 @@
 .fold {
   position: relative;
   z-index: 1;
-  margin-top: -150px;
-  /* Gradiente forte: transparente no topo (deixa a imagem
-   * passar atrás do título), evolui rápido pra preto opaco
-   * mesclando perfeitamente com o bg do .tabsRow / .body
-   * abaixo. */
+  /* Per product feedback "posicione o conteúdo desta tela mais
+   * abaixo da tela, exceto a foto" — overlap reduzido (-150 →
+   * -60) + padding-top maior (90 → 140) empurra o título +
+   * meta visualmente pra baixo da viewport, mantendo só ~60px
+   * de overlap com a imagem pra preservar o mix do gradiente. */
+  margin-top: -60px;
   background: linear-gradient(
     180deg,
     transparent 0%,
@@ -129,38 +130,58 @@
     rgba(8, 8, 14, 0.96) 75%,
     rgba(11, 11, 13, 1) 100%
   );
-  /* Padding top empurra o título pra DENTRO do gradiente —
-   * fica sobre a imagem mas com gradiente já escurecendo
-   * a área pra leitura. */
-  padding: 90px 18px 12px;
+  padding: 140px 18px 12px;
 }
 
-/* Title — Borscha bold, dentro do fold (não do hero). Text-
- * shadow extra pra reforçar leitura. */
+/* Eyebrow "Fanverse" — Inter 14, acima do nome. Per product
+ * feedback "adicione a palavra Fanverse fonte 14, inter, acima
+ * do nome dela". */
+.foldEyebrow {
+  display: block;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.75);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  margin-bottom: 4px;
+}
+
+/* Title row — nome + verified à esquerda, convites pill à
+ * direita. Per product feedback "alinhe o botão 4 convites
+ * ao nome Ana Castela". */
+.foldTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
 .foldTitle {
   display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  width: 100%;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
   font-family: 'Borscha', var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
-  margin-bottom: 6px;
 }
-.foldTitleLabel,
 .foldTitleName {
-  /* Per product feedback "aumente 6 pontos o nome Ana Castela"
-   * — 26px → 32px. */
-  font-size: 32px;
+  /* Per product feedback "aumente o tamanho do nome Ana
+   * Castela" — bump 32 → 38px. */
+  font-size: 38px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.foldTitleLabel { flex-shrink: 0; }
-.foldTitleName {
+  line-height: 1.05;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.foldVerified {
+  flex-shrink: 0;
+  /* Leve drop-shadow pra destacar contra a foto. */
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
 }
 
 /* ── Meta row ──

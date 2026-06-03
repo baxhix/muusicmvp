@@ -15,6 +15,7 @@ import {
   InviteFriendsModal,
   BenefitsTabContent,
 } from './ArtistBox';
+import VerifiedBadge from './VerifiedBadge';
 import sheetStyles from './MobileFanverseSheet.module.css';
 import boxStyles from './ArtistBox.module.css';
 
@@ -184,18 +185,17 @@ export default function MobileFanverseSheet({
        *  próximos das palavras Fanverse Ana Castela" — título
        *  + meta row dentro do mesmo bloco, com gap apertado. */}
       <div className={sheetStyles.fold}>
-        {/* Título — apenas "Ana Castela" per product feedback
-         *  "deixe apenas o nome Ana Castela". O label "Fanverse"
-         *  saiu daqui. */}
-        <div className={sheetStyles.foldTitle}>
-          <span className={sheetStyles.foldTitleName}>Ana Castela</span>
-        </div>
-        <div className={sheetStyles.metaRow}>
-          <div className={sheetStyles.metaPoints}>
-            <span className={sheetStyles.metaPointsValue}>
-              {fanpoints.toLocaleString('pt-BR')}
-            </span>
-            <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
+        {/* Eyebrow "Fanverse" + nome com verified badge + botão
+         * de convites alinhado à direita do nome. Per product
+         * feedback "adicione a palavra Fanverse fonte 14, inter,
+         * acima do nome dela", "adicione o selo de verificada
+         * no nome", "alinhe o botão 4 convites ao nome Ana
+         * Castela", "aumente o tamanho do nome Ana Castela". */}
+        <span className={sheetStyles.foldEyebrow}>Fanverse</span>
+        <div className={sheetStyles.foldTitleRow}>
+          <div className={sheetStyles.foldTitle}>
+            <span className={sheetStyles.foldTitleName}>Ana Castela</span>
+            <VerifiedBadge size={22} className={sheetStyles.foldVerified} />
           </div>
           <button
             type="button"
@@ -204,6 +204,14 @@ export default function MobileFanverseSheet({
           >
             4 convites
           </button>
+        </div>
+        <div className={sheetStyles.metaRow}>
+          <div className={sheetStyles.metaPoints}>
+            <span className={sheetStyles.metaPointsValue}>
+              {fanpoints.toLocaleString('pt-BR')}
+            </span>
+            <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
+          </div>
         </div>
       </div>
 
@@ -226,7 +234,7 @@ export default function MobileFanverseSheet({
             className={`${boxStyles.tab} ${activeTab === 'ranking' ? boxStyles.tabActive : ''}`}
             onClick={() => setActiveTab('ranking')}
           >
-            Ranking
+            Superfãs
           </button>
           <button
             type="button"
