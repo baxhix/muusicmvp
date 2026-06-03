@@ -32,7 +32,10 @@ export interface FanverseMatch {
   id: string;
   name: string;
   avatarUrl: string;
-  copy: string;
+  /** Suffix da frase — o prefix "Você e {name}" é renderizado em
+   * bold branco pelo componente; este campo carrega só o resto
+   * (cinza regular). Ex.: "ouvem a mesma música sempre". */
+  suffix: string;
 }
 
 export interface FanverseSearchSnapshot {
@@ -74,30 +77,12 @@ const TOP_LISTENERS: FanverseListener[] = [
 ];
 
 const MATCHES: FanverseMatch[] = [
-  {
-    id: 'm-01',
-    name: 'Daniel',
-    avatarUrl: avatarFor('daniel-amsterdam'),
-    copy: 'Você e {name} ouvem a mesma música sempre',
-  },
-  {
-    id: 'm-02',
-    name: 'Renata',
-    avatarUrl: avatarFor('renata-toledo'),
-    copy: 'Você e {name} curtem o mesmo álbum: Boiadeira',
-  },
-  {
-    id: 'm-03',
-    name: 'Fernanda',
-    avatarUrl: avatarFor('fernanda-amsterdam'),
-    copy: 'Você e {name} são superfãs há 2 anos',
-  },
-  {
-    id: 'm-04',
-    name: 'Lucas',
-    avatarUrl: avatarFor('lucas-sp'),
-    copy: 'Você e {name} foram aos mesmos 3 shows',
-  },
+  { id: 'm-01', name: 'Daniel',   avatarUrl: avatarFor('daniel-amsterdam'),  suffix: 'ouvem a mesma música sempre' },
+  { id: 'm-02', name: 'Renata',   avatarUrl: avatarFor('renata-toledo'),     suffix: 'curtem o mesmo álbum: Boiadeira' },
+  { id: 'm-03', name: 'Fernanda', avatarUrl: avatarFor('fernanda-amsterdam'),suffix: 'são superfãs há 2 anos' },
+  { id: 'm-04', name: 'Lucas',    avatarUrl: avatarFor('lucas-sp'),          suffix: 'foram aos mesmos 3 shows' },
+  { id: 'm-05', name: 'Beatriz',  avatarUrl: avatarFor('bia-rj'),            suffix: 'compartilham 8 playlists' },
+  { id: 'm-06', name: 'Julia',    avatarUrl: avatarFor('julia-bsb'),         suffix: 'curtem Pipoco há mais tempo' },
 ];
 
 const USERS: FanverseSearchUser[] = [

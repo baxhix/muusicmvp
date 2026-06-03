@@ -1,57 +1,84 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import FanverseCore from '@/components/animations/FanverseCore';
 import {
   FANVERSE_SEARCH_SNAPSHOT,
-  ROLE_LABEL,
   type FanverseSearchUser,
 } from '@/lib/fanverseSearchMocks';
 import styles from './FanverseSearch.module.css';
 
 /**
  * FanverseSearch — overlay full-screen disparado pelo clique no
- * orbe FanverseCore (header do ArtistBox / MobileFanverseSheet /
- * MobileHomeChrome).
+ * orbe FanverseCore.
  *
- * Layout:
- *   1. Header: back-arrow + thumb pequeno da Ana Castela (top-right)
- *   2. Hero loading: orbe grande rotacionando + "Analisando
- *      atividade do mundo..." (sempre presente; loading visual)
- *   3. Cluster com os 12 maiores ouvintes + frase "X pessoas
- *      curtindo Ana Castela com você"
- *   4. Match pill (carrossel rolando manualmente — só visual)
- *   5. Stats em 4 chips/cards (mesma música, mesmo álbum, países,
- *      pessoas)
- *   6. Tabs decorativas (Música / Super Fãs / Álbum / Artistas)
- *      com contadores
- *   7. Lista navegável de usuários (avatar + nome + cidade + bars
- *      animadas + coração)
+ * Layout v2 (per product feedback):
+ *   1. Topbar: back + thumb da Ana Castela
+ *   2. Hero: orbe rotacionando com 12 avatares flutuando ao
+ *      redor (posições semi-aleatórias) + texto "Analisando
+ *      atividade do mundo..."
+ *   3. Headline 24px left-aligned, ROTACIONA a cada 4s entre
+ *      "X pessoas curtindo Ana Castela", "X pessoas ouvindo a
+ *      mesma música", "X pessoas ouvindo o mesmo álbum",
+ *      "X países conectados". Cada frase tem um filtro próprio
+ *      pra user list abaixo.
+ *   4. Match pills — carrossel horizontal com 4px gradient
+ *      border. "Você e {name}" bold branco, suffix cinza regular.
+ *   5. User list filtrada pelo phrase atual.
  *
- * Mount-pattern: ouve `app:open-fanverse-search` global; o orbe
- * dispatcha o event, qualquer surface pode disparar. Auto-close
- * via Escape ou clique no back.
- *
- * Dados: 100% mocados — `lib/fanverseSearchMocks.ts`. Quando o
- * backend entregar os endpoints reais, trocar o useState inicial
- * por um hook (useFanverseSnapshot ou similar).
+ * Dados: 100% mocados — `lib/fanverseSearchMocks.ts`.
  */
+
+/* Coração compartilhado — mesmo SVG usado em CommentItem.
+ * outlined com stroke 1.8, viewBox 0 0 24 24. Usado tanto na pill
+ * de match quanto na user list (filled quando user.isLiked). */
+function HeartIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  );
+}
+
+/* Posições semi-aleatórias dos 12 avatares orbitando o orbe.
+ * Calculadas pra parecerem inorgânicas (sem grid, sem círculo
+ * perfeito) — top/left em %, transform translate(-50%, -50%)
+ * centra cada avatar no ponto. As 4 primeiras posições ficam
+ * mais perto do orbe (raio menor); as 8 últimas espalham pelas
+ * bordas da hero section. */
+const FLOATING_POSITIONS = [
+  { top: '12%', left: '22%' },
+  { top: '8%',  left: '68%' },
+  { top: '20%', left: '88%' },
+  { top: '30%', left: '6%' },
+  { top: '48%', left: '14%' },
+  { top: '52%', left: '92%' },
+  { top: '72%', left: '20%' },
+  { top: '78%', left: '74%' },
+  { top: '5%',  left: '42%' },
+  { top: '38%', left: '95%' },
+  { top: '88%', left: '50%' },
+  { top: '64%', left: '52%' },
+];
+
 export default function FanverseSearch() {
   const [open, setOpen] = useState(false);
-  /* "Analisando..." inicia em loading e nunca sai dele — é puro
-   * estado visual (loading aspect contínuo) per product feedback
-   * "com um aspecto de loading". Stats e listagem entram com
-   * fade-in escalonado pra dar sensação de "carregando dados". */
   const [revealed, setRevealed] = useState(false);
-  const [activeTab, setActiveTab] = useState<'musica' | 'superfas' | 'album' | 'artistas'>('musica');
+  const [phraseIdx, setPhraseIdx] = useState(0);
 
-  /* Listener global pra abrir. Qualquer surface (ArtistBox,
-   * MobileFanverseSheet, MobileHomeChrome) dispatcha o event sem
-   * precisar acoplar com shell context. */
+  /* Listener global pra abrir. */
   useEffect(() => {
-    const open = () => setOpen(true);
-    window.addEventListener('app:open-fanverse-search', open);
-    return () => window.removeEventListener('app:open-fanverse-search', open);
+    const handler = () => setOpen(true);
+    window.addEventListener('app:open-fanverse-search', handler);
+    return () => window.removeEventListener('app:open-fanverse-search', handler);
   }, []);
 
   /* Escape fecha; reveal staggered ao abrir. */
@@ -68,51 +95,93 @@ export default function FanverseSearch() {
     };
   }, [open]);
 
-  /* Reset reveal quando fechar pra reanimação na próxima abertura. */
+  /* Reset ao fechar (anima de novo na próxima abertura). */
   useEffect(() => {
-    if (!open) setRevealed(false);
+    if (!open) {
+      setRevealed(false);
+      setPhraseIdx(0);
+    }
   }, [open]);
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
-  /* Match em rotação automática a cada 4s, simulando o carrossel
-   * de afinidade. Decorativo — usuário pode ignorar. */
-  const [matchIdx, setMatchIdx] = useState(0);
+  /* 4 frases rotacionando a cada 4s. Cada uma traz um render
+   * (com bold/regular mix) + filter pra user list abaixo. */
+  type Phrase = {
+    key: string;
+    render: ReactNode;
+    filter: (u: FanverseSearchUser) => boolean;
+  };
+  const PHRASES: Phrase[] = useMemo(() => [
+    {
+      key: 'all',
+      render: (
+        <>
+          <strong>{snapshot.peopleCount.toLocaleString('pt-BR')}</strong>{' '}
+          <span className={styles.headlineMuted}>pessoas curtindo</span>{' '}
+          <strong>Ana Castela</strong>{' '}
+          <span className={styles.headlineMuted}>com você!</span>
+        </>
+      ),
+      filter: () => true,
+    },
+    {
+      key: 'song',
+      render: (
+        <>
+          <strong>{snapshot.sameSongCount.toLocaleString('pt-BR')}</strong>{' '}
+          <span className={styles.headlineMuted}>pessoas ouvindo a</span>{' '}
+          <strong>mesma música</strong>
+        </>
+      ),
+      filter: (u: FanverseSearchUser) => u.isListening,
+    },
+    {
+      key: 'album',
+      render: (
+        <>
+          <strong>{snapshot.sameAlbumCount.toLocaleString('pt-BR')}</strong>{' '}
+          <span className={styles.headlineMuted}>pessoas ouvindo o</span>{' '}
+          <strong>mesmo álbum</strong>
+        </>
+      ),
+      filter: (u: FanverseSearchUser) => u.role !== 'curioso',
+    },
+    {
+      key: 'countries',
+      render: (
+        <>
+          <strong>{snapshot.countriesCount}</strong>{' '}
+          <span className={styles.headlineMuted}>países conectados</span>{' '}
+          <strong>agora</strong>
+        </>
+      ),
+      filter: () => true,
+    },
+  ], [snapshot]);
+
+  /* Rotaciona a cada 4s. */
   useEffect(() => {
     if (!open || !revealed) return;
     const id = window.setInterval(() => {
-      setMatchIdx((i) => (i + 1) % snapshot.matches.length);
+      setPhraseIdx((i) => (i + 1) % PHRASES.length);
     }, 4000);
     return () => window.clearInterval(id);
-  }, [open, revealed, snapshot.matches.length]);
+  }, [open, revealed, PHRASES.length]);
 
-  const filteredUsers = useMemo(() => {
-    if (activeTab === 'superfas') {
-      return snapshot.users.filter((u) => u.role === 'super-fa');
-    }
-    if (activeTab === 'album') {
-      return snapshot.users.filter((u) => u.isListening);
-    }
-    if (activeTab === 'artistas') {
-      return snapshot.users;
-    }
-    /* musica = ouvintes ativos do momento */
-    return snapshot.users.filter((u) => u.isListening);
-  }, [activeTab, snapshot.users]);
+  const currentPhrase = PHRASES[phraseIdx];
+  const filteredUsers = useMemo(
+    () => snapshot.users.filter(currentPhrase.filter),
+    [snapshot.users, currentPhrase],
+  );
 
   if (!open) return null;
 
-  const currentMatch = snapshot.matches[matchIdx];
-  const matchCopy = currentMatch.copy.replace('{name}', currentMatch.name);
-
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
-      {/* Background gradient sutil pra dar profundidade vs preto
-       *  raso. Não usa blur pra evitar custo de GPU sobre o resto
-       *  do shell que continua montado atrás. */}
       <div className={styles.bg} aria-hidden="true" />
 
-      {/* Topbar: back + thumb da artista */}
+      {/* Topbar */}
       <div className={styles.topbar}>
         <button
           type="button"
@@ -135,8 +204,27 @@ export default function FanverseSearch() {
         </div>
       </div>
 
-      {/* Hero loading — orbe grande rotacionando + texto pulsante */}
+      {/* Hero — orbe + avatares orbitando + texto loading */}
       <div className={styles.hero}>
+        {/* Floating avatars — posições semi-aleatórias ao redor do
+         * orbe. Aparecem com fade staggered (animation-delay
+         * incremental). */}
+        {snapshot.topListeners.slice(0, 12).map((l, i) => (
+          <span
+            key={l.id}
+            className={styles.floatingAvatar}
+            style={{
+              top: FLOATING_POSITIONS[i].top,
+              left: FLOATING_POSITIONS[i].left,
+              animationDelay: `${i * 0.08}s`,
+            }}
+            title={l.name}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={l.avatarUrl} alt={l.name} />
+          </span>
+        ))}
+
         <div className={styles.orb} aria-hidden="true">
           <FanverseCore />
         </div>
@@ -148,121 +236,42 @@ export default function FanverseSearch() {
         </div>
       </div>
 
-      {/* Conteúdo abaixo do hero — fade-in staggered ao "revelar". */}
+      {/* Conteúdo abaixo — fade-in staggered */}
       <div className={`${styles.body} ${revealed ? styles.bodyRevealed : ''}`}>
-        {/* Cluster com top 12 listeners + headline */}
-        <section className={styles.cluster}>
-          <div className={styles.clusterAvatars}>
-            {snapshot.topListeners.slice(0, 12).map((l, i) => (
-              <span
-                key={l.id}
-                className={styles.clusterAvatar}
-                style={{ zIndex: 12 - i }}
-                title={l.name}
-              >
+        {/* Headline rotativo (24px, left-aligned, bold+gray mix) */}
+        <h2 className={styles.headline} key={currentPhrase.key}>
+          {currentPhrase.render}
+        </h2>
+
+        {/* Match pills — horizontal scroll, 4px gradient border */}
+        <div className={styles.matchPills}>
+          {snapshot.matches.map((m) => (
+            <div key={m.id} className={styles.matchPill}>
+              <span className={styles.matchAvatar}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={l.avatarUrl} alt={l.name} />
+                <img src={m.avatarUrl} alt={m.name} />
               </span>
-            ))}
-          </div>
-          <p className={styles.clusterHeadline}>
-            <strong>{snapshot.peopleCount.toLocaleString('pt-BR')}</strong>{' '}
-            pessoas curtindo <strong>Ana Castela</strong> com você!
-          </p>
-        </section>
-
-        {/* Match pill com gradient border (rotaciona a cada 4s) */}
-        <section className={styles.matchPill} key={currentMatch.id}>
-          <span className={styles.matchAvatar}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={currentMatch.avatarUrl} alt={currentMatch.name} />
-          </span>
-          <span className={styles.matchCopy}>{matchCopy}</span>
-          <span className={styles.matchHeart} aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 21s-7-4.5-9.5-9C.7 8.6 2.6 4.5 6.4 4.5c1.9 0 3.6 1.1 4.6 2.8 1-1.7 2.7-2.8 4.6-2.8 3.8 0 5.7 4.1 3.9 7.5C19 16.5 12 21 12 21z" />
-            </svg>
-          </span>
-        </section>
-
-        {/* Stats grid — 4 cards com os números do snapshot */}
-        <section className={styles.stats}>
-          <StatCard label="Mesma música agora" value={snapshot.sameSongCount} />
-          <StatCard label="Mesmo álbum agora" value={snapshot.sameAlbumCount} />
-          <StatCard label="Países conectados" value={snapshot.countriesCount} />
-          <StatCard label="Pessoas online" value={snapshot.peopleCount} />
-        </section>
-
-        {/* Tabs decorativas com contadores */}
-        <div className={styles.tabs} role="tablist">
-          <TabBtn
-            active={activeTab === 'musica'}
-            onClick={() => setActiveTab('musica')}
-            label="Música"
-            count={snapshot.sameSongCount}
-          />
-          <TabBtn
-            active={activeTab === 'superfas'}
-            onClick={() => setActiveTab('superfas')}
-            label="Super Fãs"
-            count={snapshot.users.filter((u) => u.role === 'super-fa').length}
-          />
-          <TabBtn
-            active={activeTab === 'album'}
-            onClick={() => setActiveTab('album')}
-            label="Álbum"
-            count={snapshot.sameAlbumCount}
-          />
-          <TabBtn
-            active={activeTab === 'artistas'}
-            onClick={() => setActiveTab('artistas')}
-            label="Artistas"
-            count={snapshot.users.length}
-          />
+              <span className={styles.matchCopy}>
+                <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
+                <span className={styles.matchCopyMuted}>{m.suffix}</span>
+              </span>
+              <span className={styles.matchHeart} aria-hidden="true">
+                <HeartIcon filled />
+              </span>
+            </div>
+          ))}
         </div>
 
-        {/* Lista navegável de usuários */}
-        <section className={styles.userList}>
-          {filteredUsers.map((u) => (
-            <UserRow key={u.id} user={u} />
-          ))}
+        {/* User list — muda com phraseIdx */}
+        <section className={styles.userList} key={currentPhrase.key + ':list'}>
+          {filteredUsers.length === 0 ? (
+            <p className={styles.emptyState}>Sem usuários nessa categoria agora.</p>
+          ) : (
+            filteredUsers.map((u) => <UserRow key={u.id} user={u} />)
+          )}
         </section>
       </div>
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className={styles.statCard}>
-      <span className={styles.statValue}>{value.toLocaleString('pt-BR')}</span>
-      <span className={styles.statLabel}>{label}</span>
-    </div>
-  );
-}
-
-function TabBtn({
-  active,
-  onClick,
-  label,
-  count,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  count: number;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      className={`${styles.tab} ${active ? styles.tabActive : ''}`}
-      onClick={onClick}
-    >
-      <span>{label}</span>
-      <span className={styles.tabCount}>({count.toLocaleString('pt-BR')})</span>
-    </button>
   );
 }
 
@@ -277,7 +286,7 @@ function UserRow({ user }: { user: FanverseSearchUser }) {
         <span className={styles.userName}>{user.name}</span>
         <span className={styles.userMeta}>
           {user.role === 'super-fa' && (
-            <span className={styles.userRole}>{ROLE_LABEL[user.role]}</span>
+            <span className={styles.userRole}>Super Fã</span>
           )}
           <span className={styles.userCity}>
             {user.city}{user.country ? `, ${user.country}` : ''}
@@ -295,9 +304,7 @@ function UserRow({ user }: { user: FanverseSearchUser }) {
           className={`${styles.userHeart} ${user.isLiked ? styles.userHeartActive : ''}`}
           aria-label={user.isLiked ? 'Descurtir' : 'Curtir'}
         >
-          <svg viewBox="0 0 24 24" fill={user.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-            <path d="M12 21s-7-4.5-9.5-9C.7 8.6 2.6 4.5 6.4 4.5c1.9 0 3.6 1.1 4.6 2.8 1-1.7 2.7-2.8 4.6-2.8 3.8 0 5.7 4.1 3.9 7.5C19 16.5 12 21 12 21z" />
-          </svg>
+          <HeartIcon filled={user.isLiked} />
         </button>
       </div>
     </div>

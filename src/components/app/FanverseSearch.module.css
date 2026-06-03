@@ -1,16 +1,13 @@
 /* ============================================================
- * FanverseSearch — overlay full-screen "Analisando atividade do
- * mundo". Disparado pelo clique no orbe FanverseCore. Mesma
- * paleta dark do shell + acentos magenta/orange das pílulas de
- * match (reference image enviada pelo user).
+ * FanverseSearch v2 — overlay full-screen "Analisando atividade
+ * do mundo". Avatares orbitam o orbe, headline rotaciona a cada
+ * 4s, match pills em carrossel horizontal com 4px gradient
+ * border.
  * ============================================================ */
 
 .overlay {
   position: fixed;
   inset: 0;
-  /* Acima de tudo (modais 250, sheets 240, BottomNav 245).
-   * 9000 fica abaixo do HeartsCascade (efêmero) mas acima de
-   * todo chrome do shell. */
   z-index: 8500;
   background: #000;
   overflow-y: auto;
@@ -25,8 +22,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* BG sutil gradient — meio centralizado pra dar profundidade
- * ao orbe sem precisar de blur. */
 .bg {
   position: absolute;
   inset: 0;
@@ -80,23 +75,30 @@
 }
 
 /* ── Hero loading ──────────────────────────────────────────── */
+/* Per product feedback "miniatura dos usuários deve ficar
+ * flutuando ao redor do orbe, de forma meio aleatória e
+ * inorgânica" — hero virou um stage com position:relative;
+ * avatares são absolutos com top/left em % pra fazer o orbit
+ * scatter. Altura mínima reservada pra acomodar a área dos
+ * avatares + orbe + texto. */
 .hero {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   padding: 16px 24px 28px;
+  min-height: 340px;
 }
 
 .orb {
   width: 220px;
   height: 220px;
   position: relative;
+  z-index: 1;
   filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.4));
   animation: fsOrbBreathe 4.2s ease-in-out infinite;
-  /* Mata as bordas duras do canvas WebGL contra o fundo preto. */
   -webkit-mask: radial-gradient(circle at center, #000 55%, transparent 80%);
   mask: radial-gradient(circle at center, #000 55%, transparent 80%);
 }
@@ -114,11 +116,10 @@
   display: inline-flex;
   align-items: baseline;
   gap: 2px;
+  position: relative;
+  z-index: 2;
 }
-.dots {
-  display: inline-flex;
-  gap: 2px;
-}
+.dots { display: inline-flex; gap: 2px; }
 .dots span {
   display: inline-block;
   animation: fsDotPulse 1.4s ease-in-out infinite;
@@ -131,13 +132,54 @@
   40%      { opacity: 1;   transform: translateY(-2px); }
 }
 
+/* ── Floating avatars (orbitam o orbe) ─────────────────────── */
+/* 12 avatares posicionados absolutamente dentro do .hero, com
+ * top/left em % (definidos inline no JSX a partir do array
+ * FLOATING_POSITIONS). Animação `fsFloat` faz cada um drift
+ * suave vertical pra dar sensação de "vivos"; animation-delay
+ * incremental (definido inline) dá o stagger de entrada. */
+.floatingAvatar {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1a1a1f;
+  border: 2px solid #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  opacity: 0;
+  animation:
+    fsAvatarIn 600ms ease-out forwards,
+    fsFloat 6s ease-in-out infinite 600ms;
+}
+.floatingAvatar:nth-child(2n)   { width: 34px; height: 34px; }
+.floatingAvatar:nth-child(3n)   { width: 46px; height: 46px; }
+.floatingAvatar:nth-child(4n+1) { animation-duration: 600ms, 7.5s; }
+.floatingAvatar:nth-child(5n+2) { animation-duration: 600ms, 5.2s; }
+.floatingAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+@keyframes fsAvatarIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes fsFloat {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-8px); }
+}
+
 /* ── Body ──────────────────────────────────────────────────── */
 .body {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
   padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 32px);
   max-width: 720px;
   margin: 0 auto;
@@ -151,62 +193,64 @@
   transform: translateY(0);
 }
 
-/* ── Cluster (avatars + headline) ──────────────────────────── */
-.cluster {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.clusterAvatars {
-  display: inline-flex;
-  flex-direction: row;
-}
-.clusterAvatar {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #000;
-  margin-left: -10px;
-  background: #1a1a1f;
-  flex-shrink: 0;
-}
-.clusterAvatar:first-child { margin-left: 0; }
-.clusterAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.clusterHeadline {
+/* ── Headline rotativo ─────────────────────────────────────── */
+/* Per product feedback "deve ter destaque, alinhado à esquerda,
+ * font 24 px". Mix de bold branco (números + termos-chave) e
+ * cinza regular (conectores). Key={phrase.key} no JSX força
+ * remount → animation re-fires a cada troca. */
+.headline {
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.35;
-  color: rgba(245, 245, 247, 0.82);
-}
-.clusterHeadline strong {
-  color: #fff;
+  font-size: 24px;
   font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-align: left;
+  animation: fsHeadlineIn 480ms ease-out;
+}
+.headlineMuted {
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
+}
+@keyframes fsHeadlineIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Match pill — gradient border, animado em fade quando troca ── */
-.matchPill {
+/* ── Match pills (carrossel horizontal) ────────────────────── */
+/* Per product feedback "deixe ela responsiva, ou seja, após o
+ * coração o card é terminado e na sequência deve vir outro com
+ * o mesmo estilo" — agora é um row com overflow-x:auto. Cada
+ * pill tem flex-shrink:0 + width fixo pra ficar legível e o
+ * próximo já fica visível parcial à direita ("peek" indicando
+ * que rola). */
+.matchPills {
   display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin: 0 -18px;
+  padding: 4px 18px;
+}
+.matchPills::-webkit-scrollbar { display: none; }
+
+.matchPill {
+  display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px 10px 10px;
+  padding: 8px 14px 8px 8px;
   border-radius: 999px;
   background:
     linear-gradient(#0a0a0e, #0a0a0e) padding-box,
     linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
-  border: 2px solid transparent;
+  /* Per product feedback "Aumente a espessura da borda para 4px". */
+  border: 4px solid transparent;
   box-shadow: 0 8px 24px rgba(236, 72, 153, 0.18);
-  animation: fsMatchPillIn 360ms ease-out;
-}
-@keyframes fsMatchPillIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
+  flex-shrink: 0;
+  /* Width responsiva — desktop ~340, mobile encolhe pra caber
+   * sem virar parede de texto. */
+  width: clamp(280px, 80vw, 360px);
 }
 .matchAvatar {
   width: 44px;
@@ -226,110 +270,55 @@
   flex: 1;
   min-width: 0;
   font-size: 13px;
-  line-height: 1.35;
-  color: rgba(245, 245, 247, 0.92);
-  overflow: hidden;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Per product feedback "Você e nome do usuário na cor branca e
+ * bold, o restante na cor cinza e regular". */
+.matchCopyBold {
+  color: #fff;
+  font-weight: 700;
+}
+.matchCopyMuted {
+  color: rgba(245, 245, 247, 0.55);
+  font-weight: 400;
 }
 .matchHeart {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: #ec4899;
   flex-shrink: 0;
 }
 .matchHeart svg { width: 16px; height: 16px; }
-
-/* ── Stats ─────────────────────────────────────────────────── */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.statCard {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 14px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.statValue {
-  font-size: 22px;
-  font-weight: 700;
-  color: #fff;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.statLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(245, 245, 247, 0.6);
-  letter-spacing: 0.01em;
-  margin-top: 4px;
-}
-
-/* ── Tabs ──────────────────────────────────────────────────── */
-.tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-  /* Esconder scrollbar mantendo scroll funcional. */
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: rgba(245, 245, 247, 0.65);
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
-}
-.tab:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-}
-.tabActive {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
-}
-.tabActive .tabCount {
-  color: rgba(0, 0, 0, 0.5);
-}
-.tabCount {
-  color: rgba(245, 245, 247, 0.45);
-  font-weight: 500;
-}
 
 /* ── User list ─────────────────────────────────────────────── */
 .userList {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Re-anima a lista quando o phrase troca (key={phrase.key:list}
+   * no JSX força remount). */
+  animation: fsListIn 420ms ease-out;
 }
+@keyframes fsListIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.emptyState {
+  margin: 12px 0;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.5);
+  text-align: center;
+}
+
 .userRow {
   display: flex;
   align-items: center;
@@ -388,8 +377,7 @@
   flex-shrink: 0;
 }
 
-/* Bars animadas — indicador "ouvindo agora". Estilo equalizer
- * vertical com 4 barras pulsando em ritmo diferente. */
+/* Bars animadas — indicador "ouvindo agora". */
 .userBars {
   display: inline-flex;
   align-items: flex-end;
@@ -442,8 +430,18 @@
   }
   .hero {
     padding: 8px 24px 22px;
+    min-height: 300px;
   }
   .loadingText {
     font-size: 14.5px;
   }
+  .headline {
+    font-size: 22px;
+  }
+  .floatingAvatar {
+    width: 34px;
+    height: 34px;
+  }
+  .floatingAvatar:nth-child(2n)   { width: 28px; height: 28px; }
+  .floatingAvatar:nth-child(3n)   { width: 38px; height: 38px; }
 }
