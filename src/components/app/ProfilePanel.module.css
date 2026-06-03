@@ -122,10 +122,28 @@
   gap: 16px;
 }
 
-/* Wrapper relativo: avatar centralizado, badge à direita */
+/* Wrapper relativo: avatar centralizado, badge à direita +
+ * presence dot no canto inferior direito. */
 .avatarWrap {
   position: relative;
   width: 118px;
+}
+.avatarPresence {
+  position: absolute;
+  /* Posicionado no canto inferior direito do ring (118×118) com
+   * leve overlap pra reforçar o cue de "online/offline". */
+  bottom: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #6b7280;
+  border: 3px solid #0a0a14;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+.avatarPresenceOn {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.55);
 }
 
 /* Ring wrapper — 1 px border at exactly 6 px from the image edge
@@ -244,6 +262,39 @@
   background: rgba(255,255,255,0.05);
   border-color: rgba(255,255,255,0.18);
 }
+
+/* Reactions row — fileira de emojis ao lado esquerdo do botão
+ * "Enviar mensagem" (perfis de outros usuários). Per product
+ * feedback "Adicione no perfil de usuários que não sou 'eu' [...]
+ * as reações que tem nos avatares flutuantes". */
+.reactionsRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.reactionBtn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 140ms ease, transform 140ms ease;
+}
+.reactionBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(1.12);
+}
+.reactionBtn:active {
+  transform: scale(0.94);
+}
 .actionBtn svg {
   width: 14px;
   height: 14px;
@@ -336,7 +387,13 @@
 /* ── Report menu (three-dot affordance, other-user only) ───── */
 
 .reportMenuWrap {
-  position: relative;
+  /* Per product feedback "Deixe o botão de tres pontinhos no topo
+   * direito" — wrap vira posicionado absolutamente no canto
+   * superior direito do .panel. */
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
   flex-shrink: 0;
 }
 
@@ -384,21 +441,29 @@
 }
 
 .reportMenuItem {
+  /* Padrão actionBtn (pill, branco, border sutil) per product
+   * feedback "deixe na cor branca e no mesmo padrão de botão de
+   * editar comunidade". */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  text-align: left;
+  height: 38px;
   background: transparent;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  color: #dc2626;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 0 16px;
+  border-radius: 999px;
+  color: #f5f5f7;
   font-family: inherit;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .reportMenuItem:hover {
-  background: rgba(220, 38, 38, 0.10);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* ── Tabs ────────────────────────────────────────────────── */
@@ -726,9 +791,63 @@
 @media (max-width: 768px) {
   .header { display: none; }
 
+  /* Per product feedback "Remova o bloco que tem por trás dos
+   * dados do meu perfil, mas adicione o gradiente que tem neste
+   * bloco para o background". O .panel perde o "card look"
+   * (border-radius, box-shadow, backdrop-filter). O gradiente
+   * original da .panel migra pro .backdrop (já fullscreen) pra
+   * virar o background da página. */
+  .panel {
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    /* Espaço pra BottomNav (~72px) já existe via padding-bottom
+     * no .scroll abaixo; aqui só zeramos o card antigo. */
+    animation: none !important;
+  }
+  .backdrop {
+    /* Gradiente migrado do .panel — backdrop vira o "fundo" do
+     * perfil em mobile, com o gradiente característico. */
+    background:
+      radial-gradient(120% 30% at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 70%),
+      linear-gradient(180deg,
+        rgba(11, 11, 13, 0.98) 0%,
+        rgba(5, 5, 7, 0.96) 35%,
+        rgba(2, 2, 3, 0.97) 65%,
+        rgba(2, 2, 3, 0.99) 100%) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* Não fecha ao clicar no backdrop em mobile — é o fundo da
+     * página. Click no .panel passa através (backdrop não bloqueia
+     * eventos do panel acima). */
+    pointer-events: none !important;
+  }
+
+  /* Kebab top-right pareando com o safe-area do dispositivo. */
+  .reportMenuWrap {
+    top: calc(env(safe-area-inset-top, 0px) + 14px);
+    right: 14px;
+  }
+
   /* Per product feedback "Remova os streams" — esconde o bloco
    * inteiro (· N streams) no mobile. Desktop mantém. */
   .userStreamsBlock { display: none; }
+  /* Quando a cidade é vazia, o componente já não renderiza .userMetaCity;
+   * mas se for renderizada e a string for vazia (fallback), o
+   * separador depois fica órfão. Esconde por segurança. */
+  .userMetaCity:empty,
+  .userMetaCity:empty + .userMetaSepCity {
+    display: none;
+  }
 
   /* Per product feedback "Deixe a quantidade de FP na cor branca". */
   .userFanpointsNum { color: #F5F5F7; }
@@ -740,14 +859,23 @@
 
   /* Per product feedback "Deixe as tabs no mesmo estilo que as tabs
    * que tem no Fanverse" — pill compacto: padding pequeno,
-   * border-radius 8, font 13, weight 600, ativo = white-on-glass. */
+   * border-radius 8, font 13, weight 600, ativo = white-on-glass.
+   *
+   * Per product feedback "Ajuste as tabs, estão quebradas. 'Minha
+   * atividade' está com a palavra cortada, 'Comunidade' também." —
+   * margin lateral menor (16 → 12), padding tab reduzido (9×8 →
+   * 8×4), bg do container removido pra dar mais largura útil pros
+   * labels. Mobile filtra Histórico + Ídolos, então sobram só 2
+   * tabs ("Atividade" via mobileLabel + "Comunidades"). */
   .tabs {
-    gap: 4px;
-    padding: 4px 12px 12px;
+    margin: 18px 12px 0;
+    background: transparent;
+    padding: 0;
+    gap: 6px;
   }
   .tab {
     flex: 1;
-    padding: 9px 8px;
+    padding: 8px 4px;
     border-radius: 8px;
     border: none;
     background: none;
@@ -757,6 +885,7 @@
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    min-width: 0;
   }
   .tabActive {
     background: rgba(255, 255, 255, 0.08);

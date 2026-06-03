@@ -43,9 +43,12 @@ interface Props {
 }
 
 /* ── Static mock content ─────────────────────────────────── */
-const TABS: { id: TabId; label: string }[] = [
+const TABS: { id: TabId; label: string; mobileLabel?: string }[] = [
   { id: 'historico',   label: 'Histórico'         },
-  { id: 'atividade',   label: 'Minha Atividade'   },
+  /* mobileLabel: abrevia "Minha Atividade" → "Atividade" pra não
+   * truncar em viewports pequenos (tab fica com largura limitada
+   * por flex:1). */
+  { id: 'atividade',   label: 'Minha Atividade', mobileLabel: 'Atividade' },
   { id: 'comunidades', label: 'Comunidades'       },
   { id: 'idolos',      label: 'Ídolos'            },
 ];
@@ -201,11 +204,15 @@ export default function ProfilePanel({
   onReport,
 }: Props) {
   const isMobile = useIsMobile();
-  /* Tabs visíveis variam por viewport: mobile remove "Histórico"
-   * per product feedback "Remova o Histórico". Default tab passa
-   * pra 'atividade' no mobile (era 'historico' que não existe mais). */
+  /* Tabs visíveis variam por viewport: mobile remove "Histórico" +
+   * "Ídolos" per product feedback iterativo ("Remova o Histórico" +
+   * "Remova a parte de Ídolos"). Default tab passa pra 'atividade'
+   * no mobile (era 'historico' que não existe mais). */
   const visibleTabs = useMemo(
-    () => (isMobile ? TABS.filter((t) => t.id !== 'historico') : TABS),
+    () =>
+      isMobile
+        ? TABS.filter((t) => t.id !== 'historico' && t.id !== 'idolos')
+        : TABS,
     [isMobile],
   );
   const [tab, setTab] = useState<TabId>(
@@ -267,6 +274,45 @@ export default function ProfilePanel({
         </button>
       </div>
 
+      {/* Kebab "Mais opções" — top-right do panel, fixed-position,
+       * mostrado APENAS pra outros usuários (não é o próprio
+       * perfil). Per product feedback "Deixe o botão de tres
+       * pontinhos no topo direito". Em mobile esse é o único
+       * acesso pro menu Denunciar; em desktop ele coexiste com o
+       * .header (que tá hidden no mobile). */}
+      {!isOwnProfile && (
+        <div className={styles.reportMenuWrap} ref={reportMenuRef}>
+          <button
+            type="button"
+            className={styles.reportMenuBtn}
+            onClick={() => setReportMenuOpen((v) => !v)}
+            aria-label="Mais opções"
+            aria-expanded={reportMenuOpen}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.6" />
+              <circle cx="12" cy="12" r="1.6" />
+              <circle cx="19" cy="12" r="1.6" />
+            </svg>
+          </button>
+          {reportMenuOpen && (
+            <div className={styles.reportMenu} role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                className={styles.reportMenuItem}
+                onClick={() => {
+                  setReportMenuOpen(false);
+                  onReport?.(user.id, user.name);
+                }}
+              >
+                Denunciar usuário
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={styles.scroll}>
 
         {/* ── Avatar ── */}
@@ -276,6 +322,14 @@ export default function ProfilePanel({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img key={user.img} src={user.img} alt={user.name} className={styles.avatarImg} />
             </div>
+            {/* Online dot — bolinha verde/cinza no canto inferior
+             * direito do avatar per product feedback "Adicione a
+             * bolinha que identifica se está online ou não". */}
+            <span
+              className={`${styles.avatarPresence} ${user.isOnline ? styles.avatarPresenceOn : ''}`}
+              aria-label={user.isOnline ? 'Online' : 'Offline'}
+              title={user.isOnline ? 'Online' : 'Offline'}
+            />
           </div>
         </div>
 
@@ -283,7 +337,17 @@ export default function ProfilePanel({
         <div className={styles.userInfo}>
           <p className={styles.userName}>{user.name}</p>
           <p className={styles.userMetaLine}>
-            <span className={styles.userMetaCity}>{user.city}, {user.state}</span>
+            {/* Cidade só renderiza se houver algum valor — per
+             * product feedback "Quando não tiver cidade registrada,
+             * não mostre nada". Separador depois também sai junto. */}
+            {user.city && (
+              <>
+                <span className={styles.userMetaCity}>
+                  {user.city}{user.state ? `, ${user.state}` : ''}
+                </span>
+                <span className={`${styles.userMetaSep} ${styles.userMetaSepCity}`}>·</span>
+              </>
+            )}
             {/* Streams agrupados num bloco que o @media mobile
              * esconde via .userStreamsBlock { display: none },
              * incluindo o separador antes — per product feedback
@@ -295,7 +359,6 @@ export default function ProfilePanel({
               </span>{' '}
               <span className={styles.userStreamsLabel}>streams</span>
             </span>
-            <span className={styles.userMetaSep}>·</span>
             <span className={styles.userFanpointsNum}>
               {user.fanpoints.toLocaleString('pt-BR')}
             </span>{' '}
@@ -317,7 +380,12 @@ export default function ProfilePanel({
          * (track atual deles). Sem controles, sem botões de Spotify,
          * sem progress bar — o player do outro usuário só está
          * sendo EXIBIDO, não controlado. Per product feedback. */}
-        {user.nowPlaying && (
+        {/* Player só renderiza se o user TIVER algo tocando — per
+         * product feedback "Se o usuário não estiver ouvindo nada,
+         * não mostre as animações de áudio nem o card de música
+         * tocando". user.nowPlaying é null/undefined quando não
+         * há track ativa, então a condição já cobre. */}
+        {user.nowPlaying ? (
           <div className={styles.playerRow}>
             {isOwnProfile ? (
               <>
@@ -342,7 +410,7 @@ export default function ProfilePanel({
               <NowPlayingPreview track={user.nowPlaying} />
             )}
           </div>
-        )}
+        ) : null}
 
         {/* ── Botões de ação ──────────────────────────────
             Own profile:  [ Editar perfil ] [ Minhas mensagens ]
@@ -398,6 +466,37 @@ export default function ProfilePanel({
             </>
           ) : (
             <>
+              {/* Reações rápidas (❤️ 👋 💬 👀) à ESQUERDA do botão
+               * Enviar mensagem per product feedback "Adicione no
+               * perfil de usuários que não sou 'eu' [...] as reações
+               * que tem nos avatares flutuantes, ao lado esquerdo do
+               * botão enviar mensagem". ❤️ / 👋 / 👀 disparam a
+               * cascata global; 💬 abre a conversa direta. */}
+              <div className={styles.reactionsRow} aria-label="Reações rápidas">
+                {(['❤️', '👋', '💬', '👀'] as const).map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    className={styles.reactionBtn}
+                    aria-label={emoji === '💬' ? `Enviar mensagem para ${user.name}` : `Reagir com ${emoji}`}
+                    onClick={() => {
+                      if (emoji === '💬') {
+                        onSendMessage?.(user.id, user.name);
+                      } else {
+                        try {
+                          window.dispatchEvent(
+                            new CustomEvent('app:hearts-cascade', {
+                              detail: { text: emoji },
+                            }),
+                          );
+                        } catch { /* SSR */ }
+                      }
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
                 className={styles.actionBtn}
@@ -411,36 +510,6 @@ export default function ProfilePanel({
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
               </button>
-              <div className={styles.reportMenuWrap} ref={reportMenuRef}>
-                <button
-                  type="button"
-                  className={styles.reportMenuBtn}
-                  onClick={() => setReportMenuOpen((v) => !v)}
-                  aria-label="Mais opções"
-                  aria-expanded={reportMenuOpen}
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <circle cx="5" cy="12" r="1.6" />
-                    <circle cx="12" cy="12" r="1.6" />
-                    <circle cx="19" cy="12" r="1.6" />
-                  </svg>
-                </button>
-                {reportMenuOpen && (
-                  <div className={styles.reportMenu} role="menu">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.reportMenuItem}
-                      onClick={() => {
-                        setReportMenuOpen(false);
-                        onReport?.(user.id, user.name);
-                      }}
-                    >
-                      Denunciar usuário
-                    </button>
-                  </div>
-                )}
-              </div>
             </>
           )}
         </div>
@@ -481,7 +550,7 @@ export default function ProfilePanel({
               className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
               onClick={() => setTab(t.id)}
             >
-              {t.label}
+              {isMobile && t.mobileLabel ? t.mobileLabel : t.label}
             </button>
           ))}
         </div>
