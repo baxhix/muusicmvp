@@ -937,6 +937,138 @@
   }
 }
 
+/* ── Reaction palette for REAL users ──
+ *
+ * Inspirada na paleta de mocks (.mapsim-reveal-actions) mas
+ * própria pro live-user marker. Aparece à direita do badge ao
+ * clicar — coluna vertical com 4 botões de emoji (❤️ 👋 💬 👀).
+ * Click no ❤️/👋/👀 dispara a cascata de hearts global; click no
+ * 💬 troca a paleta por uma mini caixa de texto pra mandar uma
+ * mensagem rápida (sem abrir o LiveChatPanel inteiro). */
+.reactionPalette {
+  position: absolute;
+  /* Mesmo offset do badge: top:50% / transform translate(-50%, ...).
+   * O badge está em translate(-50%, calc(-100% - 6px)), então o
+   * meio vertical dele fica em (top:50% - 50% do altura). Pra
+   * alinhar a paleta com o centro do badge usamos top que
+   * corresponde + 8px à direita. */
+  top: 50%;
+  left: calc(50% + 8px);
+  transform: translateY(calc(-100% - 6px - 50%)) scale(0.6);
+  transform-origin: left center;
+  margin-left: 60px;  /* offset pra ficar fora da pílula */
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  background: rgba(11, 11, 14, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 6;
+}
+.reactionPaletteOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(calc(-100% - 6px - 50%)) scale(1);
+}
+.reactionBtn {
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 140ms ease, transform 140ms ease;
+}
+.reactionBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.18);
+}
+.reactionBtn:active {
+  transform: scale(0.92);
+}
+
+/* Mini composer mostrado quando o emoji 💬 é clicado. Substitui
+ * a paleta visualmente — mesma vibe (card preto) mas com input
+ * + botão de enviar lado a lado pra mensagem curta. */
+.quickComposer {
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 8px);
+  transform: translateY(calc(-100% - 6px - 50%));
+  margin-left: 60px;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(11, 11, 14, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+  z-index: 7;
+  pointer-events: auto;
+}
+.quickComposerOpen {
+  display: flex;
+}
+.quickComposerInput {
+  width: 160px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+.quickComposerInput::placeholder {
+  color: rgba(245, 245, 247, 0.45);
+}
+.quickComposerInput:focus {
+  border-color: rgba(168, 85, 247, 0.55);
+  background: rgba(255, 255, 255, 0.10);
+}
+.quickComposerSend {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #9333ea 0%, #c084fc 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: filter 140ms ease, transform 140ms ease;
+}
+.quickComposerSend:hover {
+  filter: brightness(1.12);
+}
+.quickComposerSend:active {
+  transform: scale(0.94);
+}
+.quickComposerSend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Heart-burst overlay on a RECEIVING marker ──
  *
  * Spawned by `spawnHeartsAtMarker()` in Globe.tsx whenever a

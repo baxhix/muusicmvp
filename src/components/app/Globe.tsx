@@ -1261,6 +1261,28 @@ export default function Globe() {
               </svg>
             </button>
           `;
+          // Paleta de reações + mini-composer pra real users —
+          // Per product feedback "Ao clicar no perfil de usuário
+          // real no mapa, ao invés de abrir o perfil completo,
+          // deve ser aberto o badge de emojis que os usuários
+          // mocados já possuem. Ao clicar no emoji que de chat,
+          // deve ser aberto uma pequena caixa de texto para
+          // enviar uma mensagem curta". Estrutura mirror do
+          // mock-user (.mapsim-reveal-actions) mas com CSS
+          // própria (.reactionPalette) pra desacoplar do mock.
+          const reactionPaletteHtml = `
+            <div class="${styles.reactionPalette}" data-reaction-palette="${u.id}" aria-hidden="true">
+              <button type="button" class="${styles.reactionBtn}" data-emoji="❤️" aria-label="Mandar ❤️ para ${safeName}">❤️</button>
+              <button type="button" class="${styles.reactionBtn}" data-emoji="👋" aria-label="Mandar 👋 para ${safeName}">👋</button>
+              <button type="button" class="${styles.reactionBtn}" data-emoji="💬" aria-label="Mandar mensagem para ${safeName}">💬</button>
+              <button type="button" class="${styles.reactionBtn}" data-emoji="👀" aria-label="Mandar 👀 para ${safeName}">👀</button>
+            </div>
+            <div class="${styles.quickComposer}" data-quick-composer="${u.id}" role="dialog" aria-label="Mensagem rápida para ${safeName}">
+              <input type="text" class="${styles.quickComposerInput}" maxlength="140" placeholder="Mensagem rápida..." aria-label="Texto da mensagem" />
+              <button type="button" class="${styles.quickComposerSend}" aria-label="Enviar mensagem">➤</button>
+            </div>
+          `;
+
           const html = `
             <div class="${styles.liveUserBadge}" role="img" aria-label="${safeName} (online)${safeTitle ? ` ouvindo ${safeTitle}` : ''}">
               ${avatarHtml}
@@ -1270,6 +1292,7 @@ export default function Globe() {
               </div>
               ${heartHtml}
             </div>
+            ${reactionPaletteHtml}
           `;
 
           const existing = liveUserMarkers.get(u.id);
@@ -1399,8 +1422,154 @@ export default function Globe() {
                 }
                 return;
               }
+              /* ── Reaction palette buttons (❤️ 👋 💬 👀) ──
+               * Per product feedback: click no avatar abre paleta
+               * de emojis (estilo mock-user) em vez do perfil. O 💬
+               * troca a paleta pelo mini-composer pra mandar uma
+               * mensagem curta sem abrir o LiveChatPanel inteiro.
+               * Outros emojis disparam a cascata global de hearts. */
+              const reactBtn = target.closest<HTMLButtonElement>(
+                `.${styles.reactionBtn}`,
+              );
+              if (reactBtn) {
+                e.stopPropagation();
+                const emoji = reactBtn.dataset.emoji ?? '';
+                const palette = wrapper.querySelector<HTMLDivElement>(
+                  `.${styles.reactionPalette}`,
+                );
+                const composer = wrapper.querySelector<HTMLDivElement>(
+                  `.${styles.quickComposer}`,
+                );
+                if (emoji === '💬') {
+                  // Mostra o composer + foca o input.
+                  if (palette) palette.classList.remove(styles.reactionPaletteOpen);
+                  if (composer) {
+                    composer.classList.add(styles.quickComposerOpen);
+                    const input = composer.querySelector<HTMLInputElement>(
+                      `.${styles.quickComposerInput}`,
+                    );
+                    input?.focus();
+                  }
+                } else {
+                  // Hearts cascade pra ❤️ 👋 👀 + fecha paleta.
+                  try {
+                    window.dispatchEvent(
+                      new CustomEvent('app:hearts-cascade', {
+                        detail: { text: emoji },
+                      }),
+                    );
+                  } catch { /* SSR / detached */ }
+                  if (palette) palette.classList.remove(styles.reactionPaletteOpen);
+                }
+                return;
+              }
+              /* ── Quick-composer send button ──
+               * POST /api/conversations { otherUserId } pra abrir
+               * (ou criar) o DM, depois POST /messages com o body.
+               * Fire-and-forget — feedback visual via toast handler
+               * abaixo. */
+              const sendBtn = target.closest<HTMLButtonElement>(
+                `.${styles.quickComposerSend}`,
+              );
+              if (sendBtn) {
+                e.stopPropagation();
+                const composer = wrapper.querySelector<HTMLDivElement>(
+                  `.${styles.quickComposer}`,
+                );
+                const input = composer?.querySelector<HTMLInputElement>(
+                  `.${styles.quickComposerInput}`,
+                );
+                const text = (input?.value ?? '').trim();
+                if (!text) {
+                  input?.focus();
+                  return;
+                }
+                sendBtn.setAttribute('disabled', 'true');
+                (async () => {
+                  try {
+                    const convRes = await fetch('/api/conversations', {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({ otherUserId: u.id }),
+                    });
+                    if (!convRes.ok) throw new Error(`conv ${convRes.status}`);
+                    const convData = (await convRes.json()) as { id: string };
+                    const msgRes = await fetch(
+                      `/api/conversations/${convData.id}/messages`,
+                      {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ body: text }),
+                      },
+                    );
+                    if (!msgRes.ok) throw new Error(`msg ${msgRes.status}`);
+                    if (input) input.value = '';
+                    if (composer) composer.classList.remove(styles.quickComposerOpen);
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('app:toast', {
+                          detail: { message: `Mensagem enviada para ${safeName}.` },
+                        }),
+                      );
+                    } catch { /* SSR */ }
+                  } catch (err) {
+                    console.error('quick-message send failed:', err);
+                    try {
+                      window.dispatchEvent(
+                        new CustomEvent('app:toast', {
+                          detail: { message: 'Falha ao enviar. Tenta de novo.' },
+                        }),
+                      );
+                    } catch { /* SSR */ }
+                  } finally {
+                    sendBtn.removeAttribute('disabled');
+                  }
+                })();
+                return;
+              }
+              // Enter no input do composer → mesmo handler do send.
+              const composerInput = target.closest<HTMLInputElement>(
+                `.${styles.quickComposerInput}`,
+              );
+              if (composerInput) {
+                e.stopPropagation();
+                // O click no input não dispara nada — fica como no-op
+                // pra não fechar a paleta ao focar o campo.
+                return;
+              }
+              /* ── Click no resto do badge ──
+               * Per product feedback "ao invés de abrir o perfil
+               * completo, deve ser aberto o badge de emojis". Aqui
+               * a gente abre/fecha a paleta em vez do ProfilePanel.
+               * Fly-to é mantido pra dar contexto geográfico. */
+              const palette = wrapper.querySelector<HTMLDivElement>(
+                `.${styles.reactionPalette}`,
+              );
+              const composer = wrapper.querySelector<HTMLDivElement>(
+                `.${styles.quickComposer}`,
+              );
+              // Fecha composer se estava aberto.
+              if (composer) composer.classList.remove(styles.quickComposerOpen);
+              if (palette) {
+                palette.classList.toggle(styles.reactionPaletteOpen);
+              }
               map.flyTo({ center: [u.lng, u.lat], zoom: 11, duration: 1400 });
-              globeStore.openUserProfile(u.id);
+            });
+            // Keypress handler no input do composer pra Enter = enviar.
+            wrapper.addEventListener('keydown', (e) => {
+              const target = e.target as HTMLElement;
+              const input = target.closest<HTMLInputElement>(
+                `.${styles.quickComposerInput}`,
+              );
+              if (input && (e as KeyboardEvent).key === 'Enter') {
+                e.preventDefault();
+                const sendBtn = wrapper.querySelector<HTMLButtonElement>(
+                  `.${styles.quickComposerSend}`,
+                );
+                sendBtn?.click();
+              }
             });
             const marker = new mapboxgl.Marker({
               element: wrapper,

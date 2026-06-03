@@ -1346,13 +1346,12 @@
   align-items: center;
   justify-content: center;
   margin-left: 8px;
-  /* Per product feedback "deixe o botão de 4 convites no desktop
-   * no mesmo estilo que no mobile, com padding levemente maior" —
-   * adota o mesmo tratamento do MobileFanverseSheet.invitesBtn
-   * (pill 999px, gradient border roxa, fonte 700) mas com padding
-   * um tique maior (10×16 vs 8×14 no mobile) e fonte 12.5px
-   * pra encaixar no compasso visual do box desktop. */
-  padding: 10px 16px;
+  /* Per product feedback "diminua proporcionalmente o tamanho do
+   * botão 4 convites para 68px" — pill ainda no padrão mobile
+   * (gradient border roxa, pill 999px) mas com largura fixa de
+   * 68px e padding + fonte reduzidos proporcionalmente. */
+  width: 68px;
+  padding: 6px 10px;
   border-radius: 999px;
   background:
     linear-gradient(#000, #000) padding-box,
@@ -1360,7 +1359,7 @@
   border: 1.5px solid transparent;
   color: #ffffff;
   font-family: var(--sans);
-  font-size: 12.5px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.005em;
   white-space: nowrap;
