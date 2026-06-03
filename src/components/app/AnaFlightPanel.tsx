@@ -100,7 +100,7 @@ export default function AnaFlightPanel({ payload, onClose }: Props) {
         <div className={styles.hero}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/ana-castela.png"
+            src="/ana-castela-fanverse-hero.jpg"
             alt=""
             className={styles.avatar}
             aria-hidden="true"

@@ -17,7 +17,7 @@ export const FAKE_ANA_CONVERSATION_ID = 'fake-conv-ana-castela';
 
 /** Avatar path — drop the new portrait at this exact file to update.
  *  Falls back to the existing universe cover if the file is missing. */
-export const FAKE_ANA_AVATAR_URL = '/ana-castela.png';
+export const FAKE_ANA_AVATAR_URL = '/ana-castela-fanverse-hero.jpg';
 
 /** Second simulated contact: an official "Central Ana Castela"
  *  account that posts updates more in the voice of a community

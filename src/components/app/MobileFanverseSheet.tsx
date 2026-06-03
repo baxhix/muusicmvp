@@ -155,7 +155,7 @@ export default function MobileFanverseSheet({
       <div className={sheetStyles.hero}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/ana-castela-fanverse-hero.png"
+          src="/ana-castela-fanverse-hero.jpg"
           alt="Ana Castela"
           className={sheetStyles.heroImg}
         />

@@ -269,7 +269,7 @@ export default function SuperliveModal({ open, onClose }: Props) {
           <div className={styles.videoOverlayBottom}>
             <div className={styles.creator}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/ana-castela.png" alt="" className={styles.creatorAvatar} aria-hidden="true" />
+              <img src="/ana-castela-fanverse-hero.jpg" alt="" className={styles.creatorAvatar} aria-hidden="true" />
               <div className={styles.creatorMeta}>
                 <span className={styles.creatorName}>
                   Ana Castela

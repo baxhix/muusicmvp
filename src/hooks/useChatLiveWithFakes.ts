@@ -92,7 +92,7 @@ export function useChatLiveWithFakes() {
         body: text,
         createdAt: now,
         senderName: 'Ana Castela',
-        senderAvatarUrl: '/ana-castela.png',
+        senderAvatarUrl: '/ana-castela-fanverse-hero.jpg',
       };
       setAnaMessages((prev) => [...prev, newMsg]);
       // Only bump the unread badge when the fan isn't actively
@@ -216,7 +216,7 @@ export function useChatLiveWithFakes() {
             body: pickRandomAnaReply(),
             createdAt: new Date().toISOString(),
             senderName: 'Ana Castela',
-            senderAvatarUrl: '/ana-castela.png',
+            senderAvatarUrl: '/ana-castela-fanverse-hero.jpg',
           };
           setAnaMessages((prev) => [...prev, reply]);
         }, ANA_REPLY_DELAY_MS);

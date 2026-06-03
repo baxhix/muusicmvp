@@ -83,7 +83,7 @@ export default function AnaCheckInPanel({
             <span className={styles.headerPulse} aria-hidden="true" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/ana-castela.png"
+              src="/ana-castela-fanverse-hero.jpg"
               alt=""
               className={styles.headerAvatar}
             />

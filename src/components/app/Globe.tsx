@@ -1459,7 +1459,7 @@ export default function Globe() {
           <span class="${styles.anaPulse}" aria-hidden="true"></span>
           <span class="${styles.anaPulseB}" aria-hidden="true"></span>
           <div class="${styles.anaAvatarRing}" role="img" aria-label="Ana Castela fez check-in em ${safeCity}-${safeState}">
-            <img src="/ana-castela.png" alt="" class="${styles.anaAvatar}" />
+            <img src="/ana-castela-fanverse-hero.jpg" alt="" class="${styles.anaAvatar}" />
             <span class="${styles.anaMapBadge}" aria-hidden="true">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 14s5-4.5 5-9a5 5 0 0 0-10 0c0 4.5 5 9 5 9z" />
