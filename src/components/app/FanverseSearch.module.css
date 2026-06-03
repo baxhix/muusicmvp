@@ -102,8 +102,11 @@
 }
 
 .orb {
-  width: 220px;
-  height: 220px;
+  /* Desktop: 286px (220 × 1.30) per product feedback "Aumente
+   * 30% o tamanho do orbe do desktop". Mobile mantém 180px via
+   * override no @media abaixo. */
+  width: 286px;
+  height: 286px;
   position: relative;
   z-index: 1;
   filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.4));
