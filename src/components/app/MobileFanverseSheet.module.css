@@ -416,6 +416,175 @@
   gap: 8px;
 }
 
+/* ===== TOP 3 PODIUM ============================================
+ *
+ * Pódio vertical exibido acima da lista plana. Três cards em
+ * flex-row, alinhados pela base (align-items: flex-end), com
+ * alturas diferentes pra refletir importância:
+ *   - #1 (centro): mais alto + foto levemente maior
+ *   - #2 (esquerda): altura média
+ *   - #3 (direita): altura menor
+ *
+ * Visual em tons preto/cinza, sem bordas chamativas. O destaque
+ * vem da forma (altura escalonada + foto +1 do top 1) e do selo
+ * adicional dentro do card. Margin-bottom separa do início da
+ * lista plana abaixo. */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0 2px;
+}
+.podiumCard {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(255, 255, 255, 0.025) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+}
+/* "Me" highlight — discreto, ainda preto/cinza com tom roxo
+ * sutil pra continuar reconhecível como o user atual. */
+.podiumCardMe {
+  background: linear-gradient(180deg,
+    rgba(168, 85, 247, 0.18) 0%,
+    rgba(168, 85, 247, 0.08) 100%);
+}
+/* Alturas escalonadas — o #1 mais alto, #2 médio, #3 menor.
+ * Min-height garante o desenho do pódio mesmo quando o conteúdo
+ * for igualmente curto entre os três. */
+.podiumCard1 {
+  min-height: 226px;
+  padding-top: 18px;
+}
+.podiumCard2 {
+  min-height: 196px;
+}
+.podiumCard3 {
+  min-height: 176px;
+}
+
+/* Rank chip — gradiente rosa/roxo igual ao resto do app, sem
+ * borda. Pequeno e centralizado no topo do card. */
+.podiumRank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
+  line-height: 1;
+}
+
+/* Avatar wrap + presence dot — mesmo padrão das linhas planas
+ * mas com tamanhos específicos pro pódio. */
+.podiumAvatarWrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+.podiumAvatar {
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  display: block;
+}
+/* Foto do #1 levemente maior pra reforçar o destaque. */
+.podiumPhoto1 {
+  width: 72px;
+  height: 72px;
+}
+.podiumPhotoSm {
+  width: 56px;
+  height: 56px;
+}
+.podiumPresence {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #6b7280;
+  border: 2px solid #0a0a14;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+.podiumPresenceOn {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.55);
+}
+
+/* Nome — truncado se for grande demais pro card. */
+.podiumName {
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+  padding: 0 2px;
+}
+.podiumName:hover {
+  color: #c084fc;
+}
+
+/* Fanpoints — valor + label "FP" em pílula sutil. */
+.podiumPoints {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.podiumPointsValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+  font-family: var(--sans);
+}
+.podiumPointsLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.02em;
+}
+
+/* Selo adicional — chip pequeno em cinza/preto, sem cor
+ * chamativa. Mostra rótulo aspiracional ("Lendário" / "Elite"
+ * / "VIP") pra dar peso simbólico ao card. */
+.podiumBadge {
+  margin-top: auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.78);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
 /* Card do user — altura confortável, padding generoso, gap
  * razoável entre rank/avatar/info/pontos. */
 .rankingRow {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
+import type { ApiRankingRow } from '@/lib/api/types';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
 import { useRanking } from '@/hooks/useRanking';
@@ -398,21 +399,32 @@ function MobileRankingList() {
         </div>
       ) : (
         <div className={sheetStyles.rankingList}>
-          {visible.map((r, idx) => {
-            const rank = idx + 1;
+          {/* Top 3 — pódio vertical (cards de alturas diferentes
+           * na ordem visual #2 | #1 | #3, alinhados na base) per
+           * product feedback. O resto da lista (rank 4+) continua
+           * em linhas planas abaixo. */}
+          {visible.length >= 3 && (
+            <Top3Podium
+              entries={visible.slice(0, 3)}
+              meId={user?.id ?? null}
+              onlineIds={onlineIds}
+            />
+          )}
+          {visible.slice(3).map((r, idx) => {
+            const rank = idx + 4;
             const isMe = r.userId === user?.id;
-            const isTop3 = rank <= 3;
             const name = r.name?.trim() || r.email.split('@')[0];
             const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
             const isOnline = isMe || onlineIds.has(r.userId);
             return (
               <div
                 key={r.userId}
-                className={`${sheetStyles.rankingRow} ${isMe ? sheetStyles.rankingRowMe : ''} ${isTop3 ? sheetStyles.rankingRowTop3 : ''}`}
+                className={`${sheetStyles.rankingRow} ${isMe ? sheetStyles.rankingRowMe : ''}`}
               >
-                {/* Rank: medal (top3) ou "#X". */}
-                <span className={`${sheetStyles.rankingRank} ${isTop3 ? sheetStyles.rankingRankMedal : ''} ${rank === 1 ? sheetStyles.rankingRankGold : rank === 2 ? sheetStyles.rankingRankSilver : rank === 3 ? sheetStyles.rankingRankBronze : ''}`}>
-                  {isTop3 ? rank : `#${rank}`}
+                {/* Rank — top3 vivem no pódio acima, então aqui
+                 * sempre é "#X" pra rank ≥ 4. */}
+                <span className={sheetStyles.rankingRank}>
+                  {`#${rank}`}
                 </span>
 
                 {/* Avatar + presence dot. */}
@@ -455,6 +467,97 @@ function MobileRankingList() {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────────────────
+ * Top3Podium — render dos 3 superfãs do topo como um pódio
+ * vertical (em vez das linhas planas usadas pra rank 4+).
+ *
+ * Layout: três cards em flex-row, alinhados pela base
+ * (align-items: flex-end). A ordem visual é #2 | #1 | #3 e os
+ * cards têm alturas diferentes pra refletir importância:
+ *   - #1 (centro) é o mais alto + foto levemente maior
+ *   - #2 (esquerda) altura média
+ *   - #3 (direita) altura menor
+ *
+ * Cada card mostra: rank pill, foto, nome, fanpoints e um selo
+ * adicional ("Lendário" / "Elite" / "VIP"). Visual em tons de
+ * preto/cinza, sem bordas chamativas.
+ * ─────────────────────────────────────────────────────────────── */
+const PODIUM_BADGES: Record<1 | 2 | 3, string> = {
+  1: 'Lendário',
+  2: 'Elite',
+  3: 'VIP',
+};
+
+interface PodiumProps {
+  entries: ApiRankingRow[];
+  meId: string | null;
+  onlineIds: Set<string>;
+}
+
+function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
+  // Visual order: #2 (left) · #1 (center) · #3 (right)
+  // entries é [#1, #2, #3]; reordeno para [#2, #1, #3].
+  const display: { rank: 1 | 2 | 3; row: ApiRankingRow }[] = [
+    { rank: 2, row: entries[1] },
+    { rank: 1, row: entries[0] },
+    { rank: 3, row: entries[2] },
+  ];
+  return (
+    <div className={sheetStyles.podium}>
+      {display.map(({ rank, row }) => {
+        const isMe = row.userId === meId;
+        const name = row.name?.trim() || row.email.split('@')[0];
+        const avatar = row.avatarUrl ?? '/avatar-placeholder.svg';
+        const isOnline = isMe || onlineIds.has(row.userId);
+        const cardClass =
+          rank === 1
+            ? sheetStyles.podiumCard1
+            : rank === 2
+              ? sheetStyles.podiumCard2
+              : sheetStyles.podiumCard3;
+        const photoClass =
+          rank === 1 ? sheetStyles.podiumPhoto1 : sheetStyles.podiumPhotoSm;
+        return (
+          <div
+            key={row.userId}
+            className={`${sheetStyles.podiumCard} ${cardClass} ${isMe ? sheetStyles.podiumCardMe : ''}`}
+          >
+            <span className={sheetStyles.podiumRank}>{rank}</span>
+            <span className={sheetStyles.podiumAvatarWrap}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatar}
+                alt=""
+                className={`${sheetStyles.podiumAvatar} ${photoClass}`}
+              />
+              <span
+                className={`${sheetStyles.podiumPresence} ${isOnline ? sheetStyles.podiumPresenceOn : ''}`}
+                aria-label={isOnline ? 'Online' : 'Offline'}
+              />
+            </span>
+            <Link
+              href={`/app/u/${row.userId}`}
+              className={sheetStyles.podiumName}
+              prefetch={false}
+            >
+              {name}
+            </Link>
+            <div className={sheetStyles.podiumPoints}>
+              <span className={sheetStyles.podiumPointsValue}>
+                {row.points.toLocaleString('pt-BR')}
+              </span>
+              <span className={sheetStyles.podiumPointsLabel}>FP</span>
+            </div>
+            <span className={sheetStyles.podiumBadge}>
+              {PODIUM_BADGES[rank]}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
