@@ -64,13 +64,15 @@
   top: 0;
   z-index: 0;
   width: 100%;
-  /* Per product feedback "a imagem destaque Fanverse Ana Castela
-   * parece estar com sprite na parte de baixo, com parte dela
-   * sendo ocultada. Faça com que seja totalmente exibida." A
-   * imagem é 1080×1080 (quadrada); com aspect-ratio 16/9 o cover
-   * cortava topo e fundo. Trocando pro 1:1 a foto inteira cabe
-   * sem crop. */
-  aspect-ratio: 1 / 1;
+  /* Per product feedback "agora na parte superior, dê um crop no
+   * topo de 96px na imagem e posicione a imagem no topo". A
+   * imagem é 1080×1080. Removendo 96px do topo sobra 1080×984,
+   * razão 1080/984 ≈ 1.098. O container adota esse aspect-ratio
+   * pra que TODO o restante (984px de altura source) caiba e o
+   * topo seja o único pedaço escondido. object-position: bottom
+   * no .heroImg garante que o overflow vá pra cima — clip no
+   * topo, imagem alinhada ao topo da região visível. */
+  aspect-ratio: 1080 / 984;
   background: #0a0a14;
   overflow: hidden;
   /* Respeita safe area no topo (notch). */
@@ -80,6 +82,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* bottom = ancora a base da imagem na base do container, jogando
+   * todo o overflow vertical pro topo (= crop dos 96px do topo). */
+  object-position: 0 100%;
   display: block;
 }
 
