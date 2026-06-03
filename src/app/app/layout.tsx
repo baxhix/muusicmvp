@@ -10,7 +10,6 @@ import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
 import ArtistBox from '@/components/app/ArtistBox';
 import DesktopTopBanner from '@/components/app/DesktopTopBanner';
-import FanverseCore from '@/components/animations/FanverseCore';
 import LiveChatStack from '@/components/app/LiveChatStack';
 import MobileRouteHeader from '@/components/app/MobileRouteHeader';
 import NowPlaying from '@/components/app/NowPlaying';
@@ -221,20 +220,13 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* Orb decorativo da marca — mesmo WebGL2 shader do /teste
-         *  e da landing. Desktop: bottom-left, ao lado esquerdo
-         *  da BottomNav per product feedback ("o orbe deve ficar
-         *  na parte inferior ao lado esquerdo da bottom bar").
-         *  Mobile: já estava bottom-left, agora segue a mesma
-         *  ancoragem (gerenciado em MobileHomeChrome).
-         *  aria-hidden + pointer-events:none no wrapper porque é
-         *  puramente decorativo (não-clicável). Hidden em chat
-         *  detail mobile (.hideShellChrome). */}
-        {!hideShellChrome && (
-          <div className={`${styles.orbSlot} ${fadeClass(5)}`} aria-hidden="true">
-            <FanverseCore />
-          </div>
-        )}
+        {/* Orb decorativo do left rail desktop foi removido per
+         * product feedback "Remova o orbe que está na lateral do
+         * mapa e mantenha apenas dentro do box Fanverse Ana
+         * Castela". O FanverseCore continua dentro do ArtistBox
+         * (header desktop) + MobileFanverseSheet (header mobile)
+         * + MobileHomeChrome (avatar pequeno no topo do mobile).
+         * O slot .orbSlot foi limpo do layout.module.css. */}
 
         {/* Mobile route header — back arrow + centered title +
          *  drag-down → /app. Shows on every non-home /app route

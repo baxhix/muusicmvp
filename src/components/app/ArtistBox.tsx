@@ -305,12 +305,17 @@ export default function ArtistBox() {
         aria-expanded={open}
         aria-label={open ? 'Fechar Fanverse' : 'Abrir Fanverse'}
       >
-        {/* Hero image — full width do box; aspect-ratio igual ao
-         * mobile (1080/969) pra mesma proporção visual. */}
+        {/* Hero image — desktop usa o crop landscape (chapéu rosa)
+         * per product feedback "Diminua a largura do header e
+         * substitua pela imagem em anexo somente no desktop". Hero
+         * tem padding lateral (não é mais full-bleed) e radius
+         * próprio. O MobileFanverseSheet continua com o asset
+         * 1080×1080 (`/ana-castela-fanverse-hero.jpg`); o ArtistBox
+         * é mobile:none então essa src só aparece no desktop. */}
         <div className={styles.hero}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/ana-castela-fanverse-hero.jpg"
+            src="/ana-castela-fanverse-desktop.jpg"
             alt="Ana Castela"
             className={styles.heroImg}
           />

@@ -303,55 +303,16 @@
   .superchatTriggerSlot { display: none; }
 }
 
-/* ── Orb decorativo da marca (FanverseCore) ──
+/* ── Orb decorativo (.orbSlot) ──
+ * REMOVIDO per product feedback "Remova o orbe que está na lateral
+ * do mapa e mantenha apenas dentro do box Fanverse Ana Castela".
+ * O orb continua vivo em outros pontos: ArtistBox (header desktop),
+ * MobileFanverseSheet (header mobile), MobileHomeChrome
+ * (.headerOrb 88×88), FindMyLoveOverlay (estado searching).
  *
- * Desktop: TOPO CENTRAL da viewport, 100×100 (era 50×50 ao lado
- * da BottomNav — dobrou per product feedback "No desktop,
- * duplique o tamanho do orbe… posicione o Orbe no topo ao
- * centro"). Como o ArtistBox foi ocultado no desktop no mesmo
- * round, o top-center fica visualmente livre pro orb.
- *
- * Mobile: o orb antigo daqui (.orbSlot) está display:none
- * (regra abaixo). O orb mobile vive em
- * src/components/app/MobileHomeChrome (.headerOrb).
- *
- * pointer-events:none no wrapper porque é decorativo (a
- * animação não responde a click/hover). aria-hidden no JSX
- * pelos mesmos motivos. */
-/* Desktop: LEFT RAIL stack per product feedback "posicione o orbe
- * abaixo do box de nivel de zoom e o coração logo abaixo".
- *
- * O rail ficou organizado verticalmente em volta de top:50%:
- *   - Brainstorm trigger     top: 50%             (40px alto)
- *   - Zoom indicator         top: calc(50%+28px)  (~32px alto)
- *   - Orb (este)             top: calc(50%+68px)  (56×56)
- *   - Find my love (coração) top: calc(50%+132px) (40px)
- *
- * Antes ficava bottom-left 100×100 ao lado da BottomNav. Foi
- * reduzido pra 56×56 pra encaixar discreto no rail e seguir a
- * mesma largura visual dos outros itens. */
-.orbSlot {
-  position: fixed;
-  top: calc(50% + 68px);
-  left: 10px;
-  z-index: 22;
-  width: 56px;
-  height: 56px;
-  pointer-events: none;
-}
-
-@media (max-width: 768px) {
-  /* Mobile: o orb antigo do canto inferior esquerdo está
-   * SUPRIMIDO per product feedback "No mobile, dobre o tamanho
-   * do orbe e posicione no header à esquerda". O orb agora vive
-   * em src/components/app/MobileHomeChrome (.headerOrb, 88×88),
-   * dentro da home /app. Esconder aqui via display:none mantém
-   * o desktop intacto + qualquer regra futura herda do bloco
-   * desktop sem precisar override. */
-  .orbSlot {
-    display: none;
-  }
-}
+ * Se voltar no futuro, ressuscitar com base no commit que removeu
+ * (estava como position:fixed, left:10px, top:calc(50%+68px),
+ * 56×56, z-index 22). */
 
 /* ── Back-to-landing link ── */
 .backBtn {
