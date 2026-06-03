@@ -167,11 +167,13 @@
    * (era 4px). O texto já tem line-height próprio que dá uma
    * respiração mínima entre as duas linhas.
    *
-   * margin-top: 30px per "Posicione 30px mais abaixo somente as
-   * palavras Fanverse Ana Castela + selo verificado" — empurra
-   * eyebrow + título 30px pra baixo. metaRow tem margin-top:-30
-   * pra anular o push (Fanpoints + invite mantêm posição). */
-  margin-top: 30px;
+   * margin-top: 8px (era 30, -22) per "Desceu muito as palavras
+   * Fanverse e Ana Castela e o orbe. Posicione 22px acima". O
+   * push original (30px) ficou exagerado; mantém 8px só pra dar
+   * uma respiração entre o topo do fold e o título. metaRow tem
+   * margin-top:-8 pra compensar (mantém Fanpoints + invite no
+   * mesmo lugar que estavam antes do shift). */
+  margin-top: 8px;
   margin-bottom: 0;
   line-height: 1;
 }
@@ -241,9 +243,10 @@
   justify-content: space-between;
   gap: 16px;
   padding: 0;
-  /* Cancel-out do +30 que o .foldEyebrow ganhou — mantém Fanpoints
-   * + invite onde estavam (só nome desce, per product feedback). */
-  margin-top: -30px;
+  /* Cancel-out do +8 atual do .foldEyebrow (originalmente -30 do
+   * +30; agora -8 do +8) — mantém Fanpoints + invite na MESMA
+   * posição visual independente do shift do título acima. */
+  margin-top: -8px;
 }
 .metaPoints {
   display: inline-flex;
