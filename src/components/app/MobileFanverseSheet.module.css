@@ -345,28 +345,42 @@
  * .missionCheck via classes ADICIONAIS (specificity wins por ser
  * última no cascade). Tap target ≥ 56px, tipografia maior. */
 .missionsList {
+  /* Per product feedback "deixe o estilo, como a altura, cor e
+   * espaçamento dos cards de Missões e Conquistas padronizados,
+   * tomando como base o Conquistas". Padding alinhado com
+   * .benefitsScope (0 16px 12px). */
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 4px 16px 8px;
+  padding: 0 16px 12px;
 }
 .missionMobile {
-  /* Padding 14×14 garante tap area de ~56px de altura
-   * (icon 22 + 14×2 + line-height). */
-  padding: 14px 14px !important;
+  /* Mesmo padding/gap/border-radius/min-height do .tabBenefitRow
+   * (14×12, gap 12, radius 12, min-height 64) — tomando Conquistas
+   * como base padronizada. */
+  padding: 14px 12px !important;
   gap: 12px !important;
   border-radius: 12px !important;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.03) !important;
+  min-height: 64px;
 }
 .missionMobile:hover {
   background: rgba(255, 255, 255, 0.05) !important;
 }
 .missionIconMobile {
-  font-size: 20px !important;
-  width: 28px !important;
+  /* Match com .tabBenefitIcon (36×36 / svg 18×18). */
+  font-size: 18px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 9px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 .missionNameMobile {
-  font-size: 14px !important;
+  /* Match com .tabBenefitTitle (14.5px / 600). */
+  font-size: 14.5px !important;
   font-weight: 600;
   line-height: 1.3 !important;
   white-space: normal !important;

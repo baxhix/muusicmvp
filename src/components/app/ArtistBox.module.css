@@ -853,6 +853,10 @@
    * `.missionSparkles` overlay during the celebration burst. */
   position: relative;
   display: flex;
+  /* align-items: center alinha verticalmente icone + texto + xp +
+   * checkbox per product feedback "Alinhe verticalmente os
+   * checkbox". (Já era center mas o checkbox era 14×14 e o resto
+   * variava — ver fix de altura abaixo no .missionCheck.) */
   align-items: center;
   gap: 7px;
   padding: 5px 7px;
@@ -980,40 +984,46 @@
 }
 
 .missionName {
-  font-size: 11px;
+  /* Per product feedback "Deixe a tipografia das missões do mesmo
+   * padrão que o nome no ranking: missão cumprida: regular cinza;
+   * missão não cumprida, branca, igual o nome de usuário". Bate
+   * com .tabRankingName (12.5px / 600 / #fff). */
+  font-size: 12.5px;
   font-weight: 600;
-  color: rgba(245,245,247,0.85);
+  color: #ffffff;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Per product feedback "Nas missões cumpridas, remova o tachado
- * das palavras" — line-through retirado. O cue de "concluído"
- * agora vive apenas no checkbox verde + na cor fade da label
- * (sem strike). */
+/* Missão cumprida: regular + cinza (rgba 0.55), per mesmo
+ * feedback "regular cinza". Match com .tabRankingPoints/.City
+ * pra ficar coerente. */
 .missionDone .missionName {
-  color: rgba(245,245,247,0.4);
+  color: rgba(245, 245, 247, 0.55);
+  font-weight: 400;
 }
 
 .missionXp {
-  /* Per product feedback "mude a cor de textos laranjados pela
-   * cor branca". Era texto #f59e0b (orange-500) + bg
-   * rgba(245,158,11,0.1) — agora branco em pill white-on-white-low. */
-  font-size: 9.5px;
-  font-weight: 700;
+  /* Per product feedback "a quantidade de FP mesma coisa". Tip:
+   * "mesma coisa" = mesmo padrão (regular cinza quando done,
+   * branco quando aberto). Pill removido (era bg rgba 0.08); o
+   * número FP agora flutua como texto puro. */
+  font-size: 12px;
+  font-weight: 600;
   color: #ffffff;
-  font-family: var(--mono);
+  font-family: var(--sans);
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 100px;
-  padding: 2px 6px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
 }
 
 .missionDone .missionXp {
-  color: rgba(245,245,247,0.25);
-  background: rgba(255,255,255,0.04);
+  color: rgba(245, 245, 247, 0.55);
+  font-weight: 400;
+  background: transparent;
 }
 
 /* Per product feedback "remova os círculos que não estão como

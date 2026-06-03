@@ -324,27 +324,10 @@ export default function ArtistBox() {
               {fanpoints.toLocaleString('pt-BR')}
             </span>
             <span className={styles.fanpointsInlineLabel}>Fanpoints</span>
-            <span
-              role="button"
-              tabIndex={0}
-              className={styles.invitesBtn}
-              onClick={(e) => {
-                /* Header inteiro é o trigger do dropdown; aqui paramos
-                 * a propagação pra que o clique NO botão de convites
-                 * só abra o modal, sem colapsar/expandir o box. */
-                e.stopPropagation();
-                setInviteOpen(true);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setInviteOpen(true);
-                }
-              }}
-            >
-              4 convites
-            </span>
+            {/* Botão "4 convites" removido per product feedback
+             * "Remova o botão 4 convites" (desktop). InviteFriendsModal
+             * permanece importado caso outro surface ainda dispare
+             * setInviteOpen, mas a entrada visual aqui não existe mais. */}
           </div>
         </div>
       </button>
@@ -376,7 +359,7 @@ export default function ArtistBox() {
             onClick={() => { setActiveTab('ranking'); if (!open) setOpen(true); }}
             data-onboarding-anchor="ranking"
           >
-            Ranking
+            Superfãs
           </button>
           <button
             type="button"
@@ -436,13 +419,9 @@ export default function ArtistBox() {
           {activeTab === 'ranking' && <RankingTabContent />}
           {activeTab === 'beneficios' && (
             <>
-              {/* Top10ProgressBarDesktop renderizado AQUI fora do
-               * BenefitsTabContent — mobile usa sua própria barra
-               * fina via wrapper no MobileFanverseSheet, então não
-               * deve ver a versão desktop pra evitar bar dupla.
-               * Per product feedback "tem duas barras de progresso.
-               * Deixe apenas a mais fina". */}
-              <Top10ProgressBarDesktop />
+              {/* Top10ProgressBarDesktop removida da aba Conquistas
+               * desktop per product feedback "Remova a barra de
+               * progresso de Conquistas". */}
               <BenefitsTabContent />
             </>
           )}

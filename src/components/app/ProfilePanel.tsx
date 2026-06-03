@@ -262,56 +262,55 @@ export default function ProfilePanel({
       />
       <div className={styles.panel} role="dialog" aria-modal="true" aria-label="Perfil">
 
-      {/* ── Header (mesmo padrão do SuperfansPanel) ── */}
+      {/* ── Header — close + kebab "Mais opções" lado a lado per
+       * product feedback "Na tela de Perfil os botões de fechar e
+       * três pontinhos estão sobrepostos. Deixe um ao lado do
+       * outro". Mobile esconde o título (.headerTitle) via @media
+       * mas mantém os botões visíveis. */}
       <div className={styles.header}>
         <h2 className={styles.headerTitle}>
           {isOwnProfile ? 'Meu perfil' : 'Perfil'}
         </h2>
-        <button className={styles.closeBtn} aria-label="Fechar" onClick={onClose}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Kebab "Mais opções" — top-right do panel, fixed-position,
-       * mostrado APENAS pra outros usuários (não é o próprio
-       * perfil). Per product feedback "Deixe o botão de tres
-       * pontinhos no topo direito". Em mobile esse é o único
-       * acesso pro menu Denunciar; em desktop ele coexiste com o
-       * .header (que tá hidden no mobile). */}
-      {!isOwnProfile && (
-        <div className={styles.reportMenuWrap} ref={reportMenuRef}>
-          <button
-            type="button"
-            className={styles.reportMenuBtn}
-            onClick={() => setReportMenuOpen((v) => !v)}
-            aria-label="Mais opções"
-            aria-expanded={reportMenuOpen}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.6" />
-              <circle cx="12" cy="12" r="1.6" />
-              <circle cx="19" cy="12" r="1.6" />
-            </svg>
-          </button>
-          {reportMenuOpen && (
-            <div className={styles.reportMenu} role="menu">
+        <div className={styles.headerActions}>
+          {!isOwnProfile && (
+            <div className={styles.reportMenuWrap} ref={reportMenuRef}>
               <button
                 type="button"
-                role="menuitem"
-                className={styles.reportMenuItem}
-                onClick={() => {
-                  setReportMenuOpen(false);
-                  onReport?.(user.id, user.name);
-                }}
+                className={styles.reportMenuBtn}
+                onClick={() => setReportMenuOpen((v) => !v)}
+                aria-label="Mais opções"
+                aria-expanded={reportMenuOpen}
               >
-                Denunciar usuário
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <circle cx="5" cy="12" r="1.6" />
+                  <circle cx="12" cy="12" r="1.6" />
+                  <circle cx="19" cy="12" r="1.6" />
+                </svg>
               </button>
+              {reportMenuOpen && (
+                <div className={styles.reportMenu} role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={styles.reportMenuItem}
+                    onClick={() => {
+                      setReportMenuOpen(false);
+                      onReport?.(user.id, user.name);
+                    }}
+                  >
+                    Denunciar usuário
+                  </button>
+                </div>
+              )}
             </div>
           )}
+          <button className={styles.closeBtn} aria-label="Fechar" onClick={onClose}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
-      )}
+      </div>
 
       <div className={styles.scroll}>
 
