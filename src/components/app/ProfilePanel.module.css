@@ -292,6 +292,14 @@
   color: rgba(245,245,247,0.35);
   font-weight: 400;
 }
+/* Wrapper inline-flex que agrupa "· N streams" pra que o @media
+ * mobile esconda o conjunto inteiro (separador + número + label)
+ * sem deixar dot solto no meio do meta-line. */
+.userStreamsBlock {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
 .userStreamsNum {
   color: #F5F5F7;
   font-weight: 700;
@@ -708,4 +716,41 @@
  * under the route bar without a duplicate band. */
 @media (max-width: 768px) {
   .header { display: none; }
+
+  /* Per product feedback "Remova os streams" — esconde o bloco
+   * inteiro (· N streams) no mobile. Desktop mantém. */
+  .userStreamsBlock { display: none; }
+
+  /* Per product feedback "Deixe a quantidade de FP na cor branca". */
+  .userFanpointsNum { color: #F5F5F7; }
+
+  /* Per product feedback "Centralize o player, quando aparecer". */
+  .playerRow {
+    justify-content: center;
+  }
+
+  /* Per product feedback "Deixe as tabs no mesmo estilo que as tabs
+   * que tem no Fanverse" — pill compacto: padding pequeno,
+   * border-radius 8, font 13, weight 600, ativo = white-on-glass. */
+  .tabs {
+    gap: 4px;
+    padding: 4px 12px 12px;
+  }
+  .tab {
+    flex: 1;
+    padding: 9px 8px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(245, 245, 247, 0.55);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .tabActive {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+  }
 }

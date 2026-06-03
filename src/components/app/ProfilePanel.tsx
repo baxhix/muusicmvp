@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import NowPlaying from './NowPlaying';
 import NowPlayingPreview from './NowPlayingPreview';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
 import styles from './ProfilePanel.module.css';
 
@@ -198,7 +199,24 @@ export default function ProfilePanel({
   onSendMessage,
   onReport,
 }: Props) {
-  const [tab, setTab] = useState<TabId>('historico');
+  const isMobile = useIsMobile();
+  /* Tabs visíveis variam por viewport: mobile remove "Histórico"
+   * per product feedback "Remova o Histórico". Default tab passa
+   * pra 'atividade' no mobile (era 'historico' que não existe mais). */
+  const visibleTabs = useMemo(
+    () => (isMobile ? TABS.filter((t) => t.id !== 'historico') : TABS),
+    [isMobile],
+  );
+  const [tab, setTab] = useState<TabId>(
+    isMobile ? 'atividade' : 'historico',
+  );
+  // Se o user troca de viewport (raro mas possível) e a tab atual
+  // sumiu, cai pra primeira tab visível pra não ficar limbo.
+  useEffect(() => {
+    if (!visibleTabs.find((t) => t.id === tab)) {
+      setTab(visibleTabs[0]?.id ?? 'atividade');
+    }
+  }, [visibleTabs, tab]);
   const [online, setOnline] = useState<boolean>(user.isOnline);
   const [reportMenuOpen, setReportMenuOpen] = useState(false);
   const reportMenuRef = useRef<HTMLDivElement | null>(null);
@@ -257,11 +275,17 @@ export default function ProfilePanel({
           <p className={styles.userName}>{user.name}</p>
           <p className={styles.userMetaLine}>
             <span className={styles.userMetaCity}>{user.city}, {user.state}</span>
-            <span className={styles.userMetaSep}>·</span>
-            <span className={styles.userStreamsNum}>
-              {user.streams.toLocaleString('pt-BR')}
-            </span>{' '}
-            <span className={styles.userStreamsLabel}>streams</span>
+            {/* Streams agrupados num bloco que o @media mobile
+             * esconde via .userStreamsBlock { display: none },
+             * incluindo o separador antes — per product feedback
+             * "Remova os streams". */}
+            <span className={styles.userStreamsBlock}>
+              <span className={styles.userMetaSep}>·</span>
+              <span className={styles.userStreamsNum}>
+                {user.streams.toLocaleString('pt-BR')}
+              </span>{' '}
+              <span className={styles.userStreamsLabel}>streams</span>
+            </span>
             <span className={styles.userMetaSep}>·</span>
             <span className={styles.userFanpointsNum}>
               {user.fanpoints.toLocaleString('pt-BR')}
@@ -432,9 +456,14 @@ export default function ProfilePanel({
           </div>
         )}
 
-        {/* ── Tabs ── */}
+        {/* ── Tabs ──
+         * Mobile: oculta "Histórico" via visibleTabs filtrado +
+         * .tabs ganha estilo Fanverse (pill compacto) via CSS
+         * @media. Per product feedback "Deixe as tabs no mesmo
+         * estilo que as tabs que tem no Fanverse. Remova o
+         * Histórico". */}
         <div className={styles.tabs}>
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button
               key={t.id}
               className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
