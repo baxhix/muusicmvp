@@ -267,6 +267,13 @@ export default function MobileFanverseSheet({
 
         {activeTab === 'beneficios' && (
           <div className={sheetStyles.benefitsScope}>
+            {/* Per product feedback "Deixe a barra de progresso de
+             * Top 10 na aba de conquistas" — Top10ProgressBar
+             * também aparece aqui, encabeçando a aba como uma meta
+             * visível antes da lista de benefícios. */}
+            <div className={sheetStyles.benefitsProgressWrap}>
+              <Top10ProgressBar />
+            </div>
             <BenefitsTabContent />
           </div>
         )}
@@ -353,17 +360,14 @@ export default function MobileFanverseSheet({
  *  - Carrega até 100 users (sem botão "Carregar mais")
  *  - Mesma mecânica: presence dot, top3 medal, nome → /app/u/[id]
  * ──────────────────────────────────────────────────────────── */
-function MobileRankingList() {
+/* ───────────────────────────────────────────────────────────────
+ * Top10ProgressBar — barra de progresso reutilizável (Superfãs +
+ * Conquistas). Hoste seus próprios dados via useRanking + useAuth
+ * pra que possa ser dropada em qualquer tab sem prop-drilling.
+ * ─────────────────────────────────────────────────────────────── */
+function Top10ProgressBar() {
   const { user } = useAuth();
-  const { ranking, loading, error } = useRanking(true);
-  const { users: liveUsers } = useLiveUsers();
-  const onlineIds = useMemo(
-    () => new Set(liveUsers.map((u) => u.id)),
-    [liveUsers],
-  );
-
-  /* Threshold pra entrar no top 10 + posição do user atual.
-   * Mesma lógica do RankingTabContent. */
+  const { ranking } = useRanking(true);
   const top10Threshold = ranking.length >= 10 ? ranking[9].points : null;
   const myRow = user ? ranking.find((r) => r.userId === user.id) ?? null : null;
   const myPoints = myRow?.points ?? 0;
@@ -376,6 +380,43 @@ function MobileRankingList() {
       ? Math.max(0, top10Threshold + 1 - myPoints)
       : 0;
   const meProgressPct = 50;
+  return (
+    <div className={sheetStyles.rankingProgress}>
+      <div className={sheetStyles.rankingProgressHeader}>
+        <span className={sheetStyles.rankingProgressLabel}>
+          {meInTop10
+            ? 'Você está no Top 10!'
+            : top10Threshold === null
+              ? 'Continue ouvindo pra entrar no ranking'
+              : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
+        </span>
+        <span
+          className={sheetStyles.rankingProgressCrown}
+          aria-hidden="true"
+        >
+          👑
+        </span>
+      </div>
+      <div
+        className={`${boxStyles.tabRankingProgressTrack} ${sheetStyles.rankingProgressTrack}`}
+      >
+        <div
+          className={boxStyles.tabRankingProgressFill}
+          style={{ width: `${meProgressPct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MobileRankingList() {
+  const { user } = useAuth();
+  const { ranking, loading, error } = useRanking(true);
+  const { users: liveUsers } = useLiveUsers();
+  const onlineIds = useMemo(
+    () => new Set(liveUsers.map((u) => u.id)),
+    [liveUsers],
+  );
 
   /* Top 100 — per product feedback "carregue até o usuário 100". */
   const visible = useMemo(
@@ -385,38 +426,10 @@ function MobileRankingList() {
 
   return (
     <div className={sheetStyles.rankingWrap}>
-      {/* Progress bar do user atual — mesmo header do desktop. */}
-      <div className={sheetStyles.rankingProgress}>
-        {/* Header row: label "Você está no Top 10!" à esquerda +
-         * coroa 👑 alinhada no eixo do texto à direita, per
-         * product feedback "deixe a coroa alinhada ao texto Você
-         * está no Top 10!". A barra fina vem logo abaixo, com gap
-         * menor pra "aproximar o texto da barra". */}
-        <div className={sheetStyles.rankingProgressHeader}>
-          <span className={sheetStyles.rankingProgressLabel}>
-            {meInTop10
-              ? 'Você está no Top 10!'
-              : top10Threshold === null
-                ? 'Continue ouvindo pra entrar no ranking'
-                : `${pointsToTop10.toLocaleString('pt-BR')} pontos para entrar no top 10`}
-          </span>
-          <span
-            className={sheetStyles.rankingProgressCrown}
-            aria-hidden="true"
-          >
-            👑
-          </span>
-        </div>
-        {/* Track fino (3px) — altura metade do desktop. */}
-        <div
-          className={`${boxStyles.tabRankingProgressTrack} ${sheetStyles.rankingProgressTrack}`}
-        >
-          <div
-            className={boxStyles.tabRankingProgressFill}
-            style={{ width: `${meProgressPct}%` }}
-          />
-        </div>
-      </div>
+      {/* Progress bar do user atual — extraído pra componente
+       * reusável (Top10ProgressBar) per product feedback
+       * "Deixe a barra de progresso de Top 10 na aba de conquistas". */}
+      <Top10ProgressBar />
 
       {/* Lista. */}
       {error ? (

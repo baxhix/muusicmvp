@@ -831,6 +831,12 @@
 .benefitsScope {
   padding: 0 8px 12px;
 }
+/* Wrapper pra Top10ProgressBar no topo da aba Conquistas — um
+ * pouco mais de padding horizontal (16px) pra alinhar com o resto
+ * da lista de benefícios + respiro vertical antes do conteúdo. */
+.benefitsProgressWrap {
+  padding: 4px 8px 8px;
+}
 .benefitsScope :global([class*="tabBenefitsScroll"]) {
   max-height: none !important;
 }
