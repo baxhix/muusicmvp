@@ -330,13 +330,24 @@ export default function ArtistBox() {
               <span className={styles.foldTitleName}>Ana Castela</span>
               <VerifiedBadge size={18} className={styles.foldVerified} />
             </div>
-            {/* Orb decorativo — mesmo elemento do mobile (FanverseCore
-             * WebGL canvas). aria-hidden + line-height:0 evitam
-             * ghosting/baseline gap; pointer-events:none deixa o
-             * clique passar pro botão de toggle. */}
-            <span className={styles.foldOrb} aria-hidden="true">
+            {/* Orb agora é CLICÁVEL — abre o overlay FanverseSearch
+             * ("Analisando atividade do mundo"). e.stopPropagation
+             * impede que o clique também acione o toggle do header
+             * (que abre/fecha o dropdown do box). type=button +
+             * aria-label pra acessibilidade. */}
+            <button
+              type="button"
+              className={styles.foldOrb}
+              onClick={(e) => {
+                e.stopPropagation();
+                try {
+                  window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
+                } catch { /* SSR */ }
+              }}
+              aria-label="Abrir Fanverse Search"
+            >
               <FanverseCore />
-            </span>
+            </button>
           </div>
           <div
             className={styles.metaRow}

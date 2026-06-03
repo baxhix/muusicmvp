@@ -199,14 +199,22 @@ export default function MobileFanverseSheet({
             <span className={sheetStyles.foldTitleName}>Ana Castela</span>
             <VerifiedBadge size={22} className={sheetStyles.foldVerified} />
           </div>
-          {/* Orb decorativo da marca — assume o slot que era do botão
-           * "4 convites" per product feedback "insira o orbe no lugar
-           * que estava o botão 4 convites". O botão foi movido pra
-           * metaRow (alinhado aos Fanpoints) abaixo. aria-hidden +
-           * pointer-events:none porque é puramente decorativo. */}
-          <span className={sheetStyles.foldOrb} aria-hidden="true">
+          {/* Orb agora é CLICÁVEL — abre o overlay FanverseSearch
+           * ("Analisando atividade do mundo"). Mesmo padrão do
+           * desktop ArtistBox; aqui não tem stopPropagation porque
+           * o orb não vive dentro de um botão pai. */}
+          <button
+            type="button"
+            className={sheetStyles.foldOrb}
+            onClick={() => {
+              try {
+                window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
+              } catch { /* SSR */ }
+            }}
+            aria-label="Abrir Fanverse Search"
+          >
             <FanverseCore />
-          </span>
+          </button>
         </div>
         <div className={sheetStyles.metaRow}>
           <div className={sheetStyles.metaPoints}>

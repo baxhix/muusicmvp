@@ -49,9 +49,22 @@ export default function MobileHomeChrome() {
        *  FanverseCore auto-redimensiona via ResizeObserver pro
        *  novo tamanho. aria-hidden + pointer-events:none porque
        *  é puramente decorativo. */}
-      <span className={styles.headerOrb} aria-hidden="true">
+      {/* Orb agora é CLICÁVEL — abre o FanverseSearch overlay
+       * ("Analisando atividade do mundo"). Antes era decorativo
+       * (span + pointer-events:none); virou button pra ganhar
+       * affordance + acessibilidade. */}
+      <button
+        type="button"
+        className={styles.headerOrb}
+        onClick={() => {
+          try {
+            window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
+          } catch { /* SSR */ }
+        }}
+        aria-label="Abrir Fanverse Search"
+      >
         <FanverseCore />
-      </span>
+      </button>
       <div className={styles.brand} aria-hidden="false">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

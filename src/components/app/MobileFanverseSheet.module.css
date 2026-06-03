@@ -222,7 +222,21 @@
   height: 72px;
   display: inline-block;
   line-height: 0;
-  pointer-events: none;
+  /* Botão clicável (abre FanverseSearch). Reset native button +
+   * leve scale no hover/active pra feedback tátil. */
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 160ms ease;
+}
+.foldOrb:hover  { transform: scale(1.06); }
+.foldOrb:active { transform: scale(0.96); }
+.foldOrb:focus-visible {
+  outline: 2px solid rgba(168, 85, 247, 0.55);
+  outline-offset: 4px;
 }
 
 /* ── Meta row ──

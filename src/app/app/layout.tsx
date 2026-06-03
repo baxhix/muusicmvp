@@ -40,6 +40,7 @@ import MapPulses from '@/components/app/MapPulses';
 import MapZoomIndicator from '@/components/app/MapZoomIndicator';
 import SimulationHUD from '@/components/app/SimulationHUD';
 import OnboardingTooltips from '@/components/app/OnboardingTooltips';
+import FanverseSearch from '@/components/app/FanverseSearch';
 import styles from './layout.module.css';
 
 /**
@@ -499,6 +500,13 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  createPortal(document.body) — pode ficar em qualquer
        *  lugar do tree sem se preocupar com transform ancestors. */}
       <OnboardingTooltips />
+
+      {/* Fanverse Search — overlay "Analisando atividade do mundo"
+       *  disparado pelo clique no orbe FanverseCore. Self-mounting:
+       *  ouve `app:open-fanverse-search` global e renderiza
+       *  null/overlay com base em estado interno. Mantido no shell
+       *  pra ficar disponível em qualquer rota /app/*. */}
+      <FanverseSearch />
 
       {/* ── Brainstorm + Map Simulation ──
        *

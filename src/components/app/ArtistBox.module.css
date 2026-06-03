@@ -384,15 +384,31 @@
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
 }
 
-/* Orb decorativo — FanverseCore WebGL canvas. Menor que no mobile
- * (48 vs 72) pra ficar proporcional ao nome reduzido. */
+/* Orb interativo — FanverseCore WebGL canvas envolvido em <button>
+ * pra abrir o FanverseSearch overlay ("Analisando atividade do
+ * mundo"). Stop-propagation no handler garante que o clique não
+ * vaza pro toggle do header. Reset native button styling + leve
+ * scale no hover/active pra feedback. Menor que no mobile (48 vs
+ * 72) pra ficar proporcional ao nome reduzido do desktop. */
 .foldOrb {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
   display: inline-block;
   line-height: 0;
-  pointer-events: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 160ms ease;
+}
+.foldOrb:hover  { transform: scale(1.08); }
+.foldOrb:active { transform: scale(0.96); }
+.foldOrb:focus-visible {
+  outline: 2px solid rgba(168, 85, 247, 0.55);
+  outline-offset: 4px;
 }
 
 /* ── Meta row ──

@@ -188,8 +188,22 @@
   height: 70px;
   display: inline-block;
   line-height: 0;
-  pointer-events: none;
   z-index: 1;
+  /* Orb agora é botão clicável (abre FanverseSearch overlay).
+   * Reset native button + scale no hover/active pra feedback. */
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 160ms ease;
+}
+.headerOrb:hover  { transform: scale(1.06); }
+.headerOrb:active { transform: scale(0.96); }
+.headerOrb:focus-visible {
+  outline: 2px solid rgba(168, 85, 247, 0.55);
+  outline-offset: 4px;
 }
 
 @media (max-width: 360px) {
