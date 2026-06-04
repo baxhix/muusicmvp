@@ -13,6 +13,7 @@ import {
   RankingTabContent,
   BenefitsTabContent,
 } from './ArtistBox';
+import { MaterialsTabContent } from './MaterialsTabContent';
 import styles from './ArtistBoxRail.module.css';
 
 /**
@@ -35,7 +36,7 @@ import styles from './ArtistBoxRail.module.css';
  * useIsSmallDesktop() é true, ArtistBox retorna <ArtistBoxRail />
  * em vez do box grande. >1440px renderiza o box como sempre.
  */
-type Tab = 'missoes' | 'ranking' | 'beneficios';
+type Tab = 'missoes' | 'ranking' | 'beneficios' | 'materiais';
 
 export default function ArtistBoxRail() {
   const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -178,6 +179,17 @@ export default function ArtistBoxRail() {
           <Tooltip>Conquistas</Tooltip>
         </button>
 
+        {/* Materiais — pastas que a Central de Fãs compartilha. */}
+        <button
+          type="button"
+          className={`${styles.iconBtn} ${activeTab === 'materiais' && flyoutOpen ? styles.iconBtnActive : ''}`}
+          onClick={() => openTab('materiais')}
+          aria-label="Materiais"
+        >
+          <IconFolder />
+          <Tooltip>Materiais</Tooltip>
+        </button>
+
         {/* Divider antes do atalho do vídeo */}
         <div className={styles.divider} aria-hidden="true" />
 
@@ -257,6 +269,15 @@ export default function ArtistBoxRail() {
               >
                 Conquistas
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'materiais'}
+                className={`${styles.flyoutTab} ${activeTab === 'materiais' ? styles.flyoutTabActive : ''}`}
+                onClick={() => setActiveTab('materiais')}
+              >
+                Materiais
+              </button>
             </div>
           </div>
 
@@ -303,6 +324,7 @@ export default function ArtistBoxRail() {
             )}
             {activeTab === 'ranking' && <RankingTabContent />}
             {activeTab === 'beneficios' && <BenefitsTabContent />}
+            {activeTab === 'materiais' && <MaterialsTabContent />}
           </div>
         </div>
       )}
@@ -343,6 +365,13 @@ function IconMedal() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="15" r="6" />
       <path d="M8 11L6 3l3 1 3-2 3 2 3-1-2 8" />
+    </svg>
+  );
+}
+function IconFolder() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
     </svg>
   );
 }

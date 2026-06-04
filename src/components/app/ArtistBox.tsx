@@ -15,6 +15,7 @@ import VerifiedBadge from './VerifiedBadge';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { useIsSmallDesktop } from '@/hooks/useIsSmallDesktop';
 import ArtistBoxRail from './ArtistBoxRail';
+import { MaterialsTabContent } from './MaterialsTabContent';
 import styles from './ArtistBox.module.css';
 
 // Loja da Boiadeira — official Ana Castela store. Same URL the
@@ -105,7 +106,7 @@ export default function ArtistBox() {
    * preserva o comportamento atual de mostrar a lista de missões
    * + progresso. Outras tabs mostram placeholder "Em breve"
    * (implementação completa fica pro próximo round). */
-  type BoxTab = 'missoes' | 'ranking' | 'beneficios';
+  type BoxTab = 'missoes' | 'ranking' | 'beneficios' | 'materiais';
   const [activeTab, setActiveTab] = useState<BoxTab>('missoes');
 
   /* Modal "Convide seus amigos" — 4 códigos copiáveis. Triggered
@@ -425,6 +426,15 @@ export default function ArtistBox() {
           >
             Conquistas
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'materiais'}
+            className={`${styles.tab} ${activeTab === 'materiais' ? styles.tabActive : ''}`}
+            onClick={() => { setActiveTab('materiais'); if (!open) setOpen(true); }}
+          >
+            Materiais
+          </button>
         </div>
       </div>
 
@@ -480,6 +490,7 @@ export default function ArtistBox() {
               <BenefitsTabContent />
             </>
           )}
+          {activeTab === 'materiais' && <MaterialsTabContent />}
           {activeTab === 'missoes' && (
           <div className={styles.missionsList}>
             {MISSION_META.map((m) => {

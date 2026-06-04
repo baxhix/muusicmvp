@@ -1,0 +1,308 @@
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import styles from './MaterialsTabContent.module.css';
+
+/**
+ * MaterialsTabContent — tab "Materiais" do ArtistBox (e do
+ * flyout do ArtistBoxRail). Mostra um grid 3-col de pastas com
+ * conteúdos compartilhados pela Central de Fãs. Algumas pastas
+ * são tier-locked (precisa de X Fanpoints pra abrir); o cadeado
+ * aparece em cima do ícone e o clique não navega.
+ *
+ * Click em pasta unlocked → switch pra detail view inline com
+ * lista de arquivos + ações view/download. Voltar via back arrow.
+ *
+ * Dados mocados — 6 pastas + 1 "ver mais" decorativo. Em
+ * produção, plugar `useFanMaterials()` ou similar pra buscar do
+ * backend admin (acervo de materiais).
+ */
+
+type MaterialKind = 'image' | 'video' | 'audio' | 'pdf' | 'document';
+
+interface MaterialItem {
+  id: string;
+  name: string;
+  kind: MaterialKind;
+  size: string;
+}
+
+interface MaterialFolder {
+  id: string;
+  name: string;
+  emoji: string;
+  /** Fanpoints necessários pra desbloquear. Undefined = sempre aberta. */
+  lockedAt?: number;
+  items: MaterialItem[];
+}
+
+const FOLDERS: MaterialFolder[] = [
+  {
+    id: 'fotos-turne',
+    name: 'Fotos da turnê',
+    emoji: '📸',
+    items: [
+      { id: 'f1-1', name: 'Sao Paulo show 1.jpg', kind: 'image', size: '3.2 MB' },
+      { id: 'f1-2', name: 'Sao Paulo show 2.jpg', kind: 'image', size: '2.8 MB' },
+      { id: 'f1-3', name: 'Rio de Janeiro live.jpg', kind: 'image', size: '4.1 MB' },
+      { id: 'f1-4', name: 'Belo Horizonte backstage.jpg', kind: 'image', size: '3.5 MB' },
+      { id: 'f1-5', name: 'Salvador acustico.jpg', kind: 'image', size: '2.9 MB' },
+    ],
+  },
+  {
+    id: 'bastidores',
+    name: 'Bastidores VIP',
+    emoji: '🎬',
+    items: [
+      { id: 'f2-1', name: 'Camarim Boiadeira.mp4', kind: 'video', size: '48 MB' },
+      { id: 'f2-2', name: 'Aquecimento vocal.mp4', kind: 'video', size: '22 MB' },
+      { id: 'f2-3', name: 'Roteiro do show.pdf', kind: 'pdf', size: '1.2 MB' },
+    ],
+  },
+  {
+    id: 'demos',
+    name: 'Demos exclusivas',
+    emoji: '🎤',
+    lockedAt: 5000,
+    items: [
+      { id: 'f3-1', name: 'Pipoco - demo voz.mp3', kind: 'audio', size: '5.1 MB' },
+      { id: 'f3-2', name: 'Solteiro - demo violao.mp3', kind: 'audio', size: '4.7 MB' },
+    ],
+  },
+  {
+    id: 'letras',
+    name: 'Letras manuscritas',
+    emoji: '✍️',
+    items: [
+      { id: 'f4-1', name: 'Boiadeira - rascunho.pdf', kind: 'pdf', size: '850 KB' },
+      { id: 'f4-2', name: 'Nosso Quadro - letra original.pdf', kind: 'pdf', size: '1.1 MB' },
+      { id: 'f4-3', name: 'Folder de turne.pdf', kind: 'pdf', size: '2.3 MB' },
+    ],
+  },
+  {
+    id: 'backstage-fonte-nova',
+    name: 'Backstage Fonte Nova',
+    emoji: '🏟️',
+    lockedAt: 10000,
+    items: [
+      { id: 'f5-1', name: 'Passagem de som.mp4', kind: 'video', size: '92 MB' },
+      { id: 'f5-2', name: 'Encontro de fas.mp4', kind: 'video', size: '64 MB' },
+      { id: 'f5-3', name: 'Saida do palco.mp4', kind: 'video', size: '38 MB' },
+    ],
+  },
+  {
+    id: 'lives-privadas',
+    name: 'Lives privadas',
+    emoji: '🔴',
+    lockedAt: 25000,
+    items: [
+      { id: 'f6-1', name: 'Live de aniversario.mp4', kind: 'video', size: '120 MB' },
+      { id: 'f6-2', name: 'Live solo violao.mp4', kind: 'video', size: '85 MB' },
+    ],
+  },
+];
+
+export function MaterialsTabContent() {
+  const { user } = useAuth();
+  const { profile } = useUserProfile(user?.id ?? null);
+  const fanpoints = profile?.fanpoints ?? 0;
+  const [openFolderId, setOpenFolderId] = useState<string | null>(null);
+
+  const openFolder = openFolderId
+    ? FOLDERS.find((f) => f.id === openFolderId)
+    : null;
+
+  /* Detail view — lista de arquivos da pasta aberta. */
+  if (openFolder) {
+    return (
+      <div className={styles.detail}>
+        <button
+          type="button"
+          className={styles.backBtn}
+          onClick={() => setOpenFolderId(null)}
+          aria-label="Voltar para pastas"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          <span>Pastas</span>
+        </button>
+        <h3 className={styles.detailTitle}>
+          <span className={styles.detailEmoji} aria-hidden="true">{openFolder.emoji}</span>
+          {openFolder.name}
+        </h3>
+        <div className={styles.fileList}>
+          {openFolder.items.map((item) => (
+            <FileRow key={item.id} item={item} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* Grid view — 3 colunas de pastas, locked condicional a fanpoints. */
+  return (
+    <div className={styles.materials}>
+      <div className={styles.grid}>
+        {FOLDERS.map((f) => {
+          const locked = f.lockedAt !== undefined && fanpoints < f.lockedAt;
+          return (
+            <FolderCard
+              key={f.id}
+              folder={f}
+              locked={locked}
+              onClick={() => {
+                if (!locked) setOpenFolderId(f.id);
+              }}
+            />
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        className={styles.viewMore}
+        aria-label="Ver mais materiais"
+      >
+        Ver mais
+      </button>
+    </div>
+  );
+}
+
+function FolderCard({
+  folder,
+  locked,
+  onClick,
+}: {
+  folder: MaterialFolder;
+  locked: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${styles.folder} ${locked ? styles.folderLocked : ''}`}
+      onClick={onClick}
+      aria-label={
+        locked
+          ? `${folder.name} — bloqueada, precisa de ${folder.lockedAt?.toLocaleString('pt-BR')} Fanpoints`
+          : `Abrir ${folder.name}`
+      }
+      disabled={locked}
+    >
+      <div className={styles.folderIconWrap}>
+        <svg viewBox="0 0 24 24" fill="none" className={styles.folderIcon} aria-hidden="true">
+          <path
+            d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+            fill="currentColor"
+            opacity="0.85"
+          />
+        </svg>
+        <span className={styles.folderEmoji} aria-hidden="true">
+          {folder.emoji}
+        </span>
+        {locked && (
+          <span className={styles.lockOverlay} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 1a5 5 0 0 0-5 5v4H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 9V6a3 3 0 1 1 6 0v4H9z" />
+            </svg>
+          </span>
+        )}
+      </div>
+      <span className={styles.folderName}>{folder.name}</span>
+      <span className={styles.folderMeta}>
+        {locked
+          ? `${folder.lockedAt?.toLocaleString('pt-BR')} FP`
+          : `${folder.items.length} ${folder.items.length === 1 ? 'item' : 'itens'}`}
+      </span>
+    </button>
+  );
+}
+
+function FileRow({ item }: { item: MaterialItem }) {
+  return (
+    <div className={styles.fileRow}>
+      <span className={styles.fileIcon} aria-hidden="true">
+        <FileKindIcon kind={item.kind} />
+      </span>
+      <div className={styles.fileInfo}>
+        <span className={styles.fileName}>{item.name}</span>
+        <span className={styles.fileSize}>{item.size}</span>
+      </div>
+      <div className={styles.fileActions}>
+        <button
+          type="button"
+          className={styles.fileBtn}
+          aria-label={`Visualizar ${item.name}`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className={styles.fileBtn}
+          aria-label={`Baixar ${item.name}`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FileKindIcon({ kind }: { kind: MaterialKind }) {
+  /* Single set of strokes per kind — fica leve e fácil de scanear
+   * visualmente. Cor herda do parent (.fileIcon) via currentColor. */
+  if (kind === 'image') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    );
+  }
+  if (kind === 'video') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polygon points="23 7 16 12 23 17 23 7" />
+        <rect x="1" y="5" width="15" height="14" rx="2" />
+      </svg>
+    );
+  }
+  if (kind === 'audio') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+    );
+  }
+  if (kind === 'pdf') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+    );
+  }
+  /* document fallback */
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="16" y2="17" />
+    </svg>
+  );
+}
