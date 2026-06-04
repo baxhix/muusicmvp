@@ -183,10 +183,23 @@ function FolderCard({
       disabled={locked}
     >
       <div className={styles.folderIconWrap}>
+        {/* Pasta com gradient inline quando livre / cinza quando
+         * bloqueada. O gradient `folderGradient` vive no <defs>
+         * dentro do próprio SVG — multiplas instâncias na mesma
+         * página declaram o mesmo id sem conflito (browsers
+         * resolvem por gradient referenciado dentro do mesmo
+         * svg root). */}
         <svg viewBox="0 0 24 24" fill="none" className={styles.folderIcon} aria-hidden="true">
+          <defs>
+            <linearGradient id="folderGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"   stopColor="#f97316" />
+              <stop offset="50%"  stopColor="#ec4899" />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+          </defs>
           <path
             d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
-            fill="currentColor"
+            fill={locked ? 'currentColor' : 'url(#folderGradient)'}
           />
         </svg>
         {locked && (
