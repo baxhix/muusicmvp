@@ -79,7 +79,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'backstage-fonte-nova',
     name: 'Backstage Fonte Nova',
-    lockedAt: 10000,
     items: [
       { id: 'f5-1', name: 'Passagem de som.mp4', kind: 'video', size: '92 MB' },
       { id: 'f5-2', name: 'Encontro de fas.mp4', kind: 'video', size: '64 MB' },
@@ -199,11 +198,11 @@ function FolderCard({
         )}
       </div>
       <span className={styles.folderName}>{folder.name}</span>
-      <span className={styles.folderMeta}>
-        {locked
-          ? `${folder.lockedAt?.toLocaleString('pt-BR')} FP`
-          : `${folder.items.length} ${folder.items.length === 1 ? 'item' : 'itens'}`}
-      </span>
+      {locked && (
+        <span className={styles.folderMeta}>
+          {folder.lockedAt?.toLocaleString('pt-BR')} FP
+        </span>
+      )}
     </button>
   );
 }
