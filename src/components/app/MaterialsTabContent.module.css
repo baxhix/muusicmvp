@@ -31,13 +31,18 @@
  * não é o box da pasta. Deve ser a pasta". Card só dá enquadramento. */
 /* Card menor proporcionalmente (padding 14/8 → 10/4, min-height
  * 122 → 100) per product feedback "Ajuste tudo proporcionalmente,
- * exceto a tipografia". Texto + meta size mantidos pra leitura. */
+ * exceto a tipografia". Texto + meta size mantidos pra leitura.
+ *
+ * Top padding 10 → 4 per product feedback "Deixe o padding top
+ * das pastas igual das laterais" — agora 4px nos 4 lados, com
+ * bottom 8 mantido pra dar respiro pro meta "Y FP" ou só pro
+ * nome quando livre. */
 .folder {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 10px 4px 8px;
+  padding: 4px 4px 8px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
@@ -142,8 +147,11 @@
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
+/* Locked: mesma cor cinza do meta default per product feedback
+ * "a quantidade de FP necessárias para ver a pasta na cor cinza"
+ * (era amber #fbbf24). Igual sinalização do nome. */
 .folderLocked .folderMeta {
-  color: #fbbf24;
+  color: rgba(245, 245, 247, 0.5);
 }
 
 /* ── Botão "Ver mais" ──────────────────────────────────────── */
