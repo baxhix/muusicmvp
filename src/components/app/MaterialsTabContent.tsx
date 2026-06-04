@@ -1,9 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import styles from './MaterialsTabContent.module.css';
+
+/* Helper pra montar URL de thumbnail de imagem mocada via Picsum.
+ * Seed determinístico (id do item) garante que a mesma "foto"
+ * aparece em todo render. Tamanhos: 80×60 pro thumb na lista,
+ * 1600×1067 pro lightbox fullscreen. */
+function thumbUrl(seed: string, w: number, h: number): string {
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
+}
 
 /**
  * MaterialsTabContent — tab "Materiais" do ArtistBox (e do
@@ -106,6 +114,26 @@ export function MaterialsTabContent() {
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
+  /* Lightbox state — item de imagem clicado pelo user. Quando
+   * preenchido, renderiza um overlay fullscreen com a imagem em
+   * resolução maior + botão de download. */
+  const [lightboxItem, setLightboxItem] = useState<MaterialItem | null>(null);
+
+  /* Escape fecha o lightbox + bloqueia scroll do body enquanto
+   * aberto. */
+  useEffect(() => {
+    if (!lightboxItem) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxItem(null);
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightboxItem]);
 
   const openFolder = openFolderId
     ? FOLDERS.find((f) => f.id === openFolderId)
@@ -114,26 +142,39 @@ export function MaterialsTabContent() {
   /* Detail view — lista de arquivos da pasta aberta. */
   if (openFolder) {
     return (
-      <div className={styles.detail}>
-        <button
-          type="button"
-          className={styles.backBtn}
-          onClick={() => setOpenFolderId(null)}
-          aria-label="Voltar para pastas"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </svg>
-          <span>Pastas</span>
-        </button>
-        <h3 className={styles.detailTitle}>{openFolder.name}</h3>
-        <div className={styles.fileList}>
-          {openFolder.items.map((item) => (
-            <FileRow key={item.id} item={item} />
-          ))}
+      <>
+        <div className={styles.detail}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => setOpenFolderId(null)}
+            aria-label="Voltar para pastas"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            <span>Pastas</span>
+          </button>
+          <h3 className={styles.detailTitle}>{openFolder.name}</h3>
+          <div className={styles.fileList}>
+            {openFolder.items.map((item) => (
+              <FileRow
+                key={item.id}
+                item={item}
+                onPreview={
+                  item.kind === 'image'
+                    ? () => setLightboxItem(item)
+                    : undefined
+                }
+              />
+            ))}
+          </div>
         </div>
-      </div>
+        {lightboxItem && (
+          <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
+        )}
+      </>
     );
   }
 
@@ -225,12 +266,48 @@ function FolderCard({
   );
 }
 
-function FileRow({ item }: { item: MaterialItem }) {
+function FileRow({
+  item,
+  onPreview,
+}: {
+  item: MaterialItem;
+  /** Quando definido, item é tratado como visualizável (imagem) —
+   * thumbnail vira clicável e botão olho dispara preview. */
+  onPreview?: () => void;
+}) {
+  const isImage = item.kind === 'image';
+  /* Imagem: thumbnail real via Picsum (seed = item.id). Outros
+   * tipos mantêm o ícone SVG colorido. */
+  const thumbContent = isImage ? (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={thumbUrl(item.id, 80, 60)}
+      alt={item.name}
+      className={styles.fileThumbImg}
+      loading="lazy"
+    />
+  ) : (
+    <FileKindIcon kind={item.kind} />
+  );
+
+  const thumbProps = onPreview
+    ? { onClick: onPreview, 'aria-label': `Abrir ${item.name}`, type: 'button' as const }
+    : { 'aria-hidden': true as const };
+
   return (
     <div className={styles.fileRow}>
-      <span className={styles.fileIcon} aria-hidden="true">
-        <FileKindIcon kind={item.kind} />
-      </span>
+      {onPreview ? (
+        <button
+          {...(thumbProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+          className={`${styles.fileIcon} ${isImage ? styles.fileIconImage : ''}`}
+        >
+          {thumbContent}
+        </button>
+      ) : (
+        <span className={`${styles.fileIcon} ${isImage ? styles.fileIconImage : ''}`}>
+          {thumbContent}
+        </span>
+      )}
       <div className={styles.fileInfo}>
         <span className={styles.fileName}>{item.name}</span>
         <span className={styles.fileSize}>{item.size}</span>
@@ -240,23 +317,92 @@ function FileRow({ item }: { item: MaterialItem }) {
           type="button"
           className={styles.fileBtn}
           aria-label={`Visualizar ${item.name}`}
+          onClick={onPreview}
+          disabled={!onPreview}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
         </button>
-        <button
-          type="button"
+        <a
           className={styles.fileBtn}
+          href={isImage ? thumbUrl(item.id, 1600, 1067) : '#'}
+          download={item.name}
+          target="_blank"
+          rel="noopener noreferrer"
           aria-label={`Baixar ${item.name}`}
+          onClick={(e) => {
+            if (!isImage) e.preventDefault();
+          }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-        </button>
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+ * Lightbox — overlay fullscreen pra preview de imagem com
+ * download. Fecha por backdrop click, botão X, ou tecla Escape
+ * (Escape gerenciado pelo parent via useEffect). Cliques dentro
+ * da imagem não propagam pro backdrop.
+ * ============================================================ */
+function Lightbox({
+  item,
+  onClose,
+}: {
+  item: MaterialItem;
+  onClose: () => void;
+}) {
+  const fullUrl = thumbUrl(item.id, 1600, 1067);
+  return (
+    <div
+      className={styles.lightbox}
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.name}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        className={styles.lightboxClose}
+        onClick={onClose}
+        aria-label="Fechar"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <div
+        className={styles.lightboxStage}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={fullUrl} alt={item.name} className={styles.lightboxImg} />
+        <div className={styles.lightboxMeta}>
+          <div className={styles.lightboxName}>{item.name}</div>
+          <a
+            className={styles.lightboxDownload}
+            href={fullUrl}
+            download={item.name}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Baixar
+          </a>
+        </div>
       </div>
     </div>
   );
