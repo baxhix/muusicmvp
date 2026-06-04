@@ -32,7 +32,6 @@ interface MaterialItem {
 interface MaterialFolder {
   id: string;
   name: string;
-  emoji: string;
   /** Fanpoints necessários pra desbloquear. Undefined = sempre aberta. */
   lockedAt?: number;
   items: MaterialItem[];
@@ -42,7 +41,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'fotos-turne',
     name: 'Fotos da turnê',
-    emoji: '📸',
     items: [
       { id: 'f1-1', name: 'Sao Paulo show 1.jpg', kind: 'image', size: '3.2 MB' },
       { id: 'f1-2', name: 'Sao Paulo show 2.jpg', kind: 'image', size: '2.8 MB' },
@@ -54,7 +52,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'bastidores',
     name: 'Bastidores VIP',
-    emoji: '🎬',
     items: [
       { id: 'f2-1', name: 'Camarim Boiadeira.mp4', kind: 'video', size: '48 MB' },
       { id: 'f2-2', name: 'Aquecimento vocal.mp4', kind: 'video', size: '22 MB' },
@@ -64,7 +61,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'demos',
     name: 'Demos exclusivas',
-    emoji: '🎤',
     lockedAt: 5000,
     items: [
       { id: 'f3-1', name: 'Pipoco - demo voz.mp3', kind: 'audio', size: '5.1 MB' },
@@ -74,7 +70,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'letras',
     name: 'Letras manuscritas',
-    emoji: '✍️',
     items: [
       { id: 'f4-1', name: 'Boiadeira - rascunho.pdf', kind: 'pdf', size: '850 KB' },
       { id: 'f4-2', name: 'Nosso Quadro - letra original.pdf', kind: 'pdf', size: '1.1 MB' },
@@ -84,7 +79,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'backstage-fonte-nova',
     name: 'Backstage Fonte Nova',
-    emoji: '🏟️',
     lockedAt: 10000,
     items: [
       { id: 'f5-1', name: 'Passagem de som.mp4', kind: 'video', size: '92 MB' },
@@ -95,7 +89,6 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'lives-privadas',
     name: 'Lives privadas',
-    emoji: '🔴',
     lockedAt: 25000,
     items: [
       { id: 'f6-1', name: 'Live de aniversario.mp4', kind: 'video', size: '120 MB' },
@@ -130,10 +123,7 @@ export function MaterialsTabContent() {
           </svg>
           <span>Pastas</span>
         </button>
-        <h3 className={styles.detailTitle}>
-          <span className={styles.detailEmoji} aria-hidden="true">{openFolder.emoji}</span>
-          {openFolder.name}
-        </h3>
+        <h3 className={styles.detailTitle}>{openFolder.name}</h3>
         <div className={styles.fileList}>
           {openFolder.items.map((item) => (
             <FileRow key={item.id} item={item} />
@@ -198,14 +188,10 @@ function FolderCard({
           <path
             d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
             fill="currentColor"
-            opacity="0.85"
           />
         </svg>
-        <span className={styles.folderEmoji} aria-hidden="true">
-          {folder.emoji}
-        </span>
         {locked && (
-          <span className={styles.lockOverlay} aria-hidden="true">
+          <span className={styles.lockBadge} aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 1a5 5 0 0 0-5 5v4H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 9V6a3 3 0 1 1 6 0v4H9z" />
             </svg>

@@ -20,7 +20,10 @@
 
 /* ── Rail vertical ─────────────────────────────────────────── */
 .rail {
-  width: 52px;
+  /* Largura 52 → 64 pra acomodar o orbe 56×56 (per product
+   * feedback "O Orbe não mudou de tamanho, mude para 56x56px").
+   * Os outros ícones (40-44) seguem confortáveis no novo gutter. */
+  width: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -112,10 +115,12 @@
   display: block;
 }
 
-/* Orb btn — wrapper que abriga o FanverseCore */
+/* Orb btn — wrapper que abriga o FanverseCore.
+ * 56×56 per product feedback (era 44). É o item mais destacado
+ * do rail; rail.width foi bumpada pra 64 pra acomodar. */
 .orbBtn {
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   overflow: hidden;
   padding: 0;
