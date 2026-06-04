@@ -17,11 +17,13 @@
 .player {
   position: fixed;
   bottom: 24px;
-  /* Aligned to the ArtistBox column. Both at left:42 — wider
-     gutter from the screen edge so the left column feels framed.
-     Chat dock keeps its 18px right gap (asymmetric: dock is a
-     slim 44px column, doesn't need as much breathing room). */
-  left: 42px;
+  /* Aligned to the ArtistBox column. Ambos a left:34 — gutter
+     simétrico com o top:34 do ArtistBox per product feedback
+     "iguale o padding left do box do video para se alinhar ao
+     Box Fanverse Ana Castela". Chat dock keeps its 18px right
+     gap (asymmetric: dock is a slim 44px column, doesn't need as
+     much breathing room). */
+  left: 34px;
   /* Solid black surface per product feedback — the previous
    * gradient + backdrop blur read as a dark purple that didn't
    * match the rest of the dark-mode chrome. Keeping the deep drop
@@ -137,8 +139,11 @@
 .playerExpanded:hover { transform: translateY(-2px); }
 
 /* ── VIDEO (player com YouTube embed integrado ACIMA) ── */
+/* Largura +32px (320 → 352) per product feedback "Aumente 32px
+ * a largura do box do vídeo e do Fanverse Ana Castela" — alinha
+ * com a nova largura do ArtistBox (352px). */
 .playerVideo {
-  width: 320px;
+  width: 352px;
   border-radius: 12px;
   padding: 0 12px 12px;
   align-items: center;

@@ -1316,10 +1316,19 @@
 @media (min-width: 769px) {
   /* ArtistBox volta a aparecer no desktop per product feedback
    * "Retorne o box Fanverse Ana Castela". O display:none que
-   * tinha sido adicionado no commit anterior foi removido. */
+   * tinha sido adicionado no commit anterior foi removido.
+   *
+   * Padding lateral igualado ao topo (34px) per product feedback
+   * "iguale os paddins do box Fanverse Ana Castela da lateral e
+   * do topo, tomando o topo como base" — antes era left:42, agora
+   * left:34 pra fazer top/left simétricos. NowPlaying também desce
+   * pra left:34 pra alinhar verticalmente.
+   *
+   * Largura +32px (320 → 352) per product feedback "Aumente 32px
+   * a largura do box do vídeo e do Fanverse Ana Castela". */
   .box {
-    width: 320px;
-    left: 42px;
+    width: 352px;
+    left: 34px;
     border-radius: 20px;
     box-shadow:
       0 32px 80px rgba(0, 0, 0, 0.7),
@@ -1337,7 +1346,10 @@
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
-  .box { width: 300px; }
+  /* 300 → 332 = 300 + 32 (mesma adição). Em 1024px o ArtistBoxRail
+   * já assume na prática (rail vive 769-1440), mas mantém a regra
+   * coerente caso o switch breakpoint mude no futuro. */
+  .box { width: 332px; }
 }
 
 @media (max-width: 768px) {
