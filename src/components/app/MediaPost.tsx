@@ -37,6 +37,9 @@ type BasePost = {
   /** Optional caption/description below the media. Admin posts
    *  use this; mock posts leave it off. */
   description?: string;
+  /** Optional title — usado pelo tipo `material_alert` como
+   *  headline do card. Outros tipos ignoram. */
+  title?: string;
 };
 
 export type ImagePostData    = BasePost & { type: 'image';  src: string; alt?: string };
@@ -60,11 +63,19 @@ export type YoutubePostData  = BasePost & {
   youtubeId: string;
   youtubeUrl: string;
 };
+/** Material alert — post anunciando que tem material novo
+ * exclusivo na aba Materiais do box Fanverse Ana Castela. Sem
+ * mídia anexa; só title + description carregam o conteúdo, o
+ * resto é visual (pasta com gradient + badge "Superfãs"). */
+export type MaterialAlertPostData = BasePost & {
+  type: 'material_alert';
+};
 export type MediaPostData    =
   | ImagePostData
   | VideoPostData
   | CarouselPostData
-  | YoutubePostData;
+  | YoutubePostData
+  | MaterialAlertPostData;
 
 /**
  * Extrai o videoId de uma URL de YouTube. Cobre os 3 formatos
@@ -193,6 +204,10 @@ function postKeyFor(data: MediaPostData): string {
   if (data.type === 'image') return `media:image:${data.src}`;
   if (data.type === 'video') return `media:video:${data.src ?? data.poster}`;
   if (data.type === 'youtube_video') return `media:youtube:${data.youtubeId}`;
+  if (data.type === 'material_alert') {
+    // Sem mídia; usa title+user pra estabilizar entre renders.
+    return `media:material:${data.user}:${data.title ?? ''}`;
+  }
   // For carousels, the first slide's src is stable across rerenders.
   const first = data.items[0]?.src ?? data.user;
   return `media:carousel:${first}`;
@@ -291,6 +306,15 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
             referrerPolicy="strict-origin-when-cross-origin"
           />
         </div>
+      ) : data.type === 'material_alert' ? (
+        /* Material alert — card de anúncio sem mídia. Pasta com
+         * gradient (mesmo SVG da tab Materiais), badge "Exclusivo
+         * superfãs" e CTA "Ver materiais" que dispara um evento pra
+         * abrir o ArtistBox/MobileFanverseSheet na tab certa. */
+        <MaterialAlertMedia
+          title={data.title}
+          description={data.description}
+        />
       ) : (
         <div className={styles.videoWrap}>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -428,6 +452,63 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
         open={commentsOpen}
         onCountChange={setCommentCount}
       />
+    </div>
+  );
+}
+
+/* ── Material alert sub-component ────────────────────────────────────
+ * Card visual usado pelo post `material_alert`. Pasta com gradient
+ * orange→pink→purple (mesmo da tab Materiais), eyebrow "Exclusivo
+ * superfãs" + headline + CTA. Click no CTA disparam o evento
+ * `app:fanverse-open-materials` que o ArtistBox/MobileFanverseSheet
+ * escutam pra abrir o box já na aba Materiais. */
+function MaterialAlertMedia({
+  title,
+  description,
+}: {
+  title?: string;
+  description?: string;
+}) {
+  const headline = title?.trim() || 'Material novo exclusivo';
+  const subline =
+    description?.trim() ||
+    'A Central de Fãs liberou um novo acervo na sua aba Materiais.';
+  const openMaterials = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('app:fanverse-open-materials'));
+    } catch { /* SSR */ }
+  };
+  return (
+    <div className={styles.materialAlert}>
+      <span className={styles.materialBadge} aria-hidden="true">
+        Exclusivo superfãs
+      </span>
+      <div className={styles.materialIconWrap} aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" className={styles.materialIcon}>
+          <defs>
+            <linearGradient id="materialAlertGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#f97316" />
+              <stop offset="50%" stopColor="#ec4899" />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+            fill="url(#materialAlertGradient)"
+          />
+        </svg>
+      </div>
+      <div className={styles.materialCopy}>
+        <h3 className={styles.materialHeadline}>{headline}</h3>
+        <p className={styles.materialSubline}>{subline}</p>
+      </div>
+      <button
+        type="button"
+        className={styles.materialCta}
+        onClick={openMaterials}
+      >
+        Ver materiais
+      </button>
     </div>
   );
 }

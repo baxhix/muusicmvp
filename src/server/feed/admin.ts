@@ -56,7 +56,8 @@ export type FeedType =
   | 'sponsored'
   | 'broadcast'
   | 'audio'
-  | 'youtube_video';
+  | 'youtube_video'
+  | 'material_alert';
 export type FeedStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 
 export interface FeedMediaItem {

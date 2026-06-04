@@ -300,7 +300,8 @@ export type ApiFeedPostType =
   | 'sponsored'
   | 'broadcast'
   | 'audio'
-  | 'youtube_video';
+  | 'youtube_video'
+  | 'material_alert';
 
 export type ApiFeedPostStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 

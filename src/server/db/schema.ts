@@ -371,7 +371,7 @@ export const feedPosts = pgTable(
     }),
     // CMS-only fields ──
     type: text('type', {
-      enum: ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio', 'youtube_video'],
+      enum: ['image', 'video', 'carousel', 'story', 'poll', 'sponsored', 'broadcast', 'audio', 'youtube_video', 'material_alert'],
     }),
     status: text('status', {
       enum: ['published', 'scheduled', 'draft', 'inactive'],

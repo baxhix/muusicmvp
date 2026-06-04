@@ -77,7 +77,8 @@ export type FeedItemType =
   | 'sponsored'
   | 'broadcast'
   | 'audio'
-  | 'youtube_video';
+  | 'youtube_video'
+  | 'material_alert';
 
 export type FeedItemStatus = 'published' | 'scheduled' | 'draft' | 'inactive';
 

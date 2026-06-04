@@ -250,6 +250,93 @@
   display: block;
 }
 
+/* ── Material alert (post type) ──────────────────────────────
+ * Card de anúncio sem mídia. Centralizado, gradient orange/pink/
+ * purple só no folder icon (mesmo da tab Materiais), badge
+ * "Exclusivo superfãs" + headline + CTA. */
+.materialAlert {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 24px 22px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.16) 0%, transparent 55%),
+    rgba(11, 11, 14, 0.85);
+  border-top: 1px solid rgba(168, 85, 247, 0.18);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.18);
+}
+.materialBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+  border: 1px solid transparent;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.materialIconWrap {
+  width: 88px;
+  height: 88px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.materialIcon {
+  width: 88px;
+  height: 88px;
+  filter: drop-shadow(0 6px 20px rgba(236, 72, 153, 0.45));
+}
+.materialCopy {
+  text-align: center;
+  max-width: 360px;
+}
+.materialHeadline {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.materialSubline {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.65);
+  line-height: 1.45;
+}
+.materialCta {
+  margin-top: 4px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background:
+    linear-gradient(#0a0a0e, #0a0a0e) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+  border: 1.5px solid transparent;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.materialCta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.35);
+}
+.materialCta:active {
+  transform: translateY(0);
+}
+
 /* Play/pause overlay button */
 .playOverlay {
   position: absolute;

@@ -234,6 +234,19 @@ export default function ArtistBox() {
     };
   }, []);
 
+  /* CTA "Ver materiais" do feed post material_alert dispara
+   * app:fanverse-open-materials — abrimos o box + setamos a tab
+   * Materiais. ArtistBoxRail tem o próprio listener em sua own
+   * scope. */
+  useEffect(() => {
+    const handler = () => {
+      setActiveTab('materiais');
+      setOpen(true);
+    };
+    window.addEventListener('app:fanverse-open-materials', handler);
+    return () => window.removeEventListener('app:fanverse-open-materials', handler);
+  }, []);
+
   /* Rail compacto pra desktop pequeno (769-1440px) per product
    * feedback "EM telas menores o box fanverse se tornar uma barra
    * vertical com os acessos em forma de icone". Substitui o box

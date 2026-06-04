@@ -165,10 +165,29 @@ function relativeTime(iso: string): string {
 }
 
 function adminPostToMediaData(p: ApiFeedPost): MediaPostData | null {
-  if (!p.media || p.media.length === 0) return null;
   // Stories surface in their own rail (see useAdminStories below),
   // never in the main feed.
   if (p.type === 'story') return null;
+  /* material_alert é o único type sem dependência de media — o
+   * card visual é puramente texto/decorativo. Checagem precede o
+   * gate de media abaixo pra não filtrar o post. */
+  if (p.type === 'material_alert') {
+    const user = 'Central Ana Castela';
+    const avatar = '/central-anacastela.png';
+    const time = relativeTime(p.publishedAt ?? p.createdAt);
+    return {
+      type: 'material_alert' as const,
+      user,
+      avatar,
+      time,
+      likes: 0,
+      comments: p.commentCount ?? 0,
+      dbId: p.id,
+      title: p.title ?? undefined,
+      description: p.description ?? undefined,
+    };
+  }
+  if (!p.media || p.media.length === 0) return null;
   // Per product feedback every post in /app's feed surfaces as
   // "Central Ana Castela" — the platform's official artist
   // channel. Admin-supplied author metadata (`p.author?.name`,

@@ -87,6 +87,18 @@ export default function ArtistBoxRail() {
     return () => document.removeEventListener('keydown', onKey);
   }, [flyoutOpen]);
 
+  /* CTA "Ver materiais" do feed post material_alert: abre o flyout
+   * direto na tab Materiais. ArtistBox grande tem o próprio listener
+   * em sua scope. */
+  useEffect(() => {
+    const handler = () => {
+      setActiveTab('materiais');
+      setFlyoutOpen(true);
+    };
+    window.addEventListener('app:fanverse-open-materials', handler);
+    return () => window.removeEventListener('app:fanverse-open-materials', handler);
+  }, []);
+
   const openTab = (tab: Tab) => {
     setActiveTab(tab);
     setFlyoutOpen(true);

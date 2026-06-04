@@ -70,6 +70,7 @@ const TYPE_OPTIONS: Array<{
   { value: 'youtube_video',  label: 'YouTube',     hint: 'Link de vídeo do YouTube', enabled: true  },
   { value: 'audio',          label: 'Áudio',       hint: 'Faixa ou álbum em áudio', enabled: true  },
   { value: 'story',          label: 'Story',       hint: 'Conteúdo efêmero por 24h', enabled: true  },
+  { value: 'material_alert', label: 'Materiais',   hint: 'Aviso de material novo na Central de Fãs', enabled: true  },
   { value: 'poll',           label: 'Enquete',     hint: 'Em breve',                  enabled: false },
   { value: 'sponsored',      label: 'Patrocinado', hint: 'Em breve',                  enabled: false },
   { value: 'broadcast',      label: 'Transmissão', hint: 'Em breve',                  enabled: false },
@@ -309,7 +310,12 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
           </div>
         </div>
 
-        {/* ── Mídia ────────────────────────────────────── */}
+        {/* ── Mídia ──────────────────────────────────────
+         * Tipo `material_alert` é puramente texto (title +
+         * description) — o renderer no client desenha o card
+         * decorativo (folder gradient + badge "Exclusivo
+         * superfãs" + CTA). Sem campos de upload aqui. */}
+        {type !== 'material_alert' && (
         <div className={styles.section}>
           <span className={styles.sectionTitle}>
             {type === 'youtube_video' ? 'URL do YouTube *' : (
@@ -369,6 +375,7 @@ export default function FeedComposerDrawer({ open, post, onClose, onSaved }: Pro
             />
           )}
         </div>
+        )}
 
         {/* ── Expiração (apenas Story) ──────────────────── */}
         {type === 'story' && (
