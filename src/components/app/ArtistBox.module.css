@@ -485,15 +485,15 @@
 }
 .tab {
   flex: 1;
-  /* Padding lateral 8 → 4 + font-size 11.5 → 10.5 per product
-   * feedback "Ajuste o tamanho das tabs para que caiba a palavra
-   * Conquistas" — a palavra mais longa (10 chars) agora encaixa
-   * sem ellipsis no row de 4 tabs do box 352px. */
-  padding: 6px 4px;
+  /* Font 10.5 → 12 + padding lateral 4 → 6 per product feedback
+   * "Aumente o tamanho da fonte das tabs no Box Fanverse Ana
+   * Castela". O box ganhou +36 de largura (352 → 388) pra "Conquistas"
+   * caber confortavelmente com a fonte maior. */
+  padding: 6px 6px;
   border-radius: 8px;
   border: none;
   background: none;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   color: rgba(245, 245, 247, 0.55);
@@ -1328,14 +1328,14 @@
    *
    * Padding lateral igualado ao topo (34px) per product feedback
    * "iguale os paddins do box Fanverse Ana Castela da lateral e
-   * do topo, tomando o topo como base" — antes era left:42, agora
-   * left:34 pra fazer top/left simétricos. NowPlaying também desce
-   * pra left:34 pra alinhar verticalmente.
+   * do topo, tomando o topo como base".
    *
-   * Largura +32px (320 → 352) per product feedback "Aumente 32px
-   * a largura do box do vídeo e do Fanverse Ana Castela". */
+   * Largura 352 → 388 per product feedback "Aumente o tamanho da
+   * fonte das tabs... Para caber a palavra Conquistas, aumente o
+   * tamanho do box se necessário". Com font 12px e 4 tabs, cada
+   * tab fica ~88px (Conquistas cabe sem ellipsis). */
   .box {
-    width: 352px;
+    width: 388px;
     left: 34px;
     border-radius: 20px;
     box-shadow:
@@ -1354,10 +1354,10 @@
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
-  /* 300 → 332 = 300 + 32 (mesma adição). Em 1024px o ArtistBoxRail
-   * já assume na prática (rail vive 769-1440), mas mantém a regra
-   * coerente caso o switch breakpoint mude no futuro. */
-  .box { width: 332px; }
+  /* 332 → 364 = mesma adição de +32 do range acima. Em 1024px o
+   * ArtistBoxRail já assume na prática (rail vive 769-1440), mas
+   * mantém a regra coerente caso o switch breakpoint mude. */
+  .box { width: 364px; }
 }
 
 @media (max-width: 768px) {

@@ -139,11 +139,11 @@
 .playerExpanded:hover { transform: translateY(-2px); }
 
 /* ── VIDEO (player com YouTube embed integrado ACIMA) ── */
-/* Largura +32px (320 → 352) per product feedback "Aumente 32px
- * a largura do box do vídeo e do Fanverse Ana Castela" — alinha
- * com a nova largura do ArtistBox (352px). */
+/* Largura 352 → 388 acompanhando o ArtistBox que cresceu pra
+ * acomodar tabs com fonte maior. Mantém o alinhamento visual
+ * dos dois boxes na coluna esquerda do shell. */
 .playerVideo {
-  width: 352px;
+  width: 388px;
   border-radius: 12px;
   padding: 0 12px 12px;
   align-items: center;
