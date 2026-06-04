@@ -106,7 +106,12 @@ export default function ArtistBox() {
    * preserva o comportamento atual de mostrar a lista de missões
    * + progresso. Outras tabs mostram placeholder "Em breve"
    * (implementação completa fica pro próximo round). */
-  type BoxTab = 'missoes' | 'ranking' | 'beneficios' | 'materiais';
+  /* Tab "beneficios" foi removida per product feedback "Remova o
+   * item Conquistas da tab... Vamos deixar apenas 3 tabs". O
+   * conteúdo de Conquistas (BenefitsTabContent) virou um link
+   * inline no topo da aba Superfãs (RankingTabContent), que
+   * expande/colapsa sob demanda. */
+  type BoxTab = 'missoes' | 'ranking' | 'materiais';
   const [activeTab, setActiveTab] = useState<BoxTab>('missoes');
 
   /* Modal "Convide seus amigos" — 4 códigos copiáveis. Triggered
@@ -433,15 +438,6 @@ export default function ArtistBox() {
           <button
             type="button"
             role="tab"
-            aria-selected={activeTab === 'beneficios'}
-            className={`${styles.tab} ${activeTab === 'beneficios' ? styles.tabActive : ''}`}
-            onClick={() => { setActiveTab('beneficios'); if (!open) setOpen(true); }}
-          >
-            Conquistas
-          </button>
-          <button
-            type="button"
-            role="tab"
             aria-selected={activeTab === 'materiais'}
             className={`${styles.tab} ${activeTab === 'materiais' ? styles.tabActive : ''}`}
             onClick={() => { setActiveTab('materiais'); if (!open) setOpen(true); }}
@@ -493,16 +489,9 @@ export default function ArtistBox() {
       <div className={styles.content}>
         <div>
           <div className={styles.divider} />
-          {/* Body switch por tab. */}
+          {/* Body switch por tab. Conquistas saiu como aba — agora é
+           * um link inline dentro de RankingTabContent. */}
           {activeTab === 'ranking' && <RankingTabContent />}
-          {activeTab === 'beneficios' && (
-            <>
-              {/* Top10ProgressBarDesktop removida da aba Conquistas
-               * desktop per product feedback "Remova a barra de
-               * progresso de Conquistas". */}
-              <BenefitsTabContent />
-            </>
-          )}
           {activeTab === 'materiais' && <MaterialsTabContent />}
           {activeTab === 'missoes' && (
           <div className={styles.missionsList}>
@@ -793,6 +782,12 @@ export function RankingTabContent() {
     [liveUsers],
   );
   const [showAll, setShowAll] = useState(false);
+  /* Toggle inline pra mostrar Conquistas (BenefitsTabContent) no
+   * topo da aba Superfãs per product feedback "Inclua um link
+   * simples com o nome de Conquistas dentro de Superfãs, logo
+   * antes do Ranking". Default fechado pra não poluir a view
+   * principal de ranking. */
+  const [showConquistas, setShowConquistas] = useState(false);
 
   /* Memoizado pra que o slice não recrie array a cada render
    * (ex.: cada update do hook useLiveUsers dispara render). */
@@ -803,10 +798,34 @@ export function RankingTabContent() {
 
   return (
     <div className={styles.tabRanking}>
-      {/* Progress bar do top 10 foi MOVIDA pra aba Conquistas
-       * (Top10ProgressBarDesktop dentro de BenefitsTabContent),
-       * per product feedback "mova a barra de progresso 'Você está
-       * no top 10' e a coroa para a aba conquista". */}
+      {/* Link "Conquistas" inline — expande BenefitsTabContent
+       * abaixo quando clicado. Substitui a tab dedicada que foi
+       * removida. Chevron rotaciona conforme o estado. */}
+      <button
+        type="button"
+        className={styles.conquistasLink}
+        onClick={() => setShowConquistas((s) => !s)}
+        aria-expanded={showConquistas}
+      >
+        <span>Conquistas</span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`${styles.conquistasChevron} ${showConquistas ? styles.conquistasChevronOpen : ''}`}
+          aria-hidden="true"
+        >
+          <path d="M5 9l7 7 7-7" />
+        </svg>
+      </button>
+      {showConquistas && (
+        <div className={styles.conquistasInline}>
+          <BenefitsTabContent />
+        </div>
+      )}
 
       {/* Lista (sem foto, sem pontos). */}
       {error ? (

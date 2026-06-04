@@ -521,6 +521,51 @@
   padding: 0 16px 8px;
 }
 
+/* Link "Conquistas" inline dentro da tab Superfãs.
+ *
+ * Substitui a antiga tab Conquistas (removida pra reduzir o número
+ * de tabs visíveis pra 3: Superfãs / Missões / Materiais). Click
+ * expande a lista de benefícios abaixo via toggle, mantendo o
+ * conteúdo acessível sem ocupar espaço no header de tabs. */
+.conquistasLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.conquistasLink:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+.conquistasChevron {
+  width: 16px;
+  height: 16px;
+  color: rgba(245, 245, 247, 0.60);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.conquistasChevronOpen {
+  transform: rotate(180deg);
+}
+.conquistasInline {
+  margin-bottom: 8px;
+  animation: conquistasReveal 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes conquistasReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Barra de progresso top-10 (mantida do SuperfansPanel). */
 .tabRankingProgress {
   display: flex;
@@ -1330,12 +1375,11 @@
    * "iguale os paddins do box Fanverse Ana Castela da lateral e
    * do topo, tomando o topo como base".
    *
-   * Largura 352 → 388 per product feedback "Aumente o tamanho da
-   * fonte das tabs... Para caber a palavra Conquistas, aumente o
-   * tamanho do box se necessário". Com font 12px e 4 tabs, cada
-   * tab fica ~88px (Conquistas cabe sem ellipsis). */
+   * Largura 388 → 352 per product feedback "volte o tamanho do
+   * box para o tamanho anterior" (após remoção da tab Conquistas
+   * — só 3 tabs agora, então cabem confortáveis no 352). */
   .box {
-    width: 388px;
+    width: 352px;
     left: 34px;
     border-radius: 20px;
     box-shadow:
@@ -1354,10 +1398,10 @@
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
-  /* 332 → 364 = mesma adição de +32 do range acima. Em 1024px o
-   * ArtistBoxRail já assume na prática (rail vive 769-1440), mas
-   * mantém a regra coerente caso o switch breakpoint mude. */
-  .box { width: 364px; }
+  /* Volta a 332 (do override anterior 364) acompanhando o ArtistBox
+   * que voltou a 352. ArtistBoxRail vive 769-1440 e assume na prática,
+   * mas mantém a regra coerente caso o switch breakpoint mude. */
+  .box { width: 332px; }
 }
 
 @media (max-width: 768px) {

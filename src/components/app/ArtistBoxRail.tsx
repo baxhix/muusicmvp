@@ -11,7 +11,6 @@ import {
   TOTAL_MISSIONS as TOTAL,
   sumEarnedXp,
   RankingTabContent,
-  BenefitsTabContent,
 } from './ArtistBox';
 import { MaterialsTabContent } from './MaterialsTabContent';
 import styles from './ArtistBoxRail.module.css';
@@ -28,15 +27,19 @@ import styles from './ArtistBoxRail.module.css';
  *   2. Fanverse Orbe → abre o overlay FanverseSearch
  *   3. Missões (target) → abre flyout na tab missoes
  *   4. Superfãs (coroa) → abre flyout na tab ranking
- *   5. Conquistas (medalha) → abre flyout na tab beneficios
+ *   5. Materiais (pasta) → abre flyout na tab materiais
  *   6. Vídeo (play) → dispatcha app:fanverse-open-video, que o
  *      NowPlaying escuta pra entrar em modo video
+ *
+ * NOTA: a tab "Conquistas" foi removida pra reduzir o número de
+ * tabs visíveis pra 3. O conteúdo de benefícios virou um link
+ * inline dentro da tab Superfãs (ver ArtistBox.tsx RankingTabContent).
  *
  * Renderização condicional vive em ArtistBox.tsx — quando
  * useIsSmallDesktop() é true, ArtistBox retorna <ArtistBoxRail />
  * em vez do box grande. >1440px renderiza o box como sempre.
  */
-type Tab = 'missoes' | 'ranking' | 'beneficios' | 'materiais';
+type Tab = 'missoes' | 'ranking' | 'materiais';
 
 export default function ArtistBoxRail() {
   const [flyoutOpen, setFlyoutOpen] = useState(false);
@@ -180,17 +183,6 @@ export default function ArtistBoxRail() {
           <Tooltip>Superfãs</Tooltip>
         </button>
 
-        {/* Conquistas (Benefícios) */}
-        <button
-          type="button"
-          className={`${styles.iconBtn} ${activeTab === 'beneficios' && flyoutOpen ? styles.iconBtnActive : ''}`}
-          onClick={() => openTab('beneficios')}
-          aria-label="Conquistas"
-        >
-          <IconMedal />
-          <Tooltip>Conquistas</Tooltip>
-        </button>
-
         {/* Materiais — pastas que a Central de Fãs compartilha. */}
         <button
           type="button"
@@ -275,15 +267,6 @@ export default function ArtistBoxRail() {
               <button
                 type="button"
                 role="tab"
-                aria-selected={activeTab === 'beneficios'}
-                className={`${styles.flyoutTab} ${activeTab === 'beneficios' ? styles.flyoutTabActive : ''}`}
-                onClick={() => setActiveTab('beneficios')}
-              >
-                Conquistas
-              </button>
-              <button
-                type="button"
-                role="tab"
                 aria-selected={activeTab === 'materiais'}
                 className={`${styles.flyoutTab} ${activeTab === 'materiais' ? styles.flyoutTabActive : ''}`}
                 onClick={() => setActiveTab('materiais')}
@@ -293,9 +276,10 @@ export default function ArtistBoxRail() {
             </div>
           </div>
 
-          {/* Body — switch por tab. RankingTabContent e BenefitsTabContent
-           * vêm exportados do ArtistBox.tsx (reuso direto). Missões
-           * tem render inline simplificado (sem sparkle celebration). */}
+          {/* Body — switch por tab. RankingTabContent vem exportado
+           * do ArtistBox.tsx (reuso direto) — ele já carrega o link
+           * inline pra Conquistas (BenefitsTabContent). Missões tem
+           * render inline simplificado (sem sparkle celebration). */}
           <div className={styles.flyoutBody}>
             {activeTab === 'missoes' && (
               <div className={styles.missionsList}>
@@ -335,7 +319,6 @@ export default function ArtistBoxRail() {
               </div>
             )}
             {activeTab === 'ranking' && <RankingTabContent />}
-            {activeTab === 'beneficios' && <BenefitsTabContent />}
             {activeTab === 'materiais' && <MaterialsTabContent />}
           </div>
         </div>
@@ -369,14 +352,6 @@ function IconCrown() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M2.5 19h19l-1.5-9-5 3.5L12 6l-3 7.5L4 10l-1.5 9z" />
-    </svg>
-  );
-}
-function IconMedal() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="15" r="6" />
-      <path d="M8 11L6 3l3 1 3-2 3 2 3-1-2 8" />
     </svg>
   );
 }

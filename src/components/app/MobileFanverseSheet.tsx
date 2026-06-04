@@ -33,7 +33,7 @@ import boxStyles from './ArtistBox.module.css';
  *   │ Fanverse Ana Castela    402 FP │ ← title row
  *   │ [4 convites]                   │
  *   ├────────────────────────────────┤
- *   │ Missões | Ranking | Conquistas │ ← tab bar
+ *   │ Missões | Superfãs | Materiais │ ← tab bar
  *   ├────────────────────────────────┤
  *   │       <tab content>            │ ← body
  *   └────────────────────────────────┘
@@ -53,7 +53,7 @@ import boxStyles from './ArtistBox.module.css';
 interface Props {
   open: boolean;
   onClose: () => void;
-  defaultTab?: 'missoes' | 'ranking' | 'beneficios' | 'materiais';
+  defaultTab?: 'missoes' | 'ranking' | 'materiais';
 }
 
 /* Quantos users do ranking aparecem antes de truncar.
@@ -65,8 +65,11 @@ export default function MobileFanverseSheet({
   onClose,
   defaultTab = 'ranking',
 }: Props) {
-  type BoxTab = 'missoes' | 'ranking' | 'beneficios' | 'materiais';
+  type BoxTab = 'missoes' | 'ranking' | 'materiais';
   const [activeTab, setActiveTab] = useState<BoxTab>(defaultTab);
+  /* Toggle Conquistas inline dentro da tab Superfãs (espelha
+   * comportamento do desktop após remoção da tab Conquistas). */
+  const [showConquistas, setShowConquistas] = useState(false);
   // inviteOpen state removida — botão "4 convites" foi tirado do mobile.
 
   const { user } = useAuth();
@@ -255,15 +258,6 @@ export default function MobileFanverseSheet({
           <button
             type="button"
             role="tab"
-            aria-selected={activeTab === 'beneficios'}
-            className={`${boxStyles.tab} ${activeTab === 'beneficios' ? boxStyles.tabActive : ''}`}
-            onClick={() => setActiveTab('beneficios')}
-          >
-            Conquistas
-          </button>
-          <button
-            type="button"
-            role="tab"
             aria-selected={activeTab === 'materiais'}
             className={`${boxStyles.tab} ${activeTab === 'materiais' ? boxStyles.tabActive : ''}`}
             onClick={() => setActiveTab('materiais')}
@@ -275,15 +269,38 @@ export default function MobileFanverseSheet({
 
       {/* ── Body ── */}
       <div className={sheetStyles.body}>
-        {activeTab === 'ranking' && <MobileRankingList />}
-
-        {activeTab === 'beneficios' && (
-          <div className={sheetStyles.benefitsScope}>
-            {/* Top10ProgressBar removido daqui per product feedback
-             * "Remova a barra de progresso". A aba Conquistas mobile
-             * vai direto pra lista de benefícios. */}
-            <BenefitsTabContent />
-          </div>
+        {activeTab === 'ranking' && (
+          <>
+            {/* Link "Conquistas" inline — substitui a antiga tab Conquistas.
+             * Click expande BenefitsTabContent abaixo, antes da lista de
+             * ranking. Mantém o conteúdo acessível sem ocupar uma tab. */}
+            <button
+              type="button"
+              className={boxStyles.conquistasLink}
+              onClick={() => setShowConquistas((s) => !s)}
+              aria-expanded={showConquistas}
+            >
+              <span>Conquistas</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`${boxStyles.conquistasChevron} ${showConquistas ? boxStyles.conquistasChevronOpen : ''}`}
+                aria-hidden="true"
+              >
+                <path d="M5 9l7 7 7-7" />
+              </svg>
+            </button>
+            {showConquistas && (
+              <div className={`${boxStyles.conquistasInline} ${sheetStyles.benefitsScope}`}>
+                <BenefitsTabContent />
+              </div>
+            )}
+            <MobileRankingList />
+          </>
         )}
 
         {activeTab === 'materiais' && (

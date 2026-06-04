@@ -139,11 +139,10 @@
 .playerExpanded:hover { transform: translateY(-2px); }
 
 /* ── VIDEO (player com YouTube embed integrado ACIMA) ── */
-/* Largura 352 → 388 acompanhando o ArtistBox que cresceu pra
- * acomodar tabs com fonte maior. Mantém o alinhamento visual
- * dos dois boxes na coluna esquerda do shell. */
+/* Largura 388 → 352 voltando ao tamanho anterior, acompanhando o
+ * ArtistBox que voltou a 352 após remoção da tab Conquistas. */
 .playerVideo {
-  width: 388px;
+  width: 352px;
   border-radius: 12px;
   padding: 0 12px 12px;
   align-items: center;
