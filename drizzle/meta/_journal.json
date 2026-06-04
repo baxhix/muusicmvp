@@ -323,6 +323,13 @@
       "when": 1781800000000,
       "tag": "0046_message_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1781900000000,
+      "tag": "0047_feed_material_alert_type",
+      "breakpoints": true
     }
   ]
 }
