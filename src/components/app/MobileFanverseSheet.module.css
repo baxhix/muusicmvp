@@ -889,11 +889,12 @@
   padding: 0 16px 12px;
 }
 
-/* Mesma régua usada na aba Materiais — 16px laterais batem com o
- * tabsRow. O MaterialsTabContent já tem seu próprio padding interno
- * mínimo (4px); aqui fechamos o canal lateral. */
+/* Mobile: o shared MaterialsTabContent agora carrega seu próprio
+ * padding lateral (14px). materialsScope só adiciona padding-bottom
+ * pra dar respiro antes do fim do sheet — sem horizontal pra
+ * evitar dobrar com o do .materials. */
 .materialsScope {
-  padding: 0 16px 12px;
+  padding: 0 0 12px;
 }
 /* Wrapper pra Top10ProgressBar no topo da aba Conquistas — usa
  * padding 0 horizontal pra herdar o 16px do .benefitsScope (não
