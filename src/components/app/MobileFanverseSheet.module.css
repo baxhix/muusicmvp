@@ -888,6 +888,13 @@
    * outros cards das outras tabs". */
   padding: 0 16px 12px;
 }
+
+/* Mesma régua usada na aba Materiais — 16px laterais batem com o
+ * tabsRow. O MaterialsTabContent já tem seu próprio padding interno
+ * mínimo (4px); aqui fechamos o canal lateral. */
+.materialsScope {
+  padding: 0 16px 12px;
+}
 /* Wrapper pra Top10ProgressBar no topo da aba Conquistas — usa
  * padding 0 horizontal pra herdar o 16px do .benefitsScope (não
  * dobra). Só dá respiro vertical antes da lista. */

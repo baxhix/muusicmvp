@@ -18,6 +18,7 @@ import {
 } from './ArtistBox';
 import VerifiedBadge from './VerifiedBadge';
 import FanverseCore from '@/components/animations/FanverseCore';
+import { MaterialsTabContent } from './MaterialsTabContent';
 import sheetStyles from './MobileFanverseSheet.module.css';
 import boxStyles from './ArtistBox.module.css';
 
@@ -52,7 +53,7 @@ import boxStyles from './ArtistBox.module.css';
 interface Props {
   open: boolean;
   onClose: () => void;
-  defaultTab?: 'missoes' | 'ranking' | 'beneficios';
+  defaultTab?: 'missoes' | 'ranking' | 'beneficios' | 'materiais';
 }
 
 /* Quantos users do ranking aparecem antes de truncar.
@@ -64,7 +65,7 @@ export default function MobileFanverseSheet({
   onClose,
   defaultTab = 'ranking',
 }: Props) {
-  type BoxTab = 'missoes' | 'ranking' | 'beneficios';
+  type BoxTab = 'missoes' | 'ranking' | 'beneficios' | 'materiais';
   const [activeTab, setActiveTab] = useState<BoxTab>(defaultTab);
   // inviteOpen state removida — botão "4 convites" foi tirado do mobile.
 
@@ -260,6 +261,15 @@ export default function MobileFanverseSheet({
           >
             Conquistas
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'materiais'}
+            className={`${boxStyles.tab} ${activeTab === 'materiais' ? boxStyles.tabActive : ''}`}
+            onClick={() => setActiveTab('materiais')}
+          >
+            Materiais
+          </button>
         </div>
       </div>
 
@@ -273,6 +283,12 @@ export default function MobileFanverseSheet({
              * "Remova a barra de progresso". A aba Conquistas mobile
              * vai direto pra lista de benefícios. */}
             <BenefitsTabContent />
+          </div>
+        )}
+
+        {activeTab === 'materiais' && (
+          <div className={sheetStyles.materialsScope}>
+            <MaterialsTabContent />
           </div>
         )}
 
