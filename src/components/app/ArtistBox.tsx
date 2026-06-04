@@ -13,6 +13,8 @@ import {
 } from '@/hooks/useDailyMissions';
 import VerifiedBadge from './VerifiedBadge';
 import FanverseCore from '@/components/animations/FanverseCore';
+import { useIsSmallDesktop } from '@/hooks/useIsSmallDesktop';
+import ArtistBoxRail from './ArtistBoxRail';
 import styles from './ArtistBox.module.css';
 
 // Loja da Boiadeira — official Ana Castela store. Same URL the
@@ -73,6 +75,17 @@ export function sumEarnedXp(
 }
 
 export default function ArtistBox() {
+  /* Em desktop pequeno (769-1440px) renderiza a versão compacta
+   * vertical (ArtistBoxRail). Em >1440px segue com o box flutuante
+   * tradicional. Em mobile (<769) o componente é display:none via
+   * CSS — esse return early não importa lá.
+   *
+   * O hook é reativo (matchMedia listener), então redimensionar
+   * a janela troca a UI live. Os hooks abaixo continuam rodando
+   * mesmo no caminho rail pra evitar mismatch entre renders
+   * (regra do React: ordem dos hooks fixa). */
+  const isSmallDesktop = useIsSmallDesktop();
+
   // Default to OPEN on desktop so the box still reads as the
   // permanently-visible "Fanverse card" it always was — but the
   // toggle now genuinely flips the dropdown closed (see the
@@ -219,6 +232,14 @@ export default function ArtistBox() {
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
     };
   }, []);
+
+  /* Rail compacto pra desktop pequeno (769-1440px) per product
+   * feedback "EM telas menores o box fanverse se tornar uma barra
+   * vertical com os acessos em forma de icone". Substitui o box
+   * flutuante 320px por rail 52px + flyout sob demanda. */
+  if (isSmallDesktop) {
+    return <ArtistBoxRail />;
+  }
 
   return (
     <div className={`${styles.box} ${open ? styles.boxOpen : ''}`}>

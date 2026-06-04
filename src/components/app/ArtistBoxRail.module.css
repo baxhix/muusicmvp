@@ -1,0 +1,420 @@
+/* ============================================================
+ * ArtistBoxRail — versão compacta vertical do ArtistBox usada
+ * em desktop pequeno (769-1440px). Rail 52px à esquerda + flyout
+ * 320px à direita quando aberto.
+ *
+ * Coexiste com o ArtistBox grande: ArtistBox.tsx faz o switch
+ * baseado em useIsSmallDesktop. Em mobile (<769) NADA daqui
+ * aparece — o ArtistBox grande também é display:none e a
+ * versão mobile vive em MobileHomeChrome / MobileFanverseSheet.
+ * ============================================================ */
+
+.wrap {
+  position: fixed;
+  top: 34px;
+  left: 14px;
+  z-index: 60;
+  pointer-events: auto;
+  font-family: var(--sans), system-ui, sans-serif;
+}
+
+/* ── Rail vertical ─────────────────────────────────────────── */
+.rail {
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px;
+  background:
+    linear-gradient(160deg,
+      rgba(6, 6, 14, 0.96) 0%,
+      rgba(4, 4, 10, 0.94) 35%,
+      rgba(8, 6, 18, 0.95) 65%,
+      rgba(4, 4, 12, 0.97) 100%);
+  backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  border-radius: 14px;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.55),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+.divider {
+  width: 60%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+/* ── Ícones (botões do rail) ──────────────────────────────── */
+.iconBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.65);
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+.iconBtn svg {
+  width: 20px;
+  height: 20px;
+}
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.iconBtn:active {
+  transform: scale(0.95);
+}
+.iconBtnActive {
+  background: rgba(168, 85, 247, 0.18);
+  color: #fff;
+}
+.iconBtnActive::after {
+  /* Indicador esquerdo (barrinha lilás) sinalizando tab ativa. */
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, #a855f7, #c084fc);
+  border-radius: 2px;
+}
+
+/* Avatar — imagem real da Ana */
+.avatarBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  padding: 0;
+  background: #1a1a1f;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+}
+.avatarBtn:hover {
+  border-color: rgba(168, 85, 247, 0.55);
+}
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Orb btn — wrapper que abriga o FanverseCore */
+.orbBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  padding: 0;
+  background: transparent;
+}
+.orbInner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+  pointer-events: none;
+}
+
+/* Vídeo btn — destaque sutil verde quando hover (afinidade
+ * com o ícone do player que vive no rodapé). */
+.videoBtn:hover {
+  color: #34d399;
+}
+
+/* Badge numérico (ex: missions completed count) */
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #a855f7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Tooltip à direita do ícone ───────────────────────────── */
+.tooltip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  padding: 6px 10px;
+  background: rgba(11, 11, 14, 0.96);
+  color: rgba(245, 245, 247, 0.95);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 65;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.iconBtn:hover .tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ── Flyout (painel completo à direita do rail) ──────────── */
+.flyout {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 12px);
+  width: 320px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  background:
+    linear-gradient(160deg,
+      rgba(6, 6, 14, 0.96) 0%,
+      rgba(4, 4, 10, 0.94) 35%,
+      rgba(8, 6, 18, 0.95) 65%,
+      rgba(4, 4, 12, 0.97) 100%);
+  backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) brightness(0.55) saturate(1.2);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  color: #fff;
+  animation: flyoutIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes flyoutIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Header do flyout — espelha o padrão do ArtistBox: hero crop +
+ * eyebrow + título + verified + Fanpoints. */
+.flyoutHeader {
+  position: relative;
+}
+.flyoutHero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 14px 14px 0 0;
+  margin-top: -32px;
+}
+.flyoutHeroImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.flyoutHeroGradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(4, 4, 8, 0.6) 50%,
+    rgba(11, 11, 13, 0.96) 90%,
+    rgba(11, 11, 13, 1) 100%
+  );
+  pointer-events: none;
+}
+.flyoutTitleBlock {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 10px;
+  z-index: 1;
+}
+.flyoutEyebrow {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.75);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.flyoutTitleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.8);
+}
+.flyoutTitleName {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.flyoutVerified {
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+}
+.flyoutMeta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+}
+.flyoutMetaValue {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.flyoutMetaLabel {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* Tab bar (mesmo estilo dos tabs do ArtistBox). */
+.flyoutTabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.flyoutTab {
+  flex: 1;
+  padding: 8px 6px;
+  background: transparent;
+  border: none;
+  color: rgba(245, 245, 247, 0.55);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+.flyoutTab:hover {
+  color: #fff;
+}
+.flyoutTabActive {
+  color: #fff;
+  border-bottom-color: #a855f7;
+}
+
+/* Body — host do conteúdo de cada tab */
+.flyoutBody {
+  padding: 12px;
+}
+
+/* ── Missions list (render inline simplificado) ───────────── */
+.missionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.missionsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.missionsTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+.missionsProgress {
+  font-size: 11.5px;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.missionsProgressBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.missionsProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #c084fc);
+  border-radius: 999px;
+  transition: width 320ms ease;
+}
+.mission {
+  display: grid;
+  grid-template-columns: 24px 1fr 18px 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 140ms ease;
+}
+.missionDone {
+  background: rgba(168, 85, 247, 0.10);
+}
+.missionIcon {
+  font-size: 16px;
+  text-align: center;
+  line-height: 1;
+}
+.missionName {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.missionDone .missionName {
+  color: #fff;
+}
+.missionCheck {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.missionCheck svg { width: 10px; height: 10px; }
+.missionDone .missionCheck {
+  background: #a855f7;
+  color: #fff;
+}
+.missionXp {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.7);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.missionDone .missionXp {
+  color: #c084fc;
+}

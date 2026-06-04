@@ -129,6 +129,21 @@ export default function NowPlaying({
     if (!isVideo) setVideoStarted(false);
   }, [isVideo]);
 
+  /* Listener pro evento `app:fanverse-open-video` — disparado pelo
+   * ArtistBoxRail (rail compacto de desktop pequeno) quando o user
+   * clica no ícone de vídeo. Força o player pra modo video e
+   * notifica callbacks de mudança de tamanho. */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => {
+      setSize('video');
+      onExpandChange?.(true);
+      onSizeChange?.('video');
+    };
+    window.addEventListener('app:fanverse-open-video', handler);
+    return () => window.removeEventListener('app:fanverse-open-video', handler);
+  }, [onExpandChange, onSizeChange]);
+
   // ── "Voltar de onde parou" ──
   //
   // Snapshot lido SÓ no mount inicial (não muda durante a sessão).
