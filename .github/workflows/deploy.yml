@@ -227,7 +227,13 @@ jobs:
   deploy:
     name: Deploy to VPS
     needs: [changes, build-web, build-socket, build-admin]
-    runs-on: ubuntu-latest
+    # Self-hosted runner rodando dentro do próprio VPS (label
+    # `vps-muusic`, instalado em /home/github-runner/actions-runner
+    # como systemd service `actions.runner.baxhix-muusicmvp.vps-muusic`).
+    # Elimina o SSH inbound do GH Actions → VPS que sofria com o
+    # anti-DDoS upstream da Hostinger. O runner conecta OUTBOUND
+    # via HTTPS pro GitHub e recebe jobs.
+    runs-on: [self-hosted, vps-muusic]
     if: |
       always() &&
       github.ref == 'refs/heads/main' &&
@@ -243,111 +249,56 @@ jobs:
       )
 
     steps:
-      # Debug-friendly preflight — host is in vars (not secrets) so
-      # the value is visible in logs. nc confirms the TCP/22 path
-      # before we even invoke appleboy/ssh-action, narrowing where
-      # any future failures come from (network vs. SSH auth).
-      #
-      # Retry loop: GitHub Actions runner IPs rotate constantly and
-      # occasionally land in Hostinger's panel-firewall / fail2ban
-      # blocklist for unrelated reasons. We try 3 times with 20s
-      # between attempts — typically enough for the firewall to
-      # cycle its tarpit, or for the runner to release its socket
-      # and the kernel-level conntrack to fall out.
-      - name: Verify host reachability
-        run: |
-          HOST="${{ vars.DEPLOY_HOST }}"
-          if [ -z "$HOST" ]; then
-            echo "::error::vars.DEPLOY_HOST is empty — add a Repository Variable named DEPLOY_HOST in Settings → Secrets and variables → Actions → Variables"
-            exit 1
-          fi
-          RUNNER_IP=$(curl -s ifconfig.me)
-          for attempt in 1 2 3; do
-            echo "[attempt ${attempt}/3] Dialing $HOST:22 from runner ${RUNNER_IP}…"
-            if nc -vz -w 5 "$HOST" 22; then
-              echo "✓ TCP reachable on attempt ${attempt}."
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Timeout — sleeping 20s before retry."
-              sleep 20
-            fi
-          done
-          echo "::error::TCP connection to $HOST:22 timed out 3× in a row from runner ${RUNNER_IP}. Likely cause: host-side firewall (Hostinger panel firewall, ufw, or fail2ban) blocking the runner's IP. Try \`gh run rerun ${{ github.run_id }} --failed\` — reruns pick up a fresh runner IP."
-          exit 1
-
-      # appleboy/ssh-action retries its own connect attempts via the
-      # `command_timeout` + the action's built-in flags. Belt-and-
-      # suspenders against the same firewall flake.
-      - name: SSH deploy
-        uses: appleboy/ssh-action@v1.2.0
+      # O runner já está dentro do VPS, então não tem mais SSH —
+      # rodamos os comandos direto. github-runner não é root, mas
+      # tem sudo NOPASSWD pros binários necessários (configurado
+      # em /etc/sudoers.d/github-runner-deploy). git pull + docker
+      # compose ganham `sudo` pra escrever em /opt/muusic e mexer
+      # nos containers que vivem sob root.
+      - name: Pull and restart services
         env:
           CHANGED_WEB: ${{ needs.changes.outputs.web }}
           CHANGED_SOCKET: ${{ needs.changes.outputs.socket }}
           CHANGED_ADMIN: ${{ needs.changes.outputs.admin }}
           FORCE_ALL: ${{ (github.event_name == 'workflow_dispatch' && inputs.force_all) || '' }}
-        with:
-          host:     ${{ vars.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key:      ${{ secrets.DEPLOY_SSH_KEY }}
-          port:     22
-          # script_stop: false — we do our own error gating with
-          # explicit `|| { echo ::error; exit 1; }` wrappers in the
-          # script below. With script_stop:true, drone-ssh injects
-          # bash strict mode behaviour that aborts the script on
-          # the first `[ ... ]` test that returns non-zero (even
-          # inside an `if` block), with no diagnostic output.
-          script_stop: false
-          command_timeout: 10m
-          timeout: 60s
-          # The CHANGED_* + FORCE_ALL env vars need to be explicitly
-          # forwarded to the remote shell. Without `envs:` they don't
-          # cross the SSH boundary even though they're set on the step.
-          envs: CHANGED_WEB,CHANGED_SOCKET,CHANGED_ADMIN,FORCE_ALL
-          # Intentionally NO `set -e` — drone-ssh + bash strict mode
-          # was silently aborting the script with no diagnostic
-          # output (seemingly right after `git pull`). Each command
-          # below explicitly checks its own exit status and bails
-          # with a clear message. `script_stop: true` on the
-          # appleboy action covers the "stop on first error" need.
-          script: |
-            cd /opt/muusic || { echo "::error::cd /opt/muusic failed"; exit 1; }
-            echo "=> git pull"
-            git pull --ff-only || { echo "::error::git pull failed"; exit 1; }
+        run: |
+          cd /opt/muusic || { echo "::error::cd /opt/muusic failed"; exit 1; }
+          echo "=> git pull"
+          sudo git pull --ff-only || { echo "::error::git pull failed"; exit 1; }
 
-            # Build the list of services that actually need a
-            # pull + restart. `force_all` (manual workflow_dispatch)
-            # bypasses the filter and recreates everything.
-            SERVICES=""
-            if [ "${FORCE_ALL:-}" = "true" ]; then
-              SERVICES="web socket admin"
-              echo "=> force-all deploy: rebuild + restart everything"
-            else
-              if [ "${CHANGED_WEB:-}" = "true" ]; then
-                SERVICES="$SERVICES web"
-              fi
-              if [ "${CHANGED_SOCKET:-}" = "true" ]; then
-                SERVICES="$SERVICES socket"
-              fi
-              if [ "${CHANGED_ADMIN:-}" = "true" ]; then
-                SERVICES="$SERVICES admin"
-              fi
+          # Build the list of services that actually need a
+          # pull + restart. `force_all` (manual workflow_dispatch)
+          # bypasses the filter and recreates everything.
+          SERVICES=""
+          if [ "${FORCE_ALL:-}" = "true" ]; then
+            SERVICES="web socket admin"
+            echo "=> force-all deploy: rebuild + restart everything"
+          else
+            if [ "${CHANGED_WEB:-}" = "true" ]; then
+              SERVICES="$SERVICES web"
             fi
-            # Strip leading whitespace.
-            SERVICES="$(echo $SERVICES | xargs)"
-
-            if [ -z "$SERVICES" ]; then
-              echo "=> no services changed - skipping pull/restart"
-              exit 0
+            if [ "${CHANGED_SOCKET:-}" = "true" ]; then
+              SERVICES="$SERVICES socket"
             fi
+            if [ "${CHANGED_ADMIN:-}" = "true" ]; then
+              SERVICES="$SERVICES admin"
+            fi
+          fi
+          # Strip leading whitespace.
+          SERVICES="$(echo $SERVICES | xargs)"
 
-            echo "=> pulling + restarting: $SERVICES"
-            docker compose pull $SERVICES || { echo "::error::docker compose pull failed"; exit 1; }
-            docker compose up -d --no-build $SERVICES || { echo "::error::docker compose up failed"; exit 1; }
+          if [ -z "$SERVICES" ]; then
+            echo "=> no services changed - skipping pull/restart"
+            exit 0
+          fi
 
-            echo "=> post-deploy cleanup"
-            docker container prune -f || true
-            docker image prune -af || true
-            docker builder prune -af || true
+          echo "=> pulling + restarting: $SERVICES"
+          sudo docker compose pull $SERVICES || { echo "::error::docker compose pull failed"; exit 1; }
+          sudo docker compose up -d --no-build $SERVICES || { echo "::error::docker compose up failed"; exit 1; }
 
-            echo "=> deploy done"
+          echo "=> post-deploy cleanup"
+          sudo docker container prune -f || true
+          sudo docker image prune -af || true
+          sudo docker builder prune -af || true
+
+          echo "=> deploy done"
