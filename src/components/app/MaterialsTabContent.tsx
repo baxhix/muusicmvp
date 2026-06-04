@@ -61,7 +61,11 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'demos',
     name: 'Demos exclusivas',
-    lockedAt: 5000,
+    /* Threshold subiu de 5k → 500k per product feedback "Só estão
+     * sendo exibidas pastas desbloqueadas" — o user de teste tem
+     * ~402k FP, então qualquer valor abaixo disso renderiza como
+     * livre. 500k garante locked enquanto não passar do threshold. */
+    lockedAt: 500_000,
     items: [
       { id: 'f3-1', name: 'Pipoco - demo voz.mp3', kind: 'audio', size: '5.1 MB' },
       { id: 'f3-2', name: 'Solteiro - demo violao.mp3', kind: 'audio', size: '4.7 MB' },
@@ -88,7 +92,8 @@ const FOLDERS: MaterialFolder[] = [
   {
     id: 'lives-privadas',
     name: 'Lives privadas',
-    lockedAt: 25000,
+    /* Threshold ainda mais alto (1M) — tier "raro". */
+    lockedAt: 1_000_000,
     items: [
       { id: 'f6-1', name: 'Live de aniversario.mp4', kind: 'video', size: '120 MB' },
       { id: 'f6-2', name: 'Live solo violao.mp4', kind: 'video', size: '85 MB' },
