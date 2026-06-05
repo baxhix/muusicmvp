@@ -49,38 +49,40 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-/* Posições finais dos 11 avatares.
+/* Posições finais dos 11 avatares — distribuídos no PERÍMETRO da
+ * viewport, evitando a zona central do orbe (~35-65vw × 22-55vh).
  *
- * Per product feedback "Os usuários flutuantes se afastaram muito
- * do orbe, deixe eles mais próximos, ora passam por cima do orbe.
- * Inclua mais 3 usuários flutuantes para dar volume." — posições
- * recolhidas pro entorno do orbe (era 2-92vw/vh, agora 22-78vw/vh
- * em desktop; mobile fica ainda mais perto via override no CSS).
- * O orbe ocupa ~286px no centro, então 22-78vw cerca ele com folga
- * mas faz com que os paths fsRoam cruzem o orbe constantemente.
+ * Per product feedback "evite usar muitos usuários por trás do
+ * orbe" — antes 4 avatares ficavam no anel interno (28-72vw, 30-60vh)
+ * que é exatamente onde o orbe vive. Agora todos partem das bordas
+ * (top/sides/bottom) e cruzam o orbe SÓ durante o drift do fsRoam,
+ * voltando pras bordas no ciclo.
  *
- * Total 11 posições (era 8). 3 anéis radiais:
- *   - anel interno  (4 avatares perto do orbe, top/bottom + sides)
- *   - anel médio    (4 avatares meio-distância, diagonais)
- *   - anel externo  (3 avatares mais afastados, cantos)
+ * Layout perimetral:
+ *   - Top    (3): acima do orbe
+ *   - Left   (3): coluna esquerda
+ *   - Right  (3): coluna direita
+ *   - Bottom (2): abaixo da área central
  *
  * Entrada cinemática: cada avatar spawn no centro (50vw, 50vh) e
  * voa pra cá via CSS vars --from-x/--from-y. */
 const FLOATING_POSITIONS = [
-  /* Anel interno — abraça o orbe (passam frequentemente por cima) */
-  { top: '32vh', left: '28vw' },
-  { top: '30vh', left: '70vw' },
-  { top: '58vh', left: '24vw' },
-  { top: '60vh', left: '72vw' },
-  /* Anel médio */
-  { top: '18vh', left: '40vw' },
-  { top: '20vh', left: '60vw' },
-  { top: '72vh', left: '38vw' },
-  { top: '74vh', left: '62vw' },
-  /* Anel externo (3 pra dar volume sem afastar muito) */
-  { top: '12vh', left: '20vw' },
-  { top: '14vh', left: '78vw' },
-  { top: '82vh', left: '50vw' },
+  /* Top — acima do orbe (10-15vh, sem invadir o centro) */
+  { top:  '8vh', left: '22vw' },
+  { top: '12vh', left: '78vw' },
+  { top:  '6vh', left: '50vw' },
+  /* Left column — coluna esquerda (8-22vw) */
+  { top: '40vh', left:  '8vw' },
+  { top: '62vh', left: '14vw' },
+  { top: '80vh', left:  '6vw' },
+  /* Right column — coluna direita (78-92vw) */
+  { top: '38vh', left: '90vw' },
+  { top: '60vh', left: '84vw' },
+  { top: '78vh', left: '92vw' },
+  /* Bottom — abaixo do conteúdo principal (78-88vh, fora da área
+   * central onde headline/pills/list aparecem mais tarde) */
+  { top: '88vh', left: '38vw' },
+  { top: '85vh', left: '64vw' },
 ];
 
 /* Timing dos stages.
@@ -114,31 +116,18 @@ const AVATAR_WAVE_TIMINGS: number[] = [
   6200, 6420, 6650, 6900,        // 8,9,10,11 (wave 4)
 ];
 
-/* Frases pra typewriter da loading copy.
+/* Frase única do typewriter da loading copy.
  *
- * Per product feedback "Após apagar, coloque: 'Procurando no Brasil',
- * depois 'Procurando pela Europa' e assim por diante. deixe essa
- * frase acima do orbe."
- *
- * Cada frase é tipada, segurada, e apagada. Depois passa pra próxima
- * num loop infinito enquanto o overlay está aberto. Primeira é a
- * geral "Analisando..." e depois rotaciona pelas regiões. */
-const ANALYZING_PHRASES: string[] = [
-  'Analisando dados do mundo todo...',
-  'Procurando no Brasil',
-  'Procurando pela Europa',
-  'Procurando na América do Norte',
-  'Procurando na Ásia',
-  'Procurando na Oceania',
-  'Procurando na África',
-];
+ * Per product feedback "Remova a frase de procura" — antes ciclava
+ * entre "Procurando no Brasil", "Procurando pela Europa", etc.
+ * Agora é só a frase principal. O typewriter ainda tipa char a
+ * char no início e o cursor continua piscando, mas não há mais
+ * erase/cycle. */
+const ANALYZING_PHRASE = 'Analisando dados do mundo todo...';
 
-/* Velocidades do typewriter (ms). Tipar é mais lento que apagar pra
- * dar peso a cada palavra entrando. */
-const TYPE_MS = 60;
-const ERASE_MS = 30;
-const HOLD_MS = 1800;
-const PAUSE_BEFORE_NEXT_MS = 350;
+/* Velocidade de tipagem inicial (ms por char). Depois que termina
+ * de digitar, fica visível pra sempre (sem erase loop). */
+const TYPE_MS = 55;
 
 export default function FanverseSearch() {
   const [open, setOpen] = useState(false);
@@ -155,10 +144,9 @@ export default function FanverseSearch() {
    * em ondas conforme AVATAR_WAVE_TIMINGS — wave 1 (1 user), wave 2
    * (+2), wave 3 (+4), wave 4 (+4) = 11 totais. */
   const [avatarsShown, setAvatarsShown] = useState(0);
-  /* Typewriter da copy "Analisando..." */
+  /* Typewriter — tipa a frase única uma vez no início e mantém
+   * visível (sem cycle/erase). */
   const [typedText, setTypedText] = useState('');
-  const [typeIdx, setTypeIdx] = useState(0);
-  const [typePhase, setTypePhase] = useState<'typing' | 'holding' | 'erasing' | 'pausing'>('typing');
   /* Scroll state — quando o usuário rola pra baixo, o orbe fica
    * fixo + menor e o back arrow continua na sua posição. */
   const [scrolled, setScrolled] = useState(false);
@@ -204,49 +192,21 @@ export default function FanverseSearch() {
       setPhraseIdx(0);
       setAvatarsShown(0);
       setTypedText('');
-      setTypeIdx(0);
-      setTypePhase('typing');
       setScrolled(false);
     }
   }, [open]);
 
-  /* Typewriter loop: 'typing' adiciona um char por vez até o fim
-   * da frase, vai pra 'holding' (segura 1.8s), depois 'erasing'
-   * tira um char por vez até zerar, depois 'pausing' (0.35s) e
-   * 'typing' novamente com a próxima frase. */
+  /* Typewriter — tipa char a char até completar a frase única, e
+   * depois mantém visível (sem ciclar). Cursor segue piscando via CSS. */
   useEffect(() => {
     if (!open) return;
-    const phrase = ANALYZING_PHRASES[typeIdx];
-    if (typePhase === 'typing') {
-      if (typedText.length < phrase.length) {
-        const id = window.setTimeout(() => setTypedText(phrase.slice(0, typedText.length + 1)), TYPE_MS);
-        return () => window.clearTimeout(id);
-      } else {
-        const id = window.setTimeout(() => setTypePhase('holding'), 0);
-        return () => window.clearTimeout(id);
-      }
-    }
-    if (typePhase === 'holding') {
-      const id = window.setTimeout(() => setTypePhase('erasing'), HOLD_MS);
-      return () => window.clearTimeout(id);
-    }
-    if (typePhase === 'erasing') {
-      if (typedText.length > 0) {
-        const id = window.setTimeout(() => setTypedText(typedText.slice(0, -1)), ERASE_MS);
-        return () => window.clearTimeout(id);
-      } else {
-        const id = window.setTimeout(() => setTypePhase('pausing'), 0);
-        return () => window.clearTimeout(id);
-      }
-    }
-    if (typePhase === 'pausing') {
-      const id = window.setTimeout(() => {
-        setTypeIdx((i) => (i + 1) % ANALYZING_PHRASES.length);
-        setTypePhase('typing');
-      }, PAUSE_BEFORE_NEXT_MS);
-      return () => window.clearTimeout(id);
-    }
-  }, [open, typedText, typeIdx, typePhase]);
+    if (typedText.length >= ANALYZING_PHRASE.length) return;
+    const id = window.setTimeout(
+      () => setTypedText(ANALYZING_PHRASE.slice(0, typedText.length + 1)),
+      TYPE_MS,
+    );
+    return () => window.clearTimeout(id);
+  }, [open, typedText]);
 
   /* Scroll listener — quando scrollTop ultrapassa 60px, ativa o
    * estado "scrolled" que diminui o orbe via transform: scale. */
