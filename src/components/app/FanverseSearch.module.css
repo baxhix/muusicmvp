@@ -103,24 +103,24 @@
   z-index: 2;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Per feedback "Posicione os insights mais a cima, bem como os
-   * cards e a lista" — reduzido pra subir todo o conteúdo. */
-  padding-top: 310px;
+  /* Per feedback "No desktop, os insights subiram muito e está por
+   * trás do orbe. Posicione 90px mais abaixo" — 310 + 90 = 400. */
+  padding-top: 400px;
   /* Mask escolhe onde o conteúdo é visível. A área onde o orbe
    * fica vira "invisível" pra o conteúdo (transparent no mask =
    * conteúdo escondido). Banda de fade pra suavizar a entrada. */
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 220px,
-    black 320px,
+    transparent 310px,
+    black 410px,
     black 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 220px,
-    black 320px,
+    transparent 310px,
+    black 410px,
     black 100%
   );
   transition:
@@ -380,6 +380,41 @@
   62%  { transform: translate(-50%, -50%) translate(-120px,  70px);  }
   82%  { transform: translate(-50%, -50%) translate(-200px, -30px);  }
   100% { transform: translate(-50%, -50%) translate(-260px,  60px);  }
+}
+/* Mobile — mesmas trajetórias, amplitudes reduzidas (~40% do desktop)
+ * pra avatares ficarem PRÓXIMOS do orbe (180px) e não saírem pra
+ * extremos do viewport estreito. */
+@keyframes fsRoam1Mobile {
+  0%   { transform: translate(-50%, -50%) translate(-90px,  -18px); }
+  20%  { transform: translate(-50%, -50%) translate(-60px,   26px); }
+  40%  { transform: translate(-50%, -50%) translate(-12px,  -38px); }
+  60%  { transform: translate(-50%, -50%) translate(34px,    22px); }
+  80%  { transform: translate(-50%, -50%) translate(70px,   -30px); }
+  100% { transform: translate(-50%, -50%) translate(96px,    14px); }
+}
+@keyframes fsRoam2Mobile {
+  0%   { transform: translate(-50%, -50%) translate(86px,    26px); }
+  18%  { transform: translate(-50%, -50%) translate(54px,   -22px); }
+  38%  { transform: translate(-50%, -50%) translate(8px,     38px); }
+  58%  { transform: translate(-50%, -50%) translate(-38px,  -18px); }
+  78%  { transform: translate(-50%, -50%) translate(-70px,   30px); }
+  100% { transform: translate(-50%, -50%) translate(-100px, -22px); }
+}
+@keyframes fsRoam3Mobile {
+  0%   { transform: translate(-50%, -50%) translate(-74px,   42px); }
+  22%  { transform: translate(-50%, -50%) translate(-26px,   -8px); }
+  44%  { transform: translate(-50%, -50%) translate(22px,    42px); }
+  66%  { transform: translate(-50%, -50%) translate(58px,   -26px); }
+  88%  { transform: translate(-50%, -50%) translate(86px,    18px); }
+  100% { transform: translate(-50%, -50%) translate(104px,  -12px); }
+}
+@keyframes fsRoam4Mobile {
+  0%   { transform: translate(-50%, -50%) translate(94px,   -34px); }
+  20%  { transform: translate(-50%, -50%) translate(46px,    18px); }
+  42%  { transform: translate(-50%, -50%) translate(-4px,   -38px); }
+  62%  { transform: translate(-50%, -50%) translate(-50px,   30px); }
+  82%  { transform: translate(-50%, -50%) translate(-80px,  -12px); }
+  100% { transform: translate(-50%, -50%) translate(-104px,  26px); }
 }
 
 /* Fade cyclic — per product feedback "após determinado tempo,
@@ -795,25 +830,41 @@
     width: 180px;
     height: 180px;
   }
-  /* Headline/lista mais alto no mobile — orbe é menor (180px),
-   * então scroll padding-top + mask fade band reduzem proporcional. */
+  /* Headline/lista ainda mais alto no mobile — per feedback
+   * "No mobile, posicione mais acima". Orbe é menor (180px) e ocupa
+   * menos espaço vertical, então scroll padding-top encolhe mais. */
   .scroll {
-    padding-top: 260px;
+    padding-top: 220px;
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 180px,
-      black 260px,
+      transparent 150px,
+      black 230px,
       black 100%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 180px,
-      black 260px,
+      transparent 150px,
+      black 230px,
       black 100%
     );
   }
+  /* Avatares mais próximos ao orbe no mobile — per feedback
+   * "mantenha os usuários flutuantes mais próximos ao orbe".
+   * Sobrescrevemos as 4 keyframes com amplitudes reduzidas
+   * (~40% do desktop) pra a varredura ficar perto do orbe. */
+  .floatingAvatarShown          { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlink; }
+  .floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlink; }
   .hero {
     padding: 8px 24px 22px;
   }
