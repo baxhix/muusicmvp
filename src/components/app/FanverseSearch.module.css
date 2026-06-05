@@ -255,39 +255,32 @@
 /* Quando o JSX adiciona .floatingAvatarShown, as 3 animações
  * disparam de uma vez:
  *   1. fsAvatarIn (1200ms forwards) → entrada cinemática.
- *   2. fsRoamN (DINÂMICAS, 9-14s) → trajetória ampla + bouncy.
- *      Per product feedback "Os avatares estão flutuando muito
- *      devagar... deve ter dinamismo e velocidade" — antes eram
- *      22-32s (LENTAS), agora 9-14s. Mantém amplitude ±120-180px
- *      e easing spring per-keyframe, só comprime no tempo. Parent
- *      timing continua linear porque cada keyframe carrega seu
- *      próprio cubic-bezier de overshoot.
+ *   2. fsRoamN (CURTAS, 5-8s) → idle-floating breathing tipo /teste.
+ *      Parent timing ease-in-out, sem bouncy. As trajetórias são
+ *      curtas (±35-60px) e rápidas — ritmo vivo igual /teste.
  *   3. fsBlink (10s infinite) → fade out/in cíclico. */
 .floatingAvatarShown {
   animation:
     fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    fsRoam1 11s linear infinite both,
+    fsRoam1 6s ease-in-out infinite both,
     fsBlink 10s ease-in-out infinite;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Paths variados + durações DINÂMICAS (9-14s) pra cada avatar ter
- * velocidade própria. Per product feedback "Os avatares estão
- * flutuando muito devagar... deve ter dinamismo e velocidade" —
- * antes 22-32s (muito lento), agora 9-14s. Mantém amplitudes
- * ±120-180px e cubic-bezier bouncy per-keyframe; só comprime no
- * tempo. */
-.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 10s, 10s; }
-.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 13s, 10s; }
-.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 11s, 10s; }
-.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 12s, 10s; }
-.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  9.5s, 10s; }
-.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 12.5s, 10s; }
-.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 11.5s, 10s; }
-.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 11s, 10s; }
-.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  9s, 10s; }
-.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 14s, 10s; }
+/* Paths variados + durações CURTAS (5-8s) — idle-floating estilo
+ * /teste. Cada avatar tem velocidade própria pra evitar respiração
+ * sincrônica entre eles. */
+.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 5.5s, 10s; }
+.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 7.5s, 10s; }
+.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  6.2s, 10s; }
+.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms,  7s, 10s; }
+.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  5.8s, 10s; }
+.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  7.2s, 10s; }
+.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms,  6.5s, 10s; }
+.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms,  6.8s, 10s; }
+.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  5.2s, 10s; }
+.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  8s,   10s; }
 
 .floatingAvatar img {
   width: 100%;
@@ -315,82 +308,47 @@
   }
 }
 
-/* 4 paths de roaming LONGOS + BOUNCY.
+/* 4 paths de idle-floating CURTO + SUTIL inspirado no /teste
+ * AvatarConstellation.
  *
- * Per product feedback "deixe-os mais dinâmicos, com movimentos
- * longos com bouncy, bem sofisticado." — antes amplitudes ±60-90px
- * com ease-in-out smooth. Agora ±120-180px (movimentos longos que
- * cruzam o orbe e voltam pras bordas) e cada keyframe usa um
- * cubic-bezier próprio com OVERSHOOT pra dar sensação spring.
+ * Per product feedback "Os avatares estão flutuando muito devagar...
+ * deve ter dinamismo e velocidade. Veja o movimento que existe na
+ * landing page /teste como referência". O /teste usa drift de
+ * 7-11s com amplitude pequena (idle-floating breathing). Antes
+ * estávamos com paths LONGOS ±120-180px em 9-14s — sensação de
+ * deriva contemplativa, não dinâmica.
  *
- * animation-timing-function dentro do keyframe define o easing da
- * transição PARA o próximo keyframe. Cubic-bezier(.34, 1.56, .64, 1)
- * tem o y2 > 1 → ultrapassa o destino e volta (bouncy). Algumas
- * pernas usam (.6, -.28, .735, .045) (ease-in com pull-back) pra
- * variar a textura. */
+ * Agora: ±35-60px de amplitude (breathing, não roaming) com
+ * ease-in-out smooth. Cada path tem 4 stops apenas (orgânico),
+ * sem cubic-bezier bouncy que prendia o movimento. O efeito final
+ * = vida e quickness, igual /teste. */
 @keyframes fsRoam1 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);
-         animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
-  18%  { transform: translate(-50%, -50%) translate(64px,   -42px);
-         animation-timing-function: cubic-bezier(0.5, 0, 0.4, 1.32); }
-  36%  { transform: translate(-50%, -50%) translate(142px,  -88px);
-         animation-timing-function: cubic-bezier(0.4, -0.1, 0.5, 1.4); }
-  54%  { transform: translate(-50%, -50%) translate(168px,  24px);
-         animation-timing-function: cubic-bezier(0.34, 1.6, 0.4, 1); }
-  72%  { transform: translate(-50%, -50%) translate(98px,   118px);
-         animation-timing-function: cubic-bezier(0.6, -0.05, 0.5, 1.2); }
-  88%  { transform: translate(-50%, -50%) translate(-32px,  74px);
-         animation-timing-function: cubic-bezier(0.34, 1.4, 0.6, 1); }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,     0);    }
+  25%  { transform: translate(-50%, -50%) translate(28px,  -18px); }
+  50%  { transform: translate(-50%, -50%) translate(46px,  22px);  }
+  75%  { transform: translate(-50%, -50%) translate(-12px, 38px);  }
+  100% { transform: translate(-50%, -50%) translate(0,     0);    }
 }
 @keyframes fsRoam2 {
-  0%   { transform: translate(-50%, -50%) translate(0,       0);
-         animation-timing-function: cubic-bezier(0.5, 0, 0.4, 1.36); }
-  20%  { transform: translate(-50%, -50%) translate(-78px,   58px);
-         animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
-  38%  { transform: translate(-50%, -50%) translate(-148px,  -12px);
-         animation-timing-function: cubic-bezier(0.4, -0.12, 0.5, 1.4); }
-  56%  { transform: translate(-50%, -50%) translate(-104px,  -118px);
-         animation-timing-function: cubic-bezier(0.34, 1.5, 0.5, 1); }
-  74%  { transform: translate(-50%, -50%) translate(38px,    -142px);
-         animation-timing-function: cubic-bezier(0.55, -0.08, 0.45, 1.3); }
-  90%  { transform: translate(-50%, -50%) translate(84px,    -28px);
-         animation-timing-function: cubic-bezier(0.34, 1.42, 0.6, 1); }
-  100% { transform: translate(-50%, -50%) translate(0,       0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);    }
+  25%  { transform: translate(-50%, -50%) translate(-32px,  24px); }
+  50%  { transform: translate(-50%, -50%) translate(-54px,  -16px);}
+  75%  { transform: translate(-50%, -50%) translate(20px,   -38px);}
+  100% { transform: translate(-50%, -50%) translate(0,      0);    }
 }
 @keyframes fsRoam3 {
-  0%   { transform: translate(-50%, -50%) translate(0,       0);
-         animation-timing-function: cubic-bezier(0.34, 1.56, 0.5, 1); }
-  16%  { transform: translate(-50%, -50%) translate(88px,    68px);
-         animation-timing-function: cubic-bezier(0.5, -0.08, 0.4, 1.3); }
-  34%  { transform: translate(-50%, -50%) translate(156px,   122px);
-         animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1.5); }
-  52%  { transform: translate(-50%, -50%) translate(108px,   180px);
-         animation-timing-function: cubic-bezier(0.34, 1.5, 0.6, 1); }
-  68%  { transform: translate(-50%, -50%) translate(-22px,   140px);
-         animation-timing-function: cubic-bezier(0.55, -0.05, 0.45, 1.36); }
-  84%  { transform: translate(-50%, -50%) translate(-96px,   42px);
-         animation-timing-function: cubic-bezier(0.34, 1.42, 0.6, 1); }
-  94%  { transform: translate(-50%, -50%) translate(-42px,   -28px);
-         animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1.2); }
-  100% { transform: translate(-50%, -50%) translate(0,       0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);    }
+  30%  { transform: translate(-50%, -50%) translate(38px,   32px); }
+  60%  { transform: translate(-50%, -50%) translate(-22px,  52px); }
+  85%  { transform: translate(-50%, -50%) translate(-44px,  -10px);}
+  100% { transform: translate(-50%, -50%) translate(0,      0);    }
 }
 @keyframes fsRoam4 {
-  0%   { transform: translate(-50%, -50%) translate(0,       0);
-         animation-timing-function: cubic-bezier(0.4, -0.12, 0.5, 1.4); }
-  14%  { transform: translate(-50%, -50%) translate(-46px,   -64px);
-         animation-timing-function: cubic-bezier(0.34, 1.56, 0.5, 1); }
-  32%  { transform: translate(-50%, -50%) translate(-122px,  -118px);
-         animation-timing-function: cubic-bezier(0.5, -0.1, 0.4, 1.32); }
-  50%  { transform: translate(-50%, -50%) translate(-72px,   -176px);
-         animation-timing-function: cubic-bezier(0.34, 1.5, 0.6, 1); }
-  66%  { transform: translate(-50%, -50%) translate(54px,    -158px);
-         animation-timing-function: cubic-bezier(0.55, -0.05, 0.45, 1.36); }
-  82%  { transform: translate(-50%, -50%) translate(118px,   -82px);
-         animation-timing-function: cubic-bezier(0.34, 1.42, 0.6, 1); }
-  94%  { transform: translate(-50%, -50%) translate(54px,    -18px);
-         animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1.2); }
-  100% { transform: translate(-50%, -50%) translate(0,       0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);    }
+  20%  { transform: translate(-50%, -50%) translate(-26px,  -32px);}
+  50%  { transform: translate(-50%, -50%) translate(34px,   -42px);}
+  80%  { transform: translate(-50%, -50%) translate(48px,   12px); }
+  100% { transform: translate(-50%, -50%) translate(0,      0);    }
 }
 
 /* Fade cyclic — per product feedback "após determinado tempo,

@@ -122,7 +122,7 @@ const AVATAR_WAVE_TIMINGS: number[] = [
  * Agora é só a frase principal. O typewriter ainda tipa char a
  * char no início e o cursor continua piscando, mas não há mais
  * erase/cycle. */
-const ANALYZING_PHRASE = 'Analisando dados do mundo todo...';
+const ANALYZING_PHRASE = 'Analisando...';
 
 /* Velocidade de tipagem inicial (ms por char). Depois que termina
  * de digitar, fica visível pra sempre (sem erase loop). */
