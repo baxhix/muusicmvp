@@ -49,40 +49,39 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-/* Posições finais dos 11 avatares — distribuídos no PERÍMETRO da
- * viewport, evitando a zona central do orbe (~35-65vw × 22-55vh).
+/* Posições finais dos 11 avatares — anel PRÓXIMO ao orbe (não
+ * atrás dele).
  *
- * Per product feedback "evite usar muitos usuários por trás do
- * orbe" — antes 4 avatares ficavam no anel interno (28-72vw, 30-60vh)
- * que é exatamente onde o orbe vive. Agora todos partem das bordas
- * (top/sides/bottom) e cruzam o orbe SÓ durante o drift do fsRoam,
- * voltando pras bordas no ciclo.
+ * Per product feedback "Os avatares devem ficar mais próximos ao
+ * orbe" — antes (v5) eram perimetrais (6-92vw/vh). Agora ficam
+ * num cluster apertado em volta da zona central do orbe (~50vw,
+ * 35vh), respeitando a "área proibida" 40-60vw × 25-45vh onde o
+ * orbe vive (evita os avatares aparecerem behind).
  *
- * Layout perimetral:
- *   - Top    (3): acima do orbe
- *   - Left   (3): coluna esquerda
- *   - Right  (3): coluna direita
- *   - Bottom (2): abaixo da área central
+ * Layout em 3 anéis concêntricos:
+ *   - Anel próximo (4): just outside orb, NW/NE/SW/SE
+ *   - Anel médio   (4): meio-distância, far W/E e mid-S
+ *   - Anel amplo   (3): cantos pra dar volume sem afastar muito
  *
- * Entrada cinemática: cada avatar spawn no centro (50vw, 50vh) e
- * voa pra cá via CSS vars --from-x/--from-y. */
+ * Como o fsRoam tem amplitude ±120-180px e os avatares estão
+ * agora MAIS PERTO do orbe, eles passam por cima do orbe com
+ * muito mais frequência — exatamente o que o produto quer ("ora
+ * passam por cima do orbe"). */
 const FLOATING_POSITIONS = [
-  /* Top — acima do orbe (10-15vh, sem invadir o centro) */
-  { top:  '8vh', left: '22vw' },
-  { top: '12vh', left: '78vw' },
-  { top:  '6vh', left: '50vw' },
-  /* Left column — coluna esquerda (8-22vw) */
-  { top: '40vh', left:  '8vw' },
-  { top: '62vh', left: '14vw' },
-  { top: '80vh', left:  '6vw' },
-  /* Right column — coluna direita (78-92vw) */
-  { top: '38vh', left: '90vw' },
-  { top: '60vh', left: '84vw' },
-  { top: '78vh', left: '92vw' },
-  /* Bottom — abaixo do conteúdo principal (78-88vh, fora da área
-   * central onde headline/pills/list aparecem mais tarde) */
-  { top: '88vh', left: '38vw' },
-  { top: '85vh', left: '64vw' },
+  /* Anel próximo — just outside orb zone (NW/NE/SW/SE) */
+  { top: '24vh', left: '28vw' },
+  { top: '26vh', left: '72vw' },
+  { top: '46vh', left: '26vw' },
+  { top: '48vh', left: '74vw' },
+  /* Anel médio — far sides + mid-bottom */
+  { top: '34vh', left: '14vw' },
+  { top: '32vh', left: '86vw' },
+  { top: '60vh', left: '32vw' },
+  { top: '62vh', left: '68vw' },
+  /* Anel amplo — cantos pra dar volume sem afastar muito */
+  { top: '78vh', left: '22vw' },
+  { top: '80vh', left: '78vw' },
+  { top:  '8vh', left: '90vw' },
 ];
 
 /* Timing dos stages.
