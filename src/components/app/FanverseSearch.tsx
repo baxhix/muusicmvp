@@ -85,6 +85,15 @@ const FLOATING_POSITIONS = [
   { top: '52vh', left: '72vw' },
 ];
 
+/* Ordem de revelação por PROXIMIDADE ao orbe (~50vw, 35vh).
+ *
+ * Per product feedback "os do começo mais próximos ao orbe":
+ * computamos distância euclidiana de cada FLOATING_POSITIONS[i]
+ * ao centro do orbe e ordenamos crescente. O primeiro a aparecer
+ * (idx 2 = 50vw/18vh) é o que está mais perto verticalmente; os
+ * de cantos extremos (idx 5, 6) aparecem por último. */
+const AVATAR_REVEAL_ORDER = [2, 1, 0, 7, 3, 9, 4, 10, 8, 6, 5];
+
 /* Timing dos stages.
  *
  * Per product feedback:
@@ -99,25 +108,16 @@ const STAGE_HEADLINE_MS = 7000;
 const STAGE_PILLS_MS = 11000;
 const STAGE_LIST_MS = 15000;
 
-/* Avatares aparecem TODOS de uma vez, já em movimento.
- *
- * Per product feedback "Faça com que já comece com todos avatares
- * em movimento, sem o iniciar gradativo." — antes tinha onda
- * AVATAR_WAVE_TIMINGS escalonada (1 → +2 → +4 → +4). Agora todos
- * recebem .floatingAvatarShown imediatamente quando o overlay abre. */
+/* Avatares só começam a aparecer depois de 3s (apenas orbe visível
+ * antes disso). A partir daí, revelam um a um a cada 350ms na ordem
+ * AVATAR_REVEAL_ORDER (do mais próximo ao mais distante do orbe). */
+const AVATAR_REVEAL_START_MS = 3000;
+const AVATAR_REVEAL_STEP_MS = 350;
 
-/* Frase única do typewriter da loading copy.
- *
- * Per product feedback "Remova a frase de procura" — antes ciclava
- * entre "Procurando no Brasil", "Procurando pela Europa", etc.
- * Agora é só a frase principal. O typewriter ainda tipa char a
- * char no início e o cursor continua piscando, mas não há mais
- * erase/cycle. */
-const ANALYZING_PHRASE = 'Analisando...';
-
-/* Velocidade de tipagem inicial (ms por char). Depois que termina
- * de digitar, fica visível pra sempre (sem erase loop). */
-const TYPE_MS = 55;
+/* Copy do "Analisando" — agora com fade in/out via CSS (sem
+ * typewriter). Texto completo fica sempre montado; o efeito fade é
+ * a animação fsAnalyzingFade no .analyzing. */
+const ANALYZING_PHRASE = 'Analisando atividade musical...';
 
 export default function FanverseSearch() {
   const [open, setOpen] = useState(false);
@@ -130,14 +130,10 @@ export default function FanverseSearch() {
   const [showPills, setShowPills] = useState(false);
   const [showList, setShowList] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
-  /* Avatares aparecem todos juntos (per product feedback "Faça com
-   * que já comece com todos avatares em movimento, sem o iniciar
-   * gradativo"). Mantemos o state pra compatibilidade do .floatingAvatarShown,
-   * mas inicia já em 11 (length de FLOATING_POSITIONS). */
-  const avatarsShown = FLOATING_POSITIONS.length;
-  /* Typewriter — tipa a frase única uma vez no início e mantém
-   * visível (sem cycle/erase). */
-  const [typedText, setTypedText] = useState('');
+  /* Avatares aparecem em sequência (mais próximos primeiro), começando
+   * em t=3s. avatarsShown conta quantos posições da AVATAR_REVEAL_ORDER
+   * já estão visíveis (de 0 a 11). */
+  const [avatarsShown, setAvatarsShown] = useState(0);
   /* Scroll state — quando o usuário rola pra baixo, o orbe fica
    * fixo + menor e o back arrow continua na sua posição. */
   const [scrolled, setScrolled] = useState(false);
@@ -150,12 +146,20 @@ export default function FanverseSearch() {
     return () => window.removeEventListener('app:open-fanverse-search', handler);
   }, []);
 
-  /* Escape fecha; reveal staged em 3 etapas. */
+  /* Escape fecha; reveal staged em 3 etapas + avatares com delay. */
   useEffect(() => {
     if (!open) return;
     const tH = window.setTimeout(() => setShowHeadline(true), STAGE_HEADLINE_MS);
     const tP = window.setTimeout(() => setShowPills(true),    STAGE_PILLS_MS);
     const tL = window.setTimeout(() => setShowList(true),     STAGE_LIST_MS);
+    /* Avatares revelam um a um a partir de t=3s, em intervalos de
+     * 350ms. Ordem = AVATAR_REVEAL_ORDER (mais próximos primeiro). */
+    const avatarTimers = AVATAR_REVEAL_ORDER.map((_, pos) =>
+      window.setTimeout(
+        () => setAvatarsShown((n) => Math.max(n, pos + 1)),
+        AVATAR_REVEAL_START_MS + pos * AVATAR_REVEAL_STEP_MS,
+      ),
+    );
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
@@ -164,6 +168,7 @@ export default function FanverseSearch() {
       window.clearTimeout(tH);
       window.clearTimeout(tP);
       window.clearTimeout(tL);
+      avatarTimers.forEach((id) => window.clearTimeout(id));
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -175,22 +180,10 @@ export default function FanverseSearch() {
       setShowPills(false);
       setShowList(false);
       setPhraseIdx(0);
-      setTypedText('');
+      setAvatarsShown(0);
       setScrolled(false);
     }
   }, [open]);
-
-  /* Typewriter — tipa char a char até completar a frase única, e
-   * depois mantém visível (sem ciclar). Cursor segue piscando via CSS. */
-  useEffect(() => {
-    if (!open) return;
-    if (typedText.length >= ANALYZING_PHRASE.length) return;
-    const id = window.setTimeout(
-      () => setTypedText(ANALYZING_PHRASE.slice(0, typedText.length + 1)),
-      TYPE_MS,
-    );
-    return () => window.clearTimeout(id);
-  }, [open, typedText]);
 
   /* Scroll listener — quando scrollTop ultrapassa 60px, ativa o
    * estado "scrolled" que diminui o orbe via transform: scale. */
@@ -287,14 +280,14 @@ export default function FanverseSearch() {
 
       {/* Avatares flutuantes — camada fixa cobrindo a viewport.
        *
-       * Aparecem em ondas (1 → +2 → +4 → +4 = 11) controladas por
-       * `avatarsShown` (per product feedback). Cada avatar começa
-       * mounted com display:none até seu índice ser < avatarsShown,
-       * quando ganha o style.floatingAvatar (que dispara fsAvatarIn). */}
+       * Aparecem um a um a partir de t=3s, na ordem AVATAR_REVEAL_ORDER
+       * (mais próximos do orbe primeiro). isShown = avatarsShown já
+       * incluiu a posição deste avatar na ordem de reveal. */}
       <div className={styles.floatingLayer} aria-hidden="true">
         {snapshot.topListeners.slice(0, FLOATING_POSITIONS.length).map((l, i) => {
           const pos = FLOATING_POSITIONS[i];
-          const isShown = i < avatarsShown;
+          const revealPos = AVATAR_REVEAL_ORDER.indexOf(i);
+          const isShown = revealPos >= 0 && revealPos < avatarsShown;
           /* delay do roam = 1.2s (duração entrada) + stagger leve.
            * blink delay negativo pra cada um piscar em fase própria. */
           const roamDelay = 1.2 + i * 0.35;
@@ -342,8 +335,7 @@ export default function FanverseSearch() {
        * encolhe o orbe via transform: scale e sobe o conjunto. */}
       <div className={styles.fixedHeader}>
         <div className={styles.analyzing} aria-live="polite">
-          <span className={styles.analyzingText}>{typedText}</span>
-          <span className={styles.analyzingCursor} aria-hidden="true" />
+          <span className={styles.analyzingText}>{ANALYZING_PHRASE}</span>
         </div>
         <div className={styles.orb} aria-hidden="true">
           <FanverseCore />

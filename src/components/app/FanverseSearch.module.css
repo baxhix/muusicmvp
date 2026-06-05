@@ -60,6 +60,17 @@
   z-index: 1;
   pointer-events: none;
   overflow: hidden;
+  /* Transition lenta + delay quando entra em .scrolled — os avatares
+   * sobem suavemente pra não atrapalhar a leitura da lista. */
+  transition:
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1) 350ms,
+    opacity 700ms ease 350ms;
+}
+/* Quando o usuário scrolla, levanta a camada de avatares e reduz
+ * opacidade pra ela ficar fora da área de leitura. */
+.scrolled .floatingLayer {
+  transform: translateY(-28vh);
+  opacity: 0.25;
 }
 
 /* Scroll vertical do conteúdo principal — apenas body (headline,
@@ -418,51 +429,19 @@
   letter-spacing: 0.005em;
   text-align: center;
   min-height: 18px;
-  /* Gradient cinza→branco lento (8s) — bem mais sutil que antes. */
-  background:
-    linear-gradient(
-      90deg,
-      rgba(245, 245, 247, 0.55) 0%,
-      rgba(245, 245, 247, 0.55) 40%,
-      rgba(255, 255, 255, 0.95) 50%,
-      rgba(245, 245, 247, 0.55) 60%,
-      rgba(245, 245, 247, 0.55) 100%
-    );
-  background-size: 200% 100%;
-  background-position: 200% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: fsAnalyzingShimmer 8s linear infinite;
+  color: rgba(255, 255, 255, 0.85);
+  /* Ciclo fade in → hold → fade out → hold infinito.
+   * Adicionamos transition pra que mudanças de .scrolled também
+   * sejam suaves (sobrescreve fade momentaneamente). */
+  animation: fsAnalyzingFade 4.2s ease-in-out infinite;
   transition: opacity 360ms ease, transform 360ms ease;
 }
 .analyzingText {
-  /* Texto inline; a cor herda do parent (gradient via background-clip). */
   white-space: pre;
 }
-/* Cursor piscando logo após o texto digitado. 2px branco com blink. */
-.analyzingCursor {
-  display: inline-block;
-  width: 2px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.85);
-  margin-left: 3px;
-  animation: fsCursorBlink 0.9s steps(2) infinite;
-  /* IMPORTANTE: o cursor NÃO usa background-clip:text — ele é um
-   * elemento visual sólido. Por isso definimos -webkit-text-fill-color
-   * pra ele ficar branco mesmo dentro do parent transparente. */
-  -webkit-text-fill-color: #fff;
-  color: #fff;
-}
-@keyframes fsCursorBlink {
-  0%   { opacity: 1; }
-  50%  { opacity: 0; }
-  100% { opacity: 1; }
-}
-@keyframes fsAnalyzingShimmer {
-  from { background-position: 200% 0; }
-  to   { background-position: -200% 0; }
+@keyframes fsAnalyzingFade {
+  0%, 100% { opacity: 0;    transform: translateY(2px); }
+  20%, 80% { opacity: 0.95; transform: translateY(0);   }
 }
 /* Quando scrolled, o copy fica menos prominente — opacity reduzida. */
 .scrolled .analyzing {
