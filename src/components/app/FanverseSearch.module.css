@@ -740,6 +740,19 @@
 
 /* ── Mobile breakpoint ────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Back button maior/mais clicável no mobile — hitbox 52px + ícone
+   * 30px pra dedo. Também aproximamos da borda esquerda pra o toque
+   * cair natural no canto. */
+  .backBtn {
+    width: 52px;
+    height: 52px;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: 10px;
+  }
+  .backBtn svg {
+    width: 30px;
+    height: 30px;
+  }
   .orb {
     width: 180px;
     height: 180px;
