@@ -21,36 +21,57 @@
   to   { opacity: 1; }
 }
 
-/* Backdrop com blur — fica ATRÁS do modal. No mobile a cor sólida
- * domina; no desktop o blur fica perceptível porque o modal é
- * card centrado e deixa as bordas do shell aparecerem por trás. */
+/* Backdrop com blur — full-screen, cobre a viewport inteira.
+ *
+ * Per product feedback "Remova o box, deixe que tudo aconteça em
+ * um ambiente só com o fundo com blur" — não tem mais .modal card
+ * centrado. O backdrop é a única camada de fundo, com blur forte
+ * pra dar a sensação de overlay translúcido sobre o app por trás. */
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background: rgba(8, 6, 14, 0.78);
+  backdrop-filter: blur(32px) saturate(1.3);
+  -webkit-backdrop-filter: blur(32px) saturate(1.3);
 }
 
-/* Modal wrapper — full-screen no mobile, card centrado no desktop
- * (regras desktop no @media min-width:769 abaixo). */
-.modal {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
+/* Camada de gradiente sutil sobre o backdrop — dá tom roxo/rosa
+ * pra reforçar o universo Fanverse sem competir com o conteúdo. */
 .bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 18%, rgba(168, 85, 247, 0.18) 0%, transparent 45%),
-    radial-gradient(circle at 50% 60%, rgba(251, 113, 133, 0.06) 0%, transparent 55%),
-    #000;
+    radial-gradient(circle at 50% 18%, rgba(168, 85, 247, 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 50% 65%, rgba(251, 113, 133, 0.08) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Camada full-screen onde os 8 avatares flutuam. Fica acima do
+ * backdrop e do bg, mas atrás do conteúdo central (scroll). Os
+ * avatares são absolutos com % relativo a esta camada — então
+ * passeiam pela viewport inteira sem ficar presos a nenhum card.
+ *
+ * pointer-events:none deixa cliques passarem direto pro backdrop
+ * (que fecha o overlay). */
+.floatingLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Scroll vertical do conteúdo central — orbe + headline + pills
+ * + lista. Fica acima dos floatingLayer no z-index do conteúdo
+ * principal, mas os avatares (z:3) ainda passam por cima por
+ * causa do z-index local. */
+.scroll {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Topbar ────────────────────────────────────────────────── */
@@ -83,13 +104,11 @@
  * imagem da Ana Castela do topo direito superior". Mantenho a
  * regra ausente — sem renderização não cria peso visual. */
 
-/* ── Hero loading ──────────────────────────────────────────── */
-/* Per product feedback "miniatura dos usuários deve ficar
- * flutuando ao redor do orbe, de forma meio aleatória e
- * inorgânica" — hero virou um stage com position:relative;
- * avatares são absolutos com top/left em % pra fazer o orbit
- * scatter. Altura mínima reservada pra acomodar a área dos
- * avatares + orbe + texto. */
+/* ── Hero (só o orbe central) ──────────────────────────────── */
+/* Os avatares foram movidos pra .floatingLayer (camada full-screen)
+ * — esta seção fica apenas com o orbe. Mantém um stage com altura
+ * reservada pra ocupar a parte de cima da tela enquanto a headline
+ * ainda não foi revelada (durante o "carregando" inicial). */
 .hero {
   position: relative;
   z-index: 2;
@@ -98,7 +117,6 @@
   align-items: center;
   gap: 14px;
   padding: 16px 24px 28px;
-  min-height: 340px;
 }
 
 .orb {
@@ -238,6 +256,8 @@
 }
 
 /* ── Body ──────────────────────────────────────────────────── */
+/* Sem fade global agora — cada filho (headline/pills/list) faz
+ * sua própria animação de stage-in quando monta no DOM. */
 .body {
   position: relative;
   z-index: 2;
@@ -248,36 +268,31 @@
   max-width: 720px;
   margin: 0 auto;
   width: 100%;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 460ms ease-out 80ms, transform 460ms ease-out 80ms;
-}
-.bodyRevealed {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* ── Headline rotativo ─────────────────────────────────────── */
-/* Per product feedback "deve ter destaque, alinhado à esquerda,
- * font 24 px". Mix de bold branco (números + termos-chave) e
- * cinza regular (conectores). Key={phrase.key} no JSX força
- * remount → animation re-fires a cada troca. */
+/* Per product feedback "centralizadas e em uma fonte menor e só
+ * devem aparecer após 7s dos usuários flutuando, como se estivesse
+ * carregando" — text-align:center + font reduzido de 24 → 16px.
+ * O reveal é controlado pelo state showHeadline no JSX (mount em
+ * t=7s); o key={phrase.key} continua forçando re-animation a cada
+ * troca de frase (a cada 4s depois do reveal inicial). */
 .headline {
   margin: 0;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  text-align: left;
-  animation: fsHeadlineIn 480ms ease-out;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-align: center;
+  animation: fsHeadlineIn 520ms ease-out;
 }
 .headlineMuted {
   font-weight: 400;
-  color: rgba(245, 245, 247, 0.55);
+  color: rgba(245, 245, 247, 0.65);
 }
 @keyframes fsHeadlineIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -296,6 +311,9 @@
   scrollbar-width: none;
   margin: 0 -18px;
   padding: 4px 18px;
+  /* Reveal staged — pills mount em t=11s. Animação suave de fade
+   * + slide pra não pipocarem na tela. */
+  animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .matchPills::-webkit-scrollbar { display: none; }
 
@@ -371,6 +389,15 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Reveal staged — list mount em t=15s. */
+  animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Shared stage-in keyframe — usado por headline/pills/list quando
+ * mountam em seus stages. */
+@keyframes fsStageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .userRow {
@@ -457,32 +484,12 @@
 }
 .userHeart svg { width: 20px; height: 20px; }
 
-/* ── Desktop modal (>768px) ───────────────────────────────── */
-/* Per product feedback "NO desktop deixe essa animação em um
- * modal com o fundo com blur" — overlay deixa de ser tela
- * inteira e vira um card centrado, com o backdrop blur aparecendo
- * em volta. O conteúdo dentro fica idêntico ao mobile. */
-@media (min-width: 769px) {
-  .modal {
-    /* Card centrado — top/bottom 5vh, left/right auto. */
-    top: 5vh;
-    bottom: 5vh;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(640px, 92vw);
-    max-height: 90vh;
-    border-radius: 24px;
-    box-shadow:
-      0 32px 80px rgba(0, 0, 0, 0.7),
-      0 0 0 1px rgba(255, 255, 255, 0.06);
-    animation: fsModalIn 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  @keyframes fsModalIn {
-    from { opacity: 0; transform: translate(-50%, 12px) scale(0.97); }
-    to   { opacity: 1; transform: translate(-50%, 0)    scale(1);    }
-  }
-}
+/* ── Desktop (>768px) ─────────────────────────────────────── */
+/* Sem modal card mais — o overlay é um ambiente full-screen com
+ * blur em qualquer breakpoint. O conteúdo central (.scroll) já
+ * está em coluna centrada via .body { max-width: 720px; margin: 0
+ * auto } — não precisa de override aqui. Os avatares passeiam por
+ * toda a área da viewport. */
 
 /* ── Mobile breakpoint ────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -492,10 +499,9 @@
   }
   .hero {
     padding: 8px 24px 22px;
-    min-height: 300px;
   }
   .headline {
-    font-size: 22px;
+    font-size: 15px;
   }
   .floatingAvatar {
     width: 34px;

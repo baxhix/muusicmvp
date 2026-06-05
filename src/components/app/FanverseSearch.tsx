@@ -48,27 +48,52 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-/* Posições semi-aleatórias dos 8 avatares orbitando o orbe.
- * Per product feedback "Diminua para 8 avatares" — reduzido de
- * 12 → 8 pra dar mais respiro ao orbe + cada um com path de
- * movimento longo (definido nas keyframes do CSS), evitando o
- * micro-tremor que o array anterior dava. As posições aqui são
- * só o ponto de partida; o keyframe fsFloatRoam roda eles em
- * loops largos a partir daí. */
+/* Posições semi-aleatórias dos 8 avatares flutuantes.
+ *
+ * Per product feedback "Remova o box, deixe que tudo aconteça em
+ * um ambiente só com o fundo com blur e os usuários flutuem sem
+ * desaparecer no box" — os avatares passaram a ser uma camada
+ * fixa cobrindo a viewport inteira (não mais constrained ao .hero).
+ * Os % aqui são relativos à tela toda, então alguns ficam mais
+ * pertos das bordas, outros sobre a área central do orbe.
+ *
+ * As 8 posições continuam sendo o ponto de partida — o keyframe
+ * fsRoam* roda eles em loops largos a partir daí cruzando o orbe. */
 const FLOATING_POSITIONS = [
-  { top: '14%', left: '20%' },
-  { top: '10%', left: '72%' },
-  { top: '32%', left: '6%'  },
-  { top: '28%', left: '92%' },
-  { top: '58%', left: '12%' },
-  { top: '52%', left: '88%' },
-  { top: '78%', left: '32%' },
-  { top: '82%', left: '70%' },
+  { top: '12%', left: '15%' },
+  { top: '8%',  left: '78%' },
+  { top: '38%', left: '5%'  },
+  { top: '32%', left: '90%' },
+  { top: '68%', left: '10%' },
+  { top: '62%', left: '85%' },
+  { top: '85%', left: '28%' },
+  { top: '88%', left: '72%' },
 ];
+
+/* Timing dos stages.
+ *
+ * Per product feedback:
+ *   - Avatares flutuam por 7s antes da headline aparecer (efeito
+ *     "carregando").
+ *   - Headline aparece em t=7s, centralizada e com fonte menor.
+ *   - Match pills aparecem em t=11s (4s depois da headline).
+ *   - User list aparece em t=15s (4s depois das pills).
+ *
+ * Tudo em ms pra clareza. */
+const STAGE_HEADLINE_MS = 7000;
+const STAGE_PILLS_MS = 11000;
+const STAGE_LIST_MS = 15000;
 
 export default function FanverseSearch() {
   const [open, setOpen] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  /* 3 stages de reveal — cada um aparece em sequência:
+   *   t=7s  showHeadline → headline centralizada
+   *   t=11s showPills    → carrossel de match pills
+   *   t=15s showList     → lista de usuários completa
+   * Antes disso, só orbe + avatares flutuantes (efeito "carregando"). */
+  const [showHeadline, setShowHeadline] = useState(false);
+  const [showPills, setShowPills] = useState(false);
+  const [showList, setShowList] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
 
   /* Listener global pra abrir. */
@@ -78,16 +103,20 @@ export default function FanverseSearch() {
     return () => window.removeEventListener('app:open-fanverse-search', handler);
   }, []);
 
-  /* Escape fecha; reveal staggered ao abrir. */
+  /* Escape fecha; reveal staged em 3 etapas. */
   useEffect(() => {
     if (!open) return;
-    const t = window.setTimeout(() => setRevealed(true), 700);
+    const tH = window.setTimeout(() => setShowHeadline(true), STAGE_HEADLINE_MS);
+    const tP = window.setTimeout(() => setShowPills(true),    STAGE_PILLS_MS);
+    const tL = window.setTimeout(() => setShowList(true),     STAGE_LIST_MS);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', onKey);
     return () => {
-      window.clearTimeout(t);
+      window.clearTimeout(tH);
+      window.clearTimeout(tP);
+      window.clearTimeout(tL);
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -95,7 +124,9 @@ export default function FanverseSearch() {
   /* Reset ao fechar (anima de novo na próxima abertura). */
   useEffect(() => {
     if (!open) {
-      setRevealed(false);
+      setShowHeadline(false);
+      setShowPills(false);
+      setShowList(false);
       setPhraseIdx(0);
     }
   }, [open]);
@@ -156,14 +187,14 @@ export default function FanverseSearch() {
     },
   ], [snapshot]);
 
-  /* Rotaciona a cada 4s. */
+  /* Rotaciona a cada 4s — só começa depois que a headline aparece. */
   useEffect(() => {
-    if (!open || !revealed) return;
+    if (!open || !showHeadline) return;
     const id = window.setInterval(() => {
       setPhraseIdx((i) => (i + 1) % PHRASES.length);
     }, 4000);
     return () => window.clearInterval(id);
-  }, [open, revealed, PHRASES.length]);
+  }, [open, showHeadline, PHRASES.length]);
 
   const currentPhrase = PHRASES[phraseIdx];
 
@@ -171,20 +202,48 @@ export default function FanverseSearch() {
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true">
-      {/* Backdrop blur — visível no desktop quando o overlay vira
-       * modal centrado; mobile fica edge-to-edge sem blur. Click
-       * fecha. */}
+      {/* Backdrop blur — agora ocupa a tela inteira (sem modal card
+       * em cima). Click fecha. */}
       <div
         className={styles.backdrop}
         aria-hidden="true"
         onClick={() => setOpen(false)}
       />
 
-      {/* Modal — wrapper que recebe radius + max-width no desktop
-       * e ocupa full-screen no mobile. */}
-      <div className={styles.modal}>
-        <div className={styles.bg} aria-hidden="true" />
+      {/* Camada de fundo (gradiente radial roxo/rosa) — fica abaixo
+       * de tudo e ocupa toda a viewport. */}
+      <div className={styles.bg} aria-hidden="true" />
 
+      {/* Avatares flutuantes — agora numa camada própria fixa
+       * cobrindo a viewport inteira. Eles permanecem visíveis
+       * durante todos os stages (loading + reveal de headline +
+       * pills + lista), passando por cima ou por trás do conteúdo
+       * conforme z-index. Per product feedback "os usuários
+       * flutuem sem desaparecer no box". */}
+      <div className={styles.floatingLayer} aria-hidden="true">
+        {snapshot.topListeners.slice(0, 8).map((l, i) => (
+          <span
+            key={l.id}
+            className={styles.floatingAvatar}
+            style={{
+              top: FLOATING_POSITIONS[i].top,
+              left: FLOATING_POSITIONS[i].left,
+              /* 3 animation-delays:
+               *   1. fsAvatarIn entry: stagger por i (0.10s gap)
+               *   2. fsRoam* path: negative pra entrar em fase
+               *   3. fsBlink fade in/out: -2s por i (gap maior) */
+              animationDelay: `${i * 0.10}s, ${i * -1.7}s, ${i * -2.4}s`,
+            }}
+            title={l.name}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={l.avatarUrl} alt={l.name} />
+          </span>
+        ))}
+      </div>
+
+      {/* Conteúdo central — scroll vertical, sem card. */}
+      <div className={styles.scroll}>
         {/* Topbar — só back arrow. */}
         <div className={styles.topbar}>
           <button
@@ -200,83 +259,52 @@ export default function FanverseSearch() {
           </button>
         </div>
 
-      {/* Hero — orbe + avatares orbitando.
-       *
-       *  Per product feedback "Remova Analisando atividade do
-       *  mundo" — texto loading + dots foram removidos; o orbe
-       *  + os avatares orbitando já comunicam o aspecto de
-       *  "atividade" sem precisar de copy.
-       *
-       *  Avatares passam por cima do orbe per "Os avatares
-       *  flutuantes podem e devem passar por cima do orbe" — o
-       *  z-index dos avatares (3) já era maior que o do orbe (1),
-       *  e os paths agora têm amplitude maior pra que de fato
-       *  cruzem o centro visualmente.
-       *
-       *  Velocidade aumentada e ciclo de fade-out/fade-in
-       *  staggered pra "aparecem novamente" sem todos sumindo
-       *  juntos — tudo gerenciado nos keyframes do CSS. */}
-      <div className={styles.hero}>
-        {snapshot.topListeners.slice(0, 8).map((l, i) => (
-          <span
-            key={l.id}
-            className={styles.floatingAvatar}
-            style={{
-              top: FLOATING_POSITIONS[i].top,
-              left: FLOATING_POSITIONS[i].left,
-              /* 3 animation-delays:
-               *   1. fsAvatarIn entry: stagger por i (0.10s gap)
-               *   2. fsRoam* path: negative pra entrar em fase
-               *   3. fsBlink fade in/out: -2s por i (gap maior)
-               *      pra cada avatar aparecer/sumir em momento
-               *      diferente */
-              animationDelay: `${i * 0.10}s, ${i * -1.7}s, ${i * -2.4}s`,
-            }}
-            title={l.name}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={l.avatarUrl} alt={l.name} />
-          </span>
-        ))}
-
-        <div className={styles.orb} aria-hidden="true">
-          <FanverseCore />
+        {/* Hero — orbe central. Avatares já estão numa camada
+         * separada (floatingLayer) cobrindo a tela toda. */}
+        <div className={styles.hero}>
+          <div className={styles.orb} aria-hidden="true">
+            <FanverseCore />
+          </div>
         </div>
-      </div>
 
-      {/* Conteúdo abaixo — fade-in staggered */}
-      <div className={`${styles.body} ${revealed ? styles.bodyRevealed : ''}`}>
-        {/* Headline rotativo (24px, left-aligned, bold+gray mix) */}
-        <h2 className={styles.headline} key={currentPhrase.key}>
-          {currentPhrase.render}
-        </h2>
+        {/* Body — três stages, cada um renderiza condicionalmente. */}
+        <div className={styles.body}>
+          {/* Stage 1 (t=7s): headline centralizada, fonte menor,
+           * rotacionando a cada 4s entre as 4 frases. */}
+          {showHeadline && (
+            <h2 className={styles.headline} key={currentPhrase.key}>
+              {currentPhrase.render}
+            </h2>
+          )}
 
-        {/* Match pills — horizontal scroll, 4px gradient border */}
-        <div className={styles.matchPills}>
-          {snapshot.matches.map((m) => (
-            <div key={m.id} className={styles.matchPill}>
-              <span className={styles.matchAvatar}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.avatarUrl} alt={m.name} />
-              </span>
-              <span className={styles.matchCopy}>
-                <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
-                <span className={styles.matchCopyMuted}>{m.suffix}</span>
-              </span>
-              <span className={styles.matchHeart} aria-hidden="true">
-                <HeartIcon filled />
-              </span>
+          {/* Stage 2 (t=11s): match pills em carrossel horizontal. */}
+          {showPills && (
+            <div className={styles.matchPills}>
+              {snapshot.matches.map((m) => (
+                <div key={m.id} className={styles.matchPill}>
+                  <span className={styles.matchAvatar}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.avatarUrl} alt={m.name} />
+                  </span>
+                  <span className={styles.matchCopy}>
+                    <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
+                    <span className={styles.matchCopyMuted}>{m.suffix}</span>
+                  </span>
+                  <span className={styles.matchHeart} aria-hidden="true">
+                    <HeartIcon filled />
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
 
-        {/* User list — fixa per product feedback "Ao mudar a frase,
-         * não mude a lista de usuários. Deixe a fixa". Não tem mais
-         * remount via key — todos os mocked users sempre renderizam. */}
-        <section className={styles.userList}>
-          {snapshot.users.map((u) => <UserRow key={u.id} user={u} />)}
-        </section>
-      </div>
+          {/* Stage 3 (t=15s): lista completa de usuários. */}
+          {showList && (
+            <section className={styles.userList}>
+              {snapshot.users.map((u) => <UserRow key={u.id} user={u} />)}
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );
