@@ -68,20 +68,21 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
  * muito mais frequência — exatamente o que o produto quer ("ora
  * passam por cima do orbe"). */
 const FLOATING_POSITIONS = [
-  /* Anel próximo — just outside orb zone (NW/NE/SW/SE) */
-  { top: '24vh', left: '28vw' },
-  { top: '26vh', left: '72vw' },
-  { top: '46vh', left: '26vw' },
-  { top: '48vh', left: '74vw' },
-  /* Anel médio — far sides + mid-bottom */
-  { top: '34vh', left: '14vw' },
-  { top: '32vh', left: '86vw' },
-  { top: '60vh', left: '32vw' },
-  { top: '62vh', left: '68vw' },
-  /* Anel amplo — cantos pra dar volume sem afastar muito */
-  { top: '78vh', left: '22vw' },
-  { top: '80vh', left: '78vw' },
-  { top:  '8vh', left: '90vw' },
+  /* Cluster apertado em torno do orbe (~50vw, 35vh).
+   * Orbe ocupa ~40-60vw × 22-48vh; avatares no anel imediato
+   * (28-72vw × 16-58vh) — todos a no máximo ~22vw de distância
+   * do centro. */
+  { top: '20vh', left: '32vw' },
+  { top: '22vh', left: '68vw' },
+  { top: '18vh', left: '50vw' },
+  { top: '40vh', left: '24vw' },
+  { top: '42vh', left: '76vw' },
+  { top: '30vh', left: '20vw' },
+  { top: '32vh', left: '80vw' },
+  { top: '56vh', left: '34vw' },
+  { top: '58vh', left: '66vw' },
+  { top: '50vh', left: '28vw' },
+  { top: '52vh', left: '72vw' },
 ];
 
 /* Timing dos stages.
