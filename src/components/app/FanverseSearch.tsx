@@ -134,6 +134,9 @@ export default function FanverseSearch() {
    * em t=3s. avatarsShown conta quantos posições da AVATAR_REVEAL_ORDER
    * já estão visíveis (de 0 a 11). */
   const [avatarsShown, setAvatarsShown] = useState(0);
+  /* Paginação da lista — começa exibindo 20 nomes; cada clique no
+   * CTA "Exibir mais" adiciona +20 até cobrir todos os users. */
+  const [visibleUsers, setVisibleUsers] = useState(20);
   /* Scroll state — quando o usuário rola pra baixo, o orbe fica
    * fixo + menor e o back arrow continua na sua posição. */
   const [scrolled, setScrolled] = useState(false);
@@ -181,6 +184,7 @@ export default function FanverseSearch() {
       setShowList(false);
       setPhraseIdx(0);
       setAvatarsShown(0);
+      setVisibleUsers(20);
       setScrolled(false);
     }
   }, [open]);
@@ -359,14 +363,35 @@ export default function FanverseSearch() {
            * Wallet). Click no card do topo OU auto-rotate cicla. */}
           {showPills && <MatchStack matches={snapshot.matches} />}
 
-          {/* Stage 3 (t=15s): lista completa de usuários. */}
+          {/* Stage 3 (t=15s): lista paginada — primeiros 20 user
+           * rows + CTA "Exibir mais" floating quando há mais pra
+           * carregar. */}
           {showList && (
             <section className={styles.userList}>
-              {snapshot.users.map((u) => <UserRow key={u.id} user={u} />)}
+              {snapshot.users
+                .slice(0, visibleUsers)
+                .map((u) => <UserRow key={u.id} user={u} />)}
             </section>
           )}
         </div>
       </div>
+
+      {/* CTA flutuante "Exibir mais" — fixed bottom, totalmente
+       * arredondado. Aparece só quando a lista está visível e há
+       * mais users disponíveis. Cada clique soma +20. */}
+      {showList && visibleUsers < snapshot.users.length && (
+        <button
+          type="button"
+          className={styles.showMoreBtn}
+          onClick={() =>
+            setVisibleUsers((n) =>
+              Math.min(n + 20, snapshot.users.length),
+            )
+          }
+        >
+          Exibir mais
+        </button>
+      )}
     </div>
   );
 }
