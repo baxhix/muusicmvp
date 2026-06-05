@@ -97,6 +97,49 @@ const STAGE_HEADLINE_MS = 7000;
 const STAGE_PILLS_MS = 11000;
 const STAGE_LIST_MS = 15000;
 
+/* Ondas de aparecimento dos avatares.
+ *
+ * Per product feedback "Primeiro aparece apenas o orbe; Na sequencia
+ * aparece 1 usuário, seguido de mais dois com leve diferença de
+ * tempo; depois mais 4 e assim por diante, para parecer algo bem
+ * aleatório e surpresa gradativa."
+ *
+ * Cada entrada é o timestamp (ms a partir da abertura) em que o
+ * avatar de índice N deve aparecer. Pattern: 1 → +2 (stagger 300ms)
+ * → +4 (stagger 200ms) → +4 (stagger 200ms) = 11 total. */
+const AVATAR_WAVE_TIMINGS: number[] = [
+  1600,                          // 1 (wave 1)
+  2900, 3200,                    // 2,3 (wave 2 — leve diferença entre eles)
+  4400, 4600, 4800, 5050,        // 4,5,6,7 (wave 3 — stagger 200ms)
+  6200, 6420, 6650, 6900,        // 8,9,10,11 (wave 4)
+];
+
+/* Frases pra typewriter da loading copy.
+ *
+ * Per product feedback "Após apagar, coloque: 'Procurando no Brasil',
+ * depois 'Procurando pela Europa' e assim por diante. deixe essa
+ * frase acima do orbe."
+ *
+ * Cada frase é tipada, segurada, e apagada. Depois passa pra próxima
+ * num loop infinito enquanto o overlay está aberto. Primeira é a
+ * geral "Analisando..." e depois rotaciona pelas regiões. */
+const ANALYZING_PHRASES: string[] = [
+  'Analisando dados do mundo todo...',
+  'Procurando no Brasil',
+  'Procurando pela Europa',
+  'Procurando na América do Norte',
+  'Procurando na Ásia',
+  'Procurando na Oceania',
+  'Procurando na África',
+];
+
+/* Velocidades do typewriter (ms). Tipar é mais lento que apagar pra
+ * dar peso a cada palavra entrando. */
+const TYPE_MS = 60;
+const ERASE_MS = 30;
+const HOLD_MS = 1800;
+const PAUSE_BEFORE_NEXT_MS = 350;
+
 export default function FanverseSearch() {
   const [open, setOpen] = useState(false);
   /* 3 stages de reveal — cada um aparece em sequência:
@@ -108,6 +151,18 @@ export default function FanverseSearch() {
   const [showPills, setShowPills] = useState(false);
   const [showList, setShowList] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
+  /* Quantos avatares já apareceram. Começa em 0 (só orbe) e cresce
+   * em ondas conforme AVATAR_WAVE_TIMINGS — wave 1 (1 user), wave 2
+   * (+2), wave 3 (+4), wave 4 (+4) = 11 totais. */
+  const [avatarsShown, setAvatarsShown] = useState(0);
+  /* Typewriter da copy "Analisando..." */
+  const [typedText, setTypedText] = useState('');
+  const [typeIdx, setTypeIdx] = useState(0);
+  const [typePhase, setTypePhase] = useState<'typing' | 'holding' | 'erasing' | 'pausing'>('typing');
+  /* Scroll state — quando o usuário rola pra baixo, o orbe fica
+   * fixo + menor e o back arrow continua na sua posição. */
+  const [scrolled, setScrolled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   /* Listener global pra abrir. */
   useEffect(() => {
@@ -122,6 +177,11 @@ export default function FanverseSearch() {
     const tH = window.setTimeout(() => setShowHeadline(true), STAGE_HEADLINE_MS);
     const tP = window.setTimeout(() => setShowPills(true),    STAGE_PILLS_MS);
     const tL = window.setTimeout(() => setShowList(true),     STAGE_LIST_MS);
+    /* Schedule cada avatar pra aparecer no seu timestamp. Mantém
+     * todos os ids dos timeouts pra cancelar no cleanup. */
+    const avatarTimers = AVATAR_WAVE_TIMINGS.map((ms, i) =>
+      window.setTimeout(() => setAvatarsShown(i + 1), ms),
+    );
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
@@ -130,6 +190,7 @@ export default function FanverseSearch() {
       window.clearTimeout(tH);
       window.clearTimeout(tP);
       window.clearTimeout(tL);
+      avatarTimers.forEach((id) => window.clearTimeout(id));
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -141,8 +202,59 @@ export default function FanverseSearch() {
       setShowPills(false);
       setShowList(false);
       setPhraseIdx(0);
+      setAvatarsShown(0);
+      setTypedText('');
+      setTypeIdx(0);
+      setTypePhase('typing');
+      setScrolled(false);
     }
   }, [open]);
+
+  /* Typewriter loop: 'typing' adiciona um char por vez até o fim
+   * da frase, vai pra 'holding' (segura 1.8s), depois 'erasing'
+   * tira um char por vez até zerar, depois 'pausing' (0.35s) e
+   * 'typing' novamente com a próxima frase. */
+  useEffect(() => {
+    if (!open) return;
+    const phrase = ANALYZING_PHRASES[typeIdx];
+    if (typePhase === 'typing') {
+      if (typedText.length < phrase.length) {
+        const id = window.setTimeout(() => setTypedText(phrase.slice(0, typedText.length + 1)), TYPE_MS);
+        return () => window.clearTimeout(id);
+      } else {
+        const id = window.setTimeout(() => setTypePhase('holding'), 0);
+        return () => window.clearTimeout(id);
+      }
+    }
+    if (typePhase === 'holding') {
+      const id = window.setTimeout(() => setTypePhase('erasing'), HOLD_MS);
+      return () => window.clearTimeout(id);
+    }
+    if (typePhase === 'erasing') {
+      if (typedText.length > 0) {
+        const id = window.setTimeout(() => setTypedText(typedText.slice(0, -1)), ERASE_MS);
+        return () => window.clearTimeout(id);
+      } else {
+        const id = window.setTimeout(() => setTypePhase('pausing'), 0);
+        return () => window.clearTimeout(id);
+      }
+    }
+    if (typePhase === 'pausing') {
+      const id = window.setTimeout(() => {
+        setTypeIdx((i) => (i + 1) % ANALYZING_PHRASES.length);
+        setTypePhase('typing');
+      }, PAUSE_BEFORE_NEXT_MS);
+      return () => window.clearTimeout(id);
+    }
+  }, [open, typedText, typeIdx, typePhase]);
+
+  /* Scroll listener — quando scrollTop ultrapassa 60px, ativa o
+   * estado "scrolled" que diminui o orbe via transform: scale. */
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setScrolled(el.scrollTop > 60);
+  };
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
@@ -214,52 +326,45 @@ export default function FanverseSearch() {
   if (!open) return null;
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true">
-      {/* Backdrop blur — agora ocupa a tela inteira (sem modal card
-       * em cima). Click fecha. */}
+    <div
+      className={`${styles.overlay} ${scrolled ? styles.scrolled : ''}`}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Backdrop blur — ocupa a tela inteira. Click fecha. */}
       <div
         className={styles.backdrop}
         aria-hidden="true"
         onClick={() => setOpen(false)}
       />
 
-      {/* Camada de fundo (gradiente radial roxo/rosa) — fica abaixo
-       * de tudo e ocupa toda a viewport. */}
+      {/* Camada de fundo (gradiente radial roxo/rosa). */}
       <div className={styles.bg} aria-hidden="true" />
 
-      {/* Avatares flutuantes — camada fixa cobrindo a viewport
-       * inteira. Eles permanecem visíveis durante todos os stages
-       * (loading + reveal de headline + pills + lista), passando
-       * POR CIMA do orbe (z-index 3) per product feedback.
+      {/* Avatares flutuantes — camada fixa cobrindo a viewport.
        *
-       * Entrada cinemática: cada avatar spawn visualmente no centro
-       * (sobre o orbe) e voa pra sua posição final em --from-x/y.
-       * Como top/left são em vw/vh, o offset é calc(50vw - left).
-       * O fsRoam* só começa DEPOIS da entrada (delay = duração da
-       * entrada + stagger) pra não conflitar com o transform. */}
+       * Aparecem em ondas (1 → +2 → +4 → +4 = 11) controladas por
+       * `avatarsShown` (per product feedback). Cada avatar começa
+       * mounted com display:none até seu índice ser < avatarsShown,
+       * quando ganha o style.floatingAvatar (que dispara fsAvatarIn). */}
       <div className={styles.floatingLayer} aria-hidden="true">
         {snapshot.topListeners.slice(0, FLOATING_POSITIONS.length).map((l, i) => {
           const pos = FLOATING_POSITIONS[i];
-          /* stagger da entrada: cada avatar dispara 90ms depois do
-           * anterior pra dar sensação de "saindo um a um do orbe". */
-          const entryDelay = i * 0.09;
-          /* delay do roam = 1.2s (duração entrada) + stagger pra
-           * que cada um entre em órbita um pouco depois. */
-          const roamDelay = 1.2 + i * 0.4;
-          /* blink delay negativo pra cada um piscar em fase própria. */
+          const isShown = i < avatarsShown;
+          /* delay do roam = 1.2s (duração entrada) + stagger leve.
+           * blink delay negativo pra cada um piscar em fase própria. */
+          const roamDelay = 1.2 + i * 0.35;
           const blinkDelay = i * -2.4;
           return (
             <span
               key={l.id}
-              className={styles.floatingAvatar}
+              className={`${styles.floatingAvatar} ${isShown ? styles.floatingAvatarShown : ''}`}
               style={{
                 top: pos.top,
                 left: pos.left,
-                /* Offset pra começar no centro da viewport. As units
-                 * são vw/vh então o calc bate exato com left/top. */
                 ['--from-x' as string]: `calc(50vw - ${pos.left})`,
                 ['--from-y' as string]: `calc(50vh - ${pos.top})`,
-                animationDelay: `${entryDelay}s, ${roamDelay}s, ${blinkDelay}s`,
+                animationDelay: `0ms, ${roamDelay}s, ${blinkDelay}s`,
               }}
               title={l.name}
             >
@@ -270,50 +375,48 @@ export default function FanverseSearch() {
         })}
       </div>
 
-      {/* Conteúdo central — scroll vertical, sem card. */}
-      <div className={styles.scroll}>
-        {/* Topbar — só back arrow. */}
-        <div className={styles.topbar}>
-          <button
-            type="button"
-            className={styles.backBtn}
-            onClick={() => setOpen(false)}
-            aria-label="Voltar"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-        </div>
+      {/* Back arrow — fixo no canto superior esquerdo per product
+       * feedback "A seta de voltar deve ficar fixa também". Fora
+       * de .scroll, posicionado position:fixed via CSS. */}
+      <button
+        type="button"
+        className={styles.backBtn}
+        onClick={() => setOpen(false)}
+        aria-label="Voltar"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
+      </button>
 
-        {/* Hero — orbe central. Avatares já estão numa camada
-         * separada (floatingLayer) cobrindo a tela toda. */}
-        <div className={styles.hero}>
-          <div className={styles.orb} aria-hidden="true">
-            <FanverseCore />
-          </div>
+      {/* Header fixo — typewriter "Analisando..." + orbe.
+       *
+       * Per product feedback "Desça mais o orbe e ao fazer scroll
+       * ele deve permanecer fixo em um tamanho menor". Esse wrapper
+       * é position:fixed; ao scroll, recebe a classe .scrolled que
+       * encolhe o orbe via transform: scale e sobe o conjunto. */}
+      <div className={styles.fixedHeader}>
+        <div className={styles.analyzing} aria-live="polite">
+          <span className={styles.analyzingText}>{typedText}</span>
+          <span className={styles.analyzingCursor} aria-hidden="true" />
         </div>
+        <div className={styles.orb} aria-hidden="true">
+          <FanverseCore />
+        </div>
+      </div>
 
-        {/* Body — três stages, cada um renderiza condicionalmente. */}
+      {/* Scroll vertical do conteúdo principal — só body (headline,
+       * pills, list). Topbar e orbe estão fora do scroll (fixos). */}
+      <div className={styles.scroll} ref={scrollRef} onScroll={handleScroll}>
         <div className={styles.body}>
-          {/* Stage 1 (t=7s): copy "Analisando" com shimmer animado
-           * acima da headline + headline centralizada com fonte
-           * menor, rotacionando a cada 4s entre as 4 frases.
-           *
-           * O shimmer no .analyzing usa background-clip:text + um
-           * gradient cinza→branco→cinza animado horizontalmente,
-           * dando a sensação de "está carregando" enquanto o orbe
-           * trabalha. Aparece junto da headline (mesmo stage). */}
+          {/* Stage 1 (t=7s): headline centralizada com fonte menor,
+           * rotacionando a cada 4s entre as 4 frases. A loading copy
+           * "Analisando..." agora vive no .fixedHeader (acima do orbe). */}
           {showHeadline && (
-            <>
-              <div className={styles.analyzing} aria-live="polite">
-                Analisando dados do mundo todo...
-              </div>
-              <h2 className={styles.headline} key={currentPhrase.key}>
-                {currentPhrase.render}
-              </h2>
-            </>
+            <h2 className={styles.headline} key={currentPhrase.key}>
+              {currentPhrase.render}
+            </h2>
           )}
 
           {/* Stage 2 (t=11s): match cards em pilha (estilo Apple

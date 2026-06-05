@@ -62,29 +62,33 @@
   overflow: hidden;
 }
 
-/* Scroll vertical do conteúdo central — orbe + headline + pills
- * + lista. Fica acima dos floatingLayer no z-index do conteúdo
- * principal, mas os avatares (z:3) ainda passam por cima por
- * causa do z-index local. */
+/* Scroll vertical do conteúdo principal — apenas body (headline,
+ * pills, list). Back arrow e orbe vivem em camadas fixas fora dele,
+ * então recebemos padding-top grande pra empurrar o conteúdo
+ * inicial pra baixo do orbe.
+ *
+ * Quando .scrolled está ativo (scrollTop > 60), o padding diminui
+ * porque o orbe encolheu — o conteúdo sobe e ocupa o espaço. */
 .scroll {
   position: absolute;
   inset: 0;
   z-index: 2;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-top: 420px;
+  transition: padding-top 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scrolled .scroll {
+  padding-top: 160px;
 }
 
-/* ── Topbar ────────────────────────────────────────────────── */
-.topbar {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 18px 6px;
-}
-
+/* ── Back arrow (sempre fixo no canto superior esquerdo) ───── */
+/* Per product feedback "A seta de voltar deve ficar fixa também".
+ * position:fixed mantém ele visível durante scroll do conteúdo. */
 .backBtn {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 18px;
   width: 40px;
   height: 40px;
   display: inline-flex;
@@ -96,33 +100,49 @@
   cursor: pointer;
   border-radius: 50%;
   transition: background 140ms ease;
+  z-index: 6;
 }
 .backBtn:hover { background: rgba(255, 255, 255, 0.06); }
 .backBtn svg   { width: 22px; height: 22px; }
 
-/* .artistThumb foi removido do JSX per product feedback "Remova a
- * imagem da Ana Castela do topo direito superior". Mantenho a
- * regra ausente — sem renderização não cria peso visual. */
-
-/* ── Hero (só o orbe central) ──────────────────────────────── */
-/* Os avatares foram movidos pra .floatingLayer (camada full-screen)
- * — esta seção fica apenas com o orbe. Mantém um stage com altura
- * reservada pra ocupar a parte de cima da tela enquanto a headline
- * ainda não foi revelada (durante o "carregando" inicial). */
-.hero {
-  position: relative;
-  z-index: 2;
+/* ── Fixed header (typewriter copy + orbe) ─────────────────── */
+/* Per product feedback "Desça mais o orbe e ao fazer scroll ele
+ * deve permanecer fixo em um tamanho menor".
+ *
+ * Container fixed, ocupa full-width. Orbe + copy ficam aí dentro,
+ * centralizados. padding-top empurra o orbe pra baixo do back arrow
+ * deixando-o respirar.
+ *
+ * Quando .overlay ganha .scrolled (scrollTop > 60px), reduzimos o
+ * padding e escalamos o orbe via transform — ele "fica fixo num
+ * tamanho menor" enquanto o conteúdo passa por baixo. */
+.fixedHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 16px 24px 28px;
+  gap: 18px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
+  pointer-events: none;
+  transition: padding-top 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Filhos do header podem receber pointer events (orbe não precisa,
+ * mas analyzing eventualmente sim). */
+.fixedHeader > * { pointer-events: auto; }
+
+.scrolled .fixedHeader {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
+  gap: 6px;
 }
 
 .orb {
-  /* Desktop: 286px (220 × 1.30) per product feedback "Aumente
-   * 30% o tamanho do orbe do desktop". Mobile mantém 180px via
-   * override no @media abaixo. */
+  /* Desktop: 286px no estado inicial. Quando .scrolled, encolhe pra
+   * ~120px via transform: scale(0.42) — mais barato que mudar W/H
+   * porque não causa reflow do layout. */
   width: 286px;
   height: 286px;
   position: relative;
@@ -131,10 +151,15 @@
   animation: fsOrbBreathe 4.2s ease-in-out infinite;
   -webkit-mask: radial-gradient(circle at center, #000 55%, transparent 80%);
   mask: radial-gradient(circle at center, #000 55%, transparent 80%);
+  transform-origin: center top;
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scrolled .orb {
+  transform: scale(0.42);
 }
 @keyframes fsOrbBreathe {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.4)); }
-  50%      { transform: scale(1.04); filter: drop-shadow(0 0 80px rgba(168, 85, 247, 0.55)); }
+  0%, 100% { filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.4)); }
+  50%      { filter: drop-shadow(0 0 80px rgba(168, 85, 247, 0.55)); }
 }
 
 /* .loadingText e .dots foram removidos do JSX per product feedback
@@ -161,41 +186,53 @@
   background: #1a1a1f;
   border: 2px solid #000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  /* z-index 3 garante que os avatares passem POR CIMA do orbe
-   * (z:1) per product feedback "faça com que os usuários flutuando
-   * passem por cima do orbe". */
+  /* z-index 3 garante que os avatares passem POR CIMA do orbe. */
   z-index: 3;
   opacity: 0;
-  /* Defaults p/ os CSS vars caso o JSX não tenha computado ainda
-   * (defensive — não deveria acontecer). */
+  /* Defaults dos CSS vars caso o JSX não tenha computado ainda. */
   --from-x: 0;
   --from-y: 0;
-  /* 3 animações empilhadas:
-   *  1. fsAvatarIn (1200ms forwards) → entrada cinemática do centro
-   *     da tela até a posição final (saindo "de dentro" do orbe).
-   *  2. fsRoamN (8-11s infinite) → trajetória ampla cruzando o
-   *     orbe — só inicia após a entrada (delay vem do JSX).
-   *  3. fsBlink (9s infinite) → fade out/in cíclico. */
+  /* IMPORTANTE: animações ficam definidas aqui mas só DISPARAM
+   * quando .floatingAvatarShown é aplicado.
+   *
+   * Per product feedback "Primeiro aparece apenas o orbe; Na
+   * sequência aparece 1 usuário, seguido de mais dois com leve
+   * diferença de tempo; depois mais 4 e assim por diante" — o
+   * controle está em <FanverseSearch> via AVATAR_WAVE_TIMINGS,
+   * que aplica a classe Shown no momento certo. */
+  animation: none;
+}
+/* Quando o JSX adiciona .floatingAvatarShown, as 3 animações
+ * disparam de uma vez:
+ *   1. fsAvatarIn (1200ms forwards) → entrada cinemática.
+ *   2. fsRoamN (lentas, 14-22s) → trajetória orgânica.
+ *   3. fsBlink (12s infinite) → fade out/in cíclico. */
+.floatingAvatarShown {
   animation:
     fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    fsRoam1 9s ease-in-out infinite both,
-    fsBlink 9s ease-in-out infinite;
+    fsRoam1 18s ease-in-out infinite both,
+    fsBlink 12s ease-in-out infinite;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Assigna paths variados + durações distintas pra cada avatar ter
- * velocidade própria. 11 avatares no total (era 8). */
-.floatingAvatar:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms,  7s,   9s; }
-.floatingAvatar:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 11s,   9s; }
-.floatingAvatar:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  8s,   9s; }
-.floatingAvatar:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 10s,   9s; }
-.floatingAvatar:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  7.5s, 9s; }
-.floatingAvatar:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  9.5s, 9s; }
-.floatingAvatar:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms,  8.5s, 9s; }
-.floatingAvatar:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms,  9s,   9s; }
-.floatingAvatar:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  8s,   9s; }
-.floatingAvatar:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 10.5s, 9s; }
+/* Paths variados + durações lentas (14-22s) pra cada avatar ter
+ * trajetória própria e ORGÂNICA. Per product feedback "Os movimentos
+ * dos usuários flutuando não parecem naturais" — antes 7-11s era
+ * curto demais e fazia eles voltarem rápido pelo mesmo caminho.
+ * Lentidão + 8 keyframe stops nos fsRoam dão sensação de drift
+ * natural. As regras só aplicam quando .floatingAvatarShown estiver
+ * presente. */
+.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 16s, 12s; }
+.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 21s, 12s; }
+.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 17s, 12s; }
+.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 19s, 12s; }
+.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 16.5s, 12s; }
+.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 20s, 12s; }
+.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 18.5s, 12s; }
+.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 17.5s, 12s; }
+.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 16s, 12s; }
+.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 22s, 12s; }
 
 .floatingAvatar img {
   width: 100%;
@@ -223,38 +260,60 @@
   }
 }
 
-/* 4 paths de roaming AMPLOS. Amplitude aumentada de ±55 → até
- * ±120px em x e ±110px em y pra os avatares de fato cruzarem
- * o centro do hero (onde fica o orbe). Em pontos como (90px,
- * -80px) o avatar do canto top-left passa visualmente sobre o
- * orbe, e como z-index dele é 3 (orbe 1), renderiza por cima. */
+/* 4 paths de roaming ORGÂNICOS.
+ *
+ * Per product feedback "Os movimentos dos usuários flutuando não
+ * parecem naturais." — antes eram 4-5 keyframes em ângulos retos.
+ * Agora cada path tem 8 stops com offsets que NÃO formam diagonais
+ * óbvias — pontos espalhados em alturas irregulares simulando drift
+ * tipo plâncton aquoso.
+ *
+ * Amplitudes reduzidas pra ±60-90px (eram ±110) porque agora os
+ * avatares já estão perto do orbe (raio 22-78vw/vh) e o cruzamento
+ * acontece naturalmente sem precisar amplitude grande. */
 @keyframes fsRoam1 {
-  0%   { transform: translate(-50%, -50%) translate(0,     0);     }
-  25%  { transform: translate(-50%, -50%) translate(90px,  -60px); }
-  50%  { transform: translate(-50%, -50%) translate(110px, 50px);  }
-  75%  { transform: translate(-50%, -50%) translate(20px,  100px); }
-  100% { transform: translate(-50%, -50%) translate(0,     0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,     0);    }
+  12%  { transform: translate(-50%, -50%) translate(28px,  -18px); }
+  26%  { transform: translate(-50%, -50%) translate(62px,  -42px); }
+  40%  { transform: translate(-50%, -50%) translate(78px,  -10px); }
+  54%  { transform: translate(-50%, -50%) translate(70px,  34px);  }
+  68%  { transform: translate(-50%, -50%) translate(38px,  62px);  }
+  82%  { transform: translate(-50%, -50%) translate(-6px,  44px);  }
+  92%  { transform: translate(-50%, -50%) translate(-14px, 16px);  }
+  100% { transform: translate(-50%, -50%) translate(0,     0);    }
 }
 @keyframes fsRoam2 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
-  25%  { transform: translate(-50%, -50%) translate(-100px, 70px);  }
-  50%  { transform: translate(-50%, -50%) translate(-40px,  -95px); }
-  75%  { transform: translate(-50%, -50%) translate(80px,   -40px); }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);    }
+  14%  { transform: translate(-50%, -50%) translate(-32px,  22px); }
+  28%  { transform: translate(-50%, -50%) translate(-68px,  -4px); }
+  42%  { transform: translate(-50%, -50%) translate(-52px,  -48px);}
+  56%  { transform: translate(-50%, -50%) translate(-14px,  -64px);}
+  70%  { transform: translate(-50%, -50%) translate(28px,   -42px);}
+  84%  { transform: translate(-50%, -50%) translate(42px,   -8px); }
+  94%  { transform: translate(-50%, -50%) translate(18px,   12px); }
+  100% { transform: translate(-50%, -50%) translate(0,      0);    }
 }
 @keyframes fsRoam3 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
-  30%  { transform: translate(-50%, -50%) translate(105px,  85px);  }
-  60%  { transform: translate(-50%, -50%) translate(-65px,  100px); }
-  85%  { transform: translate(-50%, -50%) translate(-110px, -45px); }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);    }
+  16%  { transform: translate(-50%, -50%) translate(40px,   30px); }
+  30%  { transform: translate(-50%, -50%) translate(70px,   58px); }
+  44%  { transform: translate(-50%, -50%) translate(54px,   88px); }
+  58%  { transform: translate(-50%, -50%) translate(8px,    72px); }
+  72%  { transform: translate(-50%, -50%) translate(-32px,  46px); }
+  84%  { transform: translate(-50%, -50%) translate(-48px,  8px);  }
+  93%  { transform: translate(-50%, -50%) translate(-22px,  -14px);}
+  100% { transform: translate(-50%, -50%) translate(0,      0);    }
 }
 @keyframes fsRoam4 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
-  20%  { transform: translate(-50%, -50%) translate(-65px,  -95px); }
-  50%  { transform: translate(-50%, -50%) translate(75px,   75px);  }
-  80%  { transform: translate(-50%, -50%) translate(-95px,  25px);  }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(0,      0);    }
+  12%  { transform: translate(-50%, -50%) translate(-22px,  -28px);}
+  28%  { transform: translate(-50%, -50%) translate(-50px,  -54px);}
+  42%  { transform: translate(-50%, -50%) translate(-30px,  -82px);}
+  54%  { transform: translate(-50%, -50%) translate(14px,   -76px);}
+  66%  { transform: translate(-50%, -50%) translate(48px,   -46px);}
+  78%  { transform: translate(-50%, -50%) translate(60px,   -14px);}
+  90%  { transform: translate(-50%, -50%) translate(28px,   18px); }
+  100% { transform: translate(-50%, -50%) translate(0,      0);    }
 }
 
 /* Fade cyclic — per product feedback "após determinado tempo,
@@ -287,32 +346,37 @@
   width: 100%;
 }
 
-/* ── Copy "Analisando dados do mundo todo..." ──────────────── */
-/* Per product feedback "Acima no texto de quantidade de usuários,
- * etc. Inclua 'Analisando dados do mundo todo...' com um gradiente
- * sutil e cinza com branco em movimento no texto".
+/* ── Copy typewriter — "Analisando dados do mundo todo..." ─── */
+/* Per product feedback "deixe a parte do analisando dados do mundo
+ * todo com a frase sem ser em caixa alta, apenas a primeira letra
+ * da frase. Diminua muito a velocidade do gradiente e aplique o
+ * efeito de typewriter. Após apagar, coloque: 'Procurando no
+ * Brasil', depois 'Procurando pela Europa' e assim por diantes."
  *
- * Implementação: cor base cinza, e por cima um gradient branco
- * passando horizontalmente via background-clip:text + animation
- * que move o background-position. Dá efeito tipo "scanner" de luz
- * cruzando o texto — sensação de loading. */
+ * Sentence case (text-transform removido — agora a JS escreve a
+ * frase exatamente como deve ser exibida). Gradient lento (8s) +
+ * cursor blink no fim do texto. As frases vêm via JS (typewriter
+ * loop em <FanverseSearch>), aqui só estilizamos o container.
+ *
+ * Per "deixe essa frase acima do orbe" — o .analyzing é o primeiro
+ * filho do .fixedHeader (acima do orbe naturalmente). */
 .analyzing {
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.005em;
   text-align: center;
-  margin-bottom: 4px;
-  /* Gradient base: cinza médio com uma "banda" branca passando.
-   * Width 200% pra ter espaço pra a banda atravessar o texto. */
+  min-height: 18px;
+  /* Gradient cinza→branco lento (8s) — bem mais sutil que antes. */
   background:
     linear-gradient(
       90deg,
-      rgba(245, 245, 247, 0.35) 0%,
-      rgba(245, 245, 247, 0.35) 40%,
+      rgba(245, 245, 247, 0.55) 0%,
+      rgba(245, 245, 247, 0.55) 40%,
       rgba(255, 255, 255, 0.95) 50%,
-      rgba(245, 245, 247, 0.35) 60%,
-      rgba(245, 245, 247, 0.35) 100%
+      rgba(245, 245, 247, 0.55) 60%,
+      rgba(245, 245, 247, 0.55) 100%
     );
   background-size: 200% 100%;
   background-position: 200% 0;
@@ -320,11 +384,40 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: fsAnalyzingShimmer 2.4s linear infinite;
+  animation: fsAnalyzingShimmer 8s linear infinite;
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+.analyzingText {
+  /* Texto inline; a cor herda do parent (gradient via background-clip). */
+  white-space: pre;
+}
+/* Cursor piscando logo após o texto digitado. 2px branco com blink. */
+.analyzingCursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  margin-left: 3px;
+  animation: fsCursorBlink 0.9s steps(2) infinite;
+  /* IMPORTANTE: o cursor NÃO usa background-clip:text — ele é um
+   * elemento visual sólido. Por isso definimos -webkit-text-fill-color
+   * pra ele ficar branco mesmo dentro do parent transparente. */
+  -webkit-text-fill-color: #fff;
+  color: #fff;
+}
+@keyframes fsCursorBlink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
 }
 @keyframes fsAnalyzingShimmer {
   from { background-position: 200% 0; }
   to   { background-position: -200% 0; }
+}
+/* Quando scrolled, o copy fica menos prominente — opacity reduzida. */
+.scrolled .analyzing {
+  opacity: 0.55;
+  transform: translateY(-2px);
 }
 
 /* ── Headline rotativo ─────────────────────────────────────── */
