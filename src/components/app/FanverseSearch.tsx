@@ -5,6 +5,7 @@ import FanverseCore from '@/components/animations/FanverseCore';
 import {
   FANVERSE_SEARCH_SNAPSHOT,
   type FanverseSearchUser,
+  type FanverseMatch,
 } from '@/lib/fanverseSearchMocks';
 import styles from './FanverseSearch.module.css';
 
@@ -48,26 +49,24 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-/* Posições semi-aleatórias dos 8 avatares flutuantes.
+/* Posições finais dos 8 avatares — agora puxadas pra extremidades
+ * da viewport (vw/vh em vez de %) per product feedback "vão para
+ * as extremidades da página".
  *
- * Per product feedback "Remova o box, deixe que tudo aconteça em
- * um ambiente só com o fundo com blur e os usuários flutuem sem
- * desaparecer no box" — os avatares passaram a ser uma camada
- * fixa cobrindo a viewport inteira (não mais constrained ao .hero).
- * Os % aqui são relativos à tela toda, então alguns ficam mais
- * pertos das bordas, outros sobre a área central do orbe.
- *
- * As 8 posições continuam sendo o ponto de partida — o keyframe
- * fsRoam* roda eles em loops largos a partir daí cruzando o orbe. */
+ * Os avatares fazem uma entrada cinemática: spawnam visualmente
+ * no centro (50vw, 50vh — sobre o orbe) e voam pra cá usando a
+ * CSS var --from-x/--from-y, dando a sensação de "surgem como se
+ * fosse de dentro" do orbe (per product feedback). Depois entram
+ * no loop fsRoam pra continuar flutuando ambiente. */
 const FLOATING_POSITIONS = [
-  { top: '12%', left: '15%' },
-  { top: '8%',  left: '78%' },
-  { top: '38%', left: '5%'  },
-  { top: '32%', left: '90%' },
-  { top: '68%', left: '10%' },
-  { top: '62%', left: '85%' },
-  { top: '85%', left: '28%' },
-  { top: '88%', left: '72%' },
+  { top:  '8vh', left:  '6vw' },
+  { top:  '5vh', left: '86vw' },
+  { top: '32vh', left:  '2vw' },
+  { top: '28vh', left: '92vw' },
+  { top: '66vh', left:  '4vw' },
+  { top: '60vh', left: '90vw' },
+  { top: '88vh', left: '18vw' },
+  { top: '92vh', left: '76vw' },
 ];
 
 /* Timing dos stages.
@@ -214,32 +213,47 @@ export default function FanverseSearch() {
        * de tudo e ocupa toda a viewport. */}
       <div className={styles.bg} aria-hidden="true" />
 
-      {/* Avatares flutuantes — agora numa camada própria fixa
-       * cobrindo a viewport inteira. Eles permanecem visíveis
-       * durante todos os stages (loading + reveal de headline +
-       * pills + lista), passando por cima ou por trás do conteúdo
-       * conforme z-index. Per product feedback "os usuários
-       * flutuem sem desaparecer no box". */}
+      {/* Avatares flutuantes — camada fixa cobrindo a viewport
+       * inteira. Eles permanecem visíveis durante todos os stages
+       * (loading + reveal de headline + pills + lista), passando
+       * POR CIMA do orbe (z-index 3) per product feedback.
+       *
+       * Entrada cinemática: cada avatar spawn visualmente no centro
+       * (sobre o orbe) e voa pra sua posição final em --from-x/y.
+       * Como top/left são em vw/vh, o offset é calc(50vw - left).
+       * O fsRoam* só começa DEPOIS da entrada (delay = duração da
+       * entrada + stagger) pra não conflitar com o transform. */}
       <div className={styles.floatingLayer} aria-hidden="true">
-        {snapshot.topListeners.slice(0, 8).map((l, i) => (
-          <span
-            key={l.id}
-            className={styles.floatingAvatar}
-            style={{
-              top: FLOATING_POSITIONS[i].top,
-              left: FLOATING_POSITIONS[i].left,
-              /* 3 animation-delays:
-               *   1. fsAvatarIn entry: stagger por i (0.10s gap)
-               *   2. fsRoam* path: negative pra entrar em fase
-               *   3. fsBlink fade in/out: -2s por i (gap maior) */
-              animationDelay: `${i * 0.10}s, ${i * -1.7}s, ${i * -2.4}s`,
-            }}
-            title={l.name}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={l.avatarUrl} alt={l.name} />
-          </span>
-        ))}
+        {snapshot.topListeners.slice(0, 8).map((l, i) => {
+          const pos = FLOATING_POSITIONS[i];
+          /* stagger da entrada: cada avatar dispara 90ms depois do
+           * anterior pra dar sensação de "saindo um a um do orbe". */
+          const entryDelay = i * 0.09;
+          /* delay do roam = 1.2s (duração entrada) + stagger pra
+           * que cada um entre em órbita um pouco depois. */
+          const roamDelay = 1.2 + i * 0.4;
+          /* blink delay negativo pra cada um piscar em fase própria. */
+          const blinkDelay = i * -2.4;
+          return (
+            <span
+              key={l.id}
+              className={styles.floatingAvatar}
+              style={{
+                top: pos.top,
+                left: pos.left,
+                /* Offset pra começar no centro da viewport. As units
+                 * são vw/vh então o calc bate exato com left/top. */
+                ['--from-x' as string]: `calc(50vw - ${pos.left})`,
+                ['--from-y' as string]: `calc(50vh - ${pos.top})`,
+                animationDelay: `${entryDelay}s, ${roamDelay}s, ${blinkDelay}s`,
+              }}
+              title={l.name}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={l.avatarUrl} alt={l.name} />
+            </span>
+          );
+        })}
       </div>
 
       {/* Conteúdo central — scroll vertical, sem card. */}
@@ -277,26 +291,9 @@ export default function FanverseSearch() {
             </h2>
           )}
 
-          {/* Stage 2 (t=11s): match pills em carrossel horizontal. */}
-          {showPills && (
-            <div className={styles.matchPills}>
-              {snapshot.matches.map((m) => (
-                <div key={m.id} className={styles.matchPill}>
-                  <span className={styles.matchAvatar}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.avatarUrl} alt={m.name} />
-                  </span>
-                  <span className={styles.matchCopy}>
-                    <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
-                    <span className={styles.matchCopyMuted}>{m.suffix}</span>
-                  </span>
-                  <span className={styles.matchHeart} aria-hidden="true">
-                    <HeartIcon filled />
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Stage 2 (t=11s): match cards em pilha (estilo Apple
+           * Wallet). Click no card do topo OU auto-rotate cicla. */}
+          {showPills && <MatchStack matches={snapshot.matches} />}
 
           {/* Stage 3 (t=15s): lista completa de usuários. */}
           {showList && (
@@ -306,6 +303,71 @@ export default function FanverseSearch() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * MatchStack — pilha de cards estilo Apple Wallet.
+ *
+ * Per product feedback "Os cards de match, ao invés de serem
+ * scrolados lateralmente, crie uma interação como se fossem
+ * empilhados, estilo microinterações apple".
+ *
+ * Comportamento:
+ *   - 4 cards renderizados na mesma posição central.
+ *   - O card do topo (depth 0) fica 100% visível, em escala 1.
+ *   - Cards atrás (depth 1, 2, 3) ficam offsetados pra baixo,
+ *     com scale menor e opacity reduzida, gerando o efeito de
+ *     "deck de cartas".
+ *   - Click no card do topo OU auto-rotate (4500ms) faz o array
+ *     ciclar: o primeiro vai pro fim. Cada card transita
+ *     suavemente entre profundidades via CSS transition com
+ *     cubic-bezier overshoot.
+ */
+function MatchStack({ matches }: { matches: FanverseMatch[] }) {
+  const [order, setOrder] = useState(matches);
+
+  const cycle = () => {
+    setOrder((arr) => [...arr.slice(1), arr[0]]);
+  };
+
+  /* Auto-rotação a cada 4.5s. Pausa quando aba não está em foco
+   * (visibilitychange) pra não acumular setInterval. */
+  useEffect(() => {
+    const id = window.setInterval(cycle, 4500);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <div className={styles.matchStack}>
+      {order.map((m, i) => (
+        <button
+          key={m.id}
+          type="button"
+          className={styles.matchCard}
+          style={{
+            ['--depth' as string]: i,
+            zIndex: order.length - i,
+            opacity: i <= 2 ? Math.max(0, 1 - i * 0.32) : 0,
+            pointerEvents: i === 0 ? 'auto' : 'none',
+          }}
+          onClick={i === 0 ? cycle : undefined}
+          aria-label={`Match com ${m.name}`}
+        >
+          <span className={styles.matchAvatar}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={m.avatarUrl} alt={m.name} />
+          </span>
+          <span className={styles.matchCopy}>
+            <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
+            <span className={styles.matchCopyMuted}>{m.suffix}</span>
+          </span>
+          <span className={styles.matchHeart} aria-hidden="true">
+            <HeartIcon filled />
+          </span>
+        </button>
+      ))}
     </div>
   );
 }

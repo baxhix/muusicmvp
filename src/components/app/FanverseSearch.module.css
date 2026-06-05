@@ -161,39 +161,38 @@
   background: #1a1a1f;
   border: 2px solid #000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  transform: translate(-50%, -50%);
   /* z-index 3 garante que os avatares passem POR CIMA do orbe
-   * (z:1) per product feedback "Os avatares flutuantes podem e
-   * devem passar por cima do orbe". As paths agora têm amplitude
-   * grande (até ±120px) pra de fato cruzarem o centro. */
+   * (z:1) per product feedback "faça com que os usuários flutuando
+   * passem por cima do orbe". */
   z-index: 3;
   opacity: 0;
+  /* Defaults p/ os CSS vars caso o JSX não tenha computado ainda
+   * (defensive — não deveria acontecer). */
+  --from-x: 0;
+  --from-y: 0;
   /* 3 animações empilhadas:
-   *  1. fsAvatarIn (700ms forwards) → entrada com fade + scale
+   *  1. fsAvatarIn (1200ms forwards) → entrada cinemática do centro
+   *     da tela até a posição final (saindo "de dentro" do orbe).
    *  2. fsRoamN (8-11s infinite) → trajetória ampla cruzando o
-   *     orbe; mais rápido que antes (era 14-22s) per "aumentar
-   *     a velocidade dos avatares"
-   *  3. fsBlink (9s infinite) → fade out/in cíclico; cada avatar
-   *     usa delay negativo diferente (definido inline no JSX)
-   *     pra não sumirem todos juntos */
+   *     orbe — só inicia após a entrada (delay vem do JSX).
+   *  3. fsBlink (9s infinite) → fade out/in cíclico. */
   animation:
-    fsAvatarIn 700ms ease-out forwards,
-    fsRoam1 9s ease-in-out infinite,
+    fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    fsRoam1 9s ease-in-out infinite both,
     fsBlink 9s ease-in-out infinite;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Assigna paths variados + durações rápidas (6-11s vs 14-22s
- * antes) pra cada avatar ter velocidade própria. Mantém o
- * fsBlink na terceira posição. */
-.floatingAvatar:nth-child(2) { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 700ms,  7s, 9s; }
-.floatingAvatar:nth-child(3) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 700ms, 11s, 9s; }
-.floatingAvatar:nth-child(4) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 700ms,  8s, 9s; }
-.floatingAvatar:nth-child(5) { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 700ms, 10s, 9s; }
-.floatingAvatar:nth-child(6) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 700ms,  7.5s, 9s; }
-.floatingAvatar:nth-child(7) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 700ms,  9.5s, 9s; }
-.floatingAvatar:nth-child(8) { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 700ms,  8.5s, 9s; }
+/* Assigna paths variados + durações distintas pra cada avatar ter
+ * velocidade própria. */
+.floatingAvatar:nth-child(2) { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms,  7s, 9s; }
+.floatingAvatar:nth-child(3) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 11s, 9s; }
+.floatingAvatar:nth-child(4) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  8s, 9s; }
+.floatingAvatar:nth-child(5) { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 10s, 9s; }
+.floatingAvatar:nth-child(6) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  7.5s, 9s; }
+.floatingAvatar:nth-child(7) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms,  9.5s, 9s; }
+.floatingAvatar:nth-child(8) { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms,  8.5s, 9s; }
 
 .floatingAvatar img {
   width: 100%;
@@ -201,9 +200,24 @@
   object-fit: cover;
   display: block;
 }
+
+/* Entrada cinemática — cada avatar começa no centro da viewport
+ * (translate por --from-x/y, que compensa a diferença entre sua
+ * posição final em vw/vh e o centro 50vw/50vh) com scale 0.2, e
+ * voa pra posição final escalando até 1. Dá a sensação de
+ * "emergindo de dentro do orbe". */
 @keyframes fsAvatarIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--from-x), var(--from-y)) scale(0.15);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
+  }
 }
 
 /* 4 paths de roaming AMPLOS. Amplitude aumentada de ±55 → até
@@ -296,28 +310,40 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Match pills (carrossel horizontal) ────────────────────── */
-/* Per product feedback "deixe ela responsiva, ou seja, após o
- * coração o card é terminado e na sequência deve vir outro com
- * o mesmo estilo" — agora é um row com overflow-x:auto. Cada
- * pill tem flex-shrink:0 + width fixo pra ficar legível e o
- * próximo já fica visível parcial à direita ("peek" indicando
- * que rola). */
-.matchPills {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  margin: 0 -18px;
-  padding: 4px 18px;
-  /* Reveal staged — pills mount em t=11s. Animação suave de fade
-   * + slide pra não pipocarem na tela. */
+/* ── Match stack (pilha estilo Apple Wallet) ───────────────── */
+/* Per product feedback "Os cards de match, ao invés de serem
+ * scrolados lateralmente, crie uma interação como se fossem
+ * empilhados, estilo microinterações apple".
+ *
+ * Stack = container relative com altura fixa (top card ocupa toda
+ * a altura; cards atrás peeked via offset/scale). Cada card é
+ * position:absolute, top:0, left:50%, transform centraliza
+ * horizontalmente + aplica depth offset + scale via --depth.
+ *
+ * Transição com cubic-bezier (0.34, 1.56, 0.64, 1) dá um overshoot
+ * sutil de "spring" tipo Apple ao trocar de profundidade.
+ *
+ * Click no card do topo cicla a ordem. Pointer-events:none nos
+ * outros pra evitar click acidental nos peeked. */
+.matchStack {
+  position: relative;
+  /* Altura = altura do card + 24px de peek pros 2-3 cards atrás. */
+  height: 96px;
+  width: 100%;
+  /* Reveal staged — stack mount em t=11s. */
   animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Margin top dá folga visual pro overshoot do spring + sombras. */
+  margin: 8px 0 12px;
 }
-.matchPills::-webkit-scrollbar { display: none; }
 
-.matchPill {
+.matchCard {
+  /* Card é um <button> agora pra ser clickable no topo. Reset estilo
+   * de button + posicionamento absoluto centralizado. */
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(380px, 88vw);
+  height: 72px;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -326,14 +352,33 @@
   background:
     linear-gradient(#0a0a0e, #0a0a0e) padding-box,
     linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
-  /* Per product feedback "Aumente a espessura da borda para 4px". */
   border: 4px solid transparent;
-  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.18);
-  flex-shrink: 0;
-  /* Width responsiva — desktop ~340, mobile encolhe pra caber
-   * sem virar parede de texto. */
-  width: clamp(280px, 80vw, 360px);
+  box-shadow: 0 12px 28px rgba(236, 72, 153, 0.22), 0 2px 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  /* Transform encadeado: translate centraliza, depois aplica
+   * deslocamento + escala baseados em --depth (0 = topo, 1+ atrás).
+   *
+   * translateY((depth) * 10px)  → card afunda 10px por nível.
+   * scale(1 - depth * 0.045)     → ~4.5% menor por nível, suficiente
+   *                                pra ver a borda gradient peek
+   *                                sem distorcer o conteúdo. */
+  transform:
+    translateX(-50%)
+    translateY(calc(var(--depth, 0) * 10px))
+    scale(calc(1 - var(--depth, 0) * 0.045));
+  /* Transição spring estilo Apple — overshoot leve na promoção.
+   * Properties listadas explícitas pra evitar transition de cor
+   * acidental no hover. */
+  transition:
+    transform 620ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 420ms ease-out,
+    box-shadow 420ms ease-out;
 }
+.matchCard:hover { box-shadow: 0 16px 36px rgba(236, 72, 153, 0.32), 0 2px 8px rgba(0, 0, 0, 0.5); }
+.matchCard:active { transform: translateX(-50%) translateY(calc(var(--depth, 0) * 10px)) scale(calc(0.97 - var(--depth, 0) * 0.045)); }
 .matchAvatar {
   width: 44px;
   height: 44px;
@@ -389,6 +434,12 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Largura reduzida per product feedback "A lista de usuários
+   * que carregam deve ser menor na largura". Centralizada e
+   * com max-width menor que o body (720) pra concentrar a leitura. */
+  max-width: 460px;
+  margin: 0 auto;
+  width: 100%;
   /* Reveal staged — list mount em t=15s. */
   animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
 }
