@@ -57,7 +57,10 @@
 .floatingLayer {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  /* z-index acima do .fixedHeader (z=4) pra os avatares passarem
+   * PELA FRENTE do orbe (não atrás). Continua abaixo do back btn
+   * fixo (z=6). pointer-events:none evita que bloqueiem cliques. */
+  z-index: 5;
   pointer-events: none;
   overflow: hidden;
   /* Transition lenta + delay quando entra em .scrolled — os avatares
@@ -100,25 +103,24 @@
   z-index: 2;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Per feedback "aproximar insights do orbe" — antes era 420.
-   * Reduzido pra encurtar o gap entre orbe e a primeira frase
-   * do headline rotativo. */
-  padding-top: 370px;
+  /* Per feedback "Posicione os insights mais a cima, bem como os
+   * cards e a lista" — reduzido pra subir todo o conteúdo. */
+  padding-top: 310px;
   /* Mask escolhe onde o conteúdo é visível. A área onde o orbe
    * fica vira "invisível" pra o conteúdo (transparent no mask =
    * conteúdo escondido). Banda de fade pra suavizar a entrada. */
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 280px,
-    black 380px,
+    transparent 220px,
+    black 320px,
     black 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 280px,
-    black 380px,
+    transparent 220px,
+    black 320px,
     black 100%
   );
   transition:
@@ -190,7 +192,7 @@
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 44px);
   pointer-events: none;
   transition: padding-top 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -792,6 +794,25 @@
   .orb {
     width: 180px;
     height: 180px;
+  }
+  /* Headline/lista mais alto no mobile — orbe é menor (180px),
+   * então scroll padding-top + mask fade band reduzem proporcional. */
+  .scroll {
+    padding-top: 260px;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 180px,
+      black 260px,
+      black 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 180px,
+      black 260px,
+      black 100%
+    );
   }
   .hero {
     padding: 8px 24px 22px;
