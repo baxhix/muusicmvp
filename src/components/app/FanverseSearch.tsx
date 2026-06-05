@@ -99,22 +99,12 @@ const STAGE_HEADLINE_MS = 7000;
 const STAGE_PILLS_MS = 11000;
 const STAGE_LIST_MS = 15000;
 
-/* Ondas de aparecimento dos avatares.
+/* Avatares aparecem TODOS de uma vez, já em movimento.
  *
- * Per product feedback "Primeiro aparece apenas o orbe; Na sequencia
- * aparece 1 usuário, seguido de mais dois com leve diferença de
- * tempo; depois mais 4 e assim por diante, para parecer algo bem
- * aleatório e surpresa gradativa."
- *
- * Cada entrada é o timestamp (ms a partir da abertura) em que o
- * avatar de índice N deve aparecer. Pattern: 1 → +2 (stagger 300ms)
- * → +4 (stagger 200ms) → +4 (stagger 200ms) = 11 total. */
-const AVATAR_WAVE_TIMINGS: number[] = [
-  1600,                          // 1 (wave 1)
-  2900, 3200,                    // 2,3 (wave 2 — leve diferença entre eles)
-  4400, 4600, 4800, 5050,        // 4,5,6,7 (wave 3 — stagger 200ms)
-  6200, 6420, 6650, 6900,        // 8,9,10,11 (wave 4)
-];
+ * Per product feedback "Faça com que já comece com todos avatares
+ * em movimento, sem o iniciar gradativo." — antes tinha onda
+ * AVATAR_WAVE_TIMINGS escalonada (1 → +2 → +4 → +4). Agora todos
+ * recebem .floatingAvatarShown imediatamente quando o overlay abre. */
 
 /* Frase única do typewriter da loading copy.
  *
@@ -140,10 +130,11 @@ export default function FanverseSearch() {
   const [showPills, setShowPills] = useState(false);
   const [showList, setShowList] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
-  /* Quantos avatares já apareceram. Começa em 0 (só orbe) e cresce
-   * em ondas conforme AVATAR_WAVE_TIMINGS — wave 1 (1 user), wave 2
-   * (+2), wave 3 (+4), wave 4 (+4) = 11 totais. */
-  const [avatarsShown, setAvatarsShown] = useState(0);
+  /* Avatares aparecem todos juntos (per product feedback "Faça com
+   * que já comece com todos avatares em movimento, sem o iniciar
+   * gradativo"). Mantemos o state pra compatibilidade do .floatingAvatarShown,
+   * mas inicia já em 11 (length de FLOATING_POSITIONS). */
+  const avatarsShown = FLOATING_POSITIONS.length;
   /* Typewriter — tipa a frase única uma vez no início e mantém
    * visível (sem cycle/erase). */
   const [typedText, setTypedText] = useState('');
@@ -165,11 +156,6 @@ export default function FanverseSearch() {
     const tH = window.setTimeout(() => setShowHeadline(true), STAGE_HEADLINE_MS);
     const tP = window.setTimeout(() => setShowPills(true),    STAGE_PILLS_MS);
     const tL = window.setTimeout(() => setShowList(true),     STAGE_LIST_MS);
-    /* Schedule cada avatar pra aparecer no seu timestamp. Mantém
-     * todos os ids dos timeouts pra cancelar no cleanup. */
-    const avatarTimers = AVATAR_WAVE_TIMINGS.map((ms, i) =>
-      window.setTimeout(() => setAvatarsShown(i + 1), ms),
-    );
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
@@ -178,7 +164,6 @@ export default function FanverseSearch() {
       window.clearTimeout(tH);
       window.clearTimeout(tP);
       window.clearTimeout(tL);
-      avatarTimers.forEach((id) => window.clearTimeout(id));
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -190,7 +175,6 @@ export default function FanverseSearch() {
       setShowPills(false);
       setShowList(false);
       setPhraseIdx(0);
-      setAvatarsShown(0);
       setTypedText('');
       setScrolled(false);
     }

@@ -255,32 +255,34 @@
 /* Quando o JSX adiciona .floatingAvatarShown, as 3 animações
  * disparam de uma vez:
  *   1. fsAvatarIn (1200ms forwards) → entrada cinemática.
- *   2. fsRoamN (CURTAS, 5-8s) → idle-floating breathing tipo /teste.
- *      Parent timing ease-in-out, sem bouncy. As trajetórias são
- *      curtas (±35-60px) e rápidas — ritmo vivo igual /teste.
+ *   2. fsRoamN — agora atravessa de um lado pro outro do orbe.
+ *      direction: alternate faz o avatar ir do extremo A pro B no
+ *      forward e voltar do B pro A no backward — varredura ampla
+ *      em vez de oscilação curta. Duração 6-9s pra dar tempo da
+ *      viagem ser perceptível.
  *   3. fsBlink (10s infinite) → fade out/in cíclico. */
 .floatingAvatarShown {
   animation:
     fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    fsRoam1 3s ease-in-out infinite both,
+    fsRoam1 7s ease-in-out infinite alternate both,
     fsBlink 10s ease-in-out infinite;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Paths variados + durações CURTAS (5-8s) — idle-floating estilo
- * /teste. Cada avatar tem velocidade própria pra evitar respiração
- * sincrônica entre eles. */
-.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 2.6s, 10s; }
-.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 3.8s, 10s; }
-.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 3.0s, 10s; }
-.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 3.4s, 10s; }
-.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 2.8s, 10s; }
-.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 3.6s, 10s; }
-.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 3.2s, 10s; }
-.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 3.5s, 10s; }
-.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 2.5s, 10s; }
-.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 4.0s, 10s; }
+/* Cada avatar tem path e duração próprios pra evitar varredura
+ * sincrônica. animation-direction alternate aplicado individualmente
+ * pra todos os fsRoam para que a viagem ida-e-volta funcione. */
+.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 6.4s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 8.2s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 7.6s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 8.8s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 6.8s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 7.2s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 8.0s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 7.4s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 9.0s, 10s; animation-direction: normal, alternate, normal; }
+.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 6.6s, 10s; animation-direction: normal, alternate, normal; }
 
 .floatingAvatar img {
   width: 100%;
@@ -322,35 +324,46 @@
  * ease-in-out smooth. Cada path tem 4 stops apenas (orgânico),
  * sem cubic-bezier bouncy que prendia o movimento. O efeito final
  * = vida e quickness, igual /teste. */
-/* Paths LONGOS + RÁPIDOS — amplitudes ±90-130px com durações
- * curtas (2.5-4s) pra dar sensação clara de velocidade. */
+/* Paths que ATRAVESSAM de um lado pro outro do orbe.
+ *
+ * Cada keyframe começa no extremo esquerdo/cima e termina no
+ * extremo oposto. As animações usam `animation-direction: alternate`
+ * (definida no .floatingAvatarShown abaixo), então o avatar faz a
+ * varredura no forward, retorna no backward com timing diferente,
+ * dando a sensação de ser "levado de um lado ao outro" enquanto
+ * ainda flutua. Amplitudes ±200-260px com 6 stops asymmetricos
+ * pra microvariações no caminho — não-previsível. */
 @keyframes fsRoam1 {
-  0%   { transform: translate(-50%, -50%) translate(0,     0);     }
-  25%  { transform: translate(-50%, -50%) translate(68px,  -52px); }
-  50%  { transform: translate(-50%, -50%) translate(112px, 38px);  }
-  75%  { transform: translate(-50%, -50%) translate(-28px, 88px);  }
-  100% { transform: translate(-50%, -50%) translate(0,     0);     }
+  0%   { transform: translate(-50%, -50%) translate(-220px, -40px); }
+  20%  { transform: translate(-50%, -50%) translate(-150px,  60px); }
+  40%  { transform: translate(-50%, -50%) translate(-30px,  -90px); }
+  60%  { transform: translate(-50%, -50%) translate(80px,    50px); }
+  80%  { transform: translate(-50%, -50%) translate(170px,  -70px); }
+  100% { transform: translate(-50%, -50%) translate(240px,   30px); }
 }
 @keyframes fsRoam2 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
-  25%  { transform: translate(-50%, -50%) translate(-78px,  58px);  }
-  50%  { transform: translate(-50%, -50%) translate(-122px, -44px); }
-  75%  { transform: translate(-50%, -50%) translate(48px,   -92px); }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(210px,   60px); }
+  18%  { transform: translate(-50%, -50%) translate(130px,  -50px); }
+  38%  { transform: translate(-50%, -50%) translate(20px,    90px); }
+  58%  { transform: translate(-50%, -50%) translate(-90px,  -40px); }
+  78%  { transform: translate(-50%, -50%) translate(-170px,  70px); }
+  100% { transform: translate(-50%, -50%) translate(-250px, -50px); }
 }
 @keyframes fsRoam3 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
-  30%  { transform: translate(-50%, -50%) translate(92px,   72px);  }
-  60%  { transform: translate(-50%, -50%) translate(-58px,  118px); }
-  85%  { transform: translate(-50%, -50%) translate(-108px, -28px); }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(-180px,  100px); }
+  22%  { transform: translate(-50%, -50%) translate(-60px,   -20px); }
+  44%  { transform: translate(-50%, -50%) translate(50px,    100px); }
+  66%  { transform: translate(-50%, -50%) translate(140px,  -60px);  }
+  88%  { transform: translate(-50%, -50%) translate(210px,    40px); }
+  100% { transform: translate(-50%, -50%) translate(260px,   -30px); }
 }
 @keyframes fsRoam4 {
-  0%   { transform: translate(-50%, -50%) translate(0,      0);     }
-  20%  { transform: translate(-50%, -50%) translate(-64px,  -78px); }
-  50%  { transform: translate(-50%, -50%) translate(82px,   -102px);}
-  80%  { transform: translate(-50%, -50%) translate(118px,  32px);  }
-  100% { transform: translate(-50%, -50%) translate(0,      0);     }
+  0%   { transform: translate(-50%, -50%) translate(230px,  -80px);  }
+  20%  { transform: translate(-50%, -50%) translate(110px,   40px);  }
+  42%  { transform: translate(-50%, -50%) translate(-10px,  -90px);  }
+  62%  { transform: translate(-50%, -50%) translate(-120px,  70px);  }
+  82%  { transform: translate(-50%, -50%) translate(-200px, -30px);  }
+  100% { transform: translate(-50%, -50%) translate(-260px,  60px);  }
 }
 
 /* Fade cyclic — per product feedback "após determinado tempo,
