@@ -255,33 +255,39 @@
 /* Quando o JSX adiciona .floatingAvatarShown, as 3 animações
  * disparam de uma vez:
  *   1. fsAvatarIn (1200ms forwards) → entrada cinemática.
- *   2. fsRoamN (LENTAS, 22-30s) → trajetória longa + bouncy.
- *      Parent timing = linear porque cada keyframe define seu
- *      próprio cubic-bezier (spring/overshoot per-segment).
- *   3. fsBlink (14s infinite) → fade out/in cíclico. */
+ *   2. fsRoamN (DINÂMICAS, 9-14s) → trajetória ampla + bouncy.
+ *      Per product feedback "Os avatares estão flutuando muito
+ *      devagar... deve ter dinamismo e velocidade" — antes eram
+ *      22-32s (LENTAS), agora 9-14s. Mantém amplitude ±120-180px
+ *      e easing spring per-keyframe, só comprime no tempo. Parent
+ *      timing continua linear porque cada keyframe carrega seu
+ *      próprio cubic-bezier de overshoot.
+ *   3. fsBlink (10s infinite) → fade out/in cíclico. */
 .floatingAvatarShown {
   animation:
     fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    fsRoam1 26s linear infinite both,
-    fsBlink 14s ease-in-out infinite;
+    fsRoam1 11s linear infinite both,
+    fsBlink 10s ease-in-out infinite;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Paths variados + durações LONGAS (22-32s) pra cada avatar ter
- * trajetória própria. Per product feedback "deixe-os mais dinâmicos,
- * com movimentos longos com bouncy". Cada keyframe tem cubic-bezier
- * próprio (overshoot), então parent timing é linear. */
-.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 24s, 14s; }
-.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 30s, 14s; }
-.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 25s, 14s; }
-.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 28s, 14s; }
-.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 23.5s, 14s; }
-.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 29s, 14s; }
-.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 27s, 14s; }
-.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 26s, 14s; }
-.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 22.5s, 14s; }
-.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 32s, 14s; }
+/* Paths variados + durações DINÂMICAS (9-14s) pra cada avatar ter
+ * velocidade própria. Per product feedback "Os avatares estão
+ * flutuando muito devagar... deve ter dinamismo e velocidade" —
+ * antes 22-32s (muito lento), agora 9-14s. Mantém amplitudes
+ * ±120-180px e cubic-bezier bouncy per-keyframe; só comprime no
+ * tempo. */
+.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 10s, 10s; }
+.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 13s, 10s; }
+.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 11s, 10s; }
+.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 12s, 10s; }
+.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  9.5s, 10s; }
+.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 12.5s, 10s; }
+.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 11.5s, 10s; }
+.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 11s, 10s; }
+.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms,  9s, 10s; }
+.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 14s, 10s; }
 
 .floatingAvatar img {
   width: 100%;
