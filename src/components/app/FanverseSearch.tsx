@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import FanverseCore from '@/components/animations/FanverseCore';
 import {
   FANVERSE_SEARCH_SNAPSHOT,
@@ -49,24 +49,38 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
   );
 }
 
-/* Posições finais dos 8 avatares — agora puxadas pra extremidades
- * da viewport (vw/vh em vez de %) per product feedback "vão para
- * as extremidades da página".
+/* Posições finais dos 11 avatares.
  *
- * Os avatares fazem uma entrada cinemática: spawnam visualmente
- * no centro (50vw, 50vh — sobre o orbe) e voam pra cá usando a
- * CSS var --from-x/--from-y, dando a sensação de "surgem como se
- * fosse de dentro" do orbe (per product feedback). Depois entram
- * no loop fsRoam pra continuar flutuando ambiente. */
+ * Per product feedback "Os usuários flutuantes se afastaram muito
+ * do orbe, deixe eles mais próximos, ora passam por cima do orbe.
+ * Inclua mais 3 usuários flutuantes para dar volume." — posições
+ * recolhidas pro entorno do orbe (era 2-92vw/vh, agora 22-78vw/vh
+ * em desktop; mobile fica ainda mais perto via override no CSS).
+ * O orbe ocupa ~286px no centro, então 22-78vw cerca ele com folga
+ * mas faz com que os paths fsRoam cruzem o orbe constantemente.
+ *
+ * Total 11 posições (era 8). 3 anéis radiais:
+ *   - anel interno  (4 avatares perto do orbe, top/bottom + sides)
+ *   - anel médio    (4 avatares meio-distância, diagonais)
+ *   - anel externo  (3 avatares mais afastados, cantos)
+ *
+ * Entrada cinemática: cada avatar spawn no centro (50vw, 50vh) e
+ * voa pra cá via CSS vars --from-x/--from-y. */
 const FLOATING_POSITIONS = [
-  { top:  '8vh', left:  '6vw' },
-  { top:  '5vh', left: '86vw' },
-  { top: '32vh', left:  '2vw' },
-  { top: '28vh', left: '92vw' },
-  { top: '66vh', left:  '4vw' },
-  { top: '60vh', left: '90vw' },
-  { top: '88vh', left: '18vw' },
-  { top: '92vh', left: '76vw' },
+  /* Anel interno — abraça o orbe (passam frequentemente por cima) */
+  { top: '32vh', left: '28vw' },
+  { top: '30vh', left: '70vw' },
+  { top: '58vh', left: '24vw' },
+  { top: '60vh', left: '72vw' },
+  /* Anel médio */
+  { top: '18vh', left: '40vw' },
+  { top: '20vh', left: '60vw' },
+  { top: '72vh', left: '38vw' },
+  { top: '74vh', left: '62vw' },
+  /* Anel externo (3 pra dar volume sem afastar muito) */
+  { top: '12vh', left: '20vw' },
+  { top: '14vh', left: '78vw' },
+  { top: '82vh', left: '50vw' },
 ];
 
 /* Timing dos stages.
@@ -224,7 +238,7 @@ export default function FanverseSearch() {
        * O fsRoam* só começa DEPOIS da entrada (delay = duração da
        * entrada + stagger) pra não conflitar com o transform. */}
       <div className={styles.floatingLayer} aria-hidden="true">
-        {snapshot.topListeners.slice(0, 8).map((l, i) => {
+        {snapshot.topListeners.slice(0, FLOATING_POSITIONS.length).map((l, i) => {
           const pos = FLOATING_POSITIONS[i];
           /* stagger da entrada: cada avatar dispara 90ms depois do
            * anterior pra dar sensação de "saindo um a um do orbe". */
@@ -283,12 +297,23 @@ export default function FanverseSearch() {
 
         {/* Body — três stages, cada um renderiza condicionalmente. */}
         <div className={styles.body}>
-          {/* Stage 1 (t=7s): headline centralizada, fonte menor,
-           * rotacionando a cada 4s entre as 4 frases. */}
+          {/* Stage 1 (t=7s): copy "Analisando" com shimmer animado
+           * acima da headline + headline centralizada com fonte
+           * menor, rotacionando a cada 4s entre as 4 frases.
+           *
+           * O shimmer no .analyzing usa background-clip:text + um
+           * gradient cinza→branco→cinza animado horizontalmente,
+           * dando a sensação de "está carregando" enquanto o orbe
+           * trabalha. Aparece junto da headline (mesmo stage). */}
           {showHeadline && (
-            <h2 className={styles.headline} key={currentPhrase.key}>
-              {currentPhrase.render}
-            </h2>
+            <>
+              <div className={styles.analyzing} aria-live="polite">
+                Analisando dados do mundo todo...
+              </div>
+              <h2 className={styles.headline} key={currentPhrase.key}>
+                {currentPhrase.render}
+              </h2>
+            </>
           )}
 
           {/* Stage 2 (t=11s): match cards em pilha (estilo Apple
@@ -308,66 +333,126 @@ export default function FanverseSearch() {
 }
 
 /**
- * MatchStack — pilha de cards estilo Apple Wallet.
- *
- * Per product feedback "Os cards de match, ao invés de serem
- * scrolados lateralmente, crie uma interação como se fossem
- * empilhados, estilo microinterações apple".
- *
- * Comportamento:
- *   - 4 cards renderizados na mesma posição central.
- *   - O card do topo (depth 0) fica 100% visível, em escala 1.
- *   - Cards atrás (depth 1, 2, 3) ficam offsetados pra baixo,
- *     com scale menor e opacity reduzida, gerando o efeito de
- *     "deck de cartas".
- *   - Click no card do topo OU auto-rotate (4500ms) faz o array
- *     ciclar: o primeiro vai pro fim. Cada card transita
- *     suavemente entre profundidades via CSS transition com
- *     cubic-bezier overshoot.
+ * MatchStack — pilha de cards estilo Apple Wallet, com:
+ *   1. Reveal staged — um card aparece a cada 3s (per product
+ *      feedback "Faça com que apareça um card por vez a cada 3s").
+ *      Card novo entra do topo do stack escalando do centro.
+ *   2. Quando todos os cards já apareceram, entra em ciclo de
+ *      auto-rotação (o do topo afunda pra trás a cada 4.5s).
+ *   3. No mobile, swipe horizontal no card do topo faz ele
+ *      "sair" do stack (per product feedback "No mobile, ao
+ *      arrastar o primeiro desaparece, ficando o que está por
+ *      trás"). Click no topo também cicla (UX desktop).
  */
 function MatchStack({ matches }: { matches: FanverseMatch[] }) {
+  /* order: ordem atual dos cards no stack (índice 0 = topo). */
   const [order, setOrder] = useState(matches);
+  /* visibleCount: quantos cards já apareceram. Começa em 1; ganha
+   * +1 a cada 3s até atingir matches.length, e depois para. */
+  const [visibleCount, setVisibleCount] = useState(1);
+  /* dragOffset: deslocamento horizontal do card do topo durante o
+   * swipe (mobile). Reset pra 0 quando o swipe termina (ou completa
+   * o threshold e o card vai pra trás). */
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStateRef = useRef<{ startX: number; pointerId: number } | null>(null);
 
+  /* Cycle = manda o card do topo pro fim do array. */
   const cycle = () => {
     setOrder((arr) => [...arr.slice(1), arr[0]]);
   };
 
-  /* Auto-rotação a cada 4.5s. Pausa quando aba não está em foco
-   * (visibilitychange) pra não acumular setInterval. */
+  /* Phase 1: reveal staged — 1 card a cada 3s até preencher.
+   * Phase 2 (depois): rotação automática a cada 4.5s.
+   *
+   * Os dois ciclos compartilham o mesmo "tick" via setInterval(3s);
+   * uma vez tudo visível, mudamos o tick pra 4.5s. Implementado em
+   * 2 effects pra clareza — cada um cancela o outro via deps. */
   useEffect(() => {
+    if (visibleCount >= matches.length) return;
+    const id = window.setTimeout(() => {
+      setVisibleCount((n) => Math.min(n + 1, matches.length));
+    }, 3000);
+    return () => window.clearTimeout(id);
+  }, [visibleCount, matches.length]);
+
+  useEffect(() => {
+    if (visibleCount < matches.length) return;
     const id = window.setInterval(cycle, 4500);
     return () => window.clearInterval(id);
-  }, []);
+  }, [visibleCount, matches.length]);
+
+  /* Swipe handlers — usam Pointer Events pra cobrir touch + mouse
+   * com a mesma API. Só atua no card do topo (i===0) e quando o
+   * deslocamento absoluto passa de 80px, considera "descartado" e
+   * cicla; senão volta pra origem com transition (sem state). */
+  const onPointerDown = (e: React.PointerEvent) => {
+    dragStateRef.current = { startX: e.clientX, pointerId: e.pointerId };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragStateRef.current) return;
+    setDragOffset(e.clientX - dragStateRef.current.startX);
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!dragStateRef.current) return;
+    const offset = e.clientX - dragStateRef.current.startX;
+    dragStateRef.current = null;
+    if (Math.abs(offset) > 80) {
+      /* Anima o card saindo da tela na direção do swipe antes de
+       * ciclar (visualmente "desaparece"). Setamos offset grande
+       * pra animar, e depois de 280ms cicla + reseta. */
+      setDragOffset(offset > 0 ? 600 : -600);
+      window.setTimeout(() => {
+        cycle();
+        setDragOffset(0);
+      }, 280);
+    } else {
+      /* Volta suave pro lugar. */
+      setDragOffset(0);
+    }
+  };
 
   return (
     <div className={styles.matchStack}>
-      {order.map((m, i) => (
-        <button
-          key={m.id}
-          type="button"
-          className={styles.matchCard}
-          style={{
-            ['--depth' as string]: i,
-            zIndex: order.length - i,
-            opacity: i <= 2 ? Math.max(0, 1 - i * 0.32) : 0,
-            pointerEvents: i === 0 ? 'auto' : 'none',
-          }}
-          onClick={i === 0 ? cycle : undefined}
-          aria-label={`Match com ${m.name}`}
-        >
-          <span className={styles.matchAvatar}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={m.avatarUrl} alt={m.name} />
-          </span>
-          <span className={styles.matchCopy}>
-            <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
-            <span className={styles.matchCopyMuted}>{m.suffix}</span>
-          </span>
-          <span className={styles.matchHeart} aria-hidden="true">
-            <HeartIcon filled />
-          </span>
-        </button>
-      ))}
+      {order.map((m, i) => {
+        /* Cards além do visibleCount-1 ficam mounted mas opacity 0,
+         * pra não pipocarem na entrada — quando entram no stack
+         * (i < visibleCount), animam scale+opacity de uma vez. */
+        const isVisible = i < visibleCount;
+        const isTop = i === 0;
+        return (
+          <button
+            key={m.id}
+            type="button"
+            className={`${styles.matchCard} ${isTop && dragOffset !== 0 ? styles.matchCardDragging : ''}`}
+            style={{
+              ['--depth' as string]: i,
+              ['--drag-x' as string]: `${isTop ? dragOffset : 0}px`,
+              zIndex: order.length - i,
+              opacity: isVisible ? (i <= 2 ? Math.max(0, 1 - i * 0.32) : 0) : 0,
+              pointerEvents: isTop && isVisible ? 'auto' : 'none',
+            }}
+            onClick={isTop && dragOffset === 0 ? cycle : undefined}
+            onPointerDown={isTop ? onPointerDown : undefined}
+            onPointerMove={isTop ? onPointerMove : undefined}
+            onPointerUp={isTop ? onPointerUp : undefined}
+            onPointerCancel={isTop ? onPointerUp : undefined}
+            aria-label={`Match com ${m.name}`}
+          >
+            <span className={styles.matchAvatar}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={m.avatarUrl} alt={m.name} />
+            </span>
+            <span className={styles.matchCopy}>
+              <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
+              <span className={styles.matchCopyMuted}>{m.suffix}</span>
+            </span>
+            <span className={styles.matchHeart} aria-hidden="true">
+              <HeartIcon filled />
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
