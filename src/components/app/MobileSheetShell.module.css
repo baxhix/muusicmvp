@@ -1,0 +1,132 @@
+/* ============================================================
+ * MobileSheetShell — wrapper full-screen pra todas as páginas/
+ * modais que abrem pelo menu hamburger no mobile.
+ *
+ * Padrão unificado (per product feedback "Nas páginas que abrem
+ * ao clicar no menu hamburger, faça com que elas tenham um padrão
+ * de construção e arquitetura"):
+ *
+ *   - position: fixed; inset: 0 — full-screen mobile
+ *   - Back arrow circular top-left (40x40, blur background)
+ *   - Drag-to-close: swipe vertical de cima pra baixo fecha
+ *   - Backdrop fade-in + sheet slide-up na entrada
+ *   - z-index 240 (acima da BottomNav 245 não — abaixo dela)
+ *
+ * Desktop mantém os layouts originais — esse shell só é usado
+ * quando useIsMobile() retorna true. */
+.shell {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  background: linear-gradient(160deg,
+    rgba(11, 11, 13, 0.96) 0%,
+    rgba(5, 5, 7, 0.94) 50%,
+    rgba(2, 2, 3, 0.96) 100%);
+  display: flex;
+  flex-direction: column;
+  /* iOS notch + home indicator. */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow: hidden;
+  /* Animação de entrada: slide up sutil + fade. */
+  animation: sheetIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* touch-action: pan-y permite scroll vertical interno; drag-to-
+   * close usa pointer events JS pra capturar o gesto. */
+  touch-action: pan-y;
+}
+
+/* Quando o usuário está arrastando, removemos a transition pra
+ * o conteúdo seguir o dedo 1:1. Estado controlado via inline
+ * style `transform: translateY(Npx)` aplicado no JSX. */
+.shellDragging {
+  transition: none !important;
+}
+
+/* Estado "fechando" pra animar saída. */
+.shellClosing {
+  animation: sheetOut 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes sheetIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes sheetOut {
+  from { opacity: 1; transform: translateY(0);     }
+  to   { opacity: 0; transform: translateY(100vh); }
+}
+
+/* Header sticky com back arrow + título opcional. Fica colado no
+ * topo enquanto o conteúdo abaixo scrolla. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg,
+    rgba(8, 8, 10, 0.92) 0%,
+    rgba(8, 8, 10, 0.7) 70%,
+    rgba(8, 8, 10, 0) 100%);
+  /* Drag handle visual no centro do header — comum em bottom
+   * sheets pra sinalizar "isso é arrastável". */
+  flex-shrink: 0;
+}
+
+/* Drag indicator (pill central) — affordance visual de "arrastável". */
+.dragHandle {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+/* Back arrow circular — espelha o padrão do MobileFanverseSheet
+ * (40x40, semi-transparent dark bg, blur). */
+.backBtn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  color: rgba(245, 245, 247, 0.92);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.backBtn:active {
+  transform: scale(0.95);
+}
+.backBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0;
+  flex: 1;
+}
+
+/* Conteúdo scrollável abaixo do header. */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}

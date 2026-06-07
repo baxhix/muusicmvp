@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { ANA_ALBUMS, type AnaAlbum } from '@/data/anaAlbums';
+import MobileSheetShell from './MobileSheetShell';
 import styles from './PlaylistModal.module.css';
 
 /** Normaliza string pra busca: minúsculas + sem acentos */
@@ -30,6 +32,7 @@ export default function PlaylistModal({
   currentIdx,
   onSelect,
 }: PlaylistModalProps) {
+  const isMobile = useIsMobile();
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [query, setQuery] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
@@ -234,48 +237,20 @@ export default function PlaylistModal({
     return `${SONGS.length} faixas · clique pra tocar`;
   })();
 
-  return (
-    <>
-      {/* Backdrop removed per product feedback — was covering the
-          BottomNav and dimming the rest of the page. PlaylistModal
-          now mirrors SuperfansPanel: just the panel, dismissible
-          via the close button or Escape (handled above). The
-          backdrop CSS classes stay in the module for the closing
-          animation hook on the panel itself. */}
-      <aside
-        className={`${styles.panel} ${isIn ? styles.panelEntering : ''} ${isOut ? styles.panelClosing : ''} ${userExpandedPanel ? styles.panelExpanded : ''}`}
-        onAnimationEnd={handleAnimationEnd}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Playlist"
-      >
-        <header className={styles.header}>
-          {selectedAlbumId && (
-            <button
-              type="button"
-              className={styles.backBtn}
-              onClick={() => setSelectedAlbumId(null)}
-              aria-label="Voltar para a lista de álbuns"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          )}
-          <h2 className={styles.title}>{headerTitle}</h2>
-          <button
-            type="button"
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label="Fechar"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </header>
+  /* No mobile, a back arrow do shell já cobre "fechar". Mas quando
+   * o user está dentro de um álbum, ainda precisa do "voltar pra
+   * lista de álbuns" — mesma chave que o backBtn inline. Aqui o
+   * back do shell muda comportamento conforme contexto. */
+  const handleMobileBack = () => {
+    if (selectedAlbumId) {
+      setSelectedAlbumId(null);
+    } else {
+      onClose();
+    }
+  };
 
-        <div className={styles.body}>
+  const bodyContent = (
+    <div className={styles.body}>
           {/* Tabs Recentes / Álbuns — escondidos quando dentro de um
               álbum, porque a seta de voltar no header já navega o
               contexto e o tab não faria sentido ali. */}
@@ -530,6 +505,60 @@ export default function PlaylistModal({
             </button>
           )}
         </div>
+  );
+
+  /* Mobile: usa o MobileSheetShell padronizado (back arrow top-left,
+   * drag-to-close, portal pra document.body). Per spec "Nas páginas
+   * que abrem ao clicar no menu hamburger, faça com que elas tenham
+   * um padrão de construção e arquitetura". */
+  if (isMobile) {
+    return (
+      <MobileSheetShell
+        open={!isOut}
+        onClose={handleMobileBack}
+        title={headerTitle}
+      >
+        {bodyContent}
+      </MobileSheetShell>
+    );
+  }
+
+  return (
+    <>
+      {/* Desktop — modal anchored bottom (layout original preservado). */}
+      <aside
+        className={`${styles.panel} ${isIn ? styles.panelEntering : ''} ${isOut ? styles.panelClosing : ''} ${userExpandedPanel ? styles.panelExpanded : ''}`}
+        onAnimationEnd={handleAnimationEnd}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Playlist"
+      >
+        <header className={styles.header}>
+          {selectedAlbumId && (
+            <button
+              type="button"
+              className={styles.backBtn}
+              onClick={() => setSelectedAlbumId(null)}
+              aria-label="Voltar para a lista de álbuns"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+          <h2 className={styles.title}>{headerTitle}</h2>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Fechar"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </header>
+        {bodyContent}
       </aside>
     </>
   );
