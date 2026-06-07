@@ -169,13 +169,40 @@
  * O ≤480px existente continua disparando edge-to-edge mode (left/
  * right:8 + max-width:none), aí o video ocupa toda a largura útil.
  */
-@media (max-width: 1100px) {
+/* Faixa em que o FeedPanel se centraliza abaixo do banner
+ * (1025-1440px). Aqui o player precisa ficar BEM pequeno + colado
+ * na esquerda pra não sobrepor o feed central. Per product feedback
+ * "Ajuste o player de video para também não ficar sobreposto ao
+ * feed, agora que o feed fica ao centro quando a tela é menor. Não
+ * há problema no video ficar em um tamanho pequeno." */
+@media (min-width: 1025px) and (max-width: 1440px) {
   .playerVideo {
-    width: 320px;
+    width: 180px;
+    padding: 0 10px 10px;
+    gap: 8px;
+  }
+  /* Esconde thumb + nome + artista — só sobra vídeo + controles. */
+  .playerVideo .art,
+  .playerVideo .info {
+    display: none;
+  }
+  .playerVideo .inlineControls {
+    width: 100%;
+    justify-content: center;
+    margin: 0;
   }
   .playerHorizontal,
   .playerExpanded {
-    width: 260px;
+    width: 220px;
+  }
+}
+@media (max-width: 1100px) {
+  .playerVideo {
+    width: 180px;
+  }
+  .playerHorizontal,
+  .playerExpanded {
+    width: 220px;
   }
 }
 @media (max-width: 900px) {

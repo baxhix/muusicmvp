@@ -330,19 +330,21 @@
     /* Altura limitada pra não invadir a área do NowPlaying (bottom 24px)
      * nem do BottomNav. Mantém ~70% da viewport útil. */
     height: calc(100vh - 200px);
-    /* Centraliza horizontalmente — same width do DesktopTopBanner
-     * pra alinhamento visual. */
+    /* Centraliza horizontalmente abaixo do banner. Largura reduzida
+     * pra deixar espaço lateral pro NowPlaying (player de vídeo)
+     * caber à esquerda sem sobrepor. Cap 520px + ~140px de margem
+     * cada lado = espaço pro player até 180px wide. */
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    width: min(640px, calc(100vw - 200px));
+    width: min(520px, calc(100vw - 280px));
   }
   /* Gradient minimizado acompanha — espelha o left/width do .panel. */
   .minimizedGradient {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    width: min(640px, calc(100vw - 200px));
+    width: min(520px, calc(100vw - 280px));
   }
 }
 @media (max-width: 1024px) {
