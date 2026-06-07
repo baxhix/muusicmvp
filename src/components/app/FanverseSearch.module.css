@@ -533,23 +533,28 @@
  *
  * Click no card do topo cicla a ordem. Pointer-events:none nos
  * outros pra evitar click acidental nos peeked. */
+/* Per product feedback "os cards que ficam empilhados, devem ser
+ * um por cima do outro e não atrás um do outro" — saímos do stack
+ * tipo Apple Wallet (depth) pra uma lista vertical de cards
+ * empilhados (eixo Y). Cada card ocupa o próprio espaço, totalmente
+ * visível, com gap pequeno entre eles. A ordem ainda cicla via
+ * click/swipe no card do topo (mantém a sensação de "promover" o
+ * próximo). */
 .matchStack {
-  position: relative;
-  /* Altura = altura do card + 24px de peek pros 2-3 cards atrás. */
-  height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   /* Reveal staged — stack mount em t=11s. */
   animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
-  /* Margin top dá folga visual pro overshoot do spring + sombras. */
   margin: 8px 0 12px;
 }
 
 .matchCard {
-  /* Card é um <button> agora pra ser clickable no topo. Reset estilo
-   * de button + posicionamento absoluto centralizado. */
-  position: absolute;
-  top: 0;
-  left: 50%;
+  /* Card é um <button> em fluxo normal — sem position:absolute
+   * nem depth offset. Largura controlada, altura fixa. */
+  position: relative;
   width: min(380px, 88vw);
   height: 72px;
   display: inline-flex;
@@ -566,37 +571,25 @@
   font-family: inherit;
   color: inherit;
   text-align: left;
-  /* Transform encadeado: translate centraliza, depois aplica
-   * deslocamento + escala baseados em --depth (0 = topo, 1+ atrás).
-   *
-   * --drag-x (mobile swipe): adiciona deslocamento horizontal do
-   * card do topo durante o arrasto. Quando o swipe completa o
-   * threshold, --drag-x recebe ±600px e o card "voa pra fora" antes
-   * de ciclar (per product feedback "No mobile, ao arrastar o
-   * primeiro desaparece, ficando o que está por trás"). */
-  transform:
-    translateX(-50%)
-    translateX(var(--drag-x, 0px))
-    translateY(calc(var(--depth, 0) * 10px))
-    scale(calc(1 - var(--depth, 0) * 0.045));
-  /* Transição spring estilo Apple — overshoot leve na promoção.
-   * Touch-action: pan-y mantém scroll vertical normal mas captura
-   * gestos horizontais pra o swipe. */
+  /* Transform usado só pelo --drag-x do swipe horizontal mobile.
+   * Quando o swipe completa o threshold, --drag-x recebe ±600px
+   * e o card "voa pra fora" antes de ciclar pro fim da pilha. */
+  transform: translateX(var(--drag-x, 0px));
   transition:
-    transform 620ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 420ms ease-out,
     box-shadow 420ms ease-out;
   touch-action: pan-y;
   user-select: none;
+  flex-shrink: 0;
 }
-/* Enquanto dragging, transition do transform é mais rápida (segue
- * o dedo). A classe .matchCardDragging desativa só o transition
- * de transform — opacity e box-shadow continuam suaves. */
+/* Enquanto dragging, transition do transform é desligada pra o
+ * card seguir o dedo 1:1. */
 .matchCardDragging {
   transition: opacity 420ms ease-out, box-shadow 420ms ease-out;
 }
 .matchCard:hover { box-shadow: 0 16px 36px rgba(236, 72, 153, 0.32), 0 2px 8px rgba(0, 0, 0, 0.5); }
-.matchCard:active { transform: translateX(-50%) translateX(var(--drag-x, 0px)) translateY(calc(var(--depth, 0) * 10px)) scale(calc(0.97 - var(--depth, 0) * 0.045)); }
+.matchCard:active { transform: translateX(var(--drag-x, 0px)) scale(0.97); }
 .matchAvatar {
   width: 44px;
   height: 44px;

@@ -439,11 +439,10 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
     return () => window.clearTimeout(id);
   }, [visibleCount, matches.length]);
 
-  useEffect(() => {
-    if (visibleCount < matches.length) return;
-    const id = window.setInterval(cycle, 4500);
-    return () => window.clearInterval(id);
-  }, [visibleCount, matches.length]);
+  /* Auto-rotate desativado — com o stack vertical (cada card num
+   * lugar próprio), rotacionar a ordem sozinho a cada 4.5s ficaria
+   * visualmente confuso (cards "saltando" pra reorganizar). Cycle
+   * continua disponível via click/swipe no card do topo. */
 
   /* Swipe handlers — usam Pointer Events pra cobrir touch + mouse
    * com a mesma API. Só atua no card do topo (i===0) e quando o
@@ -479,9 +478,9 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
   return (
     <div className={styles.matchStack}>
       {order.map((m, i) => {
-        /* Cards além do visibleCount-1 ficam mounted mas opacity 0,
-         * pra não pipocarem na entrada — quando entram no stack
-         * (i < visibleCount), animam scale+opacity de uma vez. */
+        /* Stack vertical — cada card ocupa sua linha, sem peeking
+         * atrás. Cards além do visibleCount ficam mounted com
+         * display:none pra não tomarem espaço até serem revelados. */
         const isVisible = i < visibleCount;
         const isTop = i === 0;
         return (
@@ -490,10 +489,13 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
             type="button"
             className={`${styles.matchCard} ${isTop && dragOffset !== 0 ? styles.matchCardDragging : ''}`}
             style={{
-              ['--depth' as string]: i,
               ['--drag-x' as string]: `${isTop ? dragOffset : 0}px`,
+              /* zIndex preservado pro card do topo sobrepor os
+               * outros durante o swipe horizontal (caso o dedo
+               * cruze sobre eles). */
               zIndex: order.length - i,
-              opacity: isVisible ? (i <= 2 ? Math.max(0, 1 - i * 0.32) : 0) : 0,
+              opacity: isVisible ? 1 : 0,
+              display: isVisible ? undefined : 'none',
               pointerEvents: isTop && isVisible ? 'auto' : 'none',
             }}
             onClick={isTop && dragOffset === 0 ? cycle : undefined}
