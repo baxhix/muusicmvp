@@ -13,6 +13,10 @@
   z-index: 8500;
   font-family: var(--sans), system-ui, sans-serif;
   color: #fff;
+  /* CRÍTICO: evita scroll horizontal quando avatares com fsRoam
+   * passam dos limites do viewport. Antes o body podia "andar pra
+   * o lado" no mobile durante a varredura dos avatares. */
+  overflow-x: hidden;
   animation: fsOverlayIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -431,6 +435,20 @@
   90%   { opacity: 0; }
   100%  { opacity: 1; }
 }
+/* Mobile-specific blink — per product feedback "diminua a quantidade
+ * de avatares que ficam em volta do orbe, para que fique no máximo
+ * 5 visíveis ao mesmo tempo, intercalando entre sumindo e aparecendo".
+ *
+ * Cada avatar fica visível ~45% do ciclo (vs 60% no desktop). Com 11
+ * avatares e delays inline staggered, ~5 visíveis em média a qualquer
+ * momento. Fade-in/out mais lentos pra evitar piscar duro. */
+@keyframes fsBlinkMobile {
+  0%    { opacity: 0; }
+  12%   { opacity: 1; }
+  50%   { opacity: 1; }
+  68%   { opacity: 0; }
+  100%  { opacity: 0; }
+}
 
 /* ── Body ──────────────────────────────────────────────────── */
 /* Sem fade global agora — cada filho (headline/pills/list) faz
@@ -728,8 +746,17 @@
   gap: 12px;
   padding: 12px 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  /* Fade in cascateado per product feedback "Aplique um fade para
+   * aparecer a lista completa de usuários um abaixo do outro".
+   * Cada linha entra com fade + leve translateY; delay aplicado
+   * inline via style com base no índice (i * 40ms) pra cascade. */
+  animation: fsUserRowIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .userRow:last-child { border-bottom: none; }
+@keyframes fsUserRowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
 .userAvatar {
   width: 42px;
   height: 42px;
@@ -863,21 +890,24 @@
   .body {
     gap: 26px;
   }
-  /* Avatares mais próximos ao orbe no mobile — per feedback
-   * "mantenha os usuários flutuantes mais próximos ao orbe".
-   * Sobrescrevemos as 4 keyframes com amplitudes reduzidas
-   * (~40% do desktop) pra a varredura ficar perto do orbe. */
-  .floatingAvatarShown          { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlink; }
-  .floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlink; }
+  /* Avatares mais próximos ao orbe + fsBlinkMobile pra reduzir a
+   * quantidade visível simultaneamente. fsBlinkMobile fica ~45%
+   * visible (vs 60% desktop) e com os animation-delays inline
+   * staggered no JSX, em média ~5 dos 11 avatares estão visíveis
+   * a qualquer momento. Per spec "diminua a quantidade de avatares
+   * que ficam em volta do orbe, para que fique no máximo 5 visíveis
+   * ao mesmo tempo, intercalando entre sumindo e aparecendo". */
+  .floatingAvatarShown          { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlinkMobile; }
+  .floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlinkMobile; }
   .hero {
     padding: 8px 24px 22px;
   }

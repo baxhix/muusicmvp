@@ -370,7 +370,12 @@ export default function FanverseSearch() {
             <section className={styles.userList}>
               {snapshot.users
                 .slice(0, visibleUsers)
-                .map((u) => <UserRow key={u.id} user={u} />)}
+                .map((u, i) => (
+                  /* Stagger fade-in delay cap em 800ms (20 * 40ms)
+                   * pra batches longos não terem cascade gigante.
+                   * fsUserRowIn animação definida no CSS .userRow. */
+                  <UserRow key={u.id} user={u} delayMs={Math.min(i * 40, 800)} />
+                ))}
             </section>
           )}
         </div>
@@ -532,9 +537,12 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
   );
 }
 
-function UserRow({ user }: { user: FanverseSearchUser }) {
+function UserRow({ user, delayMs = 0 }: { user: FanverseSearchUser; delayMs?: number }) {
   return (
-    <div className={styles.userRow}>
+    <div
+      className={styles.userRow}
+      style={delayMs ? { animationDelay: `${delayMs}ms` } : undefined}
+    >
       <span className={styles.userAvatar}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={user.avatarUrl} alt={user.name} />
