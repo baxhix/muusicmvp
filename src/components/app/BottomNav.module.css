@@ -421,49 +421,13 @@
     -webkit-backdrop-filter: blur(16px) brightness(0.72) saturate(1.4);
   }
 
-  /* ── Mobile dialog centralizado ──
-   *
-   * Per product feedback "o box do hamburguer ainda está posicionado
-   * na parte de baixo da tela. Faça ele ser posicionado em uma área
-   * visivel" — bottom-sheet anterior caía atrás da BottomNav/floating
-   * chrome (player, chat dock, FireArenaBanner) e o usuário não
-   * conseguia ver o menu. Movido pro CENTRO do viewport como modal,
-   * removendo qualquer dependência de bottom/safe-area.
-   *
-   * Reset explícito de top/bottom/left/right/height + reposiciona
-   * com top/left 50% + translate(-50%,-50%). */
-  .moreMenu {
-    top: 50%;
-    left: 50%;
-    right: auto;
-    bottom: auto;
-    width: min(380px, calc(100vw - 32px));
-    max-width: none;
-    height: auto;
-    max-height: 72vh;
-    /* translate base — animation override durante 0.22s pra entrada. */
-    transform: translate(-50%, -50%);
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
-    /* Safe area cobertas pelo centramento; padding interno generoso
-     * com gap entre items pra leitura confortável. */
-    padding: 18px 14px;
-    gap: 4px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
-    animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  /* Items dentro do dialog: respiro mais generoso pra tap target. */
+  /* Override mobile .moreMenu vive APÓS o base rule (mais abaixo
+   * no arquivo, ~linha 620+) pra ganhar no cascade. Aqui dentro
+   * do @media (max-width: 768px) ficamos só com items styling. */
   .moreItem {
     padding: 16px 14px;
     font-size: 15px;
   }
-}
-/* Entrada cinemática: scale + fade in. Mantém translate(-50%,-50%)
- * pra não desalinhar do centro durante a animação. */
-@keyframes moreMenuMobileIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1);    }
 }
 
 /* Touch devices: kill `:hover` lifts entirely so sticky-hover
@@ -617,6 +581,46 @@
   from { opacity: 0; transform: translateX(100%); }
   to   { opacity: 1; transform: translateX(0);    }
 }
+
+/* ── Mobile dialog centralizado ──
+ *
+ * Per product feedback "ele subiu mas está parcialmente escondido
+ * à esquerda" — colocado APÓS o base rule no arquivo pra ganhar
+ * no cascade (mesma specificity, last-wins). Anteriormente o
+ * override mobile vinha ANTES do base, então o base.right:0 +
+ * base.width:320 mais o transform translate(-50%,-50%) do mobile
+ * empurravam o drawer ~160px pra esquerda do anchor direito → o
+ * left edge caía em viewport.right - 320 - 160 ≈ -90px (off-screen).
+ *
+ * Reset explícito de TODAS as propriedades de posicionamento +
+ * width + height do base pra o modal central funcionar limpo. */
+@media (max-width: 768px) {
+  .moreMenu {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: min(380px, calc(100vw - 32px));
+    max-width: none;
+    height: auto;
+    max-height: 72vh;
+    transform: translate(-50%, -50%);
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 18px 14px;
+    gap: 4px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+/* Entrada cinemática: scale + fade. Mantém translate(-50%,-50%) na
+ * transformação base pra ficar centralizado durante a animação. */
+@keyframes moreMenuMobileIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1);    }
+}
+
 .moreItem {
   display: flex;
   align-items: center;
