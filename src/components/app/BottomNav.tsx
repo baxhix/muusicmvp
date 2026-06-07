@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
@@ -58,6 +59,10 @@ export default function BottomNav() {
   // direct Perfil link since the right-rail already exposes
   // Superfãs and the cluster has room for a single-purpose slot.
   const [moreOpen, setMoreOpen] = useState(false);
+  /* SSR-safe mount flag: createPortal precisa de document.body, que
+   * só existe no client. Sem o gate o build SSR explode. */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const moreRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!moreOpen) return;
@@ -357,7 +362,13 @@ export default function BottomNav() {
               <span className={styles.dot} aria-hidden="true" />
             </button>
 
-            {moreOpen && (
+            {/* Portal pra document.body — escapa o containing block
+             *  criado pelo backdrop-filter do .inner pai. Sem o portal,
+             *  position:fixed do .moreMenu fica relativo ao .inner
+             *  (BottomNav pill no rodapé), e top:50%; left:50% caía
+             *  no centro do .inner = bottom da tela. Portal anchora
+             *  no body, restaurando o "fixed = relative to viewport". */}
+            {moreOpen && mounted && createPortal(
               <>
                 {/* Full-screen blurred backdrop behind the menu
                  *  per product feedback "No mobile, aplique o
@@ -519,7 +530,8 @@ export default function BottomNav() {
                   Configurações
                 </button>
               </div>
-              </>
+              </>,
+              document.body,
             )}
           </div>
         ) : (
