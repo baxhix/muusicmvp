@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import FanverseCore from '@/components/animations/FanverseCore';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   FANVERSE_SEARCH_SNAPSHOT,
   type FanverseSearchUser,
@@ -94,6 +95,14 @@ const FLOATING_POSITIONS = [
  * de cantos extremos (idx 5, 6) aparecem por último. */
 const AVATAR_REVEAL_ORDER = [2, 1, 0, 7, 3, 9, 4, 10, 8, 6, 5];
 
+/* Per product feedback "No mobile, diminua pela metade a quantidade
+ * de avatares" — em mobile renderizamos só 6 (≈ metade dos 11
+ * originais), priorizando os mais próximos do orbe via AVATAR_REVEAL_ORDER.
+ * O slice da AVATAR_REVEAL_ORDER cai no .filter por isso fica
+ * consistente: posições incluídas = primeiras 6 da ordem de reveal
+ * (mais centrais visualmente). */
+const MOBILE_AVATAR_COUNT = 6;
+
 /* Timing dos stages.
  *
  * Per product feedback:
@@ -120,6 +129,17 @@ const AVATAR_REVEAL_STEP_MS = 350;
 const ANALYZING_PHRASE = 'Analisando atividade musical...';
 
 export default function FanverseSearch() {
+  const isMobile = useIsMobile();
+  /* Lista de posições/ordem efetivamente renderizadas: no mobile
+   * cortamos pela metade (6 avatares) priorizando os mais próximos
+   * do orbe. As constantes globais (FLOATING_POSITIONS,
+   * AVATAR_REVEAL_ORDER) ficam intactas; o slice é per-render. */
+  const reveal = isMobile
+    ? AVATAR_REVEAL_ORDER.slice(0, MOBILE_AVATAR_COUNT)
+    : AVATAR_REVEAL_ORDER;
+  const renderedAvatarCount = isMobile
+    ? MOBILE_AVATAR_COUNT
+    : FLOATING_POSITIONS.length;
   const [open, setOpen] = useState(false);
   /* 3 stages de reveal — cada um aparece em sequência:
    *   t=7s  showHeadline → headline centralizada
@@ -156,8 +176,9 @@ export default function FanverseSearch() {
     const tP = window.setTimeout(() => setShowPills(true),    STAGE_PILLS_MS);
     const tL = window.setTimeout(() => setShowList(true),     STAGE_LIST_MS);
     /* Avatares revelam um a um a partir de t=3s, em intervalos de
-     * 350ms. Ordem = AVATAR_REVEAL_ORDER (mais próximos primeiro). */
-    const avatarTimers = AVATAR_REVEAL_ORDER.map((_, pos) =>
+     * 350ms. Usa `reveal` (slice mobile-aware) pra agendar só os
+     * que vão renderizar — no mobile são 6 (metade), desktop 11. */
+    const avatarTimers = reveal.map((_, pos) =>
       window.setTimeout(
         () => setAvatarsShown((n) => Math.max(n, pos + 1)),
         AVATAR_REVEAL_START_MS + pos * AVATAR_REVEAL_STEP_MS,
@@ -288,10 +309,15 @@ export default function FanverseSearch() {
        * (mais próximos do orbe primeiro). isShown = avatarsShown já
        * incluiu a posição deste avatar na ordem de reveal. */}
       <div className={styles.floatingLayer} aria-hidden="true">
-        {snapshot.topListeners.slice(0, FLOATING_POSITIONS.length).map((l, i) => {
+        {snapshot.topListeners.slice(0, renderedAvatarCount).map((l, idx) => {
+          /* No mobile, idx itera sobre 0..MOBILE_AVATAR_COUNT-1 mas
+           * usamos reveal[idx] pra pegar a posição original na grade
+           * (mais próximos do orbe primeiro). Assim os 6 avatares
+           * mobile ocupam slots centrais ao invés dos cantos. */
+          const i = reveal[idx];
           const pos = FLOATING_POSITIONS[i];
-          const revealPos = AVATAR_REVEAL_ORDER.indexOf(i);
-          const isShown = revealPos >= 0 && revealPos < avatarsShown;
+          const revealPos = idx; // posição na sequência de reveal
+          const isShown = revealPos < avatarsShown;
           /* delay do roam = 1.2s (duração entrada) + stagger leve.
            * blink delay negativo pra cada um piscar em fase própria. */
           const roamDelay = 1.2 + i * 0.35;
