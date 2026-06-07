@@ -420,6 +420,46 @@
     backdrop-filter: blur(16px) brightness(0.72) saturate(1.4);
     -webkit-backdrop-filter: blur(16px) brightness(0.72) saturate(1.4);
   }
+
+  /* ── Mobile drawer — bottom sheet full-width, NÃO full-screen ──
+   *
+   * Aplica a TODOS os mobiles (≤768px), não só ≤480px. A regra base
+   * (desktop side-drawer) seta top:0; bottom:0; height:100vh + slide
+   * lateral. Sem reset explícito de top/height no mobile, o elemento
+   * vira full-screen recebendo a animação translateY(100%) — em
+   * viewports dinâmicos (iOS Safari com URL bar) o cálculo de 100%
+   * de altura sai instável e o elemento podia parar fora do viewport
+   * visível, ou descer pra baixo da tela em vez de subir como sheet.
+   *
+   * Solução: reset top + height, sheet ancorado só no bottom com
+   * max-height controlada. */
+  .moreMenu {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: 80vh;
+    transform: none;
+    border-radius: 24px 24px 0 0;
+    border-left: none;
+    /* Safe area no bottom (home indicator iOS). */
+    padding: 16px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.55);
+    animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Items dentro do drawer ganham mais respiro vertical pra tap. */
+  .moreItem {
+    padding: 16px 14px;
+    font-size: 15px;
+  }
+}
+@keyframes moreMenuMobileIn {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Touch devices: kill `:hover` lifts entirely so sticky-hover
@@ -454,46 +494,8 @@
     width: calc(100% - 32px);
     max-width: 320px;
   }
-  /* Mobile drawer — bottom sheet full-width, NÃO full-screen.
-   *
-   * FIX bug "menu abre em posição negativa, não dando pra ver
-   * nada": a regra base do drawer (desktop side-drawer) seta
-   * top:0; bottom:0; height:100vh + animação translateX. O
-   * override mobile esquecia de resetar top/height, então no
-   * mobile o elemento ficava full-screen recebendo a animação
-   * translateY(100%) — em viewports dinâmicos (iOS Safari com
-   * URL bar) o cálculo de 100% de altura sai instável e o
-   * elemento podia parar fora do viewport visível.
-   *
-   * Solução: reset explícito de top + height, sheet ancorado só
-   * no bottom com max-height controlada. */
-  .moreMenu {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    max-width: none;
-    height: auto;
-    max-height: 80vh;
-    transform: none;
-    border-radius: 24px 24px 0 0;
-    border-left: none;
-    /* Safe area no bottom (home indicator iOS). */
-    padding: 16px 16px calc(20px + env(safe-area-inset-bottom, 0px));
-    gap: 6px;
-    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.55);
-    animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  @keyframes moreMenuMobileIn {
-    from { opacity: 0; transform: translateY(100%); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  /* Items dentro do drawer ganham mais respiro vertical pra tap. */
-  .moreItem {
-    padding: 16px 14px;
-    font-size: 15px;
-  }
+  /* Regra do bottom sheet movida pra @media (max-width: 768px) acima
+   * — assim aplica em todos os mobiles, não só ≤480px. */
 }
 
 /* ── Mobile "more" popover (replaces Perfil slot) ──
