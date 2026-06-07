@@ -573,17 +573,22 @@
   text-align: left;
   /* Transform encadeado: translateX(-50%) centraliza; --drag-x
    * aplica deslocamento horizontal do top card durante swipe;
-   * --depth produz peek descendente (10px por nível) + scale-down. */
+   * --depth produz peek descendente (6px por nível) + scale-down
+   * mais sutil (0.025 por nível, era 0.045). Per product feedback
+   * "as animações dos cards que ficam sobrepostos ainda estão
+   * exageradamente grandes. Deixe mais moderadas". */
   transform:
     translateX(-50%)
     translateX(var(--drag-x, 0px))
-    translateY(calc(var(--depth, 0) * 10px))
-    scale(calc(1 - var(--depth, 0) * 0.045));
-  /* Spring sutil estilo Apple ao trocar de profundidade. */
+    translateY(calc(var(--depth, 0) * 6px))
+    scale(calc(1 - var(--depth, 0) * 0.025));
+  /* Easing standard (ease-out) — antes era spring com overshoot
+   * cubic-bezier(0.34, 1.56, 0.64, 1) que dava o "bounce" exagerado.
+   * Duração reduzida 620 → 420ms pra resposta mais ágil. */
   transition:
-    transform 620ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 420ms ease-out,
-    box-shadow 420ms ease-out;
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 320ms ease-out,
+    box-shadow 320ms ease-out;
   touch-action: pan-y;
   user-select: none;
 }
@@ -593,7 +598,7 @@
   transition: opacity 420ms ease-out, box-shadow 420ms ease-out;
 }
 .matchCard:hover { box-shadow: 0 16px 36px rgba(236, 72, 153, 0.32), 0 2px 8px rgba(0, 0, 0, 0.5); }
-.matchCard:active { transform: translateX(-50%) translateX(var(--drag-x, 0px)) translateY(calc(var(--depth, 0) * 10px)) scale(calc(0.97 - var(--depth, 0) * 0.045)); }
+.matchCard:active { transform: translateX(-50%) translateX(var(--drag-x, 0px)) translateY(calc(var(--depth, 0) * 6px)) scale(calc(0.97 - var(--depth, 0) * 0.025)); }
 .matchAvatar {
   width: 44px;
   height: 44px;
