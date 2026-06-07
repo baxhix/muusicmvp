@@ -823,29 +823,40 @@
     width: 30px;
     height: 30px;
   }
+  /* Orbe mobile reduzido pra liberar espaço vertical pro headline.
+   * 180 → 140 dá ~40px a mais embaixo pra o insight respirar. */
   .orb {
-    width: 180px;
-    height: 180px;
+    width: 140px;
+    height: 140px;
   }
-  /* Headline/lista ainda mais alto no mobile — per feedback
-   * "No mobile, posicione mais acima". Orbe é menor (180px) e ocupa
-   * menos espaço vertical, então scroll padding-top encolhe mais. */
+  /* Per product feedback "o insight está abaixo do orbe dificultando
+   * a leitura... tem muita informação por cima de outra". O orbe
+   * mobile termina em ~env(top)+44+~30(analyzing)+140 = ~214 + env.
+   * Em iPhone 14 com env_top 47 → orbe ends ~261. Aumentamos o
+   * scroll padding-top pra 290 (suficiente pra o headline aparecer
+   * COMPLETO abaixo do orbe sem overlap) e mask fade band pra
+   * 220/290 acompanha (revela conteúdo logo abaixo do orbe). */
   .scroll {
-    padding-top: 220px;
+    padding-top: 290px;
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 150px,
-      black 230px,
+      transparent 220px,
+      black 290px,
       black 100%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 150px,
-      black 230px,
+      transparent 220px,
+      black 290px,
       black 100%
     );
+  }
+  /* Gap maior entre os filhos do .body no mobile pra separar
+   * visualmente headline > cards > lista — evita amontoamento. */
+  .body {
+    gap: 26px;
   }
   /* Avatares mais próximos ao orbe no mobile — per feedback
    * "mantenha os usuários flutuantes mais próximos ao orbe".

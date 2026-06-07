@@ -421,45 +421,49 @@
     -webkit-backdrop-filter: blur(16px) brightness(0.72) saturate(1.4);
   }
 
-  /* ── Mobile drawer — bottom sheet full-width, NÃO full-screen ──
+  /* ── Mobile dialog centralizado ──
    *
-   * Aplica a TODOS os mobiles (≤768px), não só ≤480px. A regra base
-   * (desktop side-drawer) seta top:0; bottom:0; height:100vh + slide
-   * lateral. Sem reset explícito de top/height no mobile, o elemento
-   * vira full-screen recebendo a animação translateY(100%) — em
-   * viewports dinâmicos (iOS Safari com URL bar) o cálculo de 100%
-   * de altura sai instável e o elemento podia parar fora do viewport
-   * visível, ou descer pra baixo da tela em vez de subir como sheet.
+   * Per product feedback "o box do hamburguer ainda está posicionado
+   * na parte de baixo da tela. Faça ele ser posicionado em uma área
+   * visivel" — bottom-sheet anterior caía atrás da BottomNav/floating
+   * chrome (player, chat dock, FireArenaBanner) e o usuário não
+   * conseguia ver o menu. Movido pro CENTRO do viewport como modal,
+   * removendo qualquer dependência de bottom/safe-area.
    *
-   * Solução: reset top + height, sheet ancorado só no bottom com
-   * max-height controlada. */
+   * Reset explícito de top/bottom/left/right/height + reposiciona
+   * com top/left 50% + translate(-50%,-50%). */
   .moreMenu {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: min(380px, calc(100vw - 32px));
     max-width: none;
     height: auto;
-    max-height: 80vh;
-    transform: none;
-    border-radius: 24px 24px 0 0;
-    border-left: none;
-    /* Safe area no bottom (home indicator iOS). */
-    padding: 16px 16px calc(20px + env(safe-area-inset-bottom, 0px));
-    gap: 6px;
-    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.55);
+    max-height: 72vh;
+    /* translate base — animation override durante 0.22s pra entrada. */
+    transform: translate(-50%, -50%);
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    /* Safe area cobertas pelo centramento; padding interno generoso
+     * com gap entre items pra leitura confortável. */
+    padding: 18px 14px;
+    gap: 4px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
     animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  /* Items dentro do drawer ganham mais respiro vertical pra tap. */
+  /* Items dentro do dialog: respiro mais generoso pra tap target. */
   .moreItem {
     padding: 16px 14px;
     font-size: 15px;
   }
 }
+/* Entrada cinemática: scale + fade in. Mantém translate(-50%,-50%)
+ * pra não desalinhar do centro durante a animação. */
 @keyframes moreMenuMobileIn {
-  from { opacity: 0; transform: translateY(100%); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1);    }
 }
 
 /* Touch devices: kill `:hover` lifts entirely so sticky-hover
