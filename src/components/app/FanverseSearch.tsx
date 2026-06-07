@@ -420,9 +420,17 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
   const [dragOffset, setDragOffset] = useState(0);
   const dragStateRef = useRef<{ startX: number; pointerId: number } | null>(null);
 
-  /* Cycle = manda o card do topo pro fim do array. */
+  /* Cycle = manda o card do topo (visualmente o último visível,
+   * pois agora o "newest" fica na frente) pra posição 0 do array.
+   * Assim o penúltimo card sobe pra ser o novo topo do stack e a
+   * sensação é de "o card foi pro fim da pilha". */
   const cycle = () => {
-    setOrder((arr) => [...arr.slice(1), arr[0]]);
+    setOrder((arr) => {
+      if (arr.length < 2) return arr;
+      const topIdx = arr.length - 1;
+      const top = arr[topIdx];
+      return [top, ...arr.slice(0, topIdx)];
+    });
   };
 
   /* Phase 1: reveal staged — 1 card a cada 3s até preencher.
@@ -478,24 +486,25 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
   return (
     <div className={styles.matchStack}>
       {order.map((m, i) => {
-        /* Stack vertical — cada card ocupa sua linha, sem peeking
-         * atrás. Cards além do visibleCount ficam mounted com
-         * display:none pra não tomarem espaço até serem revelados. */
+        /* Depth-stack "newest on top": o último card visível (maior
+         * índice entre os revelados) fica na frente (depth 0); os
+         * anteriores aparecem ATRÁS com peek descendente.
+         * depth = (visibleCount - 1) - i */
         const isVisible = i < visibleCount;
-        const isTop = i === 0;
+        const depth = isVisible ? (visibleCount - 1) - i : 99;
+        const isTop = isVisible && i === visibleCount - 1;
         return (
           <button
             key={m.id}
             type="button"
             className={`${styles.matchCard} ${isTop && dragOffset !== 0 ? styles.matchCardDragging : ''}`}
             style={{
+              ['--depth' as string]: depth,
               ['--drag-x' as string]: `${isTop ? dragOffset : 0}px`,
-              /* zIndex preservado pro card do topo sobrepor os
-               * outros durante o swipe horizontal (caso o dedo
-               * cruze sobre eles). */
-              zIndex: order.length - i,
-              opacity: isVisible ? 1 : 0,
-              display: isVisible ? undefined : 'none',
+              /* zIndex: newest (depth 0) tem o maior valor pra
+               * realmente ficar VISUALMENTE em cima dos anteriores. */
+              zIndex: 100 - depth,
+              opacity: isVisible ? (depth <= 2 ? Math.max(0.3, 1 - depth * 0.28) : 0) : 0,
               pointerEvents: isTop && isVisible ? 'auto' : 'none',
             }}
             onClick={isTop && dragOffset === 0 ? cycle : undefined}
