@@ -153,6 +153,59 @@
 }
 .playerVideo:hover { transform: translateY(-2px); }
 
+/* ── Responsividade do player video ──
+ * Per product feedback "Ao diminuir a resolução da tela, faça com
+ * que o player também vái se adaptando. a miniatura na parte de
+ * baixo com o nome da música e artista, pode ser ocultado, dando
+ * espaço somente aos controles e a tela diminuindo também".
+ *
+ * Estratégia em 2 níveis:
+ *   1. ≤1100px → encolhe largura (352→320). Tudo segue visível.
+ *      .videoShell encolhe junto (width: calc(100% + 24px)).
+ *   2. ≤900px  → encolhe mais (320→240) e ESCONDE .art + .info
+ *      (thumb + nome + artista). Sobra só .videoShell em cima
+ *      + .inlineControls (prev/play/next) centralizados embaixo.
+ *
+ * O ≤480px existente continua disparando edge-to-edge mode (left/
+ * right:8 + max-width:none), aí o video ocupa toda a largura útil.
+ */
+@media (max-width: 1100px) {
+  .playerVideo {
+    width: 320px;
+  }
+  .playerHorizontal,
+  .playerExpanded {
+    width: 260px;
+  }
+}
+@media (max-width: 900px) {
+  .playerVideo {
+    width: 240px;
+    padding: 0 10px 10px;
+    gap: 8px;
+  }
+  /* Esconde thumb + título + artista — sobra só o player e os
+   * controles. */
+  .playerVideo .art,
+  .playerVideo .info {
+    display: none;
+  }
+  /* Controles ocupam a linha inteira centralizados pra ficarem
+   * balanceados sob o vídeo. */
+  .playerVideo .inlineControls {
+    width: 100%;
+    justify-content: center;
+    margin: 0;
+  }
+  /* Horizontal/expanded também encolhem proporcionalmente sem
+   * esconder nada (eles não têm o vídeo, então a tela menor não
+   * é tão crítica — só ajusta a largura). */
+  .playerHorizontal,
+  .playerExpanded {
+    width: 220px;
+  }
+}
+
 /* Shell do iframe — fica COLADO no topo do player, com cantos arredondados em cima */
 .videoShell {
   width: calc(100% + 24px);
