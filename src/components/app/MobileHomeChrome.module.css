@@ -198,6 +198,11 @@
   cursor: pointer;
   border-radius: 50%;
   transition: transform 160ms ease;
+  /* CRÍTICO: o .chrome pai tem pointer-events:none (deixa o map
+   * receber drag por baixo). Sem auto aqui o botão nunca recebe
+   * click, então o orbe da home mobile nunca abria o FanverseSearch
+   * mesmo com o onClick dispatching o event corretamente. */
+  pointer-events: auto;
 }
 .headerOrb:hover  { transform: scale(1.06); }
 .headerOrb:active { transform: scale(0.96); }
