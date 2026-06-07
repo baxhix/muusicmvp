@@ -11,7 +11,16 @@ import {
   STEP_PATHS,
 } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
+import AuthSessionLoading from '@/components/auth/AuthSessionLoading';
 import fields from '@/components/auth/AuthFields.module.css';
+
+/* Tempo mínimo (ms) que o splash de "Retomando sua sessão" fica
+ * visível mesmo se o /api/auth/me responder rápido. Garante que
+ * usuário com sessão válida nunca veja a tela de login piscando
+ * antes do redirect pra /app — e dá uma sensação de transição
+ * intencional pra quem está sem sessão (vê o splash, depois cai
+ * suave no form). */
+const SESSION_PROBE_MIN_MS = 1500;
 
 /**
  * Step 1 — Email entry. Single field + Continuar.
@@ -44,10 +53,31 @@ export default function EmailStep() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* Splash de validação de sessão — fica visível enquanto o
+   * AuthContext consulta /api/auth/me E enquanto o min-hold timer
+   * (SESSION_PROBE_MIN_MS) não expirou, para que o usuário NUNCA
+   * veja o form de email antes de saber se já tem sessão.
+   *
+   * - authLoading true                 → ainda consultando backend
+   * - minHoldElapsed false             → backend respondeu rápido,
+   *                                      seguramos o splash
+   * - user existe (post-load)          → vamos redirecionar pra /app,
+   *                                      mantemos splash até navegar
+   * - sem sessão + minHold cumprido    → mostra o form normalmente */
+  const [minHoldElapsed, setMinHoldElapsed] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setMinHoldElapsed(true), SESSION_PROBE_MIN_MS);
+    return () => window.clearTimeout(t);
+  }, []);
+
   // Já autenticado → vai direto pro app (não passa pelo flow).
   useEffect(() => {
     if (!authLoading && user) router.replace('/app');
   }, [authLoading, user, router]);
+
+  /* Critério final de exibir splash. user!=null cobre o intervalo
+   * entre detectar sessão e o router.replace concretizar. */
+  const showSessionSplash = authLoading || user != null || !minHoldElapsed;
 
   // Restore do email + retoma onboarding em andamento.
   // Só redireciona pra step paths SE o usuário ainda tiver
@@ -100,6 +130,13 @@ export default function EmailStep() {
     track('magic_link_sent', { email_domain: trimmed.split('@')[1] });
     saveOnboarding({ email: trimmed, step: 'verify' });
     router.push('/auth/verify');
+  }
+
+  /* Enquanto validamos sessão, NUNCA renderizamos o AuthShell+form.
+   * Isso impede o "flash" do login pra quem já está logado e cria
+   * uma transição contínua (splash → /app) per spec. */
+  if (showSessionSplash) {
+    return <AuthSessionLoading />;
   }
 
   return (
