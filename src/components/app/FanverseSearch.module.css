@@ -106,6 +106,13 @@
   inset: 0;
   z-index: 2;
   overflow-y: auto;
+  /* Per spec "Fanverse Search ainda está deslizando pelas laterais
+   * o conteúdo e não fixo ao centro" — bloqueia QUALQUER overflow
+   * horizontal e gesture de pan-x. overflow-x:hidden clipa filhos
+   * que extrapolem; touch-action:pan-y impede o navegador de
+   * interpretar swipe horizontal como scroll. */
+  overflow-x: hidden;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   /* Per feedback "No desktop, os insights subiram muito e está por
    * trás do orbe. Posicione 90px mais abaixo" — 310 + 90 = 400. */
