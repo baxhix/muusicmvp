@@ -316,6 +316,35 @@
 
 
 /* ── Responsive ── */
+/* Viewport intermediário (1025-1440px) — quando o ArtistBox se
+ * retrai pro ArtistBoxRail (rail vertical 52px), o Feed perde o
+ * "irmão" largo do lado esquerdo e fica visualmente solto colado
+ * na direita. Per product feedback "Conforme a tela vai diminuindo
+ * e o box Fanverse Ana Castela se retrai, o feed deve assumir a
+ * posição central e ficar abaixo do banner no topo", reposicionamos
+ * pra centralizado abaixo do DesktopTopBanner (banner topo 34px +
+ * altura ~95px = 129; subimos 24px de breathing → top:153). */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .panel {
+    top: 153px;
+    /* Altura limitada pra não invadir a área do NowPlaying (bottom 24px)
+     * nem do BottomNav. Mantém ~70% da viewport útil. */
+    height: calc(100vh - 200px);
+    /* Centraliza horizontalmente — same width do DesktopTopBanner
+     * pra alinhamento visual. */
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(640px, calc(100vw - 200px));
+  }
+  /* Gradient minimizado acompanha — espelha o left/width do .panel. */
+  .minimizedGradient {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(640px, calc(100vw - 200px));
+  }
+}
 @media (max-width: 1024px) {
   /* Stay anchored 42px to the left of the chat dock on tablet too —
    * same math as desktop (right: 104px). Width shrinks to give the

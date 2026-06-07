@@ -251,6 +251,15 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     const v = new URLSearchParams(window.location.search).get('welcome');
     if (v === '1') return 'new';
     if (v === 'back') return 'back';
+    /* Fallback: inline-script (em src/app/layout.tsx) define
+     * data-welcome=back automaticamente quando o usuário entra
+     * em /app no mobile, mesmo sem URL param. Lemos o attr aqui
+     * pra disparar o mesmo timeline cinemático (globe + reveal). */
+    if (typeof document !== 'undefined') {
+      const attr = document.documentElement.getAttribute('data-welcome');
+      if (attr === '1') return 'new';
+      if (attr === 'back') return 'back';
+    }
     return null;
   });
 

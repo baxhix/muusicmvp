@@ -101,7 +101,18 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var w=new URLSearchParams(window.location.search).get('welcome');if(w==='1'||w==='back'){document.documentElement.setAttribute('data-welcome',w);}}catch(e){}})();",
+              "(function(){try{" +
+              "var w=new URLSearchParams(window.location.search).get('welcome');" +
+              "if(w==='1'||w==='back'){document.documentElement.setAttribute('data-welcome',w);return;}" +
+              // Mobile: splash de 3s SEMPRE antes de carregar o mapa (per
+              // product feedback "adicione um splash de 3s sempre antes
+              // de carregar o mapa, sendo na primeira autenticação ou não").
+              // Critério: path em /app + viewport ≤768px. Set 'back' pra o
+              // AppShellContext disparar o mesmo timeline cinemático.
+              "var p=window.location.pathname;" +
+              "var m=window.matchMedia&&window.matchMedia('(max-width: 768px)').matches;" +
+              "if(m&&(p==='/app'||p.indexOf('/app/')===0)){document.documentElement.setAttribute('data-welcome','back');}" +
+              "}catch(e){}})();",
           }}
         />
         {/* Pixels e tags de tracking (GA4, Clarity, Meta Pixel,
