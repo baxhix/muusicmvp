@@ -64,10 +64,18 @@ export default function BottomNav() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const moreRef = useRef<HTMLDivElement | null>(null);
+  /* Ref separado pro menu portalado em document.body — sem isso o
+   * outside-click listener (que checa só moreRef = .moreWrap dentro
+   * do BottomNav) achava que todo click no menu era "fora" e fechava
+   * antes do button onClick rodar. Resultado: navegação morria → user
+   * voltava pra home. */
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!moreOpen) return;
     const onDocClick = (e: MouseEvent) => {
-      if (moreRef.current?.contains(e.target as Node)) return;
+      const target = e.target as Node;
+      if (moreRef.current?.contains(target)) return;
+      if (moreMenuRef.current?.contains(target)) return;
       setMoreOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
@@ -386,7 +394,7 @@ export default function BottomNav() {
                   aria-hidden="true"
                   onClick={() => setMoreOpen(false)}
                 />
-              <div className={styles.moreMenu} role="menu">
+              <div ref={moreMenuRef} className={styles.moreMenu} role="menu">
                 {/* Drawer lateral mobile per product feedback "A
                  *  abertura do menu hamburger deve ser uma barra
                  *  lateral, que ocupe toda a altura e dê um blur no
