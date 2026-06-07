@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import styles from './MaterialsTabContent.module.css';
@@ -360,8 +361,17 @@ function Lightbox({
   item: MaterialItem;
   onClose: () => void;
 }) {
+  /* Portal gating — só montamos no client porque document.body não
+   * existe no SSR. Sem o portal, o lightbox ficaria CONFINADO ao
+   * ArtistBox: o .shell tem backdrop-filter (cria containing block
+   * pra position:fixed) + overflow:hidden, então o overlay nunca
+   * ocupava a tela toda. Renderizando em document.body o lightbox
+   * escapa o stacking context do box. */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const fullUrl = thumbUrl(item.id, 1600, 1067);
-  return (
+  const content = (
     <div
       className={styles.lightbox}
       role="dialog"
@@ -406,6 +416,9 @@ function Lightbox({
       </div>
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 }
 
 function FileKindIcon({ kind }: { kind: MaterialKind }) {
