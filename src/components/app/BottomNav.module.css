@@ -621,8 +621,11 @@
     background: rgba(0, 0, 0, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-left: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    padding: 8px;
+    /* Per spec "aumente o border radius do box" — 18 → 28 pra
+     * casar com o pill da navbar (border-radius:999 = totalmente
+     * arredondado) sem virar pílula, mantém retângulo soft. */
+    border-radius: 28px;
+    padding: 10px;
     gap: 2px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
     /* Per perf feedback — blur(28) caro em mobile GPU. Reduzido
