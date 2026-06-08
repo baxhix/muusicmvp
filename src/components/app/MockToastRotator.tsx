@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import styles from './MockToastRotator.module.css';
@@ -115,16 +116,33 @@ const ROTATION: MockToast[] = [
   { kind: 'top_track', track: MOCK_TRACKS[2] },
 ];
 
-/** ms each toast holds visible before exiting. */
-const HOLD_MS = 5200;
-/** ms for the exit animation — must match `.toastExit` keyframe duration. */
-const EXIT_MS = 400;
-/** ms of empty space between one toast leaving and the next entering. */
-const GAP_MS = 1100;
-/** ms for the enter animation — must match `.toastEnter` keyframe. */
-const ENTER_MS = 420;
+/* ── Stack tuning (iOS Notifications pattern) ───────────────
+ *
+ * Per spec "Mantenha as notificações mocadas empilhadas usando
+ * o motion até juntar 10, com a opção de fechá-las. Depois elas
+ * podem desaparecer. Ao clicar, elas devem ser expandidas para
+ * ver uma a uma. Use a iOS Notifications stack."
+ *
+ * Mock cadence: 1 toast a cada ~3.5s até atingir MAX_STACK.
+ * Quando o stack está cheio, a fila de mocks pausa; mensagens
+ * REAIS (chat) ainda entram e empurram a mais antiga não-pinned.
+ * Após 30s sem nenhum push novo, o stack faz auto-clear via fade.
+ */
+const MAX_STACK = 10;
+const MOCK_PUSH_INTERVAL_MS = 3500;
+const AUTO_CLEAR_AFTER_IDLE_MS = 30_000;
+/** Quantos toasts ficam visíveis no collapsed stack (resto fica
+ *  oculto atrás dos top 3). Top 3 mostram com scale-down. */
+const VISIBLE_PEEK = 3;
 
-type Phase = 'enter' | 'hold' | 'exit' | 'gap';
+interface StackItem {
+  /** Auto-increment id — usado como React key + dismissId. */
+  id: number;
+  toast: MockToast;
+  /** Real messages são "pinned" — quando stack está cheio, mocks
+   *  são droppados antes de pins. */
+  pinned: boolean;
+}
 
 /** Brand-palette confetti colors shared with FeedCelebration so
  *  the rank-up burst feels like the same family as the quiz-win
@@ -162,197 +180,204 @@ function fireRankConfetti() {
 }
 
 export default function MockToastRotator() {
-  const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState<Phase>('enter');
-  /* Fila FIFO de mensagens REAIS que entraram via socket. Quando
-   * o cycling avança (gap → enter), se essa fila tem item, ele
-   * é desenfileirado e renderizado em vez do mock; senão segue o
-   * ROTATION padrão. Limite de 8 itens evita acúmulo em explosão
-   * de msgs (raro mas defensivo — o último ainda aparece).
-   *
-   * Per product feedback "deixe dinâmica o tipo de notificação
-   * que aparece logo acima da bottombar quando o usuário manda
-   * mensagem no Chat" — chat agora é a única "linha" do rotator
-   * que reflete atividade real; outros tipos seguem mockados. */
-  const realQueueRef = useRef<RealChatToastDetail[]>([]);
-  const [currentReal, setCurrentReal] = useState<RealChatToastDetail | null>(null);
+  /* Stack ordenado cronologicamente: index 0 = mais antigo, último
+   *  = mais recente (topo do stack). Visualmente o último renderiza
+   *  por cima (z-index maior). */
+  const [stack, setStack] = useState<StackItem[]>([]);
+  /* Tap no stack collapsed expande pra lista vertical individual;
+   *  tap de novo collapse. */
+  const [expanded, setExpanded] = useState(false);
+  const counterRef = useRef(0);
+  const mockIdxRef = useRef(0);
+  /* Timestamp do último push (mock ou real). Usado pelo auto-clear
+   *  pra detectar idle. */
+  const lastPushAtRef = useRef<number>(0);
+  /* Chat/router pra abrir conv real ao clicar no toast expandido. */
+  const { chat } = useAppShell();
+  const router = useRouter();
 
-  /* Listener do evento global. Enfileira + DÁ PRIORIDADE: per
-   * product feedback "notificações reais devem ter prioridade
-   * sobre as notificações mocadas", se um mock está em hold/enter
-   * no momento, corta pra `exit` imediatamente — assim a real
-   * entra logo no próximo gap (sub-segundo de espera). Mock que
-   * ia rodar fica perdido no ciclo (próxima volta da ROTATION
-   * pega ele de novo, ou não — é demo, perda OK). */
+  /* Push novo mock toast a cada MOCK_PUSH_INTERVAL_MS, até MAX_STACK.
+   *  Se o stack está cheio, NÃO faz push de mocks (deixa o user
+   *  dismissar). Reais entram independente via handler abaixo. */
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setStack((prev) => {
+        if (prev.length >= MAX_STACK) return prev;
+        counterRef.current += 1;
+        const next = ROTATION[mockIdxRef.current % ROTATION.length];
+        mockIdxRef.current += 1;
+        lastPushAtRef.current = Date.now();
+        return [...prev, { id: counterRef.current, toast: next, pinned: false }];
+      });
+    }, MOCK_PUSH_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  /* Listener pra mensagens REAIS via socket. Sempre entra (pinned),
+   *  drop oldest non-pinned se stack está cheio. */
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<RealChatToastDetail>).detail;
       if (!detail?.senderName) return;
-      const q = realQueueRef.current;
-      // Dedupe consecutivos do mesmo sender com mesmo snippet
-      // (defensivo contra echo do socket no caso ímpar).
-      const last = q[q.length - 1];
-      if (
-        last &&
-        last.senderName === detail.senderName &&
-        last.snippet === detail.snippet
-      ) {
-        return;
-      }
-      if (q.length >= 8) q.shift(); // drop o mais antigo
-      q.push(detail);
-      /* Prioridade: força o toast atual a iniciar saída agora se
-       * estiver em hold/enter. NÃO interrompe um exit em progresso
-       * (já está saindo). NÃO interrompe um currentReal (deixa
-       * uma real anterior terminar antes da próxima). */
-      setPhase((p) => {
-        if (p === 'hold' || p === 'enter') {
-          // Só se NÃO for já um real em exibição — preserva o
-          // FIFO da fila pra reais consecutivas.
-          if (currentRealRef.current) return p;
-          return 'exit';
+      setStack((prev) => {
+        /* Dedupe consecutivo (same sender + snippet). */
+        const last = prev[prev.length - 1];
+        if (
+          last &&
+          last.toast.kind === 'real_message' &&
+          last.toast.data.senderName === detail.senderName &&
+          last.toast.data.snippet === detail.snippet
+        ) {
+          return prev;
         }
-        return p;
+        counterRef.current += 1;
+        const newItem: StackItem = {
+          id: counterRef.current,
+          toast: { kind: 'real_message', data: detail },
+          pinned: true,
+        };
+        lastPushAtRef.current = Date.now();
+        if (prev.length >= MAX_STACK) {
+          /* Tenta dropar o oldest non-pinned; se todos pinned,
+           *  dropa o oldest mesmo. */
+          const dropIdx = prev.findIndex((t) => !t.pinned);
+          if (dropIdx !== -1) {
+            return [
+              ...prev.slice(0, dropIdx),
+              ...prev.slice(dropIdx + 1),
+              newItem,
+            ];
+          }
+          return [...prev.slice(1), newItem];
+        }
+        return [...prev, newItem];
       });
     };
     window.addEventListener('app:chat-message-toast', handler);
-    return () => {
-      window.removeEventListener('app:chat-message-toast', handler);
-    };
+    return () => window.removeEventListener('app:chat-message-toast', handler);
   }, []);
 
-  /* Ref espelha o state pro listener acima conseguir checar sem
-   * recriar o handler a cada mudança de currentReal. */
-  const currentRealRef = useRef<RealChatToastDetail | null>(null);
+  /* Auto-clear depois de idle (AUTO_CLEAR_AFTER_IDLE_MS sem push).
+   *  Roda a cada 3s checando o lastPushAtRef. */
   useEffect(() => {
-    currentRealRef.current = currentReal;
-  }, [currentReal]);
+    if (stack.length === 0) return;
+    const id = window.setInterval(() => {
+      const idleFor = Date.now() - lastPushAtRef.current;
+      if (idleFor >= AUTO_CLEAR_AFTER_IDLE_MS) {
+        setStack([]);
+        setExpanded(false);
+      }
+    }, 3000);
+    return () => window.clearInterval(id);
+  }, [stack.length]);
 
+  /* Side-effect: rank-up confetti (desativado per feedback —
+   *  mantido como hook futuro). */
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-    if (phase === 'enter') {
-      t = setTimeout(() => setPhase('hold'), ENTER_MS);
-    } else if (phase === 'hold') {
-      t = setTimeout(() => setPhase('exit'), HOLD_MS);
-    } else if (phase === 'exit') {
-      t = setTimeout(() => setPhase('gap'), EXIT_MS);
-    } else {
-      t = setTimeout(() => {
-        // Próximo toast: consome a fila real primeiro, senão
-        // avança no ROTATION mock.
-        const next = realQueueRef.current.shift();
-        if (next) {
-          setCurrentReal(next);
-        } else {
-          setCurrentReal(null);
-          setIdx((i) => (i + 1) % ROTATION.length);
-        }
-        setPhase('enter');
-      }, GAP_MS);
+    if (stack.length === 0) return;
+    const last = stack[stack.length - 1];
+    if (last.toast.kind === 'top_20') {
+      /* fireRankConfetti() permanece comentado — feedback "estão
+       *  ocorrendo muitas e eram pra ser poucas" */
     }
-    return () => clearTimeout(t);
-  }, [phase]);
+  }, [stack]);
 
-  // Side-effects bound to specific notification types as they
-  // enter the screen. Each runs ONCE per toast appearance via
-  // the `phase === 'enter'` gate; the toast then proceeds through
-  // its normal hold/exit phases.
-  useEffect(() => {
-    if (phase !== 'enter') return;
-    // Real toasts não têm side effects (sem confetti, sem cascata).
-    if (currentReal) return;
-    const current = ROTATION[idx];
-    if (current.kind === 'top_20') {
-      // Confetti em rank-up DESATIVADO per product feedback
-      // "Estão ocorrendo muitas e eram pra ser poucas" (opção B
-      // Equilibrado). O toast textual "Você está no TOP 20!"
-      // continua aparecendo, só não vem mais com burst de
-      // canvas-confetti. fireRankConfetti() permanece definido
-      // pra ser fácil religar gated num futuro marco específico.
-      // fireRankConfetti();
-    }
-    /* Dispatch `app:hearts-cascade` com icon:'hand' REMOVIDO per
-     * feedback "Remova a simulação de aceno automático da plataforma".
-     * Cascata de 👋 não cai mais por timer; só rola em interação
-     * real do user (botão 👋 do reveal avatar dispatcha cascade,
-     * mas é input explícito). */
-  }, [phase, idx]);
+  const dismissOne = (id: number) => {
+    setStack((prev) => prev.filter((t) => t.id !== id));
+  };
 
-  // During the gap, the pill is fully off-screen — render nothing
-  // so even the empty container can't intercept pointer events.
-  if (phase === 'gap') return null;
+  if (stack.length === 0) return null;
 
-  /* Decide a entry visível: se há um real_message ativo, ele
-   * roda neste ciclo; senão usa o mock indexado pelo idx. */
-  const current: MockToast = currentReal
-    ? { kind: 'real_message', data: currentReal }
-    : ROTATION[idx];
-  const exiting = phase === 'exit';
-  /* Pílulas de real_message são clicáveis — levam direto pra
-   * conversa que acabou de receber a mensagem. Mocks ficam
-   * decorativos (sem ação ao clique). */
-  const clickable = current.kind === 'real_message';
+  /* Click handler do container — só toggla expand quando stack
+   *  tem múltiplos itens. Stop propagation no dismiss/clickable
+   *  child evita disparar isso por engano. */
+  const handleContainerClick = () => {
+    if (stack.length > 1) setExpanded((v) => !v);
+  };
 
   return (
-    <div className={styles.root} aria-live="polite">
-      {clickable ? (
-        <ClickableToast
-          conversationId={(current as { kind: 'real_message'; data: RealChatToastDetail }).data.conversationId}
-          exiting={exiting}
-        >
-          <ToastBody toast={current} />
-        </ClickableToast>
-      ) : (
-        <div
-          className={`${styles.toast} ${exiting ? styles.toastExit : styles.toastEnter}`}
-          role="status"
-        >
-          <ToastBody toast={current} />
-        </div>
-      )}
+    <div
+      className={`${styles.root} ${expanded ? styles.rootExpanded : ''}`}
+      aria-live="polite"
+      onClick={handleContainerClick}
+    >
+      <AnimatePresence initial={false}>
+        {stack.map((item, i) => {
+          /* depth: 0 = topo (newest), 1+ = peek atrás.
+           *  Collapsed: top 3 visíveis, mais antigos opacity 0.
+           *  Expanded: todos visíveis em coluna. */
+          const depth = stack.length - 1 - i;
+          const isTop = depth === 0;
+          /* Peek pra CIMA: cards mais antigos sobem 8/16px e
+           *  encolhem progressivamente atrás do top. */
+          const peekY = expanded ? 0 : -(depth * 8);
+          const peekScale = expanded ? 1 : 1 - depth * 0.04;
+          const peekOpacity = expanded
+            ? 1
+            : depth >= VISIBLE_PEEK
+              ? 0
+              : 1 - depth * 0.18;
+          /* Clicáveis: real_message expanded → abre conv.
+           *  Mocks ficam decorativos. */
+          const clickable =
+            expanded && item.toast.kind === 'real_message';
+
+          return (
+            <motion.div
+              key={item.id}
+              layout
+              className={`${styles.toast} ${expanded ? styles.toastExpanded : ''} ${clickable ? styles.toastClickable : ''}`}
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{
+                opacity: peekOpacity,
+                y: peekY,
+                scale: peekScale,
+              }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+              style={{
+                zIndex: 100 - depth,
+                pointerEvents: isTop || expanded ? 'auto' : 'none',
+              }}
+              role="status"
+              onClick={(e) => {
+                /* Stop propagation pra container handler não
+                 *  togglear expand quando o user clica no toast
+                 *  individual durante o expanded state. */
+                if (expanded) e.stopPropagation();
+                if (clickable && item.toast.kind === 'real_message') {
+                  chat.open(item.toast.data.conversationId);
+                  router.push('/app/chat');
+                }
+              }}
+            >
+              <ToastBody toast={item.toast} />
+              {expanded && (
+                <button
+                  type="button"
+                  className={styles.dismissBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissOne(item.id);
+                  }}
+                  aria-label="Fechar notificação"
+                >
+                  <svg viewBox="0 0 10 10" width="10" height="10" fill="none" aria-hidden="true">
+                    <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }
 
-/**
- * Wrapper interativo pra toasts reais — ao clicar, abre a conv
- * que originou a mensagem. `chat.open(id)` carrega messages +
- * marca read; `router.push('/app/chat')` leva o user pra surface
- * de detalhe. Funciona em desktop (chat panel desliza) e mobile
- * (rota /app/chat renderiza o painel full-screen).
- *
- * Componente separado pra que o `useAppShell` + `useRouter` só
- * sejam invocados no caminho clicável (mocks não precisam).
- * `pointer-events: auto` no CSS sobrescreve o `.root` que tem
- * pointer-events:none por default (pra que o pill mock não
- * intercepte cliques no mapa abaixo).
- */
-function ClickableToast({
-  conversationId,
-  exiting,
-  children,
-}: {
-  conversationId: string;
-  exiting: boolean;
-  children: React.ReactNode;
-}) {
-  const { chat } = useAppShell();
-  const router = useRouter();
-  const handleClick = () => {
-    chat.open(conversationId);
-    router.push('/app/chat');
-  };
-  return (
-    <button
-      type="button"
-      className={`${styles.toast} ${styles.toastClickable} ${exiting ? styles.toastExit : styles.toastEnter}`}
-      onClick={handleClick}
-      aria-label="Abrir conversa"
-    >
-      {children}
-    </button>
-  );
-}
+/* ClickableToast wrapper removido — chat.open/router.push agora
+ *  ficam inline no handler do motion.div dentro de MockToastRotator
+ *  (componente único após refator pro stack pattern). */
 
 function ToastBody({ toast }: { toast: MockToast }) {
   switch (toast.kind) {

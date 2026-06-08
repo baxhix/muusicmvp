@@ -10,24 +10,34 @@
 .root {
   position: fixed;
   /* Toast bottom edge sits 24px above the navbar pill's outer
-   * top. The pill is ~56px tall and the .nav block has a 24px
-   * padding-bottom, so the pill's outer top is at 80px from the
-   * viewport bottom; adding 24px of gap puts this rule at 104.
-   *
-   * Per product feedback ("Posicione as notificações 24 px
-   * acima da navbar"); replaces the previous 84/156 values
-   * that were tuned to clear the mobile NowPlaying player —
-   * the new spec is "always 24px above the pill" regardless
-   * of what else floats nearby. */
+   * top. Per product feedback "Posicione as notificações 24 px
+   * acima da navbar". */
   bottom: 104px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* Display block + relative posicionamento — toasts dentro são
+   *  absolute pra empilhar via stack iOS-style (top na base, mais
+   *  antigos peeking above). Width auto-shrink ao maior toast. */
+  display: block;
   pointer-events: none;
   max-width: calc(100vw - 32px);
+  /* Cursor pointer indica que o stack é clicável pra expandir. */
+  cursor: pointer;
+}
+
+/* Expanded mode: stack vira lista vertical com gap fixo. Cursor
+ *  volta default já que o container não é o trigger principal —
+ *  cada toast individual + dismiss btn ficam clicáveis. */
+.rootExpanded {
+  cursor: default;
+  /* Display flex permite os filhos se distribuírem com gap
+   *  natural; motion.layout anima a transição entre stacked e
+   *  expanded automaticamente. */
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 768px) {
@@ -87,8 +97,58 @@
   max-width: min(520px, calc(100vw - 32px));
 }
 
+/* Position absolute no stack collapsed — todos sobrepostos no
+ *  bottom 0 do .root, motion controla y/scale/opacity inline.
+ *  No expanded mode (.toastExpanded), volta a position:relative
+ *  pra fluir na coluna do .rootExpanded. */
+.toast {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  /* translateX(-50%) centra; motion vai adicionar translateY
+   *  via inline style (transformTemplate compõe). */
+  transform: translateX(-50%);
+}
+.toastExpanded {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  /* Padding extra à direita pro dismissBtn caber sem cobrir
+   *  o conteúdo do toast. */
+  padding-right: 38px;
+}
+
+/* Animations CSS antigas mantidas pra fallback / @media reduced,
+ *  mas .toastEnter/.toastExit não são mais aplicadas pelo JSX
+ *  (motion handle enter/exit via initial/animate/exit). */
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .toastExit  { animation: mockToastOut 0.38s cubic-bezier(0.55, 0, 1, 0.45) both; }
+
+/* Dismiss button — só visível em .toastExpanded. Pequeno X
+ *  ghost no canto direito do toast. */
+.dismissBtn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+  pointer-events: auto;
+}
+.dismissBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
 
 /* Variante clicável — usada APENAS pra real_message (toast vindo
  * do socket). Sobrescreve o pointer-events:none herdado do
