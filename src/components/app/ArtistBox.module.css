@@ -387,12 +387,15 @@
 }
 
 /* Title row — só nome + verified à esquerda. O orb saiu daqui pra
- * .foldHeadRow (sibling do .foldHead), então sem justify-content. */
+ * .foldHeadRow (sibling do .foldHead), então sem justify-content.
+ *
+ * margin-top: 12px per spec "posicione 12px mais abaixo o nome
+ * Ana Castela da palavra Fanverse, com o orbe acompanhando". */
 .foldTitleRow {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0;
+  margin: 12px 0 0;
 }
 .foldTitle {
   display: inline-flex;
@@ -435,13 +438,15 @@
    *
    * top calcula o CENTRO vertical de "Ana Castela":
    *   eyebrow_height (~12px line-height 1)
+   *   + foldTitleRow margin-top (12px — per spec "posicione 12px
+   *     mais abaixo o nome Ana Castela da palavra Fanverse")
    *   + title_height/2 (26/2 = 13)
-   *   = 25px do topo do .foldHeadRow
-   * translateY(-50%) puxa o orbe pra cima 28px → centro do orb
-   * fica exatamente em y=25, alinhado com "Ana Castela". */
+   *   = 37px do topo do .foldHeadRow
+   * translateY(-50%) puxa o orb pra cima 28px → centro do orb
+   * fica em y=37, alinhado com o novo centro de "Ana Castela". */
   position: absolute;
   right: 0;
-  top: 25px;
+  top: 37px;
   transform: translateY(-50%);
   width: 56px;
   height: 56px;
