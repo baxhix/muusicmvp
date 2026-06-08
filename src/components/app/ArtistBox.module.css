@@ -32,17 +32,25 @@
   top: 34px;
   left: 14px;
   width: 280px;
-  /* Altura máxima per spec "deixe a altura do box Fanverse Ana
-   * Castela em um tamanho máximo mantendo a distância fixa de
-   * 32px do final do box para o box do vídeo, independente de
-   * qual tab esteja ativa".
+  /* Altura máxima per spec "deixe a altura... mantendo a distância
+   * fixa de 32px do box pro player".
    *
-   * Conta: 100vh − top(34) − gap(32) − player_height(~68) −
-   *        player_bottom(24) = 100vh − 158px.
-   * Quando o conteúdo extrapola, o .content scrolla (overflow-y
-   * auto) e os botões "Ver mais" das tabs Exclusivo/Superfãs
-   * cobrem a UI de paginação. */
-  max-height: calc(100vh - 158px);
+   * Reserva ATUALIZADA per spec "A altura das tabs… estão maior e
+   * por trás do player de vídeo. Devem ficar por cima com um
+   * espaço de respiro entre os blocos". O player em modo VIDEO é
+   * muito maior que o pill padrão (era a base do cálculo
+   * anterior, 68px). Agora:
+   *
+   *   Conta: 100vh − top(34) − gap(32) − player_video_h −
+   *          player_bottom(24)
+   *
+   * player_video_h varia por viewport (vídeo é 16:9 da largura):
+   *   ≤1440px: 180px wide → ~210px tall (com controles) → 280px reserva
+   *   >1440px: 352px wide → ~280px tall (com controles) → 370px reserva
+   *
+   * Media query abaixo (.box rule, sobrescreve essa) garante o
+   * caso wide. */
+  max-height: calc(100vh - 280px);
   /* z-index bumped 15 → 60 so the box paints ABOVE the `.shell`
    * stacking context (z:55, in app/app/layout.module.css). The
    * ArtistBox is rendered as a SIBLING of `.shell` in the DOM
@@ -81,12 +89,23 @@
   border-radius: 14px 14px 18px 18px;
   /* Altura FIXA quando aberto per spec "ao navegar entre as tabs,
    * deixe a altura do box sempre a mesma, respeitando a distância
-   * do player". Usa o mesmo cálculo do .box max-height (100vh −
-   * top:34 − gap:32 − player_h:68 − player_bottom:24 = 158).
-   * Independente do conteúdo da tab ativa (poucas missões ou ranking
-   * com 100), o box mantém a mesma altura — o .content interno é
-   * que rola via overflow-y auto. */
-  height: calc(100vh - 158px);
+   * do player". Mesma reserva do .box max-height (ver comentário
+   * acima sobre o ajuste 158 → 280 / 370 pra cobrir player video).
+   * Independente do conteúdo da tab ativa, o box mantém a mesma
+   * altura — o .content interno rola via overflow-y auto. */
+  height: calc(100vh - 280px);
+}
+
+/* Wide viewport (>1440): player video usa 352px de largura → ~280px
+ * de altura. Reserva total 370px pra que o box fique acima com
+ * 32px de respiro. */
+@media (min-width: 1441px) {
+  .box {
+    max-height: calc(100vh - 370px);
+  }
+  .boxOpen {
+    height: calc(100vh - 370px);
+  }
 }
 
 /* ── Compact bar — always visible ── */
