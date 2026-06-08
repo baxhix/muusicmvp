@@ -42,8 +42,11 @@ import { getUserPoints } from '../activities/queries';
  * every read.
  */
 
-/** Minimum Fanpoints required to spawn a community. */
-const CREATE_COMMUNITY_FP_THRESHOLD = 10_000;
+/** Minimum Fanpoints required to spawn a community.
+ * 10_000 → 200 per spec "mude a regra para criação de comunidade
+ * para 200 Fanpoints". Manter sincronizado com
+ * CREATE_FP_THRESHOLD no CommunityPanel.tsx. */
+const CREATE_COMMUNITY_FP_THRESHOLD = 200;
 /** "Bombando" thresholds — recent activity + a minimum critical mass. */
 const TRENDING_WINDOW_DAYS = 7;
 const TRENDING_MIN_MEMBERS = 3;

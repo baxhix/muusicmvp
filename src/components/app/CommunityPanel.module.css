@@ -521,16 +521,22 @@
  * pra manter o kebab no topo (per feedback anterior "posicione
  * os três pontinhos para cima"), então o Entrar precisa do
  * override explícito aqui pra não pegar a mesma regra. */
+/* "Participar" — mesmo estilo gradient-border do .joinBtn em
+ * ProfilePanel per spec "substitua o cta Entrar por Participar
+ * com o mesmo estilo de botão que tem no meu perfil/comunidades.
+ * Já com 1 px na borda". Bg escuro + ::before com gradient via
+ * mask-composite (borda gradient só, 1px). */
 .cardJoinPill {
+  position: relative;
   align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
-  border-radius: 10px;
-  background: rgba(168, 85, 247, 0.12);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #d8b4fe;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #0a0a0e;
+  color: #ffffff;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -538,16 +544,41 @@
   cursor: pointer;
   flex-shrink: 0;
   white-space: nowrap;
-  transition: background 0.14s, border-color 0.14s, color 0.14s;
+  z-index: 0;
+  transition: transform 140ms ease;
+}
+.cardJoinPill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* Borda gradient 1px (mesmo padrão do .joinBtn em
+   * ProfilePanel.module.css). */
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.9) 0%,
+    rgba(217, 70, 239, 0.9) 50%,
+    rgba(244, 114, 182, 0.9) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
 }
 .cardJoinPill:hover {
-  background: rgba(168, 85, 247, 0.2);
-  border-color: rgba(168, 85, 247, 0.65);
-  color: #ffffff;
+  transform: translateY(-1px);
 }
 .cardJoinPill:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+.cardJoinPillLabel {
+  position: relative;
+  z-index: 1;
 }
 
 /* Join pill — switches between violet "Participar" and a quiet

@@ -59,7 +59,9 @@ type View =
 
 /** Minimum Fanpoints required to spawn a new community. Mirrors the
  *  server-side constant in `src/server/communities/queries.ts`. */
-const CREATE_FP_THRESHOLD = 10_000;
+/* Threshold pra criar comunidade — 10k → 200 per spec "mude a
+ * regra para criação de comunidade para 200 Fanpoints". */
+const CREATE_FP_THRESHOLD = 200;
 
 /** Format helper for relative time in a single line. */
 function relativeTime(iso: string): string {
@@ -500,21 +502,14 @@ function CommunityListView({
                         type="button"
                         className={styles.cardJoinPill}
                         onClick={() => void onJoin(c)}
-                        aria-label={`Entrar na comunidade ${c.name}`}
+                        aria-label={`Participar na comunidade ${c.name}`}
                       >
-                        <svg
-                          viewBox="0 0 16 16"
-                          width="12"
-                          height="12"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M8 3v10M3 8h10" />
-                        </svg>
-                        Entrar
+                        {/* "Entrar" → "Participar" + estilo gradient-border
+                         * per spec "substitua o cta Entrar por Participar
+                         * com o mesmo estilo de botão que tem no meu
+                         * perfil/comunidades". Label dentro de
+                         * .cardJoinPillLabel pra ficar acima do gradient. */}
+                        <span className={styles.cardJoinPillLabel}>Participar</span>
                       </button>
                     )}
                     <KebabMenu actions={actions} />
