@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'motion/react';
 import { api, ApiError } from '@/lib/api/client';
 import type {
   ApiCommunityCard,
@@ -436,9 +437,13 @@ function CommunityListView({
           />
         </div>
 
-        {/* Tabs Geral | Shows — segue o padrão visual dos chips
-         *  de filtro do ConversationsSidebar (Conversas/Grupos),
-         *  per spec "tabs semelhante às tabs que existem em Chat". */}
+        {/* Tabs Geral | Shows — Tab select estilo motion: o pill
+         *  ativo é um motion.span com layoutId="commTabPill" que
+         *  desliza entre os botões quando o usuário troca de tab
+         *  (motion auto-anima posição+tamanho via FLIP layout).
+         *  Cores preservadas do design original: purple tint
+         *  rgba(168,85,247,.16) + border rgba(...,.55) + label
+         *  #d8b4fe. Resto vira transparente; só o pill anima. */}
         <div
           className={styles.tabsRow}
           role="tablist"
@@ -448,19 +453,33 @@ function CommunityListView({
             type="button"
             role="tab"
             aria-selected={activeTab === 'general'}
-            className={`${styles.tabBtn} ${activeTab === 'general' ? styles.tabBtnActive : ''}`}
+            className={styles.tabBtn}
             onClick={() => setActiveTab('general')}
           >
-            Geral
+            {activeTab === 'general' && (
+              <motion.span
+                layoutId="commTabPill"
+                className={styles.tabBtnPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={styles.tabBtnLabel}>Geral</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'shows'}
-            className={`${styles.tabBtn} ${activeTab === 'shows' ? styles.tabBtnActive : ''}`}
+            className={styles.tabBtn}
             onClick={() => setActiveTab('shows')}
           >
-            Shows
+            {activeTab === 'shows' && (
+              <motion.span
+                layoutId="commTabPill"
+                className={styles.tabBtnPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={styles.tabBtnLabel}>Shows</span>
           </button>
         </div>
 

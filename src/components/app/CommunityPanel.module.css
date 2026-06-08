@@ -301,12 +301,16 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
-/* ── Tabs Geral | Shows ─────────────────────────────────────
- * Per spec "adicione duas tabs, semelhante às tabs que existem
- * em Chat". Mesmo padrão visual do `.filterChip` (Conversas /
- * Grupos no ConversationsSidebar): chip pill com bg/borda
- * sutil, activa com tint roxo. flex-shrink 0 mantém os chips
- * em uma linha mesmo em width estreito. */
+/* ── Tabs Geral | Shows (motion Tab select) ─────────────────
+ * Per spec "substitua as tabs pela Tab select do motion
+ * preservando as cores". Pattern: cada botão é transparente;
+ * o pill colorido vive num motion.span filho do botão ativo,
+ * com layoutId="commTabPill" — motion auto-anima posição+
+ * tamanho via FLIP quando o ativo muda.
+ *
+ * Cores preservadas: bg rgba(168,85,247,.16) + border .55
+ * + label #d8b4fe. Inativo recebe color rgba(245,...,.65)
+ * via .tabBtn base. */
 .tabsRow {
   display: flex;
   gap: 6px;
@@ -314,30 +318,50 @@
   flex-shrink: 0;
 }
 .tabBtn {
+  /* Position relative pra o pill absolute do filho ficar
+   *  ancorado dentro do botão. z-index 0 cria stacking
+   *  context pro pill negativo ficar atrás do label. */
+  position: relative;
+  z-index: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border: none;
   color: rgba(245, 245, 247, 0.65);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
-  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+  transition: color 0.14s ease;
 }
 .tabBtn:hover {
-  background: rgba(255, 255, 255, 0.07);
   color: #f5f5f7;
 }
-.tabBtnActive,
-.tabBtnActive:hover {
-  background: rgba(168, 85, 247, 0.16);
-  border-color: rgba(168, 85, 247, 0.55);
+/* aria-selected dirige a cor do label sem precisar de classe
+ *  extra. O pill roxo (via motion.span) sobrepõe o bg padrão. */
+.tabBtn[aria-selected='true'] {
   color: #d8b4fe;
+}
+.tabBtnPill {
+  /* Pill animado via motion layoutId — desliza entre os
+   *  botões ativos. Cores: tint roxo igual ao design original
+   *  (rgba 168/85/247/.16 bg + border .55). */
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  z-index: -1;
+}
+.tabBtnLabel {
+  /* Z-index 1 garante que o texto fique acima do pill (que
+   *  tem z-index -1). position relative cria a stacking. */
+  position: relative;
+  z-index: 1;
 }
 
 /* Primary CTAs — purple pill (matches "Resolver" in QuizPost +
