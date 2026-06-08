@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
@@ -77,33 +77,15 @@ export default function ConversationsSidebar({
    * posição". O picker vira subview do painel hospedeiro em vez
    * de um overlay sobre tudo. */
   const [createView, setCreateView] = useState<'single' | 'group' | null>(null);
-  /* Kebab por linha. Guardamos o id da conversa cujo menu está
-   * aberto — null significa "todos fechados". Click outside fecha
-   * via listener global; click em outra linha troca pra ela. */
-  const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
+  /* Kebab REMOVIDO — agora a única forma de apagar é via swipe
+   *  iOS-like (SwipeAction). Per spec "remova os tres pontinhos
+   *  de cada conversa na lista de chat. Vamos manter apenas o
+   *  swipe para apagar". hidingId continua pra debounce do
+   *  optimistic hide enquanto o backend confirma. */
   const [hidingId, setHidingId] = useState<string | null>(null);
-  const kebabMenuRef = useRef<HTMLDivElement>(null);
-
-  // Click fora do menu fecha-o. Listener global registrado só
-  // quando há menu aberto pra não dar overhead constante.
-  useEffect(() => {
-    if (!kebabOpenId) return;
-    const onDoc = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (kebabMenuRef.current && !kebabMenuRef.current.contains(target)) {
-        // Click em outro kebab trigger é detectado por outro
-        // handler na própria row — aqui só fechamos quando o
-        // click foi em algo COMPLETAMENTE fora.
-        setKebabOpenId(null);
-      }
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [kebabOpenId]);
 
   const handleHideConversation = async (id: string) => {
     if (hidingId) return;
-    setKebabOpenId(null);
     const ok = await confirmDialog({
       title: 'Apagar essa conversa?',
       body: 'Ela some apenas pra você; a outra parte continua vendo tudo.',
@@ -112,7 +94,6 @@ export default function ConversationsSidebar({
     });
     if (!ok) return;
     setHidingId(id);
-    setKebabOpenId(null);
     try {
       const res = await fetch(`/api/conversations/${id}/hide`, {
         method: 'POST',
@@ -373,13 +354,12 @@ export default function ConversationsSidebar({
             // user's actual last sentence, not the quoted block.
             const preview = previewRaw ? stripReplyPrefix(previewRaw) : '';
 
-            const isKebabOpen = kebabOpenId === c.id;
             return (
               /* SwipeAction wrapper: swipe pra esquerda revela
-               *  botão "Apagar" no estilo iOS Mail/Messages. O
-               *  mesmo handler usado pelo kebab é disparado pelo
-               *  swipe — kebab continua disponível como fallback
-               *  desktop/keyboard. */
+               *  botão "Apagar" no estilo iOS Mail/Messages. Per
+               *  spec "vamos manter apenas o swipe para apagar"
+               *  — esse é o único entry point pra deletar; kebab
+               *  removido. */
               <SwipeAction
                 key={c.id}
                 actionLabel="Apagar"
@@ -469,45 +449,9 @@ export default function ConversationsSidebar({
                   </span>
                 )}
 
-                {/* Kebab: 3 dots verticais. stopPropagation pra que
-                 * o click NÃO abra a conversa. */}
-                <button
-                  type="button"
-                  className={styles.kebabBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setKebabOpenId((cur) => (cur === c.id ? null : c.id));
-                  }}
-                  aria-label="Mais opções da conversa"
-                  aria-haspopup="menu"
-                  aria-expanded={isKebabOpen}
-                  disabled={hidingId === c.id}
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <circle cx="7" cy="3" r="1.3" fill="currentColor" />
-                    <circle cx="7" cy="7" r="1.3" fill="currentColor" />
-                    <circle cx="7" cy="11" r="1.3" fill="currentColor" />
-                  </svg>
-                </button>
-
-                {isKebabOpen && (
-                  <div
-                    ref={kebabMenuRef}
-                    className={styles.kebabMenu}
-                    role="menu"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      className={`${styles.kebabItem} ${styles.kebabItemDanger}`}
-                      role="menuitem"
-                      onClick={() => handleHideConversation(c.id)}
-                      disabled={hidingId === c.id}
-                    >
-                      Apagar conversa
-                    </button>
-                  </div>
-                )}
+                {/* Kebab REMOVIDO per spec "remova os tres pontinhos
+                 *  de cada conversa, vamos manter apenas o swipe pra
+                 *  apagar". Swipe-to-delete via SwipeAction wrapper. */}
               </div>
               </SwipeAction>
             );
