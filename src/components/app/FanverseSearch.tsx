@@ -331,9 +331,11 @@ export default function FanverseSearch() {
           const pos = positions[i];
           const revealPos = idx; // posição na sequência de reveal
           const isShown = revealPos < avatarsShown;
-          /* delay do roam = 1.2s (duração entrada) + stagger leve.
-           * blink delay negativo pra cada um piscar em fase própria. */
-          const roamDelay = 1.2 + i * 0.35;
+          /* roamDelay = 0 — fsRoam roda em paralelo com fsAvatarIn
+           *  (opacity-only) desde t=0, eliminando o jump da pos
+           *  final do fsAvatarIn pra a pos inicial do fsRoam que
+           *  ocorria antes (quando o delay expirava). blink ainda
+           *  com delay negativo pra cada um piscar em fase. */
           const blinkDelay = i * -2.4;
           return (
             <span
@@ -342,9 +344,7 @@ export default function FanverseSearch() {
               style={{
                 top: pos.top,
                 left: pos.left,
-                ['--from-x' as string]: `calc(50vw - ${pos.left})`,
-                ['--from-y' as string]: `calc(50vh - ${pos.top})`,
-                animationDelay: `0ms, ${roamDelay}s, ${blinkDelay}s`,
+                animationDelay: `0ms, 0s, ${blinkDelay}s`,
               }}
               title={l.name}
             >

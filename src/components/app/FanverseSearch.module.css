@@ -266,9 +266,10 @@
   /* z-index 3 garante que os avatares passem POR CIMA do orbe. */
   z-index: 3;
   opacity: 0;
-  /* Defaults dos CSS vars caso o JSX não tenha computado ainda. */
-  --from-x: 0;
-  --from-y: 0;
+  /* Promove a layer GPU desde o mount — evita "promotion mid-anim"
+   *  que causa flicker no primeiro frame em mobile. */
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
   /* IMPORTANTE: animações ficam definidas aqui mas só DISPARAM
    * quando .floatingAvatarShown é aplicado.
    *
@@ -318,23 +319,19 @@
   display: block;
 }
 
-/* Entrada cinemática — cada avatar começa no centro da viewport
- * (translate por --from-x/y, que compensa a diferença entre sua
- * posição final em vw/vh e o centro 50vw/50vh) com scale 0.2, e
- * voa pra posição final escalando até 1. Dá a sensação de
- * "emergindo de dentro do orbe". */
+/* Entrada — só fade de opacidade. ANTES era cinemática (scale +
+ * translate do centro pra posição final), mas isso causava JUMP
+ * visível: fsAvatarIn termina em `translate(0,0)` enquanto fsRoamN
+ * começa em `translate(-220px,-40px)`. No moment que o roamDelay
+ * expirava (1.2-5s depois), o avatar saltava da pos final pra a
+ * pos inicial do roam. Per feedback "objetos tremem".
+ *
+ * Solução: fade in transparente apenas. fsRoam roda em paralelo
+ * desde frame 1 (roamDelay agora é 0), controlando transform
+ * continuamente — zero discontinuidade. */
 @keyframes fsAvatarIn {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) translate(var(--from-x), var(--from-y)) scale(0.15);
-  }
-  40% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) translate(0, 0) scale(1);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* 4 paths de idle-floating CURTO + SUTIL inspirado no /teste
@@ -532,15 +529,22 @@
   letter-spacing: -0.01em;
   line-height: 1.3;
   text-align: center;
-  animation: fsHeadlineIn 520ms ease-out;
+  /* min-height reserva o espaço pra o pior caso de 2-3 linhas e
+   *  evita layout shift quando a frase troca (key remount). Phrase
+   *  rotation a cada 4s causava "pulo" visível antes — agora a
+   *  altura é estável, só o conteúdo faz fade. */
+  min-height: 56px;
+  /* Entrada/swap só fade opacity. ANTES tinha translateY(8px)
+   *  que dava sensação de "salto" toda vez que a frase mudava. */
+  animation: fsHeadlineIn 280ms ease-out;
 }
 .headlineMuted {
   font-weight: 400;
   color: rgba(245, 245, 247, 0.65);
 }
 @keyframes fsHeadlineIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── Match stack (pilha estilo Apple Wallet) ───────────────── */
@@ -936,8 +940,65 @@
   .floatingAvatar:nth-child(2n)   { width: 28px; height: 28px; }
   .floatingAvatar:nth-child(3n)   { width: 38px; height: 38px; }
   /* Match card mobile — touch-action ainda mais permissivo pra
-   * o swipe horizontal não competir com scroll vertical. */
+   * o swipe horizontal não competir com scroll vertical.
+   *
+   * Per feedback "elementos aparecendo (cards) em alguns momentos
+   * não está fluído... objetos tremem": removemos transition de
+   * opacity e box-shadow no mobile, deixando só transform.
+   * box-shadow transition força repaint full-area todo frame —
+   * caríssimo na GPU mobile e principal causador do tremor nos
+   * cards quando o stack reorganiza. will-change promove a layer
+   * GPU desde mount, evitando flicker do primeiro frame. */
   .matchCard {
     width: min(360px, 92vw);
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, opacity;
+  }
+  .matchCardDragging {
+    transition: none;
+  }
+
+  /* Mask-image transition no .scroll é GPU-killer em mobile —
+   * cada frame força raster da área inteira porque o gradient
+   * stops mudam continuamente. Per feedback "objetos tremem".
+   * Mantemos a transition só do padding-top (que é layout-cheap)
+   * e snapamos o mask diretamente sem interpolação. */
+  .scroll {
+    transition: padding-top 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Floating layer transform — promoção GPU + duração menor. A
+   * transição de 900ms da layer inteira é cara porque arrasta
+   * todos os avatares animados juntos; encurtar pra 600ms e
+   * promover ajuda. */
+  .floatingLayer {
+    will-change: transform, opacity;
+    transition:
+      transform 600ms cubic-bezier(0.22, 1, 0.36, 1) 200ms,
+      opacity 500ms ease 200ms;
+  }
+}
+
+/* Respeita prefers-reduced-motion — desliga todas as animações
+ * decorativas e mantém só o estado final visível. Cobre quem
+ * configurou redução de movimento no SO. */
+@media (prefers-reduced-motion: reduce) {
+  .floatingAvatarShown,
+  .floatingAvatar,
+  .matchCard,
+  .matchStack,
+  .userRow,
+  .userList,
+  .headline,
+  .analyzing,
+  .orb,
+  .showMoreBtn,
+  .floatingLayer {
+    animation: none !important;
+    transition: none !important;
+  }
+  .floatingAvatar,
+  .floatingAvatarShown {
+    opacity: 1 !important;
   }
 }
