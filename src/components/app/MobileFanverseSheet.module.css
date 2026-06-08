@@ -260,9 +260,22 @@
   margin-top: -18px;
 }
 .metaPoints {
+  /* Agora é o <button> que abre o FanpointsModal. Zera chrome
+   * nativo + leve hover pra indicar interatividade. */
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  padding: 2px 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 140ms ease;
+}
+.metaPoints:active {
+  opacity: 0.7;
 }
 /* Per product feedback "deixe a tipografia da quantidade de
  * Fanpoints do mesmo tamanho que a palavra Fanpoints, porém

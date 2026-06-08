@@ -516,9 +516,29 @@
   margin-top: 8px;
 }
 .metaPoints {
+  /* Agora é o <button> que abre o FanpointsModal. Zera o chrome
+   * nativo de button (bg/border/font) pra ficar visualmente igual
+   * ao <div> antigo — só ganha cursor:pointer + leve highlight de
+   * texto no hover pra indicar interatividade. */
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  padding: 2px 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 140ms ease;
+}
+.metaPoints:hover {
+  opacity: 0.85;
+}
+.metaPoints:focus-visible {
+  outline: 2px solid rgba(167, 139, 250, 0.55);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 .metaPointsValue {
   font-size: 12.5px;

@@ -400,7 +400,23 @@ export default function ArtistBox() {
                 className={styles.metaRow}
                 data-onboarding-anchor="fanpoints"
               >
-                <div className={styles.metaPoints}>
+                {/* metaPoints agora é o TRIGGER do FanpointsModal
+                 * per spec "o link para o modal Fanpoints deve ser
+                 * a quantidade de Fanpoints + o nome Fanpoints que
+                 * está abaixo do nome Ana Castela". stopPropagation
+                 * evita que o click vaze pro botão pai (.headerBtn)
+                 * que faz toggle do dropdown. */}
+                <button
+                  type="button"
+                  className={styles.metaPoints}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    try {
+                      window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+                    } catch { /* SSR */ }
+                  }}
+                  aria-label="Abrir Fanpoints"
+                >
                   <span className={styles.metaPointsValue}>
                     {fanpoints.toLocaleString('pt-BR')}
                   </span>
@@ -420,7 +436,7 @@ export default function ArtistBox() {
                       {rankBadge}
                     </span>
                   )}
-                </div>
+                </button>
               </div>
             </div>
             {/* Orb CLICÁVEL — abre o overlay FanverseSearch
@@ -836,10 +852,6 @@ function Top10ProgressBarDesktop() {
 
 export function RankingTabContent() {
   const { user } = useAuth();
-  /* Fanpoints do user logado pra mostrar como link "X Fanpoints"
-   * no topo da tab (substituiu "Minhas conquistas" per spec). */
-  const { profile } = useUserProfile(user?.id ?? null);
-  const fanpoints = profile?.fanpoints ?? 0;
   const { ranking, loading, error } = useRanking(true);
   /* Lista de online ao vivo — usada pra renderizar o dot
    * verde/cinza ao lado do avatar de cada linha. Recarrega
@@ -865,21 +877,10 @@ export function RankingTabContent() {
 
   return (
     <div className={styles.tabRanking}>
-      {/* Link "X Fanpoints" abre o FanpointsModal (mount global
-       * no layout). Substituiu o "Minhas conquistas" per spec —
-       * exibe o saldo atualizado do user e leva pro mesmo modal
-       * (que tem aba Minhas Conquistas como tab default). */}
-      <button
-        type="button"
-        className={styles.conquistasLink}
-        onClick={() => {
-          try {
-            window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
-          } catch { /* SSR */ }
-        }}
-      >
-        {fanpoints.toLocaleString('pt-BR')} Fanpoints
-      </button>
+      {/* O link "X Fanpoints" foi REMOVIDO daqui per spec "remova
+       * a palavra toda 149.424 Fanpoints que está abaixo das tabs.
+       * Ela não deve existir". O trigger pro modal agora mora no
+       * .metaPoints do fold (abaixo de "Ana Castela"). */}
 
       {/* Lista (sem foto, sem pontos). */}
       {error ? (

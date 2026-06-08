@@ -222,16 +222,27 @@ export default function MobileFanverseSheet({
           </button>
         </div>
         <div className={sheetStyles.metaRow}>
-          <div className={sheetStyles.metaPoints}>
+          {/* metaPoints é o TRIGGER do FanpointsModal per spec
+           * "o link para o modal Fanpoints deve ser a quantidade
+           * de Fanpoints + o nome Fanpoints que está abaixo do
+           * nome Ana Castela". */}
+          <button
+            type="button"
+            className={sheetStyles.metaPoints}
+            onClick={() => {
+              try {
+                window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+              } catch { /* SSR */ }
+            }}
+            aria-label="Abrir Fanpoints"
+          >
             <span className={sheetStyles.metaPointsValue}>
               {fanpoints.toLocaleString('pt-BR')}
             </span>
             <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
-          </div>
+          </button>
           {/* Botão "4 convites" removido do mobile per product
-           * feedback "Remova o botão de 4 convites do mobile".
-           * InviteFriendsModal continua disponível via outros
-           * surfaces (ex.: desktop ArtistBox). */}
+           * feedback "Remova o botão de 4 convites do mobile". */}
         </div>
       </div>
 
