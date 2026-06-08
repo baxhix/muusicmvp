@@ -423,58 +423,12 @@ export default function ProfilePanel({
         ) : null}
 
         {/* ── Botões de ação ──────────────────────────────
-            Own profile:  [ Editar perfil ] [ Minhas mensagens ]
-            Other profile: [ Enviar mensagem  ] [ ⋯ → Denunciar ]
-            The "Acenar" CTA was removed per product feedback —
-            waves still happen on the map marker (heart icon next to
-            the live-user pin), so the action is reachable, just not
-            duplicated inside the profile panel. The "⋯" menu only
-            renders for other profiles. */}
+            Own profile:  [ — removed — ] per spec "remova os
+              botões Notificações, Editar Perfil e Minhas
+              Mensagens"
+            Other profile: [ Enviar mensagem ] [ reações ] */}
         <div className={styles.actionsRow}>
-          {isOwnProfile ? (
-            <>
-              <button
-                type="button"
-                className={styles.actionBtn}
-                onClick={() => {
-                  // NOTE: do NOT call `onClose?.()` here. The
-                  // perfil page wires onClose to
-                  // `router.push('/app')`, which unmounts the
-                  // page that owns the modal's `showEditProfile`
-                  // state. If both fire, the modal flashes for one
-                  // frame (or doesn't render at all) before the
-                  // page unmounts and takes the modal with it.
-                  // We want the user to stay on /app/perfil so
-                  // the modal can open AND stay open until they
-                  // close it themselves.
-                  onEditProfile?.();
-                }}
-              >
-                Editar perfil
-              </button>
-              <button
-                type="button"
-                className={styles.actionBtn}
-                onClick={() => {
-                  // onOpenMessages already navigates to
-                  // /app/superchat. The earlier `onClose?.()` call
-                  // here was a redundant router.push('/app')
-                  // that Next.js superseded with the second push
-                  // — harmless on this path but kept simple now
-                  // that the symmetric "Editar perfil" handler
-                  // dropped it for the bug fix above.
-                  onOpenMessages?.();
-                }}
-                aria-label="Minhas mensagens"
-              >
-                Minhas mensagens
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-                     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z" />
-                </svg>
-              </button>
-            </>
-          ) : (
+          {isOwnProfile ? null : (
             <>
               {/* Reações rápidas (❤️ 👋 💬 👀) à ESQUERDA do botão
                * Enviar mensagem per product feedback "Adicione no
@@ -524,28 +478,10 @@ export default function ProfilePanel({
           )}
         </div>
 
-        {/* Linha extra (own profile only): atalho pra preferências
-            de notificação. Vive em row separada porque os 2 botões
-            do actionsRow já ocupam a largura confortável; adicionar
-            um terceiro espremia tudo. */}
-        {isOwnProfile && (
-          <div className={styles.actionsRow}>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              style={{ maxWidth: 'unset', flex: '1 1 100%' }}
-              onClick={() => onOpenNotifications?.()}
-              aria-label="Notificações"
-            >
-              Notificações
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-                   strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
-          </div>
-        )}
+        {/* Linha de Notificações REMOVIDA per spec "remova os
+         * botões Notificações, Editar Perfil e Minhas Mensagens".
+         * O acesso a notificações continua via outras surfaces
+         * (TopBar drawer + bell mobile). */}
 
         {/* ── Tabs ──
          * Mobile: oculta "Histórico" via visibleTabs filtrado +
@@ -595,29 +531,39 @@ export default function ProfilePanel({
 
           {tab === 'atividade' && (
             isOwnProfile ? (
-              <>
-                <div className={styles.activityHeader}>
-                  <div className={styles.activityTotal}>
-                    <span className={styles.activityTotalValue}>
-                      {totalPoints.toLocaleString('pt-BR')}
-                    </span>
-                    <span className={styles.activityTotalLabel}>pontos totais</span>
-                  </div>
-                  <p className={styles.activityScoring}>
-                    +100 por música · +200 por nova conversa · +50 por login
-                  </p>
-                </div>
-                {activitiesLoading ? (
-                  <div className={styles.historyEmpty}>Carregando atividades…</div>
-                ) : activities.length === 0 ? (
-                  <div className={styles.historyEmpty}>
-                    Ainda sem atividade registrada. Faça login, toque uma música
-                    ou inicie uma conversa pra começar a pontuar.
-                  </div>
-                ) : (
-                  activities.map((a) => <ActivityRow key={a.id} item={a} />)
-                )}
-              </>
+              (() => {
+                /* Per spec "em Minha atividade, liste as últimas
+                 * ações que registraram Fanpoints" — filtra fora
+                 * atividades com points === 0 (ex: `stream` no
+                 * regime atual deflacionado, login que não rendeu,
+                 * etc). Só mostra movimentação positiva. */
+                const fpActivities = activities.filter((a) => a.points > 0);
+                return (
+                  <>
+                    <div className={styles.activityHeader}>
+                      <div className={styles.activityTotal}>
+                        <span className={styles.activityTotalValue}>
+                          {totalPoints.toLocaleString('pt-BR')}
+                        </span>
+                        <span className={styles.activityTotalLabel}>Fanpoints totais</span>
+                      </div>
+                      <p className={styles.activityScoring}>
+                        +50 login · +15 share · +10 comentário · +5 curtida
+                      </p>
+                    </div>
+                    {activitiesLoading ? (
+                      <div className={styles.historyEmpty}>Carregando atividades…</div>
+                    ) : fpActivities.length === 0 ? (
+                      <div className={styles.historyEmpty}>
+                        Ainda sem ações que registraram Fanpoints. Faça login,
+                        compartilhe, comente ou curta pra começar a pontuar.
+                      </div>
+                    ) : (
+                      fpActivities.map((a) => <ActivityRow key={a.id} item={a} />)
+                    )}
+                  </>
+                );
+              })()
             ) : (
               <div className={styles.historyEmpty}>Atividade privada.</div>
             )
@@ -657,7 +603,11 @@ export default function ProfilePanel({
                       onClose?.();
                     }}
                   >
-                    {c.isMember ? 'Abrir' : 'Entrar'}
+                    {/* "Abrir" → "Participar" per spec "substitua
+                     * o botão abrir por Participar". Mesmo label
+                     * pra membros e não-membros (clicar leva pra
+                     * comunidade em ambos os casos). */}
+                    <span className={styles.joinBtnLabel}>Participar</span>
                   </button>
                 </div>
               ))
