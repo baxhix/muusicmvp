@@ -21,6 +21,7 @@ import {
 import VerifiedBadge from './VerifiedBadge';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { MaterialsTabContent } from './MaterialsTabContent';
+import Skeleton from './Skeleton';
 import sheetStyles from './MobileFanverseSheet.module.css';
 import boxStyles from './ArtistBox.module.css';
 
@@ -485,10 +486,12 @@ function MobileRankingList() {
       {/* Lista. */}
       {error ? (
         <div className={sheetStyles.rankingEmpty}>Não consegui carregar agora.</div>
-      ) : ranking.length === 0 ? (
-        <div className={sheetStyles.rankingEmpty}>
-          {loading ? 'Carregando…' : 'Sem fãs ainda.'}
+      ) : loading && ranking.length === 0 ? (
+        <div style={{ padding: '6px 14px' }}>
+          <Skeleton count={6} height={48} gap={8} ariaLabel="Carregando ranking" />
         </div>
+      ) : ranking.length === 0 ? (
+        <div className={sheetStyles.rankingEmpty}>Sem fãs ainda.</div>
       ) : (
         <div className={sheetStyles.rankingList}>
           {/* Top 3 — pódio vertical (cards de alturas diferentes

@@ -1,0 +1,43 @@
+/* Skeleton — shimmer loading placeholder.
+ *
+ * Animação CSS pura (background-position sweep) — GPU composited,
+ * sem JS por frame. Pattern Motion Skeleton Shimmer transcrito
+ * pra CSS pra menor overhead em loops infinitos. */
+
+.root {
+  display: inline-block;
+  vertical-align: middle;
+  /* Gradient triplo: 30% transparente translúcido → 50% highlight
+   *  → 70% transparente. `background-size: 200%` permite deslizar
+   *  o highlight pela largura do skeleton em 1 ciclo. */
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 70%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeletonShimmer 1.6s linear infinite;
+  /* Cor de fallback caso animação esteja desabilitada
+   *  (prefers-reduced-motion) — fica um cinza inerte. */
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  /* gap setado inline pelo componente */
+}
+
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Respeita reduce-motion: para o sweep e mantém só o bg base. */
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    animation: none;
+  }
+}

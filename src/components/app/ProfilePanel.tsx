@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import NowPlaying from './NowPlaying';
+import Skeleton from './Skeleton';
 import NowPlayingPreview from './NowPlayingPreview';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
@@ -521,7 +522,9 @@ export default function ProfilePanel({
           {tab === 'historico' && (
             isOwnProfile ? (
               historyLoading ? (
-                <div className={styles.historyEmpty}>Carregando histórico…</div>
+                <div style={{ padding: '0 18px' }}>
+                  <Skeleton count={5} height={48} gap={6} ariaLabel="Carregando histórico" />
+                </div>
               ) : history.length === 0 ? (
                 <div className={styles.historyEmpty}>
                   Ainda não tem música no histórico. Bota pra tocar lá embaixo
@@ -566,7 +569,9 @@ export default function ProfilePanel({
                       </p>
                     </div>
                     {activitiesLoading ? (
-                      <div className={styles.historyEmpty}>Carregando atividades…</div>
+                      <div style={{ padding: '0 18px' }}>
+                        <Skeleton count={5} height={48} gap={6} ariaLabel="Carregando atividades" />
+                      </div>
                     ) : fpActivities.length === 0 ? (
                       <div className={styles.historyEmpty}>
                         Ainda sem ações que registraram Fanpoints. Faça login,

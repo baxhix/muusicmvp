@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
+import Skeleton from './Skeleton';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
 import { BENEFITS, BenefitIcon } from './SuperfansPanel';
@@ -369,7 +370,9 @@ function ConquistasTab({
        * fetch /api/me/activities + render de cards. */}
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Atividade recente</h3>
-        {activitiesLoading && <p className={styles.empty}>Carregando…</p>}
+        {activitiesLoading && (
+          <Skeleton count={4} height={56} gap={8} ariaLabel="Carregando atividades" />
+        )}
         {!activitiesLoading && activities.length === 0 && (
           <p className={styles.empty}>
             Você ainda não tem atividade registrada. Interaja na

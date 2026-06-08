@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
+import Skeleton from './Skeleton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
@@ -909,10 +910,12 @@ export function RankingTabContent() {
       {/* Lista (sem foto, sem pontos). */}
       {error ? (
         <div className={styles.tabEmpty}>Não consegui carregar agora.</div>
-      ) : ranking.length === 0 ? (
-        <div className={styles.tabEmpty}>
-          {loading ? 'Carregando…' : 'Sem fãs ainda.'}
+      ) : loading && ranking.length === 0 ? (
+        <div style={{ padding: '6px 14px' }}>
+          <Skeleton count={5} height={32} gap={6} ariaLabel="Carregando ranking" />
         </div>
+      ) : ranking.length === 0 ? (
+        <div className={styles.tabEmpty}>Sem fãs ainda.</div>
       ) : (
         <div className={styles.tabRankingList}>
           {visible.map((r, idx) => {

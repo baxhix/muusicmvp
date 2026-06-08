@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
+import Skeleton from './Skeleton';
 import { api, ApiError } from '@/lib/api/client';
 import type {
   ApiCommunityCard,
@@ -484,7 +485,9 @@ function CommunityListView({
         </div>
 
         {loading && activeTab === 'general' && items.length === 0 ? (
-          <div className={styles.emptyState}>Carregando…</div>
+          <div style={{ padding: '8px 16px' }}>
+            <Skeleton count={6} height={72} gap={10} ariaLabel="Carregando comunidades" />
+          </div>
         ) : displayedItems.length === 0 ? (
           <div className={styles.emptyState}>
             {query
