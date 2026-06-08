@@ -362,20 +362,44 @@ export default function ArtistBox() {
           />
         </div>
 
-        {/* Fold — overlap com gradient sobre o hero. Eyebrow + nome +
-         * verified + orb à direita, depois meta row com Fanpoints. */}
+        {/* Fold — overlap com gradient sobre o hero.
+         *
+         * Estrutura per spec "separe o orbe do mesmo bloco da palavra
+         * Ana Castela, mas mesmo assim mantenha alinhado":
+         *  .foldHeadRow (flex row, align-items: center)
+         *    ├── .foldHead (column: eyebrow + título + meta)
+         *    └── .foldOrb  (orb à direita, centrado vertical)
+         *
+         * Com o orbe FORA do bloco do título, a coluna de texto fica
+         * compacta — "Fanverse" e "496.674 Fanpoints" se aproximam
+         * de "Ana Castela" verticalmente. */}
         <div className={styles.fold}>
-          <span className={styles.foldEyebrow}>Fanverse</span>
-          <div className={styles.foldTitleRow}>
-            <div className={styles.foldTitle}>
-              <span className={styles.foldTitleName}>Ana Castela</span>
-              <VerifiedBadge size={18} className={styles.foldVerified} />
+          <div className={styles.foldHeadRow}>
+            <div className={styles.foldHead}>
+              <span className={styles.foldEyebrow}>Fanverse</span>
+              <div className={styles.foldTitleRow}>
+                <div className={styles.foldTitle}>
+                  <span className={styles.foldTitleName}>Ana Castela</span>
+                  <VerifiedBadge size={18} className={styles.foldVerified} />
+                </div>
+              </div>
+              <div
+                className={styles.metaRow}
+                data-onboarding-anchor="fanpoints"
+              >
+                <div className={styles.metaPoints}>
+                  <span className={styles.metaPointsValue}>
+                    {fanpoints.toLocaleString('pt-BR')}
+                  </span>
+                  <span className={styles.metaPointsLabel}>Fanpoints</span>
+                </div>
+              </div>
             </div>
-            {/* Orb agora é CLICÁVEL — abre o overlay FanverseSearch
+            {/* Orb CLICÁVEL — abre o overlay FanverseSearch
              * ("Analisando atividade do mundo"). e.stopPropagation
-             * impede que o clique também acione o toggle do header
-             * (que abre/fecha o dropdown do box). type=button +
-             * aria-label pra acessibilidade. */}
+             * impede que o clique vaze pro toggle do header. Agora
+             * mora fora do bloco do título mas alinhado vertical via
+             * align-items: center no .foldHeadRow. */}
             <button
               type="button"
               className={styles.foldOrb}
@@ -389,20 +413,6 @@ export default function ArtistBox() {
             >
               <FanverseCore />
             </button>
-          </div>
-          <div
-            className={styles.metaRow}
-            data-onboarding-anchor="fanpoints"
-          >
-            <div className={styles.metaPoints}>
-              <span className={styles.metaPointsValue}>
-                {fanpoints.toLocaleString('pt-BR')}
-              </span>
-              <span className={styles.metaPointsLabel}>Fanpoints</span>
-            </div>
-            {/* Botão "4 convites" removido per product feedback
-             * anterior. InviteFriendsModal permanece disponível via
-             * outros surfaces. */}
           </div>
         </div>
       </button>

@@ -339,7 +339,24 @@
   padding: 36px 16px 8px;
 }
 
-/* Eyebrow "Fanverse" — Inter, pequeno, acima do nome. */
+/* Row externa do fold — agrupa coluna de texto (eyebrow + título
+ * + Fanpoints) com o orbe à direita, alinhados verticalmente pelo
+ * centro. Per spec "separe o orbe do mesmo bloco da palavra Ana
+ * Castela, mas mesmo assim mantenha alinhado". */
+.foldHeadRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.foldHead {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Eyebrow "Fanverse" — Inter, pequeno, acima do nome. Margem zero
+ * pra ficar bem próximo de "Ana Castela" (per spec). */
 .foldEyebrow {
   display: block;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
@@ -348,19 +365,17 @@
   letter-spacing: 0.02em;
   color: rgba(245, 245, 247, 0.75);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-  margin: 0 0 2px;
+  margin: 0;
   line-height: 1;
 }
 
-/* Title row — nome + verified à esquerda, orb decorativo à direita.
- * Mesma estrutura do MobileFanverseSheet (mesma class semantics:
- * foldTitleRow → foldTitle → foldTitleName + foldVerified). */
+/* Title row — só nome + verified à esquerda. O orb saiu daqui pra
+ * .foldHeadRow (sibling do .foldHead), então sem justify-content. */
 .foldTitleRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
-  margin-bottom: 4px;
+  margin: 0;
 }
 .foldTitle {
   display: inline-flex;
@@ -373,12 +388,14 @@
 }
 .foldTitleName {
   /* 26px — escala compatível com a largura de 280-320px do box. No
-   * mobile o nome é 38px (tela inteira); aqui fica proporcional. */
+   * mobile o nome é 38px (tela inteira); aqui fica proporcional.
+   * line-height 1 (era 1.05) — corta o leading de cima/baixo do
+   * glyph pra colar visualmente em "Fanverse" e "Fanpoints". */
   font-size: 26px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.02em;
-  line-height: 1.05;
+  line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -426,7 +443,10 @@
   justify-content: space-between;
   gap: 16px;
   padding: 0;
-  margin-top: -4px;
+  /* margin-top zero (era -4px) — junto com .foldTitleName line-height
+   * apertado, deixa "Fanpoints" colado ao nome per spec "aproximar
+   * a informação 496.674 Fanpoints do nome Ana Castela". */
+  margin-top: 0;
 }
 .metaPoints {
   display: inline-flex;
