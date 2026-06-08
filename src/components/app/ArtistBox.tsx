@@ -458,32 +458,61 @@ export default function ArtistBox() {
         </div>
       </div>
 
-      {/* Affordance "expandir" — visível APENAS quando o box está
-       *  fechado, per product feedback "com o box fechado, aumente
-       *  um pouco a altura para inserir a seta para baixo e
-       *  indicar que ao clicar o box se expande". Faixa fina com
-       *  chevron pulsante apontando pra baixo; clique expande. Some
-       *  quando abre porque o footer da dropdown já carrega o
-       *  chevron oposto (apontando pra cima → fechar). */}
+      {/* Resumo das Missões — visível APENAS quando o box está
+       *  fechado, per spec "com o box Fanverse Ana Castela
+       *  fechado, deixe visível a barra de progresso com a palavra
+       *  Missões do dia e 170 Fanpoints". Replica o
+       *  .missionsHeader + .progressWrap da tab Missões. Clique
+       *  no bloco expande o box e leva pra tab Missões. */}
       {!open && (
-        <button
-          type="button"
-          className={styles.expandHint}
-          onClick={() => setOpen(true)}
-          aria-label="Expandir Fanverse"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+        <>
+          <div className={styles.closedMissionsSummary}>
+            <div className={styles.missionsHeader}>
+              <span className={styles.missionsTitle}>
+                Missões do dia
+                <span
+                  className={styles.missionsInfo}
+                  data-tooltip="Cada dia uma missão diferente. Aproveite!"
+                  role="img"
+                  aria-label="Cada dia uma missão diferente. Aproveite!"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                </span>
+              </span>
+              <span className={styles.xpTotal}>{fpEarned} Fanpoints</span>
+            </div>
+            <div className={styles.progressWrap}>
+              <div className={styles.progressTrack}>
+                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          </div>
+          {/* Affordance "expandir" — chevron pulsante apontando pra
+           * baixo, agora abaixo do resumo de Missões. */}
+          <button
+            type="button"
+            className={styles.expandHint}
+            onClick={() => { setActiveTab('missoes'); setOpen(true); }}
+            aria-label="Expandir Fanverse"
           >
-            <path d="M5 9l7 7 7-7" />
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 9l7 7 7-7" />
+            </svg>
+          </button>
+        </>
       )}
 
       {/* Drop-down body — collapsed by default, animates open via

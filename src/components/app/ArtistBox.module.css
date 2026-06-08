@@ -1287,6 +1287,14 @@
   justify-content: space-between;
 }
 
+/* Resumo das Missões visível com box fechado — wrapper pro
+ * .missionsHeader + .progressWrap. Mora entre as tabs e o
+ * .expandHint. flex-shrink:0 pra não ser comprimido pelo max-height
+ * do .box. */
+.closedMissionsSummary {
+  flex-shrink: 0;
+}
+
 /* Header da tab Missões — mesmo flex que .footerRow tinha mas
  * agora MORA NO TOPO da lista (per spec "coloque na linha de
  * cima junto com 120 Fanpoints"). */
