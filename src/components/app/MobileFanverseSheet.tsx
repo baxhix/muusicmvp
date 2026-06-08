@@ -246,18 +246,11 @@ export default function MobileFanverseSheet({
         </div>
       </div>
 
-      {/* ── Tab bar — mesmas 3 tabs em mesma ordem ── */}
+      {/* ── Tab bar — mesma ordem do desktop:
+       *  Superfãs | Missões | Exclusivo — per spec "no mobile,
+       *  deixe as tabs na mesma ordem que no desktop". ── */}
       <div className={sheetStyles.tabsRow}>
         <div className={boxStyles.tabs} role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'missoes'}
-            className={`${boxStyles.tab} ${activeTab === 'missoes' ? boxStyles.tabActive : ''}`}
-            onClick={() => setActiveTab('missoes')}
-          >
-            Missões
-          </button>
           <button
             type="button"
             role="tab"
@@ -266,6 +259,15 @@ export default function MobileFanverseSheet({
             onClick={() => setActiveTab('ranking')}
           >
             Superfãs
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'missoes'}
+            className={`${boxStyles.tab} ${activeTab === 'missoes' ? boxStyles.tabActive : ''}`}
+            onClick={() => setActiveTab('missoes')}
+          >
+            Missões
           </button>
           <button
             type="button"

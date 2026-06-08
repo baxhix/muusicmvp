@@ -332,10 +332,12 @@
  * global selector). Mantive paridade visual; só relaxei o
  * padding interno do tab pra acomodar 44dp. */
 .tabsRow {
-  /* z-index + bg opaco pra cobrir o hero ao scrollar (sticky). */
+  /* z-index + bg opaco pra cobrir o hero ao scrollar (sticky).
+   * padding-bottom reduzido (14 → 4) per spec "diminua o espaço
+   * que tem entre Missões do dia 170 Fanpoints e as tabs". */
   position: relative;
   z-index: 1;
-  padding: 4px 16px 14px;
+  padding: 4px 16px 4px;
   background:
     linear-gradient(180deg,
       rgba(8, 8, 14, 0.98) 0%,
@@ -447,10 +449,14 @@
 
 /* "Missões do Dia · X Fanpoints" — footer da tab missões. */
 .missionsTotal {
+  /* padding-top reduzido (16 → 6) per spec "diminua o espaço
+   * que tem entre Missões do dia 170 Fanpoints e as tabs".
+   * Combinado com .tabsRow padding-bottom 4px, gap total caiu
+   * de ~30px → ~10px entre o final das tabs e o header. */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 16px 4px;
+  padding: 6px 16px 4px;
 }
 .missionsTotalLabel {
   font-size: 11px;
