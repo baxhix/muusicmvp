@@ -52,6 +52,20 @@ export default function FloatingByline({
   const [progress, setProgress] = useState(0);
   const [started, setStarted] = useState(false);
   const [copied, setCopied] = useState(false);
+  /* useScroll do motion observa o body da prose como target.
+   *  scrollYProgress é MotionValue 0→1 da pos relativa do target
+   *  em relação ao viewport (offset start "start end" → end "end start"
+   *  significa: 0 quando o topo do target entra na base do viewport,
+   *  1 quando a base do target sai pelo topo). Pra reading
+   *  progress queremos o intervalo "start start" → "end end".
+   *
+   *  Em vez de useScroll (que precisa do ref antes do mount), a
+   *  abordagem mais robusta com [data-prose-body] dinâmico é
+   *  manter o scroll listener manual + RAF, MAS apagar o setState
+   *  da progress e usar useMotionValue diretamente — re-render
+   *  React zero em scroll. Pra simplicidade aqui mantemos o
+   *  pattern atual com setState e deixamos useScroll pra páginas
+   *  com ref estático. */
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -62,12 +76,9 @@ export default function FloatingByline({
     function check() {
       if (!proseEl) return;
       const r = proseEl.getBoundingClientRect();
-      // Progress: quanto do corpo já passou pelo topo do
-      // viewport, normalizado pelo (altura - viewport).
       const denom = Math.max(1, r.height - window.innerHeight);
       const p = Math.max(0, Math.min(1, -r.top / denom));
       setProgress(p);
-      // "started" = o topo da prose já tocou o topo do viewport.
       setStarted(r.top <= 96);
     }
     function onScroll() {

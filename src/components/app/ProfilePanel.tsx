@@ -595,7 +595,13 @@ export default function ProfilePanel({
               </div>
             ) : (
               communitiesList.map((c) => (
-                <div key={c.id} className={styles.communityItem}>
+                <motion.div
+                  key={c.id}
+                  className={styles.communityItem}
+                  whileHover={{ y: -2, scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                >
                   <div className={styles.communityEmoji}>
                     {c.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -628,7 +634,7 @@ export default function ProfilePanel({
                      * comunidade em ambos os casos). */}
                     <span className={styles.joinBtnLabel}>Participar</span>
                   </button>
-                </div>
+                </motion.div>
               ))
             )
           )}

@@ -535,7 +535,15 @@ function CommunityListView({
 
               return (
                 <li key={c.id}>
-                  <div className={styles.communityCard}>
+                  {/* whileHover: card sobe 2px + escala 1.01 ao
+                   *  hover desktop. Spring snappy. tap state pra
+                   *  feedback de press (mobile + desktop). */}
+                  <motion.div
+                    className={styles.communityCard}
+                    whileHover={{ y: -2, scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  >
                     <button
                       type="button"
                       className={styles.cardOpenBtn}
@@ -611,7 +619,7 @@ function CommunityListView({
                       </button>
                     )}
                     <KebabMenu actions={actions} />
-                  </div>
+                  </motion.div>
                 </li>
               );
             })}
