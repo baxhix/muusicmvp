@@ -815,51 +815,34 @@ export function RankingTabContent() {
     () => new Set(liveUsers.map((u) => u.id)),
     [liveUsers],
   );
-  const [showAll, setShowAll] = useState(false);
-  /* Toggle inline pra mostrar Conquistas (BenefitsTabContent) no
-   * topo da aba Superfãs per product feedback "Inclua um link
-   * simples com o nome de Conquistas dentro de Superfãs, logo
-   * antes do Ranking". Default fechado pra não poluir a view
-   * principal de ranking. */
-  const [showConquistas, setShowConquistas] = useState(false);
+  /* Pagina o ranking em batches de 20 (default 6) per spec
+   * "adicione o botão Ver mais para conseguir ver os outros
+   * usuários do Ranking" — cada clique revela 20 a mais sem ir
+   * direto pra 100; o botão fica sempre próximo do scroll
+   * position do usuário em vez de "explodir" o tamanho da lista. */
+  const [visibleCount, setVisibleCount] = useState(6);
 
   /* Memoizado pra que o slice não recrie array a cada render
    * (ex.: cada update do hook useLiveUsers dispara render). */
   const visible = useMemo(
-    () => (showAll ? ranking : ranking.slice(0, 6)),
-    [showAll, ranking],
+    () => ranking.slice(0, visibleCount),
+    [visibleCount, ranking],
   );
 
   return (
     <div className={styles.tabRanking}>
-      {/* Link "Conquistas" inline — expande BenefitsTabContent
-       * abaixo quando clicado. Substitui a tab dedicada que foi
-       * removida. Chevron rotaciona conforme o estado. */}
-      <button
-        type="button"
+      {/* "Conquistas" como link simples per spec "deixe o Minha
+       * conquista como um link simples, sem ser dropdown" — sem
+       * chevron, sem expansão inline; clique navega pro
+       * BenefitsTabContent via custom event (mesmo padrão do
+       * orb → FanverseSearch). */}
+      <Link
+        href="/app/ranking"
         className={styles.conquistasLink}
-        onClick={() => setShowConquistas((s) => !s)}
-        aria-expanded={showConquistas}
+        prefetch={false}
       >
-        <span>Conquistas</span>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`${styles.conquistasChevron} ${showConquistas ? styles.conquistasChevronOpen : ''}`}
-          aria-hidden="true"
-        >
-          <path d="M5 9l7 7 7-7" />
-        </svg>
-      </button>
-      {showConquistas && (
-        <div className={styles.conquistasInline}>
-          <BenefitsTabContent />
-        </div>
-      )}
+        Minhas conquistas
+      </Link>
 
       {/* Lista (sem foto, sem pontos). */}
       {error ? (
@@ -936,13 +919,13 @@ export function RankingTabContent() {
         </div>
       )}
 
-      {!showAll && ranking.length > 6 && (
+      {visibleCount < ranking.length && (
         <button
           type="button"
           className={styles.tabRankingLoadMore}
-          onClick={() => setShowAll(true)}
+          onClick={() => setVisibleCount((c) => c + 20)}
         >
-          Carregar mais usuários
+          Ver mais
         </button>
       )}
     </div>
