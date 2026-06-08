@@ -6,6 +6,7 @@ import { track } from '@/lib/analytics';
 import { awardPoints } from '@/lib/rewards';
 import type { ApiFeedComment, ApiFeedCommentReactionResult } from '@/lib/api/types';
 import CommentInput from './CommentInput';
+import HeartButton from './HeartButton';
 import styles from './CommentsPanel.module.css';
 
 /** Local mention-count helper. Mirrors the regex in CommentsPanel
@@ -258,20 +259,15 @@ export default function CommentItem({
         </div>
 
         <div className={styles.commentActions}>
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${styles.likeBtn} ${comment.reactions.mine ? styles.liked : ''}`}
-            onClick={handleLike}
+          {/* HeartButton reutilizável: scale pop + 6 sparkles radial
+           *  ao curtir (estilo Instagram). Pink fill quando active. */}
+          <HeartButton
+            active={comment.reactions.mine}
+            onToggle={handleLike}
+            count={comment.reactions.count}
             disabled={!!comment.deletedAt}
-            aria-label={comment.reactions.mine ? 'Descurtir comentário' : 'Curtir comentário'}
-            aria-pressed={comment.reactions.mine}
-          >
-            <HeartIcon filled={comment.reactions.mine} />
-            {/* "Curtir" label removed per product feedback — only the
-                count surfaces when there is one. Empty heart on its
-                own is enough affordance to invite the action. */}
-            {comment.reactions.count > 0 ? comment.reactions.count : null}
-          </button>
+            ariaLabel={comment.reactions.mine ? 'Descurtir comentário' : 'Curtir comentário'}
+          />
 
           {!isReply && !comment.deletedAt && (
             <button

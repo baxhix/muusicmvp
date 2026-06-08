@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import styles from './AppToast.module.css';
 
 /**
@@ -60,27 +61,38 @@ export default function AppToast() {
     };
   }, []);
 
-  if (!toast) return null;
-
+  /* AnimatePresence orquestra mount/unmount via slide+fade vertical.
+   *  key={toast?.id} força animação a cada novo toast mesmo se o
+   *  anterior ainda estiver visível. Substitui CSS animation
+   *  manual (toast.toastEnter/Exit). */
   return (
-    <div
-      className={`${styles.toast} ${styles[`tone_${toast.tone}`] ?? ''}`}
-      role="status"
-      aria-live="polite"
-    >
-      {toast.tone === 'success' && (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M2.5 7.5l3 3 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+    <AnimatePresence>
+      {toast && (
+        <motion.div
+          key={toast.id}
+          className={`${styles.toast} ${styles[`tone_${toast.tone}`] ?? ''}`}
+          role="status"
+          aria-live="polite"
+          initial={{ opacity: 0, y: -16, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -12, scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+        >
+          {toast.tone === 'success' && (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2.5 7.5l3 3 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+          {toast.tone === 'error' && (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M7 4v4M7 11v.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          )}
+          <span>{toast.message}</span>
+        </motion.div>
       )}
-      {toast.tone === 'error' && (
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M7 4v4M7 11v.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.4" />
-        </svg>
-      )}
-      <span>{toast.message}</span>
-    </div>
+    </AnimatePresence>
   );
 }
 

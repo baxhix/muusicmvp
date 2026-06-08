@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import Skeleton from './Skeleton';
+import NumberTicker from './NumberTicker';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
@@ -420,7 +421,11 @@ export default function ArtistBox() {
                   aria-label="Abrir Fanpoints"
                 >
                   <span className={styles.metaPointsValue}>
-                    {fanpoints.toLocaleString('pt-BR')}
+                    {/* NumberTicker: ao ganhar Fanpoints, o
+                     *  número sobe interpolado em vez de
+                     *  atualizar instantâneo. Wow factor +
+                     *  reforça que o ranking é dinâmico. */}
+                    <NumberTicker value={fanpoints} />
                   </span>
                   <span className={styles.metaPointsLabel}>Fanpoints</span>
                   {/* Badge de colocação no ranking — (Top 1!) pro

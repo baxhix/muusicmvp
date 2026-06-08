@@ -9,6 +9,7 @@ import type {
   ApiFeedComment,
   ApiFeedCommentsPage,
 } from '@/lib/api/types';
+import { AnimatePresence, motion } from 'motion/react';
 import CommentInput from './CommentInput';
 import CommentItem from './CommentItem';
 import styles from './CommentsPanel.module.css';
@@ -364,12 +365,24 @@ export default function CommentsPanel({
           </div>
         )}
 
+        {/* AnimatePresence + motion.div layout: comentários
+         *  novos entram com fade+slide-down spring; deletados
+         *  saem com fade+collapse height; reorder anima via FLIP
+         *  automático (layout prop). */}
+        <AnimatePresence initial={false}>
         {comments.map((c) => {
           const open = openReplyThreads.has(c.id);
           const replies = repliesByParent[c.id] ?? [];
           const loading = loadingReplies.has(c.id);
           return (
-            <div key={c.id}>
+            <motion.div
+              key={c.id}
+              layout
+              initial={{ opacity: 0, y: -8, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -8, height: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            >
               <CommentItem
                 comment={c}
                 currentUserId={currentUserId}
@@ -406,9 +419,10 @@ export default function CommentsPanel({
                   ))}
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
+        </AnimatePresence>
 
         {hasMore && comments.length > 0 && (
           <button

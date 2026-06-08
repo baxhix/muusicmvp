@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useNotificationsLive } from '@/hooks/useNotificationsLive';
 import type { ApiNotification } from '@/lib/api/types';
 import styles from './NotificationBell.module.css';
@@ -283,7 +284,22 @@ export default function NotificationBell({
             <path d="M10 2a5 5 0 0 0-5 5v3.5L3.5 13h13L15 10.5V7a5 5 0 0 0-5-5z" />
             <path d="M8 16a2 2 0 0 0 4 0" />
           </svg>
-          {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          {/* Badge anima scale 0→1 spring quando aparece (nova
+           *  notificação). AnimatePresence handle unmount fade. */}
+          <AnimatePresence>
+            {unreadCount > 0 && (
+              <motion.span
+                key="badge"
+                className={styles.badge}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </button>
       )}
 
