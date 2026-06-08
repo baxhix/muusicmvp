@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type AnimationEvent } from 'react';
 import { createPortal } from 'react-dom';
+import MotionStateButton from './MotionStateButton';
 import styles from './DeleteAccountModal.module.css';
 
 interface DeleteAccountModalProps {
@@ -117,18 +118,22 @@ export default function DeleteAccountModal({
           <button type="button" className={styles.btnGhost} onClick={onClose}>
             Cancelar
           </button>
-          <button
-            type="button"
-            className={styles.btnDelete}
+          {/* Multi-state badge: idle "Excluir minha conta" →
+           *  pending "Excluindo..." → success "Excluído ✓".
+           *  await fake 600ms simula latência do backend mock
+           *  (até existir endpoint real). */}
+          <MotionStateButton
+            tone="danger"
+            idleLabel="Excluir minha conta"
+            pendingLabel="Excluindo…"
+            successLabel="Excluído"
             disabled={!canDelete}
-            onClick={() => {
-              alert('Conta excluída (mock).');
+            onClick={async () => {
+              await new Promise((r) => setTimeout(r, 600));
               setConfirmName('');
               onClose();
             }}
-          >
-            Excluir minha conta
-          </button>
+          />
         </footer>
       </aside>
     </>

@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import MotionStateButton from './MotionStateButton';
 import styles from './ReportModal.module.css';
 
 interface Props {
@@ -296,14 +297,18 @@ export default function ReportModal({
               >
                 Cancelar
               </button>
-              <button
-                type="button"
-                className={styles.primaryBtn}
+              {/* Multi-state badge button: idle "Enviar denúncia"
+               *  → pending spinner "Enviando..." → success "Enviado ✓"
+               *  → fica sticky até o modal fechar via onSubmitted. */}
+              <MotionStateButton
+                tone="danger"
+                idleLabel="Enviar denúncia"
+                pendingLabel="Enviando…"
+                successLabel="Enviado"
+                stickySuccess
                 onClick={onSubmit}
                 disabled={busy}
-              >
-                {busy ? 'Enviando…' : 'Enviar denúncia'}
-              </button>
+              />
             </div>
           </>
         )}

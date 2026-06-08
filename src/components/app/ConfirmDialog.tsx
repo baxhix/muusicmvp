@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import MotionStateButton from './MotionStateButton';
 import styles from './ConfirmDialog.module.css';
 
 /**
@@ -101,17 +102,24 @@ export default function ConfirmDialog() {
           >
             {pending.cancelLabel ?? 'Cancelar'}
           </button>
-          <button
-            type="button"
-            className={
-              tone === 'danger'
-                ? `${styles.confirmBtn} ${styles.confirmBtnDanger}`
-                : styles.confirmBtn
-            }
-            onClick={() => settle(true)}
-          >
-            {pending.confirmLabel ?? 'Confirmar'}
-          </button>
+          {/* Multi-state badge motion: idle → pending (spinner)
+           *  → success (check) → fecha. onClick resolve true,
+           *  e o setTimeout do MotionStateButton garante o
+           *  check ficar visível por 400ms antes do unmount. */}
+          <MotionStateButton
+            tone={tone === 'danger' ? 'danger' : 'primary'}
+            size="sm"
+            idleLabel={pending.confirmLabel ?? 'Confirmar'}
+            pendingLabel="Confirmando…"
+            successLabel="Pronto"
+            stickySuccess
+            onClick={async () => {
+              settle(true);
+              /* Pequeno hold pro check render antes do unmount
+               *  do modal. ConfirmDialog desmonta via settle. */
+              await new Promise((r) => setTimeout(r, 320));
+            }}
+          />
         </div>
       </div>
     </div>
