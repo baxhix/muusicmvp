@@ -1002,13 +1002,18 @@
 
 /* Mini composer mostrado quando o emoji 💬 é clicado. Substitui
  * a paleta visualmente — mesma vibe (card preto) mas com input
- * + botão de enviar lado a lado pra mensagem curta. */
+ * + botão de enviar lado a lado pra mensagem curta.
+ *
+ * Posicionamento: ABAIXO do badge do usuário per spec "posicione
+ * a caixa de texto abaixo do box do usuário e não ao lado e
+ * sobreposto". O badge tem bottom em (top:50% - 6px); o composer
+ * fica centrado horizontal e desloca-se 8px abaixo do ponto da
+ * marker pra dar respiro do badge. */
 .quickComposer {
   position: absolute;
   top: 50%;
-  left: calc(50% + 8px);
-  transform: translateY(calc(-100% - 6px - 50%));
-  margin-left: 60px;
+  left: 50%;
+  transform: translate(-50%, 8px);
   display: none;
   align-items: center;
   gap: 6px;
