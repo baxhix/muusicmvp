@@ -10,6 +10,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { api, ApiError } from '@/lib/api/client';
+import MotionSwitch from './MotionSwitch';
 import styles from './EditProfileModal.module.css';
 
 interface EditProfileModalProps {
@@ -17,24 +18,8 @@ interface EditProfileModalProps {
   onClose: () => void;
 }
 
-function Toggle({
-  checked,
-  onChange,
-  ariaLabel,
-}: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      className={`${styles.toggle} ${checked ? styles.toggleOn : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className={styles.toggleKnob} />
-    </button>
-  );
-}
+/* Toggle local removido — substituído pelo MotionSwitch
+ * compartilhado (animação spring no thumb via motion). */
 
 /** Generic silhouette used while a user hasn't uploaded their
  *  own avatar yet. Previous code seeded a deterministic
@@ -339,28 +324,28 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Aparecer no Mapa</span>
-              <Toggle checked={appearOnMap} onChange={setAppearOnMap} ariaLabel="Aparecer no Mapa" />
+              <MotionSwitch checked={appearOnMap} onCheckedChange={setAppearOnMap} ariaLabel="Aparecer no Mapa" />
             </div>
             <p className={styles.toggleDesc}>Mostra seu perfil no mapa com localização aproximada.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Permitir Interações</span>
-              <Toggle checked={allowInteractions} onChange={setAllowInteractions} ariaLabel="Permitir Interações" />
+              <MotionSwitch checked={allowInteractions} onCheckedChange={setAllowInteractions} ariaLabel="Permitir Interações" />
             </div>
             <p className={styles.toggleDesc}>Permite que outros usuários enviem mensagens e interajam com você.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Mostrar Cidade</span>
-              <Toggle checked={showCity} onChange={setShowCity} ariaLabel="Mostrar Cidade" />
+              <MotionSwitch checked={showCity} onCheckedChange={setShowCity} ariaLabel="Mostrar Cidade" />
             </div>
             <p className={styles.toggleDesc}>Mostra sua cidade no perfil e na presença no mapa.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Total de Streams</span>
-              <Toggle checked={showStreams} onChange={setShowStreams} ariaLabel="Total de Streams" />
+              <MotionSwitch checked={showStreams} onCheckedChange={setShowStreams} ariaLabel="Total de Streams" />
             </div>
             <p className={styles.toggleDesc}>Mostra seu total de streams no perfil.</p>
           </div>

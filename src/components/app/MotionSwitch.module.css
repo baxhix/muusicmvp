@@ -1,0 +1,61 @@
+/* MotionSwitch — track + thumb. `layout` no motion.span do thumb
+ * move ele entre os dois alinhamentos (flex-start ↔ flex-end) via
+ * spring animation. Sem CSS transition no thumb pra não competir. */
+
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(120, 120, 128, 0.35);
+  cursor: pointer;
+  transition: background 180ms ease;
+  flex-shrink: 0;
+  /* Justify-content controla a posição do thumb (start = off,
+   *  end = on). Motion `layout` anima entre as duas posições. */
+  justify-content: flex-start;
+}
+.checked {
+  /* Verde iOS-like — espelha o tom usado nos toggles existentes
+   *  pra não destoar do design. */
+  background: #34c759;
+  justify-content: flex-end;
+}
+.root:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.root:focus-visible {
+  outline: 2px solid rgba(168, 85, 247, 0.55);
+  outline-offset: 2px;
+}
+
+.thumb {
+  display: block;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 0 0 0.5px rgba(0, 0, 0, 0.08);
+}
+
+/* Tamanhos. md é o default; sm pra contextos mais densos. */
+.md {
+  width: 48px;
+  height: 28px;
+}
+.md .thumb {
+  width: 24px;
+  height: 24px;
+}
+
+.sm {
+  width: 36px;
+  height: 20px;
+}
+.sm .thumb {
+  width: 16px;
+  height: 16px;
+}

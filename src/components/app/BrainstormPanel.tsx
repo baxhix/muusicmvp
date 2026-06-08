@@ -7,6 +7,7 @@ import {
   useBrainstormFlags,
 } from '@/lib/brainstormFlags';
 import { useAuth } from '@/lib/auth/AuthContext';
+import MotionSwitch from './MotionSwitch';
 import styles from './BrainstormPanel.module.css';
 
 /**
@@ -163,17 +164,11 @@ export default function BrainstormPanel() {
                         {descriptor.description}
                       </span>
                     </div>
-                    <label className={styles.switch}>
-                      <input
-                        type="checkbox"
-                        checked={value}
-                        onChange={(e) => setFlag(descriptor.key, e.target.checked)}
-                        aria-label={`${descriptor.title} — ${value ? 'ligado' : 'desligado'}`}
-                      />
-                      <span className={styles.switchTrack} aria-hidden="true">
-                        <span className={styles.switchThumb} />
-                      </span>
-                    </label>
+                    <MotionSwitch
+                      checked={value}
+                      onCheckedChange={(v) => setFlag(descriptor.key, v)}
+                      ariaLabel={`${descriptor.title} — ${value ? 'ligado' : 'desligado'}`}
+                    />
                   </li>
                 );
               })}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import styles from './MaterialsTabContent.module.css';
@@ -250,9 +251,18 @@ export function MaterialsTabContent() {
             ))}
           </div>
         </div>
-        {lightboxItem && (
-          <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
-        )}
+        {/* AnimatePresence permite o Lightbox usar exit anim — sem
+         *  isso o motion.img com layoutId desmonta instantâneo
+         *  sem voltar ao thumb. */}
+        <AnimatePresence>
+          {lightboxItem && (
+            <Lightbox
+              key={lightboxItem.id}
+              item={lightboxItem}
+              onClose={() => setLightboxItem(null)}
+            />
+          )}
+        </AnimatePresence>
       </>
     );
   }
@@ -366,8 +376,13 @@ function FileRow({
    * tipos mantêm o ícone SVG colorido. */
   const thumbContent = isPreviewable ? (
     <>
+      {/* motion.img com layoutId compartilhado com o Lightbox.
+       *  Quando o user clica e o Lightbox monta, motion faz FLIP
+       *  shared-element: a thumb cresce até virar a imagem
+       *  fullscreen. Sem isso o lightbox aparece "do nada". */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <motion.img
+        layoutId={`material-img-${item.id}`}
         src={thumbUrl(item.id, 80, 60)}
         alt={item.name}
         className={styles.fileThumbImg}
@@ -482,12 +497,18 @@ function Lightbox({
 
   const fullUrl = thumbUrl(item.id, 1600, 1067);
   const content = (
-    <div
+    /* Backdrop motion.div com fade in/out via initial/animate/exit
+     *  — AnimatePresence no parent orquestra a unmount anim. */
+    <motion.div
       className={styles.lightbox}
       role="dialog"
       aria-modal="true"
       aria-label={item.name}
       onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
     >
       <button
         type="button"
@@ -505,7 +526,12 @@ function Lightbox({
         onClick={(e) => e.stopPropagation()}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={fullUrl} alt={item.name} className={styles.lightboxImg} />
+        <motion.img
+          layoutId={`material-img-${item.id}`}
+          src={fullUrl}
+          alt={item.name}
+          className={styles.lightboxImg}
+        />
         <div className={styles.lightboxMeta}>
           <div className={styles.lightboxName}>{item.name}</div>
           <a
@@ -524,7 +550,7 @@ function Lightbox({
           </a>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 
   if (!mounted) return null;

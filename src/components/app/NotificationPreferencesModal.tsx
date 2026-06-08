@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import MotionSwitch from './MotionSwitch';
 import styles from './NotificationPreferencesModal.module.css';
 
 /**
@@ -146,19 +147,11 @@ export default function NotificationPreferencesModal({ open, onClose }: Props) {
                 Receber email quando alguém te mandar mensagem direta.
               </span>
             </div>
-            <span className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={prefs.enabled}
-                onChange={(e) =>
-                  setPrefs((p) => ({ ...p, enabled: e.target.checked }))
-                }
-                aria-label="Ativar notificações de chat por email"
-              />
-              <span className={styles.toggleTrack} aria-hidden="true">
-                <span className={styles.toggleThumb} />
-              </span>
-            </span>
+            <MotionSwitch
+              checked={prefs.enabled}
+              onCheckedChange={(v) => setPrefs((p) => ({ ...p, enabled: v }))}
+              ariaLabel="Ativar notificações de chat por email"
+            />
           </label>
 
           {/* ── Sub-opções (visíveis só se master on) ────── */}
