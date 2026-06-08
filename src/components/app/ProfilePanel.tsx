@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import NowPlaying from './NowPlaying';
 import NowPlayingPreview from './NowPlayingPreview';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
@@ -483,20 +484,33 @@ export default function ProfilePanel({
          * O acesso a notificações continua via outras surfaces
          * (TopBar drawer + bell mobile). */}
 
-        {/* ── Tabs ──
+        {/* ── Tabs (motion Tab select) ──
          * Mobile: oculta "Histórico" via visibleTabs filtrado +
          * .tabs ganha estilo Fanverse (pill compacto) via CSS
-         * @media. Per product feedback "Deixe as tabs no mesmo
-         * estilo que as tabs que tem no Fanverse. Remova o
-         * Histórico". */}
-        <div className={styles.tabs}>
+         * @media. Pill ativo desliza entre as tabs via motion
+         * layoutId="profileTabPill" (id distinto pra não bleed
+         * com outras surfaces). Cores preservadas do segmented-
+         * control inset. */}
+        <div className={styles.tabs} role="tablist">
           {visibleTabs.map(t => (
             <button
               key={t.id}
-              className={`${styles.tab} ${tab === t.id ? styles.tabActive : ''}`}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              className={styles.tab}
               onClick={() => setTab(t.id)}
             >
-              {isMobile && t.mobileLabel ? t.mobileLabel : t.label}
+              {tab === t.id && (
+                <motion.span
+                  layoutId="profileTabPill"
+                  className={styles.tabPill}
+                  transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                />
+              )}
+              <span className={styles.tabLabel}>
+                {isMobile && t.mobileLabel ? t.mobileLabel : t.label}
+              </span>
             </button>
           ))}
         </div>
