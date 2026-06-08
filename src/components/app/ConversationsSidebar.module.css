@@ -318,30 +318,42 @@
   flex-shrink: 0;
 }
 .filterChip {
+  /* Position relative + z-index 0 abrigam o pill animado abaixo
+   *  do label (motion.span layoutId="chatFilterPill"). */
+  position: relative;
+  z-index: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 11px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border: none;
   color: rgba(245, 245, 247, 0.65);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
-  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+  transition: color 0.14s ease;
 }
 .filterChip:hover {
-  background: rgba(255, 255, 255, 0.07);
   color: #f5f5f7;
 }
-.filterChipActive,
-.filterChipActive:hover {
-  background: rgba(168, 85, 247, 0.16);
-  border-color: rgba(168, 85, 247, 0.55);
+.filterChip[aria-pressed='true'] {
   color: #d8b4fe;
+}
+.filterChipPill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  z-index: -1;
+}
+.filterChipLabel {
+  position: relative;
+  z-index: 1;
 }
 
 /* ── List ──────────────────────────────────────────────────────

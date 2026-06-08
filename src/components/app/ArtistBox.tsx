@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -471,35 +472,58 @@ export default function ArtistBox() {
          * .tabs/.tab/.tabActive). Switch do conteúdo do dropdown
          * acontece abaixo, no body. */}
         <div className={styles.tabs} role="tablist">
-          {/* Ordem invertida per spec "inverta a posição das tabs
-           * Superfãs e Missões" — Superfãs agora vem primeiro. */}
+          {/* Tab select motion: pill ativo desliza entre as tabs via
+           *  layoutId="artistBoxTabPill". Cor preservada — pill segue
+           *  o look segmented-control inset (rgba(255,255,255,0.08)
+           *  bg + white text). Spring snappy sem overshoot. */}
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'ranking'}
-            className={`${styles.tab} ${activeTab === 'ranking' ? styles.tabActive : ''}`}
+            className={styles.tab}
             onClick={() => { setActiveTab('ranking'); if (!open) setOpen(true); }}
             data-onboarding-anchor="ranking"
           >
-            Superfãs
+            {activeTab === 'ranking' && (
+              <motion.span
+                layoutId="artistBoxTabPill"
+                className={styles.tabPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={styles.tabLabel}>Superfãs</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'missoes'}
-            className={`${styles.tab} ${activeTab === 'missoes' ? styles.tabActive : ''}`}
+            className={styles.tab}
             onClick={() => { setActiveTab('missoes'); if (!open) setOpen(true); }}
           >
-            Missões
+            {activeTab === 'missoes' && (
+              <motion.span
+                layoutId="artistBoxTabPill"
+                className={styles.tabPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={styles.tabLabel}>Missões</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'materiais'}
-            className={`${styles.tab} ${activeTab === 'materiais' ? styles.tabActive : ''}`}
+            className={styles.tab}
             onClick={() => { setActiveTab('materiais'); if (!open) setOpen(true); }}
           >
-            Exclusivo
+            {activeTab === 'materiais' && (
+              <motion.span
+                layoutId="artistBoxTabPill"
+                className={styles.tabPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={styles.tabLabel}>Exclusivo</span>
           </button>
         </div>
       </div>

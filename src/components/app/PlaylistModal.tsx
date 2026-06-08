@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
+import { motion } from 'motion/react';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { ANA_ALBUMS, type AnaAlbum } from '@/data/anaAlbums';
@@ -256,23 +257,41 @@ export default function PlaylistModal({
               contexto e o tab não faria sentido ali. */}
           {!selectedAlbumId && (
             <div className={styles.tabs} role="tablist">
+              {/* Tab select motion: pill branco com layoutId
+               *  "playlistTabPill" desliza entre Recentes/Álbuns.
+               *  Cor preservada: bg #fff + label preto invertido
+               *  via aria-selected. */}
               <button
                 type="button"
                 role="tab"
                 aria-selected={tab === 'recentes'}
-                className={`${styles.tab} ${tab === 'recentes' ? styles.tabActive : ''}`}
+                className={styles.tab}
                 onClick={() => setTab('recentes')}
               >
-                Recentes
+                {tab === 'recentes' && (
+                  <motion.span
+                    layoutId="playlistTabPill"
+                    className={styles.tabPill}
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <span className={styles.tabLabel}>Recentes</span>
               </button>
               <button
                 type="button"
                 role="tab"
                 aria-selected={tab === 'albums'}
-                className={`${styles.tab} ${tab === 'albums' ? styles.tabActive : ''}`}
+                className={styles.tab}
                 onClick={() => setTab('albums')}
               >
-                Álbuns
+                {tab === 'albums' && (
+                  <motion.span
+                    layoutId="playlistTabPill"
+                    className={styles.tabPill}
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <span className={styles.tabLabel}>Álbuns</span>
               </button>
             </div>
           )}
