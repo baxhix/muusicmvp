@@ -288,6 +288,50 @@ button.fileIcon:hover {
   flex-direction: column;
   gap: 2px;
 }
+/* Variante quando .fileInfo é um <button> (item previewável) per
+ * spec "deixe o nome da imagem ou vídeo e a miniatura clicável".
+ * Zera chrome nativo do button. */
+.fileInfoButton {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 140ms ease;
+}
+.fileInfoButton:hover { opacity: 0.85; }
+.fileInfoButton:focus-visible {
+  outline: 2px solid rgba(168, 85, 247, 0.45);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Play badge sobreposto no thumb de vídeo — pequeno círculo
+ * com triângulo central no canto inferior direito. */
+.fileVideoBadge {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.fileVideoBadge svg {
+  width: 8px;
+  height: 8px;
+}
+/* O wrapper .fileIcon precisa ser position: relative pra que o
+ * badge absoluto seja ancorado dentro dele. */
+.fileIcon { position: relative; }
 .fileName {
   font-size: 12px;
   font-weight: 600;

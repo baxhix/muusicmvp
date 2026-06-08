@@ -110,6 +110,73 @@ const FOLDERS: MaterialFolder[] = [
   },
 ];
 
+/* Pastas extras carregadas via "Ver mais" — per spec "ao clicar
+ * Ver mais, simule mais 6 pastas com conteúdos mocados". Mistura
+ * de imagens e vídeos com tiers variados. */
+const EXTRA_FOLDERS: MaterialFolder[] = [
+  {
+    id: 'ensaios-fotograficos',
+    name: 'Ensaios fotográficos',
+    items: [
+      { id: 'f7-1', name: 'Ensaio Vogue Brasil.jpg', kind: 'image', size: '5.2 MB' },
+      { id: 'f7-2', name: 'Ensaio Caras.jpg', kind: 'image', size: '4.8 MB' },
+      { id: 'f7-3', name: 'Capa Quem Magazine.jpg', kind: 'image', size: '6.1 MB' },
+      { id: 'f7-4', name: 'Ensaio editorial 2024.jpg', kind: 'image', size: '7.3 MB' },
+    ],
+  },
+  {
+    id: 'clipes-bts',
+    name: 'BTS dos clipes',
+    items: [
+      { id: 'f8-1', name: 'Pipoco - making of.mp4', kind: 'video', size: '156 MB' },
+      { id: 'f8-2', name: 'Solteiro - bastidores.mp4', kind: 'video', size: '98 MB' },
+      { id: 'f8-3', name: 'Nosso Quadro - set design.jpg', kind: 'image', size: '3.8 MB' },
+      { id: 'f8-4', name: 'Boiadeira - prep.jpg', kind: 'image', size: '4.2 MB' },
+    ],
+  },
+  {
+    id: 'meet-greet',
+    name: 'Meet & Greet',
+    lockedAt: 50_000,
+    items: [
+      { id: 'f9-1', name: 'Fas SP - foto oficial.jpg', kind: 'image', size: '4.5 MB' },
+      { id: 'f9-2', name: 'Fas RJ - foto oficial.jpg', kind: 'image', size: '4.3 MB' },
+      { id: 'f9-3', name: 'Encontro Boiadeiros.mp4', kind: 'video', size: '72 MB' },
+    ],
+  },
+  {
+    id: 'estudio-gravacao',
+    name: 'Estúdio de gravação',
+    lockedAt: 25_000,
+    items: [
+      { id: 'f10-1', name: 'Sessao de gravacao.mp4', kind: 'video', size: '210 MB' },
+      { id: 'f10-2', name: 'Mesa de mixagem.jpg', kind: 'image', size: '3.7 MB' },
+      { id: 'f10-3', name: 'Time de producao.jpg', kind: 'image', size: '4.1 MB' },
+      { id: 'f10-4', name: 'Cabine de voz.jpg', kind: 'image', size: '3.9 MB' },
+    ],
+  },
+  {
+    id: 'turne-internacional',
+    name: 'Turnê internacional',
+    items: [
+      { id: 'f11-1', name: 'Show em Lisboa.mp4', kind: 'video', size: '180 MB' },
+      { id: 'f11-2', name: 'Show em Madrid.mp4', kind: 'video', size: '165 MB' },
+      { id: 'f11-3', name: 'Bastidores Europa.jpg', kind: 'image', size: '5.5 MB' },
+      { id: 'f11-4', name: 'Fas em Paris.jpg', kind: 'image', size: '4.8 MB' },
+    ],
+  },
+  {
+    id: 'colaboracoes',
+    name: 'Colaborações',
+    lockedAt: 10_000,
+    items: [
+      { id: 'f12-1', name: 'Feat com Marilia.mp4', kind: 'video', size: '95 MB' },
+      { id: 'f12-2', name: 'Feat com Henrique.mp4', kind: 'video', size: '88 MB' },
+      { id: 'f12-3', name: 'Encontro de artistas.jpg', kind: 'image', size: '4.6 MB' },
+    ],
+  },
+];
+
 export function MaterialsTabContent() {
   const { user } = useAuth();
   const { profile } = useUserProfile(user?.id ?? null);
@@ -119,6 +186,11 @@ export function MaterialsTabContent() {
    * preenchido, renderiza um overlay fullscreen com a imagem em
    * resolução maior + botão de download. */
   const [lightboxItem, setLightboxItem] = useState<MaterialItem | null>(null);
+  /* "Ver mais" expand — quando true, EXTRA_FOLDERS são
+   * concatenadas no grid. Per spec "ao clicar Ver mais, simule
+   * mais 6 pastas com conteúdos mocados". */
+  const [expanded, setExpanded] = useState(false);
+  const allFolders = expanded ? [...FOLDERS, ...EXTRA_FOLDERS] : FOLDERS;
 
   /* Escape fecha o lightbox + bloqueia scroll do body enquanto
    * aberto. */
@@ -136,8 +208,10 @@ export function MaterialsTabContent() {
     };
   }, [lightboxItem]);
 
+  /* Busca pasta em AMBOS arrays (base + extras) pra que ao expandir
+   * e abrir uma pasta nova, ela seja encontrada. */
   const openFolder = openFolderId
-    ? FOLDERS.find((f) => f.id === openFolderId)
+    ? [...FOLDERS, ...EXTRA_FOLDERS].find((f) => f.id === openFolderId)
     : null;
 
   /* Detail view — lista de arquivos da pasta aberta. */
@@ -163,8 +237,12 @@ export function MaterialsTabContent() {
               <FileRow
                 key={item.id}
                 item={item}
+                /* Imagens E vídeos são previewáveis (clique em
+                 * thumb OU nome abre o lightbox) per spec "deixe
+                 * o nome da imagem ou vídeo e a miniatura
+                 * clicável". */
                 onPreview={
-                  item.kind === 'image'
+                  item.kind === 'image' || item.kind === 'video'
                     ? () => setLightboxItem(item)
                     : undefined
                 }
@@ -183,7 +261,7 @@ export function MaterialsTabContent() {
   return (
     <div className={styles.materials}>
       <div className={styles.grid}>
-        {FOLDERS.map((f) => {
+        {allFolders.map((f) => {
           const locked = f.lockedAt !== undefined && fanpoints < f.lockedAt;
           return (
             <FolderCard
@@ -197,13 +275,16 @@ export function MaterialsTabContent() {
           );
         })}
       </div>
-      <button
-        type="button"
-        className={styles.viewMore}
-        aria-label="Ver mais materiais"
-      >
-        Ver mais
-      </button>
+      {!expanded && (
+        <button
+          type="button"
+          className={styles.viewMore}
+          aria-label="Ver mais materiais"
+          onClick={() => setExpanded(true)}
+        >
+          Ver mais
+        </button>
+      )}
     </div>
   );
 }
@@ -272,47 +353,76 @@ function FileRow({
   onPreview,
 }: {
   item: MaterialItem;
-  /** Quando definido, item é tratado como visualizável (imagem) —
-   * thumbnail vira clicável e botão olho dispara preview. */
+  /** Quando definido, item é tratado como visualizável (imagem
+   * ou vídeo) — thumbnail E nome viram clicáveis (botão olho
+   * também). */
   onPreview?: () => void;
 }) {
   const isImage = item.kind === 'image';
-  /* Imagem: thumbnail real via Picsum (seed = item.id). Outros
+  const isVideo = item.kind === 'video';
+  const isPreviewable = isImage || isVideo;
+  /* Imagem/vídeo: thumbnail real via Picsum (seed = item.id).
+   * Pra vídeos, mostra a foto + play overlay no canto. Outros
    * tipos mantêm o ícone SVG colorido. */
-  const thumbContent = isImage ? (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
-      src={thumbUrl(item.id, 80, 60)}
-      alt={item.name}
-      className={styles.fileThumbImg}
-      loading="lazy"
-    />
+  const thumbContent = isPreviewable ? (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={thumbUrl(item.id, 80, 60)}
+        alt={item.name}
+        className={styles.fileThumbImg}
+        loading="lazy"
+      />
+      {isVideo && (
+        <span className={styles.fileVideoBadge} aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </span>
+      )}
+    </>
   ) : (
     <FileKindIcon kind={item.kind} />
   );
-
-  const thumbProps = onPreview
-    ? { onClick: onPreview, 'aria-label': `Abrir ${item.name}`, type: 'button' as const }
-    : { 'aria-hidden': true as const };
 
   return (
     <div className={styles.fileRow}>
       {onPreview ? (
         <button
-          {...(thumbProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-          className={`${styles.fileIcon} ${isImage ? styles.fileIconImage : ''}`}
+          type="button"
+          onClick={onPreview}
+          aria-label={`Abrir ${item.name}`}
+          className={`${styles.fileIcon} ${isPreviewable ? styles.fileIconImage : ''}`}
         >
           {thumbContent}
         </button>
       ) : (
-        <span className={`${styles.fileIcon} ${isImage ? styles.fileIconImage : ''}`}>
+        <span
+          aria-hidden="true"
+          className={`${styles.fileIcon} ${isPreviewable ? styles.fileIconImage : ''}`}
+        >
           {thumbContent}
         </span>
       )}
-      <div className={styles.fileInfo}>
-        <span className={styles.fileName}>{item.name}</span>
-        <span className={styles.fileSize}>{item.size}</span>
-      </div>
+      {/* Nome também clicável quando previewável per spec "deixe
+       * o nome da imagem ou vídeo e a miniatura clicável". Não-
+       * previewável (pdf/audio/document) cai pro <div> simples. */}
+      {onPreview ? (
+        <button
+          type="button"
+          onClick={onPreview}
+          className={`${styles.fileInfo} ${styles.fileInfoButton}`}
+          aria-label={`Abrir ${item.name}`}
+        >
+          <span className={styles.fileName}>{item.name}</span>
+          <span className={styles.fileSize}>{item.size}</span>
+        </button>
+      ) : (
+        <div className={styles.fileInfo}>
+          <span className={styles.fileName}>{item.name}</span>
+          <span className={styles.fileSize}>{item.size}</span>
+        </div>
+      )}
       <div className={styles.fileActions}>
         <button
           type="button"
