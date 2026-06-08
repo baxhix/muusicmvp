@@ -1539,6 +1539,19 @@ export default function Globe() {
                 // pra não fechar a paleta ao focar o campo.
                 return;
               }
+              /* ── Click no avatar OU no nome → abre o perfil do
+               * usuário per spec "no box de usuários no mapa, ao
+               * clicar na imagem de avatar e no nome, deve abrir o
+               * Perfil do usuário". Click em qualquer outra área do
+               * badge (música, padding, etc) continua abrindo a
+               * paleta de reações (decisão original do task #265). */
+              const avatarHit = target.closest(`.${styles.liveUserAvatar}`);
+              const nameHit   = target.closest(`.${styles.liveUserName}`);
+              if (avatarHit || nameHit) {
+                e.stopPropagation();
+                window.location.href = `/app/u/${u.id}`;
+                return;
+              }
               /* ── Click no resto do badge ──
                * Per product feedback "ao invés de abrir o perfil
                * completo, deve ser aberto o badge de emojis". Aqui

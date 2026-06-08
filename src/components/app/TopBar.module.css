@@ -174,10 +174,15 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+/* z-index bumped per spec "quando o menu geral estiver aberto,
+ * ele deve ficar por cima das miniaturas flutuantes do chat".
+ * LiveChatStack desktop = z:200; backdrop 115 → 255 e drawer
+ * 120 → 260 garante que o menu fica acima. Ainda abaixo de
+ * modais altos (FanpointsModal backdrop em 300). */
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 115;
+  z-index: 255;
   background: rgba(0,0,0,0.72);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -201,7 +206,9 @@
   right: 0;
   height: 100dvh;
   width: 400px;
-  z-index: 120;
+  /* z-index bumped 120 → 260 per spec — vê comentário em
+   * .backdrop sobre o stack vs chat (z:200). */
+  z-index: 260;
   display: flex;
   flex-direction: column;
   background:
