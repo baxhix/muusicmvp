@@ -285,20 +285,11 @@ export default function MobileFanverseSheet({
       <div className={sheetStyles.body}>
         {activeTab === 'ranking' && (
           <>
-            {/* Link "X Fanpoints" abre o FanpointsModal (mount
-             * global no layout). Substituiu o dropdown "Conquistas"
-             * per spec — mesmo formato do desktop. */}
-            <button
-              type="button"
-              className={boxStyles.conquistasLink}
-              onClick={() => {
-                try {
-                  window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
-                } catch { /* SSR */ }
-              }}
-            >
-              {fanpoints.toLocaleString('pt-BR')} Fanpoints
-            </button>
+            {/* O link "X Fanpoints" foi REMOVIDO daqui per spec
+             * "remova o link 151824 Fanpoints que existe entre as
+             * tabs e a listagem do ranking". O trigger pro modal
+             * agora mora APENAS no .metaPoints do fold (abaixo de
+             * "Ana Castela") — mesma decisão tomada no desktop. */}
             <MobileRankingList />
           </>
         )}

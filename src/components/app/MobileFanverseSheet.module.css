@@ -333,11 +333,11 @@
  * padding interno do tab pra acomodar 44dp. */
 .tabsRow {
   /* z-index + bg opaco pra cobrir o hero ao scrollar (sticky).
-   * padding-bottom reduzido (14 → 4) per spec "diminua o espaço
-   * que tem entre Missões do dia 170 Fanpoints e as tabs". */
+   * padding-bottom: 4 → 12px per spec "aumente o espaçamento
+   * entre Missões do dia, as tabs e o conteúdo". */
   position: relative;
   z-index: 1;
-  padding: 4px 16px 4px;
+  padding: 4px 16px 12px;
   background:
     linear-gradient(180deg,
       rgba(8, 8, 14, 0.98) 0%,
@@ -449,14 +449,15 @@
 
 /* "Missões do Dia · X Fanpoints" — footer da tab missões. */
 .missionsTotal {
-  /* padding-top reduzido (16 → 6) per spec "diminua o espaço
-   * que tem entre Missões do dia 170 Fanpoints e as tabs".
-   * Combinado com .tabsRow padding-bottom 4px, gap total caiu
-   * de ~30px → ~10px entre o final das tabs e o header. */
+  /* padding-top: 6 → 12px + padding-bottom: 4 → 12px per spec
+   * "aumente o espaçamento entre Missões do dia, as tabs e o
+   * conteúdo". Combinado com .tabsRow padding-bottom 12px,
+   * o gap antes/depois do header agora respira ~24px de cada
+   * lado. */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 16px 4px;
+  padding: 12px 16px 12px;
 }
 .missionsTotalLabel {
   font-size: 11px;
@@ -911,11 +912,12 @@
 }
 
 /* Mobile: o shared MaterialsTabContent agora carrega seu próprio
- * padding lateral (14px). materialsScope só adiciona padding-bottom
- * pra dar respiro antes do fim do sheet — sem horizontal pra
- * evitar dobrar com o do .materials. */
+ * padding lateral (14px). materialsScope só adiciona padding
+ * vertical: top dá respiro entre os cards de pasta e o final
+ * das tabs (per spec "também dos cards de pastas em Exclusivo
+ * para as tabs"); bottom respira antes do fim do sheet. */
 .materialsScope {
-  padding: 0 0 12px;
+  padding: 16px 0 12px;
 }
 /* Wrapper pra Top10ProgressBar no topo da aba Conquistas — usa
  * padding 0 horizontal pra herdar o 16px do .benefitsScope (não
