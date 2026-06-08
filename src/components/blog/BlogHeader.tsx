@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './BlogHeader.module.css';
 
 /**
@@ -40,10 +41,14 @@ export default function BlogHeader() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/blog" className={styles.brand} aria-label="Fanverse">
-          {/* Wordmark "FANVERSE" branco — mesmo asset usado no
-           *  /teste navbar pra manter consistência de marca.
-           *  Altura 20px proporcional ao padding vertical 14px do
-           *  header. width: auto preserva o aspect ratio. */}
+          {/* Orbe Fanverse + wordmark — per spec "o Orbe faz parte
+           * do logotipo. Atualize". O orbe vai ANTES da wordmark
+           * formando a lockup completa da marca. FanverseCore tem
+           * IntersectionObserver pausing + throttle 30fps no mobile,
+           * então o custo perf é controlado. */}
+          <span className={styles.brandOrb} aria-hidden="true">
+            <FanverseCore />
+          </span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/teste/fanverse-logo.svg"
@@ -103,7 +108,7 @@ export default function BlogHeader() {
               Posts
             </Link>
             <Link href="/" className={styles.navLinkAccent}>
-              ← App
+              App
             </Link>
           </nav>
         </div>

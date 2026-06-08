@@ -97,6 +97,17 @@
 }
 .brand:hover { opacity: 0.7; }
 
+/* Orbe Fanverse como parte do logotipo (per spec "o Orbe faz parte
+ * do logotipo. Atualize"). Container quadrado 32x32 com o canvas
+ * WebGL2 do FanverseCore dentro. line-height:0 evita gap baseline. */
+.brandOrb {
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
 /* Logo SVG mono-branco — mesma altura usada no /teste navbar
  * (20px) pra que o logo do blog tenha o mesmo peso visual da
  * marca na landing. width: auto preserva o aspect ratio. */
