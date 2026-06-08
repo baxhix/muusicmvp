@@ -502,48 +502,36 @@ export default function FanverseSearch() {
 }
 
 /**
- * MatchStack — pilha de cards estilo Apple Wallet, com:
- *   1. Reveal staged — um card aparece a cada 3s (per product
- *      feedback "Faça com que apareça um card por vez a cada 3s").
- *      Card novo entra do topo do stack escalando do centro.
- *   2. Quando todos os cards já apareceram, entra em ciclo de
- *      auto-rotação (o do topo afunda pra trás a cada 4.5s).
- *   3. No mobile, swipe horizontal no card do topo faz ele
- *      "sair" do stack (per product feedback "No mobile, ao
- *      arrastar o primeiro desaparece, ficando o que está por
- *      trás"). Click no topo também cicla (UX desktop).
+ * MatchStack — pattern iOS Notifications stack:
+ *   • Collapsed (default): newest on top, 2 atrás peek BELOW
+ *     com scale-down (0.96, 0.92) + offset vertical (8px, 16px).
+ *   • Expanded (após tap no top): todos viram lista vertical
+ *     individual, motion auto-anima via `layout` prop.
+ *   • Swipe vertical no top card dismissa — cards atrás sobem
+ *     suavemente assumindo a posição do topo.
+ *
+ * Reveal staged (1 card a cada 3s até preencher) mantido — novos
+ * cards entram via AnimatePresence + initial/animate y/scale.
  */
 function MatchStack({ matches }: { matches: FanverseMatch[] }) {
-  /* order: ordem atual dos cards no stack (índice 0 = topo). */
-  const [order, setOrder] = useState(matches);
-  /* visibleCount: quantos cards já apareceram. Começa em 1; ganha
-   * +1 a cada 3s até atingir matches.length, e depois para. */
+  /* Stack em ORDEM CRONOLÓGICA — primeiro elemento = mais antigo,
+   *  último = mais recente (topo do stack). Dismiss remove o
+   *  último (newest). Cycle (auto-rotate) ainda disponível movendo
+   *  o último pra primeiro. */
+  const [stack, setStack] = useState(matches);
+  /* visibleCount: quantos cards já apareceram (reveal staged). */
   const [visibleCount, setVisibleCount] = useState(1);
-  /* dragOffset: deslocamento horizontal do card do topo durante o
-   * swipe (mobile). Reset pra 0 quando o swipe termina (ou completa
-   * o threshold e o card vai pra trás). */
-  const [dragOffset, setDragOffset] = useState(0);
-  const dragStateRef = useRef<{ startX: number; pointerId: number } | null>(null);
+  /* expanded: tap no top card expande o stack pra lista vertical. */
+  const [expanded, setExpanded] = useState(false);
 
-  /* Cycle = manda o card do topo (visualmente o último visível,
-   * pois agora o "newest" fica na frente) pra posição 0 do array.
-   * Assim o penúltimo card sobe pra ser o novo topo do stack e a
-   * sensação é de "o card foi pro fim da pilha". */
-  const cycle = () => {
-    setOrder((arr) => {
+  const dismissTop = () => {
+    setStack((arr) => {
       if (arr.length < 2) return arr;
-      const topIdx = arr.length - 1;
-      const top = arr[topIdx];
-      return [top, ...arr.slice(0, topIdx)];
+      const top = arr[arr.length - 1];
+      return [top, ...arr.slice(0, arr.length - 1)];
     });
   };
 
-  /* Phase 1: reveal staged — 1 card a cada 3s até preencher.
-   * Phase 2 (depois): rotação automática a cada 4.5s.
-   *
-   * Os dois ciclos compartilham o mesmo "tick" via setInterval(3s);
-   * uma vez tudo visível, mudamos o tick pra 4.5s. Implementado em
-   * 2 effects pra clareza — cada um cancela o outro via deps. */
   useEffect(() => {
     if (visibleCount >= matches.length) return;
     const id = window.setTimeout(() => {
@@ -552,71 +540,62 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
     return () => window.clearTimeout(id);
   }, [visibleCount, matches.length]);
 
-  /* Auto-rotate desativado — com o stack vertical (cada card num
-   * lugar próprio), rotacionar a ordem sozinho a cada 4.5s ficaria
-   * visualmente confuso (cards "saltando" pra reorganizar). Cycle
-   * continua disponível via click/swipe no card do topo. */
-
-  /* Swipe handlers — usam Pointer Events pra cobrir touch + mouse
-   * com a mesma API. Só atua no card do topo (i===0) e quando o
-   * deslocamento absoluto passa de 80px, considera "descartado" e
-   * cicla; senão volta pra origem com transition (sem state). */
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragStateRef.current = { startX: e.clientX, pointerId: e.pointerId };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragStateRef.current) return;
-    setDragOffset(e.clientX - dragStateRef.current.startX);
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!dragStateRef.current) return;
-    const offset = e.clientX - dragStateRef.current.startX;
-    dragStateRef.current = null;
-    if (Math.abs(offset) > 80) {
-      /* Anima o card saindo da tela na direção do swipe antes de
-       * ciclar (visualmente "desaparece"). Setamos offset grande
-       * pra animar, e depois de 280ms cicla + reseta. */
-      setDragOffset(offset > 0 ? 600 : -600);
-      window.setTimeout(() => {
-        cycle();
-        setDragOffset(0);
-      }, 280);
-    } else {
-      /* Volta suave pro lugar. */
-      setDragOffset(0);
-    }
-  };
+  /* Slice dos cards atualmente visíveis (newest no fim). */
+  const visible = stack.slice(stack.length - visibleCount);
 
   return (
-    <div className={styles.matchStack}>
-      {order.map((m, i) => {
-        /* Depth-stack "newest on top": o último card visível (maior
-         * índice entre os revelados) fica na frente (depth 0); os
-         * anteriores aparecem ATRÁS com peek descendente.
-         * depth = (visibleCount - 1) - i */
-        const isVisible = i < visibleCount;
-        const depth = isVisible ? (visibleCount - 1) - i : 99;
-        const isTop = isVisible && i === visibleCount - 1;
+    <div
+      className={`${styles.matchStack} ${expanded ? styles.matchStackExpanded : ''}`}
+      onClick={() => visibleCount > 1 && setExpanded((v) => !v)}
+    >
+      <AnimatePresence initial={false}>
+      {visible.map((m, i) => {
+        /* depth: 0 = topo (newest); 1, 2... = atrás. */
+        const depth = visible.length - 1 - i;
+        const isTop = depth === 0;
+        /* Collapsed: peek descendente (cards atrás aparecem 8/16px
+         *  ABAIXO do topo, scaled-down). Expanded: empilhamento
+         *  vertical normal com gap (motion `layout` anima). */
+        const peekY = expanded ? 0 : depth * 8;
+        const peekScale = expanded ? 1 : 1 - depth * 0.04;
+        const peekOpacity = depth > 2 ? 0 : 1 - depth * 0.15;
+
         return (
-          <button
+          <motion.button
             key={m.id}
             type="button"
-            className={`${styles.matchCard} ${isTop && dragOffset !== 0 ? styles.matchCardDragging : ''}`}
-            style={{
-              ['--depth' as string]: depth,
-              ['--drag-x' as string]: `${isTop ? dragOffset : 0}px`,
-              /* zIndex: newest (depth 0) tem o maior valor pra
-               * realmente ficar VISUALMENTE em cima dos anteriores. */
-              zIndex: 100 - depth,
-              opacity: isVisible ? (depth <= 2 ? Math.max(0.3, 1 - depth * 0.28) : 0) : 0,
-              pointerEvents: isTop && isVisible ? 'auto' : 'none',
+            layout
+            className={styles.matchCard}
+            /* Drag vertical só no top card collapsed — swipe up/down
+             *  dismissa. dragSnapToOrigin retorna se não passar o
+             *  threshold. */
+            drag={isTop && !expanded ? 'y' : false}
+            dragConstraints={{ top: -40, bottom: 40 }}
+            dragElastic={0.25}
+            onDragEnd={(_, info) => {
+              if (Math.abs(info.offset.y) > 40 || Math.abs(info.velocity.y) > 500) {
+                dismissTop();
+              }
             }}
-            onClick={isTop && dragOffset === 0 ? cycle : undefined}
-            onPointerDown={isTop ? onPointerDown : undefined}
-            onPointerMove={isTop ? onPointerMove : undefined}
-            onPointerUp={isTop ? onPointerUp : undefined}
-            onPointerCancel={isTop ? onPointerUp : undefined}
+            initial={{ opacity: 0, y: -40, scale: 0.9 }}
+            animate={{
+              opacity: peekOpacity,
+              y: peekY,
+              scale: peekScale,
+            }}
+            exit={{ opacity: 0, y: -60, scale: 0.85 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+            style={{
+              zIndex: 100 - depth,
+              pointerEvents: isTop || expanded ? 'auto' : 'none',
+            }}
+            onClick={(e) => {
+              /* Click no top toggle expand. Click em outro card no
+               *  modo expanded também colapsa de volta. */
+              e.stopPropagation();
+              if (visibleCount <= 1) return;
+              setExpanded((v) => !v);
+            }}
             aria-label={`Match com ${m.name}`}
           >
             <span className={styles.matchAvatar}>
@@ -630,9 +609,10 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
             <span className={styles.matchHeart} aria-hidden="true">
               <HeartIcon filled />
             </span>
-          </button>
+          </motion.button>
         );
       })}
+      </AnimatePresence>
     </div>
   );
 }

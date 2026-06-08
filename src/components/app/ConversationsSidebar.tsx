@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
+import SwipeAction from './SwipeAction';
 import { showAppToast } from './AppToast';
 import { confirmDialog } from './ConfirmDialog';
 import UserPicker from './UserPicker';
@@ -374,12 +375,22 @@ export default function ConversationsSidebar({
 
             const isKebabOpen = kebabOpenId === c.id;
             return (
-              /* Row é div (não button) pra que o kebab interno
+              /* SwipeAction wrapper: swipe pra esquerda revela
+               *  botão "Apagar" no estilo iOS Mail/Messages. O
+               *  mesmo handler usado pelo kebab é disparado pelo
+               *  swipe — kebab continua disponível como fallback
+               *  desktop/keyboard. */
+              <SwipeAction
+                key={c.id}
+                actionLabel="Apagar"
+                actionAriaLabel={`Apagar conversa com ${displayName}`}
+                onAction={() => handleHideConversation(c.id)}
+              >
+              {/* Row é div (não button) pra que o kebab interno
                * seja um sibling button — evita nested buttons
                * (inválido HTML). Acessibilidade via role/tabIndex
-               * + keyboard handler em Enter/Space. */
+               * + keyboard handler em Enter/Space. */}
               <div
-                key={c.id}
                 role="button"
                 tabIndex={0}
                 className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
@@ -498,6 +509,7 @@ export default function ConversationsSidebar({
                   </div>
                 )}
               </div>
+              </SwipeAction>
             );
           })
         )}

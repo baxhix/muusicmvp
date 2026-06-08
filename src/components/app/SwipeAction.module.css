@@ -1,0 +1,52 @@
+/* SwipeAction — wrapper iOS-style.
+ *
+ * .root: relative container, overflow:hidden pra clipar o
+ *  background que extrapola lateralmente conforme drag.
+ * .action: position:absolute right:0 — o botão fica grudado na
+ *  borda direita; foreground desliza pra esquerda e revela ele.
+ * .foreground: o conteúdo deslizável; bg herda do parent pra
+ *  não vazar transparência sobre o background do action. */
+
+.root {
+  position: relative;
+  overflow: hidden;
+  /* Mantém o radius do parent (ex: row do chat sem radius — ok).
+   *  Quando o parent tiver radius, herda via border-radius
+   *  inherit; senão, fica retangular. */
+  border-radius: inherit;
+}
+
+.action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: #ef4444; /* red-500 — destrutivo padrão iOS. */
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  /* tabIndex controlado via JSX (-1 quando fechado pra não pegar
+   *  foco sem visibilidade). */
+}
+.action:hover {
+  background: #dc2626; /* red-600 */
+}
+
+.foreground {
+  /* z-index 1 fica acima do .action (sem z = -1 pra evitar
+   *  problemas em stacking contexts). bg precisa ser opaco pra
+   *  ocultar o action quando x = 0; herda do parent pra
+   *  combinar com a lista. */
+  position: relative;
+  z-index: 1;
+  background: inherit;
+  /* will-change promove camada GPU desde o mount pra evitar
+   *  flicker no primeiro drag. */
+  will-change: transform;
+}
