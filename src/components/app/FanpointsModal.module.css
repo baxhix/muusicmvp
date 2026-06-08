@@ -518,6 +518,55 @@
   text-underline-offset: 3px;
 }
 
+/* ── Tab Ranking — lista de top usuários ── */
+.rankList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rankItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  font-family: var(--font-inter), sans-serif;
+}
+.rankItemMe {
+  background: rgba(167, 139, 250, 0.10);
+}
+.rankPosition {
+  width: 32px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.78);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.rankItemMe .rankPosition {
+  color: rgba(216, 180, 254, 0.95);
+}
+.rankName {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rankPoints {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.68);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
 /* ── Tab Benefícios — lista de marcos ── */
 .benefitsList {
   list-style: none;

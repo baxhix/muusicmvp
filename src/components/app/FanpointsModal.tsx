@@ -21,7 +21,7 @@ import styles from './FanpointsModal.module.css';
  * (referência: design-system Style | Image | Arrange).
  */
 
-type Tab = 'conquistas' | 'beneficios' | 'fanpoints' | 'atividade' | 'trocar';
+type Tab = 'conquistas' | 'beneficios' | 'fanpoints' | 'ranking' | 'trocar';
 
 interface ActivityItem {
   id: string;
@@ -105,8 +105,11 @@ export default function FanpointsModal() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
 
+  /* Atividade Recente vive DENTRO da tab Conquistas agora (per
+   * spec). Fetch dispara sempre que o modal abre + a tab atual
+   * é Conquistas. Mantém-se single-source-of-truth dos dados. */
   useEffect(() => {
-    if (!open || tab !== 'atividade') return;
+    if (!open || tab !== 'conquistas') return;
     let cancelled = false;
     setActivitiesLoading(true);
     fetch('/api/me/activities?limit=20')
@@ -217,11 +220,11 @@ export default function FanpointsModal() {
           <button
             type="button"
             role="tab"
-            aria-selected={tab === 'atividade'}
-            className={`${styles.tab} ${tab === 'atividade' ? styles.tabActive : ''}`}
-            onClick={() => setTab('atividade')}
+            aria-selected={tab === 'ranking'}
+            className={`${styles.tab} ${tab === 'ranking' ? styles.tabActive : ''}`}
+            onClick={() => setTab('ranking')}
           >
-            Atividade Recente
+            Ranking
           </button>
           <button
             type="button"
@@ -242,16 +245,15 @@ export default function FanpointsModal() {
               myRank={myRank}
               currentTier={currentTier}
               nextTier={nextTier}
+              activities={activities}
+              activitiesLoading={activitiesLoading}
+              onJumpToFanpoints={() => setTab('fanpoints')}
             />
           )}
           {tab === 'beneficios' && <BeneficiosTab fanpoints={fanpoints} />}
           {tab === 'fanpoints' && <FanpointsTab />}
-          {tab === 'atividade' && (
-            <AtividadeTab
-              items={activities}
-              loading={activitiesLoading}
-              onJumpToFanpoints={() => setTab('fanpoints')}
-            />
+          {tab === 'ranking' && (
+            <RankingTab user={user} ranking={ranking} myRank={myRank} />
           )}
           {tab === 'trocar' && <TrocarTab />}
         </div>
@@ -270,11 +272,17 @@ function ConquistasTab({
   myRank,
   currentTier,
   nextTier,
+  activities,
+  activitiesLoading,
+  onJumpToFanpoints,
 }: {
   fanpoints: number;
   myRank: number;
   currentTier: { id: string; label: string; threshold: number } | null;
   nextTier:    { id: string; label: string; threshold: number } | null;
+  activities: ActivityItem[];
+  activitiesLoading: boolean;
+  onJumpToFanpoints: () => void;
 }) {
   /* Progress: distance from currentTier threshold para nextTier
    * threshold. Mostramos pelo posição relativa (myRank diminui
@@ -375,6 +383,53 @@ function ConquistasTab({
           ))}
         </ul>
       </section>
+
+      {/* Atividade Recente — movida pra dentro de Minhas Conquistas
+       * per spec "leve o Atividade Recent para dentro de Minhas
+       * Conquistas, como uma seção nova lá dentro". Reusa o mesmo
+       * fetch /api/me/activities + render de cards. */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Atividade recente</h3>
+        {activitiesLoading && <p className={styles.empty}>Carregando…</p>}
+        {!activitiesLoading && activities.length === 0 && (
+          <p className={styles.empty}>
+            Você ainda não tem atividade registrada. Interaja na
+            plataforma pra começar a ganhar Fanpoints.
+          </p>
+        )}
+        {!activitiesLoading && activities.length > 0 && (
+          <ul className={styles.activityList}>
+            {activities.map((a) => (
+              <li key={a.id} className={styles.activityItem}>
+                <div className={styles.activityMeta}>
+                  <span className={styles.activityName}>
+                    {KIND_LABELS[a.kind] ?? a.kind}
+                  </span>
+                  <span className={styles.activityDate}>
+                    {formatRelativeDate(a.createdAt)}
+                  </span>
+                </div>
+                <span className={styles.activityPoints}>
+                  {a.points > 0 ? `+${a.points}` : a.points} FP
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {!activitiesLoading && activities.length > 0 && (
+          <p className={styles.paragraph}>
+            Quer saber todas as formas de acumular Fanpoints?{' '}
+            <button
+              type="button"
+              className={styles.inlineLink}
+              onClick={onJumpToFanpoints}
+            >
+              Veja a aba Fanpoints
+            </button>
+            .
+          </p>
+        )}
+      </section>
     </div>
   );
 }
@@ -432,64 +487,80 @@ function FanpointsTab() {
 }
 
 /* ────────────────────────────────────────────────────────────
- * Tab 3 — Atividade Recente
- * Lista cronológica + CTA pra Fanpoints tab.
+ * Tab Ranking — substituiu a antiga Atividade Recente (que
+ * virou seção dentro de Minhas Conquistas).
+ *
+ * Mostra a posição do usuário + top N usuários do ranking
+ * (Fanpoints ranking). Reusa o array `ranking` já buscado no
+ * top-level via useRanking().
  * ──────────────────────────────────────────────────────────── */
-function AtividadeTab({
-  items,
-  loading,
-  onJumpToFanpoints,
+interface RankingEntry {
+  userId: string;
+  email: string;
+  name?: string | null;
+  avatarUrl?: string | null;
+  points: number;
+}
+function RankingTab({
+  user,
+  ranking,
+  myRank,
 }: {
-  items: ActivityItem[];
-  loading: boolean;
-  onJumpToFanpoints: () => void;
+  user: { id: string } | null;
+  ranking: RankingEntry[];
+  myRank: number;
 }) {
+  const top = ranking.slice(0, 20);
   return (
     <div className={styles.tabPanel}>
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Últimas movimentações</h3>
-        {loading && <p className={styles.empty}>Carregando…</p>}
-        {!loading && items.length === 0 && (
-          <p className={styles.empty}>
-            Você ainda não tem atividade registrada. Interaja na
-            plataforma pra começar a ganhar Fanpoints.
-          </p>
-        )}
-        {!loading && items.length > 0 && (
-          <ul className={styles.activityList}>
-            {items.map((a) => (
-              <li key={a.id} className={styles.activityItem}>
-                <div className={styles.activityMeta}>
-                  <span className={styles.activityName}>
-                    {KIND_LABELS[a.kind] ?? a.kind}
-                  </span>
-                  <span className={styles.activityDate}>
-                    {formatRelativeDate(a.createdAt)}
-                  </span>
-                </div>
-                <span className={styles.activityPoints}>
-                  {a.points > 0 ? `+${a.points}` : a.points} FP
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h3 className={styles.sectionTitle}>Sua posição</h3>
+        <div className={styles.levelRow}>
+          <span className={styles.levelTier}>
+            {myRank === 0
+              ? 'Sem classificação'
+              : myRank === 1
+              ? 'Top 1!'
+              : `#${myRank}º`}
+          </span>
+          {myRank > 0 && (
+            <span className={styles.levelRank}>
+              entre {ranking.length} superfãs
+            </span>
+          )}
+        </div>
       </section>
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Como ganhar mais Fanpoints?</h3>
-        <p className={styles.paragraph}>
-          Quer saber todas as formas de acumular e utilizar seus pontos?
-          {' '}
-          <button
-            type="button"
-            className={styles.inlineLink}
-            onClick={onJumpToFanpoints}
-          >
-            Veja a aba Fanpoints
-          </button>
-          .
-        </p>
+        <h3 className={styles.sectionTitle}>Top 20 do ranking</h3>
+        {ranking.length === 0 ? (
+          <p className={styles.empty}>
+            O ranking ainda está sendo formado. Comece a interagir
+            pra aparecer aqui.
+          </p>
+        ) : (
+          <ul className={styles.rankList}>
+            {top.map((r, idx) => {
+              const rank = idx + 1;
+              const isMe = r.userId === user?.id;
+              const name = r.name?.trim() || r.email.split('@')[0];
+              return (
+                <li
+                  key={r.userId}
+                  className={`${styles.rankItem} ${isMe ? styles.rankItemMe : ''}`}
+                >
+                  <span className={styles.rankPosition}>
+                    {rank <= 3 ? rank : `#${rank}`}
+                  </span>
+                  <span className={styles.rankName}>{name}</span>
+                  <span className={styles.rankPoints}>
+                    {r.points.toLocaleString('pt-BR')} FP
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
     </div>
   );
