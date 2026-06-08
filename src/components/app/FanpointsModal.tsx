@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
+import { BENEFITS, BenefitIcon } from './SuperfansPanel';
 import styles from './FanpointsModal.module.css';
 
 /**
@@ -20,7 +21,7 @@ import styles from './FanpointsModal.module.css';
  * (referência: design-system Style | Image | Arrange).
  */
 
-type Tab = 'conquistas' | 'fanpoints' | 'atividade' | 'trocar';
+type Tab = 'conquistas' | 'beneficios' | 'fanpoints' | 'atividade' | 'trocar';
 
 interface ActivityItem {
   id: string;
@@ -160,19 +161,10 @@ export default function FanpointsModal() {
       aria-label="Fanpoints"
     >
       <div className={styles.modal}>
-        {/* Header */}
+        {/* Header — close (X) no canto superior direito per spec
+         * "deixe apenas o botão de X no tipo superior direito,
+         * remova a seta". */}
         <div className={styles.header}>
-          <button
-            type="button"
-            className={styles.closeBtn}
-            onClick={close}
-            aria-label="Fechar"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M19 12H5" />
-              <path d="M12 19l-7-7 7-7" />
-            </svg>
-          </button>
           <div className={styles.headerText}>
             <h2 className={styles.title}>Fanpoints</h2>
             <p className={styles.subtitle}>
@@ -180,6 +172,17 @@ export default function FanpointsModal() {
               veja como aproveitar seus pontos.
             </p>
           </div>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={close}
+            aria-label="Fechar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 6L6 18" />
+              <path d="M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Tabs */}
@@ -192,6 +195,15 @@ export default function FanpointsModal() {
             onClick={() => setTab('conquistas')}
           >
             Minhas Conquistas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'beneficios'}
+            className={`${styles.tab} ${tab === 'beneficios' ? styles.tabActive : ''}`}
+            onClick={() => setTab('beneficios')}
+          >
+            Benefícios
           </button>
           <button
             type="button"
@@ -233,6 +245,7 @@ export default function FanpointsModal() {
               nextTier={nextTier}
             />
           )}
+          {tab === 'beneficios' && <BeneficiosTab fanpoints={fanpoints} />}
           {tab === 'fanpoints' && <FanpointsTab />}
           {tab === 'atividade' && (
             <AtividadeTab
@@ -484,7 +497,61 @@ function AtividadeTab({
 }
 
 /* ────────────────────────────────────────────────────────────
- * Tab 4 — Como Trocar (placeholder)
+ * Tab Benefícios — lista de marcos de Fanpoints e o que cada
+ * um desbloqueia. Reusa BENEFITS de SuperfansPanel (catálogo
+ * shared com a antiga aba Conquistas). Cada item mostra o
+ * threshold em FP, ícone, título e descrição. Tags de status:
+ * "Conquistado" (threshold ≤ saldo) ou "Bloqueado".
+ * ──────────────────────────────────────────────────────────── */
+function BeneficiosTab({ fanpoints }: { fanpoints: number }) {
+  return (
+    <div className={styles.tabPanel}>
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>
+          Marcos de Fanpoints
+        </h3>
+        <p className={styles.paragraph}>
+          Cada marco desbloqueia um benefício exclusivo na Fanverse.
+          Quanto mais Fanpoints, mais conexão direta com o artista.
+        </p>
+      </section>
+      <ul className={styles.benefitsList}>
+        {BENEFITS.map((b) => {
+          const unlocked = fanpoints >= b.threshold;
+          return (
+            <li
+              key={b.id}
+              className={`${styles.benefitItem} ${unlocked ? styles.benefitUnlocked : styles.benefitLocked}`}
+            >
+              <span className={styles.benefitIcon} aria-hidden="true">
+                <BenefitIcon kind={b.icon} />
+              </span>
+              <div className={styles.benefitBody}>
+                <div className={styles.benefitTitleRow}>
+                  <span className={styles.benefitTitle}>{b.title}</span>
+                  <span className={styles.benefitThreshold}>
+                    {b.threshold === 0
+                      ? 'Acesso inicial'
+                      : `${b.threshold.toLocaleString('pt-BR')} FP`}
+                  </span>
+                </div>
+                <span className={styles.benefitDescription}>
+                  {b.description}
+                </span>
+                <span className={styles.benefitStatus}>
+                  {unlocked ? '✓ Conquistado' : 'Bloqueado'}
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * Tab Como Trocar (placeholder)
  * ──────────────────────────────────────────────────────────── */
 function TrocarTab() {
   return (
