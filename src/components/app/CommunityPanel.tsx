@@ -15,6 +15,15 @@ import type {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCommunities } from '@/hooks/useCommunities';
+import {
+  SHOW_COMMUNITIES,
+  getShowCommunityCard,
+  getShowCommunityDetail,
+  getShowCommunityTopics,
+  getShowCommunityTopic,
+  getShowTopicComments,
+  isShowCommunitySlug,
+} from '@/data/showCommunities';
 import styles from './CommunityPanel.module.css';
 
 /**
@@ -338,11 +347,32 @@ function CommunityListView({
   const canCreate = (profile?.fanpoints ?? 0) >= CREATE_FP_THRESHOLD;
 
   const [query, setQuery] = useState('');
+  /* Per spec "adicione duas tabs, semelhante às tabs que existem
+   * em Chat, com os nomes Geral e Shows". 'general' = lista do
+   * backend (atual); 'shows' = SHOW_COMMUNITIES mocados (read-only
+   * — só admin cria via equipe). Filtro acontece após o fetch:
+   * o hook segue puxando do servidor pra que membership de
+   * comunidades gerais reflita corretamente. */
+  const [activeTab, setActiveTab] = useState<'general' | 'shows'>('general');
   const [renameTarget, setRenameTarget] = useState<ApiCommunityCard | null>(null);
   const { items, loading, refresh } = useCommunities({
     enabled: true,
     search: query,
   });
+
+  /* Lista final exibida: depende da tab. Shows também respeita
+   * o search (case-insensitive sobre name+description). */
+  const displayedItems: ApiCommunityCard[] =
+    activeTab === 'shows'
+      ? SHOW_COMMUNITIES.filter((c) => {
+          if (!query.trim()) return true;
+          const q = query.trim().toLowerCase();
+          return (
+            c.name.toLowerCase().includes(q) ||
+            (c.description ?? '').toLowerCase().includes(q)
+          );
+        })
+      : items;
 
   const onLeave = useCallback(
     async (card: ApiCommunityCard) => {
@@ -406,32 +436,68 @@ function CommunityListView({
           />
         </div>
 
-        {loading && items.length === 0 ? (
+        {/* Tabs Geral | Shows — segue o padrão visual dos chips
+         *  de filtro do ConversationsSidebar (Conversas/Grupos),
+         *  per spec "tabs semelhante às tabs que existem em Chat". */}
+        <div
+          className={styles.tabsRow}
+          role="tablist"
+          aria-label="Tipo de comunidade"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'general'}
+            className={`${styles.tabBtn} ${activeTab === 'general' ? styles.tabBtnActive : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            Geral
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'shows'}
+            className={`${styles.tabBtn} ${activeTab === 'shows' ? styles.tabBtnActive : ''}`}
+            onClick={() => setActiveTab('shows')}
+          >
+            Shows
+          </button>
+        </div>
+
+        {loading && activeTab === 'general' && items.length === 0 ? (
           <div className={styles.emptyState}>Carregando…</div>
-        ) : items.length === 0 ? (
+        ) : displayedItems.length === 0 ? (
           <div className={styles.emptyState}>
-            {query ? `Nenhuma comunidade para "${query}".` : 'Nenhuma comunidade ainda.'}
+            {query
+              ? `Nenhuma comunidade para "${query}".`
+              : activeTab === 'shows'
+                ? 'Nenhuma comunidade de show no momento.'
+                : 'Nenhuma comunidade ainda.'}
           </div>
         ) : (
           <ul className={styles.cardList}>
-            {items.map((c) => {
+            {displayedItems.map((c) => {
               const isCreator = c.creatorId === user?.id;
+              /* Show communities são read-only do ponto de vista
+               *  do user — só admin gerencia. Skip edit/leave/join
+               *  e deixa só Denunciar no kebab. */
+              const isShow = isShowCommunitySlug(c.slug);
               const actions: KebabAction[] = [];
-              if (isCreator) {
+              if (isCreator && !isShow) {
                 actions.push({
                   key: 'edit',
                   label: 'Editar nome',
                   onClick: () => setRenameTarget(c),
                 });
               }
-              if (c.isMember && !isCreator) {
+              if (c.isMember && !isCreator && !isShow) {
                 actions.push({
                   key: 'leave',
                   label: 'Sair',
                   onClick: () => void onLeave(c),
                 });
               }
-              if (!c.isMember) {
+              if (!c.isMember && !isShow) {
                 actions.push({
                   key: 'join',
                   label: 'Participar',
@@ -454,8 +520,18 @@ function CommunityListView({
                       onClick={() => onOpenCommunity(c.slug)}
                     >
                       {c.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.imageUrl} alt="" className={styles.cardThumb} />
+                        <span className={styles.cardThumbWrap}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={c.imageUrl} alt="" className={styles.cardThumb} />
+                          {/* Badge "TOUR 2026" — só nas show
+                           *  communities, per spec "com um badge
+                           *  TOUR 2026 pequeno na parte de baixo". */}
+                          {isShowCommunitySlug(c.slug) && (
+                            <span className={styles.cardThumbBadge} aria-hidden="true">
+                              TOUR 2026
+                            </span>
+                          )}
+                        </span>
                       ) : (
                         <span className={styles.cardThumbPlaceholder} aria-hidden="true" />
                       )}
@@ -723,6 +799,26 @@ function CommunityDetailView({
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
+      /* Short-circuit pra show communities: dados vêm do mock
+       *  local. Mantém o mesmo shape (ApiCommunityDetail +
+       *  ApiCommunityTopic[]) pro renderer não precisar saber a
+       *  origem. Filter do search idem ao backend (case-insensitive
+       *  sobre title+body). */
+      if (isShowCommunitySlug(slug)) {
+        const det = getShowCommunityDetail(slug);
+        const allTopics = getShowCommunityTopics(slug);
+        const q = query.trim().toLowerCase();
+        const top = q
+          ? allTopics.filter(
+              (t) =>
+                t.title.toLowerCase().includes(q) ||
+                (t.body ?? '').toLowerCase().includes(q),
+            )
+          : allTopics;
+        setCommunity(det);
+        setTopics(top);
+        return;
+      }
       const [det, top] = await Promise.all([
         api.get<{ community: ApiCommunityDetail }>(`/api/communities/${slug}`),
         api.get<{ items: ApiCommunityTopic[] }>(
@@ -784,15 +880,17 @@ function CommunityDetailView({
 
   // Kebab actions for the detail header. Editar shows only for the
   // creator; Sair only for non-creator members; Denunciar always.
+  // Show communities são read-only — sem edit/sair, só Denunciar.
+  const isShow = isShowCommunitySlug(slug);
   const headerActions: KebabAction[] = [];
-  if (community.isCreator) {
+  if (community.isCreator && !isShow) {
     headerActions.push({
       key: 'edit',
       label: 'Editar nome',
       onClick: () => setRenameOpen(true),
     });
   }
-  if (community.isMember && !community.isCreator) {
+  if (community.isMember && !community.isCreator && !isShow) {
     headerActions.push({
       key: 'leave',
       label: 'Sair',
@@ -908,8 +1006,9 @@ function CommunityDetailView({
         )}
       </div>
 
-      {/* Footer: smaller "Novo tópico" CTA below the topics list. */}
-      {community.isMember && (
+      {/* Footer: smaller "Novo tópico" CTA below the topics list.
+       *  Hidden em show communities — só admin cria tópico lá. */}
+      {community.isMember && !isShow && (
         <footer className={styles.footer}>
           <button
             type="button"
@@ -1032,6 +1131,11 @@ function TopicDetailView({
   );
 
   const refreshComments = useCallback(async () => {
+    /* Mock branch — comments fixos pra show topics. */
+    if (isShowCommunitySlug(slug)) {
+      setComments(getShowTopicComments(topicId));
+      return;
+    }
     try {
       const res = await api.get<{ items: ApiCommunityTopicComment[] }>(
         `/api/communities/${slug}/topics/${topicId}/comments`,
@@ -1043,6 +1147,18 @@ function TopicDetailView({
   }, [slug, topicId]);
 
   useEffect(() => {
+    /* Short-circuit pra show communities — mesmo padrão do
+     *  CommunityDetailView. */
+    if (isShowCommunitySlug(slug)) {
+      setLoading(true);
+      const t = getShowCommunityTopic(slug, topicId);
+      const c = getShowCommunityDetail(slug);
+      setTopic(t);
+      setCommunity(c);
+      setComments(getShowTopicComments(topicId));
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     Promise.all([
@@ -1074,6 +1190,32 @@ function TopicDetailView({
     const body = draft.trim();
     if (!body || submitting) return;
     setSubmitting(true);
+    /* Show communities: append local-only (sem backend). O
+     *  comentário some no próximo refresh — é simulação. */
+    if (isShowCommunitySlug(slug)) {
+      const localId = `local-${topicId}-${comments.length + 1}`;
+      const local: ApiCommunityTopicComment = {
+        id: localId,
+        topicId,
+        parentCommentId: replyTarget?.id ?? null,
+        body,
+        createdAt: new Date().toISOString(),
+        deletedAt: null,
+        author: {
+          id: user?.id ?? null,
+          name: user?.name ?? user?.email?.split('@')[0] ?? 'Você',
+          email: user?.email ?? null,
+          avatarUrl: user?.avatarUrl ?? null,
+        },
+        reactions: { count: 0, mine: false },
+        replyCount: 0,
+      };
+      setComments((prev) => [...prev, local]);
+      setDraft('');
+      setReplyTarget(null);
+      setSubmitting(false);
+      return;
+    }
     try {
       await api.post(
         `/api/communities/${slug}/topics/${topicId}/comments`,
@@ -1114,6 +1256,9 @@ function TopicDetailView({
             : c,
         ),
       );
+      /* Show topics: sem backend — o flip optimistic acima já é
+       *  o resultado final. */
+      if (isShowCommunitySlug(slug)) return;
       try {
         const res = await api.post<ApiCommunityCommentReactionResult>(
           `/api/communities/${slug}/topics/${topicId}/comments/${commentId}/reactions`,

@@ -301,6 +301,45 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
+/* ── Tabs Geral | Shows ─────────────────────────────────────
+ * Per spec "adicione duas tabs, semelhante às tabs que existem
+ * em Chat". Mesmo padrão visual do `.filterChip` (Conversas /
+ * Grupos no ConversationsSidebar): chip pill com bg/borda
+ * sutil, activa com tint roxo. flex-shrink 0 mantém os chips
+ * em uma linha mesmo em width estreito. */
+.tabsRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 245, 247, 0.65);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.tabBtn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f5f5f7;
+}
+.tabBtnActive,
+.tabBtnActive:hover {
+  background: rgba(168, 85, 247, 0.16);
+  border-color: rgba(168, 85, 247, 0.55);
+  color: #d8b4fe;
+}
+
 /* Primary CTAs — purple pill (matches "Resolver" in QuizPost +
  * the BottomNav accents). */
 .primaryCta {
@@ -414,6 +453,43 @@
   border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
+  display: block;
+}
+
+/* Wrap relativo pro badge TOUR 2026 absolute embaixo da
+ * thumb — usado só em show communities. Mantém a thumb com
+ * mesmo tamanho/border-radius pra alinhar com cards normais
+ * (sem o badge). */
+.cardThumbWrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+.cardThumbBadge {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: 4px;
+  /* Gradient quente alinhado com o branding TOUR 2026 +
+   * blur backing pra legibilidade sobre qualquer foto. */
+  background: linear-gradient(
+    135deg,
+    rgba(244, 114, 182, 0.95) 0%,
+    rgba(217, 70, 239, 0.95) 100%
+  );
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  pointer-events: none;
 }
 .cardThumbPlaceholder {
   width: 64px;
