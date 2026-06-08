@@ -127,6 +127,19 @@ export default function ArtistBox() {
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
 
+  // Posição do usuário no ranking — exibida ao lado de "Fanpoints"
+  // per spec "à frente da palavra Fanpoints, coloque entre
+  // parênteses a colocação do usuário logado no ranking nesse
+  // formato (#11º), com exceção se for o primeiro, deve ser
+  // (Top 1!)". useRanking já é chamado dentro do RankingTabContent;
+  // chamá-lo aqui também é barato (mesmo cache de hook).
+  const { ranking: rankingForBadge } = useRanking(true);
+  const myRank = user
+    ? rankingForBadge.findIndex((r) => r.userId === user.id) + 1
+    : 0;
+  const rankBadge =
+    myRank === 1 ? '(Top 1!)' : myRank > 1 ? `(#${myRank}º)` : '';
+
   // Live daily-mission progress from the platform's real activity
   // (listening_history, track_likes, user_activities). Polled every
   // 60s + on demand via refresh().
@@ -392,6 +405,21 @@ export default function ArtistBox() {
                     {fanpoints.toLocaleString('pt-BR')}
                   </span>
                   <span className={styles.metaPointsLabel}>Fanpoints</span>
+                  {/* Badge de colocação no ranking — (Top 1!) pro
+                   * primeiro lugar; (#Nº) pros demais. Não renderiza
+                   * se o user ainda não aparece no ranking. */}
+                  {rankBadge && (
+                    <span
+                      className={`${styles.metaRankBadge} ${myRank === 1 ? styles.metaRankBadgeTop : ''}`}
+                      aria-label={
+                        myRank === 1
+                          ? 'Top 1 no ranking'
+                          : `Posição ${myRank} no ranking`
+                      }
+                    >
+                      {rankBadge}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -427,15 +455,8 @@ export default function ArtistBox() {
          * .tabs/.tab/.tabActive). Switch do conteúdo do dropdown
          * acontece abaixo, no body. */}
         <div className={styles.tabs} role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'missoes'}
-            className={`${styles.tab} ${activeTab === 'missoes' ? styles.tabActive : ''}`}
-            onClick={() => { setActiveTab('missoes'); if (!open) setOpen(true); }}
-          >
-            Missões
-          </button>
+          {/* Ordem invertida per spec "inverta a posição das tabs
+           * Superfãs e Missões" — Superfãs agora vem primeiro. */}
           <button
             type="button"
             role="tab"
@@ -445,6 +466,15 @@ export default function ArtistBox() {
             data-onboarding-anchor="ranking"
           >
             Superfãs
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'missoes'}
+            className={`${styles.tab} ${activeTab === 'missoes' ? styles.tabActive : ''}`}
+            onClick={() => { setActiveTab('missoes'); if (!open) setOpen(true); }}
+          >
+            Missões
           </button>
           <button
             type="button"

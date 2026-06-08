@@ -516,6 +516,23 @@
   font-family: var(--sans);
 }
 
+/* Badge de colocação no ranking — aparece à direita de "Fanpoints"
+ * per spec "à frente da palavra Fanpoints, coloque entre parenteses
+ * a colocação do usuário logado no ranking, nesse formato (#11º),
+ * com exceção se for o primeiro, deve ser (Top 1!)". */
+.metaRankBadge {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.72);
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.005em;
+}
+/* Top 1: cor mais vibrante (purple accent) per spec emphasize. */
+.metaRankBadgeTop {
+  color: #fbbf24;  /* amber-400 — destaque pro líder do ranking */
+}
+
 /* ── "15% OFF na Loja da Boiadeira" CTA badge ──
  * Sits under the wallet row, lilac-tinted per product feedback
  * (was green, but the discount slot reads as a perk rather than
