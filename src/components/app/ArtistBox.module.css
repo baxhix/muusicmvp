@@ -32,6 +32,17 @@
   top: 34px;
   left: 14px;
   width: 280px;
+  /* Altura máxima per spec "deixe a altura do box Fanverse Ana
+   * Castela em um tamanho máximo mantendo a distância fixa de
+   * 32px do final do box para o box do vídeo, independente de
+   * qual tab esteja ativa".
+   *
+   * Conta: 100vh − top(34) − gap(32) − player_height(~68) −
+   *        player_bottom(24) = 100vh − 158px.
+   * Quando o conteúdo extrapola, o .content scrolla (overflow-y
+   * auto) e os botões "Ver mais" das tabs Exclusivo/Superfãs
+   * cobrem a UI de paginação. */
+  max-height: calc(100vh - 158px);
   /* z-index bumped 15 → 60 so the box paints ABOVE the `.shell`
    * stacking context (z:55, in app/app/layout.module.css). The
    * ArtistBox is rendered as a SIBLING of `.shell` in the DOM
@@ -221,19 +232,18 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  /* min-height: 0 + flex 1 1 auto (no open state) deixa o
+   * dropdown shrinkable dentro do .box clampado por max-height
+   * — assim o .content rola em vez de transbordar. */
+  min-height: 0;
 }
 .boxOpen .dropdown {
-  /* Altura unificada per product feedback "ajuste para os itens
-   * do box Fanverse ficarem do mesmo tamanho na altura quando
-   * abertos, mesmo que oculte algo". 720px = teto antigo da
-   * tab Ranking/Conquistas. Mission tab pode ter espaço vazio
-   * abaixo (6 missões + progress + footer cabem em ~480px); o
-   * trade-off é consistência visual no toggle entre tabs.
-   *
-   * `.boxTallTab` mantida como alias inerte pra evitar quebrar
-   * qualquer consumer de classname externo (sem efeito visual
-   * agora que a altura é única). */
-  max-height: 720px;
+  /* Valor alto (era 720) que será CLAMPADO pelo
+   * .box max-height — o que sobra dentro do box é o que o
+   * dropdown ocupa. Animação max-height 0 → 2000 continua
+   * disparando smoothly porque o final visual é o cap do box. */
+  max-height: 2000px;
+  flex: 1 1 auto;
 }
 
 /* ── Artist header row — always visible ──
@@ -255,6 +265,9 @@
   display: block;
   padding: 0;
   position: relative;
+  /* Fixo — não shrinka quando o .box atinge max-height (o painel
+   * de conteúdo .content é quem rola). */
+  flex-shrink: 0;
 }
 
 /* Quando o header é renderizado como <button> (toggle do dropdown
@@ -489,6 +502,9 @@
   align-items: center;
   gap: 6px;
   margin: 0 16px 12px;
+  /* Tabs nunca shrinkam — quando .box bate max-height, é o
+   * .content que rola, não os controles. */
+  flex-shrink: 0;
 }
 
 /* Tab bar — substitui o antigo discountBadge. Padrão visual
@@ -975,10 +991,34 @@
   display: none;
 }
 
-/* ── Collapsible content wrapper ── */
+/* ── Collapsible content wrapper ──
+ * Faz scroll vertical quando o conteúdo da tab ativa ultrapassa
+ * o espaço disponível dentro do box (.box max-height − header −
+ * tabs − progress − footer). flex:1 + min-height:0 permitem que
+ * esse painel encolha dentro do .dropdown flex column. */
 .content {
-  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: max-height 0.42s cubic-bezier(0.16,1,0.3,1);
+  /* Scrollbar discreta (WebKit) — combina com o tema escuro do
+   * box. Firefox: scrollbar-width: thin + color match. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.content::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 3px;
+}
+.content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.32);
 }
 
 /* ── Missions list (always fully visible when box is open) ── */
@@ -1210,6 +1250,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Permanece ancorado — só o .content acima rola. */
+  flex-shrink: 0;
 }
 
 .footerRow {
@@ -1361,6 +1403,8 @@
 .progressWrap {
   margin: 4px 16px 8px;
   transition: opacity 0.2s;
+  /* Permanece ancorado — só o .content acima rola. */
+  flex-shrink: 0;
 }
 
 .progressLabel {
