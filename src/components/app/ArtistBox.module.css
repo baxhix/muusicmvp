@@ -331,12 +331,16 @@
  * sólido de informação abaixo (em vez do fade longo e suave que
  * fazia tudo parecer uma textura única).
  *
- * margin-top reduzido (-120 → -90) compensa o crop de 32px no
- * hero — sem o ajuste, o overlap engoliria muito da foto visível. */
+ * margin-top reduzido (-90 → -50) per spec "posicione mais
+ * abaixo todo o conteúdo do box Fanverse Ana Castela, para que
+ * fique mais visível a foto destaque, mantendo o gradiente".
+ * O overlap cai de 90 → 50px: cerca de +40px de foto exposta no
+ * topo; o gradient continua bridging o último 1/3 da foto pra
+ * dentro do bloco sólido. */
 .fold {
   position: relative;
   z-index: 1;
-  margin-top: -90px;
+  margin-top: -50px;
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
