@@ -231,7 +231,6 @@ export default function FanpointsModal() {
             disabled
           >
             Como Trocar
-            <span className={styles.tabBadge}>Em breve</span>
           </button>
         </div>
 
