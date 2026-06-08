@@ -573,7 +573,7 @@ export default function ArtistBox() {
        *  inner maxHeight clipper anymore. Mission rows are always
        *  laid out when the dropdown is open. */}
       <div className={styles.content}>
-        <div>
+        <div className={styles.contentInner}>
           {/* Divider removido per spec "remova a linha que tem logo
            * abaixo das tabs no desktop". */}
           {/* Body switch por tab. Conquistas saiu como aba — agora é

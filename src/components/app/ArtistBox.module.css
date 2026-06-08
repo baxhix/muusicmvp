@@ -1120,14 +1120,33 @@
 }
 
 /* ── Missions list (always fully visible when box is open) ── */
-.missionsList {
-  /* flex column + gap entre os itens per spec "aumente o
-   * espaçamento dos itens da missão do dia para ficarem melhor
-   * distribuídos e ocupar o espaço em branco desta tab". */
+/* Wrapper interno do .content — fica entre o overflow:auto e os
+ * tab bodies. Display flex column + height 100% pra que tabs
+ * filhas (missionsHeader + missionsList) possam usar flex layout
+ * pra distribuir items na altura disponível. */
+.contentInner {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 8px 14px 8px;
+  min-height: 100%;
+}
+
+.missionsList {
+  /* flex column + space-evenly distribui os 5 cards na altura
+   * disponível SEM aumentar o tamanho de cada um — gaps esticam
+   * pra ocupar o espaço em branco. flex:1 faz o list crescer pra
+   * preencher o espaço dentro do .contentInner. Resultado: cards
+   * compactos, distribuição uniforme, sem necessidade de scroll
+   * per spec "a lista de missões deve ser melhor distribuída,
+   * mas sem a necessidade de se fazer scroll". */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 4px 14px;
+  /* min-height pra garantir que mesmo com viewport curto os cards
+   * tenham um piso de espaçamento. Se o espaço for maior, o
+   * space-evenly distribui o extra. */
+  min-height: 220px;
 }
 
 /* ── Mission item ── */
@@ -1137,16 +1156,16 @@
   position: relative;
   display: flex;
   /* align-items: center alinha verticalmente icone + texto + xp +
-   * checkbox per product feedback "Alinhe verticalmente os
-   * checkbox". */
+   * checkbox. */
   align-items: center;
   gap: 9px;
-  /* padding vertical bumped 5 → 14px per spec — cada card de
-   * missão ocupa mais altura, e os 5 itens distribuem melhor o
-   * espaço disponível na tab. */
-  padding: 14px 9px;
+  /* padding compacto (8px) — cards não crescem com flex; a
+   * distribuição vem do .missionsList justify-content. */
+  padding: 8px 9px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.025);
+  /* Não shrinka — preserva tamanho fixo (~40px de altura). */
+  flex-shrink: 0;
   transition: background 0.15s;
   cursor: pointer;
 }
