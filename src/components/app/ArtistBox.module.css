@@ -352,20 +352,24 @@
   padding: 36px 16px 8px;
 }
 
-/* Row externa do fold — agrupa coluna de texto (eyebrow + título
- * + Fanpoints) com o orbe à direita, alinhados verticalmente pelo
- * centro. Per spec "separe o orbe do mesmo bloco da palavra Ana
- * Castela, mas mesmo assim mantenha alinhado". */
+/* Row externa do fold — coluna de texto (eyebrow + título +
+ * Fanpoints) à esquerda; orbe ABSOLUTO à direita, ancorado no
+ * centro vertical de "Ana Castela" (não no centro do bloco).
+ *
+ * Per spec "mantendo o orbe centralizado horizontalmente com a
+ * palavra Ana Castela": ao aumentar a distância title↔Fanpoints
+ * o bloco cresce pra baixo, mas o orb fica fixo no centro do
+ * título (não acompanha o crescimento). */
 .foldHeadRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  position: relative;
 }
 .foldHead {
-  flex: 1;
-  min-width: 0;
+  /* Margem direita = orb width (56) + gap (10) — reserva o
+   * espaço lateral pro orbe absolutely positioned. */
+  margin-right: 66px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 /* Eyebrow "Fanverse" — Inter, pequeno, acima do nome. Margem zero
@@ -426,7 +430,19 @@
  * "Aumente para 56x56px o tamanho do orbe dentro do Box Fanverse
  * Ana Castela" (era 48; mobile sheet continua 72). */
 .foldOrb {
-  flex-shrink: 0;
+  /* Absoluto ancorado no .foldHeadRow per spec "mantendo o orbe
+   * centralizado horizontalmente com a palavra Ana Castela".
+   *
+   * top calcula o CENTRO vertical de "Ana Castela":
+   *   eyebrow_height (~12px line-height 1)
+   *   + title_height/2 (26/2 = 13)
+   *   = 25px do topo do .foldHeadRow
+   * translateY(-50%) puxa o orbe pra cima 28px → centro do orb
+   * fica exatamente em y=25, alinhado com "Ana Castela". */
+  position: absolute;
+  right: 0;
+  top: 25px;
+  transform: translateY(-50%);
   width: 56px;
   height: 56px;
   display: inline-block;
@@ -439,8 +455,9 @@
   border-radius: 50%;
   transition: transform 160ms ease;
 }
-.foldOrb:hover  { transform: scale(1.08); }
-.foldOrb:active { transform: scale(0.96); }
+/* Preservam o translateY(-50%) base + adicionam o scale. */
+.foldOrb:hover  { transform: translateY(-50%) scale(1.08); }
+.foldOrb:active { transform: translateY(-50%) scale(0.96); }
 .foldOrb:focus-visible {
   outline: 2px solid rgba(168, 85, 247, 0.55);
   outline-offset: 4px;
@@ -456,10 +473,11 @@
   justify-content: space-between;
   gap: 16px;
   padding: 0;
-  /* margin-top zero (era -4px) — junto com .foldTitleName line-height
-   * apertado, deixa "Fanpoints" colado ao nome per spec "aproximar
-   * a informação 496.674 Fanpoints do nome Ana Castela". */
-  margin-top: 0;
+  /* Gap title↔Fanpoints dobrado per spec "duplique a distância
+   * entre as palavras Fanverse Ana Castela e a quantidade de
+   * pontos" — antes era 0 (apenas line-height natural ~4px).
+   * 8px de margin agrega ~10-12px visual ≈ 2× o original. */
+  margin-top: 8px;
 }
 .metaPoints {
   display: inline-flex;
