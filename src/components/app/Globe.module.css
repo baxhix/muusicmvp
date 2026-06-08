@@ -1035,7 +1035,13 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   color: #fff;
-  font-size: 12px;
+  /* font-size 16px per spec "ao enviar uma mensagem rápida... é
+   * aplicado um auto zoom e após enviar a mensagem não volta ao
+   * normal". iOS Safari faz auto-zoom em inputs com font-size <
+   * 16px (e o viewport pode não voltar). 16px desativa o zoom
+   * de focus — visualmente quase idêntico a 12px depois do
+   * baseline correction do user-agent. */
+  font-size: 16px;
   font-family: inherit;
   outline: none;
 }
