@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiRankingRow } from '@/lib/api/types';
@@ -248,35 +249,61 @@ export default function MobileFanverseSheet({
 
       {/* ── Tab bar — mesma ordem do desktop:
        *  Superfãs | Missões | Exclusivo — per spec "no mobile,
-       *  deixe as tabs na mesma ordem que no desktop". ── */}
+       *  deixe as tabs na mesma ordem que no desktop".
+       *
+       *  Motion Tab select com pill que desliza via layoutId.
+       *  layoutId "mobileFanverseTabPill" é independente do
+       *  desktop ("artistBoxTabPill") pra evitar cross-bleed se
+       *  ambos montassem simultaneamente. ── */}
       <div className={sheetStyles.tabsRow}>
         <div className={boxStyles.tabs} role="tablist">
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'ranking'}
-            className={`${boxStyles.tab} ${activeTab === 'ranking' ? boxStyles.tabActive : ''}`}
+            className={boxStyles.tab}
             onClick={() => setActiveTab('ranking')}
           >
-            Superfãs
+            {activeTab === 'ranking' && (
+              <motion.span
+                layoutId="mobileFanverseTabPill"
+                className={boxStyles.tabPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={boxStyles.tabLabel}>Superfãs</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'missoes'}
-            className={`${boxStyles.tab} ${activeTab === 'missoes' ? boxStyles.tabActive : ''}`}
+            className={boxStyles.tab}
             onClick={() => setActiveTab('missoes')}
           >
-            Missões
+            {activeTab === 'missoes' && (
+              <motion.span
+                layoutId="mobileFanverseTabPill"
+                className={boxStyles.tabPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={boxStyles.tabLabel}>Missões</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'materiais'}
-            className={`${boxStyles.tab} ${activeTab === 'materiais' ? boxStyles.tabActive : ''}`}
+            className={boxStyles.tab}
             onClick={() => setActiveTab('materiais')}
           >
-            Exclusivo
+            {activeTab === 'materiais' && (
+              <motion.span
+                layoutId="mobileFanverseTabPill"
+                className={boxStyles.tabPill}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              />
+            )}
+            <span className={boxStyles.tabLabel}>Exclusivo</span>
           </button>
         </div>
       </div>
