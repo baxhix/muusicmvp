@@ -271,7 +271,7 @@ export default function ArtistBoxRail() {
                 className={`${styles.flyoutTab} ${activeTab === 'materiais' ? styles.flyoutTabActive : ''}`}
                 onClick={() => setActiveTab('materiais')}
               >
-                Materiais
+                Exclusivo
               </button>
             </div>
           </div>
@@ -283,15 +283,18 @@ export default function ArtistBoxRail() {
           <div className={styles.flyoutBody}>
             {activeTab === 'missoes' && (
               <div className={styles.missionsList}>
-                {/* Progress chip */}
+                {/* Header (sentence case) + Fanpoints na mesma linha,
+                 * acima da lista — per spec "coloque na linha de
+                 * cima junto com 120 Fanpoints". */}
                 <div className={styles.missionsHeader}>
                   <span className={styles.missionsTitle}>
-                    Missões diárias
+                    Missões do dia
                   </span>
                   <span className={styles.missionsProgress}>
-                    {completed}/{TOTAL} · {fpEarned} FP
+                    {fpEarned} Fanpoints
                   </span>
                 </div>
+                {/* Progress bar — sem label de contagem per spec. */}
                 <div className={styles.missionsProgressBar} aria-hidden="true">
                   <div
                     className={styles.missionsProgressFill}

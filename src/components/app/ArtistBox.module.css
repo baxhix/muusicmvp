@@ -332,7 +332,11 @@
     rgba(11, 11, 13, 1) 58%,
     rgba(11, 11, 13, 1) 100%
   );
-  padding: 56px 16px 8px;
+  /* padding-top reduzido (56 → 36px) per spec "diminua pela metade
+   * a distância atual da palavra Fanverse, se aproximando da
+   * palavra Ana Castela". O eyebrow agora fica mais perto do
+   * título no fold. */
+  padding: 36px 16px 8px;
 }
 
 /* Eyebrow "Fanverse" — Inter, pequeno, acima do nome. */
@@ -943,12 +947,12 @@
   /* sem override — herda .tabRankingRankMedal */
 }
 
-/* ── Divider ── */
+/* ── Divider ──
+ * Removido per spec "remova a linha que tem logo abaixo das tabs
+ * no desktop". A regra fica documentada mas vazia caso algum
+ * componente legacy ainda referencie. */
 .divider {
-  height: 1px;
-  background: rgba(255,255,255,0.06);
-  margin: 0 16px;
-  flex-shrink: 0;
+  display: none;
 }
 
 /* ── Collapsible content wrapper ── */
@@ -1194,15 +1198,28 @@
   justify-content: space-between;
 }
 
+/* Header da tab Missões — mesmo flex que .footerRow tinha mas
+ * agora MORA NO TOPO da lista (per spec "coloque na linha de
+ * cima junto com 120 Fanpoints"). */
+.missionsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  margin: 2px 0 8px;
+}
+
 .missionsTitle {
-  font-size: 9.5px;
-  font-weight: 700;
-  color: rgba(245,245,247,0.35);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  /* Sentence case (não mais uppercase) per spec "deixe apenas
+   * a primeira letra maiúscula". Mantém peso e cor sóbrios. */
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245,245,247,0.6);
+  letter-spacing: 0;
+  text-transform: none;
   font-family: var(--sans);
   /* Inline-flex pra acomodar o ícone Info à direita do texto
-   * sem quebrar o flexbox do .footerRow. */
+   * sem quebrar o flexbox do header. */
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1290,12 +1307,14 @@
 
 .xpTotal {
   /* Per product feedback "mude a cor de textos laranjados pela
-   * cor branca". Era #f59e0b (orange-500), agora branco. */
-  font-size: 9.5px;
-  font-weight: 700;
+   * cor branca". Era #f59e0b (orange-500), agora branco.
+   * Tamanho ajustado pra casar com .missionsTitle (11px) agora
+   * que ambos vivem no .missionsHeader topo da lista. */
+  font-size: 11px;
+  font-weight: 600;
   color: #ffffff;
   font-family: var(--sans);
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 .footerArrow {

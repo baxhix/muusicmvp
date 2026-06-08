@@ -262,7 +262,7 @@ export default function MobileFanverseSheet({
             className={`${boxStyles.tab} ${activeTab === 'materiais' ? boxStyles.tabActive : ''}`}
             onClick={() => setActiveTab('materiais')}
           >
-            Materiais
+            Exclusivo
           </button>
         </div>
       </div>
@@ -311,6 +311,13 @@ export default function MobileFanverseSheet({
 
         {activeTab === 'missoes' && (
           <>
+            {/* Header "Missões do dia" (sentence case) + Fanpoints
+             * na MESMA linha, ANTES da lista — per spec "coloque
+             * na linha de cima junto com 120 Fanpoints". */}
+            <div className={sheetStyles.missionsTotal}>
+              <span className={sheetStyles.missionsTotalLabel}>Missões do dia</span>
+              <span className={sheetStyles.missionsTotalXp}>{fpEarned} Fanpoints</span>
+            </div>
             <div className={sheetStyles.missionsList}>
               {MISSION_META.map((m) => {
                 const isDone = doneById[m.id] ?? false;
@@ -358,19 +365,12 @@ export default function MobileFanverseSheet({
               })}
             </div>
 
+            {/* Progress bar — per spec "remova '1/6 missões 17%'.
+             * Deixe apenas a barra de progresso". */}
             <div className={sheetStyles.missionsProgress}>
-              <div className={sheetStyles.missionsProgressLabel}>
-                <span>{completed}/{TOTAL_MISSIONS} missões</span>
-                <span>{progress}%</span>
-              </div>
               <div className={boxStyles.progressTrack}>
                 <div className={boxStyles.progressFill} style={{ width: `${progress}%` }} />
               </div>
-            </div>
-
-            <div className={sheetStyles.missionsTotal}>
-              <span className={sheetStyles.missionsTotalLabel}>Missões do Dia</span>
-              <span className={sheetStyles.missionsTotalXp}>{fpEarned} Fanpoints</span>
             </div>
           </>
         )}

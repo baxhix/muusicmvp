@@ -42,13 +42,14 @@ export interface MissionMeta {
 }
 
 export const MISSION_META: MissionMeta[] = [
+  /* Per product feedback "diminua para 5 missões diárias" — array
+   * cortada de 6 → 5. Removida 'follow_artist' (a última, menor XP
+   * relativo + ação menos central do app). */
   { id: 'listen_5',     icon: '🎵', name: 'Ouça 5 músicas hoje',     xp: '+50 FP'  },
   { id: 'like_track',   icon: '❤️', name: 'Curtir uma música',        xp: '+30 FP'  },
   { id: 'start_chat',   icon: '💬', name: 'Inicie uma conversa',      xp: '+40 FP'  },
   { id: 'daily_login',  icon: '🔥', name: 'Login diário',              xp: '+120 FP' },
-  /* +2 missões per product feedback "deixe 6 missões no total". */
   { id: 'share_song',   icon: '🔗', name: 'Compartilhe uma música',   xp: '+25 FP'  },
-  { id: 'follow_artist', icon: '⭐', name: 'Siga um artista',         xp: '+35 FP'  },
 ];
 
 export const TOTAL_MISSIONS = MISSION_META.length;
@@ -442,7 +443,7 @@ export default function ArtistBox() {
             className={`${styles.tab} ${activeTab === 'materiais' ? styles.tabActive : ''}`}
             onClick={() => { setActiveTab('materiais'); if (!open) setOpen(true); }}
           >
-            Materiais
+            Exclusivo
           </button>
         </div>
       </div>
@@ -488,12 +489,36 @@ export default function ArtistBox() {
        *  laid out when the dropdown is open. */}
       <div className={styles.content}>
         <div>
-          <div className={styles.divider} />
+          {/* Divider removido per spec "remova a linha que tem logo
+           * abaixo das tabs no desktop". */}
           {/* Body switch por tab. Conquistas saiu como aba — agora é
            * um link inline dentro de RankingTabContent. */}
           {activeTab === 'ranking' && <RankingTabContent />}
           {activeTab === 'materiais' && <MaterialsTabContent />}
           {activeTab === 'missoes' && (
+          <>
+          {/* Header das missões: "Missões do dia" (sentence case)
+           * + 120 Fanpoints na mesma linha, ANTES da lista. Per spec
+           * "coloque na linha de cima junto com 120 Fanpoints". */}
+          <div className={styles.missionsHeader}>
+            <span className={styles.missionsTitle}>
+              Missões do dia
+              <span
+                className={styles.missionsInfo}
+                data-tooltip="Cada dia uma missão diferente. Aproveite!"
+                role="img"
+                aria-label="Cada dia uma missão diferente. Aproveite!"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </span>
+            </span>
+            <span className={styles.xpTotal}>{fpEarned} Fanpoints</span>
+          </div>
           <div className={styles.missionsList}>
             {MISSION_META.map((m) => {
               const isDone = doneById[m.id] ?? false;
@@ -547,54 +572,24 @@ export default function ArtistBox() {
               );
             })}
           </div>
+          </>
           )}
         </div>
       </div>
 
-      {/* Progress bar — só na tab Missões (mede missões do dia). */}
+      {/* Progress bar — só na tab Missões. Per spec "remova '1/6
+       * missões 17%'. Deixe apenas a barra de progresso." */}
       {activeTab === 'missoes' && (
       <div className={styles.progressWrap}>
-        <div className={styles.progressLabel}>
-          <span className={styles.progressText}>{completed}/{TOTAL} missões</span>
-          <span className={styles.progressText}>{progress}%</span>
-        </div>
         <div className={styles.progressTrack}>
           <div className={styles.progressFill} style={{ width: `${progress}%` }} />
         </div>
       </div>
       )}
 
-      {/* Dropdown footer — closes the dropdown (toggle). */}
+      {/* Dropdown footer — só a chevron de toggle agora; título +
+       * Fanpoints migraram pra cima (.missionsHeader). */}
       <div className={styles.footer} onClick={() => setOpen(o => !o)}>
-        <div className={styles.footerRow}>
-          <span className={styles.missionsTitle}>
-            Missões do Dia
-            {/* Info character com tooltip CSS custom per product
-             * feedback "inclua um caracter de Info na palavra
-             * Missões do dia com um tooltip personalizado". O
-             * conteúdo do tooltip vive na pseudo-class via
-             * data-tooltip pra ficar acessível ao CSS hover. */}
-            <span
-              className={styles.missionsInfo}
-              data-tooltip="Cada dia uma missão diferente. Aproveite!"
-              role="img"
-              aria-label="Cada dia uma missão diferente. Aproveite!"
-              onClick={(e) => {
-                /* O footer inteiro toggle a dropdown — paramos
-                 * a propagação no info pra que tooltip mobile
-                 * (tap) não cause toggle indesejado. */
-                e.stopPropagation();
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-            </span>
-          </span>
-          <span className={styles.xpTotal}>{fpEarned} Fanpoints</span>
-        </div>
         <div className={styles.footerArrow}>
           <svg
             className={`${styles.footerChevron} ${open ? styles.footerChevronOpen : ''}`}
