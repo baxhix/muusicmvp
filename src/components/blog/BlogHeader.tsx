@@ -39,7 +39,7 @@ export default function BlogHeader() {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/blog" className={styles.brand} aria-label="Fanverse Blog">
+        <Link href="/blog" className={styles.brand} aria-label="Fanverse">
           {/* Wordmark "FANVERSE" branco — mesmo asset usado no
            *  /teste navbar pra manter consistência de marca.
            *  Altura 20px proporcional ao padding vertical 14px do
@@ -50,7 +50,6 @@ export default function BlogHeader() {
             alt="Fanverse"
             className={styles.brandLogo}
           />
-          <span className={styles.brandTag}>Blog</span>
         </Link>
 
         <div className={styles.cluster}>
