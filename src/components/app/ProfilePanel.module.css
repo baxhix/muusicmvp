@@ -488,6 +488,17 @@
   padding: 3px;
   gap: 2px;
   flex-shrink: 0;
+  /* contain:layout isola reflows do tab pill (motion layoutId)
+   *  pra não propagar pro restante da panel. Sem isso, o
+   *  mount/unmount do motion.span durante a animação podia
+   *  causar layout shift micro no .tabContent abaixo. */
+  contain: layout;
+  /* Altura explícita = padding (3px*2) + tab content (~34px) = 40px.
+   *  Estabiliza a altura da tab bar contra qualquer flutuação do
+   *  pill render — antes era content-driven e podia oscilar 1-2px
+   *  na transição. */
+  min-height: 40px;
+  box-sizing: border-box;
 }
 
 .tab {
@@ -496,6 +507,11 @@
   position: relative;
   z-index: 0;
   flex: 1;
+  /* min-width:0 evita flex item crescer pelo conteúdo intrínseco
+   *  (forçando todos a serem equal-width via flex:1). box-sizing
+   *  border-box garante padding não somar à largura calculada. */
+  min-width: 0;
+  box-sizing: border-box;
   padding: 8px 8px;
   border-radius: 6px;
   border: none;
@@ -527,6 +543,11 @@
 /* ── Tab content ─────────────────────────────────────────── */
 .tabContent {
   padding: 8px 0 40px;
+  /* contain:layout isola o reflow do conteúdo (atividade vs
+   *  comunidades têm alturas diferentes) — sem isso, ao trocar
+   *  de tab o panel todo "se mexia" por causa do cascade de
+   *  recálculo. Agora a mudança fica contida nesse box. */
+  contain: layout;
 }
 
 /* History */
