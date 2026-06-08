@@ -14,7 +14,8 @@ import {
   SPARKLE_INDICES,
   sumEarnedXp,
   // InviteFriendsModal removido — botão "4 convites" sai do mobile.
-  BenefitsTabContent,
+  // BenefitsTabContent não é mais usado aqui (Conquistas migrou
+  // pro FanpointsModal acessado via link "X Fanpoints").
 } from './ArtistBox';
 import VerifiedBadge from './VerifiedBadge';
 import FanverseCore from '@/components/animations/FanverseCore';
@@ -67,9 +68,9 @@ export default function MobileFanverseSheet({
 }: Props) {
   type BoxTab = 'missoes' | 'ranking' | 'materiais';
   const [activeTab, setActiveTab] = useState<BoxTab>(defaultTab);
-  /* Toggle Conquistas inline dentro da tab Superfãs (espelha
-   * comportamento do desktop após remoção da tab Conquistas). */
-  const [showConquistas, setShowConquistas] = useState(false);
+  /* showConquistas removido — Conquistas agora vive no
+   * FanpointsModal (aba default "Minhas Conquistas"), aberto via
+   * o link "X Fanpoints" da tab Superfãs. */
   // inviteOpen state removida — botão "4 convites" foi tirado do mobile.
 
   const { user } = useAuth();
@@ -271,34 +272,20 @@ export default function MobileFanverseSheet({
       <div className={sheetStyles.body}>
         {activeTab === 'ranking' && (
           <>
-            {/* Link "Conquistas" inline — substitui a antiga tab Conquistas.
-             * Click expande BenefitsTabContent abaixo, antes da lista de
-             * ranking. Mantém o conteúdo acessível sem ocupar uma tab. */}
+            {/* Link "X Fanpoints" abre o FanpointsModal (mount
+             * global no layout). Substituiu o dropdown "Conquistas"
+             * per spec — mesmo formato do desktop. */}
             <button
               type="button"
               className={boxStyles.conquistasLink}
-              onClick={() => setShowConquistas((s) => !s)}
-              aria-expanded={showConquistas}
+              onClick={() => {
+                try {
+                  window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+                } catch { /* SSR */ }
+              }}
             >
-              <span>Conquistas</span>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`${boxStyles.conquistasChevron} ${showConquistas ? boxStyles.conquistasChevronOpen : ''}`}
-                aria-hidden="true"
-              >
-                <path d="M5 9l7 7 7-7" />
-              </svg>
+              {fanpoints.toLocaleString('pt-BR')} Fanpoints
             </button>
-            {showConquistas && (
-              <div className={`${boxStyles.conquistasInline} ${sheetStyles.benefitsScope}`}>
-                <BenefitsTabContent />
-              </div>
-            )}
             <MobileRankingList />
           </>
         )}

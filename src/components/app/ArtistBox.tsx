@@ -836,6 +836,10 @@ function Top10ProgressBarDesktop() {
 
 export function RankingTabContent() {
   const { user } = useAuth();
+  /* Fanpoints do user logado pra mostrar como link "X Fanpoints"
+   * no topo da tab (substituiu "Minhas conquistas" per spec). */
+  const { profile } = useUserProfile(user?.id ?? null);
+  const fanpoints = profile?.fanpoints ?? 0;
   const { ranking, loading, error } = useRanking(true);
   /* Lista de online ao vivo — usada pra renderizar o dot
    * verde/cinza ao lado do avatar de cada linha. Recarrega
@@ -861,9 +865,10 @@ export function RankingTabContent() {
 
   return (
     <div className={styles.tabRanking}>
-      {/* "Minhas conquistas" abre o FanpointsModal (mount global no
-       * layout). Custom event mantém o componente desacoplado do
-       * router — mesma estratégia do orb → FanverseSearch. */}
+      {/* Link "X Fanpoints" abre o FanpointsModal (mount global
+       * no layout). Substituiu o "Minhas conquistas" per spec —
+       * exibe o saldo atualizado do user e leva pro mesmo modal
+       * (que tem aba Minhas Conquistas como tab default). */}
       <button
         type="button"
         className={styles.conquistasLink}
@@ -873,7 +878,7 @@ export function RankingTabContent() {
           } catch { /* SSR */ }
         }}
       >
-        Minhas conquistas
+        {fanpoints.toLocaleString('pt-BR')} Fanpoints
       </button>
 
       {/* Lista (sem foto, sem pontos). */}
