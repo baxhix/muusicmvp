@@ -42,7 +42,7 @@ function BackArrow() {
 }
 
 /** Ícones lineares discretos para os itens do drawer */
-function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' }) {
+function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' | 'star' }) {
   const props = {
     viewBox: '0 0 24 24',
     fill: 'none' as const,
@@ -68,6 +68,15 @@ function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'ma
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="16" x2="12" y2="12" />
           <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+      );
+    case 'star':
+      // Estrela 5 pontas — usada no item Fanpoints. Mesmo glyph
+      // do item Fanpoints no hamburger menu (BottomNav) pra
+      // consistência visual entre as duas entradas.
+      return (
+        <svg {...props}>
+          <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.9 6.7 19.6l1.1-6L3.4 9.4l6-.8L12 3z" />
         </svg>
       );
     case 'activity':
@@ -570,6 +579,27 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       stays consistent across the app. */}
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Fanverse</span>
+                    {/* Fanpoints — abre o FanpointsModal global. Per
+                     * spec "inclua o item Fanpoints no menu geral,
+                     * que abre ao clicar na imagem do usuário logado
+                     * no topo direito". Mesmo evento que o trigger
+                     * do .metaPoints do fold e do item Fanpoints
+                     * no hamburger menu (BottomNav) — mantém UX
+                     * consistente. */}
+                    <button
+                      type="button"
+                      className={styles.drawerItem}
+                      onClick={() => {
+                        setOpen(false);
+                        try {
+                          window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+                        } catch { /* SSR — ignore */ }
+                      }}
+                    >
+                      <DrawerItemIcon name="star" />
+                      <span>Fanpoints</span>
+                      <DrawerChevron />
+                    </button>
                     <Link
                       href="/app/superchat"
                       className={styles.drawerItem}
