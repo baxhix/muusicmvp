@@ -4,11 +4,22 @@
  *  background que extrapola lateralmente conforme drag.
  * .action: position:absolute right:0 — o botão fica grudado na
  *  borda direita; foreground desliza pra esquerda e revela ele.
- * .foreground: o conteúdo deslizável; bg herda do parent pra
- *  não vazar transparência sobre o background do action. */
+ * .foreground: o conteúdo deslizável; transparente — o bg vive
+ *  no child (ex: .row do chat). Assim o swipe não pinta um bg
+ *  fantasma sobre o action. */
 
 .root {
   position: relative;
+  /* display:block + width:100% garantem que o wrapper se
+   *  comporte como block-level transparente no layout (em flex
+   *  column de pai, o item adota cross-axis stretch). Sem isso,
+   *  certos clients calculavam altura/largura errado e cortavam
+   *  o avatar das rows do chat. */
+  display: block;
+  width: 100%;
+  /* flex-shrink: 0 evita que o wrapper colapse em listas com
+   *  muitos itens dentro de container flex com altura limitada. */
+  flex-shrink: 0;
   overflow: hidden;
   /* Mantém o radius do parent (ex: row do chat sem radius — ok).
    *  Quando o parent tiver radius, herda via border-radius
@@ -24,6 +35,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* padding: 0 sobrescreve o default do <button> (1-6px em alguns
+   *  browsers) — não contribui pra altura, mas remove inconsistência
+   *  visual no label. */
+  padding: 0;
+  margin: 0;
   border: none;
   background: #ef4444; /* red-500 — destrutivo padrão iOS. */
   color: #ffffff;
@@ -39,13 +55,21 @@
 }
 
 .foreground {
-  /* z-index 1 fica acima do .action (sem z = -1 pra evitar
-   *  problemas em stacking contexts). bg precisa ser opaco pra
-   *  ocultar o action quando x = 0; herda do parent pra
-   *  combinar com a lista. */
+  /* z-index 1 fica acima do .action. display:block + width:100%
+   *  garantem que o child ocupe full width natural — antes a falta
+   *  de dimensão explícita combinada com o transform do motion
+   *  (cria containing block) podia resultar em cross-axis shrink
+   *  do conteúdo. */
   position: relative;
   z-index: 1;
-  background: inherit;
+  display: block;
+  width: 100%;
+  /* Background opaco dark (matching chat panel) — necessário pra
+   *  mascarar o .action vermelho atrás quando a row está em
+   *  estado at-rest (row tem bg transparent, sem isso o vermelho
+   *  vazaria). Consumidor pode override com `--swipe-action-bg`
+   *  pra adaptar a outros surfaces. */
+  background: var(--swipe-action-bg, #0a0a0e);
   /* will-change promove camada GPU desde o mount pra evitar
    *  flicker no primeiro drag. */
   will-change: transform;
