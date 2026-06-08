@@ -512,11 +512,13 @@
 .moreBackdrop {
   position: fixed;
   inset: 0;
-  /* Per product feedback mobile "deixando o fundo mais escuro e
-   * com blur" — opacity 0.45 → 0.72, blur 14 → 22. */
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  /* Per spec "ao abrir o menu hamburguer, aplique uma camada preta
+   * com transparencia para ofuscar levemente o fundo". opacity 0.72
+   * → 0.55 + blur 22 → 8: o fundo continua VISÍVEL atrás, só
+   * dimmed — em vez do efeito de frosted glass anterior. */
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
   /* z-index 250 (era 79) per product feedback "esse pequeno modal
    * deve ficar por cima dos avatares de chat flutuantes". O
    * LiveChatStack vive em z:200, então o backdrop precisa ficar

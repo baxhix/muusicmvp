@@ -403,38 +403,48 @@ export default function BottomNav() {
                  *  frequentes ficam abaixo, perto do polegar (que
                  *  acabou de tocar o hamburger na bottom bar). */}
 
-                {/* 1. Meu Perfil */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    router.push('/app/perfil');
-                  }}
-                >
-                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                    <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  Meu Perfil
-                </button>
+                {/* Ordem JSX top→bottom = ordem visual top→bottom no
+                 *  drawer. Per spec "a lista deve ser nessa ordem de
+                 *  baixo pra cima: Meu perfil, Comunidade, Fanpoints,
+                 *  Playlist, Configurações, Loja Oficial" — Meu
+                 *  Perfil fica no rodapé (perto do polegar que tocou
+                 *  o hamburger), Loja Oficial no topo. */}
 
-                {/* 2. Comunidades — per product feedback "Inclua
-                 *  Comunidades no menu hamburger". Vai pra
-                 *  /app/comunidades (mesma rota do slot desktop). */}
+                {/* 1 (topo). Loja Oficial — Loja da Boiadeira (nova aba). */}
+                <a
+                  role="menuitem"
+                  className={styles.moreItem}
+                  href="https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMoreOpen(false)}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    {/* Shopping bag — cabo arqueado + corpo retangular */}
+                    <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z" />
+                    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+                  </svg>
+                  Loja Oficial
+                </a>
+
+                {/* 2. Configurações — abre drawer do TopBar via event. */}
                 <button
                   type="button"
                   role="menuitem"
                   className={styles.moreItem}
                   onClick={() => {
                     setMoreOpen(false);
-                    router.push('/app/comunidades');
+                    try {
+                      window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
+                    } catch { /* SSR — ignore */ }
                   }}
                 >
                   <svg
@@ -446,12 +456,14 @@ export default function BottomNav() {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    <circle cx="9" cy="8" r="3.5" />
-                    <path d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5" />
-                    <circle cx="17" cy="9.5" r="2.5" />
-                    <path d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4" />
+                    <line x1="4" y1="7" x2="20" y2="7" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="17" x2="20" y2="17" />
+                    <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
+                    <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
                   </svg>
-                  Comunidades
+                  Configurações
                 </button>
 
                 {/* 3. Playlist — abre PlaylistModal. */}
@@ -482,32 +494,10 @@ export default function BottomNav() {
                   Playlist
                 </button>
 
-                {/* 4. Loja Oficial — Loja da Boiadeira (nova aba). */}
-                <a
-                  role="menuitem"
-                  className={styles.moreItem}
-                  href="https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMoreOpen(false)}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    {/* Shopping bag — cabo arqueado + corpo retangular */}
-                    <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z" />
-                    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
-                  </svg>
-                  Loja Oficial
-                </a>
-
-                {/* 5. Configurações — abre drawer do TopBar via event. */}
+                {/* 4. Fanpoints — abre FanpointsModal (mount global no
+                 *  layout). Per spec "inclua o item Fanpoints no menu
+                 *  hamburguer". Mesmo evento que o trigger do .metaPoints
+                 *  do fold dispara. */}
                 <button
                   type="button"
                   role="menuitem"
@@ -515,7 +505,7 @@ export default function BottomNav() {
                   onClick={() => {
                     setMoreOpen(false);
                     try {
-                      window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
+                      window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
                     } catch { /* SSR — ignore */ }
                   }}
                 >
@@ -528,14 +518,62 @@ export default function BottomNav() {
                     strokeLinejoin="round"
                     aria-hidden="true"
                   >
-                    <line x1="4" y1="7" x2="20" y2="7" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="17" x2="20" y2="17" />
-                    <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
+                    {/* Estrela 5 pontas — símbolo de pontos/recompensa */}
+                    <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.9 6.7 19.6l1.1-6L3.4 9.4l6-.8L12 3z" />
                   </svg>
-                  Configurações
+                  Fanpoints
+                </button>
+
+                {/* 5. Comunidades — per product feedback "Inclua
+                 *  Comunidades no menu hamburger". Vai pra
+                 *  /app/comunidades (mesma rota do slot desktop). */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    router.push('/app/comunidades');
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="9" cy="8" r="3.5" />
+                    <path d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5" />
+                    <circle cx="17" cy="9.5" r="2.5" />
+                    <path d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4" />
+                  </svg>
+                  Comunidades
+                </button>
+
+                {/* 6 (rodapé). Meu Perfil — fica mais próximo do
+                 *  polegar (que acabou de tocar o hamburger). */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    router.push('/app/perfil');
+                  }}
+                >
+                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  Meu Perfil
                 </button>
               </div>
               </>,

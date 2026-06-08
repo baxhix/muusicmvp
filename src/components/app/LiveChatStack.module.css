@@ -408,7 +408,13 @@
  *   - "Chat" header label hides — the avatars are self-evident.
  *   - Halo trimmed so it doesn't bleed past the column edge.
  */
-@media (max-width: 600px) {
+/* Breakpoint mobile alinhado com o do FeedPanel (≤768px) per spec
+ * "quando o feed estiver aberto no mobile, ele deve ficar por cima
+ * das miniaturas do chat fixas na lateral". Era ≤600px, então em
+ * viewports 601-768px o stack ficava em z:200 (desktop) e
+ * sobrepunha o FeedPanel mobile (z:100). Agora a drop pra z:90
+ * dispara a partir de ≤768px e o feed sempre ganha. */
+@media (max-width: 768px) {
   .dock {
     right: 14px;
     /* On mobile the right-rail action cluster is gone (only the
