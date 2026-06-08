@@ -53,13 +53,15 @@
   to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
 
-/* ── Header ── */
+/* ── Header ──
+ * Padding bumped per spec "aumente o padding". 20/24/18 → 32/32/28
+ * (mais respiro em volta do título). */
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 20px 24px 18px;
+  padding: 32px 32px 28px;
   flex-shrink: 0;
 }
 
@@ -94,23 +96,28 @@
 }
 
 .title {
-  margin: 0 0 4px;
+  /* font-size 22 → 32px per spec. Display flex pra alinhar
+   * o emoji estrela (.titleIcon) inline com o texto. */
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
   font-family: 'Borscha', var(--font-inter), sans-serif;
-  font-size: 22px;
+  font-size: 32px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   line-height: 1;
 }
 
-.subtitle {
-  margin: 0;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: rgba(245, 245, 247, 0.55);
-  line-height: 1.45;
+.titleIcon {
+  font-size: 28px;
+  line-height: 1;
 }
+
+/* .subtitle dropped from JSX per spec "remova o subtítulo".
+ * Classe mantida vazia caso algum consumer externo referencie. */
+.subtitle { display: none; }
 
 /* ── Tabs (minimal underline pattern, ref: Style|Image|Arrange) ── */
 .tabs {
@@ -199,10 +206,12 @@
 }
 
 .tabPanel {
-  padding: 22px 24px 28px;
+  /* Padding aumentado per spec "aumente o padding" — 22/24/28
+   * → 28/32/32. Mais respiro nas laterais e topo do conteúdo. */
+  padding: 28px 32px 32px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
 }
 
 /* ── Saldo card (sem borda, só bg) ── */

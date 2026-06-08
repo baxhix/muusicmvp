@@ -164,16 +164,16 @@ export default function FanpointsModal() {
       aria-label="Fanpoints"
     >
       <div className={styles.modal}>
-        {/* Header — close (X) no canto superior direito per spec
-         * "deixe apenas o botão de X no tipo superior direito,
-         * remova a seta". */}
+        {/* Header — close (X) no canto superior direito.
+         * Título 32px + emoji estrela + sem subtítulo per spec
+         * "deixe o título em 32px e inclua o emoji de estrela.
+         * Aumente o padding. Remova o subtítulo". */}
         <div className={styles.header}>
           <div className={styles.headerText}>
-            <h2 className={styles.title}>Fanpoints</h2>
-            <p className={styles.subtitle}>
-              Acompanhe sua evolução, descubra novas recompensas e
-              veja como aproveitar seus pontos.
-            </p>
+            <h2 className={styles.title}>
+              <span className={styles.titleIcon} aria-hidden="true">⭐</span>
+              Fanpoints
+            </h2>
           </div>
           <button
             type="button"

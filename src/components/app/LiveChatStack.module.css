@@ -412,8 +412,10 @@
  * "quando o feed estiver aberto no mobile, ele deve ficar por cima
  * das miniaturas do chat fixas na lateral". Era ≤600px, então em
  * viewports 601-768px o stack ficava em z:200 (desktop) e
- * sobrepunha o FeedPanel mobile (z:100). Agora a drop pra z:90
- * dispara a partir de ≤768px e o feed sempre ganha. */
+ * sobrepunha o FeedPanel mobile (z:100). Drop pra z:14 garante que
+ * o feed (z:100 mobile) sempre fica acima — gap grande pra
+ * compensar qualquer stacking context inesperado dos wrappers
+ * (.welcomeFade tem transition: opacity). */
 @media (max-width: 768px) {
   .dock {
     right: 14px;
@@ -439,7 +441,7 @@
      * pseudo at z:-1 inside the dock continues to read against
      * the basemap underneath without depending on a global high
      * stack position. */
-    z-index: 90;
+    z-index: 14;
   }
   .dock::before {
     inset: -6px -20px;
