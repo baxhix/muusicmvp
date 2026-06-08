@@ -734,57 +734,32 @@
   color: rgba(245,245,247,0.55);
 }
 
-/* Per spec "substitua o botão abrir por Participar, com o botão
- * com o estilo de gradient na borda". Pattern: pill com bg
- * escuro + borda formada por gradient via background-clip mask.
- * O texto fica branco e legível dentro. */
+/* Per spec "substitua o estilo de todos os botões Participar
+ * pelo estilo do botão Ver mais que tem no Box Fanverse Ana
+ * Castela" — espelha .tabRankingLoadMore (ArtistBox.module.css):
+ * pill cinza translúcido + blur + sombra, flat. */
 .joinBtn {
-  position: relative;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 999px;
   border: none;
-  background: #0a0a0e;
-  color: #ffffff;
-  font-size: 12px;
+  background: rgba(40, 40, 48, 0.96);
+  color: rgba(245, 245, 247, 0.92);
+  font-size: 11.5px;
   font-weight: 600;
-  font-family: var(--sans);
+  font-family: inherit;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 140ms ease;
-  /* z-index pra que o ::before do gradient renderize ATRÁS do
-   * texto mas DENTRO do botão. */
-  z-index: 0;
-}
-/* Borda em gradient via pseudo-element. mask exclui o interior,
- * deixando só a "borda" gradient visível. */
-.joinBtn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  /* Espessura da borda gradient: 1.5 → 1px per spec "deixe o
-   * botão de Participar com 1px na borda". */
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(167, 139, 250, 0.9) 0%,
-    rgba(217, 70, 239, 0.9) 50%,
-    rgba(244, 114, 182, 0.9) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-  z-index: -1;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: background 140ms ease, color 140ms ease;
 }
 .joinBtn:hover {
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 .joinBtnLabel {
-  position: relative;
-  z-index: 1;
+  /* Mantido pra retrocompatibilidade — pill agora é flat. */
 }
 
 /* Idols grid */
