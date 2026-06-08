@@ -41,6 +41,7 @@ import MapZoomIndicator from '@/components/app/MapZoomIndicator';
 import SimulationHUD from '@/components/app/SimulationHUD';
 import OnboardingTooltips from '@/components/app/OnboardingTooltips';
 import FanverseSearch from '@/components/app/FanverseSearch';
+import FanpointsModal from '@/components/app/FanpointsModal';
 import styles from './layout.module.css';
 
 /**
@@ -507,6 +508,12 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  null/overlay com base em estado interno. Mantido no shell
        *  pra ficar disponível em qualquer rota /app/*. */}
       <FanverseSearch />
+
+      {/* Fanpoints modal — abre via `app:open-fanpoints` (dispatched
+       *  pelo link "Minhas conquistas" da tab Superfãs do ArtistBox).
+       *  Self-mounting: ouve o evento global e renderiza overlay
+       *  com 4 tabs (Conquistas/Fanpoints/Atividade/Como Trocar). */}
+      <FanpointsModal />
 
       {/* ── Brainstorm + Map Simulation ──
        *

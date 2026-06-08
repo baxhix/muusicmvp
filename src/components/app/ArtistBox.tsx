@@ -861,18 +861,20 @@ export function RankingTabContent() {
 
   return (
     <div className={styles.tabRanking}>
-      {/* "Conquistas" como link simples per spec "deixe o Minha
-       * conquista como um link simples, sem ser dropdown" — sem
-       * chevron, sem expansão inline; clique navega pro
-       * BenefitsTabContent via custom event (mesmo padrão do
-       * orb → FanverseSearch). */}
-      <Link
-        href="/app/ranking"
+      {/* "Minhas conquistas" abre o FanpointsModal (mount global no
+       * layout). Custom event mantém o componente desacoplado do
+       * router — mesma estratégia do orb → FanverseSearch. */}
+      <button
+        type="button"
         className={styles.conquistasLink}
-        prefetch={false}
+        onClick={() => {
+          try {
+            window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+          } catch { /* SSR */ }
+        }}
       >
         Minhas conquistas
-      </Link>
+      </button>
 
       {/* Lista (sem foto, sem pontos). */}
       {error ? (

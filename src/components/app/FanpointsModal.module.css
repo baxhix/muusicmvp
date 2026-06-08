@@ -1,0 +1,532 @@
+/* FanpointsModal — modal centralizador do programa de Fanpoints.
+ *
+ * Design constraints (per spec): zero bordas em botões/boxes,
+ * sem cores chamativas. Tudo flat sobre o tema escuro do app.
+ * Accent purple é usado APENAS no indicador da tab ativa e no
+ * fill da progress bar — em todos os outros lugares prevalece
+ * o cinza/branco-translúcido do design system. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fpFade 240ms ease;
+}
+
+@keyframes fpFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  width: min(640px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  background: #0d0d12;
+  border-radius: 18px;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.75),
+    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fpRise 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fpRise {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 24px 18px;
+  flex-shrink: 0;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-radius: 999px;
+  color: rgba(245, 245, 247, 0.78);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 140ms ease, color 140ms ease;
+}
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+.closeBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.subtitle {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.55);
+  line-height: 1.45;
+}
+
+/* ── Tabs (minimal underline pattern, ref: Style|Image|Arrange) ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  position: relative;
+  padding: 12px 14px 14px;
+  background: none;
+  border: none;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 140ms ease;
+}
+.tab:first-child { padding-left: 0; }
+.tab:hover:not(:disabled) {
+  color: rgba(245, 245, 247, 0.9);
+}
+.tabActive {
+  color: #ffffff;
+}
+/* Underline indicator embaixo da tab ativa — accent purple,
+ * 2px alto, alinha com o border-bottom da linha de tabs. */
+.tabActive::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  background: #a78bfa;  /* purple-400 — único accent usado */
+  border-radius: 2px 2px 0 0;
+}
+.tab:first-child.tabActive::after { left: 0; }
+
+.tabDisabled {
+  color: rgba(245, 245, 247, 0.28);
+  cursor: not-allowed;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tabDisabled:hover { color: rgba(245, 245, 247, 0.28); }
+
+.tabBadge {
+  display: inline-block;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.55);
+}
+
+/* ── Body ── */
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.body::-webkit-scrollbar { width: 6px; }
+.body::-webkit-scrollbar-track { background: transparent; }
+.body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+.body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.tabPanel {
+  padding: 22px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── Saldo card (sem borda, só bg) ── */
+.balanceCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+}
+.balanceLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.45);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.balanceValue {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.balanceUnit {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  margin-top: 2px;
+}
+
+/* ── Section genérico (titulo + conteúdo) ── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.paragraph {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.82);
+  line-height: 1.5;
+}
+
+/* ── Nível atual ── */
+.levelRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.levelTier {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+}
+.levelRank {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Progress bar ── */
+.progressTrack {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(167, 139, 250, 0.85) 0%,
+    rgba(192, 132, 252, 0.85) 100%
+  );
+  border-radius: 999px;
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.progressNote {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.5px;
+  color: rgba(245, 245, 247, 0.65);
+  line-height: 1.45;
+}
+.progressNote strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ── Timeline (jornada de tiers) ── */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timelineItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.timelineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+.timeline_done .timelineDot {
+  background: #4ade80;  /* emerald-400 — checkmark estilo */
+}
+.timeline_current .timelineDot {
+  background: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+}
+.timeline_locked .timelineDot {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.timelineLabel {
+  flex: 1;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.78);
+}
+.timeline_current .timelineLabel { color: #ffffff; font-weight: 600; }
+.timeline_locked  .timelineLabel { color: rgba(245, 245, 247, 0.42); }
+
+.timelineCurrent {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(167, 139, 250, 0.95);
+}
+
+/* ── Recompensas ── */
+.rewardsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rewardItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.82);
+}
+.rewardIcon { font-size: 18px; line-height: 1; }
+
+/* ── Como acumular (tab Fanpoints) ── */
+.earnList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.earnItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.earnIcon  { font-size: 18px; line-height: 1; flex-shrink: 0; }
+.earnName  {
+  flex: 1;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.82);
+}
+.earnPoints {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(167, 139, 250, 0.95);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Bullet list genérico ── */
+.bulletList {
+  list-style: disc;
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  color: rgba(245, 245, 247, 0.82);
+  line-height: 1.55;
+}
+
+/* ── Atividade recente ── */
+.activityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.activityItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.activityMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.activityName {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.activityDate {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.45);
+}
+.activityPoints {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(167, 139, 250, 0.95);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.empty {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.55);
+  line-height: 1.5;
+  padding: 12px 0;
+}
+
+/* ── Inline link (texto-link sem botão) ── */
+.inlineLink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  color: rgba(192, 132, 252, 0.95);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 140ms ease, text-decoration 140ms ease;
+}
+.inlineLink:hover {
+  color: rgba(216, 180, 254, 1);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Responsive: mobile fullscreen ── */
+@media (max-width: 640px) {
+  .backdrop {
+    padding: 0;
+  }
+  .modal {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  .header {
+    padding: 16px 18px 14px;
+  }
+  .title { font-size: 20px; }
+  .subtitle { font-size: 12.5px; }
+  .tabs { padding: 0 18px; }
+  .tab { font-size: 12.5px; padding: 12px 10px 14px; }
+  .tab:first-child { padding-left: 0; }
+  .tabActive::after { left: 10px; right: 10px; }
+  .tab:first-child.tabActive::after { left: 0; }
+  .tabPanel { padding: 18px 18px 28px; gap: 18px; }
+  .balanceValue { font-size: 32px; }
+}
