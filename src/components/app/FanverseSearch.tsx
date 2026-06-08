@@ -348,8 +348,19 @@ export default function FanverseSearch() {
               }}
               title={l.name}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={l.avatarUrl} alt={l.name} />
+              {/* 2-layer wrap pra separar a entrance fade (outer
+               *  via .floatingAvatarShown) do blink cíclico (inner
+               *  via fsBlink). ANTES as duas animações disputavam
+               *  o mesmo `opacity` no mesmo elemento — fsBlink
+               *  (declarada por último) sempre vencia, ignorando
+               *  fsAvatarIn. Avatares apareciam em qualquer phase
+               *  do blink — alguns instantâneos, outros invisíveis
+               *  por segundos. Agora cada layer tem seu próprio
+               *  opacity-channel. */}
+              <span className={styles.floatingAvatarInner}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={l.avatarUrl} alt={l.name} />
+              </span>
             </span>
           );
         })}

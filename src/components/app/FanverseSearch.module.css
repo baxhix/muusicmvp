@@ -289,28 +289,51 @@
  *      em vez de oscilação curta. Duração 6-9s pra dar tempo da
  *      viagem ser perceptível.
  *   3. fsBlink (10s infinite) → fade out/in cíclico. */
+/* Outer wrap: roda fsAvatarIn (entrance opacity fade) + fsRoamN
+ * (transform contínuo). Sem fsBlink aqui — blink vive na inner
+ * layer pra não disputar o canal opacity. */
 .floatingAvatarShown {
   animation:
     fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    fsRoam1 7s ease-in-out infinite alternate both,
-    fsBlink 10s ease-in-out infinite;
+    fsRoam1 7s ease-in-out infinite alternate both;
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
 
-/* Cada avatar tem path e duração próprios pra evitar varredura
- * sincrônica. animation-direction alternate aplicado individualmente
- * pra todos os fsRoam para que a viagem ida-e-volta funcione. */
-.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 6.4s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 8.2s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 7.6s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 8.8s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 6.8s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 7.2s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1, fsBlink; animation-duration: 1200ms, 8.0s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2, fsBlink; animation-duration: 1200ms, 7.4s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3, fsBlink; animation-duration: 1200ms, 9.0s, 10s; animation-direction: normal, alternate, normal; }
-.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4, fsBlink; animation-duration: 1200ms, 6.6s, 10s; animation-direction: normal, alternate, normal; }
+/* Cada avatar tem path próprio pra evitar varredura sincrônica.
+ * animation-direction alternate aplicado individualmente pra todos
+ * os fsRoam (entrada é normal, ida-e-volta no roam). */
+.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2; animation-duration: 1200ms, 6.4s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3; animation-duration: 1200ms, 8.2s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4; animation-duration: 1200ms, 7.6s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2; animation-duration: 1200ms, 8.8s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3; animation-duration: 1200ms, 6.8s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4; animation-duration: 1200ms, 7.2s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1; animation-duration: 1200ms, 8.0s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2; animation-duration: 1200ms, 7.4s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3; animation-duration: 1200ms, 9.0s; animation-direction: normal, alternate; }
+.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4; animation-duration: 1200ms, 6.6s; animation-direction: normal, alternate; }
+
+/* Inner layer — herda 100% da outer (fill), mas roda fsBlink no
+ * SEU canal opacity (sem disputar com a entrance fade da outer).
+ * Resultado: entrance suave + blink só após a entrance terminar
+ * (delay configurado nos overrides nth-child). */
+.floatingAvatarInner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: fsBlink 10s ease-in-out infinite;
+  /* Delay maior que a duração da entrance (1.2s) pra o blink só
+   *  começar depois do fade-in terminar — evita "piscadinha"
+   *  durante a aparição inicial. */
+  animation-delay: 1.4s;
+}
+.floatingAvatarInner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 .floatingAvatar img {
   width: 100%;
@@ -867,10 +890,27 @@
     height: 30px;
   }
   /* Orbe mobile reduzido pra liberar espaço vertical pro headline.
-   * 180 → 140 dá ~40px a mais embaixo pra o insight respirar. */
+   * 180 → 140 dá ~40px a mais embaixo pra o insight respirar.
+   *
+   * fsOrbBreathe (filter: drop-shadow animation) DESLIGADO em
+   * mobile — animar filter força repaint composto da área inteira
+   * todo frame, principal causa de tremor/jank no Android Chrome
+   * e iOS Safari mais antigos. Mantemos o glow estático. */
   .orb {
     width: 140px;
     height: 140px;
+    animation: none;
+    filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.4));
+  }
+
+  /* Backdrop blur reduzido em mobile: 32px + saturate(1.3) é
+   *  caríssimo na GPU mobile e roda em TODO frame enquanto
+   *  qualquer animação acima dele anima — multiplica o custo
+   *  pra cada elemento que se move por cima. blur(16px) sem
+   *  saturate mantém o efeito visual sem matar a perf. */
+  .backdrop {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
   /* Per product feedback "o insight está abaixo do orbe dificultando
    * a leitura... tem muita informação por cima de outra". O orbe
@@ -908,17 +948,24 @@
    * a qualquer momento. Per spec "diminua a quantidade de avatares
    * que ficam em volta do orbe, para que fique no máximo 5 visíveis
    * ao mesmo tempo, intercalando entre sumindo e aparecendo". */
-  .floatingAvatarShown          { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3Mobile, fsBlinkMobile; }
-  .floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4Mobile, fsBlinkMobile; }
+  /* Outer mobile: só entrance + roam mobile-amplitudes (sem
+   *  fsBlink — blink vive na inner via fsBlinkMobile, evitando
+   *  disputa do canal opacity entre 2 animações na mesma layer). */
+  .floatingAvatarShown          { animation-name: fsAvatarIn, fsRoam1Mobile; animation-duration: 1200ms, 7s; }
+  .floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2Mobile; }
+  .floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3Mobile; }
+  .floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4Mobile; }
+  .floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2Mobile; }
+  .floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3Mobile; }
+  .floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4Mobile; }
+  .floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1Mobile; }
+  .floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2Mobile; }
+  .floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3Mobile; }
+  .floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4Mobile; }
+  /* Inner mobile: blink mais suave (fsBlinkMobile, ~45% visível). */
+  .floatingAvatarShown .floatingAvatarInner {
+    animation-name: fsBlinkMobile;
+  }
   .hero {
     padding: 8px 24px 22px;
   }
