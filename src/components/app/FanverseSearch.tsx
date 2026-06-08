@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
@@ -138,6 +139,23 @@ const STAGE_LIST_MS = 15000;
 const AVATAR_REVEAL_START_MS = 3000;
 const AVATAR_REVEAL_STEP_MS = 350;
 
+/* Paths do roam — 4 variações de keyframes normalizadas (multiplicadas
+ * pela amplitude no render time). Cada path tem 4-5 stops orgânicos
+ * pra evitar movimento previsível. Combinadas com `repeatType: mirror`
+ * fazem o avatar varrer e voltar suavemente. */
+const ROAM_PATHS_X: number[][] = [
+  [0, -1.2, 0.6, -0.4, 1.1, 0],
+  [0, 1.0, -0.8, 0.5, -1.2, 0],
+  [0, -0.5, 1.1, -1.0, 0.4, 0],
+  [0, 1.2, -0.6, 0.8, -1.0, 0],
+];
+const ROAM_PATHS_Y: number[][] = [
+  [0, 0.5, -1.0, 0.8, -0.3, 0],
+  [0, -0.7, 0.9, -1.0, 0.5, 0],
+  [0, 0.9, -0.4, 0.6, -1.1, 0],
+  [0, -1.1, 0.7, -0.5, 1.0, 0],
+];
+
 /* Copy do "Analisando" — agora com fade in/out via CSS (sem
  * typewriter). Texto completo fica sempre montado; o efeito fade é
  * a animação fsAnalyzingFade no .analyzing. */
@@ -164,10 +182,6 @@ export default function FanverseSearch() {
   const [showPills, setShowPills] = useState(false);
   const [showList, setShowList] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
-  /* Avatares aparecem em sequência (mais próximos primeiro), começando
-   * em t=3s. avatarsShown conta quantos posições da AVATAR_REVEAL_ORDER
-   * já estão visíveis (de 0 a 11). */
-  const [avatarsShown, setAvatarsShown] = useState(0);
   /* Paginação da lista — começa exibindo 20 nomes; cada clique no
    * CTA "Exibir mais" adiciona +20 até cobrir todos os users. */
   const [visibleUsers, setVisibleUsers] = useState(20);
@@ -189,15 +203,8 @@ export default function FanverseSearch() {
     const tH = window.setTimeout(() => setShowHeadline(true), STAGE_HEADLINE_MS);
     const tP = window.setTimeout(() => setShowPills(true),    STAGE_PILLS_MS);
     const tL = window.setTimeout(() => setShowList(true),     STAGE_LIST_MS);
-    /* Avatares revelam um a um a partir de t=3s, em intervalos de
-     * 350ms. Usa `reveal` (slice mobile-aware) pra agendar só os
-     * que vão renderizar — no mobile são 6 (metade), desktop 11. */
-    const avatarTimers = reveal.map((_, pos) =>
-      window.setTimeout(
-        () => setAvatarsShown((n) => Math.max(n, pos + 1)),
-        AVATAR_REVEAL_START_MS + pos * AVATAR_REVEAL_STEP_MS,
-      ),
-    );
+    /* Reveal staggered dos avatares agora é feito via `delay` no
+     *  motion.transition de cada avatar — não precisa de timers JS. */
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
@@ -206,7 +213,6 @@ export default function FanverseSearch() {
       window.clearTimeout(tH);
       window.clearTimeout(tP);
       window.clearTimeout(tL);
-      avatarTimers.forEach((id) => window.clearTimeout(id));
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -218,7 +224,6 @@ export default function FanverseSearch() {
       setShowPills(false);
       setShowList(false);
       setPhraseIdx(0);
-      setAvatarsShown(0);
       setVisibleUsers(20);
       setScrolled(false);
     }
@@ -317,51 +322,82 @@ export default function FanverseSearch() {
       {/* Camada de fundo (gradiente radial roxo/rosa). */}
       <div className={styles.bg} aria-hidden="true" />
 
-      {/* Avatares flutuantes — camada fixa cobrindo a viewport.
+      {/* Avatares flutuantes — refatorados com motion. Substitui
+       *  3 animações CSS encadeadas (fsAvatarIn + fsRoamN +
+       *  fsBlink) por uma única `animate` composta no motion.div.
        *
-       * Aparecem um a um a partir de t=3s, na ordem AVATAR_REVEAL_ORDER
-       * (mais próximos do orbe primeiro). isShown = avatarsShown já
-       * incluiu a posição deste avatar na ordem de reveal. */}
+       *  Vantagem decisiva: motion compõe x/y/opacity num único
+       *  transform/style por frame — antes 2 animações CSS
+       *  disputavam `opacity` no mesmo elemento (fsBlink vencia
+       *  silenciosamente fsAvatarIn). Aqui cada propriedade tem
+       *  sua própria transition independente, sem conflito.
+       *
+       *  Reveal staggered via `delay` no transition (nada de timer
+       *  + avatarsShown state). Mobile recebe amplitudes menores
+       *  pra ficarem próximos do orbe estreito. */}
       <div className={styles.floatingLayer} aria-hidden="true">
         {snapshot.topListeners.slice(0, renderedAvatarCount).map((l, idx) => {
-          /* `positions` é mobile-aware: no mobile = 6 posições
-           * agrupadas perto do orbe; no desktop = 11 posições da
-           * grade original. idx mapeia 1:1 com positions[idx]. */
           const i = reveal[idx];
           const pos = positions[i];
-          const revealPos = idx; // posição na sequência de reveal
-          const isShown = revealPos < avatarsShown;
-          /* roamDelay = 0 — fsRoam roda em paralelo com fsAvatarIn
-           *  (opacity-only) desde t=0, eliminando o jump da pos
-           *  final do fsAvatarIn pra a pos inicial do fsRoam que
-           *  ocorria antes (quando o delay expirava). blink ainda
-           *  com delay negativo pra cada um piscar em fase. */
-          const blinkDelay = i * -2.4;
+          /* Reveal delay = 3s base + 350ms * ordem de proximidade */
+          const revealDelay = (AVATAR_REVEAL_START_MS + idx * AVATAR_REVEAL_STEP_MS) / 1000;
+          /* Amplitude do roam — menor no mobile pra avatares
+           *  ficarem perto do orbe estreito. */
+          const amp = isMobile ? 40 : 90;
+          /* Keyframes do roam baseados no índice (4 variações pra
+           *  evitar varredura sincrônica). Cada avatar tem seu
+           *  próprio path orgânico. */
+          const xPath = ROAM_PATHS_X[i % ROAM_PATHS_X.length].map((v) => v * amp);
+          const yPath = ROAM_PATHS_Y[i % ROAM_PATHS_Y.length].map((v) => v * amp);
+          /* Duração do roam — varia entre 7-11s pra dessincronizar */
+          const roamDur = 7 + (i % 5);
+          /* Blink: opacity oscilando entre 1 e 0.15 a cada 9-12s,
+           *  com phase shift por avatar pra nem todos sumirem
+           *  juntos. */
+          const blinkDur = 9 + (i % 4);
+          const blinkPhase = (i * 1.8) % blinkDur;
           return (
-            <span
+            <motion.div
               key={l.id}
-              className={`${styles.floatingAvatar} ${isShown ? styles.floatingAvatarShown : ''}`}
-              style={{
-                top: pos.top,
-                left: pos.left,
-                animationDelay: `0ms, 0s, ${blinkDelay}s`,
+              className={styles.floatingAvatar}
+              style={{ top: pos.top, left: pos.left }}
+              initial={{ opacity: 0, x: 0, y: 0 }}
+              animate={{
+                opacity: [0, 1, 1, 0.15, 1, 1],
+                x: xPath,
+                y: yPath,
+              }}
+              transition={{
+                /* Opacity: fade-in inicial (delay), depois loop
+                 *  cíclico de blink. `times` mapeia cada keyframe
+                 *  a uma fração do ciclo. */
+                opacity: {
+                  duration: blinkDur,
+                  times: [0, 0.12, 0.55, 0.7, 0.85, 1],
+                  delay: revealDelay - blinkPhase,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                },
+                x: {
+                  duration: roamDur,
+                  delay: revealDelay,
+                  repeat: Infinity,
+                  repeatType: 'mirror',
+                  ease: 'easeInOut',
+                },
+                y: {
+                  duration: roamDur * 1.13,
+                  delay: revealDelay,
+                  repeat: Infinity,
+                  repeatType: 'mirror',
+                  ease: 'easeInOut',
+                },
               }}
               title={l.name}
             >
-              {/* 2-layer wrap pra separar a entrance fade (outer
-               *  via .floatingAvatarShown) do blink cíclico (inner
-               *  via fsBlink). ANTES as duas animações disputavam
-               *  o mesmo `opacity` no mesmo elemento — fsBlink
-               *  (declarada por último) sempre vencia, ignorando
-               *  fsAvatarIn. Avatares apareciam em qualquer phase
-               *  do blink — alguns instantâneos, outros invisíveis
-               *  por segundos. Agora cada layer tem seu próprio
-               *  opacity-channel. */}
-              <span className={styles.floatingAvatarInner}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={l.avatarUrl} alt={l.name} />
-              </span>
-            </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={l.avatarUrl} alt={l.name} />
+            </motion.div>
           );
         })}
       </div>
@@ -400,13 +436,27 @@ export default function FanverseSearch() {
        * pills, list). Topbar e orbe estão fora do scroll (fixos). */}
       <div className={styles.scroll} ref={scrollRef} onScroll={handleScroll}>
         <div className={styles.body}>
-          {/* Stage 1 (t=7s): headline centralizada com fonte menor,
-           * rotacionando a cada 4s entre as 4 frases. A loading copy
-           * "Analisando..." agora vive no .fixedHeader (acima do orbe). */}
+          {/* Stage 1 (t=7s): headline centralizada, rotaciona entre
+           *  4 frases a cada 4s. Refatorada com AnimatePresence pra
+           *  cross-fade entre frases — antes key={...} forçava unmount
+           *  + remount com layout shift toda vez que a frase tinha
+           *  line-count diferente. Agora a frase antiga faz fade-out
+           *  enquanto a nova faz fade-in no mesmo container, sem
+           *  qualquer salto. min-height no CSS reserva o espaço. */}
           {showHeadline && (
-            <h2 className={styles.headline} key={currentPhrase.key}>
-              {currentPhrase.render}
-            </h2>
+            <div className={styles.headline}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPhrase.key}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                >
+                  {currentPhrase.render}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           )}
 
           {/* Stage 2 (t=11s): match cards em pilha (estilo Apple

@@ -28,6 +28,7 @@
     "canvas-confetti": "^1.9.4",
     "drizzle-orm": "^0.45.2",
     "mapbox-gl": "^3.23.0",
+    "motion": "^12.40.0",
     "next": "^15.1.0",
     "pg": "^8.20.0",
     "posthog-js": "^1.373.4",
@@ -45,13 +46,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.149.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "^15.1.0",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^2.1.0",
-    "@vitest/coverage-v8": "^2.1.0"
+    "vitest": "^2.1.0"
   }
 }

@@ -265,75 +265,20 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   /* z-index 3 garante que os avatares passem POR CIMA do orbe. */
   z-index: 3;
-  opacity: 0;
   /* Promove a layer GPU desde o mount — evita "promotion mid-anim"
    *  que causa flicker no primeiro frame em mobile. */
   will-change: transform, opacity;
-  transform: translate3d(0, 0, 0);
-  /* IMPORTANTE: animações ficam definidas aqui mas só DISPARAM
-   * quando .floatingAvatarShown é aplicado.
+  /* IMPORTANTE: animação (entrance + roam + blink) é controlada
+   * via motion.div no JSX. CSS aqui só estabelece o resting style.
    *
-   * Per product feedback "Primeiro aparece apenas o orbe; Na
-   * sequência aparece 1 usuário, seguido de mais dois com leve
-   * diferença de tempo; depois mais 4 e assim por diante" — o
-   * controle está em <FanverseSearch> via AVATAR_WAVE_TIMINGS,
-   * que aplica a classe Shown no momento certo. */
-  animation: none;
-}
-/* Quando o JSX adiciona .floatingAvatarShown, as 3 animações
- * disparam de uma vez:
- *   1. fsAvatarIn (1200ms forwards) → entrada cinemática.
- *   2. fsRoamN — agora atravessa de um lado pro outro do orbe.
- *      direction: alternate faz o avatar ir do extremo A pro B no
- *      forward e voltar do B pro A no backward — varredura ampla
- *      em vez de oscilação curta. Duração 6-9s pra dar tempo da
- *      viagem ser perceptível.
- *   3. fsBlink (10s infinite) → fade out/in cíclico. */
-/* Outer wrap: roda fsAvatarIn (entrance opacity fade) + fsRoamN
- * (transform contínuo). Sem fsBlink aqui — blink vive na inner
- * layer pra não disputar o canal opacity. */
-.floatingAvatarShown {
-  animation:
-    fsAvatarIn 1200ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
-    fsRoam1 7s ease-in-out infinite alternate both;
+   * As animações em si (entrance + roam + blink) são geradas
+   * pelo motion.div no JSX (FanverseSearch.tsx), compondo
+   * opacity + x + y num único transform por frame. Isso evita
+   * o conflito que ocorria com 2 animações CSS disputando
+   * opacity no mesmo elemento. */
 }
 .floatingAvatar:nth-child(2n)   { width: 38px; height: 38px; }
 .floatingAvatar:nth-child(3n)   { width: 50px; height: 50px; }
-
-/* Cada avatar tem path próprio pra evitar varredura sincrônica.
- * animation-direction alternate aplicado individualmente pra todos
- * os fsRoam (entrada é normal, ida-e-volta no roam). */
-.floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2; animation-duration: 1200ms, 6.4s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3; animation-duration: 1200ms, 8.2s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4; animation-duration: 1200ms, 7.6s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2; animation-duration: 1200ms, 8.8s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3; animation-duration: 1200ms, 6.8s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4; animation-duration: 1200ms, 7.2s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1; animation-duration: 1200ms, 8.0s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2; animation-duration: 1200ms, 7.4s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3; animation-duration: 1200ms, 9.0s; animation-direction: normal, alternate; }
-.floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4; animation-duration: 1200ms, 6.6s; animation-direction: normal, alternate; }
-
-/* Inner layer — herda 100% da outer (fill), mas roda fsBlink no
- * SEU canal opacity (sem disputar com a entrance fade da outer).
- * Resultado: entrance suave + blink só após a entrance terminar
- * (delay configurado nos overrides nth-child). */
-.floatingAvatarInner {
-  display: block;
-  width: 100%;
-  height: 100%;
-  animation: fsBlink 10s ease-in-out infinite;
-  /* Delay maior que a duração da entrance (1.2s) pra o blink só
-   *  começar depois do fade-in terminar — evita "piscadinha"
-   *  durante a aparição inicial. */
-  animation-delay: 1.4s;
-}
-.floatingAvatarInner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
 
 .floatingAvatar img {
   width: 100%;
@@ -342,140 +287,13 @@
   display: block;
 }
 
-/* Entrada — só fade de opacidade. ANTES era cinemática (scale +
- * translate do centro pra posição final), mas isso causava JUMP
- * visível: fsAvatarIn termina em `translate(0,0)` enquanto fsRoamN
- * começa em `translate(-220px,-40px)`. No moment que o roamDelay
- * expirava (1.2-5s depois), o avatar saltava da pos final pra a
- * pos inicial do roam. Per feedback "objetos tremem".
- *
- * Solução: fade in transparente apenas. fsRoam roda em paralelo
- * desde frame 1 (roamDelay agora é 0), controlando transform
- * continuamente — zero discontinuidade. */
-@keyframes fsAvatarIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* 4 paths de idle-floating CURTO + SUTIL inspirado no /teste
- * AvatarConstellation.
- *
- * Per product feedback "Os avatares estão flutuando muito devagar...
- * deve ter dinamismo e velocidade. Veja o movimento que existe na
- * landing page /teste como referência". O /teste usa drift de
- * 7-11s com amplitude pequena (idle-floating breathing). Antes
- * estávamos com paths LONGOS ±120-180px em 9-14s — sensação de
- * deriva contemplativa, não dinâmica.
- *
- * Agora: ±35-60px de amplitude (breathing, não roaming) com
- * ease-in-out smooth. Cada path tem 4 stops apenas (orgânico),
- * sem cubic-bezier bouncy que prendia o movimento. O efeito final
- * = vida e quickness, igual /teste. */
-/* Paths que ATRAVESSAM de um lado pro outro do orbe.
- *
- * Cada keyframe começa no extremo esquerdo/cima e termina no
- * extremo oposto. As animações usam `animation-direction: alternate`
- * (definida no .floatingAvatarShown abaixo), então o avatar faz a
- * varredura no forward, retorna no backward com timing diferente,
- * dando a sensação de ser "levado de um lado ao outro" enquanto
- * ainda flutua. Amplitudes ±200-260px com 6 stops asymmetricos
- * pra microvariações no caminho — não-previsível. */
-@keyframes fsRoam1 {
-  0%   { transform: translate(-50%, -50%) translate(-220px, -40px); }
-  20%  { transform: translate(-50%, -50%) translate(-150px,  60px); }
-  40%  { transform: translate(-50%, -50%) translate(-30px,  -90px); }
-  60%  { transform: translate(-50%, -50%) translate(80px,    50px); }
-  80%  { transform: translate(-50%, -50%) translate(170px,  -70px); }
-  100% { transform: translate(-50%, -50%) translate(240px,   30px); }
-}
-@keyframes fsRoam2 {
-  0%   { transform: translate(-50%, -50%) translate(210px,   60px); }
-  18%  { transform: translate(-50%, -50%) translate(130px,  -50px); }
-  38%  { transform: translate(-50%, -50%) translate(20px,    90px); }
-  58%  { transform: translate(-50%, -50%) translate(-90px,  -40px); }
-  78%  { transform: translate(-50%, -50%) translate(-170px,  70px); }
-  100% { transform: translate(-50%, -50%) translate(-250px, -50px); }
-}
-@keyframes fsRoam3 {
-  0%   { transform: translate(-50%, -50%) translate(-180px,  100px); }
-  22%  { transform: translate(-50%, -50%) translate(-60px,   -20px); }
-  44%  { transform: translate(-50%, -50%) translate(50px,    100px); }
-  66%  { transform: translate(-50%, -50%) translate(140px,  -60px);  }
-  88%  { transform: translate(-50%, -50%) translate(210px,    40px); }
-  100% { transform: translate(-50%, -50%) translate(260px,   -30px); }
-}
-@keyframes fsRoam4 {
-  0%   { transform: translate(-50%, -50%) translate(230px,  -80px);  }
-  20%  { transform: translate(-50%, -50%) translate(110px,   40px);  }
-  42%  { transform: translate(-50%, -50%) translate(-10px,  -90px);  }
-  62%  { transform: translate(-50%, -50%) translate(-120px,  70px);  }
-  82%  { transform: translate(-50%, -50%) translate(-200px, -30px);  }
-  100% { transform: translate(-50%, -50%) translate(-260px,  60px);  }
-}
-/* Mobile — mesmas trajetórias, amplitudes reduzidas (~40% do desktop)
- * pra avatares ficarem PRÓXIMOS do orbe (180px) e não saírem pra
- * extremos do viewport estreito. */
-@keyframes fsRoam1Mobile {
-  0%   { transform: translate(-50%, -50%) translate(-90px,  -18px); }
-  20%  { transform: translate(-50%, -50%) translate(-60px,   26px); }
-  40%  { transform: translate(-50%, -50%) translate(-12px,  -38px); }
-  60%  { transform: translate(-50%, -50%) translate(34px,    22px); }
-  80%  { transform: translate(-50%, -50%) translate(70px,   -30px); }
-  100% { transform: translate(-50%, -50%) translate(96px,    14px); }
-}
-@keyframes fsRoam2Mobile {
-  0%   { transform: translate(-50%, -50%) translate(86px,    26px); }
-  18%  { transform: translate(-50%, -50%) translate(54px,   -22px); }
-  38%  { transform: translate(-50%, -50%) translate(8px,     38px); }
-  58%  { transform: translate(-50%, -50%) translate(-38px,  -18px); }
-  78%  { transform: translate(-50%, -50%) translate(-70px,   30px); }
-  100% { transform: translate(-50%, -50%) translate(-100px, -22px); }
-}
-@keyframes fsRoam3Mobile {
-  0%   { transform: translate(-50%, -50%) translate(-74px,   42px); }
-  22%  { transform: translate(-50%, -50%) translate(-26px,   -8px); }
-  44%  { transform: translate(-50%, -50%) translate(22px,    42px); }
-  66%  { transform: translate(-50%, -50%) translate(58px,   -26px); }
-  88%  { transform: translate(-50%, -50%) translate(86px,    18px); }
-  100% { transform: translate(-50%, -50%) translate(104px,  -12px); }
-}
-@keyframes fsRoam4Mobile {
-  0%   { transform: translate(-50%, -50%) translate(94px,   -34px); }
-  20%  { transform: translate(-50%, -50%) translate(46px,    18px); }
-  42%  { transform: translate(-50%, -50%) translate(-4px,   -38px); }
-  62%  { transform: translate(-50%, -50%) translate(-50px,   30px); }
-  82%  { transform: translate(-50%, -50%) translate(-80px,  -12px); }
-  100% { transform: translate(-50%, -50%) translate(-104px,  26px); }
-}
-
-/* Fade cyclic — per product feedback "após determinado tempo,
- * eles podem sumir com um fade e depois surgem novamente. Mas
- * faça isso de forma gradativa para não sumirem todos ao mesmo
- * tempo". 9s loop com 60% visível + 25% fade-out + 15% fade-in;
- * o animation-delay terceiro slot (inline JSX) põe cada avatar
- * em fase diferente, garantindo que pelo menos a maioria fica
- * visível enquanto 1-2 estão em fade. */
-@keyframes fsBlink {
-  0%,
-  60%   { opacity: 1; }
-  78%   { opacity: 0; }
-  90%   { opacity: 0; }
-  100%  { opacity: 1; }
-}
-/* Mobile-specific blink — per product feedback "diminua a quantidade
- * de avatares que ficam em volta do orbe, para que fique no máximo
- * 5 visíveis ao mesmo tempo, intercalando entre sumindo e aparecendo".
- *
- * Cada avatar fica visível ~45% do ciclo (vs 60% no desktop). Com 11
- * avatares e delays inline staggered, ~5 visíveis em média a qualquer
- * momento. Fade-in/out mais lentos pra evitar piscar duro. */
-@keyframes fsBlinkMobile {
-  0%    { opacity: 0; }
-  12%   { opacity: 1; }
-  50%   { opacity: 1; }
-  68%   { opacity: 0; }
-  100%  { opacity: 0; }
-}
+/* fsAvatarIn / fsRoam{1-4}{,Mobile} / fsBlink{,Mobile} removidos —
+ * substituídos por animate compound em motion.div (ver
+ * FanverseSearch.tsx). Motion compõe x+y+opacity num único transform
+ * por frame, eliminando os 3 problemas do approach CSS anterior:
+ *   1) Discontinuidade entre fsAvatarIn end-state e fsRoam start-state.
+ *   2) Conflito de opacity entre fsAvatarIn e fsBlink na mesma layer.
+ *   3) Necessidade de 11 nth-child overrides + 8 keyframes paralelos. */
 
 /* ── Body ──────────────────────────────────────────────────── */
 /* Sem fade global agora — cada filho (headline/pills/list) faz
@@ -552,22 +370,15 @@
   letter-spacing: -0.01em;
   line-height: 1.3;
   text-align: center;
-  /* min-height reserva o espaço pra o pior caso de 2-3 linhas e
-   *  evita layout shift quando a frase troca (key remount). Phrase
-   *  rotation a cada 4s causava "pulo" visível antes — agora a
-   *  altura é estável, só o conteúdo faz fade. */
+  /* min-height reserva o espaço pro pior caso (2-3 linhas) e
+   *  evita layout shift quando AnimatePresence troca a frase.
+   *  Animação de fade-in/out delegada ao motion (cross-fade
+   *  entre mount/unmount via AnimatePresence mode="wait"). */
   min-height: 56px;
-  /* Entrada/swap só fade opacity. ANTES tinha translateY(8px)
-   *  que dava sensação de "salto" toda vez que a frase mudava. */
-  animation: fsHeadlineIn 280ms ease-out;
 }
 .headlineMuted {
   font-weight: 400;
   color: rgba(245, 245, 247, 0.65);
-}
-@keyframes fsHeadlineIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 /* ── Match stack (pilha estilo Apple Wallet) ───────────────── */
@@ -941,31 +752,10 @@
   .body {
     gap: 26px;
   }
-  /* Avatares mais próximos ao orbe + fsBlinkMobile pra reduzir a
-   * quantidade visível simultaneamente. fsBlinkMobile fica ~45%
-   * visible (vs 60% desktop) e com os animation-delays inline
-   * staggered no JSX, em média ~5 dos 11 avatares estão visíveis
-   * a qualquer momento. Per spec "diminua a quantidade de avatares
-   * que ficam em volta do orbe, para que fique no máximo 5 visíveis
-   * ao mesmo tempo, intercalando entre sumindo e aparecendo". */
-  /* Outer mobile: só entrance + roam mobile-amplitudes (sem
-   *  fsBlink — blink vive na inner via fsBlinkMobile, evitando
-   *  disputa do canal opacity entre 2 animações na mesma layer). */
-  .floatingAvatarShown          { animation-name: fsAvatarIn, fsRoam1Mobile; animation-duration: 1200ms, 7s; }
-  .floatingAvatarShown:nth-child(2)  { animation-name: fsAvatarIn, fsRoam2Mobile; }
-  .floatingAvatarShown:nth-child(3)  { animation-name: fsAvatarIn, fsRoam3Mobile; }
-  .floatingAvatarShown:nth-child(4)  { animation-name: fsAvatarIn, fsRoam4Mobile; }
-  .floatingAvatarShown:nth-child(5)  { animation-name: fsAvatarIn, fsRoam2Mobile; }
-  .floatingAvatarShown:nth-child(6)  { animation-name: fsAvatarIn, fsRoam3Mobile; }
-  .floatingAvatarShown:nth-child(7)  { animation-name: fsAvatarIn, fsRoam4Mobile; }
-  .floatingAvatarShown:nth-child(8)  { animation-name: fsAvatarIn, fsRoam1Mobile; }
-  .floatingAvatarShown:nth-child(9)  { animation-name: fsAvatarIn, fsRoam2Mobile; }
-  .floatingAvatarShown:nth-child(10) { animation-name: fsAvatarIn, fsRoam3Mobile; }
-  .floatingAvatarShown:nth-child(11) { animation-name: fsAvatarIn, fsRoam4Mobile; }
-  /* Inner mobile: blink mais suave (fsBlinkMobile, ~45% visível). */
-  .floatingAvatarShown .floatingAvatarInner {
-    animation-name: fsBlinkMobile;
-  }
+  /* Avatar animations agora vivem em motion.div (FanverseSearch.tsx)
+   *  com amplitudes mobile-aware via `amp = isMobile ? 40 : 90`.
+   *  Não precisa mais de keyframes mobile-específicos nem dos 11
+   *  nth-child overrides — motion compõe x/y/opacity por avatar. */
   .hero {
     padding: 8px 24px 22px;
   }
@@ -1030,13 +820,14 @@
  * decorativas e mantém só o estado final visível. Cobre quem
  * configurou redução de movimento no SO. */
 @media (prefers-reduced-motion: reduce) {
-  .floatingAvatarShown,
-  .floatingAvatar,
+  /* Animações CSS restantes (orb breath, matchStack stage-in,
+   *  userRow cascade, showMore enter, analyzing fade) desligadas.
+   *  Motion respeita prefers-reduced-motion automaticamente, então
+   *  os avatares + headline já param sem precisar override aqui. */
   .matchCard,
   .matchStack,
   .userRow,
   .userList,
-  .headline,
   .analyzing,
   .orb,
   .showMoreBtn,
@@ -1044,8 +835,7 @@
     animation: none !important;
     transition: none !important;
   }
-  .floatingAvatar,
-  .floatingAvatarShown {
+  .floatingAvatar {
     opacity: 1 !important;
   }
 }
