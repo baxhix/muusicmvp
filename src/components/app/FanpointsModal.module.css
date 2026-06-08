@@ -119,14 +119,18 @@
  * Classe mantida vazia caso algum consumer externo referencie. */
 .subtitle { display: none; }
 
-/* ── Tabs (minimal underline pattern, ref: Style|Image|Arrange) ── */
+/* ── Tabs (minimal underline pattern, ref: Style|Image|Arrange) ──
+ * Desktop: padding generoso, sem scroll (5 tabs cabem na largura
+ * 640 do modal). Mobile vai sobrescrever pra distribuir as tabs
+ * em flex igualmente — sem overflow-x:auto pra não "se mover ao
+ * toque" (per spec "as tabs não estão fixas na tela. Ficam se
+ * movendo ao toque"). */
 .tabs {
   display: flex;
   gap: 0;
   padding: 0 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   flex-shrink: 0;
-  overflow-x: auto;
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
@@ -214,6 +218,15 @@
   gap: 24px;
 }
 
+/* Row com saldo + nível atual lado a lado per spec "deixe o
+ * meu nível atual ao lado do saldo atual". Em mobile vira
+ * stack vertical (override no @media). */
+.summaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 /* ── Saldo card (sem borda, só bg) ── */
 .balanceCard {
   display: flex;
@@ -222,6 +235,21 @@
   padding: 20px 22px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 14px;
+  min-width: 0;
+}
+
+/* Variante menor pro valor do "Nível atual" (texto, não número
+ * gigante como o saldo). */
+.balanceValueSmall {
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .balanceLabel {
   font-family: var(--font-inter), sans-serif;
@@ -556,6 +584,16 @@
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
+/* Avatar do user no item do ranking per spec "inclua o avatar
+ * dos usuários do Ranking". */
+.rankAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+}
 .rankItemMe .rankPosition {
   color: rgba(216, 180, 254, 0.95);
 }
@@ -701,11 +739,36 @@
   .closeBtn { width: 36px; height: 36px; }
   .closeBtn svg { width: 20px; height: 20px; }
 
-  .tabs { padding: 0 16px; }
-  .tab  { font-size: 12.5px; padding: 11px 10px 13px; }
-  .tab:first-child { padding-left: 0; }
-  .tabActive::after { left: 10px; right: 10px; }
-  .tab:first-child.tabActive::after { left: 0; }
+  /* Tabs mobile — TRAVADAS sem scroll horizontal per spec "as
+   * tabs não estão fixas na tela. Ficam se movendo ao toque".
+   * 5 tabs dividem a largura igualmente via flex:1; cada tab
+   * encolhe pra caber. Texto curto + padding compacto pra que
+   * todas caibam em viewports de 320px+. */
+  .tabs {
+    padding: 0 8px;
+    overflow-x: hidden;
+  }
+  .tab {
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+    padding: 11px 4px 13px;
+    text-align: center;
+    /* Ellipsis se label não couber. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tab:first-child { padding-left: 4px; }
+  .tabActive::after { left: 4px; right: 4px; }
+  .tab:first-child.tabActive::after { left: 4px; }
+  .tabBadge { display: none; }
+
+  /* summaryRow mobile: empilha vertical (era 2 colunas no
+   * desktop). Sobra mais espaço pra cada card. */
+  .summaryRow {
+    grid-template-columns: 1fr;
+  }
 
   .tabPanel { padding: 16px 16px 28px; gap: 16px; }
 

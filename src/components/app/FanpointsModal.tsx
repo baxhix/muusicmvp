@@ -197,7 +197,7 @@ export default function FanpointsModal() {
             className={`${styles.tab} ${tab === 'conquistas' ? styles.tabActive : ''}`}
             onClick={() => setTab('conquistas')}
           >
-            Minhas Conquistas
+            Conquistas
           </button>
           <button
             type="button"
@@ -250,7 +250,9 @@ export default function FanpointsModal() {
               onJumpToFanpoints={() => setTab('fanpoints')}
             />
           )}
-          {tab === 'beneficios' && <BeneficiosTab fanpoints={fanpoints} />}
+          {tab === 'beneficios' && (
+            <BeneficiosTab fanpoints={fanpoints} currentTier={currentTier} />
+          )}
           {tab === 'fanpoints' && <FanpointsTab />}
           {tab === 'ranking' && (
             <RankingTab user={user} ranking={ranking} myRank={myRank} />
@@ -297,29 +299,29 @@ function ConquistasTab({
 
   return (
     <div className={styles.tabPanel}>
-      {/* Saldo atual */}
-      <div className={styles.balanceCard}>
-        <span className={styles.balanceLabel}>Saldo atual</span>
-        <span className={styles.balanceValue}>
-          {fanpoints.toLocaleString('pt-BR')}
-        </span>
-        <span className={styles.balanceUnit}>Fanpoints</span>
-      </div>
-
-      {/* Nível atual */}
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Meu nível atual</h3>
-        <div className={styles.levelRow}>
-          <span className={styles.levelTier}>
+      {/* Saldo + Nível atual lado a lado per spec "deixe o meu
+       * nível atual ao lado do saldo atual". Card único com
+       * duas colunas: esquerda saldo, direita nível. */}
+      <div className={styles.summaryRow}>
+        <div className={styles.balanceCard}>
+          <span className={styles.balanceLabel}>Saldo atual</span>
+          <span className={styles.balanceValue}>
+            {fanpoints.toLocaleString('pt-BR')}
+          </span>
+          <span className={styles.balanceUnit}>Fanpoints</span>
+        </div>
+        <div className={styles.balanceCard}>
+          <span className={styles.balanceLabel}>Nível atual</span>
+          <span className={styles.balanceValueSmall}>
             {currentTier ? currentTier.label : 'Sem classificação'}
           </span>
           {myRank > 0 && (
-            <span className={styles.levelRank}>
-              {myRank === 1 ? '(Top 1!)' : `(#${myRank}º no ranking)`}
+            <span className={styles.balanceUnit}>
+              {myRank === 1 ? 'Top 1!' : `#${myRank}º no ranking`}
             </span>
           )}
         </div>
-      </section>
+      </div>
 
       {/* Próximo nível */}
       {nextTier && (
@@ -338,50 +340,27 @@ function ConquistasTab({
         </section>
       )}
 
-      {/* Jornada */}
+      {/* Recompensas CONQUISTADAS (filtradas: só as desbloqueadas).
+       * Per spec "substitua Recompensas por tier por Recompensas
+       * conquistadas". Quando nenhum tier desbloqueado, mostra
+       * empty hint. */}
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Jornada de conquistas</h3>
-        <ul className={styles.timeline}>
-          {TIERS.map((t) => {
-            const idx = TIERS.findIndex((x) => x.id === t.id);
-            const myIdx = currentTier
-              ? TIERS.findIndex((x) => x.id === currentTier.id)
-              : -1;
-            const state =
-              myIdx === -1
-                ? 'locked'
-                : idx < myIdx
-                ? 'done'
-                : idx === myIdx
-                ? 'current'
-                : 'locked';
-            return (
-              <li
-                key={t.id}
-                className={`${styles.timelineItem} ${styles[`timeline_${state}`]}`}
-              >
-                <span className={styles.timelineDot} aria-hidden="true" />
-                <span className={styles.timelineLabel}>{t.label}</span>
-                {state === 'current' && (
-                  <span className={styles.timelineCurrent}>atual</span>
-                )}
+        <h3 className={styles.sectionTitle}>Recompensas conquistadas</h3>
+        {currentTier ? (
+          <ul className={styles.rewardsList}>
+            {REWARDS.map((r) => (
+              <li key={r.label} className={styles.rewardItem}>
+                <span className={styles.rewardIcon} aria-hidden="true">{r.icon}</span>
+                <span>{r.label}</span>
               </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {/* Recompensas */}
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Recompensas por tier</h3>
-        <ul className={styles.rewardsList}>
-          {REWARDS.map((r) => (
-            <li key={r.label} className={styles.rewardItem}>
-              <span className={styles.rewardIcon} aria-hidden="true">{r.icon}</span>
-              <span>{r.label}</span>
-            </li>
-          ))}
-        </ul>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.empty}>
+            Você ainda não conquistou recompensas. Continue acumulando
+            Fanpoints para desbloquear os primeiros benefícios.
+          </p>
+        )}
       </section>
 
       {/* Atividade Recente — movida pra dentro de Minhas Conquistas
@@ -544,6 +523,7 @@ function RankingTab({
               const rank = idx + 1;
               const isMe = r.userId === user?.id;
               const name = r.name?.trim() || r.email.split('@')[0];
+              const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
               return (
                 <li
                   key={r.userId}
@@ -552,6 +532,14 @@ function RankingTab({
                   <span className={styles.rankPosition}>
                     {rank <= 3 ? rank : `#${rank}`}
                   </span>
+                  {/* Avatar do user no ranking per spec "inclua o
+                   * avatar dos usuários do Ranking". */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatar}
+                    alt=""
+                    className={styles.rankAvatar}
+                  />
                   <span className={styles.rankName}>{name}</span>
                   <span className={styles.rankPoints}>
                     {r.points.toLocaleString('pt-BR')} FP
@@ -573,9 +561,53 @@ function RankingTab({
  * threshold em FP, ícone, título e descrição. Tags de status:
  * "Conquistado" (threshold ≤ saldo) ou "Bloqueado".
  * ──────────────────────────────────────────────────────────── */
-function BeneficiosTab({ fanpoints }: { fanpoints: number }) {
+function BeneficiosTab({
+  fanpoints,
+  currentTier,
+}: {
+  fanpoints: number;
+  currentTier: { id: string; label: string; threshold: number } | null;
+}) {
   return (
     <div className={styles.tabPanel}>
+      {/* Jornada de conquistas — migrada da tab Conquistas per spec
+       * "leve o item Jornada de conquistas para a tab benefícios".
+       * Ordem INVERTIDA per spec "inverta a ordenação dos cards":
+       * Top 1 primeiro (objetivo máximo) → Top 100 por último
+       * (degrau inicial). [...TIERS].reverse() não muda o array
+       * original. */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Jornada de conquistas</h3>
+        <ul className={styles.timeline}>
+          {[...TIERS].reverse().map((t) => {
+            const idx = TIERS.findIndex((x) => x.id === t.id);
+            const myIdx = currentTier
+              ? TIERS.findIndex((x) => x.id === currentTier.id)
+              : -1;
+            const state =
+              myIdx === -1
+                ? 'locked'
+                : idx < myIdx
+                ? 'done'
+                : idx === myIdx
+                ? 'current'
+                : 'locked';
+            return (
+              <li
+                key={t.id}
+                className={`${styles.timelineItem} ${styles[`timeline_${state}`]}`}
+              >
+                <span className={styles.timelineDot} aria-hidden="true" />
+                <span className={styles.timelineLabel}>{t.label}</span>
+                {state === 'current' && (
+                  <span className={styles.timelineCurrent}>atual</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>
           Marcos de Fanpoints
