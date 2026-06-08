@@ -1037,10 +1037,11 @@
   color: #fff;
   /* font-size 16px per spec "ao enviar uma mensagem rápida... é
    * aplicado um auto zoom e após enviar a mensagem não volta ao
-   * normal". iOS Safari faz auto-zoom em inputs com font-size <
-   * 16px (e o viewport pode não voltar). 16px desativa o zoom
-   * de focus — visualmente quase idêntico a 12px depois do
-   * baseline correction do user-agent. */
+   * normal". Browsers mobile fazem auto-zoom em inputs com
+   * font-size < 16px no focus (e o viewport pode não retornar
+   * sozinho dependendo de como o input vai/volta do DOM). 16px
+   * desativa o zoom — visualmente quase idêntico ao 12px
+   * anterior. */
   font-size: 16px;
   font-family: inherit;
   outline: none;
