@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './BlogHeader.module.css';
@@ -19,6 +19,16 @@ import styles from './BlogHeader.module.css';
 export default function BlogHeader() {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  // Busca colapsada por padrão: o header mostra só o ícone. Ao
+  // clicar, `searchOpen` vira true e o campo (pill) abre — a
+  // mesma forma de antes. Fecha de volta no blur se estiver vazio.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Foca o input assim que o campo abre, pra o usuário já digitar.
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,12 +40,13 @@ export default function BlogHeader() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/blog" className={styles.brand} aria-label="Fanverse Blog">
-          {/* Logo SVG mono-branco — mesmo asset usado no /teste
-           *  navbar pra manter consistência de marca. Altura 20px
-           *  proporcional ao padding vertical 14px do header. */}
+          {/* Wordmark "FANVERSE" branco — mesmo asset usado no
+           *  /teste navbar pra manter consistência de marca.
+           *  Altura 20px proporcional ao padding vertical 14px do
+           *  header. width: auto preserva o aspect ratio. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/fanverse-logo.svg"
+            src="/teste/fanverse-logo.svg"
             alt="Fanverse"
             className={styles.brandLogo}
           />
@@ -43,27 +54,47 @@ export default function BlogHeader() {
         </Link>
 
         <div className={styles.cluster}>
-          <form
-            className={styles.searchForm}
-            onSubmit={onSubmit}
-            role="search"
-            aria-label="Buscar no blog"
-          >
-            <span className={styles.searchIcon} aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+          {/* Busca: por padrão só o ícone. Ao clicar, o campo
+           *  (pill) abre — a mesma forma de antes. */}
+          {searchOpen ? (
+            <form
+              className={styles.searchForm}
+              onSubmit={onSubmit}
+              role="search"
+              aria-label="Buscar no blog"
+            >
+              <span className={styles.searchIcon} aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                ref={inputRef}
+                type="search"
+                className={styles.searchInput}
+                placeholder="Buscar posts…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onBlur={() => {
+                  if (!query.trim()) setSearchOpen(false);
+                }}
+                aria-label="Buscar posts"
+              />
+            </form>
+          ) : (
+            <button
+              type="button"
+              className={styles.searchToggle}
+              onClick={() => setSearchOpen(true)}
+              aria-label="Buscar no blog"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
-            </span>
-            <input
-              type="search"
-              className={styles.searchInput}
-              placeholder="Buscar posts…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Buscar posts"
-            />
-          </form>
+            </button>
+          )}
 
           <nav className={styles.nav} aria-label="Blog">
             <Link href="/blog" className={styles.navLink}>

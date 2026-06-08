@@ -98,9 +98,6 @@ export default async function BlogPostPage({ params }: Props) {
               readingTimeMinutes={post.readingTimeMinutes}
               size="md"
             />
-            <div className={styles.shareSlot}>
-              <ShareBar title={post.title} />
-            </div>
           </div>
         </div>
       </header>
