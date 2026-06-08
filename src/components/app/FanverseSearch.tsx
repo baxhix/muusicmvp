@@ -97,11 +97,26 @@ const AVATAR_REVEAL_ORDER = [2, 1, 0, 7, 3, 9, 4, 10, 8, 6, 5];
 
 /* Per product feedback "No mobile, diminua pela metade a quantidade
  * de avatares" — em mobile renderizamos só 6 (≈ metade dos 11
- * originais), priorizando os mais próximos do orbe via AVATAR_REVEAL_ORDER.
- * O slice da AVATAR_REVEAL_ORDER cai no .filter por isso fica
- * consistente: posições incluídas = primeiras 6 da ordem de reveal
- * (mais centrais visualmente). */
+ * originais). */
 const MOBILE_AVATAR_COUNT = 6;
+
+/* Posições mobile-específicas, TODAS agrupadas em volta do orbe
+ * (~50vw, ~22vh — center). Per product feedback "os avatares não
+ * ficam próximos ao orbe e sobrepõem outros elementos" — antes
+ * usávamos slice das posições desktop, que tinham avatares em
+ * 40-58vh (longe demais do orbe mobile + sobrepondo cards/lista).
+ *
+ * Aqui mantemos todos os 6 entre 3-38vh, formando um anel apertado
+ * em torno do orbe — sem invadir a área dos cards (>45vh) nem a
+ * lista de usuários abaixo. */
+const MOBILE_FLOATING_POSITIONS = [
+  { top: '3vh',  left: '50vw' },  // acima do orbe
+  { top: '8vh',  left: '78vw' },  // canto superior direito
+  { top: '8vh',  left: '22vw' },  // canto superior esquerdo
+  { top: '22vh', left: '84vw' },  // lateral direita (na altura do orbe)
+  { top: '22vh', left: '16vw' },  // lateral esquerda (na altura do orbe)
+  { top: '38vh', left: '50vw' },  // abaixo do orbe
+];
 
 /* Timing dos stages.
  *
@@ -130,16 +145,15 @@ const ANALYZING_PHRASE = 'Analisando atividade musical...';
 
 export default function FanverseSearch() {
   const isMobile = useIsMobile();
-  /* Lista de posições/ordem efetivamente renderizadas: no mobile
-   * cortamos pela metade (6 avatares) priorizando os mais próximos
-   * do orbe. As constantes globais (FLOATING_POSITIONS,
-   * AVATAR_REVEAL_ORDER) ficam intactas; o slice é per-render. */
+  /* Posições + ordem de reveal — desktop usa as 11 originais
+   * sorted por distância (AVATAR_REVEAL_ORDER), mobile usa as 6
+   * posições próprias (todas agrupadas perto do orbe), na ordem
+   * que estão definidas. */
+  const positions = isMobile ? MOBILE_FLOATING_POSITIONS : FLOATING_POSITIONS;
   const reveal = isMobile
-    ? AVATAR_REVEAL_ORDER.slice(0, MOBILE_AVATAR_COUNT)
+    ? [0, 1, 2, 3, 4, 5]
     : AVATAR_REVEAL_ORDER;
-  const renderedAvatarCount = isMobile
-    ? MOBILE_AVATAR_COUNT
-    : FLOATING_POSITIONS.length;
+  const renderedAvatarCount = positions.length;
   const [open, setOpen] = useState(false);
   /* 3 stages de reveal — cada um aparece em sequência:
    *   t=7s  showHeadline → headline centralizada
@@ -310,12 +324,11 @@ export default function FanverseSearch() {
        * incluiu a posição deste avatar na ordem de reveal. */}
       <div className={styles.floatingLayer} aria-hidden="true">
         {snapshot.topListeners.slice(0, renderedAvatarCount).map((l, idx) => {
-          /* No mobile, idx itera sobre 0..MOBILE_AVATAR_COUNT-1 mas
-           * usamos reveal[idx] pra pegar a posição original na grade
-           * (mais próximos do orbe primeiro). Assim os 6 avatares
-           * mobile ocupam slots centrais ao invés dos cantos. */
+          /* `positions` é mobile-aware: no mobile = 6 posições
+           * agrupadas perto do orbe; no desktop = 11 posições da
+           * grade original. idx mapeia 1:1 com positions[idx]. */
           const i = reveal[idx];
-          const pos = FLOATING_POSITIONS[i];
+          const pos = positions[i];
           const revealPos = idx; // posição na sequência de reveal
           const isShown = revealPos < avatarsShown;
           /* delay do roam = 1.2s (duração entrada) + stagger leve.
