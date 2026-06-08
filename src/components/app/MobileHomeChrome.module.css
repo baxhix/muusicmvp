@@ -68,8 +68,10 @@
       rgba(14, 14, 18, 0.30) 0%,
       rgba(6, 6, 9, 0.26) 100%
     );
-  backdrop-filter: blur(36px) saturate(1.6);
-  -webkit-backdrop-filter: blur(36px) saturate(1.6);
+  /* Per perf feedback — blur(36) reduzido pra blur(14). Mobile GPU
+   * paga caro por blur strong. saturate compensa. */
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
   /* Bottom border is now drawn by the `.chrome::after`
    * pseudo-element below — it carries a horizontal lilac →
    * pink → lilac gradient with transparent fades at the corners

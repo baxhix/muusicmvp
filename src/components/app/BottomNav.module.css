@@ -625,8 +625,11 @@
     padding: 8px;
     gap: 2px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(28px) brightness(0.85) saturate(1.3);
-    -webkit-backdrop-filter: blur(28px) brightness(0.85) saturate(1.3);
+    /* Per perf feedback — blur(28) caro em mobile GPU. Reduzido
+     * pra blur(14) mantendo o efeito frosted; saturate compensa
+     * a perda visual com mais vibrância. */
+    backdrop-filter: blur(14px) brightness(0.85) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) brightness(0.85) saturate(1.4);
     animation: moreMenuMobileIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   }
   /* Items como linhas dentro do panel — sem pill próprio, só padding

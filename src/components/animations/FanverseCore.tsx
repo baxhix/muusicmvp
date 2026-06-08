@@ -280,8 +280,24 @@ export function FanverseCore({
     let visible = false;
     let tabHidden = document.hidden;
 
+    /* Per perf feedback "performance diminuiu" — throttle pra ~30fps
+     * em mobile (matchMedia coarse pointer ~= touch device). Desktop
+     * mantém 60fps. Reduz GPU work pela metade em phones sem perda
+     * perceptível visual no shader. */
+    const isCoarsePointer =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(pointer: coarse)').matches;
+    const targetFrameMs = isCoarsePointer ? 1000 / 30 : 0;
+    let lastFrameTime = 0;
+
     const render = () => {
-      const now = (performance.now() - start) / 1000;
+      const tNow = performance.now();
+      if (targetFrameMs > 0 && tNow - lastFrameTime < targetFrameMs) {
+        rafRef.current = requestAnimationFrame(render);
+        return;
+      }
+      lastFrameTime = tNow;
+      const now = (tNow - start) / 1000;
 
       gl.uniform2f(u.res, canvas.width, canvas.height);
       gl.uniform1f(u.time, now);

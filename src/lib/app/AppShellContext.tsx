@@ -269,14 +269,16 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
     if (!welcomeMode) return;
     if (typeof document === 'undefined') return;
 
-    // Globe flyTo dura 3s; usamos 3500ms como gatilho do
-    // reveal pra dar folga ao último frame do voo settle.
+    // Per perf feedback "performance diminuiu, leve demora pra
+    // carregar páginas". Antes era 3500ms (esperar globe flyTo
+    // settle). Agora 1500ms — o globe continua flyTo mas o user
+    // já vê o app no meio do voo. Trade-off de cinematic vs perf.
     const t = window.setTimeout(() => {
       // Remove o attr → CSS transition roda (opacity 0→1, 700ms)
       // em unison pra TODOS os .welcomeFade do app.
       document.documentElement.removeAttribute('data-welcome');
       setWelcomeStage(5);
-    }, 3500);
+    }, 1500);
 
     return () => {
       clearTimeout(t);

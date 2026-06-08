@@ -33,8 +33,10 @@
       rgba(11,11,13,0.98) 0%,
       rgba(5,5,7,0.98) 50%,
       rgba(2,2,3,0.99) 100%);
-  backdrop-filter: blur(30px) brightness(0.7) saturate(1.3);
-  -webkit-backdrop-filter: blur(30px) brightness(0.7) saturate(1.3);
+  /* Per perf feedback — blur(30) reduzido pra blur(14). Bg gradient
+   * já é ~0.98 opaco, blur só serve de polish leve. */
+  backdrop-filter: blur(14px) brightness(0.7) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) brightness(0.7) saturate(1.4);
   /* Espaço pra BottomNav (~72px + safe area). */
   padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   animation: sheetIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
