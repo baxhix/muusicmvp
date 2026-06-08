@@ -377,13 +377,14 @@
   gap: 6px;
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  /* Borda removida per spec "remova a borda dos cards de cada
+   * Comunidade". O bg sutil já dá separação visual suficiente. */
+  border: none;
   border-radius: 16px;
-  transition: background 0.14s ease, border-color 0.14s ease;
+  transition: background 0.14s ease;
 }
 .communityCard:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
 }
 .cardOpenBtn {
   flex: 1;
@@ -406,17 +407,18 @@
 .cardThumb {
   /* Was 48x48 — bumped to 64x64 per product feedback ("aumente
    * a imagem"). Reads as a proper portrait now, not a tiny
-   * thumbnail. */
+   * thumbnail. border-radius reduzido 14 → 8 per spec "diminua
+   * o border radious do preview das imagens para 8px". */
   width: 64px;
   height: 64px;
-  border-radius: 14px;
+  border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
 }
 .cardThumbPlaceholder {
   width: 64px;
   height: 64px;
-  border-radius: 14px;
+  border-radius: 8px;
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(217, 70, 239, 0.25) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
