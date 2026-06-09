@@ -252,12 +252,25 @@ export default function FanverseSearch() {
     }
   }, [open]);
 
-  /* Scroll listener — quando scrollTop ultrapassa 60px, ativa o
-   * estado "scrolled" que diminui o orbe via transform: scale. */
+  /* Scroll listener com rAF throttle + hysteresis (entra em
+   *  scrolled @ >80px, sai @ <40px) — antes era threshold fixo
+   *  em 60 sem throttle, causando snap brusco e setState a
+   *  cada frame de scroll. Agora o estado só muda 1x por frame
+   *  e a hysteresis evita oscilação em scroll lento perto do
+   *  threshold. */
+  const scrollRafRef = useRef<number | null>(null);
   const handleScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setScrolled(el.scrollTop > 60);
+    if (scrollRafRef.current !== null) return;
+    scrollRafRef.current = window.requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const el = scrollRef.current;
+      if (!el) return;
+      const y = el.scrollTop;
+      setScrolled((prev) => {
+        if (prev) return y > 40;     // sai do scrolled só abaixo de 40
+        return y > 80;                // entra em scrolled só acima de 80
+      });
+    });
   };
 
   /* Cap do infinite loading: 100 (ou menos se o mock devolver
@@ -313,49 +326,60 @@ export default function FanverseSearch() {
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
-  /* Insights — frases rotativas a cada 4s. Per spec atualizado
-   *  "intercale os dados mocados com os álbuns", agora cada item
-   *  pode trazer junto um álbum (thumb 72×72 acima do texto). Os
-   *  4 inserts de dados ficam intercalados com os 5 álbuns Ana
-   *  Castela, totalizando 9 entradas.
-   *
-   *  Cada frase é uma string PLAIN (sem JSX bold/br) pra que o
-   *  efeito Typewriter consiga revelar caractere por caractere
-   *  via stagger no motion. O número fica no `lead` (renderizado
-   *  bold antes do typewriter) e o resto da frase vira o `text`. */
+  /* Insights — frases rotativas. Cada frase tem segments
+   *  (text + bold flag) pra preservar destaques (número da
+   *  contagem, nome do álbum etc.) mesmo com o efeito Split
+   *  Text por palavra. Os 4 dados ficam intercalados com os 5
+   *  álbuns Ana Castela, totalizando 9 entradas. */
+  type Segment = { text: string; bold: boolean };
   type Phrase = {
     key: string;
-    lead: string;
-    text: string;
+    segments: Segment[];
     album?: { title: string; cover: string };
   };
   const PHRASES: Phrase[] = useMemo(() => {
     const data: Phrase[] = [
       {
         key: 'data-all',
-        lead: snapshot.peopleCount.toLocaleString('pt-BR'),
-        text: 'pessoas curtindo Ana Castela com você',
+        segments: [
+          { text: snapshot.peopleCount.toLocaleString('pt-BR'), bold: true },
+          { text: ' pessoas curtindo ', bold: false },
+          { text: 'Ana Castela com você', bold: true },
+        ],
       },
       {
         key: 'data-song',
-        lead: snapshot.sameSongCount.toLocaleString('pt-BR'),
-        text: 'pessoas ouvindo a mesma música',
+        segments: [
+          { text: snapshot.sameSongCount.toLocaleString('pt-BR'), bold: true },
+          { text: ' pessoas ouvindo a ', bold: false },
+          { text: 'mesma música', bold: true },
+        ],
       },
       {
         key: 'data-album',
-        lead: snapshot.sameAlbumCount.toLocaleString('pt-BR'),
-        text: 'pessoas ouvindo o mesmo álbum',
+        segments: [
+          { text: snapshot.sameAlbumCount.toLocaleString('pt-BR'), bold: true },
+          { text: ' pessoas ouvindo o ', bold: false },
+          { text: 'mesmo álbum', bold: true },
+        ],
       },
       {
         key: 'data-countries',
-        lead: String(snapshot.countriesCount),
-        text: 'países conectados agora',
+        segments: [
+          { text: String(snapshot.countriesCount), bold: true },
+          { text: ' países conectados ', bold: false },
+          { text: 'agora', bold: true },
+        ],
       },
     ];
     const albums: Phrase[] = ANA_ALBUMS.map((a) => ({
       key: a.key,
-      lead: a.listeners.toLocaleString('pt-BR'),
-      text: `pessoas ouvindo ${a.title} agora`,
+      segments: [
+        { text: a.listeners.toLocaleString('pt-BR'), bold: true },
+        { text: ' pessoas ouvindo ', bold: false },
+        { text: a.title, bold: true },
+        { text: ' agora', bold: false },
+      ],
       album: { title: a.title, cover: a.cover },
     }));
     /* Zip intercalado: data[0], album[0], data[1], album[1], ...
@@ -369,12 +393,14 @@ export default function FanverseSearch() {
     return out;
   }, [snapshot]);
 
-  /* Rotaciona a cada 4s — só começa depois que a headline aparece. */
+  /* Rotaciona a cada 7s — per spec atualizado "mantenha por
+   *  mais tempo o insight visível". Antes 4s, agora 7s pra dar
+   *  espaço pro Split Text completar + leitura confortável. */
   useEffect(() => {
     if (!open || !showHeadline) return;
     const id = window.setInterval(() => {
       setPhraseIdx((i) => (i + 1) % PHRASES.length);
-    }, 4000);
+    }, 7000);
     return () => window.clearInterval(id);
   }, [open, showHeadline, PHRASES.length]);
 
@@ -508,8 +534,40 @@ export default function FanverseSearch() {
         <div className={styles.analyzing} aria-live="polite">
           <span className={styles.analyzingText}>{ANALYZING_PHRASE}</span>
         </div>
-        <div className={styles.orb} aria-hidden="true">
-          <FanverseCore />
+        <div className={styles.orbWrap} aria-hidden="true">
+          <div className={styles.orb}>
+            <FanverseCore />
+          </div>
+          {/* Album thumb sobreposta no orbe — per spec atualizado
+           *  "deixe a miniatura por cima do orbe". AnimatePresence
+           *  faz fade in/out entre álbuns; nas frases de dados puros
+           *  o slot fica vazio (sem layout shift porque é absoluto
+           *  centralizado no orbWrap). */}
+          <AnimatePresence mode="wait">
+            {showHeadline && currentPhrase.album && (
+              <motion.div
+                key={currentPhrase.album.cover}
+                className={styles.albumThumb}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                /* O .albumThumb usa top/left 50% pra ancorar no
+                 *  centro do orbWrap; precisamos prepend o
+                 *  translate(-50%, -50%) pra o motion compor o
+                 *  scale por cima sem perder o centering. */
+                transformTemplate={(_props, generated) =>
+                  `translate(-50%, -50%) ${generated}`
+                }
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentPhrase.album.cover}
+                  alt={currentPhrase.album.title}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -525,48 +583,19 @@ export default function FanverseSearch() {
            *  tem `.album`, renderiza uma thumb 110×110 (90×90 mobile)
            *  que faz fade in/out junto com o AnimatePresence. */}
           {showHeadline && (
-            <div className={styles.headlineWrap}>
-              {/* Album thumb — só aparece nas frases que carregam
-               *  metadata de álbum. AnimatePresence cuida do
-               *  fade entre álbuns (e entre álbum/sem-álbum). */}
-              <div className={styles.albumThumbSlot} aria-hidden="true">
-                <AnimatePresence mode="wait">
-                  {currentPhrase.album && (
-                    <motion.div
-                      key={currentPhrase.album.cover}
-                      className={styles.albumThumb}
-                      initial={{ opacity: 0, scale: 0.94 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.94 }}
-                      transition={{ duration: 0.42, ease: 'easeOut' }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={currentPhrase.album.cover}
-                        alt={currentPhrase.album.title}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className={styles.headline}>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentPhrase.key}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    aria-label={`${currentPhrase.lead} ${currentPhrase.text}`}
-                  >
-                    <strong className={styles.headlineLead}>
-                      {currentPhrase.lead}
-                    </strong>{' '}
-                    <SplitText text={currentPhrase.text} />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+            <div className={styles.headline}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPhrase.key}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  aria-label={currentPhrase.segments.map((s) => s.text).join('')}
+                >
+                  <SplitText segments={currentPhrase.segments} />
+                </motion.div>
+              </AnimatePresence>
             </div>
           )}
 
@@ -670,8 +699,38 @@ export default function FanverseSearch() {
  * cada troca de frase — então o split recomeça do zero
  * automaticamente sem precisar de estado próprio.
  */
-function SplitText({ text }: { text: string }) {
-  const words = text.split(' ');
+function SplitText({
+  segments,
+}: {
+  segments: { text: string; bold: boolean }[];
+}) {
+  /* Achata os segments em uma lista de "tokens" (palavras), cada
+   *  um com sua flag de bold preservada do segment de origem.
+   *  Isso permite o efeito Split Text por palavra MANTENDO os
+   *  destaques bold ao longo da frase (número da contagem, nome
+   *  do álbum, etc.). */
+  type Token = { word: string; bold: boolean; trailingSpace: boolean };
+  const tokens: Token[] = [];
+  segments.forEach((seg) => {
+    /* Split agressivo por whitespace; cada chunk vira um token
+     *  com flag bold do segment. `text.split(/(\s+)/)` preserva
+     *  os espaços como tokens próprios — pulamos eles porque
+     *  cada palavra agora carrega seu próprio trailing space. */
+    const parts = seg.text.split(/(\s+)/);
+    parts.forEach((p) => {
+      if (!p) return;
+      if (/^\s+$/.test(p)) {
+        /* É só whitespace — anexa como trailingSpace ao último
+         *  token (preserva múltiplos espaços e o gap entre
+         *  segments). */
+        const last = tokens[tokens.length - 1];
+        if (last) last.trailingSpace = true;
+      } else {
+        tokens.push({ word: p, bold: seg.bold, trailingSpace: false });
+      }
+    });
+  });
+
   return (
     <motion.span
       className={styles.splitText}
@@ -679,22 +738,22 @@ function SplitText({ text }: { text: string }) {
       animate="visible"
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: 0.08 } },
+        visible: { transition: { staggerChildren: 0.16 } },
       }}
       aria-hidden="true"
     >
-      {words.map((word, i) => (
+      {tokens.map((tok, i) => (
         <motion.span
           key={i}
-          className={styles.splitWord}
+          className={`${styles.splitWord} ${tok.bold ? styles.splitWordBold : ''}`}
           variants={{
-            hidden: { opacity: 0, y: 8 },
+            hidden: { opacity: 0, y: 10 },
             visible: { opacity: 1, y: 0 },
           }}
-          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          {word}
-          {i < words.length - 1 ? ' ' : ''}
+          {tok.word}
+          {tok.trailingSpace || i < tokens.length - 1 ? ' ' : ''}
         </motion.span>
       ))}
     </motion.span>

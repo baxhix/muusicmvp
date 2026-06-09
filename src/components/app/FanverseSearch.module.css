@@ -134,10 +134,13 @@
     black 320px,
     black 100%
   );
-  transition:
-    padding-top 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    -webkit-mask-image 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    mask-image 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Per spec atualizado "deixe a transição do scroll suave,
+   *  está quebrando" — mask-image transition é GPU-expensive
+   *  (browser re-render full mask zone por frame). Tiramos a
+   *  transition do mask e animamos só padding-top (layout-only,
+   *  composited bem) + scroll-behavior smooth pra inertia. */
+  transition: padding-top 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  scroll-behavior: smooth;
 }
 .scrolled .scroll {
   padding-top: 160px;
@@ -217,22 +220,17 @@
 }
 
 .orb {
-  /* Desktop: 286px no estado inicial. Quando .scrolled, encolhe pra
-   * ~120px via transform: scale(0.42) — mais barato que mudar W/H
-   * porque não causa reflow do layout. */
-  width: 286px;
-  height: 286px;
+  /* Orb agora preenche o orbWrap (que carrega o sizing + a
+   *  transform scale do .scrolled). Aqui só o efeito visual:
+   *  filter glow + mask radial + breathe animation. */
+  width: 100%;
+  height: 100%;
   position: relative;
   z-index: 1;
   filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.4));
   animation: fsOrbBreathe 4.2s ease-in-out infinite;
   -webkit-mask: radial-gradient(circle at center, #000 55%, transparent 80%);
   mask: radial-gradient(circle at center, #000 55%, transparent 80%);
-  transform-origin: center top;
-  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.scrolled .orb {
-  transform: scale(0.42);
 }
 @keyframes fsOrbBreathe {
   0%, 100% { filter: drop-shadow(0 0 60px rgba(168, 85, 247, 0.4)); }
@@ -360,35 +358,52 @@
  * 24 → 22px no mobile via @media abaixo) + efeito Typewriter
  * char-by-char. Acima do texto, quando a frase é de um álbum,
  * aparece thumb 72×72 com fade in/out via AnimatePresence. */
-.headlineWrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
+/* .headlineWrap removida — não tem mais slot pra thumb no
+ *  body (a thumb foi pro orbWrap dentro do .fixedHeader). */
+
+/* Wrapper do orbe — agora orbe + album thumb são layered no
+ *  mesmo container. O orbWrap permite que o thumb seja
+ *  posicionado absoluto sobre o orbe sem afetar layout. */
+.orbWrap {
+  position: relative;
+  /* Mesmas dimensões do .orb pra .albumThumb herdar o center. */
+  width: 286px;
+  height: 286px;
+  z-index: 1;
+  transform-origin: center top;
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.scrolled .orbWrap {
+  /* Encolhe orbe + thumb juntos quando scrolled (scale tira
+   *  efeito da transform inline do .orb que aplicava scale
+   *  ao próprio orb). */
+  transform: scale(0.42);
 }
 
-/* Slot do thumb — altura fixa pra reservar o espaço mesmo
- *  quando a frase atual NÃO é de álbum (assim a headline não
- *  pula pra cima/baixo ao trocar entre data/álbum). */
-.albumThumbSlot {
-  position: relative;
-  /* Per spec atualizado 72 → 110px. */
-  width: 110px;
-  height: 110px;
-  /* AnimatePresence mode="wait" deixa o slot vazio entre
-   *  trocas — manter as dimensões fixas evita reflow. */
-}
+/* Album thumb — sobreposta NO orbe, centralizada. Per spec
+ *  atualizado: 128×128 + border-radius 6px. */
 .albumThumb {
   position: absolute;
-  inset: 0;
-  /* Per spec atualizado: cantos quase retos (2px) — mais
-   *  próximo de um print físico do que de uma thumb arredondada. */
-  border-radius: 2px;
+  top: 50%;
+  left: 50%;
+  width: 128px;
+  height: 128px;
+  border-radius: 6px;
   overflow: hidden;
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.55),
-    0 3px 8px rgba(0, 0, 0, 0.35);
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   background: #1a1a1f;
+  /* z-index acima do orbe (que está com z=1 dentro do orbWrap)
+   *  pra a capa ficar visível por cima. */
+  z-index: 2;
+  pointer-events: none;
+  /* transformTemplate composição: motion aplica scale/opacity,
+   *  precisamos manter translate(-50%, -50%) pra centering. */
+  transform-origin: center center;
+  /* transformTemplate-style centering via direct transform
+   *  (motion respeitará pelo transformTemplate na motion.div) */
 }
 .albumThumb img {
   width: 100%;
@@ -400,19 +415,20 @@
 
 .headline {
   margin: 0;
-  /* Responsivo: 14px em viewports estreitos (mobile pequeno),
-   *  18px em desktop. Anteriormente fixo em 18 com override
-   *  mobile em 22 — invertemos pra ficar MENOR no mobile per
-   *  spec atualizado. */
-  font-size: clamp(14px, 1.4vw + 10px, 18px);
-  font-weight: 700;
-  color: #fff;
+  /* Per spec atualizado: 24px no desktop, escalando pra 16px
+   *  em mobile pequeno via clamp. Era 18px (clamp 14-18) —
+   *  agora 24 dá presença ao insight. */
+  font-size: clamp(16px, 2vw + 8px, 24px);
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.78);
   letter-spacing: -0.01em;
-  line-height: 1.35;
+  line-height: 1.4;
   text-align: center;
   /* min-height reserva o espaço pro pior caso (2-3 linhas) e
-   *  evita layout shift quando AnimatePresence troca a frase. */
-  min-height: 56px;
+   *  evita layout shift quando AnimatePresence troca a frase.
+   *  Aumentado pra 72px pra acomodar o font 24 + line-height
+   *  1.4 com 2 linhas de margem. */
+  min-height: 72px;
 }
 /* O "lead" (número da contagem) — fica branco bold antes do
  *  typewriter, sem fade char-by-char. Visualmente ancora o
@@ -879,10 +895,10 @@
   /* Mobile — o clamp na .headline (desktop) já reduz pra
    *  ~14px em viewports estreitos. Não precisamos override
    *  manual aqui. Thumb mantém proporção menor pra não dominar
-   *  o orbe mobile (110 desktop → 90 mobile). */
-  .albumThumbSlot {
-    width: 90px;
-    height: 90px;
+   *  o orbe mobile (128 desktop → 104 mobile). */
+  .albumThumb {
+    width: 104px;
+    height: 104px;
   }
   .analyzing {
     font-size: 11px;
