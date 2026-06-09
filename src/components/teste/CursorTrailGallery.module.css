@@ -30,12 +30,21 @@
   text-overflow: ellipsis;
 }
 
-/* Surface — área onde o trail é desenhado. Per spec atualizado:
- *  SEM box (sem background, sem border, sem border-radius). Só
- *  captura mouse + posiciona os items absolutos filhos. */
+/* Surface — área onde o trail é desenhado. Per spec atualizado
+ *  "aplique em 100% da lateral o efeito" — quebra do padding
+ *  lateral do .root via truque margin-left:calc(50% - 50vw) pra
+ *  o trail cobrir edge-to-edge do viewport. SEM box (sem
+ *  background, sem border, sem border-radius). Só captura mouse
+ *  + posiciona os items absolutos filhos. */
 .surface {
   position: relative;
-  width: 100%;
+  width: 100vw;
+  /* Negative margin equal to (50% - 50vw) puxa o elemento pra
+   *  cobrir todo o viewport horizontal independente do padding
+   *  do pai. Funciona em qualquer container — não depende de
+   *  saber a largura do parent. */
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
   height: 460px;
   background: transparent;
   border: none;

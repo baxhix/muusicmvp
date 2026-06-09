@@ -22,6 +22,16 @@
   justify-content: center;
   padding: calc(22vh + 50px) 24px 24px;
 }
+/* Per spec atualizado "aumente a altura do header. Está muito
+ *  espremido" — mobile ganha respiro extra no topo e bottom
+ *  pra acomodar a nova row do CTA abaixo dos phones sem
+ *  espremer o conteúdo do hero. */
+@media (max-width: 720px) {
+  .hero {
+    padding-top: calc(16vh + 60px);
+    padding-bottom: 80px;
+  }
+}
 
 .center {
   position: relative;
@@ -44,10 +54,15 @@
 }
 @media (max-width: 720px) {
   .center {
-    /* Em mobile o gap fixo fica exagerado — reduz
-     * proporcionalmente. Considera o +50px adicionado em
-     * padding-top. */
-    grid-template-rows: auto 80px auto;
+    /* Per spec atualizado "na hero section mobile, posicione
+     *  abaixo dos smartphones o CTA e aumente a altura do
+     *  header. Está muito espremido".
+     *  - Grid passa de 3 rows pra 4 (adiciona row 4 pro CTA).
+     *  - Row 2 (gap) cresce 80→110 pra dar mais respiro à
+     *    headline+phrase.
+     *  - Row 4 auto pro pill com margin natural. */
+    grid-template-rows: auto 110px auto auto;
+    row-gap: 0;
   }
 }
 
@@ -150,11 +165,15 @@
 }
 @media (max-width: 720px) {
   .heroMobileCta {
-    /* Mora na row 2 do grid (junto com a .phrase) com
-     *  align-self:end pra ficar abaixo da phrase com gap. */
-    grid-row: 2;
-    align-self: end;
-    margin: 0 auto;
+    /* Per spec atualizado "posicione abaixo dos smartphones
+     *  o CTA" — moveu da row 2 (junto da phrase) pra row 4
+     *  (depois dos phones). align-self center deixa o pill
+     *  centralizado horizontalmente; margin-top dá respiro
+     *  do mockup acima. */
+    grid-row: 4;
+    align-self: center;
+    justify-self: center;
+    margin: 28px auto 0;
     position: relative;
     display: inline-flex;
     align-items: center;

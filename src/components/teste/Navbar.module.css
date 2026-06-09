@@ -243,14 +243,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  /* Per spec atualizado "deixe mais sutil o hamburguer" —
+   *  gap entre barras 6 → 5 pra deixar o ícone mais compacto. */
+  gap: 5px;
   padding: 0;
   border: 0;
-  /* Sem fundo cinza + sem border-radius arredondado — per
-   * product feedback "No meu hamburguer, remova o circulo
-   * cinza que tem em volta". O tap-target (44×44) é
-   * preservado pra acessibilidade, mas visualmente só os
-   * 3 traços ficam à mostra. */
   background: transparent;
   border-radius: 0;
   cursor: pointer;
@@ -259,29 +256,35 @@
    * clicável quando o menu está aberto, permitindo fechar
    * pelo mesmo botão. */
   z-index: 80;
+  /* Opacidade default reduzida — barras nascem em rgba branca
+   *  ~0.55 (vs sólido #fff antes). Hover/aberto recupera o
+   *  contraste. */
+  opacity: 0.78;
 }
 .menuTrigger:hover {
-  /* Feedback de hover via leve fade-out das barras (em vez do
-   * antigo background hover) — mantém o visual limpo sem
-   * círculo cinza piscando. */
-  opacity: 0.7;
+  /* Sobe o contraste no hover ao invés de fade-out. */
+  opacity: 1;
 }
 
 .menuBar {
   display: block;
-  width: 20px;
-  /* 1px per spec — desktop quer linhas finas no hamburger. No
-   * mobile a media query abaixo bumpa pra 2px pra preservar
-   * legibilidade no tap target menor / DPI maior. */
+  /* Per spec "mais sutil" — width 20 → 17 e cor sólida #fff →
+   *  rgba(255,255,255,0.78). Combinado com o opacity 0.78 do
+   *  .menuTrigger reduz visualmente o ícone sem perder a
+   *  legibilidade do ícone. */
+  width: 17px;
   height: 1px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.78);
   border-radius: 1px;
-  transition: transform 260ms cubic-bezier(0.65, 0, 0.35, 1), opacity 200ms ease-out;
+  transition: transform 260ms cubic-bezier(0.65, 0, 0.35, 1), opacity 200ms ease-out, background 200ms ease-out;
 }
 
 @media (max-width: 720px) {
   .menuBar {
-    height: 2px;
+    /* Mobile: subiu de 2px pra 1.5 — ainda mais legível que
+     *  desktop sem voltar pra 2px sólidos que reintroduzem o
+     *  peso visual que o spec pediu pra remover. */
+    height: 1.5px;
   }
 }
 

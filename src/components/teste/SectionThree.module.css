@@ -61,7 +61,9 @@
   margin-top: 120px;
   display: flex;
   flex-direction: column;
-  gap: 100px;
+  /* Per spec atualizado "duplique a distância entre as
+   *  seções de chat" — gap 100 → 200px. */
+  gap: 200px;
   /* relative + z-index pra ficar acima dos avatares da
    *  constellation (que tem z-index 30 no FloatingAvatar mas
    *  features fica logo abaixo do conteúdo principal). */

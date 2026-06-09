@@ -32,17 +32,19 @@
 }
 
 /* Stream — área onde os bubbles aparecem flutuando livres.
- *  Per spec atualizado "diminua 30% proporcionalmente os
- *  bullets" — todas as dimensões dos bubbles + min-height da
- *  stream + max-width reduzidos ~30%. */
+ *  Per spec atualizado "aumente 15% o tamanho dos bullets de
+ *  mensagens de chat" — todas as dimensões dos bubbles +
+ *  min-height da stream + max-width reescalados +15% sobre o
+ *  baseline anterior. */
 .stream {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  /* min-height 380 → 266 (-30%). */
-  min-height: 266px;
-  /* max-width 560 → 392 (-30%). */
-  max-width: 392px;
+  /* gap 8 → 9. */
+  gap: 9px;
+  /* min-height 266 → 306 (+15%). */
+  min-height: 306px;
+  /* max-width 392 → 451 (+15%). */
+  max-width: 451px;
   width: 100%;
   margin: 0 auto;
   padding: 6px 3px;
@@ -60,12 +62,12 @@
 
 .bubble {
   max-width: 78%;
-  /* padding 12×16 → 8×11 (-30%). */
-  padding: 8px 11px;
-  /* border-radius 20 → 14. */
-  border-radius: 14px;
-  /* font-size 15 → 11px. */
-  font-size: 11px;
+  /* padding 8×11 → 9×13 (+15%, arredondado pra inteiros). */
+  padding: 9px 13px;
+  /* border-radius 14 → 16. */
+  border-radius: 16px;
+  /* font-size 11 → 13px (+15% = 12.65 ≈ 13). */
+  font-size: 13px;
   line-height: 1.4;
   letter-spacing: -0.005em;
   word-break: break-word;
@@ -79,8 +81,8 @@
 .bubbleReceived {
   background: rgba(38, 38, 44, 0.92);
   color: rgba(245, 245, 247, 0.96);
-  /* tail radius 6 → 4 (-33%). */
-  border-bottom-left-radius: 4px;
+  /* tail radius 4 → 5 (+15% arredondado). */
+  border-bottom-left-radius: 5px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -91,24 +93,24 @@
 .bubbleSent {
   background: linear-gradient(135deg, #5ba6ff 0%, #2f74e8 100%);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 5px;
 }
 
 /* Typing bubble — 3 dots animados em loop. */
 .bubbleTyping {
   display: inline-flex;
   align-items: center;
-  /* gap 5 → 4. */
-  gap: 4px;
-  /* padding 14×18 → 10×13 (-30%). */
-  padding: 10px 13px;
-  /* min-width 60 → 42 (-30%). */
-  min-width: 42px;
+  /* gap 4 → 5. */
+  gap: 5px;
+  /* padding 10×13 → 12×15 (+15%). */
+  padding: 12px 15px;
+  /* min-width 42 → 48 (+15%). */
+  min-width: 48px;
 }
 .typingDot {
-  /* dots 7×7 → 5×5 (-30%). */
-  width: 5px;
-  height: 5px;
+  /* dots 5×5 → 6×6 (+15% ≈). */
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: rgba(245, 245, 247, 0.72);
   display: inline-block;
@@ -120,7 +122,8 @@
     gap: 24px;
   }
   .stream {
-    min-height: 224px;
+    /* +15% sobre 224 = 258. */
+    min-height: 258px;
     max-width: 100%;
   }
 }

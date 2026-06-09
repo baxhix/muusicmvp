@@ -138,9 +138,14 @@ export default function CursorTrailGallery() {
     spawnAt(e.clientX - rect.left, e.clientY - rect.top);
   };
 
-  /* Mobile / no-mouse fallback — quando a surface está visível
-   *  no viewport e o usuário scrolla, spawnamos em posições
-   *  semi-aleatórias dentro do retângulo. */
+  /* Mobile / no-mouse fallback — duas fontes complementares:
+   *
+   *   1. Scroll-driven (era a única antes) — spawna quando o
+   *      usuário scrolla com a surface no viewport.
+   *   2. Per spec atualizado "no mobile, elas surgem
+   *      gradativamente de forma aleatória" — interval a cada
+   *      ~1.8s spawna em posição aleatória dentro do retângulo
+   *      enquanto a surface está visível, mesmo sem scroll. */
   useEffect(() => {
     const el = surfaceRef.current;
     if (!el) return;
@@ -163,7 +168,33 @@ export default function CursorTrailGallery() {
       spawnAt(x, y);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+
+    /* Auto-spawn em mobile — sem depender de scroll, fotos
+     *  aparecem em posições aleatórias enquanto a surface está
+     *  visível. Desktop continua sem essa fonte (mouse hover já
+     *  cobre o caso). Reduced-motion bloqueia tudo via spawnAt. */
+    let intervalId: number | null = null;
+    if (isMobileRef.current) {
+      let tickCount = 0;
+      intervalId = window.setInterval(() => {
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+        tickCount += 1;
+        /* Pseudo-random via golden ratio multipliers diferentes
+         *  do scroll fallback acima — evita pile-up quando os
+         *  dois disparam no mesmo frame. */
+        const u = (tickCount * 0.754 + 0.13) % 1;
+        const v = (tickCount * 0.291 + 0.47) % 1;
+        const x = rect.width * (0.08 + u * 0.84);
+        const y = rect.height * (0.1 + v * 0.8);
+        spawnAt(x, y);
+      }, 1800);
+    }
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (intervalId !== null) window.clearInterval(intervalId);
+    };
   }, []);
 
   /* Cleanup dos timeouts pendentes ao unmount. */
