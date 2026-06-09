@@ -25,8 +25,15 @@ export default function SectionTwo() {
       <Sparkles count={13} seed={21} />
 
       <div className={styles.center}>
-        <h2 className={styles.headline}>Fã e Artista</h2>
-        <p className={styles.subline}>Conectados</p>
+        {/* Per spec atualizado:
+         *   line 1 (headline): "O mundo, a música,"
+         *   line 2 (subline mesmo peso): "em tempo real"
+         *   subtitle (Inter cinza 16px): explica o real-time. */}
+        <h2 className={styles.headline}>O mundo, a música,</h2>
+        <p className={styles.subline}>em tempo real</p>
+        <p className={styles.phrase}>
+          Veja, em real time, seus amigos online curtindo junto com você!
+        </p>
       </div>
     </section>
   );

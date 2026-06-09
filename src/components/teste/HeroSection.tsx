@@ -31,9 +31,16 @@ export default function HeroSection() {
        *  fica exatamente 180px abaixo da BASE do headline,
        *  independente do tamanho do texto da frase. */}
       <div className={styles.center}>
-        <h1 className={styles.headline}>Superfãs</h1>
+        {/* Per spec atualizado:
+         *   linha 1: "Universo do"
+         *   linha 2: "Superfã" (mesma fonte/peso, fica
+         *            inline-block como uma 2ª linha do headline,
+         *            não um caption à parte). */}
+        <h1 className={styles.headline}>
+          Universo do<br />Superfã
+        </h1>
         <p className={styles.phrase}>
-          O lugar certo para criar conexões
+          O lugar perfeito de conexão entre o Artista e o Fã
         </p>
         {/* CTA mobile — só aparece em mobile per spec atualizado
          *  "No mobile, deixe esse CTA abaixo do headline Superfãs".
