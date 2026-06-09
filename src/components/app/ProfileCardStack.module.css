@@ -252,7 +252,11 @@
 }
 
 /* Mobile tweak — card +12% proporcional ao desktop pra
- *  leitura confortável + folga no matchSuffix de 2 linhas. */
+ *  leitura confortável + folga no matchSuffix de 2 linhas.
+ *  Box-shadow do card simplificado (2 layers → 1) pra reduzir
+ *  custo de repaint quando o stack reorganiza. Mesmo
+ *  tratamento no photoImg circular (inset + drop shadow → só
+ *  inset). */
 @media (max-width: 540px) {
   .root {
     height: 420px;
@@ -260,9 +264,13 @@
   .card {
     width: 252px;
     height: 392px;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
   }
   .photo {
     height: 188px;
+  }
+  .photoImg {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
   }
 }
 

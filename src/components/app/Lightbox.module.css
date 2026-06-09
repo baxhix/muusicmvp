@@ -236,11 +236,22 @@
   background: linear-gradient(135deg, #ec4899 0%, #a855f7 60%, #6366f1 100%);
 }
 
-/* Mobile — botões nav menores, padding reduzido. */
+/* Mobile — botões nav menores + perf: removemos os
+ *  backdrop-filter dos pills internos (5 layers stacked com
+ *  blur 12px é GPU-killer em mobile). Substituídos por bg
+ *  ligeiramente mais opaco. O backdrop principal mantém
+ *  blur, mas reduzido pra 12px (era 20). */
 @media (max-width: 540px) {
+  .lightbox {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
   .nav {
     width: 40px;
     height: 40px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(20, 20, 26, 0.7);
   }
   .navPrev { left: 10px; }
   .navNext { right: 10px; }
@@ -248,6 +259,9 @@
     top: 16px;
     left: 16px;
     font-size: 11px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(20, 20, 26, 0.78);
   }
   .close {
     width: 40px;
@@ -255,9 +269,30 @@
   }
   .meta {
     bottom: max(64px, calc(env(safe-area-inset-bottom, 0px) + 64px));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(20, 20, 26, 0.88);
   }
   .name {
     max-width: 180px;
     font-size: 12px;
+  }
+  .dots {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(20, 20, 26, 0.82);
+  }
+  /* Touch — pan-y só (sem pinch-zoom) pra drag horizontal não
+   *  competir com gesto nativo de zoom. */
+  .img {
+    touch-action: pan-y;
+  }
+}
+
+/* prefers-reduced-motion — desliga slide direcional, mantém
+ *  só o fade. Crítico em iOS Safari low-power mode. */
+@media (prefers-reduced-motion: reduce) {
+  .img {
+    transition: opacity 200ms ease !important;
   }
 }

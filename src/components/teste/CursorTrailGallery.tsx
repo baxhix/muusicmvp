@@ -52,11 +52,30 @@ interface TrailItem {
 /* Distância mínima entre spawns (px). Microtremores e
  *  rebatimentos não criam pile-up. */
 const MIN_DIST = 90;
+/* Mesma threshold, porém mais larga no mobile pra reduzir
+ *  spawn rate durante scroll inercial (que pode disparar
+ *  scrollY changes a cada frame). */
+const MIN_DIST_MOBILE = 140;
 /* Tempo que cada item fica visível antes de iniciar o fade-out. */
 const LIFETIME_MS = 1600;
 /* Cap de itens simultâneos — mais que isso vira poluição
- *  visual + custo de compositing. */
+ *  visual + custo de compositing (cada item é um motion layer
+ *  com box-shadow + GPU compositing). Mobile reduz pra 4 pra
+ *  aliviar GPU em devices low-end. */
 const MAX_ITEMS = 6;
+const MAX_ITEMS_MOBILE = 4;
+/* Verificação leve de mobile via media query — evita custo de
+ *  pegar useIsMobile/AppShellContext (componente roda na landing
+ *  /teste, fora do app shell). */
+function isMobileViewport(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(max-width: 900px)').matches;
+}
+/* prefers-reduced-motion: desliga o trail completamente. */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 export default function CursorTrailGallery() {
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -72,27 +91,39 @@ export default function CursorTrailGallery() {
    *  evitar setState após o componente sumir. */
   const timeoutsRef = useRef<Set<number>>(new Set());
 
+  /* Cache do viewport check + reduced-motion no mount — evita
+   *  matchMedia call a cada spawn. */
+  const isMobileRef = useRef(false);
+  const reducedMotionRef = useRef(false);
+  useEffect(() => {
+    isMobileRef.current = isMobileViewport();
+    reducedMotionRef.current = prefersReducedMotion();
+  }, []);
+
   const spawnAt = (x: number, y: number) => {
+    /* Reduced motion → não spawna nada (acessibilidade). */
+    if (reducedMotionRef.current) return;
+    const isMobile = isMobileRef.current;
+    const minDist = isMobile ? MIN_DIST_MOBILE : MIN_DIST;
+    const cap = isMobile ? MAX_ITEMS_MOBILE : MAX_ITEMS;
+
     const last = lastSpawnRef.current;
     if (last) {
       const dx = x - last.x;
       const dy = y - last.y;
-      if (Math.hypot(dx, dy) < MIN_DIST) return;
+      if (Math.hypot(dx, dy) < minDist) return;
     }
     lastSpawnRef.current = { x, y };
     seqRef.current += 1;
     const id = seqRef.current;
     const src = EXCLUSIVE_PHOTOS[photoIdxRef.current % EXCLUSIVE_PHOTOS.length];
     photoIdxRef.current += 1;
-    /* Rotação determinística por id pra evitar Math.random no
-     *  client-spawn (mesmo path determinístico fica mais fácil
-     *  de debugar). Range -14° a +14°. */
+    /* Rotação determinística por id pra evitar Math.random.
+     *  Range -14° a +14°. */
     const rotate = ((id * 17) % 29) - 14;
     setItems((arr) => {
       const next = [...arr, { id, x, y, src, rotate }];
-      return next.length > MAX_ITEMS
-        ? next.slice(next.length - MAX_ITEMS)
-        : next;
+      return next.length > cap ? next.slice(next.length - cap) : next;
     });
     const t = window.setTimeout(() => {
       setItems((arr) => arr.filter((i) => i.id !== id));

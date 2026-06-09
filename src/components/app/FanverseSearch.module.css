@@ -886,14 +886,24 @@
   /* OrbWrap mobile: per spec atualizado, +20% → 168 → 202px.
    *  Scale quando scrolled também ajustado proporcionalmente
    *  (0.46 → 0.38) pra orbe sticky ficar do mesmo tamanho
-   *  visual de antes (~77px). */
+   *  visual de antes (~77px).
+   *  Perf: transition 720→520ms (transform anim é cheap mas
+   *  encurta o periodo onde will-change permanece ativo). */
   .orbWrap {
     width: 202px;
     height: 202px;
-    transition: transform 720ms cubic-bezier(0.65, 0, 0.35, 1);
+    transition: transform 520ms cubic-bezier(0.65, 0, 0.35, 1);
   }
   .scrolled .orbWrap {
     transform: scale(0.38);
+  }
+  /* Album thumb mobile — shadow simplificado (3 layers → 1).
+   *  3-layer drop shadow + inset highlight em elemento de
+   *  ~104px é caro repintar no compositing mobile. */
+  .albumThumb {
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   }
   /* Per spec atualizado "posicione o orbe mais acima, mantendo
    *  100px do topo" — substituímos o centering (50dvh-120) por
@@ -1029,6 +1039,8 @@
   .userList,
   .analyzing,
   .orb,
+  .orbWrap,
+  .albumThumb,
   .showMoreBtn,
   .floatingLayer {
     animation: none !important;
