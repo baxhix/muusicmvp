@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import FanverseCore from '@/components/animations/FanverseCore';
+import ProfileCardStack from './ProfileCardStack';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   FANVERSE_SEARCH_SNAPSHOT,
@@ -71,20 +72,21 @@ function HeartIcon({ filled = false }: { filled?: boolean }) {
  * passam por cima do orbe"). */
 const FLOATING_POSITIONS = [
   /* Cluster apertado em torno do orbe (~50vw, 35vh).
-   * Orbe ocupa ~40-60vw × 22-48vh; avatares no anel imediato
-   * (28-72vw × 16-58vh) — todos a no máximo ~22vw de distância
-   * do centro. */
-  { top: '20vh', left: '32vw' },
-  { top: '22vh', left: '68vw' },
+   * Per spec atualizado "Deixe os avatares próximos ao orbe",
+   * estreitamos o cluster horizontalmente (32-68vw → 38-62vw)
+   * e verticalmente (16-58vh → 18-52vh) — todos no anel
+   * imediato do orbe sem afastar nas extremidades. */
+  { top: '22vh', left: '38vw' },
+  { top: '23vh', left: '62vw' },
   { top: '18vh', left: '50vw' },
-  { top: '40vh', left: '24vw' },
-  { top: '42vh', left: '76vw' },
-  { top: '30vh', left: '20vw' },
-  { top: '32vh', left: '80vw' },
-  { top: '56vh', left: '34vw' },
-  { top: '58vh', left: '66vw' },
-  { top: '50vh', left: '28vw' },
-  { top: '52vh', left: '72vw' },
+  { top: '38vh', left: '30vw' },
+  { top: '40vh', left: '70vw' },
+  { top: '30vh', left: '26vw' },
+  { top: '32vh', left: '74vw' },
+  { top: '52vh', left: '38vw' },
+  { top: '54vh', left: '62vw' },
+  { top: '46vh', left: '32vw' },
+  { top: '48vh', left: '68vw' },
 ];
 
 /* Ordem de revelação por PROXIMIDADE ao orbe (~50vw, 35vh).
@@ -111,12 +113,16 @@ const MOBILE_AVATAR_COUNT = 6;
  * em torno do orbe — sem invadir a área dos cards (>45vh) nem a
  * lista de usuários abaixo. */
 const MOBILE_FLOATING_POSITIONS = [
-  { top: '3vh',  left: '50vw' },  // acima do orbe
-  { top: '8vh',  left: '78vw' },  // canto superior direito
-  { top: '8vh',  left: '22vw' },  // canto superior esquerdo
-  { top: '22vh', left: '84vw' },  // lateral direita (na altura do orbe)
-  { top: '22vh', left: '16vw' },  // lateral esquerda (na altura do orbe)
-  { top: '38vh', left: '50vw' },  // abaixo do orbe
+  /* Per spec atualizado "Deixe os avatares próximos ao orbe" no
+   *  mobile: cluster ainda mais apertado, lateral 30-70vw (era
+   *  16-84vw) e vertical 6-32vh (era 3-38vh). Cabe perfeitamente
+   *  ao redor do orbe novo +20% (168px). */
+  { top: '6vh',  left: '50vw' },  // acima do orbe
+  { top: '10vh', left: '70vw' },  // canto superior direito
+  { top: '10vh', left: '30vw' },  // canto superior esquerdo
+  { top: '20vh', left: '74vw' },  // lateral direita (altura do orbe)
+  { top: '20vh', left: '26vw' },  // lateral esquerda (altura do orbe)
+  { top: '32vh', left: '50vw' },  // abaixo do orbe
 ];
 
 /* Timing dos stages.
@@ -435,16 +441,21 @@ export default function FanverseSearch() {
                   repeat: Infinity,
                   ease: 'easeInOut',
                 },
+                /* x/y roam SEM delay — per spec "os avatares já
+                 *  devem aparecer em movimento e não estáticos".
+                 *  Removendo o `delay: revealDelay` faz o
+                 *  movimento começar from t=0; a opacity ainda
+                 *  esconde o avatar até revealDelay, então ele
+                 *  "fade-in já em motion". */
                 x: {
                   duration: roamDur,
-                  delay: revealDelay,
                   repeat: Infinity,
                   repeatType: 'mirror',
                   ease: 'easeInOut',
                 },
                 y: {
+                  /* Sem delay — avatares já em motion na mount. */
                   duration: roamDur * 1.13,
-                  delay: revealDelay,
                   repeat: Infinity,
                   repeatType: 'mirror',
                   ease: 'easeInOut',
@@ -519,6 +530,12 @@ export default function FanverseSearch() {
           {/* Stage 2 (t=11s): match cards em pilha (estilo Apple
            * Wallet). Click no card do topo OU auto-rotate cicla. */}
           {showPills && <MatchStack matches={snapshot.matches} />}
+
+          {/* Profile card stack — versão compacta de perfis,
+           *  Motion Card Stack pattern. Aparece junto com pills
+           *  (showPills). Swipe horizontal pra "passar" o card
+           *  do topo; 5 perfis mocados loop infinito. */}
+          {showPills && <ProfileCardStack />}
 
           {/* Stage 3 (t=15s): lista paginada — primeiros 20 user
            * rows + CTA "Exibir mais" floating quando há mais pra
@@ -661,14 +678,15 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
             type="button"
             layout
             className={styles.matchCard}
-            /* Drag vertical só no top card collapsed — swipe up/down
-             *  dismissa. dragSnapToOrigin retorna se não passar o
-             *  threshold. */
-            drag={isTop && !expanded ? 'y' : false}
-            dragConstraints={{ top: -40, bottom: 40 }}
-            dragElastic={0.25}
+            /* Drag horizontal no top card pra swipe-to-dismiss
+             *  per spec "swipe deve funcionar". Antes era `y` mas
+             *  o gesture natural pra cards stack é swipe lateral
+             *  (estilo Tinder/iOS notification swipe). */
+            drag={isTop && !expanded ? 'x' : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.4}
             onDragEnd={(_, info) => {
-              if (Math.abs(info.offset.y) > 40 || Math.abs(info.velocity.y) > 500) {
+              if (Math.abs(info.offset.x) > 80 || Math.abs(info.velocity.x) > 450) {
                 dismissTop();
               }
             }}
@@ -678,12 +696,20 @@ function MatchStack({ matches }: { matches: FanverseMatch[] }) {
               y: peekY,
               scale: peekScale,
             }}
-            exit={{ opacity: 0, y: -60, scale: 0.85 }}
+            exit={{ opacity: 0, x: 200, scale: 0.85 }}
             transition={{ type: 'spring', stiffness: 320, damping: 30 }}
             style={{
               zIndex: 100 - depth,
               pointerEvents: isTop || expanded ? 'auto' : 'none',
             }}
+            /* CRITICAL — motion sobrescreve `transform`, então o
+             *  translateX(-50%) que centralizava o card via top:0/
+             *  left:50% era perdido (cards apareciam encostados na
+             *  esquerda). transformTemplate prepend o -50% pro
+             *  motion compor depois. */
+            transformTemplate={(_props, generatedTransform) =>
+              `translateX(-50%) ${generatedTransform}`
+            }
             onClick={(e) => {
               /* Click no top toggle expand. Click em outro card no
                *  modo expanded também colapsa de volta. */
