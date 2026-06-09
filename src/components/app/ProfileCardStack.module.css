@@ -41,20 +41,32 @@
   touch-action: pan-y;
 }
 
-/* Foto destacada — proporcional ao novo height. */
+/* Foto de perfil — circular per spec atualizado, no mesmo
+ *  formato do avatar do "meu perfil" (border-radius: 50%).
+ *  Container ainda ocupa a faixa superior do card pra reservar
+ *  o slot do rankBadge no canto, mas o avatar fica centralizado
+ *  como círculo. */
 .photo {
   position: relative;
   width: 100%;
   height: 180px;
-  background: #1a1a1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   flex-shrink: 0;
 }
 .photoImg {
-  width: 100%;
-  height: 100%;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
   object-fit: cover;
   display: block;
   pointer-events: none;
+  background: #1a1a1f;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 /* Rank badge top-right da foto — agora no estilo do botão

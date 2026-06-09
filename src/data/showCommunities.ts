@@ -23,9 +23,12 @@ import type {
   ApiCommunityTopicComment,
 } from '@/lib/api/types';
 
-/** Hero image compartilhada entre todas as show communities. */
+/** Hero image compartilhada entre todas as show communities.
+ *  Per spec atualizado: URL anterior (kondzilla CDN) estava
+ *  quebrada — substituída pela URL fornecida (gstatic
+ *  encrypted-tbn). */
 export const SHOW_COMMUNITY_IMAGE =
-  'https://kondzilla.com/wp-content/uploads/2026/05/ana-castela-album-2048x2048.jpeg';
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3k5WLJgLUWWIMBw1KrVppBK_0tXT35MZj8A&s';
 
 /** Marker que o CommunityPanel usa pra renderizar o badge "TOUR 2026"
  *  sobre a thumbnail — checa se o slug pertence ao set de shows. */

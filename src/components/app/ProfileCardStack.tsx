@@ -43,7 +43,9 @@ interface ProfileCard {
   matchSuffix: string;
 }
 
-/* 5 perfis mocados — mix de top 10/20/50 com matchSuffix
+/* 5 perfis mocados — per spec atualizado, predominância feminina
+ *  (4 mulheres + 1 homem). Pravatar IDs escolhidos por aparência
+ *  (47, 44, 56, 32 = mulheres; 12 = único homem). matchSuffix
  *  reaproveitado dos MATCHES horizontais. */
 const MOCK_PROFILES: ProfileCard[] = [
   {
@@ -57,10 +59,10 @@ const MOCK_PROFILES: ProfileCard[] = [
   },
   {
     id: 'p2',
-    name: 'Rafael Tavares',
+    name: 'Larissa Tavares',
     city: 'Lisboa',
     country: 'Portugal',
-    avatarUrl: 'https://i.pravatar.cc/300?img=33',
+    avatarUrl: 'https://i.pravatar.cc/300?img=32',
     topRank: 50,
     matchSuffix: 'compartilham 8 playlists',
   },

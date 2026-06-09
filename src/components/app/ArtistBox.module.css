@@ -367,20 +367,27 @@
 .fold {
   position: relative;
   z-index: 1;
-  margin-top: -50px;
+  /* Per spec atualizado "intensifique o gradient para suavizar
+   *  o fim/limite da imagem e aparecer que ela surge" — aumentamos
+   *  o overlap (margin-top -50 → -100) pra que o gradient cubra
+   *  uma faixa BEM maior do bottom da imagem, criando uma
+   *  dissolução progressiva longa em vez do cut anterior. A
+   *  artista parece "surgir" do gradient. */
+  margin-top: -100px;
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
-    rgba(4, 4, 8, 0.6) 18%,
-    rgba(8, 8, 14, 0.92) 38%,
-    rgba(11, 11, 13, 1) 58%,
+    rgba(4, 4, 8, 0.22) 10%,
+    rgba(6, 6, 12, 0.5) 25%,
+    rgba(8, 8, 14, 0.78) 40%,
+    rgba(10, 10, 14, 0.94) 55%,
+    rgba(11, 11, 13, 1) 70%,
     rgba(11, 11, 13, 1) 100%
   );
-  /* padding-top reduzido (56 → 36px) per spec "diminua pela metade
-   * a distância atual da palavra Fanverse, se aproximando da
-   * palavra Ana Castela". O eyebrow agora fica mais perto do
-   * título no fold. */
-  padding: 36px 16px 8px;
+  /* padding-top maior (36 → 80px) pra compensar o overlap +50
+   *  que comeu metade do antigo espaço acima do eyebrow. O
+   *  eyebrow mantém ~30px de respiro do edge visível da foto. */
+  padding: 80px 16px 8px;
 }
 
 /* Row externa do fold — coluna de texto (eyebrow + título +
@@ -395,9 +402,9 @@
   position: relative;
 }
 .foldHead {
-  /* Margem direita = orb width (56) + gap (10) — reserva o
+  /* Margem direita = orb width (64) + gap (10) — reserva o
    * espaço lateral pro orbe absolutely positioned. */
-  margin-right: 66px;
+  margin-right: 74px;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -469,18 +476,21 @@
    *
    * top calcula o CENTRO vertical de "Ana Castela":
    *   eyebrow_height (~12px line-height 1)
-   *   + foldTitleRow margin-top (12px — per spec "posicione 12px
-   *     mais abaixo o nome Ana Castela da palavra Fanverse")
+   *   + foldTitleRow margin-top (12px)
    *   + title_height/2 (26/2 = 13)
    *   = 37px do topo do .foldHeadRow
-   * translateY(-50%) puxa o orb pra cima 28px → centro do orb
-   * fica em y=37, alinhado com o novo centro de "Ana Castela". */
+   * translateY(-50%) puxa o orb pra cima → centro do orb
+   * alinhado com o centro de "Ana Castela".
+   *
+   * Per spec atualizado "Aumente 15% o tamanho do orbe" —
+   * 56 → 64px (+14% arredondado pra valor par). .foldHead
+   * margin-right e foldOrbInner também acompanham. */
   position: absolute;
   right: 0;
   top: 37px;
   transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   display: inline-block;
   line-height: 0;
   padding: 0;
