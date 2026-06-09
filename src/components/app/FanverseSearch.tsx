@@ -350,6 +350,12 @@ export default function FanverseSearch() {
     album?: { title: string; cover: string };
   };
   const PHRASES: Phrase[] = useMemo(() => {
+    /* Per spec atualizado "mantenha também a miniatura do
+     *  álbum mesmo quando não houver menção do álbum no
+     *  insight" — todas as frases (inclusive as "data") agora
+     *  carregam uma cover. Cada data phrase pega um álbum
+     *  diferente da catálogo Ana Castela (ciclando por idx)
+     *  pra variar visualmente entre rotações. */
     const data: Phrase[] = [
       {
         key: 'data-all',
@@ -360,6 +366,7 @@ export default function FanverseSearch() {
           { text: ' curtindo', bold: false },
         ],
         line2: 'Ana Castela com você',
+        album: { title: ANA_ALBUMS[0].title, cover: ANA_ALBUMS[0].cover },
       },
       {
         key: 'data-song',
@@ -370,6 +377,7 @@ export default function FanverseSearch() {
           { text: ' ouvindo', bold: false },
         ],
         line2: 'a mesma música que você',
+        album: { title: ANA_ALBUMS[1].title, cover: ANA_ALBUMS[1].cover },
       },
       {
         key: 'data-album',
@@ -380,6 +388,7 @@ export default function FanverseSearch() {
           { text: ' ouvindo', bold: false },
         ],
         line2: 'o mesmo álbum',
+        album: { title: ANA_ALBUMS[2].title, cover: ANA_ALBUMS[2].cover },
       },
       {
         key: 'data-countries',
@@ -388,6 +397,7 @@ export default function FanverseSearch() {
           { text: ' países', bold: false },
         ],
         line2: 'conectados agora',
+        album: { title: ANA_ALBUMS[3].title, cover: ANA_ALBUMS[3].cover },
       },
     ];
     const albums: Phrase[] = ANA_ALBUMS.map((a) => ({

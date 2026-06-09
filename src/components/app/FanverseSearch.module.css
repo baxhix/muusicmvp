@@ -584,6 +584,10 @@
   max-width: 460px;
   margin: 0 auto;
   width: 100%;
+  /* Per spec atualizado "diminua 35% a distância da lista de
+   *  usuários para a frase do insight" — encolhe o gap herdado
+   *  do .body (18px) em ~35% (6px) via margin-top negativo. */
+  margin-top: -6px;
   /* Reveal staged — list mount em t=15s. */
   animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
 }
