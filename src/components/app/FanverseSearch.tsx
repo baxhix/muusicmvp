@@ -557,37 +557,35 @@ export default function FanverseSearch() {
           <div className={styles.orb}>
             <FanverseCore />
           </div>
-          {/* Vinyl disc — sempre visível, gira em loop atrás da
-           *  miniatura do álbum. Inspirado na feature Audição
-           *  Coletiva (CollectiveListeningModal). Per spec
-           *  atualizado, NÃO tem imagem ao centro (só os grooves
-           *  + furo central + brilho sutil). O thumb do álbum,
-           *  quando presente, fica overlaid no centro. */}
-          <div className={styles.vinylWrap}>
-            <div className={styles.vinyl} />
-            <div className={styles.vinylHole} />
-            <AnimatePresence mode="wait">
-              {showHeadline && currentPhrase.album && (
-                <motion.div
-                  key={currentPhrase.album.cover}
-                  className={styles.albumThumb}
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.92 }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  transformTemplate={(_props, generated) =>
-                    `translate(-50%, -50%) ${generated}`
-                  }
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentPhrase.album.cover}
-                    alt={currentPhrase.album.title}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+        </div>
+        {/* Vinyl disc — agora SIBLING do .orbWrap (não filho). Per
+         *  spec atualizado, orb fica mais acima e disc + thumb +
+         *  insights movem 100px pra baixo, separando visualmente
+         *  os 3 elementos. SEMPRE visível, gira em loop. */}
+        <div className={styles.vinylWrap} aria-hidden="true">
+          <div className={styles.vinyl} />
+          <div className={styles.vinylHole} />
+          <AnimatePresence mode="wait">
+            {showHeadline && currentPhrase.album && (
+              <motion.div
+                key={currentPhrase.album.cover}
+                className={styles.albumThumb}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                transformTemplate={(_props, generated) =>
+                  `translate(-50%, -50%) ${generated}`
+                }
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentPhrase.album.cover}
+                  alt={currentPhrase.album.title}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
