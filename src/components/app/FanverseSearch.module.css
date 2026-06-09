@@ -356,25 +356,72 @@
 }
 
 /* ── Headline rotativo ─────────────────────────────────────── */
-/* Per product feedback "centralizadas e em uma fonte menor e só
- * devem aparecer após 7s dos usuários flutuando, como se estivesse
- * carregando" — text-align:center + font reduzido de 24 → 16px.
- * O reveal é controlado pelo state showHeadline no JSX (mount em
- * t=7s); o key={phrase.key} continua forçando re-animation a cada
- * troca de frase (a cada 4s depois do reveal inicial). */
+/* Per spec atualizado: -2pt no font-size (20 → 18px no desktop,
+ * 24 → 22px no mobile via @media abaixo) + efeito Typewriter
+ * char-by-char. Acima do texto, quando a frase é de um álbum,
+ * aparece thumb 72×72 com fade in/out via AnimatePresence. */
+.headlineWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Slot do thumb — altura fixa pra reservar o espaço mesmo
+ *  quando a frase atual NÃO é de álbum (assim a headline não
+ *  pula pra cima/baixo ao trocar entre data/álbum). */
+.albumThumbSlot {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  /* AnimatePresence mode="wait" deixa o slot vazio entre
+   *  trocas — manter as dimensões fixas evita reflow. */
+}
+.albumThumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.55),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+  background: #1a1a1f;
+}
+.albumThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
 .headline {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.01em;
-  line-height: 1.3;
+  line-height: 1.35;
   text-align: center;
   /* min-height reserva o espaço pro pior caso (2-3 linhas) e
-   *  evita layout shift quando AnimatePresence troca a frase.
-   *  Animação de fade-in/out delegada ao motion (cross-fade
-   *  entre mount/unmount via AnimatePresence mode="wait"). */
+   *  evita layout shift quando AnimatePresence troca a frase. */
   min-height: 56px;
+}
+/* O "lead" (número da contagem) — fica branco bold antes do
+ *  typewriter, sem fade char-by-char. Visualmente ancora o
+ *  número da contagem como destaque. */
+.headlineLead {
+  font-weight: 700;
+  color: #fff;
+}
+/* Wrapper do texto que será revelado char-by-char. Mantém
+ *  display inline pra fluir junto com o `.headlineLead` sem
+ *  quebrar de linha forçada. */
+.typewriter {
+  display: inline;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.78);
+  white-space: pre-wrap;
 }
 .headlineMuted {
   font-weight: 400;
@@ -817,10 +864,14 @@
     padding: 8px 24px 22px;
   }
   .headline {
-    /* +6pt per spec atualizado: 18 → 24px no mobile pra
-     *  legibilidade dos insights ("455 pessoas curtindo",
-     *  "Mesma música", etc). */
-    font-size: 24px;
+    /* -2pt per spec atualizado: 24 → 22px no mobile (mantém
+     *  legibilidade dos insights com a redução solicitada). */
+    font-size: 22px;
+  }
+  /* Mobile — thumb um pouco menor pra não dominar o viewport. */
+  .albumThumbSlot {
+    width: 64px;
+    height: 64px;
   }
   .analyzing {
     font-size: 11px;

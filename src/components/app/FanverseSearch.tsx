@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import FanverseCore from '@/components/animations/FanverseCore';
 import ProfileCardStack from './ProfileCardStack';
@@ -8,9 +8,20 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   FANVERSE_SEARCH_SNAPSHOT,
   type FanverseSearchUser,
-  type FanverseMatch,
 } from '@/lib/fanverseSearchMocks';
 import styles from './FanverseSearch.module.css';
+
+/* Álbuns Ana Castela — entradas extras no carrossel de insights.
+ *  Per spec atualizado "intercale os dados mocados com os álbuns".
+ *  Cada álbum vira um insight com thumb 72×72 acima do texto +
+ *  contagem mocada de ouvintes simultâneos pra dar contexto. */
+const ANA_ALBUMS = [
+  { key: 'album-fire-arena',          title: 'Fire Arena',                 cover: '/albuns/firearena.jpg',                  listeners: 2310 },
+  { key: 'album-lets-go-rodeo',       title: "Let's Go Rodeo",             cover: '/albuns/lets-go-rodeo.jpg',              listeners: 1844 },
+  { key: 'album-heranca-boiadeira',   title: 'Herança Boiadeira',          cover: '/albuns/heranca-boiadeira.jpg',          listeners: 1556 },
+  { key: 'album-boiadeira-int',       title: 'Boiadeira Internacional',    cover: '/albuns/boiadeira-internacional.jpg',    listeners: 1287 },
+  { key: 'album-heranca-vivo',        title: 'Herança Boiadeira ao vivo',  cover: '/albuns/heranca-boiadeira-ao-vivo.jpg',  listeners: 1023 },
+] as const;
 
 /**
  * FanverseSearch — overlay full-screen disparado pelo clique no
@@ -302,59 +313,61 @@ export default function FanverseSearch() {
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
-  /* 4 frases rotacionando a cada 4s. Per product feedback "nas
-   * frases quebre a linha em: Ana Castela com você / Mesma
-   * música / Mesmo álbum" — `<br />` força o destaque branco
-   * bold cair pra segunda linha em cada caso. */
+  /* Insights — frases rotativas a cada 4s. Per spec atualizado
+   *  "intercale os dados mocados com os álbuns", agora cada item
+   *  pode trazer junto um álbum (thumb 72×72 acima do texto). Os
+   *  4 inserts de dados ficam intercalados com os 5 álbuns Ana
+   *  Castela, totalizando 9 entradas.
+   *
+   *  Cada frase é uma string PLAIN (sem JSX bold/br) pra que o
+   *  efeito Typewriter consiga revelar caractere por caractere
+   *  via stagger no motion. O número fica no `lead` (renderizado
+   *  bold antes do typewriter) e o resto da frase vira o `text`. */
   type Phrase = {
     key: string;
-    render: ReactNode;
+    lead: string;
+    text: string;
+    album?: { title: string; cover: string };
   };
-  const PHRASES: Phrase[] = useMemo(() => [
-    {
-      key: 'all',
-      render: (
-        <>
-          <strong>{snapshot.peopleCount.toLocaleString('pt-BR')}</strong>{' '}
-          <span className={styles.headlineMuted}>pessoas curtindo</span>
-          <br />
-          <strong>Ana Castela com você</strong>
-        </>
-      ),
-    },
-    {
-      key: 'song',
-      render: (
-        <>
-          <strong>{snapshot.sameSongCount.toLocaleString('pt-BR')}</strong>{' '}
-          <span className={styles.headlineMuted}>pessoas ouvindo a</span>
-          <br />
-          <strong>Mesma música</strong>
-        </>
-      ),
-    },
-    {
-      key: 'album',
-      render: (
-        <>
-          <strong>{snapshot.sameAlbumCount.toLocaleString('pt-BR')}</strong>{' '}
-          <span className={styles.headlineMuted}>pessoas ouvindo o</span>
-          <br />
-          <strong>Mesmo álbum</strong>
-        </>
-      ),
-    },
-    {
-      key: 'countries',
-      render: (
-        <>
-          <strong>{snapshot.countriesCount}</strong>{' '}
-          <span className={styles.headlineMuted}>países conectados</span>{' '}
-          <strong>agora</strong>
-        </>
-      ),
-    },
-  ], [snapshot]);
+  const PHRASES: Phrase[] = useMemo(() => {
+    const data: Phrase[] = [
+      {
+        key: 'data-all',
+        lead: snapshot.peopleCount.toLocaleString('pt-BR'),
+        text: 'pessoas curtindo Ana Castela com você',
+      },
+      {
+        key: 'data-song',
+        lead: snapshot.sameSongCount.toLocaleString('pt-BR'),
+        text: 'pessoas ouvindo a mesma música',
+      },
+      {
+        key: 'data-album',
+        lead: snapshot.sameAlbumCount.toLocaleString('pt-BR'),
+        text: 'pessoas ouvindo o mesmo álbum',
+      },
+      {
+        key: 'data-countries',
+        lead: String(snapshot.countriesCount),
+        text: 'países conectados agora',
+      },
+    ];
+    const albums: Phrase[] = ANA_ALBUMS.map((a) => ({
+      key: a.key,
+      lead: a.listeners.toLocaleString('pt-BR'),
+      text: `pessoas ouvindo ${a.title} agora`,
+      album: { title: a.title, cover: a.cover },
+    }));
+    /* Zip intercalado: data[0], album[0], data[1], album[1], ...
+     *  Como tem 4 data + 5 albums, sobra 1 álbum no fim. */
+    const out: Phrase[] = [];
+    const max = Math.max(data.length, albums.length);
+    for (let i = 0; i < max; i++) {
+      if (i < data.length) out.push(data[i]);
+      if (i < albums.length) out.push(albums[i]);
+    }
+    return out;
+  }, [snapshot]);
 
   /* Rotaciona a cada 4s — só começa depois que a headline aparece. */
   useEffect(() => {
@@ -504,37 +517,67 @@ export default function FanverseSearch() {
        * pills, list). Topbar e orbe estão fora do scroll (fixos). */}
       <div className={styles.scroll} ref={scrollRef} onScroll={handleScroll}>
         <div className={styles.body}>
-          {/* Stage 1 (t=7s): headline centralizada, rotaciona entre
-           *  4 frases a cada 4s. Refatorada com AnimatePresence pra
-           *  cross-fade entre frases — antes key={...} forçava unmount
-           *  + remount com layout shift toda vez que a frase tinha
-           *  line-count diferente. Agora a frase antiga faz fade-out
-           *  enquanto a nova faz fade-in no mesmo container, sem
-           *  qualquer salto. min-height no CSS reserva o espaço. */}
+          {/* Stage 1 (t=7s): headline centralizada com Typewriter.
+           *
+           *  Per spec atualizado: insights -2pt no font-size + efeito
+           *  Typewriter (char-by-char reveal via stagger no motion).
+           *  Acima do texto, quando a frase tem `.album`, renderiza
+           *  uma thumb 72×72 que faz fade in/out junto com o
+           *  AnimatePresence. */}
           {showHeadline && (
-            <div className={styles.headline}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentPhrase.key}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
-                >
-                  {currentPhrase.render}
-                </motion.div>
-              </AnimatePresence>
+            <div className={styles.headlineWrap}>
+              {/* Album thumb — só aparece nas frases que carregam
+               *  metadata de álbum. AnimatePresence cuida do
+               *  fade entre álbuns (e entre álbum/sem-álbum). */}
+              <div className={styles.albumThumbSlot} aria-hidden="true">
+                <AnimatePresence mode="wait">
+                  {currentPhrase.album && (
+                    <motion.div
+                      key={currentPhrase.album.cover}
+                      className={styles.albumThumb}
+                      initial={{ opacity: 0, scale: 0.94 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.94 }}
+                      transition={{ duration: 0.42, ease: 'easeOut' }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={currentPhrase.album.cover}
+                        alt={currentPhrase.album.title}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className={styles.headline}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentPhrase.key}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    aria-label={`${currentPhrase.lead} ${currentPhrase.text}`}
+                  >
+                    <strong className={styles.headlineLead}>
+                      {currentPhrase.lead}
+                    </strong>{' '}
+                    <Typewriter text={currentPhrase.text} />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
           )}
-
-          {/* Stage 2 (t=11s): match cards em pilha (estilo Apple
-           * Wallet). Click no card do topo OU auto-rotate cicla. */}
-          {showPills && <MatchStack matches={snapshot.matches} />}
 
           {/* Profile card stack — versão compacta de perfis,
            *  Motion Card Stack pattern. Aparece junto com pills
            *  (showPills). Swipe horizontal pra "passar" o card
-           *  do topo; 5 perfis mocados loop infinito. */}
+           *  do topo; 5 perfis mocados loop infinito.
+           *
+           *  Stage 2 (t=11s) — Per spec atualizado os cards
+           *  horizontais (MatchStack) foram removidos. Mantemos
+           *  apenas o stack vertical. */}
           {showPills && <ProfileCardStack />}
 
           {/* Stage 3 (t=15s): lista paginada — primeiros 20 user
@@ -614,127 +657,41 @@ export default function FanverseSearch() {
 }
 
 /**
- * MatchStack — pattern iOS Notifications stack:
- *   • Collapsed (default): newest on top, 2 atrás peek BELOW
- *     com scale-down (0.96, 0.92) + offset vertical (8px, 16px).
- *   • Expanded (após tap no top): todos viram lista vertical
- *     individual, motion auto-anima via `layout` prop.
- *   • Swipe vertical no top card dismissa — cards atrás sobem
- *     suavemente assumindo a posição do topo.
+ * Typewriter — revela o texto char-by-char via stagger no motion.
  *
- * Reveal staged (1 card a cada 3s até preencher) mantido — novos
- * cards entram via AnimatePresence + initial/animate y/scale.
+ * Cada caractere vira um motion.span com variant fade-in. O
+ * containerVariant aplica staggerChildren pra criar o efeito
+ * cumulativo "digitando". Espaços viram &nbsp; pra preservar o
+ * gap visual (motion.span inline default colapsa whitespace).
+ *
+ * O `key` no parent (AnimatePresence) re-monta o componente a
+ * cada troca de frase — então o typewriter recomeça do zero
+ * automaticamente sem precisar de estado próprio.
  */
-function MatchStack({ matches }: { matches: FanverseMatch[] }) {
-  /* Stack em ORDEM CRONOLÓGICA — primeiro elemento = mais antigo,
-   *  último = mais recente (topo do stack). Dismiss remove o
-   *  último (newest). Cycle (auto-rotate) ainda disponível movendo
-   *  o último pra primeiro. */
-  const [stack, setStack] = useState(matches);
-  /* visibleCount: quantos cards já apareceram (reveal staged). */
-  const [visibleCount, setVisibleCount] = useState(1);
-  /* expanded: tap no top card expande o stack pra lista vertical. */
-  const [expanded, setExpanded] = useState(false);
-
-  const dismissTop = () => {
-    setStack((arr) => {
-      if (arr.length < 2) return arr;
-      const top = arr[arr.length - 1];
-      return [top, ...arr.slice(0, arr.length - 1)];
-    });
-  };
-
-  useEffect(() => {
-    if (visibleCount >= matches.length) return;
-    const id = window.setTimeout(() => {
-      setVisibleCount((n) => Math.min(n + 1, matches.length));
-    }, 3000);
-    return () => window.clearTimeout(id);
-  }, [visibleCount, matches.length]);
-
-  /* Slice dos cards atualmente visíveis (newest no fim). */
-  const visible = stack.slice(stack.length - visibleCount);
-
+function Typewriter({ text }: { text: string }) {
   return (
-    <div
-      className={`${styles.matchStack} ${expanded ? styles.matchStackExpanded : ''}`}
-      onClick={() => visibleCount > 1 && setExpanded((v) => !v)}
+    <motion.span
+      className={styles.typewriter}
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.024 } },
+      }}
+      aria-hidden="true"
     >
-      <AnimatePresence initial={false}>
-      {visible.map((m, i) => {
-        /* depth: 0 = topo (newest); 1, 2... = atrás. */
-        const depth = visible.length - 1 - i;
-        const isTop = depth === 0;
-        /* Collapsed: peek descendente (cards atrás aparecem 8/16px
-         *  ABAIXO do topo, scaled-down). Expanded: empilhamento
-         *  vertical normal com gap (motion `layout` anima). */
-        const peekY = expanded ? 0 : depth * 8;
-        const peekScale = expanded ? 1 : 1 - depth * 0.04;
-        const peekOpacity = depth > 2 ? 0 : 1 - depth * 0.15;
-
-        return (
-          <motion.button
-            key={m.id}
-            type="button"
-            layout
-            className={styles.matchCard}
-            /* Drag horizontal no top card pra swipe-to-dismiss
-             *  per spec "swipe deve funcionar". Antes era `y` mas
-             *  o gesture natural pra cards stack é swipe lateral
-             *  (estilo Tinder/iOS notification swipe). */
-            drag={isTop && !expanded ? 'x' : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.4}
-            onDragEnd={(_, info) => {
-              if (Math.abs(info.offset.x) > 80 || Math.abs(info.velocity.x) > 450) {
-                dismissTop();
-              }
-            }}
-            initial={{ opacity: 0, y: -40, scale: 0.9 }}
-            animate={{
-              opacity: peekOpacity,
-              y: peekY,
-              scale: peekScale,
-            }}
-            exit={{ opacity: 0, x: 200, scale: 0.85 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-            style={{
-              zIndex: 100 - depth,
-              pointerEvents: isTop || expanded ? 'auto' : 'none',
-            }}
-            /* CRITICAL — motion sobrescreve `transform`, então o
-             *  translateX(-50%) que centralizava o card via top:0/
-             *  left:50% era perdido (cards apareciam encostados na
-             *  esquerda). transformTemplate prepend o -50% pro
-             *  motion compor depois. */
-            transformTemplate={(_props, generatedTransform) =>
-              `translateX(-50%) ${generatedTransform}`
-            }
-            onClick={(e) => {
-              /* Click no top toggle expand. Click em outro card no
-               *  modo expanded também colapsa de volta. */
-              e.stopPropagation();
-              if (visibleCount <= 1) return;
-              setExpanded((v) => !v);
-            }}
-            aria-label={`Match com ${m.name}`}
-          >
-            <span className={styles.matchAvatar}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.avatarUrl} alt={m.name} />
-            </span>
-            <span className={styles.matchCopy}>
-              <span className={styles.matchCopyBold}>Você e {m.name}</span>{' '}
-              <span className={styles.matchCopyMuted}>{m.suffix}</span>
-            </span>
-            <span className={styles.matchHeart} aria-hidden="true">
-              <HeartIcon filled />
-            </span>
-          </motion.button>
-        );
-      })}
-      </AnimatePresence>
-    </div>
+      {text.split('').map((c, i) => (
+        <motion.span
+          key={i}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1 },
+          }}
+        >
+          {c === ' ' ? ' ' : c}
+        </motion.span>
+      ))}
+    </motion.span>
   );
 }
 

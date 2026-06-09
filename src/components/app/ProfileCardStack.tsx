@@ -245,14 +245,22 @@ function ProfileCardItem({
             aria-label={liked ? 'Remover curtida' : 'Curtir perfil'}
             aria-pressed={liked}
           >
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
-              <path
-                d="M8 13.5s-5-3.1-5-7A2.8 2.8 0 0 1 8 4.5a2.8 2.8 0 0 1 5 2c0 3.9-5 7-5 7Z"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinejoin="round"
-                fill={liked ? 'currentColor' : 'none'}
-              />
+            {/* Mesmo coração flat do avatar do usuário no mapa
+             *  (Globe.tsx) — viewBox 24×24, stroke 1.8, mesmo path.
+             *  Per spec atualizado pra consistência visual com a
+             *  paleta de hearts no mapa. */}
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill={liked ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </motion.button>
         </div>

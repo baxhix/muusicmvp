@@ -7,10 +7,10 @@
 .root {
   position: relative;
   width: 100%;
-  /* Altura ampliada pra acomodar o card +20% E o novo bloco
-   *  matchSuffix abaixo do botão "Enviar mensagem".
-   *  Card 332 + peek offset 16 + breathing → 360. */
-  height: 360px;
+  /* Altura ampliada proporcionalmente per spec atualizado
+   *  "Aumente proporcionalmente o tamanho do box". Card 376 +
+   *  peek offset 16 + breathing → 404. */
+  height: 404px;
   margin: 12px 0 16px;
 }
 
@@ -18,12 +18,13 @@
   position: absolute;
   top: 0;
   left: 50%;
-  width: 216px;
-  /* Altura aumentada de 276 → 332 pra caber:
-   *   photo (160) + info (50) + reactions (44) +
-   *   messageBtn (38) + matchSuffix (~32) + paddings.
-   *  Antes o button estava sendo cortado pelo overflow:hidden. */
-  height: 332px;
+  /* Bump proporcional 216 → 240 (~+11%). Mais largura =
+   *  matchSuffix de 2 linhas ganha respiro lateral. */
+  width: 240px;
+  /* Bump proporcional 332 → 376 (~+13%). photo + info +
+   *  reactions + messageBtn + matchSuffix com folga lateral
+   *  pra que o suffix de 2 linhas não cole nas bordas. */
+  height: 376px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,11 +41,11 @@
   touch-action: pan-y;
 }
 
-/* Foto destacada — ~48% do card (160/332). */
+/* Foto destacada — proporcional ao novo height. */
 .photo {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 180px;
   background: #1a1a1f;
   flex-shrink: 0;
 }
@@ -211,10 +212,11 @@
 }
 
 /* Match suffix — "Vocês curtem Pipoco há mais tempo" abaixo
- *  do botão. Mesmo conteúdo dos cards horizontais (FanverseMatch),
- *  estilizado mais compacto pra caber no card vertical. */
+ *  do botão. Per spec atualizado o card cresceu pra que o
+ *  suffix de 2 linhas tenha respiro lateral — margem horizontal
+ *  ampliada (14 → 18) e padding inferior maior. */
 .matchSuffix {
-  margin: 10px 14px 14px;
+  margin: 12px 18px 18px;
   font-size: 11.5px;
   line-height: 1.4;
   text-align: center;
@@ -237,18 +239,18 @@
   /* Resto do suffix mantém cinza translúcido. */
 }
 
-/* Mobile tweak — card um pouco maior pra leitura confortável.
- *  Altura ajustada pra também acomodar o matchSuffix. */
+/* Mobile tweak — card +12% proporcional ao desktop pra
+ *  leitura confortável + folga no matchSuffix de 2 linhas. */
 @media (max-width: 540px) {
   .root {
-    height: 376px;
+    height: 420px;
   }
   .card {
-    width: 226px;
-    height: 348px;
+    width: 252px;
+    height: 392px;
   }
   .photo {
-    height: 168px;
+    height: 188px;
   }
 }
 

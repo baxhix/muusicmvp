@@ -5,7 +5,6 @@ import HeroSection from '@/components/teste/HeroSection';
 import SectionTwo from '@/components/teste/SectionTwo';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionFour from '@/components/teste/SectionFour';
-import SectionFive from '@/components/teste/SectionFive';
 import SectionSix from '@/components/teste/SectionSix';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
@@ -58,7 +57,7 @@ export default function TestePage() {
        *  page-level com `circling: true` (slide-in radial +
        *  drift sutil contínuo). */}
       <SectionFour />
-      <SectionFive />
+      {/* SectionFive "Artistas" removida per spec. */}
       <SectionSix />
       {/* O orbe FanverseCore 390×390 que vivia aqui foi removido
        *  per product feedback (e por motivos de performance —

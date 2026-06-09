@@ -30,7 +30,7 @@ const GROUPS: MenuGroup[] = [
     items: [
       { label: 'O App',         href: '/teste' },
       { label: 'Para Artistas', href: '/para-artistas' },
-      { label: 'Pre-save',      href: '/teste#section-5' },
+      { label: 'Pre-save',      href: '#pre-save' },
       { label: 'Fanpoints',     href: '#fanpoints' },
       { label: 'Live',          href: '#live' },
       { label: 'Superchat',     href: '#superchat' },
