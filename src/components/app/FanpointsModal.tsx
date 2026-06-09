@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Skeleton from './Skeleton';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -620,37 +621,183 @@ function BeneficiosTab({
           Quanto mais Fanpoints, mais conexão direta com o artista.
         </p>
       </section>
-      <ul className={styles.benefitsList}>
-        {BENEFITS.map((b) => {
-          const unlocked = fanpoints >= b.threshold;
-          return (
-            <li
-              key={b.id}
-              className={`${styles.benefitItem} ${unlocked ? styles.benefitUnlocked : styles.benefitLocked}`}
+
+      {/* Marcos agora organizados em accordion por tier (Top 1,
+       *  Top 5, Top 10, Top 50, Top 100). Cada card expansível
+       *  via motion AnimatePresence + height animation. Per
+       *  spec atualizado os 3 primeiros (Top 1 / Top 5 / Top 10)
+       *  ficam abertos por default. */}
+      <MarcosAccordion fanpoints={fanpoints} />
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * MarcosAccordion — agrupa BENEFITS por tier e renderiza um
+ * card accordion (Motion) por tier. Top 1/5/10 abertos por
+ * default per spec.
+ * ──────────────────────────────────────────────────────────── */
+interface MarcosAccordionProps {
+  fanpoints: number;
+}
+
+/* Tiers de marco usados pra agrupar benefícios. Threshold em
+ *  FP que define o teto MÁXIMO de benefícios desse tier (o
+ *  bucket pega benefícios com threshold ≤ tier.threshold E >
+ *  o threshold do tier anterior). Ordenação: Top 1 (mais
+ *  exclusivo) → Top 100 (mais acessível). */
+const MARCO_TIERS = [
+  { id: 'top1',   label: 'Top 1',   minFp: 50000,  description: 'Onde só os mais dedicados chegam.' },
+  { id: 'top5',   label: 'Top 5',   minFp: 20000,  description: 'Benefícios exclusivos pros realmente comprometidos.' },
+  { id: 'top10',  label: 'Top 10',  minFp: 10000,  description: 'Você está entre os mais ativos da Fanverse.' },
+  { id: 'top50',  label: 'Top 50',  minFp: 2500,   description: 'Comece a desbloquear vantagens exclusivas.' },
+  { id: 'top100', label: 'Top 100', minFp: 0,      description: 'O primeiro passo na jornada.' },
+];
+
+function MarcosAccordion({ fanpoints }: MarcosAccordionProps) {
+  /* Bucket de benefícios por tier: cada tier recebe os
+   *  BENEFITS cujo threshold cai entre minFp do tier e
+   *  minFp do tier ACIMA (mais exclusivo). Top 100 recebe
+   *  benefits com threshold 0–2500, Top 50: 2500–10000, etc. */
+  const bucketsByTier = useMemo(() => {
+    const out: Record<string, typeof BENEFITS> = {};
+    MARCO_TIERS.forEach((tier, idx) => {
+      const upperBound =
+        idx === 0 ? Infinity : MARCO_TIERS[idx - 1].minFp;
+      out[tier.id] = BENEFITS.filter(
+        (b) => b.threshold >= tier.minFp && b.threshold < upperBound,
+      );
+    });
+    return out;
+  }, []);
+
+  /* Set de cards abertos. Per spec, os 3 primeiros (Top 1, Top
+   *  5, Top 10) começam abertos. Toggle individual via click no
+   *  header. */
+  const [openSet, setOpenSet] = useState<Set<string>>(
+    () => new Set(['top1', 'top5', 'top10']),
+  );
+
+  const toggle = (id: string) => {
+    setOpenSet((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className={styles.marcosAccordion}>
+      {MARCO_TIERS.map((tier) => {
+        const benefits = bucketsByTier[tier.id];
+        const isOpen = openSet.has(tier.id);
+        /* Tier unlocked = user já tem FP suficiente pra esse
+         *  tier mínimo. Visual: gradient brand quando unlocked,
+         *  glass dim quando locked. */
+        const unlocked = fanpoints >= tier.minFp;
+
+        return (
+          <div
+            key={tier.id}
+            className={`${styles.marcoCard} ${unlocked ? styles.marcoUnlocked : ''}`}
+          >
+            <button
+              type="button"
+              className={styles.marcoHeader}
+              onClick={() => toggle(tier.id)}
+              aria-expanded={isOpen}
+              aria-controls={`marco-body-${tier.id}`}
             >
-              <span className={styles.benefitIcon} aria-hidden="true">
-                <BenefitIcon kind={b.icon} />
-              </span>
-              <div className={styles.benefitBody}>
-                <div className={styles.benefitTitleRow}>
-                  <span className={styles.benefitTitle}>{b.title}</span>
-                  <span className={styles.benefitThreshold}>
-                    {b.threshold === 0
-                      ? 'Acesso inicial'
-                      : `${b.threshold.toLocaleString('pt-BR')} FP`}
-                  </span>
-                </div>
-                <span className={styles.benefitDescription}>
-                  {b.description}
-                </span>
-                <span className={styles.benefitStatus}>
-                  {unlocked ? '✓ Conquistado' : 'Bloqueado'}
+              <div className={styles.marcoHeaderLeft}>
+                <span className={styles.marcoLabel}>{tier.label}</span>
+                <span className={styles.marcoMinFp}>
+                  {tier.minFp === 0
+                    ? 'a partir de 0 FP'
+                    : `${tier.minFp.toLocaleString('pt-BR')}+ FP`}
                 </span>
               </div>
-            </li>
-          );
-        })}
-      </ul>
+              <motion.span
+                className={styles.marcoChevron}
+                aria-hidden="true"
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+              >
+                <svg viewBox="0 0 12 12" width="12" height="12" fill="none" aria-hidden="true">
+                  <path
+                    d="M2 4l4 4 4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </motion.span>
+            </button>
+
+            {/* Body — height anima de 0 → auto via motion. */}
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  key="body"
+                  id={`marco-body-${tier.id}`}
+                  className={styles.marcoBody}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    height: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+                    opacity: { duration: 0.22 },
+                  }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <p className={styles.marcoDescription}>{tier.description}</p>
+                  {benefits.length === 0 ? (
+                    <p className={styles.marcoEmpty}>
+                      Sem novos marcos neste tier — você desbloqueia tudo no tier
+                      anterior.
+                    </p>
+                  ) : (
+                    <ul className={styles.marcoBenefitsList}>
+                      {benefits.map((b) => {
+                        const benUnlocked = fanpoints >= b.threshold;
+                        return (
+                          <li
+                            key={b.id}
+                            className={`${styles.marcoBenefitItem} ${
+                              benUnlocked ? styles.benefitUnlocked : styles.benefitLocked
+                            }`}
+                          >
+                            <span className={styles.benefitIcon} aria-hidden="true">
+                              <BenefitIcon kind={b.icon} />
+                            </span>
+                            <div className={styles.benefitBody}>
+                              <div className={styles.benefitTitleRow}>
+                                <span className={styles.benefitTitle}>{b.title}</span>
+                                <span className={styles.benefitThreshold}>
+                                  {b.threshold === 0
+                                    ? 'Acesso inicial'
+                                    : `${b.threshold.toLocaleString('pt-BR')} FP`}
+                                </span>
+                              </div>
+                              <span className={styles.benefitDescription}>
+                                {b.description}
+                              </span>
+                              <span className={styles.benefitStatus}>
+                                {benUnlocked ? '✓ Conquistado' : 'Bloqueado'}
+                              </span>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -1,15 +1,15 @@
 /* ProfileCardStack — Motion card-stack pattern.
- *  Container relative com altura do top card + peek (~250px).
- *  Cards são absolute, top:0 left:50% + transformTemplate
- *  centering via motion. */
+ *  Card 216×276 (=180×230 × 1.2 per spec atualizado). Sem
+ *  borda visível, layout centralizado, botão de texto full-
+ *  width como CTA principal.
+ */
 
 .root {
   position: relative;
   width: 100%;
-  /* Altura = card height (230) + 2 peeks (10+10) + breathing room.
-   *  Garante que os peek cards não vazem visualmente fora. */
-  height: 260px;
-  /* Margin similar ao .matchStack pra ficar no mesmo gutter. */
+  /* Altura: card height (276) + peek offset (16) + breathing.
+   *  +20% pra acomodar o card maior. */
+  height: 308px;
   margin: 12px 0 16px;
 }
 
@@ -17,21 +17,20 @@
   position: absolute;
   top: 0;
   left: 50%;
-  width: 180px;
-  height: 230px;
-  /* CSS sem `transform` — motion+transformTemplate compõem o
-   *  centering (-50%) + animate (y/scale). */
+  /* +20% sobre o tamanho original 180×230. */
+  width: 216px;
+  height: 276px;
   display: flex;
   flex-direction: column;
-  border-radius: 18px;
-  /* Bg + border gradient brand (igual matchCard mas suavizado). */
-  background:
-    linear-gradient(#0a0a0e, #0a0a0e) padding-box,
-    linear-gradient(160deg, rgba(236, 72, 153, 0.7) 0%, rgba(168, 85, 247, 0.7) 100%) border-box;
-  border: 1.5px solid transparent;
+  align-items: center;
+  border-radius: 22px;
+  /* SEM border per spec — só bg sólido com sombra pra
+   *  separar do fundo. */
+  background: linear-gradient(180deg, #15151b 0%, #0c0c12 100%);
+  border: none;
   box-shadow:
-    0 18px 36px rgba(0, 0, 0, 0.6),
-    0 4px 12px rgba(236, 72, 153, 0.18);
+    0 24px 48px rgba(0, 0, 0, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   cursor: grab;
   user-select: none;
@@ -39,11 +38,12 @@
   touch-action: pan-y;
 }
 
-/* Foto destacada — ~58% do card de altura (134px / 230px). */
+/* Foto destacada — ~58% do card (160/276). +20% scale do
+ *  original 134px. */
 .photo {
   position: relative;
   width: 100%;
-  height: 134px;
+  height: 160px;
   background: #1a1a1f;
   flex-shrink: 0;
 }
@@ -52,124 +52,128 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  /* Drag delegated ao motion.div parent. */
   pointer-events: none;
 }
 
 /* Rank badge top-right da foto — gradient brand pill. */
 .rankBadge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 3px 9px;
+  top: 10px;
+  right: 10px;
+  padding: 4px 11px;
   border-radius: 999px;
   background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
   color: #fff;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  /* Shadow leve pra contrast sobre foto clara. */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
-/* Info block — nome + cidade. Padding-x compartilhado com
- *  actions row pra alignment visual. */
+/* Info block — nome + cidade CENTRALIZADOS per spec. */
 .info {
-  padding: 10px 14px 6px;
+  padding: 10px 14px 4px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   flex-shrink: 0;
+  width: 100%;
 }
 .name {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
-  color: rgba(245, 245, 247, 0.95);
+  color: rgba(245, 245, 247, 0.96);
   letter-spacing: -0.01em;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 .city {
-  font-size: 11px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.55);
   letter-spacing: 0.01em;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-/* Actions row — reactions à esquerda, message btn à direita.
- *  Empurra-se pro bottom via margin-top: auto. */
-.actions {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px 12px;
-  gap: 8px;
-}
+/* Reactions row — emojis SEM CÍRCULO per spec, centralizadas
+ *  logo abaixo do nome/cidade. Gap maior pra emojis nus
+ *  respirarem. */
 .reactions {
   display: inline-flex;
-  gap: 4px;
+  justify-content: center;
+  gap: 14px;
+  padding: 6px 0 8px;
+  width: 100%;
 }
 .reaction {
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
+  /* Sem background, sem border, sem padding — só o emoji
+   *  como texto interativo. Hover/active animados via motion. */
+  background: transparent;
+  border: none;
   padding: 0;
-  transition: background 160ms ease, border-color 160ms ease;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  /* Filter grayscale leve no estado idle pra emoji se
+   *  destacar quando ativo. */
+  filter: grayscale(0.3);
+  opacity: 0.8;
+  transition: filter 180ms ease, opacity 180ms ease;
 }
 .reaction:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
+  filter: grayscale(0);
+  opacity: 1;
 }
 .reactionActive {
-  /* Quando reaction está ativa: brand gradient bg + border
-   *  gradient pra puxar foco. */
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(168, 85, 247, 0.25));
-  border-color: rgba(236, 72, 153, 0.55);
+  filter: grayscale(0);
+  opacity: 1;
+  /* Sutil glow brand pra denotar ativo. */
+  text-shadow: 0 0 8px rgba(236, 72, 153, 0.5);
 }
 
-/* Message btn — gradient brand circular, ícone bubble dentro. */
+/* Enviar mensagem — botão de texto FULL-WIDTH pill no mesmo
+ *  estilo do "Ver mais" do MaterialsTabContent. Cresce pra
+ *  ocupar a largura do card menos os paddings laterais. */
 .messageBtn {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+  margin: auto 14px 14px;
+  width: calc(100% - 28px);
+  padding: 10px 14px;
+  border-radius: 999px;
   border: none;
-  background: linear-gradient(135deg, #ec4899 0%, #a855f7 60%, #6366f1 100%);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.92);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  padding: 0;
-  box-shadow:
-    0 4px 12px rgba(236, 72, 153, 0.35),
-    0 1px 3px rgba(0, 0, 0, 0.3);
-  flex-shrink: 0;
+  transition: background 160ms ease, color 160ms ease;
+}
+.messageBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
-/* Mobile tweak — card um pouco maior pra leitura confortável. */
+/* Mobile tweak — card +5% sobre o desktop pra leitura
+ *  confortável (já vem +20% sobre original). */
 @media (max-width: 540px) {
   .root {
-    height: 270px;
+    height: 320px;
   }
   .card {
-    width: 188px;
-    height: 240px;
+    width: 226px;
+    height: 290px;
   }
   .photo {
-    height: 140px;
+    height: 168px;
   }
 }
 

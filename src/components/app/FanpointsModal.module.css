@@ -806,3 +806,114 @@
   .earnName  { font-size: 13px; }
   .earnPoints { font-size: 12px; }
 }
+
+/* ── Marcos accordion (tier cards Top 1/5/10/50/100) ──────
+ * Cada card tem header clicável (label + chevron motion) e
+ * body collapsible com height animation.
+ * ─────────────────────────────────────────────────────────── */
+.marcosAccordion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px;
+}
+.marcoCard {
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 20, 26, 0.65) 0%, rgba(14, 14, 20, 0.7) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+/* Unlocked: border brand sutil + bg gradient leve. */
+.marcoUnlocked {
+  border-color: rgba(236, 72, 153, 0.25);
+  background: linear-gradient(180deg, rgba(40, 22, 32, 0.5) 0%, rgba(20, 14, 24, 0.7) 100%);
+}
+
+.marcoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  gap: 12px;
+  transition: background 160ms ease;
+}
+.marcoHeader:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.marcoHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.marcoLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.marcoMinFp {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.02em;
+}
+.marcoChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: rgba(245, 245, 247, 0.7);
+  flex-shrink: 0;
+}
+
+/* Body: padding inferior + lateral. height animado via motion. */
+.marcoBody {
+  /* Padding interno aplica APENAS quando aberto; o overflow:
+   *  hidden no inline style do motion controla o clipping
+   *  durante o height transition. */
+  padding: 0 16px 14px;
+}
+.marcoDescription {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.65);
+  margin: 0 0 12px;
+}
+.marcoEmpty {
+  font-size: 12.5px;
+  color: rgba(245, 245, 247, 0.45);
+  margin: 0;
+  font-style: normal;
+}
+.marcoBenefitsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.marcoBenefitItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.marcoBenefitItem.benefitUnlocked {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.18);
+}

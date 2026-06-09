@@ -83,7 +83,10 @@ const MOCK_PROFILES: ProfileCard[] = [
   },
 ];
 
-const REACTIONS = ['🔥', '❤️', '👏'];
+/* Reações disponíveis no card. Per spec atualizado o 🔥 foi
+ *  substituído por 👀 (olhos) — sinaliza "estou observando" /
+ *  curioso, mais alinhado com o tom do app. */
+const REACTIONS = ['👀', '❤️', '👏'];
 
 export default function ProfileCardStack() {
   /* Stack chronologic — primeiro = mais antigo, último = topo.
@@ -108,11 +111,17 @@ export default function ProfileCardStack() {
         {visible.map((profile, i) => {
           const depth = visible.length - 1 - i;
           const isTop = depth === 0;
-          /* Peek behind: cards atrás aparecem 10/20px ABAIXO do
-           *  topo, scale-down 0.94/0.88. */
-          const peekY = depth * 10;
-          const peekScale = 1 - depth * 0.06;
-          const peekOpacity = 1 - depth * 0.18;
+          /* Per spec atualizado "Desloque os cards que estão
+           *  atrás" — cards de trás agora têm offset lateral
+           *  alternado (-1 = esq, +1 = dir) em vez de só Y
+           *  descendente. Sinaliza mais explicitamente que tem
+           *  outros cards no stack. */
+          const offsetSide = depth === 1 ? -1 : depth === 2 ? 1 : 0;
+          const peekX = offsetSide * 14;
+          const peekY = depth * 8;
+          const peekRotate = offsetSide * -3;
+          const peekScale = 1 - depth * 0.05;
+          const peekOpacity = 1 - depth * 0.16;
 
           return (
             <ProfileCardItem
@@ -120,7 +129,9 @@ export default function ProfileCardStack() {
               profile={profile}
               isTop={isTop}
               depth={depth}
+              peekX={peekX}
               peekY={peekY}
+              peekRotate={peekRotate}
               peekScale={peekScale}
               peekOpacity={peekOpacity}
               onDismiss={dismissTop}
@@ -136,7 +147,9 @@ interface ProfileCardItemProps {
   profile: ProfileCard;
   isTop: boolean;
   depth: number;
+  peekX: number;
   peekY: number;
+  peekRotate: number;
   peekScale: number;
   peekOpacity: number;
   onDismiss: () => void;
@@ -146,7 +159,9 @@ function ProfileCardItem({
   profile,
   isTop,
   depth,
+  peekX,
   peekY,
+  peekRotate,
   peekScale,
   peekOpacity,
   onDismiss,
@@ -156,7 +171,6 @@ function ProfileCardItem({
   return (
     <motion.div
       className={styles.card}
-      /* Drag horizontal só no top — swipe pra dismiss. */
       drag={isTop ? 'x' : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.5}
@@ -166,10 +180,12 @@ function ProfileCardItem({
         }
       }}
       whileDrag={{ cursor: 'grabbing' }}
-      initial={{ opacity: 0, y: -30, scale: 0.85 }}
+      initial={{ opacity: 0, y: -30, scale: 0.85, rotate: 0 }}
       animate={{
         opacity: peekOpacity,
+        x: peekX,
         y: peekY,
+        rotate: peekRotate,
         scale: peekScale,
       }}
       exit={{ opacity: 0, x: 240, rotate: 12, scale: 0.85 }}
@@ -178,14 +194,11 @@ function ProfileCardItem({
         zIndex: 100 - depth,
         pointerEvents: isTop ? 'auto' : 'none',
       }}
-      /* transformTemplate pra preservar centering -50% durante
-       *  drag — motion overwriting o transform CSS removia o
-       *  anchor central. */
       transformTemplate={(_props, generated) =>
         `translateX(-50%) ${generated}`
       }
     >
-      {/* Foto destacada — ocupa ~60% da altura do card. */}
+      {/* Foto destacada — ocupa o topo do card. */}
       <div className={styles.photo}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -194,64 +207,54 @@ function ProfileCardItem({
           className={styles.photoImg}
           draggable={false}
         />
-        {/* Badge top rank no canto superior direito da foto. */}
         <span className={styles.rankBadge} aria-label={`Top ${profile.topRank}`}>
           Top {profile.topRank}
         </span>
       </div>
 
-      {/* Info row: nome + cidade. */}
+      {/* Info — nome + cidade CENTRALIZADOS per spec. */}
       <div className={styles.info}>
         <div className={styles.name}>{profile.name}</div>
         <div className={styles.city}>{profile.city}</div>
       </div>
 
-      {/* Reactions row + message button. */}
-      <div className={styles.actions}>
-        <div className={styles.reactions} role="group" aria-label="Reações">
-          {REACTIONS.map((emoji) => (
-            <motion.button
-              key={emoji}
-              type="button"
-              className={`${styles.reaction} ${reaction === emoji ? styles.reactionActive : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setReaction((r) => (r === emoji ? null : emoji));
-              }}
-              whileTap={{ scale: 0.85 }}
-              whileHover={{ scale: 1.12 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-              aria-label={`Reagir com ${emoji}`}
-              aria-pressed={reaction === emoji}
-            >
-              {emoji}
-            </motion.button>
-          ))}
-        </div>
-        <motion.button
-          type="button"
-          className={styles.messageBtn}
-          onClick={(e) => e.stopPropagation()}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 380, damping: 22 }}
-          aria-label="Enviar mensagem"
-        >
-          <svg
-            viewBox="0 0 16 16"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+      {/* Reactions row — emojis sem círculo, centralizadas
+       *  (justify-content: center) per spec. */}
+      <div className={styles.reactions} role="group" aria-label="Reações">
+        {REACTIONS.map((emoji) => (
+          <motion.button
+            key={emoji}
+            type="button"
+            className={`${styles.reaction} ${reaction === emoji ? styles.reactionActive : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setReaction((r) => (r === emoji ? null : emoji));
+            }}
+            whileTap={{ scale: 0.85 }}
+            whileHover={{ scale: 1.18 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+            aria-label={`Reagir com ${emoji}`}
+            aria-pressed={reaction === emoji}
           >
-            <path d="M14 6c0 3-2.7 5.5-6 5.5-.5 0-1-.05-1.4-.15L3 13l.6-3C2.5 8.9 2 7.5 2 6c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5z" />
-          </svg>
-        </motion.button>
+            {emoji}
+          </motion.button>
+        ))}
       </div>
+
+      {/* "Enviar mensagem" — botão de texto full-width pill,
+       *  mesmo estilo do "Ver mais" do Box Fanverse Ana Castela
+       *  (.viewMore em MaterialsTabContent: bg sutil, color
+       *  branco-translúcido, hover mais escuro). */}
+      <motion.button
+        type="button"
+        className={styles.messageBtn}
+        onClick={(e) => e.stopPropagation()}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+      >
+        Enviar mensagem
+      </motion.button>
     </motion.div>
   );
 }
