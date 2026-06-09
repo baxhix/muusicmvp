@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import confetti from 'canvas-confetti';
+import { fireMotionConfetti } from './MotionConfetti';
 import styles from './FeedCelebration.module.css';
 
 /* ── Feed-scoped celebration overlay ──
@@ -47,26 +47,11 @@ function isCelebratable(points: number): boolean {
 const HOLD_MS = 3600;
 const FADE_MS = 400;
 
-// Brand palette mirrored from AchievementCelebration so the
-// two surfaces feel like the same family.
-const CONFETTI_COLORS = [
-  '#4F46E5',
-  '#7C3AED',
-  '#0284C7',
-  '#0F766E',
-  '#15803D',
-  '#D97706',
-  '#DC2626',
-  '#DB2777',
-  '#3DDB74',
-];
+/* CONFETTI_COLORS removido — paleta brand agora vive dentro
+ *  de MotionConfetti, que é a única origem do confetti pós-
+ *  refactor pra motion/react. */
 
 export default function FeedCelebration() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  // Cached scoped confetti instance. Recreated whenever the canvas
-  // mounts; null until the ref is wired.
-  const fireRef = useRef<ReturnType<typeof confetti.create> | null>(null);
-
   const [active, setActive] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [message, setMessage] = useState<CelebrateDetail>({});
@@ -84,19 +69,10 @@ export default function FeedCelebration() {
       // Gate de confetti: só dispara se o evento marcar `points`
       // múltiplo de 500_000 (isCelebratable acima). Sem `points`
       // no detail (ex.: fim de quiz), o headline + sub ainda
-      // aparecem mas sem burst. Lazy-create da factory também só
-      // roda nesse caminho — o canvas continua montado mas o
-      // `confetti.create` (que cria worker/contextos) só roda
-      // quando vai disparar.
+      // aparecem mas sem burst.
       const shouldFireConfetti =
         typeof detail.points === 'number' && isCelebratable(detail.points);
       if (shouldFireConfetti) {
-        if (canvasRef.current && !fireRef.current) {
-          fireRef.current = confetti.create(canvasRef.current, {
-            resize: true,
-            useWorker: false,
-          });
-        }
         fireBurst();
       }
 
@@ -118,23 +94,16 @@ export default function FeedCelebration() {
     };
   }, []);
 
+  /* Burst de 3 origens espelha o sweep visual que o canvas-
+   *  confetti scoped fazia. Agora cada call vai pro MotionConfetti
+   *  global (portal pra body), então perdemos o scope ao feed —
+   *  é uma celebração viewport-wide. Trade-off aceito: o
+   *  MotionConfetti respeita pointer-events: none e os
+   *  marcos já são raros (500k em 500k FP). */
   const fireBurst = () => {
-    const fire = fireRef.current;
-    if (!fire) return;
-    const defaults = {
-      spread: 70,
-      ticks: 200,
-      gravity: 0.9,
-      decay: 0.94,
-      startVelocity: 32,
-      colors: CONFETTI_COLORS,
-      disableForReducedMotion: true,
-    };
-    // Three origins for a wider sweep — same recipe as
-    // AchievementCelebration, just scoped to the local canvas.
-    fire({ ...defaults, particleCount: 50, origin: { x: 0.2, y: 0.7 } });
-    fire({ ...defaults, particleCount: 80, origin: { x: 0.5, y: 0.65 } });
-    fire({ ...defaults, particleCount: 50, origin: { x: 0.8, y: 0.7 } });
+    fireMotionConfetti({ origin: { x: 0.2, y: 0.7 } });
+    fireMotionConfetti({ origin: { x: 0.5, y: 0.65 } });
+    fireMotionConfetti({ origin: { x: 0.8, y: 0.7 } });
   };
 
   return (
@@ -142,11 +111,6 @@ export default function FeedCelebration() {
       className={`${styles.root} ${active ? styles.rootActive : ''} ${exiting ? styles.rootExiting : ''}`}
       aria-hidden={!active}
     >
-      {/* Always-mounted canvas — confetti.create() needs a stable
-          ref. Sits below the message so particles read as falling
-          behind the headline. */}
-      <canvas ref={canvasRef} className={styles.canvas} />
-
       {active && (
         <div className={styles.message}>
           <h3 className={styles.headline}>

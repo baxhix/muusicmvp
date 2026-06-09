@@ -27,6 +27,8 @@ import HeartsCascade from '@/components/app/HeartsCascade';
 import WaveReceiveOverlay from '@/components/app/WaveReceiveOverlay';
 import MilestoneNotification from '@/components/app/MilestoneNotification';
 import AchievementCelebration from '@/components/app/AchievementCelebration';
+import MotionConfetti from '@/components/app/MotionConfetti';
+import DailyMissionCelebration from '@/components/app/DailyMissionCelebration';
 import SocialAchievementToast from '@/components/app/SocialAchievementToast';
 import { useFanpointMilestones } from '@/hooks/useFanpointMilestones';
 import BrainstormGate from '@/components/app/BrainstormGate';
@@ -474,6 +476,15 @@ function Shell({ children }: { children: React.ReactNode }) {
       <ConfirmDialog />
       <MilestoneNotification />
       <AchievementCelebration />
+      {/* MotionConfetti — sink global pro confetti motion/react.
+       *  Escuta CustomEvent('app:motion-confetti'); todos os
+       *  callers (AchievementCelebration, FeedCelebration,
+       *  DailyMissionCelebration) disparam via fireMotionConfetti().
+       *  Substitui o canvas-confetti antigo. */}
+      <MotionConfetti />
+      {/* Daily mission completion — observa transições done=false
+       *  → done=true e dispara confetti motion. Sem UI própria. */}
+      <DailyMissionCelebration />
       {/* SocialAchievementToast e HeartsCascade desmontados per
        *  product feedback (opção B "Equilibrado"): manter só
        *  AchievementCelebration em marcos de 500k + o overlay

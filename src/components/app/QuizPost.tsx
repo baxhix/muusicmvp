@@ -48,9 +48,11 @@ export default function QuizPost({ data }: { data: QuizPostData }) {
     });
     if (correct && typeof window !== 'undefined') {
       // The FeedPanel listens for this and shows a scoped
-      // celebration overlay (canvas-confetti inside the panel +
-      // congrats headline) — same vibe as AchievementCelebration
-      // but contained to the feed envelope.
+      // celebration overlay (motion/react confetti via
+      // MotionConfetti global + congrats headline) — same vibe
+      // as AchievementCelebration. O confetti em si só dispara
+      // se `detail.points` for múltiplo de 500k (quiz não passa
+      // points por default, então só headline aparece).
       window.dispatchEvent(
         new CustomEvent('app:feed-celebrate', {
           detail: {

@@ -1,24 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import confetti from 'canvas-confetti';
+import { fireMotionConfetti } from './MotionConfetti';
 import { useAchievements, type MyAchievement } from '@/hooks/useAchievements';
 import styles from './AchievementCelebration.module.css';
-
-/** Brand palette piped to the confetti library — matches the
- *  Tailwind 600/700 hues we already use elsewhere (Superchat bubbles,
- *  Paraná dots). Avoids generic rainbow vibe. */
-const CONFETTI_COLORS = [
-  '#4F46E5', // indigo
-  '#7C3AED', // violet
-  '#0284C7', // sky
-  '#0F766E', // teal
-  '#15803D', // green
-  '#D97706', // amber
-  '#DC2626', // red
-  '#DB2777', // pink
-  '#3DDB74', // accent
-];
 
 /* A celebração inteira (mensagem "Você atingiu X Fanpoints" +
  * confetti) agora só aparece a cada 500k em 500k de Fanpoints.
@@ -46,23 +31,15 @@ function formatMilestone(points: number): string {
   return `${k} mil Fanpoints`;
 }
 
-/** Fire a multi-burst confetti sweep using the brand palette. */
+/* Fire a multi-burst sweep usando o componente MotionConfetti
+ *  (montado globalmente no layout). O componente recebe os
+ *  params canônicos pelo módulo — aqui só disparamos com 3
+ *  origins distintos pra preservar o sweep visual largo que
+ *  o canvas-confetti dava antes. */
 function fireConfettiBurst(): void {
-  const defaults = {
-    spread: 70,
-    ticks: 200,
-    gravity: 0.9,
-    decay: 0.94,
-    startVelocity: 32,
-    colors: CONFETTI_COLORS,
-    disableForReducedMotion: true,
-  };
-  // Three origins: left, center, right — gives a wider visual sweep
-  // que um burst só. Counts ajustados pela metade do original
-  // (60/90/60 → 30/45/30) pra celebração mais discreta.
-  confetti({ ...defaults, particleCount: 30, origin: { x: 0.2, y: 0.6 } });
-  confetti({ ...defaults, particleCount: 45, origin: { x: 0.5, y: 0.55 } });
-  confetti({ ...defaults, particleCount: 30, origin: { x: 0.8, y: 0.6 } });
+  fireMotionConfetti({ origin: { x: 0.2, y: 0.6 } });
+  fireMotionConfetti({ origin: { x: 0.5, y: 0.55 } });
+  fireMotionConfetti({ origin: { x: 0.8, y: 0.6 } });
 }
 
 /**

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
-import confetti from 'canvas-confetti';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import styles from './MockToastRotator.module.css';
 
@@ -144,40 +143,13 @@ interface StackItem {
   pinned: boolean;
 }
 
-/** Brand-palette confetti colors shared with FeedCelebration so
- *  the rank-up burst feels like the same family as the quiz-win
- *  celebration the user explicitly compared it to. */
-const CONFETTI_COLORS = [
-  '#4F46E5',
-  '#7C3AED',
-  '#0284C7',
-  '#0F766E',
-  '#15803D',
-  '#D97706',
-  '#DC2626',
-  '#DB2777',
-  '#3DDB74',
-];
-
-/** Fire the same three-origin confetti burst FeedCelebration uses
- *  when the user solves a quiz correctly. Difference: this burst
- *  uses canvas-confetti's GLOBAL canvas (no scoping), so the
- *  particles cover the full viewport — appropriate for a toast
- *  that lives outside the feed envelope. */
-function fireRankConfetti() {
-  const defaults = {
-    spread: 70,
-    ticks: 200,
-    gravity: 0.9,
-    decay: 0.94,
-    startVelocity: 32,
-    colors: CONFETTI_COLORS,
-    disableForReducedMotion: true,
-  };
-  confetti({ ...defaults, particleCount: 50, origin: { x: 0.2, y: 0.7 } });
-  confetti({ ...defaults, particleCount: 80, origin: { x: 0.5, y: 0.65 } });
-  confetti({ ...defaults, particleCount: 50, origin: { x: 0.8, y: 0.7 } });
-}
+/* fireRankConfetti removido — burst de rank-up agora vai
+ *  pelo MotionConfetti global (vide MotionConfetti.tsx +
+ *  callers em Achievement/Feed/DailyMissionCelebration). O
+ *  hook abaixo no top_20 effect ficou no-op por design (per
+ *  product feedback "estão ocorrendo muitas e eram pra ser
+ *  poucas") — se quiser reativar, basta importar
+ *  fireMotionConfetti e chamar dentro do useEffect. */
 
 export default function MockToastRotator() {
   /* Stack ordenado cronologicamente: index 0 = mais antigo, último
