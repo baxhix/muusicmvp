@@ -11,10 +11,11 @@
   color: #fff;
   overflow: hidden;
   display: flex;
-  /* Headline mais ao topo (alinha com Hero/Two). */
-  align-items: flex-start;
+  /* Sem headline no topo agora — centralizamos a feature
+   *  verticalmente pra ela respirar no canvas. */
+  align-items: center;
   justify-content: center;
-  padding: 22vh 24px 24px;
+  padding: 14vh 24px 14vh;
 }
 
 .center {

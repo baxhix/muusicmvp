@@ -1,6 +1,5 @@
 'use client';
 
-import SectionCTA from './SectionCTA';
 import ChatFeatureDemo from './ChatFeatureDemo';
 import styles from './SectionThree.module.css';
 
@@ -15,8 +14,9 @@ import styles from './SectionThree.module.css';
  * notifications stack, fanpoints celebration, etc — cada uma
  * vai virar uma feature demo dentro dessa section.
  *
- * Headline + phrase + CTA continuam no topo pra ancorar a
- * narrativa; o ChatFeatureDemo aparece logo abaixo.
+ * Headline "Pertencer" + phrase + CTA "Meu Fanverse" foram
+ * removidos per spec atualizado — a section agora abre direto
+ * com o ChatFeatureDemo, sem o bloco introdutório no topo.
  */
 export default function SectionThree() {
   return (
@@ -25,14 +25,6 @@ export default function SectionThree() {
       data-section="3"
       className={styles.section}
     >
-      <div className={styles.center}>
-        <h2 className={styles.headline}>Pertencer</h2>
-        <p className={styles.phrase}>
-          Descubra, conecte e pertença a uma comunidade
-        </p>
-        <SectionCTA />
-      </div>
-
       {/* Feature 01 — Chat com superfãs. Bubbles animados +
        *  indicador "escrevendo" entram em loop via motion. */}
       <div className={styles.features}>
