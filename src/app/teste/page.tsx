@@ -10,6 +10,13 @@ import SectionSix from '@/components/teste/SectionSix';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
 import GalaxyBackdrop from '@/components/teste/GalaxyBackdrop';
+import {
+  TickerTextHover,
+  ScrollTextLines,
+  SplitText,
+  RevealText,
+  MotionTextDemoSection,
+} from '@/components/teste/MotionTextDemos';
 import styles from './page.module.css';
 
 /**
@@ -60,6 +67,77 @@ export default function TestePage() {
       <SectionFour />
       <SectionFive />
       <SectionSix />
+
+      {/* ── Motion text effects DEMO sections ─────────────────
+       *  4 efeitos pra cliente avaliar o comportamento antes
+       *  de trocar o conteúdo real. Cada um vive numa
+       *  MotionTextDemoSection com label "DEMO Nº — Effect".
+       *  Pra substituir, troque o `text` / `lines` prop pelo
+       *  conteúdo definitivo. */}
+      <MotionTextDemoSection
+        label="Demo 01"
+        effectName="Ticker — Text hover effect"
+      >
+        <TickerTextHover text="Passe o cursor aqui" />
+        <p
+          style={{
+            fontSize: 14,
+            color: 'rgba(245, 245, 247, 0.5)',
+            textAlign: 'center',
+            margin: 0,
+          }}
+        >
+          Cada letra rola pra cima e revela uma cópia em gradient brand.
+        </p>
+      </MotionTextDemoSection>
+
+      <MotionTextDemoSection
+        label="Demo 02"
+        effectName="Scroll text lines"
+      >
+        <ScrollTextLines
+          lines={[
+            'Cada linha aparece quando entra no viewport.',
+            'A próxima sobe com 80ms de atraso em cascata.',
+            'Tipografia editorial, ritmo Apple Newsroom.',
+            'Role pra baixo pra revelar o restante do bloco.',
+          ]}
+        />
+      </MotionTextDemoSection>
+
+      <MotionTextDemoSection
+        label="Demo 03"
+        effectName="Split text"
+      >
+        <SplitText text="Cada caractere entra com stagger." />
+        <p
+          style={{
+            fontSize: 14,
+            color: 'rgba(245, 245, 247, 0.5)',
+            textAlign: 'center',
+            margin: 0,
+          }}
+        >
+          Cascade ao entrar no viewport — 25ms por caractere.
+        </p>
+      </MotionTextDemoSection>
+
+      <MotionTextDemoSection
+        label="Demo 04"
+        effectName="Reveal text effect"
+      >
+        <RevealText text="Olá." />
+        <p
+          style={{
+            fontSize: 14,
+            color: 'rgba(245, 245, 247, 0.5)',
+            textAlign: 'center',
+            margin: 0,
+          }}
+        >
+          Mask de gradient wipa conforme o scroll progride pela section.
+        </p>
+      </MotionTextDemoSection>
       {/* O orbe FanverseCore 390×390 que vivia aqui foi removido
        *  per product feedback (e por motivos de performance —
        *  era a segunda instância de WebGL2 shader rodando em

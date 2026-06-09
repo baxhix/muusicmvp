@@ -219,30 +219,41 @@
   border-radius: 4px;
 }
 
-/* Zoom overlay — fullscreen com foto ampliada. */
+/* Zoom overlay — Lightbox fullscreen edge-to-edge. Ocupa
+ *  toda a viewport (100vw × 100vh), foto centralizada via
+ *  object-fit: contain pra preservar proporção sem cortes
+ *  enquanto cobre o site inteiro. */
 .zoom {
   position: fixed;
   inset: 0;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.92);
+  z-index: 9999;
+  /* Overlay quase opaco — plataforma é dark theme, então
+   *  preto puro casa com o background do app. */
+  background: rgba(0, 0, 0, 0.96);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: zoom-out;
 }
 .zoomImg {
-  max-width: min(96vw, 900px);
-  max-height: 90vh;
+  /* Edge-to-edge: ocupa o viewport inteiro, com pequenas
+   *  margens só pra não colar nas bordas no zoom máximo.
+   *  object-fit: contain preserva proporção. */
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.7);
+  /* Sem border-radius nem shadow — visual lightbox limpo
+   *  igual instagram / iOS Photos. */
+  border-radius: 0;
 }
 .zoomClose {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
+  top: max(16px, env(safe-area-inset-top, 0px));
+  right: max(16px, env(safe-area-inset-right, 0px));
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   background: rgba(40, 40, 48, 0.78);
@@ -252,6 +263,8 @@
   justify-content: center;
   cursor: pointer;
   z-index: 1;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: background 140ms ease;
 }
 .zoomClose:hover { background: rgba(60, 60, 72, 0.95); }

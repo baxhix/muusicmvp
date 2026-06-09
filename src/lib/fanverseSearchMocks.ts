@@ -169,6 +169,29 @@ const USERS: FanverseSearchUser[] = [
   { id: 'u-78', name: 'Marcos Pellegrini', role: 'fa',     city: 'Cidade do Cabo', country: 'África do Sul', avatarUrl: avatarFor('marcos-cpt2'), isListening: false, isLiked: false },
   { id: 'u-79', name: 'Bárbara Ottoni',  role: 'super-fa', city: 'Cancún',     country: 'México', avatarUrl: avatarFor('barbara-cun'),      isListening: true,  isLiked: false },
   { id: 'u-80', name: 'Sandra Lacerda',  role: 'fa',       city: 'Tel Aviv',   country: 'Israel', avatarUrl: avatarFor('sandra-tlv'),       isListening: true,  isLiked: false },
+  /* +20 users pra cobrir o teto de 100 que o infinite loading
+   * consome. Mantém o mix curioso/fa/super-fa + variedade
+   * geográfica em sintonia com o resto da lista. */
+  { id: 'u-81', name: 'Igor Bertolazzi', role: 'fa',       city: 'Florença',   country: 'Itália', avatarUrl: avatarFor('igor-flr'),         isListening: true,  isLiked: false },
+  { id: 'u-82', name: 'Helena Bastos',   role: 'super-fa', city: 'Recife',     country: 'Brasil', avatarUrl: avatarFor('helena-rec'),       isListening: true,  isLiked: true  },
+  { id: 'u-83', name: 'Tomás Vieira',    role: 'curioso',  city: 'Porto',      country: 'Portugal', avatarUrl: avatarFor('tomas-opo'),      isListening: false, isLiked: false },
+  { id: 'u-84', name: 'Liz Tavares',     role: 'fa',       city: 'Salvador',   country: 'Brasil', avatarUrl: avatarFor('liz-ssa'),          isListening: true,  isLiked: false },
+  { id: 'u-85', name: 'Murilo Bittencourt', role: 'fa',    city: 'Brasília',   country: 'Brasil', avatarUrl: avatarFor('murilo-bsb'),       isListening: false, isLiked: false },
+  { id: 'u-86', name: 'Cecília Pessoa',  role: 'super-fa', city: 'Curitiba',   country: 'Brasil', avatarUrl: avatarFor('cecilia-cwb'),      isListening: true,  isLiked: true  },
+  { id: 'u-87', name: 'Bento Aragão',    role: 'fa',       city: 'Lima',       country: 'Peru',   avatarUrl: avatarFor('bento-lim'),        isListening: true,  isLiked: false },
+  { id: 'u-88', name: 'Maitê Pádua',     role: 'fa',       city: 'Belém',      country: 'Brasil', avatarUrl: avatarFor('maite-bel'),        isListening: false, isLiked: false },
+  { id: 'u-89', name: 'Augusto Tafur',   role: 'curioso',  city: 'Asunción',   country: 'Paraguai', avatarUrl: avatarFor('augusto-asu'),    isListening: false, isLiked: false },
+  { id: 'u-90', name: 'Vitória Camargo', role: 'super-fa', city: 'Goiânia',    country: 'Brasil', avatarUrl: avatarFor('vitoria-gyn'),      isListening: true,  isLiked: true  },
+  { id: 'u-91', name: 'Otávio Saldanha', role: 'fa',       city: 'Vancouver',  country: 'Canadá', avatarUrl: avatarFor('otavio-yvr'),       isListening: true,  isLiked: false },
+  { id: 'u-92', name: 'Joana Pacheco',   role: 'fa',       city: 'Maceió',     country: 'Brasil', avatarUrl: avatarFor('joana-mcz'),        isListening: false, isLiked: false },
+  { id: 'u-93', name: 'Davi Wanderley',  role: 'fa',       city: 'Manaus',     country: 'Brasil', avatarUrl: avatarFor('davi-mao'),         isListening: true,  isLiked: false },
+  { id: 'u-94', name: 'Olívia Bezerra',  role: 'super-fa', city: 'Natal',      country: 'Brasil', avatarUrl: avatarFor('olivia-nat'),       isListening: true,  isLiked: true  },
+  { id: 'u-95', name: 'Bernardo Coutinho', role: 'curioso',city: 'Estocolmo',  country: 'Suécia', avatarUrl: avatarFor('bernardo-arn'),     isListening: false, isLiked: false },
+  { id: 'u-96', name: 'Antonella Faria', role: 'fa',       city: 'Quito',      country: 'Equador', avatarUrl: avatarFor('antonella-uio'),   isListening: true,  isLiked: false },
+  { id: 'u-97', name: 'Vicente Romão',   role: 'fa',       city: 'Joinville',  country: 'Brasil', avatarUrl: avatarFor('vicente-jvl'),      isListening: false, isLiked: false },
+  { id: 'u-98', name: 'Catarina Vianna', role: 'super-fa', city: 'Praga',      country: 'Tchéquia', avatarUrl: avatarFor('catarina-prg'),   isListening: true,  isLiked: true  },
+  { id: 'u-99', name: 'Henrique Caldas', role: 'fa',       city: 'Belo Horizonte', country: 'Brasil', avatarUrl: avatarFor('henrique-cnf'), isListening: true,  isLiked: false },
+  { id: 'u-100', name: 'Yasmin Calixto', role: 'fa',       city: 'Aracaju',    country: 'Brasil', avatarUrl: avatarFor('yasmin-aju'),       isListening: true,  isLiked: false },
 ];
 
 export const FANVERSE_SEARCH_SNAPSHOT: FanverseSearchSnapshot = {

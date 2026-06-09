@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -183,22 +183,35 @@ export function MaterialsTabContent() {
   const { profile } = useUserProfile(user?.id ?? null);
   const fanpoints = profile?.fanpoints ?? 0;
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
-  /* Lightbox state — item de imagem clicado pelo user. Quando
-   * preenchido, renderiza um overlay fullscreen com a imagem em
-   * resolução maior + botão de download. */
-  const [lightboxItem, setLightboxItem] = useState<MaterialItem | null>(null);
+  /* Lightbox state — agora é um CAROUSEL: armazena o index do
+   *  item clicado dentro da lista de previewáveis da pasta. -1 =
+   *  fechado. O Lightbox component navega entre os itens via
+   *  setas/arrow keys/swipe e exibe fullscreen edge-to-edge. */
+  const [lightboxIdx, setLightboxIdx] = useState<number>(-1);
   /* "Ver mais" expand — quando true, EXTRA_FOLDERS são
    * concatenadas no grid. Per spec "ao clicar Ver mais, simule
    * mais 6 pastas com conteúdos mocados". */
   const [expanded, setExpanded] = useState(false);
   const allFolders = expanded ? [...FOLDERS, ...EXTRA_FOLDERS] : FOLDERS;
 
-  /* Escape fecha o lightbox + bloqueia scroll do body enquanto
-   * aberto. */
+  /* Busca pasta em AMBOS arrays (base + extras) pra que ao expandir
+   * e abrir uma pasta nova, ela seja encontrada. */
+  const openFolder = openFolderId
+    ? [...FOLDERS, ...EXTRA_FOLDERS].find((f) => f.id === openFolderId)
+    : null;
+
+  /* Lista de itens previewáveis (image + video) da pasta aberta —
+   *  é o que vira o carousel do Lightbox. */
+  const previewableItems = openFolder
+    ? openFolder.items.filter((i) => i.kind === 'image' || i.kind === 'video')
+    : [];
+
+  /* Body scroll lock + escape key — só ativos quando lightbox tá
+   *  aberto. ←/→ keys são tratados dentro do CarouselLightbox. */
   useEffect(() => {
-    if (!lightboxItem) return;
+    if (lightboxIdx < 0) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxItem(null);
+      if (e.key === 'Escape') setLightboxIdx(-1);
     };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
@@ -207,13 +220,7 @@ export function MaterialsTabContent() {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [lightboxItem]);
-
-  /* Busca pasta em AMBOS arrays (base + extras) pra que ao expandir
-   * e abrir uma pasta nova, ela seja encontrada. */
-  const openFolder = openFolderId
-    ? [...FOLDERS, ...EXTRA_FOLDERS].find((f) => f.id === openFolderId)
-    : null;
+  }, [lightboxIdx]);
 
   /* Detail view — lista de arquivos da pasta aberta. */
   if (openFolder) {
@@ -239,27 +246,33 @@ export function MaterialsTabContent() {
                 key={item.id}
                 item={item}
                 /* Imagens E vídeos são previewáveis (clique em
-                 * thumb OU nome abre o lightbox) per spec "deixe
-                 * o nome da imagem ou vídeo e a miniatura
-                 * clicável". */
+                 * thumb OU nome abre o lightbox carousel) per
+                 * spec "deixe o nome da imagem ou vídeo e a
+                 * miniatura clicável". */
                 onPreview={
                   item.kind === 'image' || item.kind === 'video'
-                    ? () => setLightboxItem(item)
+                    ? () => {
+                        const idx = previewableItems.findIndex(
+                          (p) => p.id === item.id,
+                        );
+                        setLightboxIdx(idx >= 0 ? idx : 0);
+                      }
                     : undefined
                 }
               />
             ))}
           </div>
         </div>
-        {/* AnimatePresence permite o Lightbox usar exit anim — sem
-         *  isso o motion.img com layoutId desmonta instantâneo
-         *  sem voltar ao thumb. */}
+        {/* AnimatePresence orquestra o exit anim — sem isso o
+         *  overlay desmonta instantâneo. */}
         <AnimatePresence>
-          {lightboxItem && (
-            <Lightbox
-              key={lightboxItem.id}
-              item={lightboxItem}
-              onClose={() => setLightboxItem(null)}
+          {lightboxIdx >= 0 && previewableItems[lightboxIdx] && (
+            <CarouselLightbox
+              key="lightbox"
+              items={previewableItems}
+              index={lightboxIdx}
+              onIndexChange={setLightboxIdx}
+              onClose={() => setLightboxIdx(-1)}
             />
           )}
         </AnimatePresence>
@@ -479,26 +492,71 @@ function FileRow({
  * (Escape gerenciado pelo parent via useEffect). Cliques dentro
  * da imagem não propagam pro backdrop.
  * ============================================================ */
-function Lightbox({
-  item,
+/**
+ * CarouselLightbox — overlay fullscreen edge-to-edge que mostra
+ * a foto/vídeo ativa e permite navegar entre todos os itens
+ * previewáveis da pasta via setas, dots, swipe horizontal e
+ * arrow keys.
+ *
+ * Comportamento:
+ *  - Background quase opaco + blur (paleta dark do app).
+ *  - Imagem central: object-fit contain pra preservar proporção
+ *    sem cortes, com max-width/height 100vw/100vh.
+ *  - Nav arrows nas laterais (desktop) + dots na base.
+ *  - Drag horizontal: AnimatePresence + custom direction → ao
+ *    arrastar pra esquerda, próxima imagem; pra direita, anterior.
+ *  - Keyboard: ←/→ navega; Esc fecha (Esc tratado no parent).
+ *  - Portal pra body pra escapar containing block do ArtistBox
+ *    (que tem overflow:hidden + backdrop-filter).
+ *  - Botão Baixar no canto inferior + nome do item.
+ *  - "i/N" counter no canto superior.
+ */
+function CarouselLightbox({
+  items,
+  index,
+  onIndexChange,
   onClose,
 }: {
-  item: MaterialItem;
+  items: MaterialItem[];
+  index: number;
+  onIndexChange: (i: number) => void;
   onClose: () => void;
 }) {
-  /* Portal gating — só montamos no client porque document.body não
-   * existe no SSR. Sem o portal, o lightbox ficaria CONFINADO ao
-   * ArtistBox: o .shell tem backdrop-filter (cria containing block
-   * pra position:fixed) + overflow:hidden, então o overlay nunca
-   * ocupava a tela toda. Renderizando em document.body o lightbox
-   * escapa o stacking context do box. */
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  /* Direction (-1/+1) — controla o slide animation no
+   *  AnimatePresence: novo item entra da direita ou da esquerda
+   *  baseado em qual seta foi pressionada. */
+  const [direction, setDirection] = useState<1 | -1>(1);
 
-  const fullUrl = thumbUrl(item.id, 1600, 1067);
+  const item = items[index];
+
+  const goPrev = useCallback(() => {
+    if (index <= 0) return;
+    setDirection(-1);
+    onIndexChange(index - 1);
+  }, [index, onIndexChange]);
+
+  const goNext = useCallback(() => {
+    if (index >= items.length - 1) return;
+    setDirection(1);
+    onIndexChange(index + 1);
+  }, [index, items.length, onIndexChange]);
+
+  /* Keyboard nav — ←/→ navega entre os itens. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') goPrev();
+      else if (e.key === 'ArrowRight') goNext();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [goPrev, goNext]);
+
+  if (!item) return null;
+  const fullUrl = thumbUrl(item.id, 1920, 1280);
+
   const content = (
-    /* Backdrop motion.div com fade in/out via initial/animate/exit
-     *  — AnimatePresence no parent orquestra a unmount anim. */
     <motion.div
       className={styles.lightbox}
       role="dialog"
@@ -510,6 +568,7 @@ function Lightbox({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
+      {/* Close button — top right. */}
       <button
         type="button"
         className={styles.lightboxClose}
@@ -521,17 +580,77 @@ function Lightbox({
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
+
+      {/* Counter top-left — "i/N". */}
+      <div className={styles.lightboxCounter} aria-hidden="true">
+        {index + 1} / {items.length}
+      </div>
+
+      {/* Nav arrows — esconder os disabled mas manter o slot
+       *  pra layout não pular. */}
+      <button
+        type="button"
+        className={`${styles.lightboxNav} ${styles.lightboxNavPrev}`}
+        onClick={(e) => { e.stopPropagation(); goPrev(); }}
+        disabled={index === 0}
+        aria-label="Imagem anterior"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className={`${styles.lightboxNav} ${styles.lightboxNavNext}`}
+        onClick={(e) => { e.stopPropagation(); goNext(); }}
+        disabled={index === items.length - 1}
+        aria-label="Próxima imagem"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+
+      {/* Stage — clique aqui não propaga (não fecha overlay).
+       *  AnimatePresence + custom direction → o slide novo entra
+       *  da direção certa (esq/dir) baseado em qual seta. */}
       <div
         className={styles.lightboxStage}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <motion.img
-          layoutId={`material-img-${item.id}`}
-          src={fullUrl}
-          alt={item.name}
-          className={styles.lightboxImg}
-        />
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.img
+            key={item.id}
+            src={fullUrl}
+            alt={item.name}
+            className={styles.lightboxImg}
+            custom={direction}
+            /* Variants em vez de função inline — motion suporta
+             *  função dentro de variants (com custom), mas espera
+             *  o variant name no initial/animate/exit. */
+            variants={{
+              enter: (dir: number) => ({ opacity: 0, x: dir * 60 }),
+              center: { opacity: 1, x: 0 },
+              exit: (dir: number) => ({ opacity: 0, x: dir * -60 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            /* Drag horizontal pra trocar de imagem — match com
+             *  swipe nativo de iOS/Android photos. */
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_e, info) => {
+              if (info.offset.x < -60 || info.velocity.x < -300) goNext();
+              else if (info.offset.x > 60 || info.velocity.x > 300) goPrev();
+            }}
+          />
+        </AnimatePresence>
+
+        {/* Meta pill — fica no bottom da stage, sai do layout
+         *  do imagem (pra imagem ocupar tela toda). */}
         <div className={styles.lightboxMeta}>
           <div className={styles.lightboxName}>{item.name}</div>
           <a
@@ -540,6 +659,7 @@ function Lightbox({
             download={item.name}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -549,6 +669,31 @@ function Lightbox({
             Baixar
           </a>
         </div>
+
+        {/* Dots — pra pular direto pra qualquer item. */}
+        {items.length > 1 && (
+          <div
+            className={styles.lightboxDots}
+            role="tablist"
+            aria-label="Selecionar imagem"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {items.map((it, i) => (
+              <button
+                key={it.id}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Ir pra imagem ${i + 1}`}
+                className={`${styles.lightboxDot} ${i === index ? styles.lightboxDotActive : ''}`}
+                onClick={() => {
+                  setDirection(i > index ? 1 : -1);
+                  onIndexChange(i);
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );

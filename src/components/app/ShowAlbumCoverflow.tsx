@@ -49,18 +49,20 @@ interface ShowAlbumCoverflowProps {
   title: string;
 }
 
-/* Tuning constants — escolhidos pra o efeito ficar "Apple-like"
- *  sem ser cartoonish. */
-const SIDE_TRANSLATE_X = 60;   // % da largura do card pra cada lado
-const SIDE_TRANSLATE_Z = -120; // px (negativo = atrás no Z)
-const SIDE_ROTATE_Y = 45;      // graus
-const SIDE_SCALE = 0.78;
-/* Card 2+ de distância: ainda mais atrás, opacity baixa, fade
- *  pra fora. */
-const FAR_TRANSLATE_X = 110;
-const FAR_TRANSLATE_Z = -240;
-const FAR_ROTATE_Y = 55;
-const FAR_SCALE = 0.6;
+/* Tuning constants — calibrados pra match o modelo de referência
+ *  enviado pelo cliente: cards laterais quase-edge-on (rotação
+ *  agressiva) com pouco translateX, mostrando só uma fatia
+ *  estreita do conteúdo. Card central full size e square. */
+const SIDE_TRANSLATE_X = 75;   // % da largura do card pra cada lado
+const SIDE_TRANSLATE_Z = -100; // px (negativo = atrás no Z)
+const SIDE_ROTATE_Y = 65;      // graus — quase edge-on como o ref
+const SIDE_SCALE = 0.92;       // mantém altura próxima do central
+/* Card 2+ de distância: rotação ainda maior, mais atrás,
+ *  opacity baixa pra fade pra fora. */
+const FAR_TRANSLATE_X = 105;
+const FAR_TRANSLATE_Z = -220;
+const FAR_ROTATE_Y = 78;
+const FAR_SCALE = 0.78;
 
 export default function ShowAlbumCoverflow({
   items,

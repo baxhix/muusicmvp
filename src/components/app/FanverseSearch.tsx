@@ -182,9 +182,15 @@ export default function FanverseSearch() {
   const [showPills, setShowPills] = useState(false);
   const [showList, setShowList] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
-  /* Paginação da lista — começa exibindo 20 nomes; cada clique no
-   * CTA "Exibir mais" adiciona +20 até cobrir todos os users. */
+  /* Lista com infinite loading — começa com 20 nomes e a sentinela
+   * no fim da lista, ao entrar no viewport via IntersectionObserver,
+   * dispara carga de +20 simulando um fetch. Para no teto de 100
+   * (cap da lista mocada). */
   const [visibleUsers, setVisibleUsers] = useState(20);
+  /* Loading state pro shimmer "Carregando mais..." aparecer entre
+   * o último user e a sentinela durante o fetch simulado. */
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   /* Scroll state — quando o usuário rola pra baixo, o orbe fica
    * fixo + menor e o back arrow continua na sua posição. */
   const [scrolled, setScrolled] = useState(false);
@@ -236,6 +242,57 @@ export default function FanverseSearch() {
     if (!el) return;
     setScrolled(el.scrollTop > 60);
   };
+
+  /* Cap do infinite loading: 100 (ou menos se o mock devolver
+   *  menos). Quando atingir esse limite, a sentinela não dispara
+   *  mais e o "Fim da lista" footer aparece. */
+  const INFINITE_LOAD_CAP = 100;
+
+  /* Snapshot precisa ser referenciado pelo effect abaixo, então
+   *  declaramos aqui antes do useEffect (em vez de mais embaixo
+   *  com o resto da lógica de rendering). */
+  const snapshotForEffect = FANVERSE_SEARCH_SNAPSHOT;
+
+  /* Infinite loading via IntersectionObserver. Anexa o observer
+   *  na sentinela; quando entra no viewport (raiz = scrollRef),
+   *  dispara um fetch simulado (setTimeout 600ms) que adiciona
+   *  +20 users até atingir INFINITE_LOAD_CAP. */
+  useEffect(() => {
+    if (!showList) return;
+    const sentinel = sentinelRef.current;
+    const scrollEl = scrollRef.current;
+    if (!sentinel || !scrollEl) return;
+    /* Loaded all available users? não observa mais. */
+    const totalAvailable = Math.min(
+      snapshotForEffect.users.length,
+      INFINITE_LOAD_CAP,
+    );
+    if (visibleUsers >= totalAvailable) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry || !entry.isIntersecting) return;
+        if (loadingMore) return;
+        setLoadingMore(true);
+        /* Simula fetch (600ms) — em produção plugar API real. */
+        window.setTimeout(() => {
+          setVisibleUsers((n) => Math.min(n + 20, totalAvailable));
+          setLoadingMore(false);
+        }, 600);
+      },
+      {
+        root: scrollEl,
+        /* rootMargin estende a zona de gatilho 120px antes do
+         *  sentinela aparecer — começa o load enquanto o user
+         *  ainda está rolando, dando uma sensação seamless. */
+        rootMargin: '0px 0px 120px 0px',
+        threshold: 0.01,
+      },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [showList, visibleUsers, loadingMore, snapshotForEffect.users.length]);
 
   const snapshot = FANVERSE_SEARCH_SNAPSHOT;
 
@@ -476,27 +533,65 @@ export default function FanverseSearch() {
                    * fsUserRowIn animação definida no CSS .userRow. */
                   <UserRow key={u.id} user={u} delayMs={Math.min(i * 40, 800)} />
                 ))}
+
+              {/* Infinite loading footer — sentinela + shimmer.
+               *  IntersectionObserver no useEffect acima observa
+               *  o sentinel e dispara um "fetch" de +20 a cada
+               *  vez que entra no viewport, até atingir o cap
+               *  (INFINITE_LOAD_CAP = 100). */}
+              {visibleUsers <
+                Math.min(snapshot.users.length, INFINITE_LOAD_CAP) && (
+                <div
+                  ref={sentinelRef}
+                  className={styles.loadMore}
+                  aria-live="polite"
+                  aria-busy={loadingMore}
+                >
+                  {/* 3 skeleton rows shimmer enquanto carrega o
+                   *  próximo lote — antecipa visualmente o que
+                   *  vai aparecer. */}
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className={styles.loadMoreSkeleton}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: loadingMore ? 1 : 0.5 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: i * 0.08,
+                      }}
+                    >
+                      <span className={styles.loadMoreAvatar} />
+                      <span className={styles.loadMoreLine} />
+                    </motion.div>
+                  ))}
+                  <motion.span
+                    className={styles.loadMoreLabel}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {loadingMore ? 'Carregando mais fãs…' : 'Role para ver mais'}
+                  </motion.span>
+                </div>
+              )}
+
+              {/* End-of-list footer — cap atingido. */}
+              {visibleUsers >=
+                Math.min(snapshot.users.length, INFINITE_LOAD_CAP) && (
+                <motion.div
+                  className={styles.endOfList}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                >
+                  Você viu todos os {INFINITE_LOAD_CAP} fãs em sintonia.
+                </motion.div>
+              )}
             </section>
           )}
         </div>
       </div>
-
-      {/* CTA flutuante "Exibir mais" — fixed bottom, totalmente
-       * arredondado. Aparece só quando a lista está visível e há
-       * mais users disponíveis. Cada clique soma +20. */}
-      {showList && visibleUsers < snapshot.users.length && (
-        <button
-          type="button"
-          className={styles.showMoreBtn}
-          onClick={() =>
-            setVisibleUsers((n) =>
-              Math.min(n + 20, snapshot.users.length),
-            )
-          }
-        >
-          Exibir mais
-        </button>
-      )}
     </div>
   );
 }
