@@ -482,13 +482,18 @@ export default function Globe() {
       //
       // Both sources start empty; the scheduler in the shell
       // provider publishes the first payload right after mount.
+      // lineMetrics: true habilita `['line-progress']` em
+      //  `line-gradient` — sem isso o gradient ao longo da
+      //  linha não funciona no Mapbox GL.
       map.addSource('ana-flight-traveled', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
+        lineMetrics: true,
       });
       map.addSource('ana-flight-remaining', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
+        lineMetrics: true,
       });
 
       // Remaining (gray, dashed) — drawn first so the traveled
@@ -510,25 +515,32 @@ export default function Globe() {
         },
       });
 
-      // Traveled (pink, solid + glow). Two stacked layers — a
-      // wider, blurred underlay for the halo + the crisp line on
-      // top. Mirrors the "Ana ring" pink that the check-in pin
-      // uses, so the whole Ana-overlay system reads as one piece.
+      // Traveled — gradient roxo→rosa ao longo da linha + glow
+      //  sutil por baixo. Mapbox `line-gradient` precisa de
+      //  source com `lineMetrics: true` (acima) pra resolver
+      //  ['line-progress'] (0..1 ao longo do comprimento total).
+      //  Per spec atualizado "deixe o traço do avião mais fino
+      //  com gradiente roxo para o rosa". Larguras reduzidas
+      //  ~45% (era 2.2/2.8/3.4 → 1.2/1.5/1.8). Glow também
+      //  encolhe pra acompanhar.
       map.addLayer({
         id: 'ana-flight-traveled-glow',
         type: 'line',
         source: 'ana-flight-traveled',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#ec4899',
+          // Cor única no glow (gradient não faz sentido em
+          //  blur ampliado — fica embaçado). Usa um roxo-rosa
+          //  intermediário pra casar com as duas pontas.
+          'line-color': '#c026d3',
           'line-width': [
             'interpolate', ['linear'], ['zoom'],
-            1, 6,
-            5, 8,
-            10, 11,
+            1, 3.5,
+            5, 4.5,
+            10, 6,
           ],
-          'line-opacity': 0.35,
-          'line-blur': 4,
+          'line-opacity': 0.32,
+          'line-blur': 3,
         },
       });
       map.addLayer({
@@ -537,12 +549,19 @@ export default function Globe() {
         source: 'ana-flight-traveled',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#f472b6',
+          'line-gradient': [
+            'interpolate',
+            ['linear'],
+            ['line-progress'],
+            0, '#a855f7',
+            0.5, '#d946ef',
+            1, '#ec4899',
+          ],
           'line-width': [
             'interpolate', ['linear'], ['zoom'],
-            1, 2.2,
-            5, 2.8,
-            10, 3.4,
+            1, 1.2,
+            5, 1.5,
+            10, 1.8,
           ],
           'line-opacity': 1,
         },
