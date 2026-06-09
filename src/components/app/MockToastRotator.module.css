@@ -110,10 +110,16 @@
 /* Collapsed: cada toast ocupa a mesma célula do grid
  *  (grid-row 1 / grid-column 1) — empilham bottom-anchored
  *  via place-items: end center do .root. Motion controla
- *  y/scale/opacity sem precisar de transform CSS extra. */
+ *  y/scale/opacity sem precisar de transform CSS extra.
+ *  position: relative pra ancorar o X button absoluto. */
 .toast {
+  position: relative;
   grid-row: 1;
   grid-column: 1;
+  /* touch-action pan-y permite scroll vertical mas captura
+   *  o swipe horizontal pro motion drag funcionar smooth no
+   *  mobile (iOS especificamente exige isso). */
+  touch-action: pan-y;
 }
 
 /* Expanded: filhos do flex, sem stack. Reseta grid-row/column
@@ -130,9 +136,56 @@
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .toastExit  { animation: mockToastOut 0.38s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
-/* .dismissBtn removido — comportamento iOS native é tap no
- *  card inteiro pra dismissar (não tem X visível). Whole-toast
- *  click no expanded mode chama dismissOne() direto. */
+/* X close button — desktop sempre visível com hover scale; no
+ *  mobile escondido (swipe lateral é a action principal). Pos
+ *  absoluta dentro do .toast, top-right canto. */
+.dismissBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.78);
+  cursor: pointer;
+  /* Backdrop blur leve pra X parecer "flutuando" sobre o
+   *  conteúdo do toast quando o conteúdo é colorido. */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    opacity 220ms ease;
+  /* pointer-events: auto explicitamente pra sobrescrever o
+   *  none do .root quando o cap reduz opacity. */
+  pointer-events: auto;
+  /* z-index acima do conteúdo do toast pra ficar sempre
+   *  clicável. */
+  z-index: 1;
+}
+.dismissBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transform: scale(1.08);
+}
+.dismissBtn:active {
+  transform: scale(0.94);
+}
+
+/* Mobile: X escondido — swipe horizontal é a interação
+ *  primária. Cobrimos via media query coarse pointer (touch
+ *  devices) em vez de só width pra também esconder em tablets. */
+@media (pointer: coarse), (max-width: 540px) {
+  .dismissBtn {
+    display: none;
+  }
+}
 
 /* Variante clicável — usada APENAS pra real_message (toast vindo
  * do socket). Sobrescreve o pointer-events:none herdado do

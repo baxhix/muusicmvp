@@ -117,22 +117,35 @@ const ROTATION: MockToast[] = [
 
 /* ── Stack tuning (iOS Notifications pattern) ───────────────
  *
- * Per spec "Mantenha as notificações mocadas empilhadas usando
- * o motion até juntar 10, com a opção de fechá-las. Depois elas
- * podem desaparecer. Ao clicar, elas devem ser expandidas para
- * ver uma a uma. Use a iOS Notifications stack."
+ * Per spec atualizado:
+ *  - MAX_STACK = 4 (era 10). Quando atinge 4, todas somem
+ *    automaticamente depois de ~4s pra liberar a tela.
+ *  - Desktop: cada notif tem um X visível pra fechar individual.
+ *  - Mobile: swipe horizontal (≥80px ou velocity alta) dismissa
+ *    a notif individual estilo iOS notification center.
+ *  - Cap reduzido faz a pilha ser sempre legível (top + 3 peek
+ *    atrás), evitando "scroll de notif" que ninguém ia ler.
  *
- * Mock cadence: 1 toast a cada ~3.5s até atingir MAX_STACK.
- * Quando o stack está cheio, a fila de mocks pausa; mensagens
- * REAIS (chat) ainda entram e empurram a mais antiga não-pinned.
- * Após 30s sem nenhum push novo, o stack faz auto-clear via fade.
+ * Cadência: 1 toast a cada ~3.5s até atingir MAX_STACK. Real
+ * messages (socket) sempre entram, dropando a mais antiga
+ * non-pinned se a pilha está cheia.
  */
-const MAX_STACK = 10;
+const MAX_STACK = 4;
 const MOCK_PUSH_INTERVAL_MS = 3500;
+/** Quanto tempo a pilha completa fica visível antes do auto-
+ *  clear disparar (todos somem juntos). Per spec "Após acumular
+ *  4 notificações, elas desaparecem". */
+const AUTO_CLEAR_WHEN_FULL_MS = 4_000;
+/** Fallback: idle sem nenhum push novo — também limpa a pilha
+ *  mesmo que ela não esteja cheia (evita notifs órfãs). */
 const AUTO_CLEAR_AFTER_IDLE_MS = 30_000;
-/** Quantos toasts ficam visíveis no collapsed stack (resto fica
- *  oculto atrás dos top 3). Top 3 mostram com scale-down. */
+/** Quantos toasts ficam visíveis no collapsed stack. Com MAX 4
+ *  e VISIBLE_PEEK 3, todos os 4 são visíveis (topo + 3 atrás). */
 const VISIBLE_PEEK = 3;
+/** Swipe threshold pra dismiss no mobile (px) e velocidade
+ *  mínima pra dismissar mesmo com swipe curto + rápido. */
+const SWIPE_DISMISS_PX = 80;
+const SWIPE_DISMISS_VELOCITY = 450;
 
 interface StackItem {
   /** Auto-increment id — usado como React key + dismissId. */
@@ -229,8 +242,24 @@ export default function MockToastRotator() {
     return () => window.removeEventListener('app:chat-message-toast', handler);
   }, []);
 
-  /* Auto-clear depois de idle (AUTO_CLEAR_AFTER_IDLE_MS sem push).
-   *  Roda a cada 3s checando o lastPushAtRef. */
+  /* Auto-clear quando a pilha atinge MAX_STACK — todas somem
+   *  juntas depois de AUTO_CLEAR_WHEN_FULL_MS. Esse é o caminho
+   *  primário (per spec "Após acumular 4, elas desaparecem").
+   *  Pausa enquanto expanded pra user ter chance de fechar
+   *  individual sem ver tudo sumir. */
+  useEffect(() => {
+    if (stack.length < MAX_STACK || expanded) return;
+    const id = window.setTimeout(() => {
+      setStack([]);
+      setExpanded(false);
+    }, AUTO_CLEAR_WHEN_FULL_MS);
+    return () => window.clearTimeout(id);
+  }, [stack.length, expanded]);
+
+  /* Auto-clear fallback por idle — se a pilha NÃO chegou no
+   *  cap mas ficou parada AUTO_CLEAR_AFTER_IDLE_MS sem push,
+   *  também limpa. Cobre o caso "1 ou 2 notifs paradas" que
+   *  o caminho acima não pega. */
   useEffect(() => {
     if (stack.length === 0) return;
     const id = window.setInterval(() => {
@@ -289,11 +318,20 @@ export default function MockToastRotator() {
             : depth >= VISIBLE_PEEK
               ? 0
               : 1 - depth * 0.18;
-          /* Comportamento iOS native: tap em qualquer card no
-           *  modo expanded fecha aquele card (e abre a conv se
-           *  for real_message). No collapsed, só o top é
-           *  clickable e o tap toggla expand (via container). */
+          /* Tap behavior:
+           *  - Collapsed + multi-stack: tap no container toggla
+           *    expand (handler do parent).
+           *  - Expanded: tap no card abre conv (se real) e
+           *    dismissa o card.
+           *  Drag (mobile/touch): swipe lateral >SWIPE_DISMISS_PX
+           *  ou velocity alta → dismiss imediato (estilo iOS
+           *  notification center). Funciona no top E nos cards
+           *  abaixo quando expanded (cada um arrastável). */
           const clickable = expanded;
+          /* Drag enabled só pro top quando collapsed (peek
+           *  cards atrás ficam estáticos) e pra TODOS quando
+           *  expanded (cada um arrastável individualmente). */
+          const draggable = isTop || expanded;
 
           return (
             <motion.div
@@ -306,13 +344,29 @@ export default function MockToastRotator() {
                 y: peekY,
                 scale: peekScale,
               }}
-              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              exit={{ opacity: 0, x: 0, y: 20, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 320, damping: 30 }}
               style={{
                 zIndex: 100 - depth,
                 pointerEvents: isTop || expanded ? 'auto' : 'none',
               }}
               role="status"
+              /* Swipe-to-dismiss (mobile + trackpad). Drag
+               *  constraints {left:0,right:0} fazem o card
+               *  voltar pro lugar se o user não passar do
+               *  threshold; passou → dismissOne via onDragEnd. */
+              drag={draggable ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.5}
+              onDragEnd={(_e, info) => {
+                const passedThreshold =
+                  Math.abs(info.offset.x) > SWIPE_DISMISS_PX ||
+                  Math.abs(info.velocity.x) > SWIPE_DISMISS_VELOCITY;
+                if (passedThreshold) {
+                  dismissOne(item.id);
+                }
+              }}
+              whileDrag={{ cursor: 'grabbing' }}
               onClick={(e) => {
                 /* Stop propagation pra container handler não
                  *  togglear expand quando o user clica no toast
@@ -330,6 +384,28 @@ export default function MockToastRotator() {
               }}
             >
               <ToastBody toast={item.toast} />
+              {/* X close button — visível desktop (hover ou
+                  always per CSS); no mobile fica escondido
+                  pra dar espaço pro swipe. Posicionado top-
+                  right de cada card. stopPropagation pra não
+                  togglear o expand do container. */}
+              {(isTop || expanded) && (
+                <button
+                  type="button"
+                  className={styles.dismissBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissOne(item.id);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="Fechar notificação"
+                  tabIndex={0}
+                >
+                  <svg viewBox="0 0 10 10" width="10" height="10" fill="none" aria-hidden="true">
+                    <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
             </motion.div>
           );
         })}
