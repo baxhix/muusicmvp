@@ -8,9 +8,12 @@
 .card {
   margin: 16px 14px 0;
   border-radius: 16px;
+  /* Per spec atualizado "deixe o roxo no background dos posts
+   *  mais próximos do preto" — mesmo tom usado nos outros
+   *  cards do feed. */
   background: linear-gradient(145deg,
-    rgba(10,7,20,0.88) 0%,
-    rgba(7,5,14,0.85) 100%);
+    rgba(5,3,8,0.92) 0%,
+    rgba(3,2,5,0.9) 100%);
   border: 1px solid rgba(255,255,255,0.07);
   box-shadow:
     0 0 0 1px rgba(168,85,247,0.15),

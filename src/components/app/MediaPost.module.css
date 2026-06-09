@@ -2,9 +2,15 @@
 .card {
   margin: 16px 14px 0;
   border-radius: 16px;
+  /* Per spec atualizado "deixe o roxo no background dos posts
+   *  mais próximos do preto" — o fundo do card era roxo-escuro
+   *  visível (10,7,20 → 7,5,14). Mantém só um sussurro do tom
+   *  roxo (B levemente acima de R/G) mas o resto vai pra ~#040308.
+   *  Os glows roxos das bordas/::before continuam (são decoração
+   *  intencional, não o "fundo"). */
   background: linear-gradient(145deg,
-    rgba(10,7,20,0.88) 0%,
-    rgba(7,5,14,0.85) 100%);
+    rgba(5,3,8,0.92) 0%,
+    rgba(3,2,5,0.9) 100%);
   border: 1px solid rgba(255,255,255,0.07);
   box-shadow:
     0 0 0 1px rgba(168,85,247,0.15),
@@ -261,9 +267,13 @@
   align-items: center;
   gap: 12px;
   padding: 28px 24px 22px;
+  /* Bg base do material_alert também escurecido pra acompanhar
+   *  o restante dos cards do feed. O radial roxo de cima (0.16
+   *  opacidade) continua como accent de marca — agora repousa
+   *  sobre um preto mais profundo (3,3,5) em vez de (11,11,14). */
   background:
-    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.16) 0%, transparent 55%),
-    rgba(11, 11, 14, 0.85);
+    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.12) 0%, transparent 55%),
+    rgba(3, 3, 5, 0.92);
   border-top: 1px solid rgba(168, 85, 247, 0.18);
   border-bottom: 1px solid rgba(168, 85, 247, 0.18);
 }
