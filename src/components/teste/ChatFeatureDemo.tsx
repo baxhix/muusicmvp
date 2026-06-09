@@ -113,7 +113,7 @@ export default function ChatFeatureDemo() {
       {/* Per spec atualizado: headline em 1 linha centralizado
        *  (sem descrição, sem coluna de copy). Pattern alinhado
        *  com a CursorTrailGallery (Feature 02). */}
-      <h3 className={styles.featureTitle}>Chat com superfãs</h3>
+      <h3 className={styles.featureTitle}>Chat</h3>
 
       {/* Bubbles SOLTOS — sem mockup de celular, sem header,
        *  sem status bar. As caixas aparecem flutuando no canvas
