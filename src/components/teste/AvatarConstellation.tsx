@@ -30,6 +30,11 @@ interface AvatarSlot {
   src?: string;
   circling?: boolean;
   driftDelay?: number;
+  /** Posição base (vw/vh, relativa ao centro). Mantida crua pra
+   *  que o render possa recalcular left/top quando o "spread"
+   *  (afastamento na seção Chat) está ativo. */
+  fx: number;
+  fy: number;
   style: React.CSSProperties;
 }
 
@@ -166,11 +171,11 @@ function buildFloatingSlots(seed: number): AvatarSlot[] {
       src: CIRCLE_AVATAR_SRCS[i % CIRCLE_AVATAR_SRCS.length],
       circling: true,
       driftDelay: rng() * 4,
+      fx: pos.fx,
+      fy: pos.fy,
       style: {
-        // Posições em vw/vh — escala com viewport real, dando
-        // mais spread em desktops largos.
-        left: `calc(50% + ${pos.fx.toFixed(2)}vw - 24px)`,
-        top: `calc(50% + ${pos.fy.toFixed(2)}vh - 24px)`,
+        // left/top NÃO são mais baked aqui — calculados no render
+        // (consomem o fx/fy crus + o fator de spread da seção Chat).
         ['--circle-tx' as string]:
           `calc(${sx.toFixed(2)}vmax - ${pos.fx.toFixed(2)}vw)`,
         ['--circle-ty' as string]:
@@ -218,6 +223,19 @@ const PHASE_DELAY_MS = 350;
 /** Breakpoint mobile pro count de avatares. */
 const MOBILE_BREAKPOINT_PX = 720;
 
+/** Spread da seção Chat — quando a simulação de chat ocupa o
+ *  centro do viewport, empurramos os avatares pra LONGE do
+ *  centro (radialmente) pra dar foco ao chat. Fator multiplica
+ *  a distância de cada avatar ao centro; o clamp evita que
+ *  saiam totalmente da tela (ficam ancorados nas bordas). */
+const SPREAD_FACTOR = 1.4;
+const SPREAD_CLAMP_X = 46; // vw máx a partir do centro
+const SPREAD_CLAMP_Y = 44; // vh máx a partir do centro
+
+function clampAbs(v: number, max: number): number {
+  return Math.max(-max, Math.min(max, v));
+}
+
 export default function AvatarConstellation() {
   const [phase, setPhase] = useState(0);
   const [targetPhase, setTargetPhase] = useState(0);
@@ -233,6 +251,10 @@ export default function AvatarConstellation() {
   const [maxCount, setMaxCount] = useState(10);
 
   const [visibleCount, setVisibleCount] = useState(0);
+
+  /** `true` quando a simulação de chat está centralizada no
+   *  viewport — dispara o afastamento dos avatares. */
+  const [spread, setSpread] = useState(false);
 
   /** Parallax scroll: -px = avatar sobe (acompanhando conteúdo
    *  pra cima); recovers para 0 (desce de volta) per "ao
@@ -321,6 +343,18 @@ export default function AvatarConstellation() {
         prev === nextTargetPhase ? prev : nextTargetPhase,
       );
 
+      // -- Spread: a simulação de chat (topo da section-3) está
+      // ocupando o centro do viewport? Se sim, afasta os avatares
+      // pra dar foco ao chat. Usa o mesmo critério "straddle do
+      // centro" da detecção de section.
+      const chat = document.getElementById('chat-feature');
+      let chatFocused = false;
+      if (chat) {
+        const cr = chat.getBoundingClientRect();
+        chatFocused = cr.top <= center && cr.bottom > center;
+      }
+      setSpread((prev) => (prev === chatFocused ? prev : chatFocused));
+
       // -- Parallax: aplica delta do scroll ao offset.
       // DESABILITADO em mobile per product feedback "ao fazer
       // scroll mobile, os avatares ficam tremendo": iOS Safari
@@ -380,21 +414,32 @@ export default function AvatarConstellation() {
 
   return (
     <>
-      {visibleSet.map((a, i) => (
-        <FloatingAvatar
-          key={a.name}
-          src={a.src}
-          name={a.name}
-          size="sm"
-          revealed={i < visibleCount}
-          circling={a.circling}
-          driftDelay={a.driftDelay}
-          style={{
-            ...a.style,
-            ['--parallax-y' as string]: `${parallaxY.toFixed(1)}px`,
-          }}
-        />
-      ))}
+      {visibleSet.map((a, i) => {
+        // Spread ativo → afasta o avatar radialmente do centro
+        // (fx/fy × fator, com clamp pra ancorar nas bordas). O
+        // `.wrap` transiciona left/top em 2600ms, então o
+        // afastamento (e o retorno) acontece de forma suave.
+        const sf = spread ? SPREAD_FACTOR : 1;
+        const fx = spread ? clampAbs(a.fx * sf, SPREAD_CLAMP_X) : a.fx;
+        const fy = spread ? clampAbs(a.fy * sf, SPREAD_CLAMP_Y) : a.fy;
+        return (
+          <FloatingAvatar
+            key={a.name}
+            src={a.src}
+            name={a.name}
+            size="sm"
+            revealed={i < visibleCount}
+            circling={a.circling}
+            driftDelay={a.driftDelay}
+            style={{
+              ...a.style,
+              left: `calc(50% + ${fx.toFixed(2)}vw - 24px)`,
+              top: `calc(50% + ${fy.toFixed(2)}vh - 24px)`,
+              ['--parallax-y' as string]: `${parallaxY.toFixed(1)}px`,
+            }}
+          />
+        );
+      })}
     </>
   );
 }

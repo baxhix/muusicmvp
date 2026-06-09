@@ -116,7 +116,7 @@ export default function ChatFeatureDemo() {
   }, [inView]);
 
   return (
-    <div ref={ref} className={styles.root}>
+    <div ref={ref} id="chat-feature" className={styles.root}>
       {/* Per spec atualizado: headline em 1 linha centralizado
        *  (sem descrição, sem coluna de copy). Pattern alinhado
        *  com a CursorTrailGallery (Feature 02). */}
