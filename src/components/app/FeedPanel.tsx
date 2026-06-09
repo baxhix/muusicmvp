@@ -486,7 +486,7 @@ export default function FeedPanel() {
         <MediaPost data={MEDIA[1]} />
         <ActivityCard data={ACTIVITIES[2]} />
         <MediaPost data={MEDIA[2]} />
-        <ActivityCard data={ACTIVITIES[3]} />
+        {ACTIVITIES[3] && <ActivityCard data={ACTIVITIES[3]} />}
 
         {/* Repetição para o loop do scroll */}
         <Stories />
@@ -496,7 +496,7 @@ export default function FeedPanel() {
         <ActivityCard data={ACTIVITIES[2]} />
         <MediaPost data={MEDIA[2]} />
         <MediaPost data={MEDIA[1]} />
-        <ActivityCard data={ACTIVITIES[3]} />
+        {ACTIVITIES[3] && <ActivityCard data={ACTIVITIES[3]} />}
         <MediaPost data={MEDIA[0]} />
         <ActivityCard data={ACTIVITIES[1]} />
       </div>
