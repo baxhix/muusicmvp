@@ -114,24 +114,24 @@
   overflow-x: hidden;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-  /* Per feedback "No desktop, os insights subiram muito e está por
-   * trás do orbe. Posicione 90px mais abaixo" — 310 + 90 = 400. */
-  padding-top: 400px;
-  /* Mask escolhe onde o conteúdo é visível. A área onde o orbe
-   * fica vira "invisível" pra o conteúdo (transparent no mask =
-   * conteúdo escondido). Banda de fade pra suavizar a entrada. */
+  /* Per spec atualizado "No desktop, posicione mais acima os
+   * insights, cards e lista" — reduzimos padding-top 400→320 e
+   * o mask zone proporcionalmente (transparent 310→230, fade
+   * end 410→320). Insights sobem ~80px sem colidir com o orbe
+   * (visible glow termina em ~267px com margin de segurança). */
+  padding-top: 320px;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 310px,
-    black 410px,
+    transparent 230px,
+    black 320px,
     black 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 310px,
-    black 410px,
+    transparent 230px,
+    black 320px,
     black 100%
   );
   transition:
@@ -372,15 +372,18 @@
  *  pula pra cima/baixo ao trocar entre data/álbum). */
 .albumThumbSlot {
   position: relative;
-  width: 72px;
-  height: 72px;
+  /* Per spec atualizado 72 → 110px. */
+  width: 110px;
+  height: 110px;
   /* AnimatePresence mode="wait" deixa o slot vazio entre
    *  trocas — manter as dimensões fixas evita reflow. */
 }
 .albumThumb {
   position: absolute;
   inset: 0;
-  border-radius: 14px;
+  /* Per spec atualizado: cantos quase retos (2px) — mais
+   *  próximo de um print físico do que de uma thumb arredondada. */
+  border-radius: 2px;
   overflow: hidden;
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.55),
@@ -397,7 +400,11 @@
 
 .headline {
   margin: 0;
-  font-size: 18px;
+  /* Responsivo: 14px em viewports estreitos (mobile pequeno),
+   *  18px em desktop. Anteriormente fixo em 18 com override
+   *  mobile em 22 — invertemos pra ficar MENOR no mobile per
+   *  spec atualizado. */
+  font-size: clamp(14px, 1.4vw + 10px, 18px);
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.01em;
@@ -414,14 +421,20 @@
   font-weight: 700;
   color: #fff;
 }
-/* Wrapper do texto que será revelado char-by-char. Mantém
- *  display inline pra fluir junto com o `.headlineLead` sem
- *  quebrar de linha forçada. */
-.typewriter {
+/* Wrapper do "Split Text gradual" — cada palavra entra com
+ *  fade + slide-up via stagger no motion. Diferente do
+ *  Typewriter (char-by-char), aqui cada token é uma palavra
+ *  inteira (inline-block) que sobe 8px. */
+.splitText {
   display: inline;
   font-weight: 400;
   color: rgba(245, 245, 247, 0.78);
-  white-space: pre-wrap;
+}
+.splitWord {
+  display: inline-block;
+  /* will-change pra promover layer GPU durante a animação
+   *  (~6-12 palavras × stagger 80ms). */
+  will-change: transform, opacity;
 }
 .headlineMuted {
   font-weight: 400;
@@ -863,15 +876,13 @@
   .hero {
     padding: 8px 24px 22px;
   }
-  .headline {
-    /* -2pt per spec atualizado: 24 → 22px no mobile (mantém
-     *  legibilidade dos insights com a redução solicitada). */
-    font-size: 22px;
-  }
-  /* Mobile — thumb um pouco menor pra não dominar o viewport. */
+  /* Mobile — o clamp na .headline (desktop) já reduz pra
+   *  ~14px em viewports estreitos. Não precisamos override
+   *  manual aqui. Thumb mantém proporção menor pra não dominar
+   *  o orbe mobile (110 desktop → 90 mobile). */
   .albumThumbSlot {
-    width: 64px;
-    height: 64px;
+    width: 90px;
+    height: 90px;
   }
   .analyzing {
     font-size: 11px;

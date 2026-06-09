@@ -517,13 +517,13 @@ export default function FanverseSearch() {
        * pills, list). Topbar e orbe estão fora do scroll (fixos). */}
       <div className={styles.scroll} ref={scrollRef} onScroll={handleScroll}>
         <div className={styles.body}>
-          {/* Stage 1 (t=7s): headline centralizada com Typewriter.
+          {/* Stage 1 (t=7s): headline centralizada com Split Text.
            *
-           *  Per spec atualizado: insights -2pt no font-size + efeito
-           *  Typewriter (char-by-char reveal via stagger no motion).
-           *  Acima do texto, quando a frase tem `.album`, renderiza
-           *  uma thumb 72×72 que faz fade in/out junto com o
-           *  AnimatePresence. */}
+           *  Per spec atualizado: insights menores e responsivos +
+           *  efeito "Split text gradual" (word-by-word fade + slide
+           *  via stagger no motion). Acima do texto, quando a frase
+           *  tem `.album`, renderiza uma thumb 110×110 (90×90 mobile)
+           *  que faz fade in/out junto com o AnimatePresence. */}
           {showHeadline && (
             <div className={styles.headlineWrap}>
               {/* Album thumb — só aparece nas frases que carregam
@@ -563,7 +563,7 @@ export default function FanverseSearch() {
                     <strong className={styles.headlineLead}>
                       {currentPhrase.lead}
                     </strong>{' '}
-                    <Typewriter text={currentPhrase.text} />
+                    <SplitText text={currentPhrase.text} />
                   </motion.div>
                 </AnimatePresence>
               </div>
@@ -657,38 +657,44 @@ export default function FanverseSearch() {
 }
 
 /**
- * Typewriter — revela o texto char-by-char via stagger no motion.
+ * SplitText — efeito "Split text gradual" do motion: cada
+ * palavra entra com fade + slide-up (8px), uma após a outra
+ * via stagger (80ms entre palavras).
  *
- * Cada caractere vira um motion.span com variant fade-in. O
- * containerVariant aplica staggerChildren pra criar o efeito
- * cumulativo "digitando". Espaços viram &nbsp; pra preservar o
- * gap visual (motion.span inline default colapsa whitespace).
+ * Diferente do typewriter char-by-char, aqui o token é a
+ * PALAVRA — visualmente mais limpo e legível. Cada palavra é
+ * um motion.span inline-block (necessário pra y transform
+ * funcionar) com space regular entre elas.
  *
  * O `key` no parent (AnimatePresence) re-monta o componente a
- * cada troca de frase — então o typewriter recomeça do zero
+ * cada troca de frase — então o split recomeça do zero
  * automaticamente sem precisar de estado próprio.
  */
-function Typewriter({ text }: { text: string }) {
+function SplitText({ text }: { text: string }) {
+  const words = text.split(' ');
   return (
     <motion.span
-      className={styles.typewriter}
+      className={styles.splitText}
       initial="hidden"
       animate="visible"
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: 0.024 } },
+        visible: { transition: { staggerChildren: 0.08 } },
       }}
       aria-hidden="true"
     >
-      {text.split('').map((c, i) => (
+      {words.map((word, i) => (
         <motion.span
           key={i}
+          className={styles.splitWord}
           variants={{
-            hidden: { opacity: 0 },
-            visible: { opacity: 1 },
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0 },
           }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
         >
-          {c === ' ' ? ' ' : c}
+          {word}
+          {i < words.length - 1 ? ' ' : ''}
         </motion.span>
       ))}
     </motion.span>
