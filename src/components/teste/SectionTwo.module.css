@@ -52,3 +52,27 @@
   margin: 0;
   text-align: center;
 }
+
+/* Subline "Conectados" — per spec atualizado fica 14px menor
+ *  que o headline acima, mas mantém a mesma família Borscha
+ *  bold e o gradient branco. Funciona como uma "segunda linha"
+ *  da headline em vez de um caption em Inter cinza.
+ *
+ *  `calc(... - 14px)` clamp-wraps cada breakpoint do headline
+ *  diminuindo exatamente 14px: 34/min, 9.35vw-14px/fluid,
+ *  122/max. */
+.subline {
+  font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: clamp(34px, calc(9.35vw - 14px), 122px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  margin: 0;
+  text-align: center;
+  -webkit-font-smoothing: antialiased;
+}
