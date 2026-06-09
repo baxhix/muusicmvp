@@ -88,8 +88,29 @@ const QUIZ_PRIMEIRO_HIT: QuizPostData = {
 
 /* ── Media posts data ───────────────────────────────────── */
 const MEDIA: MediaPostData[] = [
-  // Newest post first — FESPOP show. Photos shot live; same set
-  // also flows through the Ana + Central chats (see fakeAna.ts).
+  // Newest post first — show album do FESPOP renderizado com
+  // Coverflow 3D (motion/react). Reúne todas as fotos do show
+  // num único post temático em vez do carousel flat tradicional.
+  {
+    type: 'show_album',
+    user: 'Central Ana Castela',
+    avatar: '/central-anacastela.png',
+    time: '5min',
+    likes: 9420,
+    comments: 612,
+    title: 'Show no FESPOP 2024',
+    showSubtitle: 'Parque do Lago, Cuiabá • 31/05',
+    description:
+      'Que noite, Cuiabá! 💛 Vocês fizeram esse FESPOP virar uma das nossas melhores apresentações do ano.\nArrasta pro lado pra ver tudo!',
+    items: [
+      { src: '/feed/ana-castela-fespop-1.png', alt: 'No palco do FESPOP com chapéu AGROTHOMMY, sorriso aberto pra plateia' },
+      { src: '/feed/ana-castela-fespop-2.png', alt: 'Sob o letreiro FESPOP iluminado, microfone em punho' },
+      { src: '/feed/ana-castela-fespop-3.png', alt: 'Close no palco, camisa branca bordada e expressão concentrada' },
+      { src: '/feed/ana-castela-fespop-4.png', alt: 'Cantando com luzes rosa ao fundo, momento épico do show' },
+      { src: '/feed/ana-castela-3.png', alt: 'Perfil de chapéu, em close íntimo durante balada' },
+      { src: '/feed/ana-castela-1.png', alt: 'No palco com microfone de glitter, energia total' },
+    ],
+  },
   {
     type: 'carousel',
     user: 'Central Ana Castela',

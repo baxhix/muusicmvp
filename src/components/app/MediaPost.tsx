@@ -5,6 +5,7 @@ import { track } from '@/lib/analytics';
 import { awardPoints } from '@/lib/rewards';
 import CommentsPanel from './CommentsPanel';
 import VerifiedBadge from './VerifiedBadge';
+import ShowAlbumCoverflow, { type ShowAlbumItem } from './ShowAlbumCoverflow';
 import styles from './MediaPost.module.css';
 
 /** Display name → verified flag. Centralized so the rule lives in
@@ -70,12 +71,28 @@ export type YoutubePostData  = BasePost & {
 export type MaterialAlertPostData = BasePost & {
   type: 'material_alert';
 };
+/** Show album — álbum de fotos de um show específico,
+ * apresentado num carousel estilo Apple Coverflow. Inclui
+ * metadata do show (nome/venue/data) no `title` + lista
+ * ordenada de fotos. O componente ShowAlbumCoverflow handle
+ * o efeito 3D, navegação, zoom-view. */
+export type ShowAlbumPostData = BasePost & {
+  type: 'show_album';
+  /** Subtítulo curto com venue + data (ex.: "Arena Fonte Nova,
+   *  Salvador • 24/05"). Renderizado entre o description e o
+   *  carousel. */
+  showSubtitle?: string;
+  /** Fotos do álbum — mínimo 1; recomendado 4-8 pro efeito
+   *  3D fazer sentido. Ordem do array é a ordem de exibição. */
+  items: ShowAlbumItem[];
+};
 export type MediaPostData    =
   | ImagePostData
   | VideoPostData
   | CarouselPostData
   | YoutubePostData
-  | MaterialAlertPostData;
+  | MaterialAlertPostData
+  | ShowAlbumPostData;
 
 /**
  * Extrai o videoId de uma URL de YouTube. Cobre os 3 formatos
@@ -208,6 +225,10 @@ function postKeyFor(data: MediaPostData): string {
     // Sem mídia; usa title+user pra estabilizar entre renders.
     return `media:material:${data.user}:${data.title ?? ''}`;
   }
+  if (data.type === 'show_album') {
+    // Show albums têm título único por show; usa pra chave estável.
+    return `media:show_album:${data.title ?? ''}:${data.items[0]?.src ?? ''}`;
+  }
   // For carousels, the first slide's src is stable across rerenders.
   const first = data.items[0]?.src ?? data.user;
   return `media:carousel:${first}`;
@@ -315,6 +336,26 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
           title={data.title}
           description={data.description}
         />
+      ) : data.type === 'show_album' ? (
+        /* Show album — Apple Coverflow das fotos do show. Title
+         *  + showSubtitle aparecem como header dentro do bloco
+         *  pra dar contexto antes do carousel 3D. */
+        <div>
+          {(data.title || data.showSubtitle) && (
+            <div className={styles.showAlbumHeader}>
+              {data.title && (
+                <h3 className={styles.showAlbumTitle}>{data.title}</h3>
+              )}
+              {data.showSubtitle && (
+                <p className={styles.showAlbumSubtitle}>{data.showSubtitle}</p>
+              )}
+            </div>
+          )}
+          <ShowAlbumCoverflow
+            items={data.items}
+            title={data.title ?? 'Álbum do show'}
+          />
+        </div>
       ) : (
         <div className={styles.videoWrap}>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
