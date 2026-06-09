@@ -137,14 +137,17 @@
 .toastExit  { animation: mockToastOut 0.38s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* X close button — desktop sempre visível com hover scale; no
- *  mobile escondido (swipe lateral é a action principal). Pos
- *  absoluta dentro do .toast, top-right canto. */
+ *  mobile escondido (swipe lateral é a action principal).
+ *  Pos absoluta vertical-centered no canto direito do .toast
+ *  (pill horizontal, então o X fica no meio do eixo Y). */
 .dismissBtn {
   position: absolute;
-  top: 8px;
+  top: 50%;
   right: 8px;
-  width: 22px;
-  height: 22px;
+  /* translateY -50% centra verticalmente na pill. */
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -153,8 +156,6 @@
   background: rgba(255, 255, 255, 0.1);
   color: rgba(245, 245, 247, 0.78);
   cursor: pointer;
-  /* Backdrop blur leve pra X parecer "flutuando" sobre o
-   *  conteúdo do toast quando o conteúdo é colorido. */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition:
@@ -162,20 +163,34 @@
     color 160ms ease,
     transform 160ms ease,
     opacity 220ms ease;
-  /* pointer-events: auto explicitamente pra sobrescrever o
-   *  none do .root quando o cap reduz opacity. */
   pointer-events: auto;
-  /* z-index acima do conteúdo do toast pra ficar sempre
-   *  clicável. */
   z-index: 1;
+  flex-shrink: 0;
 }
 .dismissBtn:hover {
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
-  transform: scale(1.08);
+  /* Hover escala 1.12 já incluindo o translate -50% inicial
+   *  pra não perder o vertical-center durante o hover. */
+  transform: translateY(-50%) scale(1.12);
 }
 .dismissBtn:active {
-  transform: scale(0.94);
+  transform: translateY(-50%) scale(0.94);
+}
+/* SVG do X menor pra caber no botão 18×18 sem ficar gordo. */
+.dismissBtn svg {
+  width: 8px;
+  height: 8px;
+}
+
+/* Desktop: reserva padding-right extra no .toast pra
+ *  acomodar o X sem sobrepor o texto. 18→36px adiciona
+ *  ~18px de respiro entre o último caractere e o botão.
+ *  Mobile mantém 18px (X escondido lá). */
+@media (pointer: fine) and (min-width: 541px) {
+  .toast {
+    padding-right: 36px;
+  }
 }
 
 /* Mobile: X escondido — swipe horizontal é a interação
