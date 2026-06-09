@@ -346,7 +346,13 @@ export default function FanverseSearch() {
      *  Castela, mesma música, conectados agora etc. quebram
      *  pra linha de baixo dando destaque. */
     line1: Segment[];
-    line2: string;
+    /* Segment[] (igual line1) — permite intercalar bold+muted
+     *  na segunda linha. Antes era string, mas per spec
+     *  atualizado "remova o bold de 'com você', na frase
+     *  Ana Castela com você. Deixe apenas Ana Castela em bold"
+     *  parte da line2 precisa ser muted. Cada outra phrase
+     *  usa um único segment bold pra manter a aparência. */
+    line2: Segment[];
     album?: { title: string; cover: string };
   };
   const PHRASES: Phrase[] = useMemo(() => {
@@ -365,7 +371,13 @@ export default function FanverseSearch() {
           { text: 'pessoas', bold: true },
           { text: ' curtindo', bold: false },
         ],
-        line2: 'Ana Castela com você',
+        /* Per spec atualizado: "Ana Castela" bold, " com você"
+         *  muted. Os outros line2s permanecem 100% bold (um
+         *  único segmento). */
+        line2: [
+          { text: 'Ana Castela', bold: true },
+          { text: ' com você', bold: false },
+        ],
         album: { title: ANA_ALBUMS[0].title, cover: ANA_ALBUMS[0].cover },
       },
       {
@@ -376,7 +388,7 @@ export default function FanverseSearch() {
           { text: 'pessoas', bold: true },
           { text: ' ouvindo', bold: false },
         ],
-        line2: 'a mesma música que você',
+        line2: [{ text: 'a mesma música que você', bold: true }],
         album: { title: ANA_ALBUMS[1].title, cover: ANA_ALBUMS[1].cover },
       },
       {
@@ -387,7 +399,7 @@ export default function FanverseSearch() {
           { text: 'pessoas', bold: true },
           { text: ' ouvindo', bold: false },
         ],
-        line2: 'o mesmo álbum',
+        line2: [{ text: 'o mesmo álbum', bold: true }],
         album: { title: ANA_ALBUMS[2].title, cover: ANA_ALBUMS[2].cover },
       },
       {
@@ -396,7 +408,7 @@ export default function FanverseSearch() {
           { text: String(snapshot.countriesCount), bold: true },
           { text: ' países', bold: false },
         ],
-        line2: 'conectados agora',
+        line2: [{ text: 'conectados agora', bold: true }],
         album: { title: ANA_ALBUMS[3].title, cover: ANA_ALBUMS[3].cover },
       },
     ];
@@ -408,7 +420,7 @@ export default function FanverseSearch() {
         { text: 'pessoas', bold: true },
         { text: ' ouvindo', bold: false },
       ],
-      line2: a.title,
+      line2: [{ text: a.title, bold: true }],
       album: { title: a.title, cover: a.cover },
     }));
     /* Zip intercalado: data[0], album[0], data[1], album[1], ...
@@ -617,7 +629,7 @@ export default function FanverseSearch() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  aria-label={`${currentPhrase.line1.map((s) => s.text).join('')} ${currentPhrase.line2}`}
+                  aria-label={`${currentPhrase.line1.map((s) => s.text).join('')} ${currentPhrase.line2.map((s) => s.text).join('')}`}
                 >
                   {/* Per spec atualizado: 2 linhas — line1 (número
                    *  + "pessoas" + conector) acima, line2 (highlight
@@ -634,7 +646,14 @@ export default function FanverseSearch() {
                     ))}
                   </div>
                   <div className={styles.headlineLine2}>
-                    {currentPhrase.line2}
+                    {currentPhrase.line2.map((seg, i) => (
+                      <span
+                        key={i}
+                        className={seg.bold ? styles.headlineBold : styles.headlineMuted}
+                      >
+                        {seg.text}
+                      </span>
+                    ))}
                   </div>
                 </motion.div>
               </AnimatePresence>
