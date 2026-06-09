@@ -24,13 +24,21 @@
   top: 32px;
   left: 50%;
   transform: translateX(-50%);
-  /* Width bumped 440 → 500 per product feedback ("Aumente o
-   * banner para caber a frase toda de lançamento") so the
-   * full "Lançamento em 28 de maio de 2026" sentence in the
-   * byline fits in one line without the ellipsis kicking in.
-   * The extra 60px goes mostly to the info column between
-   * the cover and the countdown chip. */
-  width: 500px;
+  /* Per spec atualizado "na versão desktop, faça que o banner
+   *  central seja responsivo e diminua de tamanho conforme a
+   *  tela diminui, para que nenhum elemento fique por cima".
+   *
+   *  Antes era 500px fixos — em viewports estreitos (~1100-
+   *  1300px) o banner sobrepunha o FeedPanel (que ocupa 502px
+   *  no canto direito: 104px offset + 398px width). Agora
+   *  cresce até 500px MAX e encolhe linearmente seguindo a
+   *  largura útil do centro da tela.
+   *
+   *  clamp(min, ideal, max): ideal = 100vw - 720px reserva
+   *  ~360px de cada lado pra painéis/FAB + margem. Min 380
+   *  garante que o cover + countdown chip ainda cabem com o
+   *  byline truncado por ellipsis. */
+  width: clamp(380px, calc(100vw - 720px), 500px);
   height: 80px;
   /* Banner é uma superfície ambiente que pinta sobre o mapa, mas
    * deve SEMPRE ceder espaço pros painéis interativos (SuperfansPanel
@@ -191,10 +199,12 @@
  * (value 14 → 13, label 12 → 11). */
 @media (max-width: 1024px) {
   .banner {
-    /* Widened 400 → 460 to keep the byline sentence on one
-     * line at tablet widths too — same reason as the desktop
-     * bump above. */
-    width: 460px;
+    /* Tablet também ganha clamp pra continuar responsivo
+     *  abaixo de 1024. Max 460 (mesmo que era fixo antes), min
+     *  340. Calc 100vw-580 reserva menos espaço (~290px de
+     *  cada lado) já que o chat dock + FAB são menores no
+     *  intervalo 720-1024. */
+    width: clamp(340px, calc(100vw - 580px), 460px);
     gap: 10px;
     padding: 0 12px;
   }
