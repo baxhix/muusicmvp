@@ -98,7 +98,33 @@ const GROUPS: MenuGroup[] = [
 export default function Navbar() {
   const [lang, setLang] = useState<Lang>('PT');
   const [menuOpen, setMenuOpen] = useState(false);
+  /* scrolled: ativa o "frosted shelf" (bg escuro + backdrop blur)
+   *  per spec atualizado. Toggle com hysteresis (entra @>24px,
+   *  sai @<8px) + rAF throttle pra não disparar setState em
+   *  cada frame de scroll inercial iOS. */
+  const [scrolled, setScrolled] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        setScrolled((prev) => {
+          if (prev) return y > 8;
+          return y > 24;
+        });
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
 
   /* Outside click + Escape fecham. Quando fecha, devolve o
    * foco pro trigger pra não deixar o usuário de teclado
@@ -133,7 +159,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={styles.navbar}>
+      <header className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''}`}>
         {/* Container 1200px com brand + nav nas pontas. */}
         <div className={styles.container}>
           <a href="/teste" className={styles.brand} aria-label="Fanverse — início">

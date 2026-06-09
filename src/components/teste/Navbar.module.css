@@ -10,18 +10,25 @@
    * trigger (3 traços) absolute fora dele à direita da
    * viewport. */
   padding: 18px clamp(20px, 4vw, 56px);
-  /* Frosted glass per product feedback "adicione cor no
-   * background do header e aplique o efeito de desfoque do
-   * fundo": preto translúcido + backdrop-filter blur, com
-   * hairline sutil de separação. -webkit prefix pra Safari. */
-  /* Header sem fundo — per product feedback "Remova o fundo do
-   * header". Antes era rgba(0,0,0,0.65) + backdrop-filter
-   * blur(12px) ("frosted shelf"). Agora o navbar fica
-   * completamente transparente; a galáxia do GalaxyBackdrop
-   * + nebulae transparecem direto através dele. Removido
-   * também o backdrop-filter porque sem o background
-   * translúcido ele não tem o que borrar. */
+  /* No topo da página, navbar transparente — a galáxia do
+   *  GalaxyBackdrop atravessa. Ao scrollar (state .scrolled
+   *  controlado pelo JS), liga o "frosted shelf" via classe
+   *  .navbarScrolled. Transição suave entre os dois estados. */
   background: transparent;
+  transition: background-color 280ms ease, backdrop-filter 280ms ease,
+    -webkit-backdrop-filter 280ms ease, border-bottom-color 280ms ease;
+  border-bottom: 1px solid transparent;
+}
+
+/* Scrolled state — bg dark translúcido + blur. Per spec
+ *  "background dark no header com blur no fundo ao fazer
+ *  scroll". Hairline na border-bottom dá a sensação de
+ *  shelf flutuante separado do conteúdo abaixo. */
+.navbarScrolled {
+  background: rgba(8, 8, 12, 0.72);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Container responsivo per product feedback "em telas menores,
@@ -620,6 +627,20 @@
   .container {
     /* Reserva 64px pro trigger (44px + gap). */
     max-width: calc(100vw - 2 * clamp(16px, 4vw, 56px) - 64px);
+    /* Per spec atualizado "No mobile o logotipo deve ficar
+     *  centralizado" — brand sai do flex flow via absolute,
+     *  container alinha o .nav (ctaPill) à direita. */
+    justify-content: flex-end;
+  }
+  /* Brand centralizado no viewport (ancorado ao .navbar
+   *  position:fixed que é o positioning context mais próximo).
+   *  pointer-events:auto reabilita o click no link âncora. */
+  .brand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
   }
   .navLink { display: none; }
   .nav { gap: 0; }
