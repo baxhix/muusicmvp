@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import styles from './FloatingAvatar.module.css';
 
 /**
@@ -181,70 +182,130 @@ export default function FloatingAvatar({
 
   const currentLabel = cycleList ? cycleList[labelIdx] : label;
 
+  /* Drift duration per avatar — derivado do hash do nome pra
+   *  cada um respirar no próprio tempo (5.5s a 8.5s). Match com
+   *  o que o CSS antigo fazia via --drift-duration. */
+  const driftDuration = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) {
+      h = (h * 31 + name.charCodeAt(i)) | 0;
+    }
+    return 5.5 + (Math.abs(h) % 30) / 10; // 5.5 → 8.5s
+  }, [name]);
+
+  /* Motion only kicks in pós-reveal pra evitar conflito com a
+   *  CSS transition de opacity/y do estado hidden→revealed. */
+  const driftAnim = revealed && circling
+    ? {
+        /* Trajetória "8-ish" — mesmo padrão do keyframe CSS
+         *  (tloop-circle-drift) só que x/y desacoplados pra
+         *  motion interpolar suave via keyframes array. */
+        x: [0, 6, -3, -7, 4, 0],
+        y: [0, -4, -8, 3, 7, 0],
+      }
+    : { x: 0, y: 0 };
+
   return (
-    <div
+    <motion.div
       className={[
         styles.wrap,
         labelPosition === 'below' ? styles.wrapColumn : styles.wrapRow,
-        revealed ? styles.revealed : styles.hidden,
         circling ? styles.circling : '',
-        circling && revealed ? styles.drifting : '',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{
-        ...style,
-        // CSS var pro animation-delay do drift — varia entre
-        // avatares pra desincronizar.
-        ...(circling
-          ? ({ ['--drift-delay' as string]: `${driftDelay}s` })
-          : {}),
+      style={style}
+      /* Reveal — opacity 0/8px → 1/0. y é a entrada sutil
+       *  vinda de baixo. Spring suave pra não bater duro. */
+      initial={{ opacity: 0, y: 8 }}
+      animate={{
+        opacity: revealed ? 1 : 0,
+        y: revealed ? 0 : 8,
       }}
+      transition={{
+        opacity: { duration: revealed ? 0.7 : 0.4, ease: [0.22, 1, 0.36, 1] },
+        y: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+      }}
+      /* Hover — scale up sutil + ring brilho via filter. Não
+       *  afeta o drift (motion compõe transforms). */
+      whileHover={{ scale: 1.08 }}
     >
-      <div
-        className={[
-          styles.avatar,
-          ringClass,
-          // Sem src → aplica bg cinza wireframe (.avatarFallback)
-          // pra que as iniciais ainda apareçam num "card". Com
-          // src, bg fica transparente pra não aparecer ao redor
-          // da foto (que pode ter transparência no PNG).
-          !src ? styles.avatarFallback : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        style={{
-          width: px,
-          height: px,
+      {/* Drift wrapper — motion separado pro x/y oscilar em
+       *  loop sem competir com o opacity/y do reveal. Aplicado
+       *  só em modo .circling per spec original. */}
+      <motion.div
+        style={{ display: 'contents' }}
+        animate={driftAnim}
+        transition={{
+          duration: driftDuration,
+          repeat: revealed && circling ? Infinity : 0,
+          ease: 'easeInOut',
+          delay: driftDelay,
+          times: [0, 0.2, 0.4, 0.6, 0.8, 1],
         }}
       >
-        {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={name} className={styles.avatarImg} />
-        ) : (
-          <span className={styles.avatarInitials}>{initials}</span>
-        )}
-      </div>
+        <motion.div
+          className={[
+            styles.avatar,
+            ringClass,
+            !src ? styles.avatarFallback : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          style={{ width: px, height: px }}
+          /* Tap feedback — pressiona o avatar levemente. */
+          whileTap={{ scale: 0.94 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+        >
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src} alt={name} className={styles.avatarImg} />
+          ) : (
+            <span className={styles.avatarInitials}>{initials}</span>
+          )}
+        </motion.div>
 
-      {currentLabel && (
-        <div className={styles.labelGroup}>
-          {/* Ícone de "ouvindo" — pequena barra de chart pulsa
-           *  pra denotar atividade. */}
-          <span className={styles.listeningIcon} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-          <span
-            className={`${styles.label} ${
-              labelVisible ? styles.labelVisible : styles.labelInvisible
-            }`}
-          >
-            {currentLabel}
-          </span>
-        </div>
-      )}
-    </div>
+        {currentLabel && (
+          <div className={styles.labelGroup}>
+            {/* Ícone de "ouvindo" — 3 barras animadas via motion
+             *  em vez de CSS keyframes. Cada barra com delay
+             *  diferente pra dar o efeito de equalizer. */}
+            <span className={styles.listeningIcon} aria-hidden="true">
+              {[6, 11, 8].map((baseHeight, i) => (
+                <motion.span
+                  key={i}
+                  style={{ height: baseHeight }}
+                  animate={{
+                    scaleY: [1, 0.4, 1, 0.7, 1],
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    delay: i * 0.15,
+                  }}
+                />
+              ))}
+            </span>
+            {/* AnimatePresence pra crossfade entre labels do
+             *  cycleList — quando o currentLabel muda, o anterior
+             *  exit (fade out) e o novo enter (fade in) sincros. */}
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={currentLabel}
+                className={styles.label}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: labelVisible ? 1 : 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              >
+                {currentLabel}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
