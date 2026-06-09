@@ -1,49 +1,40 @@
-/* ChatFeatureDemo — feature da Section 3.
- *  Copy à esquerda + bubbles flutuando livres à direita.
- *  Sem mockup de phone — bubbles aparecem direto na tela.
+/* ChatFeatureDemo — Feature 01 da Section 3.
+ *  Per spec atualizado: headline em 1 linha centralizado +
+ *  stream de bubbles abaixo full-width. Pattern alinhado com
+ *  a CursorTrailGallery (Feature 02). Sem descrição, sem
+ *  coluna de copy à esquerda.
  */
 
 .root {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 56px;
-  align-items: center;
-  max-width: 1040px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 36px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-/* Copy à esquerda — título + descrição 2 linhas. */
-.copy {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  max-width: 460px;
-}
+/* Headline em 1 linha, centralizado. Mesmo size/clamp da
+ *  Feature 02 pra simetria visual. */
 .featureTitle {
   font-family: 'Borscha', Inter, sans-serif;
-  font-size: clamp(40px, 5.4vw, 60px);
+  font-size: clamp(36px, 5vw, 60px);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.02em;
   color: #fff;
   margin: 0;
-}
-.featureDesc {
-  font-size: 17px;
-  line-height: 1.5;
-  color: rgba(245, 245, 247, 0.72);
-  letter-spacing: -0.005em;
-  margin: 0;
-  /* Cap visual em 2 linhas per spec. Line-clamp garante que
-   *  texto longo não estoura — mesmo se conteúdo for editado. */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  text-align: center;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Stream — área onde os bubbles aparecem flutuando livres. */
+/* Stream — área onde os bubbles aparecem flutuando livres.
+ *  Centralizada com max-width pra evitar bubbles esticando
+ *  demais em desktops largos (a copy do bubble fica difícil
+ *  de ler full-width). */
 .stream {
   display: flex;
   flex-direction: column;
@@ -51,8 +42,9 @@
   /* Altura suficiente pra acomodar o pior caso (~7 bubbles)
    *  sem layout-shift quando bubbles entram/saem. */
   min-height: 380px;
-  /* Padding lateral pequeno pra bubbles não colarem nas
-   *  bordas visuais. */
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
   padding: 8px 4px;
 }
 
@@ -74,9 +66,6 @@
   line-height: 1.4;
   letter-spacing: -0.005em;
   word-break: break-word;
-  /* Sombra leve pros bubbles "saltarem" do bg sem o frame
-   *  de phone — agora que estão soltos, precisam de mais
-   *  presença visual. */
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.45),
     0 2px 6px rgba(0, 0, 0, 0.3);
@@ -117,20 +106,13 @@
   display: inline-block;
 }
 
-/* Mobile — copy em cima, stream abaixo, ambos centralizados. */
+/* Mobile — gap menor + stream mais baixa. */
 @media (max-width: 900px) {
   .root {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-  .copy {
-    max-width: 100%;
-    text-align: left;
-  }
-  .featureDesc {
-    font-size: 16px;
+    gap: 24px;
   }
   .stream {
     min-height: 320px;
+    max-width: 100%;
   }
 }

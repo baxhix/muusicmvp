@@ -110,15 +110,10 @@ export default function ChatFeatureDemo() {
 
   return (
     <div ref={ref} className={styles.root}>
-      {/* Copy à ESQUERDA (per spec atualizado) — título +
-       *  descrição 2-linhas. Badge "Feature 01" removido. */}
-      <div className={styles.copy}>
-        <h3 className={styles.featureTitle}>Chat com superfãs</h3>
-        <p className={styles.featureDesc}>
-          Conecte-se com fãs do mundo todo em tempo real.
-          Combine de ir num show juntos, troque playlists.
-        </p>
-      </div>
+      {/* Per spec atualizado: headline em 1 linha centralizado
+       *  (sem descrição, sem coluna de copy). Pattern alinhado
+       *  com a CursorTrailGallery (Feature 02). */}
+      <h3 className={styles.featureTitle}>Chat com superfãs</h3>
 
       {/* Bubbles SOLTOS — sem mockup de celular, sem header,
        *  sem status bar. As caixas aparecem flutuando no canvas
