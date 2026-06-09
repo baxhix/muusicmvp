@@ -35,6 +35,14 @@ export default function HeroSection() {
         <p className={styles.phrase}>
           O lugar certo para criar conexões
         </p>
+        {/* CTA mobile — só aparece em mobile per spec atualizado
+         *  "No mobile, deixe esse CTA abaixo do headline Superfãs".
+         *  No desktop o CTA vive na Navbar; no mobile a navbar
+         *  esconde o CTA e mostramos aqui. Lux estática atrás
+         *  (só muda cor, não posição) — mesmo padrão do Navbar. */}
+        <a href="/auth" className={styles.heroMobileCta}>
+          Meu Fanverse
+        </a>
         <div className={styles.phonesWrap}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

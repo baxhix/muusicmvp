@@ -192,9 +192,11 @@
   );
   background-size: 300% 100%;
   background-position: 0% 50%;
-  animation:
-    ctaPillShift 6s linear infinite,
-    ctaShadowDrift 8s ease-in-out infinite;
+  /* Per spec atualizado "mantenha a lux por trás do CTA estática,
+   *  apenas mudando de cor, não de posição" — só o shift de cor
+   *  (background-position via ctaPillShift). O drift translateX
+   *  (ctaShadowDrift) foi removido. */
+  animation: ctaPillShift 6s linear infinite;
   filter: blur(24px);
   opacity: 0.75;
   pointer-events: none;
@@ -217,16 +219,8 @@
   to   { background-position: -200% 50%; }
 }
 
-/* Drift horizontal da sombra inteira — translateX simétrico
- * ±26px (era ±18). O drift maior é o que produz a leitura
- * "sombra deslizando ATRÁS do botão": quando o pseudo se
- * move pra um lado, o blur vaza forte pra esse lado e some
- * do oposto, criando um "respiro" de cor que não envolve o
- * botão inteiro. */
-@keyframes ctaShadowDrift {
-  0%, 100% { transform: translateX(-26px); }
-  50%      { transform: translateX(26px); }
-}
+/* ctaShadowDrift removida — per spec atualizado a lux fica
+ *  estática (sem translateX). Só o ctaPillShift muda cor. */
 
 @media (prefers-reduced-motion: reduce) {
   .ctaPill::before {
@@ -644,9 +638,11 @@
   }
   .navLink { display: none; }
   .nav { gap: 0; }
+  /* Per spec atualizado "No mobile, deixe esse CTA abaixo do
+   *  headline Superfãs" — escondemos o CTA da navbar; a Hero
+   *  renderiza sua própria CTA (.heroMobileCta) abaixo do título. */
   .ctaPill {
-    white-space: nowrap;
-    padding: 17px 24px;
+    display: none;
   }
   .menuTrigger { width: 42px; height: 42px; }
 

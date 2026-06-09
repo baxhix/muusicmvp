@@ -29,8 +29,10 @@
 .headline {
   font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  /* -15% per product feedback. 56→48, 11→9.35, 160→136. */
-  font-size: clamp(48px, 9.35vw, 136px);
+  /* Per spec atualizado "Diminua para 84px Fã e Artista
+   *  Conectados" — max 84px (era 136). Mantém clamp pra
+   *  responsividade até 84 no viewport amplo. */
+  font-size: clamp(40px, 9.35vw, 84px);
   line-height: 0.95;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
@@ -64,7 +66,9 @@
 .subline {
   font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  font-size: clamp(34px, calc(9.35vw - 14px), 122px);
+  /* 14px menor que o headline em cada breakpoint per spec
+   *  original. Com headline max 84, subline max 70. */
+  font-size: clamp(28px, calc(9.35vw - 14px), 70px);
   line-height: 0.95;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
