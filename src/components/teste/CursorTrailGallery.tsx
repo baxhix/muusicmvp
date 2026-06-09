@@ -146,15 +146,14 @@ export default function CursorTrailGallery() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.copy}>
-        <span className={styles.featureBadge}>Feature 02</span>
-        <h3 className={styles.featureTitle}>Conteúdo exclusivo</h3>
-        <p className={styles.featureDesc}>
-          Bastidores, ensaios e fotos inéditas só pra quem pertence ao
-          Fanverse. Passe o cursor pra revelar.
-        </p>
-      </div>
+      {/* Headline centralizado em uma linha — per spec atualizado.
+       *  Sem badge "Feature 02" nem descrição multi-linha; a copy
+       *  fica enxuta pra dar protagonismo à trail abaixo. */}
+      <h3 className={styles.featureTitle}>Conteúdo exclusivo</h3>
 
+      {/* Surface full-width abaixo do headline. Sem box (sem bg
+       *  gradient, sem border): a trail é desenhada direto sobre
+       *  a galáxia da landing. */}
       <div
         ref={surfaceRef}
         className={styles.surface}
