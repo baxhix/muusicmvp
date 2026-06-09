@@ -20,10 +20,12 @@
 .stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 11;
+  /* Aspect 4:3 dá mais altura pros cards quadrados respirarem.
+   *  Antes era 16:11 (landscape), que apertava a vertical. */
+  aspect-ratio: 4 / 3;
   /* Perspective dá a sensação de profundidade — sem isso, o
    *  rotateY parece "achatado". 1100px é um sweet spot que
-   *  acomoda cards 76% wide sem distorção excessiva. */
+   *  acomoda cards rotacionados sem distorção excessiva. */
   perspective: 1100px;
   perspective-origin: 50% 50%;
   /* Bg gradient sutil pra emoldurar os cards, igual o
@@ -34,7 +36,10 @@
       rgba(255, 255, 255, 0.04),
       rgba(0, 0, 0, 0) 70%
     );
-  overflow: hidden;
+  /* overflow: visible pra cards rotacionados não serem cortados
+   *  nas bordas — ainda assim os ±2 já fadeam pra 0 opacidade,
+   *  então não há cards estourando pra fora visualmente. */
+  overflow: visible;
   /* Toque rola horizontal (drag), mas vertical fica livre pra
    *  scroll do feed. */
   touch-action: pan-y;
@@ -48,18 +53,18 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  /* Negative margin = trazer pra centro (substitui translateX
-   *  -50%; queremos não interferir com o motion transform). */
   margin: 0;
-  /* Card é 60% do stage de largura no desktop. Aspect ratio
-   *  1:1 (quadrado) — fotos de show ficam bem em quadrado pra
-   *  Coverflow. */
-  width: 58%;
+  /* Card é 50% do stage de largura no desktop, aspect 1:1 —
+   *  fotos de show ficam bem em quadrado pra Coverflow. Reduzi
+   *  de 58% pra 50% pra dar mais respiro lateral pros peeks. */
+  width: 50%;
   aspect-ratio: 1 / 1;
-  /* Translate -50% -50% inicial pra ancorar no centro do
-   *  stage. Motion vai SOMAR x/y/scale/rotateY a partir daqui
-   *  (motion compõe transforms preservando esse base). */
-  transform: translate(-50%, -50%);
+  /* NOTA: a CSS `transform: translate(-50%, -50%)` foi removida —
+   *  motion sobrescrevia essa property e perdíamos o centering.
+   *  Agora o transformTemplate no motion.button injeta esse
+   *  `translate(-50%, -50%)` ANTES do transform gerado por motion
+   *  (rotateY/scale/translateX percentage), restaurando o anchor
+   *  e fazendo a rotação girar em torno do centro do próprio card. */
   /* Border-radius generoso — coverflow vibe + match com cards
    *  do resto do app. */
   border-radius: 14px;

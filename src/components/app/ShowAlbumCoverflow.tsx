@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import styles from './ShowAlbumCoverflow.module.css';
 
@@ -49,18 +50,18 @@ interface ShowAlbumCoverflowProps {
   title: string;
 }
 
-/* Tuning constants — calibrados pra match o modelo de referência
- *  enviado pelo cliente: cards laterais quase-edge-on (rotação
- *  agressiva) com pouco translateX, mostrando só uma fatia
- *  estreita do conteúdo. Card central full size e square. */
-const SIDE_TRANSLATE_X = 75;   // % da largura do card pra cada lado
-const SIDE_TRANSLATE_Z = -100; // px (negativo = atrás no Z)
-const SIDE_ROTATE_Y = 65;      // graus — quase edge-on como o ref
-const SIDE_SCALE = 0.92;       // mantém altura próxima do central
+/* Tuning constants — calibrados pra match o modelo de referência:
+ *  cards laterais quase-edge-on (rotação agressiva) com translateX
+ *  moderado pra ficarem encostados ao card central sem extrapolar
+ *  o stage. Card central full size square. */
+const SIDE_TRANSLATE_X = 42;   // % da largura do card pra cada lado
+const SIDE_TRANSLATE_Z = -80;  // px (negativo = atrás no Z)
+const SIDE_ROTATE_Y = 62;      // graus — edge-on como o ref
+const SIDE_SCALE = 0.94;       // altura quase igual ao central
 /* Card 2+ de distância: rotação ainda maior, mais atrás,
  *  opacity baixa pra fade pra fora. */
-const FAR_TRANSLATE_X = 105;
-const FAR_TRANSLATE_Z = -220;
+const FAR_TRANSLATE_X = 70;
+const FAR_TRANSLATE_Z = -200;
 const FAR_ROTATE_Y = 78;
 const FAR_SCALE = 0.78;
 
@@ -70,6 +71,13 @@ export default function ShowAlbumCoverflow({
 }: ShowAlbumCoverflowProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
+  /* Portal gating — só monta após o client mount pra evitar
+   *  problema de SSR (document.body não existe). Quando o zoom
+   *  estiver aberto, ele é renderizado direto em document.body
+   *  pra escapar o containing block do feed (que tem overflow
+   *  hidden / position relative e restringia o overlay). */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -173,6 +181,17 @@ export default function ShowAlbumCoverflow({
                 opacity,
               }}
               transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+              /* CRITICAL — motion sobrescreve a property `transform`
+               *  da CSS, então o `translate(-50%, -50%)` que ancorava
+               *  o card no centro (via top:50%/left:50%) era perdido,
+               *  deixando os cards flat sem rotação 3D visível. O
+               *  transformTemplate prepend o -50% -50% ANTES do
+               *  transform gerado por motion, restaurando o anchor
+               *  e fazendo a rotação girar em torno do próprio
+               *  centro do card. */
+              transformTemplate={(_props, generatedTransform) =>
+                `translate(-50%, -50%) ${generatedTransform}`
+              }
               onClick={() => {
                 if (isCenter) {
                   /* Tap no card central abre zoom-view (fullscreen
@@ -256,8 +275,13 @@ export default function ShowAlbumCoverflow({
         )}
       </div>
 
-      {/* Zoom overlay: tap no card central abre full-screen pra
-          inspecionar detalhes. Tap fora ou Esc fecha. */}
+      {/* Zoom overlay: portal-ed pra document.body pra escapar o
+          containing block do feed (que tem overflow:hidden e cria
+          stacking context que limitava o overlay à área do feed).
+          Renderizando direto em body, o motion.div fixed cobre
+          o viewport inteiro independente de onde o componente
+          tá montado. */}
+      {mounted && createPortal(
       <AnimatePresence>
         {zoomOpen && (
           <motion.div
@@ -300,7 +324,9 @@ export default function ShowAlbumCoverflow({
             </button>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body,
+      )}
     </div>
   );
 }
