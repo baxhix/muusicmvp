@@ -22,13 +22,16 @@
   justify-content: center;
   padding: calc(22vh + 50px) 24px 24px;
 }
-/* Per spec atualizado "aumente a altura do header. Está muito
- *  espremido" — mobile ganha respiro extra no topo e bottom
- *  pra acomodar a nova row do CTA abaixo dos phones sem
- *  espremer o conteúdo do hero. */
+/* Per spec atualizado "era pra aumentar a altura do header
+ *  mobile não do desktop" — correção: a iteração anterior
+ *  usou calc(16vh + 60px) que em viewports mobile típicos
+ *  (~800px tall) dava ~188px, MENOR que o default desktop
+ *  22vh+50=226. Agora cresce pra calc(28vh + 100px) ≈ 324px
+ *  num viewport de 800px — bem acima do original e dando o
+ *  respiro pedido. Desktop continua intacto (default acima). */
 @media (max-width: 720px) {
   .hero {
-    padding-top: calc(16vh + 60px);
+    padding-top: calc(28vh + 100px);
     padding-bottom: 80px;
   }
 }
