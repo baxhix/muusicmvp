@@ -14,8 +14,10 @@
   padding: 0 24px;
 }
 
-/* Headline em uma linha, centralizado. Borscha + clamp pro
- *  size escalar bem entre desktop/mobile. */
+/* Headline em uma linha (desktop), centralizado. Borscha +
+ *  clamp pro size escalar bem entre desktop/mobile. Mobile
+ *  permite 2 linhas — espec atualizado "deixe em duas linhas
+ *  o headline Conteúdo exclusivo" — gerenciado no @media abaixo. */
 .featureTitle {
   font-family: 'Borscha', Inter, sans-serif;
   font-size: clamp(36px, 5vw, 60px);
@@ -104,6 +106,14 @@
 @media (max-width: 900px) {
   .root {
     gap: 24px;
+  }
+  /* Per spec atualizado "no mobile, deixe em duas linhas o
+   *  headline Conteúdo exclusivo" — destrava o nowrap e
+   *  permite o wrap natural entre as duas palavras. line-height
+   *  sobe pra 1.1 pra acomodar 2 linhas sem cortar. */
+  .featureTitle {
+    white-space: normal;
+    line-height: 1.1;
   }
   .surface {
     height: 380px;

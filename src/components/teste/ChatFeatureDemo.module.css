@@ -88,10 +88,14 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Sent bubble — gradient azul iMessage, alinhada à direita
- *  com canto inferior direito fechado. */
+/* Sent bubble — per spec atualizado "mude o azul para um
+ *  roxo e dark os bullets do chat na landing page". Antes
+ *  era gradient azul iMessage (#5ba6ff → #2f74e8). Agora
+ *  gradient roxo-dark (#6d28d9 → #3b1078) que combina com a
+ *  paleta da landing (mesmo lineage de purple do CTA Meu
+ *  Fanverse). Cantos e tail mantidos. */
 .bubbleSent {
-  background: linear-gradient(135deg, #5ba6ff 0%, #2f74e8 100%);
+  background: linear-gradient(135deg, #6d28d9 0%, #3b1078 100%);
   color: #fff;
   border-bottom-right-radius: 5px;
 }
