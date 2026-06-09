@@ -1,17 +1,22 @@
 'use client';
 
 import SectionCTA from './SectionCTA';
+import ChatFeatureDemo from './ChatFeatureDemo';
 import styles from './SectionThree.module.css';
 
 /**
- * Section 3 — mock final pra fechar a constelação.
+ * Section 3 — features da plataforma. Per spec atualizado,
+ * essa section abriga as features animadas que mostram o que
+ * o usuário pode fazer dentro do app. Primeira feature: Chat —
+ * bubbles animados entrando + indicador "escrevendo" (estilo
+ * iMessage).
  *
- * Conteúdo textual segue as typography rules:
- *   - Headline 1 palavra ALL CAPS 80px ("PERTENCER").
- *   - Frase >2 palavras em Inter 16px cinza.
+ * Próximas features (lugar reservado): playlist colaborativa,
+ * notifications stack, fanpoints celebration, etc — cada uma
+ * vai virar uma feature demo dentro dessa section.
  *
- * Avatares vivem na <AvatarConstellation /> — esta section é
- * só gatilho de scroll via `id="section-3"`.
+ * Headline + phrase + CTA continuam no topo pra ancorar a
+ * narrativa; o ChatFeatureDemo aparece logo abaixo.
  */
 export default function SectionThree() {
   return (
@@ -20,14 +25,18 @@ export default function SectionThree() {
       data-section="3"
       className={styles.section}
     >
-      {/* Sparkles removido — star field global em GalaxyBackdrop. */}
-
       <div className={styles.center}>
         <h2 className={styles.headline}>Pertencer</h2>
         <p className={styles.phrase}>
           Descubra, conecte e pertença a uma comunidade
         </p>
         <SectionCTA />
+      </div>
+
+      {/* Feature 01 — Chat com superfãs. Bubbles animados +
+       *  indicador "escrevendo" entram em loop via motion. */}
+      <div className={styles.features}>
+        <ChatFeatureDemo />
       </div>
     </section>
   );

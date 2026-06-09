@@ -52,3 +52,18 @@
   margin: 0;
   text-align: center;
 }
+
+/* Features stripe — abriga os feature demos abaixo do
+ *  headline+CTA. Margin-top generoso pra criar gap visual
+ *  e respiro com a constelação de avatares ao fundo. */
+.features {
+  margin-top: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 100px;
+  /* relative + z-index pra ficar acima dos avatares da
+   *  constellation (que tem z-index 30 no FloatingAvatar mas
+   *  features fica logo abaixo do conteúdo principal). */
+  position: relative;
+  z-index: 4;
+}

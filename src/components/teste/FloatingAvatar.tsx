@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useScroll, useTransform, useSpring } from 'motion/react';
 import styles from './FloatingAvatar.module.css';
 
 /**
@@ -182,9 +182,12 @@ export default function FloatingAvatar({
 
   const currentLabel = cycleList ? cycleList[labelIdx] : label;
 
-  /* Drift duration per avatar — derivado do hash do nome pra
-   *  cada um respirar no próprio tempo (5.5s a 8.5s). Match com
-   *  o que o CSS antigo fazia via --drift-duration. */
+  /* Drift duration + amplitude per avatar — derivados do hash
+   *  do nome pra cada um respirar no próprio tempo (5.5–8.5s)
+   *  e ter trajetória própria. Antes só `circling` driftava;
+   *  agora TODOS os avatares revealed fazem drift suave per
+   *  spec "Quando a página estiver sem mexer eles devem ter o
+   *  movimento de flutuação". */
   const driftDuration = useMemo(() => {
     let h = 0;
     for (let i = 0; i < name.length; i++) {
@@ -193,17 +196,52 @@ export default function FloatingAvatar({
     return 5.5 + (Math.abs(h) % 30) / 10; // 5.5 → 8.5s
   }, [name]);
 
-  /* Motion only kicks in pós-reveal pra evitar conflito com a
-   *  CSS transition de opacity/y do estado hidden→revealed. */
-  const driftAnim = revealed && circling
+  /* Hash-derived phase offset pra cada avatar começar em ponto
+   *  diferente do ciclo — desincroniza o respirar coletivo. */
+  const driftPhase = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) {
+      h = (h * 17 + name.charCodeAt(i)) | 0;
+    }
+    return (Math.abs(h) % 100) / 100; // 0 → 1
+  }, [name]);
+
+  /* Amplitude do drift — circling tem trajetória maior; resto
+   *  faz floating mais sutil (±3-5px) pra não distrair. */
+  const driftAmpX = circling ? 7 : 3.5;
+  const driftAmpY = circling ? 8 : 4;
+
+  const driftAnim = revealed
     ? {
-        /* Trajetória "8-ish" — mesmo padrão do keyframe CSS
-         *  (tloop-circle-drift) só que x/y desacoplados pra
-         *  motion interpolar suave via keyframes array. */
-        x: [0, 6, -3, -7, 4, 0],
-        y: [0, -4, -8, 3, 7, 0],
+        x: [0, driftAmpX, -driftAmpX * 0.5, -driftAmpX, driftAmpX * 0.6, 0],
+        y: [0, -driftAmpY * 0.5, -driftAmpY, driftAmpY * 0.4, driftAmpY, 0],
       }
     : { x: 0, y: 0 };
+
+  /* Scroll-driven movement — useScroll do window. Cada avatar
+   *  reage com offset proporcional ao seu hash (parallax). O
+   *  spring suaviza o follow do scroll pra movimento natural,
+   *  não 1:1 com o pixel. */
+  const { scrollY } = useScroll();
+  /* Amount per avatar — parallax depth derivado do hash do
+   *  nome (-1 a +1, escalado por 60px). Alguns sobem com
+   *  scroll, outros descem, criando dinamismo. */
+  const parallaxDepth = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) {
+      h = (h * 23 + name.charCodeAt(i)) | 0;
+    }
+    return (((Math.abs(h) % 200) / 100) - 1) * 0.18; // -0.18 → +0.18
+  }, [name]);
+  /* Maps scroll position pra um offset Y, com spring pra
+   *  suavidade. scrollY * parallaxDepth dá o "puxão" baseado
+   *  na profundidade. */
+  const scrollOffset = useTransform(scrollY, (v) => v * parallaxDepth);
+  const smoothScrollOffset = useSpring(scrollOffset, {
+    stiffness: 120,
+    damping: 30,
+    mass: 0.6,
+  });
 
   return (
     <motion.div
@@ -215,33 +253,34 @@ export default function FloatingAvatar({
       ]
         .filter(Boolean)
         .join(' ')}
-      style={style}
-      /* Reveal — opacity 0/8px → 1/0. y é a entrada sutil
-       *  vinda de baixo. Spring suave pra não bater duro. */
-      initial={{ opacity: 0, y: 8 }}
-      animate={{
-        opacity: revealed ? 1 : 0,
-        y: revealed ? 0 : 8,
-      }}
+      /* y como motion value (smoothScrollOffset) — parallax que
+       *  segue o scroll com spring smoothing. Combina com o
+       *  driftWrapper interior (que adiciona oscilação x/y). */
+      style={{ ...style, y: smoothScrollOffset }}
+      /* Reveal — só opacity agora (y delegado ao motion value
+       *  scroll-driven). */
+      initial={{ opacity: 0 }}
+      animate={{ opacity: revealed ? 1 : 0 }}
       transition={{
         opacity: { duration: revealed ? 0.7 : 0.4, ease: [0.22, 1, 0.36, 1] },
-        y: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
       }}
-      /* Hover — scale up sutil + ring brilho via filter. Não
-       *  afeta o drift (motion compõe transforms). */
+      /* Hover — scale up sutil. Não afeta o drift nem o
+       *  parallax (motion compõe transforms via motion values). */
       whileHover={{ scale: 1.08 }}
     >
-      {/* Drift wrapper — motion separado pro x/y oscilar em
-       *  loop sem competir com o opacity/y do reveal. Aplicado
-       *  só em modo .circling per spec original. */}
+      {/* Drift wrapper — todos os avatares (não só circling)
+       *  agora têm float contínuo. Phase offset hash-derived
+       *  desincroniza cada um do coletivo. */}
       <motion.div
         style={{ display: 'contents' }}
         animate={driftAnim}
         transition={{
           duration: driftDuration,
-          repeat: revealed && circling ? Infinity : 0,
+          repeat: revealed ? Infinity : 0,
           ease: 'easeInOut',
-          delay: driftDelay,
+          /* delay negativo coloca o loop em fase aleatória pra
+           *  cada avatar começar num ponto diferente do drift. */
+          delay: (driftDelay || 0) - driftPhase * driftDuration,
           times: [0, 0.2, 0.4, 0.6, 0.8, 1],
         }}
       >

@@ -407,9 +407,9 @@ button.fileIcon:hover {
 }
 
 .lightboxClose {
-  position: absolute;
-  top: 18px;
-  right: 18px;
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top, 0px));
+  right: max(18px, env(safe-area-inset-right, 0px));
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -420,6 +420,9 @@ button.fileIcon:hover {
   border-radius: 50%;
   color: #fff;
   cursor: pointer;
+  /* z-index alto pra estar SEMPRE acima da imagem e do stage. */
+  z-index: 12;
+  pointer-events: auto;
   transition: background 140ms ease, transform 140ms ease;
 }
 .lightboxClose:hover {
@@ -432,26 +435,34 @@ button.fileIcon:hover {
 }
 
 .lightboxStage {
-  /* Stage ocupa o overlay inteiro — image absoluta no centro,
-   *  meta + dots posicionados ao bottom via absolute. */
+  /* Stage NÃO ocupa 100vw×100vh — só wrap as inner controls
+   *  pra clicks no backdrop (fora dos elementos) cheguem ao
+   *  overlay onClick → onClose. Antes o stage capturava clicks
+   *  no viewport inteiro via stopPropagation, bloqueando o
+   *  dismiss por outside-click. */
   position: relative;
-  width: 100vw;
-  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* pointer-events: none deixa o stage transparente pra clicks
+   *  — só os children específicos (img, meta, dots) com
+   *  pointer-events: auto + stopPropagation capturam. */
+  pointer-events: none;
 }
 .lightboxImg {
-  /* Edge-to-edge: ocupa o viewport inteiro, contain pra preservar
-   *  proporção. Sem border-radius (lightbox limpo estilo iOS
-   *  Photos / Instagram). */
-  width: 100vw;
-  height: 100vh;
+  /* Width/height auto + max 100vw/vh: o elemento <img> tem
+   *  bounding box IGUAL ao conteúdo visível da imagem. Clicks
+   *  fora do visível (área escura do backdrop) NÃO acertam o
+   *  IMG — vão direto pro overlay onClose. */
   max-width: 100vw;
   max-height: 100vh;
+  width: auto;
+  height: auto;
   object-fit: contain;
   display: block;
-  /* Permitir drag horizontal pra trocar de imagem. */
+  /* pointer-events: auto reabilita só na imagem (stage está
+   *  none, e img precisa receber drag + stopPropagation). */
+  pointer-events: auto;
   touch-action: pan-y pinch-zoom;
   user-select: none;
   -webkit-user-drag: none;
@@ -459,7 +470,7 @@ button.fileIcon:hover {
 .lightboxMeta {
   /* Bottom pill — flutua sobre a imagem, alinhado ao bottom
    *  do viewport com gutters pra safe-area. */
-  position: absolute;
+  position: fixed;
   bottom: max(72px, calc(env(safe-area-inset-bottom, 0px) + 72px));
   left: 50%;
   transform: translateX(-50%);
@@ -472,7 +483,10 @@ button.fileIcon:hover {
   border-radius: 999px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 2;
+  /* z-index acima do stage e da img pra clicks no pill
+   *  pegarem (a img tinha cobertura total antes). */
+  z-index: 10;
+  pointer-events: auto;
 }
 .lightboxName {
   font-size: 13px;
@@ -513,7 +527,7 @@ button.fileIcon:hover {
 /* Nav arrows — laterais do viewport, vertically centered.
  *  Brand-aware: gradient stroke quando hover. */
 .lightboxNav {
-  position: absolute;
+  position: fixed;
   top: 50%;
   transform: translateY(-50%);
   width: 48px;
@@ -526,7 +540,10 @@ button.fileIcon:hover {
   border-radius: 50%;
   color: rgba(245, 245, 247, 0.92);
   cursor: pointer;
-  z-index: 3;
+  /* z-index acima da img pra nav buttons receberem clicks
+   *  mesmo com a img sobreposta. */
+  z-index: 11;
+  pointer-events: auto;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition:
@@ -551,8 +568,8 @@ button.fileIcon:hover {
 
 /* Counter "i/N" — top-left, gives positional context. */
 .lightboxCounter {
-  position: absolute;
-  top: 22px;
+  position: fixed;
+  top: max(22px, env(safe-area-inset-top, 0px));
   left: 22px;
   padding: 6px 12px;
   background: rgba(11, 11, 14, 0.78);
@@ -564,13 +581,14 @@ button.fileIcon:hover {
   letter-spacing: 0.02em;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 2;
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* Dots — bottom strip pra navegação direta. Brand-tinted no
  *  ativo (gradient magenta→indigo da plataforma). */
 .lightboxDots {
-  position: absolute;
+  position: fixed;
   bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 28px));
   left: 50%;
   transform: translateX(-50%);
@@ -585,7 +603,8 @@ button.fileIcon:hover {
   max-width: calc(100vw - 32px);
   overflow-x: auto;
   scrollbar-width: none;
-  z-index: 2;
+  z-index: 10;
+  pointer-events: auto;
 }
 .lightboxDots::-webkit-scrollbar { display: none; }
 .lightboxDot {
