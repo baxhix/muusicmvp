@@ -23,6 +23,20 @@ const ANA_ALBUMS = [
   { key: 'album-heranca-vivo',        title: 'Herança Boiadeira ao vivo',  cover: '/albuns/heranca-boiadeira-ao-vivo.jpg',  listeners: 1023 },
 ] as const;
 
+/* Per spec atualizado "Inclua uma variação de insight de 45.889
+ *  pessoas ouvindo a [nome da música]". Catálogo de músicas
+ *  populares da Ana Castela que rotacionam no insight de música,
+ *  cada uma com contagem mocada. Cover reaproveita um álbum
+ *  (cyclando ANA_ALBUMS) pra a thumb seguir o padrão dos demais
+ *  insights. */
+const ANA_SONGS = [
+  { key: 'song-pipoco',          title: 'Pipoco',           listeners: 45889 },
+  { key: 'song-boiadeira',       title: 'Boiadeira',        listeners: 38412 },
+  { key: 'song-nosso-quadro',    title: 'Nosso Quadro',     listeners: 33214 },
+  { key: 'song-lua',             title: 'Lua',              listeners: 29733 },
+  { key: 'song-solteiro-forcado',title: 'Solteiro Forçado', listeners: 24581 },
+] as const;
+
 /**
  * FanverseSearch — overlay full-screen disparado pelo clique no
  * orbe FanverseCore.
@@ -388,7 +402,13 @@ export default function FanverseSearch() {
           { text: 'pessoas', bold: true },
           { text: ' ouvindo', bold: false },
         ],
-        line2: [{ text: 'a mesma música que você', bold: true }],
+        /* Per spec atualizado "remova o bold de 'que você' da
+         *  frase X pessoas ouvindo a mesma música que você" — só
+         *  'a mesma música' fica bold; ' que você' vai pra muted. */
+        line2: [
+          { text: 'a mesma música', bold: true },
+          { text: ' que você', bold: false },
+        ],
         album: { title: ANA_ALBUMS[1].title, cover: ANA_ALBUMS[1].cover },
       },
       {
@@ -423,13 +443,36 @@ export default function FanverseSearch() {
       line2: [{ text: a.title, bold: true }],
       album: { title: a.title, cover: a.cover },
     }));
-    /* Zip intercalado: data[0], album[0], data[1], album[1], ...
-     *  Como tem 4 data + 5 albums, sobra 1 álbum no fim. */
+    /* Per spec atualizado "Inclua uma variação de insight de
+     *  45.889 pessoas ouvindo a [nome da música] (linha de
+     *  baixo)" — cada música no ANA_SONGS vira uma rotação.
+     *  Line1 inclui o artigo "a" antes do nome da música pra
+     *  casar com o gabarito da spec. Thumb reaproveita um
+     *  álbum (ciclo) pra a miniatura nunca ficar vazia. */
+    const songs: Phrase[] = ANA_SONGS.map((s, i) => {
+      const cover = ANA_ALBUMS[i % ANA_ALBUMS.length];
+      return {
+        key: s.key,
+        line1: [
+          { text: s.listeners.toLocaleString('pt-BR'), bold: true },
+          { text: ' ', bold: false },
+          { text: 'pessoas', bold: true },
+          { text: ' ouvindo a', bold: false },
+        ],
+        line2: [{ text: s.title, bold: true }],
+        album: { title: cover.title, cover: cover.cover },
+      };
+    });
+    /* Zip intercalado triplo: data[i], album[i], song[i] em cada
+     *  rotação. 4 data + 5 albums + 5 songs = 14 slots. Mantém
+     *  a sequência data→album existente, e injeta song depois
+     *  pra a cadência ficar data-album-música. */
     const out: Phrase[] = [];
-    const max = Math.max(data.length, albums.length);
+    const max = Math.max(data.length, albums.length, songs.length);
     for (let i = 0; i < max; i++) {
       if (i < data.length) out.push(data[i]);
       if (i < albums.length) out.push(albums[i]);
+      if (i < songs.length) out.push(songs[i]);
     }
     return out;
   }, [snapshot]);
