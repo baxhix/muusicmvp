@@ -23,7 +23,7 @@ export default function SectionTwo() {
       data-section="2"
       className={styles.section}
     >
-      <Sparkles count={32} seed={21} />
+      <Sparkles count={13} seed={21} />
 
       <div className={styles.center}>
         <h2 className={styles.headline}>Música</h2>

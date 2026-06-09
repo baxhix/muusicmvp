@@ -18,7 +18,7 @@ export default function SectionSix() {
       data-section="6"
       className={styles.section}
     >
-      <Sparkles count={28} seed={219} />
+      <Sparkles count={11} seed={219} />
 
       <div className={styles.center}>
         <h2 className={styles.headline}>Baixe o app</h2>

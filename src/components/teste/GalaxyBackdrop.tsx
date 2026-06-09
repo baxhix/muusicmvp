@@ -40,13 +40,12 @@ function makeRng(seed: number) {
   };
 }
 
-// 84 (era 120) — corte adicional de 30% per product feedback
-// "Remova mais 30% dos pontos estáticos". Histórico:
-// 180 → 240 (bump compensando remoção dos Sparkles per-section)
-// → 120 (metade) → 84 (-30%). Densidade visual deliberadamente
-// rarefeita pra que as estrelas pareçam mais "espalhadas no
-// espaço" em vez de pontilhismo denso.
-const STAR_COUNT = 84;
+// 34 (era 84) — corte adicional de 60% per product feedback
+// "Remova 60% das estrelas no background da landing page".
+// Histórico: 180 → 240 → 120 → 84 → 34. Densidade visual
+// deliberadamente rarefeita pra que as estrelas pareçam mais
+// "espalhadas no espaço" em vez de pontilhismo denso.
+const STAR_COUNT = 34;
 
 interface Star {
   // Posições normalizadas 0..1 — multiplicadas pela viewport
