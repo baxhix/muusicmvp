@@ -47,6 +47,15 @@
       transparent 65%
     );
   transform: translate3d(0, calc(var(--galaxy-scroll, 0) * -70vh), 0);
+  /* Fade da borda inferior. Como a camada translada pra cima
+   * com o scroll (parallax), o seu limite inferior (uma borda
+   * retangular dura) acabava subindo pra dentro do viewport e
+   * aparecia como uma "divisão" — tom de nebula acima, preto
+   * puro abaixo. O mask dissolve esses ~28% finais até
+   * transparent ANTES da borda real (100%), eliminando a linha
+   * em qualquer posição de scroll. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 95%);
+  mask-image: linear-gradient(to bottom, #000 72%, transparent 95%);
   /* Fade-in conforme --galaxy-scroll, idêntico ao .page::before:
    * opacity 0 até scroll=0.10 (~Section 1), sobe linearmente
    * até 1 em scroll≈0.43. Mantém a primeira seção em tom
