@@ -44,6 +44,13 @@ const SCRIPT: Step[] = [
   { kind: 'sent', text: 'Bora! Te chamo no chat 🔥' },
 ];
 
+/* Avatares dos dois participantes — associam cada bubble ao
+ *  seu autor. Mesmos assets dos avatares da constellation.
+ *  ME = mensagens próprias (sent, à direita); OTHER = o outro
+ *  superfã (received, à esquerda). */
+const AVATAR_ME = '/teste/user-02.png';
+const AVATAR_OTHER = '/teste/user-01.png';
+
 /* Delay entre steps (ms). Typing usa seu próprio duration; os
  *  outros usam STEP_DELAY base. */
 const STEP_DELAY = 1300;
@@ -134,6 +141,13 @@ export default function ChatFeatureDemo() {
                   exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.18 } }}
                   transition={{ type: 'spring', stiffness: 360, damping: 26 }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={step.side === 'right' ? AVATAR_ME : AVATAR_OTHER}
+                    alt=""
+                    className={styles.avatar}
+                    aria-hidden="true"
+                  />
                   <div className={`${styles.bubble} ${styles.bubbleReceived} ${styles.bubbleTyping}`}>
                     {[0, 1, 2].map((di) => (
                       <motion.span
@@ -177,6 +191,17 @@ export default function ChatFeatureDemo() {
                 }}
                 transition={{ type: 'spring', stiffness: 340, damping: 26 }}
               >
+                {/* Avatar do autor — associa o bubble ao usuário.
+                 *  Renderizado sempre primeiro no DOM; nas rows
+                 *  `sent` o row-reverse (CSS) joga o avatar pra
+                 *  borda direita. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={isSent ? AVATAR_ME : AVATAR_OTHER}
+                  alt=""
+                  className={styles.avatar}
+                  aria-hidden="true"
+                />
                 <div
                   className={`${styles.bubble} ${
                     isSent ? styles.bubbleSent : styles.bubbleReceived

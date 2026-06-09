@@ -50,14 +50,36 @@
   padding: 6px 3px;
 }
 
-/* Bubble row — usado por sent e received pra alinhar lateral. */
+/* Bubble row — usado por sent e received pra alinhar lateral.
+ *  align-items flex-end → o avatar fica ancorado na base do
+ *  bubble. gap separa avatar do bubble. */
 .bubbleRow {
   display: flex;
   width: 100%;
+  align-items: flex-end;
+  gap: 8px;
   justify-content: flex-start;
 }
+/* Rows `sent` — row-reverse joga o avatar (1º no DOM) pra borda
+ *  direita e deixa o bubble à sua esquerda; justify-start em
+ *  row-reverse empacota o grupo contra a borda direita. */
 .bubbleRowRight {
-  justify-content: flex-end;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+/* Avatar do autor — círculo pequeno ao lado de cada bubble. */
+.avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  /* Empurra levemente pra baixo pra alinhar com o tail do bubble. */
+  margin-bottom: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  user-select: none;
 }
 
 .bubble {
