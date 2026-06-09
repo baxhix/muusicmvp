@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import PageHeader from '@/components/ui/PageHeader';
 import StatCard from '@/components/ui/StatCard';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
@@ -51,7 +52,17 @@ function formatKpi(k: Kpi): string {
   return formatNumber(k.value);
 }
 
-/* ── Inline SVG line chart ──────────────────────────────── */
+/* ── Motion-animated line chart ─────────────────────────── */
+
+/** Formata ISO date pra DD/MM, fallback pro ISO se parse falhar.
+ *  Usado pelo tooltip do LineChart pra mostrar o eixo X. */
+function formatPointDate(iso: string): string {
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return iso;
+  const dd = String(dt.getDate()).padStart(2, '0');
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}`;
+}
 
 function LineChart({
   series,
@@ -77,6 +88,11 @@ function LineChart({
   strokeColors?: string[];
   normalizePerSeries?: boolean;
 }) {
+  // Hover state: x-index do ponto sob o cursor pra renderizar dot
+  // ativo + tooltip. -1 = sem hover. Estado vive aqui no chart pra
+  // todas as séries reagirem juntas (mesmo X = mesmo ponto temporal).
+  const [hoverIdx, setHoverIdx] = useState<number>(-1);
+
   if (series.length === 0 || series[0].data.length === 0) return null;
 
   const w = 600;
@@ -99,24 +115,66 @@ function LineChart({
   const points = series[0].data.length;
   const stepX = (w - padX * 2) / (points - 1);
 
-  const buildPath = (s: ChartSeries, idx: number) => {
+  /* Per-series pixel coords pré-computadas — usadas por path,
+   *  area, dots e tooltip. Calcular uma vez aqui evita refazer
+   *  o math em cada branch de render. */
+  const seriesCoords = series.map((s, idx) => {
     const { min, range } = normalizePerSeries
       ? seriesRanges[idx]
       : { min: globalMin, range: globalRange };
-    return s.data
-      .map((p, i) => {
-        const x = padX + i * stepX;
-        const y = padY + (h - padY * 2) * (1 - (p.value - min) / range);
-        return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
-      })
+    return s.data.map((p, i) => ({
+      x: padX + i * stepX,
+      y: padY + (h - padY * 2) * (1 - (p.value - min) / range),
+      value: p.value,
+      /* SeriesPoint só carrega `date` (ISO). Formata aqui pro
+       *  tooltip exibir DD/MM enxuto em vez do ISO completo. */
+      label: formatPointDate(p.date),
+    }));
+  });
+
+  const buildPath = (coords: { x: number; y: number }[]) =>
+    coords
+      .map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(2)},${c.y.toFixed(2)}`)
       .join(' ');
+
+  const buildArea = (coords: { x: number; y: number }[]) =>
+    `${buildPath(coords)} L ${(padX + (points - 1) * stepX).toFixed(2)},${h - padY} L ${padX},${h - padY} Z`;
+
+  // Y grid lines (5 níveis: 0%, 25%, 50%, 75%, 100%).
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => padY + (h - padY * 2) * p);
+
+  /* Pointer event → snap pro ponto mais próximo no eixo X.
+   *  Calcula a fração X do cursor relativa à área plotável
+   *  (descontando padX) e arredonda pro índice do data point. */
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const xPx = e.clientX - rect.left;
+    /* xPx tá em pixels do viewport; viewBox é 600px wide com
+     *  scaleX = rect.width / 600. Converte de volta pra coords
+     *  do viewBox antes de calcular o índice. */
+    const xVb = (xPx / rect.width) * w;
+    const xInPlot = xVb - padX;
+    const plotWidth = w - padX * 2;
+    if (xInPlot < -8 || xInPlot > plotWidth + 8) {
+      setHoverIdx(-1);
+      return;
+    }
+    const frac = Math.max(0, Math.min(1, xInPlot / plotWidth));
+    const idx = Math.round(frac * (points - 1));
+    setHoverIdx(idx);
   };
 
-  const buildArea = (s: ChartSeries, idx: number) =>
-    `${buildPath(s, idx)} L ${(padX + (points - 1) * stepX).toFixed(2)},${h - padY} L ${padX},${h - padY} Z`;
-
-  // Y grid lines
-  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => padY + (h - padY * 2) * p);
+  /* Tooltip — calcula posição em coords absolutas do viewBox.
+   *  Renderiza só se hoverIdx ≥ 0; usa o primeiro series como
+   *  base pra ancorar X (todas as séries compartilham o eixo X).
+   *  Conteúdo: label do ponto + uma linha por série. */
+  const hover = hoverIdx >= 0 && hoverIdx < points
+    ? {
+        x: seriesCoords[0][hoverIdx].x,
+        label: seriesCoords[0][hoverIdx].label,
+      }
+    : null;
 
   return (
     <svg
@@ -125,6 +183,8 @@ function LineChart({
       width="100%"
       height={h}
       style={{ display: 'block' }}
+      onPointerMove={onPointerMove}
+      onPointerLeave={() => setHoverIdx(-1)}
     >
       <defs>
         {series.map((s, i) => (
@@ -134,8 +194,11 @@ function LineChart({
           </linearGradient>
         ))}
       </defs>
+
+      {/* Grid lines — fade-in escalonado pra criar sensação de
+          "carregando o eixo" antes das curvas desenharem. */}
       {gridLines.map((y, i) => (
-        <line
+        <motion.line
           key={i}
           x1={padX}
           x2={w - padX}
@@ -144,21 +207,107 @@ function LineChart({
           stroke="var(--border-soft)"
           strokeWidth="1"
           strokeDasharray="2 4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: i * 0.05, ease: 'easeOut' }}
         />
       ))}
-      {series.map((s, i) => (
-        <g key={s.id}>
-          <path d={buildArea(s, i)} fill={`url(#area-${s.id})`} />
-          <path
-            d={buildPath(s, i)}
-            fill="none"
-            stroke={strokeColors[i % strokeColors.length]}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+
+      {/* Séries — uma <g> por série. Ordem dos children importa:
+          area atrás, linha em cima, dots por último. */}
+      {series.map((s, i) => {
+        const coords = seriesCoords[i];
+        const stroke = strokeColors[i % strokeColors.length];
+        const seriesDelay = 0.35 + i * 0.18;
+        return (
+          <g key={s.id}>
+            {/* Area fill — fade-in depois da linha começar a
+                desenhar. Não anima o path em si (custoso); só
+                opacity. */}
+            <motion.path
+              d={buildArea(coords)}
+              fill={`url(#area-${s.id})`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                duration: 0.6,
+                delay: seriesDelay + 0.4,
+                ease: 'easeOut',
+              }}
+            />
+
+            {/* Linha — draws progressively via pathLength 0 → 1.
+                Esta é a animação chave do "Line graph" do motion:
+                o stroke "se desenha" da esquerda pra direita. */}
+            <motion.path
+              d={buildPath(coords)}
+              fill="none"
+              stroke={stroke}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{
+                pathLength: {
+                  duration: 1.1,
+                  delay: seriesDelay,
+                  ease: [0.22, 1, 0.36, 1],
+                },
+                opacity: { duration: 0.2, delay: seriesDelay },
+              }}
+            />
+
+            {/* Dot ativo no hover — só renderiza pra essa série
+                quando hoverIdx está num índice válido. Scale-in
+                spring pra dar o "pop" característico. */}
+            {hover && hoverIdx >= 0 && (
+              <motion.circle
+                cx={coords[hoverIdx].x}
+                cy={coords[hoverIdx].y}
+                r={4}
+                fill={stroke}
+                stroke="var(--surface-1, #0a0a0e)"
+                strokeWidth="2"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              />
+            )}
+          </g>
+        );
+      })}
+
+      {/* Hover guideline + tooltip. Linha vertical fina cruza o
+          chart no X do ponto ativo; tooltip texto fica logo
+          abaixo do topo do svg. */}
+      {hover && (
+        <>
+          <motion.line
+            x1={hover.x}
+            x2={hover.x}
+            y1={padY}
+            y2={h - padY}
+            stroke="var(--border-soft)"
+            strokeWidth="1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            transition={{ duration: 0.12 }}
           />
-        </g>
-      ))}
+          <motion.text
+            x={hover.x}
+            y={padY - 4}
+            textAnchor="middle"
+            fontSize="10"
+            fill="var(--text-mute)"
+            initial={{ opacity: 0, y: padY - 8 }}
+            animate={{ opacity: 1, y: padY - 4 }}
+            transition={{ duration: 0.16 }}
+          >
+            {hover.label}
+          </motion.text>
+        </>
+      )}
     </svg>
   );
 }
