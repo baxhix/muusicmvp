@@ -584,10 +584,15 @@
   max-width: 460px;
   margin: 0 auto;
   width: 100%;
-  /* Per spec atualizado "diminua 35% a distância da lista de
-   *  usuários para a frase do insight" — encolhe o gap herdado
-   *  do .body (18px) em ~35% (6px) via margin-top negativo. */
-  margin-top: -6px;
+  /* Per spec atualizado "posicione mais acima, somente a lista
+   *  de usuários e o ícone para que apareça um pouco mais de
+   *  usuários e não fique um espaço tão grande em branco entre
+   *  o fim do insight e o começo da listagem" — bumped de -6
+   *  pra -28 (cancela inteiro o gap do .body de 18 + sobra de
+   *  10 que aproxima o toggle icon + primeira row do texto do
+   *  insight). Ganho de ~22px de espaço vertical = uma fração
+   *  de row a mais visível antes do scroll. */
+  margin-top: -28px;
   /* Reveal staged — list mount em t=15s. */
   animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
 }
