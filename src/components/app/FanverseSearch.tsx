@@ -340,63 +340,65 @@ export default function FanverseSearch() {
   type Segment = { text: string; bold: boolean };
   type Phrase = {
     key: string;
-    segments: Segment[];
+    /* line1 = primeira linha (número + "pessoas" + conector).
+     *  line2 = segunda linha, sempre bold — o "highlight" da
+     *  frase. Per spec atualizado os termos Fire Arena, Ana
+     *  Castela, mesma música, conectados agora etc. quebram
+     *  pra linha de baixo dando destaque. */
+    line1: Segment[];
+    line2: string;
     album?: { title: string; cover: string };
   };
   const PHRASES: Phrase[] = useMemo(() => {
-    /* Per spec atualizado "Números+pessoas, nome do álbum,
-     *  nome da artista sempre em bold". A artista é "Ana Castela"
-     *  (sempre bold quando aparece); álbuns idem; números e
-     *  "pessoas" também. Conectores (curtindo, ouvindo, agora,
-     *  com você) ficam muted. */
     const data: Phrase[] = [
       {
         key: 'data-all',
-        segments: [
+        line1: [
           { text: snapshot.peopleCount.toLocaleString('pt-BR'), bold: true },
           { text: ' ', bold: false },
           { text: 'pessoas', bold: true },
-          { text: ' curtindo ', bold: false },
-          { text: 'Ana Castela', bold: true },
-          { text: ' com você', bold: false },
+          { text: ' curtindo', bold: false },
         ],
+        line2: 'Ana Castela com você',
       },
       {
         key: 'data-song',
-        segments: [
+        line1: [
           { text: snapshot.sameSongCount.toLocaleString('pt-BR'), bold: true },
           { text: ' ', bold: false },
           { text: 'pessoas', bold: true },
-          { text: ' ouvindo a mesma música', bold: false },
+          { text: ' ouvindo', bold: false },
         ],
+        line2: 'a mesma música que você',
       },
       {
         key: 'data-album',
-        segments: [
+        line1: [
           { text: snapshot.sameAlbumCount.toLocaleString('pt-BR'), bold: true },
           { text: ' ', bold: false },
           { text: 'pessoas', bold: true },
-          { text: ' ouvindo o mesmo álbum', bold: false },
+          { text: ' ouvindo', bold: false },
         ],
+        line2: 'o mesmo álbum',
       },
       {
         key: 'data-countries',
-        segments: [
+        line1: [
           { text: String(snapshot.countriesCount), bold: true },
-          { text: ' países conectados agora', bold: false },
+          { text: ' países', bold: false },
         ],
+        line2: 'conectados agora',
       },
     ];
     const albums: Phrase[] = ANA_ALBUMS.map((a) => ({
       key: a.key,
-      segments: [
+      line1: [
         { text: a.listeners.toLocaleString('pt-BR'), bold: true },
         { text: ' ', bold: false },
         { text: 'pessoas', bold: true },
-        { text: ' ouvindo ', bold: false },
-        { text: a.title, bold: true },
-        { text: ' agora', bold: false },
+        { text: ' ouvindo', bold: false },
       ],
+      line2: a.title,
       album: { title: a.title, cover: a.cover },
     }));
     /* Zip intercalado: data[0], album[0], data[1], album[1], ...
@@ -606,20 +608,25 @@ export default function FanverseSearch() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  aria-label={currentPhrase.segments.map((s) => s.text).join('')}
+                  aria-label={`${currentPhrase.line1.map((s) => s.text).join('')} ${currentPhrase.line2}`}
                 >
-                  {/* Per spec atualizado: removido o efeito SplitText
-                   *  pra formatação voltar a existir (espaços e bold
-                   *  preservados). Cada segment renderiza como span
-                   *  com classe bold/muted apropriada. */}
-                  {currentPhrase.segments.map((seg, i) => (
-                    <span
-                      key={i}
-                      className={seg.bold ? styles.headlineBold : styles.headlineMuted}
-                    >
-                      {seg.text}
-                    </span>
-                  ))}
+                  {/* Per spec atualizado: 2 linhas — line1 (número
+                   *  + "pessoas" + conector) acima, line2 (highlight
+                   *  bold) abaixo. Cada line é um block separado
+                   *  pra forçar a quebra. */}
+                  <div className={styles.headlineLine1}>
+                    {currentPhrase.line1.map((seg, i) => (
+                      <span
+                        key={i}
+                        className={seg.bold ? styles.headlineBold : styles.headlineMuted}
+                      >
+                        {seg.text}
+                      </span>
+                    ))}
+                  </div>
+                  <div className={styles.headlineLine2}>
+                    {currentPhrase.line2}
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
