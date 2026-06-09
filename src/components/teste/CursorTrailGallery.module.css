@@ -1,0 +1,148 @@
+/* CursorTrailGallery — Feature 02 da Section 3.
+ *  Copy à esquerda (espelho do ChatFeatureDemo que tem copy à
+ *  esquerda + bubbles à direita). Surface à direita captura
+ *  mousemove e spawna miniaturas de fotos exclusivas com fade.
+ */
+
+.root {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 56px;
+  align-items: center;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Copy à esquerda. Mesma typography do ChatFeatureDemo. */
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 460px;
+}
+.featureBadge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 247, 0.55);
+}
+.featureTitle {
+  font-family: 'Borscha', Inter, sans-serif;
+  font-size: clamp(40px, 5.4vw, 60px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+}
+.featureDesc {
+  font-size: 17px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.72);
+  letter-spacing: -0.005em;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Surface — área onde o trail é desenhado. position:relative
+ *  pros itens position:absolute filhos. overflow:hidden corta
+ *  fotos que estouram a borda. */
+.surface {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  border-radius: 24px;
+  /* Gradient sutil pra dar contraste com as fotos coloridas
+   *  + reforçar que é uma zona "interativa". */
+  background:
+    radial-gradient(120% 100% at 30% 0%, rgba(236, 72, 153, 0.16), transparent 60%),
+    radial-gradient(120% 100% at 80% 100%, rgba(168, 85, 247, 0.18), transparent 60%),
+    linear-gradient(180deg, rgba(20, 20, 26, 0.6) 0%, rgba(10, 10, 14, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(245, 245, 247, 0.45);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Foto spawned — position absoluta com left/top do JSX.
+ *  O transformTemplate adiciona translate(-50%) + rotate
+ *  específico do item; o scale/opacity vem do motion. */
+.photo {
+  position: absolute;
+  width: 140px;
+  height: 175px;
+  border-radius: 14px;
+  overflow: hidden;
+  pointer-events: none;
+  background: #1a1a1f;
+  box-shadow:
+    0 18px 36px rgba(0, 0, 0, 0.55),
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  /* Will-change pra promover layer GPU e evitar flicker no
+   *  primeiro frame após o spawn. */
+  will-change: transform, opacity;
+}
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+
+/* Mobile — copy em cima, surface abaixo. Cursor não existe,
+ *  mas o scroll-driven spawn ainda anima o trail. */
+@media (max-width: 900px) {
+  .root {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .copy {
+    max-width: 100%;
+  }
+  .surface {
+    height: 360px;
+    cursor: default;
+  }
+  .featureDesc {
+    font-size: 16px;
+  }
+  .photo {
+    width: 110px;
+    height: 138px;
+  }
+  .hint {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo {
+    /* Sem motion: ainda mostra a foto mas sem scale/rotate
+     *  amplificados. AnimatePresence respeita prefers-reduced-motion
+     *  automaticamente via duration mínimo. */
+    transition: none;
+  }
+}
