@@ -110,114 +110,89 @@ export default function ChatFeatureDemo() {
 
   return (
     <div ref={ref} className={styles.root}>
-      <div className={styles.phone} aria-hidden="true">
-        {/* Status bar mock. */}
-        <div className={styles.statusBar}>
-          <span className={styles.time}>20:42</span>
-          <span className={styles.statusIcons}>
-            <span className={styles.signal} />
-            <span className={styles.battery} />
-          </span>
-        </div>
-
-        {/* Chat header. */}
-        <div className={styles.chatHeader}>
-          <div className={styles.headerAvatar}>
-            <span className={styles.avatarInitial}>AC</span>
-          </div>
-          <div className={styles.headerCopy}>
-            <div className={styles.headerName}>Ana C.</div>
-            <div className={styles.headerStatus}>online</div>
-          </div>
-        </div>
-
-        {/* Bubbles stream. */}
-        <div className={styles.stream} aria-label="Conversa">
-          <AnimatePresence initial={false}>
-            {visibleSteps.map((step, i) => {
-              if (step.kind === 'typing') {
-                return (
-                  <motion.div
-                    key={`typing-${i}`}
-                    layout
-                    className={`${styles.bubbleRow} ${
-                      step.side === 'right' ? styles.bubbleRowRight : ''
-                    }`}
-                    initial={{ opacity: 0, y: 12, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.18 } }}
-                    transition={{ type: 'spring', stiffness: 360, damping: 26 }}
-                  >
-                    <div className={`${styles.bubble} ${styles.bubbleReceived} ${styles.bubbleTyping}`}>
-                      {/* 3 dots animados em loop — "escrevendo". */}
-                      {[0, 1, 2].map((di) => (
-                        <motion.span
-                          key={di}
-                          className={styles.typingDot}
-                          animate={{
-                            scale: [0.6, 1, 0.6],
-                            opacity: [0.4, 1, 0.4],
-                          }}
-                          transition={{
-                            duration: 1.1,
-                            repeat: Infinity,
-                            ease: 'easeInOut',
-                            delay: di * 0.18,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                );
-              }
-              const isSent = step.kind === 'sent';
-              return (
-                <motion.div
-                  key={`msg-${i}`}
-                  layout
-                  className={`${styles.bubbleRow} ${
-                    isSent ? styles.bubbleRowRight : ''
-                  }`}
-                  initial={{
-                    opacity: 0,
-                    /* Entra do lado correspondente: sent vem
-                     *  da direita, received da esquerda. */
-                    x: isSent ? 30 : -30,
-                    y: 14,
-                    scale: 0.88,
-                  }}
-                  animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                  exit={{
-                    opacity: 0,
-                    scale: 0.92,
-                    transition: { duration: 0.22 },
-                  }}
-                  transition={{ type: 'spring', stiffness: 340, damping: 26 }}
-                >
-                  <div
-                    className={`${styles.bubble} ${
-                      isSent ? styles.bubbleSent : styles.bubbleReceived
-                    }`}
-                  >
-                    {step.text}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Side copy explicando a feature. Em desktop fica à
-       *  direita do phone; em mobile, abaixo. */}
+      {/* Copy à ESQUERDA (per spec atualizado) — título +
+       *  descrição 2-linhas. Badge "Feature 01" removido. */}
       <div className={styles.copy}>
-        <div className={styles.featureLabel}>Feature 01</div>
         <h3 className={styles.featureTitle}>Chat com superfãs</h3>
         <p className={styles.featureDesc}>
           Conecte-se com fãs do mundo todo em tempo real.
-          Combine de ir num show juntos, troque playlists,
-          ou só pertença a uma comunidade que entende.
+          Combine de ir num show juntos, troque playlists.
         </p>
+      </div>
+
+      {/* Bubbles SOLTOS — sem mockup de celular, sem header,
+       *  sem status bar. As caixas aparecem flutuando no canvas
+       *  livre, layout = motion AnimatePresence. */}
+      <div className={styles.stream} aria-label="Conversa">
+        <AnimatePresence initial={false}>
+          {visibleSteps.map((step, i) => {
+            if (step.kind === 'typing') {
+              return (
+                <motion.div
+                  key={`typing-${i}`}
+                  layout
+                  className={`${styles.bubbleRow} ${
+                    step.side === 'right' ? styles.bubbleRowRight : ''
+                  }`}
+                  initial={{ opacity: 0, y: 12, scale: 0.92 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.18 } }}
+                  transition={{ type: 'spring', stiffness: 360, damping: 26 }}
+                >
+                  <div className={`${styles.bubble} ${styles.bubbleReceived} ${styles.bubbleTyping}`}>
+                    {[0, 1, 2].map((di) => (
+                      <motion.span
+                        key={di}
+                        className={styles.typingDot}
+                        animate={{
+                          scale: [0.6, 1, 0.6],
+                          opacity: [0.4, 1, 0.4],
+                        }}
+                        transition={{
+                          duration: 1.1,
+                          repeat: Infinity,
+                          ease: 'easeInOut',
+                          delay: di * 0.18,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            }
+            const isSent = step.kind === 'sent';
+            return (
+              <motion.div
+                key={`msg-${i}`}
+                layout
+                className={`${styles.bubbleRow} ${
+                  isSent ? styles.bubbleRowRight : ''
+                }`}
+                initial={{
+                  opacity: 0,
+                  x: isSent ? 30 : -30,
+                  y: 14,
+                  scale: 0.88,
+                }}
+                animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.92,
+                  transition: { duration: 0.22 },
+                }}
+                transition={{ type: 'spring', stiffness: 340, damping: 26 }}
+              >
+                <div
+                  className={`${styles.bubble} ${
+                    isSent ? styles.bubbleSent : styles.bubbleReceived
+                  }`}
+                >
+                  {step.text}
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </div>
   );
