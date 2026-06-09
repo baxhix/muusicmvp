@@ -7,9 +7,10 @@
 .root {
   position: relative;
   width: 100%;
-  /* Altura: card height (276) + peek offset (16) + breathing.
-   *  +20% pra acomodar o card maior. */
-  height: 308px;
+  /* Altura ampliada pra acomodar o card +20% E o novo bloco
+   *  matchSuffix abaixo do botão "Enviar mensagem".
+   *  Card 332 + peek offset 16 + breathing → 360. */
+  height: 360px;
   margin: 12px 0 16px;
 }
 
@@ -17,15 +18,16 @@
   position: absolute;
   top: 0;
   left: 50%;
-  /* +20% sobre o tamanho original 180×230. */
   width: 216px;
-  height: 276px;
+  /* Altura aumentada de 276 → 332 pra caber:
+   *   photo (160) + info (50) + reactions (44) +
+   *   messageBtn (38) + matchSuffix (~32) + paddings.
+   *  Antes o button estava sendo cortado pelo overflow:hidden. */
+  height: 332px;
   display: flex;
   flex-direction: column;
   align-items: center;
   border-radius: 22px;
-  /* SEM border per spec — só bg sólido com sombra pra
-   *  separar do fundo. */
   background: linear-gradient(180deg, #15151b 0%, #0c0c12 100%);
   border: none;
   box-shadow:
@@ -38,8 +40,7 @@
   touch-action: pan-y;
 }
 
-/* Foto destacada — ~58% do card (160/276). +20% scale do
- *  original 134px. */
+/* Foto destacada — ~48% do card (160/332). */
 .photo {
   position: relative;
   width: 100%;
@@ -55,14 +56,22 @@
   pointer-events: none;
 }
 
-/* Rank badge top-right da foto — gradient brand pill. */
+/* Rank badge top-right da foto — agora no estilo do botão
+ *  "Baixar" do lightbox de fotos exclusivas (gradient-border
+ *  pill com bg dark padding-box). Per spec atualizado. */
 .rankBadge {
   position: absolute;
   top: 10px;
   right: 10px;
   padding: 4px 11px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+  /* Double-bg trick: padding-box recebe a cor dark, border-box
+   *  recebe o gradient. Border transparente revela o gradient
+   *  só na borda — efeito "stroke gradient". */
+  background:
+    linear-gradient(#0a0a0e, #0a0a0e) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+  border: 1.5px solid transparent;
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -71,7 +80,8 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
-/* Info block — nome + cidade CENTRALIZADOS per spec. */
+/* Info block — nameRow com heart à direita + cidade abaixo
+ *  centralizada. */
 .info {
   padding: 10px 14px 4px;
   display: flex;
@@ -80,6 +90,17 @@
   gap: 2px;
   flex-shrink: 0;
   width: 100%;
+}
+/* Name row — nome centralizado, heart à direita alinhado
+ *  verticalmente. Grid 3 cols (spacer / name / heart) pra
+ *  garantir que o nome fique CENTRALIZADO mesmo com o heart
+ *  ocupando espaço à direita. */
+.nameRow {
+  display: grid;
+  grid-template-columns: 22px 1fr 22px;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
 }
 .name {
   font-size: 14.5px;
@@ -90,7 +111,33 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  /* Coluna central do grid. */
+  grid-column: 2;
+}
+/* Heart btn — flat, simples, sem fill por default. Estado
+ *  liked preenche o coração com a cor + brand glow leve. */
+.heartBtn {
+  grid-column: 3;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(245, 245, 247, 0.55);
+  transition: color 160ms ease;
+  justify-self: end;
+}
+.heartBtn:hover {
+  color: rgba(245, 245, 247, 0.9);
+}
+.heartBtnLiked {
+  /* Liked = brand magenta, mas SEM o vermelho saturado típico
+   *  de likes — fica alinhado com a paleta brand. */
+  color: #ec4899;
 }
 .city {
   font-size: 12px;
@@ -140,10 +187,10 @@
 }
 
 /* Enviar mensagem — botão de texto FULL-WIDTH pill no mesmo
- *  estilo do "Ver mais" do MaterialsTabContent. Cresce pra
- *  ocupar a largura do card menos os paddings laterais. */
+ *  estilo do "Ver mais" do MaterialsTabContent. Margin auto
+ *  removida (matchSuffix abaixo ocupa o espaço inferior). */
 .messageBtn {
-  margin: auto 14px 14px;
+  margin: 4px 14px 0;
   width: calc(100% - 28px);
   padding: 10px 14px;
   border-radius: 999px;
@@ -156,21 +203,49 @@
   letter-spacing: 0.01em;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease;
+  flex-shrink: 0;
 }
 .messageBtn:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
-/* Mobile tweak — card +5% sobre o desktop pra leitura
- *  confortável (já vem +20% sobre original). */
+/* Match suffix — "Vocês curtem Pipoco há mais tempo" abaixo
+ *  do botão. Mesmo conteúdo dos cards horizontais (FanverseMatch),
+ *  estilizado mais compacto pra caber no card vertical. */
+.matchSuffix {
+  margin: 10px 14px 14px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  text-align: center;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.005em;
+  /* Max 2 linhas — qualquer suffix mais longo trunca com
+   *  ellipsis via line-clamp. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.matchPrefix {
+  /* "Vocês" em branco bold pra puxar foco. */
+  color: rgba(245, 245, 247, 0.95);
+  font-weight: 600;
+}
+.matchText {
+  /* Resto do suffix mantém cinza translúcido. */
+}
+
+/* Mobile tweak — card um pouco maior pra leitura confortável.
+ *  Altura ajustada pra também acomodar o matchSuffix. */
 @media (max-width: 540px) {
   .root {
-    height: 320px;
+    height: 376px;
   }
   .card {
     width: 226px;
-    height: 290px;
+    height: 348px;
   }
   .photo {
     height: 168px;

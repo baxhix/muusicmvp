@@ -36,10 +36,15 @@ interface ProfileCard {
   country: string;
   avatarUrl: string;
   topRank: 10 | 20 | 50;
+  /* Match suffix vindo do mesmo padrão dos cards horizontais
+   *  (FanverseMatch.suffix em fanverseSearchMocks). Ex.:
+   *  "curtem Pipoco há mais tempo". Renderizado abaixo do botão
+   *  "Enviar mensagem" pra dar contexto da afinidade. */
+  matchSuffix: string;
 }
 
-/* 5 perfis mocados — mix de top 10/20/50 pra mostrar variação
- *  do badge. Avatares via pravatar pra ter fotos realistas. */
+/* 5 perfis mocados — mix de top 10/20/50 com matchSuffix
+ *  reaproveitado dos MATCHES horizontais. */
 const MOCK_PROFILES: ProfileCard[] = [
   {
     id: 'p1',
@@ -48,6 +53,7 @@ const MOCK_PROFILES: ProfileCard[] = [
     country: 'Brasil',
     avatarUrl: 'https://i.pravatar.cc/300?img=47',
     topRank: 10,
+    matchSuffix: 'curtem Pipoco há mais tempo',
   },
   {
     id: 'p2',
@@ -56,6 +62,7 @@ const MOCK_PROFILES: ProfileCard[] = [
     country: 'Portugal',
     avatarUrl: 'https://i.pravatar.cc/300?img=33',
     topRank: 50,
+    matchSuffix: 'compartilham 8 playlists',
   },
   {
     id: 'p3',
@@ -64,6 +71,7 @@ const MOCK_PROFILES: ProfileCard[] = [
     country: 'Brasil',
     avatarUrl: 'https://i.pravatar.cc/300?img=44',
     topRank: 20,
+    matchSuffix: 'foram aos mesmos 3 shows',
   },
   {
     id: 'p4',
@@ -72,6 +80,7 @@ const MOCK_PROFILES: ProfileCard[] = [
     country: 'Paraguai',
     avatarUrl: 'https://i.pravatar.cc/300?img=12',
     topRank: 50,
+    matchSuffix: 'curtem o mesmo álbum: Boiadeira',
   },
   {
     id: 'p5',
@@ -80,13 +89,14 @@ const MOCK_PROFILES: ProfileCard[] = [
     country: 'Brasil',
     avatarUrl: 'https://i.pravatar.cc/300?img=56',
     topRank: 10,
+    matchSuffix: 'são superfãs há 2 anos',
   },
 ];
 
-/* Reações disponíveis no card. Per spec atualizado o 🔥 foi
- *  substituído por 👀 (olhos) — sinaliza "estou observando" /
- *  curioso, mais alinhado com o tom do app. */
-const REACTIONS = ['👀', '❤️', '👏'];
+/* Reações disponíveis no card. Per spec atualizado ❤️ removido
+ *  (vira heart toggle separado ao lado do nome). Mantemos 👀
+ *  + 👏 — sinais de "observando" e "aplaudindo". */
+const REACTIONS = ['👀', '👏'];
 
 export default function ProfileCardStack() {
   /* Stack chronologic — primeiro = mais antigo, último = topo.
@@ -167,6 +177,7 @@ function ProfileCardItem({
   onDismiss,
 }: ProfileCardItemProps) {
   const [reaction, setReaction] = useState<string | null>(null);
+  const [liked, setLiked] = useState(false);
 
   return (
     <motion.div
@@ -207,19 +218,48 @@ function ProfileCardItem({
           className={styles.photoImg}
           draggable={false}
         />
+        {/* Rank badge — agora no estilo gradient-border do botão
+         *  "Baixar" do lightbox de fotos exclusivas. Border
+         *  transparente com gradient brand brincando atrás. */}
         <span className={styles.rankBadge} aria-label={`Top ${profile.topRank}`}>
           Top {profile.topRank}
         </span>
       </div>
 
-      {/* Info — nome + cidade CENTRALIZADOS per spec. */}
+      {/* Info row — nome centralizado com heart toggle à direita
+       *  alinhado verticalmente, abaixo da foto. Cidade fica
+       *  abaixo, centralizada. */}
       <div className={styles.info}>
-        <div className={styles.name}>{profile.name}</div>
+        <div className={styles.nameRow}>
+          <div className={styles.name}>{profile.name}</div>
+          <motion.button
+            type="button"
+            className={`${styles.heartBtn} ${liked ? styles.heartBtnLiked : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setLiked((v) => !v);
+            }}
+            whileTap={{ scale: 0.85 }}
+            whileHover={{ scale: 1.12 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+            aria-label={liked ? 'Remover curtida' : 'Curtir perfil'}
+            aria-pressed={liked}
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+              <path
+                d="M8 13.5s-5-3.1-5-7A2.8 2.8 0 0 1 8 4.5a2.8 2.8 0 0 1 5 2c0 3.9-5 7-5 7Z"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinejoin="round"
+                fill={liked ? 'currentColor' : 'none'}
+              />
+            </svg>
+          </motion.button>
+        </div>
         <div className={styles.city}>{profile.city}</div>
       </div>
 
-      {/* Reactions row — emojis sem círculo, centralizadas
-       *  (justify-content: center) per spec. */}
+      {/* Reactions row — emojis sem círculo, centralizadas. */}
       <div className={styles.reactions} role="group" aria-label="Reações">
         {REACTIONS.map((emoji) => (
           <motion.button
@@ -241,10 +281,7 @@ function ProfileCardItem({
         ))}
       </div>
 
-      {/* "Enviar mensagem" — botão de texto full-width pill,
-       *  mesmo estilo do "Ver mais" do Box Fanverse Ana Castela
-       *  (.viewMore em MaterialsTabContent: bg sutil, color
-       *  branco-translúcido, hover mais escuro). */}
+      {/* "Enviar mensagem" — botão de texto full-width pill. */}
       <motion.button
         type="button"
         className={styles.messageBtn}
@@ -255,6 +292,14 @@ function ProfileCardItem({
       >
         Enviar mensagem
       </motion.button>
+
+      {/* Match suffix — "Vocês curtem Pipoco há mais tempo" etc.
+       *  Aparece abaixo do botão, contextualizando a afinidade
+       *  no mesmo formato dos cards horizontais. */}
+      <div className={styles.matchSuffix}>
+        <span className={styles.matchPrefix}>Vocês</span>{' '}
+        <span className={styles.matchText}>{profile.matchSuffix}</span>
+      </div>
     </motion.div>
   );
 }
