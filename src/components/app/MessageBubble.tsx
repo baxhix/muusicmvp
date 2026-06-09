@@ -1,13 +1,13 @@
 'use client';
 
 import { memo, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { createPortal } from 'react-dom';
 import type {
   ApiMessage,
   ApiMessageAttachment,
   ApiMessageReaction,
 } from '@/lib/api/types';
 import MessageBody, { stripReplyPrefix } from './MessageBody';
+import Lightbox from './Lightbox';
 import styles from './LiveChatPanel.module.css';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
@@ -400,60 +400,22 @@ function MessageAttachments({
           </button>
         ))}
       </div>
+      {/* Lightbox compartilhado — padrão único da plataforma.
+       *  Per spec atualizado: usuário pode navegar entre todos
+       *  os attachments da mensagem via arrows/dots/swipe. */}
       {lightboxIdx !== null && items[lightboxIdx] && (
-        <AttachmentLightbox
-          attachment={items[lightboxIdx]}
+        <Lightbox
+          items={items.map((a, i) => ({
+            id: `att-${i}-${a.url}`,
+            src: a.url,
+            downloadUrl: a.url,
+          }))}
+          index={lightboxIdx}
+          onIndexChange={setLightboxIdx}
           onClose={() => setLightboxIdx(null)}
         />
       )}
     </>
-  );
-}
-
-function AttachmentLightbox({
-  attachment,
-  onClose,
-}: {
-  attachment: ApiMessageAttachment;
-  onClose: () => void;
-}) {
-  /* Esc fecha — listener global enquanto o lightbox está montado.
-   * useEffect proper agora pra cleanup correto (antes era inline
-   * e dependia do onKeyDown do backdrop que precisava de focus). */
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  /* SSR-safe portal: só monta quando document existe. Sem isso o
-   * Next.js quebra no server-side render (createPortal precisa de
-   * document.body). */
-  if (typeof document === 'undefined') return null;
-
-  /* React Portal pro document.body — escapa do stacking context
-   * do .panel (que tem backdrop-filter, criando contexto que
-   * aprisionava qualquer position:fixed dentro do panel à
-   * bounding box dele). Agora o lightbox cobre a viewport TODA. */
-  return createPortal(
-    <div
-      className={styles.lightboxBackdrop}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Imagem em tamanho maior"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={attachment.url}
-        alt=""
-        className={styles.lightboxImage}
-        onClick={(e) => e.stopPropagation()}
-      />
-    </div>,
-    document.body,
   );
 }
 

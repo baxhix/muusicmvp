@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import Lightbox from './Lightbox';
 import styles from './ShowAlbumCoverflow.module.css';
 
 /**
@@ -71,12 +71,11 @@ export default function ShowAlbumCoverflow({
 }: ShowAlbumCoverflowProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
-  /* Direction (-1/+1) — controla o slide direcional no
-   *  AnimatePresence do zoom: novo item entra do lado correto
-   *  conforme swipe (esq=next/+1, dir=prev/-1). */
-  const [direction, setDirection] = useState<1 | -1>(1);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  /* Direction (-1/+1) — controla o slide direcional no coverflow
+   *  stage interno (cards giram pro lado correto). O lightbox de
+   *  zoom usa o componente compartilhado <Lightbox /> com sua
+   *  própria direction interna. */
+  const [, setDirection] = useState<1 | -1>(1);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -266,82 +265,23 @@ export default function ShowAlbumCoverflow({
         )}
       </div>
 
-      {/* Zoom overlay: portal-ed pra document.body pra escapar o
-          containing block do feed (que tem overflow:hidden e cria
-          stacking context que limitava o overlay à área do feed).
-          Renderizando direto em body, o motion.div fixed cobre
-          o viewport inteiro independente de onde o componente
-          tá montado. */}
-      {mounted && createPortal(
-      <AnimatePresence>
-        {zoomOpen && (
-          <motion.div
-            className={styles.zoom}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            onClick={() => setZoomOpen(false)}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Visualizar foto em tela cheia"
-          >
-            {/* AnimatePresence mode="wait" + key={src} → quando
-             *  activeIndex muda (via swipe), a img antiga sai e
-             *  a nova entra com slide direcional (custom={direction}). */}
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.img
-                key={items[activeIndex].src}
-                src={items[activeIndex].src}
-                alt={items[activeIndex].alt}
-                className={styles.zoomImg}
-                custom={direction}
-                variants={{
-                  enter: (d: number) => ({ opacity: 0, x: d * 60, scale: 0.96 }),
-                  center: { opacity: 1, x: 0, scale: 1 },
-                  exit: (d: number) => ({ opacity: 0, x: d * -60, scale: 0.96 }),
-                }}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                /* Drag horizontal pra navegar entre fotos. Swipe
-                 *  >60px ou velocity alta → goPrev/goNext. */
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.3}
-                onClick={(e) => e.stopPropagation()}
-                onDragEnd={(_, info) => {
-                  if (info.offset.x < -60 || info.velocity.x < -300) {
-                    goNext();
-                  } else if (info.offset.x > 60 || info.velocity.x > 300) {
-                    goPrev();
-                  }
-                }}
-              />
-            </AnimatePresence>
-            <button
-              type="button"
-              className={styles.zoomClose}
-              onClick={(e) => {
-                e.stopPropagation();
-                setZoomOpen(false);
-              }}
-              aria-label="Fechar"
-            >
-              <svg viewBox="0 0 14 14" width="14" height="14" aria-hidden="true">
-                <path
-                  d="M1 1l12 12M13 1L1 13"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>,
-      document.body,
+      {/* Zoom — Lightbox compartilhado da plataforma. Padrão único
+       *  (close top-right, counter top-left, nav arrows, dots,
+       *  swipe horizontal, keyboard). */}
+      {zoomOpen && (
+        <Lightbox
+          items={items.map((it, i) => ({
+            id: `album-${i}-${it.src}`,
+            src: it.src,
+            alt: it.alt,
+          }))}
+          index={activeIndex}
+          onIndexChange={(i) => {
+            setDirection(i > activeIndex ? 1 : -1);
+            setActiveIndex(i);
+          }}
+          onClose={() => setZoomOpen(false)}
+        />
       )}
     </div>
   );

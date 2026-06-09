@@ -1,10 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import Lightbox from './Lightbox';
 import styles from './MaterialsTabContent.module.css';
 
 /* Helper pra montar URL de thumbnail de imagem mocada via Picsum.
@@ -263,19 +262,27 @@ export function MaterialsTabContent() {
             ))}
           </div>
         </div>
-        {/* AnimatePresence orquestra o exit anim — sem isso o
-         *  overlay desmonta instantâneo. */}
-        <AnimatePresence>
-          {lightboxIdx >= 0 && previewableItems[lightboxIdx] && (
-            <CarouselLightbox
-              key="lightbox"
-              items={previewableItems}
-              index={lightboxIdx}
-              onIndexChange={setLightboxIdx}
-              onClose={() => setLightboxIdx(-1)}
-            />
-          )}
-        </AnimatePresence>
+        {/* Lightbox compartilhado — padrão único da plataforma
+         *  (chat, álbuns, pastas exclusivas). Mapeamos MaterialItem
+         *  pro shape genérico LightboxItem. */}
+        {lightboxIdx >= 0 && previewableItems[lightboxIdx] && (
+          <Lightbox
+            items={previewableItems.map((m) => {
+              const url = thumbUrl(m.id, 1920, 1280);
+              return {
+                id: m.id,
+                src: url,
+                alt: m.name,
+                name: m.name,
+                downloadUrl: url,
+                downloadName: m.name,
+              };
+            })}
+            index={lightboxIdx}
+            onIndexChange={setLightboxIdx}
+            onClose={() => setLightboxIdx(-1)}
+          />
+        )}
       </>
     );
   }
@@ -389,13 +396,10 @@ function FileRow({
    * tipos mantêm o ícone SVG colorido. */
   const thumbContent = isPreviewable ? (
     <>
-      {/* motion.img com layoutId compartilhado com o Lightbox.
-       *  Quando o user clica e o Lightbox monta, motion faz FLIP
-       *  shared-element: a thumb cresce até virar a imagem
-       *  fullscreen. Sem isso o lightbox aparece "do nada". */}
+      {/* Thumb img — simples, sem layoutId. O Lightbox compartilhado
+       *  cuida do fade-in/out via opacity quando monta. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <motion.img
-        layoutId={`material-img-${item.id}`}
+      <img
         src={thumbUrl(item.id, 80, 60)}
         alt={item.name}
         className={styles.fileThumbImg}
@@ -484,222 +488,6 @@ function FileRow({
       </div>
     </div>
   );
-}
-
-/* ============================================================
- * Lightbox — overlay fullscreen pra preview de imagem com
- * download. Fecha por backdrop click, botão X, ou tecla Escape
- * (Escape gerenciado pelo parent via useEffect). Cliques dentro
- * da imagem não propagam pro backdrop.
- * ============================================================ */
-/**
- * CarouselLightbox — overlay fullscreen edge-to-edge que mostra
- * a foto/vídeo ativa e permite navegar entre todos os itens
- * previewáveis da pasta via setas, dots, swipe horizontal e
- * arrow keys.
- *
- * Comportamento:
- *  - Background quase opaco + blur (paleta dark do app).
- *  - Imagem central: object-fit contain pra preservar proporção
- *    sem cortes, com max-width/height 100vw/100vh.
- *  - Nav arrows nas laterais (desktop) + dots na base.
- *  - Drag horizontal: AnimatePresence + custom direction → ao
- *    arrastar pra esquerda, próxima imagem; pra direita, anterior.
- *  - Keyboard: ←/→ navega; Esc fecha (Esc tratado no parent).
- *  - Portal pra body pra escapar containing block do ArtistBox
- *    (que tem overflow:hidden + backdrop-filter).
- *  - Botão Baixar no canto inferior + nome do item.
- *  - "i/N" counter no canto superior.
- */
-function CarouselLightbox({
-  items,
-  index,
-  onIndexChange,
-  onClose,
-}: {
-  items: MaterialItem[];
-  index: number;
-  onIndexChange: (i: number) => void;
-  onClose: () => void;
-}) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  /* Direction (-1/+1) — controla o slide animation no
-   *  AnimatePresence: novo item entra da direita ou da esquerda
-   *  baseado em qual seta foi pressionada. */
-  const [direction, setDirection] = useState<1 | -1>(1);
-
-  const item = items[index];
-
-  const goPrev = useCallback(() => {
-    if (index <= 0) return;
-    setDirection(-1);
-    onIndexChange(index - 1);
-  }, [index, onIndexChange]);
-
-  const goNext = useCallback(() => {
-    if (index >= items.length - 1) return;
-    setDirection(1);
-    onIndexChange(index + 1);
-  }, [index, items.length, onIndexChange]);
-
-  /* Keyboard nav — ←/→ navega entre os itens. */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') goPrev();
-      else if (e.key === 'ArrowRight') goNext();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [goPrev, goNext]);
-
-  if (!item) return null;
-  const fullUrl = thumbUrl(item.id, 1920, 1280);
-
-  const content = (
-    <motion.div
-      className={styles.lightbox}
-      role="dialog"
-      aria-modal="true"
-      aria-label={item.name}
-      onClick={onClose}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      {/* Close button — top right. */}
-      <button
-        type="button"
-        className={styles.lightboxClose}
-        onClick={onClose}
-        aria-label="Fechar"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-
-      {/* Counter top-left — "i/N". */}
-      <div className={styles.lightboxCounter} aria-hidden="true">
-        {index + 1} / {items.length}
-      </div>
-
-      {/* Nav arrows — esconder os disabled mas manter o slot
-       *  pra layout não pular. */}
-      <button
-        type="button"
-        className={`${styles.lightboxNav} ${styles.lightboxNavPrev}`}
-        onClick={(e) => { e.stopPropagation(); goPrev(); }}
-        disabled={index === 0}
-        aria-label="Imagem anterior"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        className={`${styles.lightboxNav} ${styles.lightboxNavNext}`}
-        onClick={(e) => { e.stopPropagation(); goNext(); }}
-        disabled={index === items.length - 1}
-        aria-label="Próxima imagem"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
-
-      {/* Stage — clique aqui não propaga (não fecha overlay).
-       *  AnimatePresence + custom direction → o slide novo entra
-       *  da direção certa (esq/dir) baseado em qual seta. */}
-      <div
-        className={styles.lightboxStage}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.img
-            key={item.id}
-            src={fullUrl}
-            alt={item.name}
-            className={styles.lightboxImg}
-            custom={direction}
-            /* Variants em vez de função inline — motion suporta
-             *  função dentro de variants (com custom), mas espera
-             *  o variant name no initial/animate/exit. */
-            variants={{
-              enter: (dir: number) => ({ opacity: 0, x: dir * 60 }),
-              center: { opacity: 1, x: 0 },
-              exit: (dir: number) => ({ opacity: 0, x: dir * -60 }),
-            }}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            /* Drag horizontal pra trocar de imagem — match com
-             *  swipe nativo de iOS/Android photos. */
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(_e, info) => {
-              if (info.offset.x < -60 || info.velocity.x < -300) goNext();
-              else if (info.offset.x > 60 || info.velocity.x > 300) goPrev();
-            }}
-          />
-        </AnimatePresence>
-
-        {/* Meta pill — fica no bottom da stage, sai do layout
-         *  do imagem (pra imagem ocupar tela toda). */}
-        <div className={styles.lightboxMeta}>
-          <div className={styles.lightboxName}>{item.name}</div>
-          <a
-            className={styles.lightboxDownload}
-            href={fullUrl}
-            download={item.name}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Baixar
-          </a>
-        </div>
-
-        {/* Dots — pra pular direto pra qualquer item. */}
-        {items.length > 1 && (
-          <div
-            className={styles.lightboxDots}
-            role="tablist"
-            aria-label="Selecionar imagem"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {items.map((it, i) => (
-              <button
-                key={it.id}
-                type="button"
-                role="tab"
-                aria-selected={i === index}
-                aria-label={`Ir pra imagem ${i + 1}`}
-                className={`${styles.lightboxDot} ${i === index ? styles.lightboxDotActive : ''}`}
-                onClick={() => {
-                  setDirection(i > index ? 1 : -1);
-                  onIndexChange(i);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-
-  if (!mounted) return null;
-  return createPortal(content, document.body);
 }
 
 function FileKindIcon({ kind }: { kind: MaterialKind }) {
