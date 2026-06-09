@@ -883,29 +883,25 @@
     animation: none;
     filter: drop-shadow(0 0 40px rgba(168, 85, 247, 0.4));
   }
-  /* OrbWrap mobile: 168×168 (era 286×286 herdado do desktop) +
-   *  scale 0.46 quando scrolled (proporcionalmente equivalente
-   *  ao desktop). Transition mais longa pra ficar suave per
-   *  spec atualizado. */
+  /* OrbWrap mobile: per spec atualizado, +20% → 168 → 202px.
+   *  Scale quando scrolled também ajustado proporcionalmente
+   *  (0.46 → 0.38) pra orbe sticky ficar do mesmo tamanho
+   *  visual de antes (~77px). */
   .orbWrap {
-    width: 168px;
-    height: 168px;
+    width: 202px;
+    height: 202px;
     transition: transform 720ms cubic-bezier(0.65, 0, 0.35, 1);
   }
   .scrolled .orbWrap {
-    transform: scale(0.46);
+    transform: scale(0.38);
   }
-  /* Per spec atualizado "Centralize o orbe na tela" no mobile.
-   *  No estado pré-scroll, padding-top empurra o orbe pro centro
-   *  vertical do viewport. Cálculo: 50dvh - 120px (analyzing
-   *  ~30 + gap 6 + metade do orbWrap 84 = ~120). Quando scrolled,
-   *  cai pro topo. Transition 720ms suaviza esse movimento longo
-   *  per spec "transição do orbe mais suave no mobile". */
+  /* Per spec atualizado "posicione o orbe mais acima, mantendo
+   *  100px do topo" — substituímos o centering (50dvh-120) por
+   *  um padding-top fixo de 100px (somando safe-area-inset-top
+   *  pra respeitar notch do iPhone). O orbe não sai do topo nem
+   *  quando scrolled (volta pra safe-area+14 que dá ~58px). */
   .fixedHeader {
-    padding-top: max(
-      calc(env(safe-area-inset-top, 0px) + 44px),
-      calc(50dvh - 120px)
-    );
+    padding-top: calc(env(safe-area-inset-top, 0px) + 100px);
     transition: padding-top 720ms cubic-bezier(0.65, 0, 0.35, 1);
   }
   .scrolled .fixedHeader {
