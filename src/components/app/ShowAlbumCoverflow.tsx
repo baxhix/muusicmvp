@@ -71,11 +71,10 @@ export default function ShowAlbumCoverflow({
 }: ShowAlbumCoverflowProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
-  /* Portal gating — só monta após o client mount pra evitar
-   *  problema de SSR (document.body não existe). Quando o zoom
-   *  estiver aberto, ele é renderizado direto em document.body
-   *  pra escapar o containing block do feed (que tem overflow
-   *  hidden / position relative e restringia o overlay). */
+  /* Direction (-1/+1) — controla o slide direcional no
+   *  AnimatePresence do zoom: novo item entra do lado correto
+   *  conforme swipe (esq=next/+1, dir=prev/-1). */
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -88,10 +87,12 @@ export default function ShowAlbumCoverflow({
   );
 
   const goPrev = useCallback(() => {
+    setDirection(-1);
     setActiveIndex((i) => Math.max(0, i - 1));
   }, []);
 
   const goNext = useCallback(() => {
+    setDirection(1);
     setActiveIndex((i) => Math.min(items.length - 1, i + 1));
   }, [items.length]);
 
@@ -116,11 +117,21 @@ export default function ShowAlbumCoverflow({
 
   return (
     <div className={styles.root}>
-      <div
+      <motion.div
         className={styles.stage}
         role="region"
         aria-label={`Álbum: ${title}`}
         aria-roledescription="carousel"
+        /* Pan handler captura swipe horizontal SEM mexer no
+         *  transform dos cards (que continuam animando via
+         *  animate props). onPanEnd decide goPrev/goNext baseado
+         *  no offset + velocity. Threshold 60px / 300 velocity. */
+        onPanEnd={(_, info) => {
+          const ox = info.offset.x;
+          const vx = info.velocity.x;
+          if (ox < -60 || vx < -300) goNext();
+          else if (ox > 60 || vx > 300) goPrev();
+        }}
       >
         {items.map((item, i) => {
           const offset = i - activeIndex;
@@ -225,30 +236,10 @@ export default function ShowAlbumCoverflow({
           );
         })}
 
-        {/* Nav arrows — só renderiza se tem mais de 1 foto. */}
-        {items.length > 1 && (
-          <>
-            <button
-              type="button"
-              className={`${styles.navBtn} ${styles.navBtnPrev}`}
-              onClick={goPrev}
-              disabled={activeIndex === 0}
-              aria-label="Foto anterior"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              type="button"
-              className={`${styles.navBtn} ${styles.navBtnNext}`}
-              onClick={goNext}
-              disabled={activeIndex === items.length - 1}
-              aria-label="Próxima foto"
-            >
-              <ChevronRight />
-            </button>
-          </>
-        )}
-      </div>
+        {/* Nav arrows removidas per spec — swipe horizontal
+         *  (onPanEnd no stage acima) é a navegação primária.
+         *  Dots continuam no captionRow pra navegação direta. */}
+      </motion.div>
 
       {/* Caption + dots row. Caption é a alt da foto ativa — dá
           contexto sobre cada uma sem precisar abrir zoom. */}
@@ -295,15 +286,40 @@ export default function ShowAlbumCoverflow({
             aria-modal="true"
             aria-label="Visualizar foto em tela cheia"
           >
-            <motion.img
-              src={items[activeIndex].src}
-              alt={items[activeIndex].alt}
-              className={styles.zoomImg}
-              initial={{ scale: 0.94 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-            />
+            {/* AnimatePresence mode="wait" + key={src} → quando
+             *  activeIndex muda (via swipe), a img antiga sai e
+             *  a nova entra com slide direcional (custom={direction}). */}
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.img
+                key={items[activeIndex].src}
+                src={items[activeIndex].src}
+                alt={items[activeIndex].alt}
+                className={styles.zoomImg}
+                custom={direction}
+                variants={{
+                  enter: (d: number) => ({ opacity: 0, x: d * 60, scale: 0.96 }),
+                  center: { opacity: 1, x: 0, scale: 1 },
+                  exit: (d: number) => ({ opacity: 0, x: d * -60, scale: 0.96 }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                /* Drag horizontal pra navegar entre fotos. Swipe
+                 *  >60px ou velocity alta → goPrev/goNext. */
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.3}
+                onClick={(e) => e.stopPropagation()}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -60 || info.velocity.x < -300) {
+                    goNext();
+                  } else if (info.offset.x > 60 || info.velocity.x > 300) {
+                    goPrev();
+                  }
+                }}
+              />
+            </AnimatePresence>
             <button
               type="button"
               className={styles.zoomClose}
@@ -331,29 +347,5 @@ export default function ShowAlbumCoverflow({
   );
 }
 
-function ChevronLeft() {
-  return (
-    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-      <path
-        d="M10 2L4 8l6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-function ChevronRight() {
-  return (
-    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-      <path
-        d="M6 2l6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+/* ChevronLeft / ChevronRight removidas — nav arrows não existem
+ *  mais; navegação 100% por swipe (onPanEnd no stage) + dots. */

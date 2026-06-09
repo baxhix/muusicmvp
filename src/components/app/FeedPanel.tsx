@@ -32,12 +32,9 @@ const ACTIVITIES: ActivityCardData[] = [
     user: 'Daniel',
     avatar: 'https://i.pravatar.cc/96?img=12',
   },
-  {
-    type: 'message_request',
-    user: 'Daniel',
-    avatar: 'https://i.pravatar.cc/96?img=12',
-    preview: 'Vi que você vai no Villa Country hoje? Tenho um par de ingressos sobrando…',
-  },
+  /* Post "message_request" do Daniel removido per spec
+   *  atualizado — "Daniel quer mandar uma mensagem pra você"
+   *  saiu do feed mocado. */
 ];
 
 /* ── Poll / Quiz mock data ───────────────────────────────
