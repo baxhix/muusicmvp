@@ -208,10 +208,24 @@ export default function CursorTrailGallery() {
 
   return (
     <div className={styles.root}>
-      {/* Headline centralizado em uma linha — per spec atualizado.
-       *  Sem badge "Feature 02" nem descrição multi-linha; a copy
-       *  fica enxuta pra dar protagonismo à trail abaixo. */}
-      <h3 className={styles.featureTitle}>Conteúdo exclusivo</h3>
+      {/* Headline centralizado. Desktop: uma linha. Mobile: duas
+       *  linhas forçadas via <br> que só aparece no mobile (per
+       *  spec "no mobile, deixe o headline em duas linhas"). Com
+       *  display:none no desktop, o whitespace ao redor colapsa
+       *  e o título volta a ler "Conteúdo exclusivo" numa linha. */}
+      <h3 className={styles.featureTitle}>
+        Conteúdo<br className={styles.titleBreak} /> exclusivo
+      </h3>
+
+      {/* Diferenciais — bullets com os destaques do conteúdo
+       *  exclusivo. Row centralizada que wrappa no mobile; cada
+       *  item tem um dot com o gradient da marca. */}
+      <ul className={styles.perks}>
+        <li>Lives</li>
+        <li>Backstage</li>
+        <li>Grupos fechados</li>
+        <li>Pré-lançamentos</li>
+      </ul>
 
       {/* Surface full-width abaixo do headline. Sem box (sem bg
        *  gradient, sem border): a trail é desenhada direto sobre
