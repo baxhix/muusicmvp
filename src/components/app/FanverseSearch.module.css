@@ -382,17 +382,76 @@
   transform: scale(0.42);
 }
 
-/* Album thumb — agora vive no body (acima do insight), NÃO
- *  sobre o orbe per spec atualizado "não sobrepor o orbe".
- *  128×128 com border-radius 6px. */
-.albumThumbSlot {
-  display: flex;
-  justify-content: center;
-  /* Altura fixa pra reservar espaço mesmo quando a frase atual
-   *  não tem álbum (evita layout shift do insight). */
-  height: 128px;
+/* Vinyl disc — gira em loop atrás do thumb. SEMPRE visível
+ *  per spec atualizado (mesmo sem álbum). Inspirado na
+ *  CollectiveListeningModal, mas SEM o album cover ao centro
+ *  (a thumb do álbum é layered por cima quando presente). */
+.vinylWrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 156px;
+  height: 156px;
+  margin: -78px 0 0 -78px;
+  z-index: 2;
+  pointer-events: none;
 }
+.vinyl {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 35% 35%,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.02) 18%,
+      transparent 35%
+    ),
+    repeating-radial-gradient(
+      circle at center,
+      #0c0c0e 0px,
+      #0c0c0e 1px,
+      #1a1a1c 1.5px,
+      #0c0c0e 3px
+    ),
+    radial-gradient(
+      circle at center,
+      #1a1a1c 0%,
+      #060608 100%
+    );
+  box-shadow:
+    0 14px 36px -10px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  animation: fsVinylSpin 4.5s linear infinite;
+}
+.vinylHole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #050505;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10);
+  z-index: 3;
+}
+@keyframes fsVinylSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Album thumb — agora vive DENTRO do .vinylWrap, sobreposta
+ *  ao orbe via z-index. Per spec atualizado:
+ *  - SEMPRE por cima do orbe no scroll (vinylWrap fica no
+ *    .fixedHeader que é position:fixed)
+ *  - 128×128 desktop, 135×135 mobile (+30%)
+ *  - border-radius 6px
+ *  - Vinyl spinning permanece atrás dela. */
 .albumThumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 128px;
   height: 128px;
   border-radius: 6px;
@@ -404,6 +463,7 @@
   background: #1a1a1f;
   pointer-events: none;
   transform-origin: center center;
+  z-index: 4;
 }
 .albumThumb img {
   width: 100%;
@@ -905,13 +965,11 @@
       0 10px 24px rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   }
-  /* Per spec atualizado "posicione o orbe mais acima, mantendo
-   *  100px do topo" — substituímos o centering (50dvh-120) por
-   *  um padding-top fixo de 100px (somando safe-area-inset-top
-   *  pra respeitar notch do iPhone). O orbe não sai do topo nem
-   *  quando scrolled (volta pra safe-area+14 que dá ~58px). */
+  /* Per spec atualizado "Diminua para 50px a distância do
+   *  orbe para o topo" — padding-top fixo de 50px (somando
+   *  safe-area-inset-top pra respeitar notch). */
   .fixedHeader {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 100px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 50px);
     transition: padding-top 720ms cubic-bezier(0.65, 0, 0.35, 1);
   }
   .scrolled .fixedHeader {
@@ -934,27 +992,32 @@
    * scroll padding-top pra 290 (suficiente pra o headline aparecer
    * COMPLETO abaixo do orbe sem overlap) e mask fade band pra
    * 220/290 acompanha (revela conteúdo logo abaixo do orbe). */
+  /* Per spec atualizado "Diminua pela metade a distância do
+   *  texto e a miniatura do álbum" — gap thumb→text foi de
+   *  ~73px (mask transparent 220→290) pra ~37px (transparent
+   *  217→254). Considera o orb a 50px do topo + thumb 135px
+   *  centralizado no orbWrap. */
   .scroll {
-    padding-top: 290px;
+    padding-top: 254px;
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 220px,
-      black 290px,
+      transparent 217px,
+      black 254px,
       black 100%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 220px,
-      black 290px,
+      transparent 217px,
+      black 254px,
       black 100%
     );
   }
-  /* Gap maior entre os filhos do .body no mobile pra separar
-   * visualmente headline > cards > lista — evita amontoamento. */
+  /* Gap entre os filhos do .body no mobile — reduzido de 26
+   *  pra 18 pra acompanhar o aperto entre thumb e text. */
   .body {
-    gap: 26px;
+    gap: 18px;
   }
   /* Avatar animations agora vivem em motion.div (FanverseSearch.tsx)
    *  com amplitudes mobile-aware via `amp = isMobile ? 40 : 90`.
@@ -963,13 +1026,16 @@
   .hero {
     padding: 8px 24px 22px;
   }
-  /* Mobile — o clamp na .headline (desktop) já reduz pra
-   *  ~14px em viewports estreitos. Não precisamos override
-   *  manual aqui. Thumb mantém proporção menor pra não dominar
-   *  o orbe mobile (128 desktop → 104 mobile). */
+  /* Mobile thumb — per spec atualizado +30%: 104 → 135.
+   *  Vinyl mobile mais largo pra acompanhar (156 → 170). */
   .albumThumb {
-    width: 104px;
-    height: 104px;
+    width: 135px;
+    height: 135px;
+  }
+  .vinylWrap {
+    width: 170px;
+    height: 170px;
+    margin: -85px 0 0 -85px;
   }
   .analyzing {
     font-size: 11px;
@@ -1041,6 +1107,7 @@
   .orb,
   .orbWrap,
   .albumThumb,
+  .vinyl,
   .showMoreBtn,
   .floatingLayer {
     animation: none !important;

@@ -557,6 +557,37 @@ export default function FanverseSearch() {
           <div className={styles.orb}>
             <FanverseCore />
           </div>
+          {/* Vinyl disc — sempre visível, gira em loop atrás da
+           *  miniatura do álbum. Inspirado na feature Audição
+           *  Coletiva (CollectiveListeningModal). Per spec
+           *  atualizado, NÃO tem imagem ao centro (só os grooves
+           *  + furo central + brilho sutil). O thumb do álbum,
+           *  quando presente, fica overlaid no centro. */}
+          <div className={styles.vinylWrap}>
+            <div className={styles.vinyl} />
+            <div className={styles.vinylHole} />
+            <AnimatePresence mode="wait">
+              {showHeadline && currentPhrase.album && (
+                <motion.div
+                  key={currentPhrase.album.cover}
+                  className={styles.albumThumb}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.92 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  transformTemplate={(_props, generated) =>
+                    `translate(-50%, -50%) ${generated}`
+                  }
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentPhrase.album.cover}
+                    alt={currentPhrase.album.title}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -571,33 +602,10 @@ export default function FanverseSearch() {
            *  via stagger no motion). Acima do texto, quando a frase
            *  tem `.album`, renderiza uma thumb 110×110 (90×90 mobile)
            *  que faz fade in/out junto com o AnimatePresence. */}
-          {/* Album thumb 128×128 — agora vive ACIMA do insight
-           *  (no body, abaixo do orbe) per spec atualizado "não
-           *  sobrepor o orbe". AnimatePresence faz fade entre
-           *  álbuns; slot fixo evita layout shift quando a frase
-           *  atual não tem álbum. */}
-          {showHeadline && (
-            <div className={styles.albumThumbSlot} aria-hidden="true">
-              <AnimatePresence mode="wait">
-                {currentPhrase.album && (
-                  <motion.div
-                    key={currentPhrase.album.cover}
-                    className={styles.albumThumb}
-                    initial={{ opacity: 0, scale: 0.94 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.94 }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={currentPhrase.album.cover}
-                      alt={currentPhrase.album.title}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+          {/* Album thumb agora vive dentro do .orbWrap no
+           *  fixedHeader (sempre fixo + por cima do orbe no
+           *  scroll, com vinyl spinning atrás). Removido daqui
+           *  do body. */}
 
           {showHeadline && (
             <div className={styles.headline}>
