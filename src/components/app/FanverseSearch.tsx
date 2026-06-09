@@ -558,35 +558,6 @@ export default function FanverseSearch() {
             <FanverseCore />
           </div>
         </div>
-        {/* Vinyl disc — agora SIBLING do .orbWrap (não filho). Per
-         *  spec atualizado, orb fica mais acima e disc + thumb +
-         *  insights movem 100px pra baixo, separando visualmente
-         *  os 3 elementos. SEMPRE visível, gira em loop. */}
-        <div className={styles.vinylWrap} aria-hidden="true">
-          <div className={styles.vinyl} />
-          <div className={styles.vinylHole} />
-          <AnimatePresence mode="wait">
-            {showHeadline && currentPhrase.album && (
-              <motion.div
-                key={currentPhrase.album.cover}
-                className={styles.albumThumb}
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                transformTemplate={(_props, generated) =>
-                  `translate(-50%, -50%) ${generated}`
-                }
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentPhrase.album.cover}
-                  alt={currentPhrase.album.title}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
 
       {/* Scroll vertical do conteúdo principal — só body (headline,
@@ -600,10 +571,32 @@ export default function FanverseSearch() {
            *  via stagger no motion). Acima do texto, quando a frase
            *  tem `.album`, renderiza uma thumb 110×110 (90×90 mobile)
            *  que faz fade in/out junto com o AnimatePresence. */}
-          {/* Album thumb agora vive dentro do .orbWrap no
-           *  fixedHeader (sempre fixo + por cima do orbe no
-           *  scroll, com vinyl spinning atrás). Removido daqui
-           *  do body. */}
+          {/* Album thumb — agora vive no body (não mais no
+           *  fixedHeader). Per spec atualizado, scrolla junto
+           *  com o insight (ficam visualmente colados). Sem o
+           *  vinyl spinning atrás. */}
+          {showHeadline && (
+            <div className={styles.albumThumbSlot} aria-hidden="true">
+              <AnimatePresence mode="wait">
+                {currentPhrase.album && (
+                  <motion.div
+                    key={currentPhrase.album.cover}
+                    className={styles.albumThumb}
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.94 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={currentPhrase.album.cover}
+                      alt={currentPhrase.album.title}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           {showHeadline && (
             <div className={styles.headline}>

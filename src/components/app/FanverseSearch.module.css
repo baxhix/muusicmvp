@@ -114,22 +114,24 @@
   overflow-x: hidden;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-  /* Per spec atualizado "Posicione o disco, miniatura do álbum
-   *  e insights 100px mais abaixo" — 390 → 490px. Mask zone
-   *  acompanha (290-390 → 390-490). */
-  padding-top: 490px;
+  /* Vinyl removido — apenas o orbe vive no fixedHeader.
+   *  Padding-top do scroll volta a ser proporcional ao
+   *  espaço só do orbe (orb 286px + 20px top = bottom ~306px;
+   *  +20px breathing = 326). Album thumb agora é primeiro
+   *  filho do body e scrolla junto. */
+  padding-top: 326px;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 390px,
-    black 490px,
+    transparent 236px,
+    black 326px,
     black 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 390px,
-    black 490px,
+    transparent 236px,
+    black 326px,
     black 100%
   );
   /* Per spec atualizado "deixe a transição do scroll suave,
@@ -384,73 +386,17 @@
   transform: scale(0.42);
 }
 
-/* Vinyl disc — agora SIBLING do .orbWrap (não filho). Per
- *  spec atualizado, vive abaixo do orbe (separado visualmente)
- *  em vez de sobreposto. SEMPRE visível, gira em loop.
- *  position:relative + margin-top negativo aproxima do orbe
- *  sem sobrepor (orb visible glow termina antes do bottom do
- *  orbWrap, então o disc preenche esse gap). */
-.vinylWrap {
-  position: relative;
-  width: 156px;
-  height: 156px;
-  margin: -50px auto 0;
-  z-index: 2;
-  pointer-events: none;
-}
-.vinyl {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background:
-    radial-gradient(
-      circle at 35% 35%,
-      rgba(255, 255, 255, 0.05) 0%,
-      rgba(255, 255, 255, 0.02) 18%,
-      transparent 35%
-    ),
-    repeating-radial-gradient(
-      circle at center,
-      #0c0c0e 0px,
-      #0c0c0e 1px,
-      #1a1a1c 1.5px,
-      #0c0c0e 3px
-    ),
-    radial-gradient(
-      circle at center,
-      #1a1a1c 0%,
-      #060608 100%
-    );
-  box-shadow:
-    0 14px 36px -10px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-  animation: fsVinylSpin 4.5s linear infinite;
-}
-.vinylHole {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  border-radius: 50%;
-  background: #050505;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10);
-  z-index: 3;
-}
-@keyframes fsVinylSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
+/* Vinyl disc — REMOVIDO definitivamente per spec atualizado.
+ *  Mantemos apenas a miniatura do álbum. */
 
-/* Album thumb — vive DENTRO do .vinylWrap. Per spec atualizado:
- *  - -10% no tamanho: 128 → 115 desktop, 135 → 122 mobile
- *  - border-radius 6px
- *  - Vinyl spinning permanece atrás dela. */
+/* Album thumb — agora vive no BODY (scroll), logo acima do
+ *  insight. Per spec atualizado: scrolla junto com o texto
+ *  do insight, ficam visualmente colados. */
+.albumThumbSlot {
+  display: flex;
+  justify-content: center;
+}
 .albumThumb {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   width: 115px;
   height: 115px;
   border-radius: 6px;
@@ -462,7 +408,6 @@
   background: #1a1a1f;
   pointer-events: none;
   transform-origin: center center;
-  z-index: 4;
 }
 .albumThumb img {
   width: 100%;
@@ -990,23 +935,23 @@
    * scroll padding-top pra 290 (suficiente pra o headline aparecer
    * COMPLETO abaixo do orbe sem overlap) e mask fade band pra
    * 220/290 acompanha (revela conteúdo logo abaixo do orbe). */
-  /* Per spec atualizado "Posicione disco + miniatura + insights
-   *  100px mais abaixo" — scroll padding-top 254 → 354px. Mask
-   *  zone acompanha (217-254 → 317-354). */
+  /* Vinyl removido. Apenas o orbe vive no fixedHeader mobile
+   *  (202px orb + 24px top = ~226 bottom + 14 breathing = 240).
+   *  Album thumb agora é primeiro filho do body e scrolla. */
   .scroll {
-    padding-top: 354px;
+    padding-top: 240px;
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 317px,
-      black 354px,
+      transparent 170px,
+      black 240px,
       black 100%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      transparent 317px,
-      black 354px,
+      transparent 170px,
+      black 240px,
       black 100%
     );
   }
@@ -1022,18 +967,10 @@
   .hero {
     padding: 8px 24px 22px;
   }
-  /* Mobile thumb — per spec atualizado -10% do valor anterior:
-   *  135 → 122. */
+  /* Mobile thumb — 122×122 (era 135 antes do -10%). */
   .albumThumb {
     width: 122px;
     height: 122px;
-  }
-  /* Mobile vinylWrap — agora sibling do orbWrap (não filho), com
-   *  margin-top negativo pra ficar próximo do orbe sem sobrepor. */
-  .vinylWrap {
-    width: 170px;
-    height: 170px;
-    margin: -40px auto 0;
   }
   .analyzing {
     font-size: 11px;
@@ -1105,7 +1042,6 @@
   .orb,
   .orbWrap,
   .albumThumb,
-  .vinyl,
   .showMoreBtn,
   .floatingLayer {
     animation: none !important;
