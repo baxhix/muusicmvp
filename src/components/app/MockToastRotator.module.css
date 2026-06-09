@@ -13,22 +13,32 @@
    * top. Per product feedback "Posicione as notificações 24 px
    * acima da navbar". */
   bottom: 104px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60;
-  /* Display block + relative posicionamento — toasts dentro são
-   *  absolute pra empilhar via stack iOS-style (top na base, mais
-   *  antigos peeking above). Width auto-shrink ao maior toast. */
-  display: block;
-  pointer-events: none;
+  /* Centering via inset-x:0 + margin auto (NÃO via translateX
+   *  -50%) — porque motion controla `transform` no .toast e
+   *  sobrescreveria translateX. Aqui no .root, só posicionamos
+   *  o container; o conteúdo se centraliza via grid/flex. */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
   max-width: calc(100vw - 32px);
+  z-index: 60;
+  /* Grid 1x1: todos os filhos compartilham a mesma célula
+   *  (grid-row 1 / grid-column 1) → empilham naturalmente.
+   *  place-items: end center alinha cada um ao bottom-center
+   *  da célula, dando o ancoramento iOS-stack visual. Sem
+   *  precisar de position: absolute nos filhos. */
+  display: grid;
+  grid-template: 1fr / 1fr;
+  place-items: end center;
+  pointer-events: none;
   /* Cursor pointer indica que o stack é clicável pra expandir. */
   cursor: pointer;
 }
 
 /* Expanded mode: stack vira lista vertical com gap fixo. Cursor
  *  volta default já que o container não é o trigger principal —
- *  cada toast individual + dismiss btn ficam clicáveis. */
+ *  cada toast individual fica clicável. */
 .rootExpanded {
   cursor: default;
   /* Display flex permite os filhos se distribuírem com gap
@@ -97,26 +107,21 @@
   max-width: min(520px, calc(100vw - 32px));
 }
 
-/* Position absolute no stack collapsed — todos sobrepostos no
- *  bottom 0 do .root, motion controla y/scale/opacity inline.
- *  No expanded mode (.toastExpanded), volta a position:relative
- *  pra fluir na coluna do .rootExpanded. */
+/* Collapsed: cada toast ocupa a mesma célula do grid
+ *  (grid-row 1 / grid-column 1) — empilham bottom-anchored
+ *  via place-items: end center do .root. Motion controla
+ *  y/scale/opacity sem precisar de transform CSS extra. */
 .toast {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  /* translateX(-50%) centra; motion vai adicionar translateY
-   *  via inline style (transformTemplate compõe). */
-  transform: translateX(-50%);
+  grid-row: 1;
+  grid-column: 1;
 }
+
+/* Expanded: filhos do flex, sem stack. Reseta grid-row/column
+ *  caso herdem do collapsed estilo (não é o caso já que a
+ *  class só é aplicada no expanded). */
 .toastExpanded {
-  position: relative;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  /* Padding extra à direita pro dismissBtn caber sem cobrir
-   *  o conteúdo do toast. */
-  padding-right: 38px;
+  grid-row: auto;
+  grid-column: auto;
 }
 
 /* Animations CSS antigas mantidas pra fallback / @media reduced,
@@ -125,30 +130,9 @@
 .toastEnter { animation: mockToastIn  0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .toastExit  { animation: mockToastOut 0.38s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
-/* Dismiss button — só visível em .toastExpanded. Pequeno X
- *  ghost no canto direito do toast. */
-.dismissBtn {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(245, 245, 247, 0.7);
-  cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
-  pointer-events: auto;
-}
-.dismissBtn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-}
+/* .dismissBtn removido — comportamento iOS native é tap no
+ *  card inteiro pra dismissar (não tem X visível). Whole-toast
+ *  click no expanded mode chama dismissOne() direto. */
 
 /* Variante clicável — usada APENAS pra real_message (toast vindo
  * do socket). Sobrescreve o pointer-events:none herdado do

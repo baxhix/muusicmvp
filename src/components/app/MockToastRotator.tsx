@@ -289,10 +289,11 @@ export default function MockToastRotator() {
             : depth >= VISIBLE_PEEK
               ? 0
               : 1 - depth * 0.18;
-          /* Clicáveis: real_message expanded → abre conv.
-           *  Mocks ficam decorativos. */
-          const clickable =
-            expanded && item.toast.kind === 'real_message';
+          /* Comportamento iOS native: tap em qualquer card no
+           *  modo expanded fecha aquele card (e abre a conv se
+           *  for real_message). No collapsed, só o top é
+           *  clickable e o tap toggla expand (via container). */
+          const clickable = expanded;
 
           return (
             <motion.div
@@ -316,29 +317,19 @@ export default function MockToastRotator() {
                 /* Stop propagation pra container handler não
                  *  togglear expand quando o user clica no toast
                  *  individual durante o expanded state. */
-                if (expanded) e.stopPropagation();
-                if (clickable && item.toast.kind === 'real_message') {
+                if (!expanded) return;
+                e.stopPropagation();
+                /* iOS native: tap dismissa o card. Se for
+                 *  real_message, abre a conv ANTES de dismissar
+                 *  (pra preservar o intent do "tap pra abrir"). */
+                if (item.toast.kind === 'real_message') {
                   chat.open(item.toast.data.conversationId);
                   router.push('/app/chat');
                 }
+                dismissOne(item.id);
               }}
             >
               <ToastBody toast={item.toast} />
-              {expanded && (
-                <button
-                  type="button"
-                  className={styles.dismissBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dismissOne(item.id);
-                  }}
-                  aria-label="Fechar notificação"
-                >
-                  <svg viewBox="0 0 10 10" width="10" height="10" fill="none" aria-hidden="true">
-                    <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                  </svg>
-                </button>
-              )}
             </motion.div>
           );
         })}
