@@ -114,24 +114,25 @@
   overflow-x: hidden;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-  /* Per spec atualizado "No desktop, posicione mais acima os
-   * insights, cards e lista" — reduzimos padding-top 400→320 e
-   * o mask zone proporcionalmente (transparent 310→230, fade
-   * end 410→320). Insights sobem ~80px sem colidir com o orbe
-   * (visible glow termina em ~267px com margin de segurança). */
-  padding-top: 320px;
+  /* Per spec atualizado "posicione mais abaixo os insights +
+   *  miniatura do álbum para não sobrepor o orbe" — voltamos
+   *  pra um padding-top maior (440px) com mask zone na mesma
+   *  proporção. Orbe central ocupa ~286px com mask radial de
+   *  glow até ~310px; +130px de breathing antes do conteúdo
+   *  aparecer. */
+  padding-top: 440px;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 230px,
-    black 320px,
+    transparent 340px,
+    black 440px,
     black 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    transparent 230px,
-    black 320px,
+    transparent 340px,
+    black 440px,
     black 100%
   );
   /* Per spec atualizado "deixe a transição do scroll suave,
@@ -380,12 +381,17 @@
   transform: scale(0.42);
 }
 
-/* Album thumb — sobreposta NO orbe, centralizada. Per spec
- *  atualizado: 128×128 + border-radius 6px. */
+/* Album thumb — agora vive no body (acima do insight), NÃO
+ *  sobre o orbe per spec atualizado "não sobrepor o orbe".
+ *  128×128 com border-radius 6px. */
+.albumThumbSlot {
+  display: flex;
+  justify-content: center;
+  /* Altura fixa pra reservar espaço mesmo quando a frase atual
+   *  não tem álbum (evita layout shift do insight). */
+  height: 128px;
+}
 .albumThumb {
-  position: absolute;
-  top: 50%;
-  left: 50%;
   width: 128px;
   height: 128px;
   border-radius: 6px;
@@ -395,15 +401,8 @@
     0 6px 14px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   background: #1a1a1f;
-  /* z-index acima do orbe (que está com z=1 dentro do orbWrap)
-   *  pra a capa ficar visível por cima. */
-  z-index: 2;
   pointer-events: none;
-  /* transformTemplate composição: motion aplica scale/opacity,
-   *  precisamos manter translate(-50%, -50%) pra centering. */
   transform-origin: center center;
-  /* transformTemplate-style centering via direct transform
-   *  (motion respeitará pelo transformTemplate na motion.div) */
 }
 .albumThumb img {
   width: 100%;
@@ -430,27 +429,13 @@
    *  1.4 com 2 linhas de margem. */
   min-height: 72px;
 }
-/* O "lead" (número da contagem) — fica branco bold antes do
- *  typewriter, sem fade char-by-char. Visualmente ancora o
- *  número da contagem como destaque. */
-.headlineLead {
+/* Headline em segments — bold (números, "pessoas", nome da
+ *  artista, nome do álbum) vs muted (conectores). Per spec
+ *  atualizado o efeito SplitText foi removido pra formatação
+ *  (espaços + bold) ser preservada. */
+.headlineBold {
   font-weight: 700;
   color: #fff;
-}
-/* Wrapper do "Split Text gradual" — cada palavra entra com
- *  fade + slide-up via stagger no motion. Diferente do
- *  Typewriter (char-by-char), aqui cada token é uma palavra
- *  inteira (inline-block) que sobe 8px. */
-.splitText {
-  display: inline;
-  font-weight: 400;
-  color: rgba(245, 245, 247, 0.78);
-}
-.splitWord {
-  display: inline-block;
-  /* will-change pra promover layer GPU durante a animação
-   *  (~6-12 palavras × stagger 80ms). */
-  will-change: transform, opacity;
 }
 .headlineMuted {
   font-weight: 400;
@@ -587,6 +572,51 @@
   width: 100%;
   /* Reveal staged — list mount em t=15s. */
   animation: fsStageIn 540ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Header da userList — alinha o botão de toggle dos cards à
+ *  direita, acima da primeira row. */
+.userListHeader {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 4px 6px;
+}
+
+/* Botão de toggle dos cards verticais (ProfileCardStack).
+ *  Per spec atualizado: ícone de "card" mostra/oculta o stack.
+ *  Estado ativo (showCards = true) destaca com gradient brand. */
+.cardsToggle {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(245, 245, 247, 0.72);
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.cardsToggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(245, 245, 247, 0.95);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.cardsToggleActive {
+  /* Quando ativo: gradient-border brand igual ao "Top X" no
+   *  ProfileCardStack pra reforçar a conexão visual. */
+  background:
+    linear-gradient(#0a0a0e, #0a0a0e) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+  border: 1.5px solid transparent;
+  color: #fff;
+}
+.cardsToggleActive:hover {
+  background:
+    linear-gradient(#15151b, #15151b) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
 }
 
 /* Shared stage-in keyframe — usado por headline/pills/list quando

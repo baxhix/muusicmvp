@@ -198,6 +198,11 @@ export default function FanverseSearch() {
   const [showHeadline, setShowHeadline] = useState(false);
   const [showPills, setShowPills] = useState(false);
   const [showList, setShowList] = useState(false);
+  /* showCards: ProfileCardStack inicialmente OCULTO per spec
+   *  atualizado "Inicialmente deixe eles ocultos e apenas a
+   *  lista de usuários". Usuário toggla via o botão de "card"
+   *  no topo da lista. */
+  const [showCards, setShowCards] = useState(false);
   const [phraseIdx, setPhraseIdx] = useState(0);
   /* Lista com infinite loading — começa com 20 nomes e a sentinela
    * no fim da lista, ao entrar no viewport via IntersectionObserver,
@@ -246,6 +251,7 @@ export default function FanverseSearch() {
       setShowHeadline(false);
       setShowPills(false);
       setShowList(false);
+      setShowCards(false);
       setPhraseIdx(0);
       setVisibleUsers(20);
       setScrolled(false);
@@ -338,37 +344,46 @@ export default function FanverseSearch() {
     album?: { title: string; cover: string };
   };
   const PHRASES: Phrase[] = useMemo(() => {
+    /* Per spec atualizado "Números+pessoas, nome do álbum,
+     *  nome da artista sempre em bold". A artista é "Ana Castela"
+     *  (sempre bold quando aparece); álbuns idem; números e
+     *  "pessoas" também. Conectores (curtindo, ouvindo, agora,
+     *  com você) ficam muted. */
     const data: Phrase[] = [
       {
         key: 'data-all',
         segments: [
           { text: snapshot.peopleCount.toLocaleString('pt-BR'), bold: true },
-          { text: ' pessoas curtindo ', bold: false },
-          { text: 'Ana Castela com você', bold: true },
+          { text: ' ', bold: false },
+          { text: 'pessoas', bold: true },
+          { text: ' curtindo ', bold: false },
+          { text: 'Ana Castela', bold: true },
+          { text: ' com você', bold: false },
         ],
       },
       {
         key: 'data-song',
         segments: [
           { text: snapshot.sameSongCount.toLocaleString('pt-BR'), bold: true },
-          { text: ' pessoas ouvindo a ', bold: false },
-          { text: 'mesma música', bold: true },
+          { text: ' ', bold: false },
+          { text: 'pessoas', bold: true },
+          { text: ' ouvindo a mesma música', bold: false },
         ],
       },
       {
         key: 'data-album',
         segments: [
           { text: snapshot.sameAlbumCount.toLocaleString('pt-BR'), bold: true },
-          { text: ' pessoas ouvindo o ', bold: false },
-          { text: 'mesmo álbum', bold: true },
+          { text: ' ', bold: false },
+          { text: 'pessoas', bold: true },
+          { text: ' ouvindo o mesmo álbum', bold: false },
         ],
       },
       {
         key: 'data-countries',
         segments: [
           { text: String(snapshot.countriesCount), bold: true },
-          { text: ' países conectados ', bold: false },
-          { text: 'agora', bold: true },
+          { text: ' países conectados agora', bold: false },
         ],
       },
     ];
@@ -376,7 +391,9 @@ export default function FanverseSearch() {
       key: a.key,
       segments: [
         { text: a.listeners.toLocaleString('pt-BR'), bold: true },
-        { text: ' pessoas ouvindo ', bold: false },
+        { text: ' ', bold: false },
+        { text: 'pessoas', bold: true },
+        { text: ' ouvindo ', bold: false },
         { text: a.title, bold: true },
         { text: ' agora', bold: false },
       ],
@@ -538,36 +555,6 @@ export default function FanverseSearch() {
           <div className={styles.orb}>
             <FanverseCore />
           </div>
-          {/* Album thumb sobreposta no orbe — per spec atualizado
-           *  "deixe a miniatura por cima do orbe". AnimatePresence
-           *  faz fade in/out entre álbuns; nas frases de dados puros
-           *  o slot fica vazio (sem layout shift porque é absoluto
-           *  centralizado no orbWrap). */}
-          <AnimatePresence mode="wait">
-            {showHeadline && currentPhrase.album && (
-              <motion.div
-                key={currentPhrase.album.cover}
-                className={styles.albumThumb}
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                /* O .albumThumb usa top/left 50% pra ancorar no
-                 *  centro do orbWrap; precisamos prepend o
-                 *  translate(-50%, -50%) pra o motion compor o
-                 *  scale por cima sem perder o centering. */
-                transformTemplate={(_props, generated) =>
-                  `translate(-50%, -50%) ${generated}`
-                }
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentPhrase.album.cover}
-                  alt={currentPhrase.album.title}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
@@ -582,38 +569,106 @@ export default function FanverseSearch() {
            *  via stagger no motion). Acima do texto, quando a frase
            *  tem `.album`, renderiza uma thumb 110×110 (90×90 mobile)
            *  que faz fade in/out junto com o AnimatePresence. */}
+          {/* Album thumb 128×128 — agora vive ACIMA do insight
+           *  (no body, abaixo do orbe) per spec atualizado "não
+           *  sobrepor o orbe". AnimatePresence faz fade entre
+           *  álbuns; slot fixo evita layout shift quando a frase
+           *  atual não tem álbum. */}
+          {showHeadline && (
+            <div className={styles.albumThumbSlot} aria-hidden="true">
+              <AnimatePresence mode="wait">
+                {currentPhrase.album && (
+                  <motion.div
+                    key={currentPhrase.album.cover}
+                    className={styles.albumThumb}
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.94 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={currentPhrase.album.cover}
+                      alt={currentPhrase.album.title}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
           {showHeadline && (
             <div className={styles.headline}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentPhrase.key}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   aria-label={currentPhrase.segments.map((s) => s.text).join('')}
                 >
-                  <SplitText segments={currentPhrase.segments} />
+                  {/* Per spec atualizado: removido o efeito SplitText
+                   *  pra formatação voltar a existir (espaços e bold
+                   *  preservados). Cada segment renderiza como span
+                   *  com classe bold/muted apropriada. */}
+                  {currentPhrase.segments.map((seg, i) => (
+                    <span
+                      key={i}
+                      className={seg.bold ? styles.headlineBold : styles.headlineMuted}
+                    >
+                      {seg.text}
+                    </span>
+                  ))}
                 </motion.div>
               </AnimatePresence>
             </div>
           )}
 
-          {/* Profile card stack — versão compacta de perfis,
-           *  Motion Card Stack pattern. Aparece junto com pills
-           *  (showPills). Swipe horizontal pra "passar" o card
-           *  do topo; 5 perfis mocados loop infinito.
-           *
-           *  Stage 2 (t=11s) — Per spec atualizado os cards
-           *  horizontais (MatchStack) foram removidos. Mantemos
-           *  apenas o stack vertical. */}
-          {showPills && <ProfileCardStack />}
+          {/* Profile card stack — versão compacta de perfis.
+           *  Per spec atualizado, inicialmente OCULTO. Usuário
+           *  toggla via botão de "card" no header da lista
+           *  (showCards). */}
+          {showPills && showCards && <ProfileCardStack />}
 
           {/* Stage 3 (t=15s): lista paginada — primeiros 20 user
            * rows + CTA "Exibir mais" floating quando há mais pra
            * carregar. */}
           {showList && (
             <section className={styles.userList}>
+              {/* Header da lista com toggle do ProfileCardStack.
+               *  Botão "card" mostra/oculta o stack vertical
+               *  acima da lista. Inicia oculto per spec. */}
+              {showPills && (
+                <div className={styles.userListHeader}>
+                  <motion.button
+                    type="button"
+                    className={`${styles.cardsToggle} ${showCards ? styles.cardsToggleActive : ''}`}
+                    onClick={() => setShowCards((v) => !v)}
+                    aria-label={showCards ? 'Ocultar cards' : 'Mostrar cards de perfis'}
+                    aria-pressed={showCards}
+                    whileTap={{ scale: 0.92 }}
+                    whileHover={{ scale: 1.06 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      {/* Stack of 2 cards (back card offset) */}
+                      <rect x="6" y="3" width="13" height="17" rx="2" />
+                      <rect x="3" y="6" width="13" height="17" rx="2" />
+                    </svg>
+                  </motion.button>
+                </div>
+              )}
               {snapshot.users
                 .slice(0, visibleUsers)
                 .map((u, i) => (
@@ -682,81 +737,6 @@ export default function FanverseSearch() {
         </div>
       </div>
     </div>
-  );
-}
-
-/**
- * SplitText — efeito "Split text gradual" do motion: cada
- * palavra entra com fade + slide-up (8px), uma após a outra
- * via stagger (80ms entre palavras).
- *
- * Diferente do typewriter char-by-char, aqui o token é a
- * PALAVRA — visualmente mais limpo e legível. Cada palavra é
- * um motion.span inline-block (necessário pra y transform
- * funcionar) com space regular entre elas.
- *
- * O `key` no parent (AnimatePresence) re-monta o componente a
- * cada troca de frase — então o split recomeça do zero
- * automaticamente sem precisar de estado próprio.
- */
-function SplitText({
-  segments,
-}: {
-  segments: { text: string; bold: boolean }[];
-}) {
-  /* Achata os segments em uma lista de "tokens" (palavras), cada
-   *  um com sua flag de bold preservada do segment de origem.
-   *  Isso permite o efeito Split Text por palavra MANTENDO os
-   *  destaques bold ao longo da frase (número da contagem, nome
-   *  do álbum, etc.). */
-  type Token = { word: string; bold: boolean; trailingSpace: boolean };
-  const tokens: Token[] = [];
-  segments.forEach((seg) => {
-    /* Split agressivo por whitespace; cada chunk vira um token
-     *  com flag bold do segment. `text.split(/(\s+)/)` preserva
-     *  os espaços como tokens próprios — pulamos eles porque
-     *  cada palavra agora carrega seu próprio trailing space. */
-    const parts = seg.text.split(/(\s+)/);
-    parts.forEach((p) => {
-      if (!p) return;
-      if (/^\s+$/.test(p)) {
-        /* É só whitespace — anexa como trailingSpace ao último
-         *  token (preserva múltiplos espaços e o gap entre
-         *  segments). */
-        const last = tokens[tokens.length - 1];
-        if (last) last.trailingSpace = true;
-      } else {
-        tokens.push({ word: p, bold: seg.bold, trailingSpace: false });
-      }
-    });
-  });
-
-  return (
-    <motion.span
-      className={styles.splitText}
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.16 } },
-      }}
-      aria-hidden="true"
-    >
-      {tokens.map((tok, i) => (
-        <motion.span
-          key={i}
-          className={`${styles.splitWord} ${tok.bold ? styles.splitWordBold : ''}`}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {tok.word}
-          {tok.trailingSpace || i < tokens.length - 1 ? ' ' : ''}
-        </motion.span>
-      ))}
-    </motion.span>
   );
 }
 
