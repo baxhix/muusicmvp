@@ -25,11 +25,12 @@ export default function SectionTwo() {
       <Sparkles count={13} seed={21} />
 
       <div className={styles.center}>
-        {/* Per spec atualizado:
-         *   line 1 (headline): "O mundo, a música,"
-         *   line 2 (subline mesmo peso): "em tempo real"
+        {/* Per spec atualizado — 3 linhas, cada termo na sua:
+         *   linha 1 (headline): "O mundo"
+         *   linha 2 (headline): "a música"
+         *   linha 3 (subline, mesmo peso): "em tempo real"
          *   subtitle (Inter cinza 16px): explica o real-time. */}
-        <h2 className={styles.headline}>O mundo, a música,</h2>
+        <h2 className={styles.headline}>O mundo<br />a música</h2>
         <p className={styles.subline}>em tempo real</p>
         <p className={styles.phrase}>
           Veja, em real time, seus amigos online curtindo junto com você!

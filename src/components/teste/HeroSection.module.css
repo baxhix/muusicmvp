@@ -93,7 +93,19 @@
    * usado pelo gradient não incluía a área do diacrítico. */
   line-height: 1.05;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
+  /* Gradient leve cinza-claro → branco em movimento per product
+   * feedback. background-size 250% + animação de background-position
+   * faz o shimmer percorrer o texto suavemente (técnica canônica
+   * com background-clip: text). */
+  background: linear-gradient(
+    120deg,
+    #FFFFFF 0%,
+    #E6E6E6 30%,
+    #FFFFFF 50%,
+    #E6E6E6 70%,
+    #FFFFFF 100%
+  );
+  background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -108,7 +120,9 @@
   text-align: center;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  animation: tloop-fadeup 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation:
+    tloop-fadeup 800ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    tloop-headlineShimmer 7s ease-in-out infinite;
 }
 
 /* Frase de apoio — regra fixada com o produto:
@@ -157,6 +171,15 @@
 @keyframes tloop-fadeup {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer dos headlines — gradient cinza-claro→branco em
+ * movimento contínuo. Vai-e-volta suave (ease-in-out) pra
+ * não dar a sensação de "esteira" mecânica. */
+@keyframes tloop-headlineShimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* CTA mobile — vive abaixo do .phrase no mobile, escondida
@@ -225,6 +248,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .headline, .phrase, .heroMobileCta { animation: none; }
+  /* Headline volta ao gradient estático (sem shimmer nem fadeup). */
+  .headline {
+    animation: none;
+    background-position: 0% 50%;
+  }
+  .phrase, .heroMobileCta { animation: none; }
   .heroMobileCta::before { animation: none; }
 }

@@ -35,7 +35,17 @@
   font-size: clamp(40px, 9.35vw, 84px);
   line-height: 0.95;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
+  /* Gradient leve cinza-claro → branco em movimento (mesmo
+   * shimmer da Hero). */
+  background: linear-gradient(
+    120deg,
+    #FFFFFF 0%,
+    #E6E6E6 30%,
+    #FFFFFF 50%,
+    #E6E6E6 70%,
+    #FFFFFF 100%
+  );
+  background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -43,6 +53,21 @@
   margin: 0;
   text-align: center;
   -webkit-font-smoothing: antialiased;
+  animation: tloop-headlineShimmer 7s ease-in-out infinite;
+}
+
+/* Shimmer dos headlines — gradient cinza-claro→branco em movimento. */
+@keyframes tloop-headlineShimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline, .subline {
+    animation: none;
+    background-position: 0% 50%;
+  }
 }
 
 .phrase {
@@ -67,7 +92,17 @@
   font-size: clamp(40px, 9.35vw, 84px);
   line-height: 0.95;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #FFFFFF 0%, #EBEBEB 100%);
+  /* Gradient leve cinza-claro → branco em movimento (mesmo
+   * shimmer da Hero). */
+  background: linear-gradient(
+    120deg,
+    #FFFFFF 0%,
+    #E6E6E6 30%,
+    #FFFFFF 50%,
+    #E6E6E6 70%,
+    #FFFFFF 100%
+  );
+  background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -75,4 +110,5 @@
   margin: 0;
   text-align: center;
   -webkit-font-smoothing: antialiased;
+  animation: tloop-headlineShimmer 7s ease-in-out infinite;
 }
