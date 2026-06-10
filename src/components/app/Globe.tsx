@@ -810,19 +810,89 @@ export default function Globe() {
       return [Math.cos(theta) * R, Math.sin(theta) * R];
     };
 
+    // Distância mínima centro-a-centro (px) entre avatares compactos
+    // (38px). 52 → ~14px de respiro entre dois avatares vizinhos.
+    const MIN_SEP_PX = 52;
+    const SPREAD_ITERATIONS = 6;
+
     /**
-     * Walk every live marker and re-apply its offset based on the
-     * current zoom. Cheap (O(N) of presence markers, typically < 50)
-     * and only runs on zoom events.
+     * De-clustering em screen-space — empurra os markers pra que
+     * nenhum par de avatares compactos fique mais perto que MIN_SEP_PX,
+     * mantendo cada um o mais próximo possível da sua posição real
+     * (jitterada) na cidade. Per product feedback: "os usuários não
+     * podem ficar muito próximos um do outro, desde que espalhados
+     * pela cidade".
+     *
+     * Vale pra TODOS os zooms: parte do anel de baixo-zoom
+     * (offsetForUser) como deslocamento inicial e relaxa em cima dele.
+     * Determinístico por estado de câmera — recomputa do zero a cada
+     * passada (não acumula entre frames) → estável, sem o "tremor" de
+     * oscilação. O(N²·iters) com N < ~50 = barato; rAF-throttled via
+     * scheduleCollisionRefresh.
      */
-    const reapplyMarkerOffsets = () => {
+    const applyMarkerSpread = () => {
       const zoom = map.getZoom();
-      for (const [id, marker] of liveUserMarkers) {
-        marker.setOffset(offsetForUser(id, zoom));
+      interface SpreadNode {
+        marker: mapboxgl.Marker;
+        px: number; // posição real projetada (sem offset)
+        py: number;
+        x: number; // posição de trabalho (com offset/relaxação)
+        y: number;
+      }
+      const nodes: SpreadNode[] = [];
+      const addNode = (marker: mapboxgl.Marker, base: [number, number]) => {
+        const ll = marker.getLngLat();
+        const p = map.project([ll.lng, ll.lat]);
+        nodes.push({
+          marker,
+          px: p.x,
+          py: p.y,
+          x: p.x + base[0],
+          y: p.y + base[1],
+        });
+      };
+      // "Você" entra como nó normal (também não pode sobrepor outros);
+      // base [0,0] pra ancorar na própria posição.
+      if (userLocationMarker) addNode(userLocationMarker, [0, 0]);
+      for (const [id, m] of liveUserMarkers) {
+        addNode(m, offsetForUser(id, zoom));
+      }
+
+      if (nodes.length > 1) {
+        for (let iter = 0; iter < SPREAD_ITERATIONS; iter += 1) {
+          for (let i = 0; i < nodes.length; i += 1) {
+            for (let j = i + 1; j < nodes.length; j += 1) {
+              const a = nodes[i];
+              const b = nodes[j];
+              let dx = b.x - a.x;
+              let dy = b.y - a.y;
+              let d = Math.hypot(dx, dy);
+              if (d >= MIN_SEP_PX) continue;
+              if (d < 0.001) {
+                // Posições idênticas — separa em direção determinística.
+                const ang = (((i * 73 + j * 149) % 360) * Math.PI) / 180;
+                dx = Math.cos(ang);
+                dy = Math.sin(ang);
+                d = 1;
+              }
+              const push = (MIN_SEP_PX - d) / 2;
+              const ux = dx / d;
+              const uy = dy / d;
+              a.x -= ux * push;
+              a.y -= uy * push;
+              b.x += ux * push;
+              b.y += uy * push;
+            }
+          }
+        }
+      }
+
+      for (const n of nodes) {
+        n.marker.setOffset([n.x - n.px, n.y - n.py]);
       }
     };
 
-    map.on('zoom', reapplyMarkerOffsets);
+    map.on('zoom', applyMarkerSpread);
 
     // ── Compact badge mode ─────────────────────────────────────────
     // Per product feedback: os OUTROS usuários reais ficam SEMPRE
@@ -900,6 +970,10 @@ export default function Globe() {
         // (ex.: o anteriormente expandido) fiquem fechados.
         if (compact) closeMarkerOverlays(el);
       }
+
+      // De-clustering: reposiciona os markers pra nenhum avatar ficar
+      // colado em outro (mantendo cada um perto da sua posição real).
+      applyMarkerSpread();
     };
 
     /** rAF-throttled wrapper: a single map pan can fire dozens of
