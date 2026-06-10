@@ -187,9 +187,11 @@
 
 .arena {
   display: block;
-  width: 120px;
-  height: 84px;
-  filter: drop-shadow(0 0 14px rgba(236, 72, 153, 0.45));
+  width: 128px;
+  height: 100px;
+  filter:
+    drop-shadow(0 0 16px rgba(236, 72, 153, 0.5))
+    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
 }
 .arena svg {
   display: block;
@@ -217,79 +219,118 @@
   height: 0;
   pointer-events: none;
 }
+/* Cones de luz cênicos (rig de 5 spots) — receita do brainstorm
+ * ShowLiveStage: clip-path triangular + gradient + mix-blend screen,
+ * com 3 animações combinadas (sweep pendular + flicker não-metronômico
+ * + hue-shift girando a roda de cores roxo↔magenta↔rosa). */
 .beam {
   position: absolute;
-  bottom: -32px;
-  left: -13px;
-  width: 26px;
-  height: 64px;
-  clip-path: polygon(42% 100%, 58% 100%, 100% 0%, 0% 0%);
+  bottom: -46px;
+  left: -24px;
+  width: 48px;
+  height: 92px;
+  clip-path: polygon(44% 100%, 56% 100%, 100% 0%, 0% 0%);
   transform-origin: bottom center;
   mix-blend-mode: screen;
   opacity: 0;
-  will-change: transform, opacity;
+  will-change: transform, opacity, filter;
 }
+.beamL2,
 .beamL {
   background: linear-gradient(
     to top,
-    rgba(168, 85, 247, 0.75),
+    rgba(168, 85, 247, 0.72),
     rgba(168, 85, 247, 0)
   );
 }
 .beamC {
   background: linear-gradient(
     to top,
-    rgba(252, 231, 243, 0.65),
+    rgba(252, 231, 243, 0.62),
     rgba(236, 72, 153, 0)
   );
 }
-.beamR {
+.beamR,
+.beamR2 {
   background: linear-gradient(
     to top,
-    rgba(236, 72, 153, 0.75),
+    rgba(236, 72, 153, 0.72),
     rgba(236, 72, 153, 0)
   );
 }
 /* Feixes só varrem na fase live. */
+.wrap[data-phase='live'] .beamL2 {
+  opacity: 0.5;
+  animation:
+    sdBeamSweepL2 4.6s ease-in-out infinite alternate,
+    sdBeamFlicker 5.9s ease-in-out infinite,
+    sdBeamHue 9s ease-in-out infinite;
+  animation-delay: -2.1s, -1.3s, -4s;
+}
 .wrap[data-phase='live'] .beamL {
   opacity: 0.7;
   animation:
     sdBeamSweepL 3.8s ease-in-out infinite alternate,
-    sdBeamFlicker 5.2s ease-in-out infinite;
-  animation-delay: -1.5s, -0.4s;
+    sdBeamFlicker 5.2s ease-in-out infinite,
+    sdBeamHue 10s ease-in-out infinite;
+  animation-delay: -1.5s, -0.4s, -1s;
 }
 .wrap[data-phase='live'] .beamC {
   opacity: 0.55;
   animation:
     sdBeamSweepC 4.6s ease-in-out infinite alternate,
-    sdBeamFlicker 6.1s ease-in-out infinite;
-  animation-delay: -0.7s, -2.2s;
+    sdBeamFlicker 6.1s ease-in-out infinite,
+    sdBeamHue 11s ease-in-out infinite;
+  animation-delay: -0.7s, -2.2s, -3s;
 }
 .wrap[data-phase='live'] .beamR {
   opacity: 0.7;
   animation:
     sdBeamSweepR 4.2s ease-in-out infinite alternate,
-    sdBeamFlicker 5.7s ease-in-out infinite;
-  animation-delay: -2.6s, -1.1s;
+    sdBeamFlicker 5.7s ease-in-out infinite,
+    sdBeamHue 9.5s ease-in-out infinite;
+  animation-delay: -2.6s, -1.1s, -2s;
+}
+.wrap[data-phase='live'] .beamR2 {
+  opacity: 0.5;
+  animation:
+    sdBeamSweepR2 4.9s ease-in-out infinite alternate,
+    sdBeamFlicker 6.4s ease-in-out infinite,
+    sdBeamHue 10.5s ease-in-out infinite;
+  animation-delay: -3.3s, -0.8s, -5s;
 }
 
+@keyframes sdBeamSweepL2 {
+  from { transform: rotate(-44deg); }
+  to { transform: rotate(-22deg); }
+}
 @keyframes sdBeamSweepL {
-  from { transform: rotate(-30deg); }
-  to { transform: rotate(10deg); }
+  from { transform: rotate(-28deg); }
+  to { transform: rotate(-4deg); }
 }
 @keyframes sdBeamSweepC {
-  from { transform: rotate(-8deg); }
-  to { transform: rotate(8deg); }
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(10deg); }
 }
 @keyframes sdBeamSweepR {
-  from { transform: rotate(-10deg); }
-  to { transform: rotate(30deg); }
+  from { transform: rotate(4deg); }
+  to { transform: rotate(28deg); }
+}
+@keyframes sdBeamSweepR2 {
+  from { transform: rotate(22deg); }
+  to { transform: rotate(44deg); }
 }
 @keyframes sdBeamFlicker {
-  0%, 100% { opacity: 0.45; }
-  30% { opacity: 0.8; }
-  55% { opacity: 0.35; }
-  80% { opacity: 0.7; }
+  0%, 100% { opacity: 0.5; }
+  18% { opacity: 0.88; }
+  42% { opacity: 0.32; }
+  68% { opacity: 0.78; }
+  88% { opacity: 0.55; }
+}
+@keyframes sdBeamHue {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+  33% { filter: hue-rotate(-22deg) saturate(1.15); }
+  66% { filter: hue-rotate(30deg) saturate(1.2); }
 }
 
 .viewersChip {
@@ -317,15 +358,19 @@
     animation: none !important;
     opacity: 0 !important;
   }
+  .wrap[data-phase='live'] .beamL2,
   .wrap[data-phase='live'] .beamL,
   .wrap[data-phase='live'] .beamC,
-  .wrap[data-phase='live'] .beamR {
+  .wrap[data-phase='live'] .beamR,
+  .wrap[data-phase='live'] .beamR2 {
     animation: none;
-    opacity: 0.35;
+    opacity: 0.32;
   }
-  .wrap[data-phase='live'] .beamL { transform: rotate(-18deg); }
+  .wrap[data-phase='live'] .beamL2 { transform: rotate(-32deg); }
+  .wrap[data-phase='live'] .beamL { transform: rotate(-16deg); }
   .wrap[data-phase='live'] .beamC { transform: rotate(0deg); }
-  .wrap[data-phase='live'] .beamR { transform: rotate(18deg); }
+  .wrap[data-phase='live'] .beamR { transform: rotate(16deg); }
+  .wrap[data-phase='live'] .beamR2 { transform: rotate(32deg); }
   .wrap[data-phase='announced'] .arena {
     animation: none;
     opacity: 1;
@@ -341,15 +386,19 @@
   .wrap[data-phase='live'] .chipDot {
     animation: none;
   }
+  .wrap[data-phase='live'] .beamL2,
   .wrap[data-phase='live'] .beamL,
   .wrap[data-phase='live'] .beamC,
-  .wrap[data-phase='live'] .beamR {
+  .wrap[data-phase='live'] .beamR,
+  .wrap[data-phase='live'] .beamR2 {
     animation: none;
-    opacity: 0.35;
+    opacity: 0.32;
   }
-  .wrap[data-phase='live'] .beamL { transform: rotate(-18deg); }
+  .wrap[data-phase='live'] .beamL2 { transform: rotate(-32deg); }
+  .wrap[data-phase='live'] .beamL { transform: rotate(-16deg); }
   .wrap[data-phase='live'] .beamC { transform: rotate(0deg); }
-  .wrap[data-phase='live'] .beamR { transform: rotate(18deg); }
+  .wrap[data-phase='live'] .beamR { transform: rotate(16deg); }
+  .wrap[data-phase='live'] .beamR2 { transform: rotate(32deg); }
   .wrap[data-phase='announced'] .arena {
     animation: none;
   }

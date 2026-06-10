@@ -88,9 +88,9 @@ function chipContent(phase: ShowDayPhase): { text: string; sub: string } {
  *  telão no gradiente magenta/roxo do tema. Ids de gradiente fixos são
  *  seguros — só existe UMA instância deste marker no app. */
 const ARENA_SVG = `
-<svg viewBox="0 0 120 84" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<svg viewBox="0 0 128 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <linearGradient id="sdStageGrad" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="sdScreenGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#c084fc"/>
       <stop offset="0.5" stop-color="#e879f9"/>
       <stop offset="1" stop-color="#f472b6"/>
@@ -99,64 +99,138 @@ const ARENA_SVG = `
       <stop offset="0" stop-color="#4338ca"/>
       <stop offset="1" stop-color="#1e1b4b"/>
     </linearGradient>
+    <radialGradient id="sdGlowGrad" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ec4899" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sdPoolP" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sdPoolK" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ec4899" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+    </radialGradient>
   </defs>
+  <style>
+    .sdPool{transform-box:fill-box;transform-origin:center;mix-blend-mode:screen;animation:sdsvgPool 3.2s ease-in-out infinite}
+    .sdPoolB{animation-duration:3.8s;animation-delay:-1.2s}
+    .sdPoolC{animation-duration:4.4s;animation-delay:-.6s}
+    .sdLens{animation:sdsvgLens 2.2s ease-in-out infinite}
+    @keyframes sdsvgPool{0%,100%{opacity:.5;transform:scaleX(1)}50%{opacity:.85;transform:scaleX(1.14)}}
+    @keyframes sdsvgLens{0%,100%{opacity:.55}50%{opacity:1}}
+    @media (max-width:768px){.sdPool,.sdLens{animation:none}}
+    @media (prefers-reduced-motion:reduce){.sdPool,.sdLens{animation:none}}
+  </style>
 
-  <!-- Telão de LED / backdrop -->
-  <rect x="38" y="16" width="44" height="34" rx="2.5" fill="url(#sdStageGrad)" opacity="0.92"/>
-  <g stroke="#fdf4ff" stroke-opacity="0.22" stroke-width="0.7">
-    <line x1="41" y1="26" x2="79" y2="26"/>
-    <line x1="41" y1="33" x2="79" y2="33"/>
-    <line x1="41" y1="40" x2="79" y2="40"/>
+  <!-- Cobertura / teto arqueado -->
+  <path d="M14 18 Q64 1 114 18 L114 21 Q64 5 14 21 Z" fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.8" stroke-opacity="0.45"/>
+  <path d="M16 17.5 Q64 2.5 112 17.5" fill="none" stroke="#c4b5fd" stroke-width="1.1" stroke-opacity="0.75"/>
+
+  <!-- Glow de fundo do palco -->
+  <ellipse cx="64" cy="42" rx="42" ry="30" fill="url(#sdGlowGrad)" opacity="0.5"/>
+
+  <!-- Telão de LED -->
+  <rect x="40" y="30" width="48" height="28" rx="2.5" fill="url(#sdScreenGrad)" opacity="0.92"/>
+  <g stroke="#fdf4ff" stroke-opacity="0.2" stroke-width="0.7">
+    <line x1="43" y1="38" x2="85" y2="38"/><line x1="43" y1="44" x2="85" y2="44"/><line x1="43" y1="50" x2="85" y2="50"/>
   </g>
-  <rect x="38" y="16" width="44" height="34" rx="2.5" fill="none" stroke="#fce7f3" stroke-width="1" stroke-opacity="0.55"/>
+  <rect x="40" y="30" width="48" height="28" rx="2.5" fill="none" stroke="#fce7f3" stroke-width="1" stroke-opacity="0.55"/>
 
   <!-- Line-arrays pendurados (flanqueando o telão) -->
   <g fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.7" stroke-opacity="0.6">
-    <line x1="30" y1="16" x2="30" y2="19" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
-    <rect x="26.5" y="19" width="7" height="4.4" rx="1"/>
-    <rect x="26.8" y="24" width="6.4" height="4.4" rx="1"/>
-    <rect x="27.1" y="29" width="5.8" height="4.4" rx="1"/>
-    <rect x="27.4" y="34" width="5.2" height="4.4" rx="1"/>
-    <line x1="90" y1="16" x2="90" y2="19" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
-    <rect x="86.5" y="19" width="7" height="4.4" rx="1"/>
-    <rect x="86.8" y="24" width="6.4" height="4.4" rx="1"/>
-    <rect x="87.1" y="29" width="5.8" height="4.4" rx="1"/>
-    <rect x="87.4" y="34" width="5.2" height="4.4" rx="1"/>
+    <line x1="33" y1="25" x2="33" y2="30" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
+    <rect x="30" y="30" width="6" height="4" rx="1"/><rect x="30.3" y="34.6" width="5.4" height="4" rx="1"/><rect x="30.6" y="39.2" width="4.8" height="4" rx="1"/><rect x="30.9" y="43.8" width="4.2" height="4" rx="1"/>
+    <line x1="95" y1="25" x2="95" y2="30" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
+    <rect x="92" y="30" width="6" height="4" rx="1"/><rect x="92.3" y="34.6" width="5.4" height="4" rx="1"/><rect x="92.6" y="39.2" width="4.8" height="4" rx="1"/><rect x="92.9" y="43.8" width="4.2" height="4" rx="1"/>
   </g>
 
-  <!-- Torres de treliça + viga superior -->
-  <g stroke="#a5b4fc" stroke-width="1.3" stroke-linecap="round" fill="none" opacity="0.92">
-    <path d="M16 10V66M24 10V66"/>
-    <path d="M16 10H24M16 24H24M16 38H24M16 52H24M16 66H24"/>
-    <path d="M16 10 24 24M24 10 16 24M16 24 24 38M24 24 16 38M16 38 24 52M24 38 16 52M16 52 24 66M24 52 16 66"/>
-    <path d="M96 10V66M104 10V66"/>
-    <path d="M96 10H104M96 24H104M96 38H104M96 52H104M96 66H104"/>
-    <path d="M96 10 104 24M104 10 96 24M96 24 104 38M104 24 96 38M96 38 104 52M104 38 96 52M96 52 104 66M104 52 96 66"/>
-    <path d="M16 9H104M16 16H104"/>
-    <path d="M20 9 28 16M28 9 36 16M36 9 44 16M44 9 52 16M52 9 60 16M60 9 68 16M68 9 76 16M76 9 84 16M84 9 92 16M92 9 100 16"/>
+  <!-- Torres de treliça (dupla) + viga superior -->
+  <g stroke="#a5b4fc" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.9">
+    <path d="M18 20V76M26 20V76"/>
+    <path d="M18 20H26M18 34H26M18 48H26M18 62H26M18 76H26"/>
+    <path d="M18 20 26 34M26 20 18 34M18 34 26 48M26 34 18 48M18 48 26 62M26 48 18 62M18 62 26 76M26 62 18 76"/>
+    <path d="M102 20V76M110 20V76"/>
+    <path d="M102 20H110M102 34H110M102 48H110M102 62H110M102 76H110"/>
+    <path d="M102 20 110 34M110 20 102 34M102 34 110 48M110 34 102 48M102 48 110 62M110 48 102 62M102 62 110 76M110 62 102 76"/>
+    <path d="M18 20H110M18 26H110"/>
+    <path d="M22 20 30 26M30 20 38 26M38 20 46 26M46 20 54 26M54 20 62 26M62 20 70 26M70 20 78 26M78 20 86 26M86 20 94 26M94 20 102 26M102 20 110 26"/>
   </g>
 
-  <!-- Luminárias na viga (de onde nascem os feixes) -->
-  <g fill="#fdf4ff">
-    <circle cx="34" cy="15.5" r="1.5"/><circle cx="47" cy="15.5" r="1.5"/><circle cx="60" cy="15.5" r="1.5"/><circle cx="73" cy="15.5" r="1.5"/><circle cx="86" cy="15.5" r="1.5"/>
+  <!-- PARs / moving heads na viga frontal (lentes piscam) -->
+  <g fill="#312e81" stroke="#a5b4fc" stroke-width="0.5" stroke-opacity="0.6">
+    <rect x="42.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="50.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="58.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="66.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="74.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="82.5" y="26" width="3" height="2.6" rx="0.6"/>
+  </g>
+  <g fill="#fef9c3">
+    <circle class="sdLens" cx="44" cy="29.2" r="1.15" style="animation-delay:-0.2s"/><circle class="sdLens" cx="52" cy="29.2" r="1.15" style="animation-delay:-1.4s"/><circle class="sdLens" cx="60" cy="29.2" r="1.15" style="animation-delay:-0.7s"/><circle class="sdLens" cx="68" cy="29.2" r="1.15" style="animation-delay:-1.9s"/><circle class="sdLens" cx="76" cy="29.2" r="1.15" style="animation-delay:-0.5s"/><circle class="sdLens" cx="84" cy="29.2" r="1.15" style="animation-delay:-1.1s"/>
   </g>
 
   <!-- Palco (deck em perspectiva) + escada central -->
-  <path d="M14 64H106L112 74H8Z" fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.9" stroke-opacity="0.5"/>
-  <line x1="14" y1="64" x2="106" y2="64" stroke="#c4b5fd" stroke-width="1.4" stroke-opacity="0.9" stroke-linecap="round"/>
-  <path d="M53 64H67L70 73H50Z" fill="#312e81" stroke="#a5b4fc" stroke-width="0.7" stroke-opacity="0.5"/>
-  <line x1="51.5" y1="68.5" x2="68.5" y2="68.5" stroke="#a5b4fc" stroke-width="0.6" stroke-opacity="0.45"/>
+  <path d="M14 76 H114 L120 88 H8 Z" fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.8" stroke-opacity="0.45"/>
+  <line x1="14" y1="76" x2="114" y2="76" stroke="#c4b5fd" stroke-width="1.3" stroke-opacity="0.85" stroke-linecap="round"/>
+  <path d="M55 76 H73 L77 84 H51 Z" fill="#312e81" stroke="#a5b4fc" stroke-width="0.6" stroke-opacity="0.45"/>
+
+  <!-- Poças de luz no chão (luzes cênicas batendo no deck) -->
+  <ellipse class="sdPool sdPoolA" cx="51" cy="74" rx="13" ry="3.4" fill="url(#sdPoolP)"/>
+  <ellipse class="sdPool sdPoolB" cx="77" cy="74" rx="13" ry="3.4" fill="url(#sdPoolK)"/>
+  <ellipse class="sdPool sdPoolC" cx="64" cy="75" rx="11" ry="3" fill="url(#sdPoolP)"/>
+
+  <!-- Banda (silhueta com rim-light contra o telão) -->
+  <g fill="#08040f">
+    <!-- guitarrista (esq) -->
+    <circle cx="49" cy="65" r="2.2"/>
+    <path d="M46.5 67 L51.5 67 L52.5 76 L45.5 76 Z"/>
+    <ellipse cx="44.5" cy="71" rx="2.6" ry="1.7"/>
+    <path d="M46 70 L52 66.5" stroke="#08040f" stroke-width="1.1" stroke-linecap="round"/>
+    <!-- vocalista (centro) com microfone -->
+    <circle cx="64" cy="62.5" r="2.4"/>
+    <path d="M61 64.5 Q64 63.6 67 64.5 L68 76 L60 76 Z"/>
+    <path d="M66 65 L69.4 60.5" stroke="#08040f" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="69.8" cy="59.7" r="1"/>
+    <!-- baterista (dir) atrás do kit -->
+    <circle cx="78" cy="63" r="2"/>
+    <path d="M75.6 64.8 L80.4 64.8 L81 75 L75 75 Z"/>
+    <ellipse cx="74" cy="73.5" rx="2.1" ry="1.5"/>
+    <ellipse cx="80.5" cy="73.5" rx="2.1" ry="1.5"/>
+    <path d="M83 70.5 L87 69.5" stroke="#08040f" stroke-width="0.8" stroke-linecap="round"/>
+    <ellipse cx="86" cy="69.4" rx="2.2" ry="0.7"/>
+  </g>
+  <!-- rim-light nos ombros/cabeças (backlit pelo telão) -->
+  <g fill="none" stroke="#f5d0fe" stroke-width="0.6" stroke-opacity="0.45" stroke-linecap="round">
+    <path d="M46.9 65.6 A2.2 2.2 0 0 1 51.1 65.6"/>
+    <path d="M61.7 63.1 A2.4 2.4 0 0 1 66.3 63.1"/>
+    <path d="M76.1 63.6 A2 2 0 0 1 79.9 63.6"/>
+  </g>
+
+  <!-- Subwoofers / PA nas laterais do palco -->
+  <g fill="#0b0712" stroke="#a5b4fc" stroke-width="0.5" stroke-opacity="0.5">
+    <rect x="13" y="79" width="13" height="5" rx="1"/><rect x="13" y="84.4" width="13" height="5" rx="1"/>
+    <rect x="102" y="79" width="13" height="5" rx="1"/><rect x="102" y="84.4" width="13" height="5" rx="1"/>
+  </g>
+  <g fill="#312e81">
+    <circle cx="19.5" cy="81.5" r="1.5"/><circle cx="19.5" cy="86.9" r="1.5"/><circle cx="108.5" cy="81.5" r="1.5"/><circle cx="108.5" cy="86.9" r="1.5"/>
+  </g>
+
+  <!-- Plateia (silhueta + luzinhas de celular) -->
+  <path d="M2 100 V94 Q9 90 15 94 Q22 90 28 94 Q35 91 41 94 Q48 90 54 94 Q61 91 67 94 Q74 90 80 94 Q87 91 93 94 Q100 90 106 94 Q113 91 119 94 Q124 91 126 94 V100 Z" fill="#06030b"/>
+  <g stroke="#06030b" stroke-width="1.1" stroke-linecap="round">
+    <path d="M24 93 V89"/><path d="M58 93 V88"/><path d="M96 93 V89"/>
+  </g>
+  <g fill="#fde68a">
+    <circle cx="34" cy="91" r="0.8"/><circle cx="71" cy="90.4" r="0.8"/><circle cx="104" cy="91" r="0.8"/>
+  </g>
 </svg>`;
 
-/** Glyph compacto (tier mid): mini palco (torres + viga + telão + deck). */
+/** Glyph compacto (tier mid): mini palco (teto + torres + telão + luzes). */
 const GLYPH_SVG = `
 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <rect x="8" y="6" width="8" height="7" rx="1" fill="#ec4899"/>
+  <path d="M4 7 Q12 3 20 7" fill="none" stroke="#f9a8d4" stroke-width="1.2" stroke-linecap="round"/>
+  <rect x="8" y="8" width="8" height="7" rx="1" fill="#ec4899"/>
   <g stroke="#f9a8d4" stroke-width="1.2" stroke-linecap="round">
-    <path d="M5 5V15M19 5V15"/>
-    <path d="M5 5H19"/>
-    <path d="M3 16H21"/>
+    <path d="M5 7V16M19 7V16"/>
+    <path d="M3 17H21"/>
   </g>
+  <g fill="#fde68a"><circle cx="9.5" cy="9.4" r="0.9"/><circle cx="14.5" cy="9.4" r="0.9"/></g>
 </svg>`;
 
 export default function ShowDayLayer() {
@@ -289,7 +363,7 @@ export default function ShowDayLayer() {
       near.className = styles.near;
       const beams = document.createElement('div');
       beams.className = styles.beams;
-      (['beamL', 'beamC', 'beamR'] as const).forEach((k) => {
+      (['beamL2', 'beamL', 'beamC', 'beamR', 'beamR2'] as const).forEach((k) => {
         const beam = document.createElement('span');
         beam.className = `${styles.beam} ${styles[k]}`;
         beams.appendChild(beam);
