@@ -44,6 +44,7 @@ import SimulationHUD from '@/components/app/SimulationHUD';
 import OnboardingTooltips from '@/components/app/OnboardingTooltips';
 import FanverseSearch from '@/components/app/FanverseSearch';
 import FanpointsModal from '@/components/app/FanpointsModal';
+import { InviteFriendsModal } from '@/components/app/ArtistBox';
 import styles from './layout.module.css';
 
 /**
@@ -525,6 +526,12 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  Self-mounting: ouve o evento global e renderiza overlay
        *  com 4 tabs (Conquistas/Fanpoints/Atividade/Como Trocar). */}
       <FanpointsModal />
+
+      {/* Modal "Convide seus amigos" (loop viral / referral) —
+       *  abre via `app:open-invite` (dispatched pelo drawer do
+       *  TopBar + hamburger do BottomNav). Self-mounting: ouve o
+       *  evento global e renderiza o link de convite + stats. */}
+      <InviteFriendsModal />
 
       {/* ── Brainstorm + Map Simulation ──
        *

@@ -64,6 +64,22 @@ export const users = pgTable('users', {
    * artista). FK declarada no nível do SQL (migration) pra
    * evitar circular import com artistSignupLinks abaixo. */
   signupLinkId: uuid('signup_link_id'),
+  /** Código de referral único e estável do usuário — base do
+   *  loop viral. Compartilhado via /i/{code}. Gerado lazy em
+   *  getOrCreateReferralCode() na primeira leitura, e backfillado
+   *  pra contas existentes na migration 0049. UNIQUE permite
+   *  múltiplos NULL (contas que nunca tiveram code gerado ainda),
+   *  mas garante unicidade quando preenchido. */
+  referralCode: text('referral_code').unique(),
+  /** Quem convidou este usuário. Setado UMA vez na criação da
+   *  conta, lendo o cookie `fanverse_invite` (cravado pelo
+   *  /i/[code]). Self-reference; null = signup não-referido.
+   *  ON DELETE SET NULL pra não derrubar a row do convidado se
+   *  o referrer for removido (LGPD). */
+  referredByUserId: uuid('referred_by_user_id').references(
+    (): AnyPgColumn => users.id,
+    { onDelete: 'set null' },
+  ),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   /**
@@ -570,6 +586,14 @@ export const userActivities = pgTable(
         'comment_posted',
         'post_shared',
         'three_streams',
+        /* Referral rewards (migration 0049). `referral_bonus` é
+         *  creditado ao REFERRER quando o convidado ativa
+         *  (completa onboarding); `referral_welcome` é o bônus
+         *  de boas-vindas pro próprio convidado. A coluna é text
+         *  puro (sem CHECK no banco), então o enum aqui é só o
+         *  contrato TS. */
+        'referral_bonus',
+        'referral_welcome',
       ],
     }).notNull(),
     points: integer('points').notNull(),
@@ -656,6 +680,63 @@ export const artistSignupLinks = pgTable('artist_signup_links', {
   }),
   archivedAt: timestamp('archived_at', { withTimezone: true }),
 });
+
+/**
+ * Referrals — loop viral usuário→usuário (migration 0049).
+ *
+ * Cada row é UM convite atribuído: o referrer (dono do
+ * `referral_code`) trouxe o referred (convidado). O modelo é
+ * "um referral por convidado" (referredId UNIQUE) com máquina
+ * de estados:
+ *
+ *   pending   → convidado criou a conta via /i/{code} mas ainda
+ *               não ativou (não completou onboarding).
+ *   activated → convidado completou onboarding. Disparamos o
+ *               reward neste instante e já avançamos pra rewarded.
+ *   rewarded  → FP creditado pro referrer (+ welcome pro
+ *               convidado). Estado terminal — a transição
+ *               pending→rewarded é atômica (UPDATE ... WHERE
+ *               status='pending') pra garantir crédito único
+ *               mesmo em corridas.
+ *
+ * Anti-fraude: reward só na ATIVAÇÃO (não no signup puro), 1
+ * row por referred (UNIQUE), e self-referral bloqueado na
+ * atribuição. `rewardPoints` denormaliza o valor creditado no
+ * momento (audit), independente de mudanças futuras na regra.
+ */
+export const referrals = pgTable(
+  'referrals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    referrerId: uuid('referrer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** UNIQUE — um convidado só pode ser atribuído a um referrer.
+     *  Garante idempotência da atribuição no signup. */
+    referredId: uuid('referred_id')
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Código usado, denormalizado pra auditoria mesmo se o
+     *  referrer trocar de code no futuro. */
+    code: text('code').notNull(),
+    status: text('status', {
+      enum: ['pending', 'activated', 'rewarded'],
+    })
+      .notNull()
+      .default('pending'),
+    rewardPoints: integer('reward_points'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
+    rewardedAt: timestamp('rewarded_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('referrals_referrer_idx').on(t.referrerId),
+    index('referrals_status_idx').on(t.status),
+  ],
+);
 
 /**
  * User-submitted reports. Created from anywhere a "Denunciar" button

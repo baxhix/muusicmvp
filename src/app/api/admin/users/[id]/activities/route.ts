@@ -129,6 +129,20 @@ function mapToAdminEvent(
         action: 'post_shared',
         description: 'Compartilhou um post do feed',
       };
+    case 'referral_bonus':
+      return {
+        ...base,
+        category: 'content',
+        action: 'referral_bonus',
+        description: 'Ganhou Fanpoints por um amigo convidado que ativou',
+      };
+    case 'referral_welcome':
+      return {
+        ...base,
+        category: 'content',
+        action: 'referral_welcome',
+        description: 'Bônus de boas-vindas por entrar via convite',
+      };
     default: {
       // Exhaustive catch — falls through to a generic ledger entry
       // so an unknown kind doesn't drop the row from the audit feed.

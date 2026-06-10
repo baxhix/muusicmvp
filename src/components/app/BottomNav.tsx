@@ -524,7 +524,40 @@ export default function BottomNav() {
                   Fanpoints
                 </button>
 
-                {/* 5. Comunidades — per product feedback "Inclua
+                {/* 5. Convidar amigos — loop viral (Item 6). Abre o
+                 *  InviteFriendsModal (mount global no layout) via
+                 *  CustomEvent. Único entry-point do referral no
+                 *  mobile. */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.moreItem}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    try {
+                      window.dispatchEvent(new CustomEvent('app:open-invite'));
+                    } catch { /* SSR — ignore */ }
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    {/* Pessoa + "+" — convidar */}
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <line x1="19" y1="8" x2="19" y2="14" />
+                    <line x1="22" y1="11" x2="16" y2="11" />
+                  </svg>
+                  Convidar amigos
+                </button>
+
+                {/* 6. Comunidades — per product feedback "Inclua
                  *  Comunidades no menu hamburger". Vai pra
                  *  /app/comunidades (mesma rota do slot desktop). */}
                 <button

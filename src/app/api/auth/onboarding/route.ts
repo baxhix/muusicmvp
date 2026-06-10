@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { getCurrentUser } from '@/server/auth/session';
+import { maybeRewardReferral } from '@/server/referral/queries';
 
 export const runtime = 'nodejs';
 
@@ -59,6 +60,13 @@ export async function POST(req: Request) {
   }
 
   await db.update(users).set(patch).where(eq(users.id, me.id));
+
+  /* Ativação do referral — este é o momento de "first value" que
+   * dispara o reward (não o signup puro, anti-fraude). Se o usuário
+   * veio de um convite, credita FP pro referrer + bônus de
+   * boas-vindas pra ele. Best-effort: maybeRewardReferral nunca
+   * lança, então não compromete a finalização do onboarding. */
+  await maybeRewardReferral(me.id);
 
   return NextResponse.json({ ok: true });
 }

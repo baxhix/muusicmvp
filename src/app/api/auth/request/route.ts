@@ -11,6 +11,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { limitByIp, limitByKey, magicLinkLimiter } from '@/server/rateLimit';
 import { TokenBucket } from '@/server/realtime/rateLimit';
 import { resolveSlugForSignup } from '@/server/acquisition/links';
+import { recordReferralAttribution } from '@/server/referral/queries';
 import { logger } from '@/server/log';
 
 /* Bucket por email pra prevenir inbox-spam: mesmo que o atacante
@@ -117,6 +118,11 @@ export async function POST(req: Request) {
   const cookieStore = await cookies();
   const refSlug = cookieStore.get('fanverse_ref')?.value ?? null;
   const signupLinkId = await resolveSlugForSignup(refSlug);
+  /* Referral usuário→usuário — cookie `fanverse_invite` cravado
+   * pelo /i/[code]. Atribuído pós-INSERT (best-effort), igual ao
+   * signupLinkId. A row de `referrals` fica em status='pending'
+   * até o convidado ativar (onboarding). */
+  const inviteCode = cookieStore.get('fanverse_invite')?.value ?? null;
 
   const { user, isNewUser } = await db.transaction(async (tx) => {
     // Filtra soft-deleted: usuário que pediu exclusão LGPD não
@@ -164,6 +170,15 @@ export async function POST(req: Request) {
         err: err instanceof Error ? err.message : String(err),
       });
     }
+  }
+
+  /* Atribuição de referral (best-effort, fora da transaction):
+   * só pra conta NOVA. recordReferralAttribution nunca lança —
+   * resolve o code, bloqueia self-referral, grava
+   * referred_by_user_id + cria a row pending em `referrals`. O
+   * reward só sai quando o convidado completa onboarding. */
+  if (isNewUser && inviteCode) {
+    await recordReferralAttribution({ referredId: user.id, code: inviteCode });
   }
 
   /**

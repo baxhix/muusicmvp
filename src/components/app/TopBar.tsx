@@ -42,7 +42,7 @@ function BackArrow() {
 }
 
 /** Ícones lineares discretos para os itens do drawer */
-function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' | 'star' }) {
+function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' | 'star' | 'invite' }) {
   const props = {
     viewBox: '0 0 24 24',
     fill: 'none' as const,
@@ -77,6 +77,16 @@ function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'ma
       return (
         <svg {...props}>
           <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.9 6.7 19.6l1.1-6L3.4 9.4l6-.8L12 3z" />
+        </svg>
+      );
+    case 'invite':
+      // Pessoa + "+" — convidar amigos (loop viral).
+      return (
+        <svg {...props}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <line x1="19" y1="8" x2="19" y2="14" />
+          <line x1="22" y1="11" x2="16" y2="11" />
         </svg>
       );
     case 'activity':
@@ -598,6 +608,23 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     >
                       <DrawerItemIcon name="star" />
                       <span>Fanpoints</span>
+                      <DrawerChevron />
+                    </button>
+                    {/* Convidar amigos — loop viral (Item 6). Abre o
+                     * InviteFriendsModal (mount global no layout) via
+                     * CustomEvent. */}
+                    <button
+                      type="button"
+                      className={styles.drawerItem}
+                      onClick={() => {
+                        setOpen(false);
+                        try {
+                          window.dispatchEvent(new CustomEvent('app:open-invite'));
+                        } catch { /* SSR — ignore */ }
+                      }}
+                    >
+                      <DrawerItemIcon name="invite" />
+                      <span>Convidar amigos</span>
                       <DrawerChevron />
                     </button>
                     <Link

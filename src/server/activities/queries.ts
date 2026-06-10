@@ -10,7 +10,12 @@ export type ActivityKind =
   | 'post_liked'
   | 'comment_posted'
   | 'post_shared'
-  | 'three_streams';
+  | 'three_streams'
+  // Referral (migration 0049). Creditados via recordActivity quando
+  // o convidado ativa: `referral_bonus` pro referrer, `referral_welcome`
+  // pro próprio convidado.
+  | 'referral_bonus'
+  | 'referral_welcome';
 
 /**
  * Fallback / spec inicial dos pontos por ação. Os valores reais
@@ -42,6 +47,10 @@ export const POINTS: Record<ActivityKind, number> = {
   comment_posted: 10,
   post_shared: 15,
   three_streams: 10,
+  // Fallback caso fanpoint_rules ainda não tenha as linhas (a
+  // migration 0049 já as semeia). Valores espelham o INSERT da 0049.
+  referral_bonus: 50,
+  referral_welcome: 30,
 };
 
 /**

@@ -1905,3 +1905,70 @@
 .inviteCopyBtnDone {
   background: #22c55e;
 }
+
+/* ── Loop viral (Item 6) — share button + stats ── */
+.inviteLoading {
+  padding: 14px 12px;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+/* Encolhe a URL longa no .inviteCode sem quebrar layout. */
+.inviteRow .inviteCode {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inviteShareBtn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+  border: none;
+  color: #ffffff;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: filter 140ms ease, transform 140ms ease;
+}
+.inviteShareBtn:hover {
+  filter: brightness(1.15);
+}
+.inviteShareBtn:active {
+  transform: scale(0.98);
+}
+.inviteStats {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+}
+.inviteStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.inviteStatValue {
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.inviteStatLabel {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.55);
+  letter-spacing: 0.02em;
+}

@@ -18,6 +18,7 @@ import VerifiedBadge from './VerifiedBadge';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { useIsSmallDesktop } from '@/hooks/useIsSmallDesktop';
 import ArtistBoxRail from './ArtistBoxRail';
+import { track } from '@/lib/analytics';
 import { MaterialsTabContent } from './MaterialsTabContent';
 import styles from './ArtistBox.module.css';
 
@@ -117,11 +118,6 @@ export default function ArtistBox() {
    * expande/colapsa sob demanda. */
   type BoxTab = 'missoes' | 'ranking' | 'materiais';
   const [activeTab, setActiveTab] = useState<BoxTab>('missoes');
-
-  /* Modal "Convide seus amigos" — 4 códigos copiáveis. Triggered
-   * pelo botão pill "4 convites" ao lado de 402.299 Fanpoints
-   * no header do box. Per product feedback. */
-  const [inviteOpen, setInviteOpen] = useState(false);
 
   // Logged-in user's current Fanpoints balance — fetched live via
   // useUserProfile so it stays accurate when the user earns/spends
@@ -717,66 +713,125 @@ export default function ArtistBox() {
       </div>
 
       </div>  {/* /dropdown */}
-
-      {/* Modal "Convide seus amigos" — render fora do dropdown
-       *  (mesmo tree do .box, mas overlay full-viewport via
-       *  position:fixed no CSS). Renderiza condicionalmente. */}
-      {inviteOpen && (
-        <InviteFriendsModal onClose={() => setInviteOpen(false)} />
-      )}
+      {/* InviteFriendsModal agora é instância global montada no
+       *  layout (abre via `app:open-invite`) — não é mais renderizada
+       *  aqui. */}
     </div>
   );
 }
 
 /* ────────────────────────────────────────────────────────────
- * Modal "Convide seus amigos" — 4 códigos pre-gerados com
- * botão "Copiar" por linha. Per product feedback "ao clicar,
- * abre um modal com 4 códigos, botão de copiar. Título do
- * modal: Convide seus amigos". Click no backdrop ou na X fecha.
+ * Modal "Convide seus amigos" — loop viral REAL (Item 6).
+ *
+ * Busca /api/me/referral (code + url + stats), mostra o link
+ * único de convite com botão Copiar + Compartilhar (navigator.
+ * share nativo no mobile), e o progresso ("X amigos · Y
+ * ativaram · +Z FP"). O reward é creditado no backend quando o
+ * convidado completa onboarding.
  * ──────────────────────────────────────────────────────────── */
-const INVITE_CODES = [
-  'FANV-9K2X4',
-  'FANV-MT7Q8',
-  'FANV-B5RP3',
-  'FANV-YH6JD',
-];
+interface ReferralData {
+  code: string;
+  url: string;
+  invited: number;
+  activated: number;
+  pointsEarned: number;
+  rewardPerFriend: number;
+}
 
-export function InviteFriendsModal({ onClose }: { onClose: () => void }) {
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+export function InviteFriendsModal() {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<ReferralData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* ESC fecha o modal. */
+  /* Instância global montada no layout — abre via CustomEvent
+   * `app:open-invite` (dispatched pelo TopBar drawer + hamburger
+   * do BottomNav). Mesmo padrão do FanpointsModal. */
   useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener('app:open-invite', onOpen);
+    return () => window.removeEventListener('app:open-invite', onOpen);
+  }, []);
+
+  /* ESC fecha o modal (só quando aberto). */
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') setOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [open]);
 
-  /* Cleanup do timer ao desmontar pra não disparar setState
-   * num componente já fora da tree. */
+  /* Carrega o link de referral na PRIMEIRA abertura (lazy-cria o
+   * code no backend). Não busca no mount pra não gerar request pra
+   * quem nunca abre o convite. Same-origin → cookie de sessão vai. */
+  useEffect(() => {
+    if (!open || data) return;
+    let alive = true;
+    setLoading(true);
+    fetch('/api/me/referral')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: ReferralData | null) => {
+        if (alive) {
+          setData(d);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open, data]);
+
+  /* Cleanup do timer ao desmontar. */
   useEffect(() => {
     return () => {
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
 
-  function handleCopy(code: string, idx: number) {
-    /* navigator.clipboard pode falhar em contexts não-secure;
-     * fallback via execCommand. */
+  if (!open) return null;
+  const onClose = () => setOpen(false);
+
+  function markCopied() {
+    setCopied(true);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
+  }
+
+  function handleCopy() {
+    if (!data) return;
     const onDone = () => {
-      setCopiedIdx(idx);
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopiedIdx(null), 1600);
+      markCopied();
+      track('invite_sent', { channel: 'copy_link' });
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(code).then(onDone).catch(() => {
-        // fallback silencioso
-        onDone();
-      });
+      navigator.clipboard.writeText(data.url).then(onDone).catch(onDone);
     } else {
       onDone();
+    }
+  }
+
+  function handleShare() {
+    if (!data) return;
+    const shareData = {
+      title: 'Fanverse — Ana Castela',
+      text: 'Entra no Fanverse da Ana Castela comigo!',
+      url: data.url,
+    };
+    if (typeof navigator.share === 'function') {
+      navigator
+        .share(shareData)
+        .then(() => track('invite_sent', { channel: 'native_share' }))
+        .catch(() => {
+          /* usuário cancelou o share — não conta como envio. */
+        });
+    } else {
+      handleCopy();
     }
   }
 
@@ -807,23 +862,57 @@ export function InviteFriendsModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <p className={styles.inviteSubtitle}>
-          Compartilhe um dos códigos abaixo. Cada amigo que entrar
-          rende Fanpoints pra você.
+          {data
+            ? `Compartilhe seu link. Cada amigo que entrar e ativar a conta rende ${data.rewardPerFriend} Fanpoints pra você.`
+            : 'Compartilhe seu link. Cada amigo que entrar e ativar a conta rende Fanpoints pra você.'}
         </p>
-        <div className={styles.inviteList}>
-          {INVITE_CODES.map((code, idx) => (
-            <div key={code} className={styles.inviteRow}>
-              <span className={styles.inviteCode}>{code}</span>
+
+        {loading ? (
+          <div className={styles.inviteLoading}>Gerando seu link…</div>
+        ) : !data ? (
+          <div className={styles.inviteLoading}>
+            Não foi possível carregar seu link. Tente de novo.
+          </div>
+        ) : (
+          <>
+            {/* Link de convite + Copiar */}
+            <div className={styles.inviteRow}>
+              <span className={styles.inviteCode}>{data.url.replace(/^https?:\/\//, '')}</span>
               <button
                 type="button"
-                className={`${styles.inviteCopyBtn} ${copiedIdx === idx ? styles.inviteCopyBtnDone : ''}`}
-                onClick={() => handleCopy(code, idx)}
+                className={`${styles.inviteCopyBtn} ${copied ? styles.inviteCopyBtnDone : ''}`}
+                onClick={handleCopy}
               >
-                {copiedIdx === idx ? 'Copiado!' : 'Copiar'}
+                {copied ? 'Copiado!' : 'Copiar'}
               </button>
             </div>
-          ))}
-        </div>
+
+            {/* CTA primário de compartilhar (share nativo no mobile) */}
+            <button
+              type="button"
+              className={styles.inviteShareBtn}
+              onClick={handleShare}
+            >
+              Compartilhar convite
+            </button>
+
+            {/* Progresso do referral */}
+            <div className={styles.inviteStats}>
+              <div className={styles.inviteStat}>
+                <span className={styles.inviteStatValue}>{data.invited}</span>
+                <span className={styles.inviteStatLabel}>convidados</span>
+              </div>
+              <div className={styles.inviteStat}>
+                <span className={styles.inviteStatValue}>{data.activated}</span>
+                <span className={styles.inviteStatLabel}>ativaram</span>
+              </div>
+              <div className={styles.inviteStat}>
+                <span className={styles.inviteStatValue}>+{data.pointsEarned}</span>
+                <span className={styles.inviteStatLabel}>Fanpoints</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
