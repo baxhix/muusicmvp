@@ -1006,6 +1006,19 @@ export default function Globe() {
       map.on('move', scheduleCollisionRefresh);
     }
 
+    /* Clique FORA do box (no canvas do mapa) colapsa o usuário
+     * expandido. Os cliques nos próprios markers DOM chamam
+     * stopPropagation e não são cliques no canvas, então não chegam
+     * aqui — só um clique em área vazia (ou em outra camada do mapa)
+     * fecha a versão expandida. Per product feedback "ao clicar fora
+     * do box, deve fechar a versão expandida". */
+    map.on('click', () => {
+      if (expandedUserId !== null) {
+        expandedUserId = null;
+        scheduleCollisionRefresh();
+      }
+    });
+
     /**
      * Measure the song-row's inner text vs its container width. When
      * the text overflows, set CSS vars + add the marquee-active class
@@ -1581,24 +1594,27 @@ export default function Globe() {
                 // pra não fechar a paleta ao focar o campo.
                 return;
               }
-              /* ── Click no AVATAR → expande / colapsa o badge ──
-               * Per product feedback: usuários reais ficam compactos
-               * (estilo mock) por padrão; a forma expandida (nome +
-               * música + artista + coração + barras de áudio) só
-               * aparece ao clicar na imagem. Um expandido por vez —
-               * refreshCollisionState colapsa os demais e fecha as
-               * paletas órfãs. */
+              /* ── Click no AVATAR ──
+               * Per product feedback:
+               *   - Compacto (estilo mock): clique no avatar EXPANDE o
+               *     badge (nome + música + artista + coração + áudio).
+               *   - Já expandido: clique no avatar (ou no nome) vai pro
+               *     PERFIL do usuário.
+               * Fechar a versão expandida é por clique FORA do box
+               * (handler de map.on('click') abaixo). */
               const avatarHit = target.closest(`.${styles.liveUserAvatar}`);
               const nameHit   = target.closest(`.${styles.liveUserName}`);
               if (avatarHit) {
                 e.stopPropagation();
-                expandedUserId = expandedUserId === u.id ? null : u.id;
-                refreshCollisionState();
+                if (expandedUserId === u.id) {
+                  window.location.href = `/app/u/${u.id}`;
+                } else {
+                  expandedUserId = u.id;
+                  refreshCollisionState();
+                }
                 return;
               }
-              /* ── Click no NOME (visível só quando expandido) → abre
-               * o perfil do usuário. Mantém o acesso ao perfil agora
-               * que o avatar virou o gatilho de expandir. */
+              /* ── Click no NOME (visível só quando expandido) → perfil. */
               if (nameHit) {
                 e.stopPropagation();
                 window.location.href = `/app/u/${u.id}`;

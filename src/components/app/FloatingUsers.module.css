@@ -25,39 +25,18 @@
 
 .wrapperClickable { cursor: pointer; }
 
+/* Versão flutuante = APENAS o avatar (estilo mock), per product
+ * feedback "deixe a versão apenas do avatar quando os usuários reais
+ * estiverem flutuando". Sem pílula, sem nome/música/coração — só o
+ * círculo. O .badge vira um wrapper transparente em volta do avatar. */
 .badge {
   display: flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(0,0,0,0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 40px;
-  padding: 6px 11px 6px 7px;
-  /* Cap the width so a long song title + artist combo doesn't
-   * blow the pill out across the viewport when the badge
-   * expands on hover. */
-  max-width: 280px;
-  transition:
-    border-color 0.15s,
-    background 0.15s,
-    border-radius 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    padding 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Sem expansão no hover — a versão flutuante permanece só o avatar. */
 .wrapper:hover .badge {
-  background: rgba(6,6,8,0.92);
-  border-color: rgba(255,255,255,0.07);
-  /* Expanded state — anchor the avatar to the top-left so it
-   * stays where it was instead of floating into the visual
-   * middle of the now-taller content stack. Soften the pill
-   * shape to a card-radius since the 40px pill clip looks odd
-   * on a multi-line element. Slightly more vertical padding
-   * to give the extra rows breathing room. */
-  align-items: flex-start;
-  border-radius: 18px;
-  padding: 8px 12px 9px 7px;
+  /* intencionalmente vazio */
 }
 
 /* ── Inline hover-expanded details ──
@@ -235,21 +214,24 @@
   animation: fadeSlideOut 0.75s ease forwards;
 }
 
-/* Avatar */
+/* Avatar — 38px + borda verde estilo mock, mesmo visual do marker
+   compacto do mapa (coerência entre flutuante e fixo). */
 .avatar {
-  width: 26px; height: 26px;
+  width: 38px; height: 38px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255,255,255,0.18);
+  border: 2px solid #3DDB74;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.55),
+    0 0 0 3px rgba(61, 219, 116, 0.20);
   display: block;
 }
 
-/* Info */
+/* Info (nome + música + cidade) escondida na versão flutuante —
+   só o avatar fica visível. */
 .info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  display: none;
 }
 
 .name {
@@ -282,7 +264,10 @@
  * language matches the Globe Mapbox marker heart: gray at
  * rest, red after click, same SVG path. */
 .likeBtn {
-  display: inline-flex;
+  /* Coração escondido na versão flutuante (só o avatar). A interação
+     de aceno acontece no marker do mapa (clicar o avatar flutuante
+     leva o usuário pra lá via flyTo). */
+  display: none;
   align-items: center;
   justify-content: center;
   width: 22px;
