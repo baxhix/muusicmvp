@@ -10,6 +10,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { api, ApiError } from '@/lib/api/client';
+import { track } from '@/lib/analytics';
 import MotionSwitch from './MotionSwitch';
 import styles from './EditProfileModal.module.css';
 
@@ -34,15 +35,22 @@ const PLACEHOLDER_AVATAR = '/avatar-placeholder.svg';
 
 export default function EditProfileModal({ open, onClose }: EditProfileModalProps) {
   const { user, refresh } = useAuth();
+  // Menor de idade nunca compartilha localização (LGPD) — o toggle
+  // fica desabilitado/off.
+  const isMinor = Boolean(user?.isMinor);
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
 
   // Form state (initialised when the modal opens from current user values).
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [language, setLanguage] = useState<'pt' | 'en' | 'es'>('pt');
-  const [appearOnMap, setAppearOnMap] = useState(true);
+  /* "Aparecer no Mapa" agora é o consentimento LGPD REAL
+   * (users.location_consent) — espelha user.locationConsent e
+   * persiste no PATCH /api/me/location-consent (não é mais mock).
+   * Desligar zera a localização e tira o usuário do mapa pros outros. */
+  const [appearOnMap, setAppearOnMap] = useState(false);
+  const [consentBusy, setConsentBusy] = useState(false);
   const [allowInteractions, setAllowInteractions] = useState(true);
-  const [showCity, setShowCity] = useState(true);
   const [showStreams, setShowStreams] = useState(true);
 
   // Loading flags & feedback
@@ -60,6 +68,7 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
     if (justOpened && user) {
       setName(user.name ?? '');
       setAvatarUrl(user.avatarUrl ?? null);
+      setAppearOnMap(Boolean(user.locationConsent));
       setError(null);
     }
     prevOpenRef.current = open;
@@ -179,6 +188,29 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
       setError(`Não consegui salvar agora (${code}).`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  /* Toggle "Aparecer no Mapa" = consentimento LGPD real. Persiste na
+   * hora (PATCH /api/me/location-consent) + refresh — assim some pros
+   * outros usuários (listOnlineUsers filtra por location_consent e a
+   * revogação zera lat/lng/city) e o estado sobrevive ao reload (vem
+   * de user.locationConsent no /api/auth/me). Optimistic + rollback. */
+  const handleAppearOnMap = async (next: boolean) => {
+    if (consentBusy || isMinor) return;
+    setAppearOnMap(next);
+    setConsentBusy(true);
+    try {
+      await api.patch('/api/me/location-consent', { consent: next });
+      if (next) track('location_consent_granted', { surface: 'settings' });
+      else track('location_consent_revoked', {});
+      await refresh();
+    } catch (err) {
+      setAppearOnMap(!next); // rollback
+      console.error('location consent toggle failed:', err);
+      setError('Não consegui atualizar a visibilidade no mapa. Tenta de novo.');
+    } finally {
+      setConsentBusy(false);
     }
   };
 
@@ -320,13 +352,24 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
             </button>
           </div>
 
-          {/* Toggles de visibilidade (mock até backend de preferências) */}
+          {/* "Aparecer no Mapa" = consentimento de localização LGPD
+              (real, persistido). Os demais toggles abaixo ainda são
+              mock até existir backend de preferências. */}
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Aparecer no Mapa</span>
-              <MotionSwitch checked={appearOnMap} onCheckedChange={setAppearOnMap} ariaLabel="Aparecer no Mapa" />
+              <MotionSwitch
+                checked={appearOnMap}
+                onCheckedChange={handleAppearOnMap}
+                disabled={isMinor || consentBusy}
+                ariaLabel="Aparecer no Mapa"
+              />
             </div>
-            <p className={styles.toggleDesc}>Mostra seu perfil no mapa com localização aproximada.</p>
+            <p className={styles.toggleDesc}>
+              {isMinor
+                ? 'Indisponível para menores de 18 anos.'
+                : 'Mostra você no mapa pros outros fãs com cidade e localização aproximada (nunca exata). Desligar te remove do mapa e apaga sua localização.'}
+            </p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
@@ -334,13 +377,6 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
               <MotionSwitch checked={allowInteractions} onCheckedChange={setAllowInteractions} ariaLabel="Permitir Interações" />
             </div>
             <p className={styles.toggleDesc}>Permite que outros usuários enviem mensagens e interajam com você.</p>
-          </div>
-          <div className={styles.toggleRow}>
-            <div className={styles.toggleRowTop}>
-              <span className={styles.toggleTitle}>Mostrar Cidade</span>
-              <MotionSwitch checked={showCity} onCheckedChange={setShowCity} ariaLabel="Mostrar Cidade" />
-            </div>
-            <p className={styles.toggleDesc}>Mostra sua cidade no perfil e na presença no mapa.</p>
           </div>
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
