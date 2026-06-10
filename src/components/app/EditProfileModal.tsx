@@ -367,7 +367,7 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
             <p className={styles.toggleDesc}>
               {isMinor
                 ? 'Indisponível para menores de 18 anos.'
-                : 'Mostra você no mapa pros outros fãs com cidade e localização aproximada (nunca exata). Desligar te remove do mapa e apaga sua localização.'}
+                : 'Mostra você no mapa pros outros fãs com cidade e localização aproximada (nunca exata). Desligar te esconde do mapa na hora; religar te mostra de novo.'}
             </p>
           </div>
         </div>

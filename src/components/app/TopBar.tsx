@@ -311,8 +311,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
   /* Consentimento de localização (LGPD) — real, persistido em
    * users.location_consent. Espelha user.locationConsent com update
    * otimista; o toggle fica desabilitado pra menores (que nunca
-   * compartilham localização). Revogar zera as coords server-side e
-   * tira o usuário do mapa na hora. */
+   * compartilham localização). Revogar só desliga o flag (as coords
+   * ficam guardadas, escondidas) e tira o usuário do mapa na hora;
+   * religar mostra de novo. A captura inicial das coords é feita pelo
+   * LocationSync headless no /app. */
   const isMinor = Boolean(user?.isMinor);
   const [locationConsent, setLocationConsent] = useState(
     Boolean(user?.locationConsent),
@@ -912,7 +914,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     ) : (
                       <SettingRow
                         title="Compartilhar localização"
-                        description="Mostra seu perfil no mapa para outros fãs (localização aproximada — nunca exata). Desligar remove você do mapa e apaga sua localização."
+                        description="Mostra seu perfil no mapa para outros fãs (localização aproximada — nunca exata). Desligar esconde você do mapa na hora; religar mostra de novo."
                       >
                         <Toggle
                           checked={locationConsent}

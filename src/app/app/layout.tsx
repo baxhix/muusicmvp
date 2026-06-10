@@ -47,6 +47,7 @@ import FanpointsModal from '@/components/app/FanpointsModal';
 import { InviteFriendsModal } from '@/components/app/ArtistBox';
 import ShowDayLayer from '@/components/app/ShowDayLayer';
 import ShowDayPanel from '@/components/app/ShowDayPanel';
+import LocationSync from '@/components/app/LocationSync';
 import styles from './layout.module.css';
 
 /**
@@ -192,6 +193,12 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  background while Mapbox bootstraps. */}
       <div className={styles.globePlaceholder} aria-hidden="true" />
       {showGlobe && <Globe />}
+
+      {/* Sync headless de localização: captura/atualiza as coords de quem
+       *  consentiu (LGPD) pra ele aparecer no mapa pros outros. Render
+       *  null — restaura a captura que ficou órfã quando o LocateButton
+       *  saiu da tela. */}
+      <LocationSync />
 
       {/* Back to landing */}
       <Link href="/" className={styles.backBtn} aria-label="Voltar para início">

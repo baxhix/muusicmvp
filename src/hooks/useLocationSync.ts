@@ -1,11 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '@/lib/api/client';
 import type { ApiLocation } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-
-const STORAGE_KEY = 'muusic:location:askedAt';
 
 /**
  * Asks the browser for geolocation, sends it to /api/me/location once.
@@ -63,46 +61,51 @@ export function useLocationSync(): {
         },
         { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
       );
-      try {
-        localStorage.setItem(STORAGE_KEY, Date.now().toString());
-      } catch {
-        // localStorage may be blocked (private mode); ignore.
-      }
     },
     [user, refresh],
   );
 
-  // First-login auto-prompt: only if user.city is null (never set) and we
-  // haven't asked recently (within 24h). Avoids re-prompting on every page.
+  // Tenta a captura de recuperação no máximo uma vez por mount (ver effect).
+  const autoSyncedRef = useRef(false);
+
+  // Reflete coords já capturadas + recupera quem consentiu mas está sem
+  // coords. A VISIBILIDADE no mapa exige coords não-nulas (listOnlineUsers),
+  // então o gate é coords presentes — não só `city`.
   useEffect(() => {
     if (!user) return;
-    if (user.city) {
-      setLocation({
-        city: user.city,
-        country: user.country,
-        countryCode: user.countryCode,
-        lat: user.lat ?? 0,
-        lng: user.lng ?? 0,
-      });
+
+    // Já tem coords → reflete como synced (sem recaptura). Só popula
+    // `location` quando há `city` (ApiLocation.city é não-nulável); o
+    // sinal de "synced" depende só das coords.
+    if (user.lat != null && user.lng != null) {
+      setLocation(
+        user.city != null
+          ? {
+              city: user.city,
+              country: user.country,
+              countryCode: user.countryCode,
+              lat: user.lat,
+              lng: user.lng,
+            }
+          : null,
+      );
       setStatus('synced');
       return;
     }
 
-    // LGPD: o prompt do SO só dispara automaticamente pra quem JÁ consentiu
-    // compartilhar localização (ex.: concedeu no onboarding ou nas
-    // Configurações). Quem não consentiu precisa do CTA manual (LocateButton),
-    // que passa grant:true. Sem este guard o app pediria geolocation sem opt-in.
+    // Daqui pra baixo: SEM coords.
+    // LGPD: quem não consentiu nunca é auto-promptado — precisa do CTA
+    // manual (LocateButton, grant:true). Este é o gate de privacidade real.
     if (!user.locationConsent) return;
 
-    let lastAsked = 0;
-    try {
-      lastAsked = parseInt(localStorage.getItem(STORAGE_KEY) ?? '0', 10);
-    } catch {
-      // ignore
-    }
-    const recentlyAsked = Date.now() - lastAsked < 24 * 60 * 60 * 1000;
-    if (recentlyAsked) return;
-
+    // Consentiu mas está sem coords — ex.: legado da revogação que apagava
+    // a localização, ou consentiu (toggle) mas nunca capturou. A captura é
+    // o que efetivamente coloca o usuário no mapa, então tentamos UMA vez
+    // por mount: silenciosa se a permissão do navegador já foi concedida,
+    // um prompt se estiver "perguntar", falha calada se "negada". Sem isso
+    // o toggle fica ON e o usuário nunca aparece pros outros.
+    if (autoSyncedRef.current) return;
+    autoSyncedRef.current = true;
     request();
   }, [user, request]);
 
