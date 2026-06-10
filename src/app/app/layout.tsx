@@ -45,6 +45,8 @@ import OnboardingTooltips from '@/components/app/OnboardingTooltips';
 import FanverseSearch from '@/components/app/FanverseSearch';
 import FanpointsModal from '@/components/app/FanpointsModal';
 import { InviteFriendsModal } from '@/components/app/ArtistBox';
+import ShowDayLayer from '@/components/app/ShowDayLayer';
+import ShowDayPanel from '@/components/app/ShowDayPanel';
 import styles from './layout.module.css';
 
 /**
@@ -466,6 +468,15 @@ function Shell({ children }: { children: React.ReactNode }) {
         payload={anaFlightModalPayload}
         onClose={closeAnaFlight}
       />
+
+      {/* "Hoje tem show" — feature pra TODOS os usuários (fora do
+       *  BrainstormGate, sem flag). ShowDayLayer pinta o marker da
+       *  Fire Arena no mapa (subscribeMapInstance — sobrevive a
+       *  remounts do Globe no mobile); ShowDayPanel abre via
+       *  globeStore.openShowDay() / CustomEvent 'app:open-show-day'
+       *  com o chat simulado + lista de presentes. */}
+      <ShowDayLayer />
+      <ShowDayPanel />
 
       {/* Persistent toasts — render at the shell level so rewards,
        *  achievements, milestones, and "X listening the same

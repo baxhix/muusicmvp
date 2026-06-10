@@ -211,6 +211,24 @@ export interface EventPayloadMap {
    *  AFTER the 8h journey completes (plane parked at Lisbon). */
   ana_flight_pin_clicked: { progress: number; arrived: boolean };
 
+  // ── HOJE TEM SHOW (simulação Fire Arena) ──────────────────────
+  /** Marker "Hoje tem show" da Fire Arena clicado no globo —
+   *  qualquer tier de zoom (far = camada nativa, mid/near = DOM). */
+  show_day_pin_clicked: { phase: 'announced' | 'live' | 'ended'; tier: 'far' | 'mid' | 'near' };
+  /** ShowDayPanel aberto (chat simulado + presentes). */
+  show_day_panel_opened: { phase: 'announced' | 'live' | 'ended'; source: 'map_pin' | 'event' };
+  /** ShowDayPanel fechado — `seconds_open` mede o engajamento. */
+  show_day_panel_closed: { phase: 'announced' | 'live' | 'ended'; seconds_open: number };
+  /** Mensagem local enviada no chat simulado do show (NUNCA vai
+   *  pro backend — distinto de chat_message_sent de propósito). */
+  show_day_message_sent_local: { phase: 'announced' | 'live'; body_length: number };
+  /** Foto exclusiva da Central aberta no Lightbox. */
+  show_day_photo_viewed: { photo_index: number; phase: 'announced' | 'live' | 'ended' };
+  /** Vista "Presentes no show" aberta via strip do painel. */
+  show_day_presentes_viewed: { phase: 'announced' | 'live' | 'ended' };
+  /** Fase do show virou com a sessão aberta (20h/23h/meia-noite). */
+  show_day_phase_changed: { from: string; to: string };
+
   // ── NOTIFICATIONS ─────────────────────────────────────────────
   notification_received:   { kind: string };
   notification_opened:     { kind: string; notification_id: string };
@@ -360,6 +378,13 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   ana_show_pin_clicked:     { category: 'feed', importance: 'high', description: 'Pin de próximo show da Ana aberto no globo.', trigger: 'Clique no chip com a data sobre uma cidade da agenda.', ga4: true },
   ana_show_tickets_clicked: { category: 'feed', importance: 'high', description: 'Botão "Ingressos" clicado no card de show da Ana (inert até parceiro de bilhetagem).', trigger: 'Clique no CTA dentro do popover do pin de show.', ga4: true },
   ana_flight_pin_clicked:   { category: 'feed', importance: 'high', description: 'Marker do avião da Tour Portugal clicado no globo.', trigger: 'Clique no ícone de avião que percorre a linha Londrina → Lisboa.', ga4: true },
+  show_day_pin_clicked:        { category: 'feed', importance: 'high', description: 'Marker "Hoje tem show" da Fire Arena clicado no globo.', trigger: 'Clique no marker especial (camada nativa ou DOM) em qualquer zoom.', ga4: true },
+  show_day_panel_opened:       { category: 'feed', importance: 'high', description: 'Painel do show do dia aberto (chat simulado + presentes).', trigger: 'globeStore.openShowDay ou CustomEvent app:open-show-day.', ga4: true },
+  show_day_panel_closed:       { category: 'feed', importance: 'medium', description: 'Painel do show fechado; mede tempo de permanência.', trigger: 'Esc, backdrop ou drag-to-close do painel.' },
+  show_day_message_sent_local: { category: 'feed', importance: 'medium', description: 'Mensagem local enviada no chat simulado do show.', trigger: 'Composer do ShowDayPanel submetido (client-only).' },
+  show_day_photo_viewed:       { category: 'feed', importance: 'medium', description: 'Foto exclusiva da Central aberta no Lightbox.', trigger: 'Clique numa foto do chat do show.' },
+  show_day_presentes_viewed:   { category: 'feed', importance: 'low', description: 'Lista "Presentes no show" aberta.', trigger: 'Tap na strip de presentes do painel.' },
+  show_day_phase_changed:      { category: 'feed', importance: 'low', description: 'Fase do show do dia virou com a sessão aberta.', trigger: 'Relógio cruza 20h/23h/meia-noite com o marker montado.' },
   creator_followed:   { category: 'social', importance: 'high', description: 'Usuário começou a seguir um perfil.', trigger: 'CTA "Seguir" ativado.', ga4: true },
   creator_unfollowed: { category: 'social', importance: 'low', description: 'Usuário deixou de seguir um perfil.', trigger: 'CTA "Seguindo" desfeito.' },
   content_shared:     { category: 'social', importance: 'high', description: 'Conteúdo compartilhado para fora do app.', trigger: 'navigator.share() ou copy-link.', ga4: true },

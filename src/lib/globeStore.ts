@@ -135,6 +135,7 @@ type OpenAnaCheckInFn = (payload: AnaCheckInPayload) => void;
 type SetAnaShowsFn = (shows: AnaShow[]) => void;
 type SetAnaFlightFn = (payload: AnaFlightPayload | null) => void;
 type OpenAnaFlightFn = (payload: AnaFlightPayload) => void;
+type OpenShowDayFn = () => void;
 
 /**
  * Visible user-id tracking — wired so the Floating user badges
@@ -174,6 +175,7 @@ let _anaShowsBuffer: AnaShow[] | null = null;
 let _setAnaFlight: SetAnaFlightFn | null = null;
 let _anaFlightBuffer: AnaFlightPayload | null = null;
 let _openAnaFlight: OpenAnaFlightFn | null = null;
+let _openShowDay: OpenShowDayFn | null = null;
 
 /* Map instance pub/sub — Globe publica a referência do Mapbox map
  * após o load. Consumers (ex.: MapSimulationLayer) se inscrevem
@@ -333,6 +335,17 @@ export const globeStore = {
    */
   registerOpenAnaFlight: (fn: OpenAnaFlightFn) => { _openAnaFlight = fn; },
   openAnaFlight: (payload: AnaFlightPayload) => { _openAnaFlight?.(payload); },
+
+  /**
+   * "Hoje tem show" — handoff do marker da Fire Arena pro
+   * ShowDayPanel. Payload-less de propósito: o painel calcula a
+   * fase/contadores sozinho via useShowDayPhase. Handler é
+   * PANEL-owned (registrado pelo ShowDayPanel auto-montado no
+   * layout), então NÃO entra no unregisterMapCallbacks — sobrevive
+   * a remounts do Globe igual openAnaCheckIn/openAnaFlight.
+   */
+  registerOpenShowDay: (fn: OpenShowDayFn) => { _openShowDay = fn; },
+  openShowDay: () => { _openShowDay?.(); },
 
   /**
    * Publish the set of user ids currently visible (inside the

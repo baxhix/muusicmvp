@@ -59,6 +59,7 @@ export type BrainstormFlagKey =
   | 'superlive'
   | 'collectiveListening'
   | 'showLive'
+  | 'showDay'
   | 'mapSimulation'
   | 'findMyLove';
 
@@ -74,6 +75,7 @@ const DEFAULTS: BrainstormFlags = {
   superlive: true,
   collectiveListening: true,
   showLive: true,
+  showDay: true,
   mapSimulation: false,
   findMyLove: false,
 };
@@ -114,6 +116,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Show ao vivo (Fire Arena)',
     description:
       'Pin neon na Arena Fonte Nova (Bahia) que transforma o mapa num palco — vinheta escura ao redor, luzes de palco rosa pulsando sobre o estádio, frame de transmissão acima e chat dos fãs ao lado. Pensado pro lançamento do álbum Fire Arena.',
+  },
+  {
+    key: 'showDay',
+    title: 'Hoje tem show (Fire Arena)',
+    description:
+      'Marker especial na Fire Arena (Salvador) que muda ao longo do dia: "HOJE TEM SHOW" com contagem regressiva, depois "AO VIVO" às 20h com holofotes varrendo o palco (visível em todos os zooms, com mais detalhe perto). Tocar abre um painel com o chat simulado do show — fãs comentando + a Central Ana Castela mandando fotos exclusivas — e a lista de "presentes no local".',
   },
   {
     key: 'findMyLove',

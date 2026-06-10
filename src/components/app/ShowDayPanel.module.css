@@ -1,0 +1,432 @@
+/* ============================================================
+ * SHOW DAY PANEL — painel "Hoje tem show" (Fire Arena).
+ *
+ * Desktop: override do MotionModalShell — coluna 420px ×
+ * min(72vh, 680px), padding 0 (layout interno próprio) e scrim
+ * LEVE pro mapa continuar legível atrás.
+ * Mobile: conteúdo preenche o MobileSheetShell.
+ * ============================================================ */
+
+/* Scrim leve — o globo continua visível (spec "painel ancorado"). */
+.scrim {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.modal {
+  padding: 0;
+  width: 420px;
+  max-width: min(420px, calc(100vw - 48px));
+  height: min(72vh, 680px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(236, 72, 153, 0.25);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(
+      120% 140% at 50% -40%,
+      rgba(236, 72, 153, 0.22) 0%,
+      rgba(236, 72, 153, 0) 60%
+    );
+}
+.content[data-phase='live'] .header {
+  background:
+    radial-gradient(
+      120% 140% at 50% -40%,
+      rgba(244, 63, 94, 0.28) 0%,
+      rgba(244, 63, 94, 0) 60%
+    );
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: rgba(236, 72, 153, 0.18);
+  border: 1px solid rgba(236, 72, 153, 0.55);
+}
+.content[data-phase='live'] .statusBadge {
+  background: rgba(244, 63, 94, 0.22);
+  border-color: rgba(244, 63, 94, 0.7);
+}
+.content[data-phase='ended'] .statusBadge {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ec4899;
+  flex-shrink: 0;
+}
+.content[data-phase='live'] .statusDot {
+  background: #f43f5e;
+  animation: sdpDotBlink 1.4s ease-in-out infinite;
+}
+.content[data-phase='ended'] .statusDot {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+@keyframes sdpDotBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.statusTime {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.venue {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── Strip de presentes ───────────────────────────────────── */
+.presenceStrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  text-align: left;
+  transition: background 160ms ease;
+}
+.presenceStrip:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.presenceAvatars {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.presenceAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #0a0a0e;
+  margin-left: -7px;
+  background: #1c1c24;
+}
+.presenceAvatar:first-child {
+  margin-left: 0;
+}
+
+.presenceLabel {
+  flex: 1;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+.presenceChevron {
+  font-size: 18px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Stream do chat ───────────────────────────────────────── */
+.stream {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overscroll-behavior: contain;
+}
+
+.bubble {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+
+.bubbleAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #1c1c24;
+}
+
+.bubbleBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bubbleName {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.bubbleText {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-wrap: anywhere;
+}
+
+/* Central Ana Castela — accent de marca na borda esquerda. */
+.bubbleStaff .bubbleBody {
+  border-left: 2px solid;
+  border-image: linear-gradient(180deg, #d946ef, #ec4899) 1;
+  padding-left: 8px;
+}
+.bubbleStaff .bubbleName {
+  color: #f9a8d4;
+}
+
+/* Mensagem local do próprio usuário. */
+.bubbleSelf .bubbleName {
+  color: rgba(103, 232, 249, 0.9);
+}
+
+.roleChip,
+.selfChip {
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.roleChip {
+  background: rgba(236, 72, 153, 0.18);
+  color: #f9a8d4;
+}
+.selfChip {
+  background: rgba(103, 232, 249, 0.14);
+  color: rgba(103, 232, 249, 0.9);
+  text-transform: uppercase;
+}
+
+/* Foto exclusiva — dimensões explícitas via atributos (sem CLS);
+ * o CSS só limita a largura e mantém o aspect-ratio. */
+.photoBtn {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 240px;
+  line-height: 0;
+}
+.photoImg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+/* ── Lista de presentes ───────────────────────────────────── */
+.attendeesList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 16px 16px;
+  overscroll-behavior: contain;
+}
+
+.attendeeRow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.attendeeRow:last-of-type {
+  border-bottom: none;
+}
+
+.attendeeAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #1c1c24;
+}
+
+.attendeeInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.attendeeName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.attendeeCity {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.attendeePresence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #4ade80;
+  text-transform: uppercase;
+}
+.attendeePresence::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+}
+
+.attendeesFooter {
+  margin: 12px 0 0;
+  text-align: center;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Composer ─────────────────────────────────────────────── */
+.composer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.composerField {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-family: var(--font-inter), sans-serif;
+  /* 16px — evita auto-zoom do iOS no focus. */
+  font-size: 16px;
+  outline: none;
+}
+.composerField::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+.composerField:focus {
+  border-color: rgba(236, 72, 153, 0.55);
+}
+
+.composerSend {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d946ef, #ec4899);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 140ms ease;
+}
+.composerSend:hover {
+  transform: scale(1.06);
+}
+.composerSend:active {
+  transform: scale(0.96);
+}
+
+.endedFooter {
+  margin: 0;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: center;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Mobile (dentro do MobileSheetShell) ──────────────────── */
+@media (max-width: 768px) {
+  .content {
+    /* O sheet body já scrolla; o content trava a própria altura
+     * pra que SÓ o stream role internamente. */
+    height: 100%;
+  }
+  .header {
+    padding: 12px 16px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusDot {
+    animation: none !important;
+  }
+}

@@ -32,6 +32,7 @@ import { ANA_CHECKINS } from '@/data/anaCheckIns';
 import { getFlightState } from '@/lib/anaFlight';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { ANA_SHOWS } from '@/data/anaShows';
+import { SHOW_DAY } from '@/lib/showDay';
 
 /**
  * App-shell context — the seam between the persistent layout
@@ -482,9 +483,22 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
 
   // Static list of upcoming Ana shows — published once. Globe
   // draws them as orange dots + zoom-gated labels.
+  //
+  // O pin de agenda da Fire Arena só é SUPRIMIDO quando o marker
+  // especial "Hoje tem show" está ativo (feature gated pelo menu
+  // Novas Features — flag `showDay`, owner-only por enquanto). Aí o
+  // ShowDayPanel substitui o popover "Ingressos" naquele venue;
+  // dois markers no mesmo ponto confundiriam o clique. Pra quem NÃO
+  // tem a feature ligada, o pin de agenda da Fire Arena aparece
+  // normalmente. Re-publica quando o flag vira.
+  const showDayEnabled = brainstormFlags.showDay;
   useEffect(() => {
-    globeStore.setAnaShows(ANA_SHOWS);
-  }, []);
+    globeStore.setAnaShows(
+      showDayEnabled
+        ? ANA_SHOWS.filter((s) => s.id !== SHOW_DAY.agendaShowId)
+        : ANA_SHOWS,
+    );
+  }, [showDayEnabled]);
 
   // ── Ana Castela check-in scheduler ────────────────────────────
   // Round-robin through the preset cities every 2 minutes. The

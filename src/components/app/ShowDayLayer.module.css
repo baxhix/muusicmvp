@@ -1,0 +1,360 @@
+/* ============================================================
+ * HOJE TEM SHOW — marker da Fire Arena (tiers mid/near).
+ *
+ * Regras de performance (espelham Globe.module.css):
+ *   - Toda animação é transform/opacity (compositor GPU).
+ *   - will-change SÓ nos 3 feixes de holofote.
+ *   - Mobile ≤768px: pulsos e varredura dos feixes desligados;
+ *     única animação sobrevivente = blink do dot do chip.
+ *   - prefers-reduced-motion: tudo estático.
+ *
+ * Tiers via [data-tier] no wrapper, cross-fade 280ms entre
+ * .mid/.near (visibility com delay tira o tier oculto do
+ * hit-testing depois do fade — sem pop-in).
+ * Fases via [data-phase] (announced | live | ended).
+ * ============================================================ */
+
+.wrap {
+  position: relative;
+  width: 0;
+  height: 0;
+  cursor: pointer;
+  outline: none;
+}
+.wrap:focus-visible .chip {
+  box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.8);
+}
+/* Tiers far/hidden: DOM todo invisível e fora do hit-testing —
+ * o clique fica com a layer nativa show-day-halo. */
+.wrap[data-tier='hidden'],
+.wrap[data-tier='far'] {
+  pointer-events: none;
+}
+
+/* ── Anéis de pulso (mid + near) ───────────────────────────── */
+.pulse {
+  position: absolute;
+  left: -22px;
+  bottom: -22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(236, 72, 153, 0.5) 0%,
+    rgba(236, 72, 153, 0) 70%
+  );
+  transform: scale(0.5);
+  opacity: 0;
+  pointer-events: none;
+  animation: sdPulseRing 3.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+.pulseB {
+  animation-delay: -1.6s;
+}
+.wrap[data-phase='live'] .pulse {
+  animation-duration: 2.2s;
+  background: radial-gradient(
+    circle,
+    rgba(244, 63, 94, 0.55) 0%,
+    rgba(244, 63, 94, 0) 70%
+  );
+}
+.wrap[data-phase='ended'] .pulse,
+.wrap[data-tier='hidden'] .pulse,
+.wrap[data-tier='far'] .pulse {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes sdPulseRing {
+  0% { transform: scale(0.45); opacity: 0.6; }
+  70% { transform: scale(2.4); opacity: 0; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/* ── Containers de tier (cross-fade sem pop-in) ────────────── */
+.mid,
+.near {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%) scale(0.92);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease,
+    visibility 0s linear 280ms;
+}
+.wrap[data-tier='mid'] .mid,
+.wrap[data-tier='near'] .near {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) scale(1);
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease,
+    visibility 0s;
+}
+
+/* ── Tier MID — glyph + chip ───────────────────────────────── */
+.glyph {
+  display: block;
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 0 6px rgba(236, 72, 153, 0.65));
+}
+.glyph svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(10, 6, 16, 0.82);
+  border: 1px solid rgba(236, 72, 153, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: nowrap;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-transform: uppercase;
+  box-shadow: 0 2px 12px rgba(236, 72, 153, 0.35);
+}
+.wrap[data-phase='live'] .chip {
+  border-color: rgba(244, 63, 94, 0.8);
+  background: rgba(34, 5, 12, 0.88);
+  box-shadow: 0 2px 14px rgba(244, 63, 94, 0.45);
+}
+.wrap[data-phase='ended'] .chip {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(15, 15, 20, 0.8);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.chipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ec4899;
+  flex-shrink: 0;
+}
+.wrap[data-phase='live'] .chipDot {
+  background: #f43f5e;
+  animation: sdDotBlink 1.4s ease-in-out infinite;
+}
+.wrap[data-phase='ended'] .chipDot {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+@keyframes sdDotBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.chipText {
+  line-height: 1;
+}
+.chipSub {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* ── Tier NEAR — arena + holofotes + viewers ───────────────── */
+.near {
+  /* Os feixes sobem ~64px acima da arena. */
+  padding-top: 64px;
+}
+
+.arena {
+  display: block;
+  width: 120px;
+  height: 84px;
+  filter: drop-shadow(0 0 14px rgba(236, 72, 153, 0.45));
+}
+.arena svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Announced: o palco "respira" enquanto os feixes ficam off. */
+.wrap[data-phase='announced'] .arena {
+  animation: sdArenaBreath 4s ease-in-out infinite;
+}
+.wrap[data-phase='ended'] .arena {
+  filter: grayscale(0.7) opacity(0.55);
+}
+
+@keyframes sdArenaBreath {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+.beams {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.beam {
+  position: absolute;
+  bottom: -32px;
+  left: -13px;
+  width: 26px;
+  height: 64px;
+  clip-path: polygon(42% 100%, 58% 100%, 100% 0%, 0% 0%);
+  transform-origin: bottom center;
+  mix-blend-mode: screen;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.beamL {
+  background: linear-gradient(
+    to top,
+    rgba(168, 85, 247, 0.75),
+    rgba(168, 85, 247, 0)
+  );
+}
+.beamC {
+  background: linear-gradient(
+    to top,
+    rgba(252, 231, 243, 0.65),
+    rgba(236, 72, 153, 0)
+  );
+}
+.beamR {
+  background: linear-gradient(
+    to top,
+    rgba(236, 72, 153, 0.75),
+    rgba(236, 72, 153, 0)
+  );
+}
+/* Feixes só varrem na fase live. */
+.wrap[data-phase='live'] .beamL {
+  opacity: 0.7;
+  animation:
+    sdBeamSweepL 3.8s ease-in-out infinite alternate,
+    sdBeamFlicker 5.2s ease-in-out infinite;
+  animation-delay: -1.5s, -0.4s;
+}
+.wrap[data-phase='live'] .beamC {
+  opacity: 0.55;
+  animation:
+    sdBeamSweepC 4.6s ease-in-out infinite alternate,
+    sdBeamFlicker 6.1s ease-in-out infinite;
+  animation-delay: -0.7s, -2.2s;
+}
+.wrap[data-phase='live'] .beamR {
+  opacity: 0.7;
+  animation:
+    sdBeamSweepR 4.2s ease-in-out infinite alternate,
+    sdBeamFlicker 5.7s ease-in-out infinite;
+  animation-delay: -2.6s, -1.1s;
+}
+
+@keyframes sdBeamSweepL {
+  from { transform: rotate(-30deg); }
+  to { transform: rotate(10deg); }
+}
+@keyframes sdBeamSweepC {
+  from { transform: rotate(-8deg); }
+  to { transform: rotate(8deg); }
+}
+@keyframes sdBeamSweepR {
+  from { transform: rotate(-10deg); }
+  to { transform: rotate(30deg); }
+}
+@keyframes sdBeamFlicker {
+  0%, 100% { opacity: 0.45; }
+  30% { opacity: 0.8; }
+  55% { opacity: 0.35; }
+  80% { opacity: 0.7; }
+}
+
+.viewersChip {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(10, 6, 16, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+.viewersChip:empty {
+  display: none;
+}
+
+/* ── Mobile: corta animações caras (precedente Globe ≤768px).
+ *    Sobrevive só o sdDotBlink — o cue mais barato de "ao vivo". */
+@media (max-width: 768px) {
+  .pulse {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .wrap[data-phase='live'] .beamL,
+  .wrap[data-phase='live'] .beamC,
+  .wrap[data-phase='live'] .beamR {
+    animation: none;
+    opacity: 0.35;
+  }
+  .wrap[data-phase='live'] .beamL { transform: rotate(-18deg); }
+  .wrap[data-phase='live'] .beamC { transform: rotate(0deg); }
+  .wrap[data-phase='live'] .beamR { transform: rotate(18deg); }
+  .wrap[data-phase='announced'] .arena {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ── prefers-reduced-motion: tudo estático, dot sólido. ────── */
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .wrap[data-phase='live'] .chipDot {
+    animation: none;
+  }
+  .wrap[data-phase='live'] .beamL,
+  .wrap[data-phase='live'] .beamC,
+  .wrap[data-phase='live'] .beamR {
+    animation: none;
+    opacity: 0.35;
+  }
+  .wrap[data-phase='live'] .beamL { transform: rotate(-18deg); }
+  .wrap[data-phase='live'] .beamC { transform: rotate(0deg); }
+  .wrap[data-phase='live'] .beamR { transform: rotate(18deg); }
+  .wrap[data-phase='announced'] .arena {
+    animation: none;
+  }
+  .mid,
+  .near {
+    transition: none;
+  }
+}
