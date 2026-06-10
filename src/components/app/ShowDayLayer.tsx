@@ -81,39 +81,82 @@ function chipContent(phase: ShowDayPhase): { text: string; sub: string } {
   return { text: 'HOJE TEM SHOW', sub: `· em ${formatCountdownShort(ms)}` };
 }
 
-/** Arena simbólica (tier near): arco de palco + 3 fileiras de
- *  pontos-plateia + baseline. Gradiente com id fixo é seguro —
- *  só existe UMA instância deste marker no app. */
+/** Palco de festival simbólico (tier near): torres de treliça (truss)
+ *  nas laterais, telão de LED central, line-arrays pendurados,
+ *  luminárias na treliça superior (de onde saem os feixes) e o palco
+ *  com escada. Estrutura em índigo claro pra ler sobre o mapa escuro;
+ *  telão no gradiente magenta/roxo do tema. Ids de gradiente fixos são
+ *  seguros — só existe UMA instância deste marker no app. */
 const ARENA_SVG = `
 <svg viewBox="0 0 120 84" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <linearGradient id="sdStageGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#a855f7"/>
-      <stop offset="0.55" stop-color="#d946ef"/>
-      <stop offset="1" stop-color="#ec4899"/>
+    <linearGradient id="sdStageGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c084fc"/>
+      <stop offset="0.5" stop-color="#e879f9"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="sdDeckGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4338ca"/>
+      <stop offset="1" stop-color="#1e1b4b"/>
     </linearGradient>
   </defs>
-  <path d="M28 38a32 18 0 0 1 64 0l-6 4a26 14 0 0 0-52 0z" fill="url(#sdStageGrad)" opacity="0.95"/>
-  <ellipse cx="60" cy="42" rx="26" ry="6.5" stroke="url(#sdStageGrad)" stroke-width="2" opacity="0.8"/>
-  <g fill="#f9a8d4" opacity="0.85">
-    <circle cx="34" cy="56" r="2"/><circle cx="47" cy="58" r="2"/><circle cx="60" cy="59" r="2"/><circle cx="73" cy="58" r="2"/><circle cx="86" cy="56" r="2"/>
+
+  <!-- Telão de LED / backdrop -->
+  <rect x="38" y="16" width="44" height="34" rx="2.5" fill="url(#sdStageGrad)" opacity="0.92"/>
+  <g stroke="#fdf4ff" stroke-opacity="0.22" stroke-width="0.7">
+    <line x1="41" y1="26" x2="79" y2="26"/>
+    <line x1="41" y1="33" x2="79" y2="33"/>
+    <line x1="41" y1="40" x2="79" y2="40"/>
   </g>
-  <g fill="#e879f9" opacity="0.6">
-    <circle cx="26" cy="64" r="1.8"/><circle cx="38" cy="66.5" r="1.8"/><circle cx="49" cy="68" r="1.8"/><circle cx="60" cy="68.6" r="1.8"/><circle cx="71" cy="68" r="1.8"/><circle cx="82" cy="66.5" r="1.8"/><circle cx="94" cy="64" r="1.8"/>
+  <rect x="38" y="16" width="44" height="34" rx="2.5" fill="none" stroke="#fce7f3" stroke-width="1" stroke-opacity="0.55"/>
+
+  <!-- Line-arrays pendurados (flanqueando o telão) -->
+  <g fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.7" stroke-opacity="0.6">
+    <line x1="30" y1="16" x2="30" y2="19" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
+    <rect x="26.5" y="19" width="7" height="4.4" rx="1"/>
+    <rect x="26.8" y="24" width="6.4" height="4.4" rx="1"/>
+    <rect x="27.1" y="29" width="5.8" height="4.4" rx="1"/>
+    <rect x="27.4" y="34" width="5.2" height="4.4" rx="1"/>
+    <line x1="90" y1="16" x2="90" y2="19" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
+    <rect x="86.5" y="19" width="7" height="4.4" rx="1"/>
+    <rect x="86.8" y="24" width="6.4" height="4.4" rx="1"/>
+    <rect x="87.1" y="29" width="5.8" height="4.4" rx="1"/>
+    <rect x="87.4" y="34" width="5.2" height="4.4" rx="1"/>
   </g>
-  <g fill="#c084fc" opacity="0.4">
-    <circle cx="18" cy="73" r="1.5"/><circle cx="29" cy="75" r="1.5"/><circle cx="40" cy="76.5" r="1.5"/><circle cx="50" cy="77.4" r="1.5"/><circle cx="60" cy="77.8" r="1.5"/><circle cx="70" cy="77.4" r="1.5"/><circle cx="80" cy="76.5" r="1.5"/><circle cx="91" cy="75" r="1.5"/><circle cx="102" cy="73" r="1.5"/>
+
+  <!-- Torres de treliça + viga superior -->
+  <g stroke="#a5b4fc" stroke-width="1.3" stroke-linecap="round" fill="none" opacity="0.92">
+    <path d="M16 10V66M24 10V66"/>
+    <path d="M16 10H24M16 24H24M16 38H24M16 52H24M16 66H24"/>
+    <path d="M16 10 24 24M24 10 16 24M16 24 24 38M24 24 16 38M16 38 24 52M24 38 16 52M16 52 24 66M24 52 16 66"/>
+    <path d="M96 10V66M104 10V66"/>
+    <path d="M96 10H104M96 24H104M96 38H104M96 52H104M96 66H104"/>
+    <path d="M96 10 104 24M104 10 96 24M96 24 104 38M104 24 96 38M96 38 104 52M104 38 96 52M96 52 104 66M104 52 96 66"/>
+    <path d="M16 9H104M16 16H104"/>
+    <path d="M20 9 28 16M28 9 36 16M36 9 44 16M44 9 52 16M52 9 60 16M60 9 68 16M68 9 76 16M76 9 84 16M84 9 92 16M92 9 100 16"/>
   </g>
-  <line x1="14" y1="82" x2="106" y2="82" stroke="rgba(236,72,153,0.5)" stroke-width="1.4" stroke-linecap="round"/>
+
+  <!-- Luminárias na viga (de onde nascem os feixes) -->
+  <g fill="#fdf4ff">
+    <circle cx="34" cy="15.5" r="1.5"/><circle cx="47" cy="15.5" r="1.5"/><circle cx="60" cy="15.5" r="1.5"/><circle cx="73" cy="15.5" r="1.5"/><circle cx="86" cy="15.5" r="1.5"/>
+  </g>
+
+  <!-- Palco (deck em perspectiva) + escada central -->
+  <path d="M14 64H106L112 74H8Z" fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.9" stroke-opacity="0.5"/>
+  <line x1="14" y1="64" x2="106" y2="64" stroke="#c4b5fd" stroke-width="1.4" stroke-opacity="0.9" stroke-linecap="round"/>
+  <path d="M53 64H67L70 73H50Z" fill="#312e81" stroke="#a5b4fc" stroke-width="0.7" stroke-opacity="0.5"/>
+  <line x1="51.5" y1="68.5" x2="68.5" y2="68.5" stroke="#a5b4fc" stroke-width="0.6" stroke-opacity="0.45"/>
 </svg>`;
 
-/** Glyph compacto (tier mid): mini arco de palco. */
+/** Glyph compacto (tier mid): mini palco (torres + viga + telão + deck). */
 const GLYPH_SVG = `
 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path d="M5 13a7 5 0 0 1 14 0l-2 1.4a5 3.4 0 0 0-10 0z" fill="#ec4899"/>
-  <circle cx="7" cy="18" r="1.2" fill="#f9a8d4"/>
-  <circle cx="12" cy="19.2" r="1.2" fill="#f9a8d4"/>
-  <circle cx="17" cy="18" r="1.2" fill="#f9a8d4"/>
+  <rect x="8" y="6" width="8" height="7" rx="1" fill="#ec4899"/>
+  <g stroke="#f9a8d4" stroke-width="1.2" stroke-linecap="round">
+    <path d="M5 5V15M19 5V15"/>
+    <path d="M5 5H19"/>
+    <path d="M3 16H21"/>
+  </g>
 </svg>`;
 
 export default function ShowDayLayer() {
