@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import mapboxgl from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { loadGlobeCamera, saveGlobeCamera } from '@/lib/globeCamera';
@@ -14,6 +15,16 @@ const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
 
 export default function Globe() {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Router capturado num ref pra que os handlers imperativos (criados
+  // uma única vez dentro do useEffect de mount) naveguem client-side
+  // via router.push em vez de window.location.href. O reload total
+  // destruía/recriava o globo Mapbox a cada clique em "ir pro perfil",
+  // causando a "tremida"/flash na tela. router.push mantém o layout
+  // persistente (e o globo, no desktop) vivo → transição suave.
+  const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -813,6 +824,15 @@ export default function Globe() {
     // Distância mínima centro-a-centro (px) entre avatares compactos
     // (38px). 52 → ~14px de respiro entre dois avatares vizinhos.
     const MIN_SEP_PX = 52;
+    // Separação maior pra qualquer par que envolva o pin da Ana: o anel
+    // de avatar dela tem 60px (raio 30) vs. 19 do usuário, então
+    // 30+19+respiro ≈ 64 mantém os fãs sem encostar nela.
+    const MIN_SEP_ANA_PX = 64;
+    // O marker da Ana é anchor:'bottom' + o wrapper tem translateY(-8px),
+    // então o CENTRO do anel de 60px fica ~38px acima do ponto-âncora
+    // projetado. Subimos a posição da Ana por isso pra repelir os
+    // usuários a partir do avatar dela, não do "pé" do pin.
+    const ANA_RISE_PX = 38;
     const SPREAD_ITERATIONS = 6;
 
     /**
@@ -838,9 +858,16 @@ export default function Globe() {
         py: number;
         x: number; // posição de trabalho (com offset/relaxação)
         y: number;
+        // `fixed` = nó-âncora (a Ana): nunca se desloca, mas empurra os
+        // outros. Markers fixos não recebem setOffset no fim.
+        fixed: boolean;
       }
       const nodes: SpreadNode[] = [];
-      const addNode = (marker: mapboxgl.Marker, base: [number, number]) => {
+      const addNode = (
+        marker: mapboxgl.Marker,
+        base: [number, number],
+        fixed = false,
+      ) => {
         const ll = marker.getLngLat();
         const p = map.project([ll.lng, ll.lat]);
         nodes.push({
@@ -849,8 +876,18 @@ export default function Globe() {
           py: p.y,
           x: p.x + base[0],
           y: p.y + base[1],
+          fixed,
         });
       };
+      // Ana Castela (pin de check-in) entra como nó ANCORADO: ela não se
+      // move, mas os avatares de usuário são empurrados pra não encostar
+      // nela. `base[1] = -ANA_RISE_PX` posiciona o nó no centro do anel
+      // do avatar (acima da âncora 'bottom'). Per product feedback:
+      // "inclua o avatar da Ana no jitter pra não interferir na
+      // sobreposição de elementos e usuários no mapa".
+      if (anaMarkerRef.current) {
+        addNode(anaMarkerRef.current, [0, -ANA_RISE_PX], true);
+      }
       // "Você" entra como nó normal (também não pode sobrepor outros);
       // base [0,0] pra ancorar na própria posição.
       if (userLocationMarker) addNode(userLocationMarker, [0, 0]);
@@ -864,10 +901,15 @@ export default function Globe() {
             for (let j = i + 1; j < nodes.length; j += 1) {
               const a = nodes[i];
               const b = nodes[j];
+              // Dois nós fixos nunca se empurram (só a Ana é fixa hoje,
+              // mas a guarda mantém o algoritmo correto se mudar).
+              if (a.fixed && b.fixed) continue;
+              // Par que envolve a Ana usa a separação maior.
+              const minSep = a.fixed || b.fixed ? MIN_SEP_ANA_PX : MIN_SEP_PX;
               let dx = b.x - a.x;
               let dy = b.y - a.y;
               let d = Math.hypot(dx, dy);
-              if (d >= MIN_SEP_PX) continue;
+              if (d >= minSep) continue;
               if (d < 0.001) {
                 // Posições idênticas — separa em direção determinística.
                 const ang = (((i * 73 + j * 149) % 360) * Math.PI) / 180;
@@ -875,24 +917,40 @@ export default function Globe() {
                 dy = Math.sin(ang);
                 d = 1;
               }
-              const push = (MIN_SEP_PX - d) / 2;
+              const overlap = minSep - d;
               const ux = dx / d;
               const uy = dy / d;
-              a.x -= ux * push;
-              a.y -= uy * push;
-              b.x += ux * push;
-              b.y += uy * push;
+              if (a.fixed) {
+                // Só `b` se move — toma o empurrão inteiro.
+                b.x += ux * overlap;
+                b.y += uy * overlap;
+              } else if (b.fixed) {
+                a.x -= ux * overlap;
+                a.y -= uy * overlap;
+              } else {
+                const push = overlap / 2;
+                a.x -= ux * push;
+                a.y -= uy * push;
+                b.x += ux * push;
+                b.y += uy * push;
+              }
             }
           }
         }
       }
 
       for (const n of nodes) {
+        if (n.fixed) continue; // a Ana mantém o offset default (não se move)
         n.marker.setOffset([n.x - n.px, n.y - n.py]);
       }
     };
 
-    map.on('zoom', applyMarkerSpread);
+    // NB: o de-clustering NÃO tem listener próprio de `zoom`. O listener
+    // de `move`/`moveend` (scheduleCollisionRefresh, mais abaixo) já é um
+    // superset de zoom e roda rAF-throttled (desktop) / deferido pro fim
+    // do gesto (mobile). Um `map.on('zoom', applyMarkerSpread)` separado
+    // rodava o O(N²) sem throttle a cada evento de zoom — redundante no
+    // desktop e furava a otimização térmica do mobile no pinch-zoom.
 
     // ── Compact badge mode ─────────────────────────────────────────
     // Per product feedback: os OUTROS usuários reais ficam SEMPRE
@@ -1607,7 +1665,7 @@ export default function Globe() {
               if (avatarHit) {
                 e.stopPropagation();
                 if (expandedUserId === u.id) {
-                  window.location.href = `/app/u/${u.id}`;
+                  routerRef.current.push(`/app/u/${u.id}`);
                 } else {
                   expandedUserId = u.id;
                   refreshCollisionState();
@@ -1617,7 +1675,7 @@ export default function Globe() {
               /* ── Click no NOME (visível só quando expandido) → perfil. */
               if (nameHit) {
                 e.stopPropagation();
-                window.location.href = `/app/u/${u.id}`;
+                routerRef.current.push(`/app/u/${u.id}`);
                 return;
               }
               /* ── Click no resto do badge expandido → toggle da paleta
@@ -1733,7 +1791,12 @@ export default function Globe() {
           anaMarkerRef.current.remove();
           anaMarkerRef.current = null;
         }
-        if (!payload) return;
+        if (!payload) {
+          // Ana saiu do mapa → re-relaxa pra os usuários que tinham
+          // sido empurrados voltarem pra perto da posição real deles.
+          scheduleCollisionRefresh();
+          return;
+        }
 
         const safeCity = payload.city.replace(/[<>&"']/g, '');
         const safeState = payload.state.replace(/[<>&"']/g, '');
@@ -1784,6 +1847,10 @@ export default function Globe() {
         })
           .setLngLat([payload.lng, payload.lat])
           .addTo(map);
+
+        // Ana entrou/mudou de lugar → re-relaxa o de-clustering pra
+        // empurrar os avatares de usuário pra longe dela na hora.
+        scheduleCollisionRefresh();
       });
 
       // ── Ana Castela upcoming shows ────────────────────────────
