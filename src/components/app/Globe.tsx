@@ -345,6 +345,13 @@ export default function Globe() {
      *  marker markup. */
     const likedUsers = new Set<string>();
 
+    /* Marker de usuário real "expandido" no momento. Per product
+     * feedback: os outros usuários ficam SEMPRE compactos (estilo
+     * mock, em todos os zooms) pra não sobreporem; a forma expandida
+     * (nome + música + artista + coração + barras de áudio) só aparece
+     * ao CLICAR no avatar. Apenas um expandido por vez. */
+    let expandedUserId: string | null = null;
+
     map.on('style.load', () => {
       map.setFog({
         color: 'rgba(0,0,0,0.9)',
@@ -817,70 +824,17 @@ export default function Globe() {
 
     map.on('zoom', reapplyMarkerOffsets);
 
-    // ── Compact badge mode — collision-driven ──────────────────────
-    // Every presence badge (Você + live users) starts as an expanded
-    // pill (avatar + name + song row). When two badges' EXPANDED
-    // screen-space bounding boxes would overlap, the lower-priority
-    // marker collapses to compact mode (28×28 avatar circle only,
-    // with the equalizer chip), so the user still sees the person is
-    // there but the surface stops being a wall of overlapping text.
-    //
-    // Priority order:
-    //   1. Você (own marker) always wins — it represents the user
-    //      themselves and should never collapse just because someone
-    //      else is nearby.
-    //   2. Among other users, the topmost-on-screen marker wins. The
-    //      "winner" is the marker rendered higher up — visually it
-    //      already reads as foreground in a top-down layout, so
-    //      leaving it expanded matches stacking intuition.
-    //
-    // Below COMPACT_ZOOM_THRESHOLD (globe-view), we skip detection
-    // and just force every badge compact. At that zoom every pair
-    // would collide anyway, and the cheaper unconditional path
-    // matters because globe-view is where the marker count is
-    // highest.
-    //
-    // Rectangle dimensions are conservative caps that match the CSS
-    // upper bounds — actual badges may be narrower (truncated song
-    // name) but the cap is what determines collision worst-case.
+    // ── Compact badge mode ─────────────────────────────────────────
+    // Per product feedback: os OUTROS usuários reais ficam SEMPRE
+    // compactos (avatar circular estilo mock) em TODOS os níveis de
+    // zoom — não expandem por hover nem por collision. Assim alguns
+    // poucos usuários já não se sobrepõem de forma desagradável. A
+    // forma expandida (nome + música + artista + coração + barras de
+    // áudio) só aparece ao CLICAR no avatar, controlada por
+    // `expandedUserId` (um expandido por vez). O marker "Você" segue a
+    // regra simples de zoom abaixo (singular, sem sobreposição):
+    // compacto na visão de globo, expandido quando dá zoom.
     const COMPACT_ZOOM_THRESHOLD = 4;
-    const COMPACT_SIZE_PX = 28;
-    const EXPANDED_WIDTH_PX = 200;
-    const EXPANDED_HEIGHT_PX = 56;
-    // The badge sits 6px ABOVE the marker anchor (`transform:
-    // translate(-50%, calc(-100% - 6px))` in the .userBadge /
-    // .liveUserBadge CSS rules).
-    const BADGE_ANCHOR_OFFSET_PX = 6;
-
-    interface ScreenRect { x1: number; y1: number; x2: number; y2: number }
-    const rectsOverlap = (a: ScreenRect, b: ScreenRect): boolean =>
-      !(a.x2 < b.x1 || a.x1 > b.x2 || a.y2 < b.y1 || a.y1 > b.y2);
-
-    /**
-     * Compute the screen-space bounding box for a marker rendered
-     * either compact (28×28) or expanded (200×56), accounting for
-     * the marker's own offset (the cluster-fan offset applied via
-     * `marker.setOffset` for de-overlap of clustered users at the
-     * same coords).
-     */
-    const getBadgeScreenRect = (
-      marker: mapboxgl.Marker,
-      compact: boolean,
-    ): ScreenRect => {
-      const ll = marker.getLngLat();
-      const offset = marker.getOffset();
-      const p = map.project([ll.lng, ll.lat]);
-      const cx = p.x + offset.x;
-      const cy = p.y + offset.y;
-      const w = compact ? COMPACT_SIZE_PX : EXPANDED_WIDTH_PX;
-      const h = compact ? COMPACT_SIZE_PX : EXPANDED_HEIGHT_PX;
-      return {
-        x1: cx - w / 2,
-        y1: cy - BADGE_ANCHOR_OFFSET_PX - h,
-        x2: cx + w / 2,
-        y2: cy - BADGE_ANCHOR_OFFSET_PX,
-      };
-    };
 
     /** Toggle the badgeCompact class on a marker's inner badge, AND
      *  mirror the state to a data-attr on the wrapper element. The
@@ -909,47 +863,42 @@ export default function Globe() {
       if (badge) badge.classList.toggle(styles.badgeCompact, compact);
     };
 
-    /** Walk every marker, decide compact-vs-expanded by greedy
-     *  collision check, and apply the resulting class. */
+    /** Fecha a paleta de reações + o mini-composer de um wrapper —
+     *  chamado quando um marker colapsa pra compacto pra não deixar
+     *  overlay órfão aberto. */
+    const closeMarkerOverlays = (root: HTMLElement) => {
+      root
+        .querySelector<HTMLElement>('.' + styles.reactionPalette)
+        ?.classList.remove(styles.reactionPaletteOpen);
+      root
+        .querySelector<HTMLElement>('.' + styles.quickComposer)
+        ?.classList.remove(styles.quickComposerOpen);
+    };
+
+    /** Aplica o estado compact/expanded a cada marker.
+     *
+     *  - Você (own): compacto na visão de globo (zoom ≤ threshold),
+     *    expandido quando dá zoom. Marker único, sem sobreposição.
+     *  - Outros usuários: SEMPRE compactos, exceto o que foi
+     *    click-expandido (`expandedUserId`). Sem collision check —
+     *    todos ficam no estilo mock em qualquer zoom. */
     const refreshCollisionState = () => {
       const zoom = map.getZoom();
 
-      interface Entry { marker: mapboxgl.Marker; isOwn: boolean }
-      const entries: Entry[] = [];
       if (userLocationMarker) {
-        entries.push({ marker: userLocationMarker, isOwn: true });
-      }
-      for (const [, m] of liveUserMarkers) {
-        entries.push({ marker: m, isOwn: false });
-      }
-
-      // Globe view: skip the O(N²) check, force-compact everything.
-      if (zoom <= COMPACT_ZOOM_THRESHOLD) {
-        for (const e of entries) setMarkerCompact(e.marker.getElement(), true);
-        return;
+        setMarkerCompact(
+          userLocationMarker.getElement(),
+          zoom <= COMPACT_ZOOM_THRESHOLD,
+        );
       }
 
-      // Sort: own marker first, then by ascending screen-Y (topmost
-      // marker wins overlaps below it).
-      entries.sort((a, b) => {
-        if (a.isOwn !== b.isOwn) return a.isOwn ? -1 : 1;
-        const ay = getBadgeScreenRect(a.marker, false).y1;
-        const by = getBadgeScreenRect(b.marker, false).y1;
-        return ay - by;
-      });
-
-      const expandedRects: ScreenRect[] = [];
-      for (const e of entries) {
-        const r = getBadgeScreenRect(e.marker, false);
-        let collides = false;
-        for (const other of expandedRects) {
-          if (rectsOverlap(r, other)) {
-            collides = true;
-            break;
-          }
-        }
-        setMarkerCompact(e.marker.getElement(), collides);
-        if (!collides) expandedRects.push(r);
+      for (const [id, m] of liveUserMarkers) {
+        const el = m.getElement();
+        const compact = id !== expandedUserId;
+        setMarkerCompact(el, compact);
+        // Ao colapsar, garante que paleta/composer daquele marker
+        // (ex.: o anteriormente expandido) fiquem fechados.
+        if (compact) closeMarkerOverlays(el);
       }
     };
 
@@ -1558,36 +1507,88 @@ export default function Globe() {
                 // pra não fechar a paleta ao focar o campo.
                 return;
               }
-              /* ── Click no avatar OU no nome → abre o perfil do
-               * usuário per spec "no box de usuários no mapa, ao
-               * clicar na imagem de avatar e no nome, deve abrir o
-               * Perfil do usuário". Click em qualquer outra área do
-               * badge (música, padding, etc) continua abrindo a
-               * paleta de reações (decisão original do task #265). */
+              /* ── Click no AVATAR → expande / colapsa o badge ──
+               * Per product feedback: usuários reais ficam compactos
+               * (estilo mock) por padrão; a forma expandida (nome +
+               * música + artista + coração + barras de áudio) só
+               * aparece ao clicar na imagem. Um expandido por vez —
+               * refreshCollisionState colapsa os demais e fecha as
+               * paletas órfãs. */
               const avatarHit = target.closest(`.${styles.liveUserAvatar}`);
               const nameHit   = target.closest(`.${styles.liveUserName}`);
-              if (avatarHit || nameHit) {
+              if (avatarHit) {
+                e.stopPropagation();
+                expandedUserId = expandedUserId === u.id ? null : u.id;
+                refreshCollisionState();
+                return;
+              }
+              /* ── Click no NOME (visível só quando expandido) → abre
+               * o perfil do usuário. Mantém o acesso ao perfil agora
+               * que o avatar virou o gatilho de expandir. */
+              if (nameHit) {
                 e.stopPropagation();
                 window.location.href = `/app/u/${u.id}`;
                 return;
               }
-              /* ── Click no resto do badge ──
-               * Per product feedback "ao invés de abrir o perfil
-               * completo, deve ser aberto o badge de emojis". Aqui
-               * a gente abre/fecha a paleta em vez do ProfilePanel.
-               * Fly-to é mantido pra dar contexto geográfico. */
+              /* ── Click no resto do badge expandido → toggle da paleta
+               * de reações. Fallback de touch (no desktop a paleta abre
+               * no hover do coração). Sem flyTo pra não mover a câmera
+               * num gesto de reação. */
               const palette = wrapper.querySelector<HTMLDivElement>(
                 `.${styles.reactionPalette}`,
               );
               const composer = wrapper.querySelector<HTMLDivElement>(
                 `.${styles.quickComposer}`,
               );
-              // Fecha composer se estava aberto.
               if (composer) composer.classList.remove(styles.quickComposerOpen);
               if (palette) {
                 palette.classList.toggle(styles.reactionPaletteOpen);
               }
-              map.flyTo({ center: [u.lng, u.lat], zoom: 11, duration: 1400 });
+            });
+
+            /* ── Hover no coração → paleta de emojis (desktop) ──
+             * Per product feedback: "ao passar o mouse por cima do
+             * coração, mostre as opções de interação via emojis que
+             * tem em usuários mocados". A paleta fica à direita do
+             * badge com um pequeno gap; o timer de 260ms ao sair faz
+             * a "ponte de hover" pra não fechar enquanto o cursor
+             * cruza o vão até a paleta. Touch não dispara hover —
+             * nesse caso o tap no corpo do badge (handler acima)
+             * abre a paleta. */
+            let paletteCloseTimer: ReturnType<typeof setTimeout> | null = null;
+            const inPaletteZone = (el: HTMLElement | null) =>
+              !!el &&
+              (!!el.closest?.(`.${styles.likeBtn}`) ||
+                !!el.closest?.(`.${styles.reactionPalette}`));
+            const showPalette = () => {
+              if (paletteCloseTimer) {
+                clearTimeout(paletteCloseTimer);
+                paletteCloseTimer = null;
+              }
+              // Não reabre a paleta por cima do mini-composer (💬 ativo).
+              const composer = wrapper.querySelector<HTMLDivElement>(
+                `.${styles.quickComposer}`,
+              );
+              if (composer?.classList.contains(styles.quickComposerOpen)) return;
+              wrapper
+                .querySelector<HTMLDivElement>(`.${styles.reactionPalette}`)
+                ?.classList.add(styles.reactionPaletteOpen);
+            };
+            const hidePaletteSoon = () => {
+              if (paletteCloseTimer) clearTimeout(paletteCloseTimer);
+              paletteCloseTimer = setTimeout(() => {
+                wrapper
+                  .querySelector<HTMLDivElement>(`.${styles.reactionPalette}`)
+                  ?.classList.remove(styles.reactionPaletteOpen);
+              }, 260);
+            };
+            wrapper.addEventListener('mouseover', (e) => {
+              if (inPaletteZone(e.target as HTMLElement)) showPalette();
+            });
+            wrapper.addEventListener('mouseout', (e) => {
+              if (inPaletteZone((e as MouseEvent).relatedTarget as HTMLElement))
+                return;
+              hidePaletteSoon();
             });
             // Keypress handler no input do composer pra Enter = enviar.
             wrapper.addEventListener('keydown', (e) => {

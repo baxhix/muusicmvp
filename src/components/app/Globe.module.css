@@ -426,47 +426,13 @@
     margin 220ms cubic-bezier(0.22, 1, 0.36, 1);
   margin: 0;
 }
-/* The expand-on-hover behaviour is GATED on `@media (hover: hover)`
- * so it only fires on devices with a real pointer (desktop with a
- * mouse). On touch devices (mobile / tablet), the browser
- * synthesizes a brief `:hover` on tap — combined with the compact
- * hover animation racing itself (max-width / max-height transition
- * smoothly while min-width / min-height / aspect-ratio snap
- * instantly), the result was a momentarily stretched, distorted
- * shape during the tap-to-open gesture. With the rules gated, the
- * pin stays as a clean circle on touch and the click handler
- * (independent of CSS) opens the profile normally. */
-@media (hover: hover) and (pointer: fine) {
-  .badgeCompact:hover {
-    gap: 7px;
-    padding: 6px 11px 6px 7px;
-    /* Hover undoes the lock so the badge expands to its real width. */
-    min-width: 0;
-    max-width: 260px;
-    min-height: 0;
-    max-height: 56px;
-    aspect-ratio: auto;
-    justify-content: flex-start;
-    /* Restore the dark pill envelope on hover. The resting state
-     * collapses to a bare circular avatar (no wrapper); hover
-     * grows the pill back so the username + song row are readable
-     * against a consistent dark background — same visual language
-     * as the non-compact `.userBadge`. These !important values
-     * cancel the `transparent` defaults declared on `.badgeCompact`
-     * above. */
-    background: rgba(0, 0, 0, 0.88) !important;
-    border-color: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(18px) !important;
-    -webkit-backdrop-filter: blur(18px) !important;
-  }
-  .badgeCompact:hover .userBadgeInfo,
-  .badgeCompact:hover .liveUserInfo {
-    max-width: 200px;
-    max-height: 56px;
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
+/* Expansão por HOVER removida — per product feedback a forma
+ * expandida (nome + música + artista + coração + barras de áudio)
+ * dos usuários reais só aparece ao CLICAR no avatar. O Globe.tsx
+ * alterna `expandedUserId` e tira a classe `.badgeCompact` do marker
+ * clicado pra mostrar o badge cheio; hover não expande mais. Assim o
+ * marker compacto fica como um avatar circular (estilo mock) em todos
+ * os níveis de zoom e poucos usuários já não se sobrepõem. */
 
 /* "Listening" indicator shown ONLY in compact mode (and only when a
    track is playing). A 14×14 SQUARE container with border-radius 50%
@@ -533,11 +499,6 @@
  */
 .badgeCompact .compactBarsBadge {
   display: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .badgeCompact:hover .compactBarsBadge {
-    display: inline-flex;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -929,12 +890,6 @@
 .badgeCompact:focus-within .likeBtn {
   opacity: 1;
   pointer-events: auto;
-}
-@media (hover: hover) and (pointer: fine) {
-  .badgeCompact:hover .likeBtn {
-    opacity: 1;
-    pointer-events: auto;
-  }
 }
 
 /* ── Reaction palette for REAL users ──
