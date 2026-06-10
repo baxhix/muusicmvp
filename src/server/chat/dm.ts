@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { conversationParticipants, conversations, users } from '../db/schema';
 import { recordActivity } from '../activities/queries';
+import { redactLocation } from '../users/serialize';
 
 /**
  * Get the existing 1-on-1 DM between two users, or create one.
@@ -177,13 +178,13 @@ export async function listSuperchatParticipants() {
   if (!id) return [];
   const result = await db.execute(sql`
     SELECT
-      u.id           AS id,
-      u.name         AS name,
-      u.email        AS email,
-      u.avatar_url   AS avatar_url,
-      u.city         AS city,
-      cp.joined_at   AS joined_at,
-      u.last_seen_at AS last_seen_at
+      u.id              AS id,
+      u.name            AS name,
+      u.avatar_url      AS avatar_url,
+      u.city            AS city,
+      u.location_consent AS location_consent,
+      cp.joined_at      AS joined_at,
+      u.last_seen_at    AS last_seen_at
     FROM conversation_participants cp
     JOIN users u ON u.id = cp.user_id
     WHERE cp.conversation_id = ${id}
@@ -192,9 +193,12 @@ export async function listSuperchatParticipants() {
   return result.rows.map((r) => ({
     id: r.id as string,
     name: r.name as string | null,
-    email: r.email as string,
     avatarUrl: r.avatar_url as string | null,
-    city: r.city as string | null,
+    // Cidade só pra quem consentiu compartilhar localização (LGPD).
+    ...redactLocation(
+      { city: r.city as string | null },
+      Boolean(r.location_consent),
+    ),
     joinedAt: (r.joined_at as Date).toISOString(),
     lastSeenAt: r.last_seen_at ? (r.last_seen_at as Date).toISOString() : null,
   }));

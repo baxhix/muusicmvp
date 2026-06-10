@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
 import { resetOnboarding } from '@/lib/onboarding';
+import { api } from '@/lib/api/client';
+import { track } from '@/lib/analytics';
 import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
 import styles from './TopBar.module.css';
 
@@ -254,7 +256,7 @@ interface TopBarProps {
 }
 
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, refresh } = useAuth();
   /* Per product feedback "as notificações vão para cima, ao lado
    * esquerdo da imagem do usuário no topo superior direito" —
    * trazemos o bell pro topo. Toggle do mesmo flag
@@ -305,8 +307,39 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
   // Estado dos toggles persistido em localStorage
   const [allowMessages, setAllowMessages] = useState(true);
-  const [showInMap, setShowInMap] = useState(false);
-  const [showCity, setShowCity] = useState(true);
+
+  /* Consentimento de localização (LGPD) — real, persistido em
+   * users.location_consent. Espelha user.locationConsent com update
+   * otimista; o toggle fica desabilitado pra menores (que nunca
+   * compartilham localização). Revogar zera as coords server-side e
+   * tira o usuário do mapa na hora. */
+  const isMinor = Boolean(user?.isMinor);
+  const [locationConsent, setLocationConsent] = useState(
+    Boolean(user?.locationConsent),
+  );
+  const [consentBusy, setConsentBusy] = useState(false);
+  useEffect(() => {
+    setLocationConsent(Boolean(user?.locationConsent));
+  }, [user?.locationConsent]);
+
+  async function handleLocationConsentToggle(next: boolean) {
+    if (consentBusy || isMinor) return;
+    setLocationConsent(next); // otimista
+    setConsentBusy(true);
+    try {
+      await api.patch('/api/me/location-consent', { consent: next });
+      if (next) {
+        track('location_consent_granted', { surface: 'settings' });
+      } else {
+        track('location_consent_revoked', {});
+      }
+      await refresh();
+    } catch {
+      setLocationConsent(!next); // rollback
+    } finally {
+      setConsentBusy(false);
+    }
+  }
 
   // Senha (sem submissão real — é um placeholder UI)
   const [pwdCurrent, setPwdCurrent] = useState('');
@@ -871,26 +904,23 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
                 {section === 'map' && (
                   <SubScreenWrap title="Mapa" onBack={goBack}>
-                    <SettingRow
-                      title="Aparecer no Mapa"
-                      description="Mostra seu perfil no mapa para outros usuários quando a localização está ativa."
-                    >
-                      <Toggle
-                        checked={showInMap}
-                        onChange={setShowInMap}
-                        ariaLabel="Aparecer no Mapa"
-                      />
-                    </SettingRow>
-                    <SettingRow
-                      title="Mostrar Cidade"
-                      description="Mostra a cidade que você está ao permitir a localização."
-                    >
-                      <Toggle
-                        checked={showCity}
-                        onChange={setShowCity}
-                        ariaLabel="Mostrar Cidade"
-                      />
-                    </SettingRow>
+                    {isMinor ? (
+                      <p className={styles.subBody}>
+                        O compartilhamento de localização não está disponível
+                        para menores de 18 anos.
+                      </p>
+                    ) : (
+                      <SettingRow
+                        title="Compartilhar localização"
+                        description="Mostra seu perfil no mapa para outros fãs (localização aproximada — nunca exata). Desligar remove você do mapa e apaga sua localização."
+                      >
+                        <Toggle
+                          checked={locationConsent}
+                          onChange={handleLocationConsentToggle}
+                          ariaLabel="Compartilhar localização"
+                        />
+                      </SettingRow>
+                    )}
 
                     <h4 className={styles.subSectionTitle}>Importante</h4>
                     <p className={styles.subBody}>

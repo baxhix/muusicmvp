@@ -50,6 +50,14 @@ export const users = pgTable('users', {
    *  pode aplicar restrições de conteúdo / consentimento
    *  parental baseado nessa flag. */
   isMinor: boolean('is_minor').notNull().default(false),
+  /** Consentimento LGPD pra DERIVAR, ARMAZENAR e COMPARTILHAR a
+   *  localização aproximada (city-level, jittered ~4km — nunca GPS
+   *  exato). Sem este flag = true: o auto-sync não roda, o POST
+   *  /api/me/location rejeita, e o usuário não aparece no mapa pra
+   *  outros. Default false (opt-in afirmativo); a migration 0050
+   *  faz grandfather (true) das contas que já tinham lat preenchido.
+   *  Forçado false pra menores. Revogar zera lat/lng/city/country. */
+  locationConsent: boolean('location_consent').notNull().default(false),
   /** Aceite de termos + privacidade — timestamp ISO. Null se
    *  ainda não aceitou (contas pré-onboarding-flow). */
   termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),

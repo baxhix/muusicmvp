@@ -41,6 +41,11 @@ export async function GET() {
       // Flag pra que o frontend (verify page) decida entre
       // /app e /auth/onboarding/birth-date.
       isOnboarded: user.isOnboarded,
+      // Estado de consentimento de localização + flag de menor —
+      // dirigem o toggle nas Configurações, o guard do auto-sync e o
+      // CTA do LocateButton.
+      locationConsent: user.locationConsent,
+      isMinor: user.isMinor,
     },
   });
 }

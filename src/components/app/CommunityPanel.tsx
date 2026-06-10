@@ -1234,7 +1234,6 @@ function TopicDetailView({
         author: {
           id: user?.id ?? null,
           name: user?.name ?? user?.email?.split('@')[0] ?? 'Você',
-          email: user?.email ?? null,
           avatarUrl: user?.avatarUrl ?? null,
         },
         reactions: { count: 0, mine: false },
@@ -1766,7 +1765,7 @@ function MembersModal({
                   <span className={styles.memberAvatarPlaceholder} aria-hidden="true" />
                 )}
                 <span className={styles.memberName}>
-                  {m.name ?? m.email.split('@')[0]}
+                  {m.name ?? 'Fã'}
                   {m.isCreator && <span className={styles.memberCreatorTag}> · criador</span>}
                 </span>
               </li>

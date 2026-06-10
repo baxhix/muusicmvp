@@ -30,6 +30,8 @@ const bodySchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   age: z.number().int().min(0).max(150).optional(),
   isMinor: z.boolean().optional(),
+  // Consentimento LGPD de localização escolhido no passo Perfil.
+  locationConsent: z.boolean().optional(),
   interests: z.array(z.string().max(40)).max(50).optional(),
   termsAcceptedAt: z.string().datetime().optional(),
 });
@@ -54,6 +56,11 @@ export async function POST(req: Request) {
   if (parsed.birthDate) patch.birthDate = parsed.birthDate;
   if (typeof parsed.age === 'number') patch.age = parsed.age;
   if (typeof parsed.isMinor === 'boolean') patch.isMinor = parsed.isMinor;
+  // Guard server-side: menor NUNCA consente localização, mesmo que o
+  // cliente envie true (o toggle já fica escondido na UI).
+  if (typeof parsed.locationConsent === 'boolean') {
+    patch.locationConsent = parsed.isMinor ? false : parsed.locationConsent;
+  }
   if (parsed.interests) patch.interests = parsed.interests;
   if (parsed.termsAcceptedAt) {
     patch.termsAcceptedAt = new Date(parsed.termsAcceptedAt);

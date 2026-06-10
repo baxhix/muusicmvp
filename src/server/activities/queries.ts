@@ -2,6 +2,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { fanpointRules, userActivities } from '../db/schema';
 import { logger } from '../log';
+import { redactLocation } from '../users/serialize';
 
 export type ActivityKind =
   | 'stream'
@@ -159,8 +160,8 @@ export function findCrossedMilestones(prev: number, current: number): number[] {
 export interface RankingRow {
   userId: string;
   name: string | null;
-  email: string;
   avatarUrl: string | null;
+  /** Localização aproximada — null quando o usuário não consentiu (LGPD). */
   city: string | null;
   country: string | null;
   streams: number;
@@ -179,19 +180,19 @@ export interface RankingRow {
 export async function getRanking(limit = 100): Promise<RankingRow[]> {
   const result = await db.execute(sql`
     SELECT
-      u.id           AS user_id,
-      u.name         AS name,
-      u.email        AS email,
-      u.avatar_url   AS avatar_url,
-      u.city         AS city,
-      u.country      AS country,
+      u.id              AS user_id,
+      u.name            AS name,
+      u.avatar_url      AS avatar_url,
+      u.city            AS city,
+      u.country         AS country,
+      u.location_consent AS location_consent,
       COUNT(*) FILTER (WHERE a.kind = 'stream')::int       AS streams,
       COUNT(*) FILTER (WHERE a.kind = 'login')::int        AS logins,
       COUNT(*) FILTER (WHERE a.kind = 'chat_started')::int AS chats_started,
       COALESCE(SUM(a.points), 0)::int                      AS points
     FROM users u
     LEFT JOIN user_activities a ON a.user_id = u.id
-    GROUP BY u.id, u.name, u.email, u.avatar_url, u.city, u.country
+    GROUP BY u.id, u.name, u.avatar_url, u.city, u.country, u.location_consent
     ORDER BY points DESC, streams DESC, u.created_at ASC
     LIMIT ${limit}
   `);
@@ -199,10 +200,15 @@ export async function getRanking(limit = 100): Promise<RankingRow[]> {
   return result.rows.map((r) => ({
     userId: r.user_id as string,
     name: r.name as string | null,
-    email: r.email as string,
     avatarUrl: r.avatar_url as string | null,
-    city: r.city as string | null,
-    country: r.country as string | null,
+    // Redação por consentimento: city/country só pra quem consentiu.
+    ...redactLocation(
+      {
+        city: r.city as string | null,
+        country: r.country as string | null,
+      },
+      Boolean(r.location_consent),
+    ),
     streams: r.streams as number,
     logins: r.logins as number,
     chatsStarted: r.chats_started as number,

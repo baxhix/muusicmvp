@@ -36,6 +36,10 @@ export interface OnboardingState {
   termsAcceptedAt?: string;
   displayName?: string;
   interests?: string[];
+  /** Consentimento LGPD de localização escolhido no passo Perfil
+   *  (default OFF; forçado false pra menores). Enviado no finalize
+   *  /api/auth/onboarding. */
+  locationConsent?: boolean;
   /** ms — pra invalidar progresso > 7 dias. */
   updatedAt: number;
 }

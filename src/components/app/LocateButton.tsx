@@ -3,6 +3,7 @@
 import { useLocationSync } from '@/hooks/useLocationSync';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { globeStore } from '@/lib/globeStore';
+import { track } from '@/lib/analytics';
 import styles from './LocateButton.module.css';
 
 /**
@@ -34,9 +35,19 @@ export default function LocateButton() {
     if (hasCoords && user) {
       globeStore.flyTo([user.lng as number, user.lat as number], 11);
     } else {
-      request();
+      // O tap em "Compartilhar localização" é o ato afirmativo de
+      // consentimento (LGPD): passa grant:true, que o backend usa pra
+      // gravar coords E ligar location_consent no mesmo write. Só
+      // registramos o evento quando é a transição de fato (ainda OFF).
+      if (user && !user.locationConsent) {
+        track('location_consent_granted', { surface: 'locate_button' });
+      }
+      request({ grant: true });
     }
   };
+
+  // Menores nunca compartilham localização (LGPD) — o CTA nem aparece.
+  if (user?.isMinor) return null;
 
   const title =
     status === 'denied'

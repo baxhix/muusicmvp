@@ -459,7 +459,6 @@ export async function leaveCommunity(args: {
 export interface ApiCommunityMember {
   userId: string;
   name: string | null;
-  email: string;
   avatarUrl: string | null;
   joinedAt: string;
   isCreator: boolean;
@@ -483,7 +482,6 @@ export async function listMembers(args: {
     .select({
       userId: users.id,
       name: users.name,
-      email: users.email,
       avatarUrl: users.avatarUrl,
       joinedAt: communityMembers.joinedAt,
     })
@@ -496,7 +494,6 @@ export async function listMembers(args: {
   const items: ApiCommunityMember[] = rows.map((r) => ({
     userId: r.userId,
     name: r.name,
-    email: r.email,
     avatarUrl: r.avatarUrl,
     joinedAt: r.joinedAt.toISOString(),
     isCreator: r.userId === row.creatorId,
@@ -538,7 +535,6 @@ export interface ApiCommunityTopic {
   body: string | null;
   authorId: string | null;
   authorName: string | null;
-  authorEmail: string | null;
   authorAvatar: string | null;
   commentCount: number;
   createdAt: string;
@@ -585,7 +581,6 @@ export async function listTopics(args: {
       body: communityTopics.body,
       authorId: communityTopics.authorId,
       authorName: users.name,
-      authorEmail: users.email,
       authorAvatar: users.avatarUrl,
       commentCount: communityTopics.commentCount,
       createdAt: communityTopics.createdAt,
@@ -604,7 +599,6 @@ export async function listTopics(args: {
     body: r.body,
     authorId: r.authorId,
     authorName: r.authorName,
-    authorEmail: r.authorEmail,
     authorAvatar: r.authorAvatar,
     commentCount: r.commentCount,
     createdAt: r.createdAt.toISOString(),
@@ -683,7 +677,6 @@ export async function getTopic(args: {
       body: communityTopics.body,
       authorId: communityTopics.authorId,
       authorName: users.name,
-      authorEmail: users.email,
       authorAvatar: users.avatarUrl,
       commentCount: communityTopics.commentCount,
       createdAt: communityTopics.createdAt,
@@ -702,7 +695,6 @@ export async function getTopic(args: {
     body: row.body,
     authorId: row.authorId,
     authorName: row.authorName,
-    authorEmail: row.authorEmail,
     authorAvatar: row.authorAvatar,
     commentCount: row.commentCount,
     createdAt: row.createdAt.toISOString(),
@@ -722,7 +714,6 @@ export interface ApiCommunityTopicComment {
   author: {
     id: string | null;
     name: string | null;
-    email: string | null;
     avatarUrl: string | null;
   };
   /** Aggregated ❤️ reactions. `mine` reflects the viewer's state. */
@@ -751,7 +742,6 @@ export async function listTopicComments(args: {
       deletedAt: communityTopicComments.deletedAt,
       authorId: communityTopicComments.authorId,
       authorName: users.name,
-      authorEmail: users.email,
       authorAvatar: users.avatarUrl,
     })
     .from(communityTopicComments)
@@ -777,7 +767,6 @@ export async function listTopicComments(args: {
     author: {
       id: r.authorId,
       name: r.authorName,
-      email: r.authorEmail,
       avatarUrl: r.authorAvatar,
     },
     reactions: reactionAgg.get(r.id) ?? { count: 0, mine: false },

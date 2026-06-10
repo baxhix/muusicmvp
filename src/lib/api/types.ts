@@ -20,6 +20,14 @@ export interface ApiUser {
    *  profile / interests. Verify page usa pra decidir entre
    *  /app (returning) e /auth/onboarding/birth-date (novo). */
   isOnboarded: boolean;
+  /** Consentimento LGPD de localização. Quando false, o auto-sync não
+   *  roda, o usuário não aparece no mapa e o toggle nas Configurações
+   *  fica desligado. Granted via LocateButton / onboarding / settings. */
+  locationConsent: boolean;
+  /** Menor de 18 (definido no onboarding pela data de nascimento).
+   *  Força o consentimento de localização OFF e esconde/desabilita o
+   *  toggle, no cliente e no servidor. */
+  isMinor: boolean;
 }
 
 export interface ApiOnlineUser {
@@ -36,8 +44,9 @@ export interface ApiOnlineUser {
 export interface ApiSearchUser {
   id: string;
   name: string | null;
-  email: string;
   avatarUrl: string | null;
+  /** Cidade aproximada — só presente quando o usuário consentiu
+   *  compartilhar localização; null caso contrário (LGPD). */
   city: string | null;
 }
 
@@ -201,8 +210,8 @@ export interface ApiSuperchatResponse {
 export interface ApiSuperchatParticipant {
   id: string;
   name: string | null;
-  email: string;
   avatarUrl: string | null;
+  /** Cidade aproximada — null quando o usuário não consentiu (LGPD). */
   city: string | null;
   joinedAt: string;
   lastSeenAt: string | null;
@@ -277,8 +286,8 @@ export interface ApiHistoryItem {
 export interface ApiRankingRow {
   userId: string;
   name: string | null;
-  email: string;
   avatarUrl: string | null;
+  /** Localização aproximada — null quando o usuário não consentiu (LGPD). */
   city: string | null;
   country: string | null;
   streams: number;
@@ -451,7 +460,6 @@ export interface ApiCommunityDetail extends ApiCommunityCard {
 export interface ApiCommunityMember {
   userId: string;
   name: string | null;
-  email: string;
   avatarUrl: string | null;
   joinedAt: string;
   isCreator: boolean;
@@ -464,7 +472,6 @@ export interface ApiCommunityTopic {
   body: string | null;
   authorId: string | null;
   authorName: string | null;
-  authorEmail: string | null;
   authorAvatar: string | null;
   commentCount: number;
   createdAt: string;
@@ -481,7 +488,6 @@ export interface ApiCommunityTopicComment {
   author: {
     id: string | null;
     name: string | null;
-    email: string | null;
     avatarUrl: string | null;
   };
   /** Aggregated ❤️ reactions. `mine` reflects the viewer's state. */

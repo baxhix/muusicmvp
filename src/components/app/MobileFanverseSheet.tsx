@@ -508,7 +508,7 @@ function MobileRankingList() {
           {visible.slice(3).map((r, idx) => {
             const rank = idx + 4;
             const isMe = r.userId === user?.id;
-            const name = r.name?.trim() || r.email.split('@')[0];
+            const name = r.name?.trim() || 'Fã';
             const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
             const isOnline = isMe || onlineIds.has(r.userId);
             return (
@@ -605,7 +605,7 @@ function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
     <div className={sheetStyles.podium}>
       {display.map(({ rank, row }) => {
         const isMe = row.userId === meId;
-        const name = row.name?.trim() || row.email.split('@')[0];
+        const name = row.name?.trim() || 'Fã';
         const avatar = row.avatarUrl ?? '/avatar-placeholder.svg';
         const isOnline = isMe || onlineIds.has(row.userId);
         const cardClass =

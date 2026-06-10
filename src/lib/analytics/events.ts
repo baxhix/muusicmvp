@@ -56,6 +56,7 @@ export type EventCategory =
   | 'social'
   | 'notification'
   | 'engagement'
+  | 'privacy'
   | 'admin'
   | 'monetization';
 
@@ -221,6 +222,19 @@ export interface EventPayloadMap {
   time_on_screen: { screen_name: string; seconds: number };
   button_clicked: { id: string; pathname: string };
 
+  // ── PRIVACY / LGPD ────────────────────────────────────────────
+  /** Usuário concedeu consentimento de compartilhamento de
+   *  localização aproximada. `surface` distingue onde o opt-in
+   *  aconteceu (passo de onboarding, CTA do LocateButton, toggle
+   *  das Configurações). */
+  location_consent_granted: { surface: 'onboarding' | 'locate_button' | 'settings' };
+  /** Usuário recusou (deixou OFF) o consentimento no onboarding —
+   *  sinal afirmativo de declínio pra funil de privacidade. */
+  location_consent_denied:  { surface: 'onboarding' };
+  /** Usuário revogou o consentimento nas Configurações; o backend
+   *  zera lat/lng/city/country e o some do mapa na hora. */
+  location_consent_revoked: Record<string, never>;
+
   // ── ADMIN ─────────────────────────────────────────────────────
   admin_feed_post_created:   { post_id: string; type: string; action: 'publish' | 'schedule' | 'draft' };
   admin_feed_post_updated:   { post_id: string; action: 'publish' | 'schedule' | 'draft' };
@@ -361,6 +375,11 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   scroll_depth:   { category: 'engagement', importance: 'low', description: 'Marco de profundidade de scroll atingido (25/50/75/100).', trigger: 'AnalyticsProvider dispara uma vez por marco por pathname.' },
   time_on_screen: { category: 'engagement', importance: 'low', description: 'Tempo gasto em uma tela lógica.', trigger: 'AnalyticsProvider dispara ao trocar de screen.' },
   button_clicked: { category: 'engagement', importance: 'low', description: 'Clique em qualquer elemento com data-analytics-id.', trigger: 'AnalyticsProvider escuta clicks no document.' },
+
+  // Privacy / LGPD
+  location_consent_granted: { category: 'privacy', importance: 'high', description: 'Usuário consentiu em compartilhar localização aproximada.', trigger: 'Toggle ON no onboarding/Configurações ou tap no LocateButton.', ga4: true },
+  location_consent_denied:  { category: 'privacy', importance: 'high', description: 'Usuário deixou o consentimento de localização OFF no onboarding.', trigger: 'Submit do passo Perfil com o toggle desligado.' },
+  location_consent_revoked: { category: 'privacy', importance: 'high', description: 'Usuário revogou o consentimento; backend zera localização.', trigger: 'Toggle OFF nas Configurações.', ga4: true },
 
   // Admin
   admin_feed_post_created:   { category: 'admin', importance: 'high', description: 'Post criado pelo admin (/admin/feed).', trigger: 'POST /api/admin/feed retorna 201.' },

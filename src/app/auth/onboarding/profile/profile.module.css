@@ -1,0 +1,42 @@
+/* Toggle de consentimento de localização (LGPD) no passo Perfil.
+ * Espelha o termsRow/checkbox do birth-date pra consistência visual. */
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 4px 4px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  user-select: none;
+}
+.consentRow a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.consentRow a:hover {
+  color: #fff;
+}
+
+.checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  accent-color: #ff00b4;
+  cursor: pointer;
+}
+
+/* Nota exibida no lugar do toggle pra menores de 18. */
+.minorNote {
+  padding: 14px 4px 4px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+}

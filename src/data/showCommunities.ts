@@ -187,7 +187,6 @@ function topic(
     body: args.body,
     authorId: STAFF_PREVIEW.id,
     authorName: args.authorName ?? STAFF_PREVIEW.name,
-    authorEmail: null,
     authorAvatar: STAFF_AVATAR,
     commentCount: args.commentCount,
     createdAt: args.createdAt,
@@ -465,7 +464,6 @@ function buildComments(topicId: string): ApiCommunityTopicComment[] {
       author: {
         id: 'm1',
         name: 'Marina',
-        email: null,
         avatarUrl: 'https://i.pravatar.cc/80?img=44',
       },
       reactions: { count: 7, mine: false },
@@ -481,7 +479,6 @@ function buildComments(topicId: string): ApiCommunityTopicComment[] {
       author: {
         id: 'm3',
         name: 'Camila',
-        email: null,
         avatarUrl: 'https://i.pravatar.cc/80?img=32',
       },
       reactions: { count: 12, mine: false },
@@ -497,7 +494,6 @@ function buildComments(topicId: string): ApiCommunityTopicComment[] {
       author: {
         id: 'm5',
         name: 'Bia',
-        email: null,
         avatarUrl: 'https://i.pravatar.cc/80?img=23',
       },
       reactions: { count: 4, mine: false },

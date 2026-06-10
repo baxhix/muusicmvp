@@ -1016,7 +1016,7 @@ export function RankingTabContent() {
             const rank = idx + 1;
             const isMe = r.userId === user?.id;
             const isTop3 = rank <= 3;
-            const name = r.name?.trim() || r.email.split('@')[0];
+            const name = r.name?.trim() || 'Fã';
             const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
             /* Online = presença ao vivo (lista do useLiveUsers).
              * O "Você" sempre conta como online — o backend só

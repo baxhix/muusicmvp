@@ -50,7 +50,7 @@ function trendFor(userId: string): Trend {
 }
 
 function displayName(r: ApiRankingRow): string {
-  return r.name?.trim() || r.email.split('@')[0];
+  return r.name?.trim() || 'Fã';
 }
 
 function avatarSrc(r: ApiRankingRow): string {
@@ -320,7 +320,6 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
       name: displayName({
         userId: authUser.id,
         name: authUser.name,
-        email: authUser.email,
         avatarUrl: authUser.avatarUrl,
         city: authUser.city,
         country: authUser.country,

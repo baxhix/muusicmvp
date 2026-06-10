@@ -19,7 +19,7 @@ function isOnline(p: ApiSuperchatParticipant): boolean {
 }
 
 function displayName(p: ApiSuperchatParticipant): string {
-  return p.name?.trim() || p.email.split('@')[0];
+  return p.name?.trim() || 'Fã';
 }
 
 function avatarSrc(p: ApiSuperchatParticipant): string {

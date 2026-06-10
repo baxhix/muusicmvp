@@ -479,7 +479,6 @@ function FanpointsTab() {
  * ──────────────────────────────────────────────────────────── */
 interface RankingEntry {
   userId: string;
-  email: string;
   name?: string | null;
   avatarUrl?: string | null;
   points: number;
@@ -526,7 +525,7 @@ function RankingTab({
             {top.map((r, idx) => {
               const rank = idx + 1;
               const isMe = r.userId === user?.id;
-              const name = r.name?.trim() || r.email.split('@')[0];
+              const name = r.name?.trim() || 'Fã';
               const avatar = r.avatarUrl ?? '/avatar-placeholder.svg';
               return (
                 <li

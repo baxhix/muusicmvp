@@ -1,6 +1,7 @@
-import { and, desc, eq, gt, ilike, isNotNull, ne, or } from 'drizzle-orm';
+import { and, desc, eq, gt, ilike, isNotNull, ne } from 'drizzle-orm';
 import { db } from '../db';
 import { nowPlaying, tracks, users } from '../db/schema';
+import { redactLocation } from './serialize';
 
 const ONLINE_WINDOW_MS = 60_000; // last_seen_at within 60s = online
 
@@ -33,10 +34,14 @@ export async function listOnlineUsers(excludeUserId: string, limit = 200) {
       and(
         ne(users.id, excludeUserId),
         gt(users.lastSeenAt, since),
-        // Only surface users who have actually shared their location. The
-        // map markers need coords, and clients filter out null-coord rows
-        // anyway — filtering server-side keeps payloads tight and
-        // eliminates one source of asymmetric visibility.
+        // Só superfície usuários que CONSENTIRAM compartilhar localização
+        // (LGPD). A revogação zera lat/lng, então o filtro de coords abaixo
+        // já removeria a row — mas atrelar explicitamente ao flag de
+        // consentimento torna "aparecer no mapa" provavelmente correto
+        // mesmo que o null-out de coords mude no futuro.
+        eq(users.locationConsent, true),
+        // Map markers need coords; clients filter out null-coord rows
+        // anyway — filtering server-side keeps payloads tight.
         isNotNull(users.lat),
         isNotNull(users.lng),
       ),
@@ -62,7 +67,14 @@ export async function listOnlineUsers(excludeUserId: string, limit = 200) {
   }));
 }
 
-/** Search users by name or email prefix (for starting DMs). */
+/**
+ * Search users by NAME prefix (for starting DMs).
+ *
+ * Não busca mais por email: o match por prefixo de email era um oráculo
+ * de enumeração (revelava se um endereço existe) e a coluna `email` saiu
+ * do payload (LGPD). A `city` só volta pra quem consentiu compartilhar
+ * localização.
+ */
 export async function searchUsers(
   query: string,
   excludeUserId: string,
@@ -73,23 +85,22 @@ export async function searchUsers(
 
   const like = `${q}%`;
 
-  return await db
+  const rows = await db
     .select({
       id: users.id,
       name: users.name,
-      email: users.email,
       avatarUrl: users.avatarUrl,
       city: users.city,
+      locationConsent: users.locationConsent,
     })
     .from(users)
-    .where(
-      and(
-        ne(users.id, excludeUserId),
-        or(ilike(users.name, like), ilike(users.email, like)),
-      ),
-    )
+    .where(and(ne(users.id, excludeUserId), ilike(users.name, like)))
     .orderBy(users.name)
     .limit(limit);
+
+  return rows.map(({ locationConsent, ...rest }) =>
+    redactLocation(rest, locationConsent),
+  );
 }
 
 /** Update the current user's profile fields (name, avatarUrl). */

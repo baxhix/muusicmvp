@@ -16,7 +16,7 @@ const STORAGE_KEY = 'muusic:location:askedAt';
 export function useLocationSync(): {
   status: 'idle' | 'requesting' | 'denied' | 'unavailable' | 'synced' | 'error';
   location: ApiLocation | null;
-  request: () => void;
+  request: (opts?: { grant?: boolean }) => void;
 } {
   const { user, refresh } = useAuth();
   const [status, setStatus] = useState<
@@ -24,42 +24,53 @@ export function useLocationSync(): {
   >('idle');
   const [location, setLocation] = useState<ApiLocation | null>(null);
 
-  const request = useCallback(() => {
-    if (!user) return;
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setStatus('unavailable');
-      return;
-    }
+  // `grant: true` é passado pelo CTA manual (LocateButton) — o tap concede
+  // o consentimento LGPD junto com a captura. O auto-sync chama sem grant
+  // (e só roda pra quem JÁ consentiu — ver o guard no effect abaixo).
+  const request = useCallback(
+    (opts?: { grant?: boolean }) => {
+      if (!user) return;
+      if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+        setStatus('unavailable');
+        return;
+      }
 
-    setStatus('requesting');
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await api.post<ApiLocation>('/api/me/location', {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
-          setLocation(res);
-          setStatus('synced');
-          // Refresh the auth user so .city / .lat / .lng come along.
-          await refresh();
-        } catch (err) {
-          console.error('location sync failed:', err);
-          setStatus(err instanceof ApiError && err.status === 422 ? 'unavailable' : 'error');
-        }
-      },
-      (err) => {
-        console.warn('geolocation error:', err);
-        setStatus(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable');
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
-    );
-    try {
-      localStorage.setItem(STORAGE_KEY, Date.now().toString());
-    } catch {
-      // localStorage may be blocked (private mode); ignore.
-    }
-  }, [user, refresh]);
+      setStatus('requesting');
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await api.post<ApiLocation>('/api/me/location', {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              ...(opts?.grant ? { grantConsent: true } : {}),
+            });
+            setLocation(res);
+            setStatus('synced');
+            // Refresh the auth user so .city / .lat / .lng come along.
+            await refresh();
+          } catch (err) {
+            console.error('location sync failed:', err);
+            setStatus(
+              err instanceof ApiError && err.status === 422
+                ? 'unavailable'
+                : 'error',
+            );
+          }
+        },
+        (err) => {
+          console.warn('geolocation error:', err);
+          setStatus(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable');
+        },
+        { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
+      );
+      try {
+        localStorage.setItem(STORAGE_KEY, Date.now().toString());
+      } catch {
+        // localStorage may be blocked (private mode); ignore.
+      }
+    },
+    [user, refresh],
+  );
 
   // First-login auto-prompt: only if user.city is null (never set) and we
   // haven't asked recently (within 24h). Avoids re-prompting on every page.
@@ -76,6 +87,12 @@ export function useLocationSync(): {
       setStatus('synced');
       return;
     }
+
+    // LGPD: o prompt do SO só dispara automaticamente pra quem JÁ consentiu
+    // compartilhar localização (ex.: concedeu no onboarding ou nas
+    // Configurações). Quem não consentiu precisa do CTA manual (LocateButton),
+    // que passa grant:true. Sem este guard o app pediria geolocation sem opt-in.
+    if (!user.locationConsent) return;
 
     let lastAsked = 0;
     try {

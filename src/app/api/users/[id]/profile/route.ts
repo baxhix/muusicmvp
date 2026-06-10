@@ -49,6 +49,7 @@ export async function GET(
       city: users.city,
       country: users.country,
       countryCode: users.countryCode,
+      locationConsent: users.locationConsent,
       avatarUrl: users.avatarUrl,
       lastSeenAt: users.lastSeenAt,
     })
@@ -87,6 +88,8 @@ export async function GET(
   const onlineSince = Date.now() - ONLINE_WINDOW_MS;
   const lastSeenMs = u.lastSeenAt ? new Date(u.lastSeenAt).getTime() : 0;
   const isSelf = u.id === caller.id;
+  // Localização aproximada só pra self ou pra quem consentiu compartilhar (LGPD).
+  const showLocation = isSelf || u.locationConsent;
 
   return NextResponse.json({
     user: {
@@ -94,9 +97,9 @@ export async function GET(
       name: u.name,
       // Hide email on cross-user lookups; only return it for self.
       email: isSelf ? u.email : null,
-      city: u.city,
-      country: u.country,
-      countryCode: u.countryCode,
+      city: showLocation ? u.city : null,
+      country: showLocation ? u.country : null,
+      countryCode: showLocation ? u.countryCode : null,
       avatarUrl: absoluteAvatar(u.avatarUrl),
       fanpoints: agg.fanpoints ?? 0,
       streams: agg.streams ?? 0,

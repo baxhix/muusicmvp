@@ -134,7 +134,10 @@ export default function UserPicker(props: Props) {
         id: u.id,
         name: u.name,
         avatarUrl: u.avatarUrl,
-        subtitle: u.email,
+        // Antes mostrava o email cru (vazamento de PII). Agora a cidade
+        // aproximada — só presente pra quem consentiu compartilhar
+        // localização; vazia caso contrário (LGPD).
+        subtitle: u.city ?? '',
       }));
     }
     if (isGroupMode && props.recentConversations) {
