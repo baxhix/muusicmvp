@@ -50,8 +50,6 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
    * Desligar zera a localização e tira o usuário do mapa pros outros. */
   const [appearOnMap, setAppearOnMap] = useState(false);
   const [consentBusy, setConsentBusy] = useState(false);
-  const [allowInteractions, setAllowInteractions] = useState(true);
-  const [showStreams, setShowStreams] = useState(true);
 
   // Loading flags & feedback
   const [avatarBusy, setAvatarBusy] = useState(false);
@@ -353,8 +351,9 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
           </div>
 
           {/* "Aparecer no Mapa" = consentimento de localização LGPD
-              (real, persistido). Os demais toggles abaixo ainda são
-              mock até existir backend de preferências. */}
+              (real, persistido). Único toggle de visibilidade — os mocks
+              "Permitir Interações" e "Total de Streams" foram removidos
+              por não terem backend de preferências. */}
           <div className={styles.toggleRow}>
             <div className={styles.toggleRowTop}>
               <span className={styles.toggleTitle}>Aparecer no Mapa</span>
@@ -370,20 +369,6 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
                 ? 'Indisponível para menores de 18 anos.'
                 : 'Mostra você no mapa pros outros fãs com cidade e localização aproximada (nunca exata). Desligar te remove do mapa e apaga sua localização.'}
             </p>
-          </div>
-          <div className={styles.toggleRow}>
-            <div className={styles.toggleRowTop}>
-              <span className={styles.toggleTitle}>Permitir Interações</span>
-              <MotionSwitch checked={allowInteractions} onCheckedChange={setAllowInteractions} ariaLabel="Permitir Interações" />
-            </div>
-            <p className={styles.toggleDesc}>Permite que outros usuários enviem mensagens e interajam com você.</p>
-          </div>
-          <div className={styles.toggleRow}>
-            <div className={styles.toggleRowTop}>
-              <span className={styles.toggleTitle}>Total de Streams</span>
-              <MotionSwitch checked={showStreams} onCheckedChange={setShowStreams} ariaLabel="Total de Streams" />
-            </div>
-            <p className={styles.toggleDesc}>Mostra seu total de streams no perfil.</p>
           </div>
         </div>
 
