@@ -37,7 +37,7 @@ export default function PlaylistModal({
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [query, setQuery] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
-  const [tab, setTab] = useState<TabId>('recentes');
+  const [tab, setTab] = useState<TabId>('albums');
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   /** Truncate the list to a small "above the fold" set by default;
    *  user expands via the "Ver mais" CTA below. Reset on close so
@@ -66,7 +66,7 @@ export default function PlaylistModal({
   );
 
   // Reseta estados ao fechar — incluindo o tab e o álbum selecionado
-  // pra que reabrir comece sempre em "Recentes" no nível raiz.
+  // pra que reabrir comece sempre em "Álbuns" no nível raiz.
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => {
@@ -74,7 +74,7 @@ export default function PlaylistModal({
         setHighlightIdx(0);
         setShowAll(false);
         setUserExpandedPanel(false);
-        setTab('recentes');
+        setTab('albums');
         setSelectedAlbumId(null);
       }, 360);
       return () => clearTimeout(t);
