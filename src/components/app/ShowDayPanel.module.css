@@ -260,13 +260,17 @@
 /* ── Chat panel — ancorado à direita (sem vídeo pra parear) ── */
 .chatPanel {
   position: absolute;
-  top: 84px;
-  /* Centralizado horizontalmente — margin-left (metade da largura)
-   * em vez de translateX pra não brigar com o sdChatSlideIn. */
+  /* Centralizado na tela: horizontal via left:50% + margin-left
+   * (-½ largura); vertical via top/bottom:0 + margin auto (sem
+   * transform, pra não brigar com o sdChatSlideIn). */
+  top: 0;
+  bottom: 0;
   left: 50%;
+  margin-top: auto;
+  margin-bottom: auto;
   margin-left: -240px;
   width: 480px;
-  height: min(560px, calc(100vh - 168px));
+  height: min(560px, calc(100vh - 160px));
   display: flex;
   flex-direction: column;
   background: rgba(15, 5, 18, 0.85);
@@ -509,6 +513,8 @@
     left: 12px;
     right: 12px;
     margin-left: 0;
+    margin-top: 0;
+    margin-bottom: 0;
     width: auto;
     height: 44vh;
     min-height: 260px;
