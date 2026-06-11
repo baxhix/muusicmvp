@@ -83,9 +83,10 @@
 .spots {
   position: absolute;
   left: 0;
-  /* Base elevada pra os feixes nascerem ACIMA do badge — o badge
-   * "Show de hoje" fica logo abaixo dos spots. */
-  bottom: 50px;
+  /* Base no PRÓPRIO ponto do show (era 50px acima, o que abria um
+   * vão preenchido pelo badge). Agora os feixes nascem direto do
+   * ponto; o badge/conteúdo desce pra baixo do ponto (.content). */
+  bottom: 0;
   width: 0;
   height: 0;
   transform: translateX(-50%);
@@ -196,17 +197,20 @@
   88% { opacity: 0.6; }
 }
 
-/* ── Conteúdo (badges + palco), ancorado na base ───────────── */
+/* ── Conteúdo (badges + palco), ancorado ABAIXO do ponto ──────
+ *  top:0 (em vez de bottom:0) faz o badge/palco descerem pra baixo
+ *  do ponto do show — assim os spots nascem do ponto sem o "buraco"
+ *  que o badge causava entre a base dos feixes e o ponto. */
 .content {
   position: absolute;
   left: 0;
-  bottom: 0;
+  top: 0;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 9px;
-  padding-bottom: 10px;
+  padding-top: 10px;
 }
 
 /* Badges escondidos por padrão; [data-badge] mostra o ativo. */
