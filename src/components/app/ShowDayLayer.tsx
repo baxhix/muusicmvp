@@ -6,15 +6,7 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { track } from '@/lib/analytics';
-import {
-  SHOW_DAY,
-  formatCountdownShort,
-  formatViewers,
-  getShowDayBounds,
-  getShowDayPhase,
-  getShowDayViewers,
-  type ShowDayPhase,
-} from '@/lib/showDay';
+import { SHOW_DAY, getShowDayPhase, type ShowDayPhase } from '@/lib/showDay';
 import styles from './ShowDayLayer.module.css';
 
 /* ============================================================
@@ -24,38 +16,41 @@ import styles from './ShowDayLayer.module.css';
  * (subscribeMapInstance, render null, cleanup completo — ZERO
  * mudanças no Globe.tsx):
  *
- *   • 2 circle layers nativas (halo blur + core) — tier "longe",
- *     visíveis em TODOS os zooms, escala via interpolate.
- *   • 1 DOM marker — tiers "mid" (glyph + chip) e "near" (arena
- *     simbólica + holofotes varrendo). Visibilidade por
- *     data-tier com cross-fade CSS (sem pop-in).
+ *   • 2 circle layers nativas (halo blur + core) — glow do ponto,
+ *     visível em todos os zooms, escala via interpolate.
+ *   • 1 DOM marker — 3 spots de luz (sempre, escalando por zoom) +
+ *     badge cujo conteúdo muda por faixa de zoom + palco simbólico
+ *     (arena) a partir de z8.
  *
- * Tiers de zoom:
- *   z < 2.5   hidden (só nativo — precedente MapPulses mobile)
- *   2.5–4     far    (só nativo; DOM opacity 0)
- *   4–10      mid    (glyph 22px + chip + anéis de pulso)
- *   ≥ 10      near   (arena + feixes + chip status + viewers)
+ * Faixas de zoom (badge + palco):
+ *   z < 2.5    nada (só nativo)
+ *   2.5–6      3 spots + badge "Show de hoje!"
+ *   6–9.2      3 spots + badge "Show de hoje às 23h00! / Salvador - BA"
+ *   ≥ 8        + palco (arena) aparece
+ *   ≥ 9.2      badge vira box (foto + título + CTA "Entrar no chat")
  *
- * Fases (relógio local, sempre "hoje" — ver lib/showDay.ts):
- *   announced → rosa, pulso lento, countdown no chip
- *   live      → "● AO VIVO" vermelho, feixes varrendo, viewers
- *   ended     → esmaecido estático, "SHOW ENCERRADO"
+ * Spots: SEMPRE os 3 feixes (L/C/R) quando visível, varrendo rápido,
+ * altura escala por zoom (--sdBeamH). Badges SEM borda e SEM dot.
  *
- * Performance: zero JS-per-frame. Toda animação é CSS keyframe
- * (transform/opacity); o JS é um interval de 30s (fase/countdown
- * de minuto) + um zoom handler O(1) que só escreve data-tier
- * quando o tier muda.
+ * Performance: zero JS-per-frame. Animação é CSS keyframe
+ * (transform/opacity); o JS é um interval de 30s (fase) + um zoom
+ * handler O(1) que escreve data-badge/data-stage/--sdBeamH.
  * ============================================================ */
 
 const SOURCE_ID = 'show-day';
 const HALO_LAYER = 'show-day-halo';
 const CORE_LAYER = 'show-day-core';
 
-const TIER_FAR_MIN = 2.5;
-const TIER_MID_MIN = 4; // = COMPACT_ZOOM_THRESHOLD do Globe
-const TIER_NEAR_MIN = 10;
+/** Limiares de zoom (travados com o produto). */
+const SPOTS_MIN = 2.5; // a partir daqui os 3 spots + badge aparecem
+const BADGE_CITY_MIN = 6; // badge passa a mostrar hora + cidade
+const STAGE_MIN = 8; // palco (arena) aparece
+const BADGE_BOX_MIN = 9.2; // badge vira box (foto + título + CTA)
 
-type Tier = 'hidden' | 'far' | 'mid' | 'near';
+/** Foto do box (z ≥ 9.2). */
+const SHOW_PHOTO = '/show-day/show-1.jpg';
+
+type BadgeLevel = 'none' | 'simple' | 'city' | 'box';
 
 const PHASE_HALO_COLOR: Record<ShowDayPhase, string> = {
   announced: '#ec4899',
@@ -63,10 +58,21 @@ const PHASE_HALO_COLOR: Record<ShowDayPhase, string> = {
   ended: 'rgba(148, 163, 184, 0.8)',
 };
 
-function tierFor(zoom: number): Tier {
-  if (zoom < TIER_FAR_MIN) return 'hidden';
-  if (zoom < TIER_MID_MIN) return 'far';
-  if (zoom < TIER_NEAR_MIN) return 'mid';
+function badgeLevelFor(zoom: number): BadgeLevel {
+  if (zoom < SPOTS_MIN) return 'none';
+  if (zoom < BADGE_CITY_MIN) return 'simple';
+  if (zoom < BADGE_BOX_MIN) return 'city';
+  return 'box';
+}
+
+function stageVisibleFor(zoom: number): boolean {
+  return zoom >= STAGE_MIN;
+}
+
+/** Tier coarse só pro parâmetro de analytics. */
+function tierForAnalytics(zoom: number): 'far' | 'mid' | 'near' {
+  if (zoom < BADGE_CITY_MIN) return 'far';
+  if (zoom < BADGE_BOX_MIN) return 'mid';
   return 'near';
 }
 
@@ -101,23 +107,11 @@ function beamHeightFor(zoom: number): number {
   return last[1];
 }
 
-/** Texto do chip de status por fase (countdown atualiza a cada 30s). */
-function chipContent(phase: ShowDayPhase): { text: string; sub: string } {
-  if (phase === 'live') return { text: 'AO VIVO', sub: '' };
-  if (phase === 'ended') {
-    return { text: 'SHOW ENCERRADO', sub: `· hoje ${SHOW_DAY.startHour}h` };
-  }
-  const { startsAt } = getShowDayBounds();
-  const ms = startsAt.getTime() - Date.now();
-  return { text: 'HOJE TEM SHOW', sub: `· em ${formatCountdownShort(ms)}` };
-}
-
-/** Palco de festival simbólico (tier near): torres de treliça (truss)
- *  nas laterais, telão de LED central, line-arrays pendurados,
- *  luminárias na treliça superior (de onde saem os feixes) e o palco
- *  com escada. Estrutura em índigo claro pra ler sobre o mapa escuro;
- *  telão no gradiente magenta/roxo do tema. Ids de gradiente fixos são
- *  seguros — só existe UMA instância deste marker no app. */
+/** Palco de festival simbólico (z ≥ 8): colunas sólidas, telão de LED
+ *  central, line-arrays pendurados, PARs na viga (lentes piscam) e o
+ *  palco com escada + plateia. Estrutura em índigo claro pra ler sobre
+ *  o mapa escuro. Ids de gradiente fixos são seguros — só existe UMA
+ *  instância deste marker no app. */
 const ARENA_SVG = `
 <svg viewBox="0 0 128 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
@@ -225,18 +219,6 @@ const ARENA_SVG = `
   </g>
 </svg>`;
 
-/** Glyph compacto (tier mid): mini palco (teto + torres + telão + luzes). */
-const GLYPH_SVG = `
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path d="M4 7 Q12 3 20 7" fill="none" stroke="#f9a8d4" stroke-width="1.2" stroke-linecap="round"/>
-  <rect x="8" y="8" width="8" height="7" rx="1" fill="#ec4899"/>
-  <g stroke="#f9a8d4" stroke-width="1.2" stroke-linecap="round">
-    <path d="M5 7V16M19 7V16"/>
-    <path d="M3 17H21"/>
-  </g>
-  <g fill="#fde68a"><circle cx="9.5" cy="9.4" r="0.9"/><circle cx="14.5" cy="9.4" r="0.9"/></g>
-</svg>`;
-
 export default function ShowDayLayer() {
   /* Feature "Hoje tem show" vive no menu Novas Features (brainstorm):
    * gated pelo flag `showDay`. Owners veem com o toggle ligado
@@ -251,22 +233,22 @@ export default function ShowDayLayer() {
     let currentMap: MapboxMap | null = null;
     let marker: mapboxgl.Marker | null = null;
     let wrapEl: HTMLDivElement | null = null;
-    let chipTextEls: HTMLElement[] = [];
-    let chipSubEls: HTMLElement[] = [];
-    let viewersEl: HTMLElement | null = null;
     let zoomHandler: (() => void) | null = null;
     let styleHandler: (() => void) | null = null;
-    let lastTier: Tier | null = null;
+    let lastBadge: BadgeLevel | null = null;
+    let lastStage: 'on' | 'off' | null = null;
     let lastPhase: ShowDayPhase = getShowDayPhase();
 
-    const onHaloClick = () => {
-      const tier = (wrapEl?.dataset.tier as Tier | undefined) ?? 'far';
+    const openPanel = () => {
+      const z = currentMap?.getZoom() ?? BADGE_CITY_MIN;
       track('show_day_pin_clicked', {
         phase: getShowDayPhase(),
-        tier: tier === 'hidden' ? 'far' : tier,
+        tier: tierForAnalytics(z),
       });
       globeStore.openShowDay();
     };
+
+    const onHaloClick = () => openPanel();
     const onHaloEnter = () => {
       if (currentMap) currentMap.getCanvas().style.cursor = 'pointer';
     };
@@ -274,29 +256,14 @@ export default function ShowDayLayer() {
       if (currentMap) currentMap.getCanvas().style.cursor = '';
     };
 
-    /* Atualiza chip/cores conforme a fase + countdown (tick 30s). */
+    /* Fase: cor do halo nativo + data-phase (spots/arena reagem). */
     const applyPhase = () => {
       const phase = getShowDayPhase();
       if (phase !== lastPhase) {
         track('show_day_phase_changed', { from: lastPhase, to: phase });
         lastPhase = phase;
       }
-      if (wrapEl) {
-        wrapEl.dataset.phase = phase;
-        const { text, sub } = chipContent(phase);
-        chipTextEls.forEach((el) => { el.textContent = text; });
-        chipSubEls.forEach((el) => {
-          el.textContent = sub;
-          el.style.display = sub ? '' : 'none';
-        });
-        if (viewersEl) {
-          viewersEl.textContent =
-            phase === 'live'
-              ? `${formatViewers(getShowDayViewers())} assistindo`
-              : '';
-          viewersEl.style.display = phase === 'live' ? '' : 'none';
-        }
-      }
+      if (wrapEl) wrapEl.dataset.phase = phase;
       if (currentMap?.getLayer(HALO_LAYER)) {
         currentMap.setPaintProperty(
           HALO_LAYER,
@@ -306,24 +273,28 @@ export default function ShowDayLayer() {
       }
     };
 
-    const applyTier = (map: MapboxMap) => {
-      const tier = tierFor(map.getZoom());
-      if (tier === lastTier || !wrapEl) return;
-      lastTier = tier;
-      wrapEl.dataset.tier = tier;
-    };
-
-    /* Escala contínua da altura dos feixes conforme o zoom. Roda a
-     * cada evento de zoom — barato (um setProperty num subtree de
-     * 0×0; nenhum reflow de página), e a `height` dos feixes só
-     * afeta esse subtree absoluto. */
-    const applyBeamHeight = (map: MapboxMap) => {
+    /* Zoom: badge level + palco + altura dos feixes. Roda a cada
+     * evento de zoom — barato (escreve data-attrs / uma var num
+     * subtree 0×0; nenhum reflow de página). */
+    const applyZoom = (map: MapboxMap) => {
       if (!wrapEl) return;
-      wrapEl.style.setProperty('--sdBeamH', `${beamHeightFor(map.getZoom())}px`);
+      const z = map.getZoom();
+      const badge = badgeLevelFor(z);
+      if (badge !== lastBadge) {
+        wrapEl.dataset.badge = badge;
+        lastBadge = badge;
+      }
+      const stage = stageVisibleFor(z) ? 'on' : 'off';
+      if (stage !== lastStage) {
+        wrapEl.dataset.stage = stage;
+        lastStage = stage;
+      }
+      wrapEl.style.setProperty('--sdBeamH', `${beamHeightFor(z)}px`);
     };
 
     /** Monta o DOM do marker (uma vez por attach). */
     const buildMarker = (map: MapboxMap) => {
+      const z = map.getZoom();
       const wrap = document.createElement('div');
       wrap.className = styles.wrap;
       wrap.setAttribute('role', 'button');
@@ -333,11 +304,13 @@ export default function ShowDayLayer() {
         `Hoje tem show: ${SHOW_DAY.venue}, ${SHOW_DAY.city}`,
       );
       wrap.dataset.phase = getShowDayPhase();
-      wrap.dataset.tier = tierFor(map.getZoom());
-      lastTier = tierFor(map.getZoom());
-      wrap.style.setProperty('--sdBeamH', `${beamHeightFor(map.getZoom())}px`);
+      wrap.dataset.badge = badgeLevelFor(z);
+      wrap.dataset.stage = stageVisibleFor(z) ? 'on' : 'off';
+      lastBadge = badgeLevelFor(z);
+      lastStage = stageVisibleFor(z) ? 'on' : 'off';
+      wrap.style.setProperty('--sdBeamH', `${beamHeightFor(z)}px`);
 
-      /* Anéis de pulso (mid + near). */
+      /* Anéis de pulso no ponto. */
       const pulseA = document.createElement('span');
       pulseA.className = `${styles.pulse} ${styles.pulseA}`;
       const pulseB = document.createElement('span');
@@ -345,38 +318,8 @@ export default function ShowDayLayer() {
       wrap.appendChild(pulseA);
       wrap.appendChild(pulseB);
 
-      const makeChip = () => {
-        const chip = document.createElement('span');
-        chip.className = styles.chip;
-        const dot = document.createElement('span');
-        dot.className = styles.chipDot;
-        const text = document.createElement('span');
-        text.className = styles.chipText;
-        const sub = document.createElement('span');
-        sub.className = styles.chipSub;
-        chip.appendChild(dot);
-        chip.appendChild(text);
-        chip.appendChild(sub);
-        chipTextEls.push(text);
-        chipSubEls.push(sub);
-        return chip;
-      };
-
-      /* Tier MID — glyph + chip. */
-      const mid = document.createElement('div');
-      mid.className = styles.mid;
-      const glyph = document.createElement('span');
-      glyph.className = styles.glyph;
-      glyph.innerHTML = GLYPH_SVG;
-      mid.appendChild(glyph);
-      mid.appendChild(makeChip());
-      wrap.appendChild(mid);
-
-      /* Spots de luz — varredura de holofotes em TODOS os tiers
-       * (far/mid/near), o cue de "tem show aqui" que diferencia em
-       * cada zoom. Vive no wrapper (não dentro de .mid/.near); a
-       * altura escala com o zoom via --sdBeamH. 3 feixes L/C/R:
-       * o central aparece já no far, os laterais entram do mid. */
+      /* Spots de luz — SEMPRE os 3 feixes (L/C/R) quando visível,
+       * varrendo rápido; altura escala com o zoom (--sdBeamH). */
       const spots = document.createElement('div');
       spots.className = styles.spots;
       (['beamL', 'beamC', 'beamR'] as const).forEach((k) => {
@@ -386,30 +329,66 @@ export default function ShowDayLayer() {
       });
       wrap.appendChild(spots);
 
-      /* Tier NEAR — arena + chip + viewers (os feixes ficam no .spots). */
-      const near = document.createElement('div');
-      near.className = styles.near;
+      /* Conteúdo (badges + palco), ancorado na base do marker. */
+      const content = document.createElement('div');
+      content.className = styles.content;
+
+      // Badge "simple" (2.5–6): "Show de hoje!"
+      const badgeSimple = document.createElement('span');
+      badgeSimple.className = styles.badgeSimple;
+      badgeSimple.textContent = 'Show de hoje!';
+      content.appendChild(badgeSimple);
+
+      // Badge "city" (6–9.2): hora + cidade
+      const badgeCity = document.createElement('div');
+      badgeCity.className = styles.badgeCity;
+      const cityTitle = document.createElement('span');
+      cityTitle.className = styles.badgeCityTitle;
+      cityTitle.textContent = 'Show de hoje às 23h00!';
+      const citySub = document.createElement('span');
+      citySub.className = styles.badgeCitySub;
+      citySub.textContent = `${SHOW_DAY.city} - ${SHOW_DAY.state}`;
+      badgeCity.appendChild(cityTitle);
+      badgeCity.appendChild(citySub);
+      content.appendChild(badgeCity);
+
+      // Badge "box" (≥9.2): foto + título + CTA "Entrar no chat"
+      const badgeBox = document.createElement('div');
+      badgeBox.className = styles.badgeBox;
+      const photo = document.createElement('img');
+      photo.className = styles.badgeBoxPhoto;
+      photo.src = SHOW_PHOTO;
+      photo.alt = '';
+      photo.loading = 'lazy';
+      const boxTitle = document.createElement('span');
+      boxTitle.className = styles.badgeBoxTitle;
+      boxTitle.textContent = 'Show Ana Castela — Festa do Peão';
+      const cta = document.createElement('button');
+      cta.type = 'button';
+      cta.className = styles.badgeCta;
+      cta.textContent = 'Entrar no chat';
+      cta.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPanel();
+      });
+      badgeBox.appendChild(photo);
+      badgeBox.appendChild(boxTitle);
+      badgeBox.appendChild(cta);
+      content.appendChild(badgeBox);
+
+      // Palco (arena) — visível a partir de z8 (data-stage='on').
       const arena = document.createElement('span');
       arena.className = styles.arena;
       arena.innerHTML = ARENA_SVG;
-      near.appendChild(arena);
-      near.appendChild(makeChip());
-      const viewers = document.createElement('span');
-      viewers.className = styles.viewersChip;
-      near.appendChild(viewers);
-      viewersEl = viewers;
-      wrap.appendChild(near);
+      content.appendChild(arena);
+
+      wrap.appendChild(content);
 
       /* Click/teclado → painel. stopPropagation evita double-fire
        * com o click da layer nativa por baixo. */
       const open = (e: Event) => {
         e.stopPropagation();
-        const tier = (wrap.dataset.tier as Tier) ?? 'mid';
-        track('show_day_pin_clicked', {
-          phase: getShowDayPhase(),
-          tier: tier === 'hidden' ? 'far' : tier,
-        });
-        globeStore.openShowDay();
+        openPanel();
       };
       wrap.addEventListener('click', open);
       wrap.addEventListener('keydown', (e) => {
@@ -422,7 +401,7 @@ export default function ShowDayLayer() {
         .addTo(map);
     };
 
-    /** Source + circle layers nativas (tier longe). Idempotente —
+    /** Source + circle layers nativas (glow do ponto). Idempotente —
      *  guard pelo getSource; re-roda no style.load (style swap). */
     const ensureLayers = (map: MapboxMap) => {
       if (map.getSource(SOURCE_ID)) return;
@@ -469,7 +448,7 @@ export default function ShowDayLayer() {
             'interpolate', ['linear'], ['zoom'],
             1, 2.5, 4, 3.5,
           ],
-          // Handoff pro chip DOM: o core some quando o tier mid entra.
+          // Handoff pro badge DOM: o core some quando o badge entra.
           'circle-opacity': [
             'interpolate', ['linear'], ['zoom'],
             3.5, 1, 4.5, 0,
@@ -487,10 +466,8 @@ export default function ShowDayLayer() {
         marker = null;
       }
       wrapEl = null;
-      chipTextEls = [];
-      chipSubEls = [];
-      viewersEl = null;
-      lastTier = null;
+      lastBadge = null;
+      lastStage = null;
       if (currentMap) {
         try {
           if (zoomHandler) currentMap.off('zoom', zoomHandler);
@@ -518,8 +495,7 @@ export default function ShowDayLayer() {
         ensureLayers(map);
         if (!marker) buildMarker(map);
         applyPhase();
-        applyTier(map);
-        applyBeamHeight(map);
+        applyZoom(map);
       };
       if (map.isStyleLoaded()) setup();
       else map.once('style.load', setup);
@@ -527,17 +503,13 @@ export default function ShowDayLayer() {
       styleHandler = () => ensureLayers(map);
       map.on('style.load', styleHandler);
 
-      zoomHandler = () => {
-        applyTier(map);
-        applyBeamHeight(map);
-      };
+      zoomHandler = () => applyZoom(map);
       map.on('zoom', zoomHandler);
     };
 
     const unsubscribe = globeStore.subscribeMapInstance(attach);
 
-    /* Tick de fase/countdown — granularidade de minuto basta pro
-     * chip; 30s garante a virada de fase com ≤30s de atraso. */
+    /* Tick de fase — 30s garante a virada de fase com ≤30s de atraso. */
     const phaseTimer = setInterval(applyPhase, 30_000);
     const onVisible = () => {
       if (document.visibilityState === 'visible') applyPhase();
