@@ -68,6 +68,8 @@
   flex-direction: column;
   /* +35% de espaçamento entre itens (gap + padding). */
   gap: 8px;
+  /* Itens 6px mais à direita (não afeta grabber/X, que são irmãos). */
+  padding-left: 6px;
 }
 
 /* Item base — tipografia Borscha grande (peso 700), sem ícone, alvo
@@ -101,29 +103,25 @@
   opacity: 0.65;
 }
 
-/* Minha conta — só texto: "Minha conta" + "Meu perfil". Peso mais leve
- * (500) e um tiquinho maior que os demais itens. A foto de perfil foi
- * pro toggle "Visível no mapa" (abaixo). */
-.itemAccount {
-  font-weight: 500;
-}
-.accountLabel {
-  display: inline-flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 12px;
+/* "Visível/Invisível no mapa" — label (Borscha, herda o gradiente) +
+ * legenda pequena (Inter) empilhadas ao lado do avatar. */
+.toggleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
-  font-size: 1.06em;
 }
-/* "Meu perfil" — um pouco maior que antes, peso menor, em cinza. O
- * -webkit-text-fill-color anula o gradiente herdado do .item pra
- * manter o cinza. */
-.accountKicker {
-  font-size: 0.6em;
+.toggleLabel {
+  line-height: 1.05;
+}
+.toggleCaption {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11px;
   font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.25;
   color: rgba(245, 245, 247, 0.5);
   -webkit-text-fill-color: rgba(245, 245, 247, 0.5);
-  letter-spacing: 0;
 }
 
 /* Avatar + dot de status — agora junto do "Visível no mapa" (toggle).

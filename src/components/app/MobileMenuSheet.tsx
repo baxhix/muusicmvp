@@ -278,16 +278,13 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
                 whileTap={tap}
                 type="button"
                 role="menuitem"
-                className={`${styles.item} ${styles.itemAccount}`}
+                className={styles.item}
                 onClick={() => {
                   onClose();
                   dispatch('app:open-account-drawer');
                 }}
               >
-                <span className={styles.accountLabel}>
-                  Minha conta
-                  <span className={styles.accountKicker}>Meu perfil</span>
-                </span>
+                Minha conta
               </motion.button>
 
               {/* 7. Visível / Invisível no mapa — toggle integrado
@@ -308,7 +305,17 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
                       aria-hidden="true"
                     />
                   </span>
-                  <span>{consent ? 'Visível no mapa' : 'Invisível no mapa'}</span>
+                  <span className={styles.toggleText}>
+                    <span className={styles.toggleLabel}>
+                      {consent ? 'Visível no mapa' : 'Invisível no mapa'}
+                    </span>
+                    {/* Legenda pequena (Inter) abaixo do toggle. */}
+                    <span className={styles.toggleCaption}>
+                      {consent
+                        ? 'Não é sua localização exata.'
+                        : 'você não está aparecendo no mapa.'}
+                    </span>
+                  </span>
                 </span>
                 <MotionSwitch
                   checked={consent}
