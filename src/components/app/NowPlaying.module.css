@@ -175,7 +175,7 @@
  * "Ajuste o player de video para também não ficar sobreposto ao
  * feed, agora que o feed fica ao centro quando a tela é menor. Não
  * há problema no video ficar em um tamanho pequeno." */
-@media (min-width: 1025px) and (max-width: 1440px) {
+@media (min-width: 1025px) and (max-width: 1490px) {
   .playerVideo {
     width: 180px;
     padding: 0 10px 10px;

@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
  * SSR-safe: o primeiro render reporta `false` (assume desktop
  * largo); o effect snapa pro valor real após hidratação.
  */
-const QUERY = '(min-width: 769px) and (max-width: 1440px)';
+const QUERY = '(min-width: 769px) and (max-width: 1490px)';
 
 export function useIsSmallDesktop(): boolean {
   const [isSmallDesktop, setIsSmallDesktop] = useState(false);

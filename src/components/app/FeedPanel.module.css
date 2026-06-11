@@ -324,12 +324,12 @@
  * posição central e ficar abaixo do banner no topo", reposicionamos
  * pra centralizado abaixo do DesktopTopBanner (banner topo 34px +
  * altura ~95px = 129; subimos 24px de breathing → top:153). */
-@media (min-width: 1025px) and (max-width: 1440px) {
+@media (min-width: 1025px) and (max-width: 1490px) {
   .panel {
     top: 153px;
-    /* Altura limitada pra não invadir a área do NowPlaying (bottom 24px)
-     * nem do BottomNav. Mantém ~70% da viewport útil. */
-    height: calc(100vh - 200px);
+    /* Altura do feed retraído +45px (era calc(100vh - 200px)) per
+     * product feedback. Continua acima do NowPlaying/BottomNav. */
+    height: calc(100vh - 155px);
     /* Centraliza horizontalmente abaixo do banner. Largura reduzida
      * pra deixar espaço lateral pro NowPlaying (player de vídeo)
      * caber à esquerda sem sobrepor. Cap 520px + ~140px de margem

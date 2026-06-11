@@ -261,7 +261,10 @@
 .chatPanel {
   position: absolute;
   top: 84px;
-  right: 24px;
+  /* Centralizado horizontalmente — margin-left (metade da largura)
+   * em vez de translateX pra não brigar com o sdChatSlideIn. */
+  left: 50%;
+  margin-left: -170px;
   width: 340px;
   height: min(560px, calc(100vh - 168px));
   display: flex;
@@ -505,6 +508,7 @@
     bottom: 84px;
     left: 12px;
     right: 12px;
+    margin-left: 0;
     width: auto;
     height: 44vh;
     min-height: 260px;
