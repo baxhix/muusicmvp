@@ -264,8 +264,8 @@
   /* Centralizado horizontalmente — margin-left (metade da largura)
    * em vez de translateX pra não brigar com o sdChatSlideIn. */
   left: 50%;
-  margin-left: -170px;
-  width: 340px;
+  margin-left: -240px;
+  width: 480px;
   height: min(560px, calc(100vh - 168px));
   display: flex;
   flex-direction: column;
