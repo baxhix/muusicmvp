@@ -20,6 +20,12 @@
   cursor: pointer;
   outline: none;
 }
+/* Durante a "Cobertura ao vivo" (ShowDayPanel full-screen seta
+ * html[data-showlive]) o mapa voa pra arena — esconde o marker
+ * pra não competir com o palco. */
+:global(html[data-showlive='true']) .wrap {
+  display: none;
+}
 .wrap:focus-visible .badgeSimple,
 .wrap:focus-visible .badgeCity,
 .wrap:focus-visible .badgeBox {
