@@ -76,19 +76,19 @@ function tierForAnalytics(zoom: number): 'far' | 'mid' | 'near' {
   return 'near';
 }
 
-/* Altura (px) dos feixes de luz por zoom — tabela travada com o
- * produto pra dar a diferenciação de "tem show aqui" em cada nível:
- *   z2.5→54 · z4→96 · z6→106 · z7.5→116 · z9.2→106 · z12→224.
+/* Altura (px) dos feixes de luz por zoom — metade da altura anterior
+ * pra um cue mais discreto:
+ *   z2.5→27 · z4→48 · z6→53 · z7.5→58 · z9.2→53 · z12→112.
  * Interpolação linear por trechos; clamp nas pontas. O valor é
  * escrito numa var CSS (--sdBeamH) e a `height` dos feixes a usa,
  * então os spots crescem/encolhem suavemente conforme o zoom. */
 const BEAM_HEIGHT_STOPS: ReadonlyArray<readonly [number, number]> = [
-  [2.5, 54],
-  [4, 96],
-  [6, 106],
-  [7.5, 116],
-  [9.2, 106],
-  [12, 224],
+  [2.5, 27],
+  [4, 48],
+  [6, 53],
+  [7.5, 58],
+  [9.2, 53],
+  [12, 112],
 ];
 
 function beamHeightFor(zoom: number): number {

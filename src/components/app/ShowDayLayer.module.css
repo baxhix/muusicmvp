@@ -102,19 +102,35 @@
   clip-path: polygon(42% 100%, 58% 100%, 100% 0%, 0% 0%);
   transform-origin: bottom center;
   mix-blend-mode: screen;
-  /* Tons mais vibrantes nos feixes. */
-  filter: saturate(1.5);
+  /* Tons vibrantes, porém suaves. */
+  filter: saturate(1.25);
   opacity: 0;
   will-change: transform, opacity;
 }
+/* Gradiente suavizado — alpha mais baixo + 3 paradas pra um fade gradual. */
 .beamL {
-  background: linear-gradient(to top, rgba(178, 60, 255, 0.95), rgba(178, 60, 255, 0));
+  background: linear-gradient(
+    to top,
+    rgba(178, 80, 255, 0.58) 0%,
+    rgba(178, 80, 255, 0.24) 48%,
+    rgba(178, 80, 255, 0) 100%
+  );
 }
 .beamC {
-  background: linear-gradient(to top, rgba(255, 130, 235, 0.9), rgba(244, 63, 180, 0));
+  background: linear-gradient(
+    to top,
+    rgba(255, 150, 235, 0.52) 0%,
+    rgba(244, 90, 190, 0.2) 48%,
+    rgba(244, 63, 180, 0) 100%
+  );
 }
 .beamR {
-  background: linear-gradient(to top, rgba(255, 40, 150, 0.95), rgba(255, 40, 150, 0));
+  background: linear-gradient(
+    to top,
+    rgba(255, 80, 165, 0.58) 0%,
+    rgba(255, 80, 165, 0.24) 48%,
+    rgba(255, 40, 150, 0) 100%
+  );
 }
 
 /* Os 3 feixes varrem em announced + live (rápido). */
@@ -262,13 +278,12 @@
   flex-direction: column;
   width: 188px;
   border: 1.5px solid transparent;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
+  /* Fundo preto + borda com gradiente. */
   background:
-    linear-gradient(rgba(8, 5, 13, 0.92), rgba(8, 5, 13, 0.92)) padding-box,
+    linear-gradient(#000, #000) padding-box,
     linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   gap: 0;
 }
 .wrap[data-badge='box'] .badgeBox {
@@ -312,7 +327,7 @@
   border: 1.5px solid transparent;
   border-radius: 999px;
   background:
-    linear-gradient(rgba(8, 5, 13, 0.92), rgba(8, 5, 13, 0.92)) padding-box,
+    linear-gradient(#000, #000) padding-box,
     linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
   color: #ffffff;
   font-family: var(--font-inter), sans-serif;

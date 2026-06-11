@@ -158,7 +158,7 @@ export default function ShowDayPanel() {
   // openShowDay nem chega a ser disparado nesses casos.
   if (!flags.showDay) return null;
 
-  const attendeeLabel = `${attendeeCount.toLocaleString('pt-BR')} fãs presentes`;
+  const attendeeLabel = `${attendeeCount.toLocaleString('pt-BR')} fãs fizeram check-in`;
 
   const content = (
     <div className={styles.content} data-phase={phase}>
@@ -186,7 +186,7 @@ export default function ShowDayPanel() {
           )}
         </div>
         <span className={styles.venue}>
-          {SHOW_DAY.venue} · {SHOW_DAY.city}, {SHOW_DAY.state}
+          {SHOW_DAY.city}, {SHOW_DAY.state}
         </span>
       </div>
 
@@ -289,7 +289,6 @@ export default function ShowDayPanel() {
                 </span>
                 <span className={styles.attendeeCity}>{a.city}</span>
               </div>
-              <span className={styles.attendeePresence}>no local</span>
             </div>
           ))}
           <p className={styles.attendeesFooter}>

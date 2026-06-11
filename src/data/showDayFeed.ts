@@ -195,9 +195,9 @@ export const SHOW_DAY_PHOTOS: ReadonlyArray<{
 
 /* ── Presentes no show ───────────────────────────────────────── */
 
-/** Base do contador "X fãs presentes" por fase (o drift fica no
+/** Base do contador "X fãs fizeram check-in" por fase (o drift fica no
  *  useShowDaySimulation). */
-export const ATTENDEES_BASE_ANNOUNCED = 860;
+export const ATTENDEES_BASE_ANNOUNCED = 880;
 export const ATTENDEES_BASE_LIVE = 1_243;
 
 /** ~30 fãs "no local" — lista estática (o número grande é que

@@ -84,7 +84,7 @@
   letter-spacing: 0.08em;
   color: #fff;
   background: rgba(236, 72, 153, 0.18);
-  border: 1px solid rgba(236, 72, 153, 0.55);
+  border: none;
 }
 .content[data-phase='live'] .statusBadge {
   background: rgba(244, 63, 94, 0.22);
