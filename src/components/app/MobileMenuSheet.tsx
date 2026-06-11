@@ -284,19 +284,9 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
                   dispatch('app:open-account-drawer');
                 }}
               >
-                <span className={styles.accountAvatarWrap}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={avatar} alt="" className={styles.accountAvatar} />
-                  {/* Dot de status — verde quando visível no mapa
-                      (consent ON), cinza quando invisível. */}
-                  <span
-                    className={`${styles.accountDot} ${consent ? styles.accountDotOn : ''}`}
-                    aria-hidden="true"
-                  />
-                </span>
                 <span className={styles.accountLabel}>
-                  <span className={styles.accountKicker}>Meu perfil</span>
                   Minha conta
+                  <span className={styles.accountKicker}>Meu perfil</span>
                 </span>
               </motion.button>
 
@@ -307,7 +297,19 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
                 variants={itemVariants}
                 className={`${styles.item} ${styles.itemToggle}`}
               >
-                <span>{consent ? 'Visível no mapa' : 'Invisível no mapa'}</span>
+                <span className={styles.toggleLead}>
+                  <span className={styles.accountAvatarWrap}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={avatar} alt="" className={styles.accountAvatar} />
+                    {/* Dot de status — verde quando visível no mapa
+                        (consent ON), cinza quando invisível. */}
+                    <span
+                      className={`${styles.accountDot} ${consent ? styles.accountDotOn : ''}`}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <span>{consent ? 'Visível no mapa' : 'Invisível no mapa'}</span>
+                </span>
                 <MotionSwitch
                   checked={consent}
                   onCheckedChange={toggleConsent}
