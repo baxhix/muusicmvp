@@ -1,0 +1,181 @@
+/* ============================================================
+ * MobileMenuSheet — menu hambúrguer premium (mobile).
+ *
+ * Bottom sheet full-width que sobe da base. Backdrop borra o
+ * resto do app; o painel tem fundo preto + blur intenso, cantos
+ * superiores arredondados e respeita as safe-areas. Fica ABAIXO
+ * da navbar (z:245) pra ela continuar visível/interativa — daí o
+ * padding-bottom generoso que ergue o conteúdo acima do pill.
+ * ============================================================ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  /* Abaixo da navbar (245); acima do resto do chrome (LiveChatStack
+   * 200, MobileFanverseSheet 240). */
+  z-index: 241;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+}
+
+.panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 242;
+  width: 100%;
+  /* Bottom sheet: só a altura do conteúdo (poucos itens), ancorado
+   * na base. Cap em 100dvh-68px garante ≥68px livres no topo mesmo
+   * em telas curtas; rola internamente se precisar. */
+  max-height: calc(100dvh - 68px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* Topo respira; base ergue o conteúdo acima da navbar (pill ~52 +
+   * nav padding-bottom 24) + safe-area (home indicator). */
+  padding: 26px 24px calc(env(safe-area-inset-bottom, 0px) + 100px);
+  /* Fundo preto + blur intenso. */
+  background: linear-gradient(
+    180deg,
+    rgba(8, 8, 11, 0.6) 0%,
+    rgba(5, 5, 7, 0.82) 55%,
+    rgba(2, 2, 3, 0.93) 100%
+  );
+  backdrop-filter: blur(30px) saturate(1.3) brightness(0.74);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3) brightness(0.74);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  box-shadow: 0 -26px 64px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Slide é só transform → compositor; declara pra GPU. */
+  will-change: transform;
+  touch-action: none;
+}
+
+/* Handle de swipe — afor­dance de "arraste pra baixo pra fechar". */
+.grabber {
+  width: 42px;
+  height: 5px;
+  flex-shrink: 0;
+  margin: 0 auto 20px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Item base — tipografia Borscha grande, sem ícone, alvo de toque
+ * amplo. Texto à esquerda; alinhamento à base (sheet) cuida do
+ * vertical. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 13px 4px;
+  border: none;
+  background: none;
+  color: rgba(245, 245, 247, 0.92);
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  font-size: clamp(27px, 6.6vw, 34px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.16s ease;
+}
+.item:active {
+  color: #ffffff;
+}
+
+/* Minha conta — foto de perfil à esquerda do texto. */
+.itemAccount {
+  gap: 14px;
+}
+.accountAvatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* Visível/Invisível no mapa — label à esquerda, switch à direita. */
+.itemToggle {
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: default;
+}
+
+/* Botão fechar — FAB circular no canto inferior direito (acima da
+ * navbar, dentro do padding-bottom do painel). */
+.closeFab {
+  align-self: flex-end;
+  margin-top: 22px;
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: background 0.16s ease;
+}
+.closeFab:active {
+  background: rgba(255, 255, 255, 0.16);
+}
+.closeFab svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Telas baixas — encolhe tipografia/espaçamentos pros 7 itens
+ * caberem sem corte (o painel não rola: touch-action:none mantém
+ * o swipe-to-dismiss limpo). */
+@media (max-height: 720px) {
+  .panel {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+  }
+  .grabber {
+    margin-bottom: 14px;
+  }
+  .item {
+    font-size: clamp(22px, 5.8vw, 28px);
+    padding: 10px 4px;
+  }
+  .accountAvatar {
+    width: 36px;
+    height: 36px;
+  }
+  .itemToggle {
+    padding-top: 12px;
+  }
+  .closeFab {
+    width: 48px;
+    height: 48px;
+    margin-top: 16px;
+  }
+}

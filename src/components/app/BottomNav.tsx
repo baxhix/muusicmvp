@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { globeStore } from '@/lib/globeStore';
+import MobileMenuSheet from './MobileMenuSheet';
 import styles from './BottomNav.module.css';
 
 /**
@@ -41,7 +41,6 @@ export default function BottomNav() {
     locationSync,
     activeOverlay,
     setActiveOverlay,
-    setShowPlaylist,
     setShowEditProfile,
     chatUnreadCount,
   } = useAppShell();
@@ -52,45 +51,14 @@ export default function BottomNav() {
   const hasCoords = user?.lat != null && user?.lng != null;
   const locating = status === 'requesting';
 
-  // Mobile-only "more" popover — replaces the Perfil slot on phones
-  // with a hamburger that surfaces Superfã / Minha Conta /
-  // Configurações in a small floating sheet anchored above the
-  // nav. Click-outside + Escape close it. Desktop keeps the
-  // direct Perfil link since the right-rail already exposes
-  // Superfãs and the cluster has room for a single-purpose slot.
+  // Mobile-only hamburger — abre o MobileMenuSheet (bottom sheet
+  // premium com motion). O fechamento (backdrop / X / swipe / Esc)
+  // é todo gerenciado dentro do sheet; aqui só guardamos o estado
+  // aberto/fechado e o zeramos na troca de rota.
   const [moreOpen, setMoreOpen] = useState(false);
-  /* SSR-safe mount flag: createPortal precisa de document.body, que
-   * só existe no client. Sem o gate o build SSR explode. */
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const moreRef = useRef<HTMLDivElement | null>(null);
-  /* Ref separado pro menu portalado em document.body — sem isso o
-   * outside-click listener (que checa só moreRef = .moreWrap dentro
-   * do BottomNav) achava que todo click no menu era "fora" e fechava
-   * antes do button onClick rodar. Resultado: navegação morria → user
-   * voltava pra home. */
-  const moreMenuRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!moreOpen) return;
-    const onDocClick = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (moreRef.current?.contains(target)) return;
-      if (moreMenuRef.current?.contains(target)) return;
-      setMoreOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMoreOpen(false);
-    };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [moreOpen]);
-  // Close the popover whenever the route changes (e.g. user picks
-  // an item) — otherwise a stale sheet would linger over the next
-  // surface until they tap outside.
+  // Close the menu whenever the route changes (e.g. user picks an
+  // item) — otherwise a stale sheet would linger over the next
+  // surface.
   useEffect(() => {
     setMoreOpen(false);
   }, [pathname]);
@@ -338,7 +306,7 @@ export default function BottomNav() {
          *   the nav and dismisses on outside-click, Escape, or
          *   route change. */}
         {isMobile ? (
-          <div className={styles.moreWrap} ref={moreRef}>
+          <div className={styles.moreWrap}>
             <button
               type="button"
               className={`${styles.item} ${moreOpen ? styles.itemActive : ''}`}
@@ -370,248 +338,15 @@ export default function BottomNav() {
               <span className={styles.dot} aria-hidden="true" />
             </button>
 
-            {/* Portal pra document.body — escapa o containing block
-             *  criado pelo backdrop-filter do .inner pai. Sem o portal,
-             *  position:fixed do .moreMenu fica relativo ao .inner
-             *  (BottomNav pill no rodapé), e top:50%; left:50% caía
-             *  no centro do .inner = bottom da tela. Portal anchora
-             *  no body, restaurando o "fixed = relative to viewport". */}
-            {moreOpen && mounted && createPortal(
-              <>
-                {/* Full-screen blurred backdrop behind the menu
-                 *  per product feedback "No mobile, aplique o
-                 *  efeito de blur no background no box que abre
-                 *  após clicar no menu hamburguer". Sits below
-                 *  the menu (z:79 vs menu z:80) but above the
-                 *  rest of the app chrome so everything visible
-                 *  while the menu is open softens out. Click
-                 *  anywhere on the backdrop closes the menu —
-                 *  same affordance the existing outside-click
-                 *  listener already provides, just made tappable
-                 *  edge-to-edge. */}
-                <div
-                  className={styles.moreBackdrop}
-                  aria-hidden="true"
-                  onClick={() => setMoreOpen(false)}
-                />
-              <div ref={moreMenuRef} className={styles.moreMenu} role="menu">
-                {/* Drawer lateral mobile per product feedback "A
-                 *  abertura do menu hamburger deve ser uma barra
-                 *  lateral, que ocupe toda a altura e dê um blur no
-                 *  resto do site." Ordem top-down JSX = ordem
-                 *  visual top-down no drawer; itens mais
-                 *  frequentes ficam abaixo, perto do polegar (que
-                 *  acabou de tocar o hamburger na bottom bar). */}
-
-                {/* Ordem JSX top→bottom = ordem visual top→bottom no
-                 *  drawer. Per spec "a lista deve ser nessa ordem de
-                 *  baixo pra cima: Meu perfil, Comunidade, Fanpoints,
-                 *  Playlist, Configurações, Loja Oficial" — Meu
-                 *  Perfil fica no rodapé (perto do polegar que tocou
-                 *  o hamburger), Loja Oficial no topo. */}
-
-                {/* 1 (topo). Loja Oficial — Loja da Boiadeira (nova aba). */}
-                <a
-                  role="menuitem"
-                  className={styles.moreItem}
-                  href="https://lojaanacastela.com.br/?srsltid=AfmBOoqO3lURzf9V03K4wnnoPrXa2sFOUu2r7DE9TJguEVZbdzGrWpka"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMoreOpen(false)}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    {/* Shopping bag — cabo arqueado + corpo retangular */}
-                    <path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z" />
-                    <path d="M9 8V6a3 3 0 0 1 6 0v2" />
-                  </svg>
-                  Loja Oficial
-                </a>
-
-                {/* 2. Minha conta — abre o drawer do TopBar (conta) via event. */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    try {
-                      window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
-                    } catch { /* SSR — ignore */ }
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="4" y1="7" x2="20" y2="7" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="17" x2="20" y2="17" />
-                    <circle cx="9" cy="7" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
-                    <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
-                  </svg>
-                  Minha conta
-                </button>
-
-                {/* 3. Playlist — abre PlaylistModal. */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    setShowPlaylist(true);
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M3 5h11M3 10h11M3 15h7" />
-                    <path d="M17 6v9" />
-                    <circle cx="15.5" cy="16.5" r="1.6" fill="currentColor" stroke="none" />
-                    <circle cx="20.5" cy="14.5" r="1.6" fill="currentColor" stroke="none" />
-                    <path d="M17 6l4-1" />
-                  </svg>
-                  Playlist
-                </button>
-
-                {/* 4. Fanpoints — abre FanpointsModal (mount global no
-                 *  layout). Per spec "inclua o item Fanpoints no menu
-                 *  hamburguer". Mesmo evento que o trigger do .metaPoints
-                 *  do fold dispara. */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    try {
-                      window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
-                    } catch { /* SSR — ignore */ }
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    {/* Estrela 5 pontas — símbolo de pontos/recompensa */}
-                    <path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.9 6.7 19.6l1.1-6L3.4 9.4l6-.8L12 3z" />
-                  </svg>
-                  Fanpoints
-                </button>
-
-                {/* 5. Convidar amigos — loop viral (Item 6). Abre o
-                 *  InviteFriendsModal (mount global no layout) via
-                 *  CustomEvent. Único entry-point do referral no
-                 *  mobile. */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    try {
-                      window.dispatchEvent(new CustomEvent('app:open-invite'));
-                    } catch { /* SSR — ignore */ }
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    {/* Pessoa + "+" — convidar */}
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <line x1="19" y1="8" x2="19" y2="14" />
-                    <line x1="22" y1="11" x2="16" y2="11" />
-                  </svg>
-                  Convidar amigos
-                </button>
-
-                {/* 6. Comunidades — per product feedback "Inclua
-                 *  Comunidades no menu hamburger". Vai pra
-                 *  /app/comunidades (mesma rota do slot desktop). */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    router.push('/app/comunidades');
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <circle cx="9" cy="8" r="3.5" />
-                    <path d="M2 20c1-3.5 3.6-5.5 7-5.5s6 2 7 5.5" />
-                    <circle cx="17" cy="9.5" r="2.5" />
-                    <path d="M16 14.4c1.2 0 2.3.2 3.2.7 1.5.8 2.5 2.2 2.9 4" />
-                  </svg>
-                  Comunidades
-                </button>
-
-                {/* 6 (rodapé). Meu Perfil — fica mais próximo do
-                 *  polegar (que acabou de tocar o hamburger). */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={styles.moreItem}
-                  onClick={() => {
-                    setMoreOpen(false);
-                    router.push('/app/perfil');
-                  }}
-                >
-                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                    <circle cx="11" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.6" />
-                    <path
-                      d="M4 19c1.4-3.2 4-5 7-5s5.6 1.8 7 5"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  Meu Perfil
-                </button>
-              </div>
-              </>,
-              document.body,
-            )}
+            {/* Menu premium (motion) — bottom sheet full-width que sobe
+             *  da base com stagger/spring; backdrop borra o resto do
+             *  app. Fecha por backdrop, X (FAB), swipe pra baixo, Esc
+             *  ou troca de rota. Portala pra document.body internamente
+             *  e fica abaixo da navbar (que permanece visível). */}
+            <MobileMenuSheet
+              open={moreOpen}
+              onClose={() => setMoreOpen(false)}
+            />
           </div>
         ) : (
           /* Desktop 5th slot = Comunidade. Antes era Chat (slot 4
