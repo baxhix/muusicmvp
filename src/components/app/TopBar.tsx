@@ -525,6 +525,17 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   </div>
                   <h2 className={styles.drawerIdentityName}>{userLabel}</h2>
 
+                  {/* Fanpoints + posição no ranking — logo abaixo do nome,
+                   *  linkando pro ranking (/app/ranking). */}
+                  <Link
+                    href="/app/ranking"
+                    className={styles.drawerFanpoints}
+                    onClick={closeAll}
+                  >
+                    <strong>236.354</strong> Fanpoints
+                    <span className={styles.drawerFanpointsRank}>(Top 1!)</span>
+                  </Link>
+
                   {/* Aparecer no mapa — visibilidade REAL no mapa
                    *  (consentimento LGPD, location_consent). Substituiu o
                    *  antigo toggle "Online" (que era só estado local
@@ -536,9 +547,20 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     <div className={styles.drawerMapText}>
                       <span className={styles.drawerMapTitle}>Aparecer no mapa</span>
                       <span className={styles.drawerMapDesc}>
-                        {isMinor
-                          ? 'Indisponível para menores de 18 anos.'
-                          : 'Mostra você no mapa pros outros fãs com localização aproximada (nunca exata). Desligar te esconde na hora; religar mostra de novo.'}
+                        {isMinor ? (
+                          'Indisponível para menores de 18 anos.'
+                        ) : (
+                          <>
+                            Mostra você no mapa para outros fãs com{' '}
+                            <strong className={styles.bold}>
+                              localização aleatória em raio de 25 Km
+                            </strong>{' '}
+                            ao redor da cidade que você selecionou.{' '}
+                            <strong className={styles.bold}>Nunca a exata</strong>.
+                            <br />
+                            Desligar te esconde na hora; religar mostra de novo.
+                          </>
+                        )}
                       </span>
                     </div>
                     <Toggle
@@ -550,9 +572,16 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   </div>
                   {!isMinor && (
                     <p className={styles.drawerMapNote}>
-                      Sua localização nunca é exibida de forma exata e não fica
-                      armazenada — aparece só uma região aproximada, alternando
-                      entre pontos dentro da sua cidade.
+                      O mapa é uma forma de visualizarmos o volume de pessoas no
+                      mundo.
+                      <br />
+                      <strong className={styles.bold}>
+                        Sua localização nunca é exibida de forma exata
+                      </strong>{' '}
+                      e não fica armazenada em nosso banco de dados — aparece
+                      somente em uma região randômica, alternando entre pontos
+                      dentro da cidade de sua escolha. Sua segurança em primeiro
+                      lugar.
                     </p>
                   )}
                 </div>

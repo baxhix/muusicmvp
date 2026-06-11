@@ -115,15 +115,15 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
       opacity: 1,
       y: 0,
       transition: reduce
-        ? { duration: 0.2 }
+        ? { duration: 0.16 }
         : {
             type: 'spring',
-            stiffness: 420,
-            damping: 40,
-            mass: 0.9,
+            stiffness: 580,
+            damping: 36,
+            mass: 0.7,
             when: 'beforeChildren',
-            delayChildren: 0.07,
-            staggerChildren: 0.045,
+            delayChildren: 0.02,
+            staggerChildren: 0.032,
             staggerDirection: -1,
           },
     },
@@ -131,12 +131,12 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
       opacity: 0,
       y: reduce ? 0 : '114%',
       transition: reduce
-        ? { duration: 0.18 }
+        ? { duration: 0.16 }
         : {
-            duration: 0.34,
+            duration: 0.28,
             ease: [0.4, 0, 1, 1],
             when: 'afterChildren',
-            staggerChildren: 0.028,
+            staggerChildren: 0.022,
             staggerDirection: 1,
           },
     },
@@ -147,7 +147,7 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
     visible: {
       opacity: 1,
       y: 0,
-      transition: { type: 'spring', stiffness: 480, damping: 30 },
+      transition: { type: 'spring', stiffness: 620, damping: 30 },
     },
     exit: {
       opacity: 0,
@@ -278,9 +278,20 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
                   dispatch('app:open-account-drawer');
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={avatar} alt="" className={styles.accountAvatar} />
-                <span>Minha conta</span>
+                <span className={styles.accountAvatarWrap}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={avatar} alt="" className={styles.accountAvatar} />
+                  {/* Dot de status — verde quando visível no mapa
+                      (consent ON), cinza quando invisível. */}
+                  <span
+                    className={`${styles.accountDot} ${consent ? styles.accountDotOn : ''}`}
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className={styles.accountLabel}>
+                  <span className={styles.accountKicker}>Meu perfil</span>
+                  Minha conta
+                </span>
               </motion.button>
 
               {/* 7. Visível / Invisível no mapa — toggle integrado

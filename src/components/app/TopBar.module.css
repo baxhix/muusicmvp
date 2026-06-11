@@ -840,6 +840,40 @@
  *  Substituiu o antigo toggle "Online" (mocado). Card full-width
  *  com título + descrição contextual + toggle real (location_consent),
  *  seguido de uma nota fina explicando a aproximação da localização. */
+/* Linha de Fanpoints + ranking abaixo do nome (link pro /app/ranking). */
+.drawerFanpoints {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: rgba(245, 245, 247, 0.62);
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+.drawerFanpoints strong {
+  font-weight: 800;
+  color: #ffffff;
+}
+.drawerFanpoints:hover {
+  color: rgba(245, 245, 247, 0.85);
+}
+.drawerFanpointsRank {
+  font-weight: 800;
+  color: #f0abfc;
+}
+
+/* Trecho em negrito branco dentro das descrições do mapa (per spec
+ * "palavras entre * em bold na cor branca"). */
+.bold {
+  font-weight: 700;
+  color: #ffffff;
+}
+
 .drawerMapRow {
   display: flex;
   align-items: center;
