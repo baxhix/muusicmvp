@@ -1,0 +1,74 @@
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+
+.body {
+  min-width: 0;
+}
+.subject {
+  font-size: 13px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+}
+.actor {
+  font-weight: 600;
+  color: var(--text);
+}
+.copy {
+  font-weight: 400;
+  color: var(--text-mute);
+}
+.meta {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-top: 2px;
+}
+.when {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 40px 18px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+/* Loading skeleton */
+.rowSkeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.skelAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+.skelLine {
+  height: 12px;
+  flex: 1;
+  max-width: 60%;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}

@@ -154,6 +154,7 @@ function mapActivity(rows: BackendActivity[]): ActivityEntry[] {
     return {
       id: r.id,
       type: KIND_TO_TYPE[r.kind],
+      kind: r.kind,
       actor: {
         id: r.user.id,
         name: actorName,

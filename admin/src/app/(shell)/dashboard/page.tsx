@@ -553,6 +553,7 @@ export default function DashboardPage() {
             <div className={styles.activityList}>
               {(activity ?? []).slice(0, 6).map((a) => (
                 <div key={a.id} className={styles.activityItem}>
+                  <Avatar src={a.actor?.avatar} name={a.actor?.name} size="sm" />
                   <div className={styles.activityBody}>
                     {/* Subject built as a single tokenised line so the
                         actor + the song/object stay bold and the
@@ -576,7 +577,7 @@ export default function DashboardPage() {
                 </div>
               ))}
               {(activity?.length ?? 0) > 0 && (
-                <a className={styles.activitySeeAll} href="/users">
+                <a className={styles.activitySeeAll} href="/atividade">
                   Ver todas as atividades
                   <svg
                     width="12"

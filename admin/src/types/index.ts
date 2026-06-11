@@ -359,6 +359,10 @@ export type ActivityType =
 export interface ActivityEntry {
   id: ID;
   type: ActivityType;
+  /** Categoria crua do backend (user_activities.kind), preservada
+   *  além do `type` lossy pra a página de Atividade renderizar um
+   *  badge de categoria coerente (stream/login/chat). */
+  kind?: 'stream' | 'login' | 'chat_started';
   actor: { id: ID; name: string; avatar?: string } | null;
   subject: string;
   meta?: string;

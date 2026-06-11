@@ -1,4 +1,4 @@
-import Badge, { type BadgeTone } from '@/components/ui/Badge';
+import Badge, { type BadgeSize, type BadgeTone } from '@/components/ui/Badge';
 import type { BlogPostStatus } from '@/types/blog';
 
 /** Mapeia status do post pro tone do Badge do design system.
@@ -18,9 +18,18 @@ const LABEL: Record<BlogPostStatus, string> = {
   archived:  'Arquivado',
 };
 
-export default function PostStatusBadge({ status }: { status: BlogPostStatus }) {
+export default function PostStatusBadge({
+  status,
+  size = 'md',
+}: {
+  status: BlogPostStatus;
+  /** Default `md` pra alinhar com StatusBadge/FeedStatusBadge
+   *  (tamanho padrão do design system). Override pra `sm` em
+   *  contextos densos se precisar. */
+  size?: BadgeSize;
+}) {
   return (
-    <Badge tone={TONE[status]} size="sm" dot>
+    <Badge tone={TONE[status]} size={size} dot>
       {LABEL[status]}
     </Badge>
   );

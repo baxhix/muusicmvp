@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   IconDashboard,
   IconUsers,
+  IconActivity,
   IconStar,
   IconTrendingUp,
   IconGrid,
@@ -104,6 +105,7 @@ type NavEntry = NavLeaf | NavGroup;
 const NAV: NavEntry[] = [
   { kind: 'leaf', href: '/dashboard', label: 'Dashboard', icon: IconDashboard },
   { kind: 'leaf', href: '/users',     label: 'Usuários',  icon: IconUsers },
+  { kind: 'leaf', href: '/atividade', label: 'Atividade', icon: IconActivity },
 
   {
     kind: 'group',
