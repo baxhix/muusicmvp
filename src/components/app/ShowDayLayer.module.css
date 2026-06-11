@@ -329,13 +329,16 @@
 /* Mesmo estilo do botão "Baixar" do Lightbox de materiais: borda com
  * gradiente laranja→rosa→roxo + fill #0a0a0e, pill 999px, 12.5px/600. */
 .badgeCta {
-  width: 100%;
+  /* Largura encolhe pro conteúdo (3 avatares + label) e centraliza,
+   * em vez de ocupar 100% do card. */
+  width: auto;
+  align-self: center;
   margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 7px 0;
+  padding: 7px 16px;
   border: 1.5px solid transparent;
   border-radius: 999px;
   background:

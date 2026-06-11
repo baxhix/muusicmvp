@@ -51,9 +51,9 @@ const BADGE_BOX_MIN = 9.2; // badge vira box (foto + título + CTA)
 /** Foto do box (z ≥ 9.2). */
 const SHOW_PHOTO = '/show-day/show-1.jpg';
 
-/** 4 rostos pra empilhar no CTA "Entrar no chat" (mesmos fãs do
+/** 3 rostos pra empilhar no CTA "Entrar no chat" (mesmos fãs do
  *  chat do show) — reforça o "tem gente aqui agora". */
-const CTA_FACES = SHOW_DAY_FANS.slice(0, 4).map((f) => f.avatarUrl);
+const CTA_FACES = SHOW_DAY_FANS.slice(0, 3).map((f) => f.avatarUrl);
 
 type BadgeLevel = 'none' | 'simple' | 'city' | 'box';
 
