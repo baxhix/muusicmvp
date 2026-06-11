@@ -11,6 +11,10 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useRanking } from '@/hooks/useRanking';
 import { useCommunities } from '@/hooks/useCommunities';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { api } from '@/lib/api/client';
+import { track } from '@/lib/analytics';
+import MotionSwitch from './MotionSwitch';
 import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
 import styles from './ProfilePanel.module.css';
 
@@ -243,6 +247,42 @@ export default function ProfilePanel({
   const [reportMenuOpen, setReportMenuOpen] = useState(false);
   const reportMenuRef = useRef<HTMLDivElement | null>(null);
 
+  // ── "Aparecer no mapa" = consentimento LGPD real (own-profile) ──
+  // Vive aqui (logo abaixo do toggle Online) pra gestão fácil. Espelha
+  // authUser.locationConsent + persiste no PATCH /api/me/location-consent;
+  // a revogação tira o usuário do mapa dos outros na hora (listOnlineUsers
+  // filtra por location_consent). Optimistic + rollback + toast no erro.
+  const { user: authUser, refresh: refreshAuth } = useAuth();
+  const isMinor = Boolean(authUser?.isMinor);
+  const [appearOnMap, setAppearOnMap] = useState(Boolean(authUser?.locationConsent));
+  const [consentBusy, setConsentBusy] = useState(false);
+  useEffect(() => {
+    setAppearOnMap(Boolean(authUser?.locationConsent));
+  }, [authUser?.locationConsent]);
+  const handleAppearOnMap = async (next: boolean) => {
+    if (consentBusy || isMinor) return;
+    setAppearOnMap(next);
+    setConsentBusy(true);
+    try {
+      await api.patch('/api/me/location-consent', { consent: next });
+      if (next) track('location_consent_granted', { surface: 'settings' });
+      else track('location_consent_revoked', {});
+      await refreshAuth();
+    } catch (err) {
+      setAppearOnMap(!next); // rollback
+      console.error('location consent toggle failed:', err);
+      try {
+        window.dispatchEvent(
+          new CustomEvent('app:toast', {
+            detail: { message: 'Não consegui atualizar sua visibilidade no mapa. Tenta de novo.' },
+          }),
+        );
+      } catch { /* SSR */ }
+    } finally {
+      setConsentBusy(false);
+    }
+  };
+
   // Click-outside dismisses the report dropdown so it doesn't trap
   // focus when the user moves on.
   useEffect(() => {
@@ -423,6 +463,27 @@ export default function ProfilePanel({
             )}
           </div>
         ) : null}
+
+        {/* ── Aparecer no mapa (own-profile) — logo abaixo do Online ──
+            Consentimento LGPD real, gerenciável direto daqui. */}
+        {isOwnProfile && (
+          <div className={styles.mapRow}>
+            <div className={styles.mapRowText}>
+              <span className={styles.mapRowTitle}>Aparecer no mapa</span>
+              <span className={styles.mapRowDesc}>
+                {isMinor
+                  ? 'Indisponível para menores de 18 anos.'
+                  : 'Mostra você no mapa pros outros fãs (localização aproximada). Desligar te esconde na hora.'}
+              </span>
+            </div>
+            <MotionSwitch
+              checked={appearOnMap}
+              onCheckedChange={handleAppearOnMap}
+              disabled={isMinor || consentBusy}
+              ariaLabel="Aparecer no mapa"
+            />
+          </div>
+        )}
 
         {/* ── Botões de ação ──────────────────────────────
             Own profile:  [ — removed — ] per spec "remova os

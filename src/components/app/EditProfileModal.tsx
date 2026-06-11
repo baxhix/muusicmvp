@@ -10,17 +10,12 @@ import {
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { api, ApiError } from '@/lib/api/client';
-import { track } from '@/lib/analytics';
-import MotionSwitch from './MotionSwitch';
 import styles from './EditProfileModal.module.css';
 
 interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
 }
-
-/* Toggle local removido — substituído pelo MotionSwitch
- * compartilhado (animação spring no thumb via motion). */
 
 /** Generic silhouette used while a user hasn't uploaded their
  *  own avatar yet. Previous code seeded a deterministic
@@ -35,21 +30,11 @@ const PLACEHOLDER_AVATAR = '/avatar-placeholder.svg';
 
 export default function EditProfileModal({ open, onClose }: EditProfileModalProps) {
   const { user, refresh } = useAuth();
-  // Menor de idade nunca compartilha localização (LGPD) — o toggle
-  // fica desabilitado/off.
-  const isMinor = Boolean(user?.isMinor);
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
 
   // Form state (initialised when the modal opens from current user values).
   const [name, setName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [language, setLanguage] = useState<'pt' | 'en' | 'es'>('pt');
-  /* "Aparecer no Mapa" agora é o consentimento LGPD REAL
-   * (users.location_consent) — espelha user.locationConsent e
-   * persiste no PATCH /api/me/location-consent (não é mais mock).
-   * Desligar zera a localização e tira o usuário do mapa pros outros. */
-  const [appearOnMap, setAppearOnMap] = useState(false);
-  const [consentBusy, setConsentBusy] = useState(false);
 
   // Loading flags & feedback
   const [avatarBusy, setAvatarBusy] = useState(false);
@@ -66,7 +51,6 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
     if (justOpened && user) {
       setName(user.name ?? '');
       setAvatarUrl(user.avatarUrl ?? null);
-      setAppearOnMap(Boolean(user.locationConsent));
       setError(null);
     }
     prevOpenRef.current = open;
@@ -189,29 +173,6 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
     }
   };
 
-  /* Toggle "Aparecer no Mapa" = consentimento LGPD real. Persiste na
-   * hora (PATCH /api/me/location-consent) + refresh — assim some pros
-   * outros usuários (listOnlineUsers filtra por location_consent e a
-   * revogação zera lat/lng/city) e o estado sobrevive ao reload (vem
-   * de user.locationConsent no /api/auth/me). Optimistic + rollback. */
-  const handleAppearOnMap = async (next: boolean) => {
-    if (consentBusy || isMinor) return;
-    setAppearOnMap(next);
-    setConsentBusy(true);
-    try {
-      await api.patch('/api/me/location-consent', { consent: next });
-      if (next) track('location_consent_granted', { surface: 'settings' });
-      else track('location_consent_revoked', {});
-      await refresh();
-    } catch (err) {
-      setAppearOnMap(!next); // rollback
-      console.error('location consent toggle failed:', err);
-      setError('Não consegui atualizar a visibilidade no mapa. Tenta de novo.');
-    } finally {
-      setConsentBusy(false);
-    }
-  };
-
   const displayAvatar = avatarUrl ?? PLACEHOLDER_AVATAR;
 
   // The whole `/app/*` shell lives inside `.shell` (position:fixed,
@@ -320,56 +281,9 @@ export default function EditProfileModal({ open, onClose }: EditProfileModalProp
           </div>
 
           {error && <div className={styles.errorBox}>{error}</div>}
-
-          {/* Idioma do app (mock até backend de preferências) */}
-          <h3 className={styles.sectionTitle}>Idioma do app</h3>
-          <p className={styles.sectionDesc}>
-            Escolha o idioma que você prefere usar no aplicativo.
-          </p>
-          <div className={styles.langPills}>
-            <button
-              type="button"
-              className={`${styles.langPill} ${language === 'pt' ? styles.langPillActive : ''}`}
-              onClick={() => setLanguage('pt')}
-            >
-              Português (Brasil)
-            </button>
-            <button
-              type="button"
-              className={`${styles.langPill} ${language === 'en' ? styles.langPillActive : ''}`}
-              onClick={() => setLanguage('en')}
-            >
-              English
-            </button>
-            <button
-              type="button"
-              className={`${styles.langPill} ${language === 'es' ? styles.langPillActive : ''}`}
-              onClick={() => setLanguage('es')}
-            >
-              Español
-            </button>
-          </div>
-
-          {/* "Aparecer no Mapa" = consentimento de localização LGPD
-              (real, persistido). Único toggle de visibilidade — os mocks
-              "Permitir Interações" e "Total de Streams" foram removidos
-              por não terem backend de preferências. */}
-          <div className={styles.toggleRow}>
-            <div className={styles.toggleRowTop}>
-              <span className={styles.toggleTitle}>Aparecer no Mapa</span>
-              <MotionSwitch
-                checked={appearOnMap}
-                onCheckedChange={handleAppearOnMap}
-                disabled={isMinor || consentBusy}
-                ariaLabel="Aparecer no Mapa"
-              />
-            </div>
-            <p className={styles.toggleDesc}>
-              {isMinor
-                ? 'Indisponível para menores de 18 anos.'
-                : 'Mostra você no mapa pros outros fãs com cidade e localização aproximada (nunca exata). Desligar te esconde do mapa na hora; religar te mostra de novo.'}
-            </p>
-          </div>
+          {/* "Aparecer no Mapa" foi movido pro ProfilePanel (Meu Perfil),
+              logo abaixo do toggle Online, pra gestão mais fácil. O bloco
+              de idiomas foi removido (mock sem backend de preferências). */}
         </div>
 
         <footer className={styles.footer}>
