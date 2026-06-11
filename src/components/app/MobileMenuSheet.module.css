@@ -112,12 +112,16 @@
   min-width: 0;
 }
 .toggleLabel {
+  /* Menor que os demais itens pra "Invisível no mapa" não quebrar em
+   * duas linhas (cabe ao lado do avatar + switch). */
+  font-size: clamp(19px, 5vw, 24px);
   line-height: 1.05;
+  white-space: nowrap;
 }
 .toggleCaption {
   font-family: var(--font-inter), sans-serif;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1.25;
   color: rgba(245, 245, 247, 0.5);
