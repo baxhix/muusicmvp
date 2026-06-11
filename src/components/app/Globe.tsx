@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import mapboxgl from 'mapbox-gl';
 import { globeStore } from '@/lib/globeStore';
+import { LONDRINA, LISBON } from '@/lib/anaFlight';
 import { loadGlobeCamera, saveGlobeCamera } from '@/lib/globeCamera';
 import { track } from '@/lib/analytics';
 import { getSocket } from '@/lib/socket/client';
@@ -529,7 +530,16 @@ export default function Globe() {
             5, 1.8,
             10, 2.4,
           ],
-          'line-dasharray': [3, 3],
+          // Traços menores (estilo pontilhado fino) — principalmente
+          //  no zoom de 2 a 4, onde o traço comprido boiava solto.
+          //  `step` porque line-dasharray só aceita expressão de zoom
+          //  não-interpolada. Abaixo de z4 fica bem curtinho; a partir
+          //  de z4 cresce um pouco mas ainda menor que o [3,3] antigo.
+          'line-dasharray': [
+            'step', ['zoom'],
+            [1.6, 2.2],
+            4, [2.4, 2.6],
+          ],
         },
       });
 
@@ -582,6 +592,66 @@ export default function Globe() {
             10, 1.8,
           ],
           'line-opacity': 1,
+        },
+      });
+
+      // Endpoint nodes — círculos fixos ancorando o trajeto na
+      //  origem (Londrina) e no destino (Lisboa). Sem eles a linha
+      //  tracejada fica "avulsa", boiando sem início/fim claros.
+      //  Coords são constantes (endpoints não se movem), então a
+      //  source é populada uma vez aqui. Halo suave por baixo +
+      //  núcleo branco com anel rosa por cima — casa com a paleta
+      //  do traço (roxo→rosa). Adicionadas por último → ficam acima
+      //  das linhas (o avião é DOM Marker, sempre acima do canvas).
+      map.addSource('ana-flight-endpoints', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: { role: 'origin' },
+              geometry: { type: 'Point', coordinates: [LONDRINA.lng, LONDRINA.lat] },
+            },
+            {
+              type: 'Feature',
+              properties: { role: 'destination' },
+              geometry: { type: 'Point', coordinates: [LISBON.lng, LISBON.lat] },
+            },
+          ],
+        },
+      });
+      map.addLayer({
+        id: 'ana-flight-endpoint-halo',
+        type: 'circle',
+        source: 'ana-flight-endpoints',
+        paint: {
+          'circle-color': '#ec4899',
+          'circle-blur': 0.8,
+          'circle-opacity': 0.28,
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            2, 6,
+            6, 8.5,
+            10, 11,
+          ],
+        },
+      });
+      map.addLayer({
+        id: 'ana-flight-endpoint-core',
+        type: 'circle',
+        source: 'ana-flight-endpoints',
+        paint: {
+          'circle-color': '#ffffff',
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            2, 2.6,
+            6, 3.4,
+            10, 4.4,
+          ],
+          'circle-stroke-color': '#ec4899',
+          'circle-stroke-width': 1.6,
+          'circle-stroke-opacity': 0.95,
         },
       });
     });
