@@ -120,19 +120,35 @@ function beamHeightFor(zoom: number): number {
 const ARENA_SVG = `
 <svg viewBox="0 0 128 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <linearGradient id="sdScreenGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#c084fc"/>
-      <stop offset="0.5" stop-color="#e879f9"/>
-      <stop offset="1" stop-color="#f472b6"/>
+    <radialGradient id="sdSky" cx="0.5" cy="0.32" r="0.78">
+      <stop offset="0" stop-color="#3d1268"/>
+      <stop offset="0.46" stop-color="#1b0a32"/>
+      <stop offset="1" stop-color="#06030e"/>
+    </radialGradient>
+    <linearGradient id="sdScreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fce7f3"/>
+      <stop offset="0.32" stop-color="#f472b6"/>
+      <stop offset="0.68" stop-color="#c026d3"/>
+      <stop offset="1" stop-color="#7c3aed"/>
     </linearGradient>
-    <linearGradient id="sdDeckGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4338ca"/>
-      <stop offset="1" stop-color="#1e1b4b"/>
+    <linearGradient id="sdDeck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26113a"/>
+      <stop offset="1" stop-color="#090413"/>
     </linearGradient>
-    <radialGradient id="sdGlowGrad" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#ec4899" stop-opacity="0.6"/>
+    <radialGradient id="sdGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ec4899" stop-opacity="0.7"/>
       <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="sdRayP" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5d0fe" stop-opacity="0.9"/>
+      <stop offset="0.55" stop-color="#d946ef" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sdRayK" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbcfe8" stop-opacity="0.9"/>
+      <stop offset="0.55" stop-color="#f472b6" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+    </linearGradient>
     <radialGradient id="sdPoolP" cx="0.5" cy="0.5" r="0.5">
       <stop offset="0" stop-color="#a855f7" stop-opacity="0.95"/>
       <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
@@ -141,86 +157,154 @@ const ARENA_SVG = `
       <stop offset="0" stop-color="#ec4899" stop-opacity="0.95"/>
       <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="sdHaze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c084fc" stop-opacity="0"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0.2"/>
+    </linearGradient>
   </defs>
   <style>
+    .sdRay{transform-box:fill-box;transform-origin:50% 0;mix-blend-mode:screen;animation:sdsvgRay 4.6s ease-in-out infinite}
+    .sdRayB{animation-duration:5.4s;animation-delay:-1.7s}
+    .sdRayC{animation-duration:5s;animation-delay:-2.8s}
+    .sdRayD{animation-duration:5.8s;animation-delay:-.9s}
+    .sdRayE{animation-duration:4.9s;animation-delay:-3.4s}
     .sdPool{transform-box:fill-box;transform-origin:center;mix-blend-mode:screen;animation:sdsvgPool 3.2s ease-in-out infinite}
     .sdPoolB{animation-duration:3.8s;animation-delay:-1.2s}
     .sdPoolC{animation-duration:4.4s;animation-delay:-.6s}
     .sdLens{animation:sdsvgLens 2.2s ease-in-out infinite}
+    .sdStar{animation:sdsvgStar 2.6s ease-in-out infinite}
+    @keyframes sdsvgRay{0%,100%{transform:rotate(-7deg);opacity:.55}50%{transform:rotate(7deg);opacity:.95}}
     @keyframes sdsvgPool{0%,100%{opacity:.5;transform:scaleX(1)}50%{opacity:.85;transform:scaleX(1.14)}}
-    @keyframes sdsvgLens{0%,100%{opacity:.55}50%{opacity:1}}
-    @media (max-width:768px){.sdPool,.sdLens{animation:none}}
-    @media (prefers-reduced-motion:reduce){.sdPool,.sdLens{animation:none}}
+    @keyframes sdsvgLens{0%,100%{opacity:.45}50%{opacity:1}}
+    @keyframes sdsvgStar{0%,100%{opacity:.2}50%{opacity:1}}
+    @media (max-width:768px){.sdRay,.sdPool,.sdLens,.sdStar{animation:none}}
+    @media (prefers-reduced-motion:reduce){.sdRay,.sdPool,.sdLens,.sdStar{animation:none}}
   </style>
 
-  <!-- Cobertura / teto arqueado -->
-  <path d="M14 18 Q64 1 114 18 L114 21 Q64 5 14 21 Z" fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.8" stroke-opacity="0.45"/>
-  <path d="M16 17.5 Q64 2.5 112 17.5" fill="none" stroke="#c4b5fd" stroke-width="1.1" stroke-opacity="0.75"/>
+  <!-- Fundo escuro de arena (mood roxo profundo) -->
+  <ellipse cx="64" cy="39" rx="63" ry="49" fill="url(#sdSky)"/>
+  <!-- Glow rosa atrás do telão -->
+  <ellipse cx="64" cy="43" rx="41" ry="29" fill="url(#sdGlow)" opacity="0.6"/>
 
-  <!-- Glow de fundo do palco -->
-  <ellipse cx="64" cy="42" rx="42" ry="30" fill="url(#sdGlowGrad)" opacity="0.5"/>
-
-  <!-- Telão de LED -->
-  <rect x="40" y="30" width="48" height="28" rx="2.5" fill="url(#sdScreenGrad)" opacity="0.92"/>
-  <g stroke="#fdf4ff" stroke-opacity="0.2" stroke-width="0.7">
-    <line x1="43" y1="38" x2="85" y2="38"/><line x1="43" y1="44" x2="85" y2="44"/><line x1="43" y1="50" x2="85" y2="50"/>
+  <!-- Treliça do teto (arco) -->
+  <g stroke="#6d4aa8" stroke-width="0.7" stroke-opacity="0.7" stroke-linecap="round" fill="none">
+    <path d="M16 18.5 Q64 12.5 112 18.5"/>
+    <path d="M16 23.5 Q64 17.7 112 23.5"/>
+    <path d="M18 23.2 L24 18.9 L30 22.9 L36 18.7 L42 22.7 L48 18.5 L54 22.6 L60 18.4 L68 18.4 L74 22.6 L80 18.5 L86 22.7 L92 18.7 L98 22.9 L104 18.9 L110 23.2"/>
   </g>
-  <rect x="40" y="30" width="48" height="28" rx="2.5" fill="none" stroke="#fce7f3" stroke-width="1" stroke-opacity="0.55"/>
+  <path d="M16 18.3 Q64 12.3 112 18.3" stroke="#d8b4fe" stroke-width="0.8" stroke-opacity="0.55" fill="none"/>
+
+  <!-- Colunas treliçadas -->
+  <g stroke="#6d4aa8" stroke-width="0.7" stroke-opacity="0.65" stroke-linecap="round" fill="none">
+    <line x1="19.5" y1="23" x2="19.5" y2="78"/>
+    <line x1="25.5" y1="23" x2="25.5" y2="78"/>
+    <path d="M19.5 27 L25.5 31 M25.5 35 L19.5 39 M19.5 43 L25.5 47 M25.5 51 L19.5 55 M19.5 59 L25.5 63 M25.5 67 L19.5 71"/>
+    <line x1="19.5" y1="31" x2="25.5" y2="31"/><line x1="19.5" y1="43" x2="25.5" y2="43"/><line x1="19.5" y1="55" x2="25.5" y2="55"/><line x1="19.5" y1="67" x2="25.5" y2="67"/>
+    <line x1="102.5" y1="23" x2="102.5" y2="78"/>
+    <line x1="108.5" y1="23" x2="108.5" y2="78"/>
+    <path d="M108.5 27 L102.5 31 M102.5 35 L108.5 39 M108.5 43 L102.5 47 M102.5 51 L108.5 55 M108.5 59 L102.5 63 M102.5 67 L108.5 71"/>
+    <line x1="102.5" y1="31" x2="108.5" y2="31"/><line x1="102.5" y1="43" x2="108.5" y2="43"/><line x1="102.5" y1="55" x2="108.5" y2="55"/><line x1="102.5" y1="67" x2="108.5" y2="67"/>
+  </g>
+  <!-- Tiras de pixel LED nas colunas (glow rosa) -->
+  <g class="sdLens" fill="#f0abfc">
+    <rect x="21.6" y="30" width="2" height="3" rx="0.6" style="animation-delay:-0.3s"/>
+    <rect x="21.6" y="38" width="2" height="3" rx="0.6" style="animation-delay:-1.1s"/>
+    <rect x="21.6" y="46" width="2" height="3" rx="0.6" style="animation-delay:-0.7s"/>
+    <rect x="21.6" y="54" width="2" height="3" rx="0.6" style="animation-delay:-1.6s"/>
+    <rect x="21.6" y="62" width="2" height="3" rx="0.6" style="animation-delay:-0.5s"/>
+    <rect x="104.4" y="30" width="2" height="3" rx="0.6" style="animation-delay:-0.9s"/>
+    <rect x="104.4" y="38" width="2" height="3" rx="0.6" style="animation-delay:-0.2s"/>
+    <rect x="104.4" y="46" width="2" height="3" rx="0.6" style="animation-delay:-1.3s"/>
+    <rect x="104.4" y="54" width="2" height="3" rx="0.6" style="animation-delay:-0.6s"/>
+    <rect x="104.4" y="62" width="2" height="3" rx="0.6" style="animation-delay:-1.8s"/>
+  </g>
 
   <!-- Line-arrays pendurados (flanqueando o telão) -->
-  <g fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.7" stroke-opacity="0.6">
-    <line x1="33" y1="25" x2="33" y2="30" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
-    <rect x="30" y="30" width="6" height="4" rx="1"/><rect x="30.3" y="34.6" width="5.4" height="4" rx="1"/><rect x="30.6" y="39.2" width="4.8" height="4" rx="1"/><rect x="30.9" y="43.8" width="4.2" height="4" rx="1"/>
-    <line x1="95" y1="25" x2="95" y2="30" stroke="#a5b4fc" stroke-width="1" stroke-opacity="0.7"/>
-    <rect x="92" y="30" width="6" height="4" rx="1"/><rect x="92.3" y="34.6" width="5.4" height="4" rx="1"/><rect x="92.6" y="39.2" width="4.8" height="4" rx="1"/><rect x="92.9" y="43.8" width="4.2" height="4" rx="1"/>
+  <g fill="url(#sdDeck)" stroke="#6d4aa8" stroke-width="0.6" stroke-opacity="0.55">
+    <line x1="34" y1="24" x2="34" y2="29" stroke="#8b5cf6" stroke-width="0.9" stroke-opacity="0.6"/>
+    <rect x="31" y="29" width="6" height="3.4" rx="1"/><rect x="31.3" y="33" width="5.4" height="3.4" rx="1"/><rect x="31.6" y="37" width="4.8" height="3.4" rx="1"/><rect x="31.9" y="41" width="4.2" height="3.4" rx="1"/>
+    <line x1="94" y1="24" x2="94" y2="29" stroke="#8b5cf6" stroke-width="0.9" stroke-opacity="0.6"/>
+    <rect x="91" y="29" width="6" height="3.4" rx="1"/><rect x="91.3" y="33" width="5.4" height="3.4" rx="1"/><rect x="91.6" y="37" width="4.8" height="3.4" rx="1"/><rect x="91.9" y="41" width="4.2" height="3.4" rx="1"/>
   </g>
 
-  <!-- Colunas sólidas + viga superior sólida (sem treliça) -->
-  <g fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.8" stroke-opacity="0.5">
-    <rect x="18" y="19" width="92" height="6" rx="1.5"/>
-    <rect x="18" y="20" width="8" height="56" rx="2"/>
-    <rect x="102" y="20" width="8" height="56" rx="2"/>
+  <!-- Telão de LED (gradiente rosa→roxo) -->
+  <rect x="40" y="29.5" width="48" height="29" rx="2.5" fill="url(#sdScreen)"/>
+  <!-- Equalizer / conteúdo na tela -->
+  <g fill="#fdf4ff" fill-opacity="0.42">
+    <rect x="45" y="46" width="2.6" height="8" rx="0.6"/>
+    <rect x="49.5" y="41" width="2.6" height="13" rx="0.6"/>
+    <rect x="54" y="48" width="2.6" height="6" rx="0.6"/>
+    <rect x="58.5" y="38" width="2.6" height="16" rx="0.6"/>
+    <rect x="63" y="44" width="2.6" height="10" rx="0.6"/>
+    <rect x="67.5" y="40" width="2.6" height="14" rx="0.6"/>
+    <rect x="72" y="47" width="2.6" height="7" rx="0.6"/>
+    <rect x="76.5" y="42" width="2.6" height="12" rx="0.6"/>
+    <rect x="81" y="45" width="2.6" height="9" rx="0.6"/>
   </g>
-  <!-- realce vertical das colunas (leitura de volume sólido) -->
-  <g stroke="#c4b5fd" stroke-width="0.9" stroke-opacity="0.5" stroke-linecap="round">
-    <line x1="20.5" y1="22" x2="20.5" y2="74"/>
-    <line x1="104.5" y1="22" x2="104.5" y2="74"/>
+  <g stroke="#fdf4ff" stroke-opacity="0.12" stroke-width="0.6"><line x1="42" y1="36" x2="86" y2="36"/><line x1="42" y1="58" x2="86" y2="58"/></g>
+  <rect x="40" y="29.5" width="48" height="29" rx="2.5" fill="none" stroke="#fbcfe8" stroke-width="0.9" stroke-opacity="0.6"/>
+
+  <!-- Viga frontal + moving heads (lentes piscam) -->
+  <rect x="18" y="22.5" width="92" height="3.2" rx="1.2" fill="url(#sdDeck)" stroke="#6d4aa8" stroke-width="0.6" stroke-opacity="0.5"/>
+  <g fill="#1a0f2e" stroke="#6d4aa8" stroke-width="0.45" stroke-opacity="0.6">
+    <rect x="44" y="26" width="3" height="2.6" rx="0.6"/><rect x="52" y="26" width="3" height="2.6" rx="0.6"/><rect x="60" y="26" width="3" height="2.6" rx="0.6"/><rect x="68" y="26" width="3" height="2.6" rx="0.6"/><rect x="76" y="26" width="3" height="2.6" rx="0.6"/><rect x="84" y="26" width="3" height="2.6" rx="0.6"/>
+  </g>
+  <g fill="#fdf4ff">
+    <circle class="sdLens" cx="45.5" cy="29" r="1.1" style="animation-delay:-0.2s"/><circle class="sdLens" cx="53.5" cy="29" r="1.1" style="animation-delay:-1.4s"/><circle class="sdLens" cx="61.5" cy="29" r="1.1" style="animation-delay:-0.7s"/><circle class="sdLens" cx="69.5" cy="29" r="1.1" style="animation-delay:-1.9s"/><circle class="sdLens" cx="77.5" cy="29" r="1.1" style="animation-delay:-0.5s"/><circle class="sdLens" cx="85.5" cy="29" r="1.1" style="animation-delay:-1.1s"/>
   </g>
 
-  <!-- PARs / moving heads na viga frontal (lentes piscam) -->
-  <g fill="#312e81" stroke="#a5b4fc" stroke-width="0.5" stroke-opacity="0.6">
-    <rect x="42.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="50.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="58.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="66.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="74.5" y="26" width="3" height="2.6" rx="0.6"/><rect x="82.5" y="26" width="3" height="2.6" rx="0.6"/>
-  </g>
-  <g fill="#fef9c3">
-    <circle class="sdLens" cx="44" cy="29.2" r="1.15" style="animation-delay:-0.2s"/><circle class="sdLens" cx="52" cy="29.2" r="1.15" style="animation-delay:-1.4s"/><circle class="sdLens" cx="60" cy="29.2" r="1.15" style="animation-delay:-0.7s"/><circle class="sdLens" cx="68" cy="29.2" r="1.15" style="animation-delay:-1.9s"/><circle class="sdLens" cx="76" cy="29.2" r="1.15" style="animation-delay:-0.5s"/><circle class="sdLens" cx="84" cy="29.2" r="1.15" style="animation-delay:-1.1s"/>
+  <!-- Palco (deck em perspectiva) + reflexo + passarela -->
+  <path d="M14 76 H114 L120 90 H8 Z" fill="url(#sdDeck)" stroke="#6d4aa8" stroke-width="0.7" stroke-opacity="0.4"/>
+  <path d="M40 76 H88 L92 83 H36 Z" fill="url(#sdScreen)" opacity="0.12"/>
+  <line x1="14" y1="76" x2="114" y2="76" stroke="#e9d5ff" stroke-width="1.2" stroke-opacity="0.8" stroke-linecap="round"/>
+  <path d="M56 76 H72 L76 84 H52 Z" fill="#1a0f2e" stroke="#6d4aa8" stroke-width="0.5" stroke-opacity="0.5"/>
+
+  <!-- Feixes volumétricos varrendo (na frente do telão, mix screen) -->
+  <g>
+    <polygon class="sdRay" points="50,28 40,88 60,88" fill="url(#sdRayP)"/>
+    <polygon class="sdRay sdRayB" points="64,27 52,90 76,90" fill="url(#sdRayK)"/>
+    <polygon class="sdRay sdRayC" points="78,28 68,88 88,88" fill="url(#sdRayP)"/>
+    <polygon class="sdRay sdRayD" points="42,29 34,84 50,84" fill="url(#sdRayK)"/>
+    <polygon class="sdRay sdRayE" points="87,29 78,84 96,84" fill="url(#sdRayP)"/>
   </g>
 
-  <!-- Palco (deck em perspectiva) + escada central -->
-  <path d="M14 76 H114 L120 88 H8 Z" fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.8" stroke-opacity="0.45"/>
-  <line x1="14" y1="76" x2="114" y2="76" stroke="#c4b5fd" stroke-width="1.3" stroke-opacity="0.85" stroke-linecap="round"/>
-  <path d="M55 76 H73 L77 84 H51 Z" fill="#312e81" stroke="#a5b4fc" stroke-width="0.6" stroke-opacity="0.45"/>
-
-  <!-- Poças de luz no chão (luzes cênicas batendo no deck) -->
-  <ellipse class="sdPool sdPoolA" cx="51" cy="74" rx="13" ry="3.4" fill="url(#sdPoolP)"/>
-  <ellipse class="sdPool sdPoolB" cx="77" cy="74" rx="13" ry="3.4" fill="url(#sdPoolK)"/>
+  <!-- Poças de luz no chão -->
+  <ellipse class="sdPool" cx="50" cy="74" rx="13" ry="3.3" fill="url(#sdPoolP)"/>
+  <ellipse class="sdPool sdPoolB" cx="78" cy="74" rx="13" ry="3.3" fill="url(#sdPoolK)"/>
   <ellipse class="sdPool sdPoolC" cx="64" cy="75" rx="11" ry="3" fill="url(#sdPoolP)"/>
 
-  <!-- Subwoofers / PA nas laterais do palco -->
-  <g fill="#0b0712" stroke="#a5b4fc" stroke-width="0.5" stroke-opacity="0.5">
-    <rect x="13" y="79" width="13" height="5" rx="1"/><rect x="13" y="84.4" width="13" height="5" rx="1"/>
-    <rect x="102" y="79" width="13" height="5" rx="1"/><rect x="102" y="84.4" width="13" height="5" rx="1"/>
+  <!-- Névoa / haze sobre o palco -->
+  <rect x="8" y="64" width="112" height="22" fill="url(#sdHaze)" style="mix-blend-mode:screen" opacity="0.7"/>
+
+  <!-- PA / subwoofers laterais -->
+  <g fill="#0b0712" stroke="#6d4aa8" stroke-width="0.45" stroke-opacity="0.5">
+    <rect x="13" y="79" width="12" height="5" rx="1"/><rect x="13" y="84.4" width="12" height="5" rx="1"/>
+    <rect x="103" y="79" width="12" height="5" rx="1"/><rect x="103" y="84.4" width="12" height="5" rx="1"/>
   </g>
-  <g fill="#312e81">
-    <circle cx="19.5" cy="81.5" r="1.5"/><circle cx="19.5" cy="86.9" r="1.5"/><circle cx="108.5" cy="81.5" r="1.5"/><circle cx="108.5" cy="86.9" r="1.5"/>
+  <g fill="#7c3aed">
+    <circle cx="19" cy="81.5" r="1.4"/><circle cx="19" cy="86.9" r="1.4"/><circle cx="109" cy="81.5" r="1.4"/><circle cx="109" cy="86.9" r="1.4"/>
   </g>
 
-  <!-- Plateia (silhueta + luzinhas de celular) -->
-  <path d="M2 100 V94 Q9 90 15 94 Q22 90 28 94 Q35 91 41 94 Q48 90 54 94 Q61 91 67 94 Q74 90 80 94 Q87 91 93 94 Q100 90 106 94 Q113 91 119 94 Q124 91 126 94 V100 Z" fill="#06030b"/>
-  <g stroke="#06030b" stroke-width="1.1" stroke-linecap="round">
-    <path d="M24 93 V89"/><path d="M58 93 V88"/><path d="M96 93 V89"/>
+  <!-- Plateia: silhueta + mar de luzes (piscando) -->
+  <path d="M2 100 V93 Q9 89 15 93 Q22 89 28 93 Q35 90 41 93 Q48 89 54 93 Q61 90 67 93 Q74 89 80 93 Q87 90 93 93 Q100 89 106 93 Q113 90 119 93 Q124 90 126 93 V100 Z" fill="#05020a"/>
+  <g class="sdStar" fill="#fde68a">
+    <circle cx="14" cy="91" r="0.7" style="animation-delay:-0.2s"/>
+    <circle cx="24" cy="89.6" r="0.7" style="animation-delay:-1.3s"/>
+    <circle cx="33" cy="91.4" r="0.7" style="animation-delay:-0.6s"/>
+    <circle cx="44" cy="89.2" r="0.7" style="animation-delay:-1.8s"/>
+    <circle cx="58" cy="90.6" r="0.7" style="animation-delay:-0.9s"/>
+    <circle cx="71" cy="89.4" r="0.7" style="animation-delay:-2.1s"/>
+    <circle cx="84" cy="91" r="0.7" style="animation-delay:-0.4s"/>
+    <circle cx="96" cy="89.6" r="0.7" style="animation-delay:-1.5s"/>
+    <circle cx="107" cy="91.2" r="0.7" style="animation-delay:-0.8s"/>
+    <circle cx="116" cy="90" r="0.7" style="animation-delay:-2.3s"/>
   </g>
-  <g fill="#fde68a">
-    <circle cx="34" cy="91" r="0.8"/><circle cx="71" cy="90.4" r="0.8"/><circle cx="104" cy="91" r="0.8"/>
+  <g class="sdStar" fill="#f9a8d4">
+    <circle cx="19" cy="90.4" r="0.6" style="animation-delay:-1s"/>
+    <circle cx="39" cy="90.8" r="0.6" style="animation-delay:-0.3s"/>
+    <circle cx="64" cy="89.8" r="0.6" style="animation-delay:-1.7s"/>
+    <circle cx="90" cy="90.6" r="0.6" style="animation-delay:-0.7s"/>
+    <circle cx="112" cy="90.8" r="0.6" style="animation-delay:-2s"/>
   </g>
 </svg>`;
 

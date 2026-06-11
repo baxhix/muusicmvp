@@ -370,11 +370,13 @@
 /* ── Palco (arena) — só a partir de z8 ─────────────────────── */
 .arena {
   display: none;
-  width: 128px;
-  height: 100px;
+  width: 136px;
+  height: 106px;
+  /* Glow roxo + rosa pra integrar o palco mais dark ao mapa. */
   filter:
-    drop-shadow(0 0 16px rgba(236, 72, 153, 0.5))
-    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+    drop-shadow(0 0 10px rgba(168, 85, 247, 0.55))
+    drop-shadow(0 0 22px rgba(236, 72, 153, 0.4))
+    drop-shadow(0 3px 7px rgba(0, 0, 0, 0.7));
 }
 .wrap[data-stage='on'] .arena {
   display: block;
