@@ -124,8 +124,8 @@
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1.25;
-  color: rgba(245, 245, 247, 0.5);
-  -webkit-text-fill-color: rgba(245, 245, 247, 0.5);
+  color: #8a8a8f;
+  -webkit-text-fill-color: #8a8a8f;
 }
 
 /* Avatar + dot de status — agora junto do "Visível no mapa" (toggle).
