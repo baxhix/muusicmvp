@@ -344,17 +344,16 @@
 /* aria-selected dirige a cor do label sem precisar de classe
  *  extra. O pill roxo (via motion.span) sobrepõe o bg padrão. */
 .tabBtn[aria-selected='true'] {
-  color: #d8b4fe;
+  color: #ffffff;
 }
 .tabBtnPill {
-  /* Pill animado via motion layoutId — desliza entre os
-   *  botões ativos. Cores: tint roxo igual ao design original
-   *  (rgba 168/85/247/.16 bg + border .55). */
+  /* Pill animado via motion layoutId — desliza entre os botões
+   *  ativos. Tint roxo no fundo, SEM borda (per feedback). */
   position: absolute;
   inset: 0;
   border-radius: 999px;
   background: rgba(168, 85, 247, 0.16);
-  border: 1px solid rgba(168, 85, 247, 0.55);
+  border: none;
   z-index: -1;
 }
 .tabBtnLabel {
