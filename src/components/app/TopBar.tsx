@@ -674,15 +674,9 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       <span>Convidar amigos</span>
                       <DrawerChevron />
                     </button>
-                    <Link
-                      href="/app/superchat"
-                      className={styles.drawerItem}
-                      onClick={() => setOpen(false)}
-                    >
-                      <DrawerItemIcon name="superchat" />
-                      <span>Entre no Superchat</span>
-                      <DrawerChevron />
-                    </Link>
+                    {/* "Entre no Superchat" foi movido pro Brainstorm
+                        (trigger no left-rail da home, gated por
+                        flags.superchat) per product feedback. */}
                   </div>
 
                   <div className={styles.drawerSection}>

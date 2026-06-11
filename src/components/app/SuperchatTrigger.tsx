@@ -1,31 +1,31 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import styles from './SuperchatTrigger.module.css';
 
-interface Props {
-  onClick: () => void;
-  /** Number of unread messages in the Superchat room. 0 hides the badge. */
-  unreadCount?: number;
-}
-
 /**
- * Inline pill (next to FilterTabs / Ranking / NotificationBell) that
- * opens the global Superchat panel. Same visual treatment as the
- * "Entre no Superchat!" CTA that used to live in the (now-removed)
- * SingleBanner: white pill with a play glyph + bold dark label and
- * a soft idle pulse so the eye gets drawn to the entry point.
+ * Trigger brainstorm-gated do Superchat. Pílula no left-rail da home
+ * que abre a sala global de chat dos fãs (rota /app/superchat).
+ *
+ * Movido do menu do perfil pro Brainstorm (per product feedback
+ * "deixe a funcionalidade de Superchat dentro do Brainstorm e remova
+ * do perfil"). Gated por `flags.superchat` + pelo toggle "Recursos em
+ * teste" (BrainstormGate, no layout). Self-contained: lê o flag e
+ * navega sozinho — só montar uma vez no bloco BrainstormGate.
  */
-export default function SuperchatTrigger({ onClick, unreadCount = 0 }: Props) {
+export default function SuperchatTrigger() {
+  const { flags } = useBrainstormFlags();
+  const router = useRouter();
+
+  if (!flags.superchat) return null;
+
   return (
     <button
       type="button"
       className={styles.btn}
-      onClick={onClick}
-      aria-label={
-        unreadCount > 0
-          ? `Entre no Superchat (${unreadCount} mensagens não lidas)`
-          : 'Entre no Superchat'
-      }
+      onClick={() => router.push('/app/superchat')}
+      aria-label="Entre no Superchat"
       title="Entre no Superchat"
     >
       <svg
@@ -39,11 +39,6 @@ export default function SuperchatTrigger({ onClick, unreadCount = 0 }: Props) {
         <path d="M4 2.5v11l9-5.5z" />
       </svg>
       <span className={styles.label}>Entre no Superchat!</span>
-      {unreadCount > 0 && (
-        <span className={styles.badge} aria-hidden="true">
-          {unreadCount > 9 ? '9+' : unreadCount}
-        </span>
-      )}
     </button>
   );
 }

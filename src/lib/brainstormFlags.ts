@@ -60,6 +60,7 @@ export type BrainstormFlagKey =
   | 'collectiveListening'
   | 'showLive'
   | 'showDay'
+  | 'superchat'
   | 'mapSimulation'
   | 'findMyLove';
 
@@ -76,6 +77,7 @@ const DEFAULTS: BrainstormFlags = {
   collectiveListening: true,
   showLive: true,
   showDay: true,
+  superchat: true,
   mapSimulation: false,
   findMyLove: false,
 };
@@ -122,6 +124,12 @@ export const FLAG_DESCRIPTORS: readonly FlagDescriptor[] = [
     title: 'Hoje tem show (Fire Arena)',
     description:
       'Marker especial na Fire Arena (Salvador) que muda ao longo do dia: "HOJE TEM SHOW" com contagem regressiva, depois "AO VIVO" às 20h com holofotes varrendo o palco (visível em todos os zooms, com mais detalhe perto). Tocar abre um painel com o chat simulado do show — fãs comentando + a Central Ana Castela mandando fotos exclusivas — e a lista de "presentes no local".',
+  },
+  {
+    key: 'superchat',
+    title: 'Superchat',
+    description:
+      'Pílula "Entre no Superchat!" na home que abre a sala global de chat dos fãs em tempo real. Movida do menu do perfil pra cá.',
   },
   {
     key: 'findMyLove',

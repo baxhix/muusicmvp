@@ -1,9 +1,15 @@
-/* Sibling of FilterTabs + Ranking + NotificationBell inside .topBar.
-   White pill — same treatment the SingleBanner CTA used. Stands out
-   from the dark-glass siblings around it because this IS the primary
-   action on the bar (enter the room). */
+/* Trigger do Superchat no left-rail do Brainstorm (mesma coluna fixa
+   dos outros triggers: left:18px, tops escalonados). Pílula branca —
+   destaque proposital como ponto de entrada da sala. Stack:
+     Superlive   top: calc(50%+28px)
+     Coletiva    top: calc(50%+76px)
+     Show ao vivo top: calc(50%+124px)
+     Superchat   top: calc(50%+172px)  ← este */
 .btn {
-  position: relative;
+  position: fixed;
+  top: calc(50% + 172px);
+  left: 18px;
+  z-index: 60;
   display: inline-flex;
   align-items: center;
   gap: 7px;

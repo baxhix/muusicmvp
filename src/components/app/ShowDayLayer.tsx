@@ -145,16 +145,16 @@ const ARENA_SVG = `
     <rect x="92" y="30" width="6" height="4" rx="1"/><rect x="92.3" y="34.6" width="5.4" height="4" rx="1"/><rect x="92.6" y="39.2" width="4.8" height="4" rx="1"/><rect x="92.9" y="43.8" width="4.2" height="4" rx="1"/>
   </g>
 
-  <!-- Torres de treliça (dupla) + viga superior -->
-  <g stroke="#a5b4fc" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.9">
-    <path d="M18 20V76M26 20V76"/>
-    <path d="M18 20H26M18 34H26M18 48H26M18 62H26M18 76H26"/>
-    <path d="M18 20 26 34M26 20 18 34M18 34 26 48M26 34 18 48M18 48 26 62M26 48 18 62M18 62 26 76M26 62 18 76"/>
-    <path d="M102 20V76M110 20V76"/>
-    <path d="M102 20H110M102 34H110M102 48H110M102 62H110M102 76H110"/>
-    <path d="M102 20 110 34M110 20 102 34M102 34 110 48M110 34 102 48M102 48 110 62M110 48 102 62M102 62 110 76M110 62 102 76"/>
-    <path d="M18 20H110M18 26H110"/>
-    <path d="M22 20 30 26M30 20 38 26M38 20 46 26M46 20 54 26M54 20 62 26M62 20 70 26M70 20 78 26M78 20 86 26M86 20 94 26M94 20 102 26M102 20 110 26"/>
+  <!-- Colunas sólidas + viga superior sólida (sem treliça) -->
+  <g fill="url(#sdDeckGrad)" stroke="#a5b4fc" stroke-width="0.8" stroke-opacity="0.5">
+    <rect x="18" y="19" width="92" height="6" rx="1.5"/>
+    <rect x="18" y="20" width="8" height="56" rx="2"/>
+    <rect x="102" y="20" width="8" height="56" rx="2"/>
+  </g>
+  <!-- realce vertical das colunas (leitura de volume sólido) -->
+  <g stroke="#c4b5fd" stroke-width="0.9" stroke-opacity="0.5" stroke-linecap="round">
+    <line x1="20.5" y1="22" x2="20.5" y2="74"/>
+    <line x1="104.5" y1="22" x2="104.5" y2="74"/>
   </g>
 
   <!-- PARs / moving heads na viga frontal (lentes piscam) -->
@@ -174,33 +174,6 @@ const ARENA_SVG = `
   <ellipse class="sdPool sdPoolA" cx="51" cy="74" rx="13" ry="3.4" fill="url(#sdPoolP)"/>
   <ellipse class="sdPool sdPoolB" cx="77" cy="74" rx="13" ry="3.4" fill="url(#sdPoolK)"/>
   <ellipse class="sdPool sdPoolC" cx="64" cy="75" rx="11" ry="3" fill="url(#sdPoolP)"/>
-
-  <!-- Banda (silhueta com rim-light contra o telão) -->
-  <g fill="#08040f">
-    <!-- guitarrista (esq) -->
-    <circle cx="49" cy="65" r="2.2"/>
-    <path d="M46.5 67 L51.5 67 L52.5 76 L45.5 76 Z"/>
-    <ellipse cx="44.5" cy="71" rx="2.6" ry="1.7"/>
-    <path d="M46 70 L52 66.5" stroke="#08040f" stroke-width="1.1" stroke-linecap="round"/>
-    <!-- vocalista (centro) com microfone -->
-    <circle cx="64" cy="62.5" r="2.4"/>
-    <path d="M61 64.5 Q64 63.6 67 64.5 L68 76 L60 76 Z"/>
-    <path d="M66 65 L69.4 60.5" stroke="#08040f" stroke-width="1.3" stroke-linecap="round"/>
-    <circle cx="69.8" cy="59.7" r="1"/>
-    <!-- baterista (dir) atrás do kit -->
-    <circle cx="78" cy="63" r="2"/>
-    <path d="M75.6 64.8 L80.4 64.8 L81 75 L75 75 Z"/>
-    <ellipse cx="74" cy="73.5" rx="2.1" ry="1.5"/>
-    <ellipse cx="80.5" cy="73.5" rx="2.1" ry="1.5"/>
-    <path d="M83 70.5 L87 69.5" stroke="#08040f" stroke-width="0.8" stroke-linecap="round"/>
-    <ellipse cx="86" cy="69.4" rx="2.2" ry="0.7"/>
-  </g>
-  <!-- rim-light nos ombros/cabeças (backlit pelo telão) -->
-  <g fill="none" stroke="#f5d0fe" stroke-width="0.6" stroke-opacity="0.45" stroke-linecap="round">
-    <path d="M46.9 65.6 A2.2 2.2 0 0 1 51.1 65.6"/>
-    <path d="M61.7 63.1 A2.4 2.4 0 0 1 66.3 63.1"/>
-    <path d="M76.1 63.6 A2 2 0 0 1 79.9 63.6"/>
-  </g>
 
   <!-- Subwoofers / PA nas laterais do palco -->
   <g fill="#0b0712" stroke="#a5b4fc" stroke-width="0.5" stroke-opacity="0.5">

@@ -247,25 +247,18 @@
  * flag mapSimulation — só aparece pro brainstorm owner. */
 .zoomIndicator {
   position: fixed;
-  /* Per feedback "Posicione o globe e o indicador de nivel de zoom
-   * abaixo do botão de features, sem sobreposição".
-   *
-   * O botão de features (Brainstorm trigger) fica em:
-   *   top: 50% / left: 18px / height: 40px (centrado verticalmente)
-   * → bottom do botão = 50vh + 20px.
-   *
-   * Posicionamos esse pill logo abaixo com gap 8px:
-   *   top = 50% + 20px (metade da altura do botão) + 8px (gap) = +28px
-   *   left: 18px (alinhado com o botão).
-   *
-   * Antes ficava em bottom 24px (ao lado do player NowPlaying) — agora
-   * sobe pro left rail logo abaixo do botão de Brainstorm. */
-  top: calc(50% + 28px);
-  left: 18px;
+  /* Per feedback "Posicione o box que mostra o nível de zoom abaixo do
+   * banner centralizado no topo e não na lateral". O DesktopTopBanner
+   * fica em top:34px / left:50% / width:640 / aspect 1620:242
+   * (~96px de altura) → bottom ≈ 130px. Posicionamos esse pill
+   * centralizado logo abaixo, com gap. */
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 25;
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 1px;
   padding: 6px 12px 7px;
   background: rgba(11, 11, 14, 0.85);
@@ -295,10 +288,11 @@
 
 @media (max-width: 640px) {
   .zoomIndicator {
-    /* Mobile: mesma lógica (logo abaixo do botão Brainstorm), só com
-     * gutter um pouco menor pra economizar largura. */
-    top: calc(50% + 28px);
-    left: 12px;
+    /* Mobile: banner desktop não aparece — centraliza no topo logo
+     * abaixo do chrome do topo. */
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
     padding: 5px 10px 6px;
   }
   .zoomNum { font-size: 13px; }

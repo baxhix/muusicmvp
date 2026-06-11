@@ -37,6 +37,7 @@ import SuperliveTrigger from '@/components/app/SuperliveTrigger';
 import CollectiveListeningTrigger from '@/components/app/CollectiveListeningTrigger';
 import ShowLiveTrigger from '@/components/app/ShowLiveTrigger';
 import FindMyLoveTrigger from '@/components/app/FindMyLoveTrigger';
+import SuperchatTrigger from '@/components/app/SuperchatTrigger';
 import MapSimulationLayer from '@/components/app/MapSimulationLayer';
 import MapPulses from '@/components/app/MapPulses';
 import MapZoomIndicator from '@/components/app/MapZoomIndicator';
@@ -578,6 +579,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             <SuperliveTrigger />
             <CollectiveListeningTrigger />
             <ShowLiveTrigger />
+            <SuperchatTrigger />
             <FindMyLoveTrigger />
           </BrainstormGate>
           <MapSimulationLayer />
