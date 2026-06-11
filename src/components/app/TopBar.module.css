@@ -596,6 +596,13 @@
   flex-shrink: 0;
   transition: color 0.13s, transform 0.13s;
 }
+/* Chevron do agrupador "Configurações" aberto: aponta pra baixo. */
+.drawerChevronOpen {
+  transform: rotate(90deg);
+}
+.drawerItem:hover .drawerChevronOpen {
+  transform: rotate(90deg) translateX(2px);
+}
 .drawerItem:hover .drawerChevron {
   color: rgba(245,245,247,0.6);
   transform: translateX(2px);

@@ -400,17 +400,8 @@ export default function ProfilePanel({
                 </>
               );
             })()}
-            {/* Streams agrupados num bloco que o @media mobile
-             * esconde via .userStreamsBlock { display: none },
-             * incluindo o separador antes — per product feedback
-             * "Remova os streams". */}
-            <span className={styles.userStreamsBlock}>
-              <span className={styles.userMetaSep}>·</span>
-              <span className={styles.userStreamsNum}>
-                {user.streams.toLocaleString('pt-BR')}
-              </span>{' '}
-              <span className={styles.userStreamsLabel}>streams</span>
-            </span>
+            {/* Bloco "Total de Streams" removido por completo per
+             * product feedback "Oculte o bloco Total de Streams". */}
             <span className={styles.userFanpointsNum}>
               {user.fanpoints.toLocaleString('pt-BR')}
             </span>{' '}

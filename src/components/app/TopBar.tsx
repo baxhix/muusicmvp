@@ -27,9 +27,14 @@ function displayName(user: { name: string | null; email: string } | null): strin
 
 /* ── Helpers / shared subcomponents ─────────────────────────────────────── */
 
-function DrawerChevron() {
+function DrawerChevron({ open }: { open?: boolean } = {}) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={styles.drawerChevron}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={`${styles.drawerChevron}${open ? ` ${styles.drawerChevronOpen}` : ''}`}
+    >
       <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -44,7 +49,7 @@ function BackArrow() {
 }
 
 /** Ícones lineares discretos para os itens do drawer */
-function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' | 'star' | 'invite' }) {
+function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'map' | 'lock' | 'file' | 'shield' | 'trash' | 'logout' | 'grid' | 'bag' | 'superchat' | 'info' | 'star' | 'invite' | 'settings' }) {
   const props = {
     viewBox: '0 0 24 24',
     fill: 'none' as const,
@@ -70,6 +75,14 @@ function DrawerItemIcon({ name }: { name: 'edit' | 'activity' | 'messages' | 'ma
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="16" x2="12" y2="12" />
           <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+      );
+    case 'settings':
+      // Engrenagem (Feather "settings") — agrupador Configurações.
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       );
     case 'star':
@@ -280,7 +293,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
     true,
   );
   const userLabel = displayName(user);
-  const userEmail = user?.email ?? '';
   // Generic placeholder silhouette for brand-new users who
   // haven't uploaded a profile photo yet. The previous fallback
   // was an actual person's photo (/ana-beatriz-avatar.png),
@@ -290,6 +302,9 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SubScreen>(null);
+  /* Agrupador "Configurações": colapsa de "Minha atividade" pra baixo
+   * num único item, pra não poluir o menu (collapsed por padrão). */
+  const [settingsOpen, setSettingsOpen] = useState(false);
   /* Modal in-app pra Termos / Privacidade. Aberto via item do
    * drawer (seção Legal). null = fechado. Mantido fora do drawer
    * pra que fechar o drawer não desmonte o modal involuntariamente. */
@@ -554,9 +569,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     )}
                   </div>
                   <h2 className={styles.drawerIdentityName}>{userLabel}</h2>
-                  {userEmail && (
-                    <span className={styles.drawerIdentityEmail}>{userEmail}</span>
-                  )}
                   <div className={styles.drawerIdentityStatusRow}>
                     <span className={`${styles.drawerStatusDot} ${online ? styles.drawerStatusDotOn : styles.drawerStatusDotOff}`} />
                     <span className={styles.drawerIdentityStatusLabel}>
@@ -683,6 +695,25 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       <span>Editar perfil</span>
                       <DrawerChevron />
                     </button>
+                    {/* Configurações — agrupa tudo de "Minha atividade" pra
+                     *  baixo num único item colapsável, pra não poluir o
+                     *  menu pro usuário. Collapsed por padrão. */}
+                    <button
+                      type="button"
+                      className={styles.drawerItem}
+                      onClick={() => setSettingsOpen((v) => !v)}
+                      aria-expanded={settingsOpen}
+                    >
+                      <DrawerItemIcon name="settings" />
+                      <span>Configurações</span>
+                      <DrawerChevron open={settingsOpen} />
+                    </button>
+                  </div>
+
+                  {settingsOpen && (
+                  <>
+                  <div className={styles.drawerSection}>
+                    <span className={styles.drawerEyebrow}>Atividade</span>
                     <button
                       className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
                       disabled
@@ -833,6 +864,8 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       <span>Excluir conta</span>
                     </button>
                   </div>
+                  </>
+                  )}
                 </nav>
 
                 <div className={styles.drawerFooter}>
