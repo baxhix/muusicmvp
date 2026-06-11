@@ -336,7 +336,7 @@ export default function ShowDayLayer() {
       // Badge "simple" (2.5–6): "Show de hoje!"
       const badgeSimple = document.createElement('span');
       badgeSimple.className = styles.badgeSimple;
-      badgeSimple.textContent = 'Show de hoje!';
+      badgeSimple.textContent = 'Hoje tem show!';
       content.appendChild(badgeSimple);
 
       // Badge "city" (6–9.2): hora + cidade
@@ -344,7 +344,7 @@ export default function ShowDayLayer() {
       badgeCity.className = styles.badgeCity;
       const cityTitle = document.createElement('span');
       cityTitle.className = styles.badgeCityTitle;
-      cityTitle.textContent = 'Show de hoje às 23h00!';
+      cityTitle.textContent = 'Hoje tem show às 23h00!';
       const citySub = document.createElement('span');
       citySub.className = styles.badgeCitySub;
       citySub.textContent = `${SHOW_DAY.city} - ${SHOW_DAY.state}`;
