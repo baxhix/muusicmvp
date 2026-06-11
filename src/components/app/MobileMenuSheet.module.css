@@ -50,7 +50,6 @@
   -webkit-overflow-scrolling: touch;
   /* Slide é só transform → compositor; declara pra GPU. */
   will-change: transform;
-  touch-action: none;
 }
 
 /* Handle de swipe — afor­dance de "arraste pra baixo pra fechar". */
@@ -185,8 +184,7 @@
 }
 
 /* Telas baixas — encolhe tipografia/espaçamentos pros 7 itens
- * caberem sem corte (o painel não rola: touch-action:none mantém
- * o swipe-to-dismiss limpo). */
+ * caberem sem corte. */
 @media (max-height: 780px) {
   .panel {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);

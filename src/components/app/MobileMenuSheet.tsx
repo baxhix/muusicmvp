@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   AnimatePresence,
   motion,
   useReducedMotion,
-  type PanInfo,
   type Variants,
 } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -100,9 +99,10 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
     }
   };
 
-  const onDragEnd = (_e: unknown, info: PanInfo) => {
-    if (info.offset.y > 110 || info.velocity.y > 520) onClose();
-  };
+  /* Swipe-pra-baixo simples (sem drag-follow nem elástico): guarda o Y
+   * inicial do toque e, se o dedo desce além do limiar, fecha — só
+   * dispara a transição de saída normal. Taps (dy ≈ 0) não fecham. */
+  const swipeStartY = useRef<number | null>(null);
 
   /* ── Variants ──────────────────────────────────────────────
    * Painel: sobe da base com spring; no exit desce DEPOIS dos
@@ -182,10 +182,16 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
             initial="hidden"
             animate="visible"
             exit="exit"
-            drag={reduce ? false : 'y'}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.55 }}
-            onDragEnd={onDragEnd}
+            onTouchStart={(e) => {
+              swipeStartY.current = e.touches[0]?.clientY ?? null;
+            }}
+            onTouchEnd={(e) => {
+              const start = swipeStartY.current;
+              swipeStartY.current = null;
+              if (start != null && (e.changedTouches[0]?.clientY ?? start) - start > 60) {
+                onClose();
+              }
+            }}
           >
             <span className={styles.grabber} aria-hidden="true" />
 
