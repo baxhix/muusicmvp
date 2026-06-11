@@ -557,8 +557,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                             </strong>{' '}
                             ao redor da cidade que você selecionou.{' '}
                             <strong className={styles.bold}>Nunca a exata</strong>.
-                            <br />
-                            Desligar te esconde na hora; religar mostra de novo.
                           </>
                         )}
                       </span>
@@ -572,9 +570,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                   </div>
                   {!isMinor && (
                     <p className={styles.drawerMapNote}>
-                      O mapa é uma forma de visualizarmos o volume de pessoas no
-                      mundo.
-                      <br />
                       <strong className={styles.bold}>
                         Sua localização nunca é exibida de forma exata
                       </strong>{' '}
