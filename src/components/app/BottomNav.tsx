@@ -63,13 +63,12 @@ export default function BottomNav() {
     setMoreOpen(false);
   }, [pathname]);
 
-  /* Micro-interação (mobile, estilo Instagram): ao rolar QUALQUER
-   * superfície scrollável — menos o mapa — a bottom bar contrai 15%
-   * na largura, suave, e volta ao tamanho quando o scroll para.
+  /* Micro-interação (mobile, estilo Instagram): scroll pra BAIXO
+   * contrai a bottom bar 20% na largura; scroll pra CIMA expande de
+   * novo. Direcional (não por idle) pra não ficar "indo e voltando".
    * Listener em capture pega o scroll de qualquer scroller filho
-   * (scroll não borbulha). O mapa (Mapbox) não dispara 'scroll'
-   * (pan/zoom é transform interno), mas guardamos por garantia.
-   * prefers-reduced-motion desliga a interação. */
+   * (scroll não borbulha); ignora o mapa. Threshold anti-jitter
+   * absorve o micro-bounce do iOS. prefers-reduced-motion desliga. */
   const [navContracted, setNavContracted] = useState(false);
   useEffect(() => {
     if (!isMobile) return;
@@ -79,19 +78,26 @@ export default function BottomNav() {
     ) {
       return;
     }
-    let idle: ReturnType<typeof setTimeout> | null = null;
+    /* Último scrollTop por scroller — direção = top atual − anterior. */
+    const lastTop = new WeakMap<object, number>();
     const onScroll = (e: Event) => {
-      const t = e.target as HTMLElement | null;
-      // Ignora scroll originado no mapa.
-      if (t && t.nodeType === 1 && t.closest?.('.mapboxgl-map')) return;
-      setNavContracted(true);
-      if (idle) clearTimeout(idle);
-      idle = setTimeout(() => setNavContracted(false), 600);
+      const node = e.target as HTMLElement | null;
+      if (!node || node.nodeType !== 1) return; // só elementos scrolláveis
+      if (node.closest?.('.mapboxgl-map')) return; // ignora o mapa
+      const top = node.scrollTop;
+      const prev = lastTop.get(node) ?? 0;
+      const delta = top - prev;
+      lastTop.set(node, top);
+      if (Math.abs(delta) < 6) return; // anti-jitter (bounce do iOS)
+      if (top <= 4) {
+        setNavContracted(false); // perto do topo: sempre expandida
+        return;
+      }
+      setNavContracted(delta > 0); // desceu → contrai; subiu → expande
     };
     document.addEventListener('scroll', onScroll, { capture: true, passive: true });
     return () => {
       document.removeEventListener('scroll', onScroll, { capture: true });
-      if (idle) clearTimeout(idle);
     };
   }, [isMobile]);
 

@@ -429,7 +429,7 @@
     transition: width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .navContracted .inner {
-    width: 238px; /* 280 × 0.85 (tablets 481-768px) */
+    width: 224px; /* 280 × 0.80 (tablets 481-768px) */
   }
 
   /* Override mobile .moreMenu vive APÓS o base rule (mais abaixo
@@ -473,10 +473,10 @@
     width: calc(100% - 32px);
     max-width: 320px;
   }
-  /* Contração 15% (micro-interação de scroll) no phone. */
+  /* Contração 20% (micro-interação de scroll) no phone. */
   .navContracted .inner {
-    width: calc((100% - 32px) * 0.85);
-    max-width: 272px; /* 320 × 0.85 */
+    width: calc((100% - 32px) * 0.8);
+    max-width: 256px; /* 320 × 0.80 */
   }
   /* Regra do bottom sheet movida pra @media (max-width: 768px) acima
    * — assim aplica em todos os mobiles, não só ≤480px. */
