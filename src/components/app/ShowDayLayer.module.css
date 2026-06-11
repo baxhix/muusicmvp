@@ -276,14 +276,11 @@
  * sombra. */
 .badgeBox {
   flex-direction: column;
-  width: 188px;
-  border: 1.5px solid transparent;
+  width: 196px;
   border-radius: 12px;
   overflow: hidden;
-  /* Fundo preto + borda com gradiente. */
-  background:
-    linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
+  /* Sem borda — fundo preto puro (a borda agora vive só no CTA). */
+  background: #000;
   gap: 0;
 }
 .wrap[data-badge='box'] .badgeBox {
@@ -292,15 +289,15 @@
 .badgeBoxPhoto {
   display: block;
   width: 100%;
-  height: 132px;
+  height: 138px;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.06);
 }
 .badgeBoxBody {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 9px 11px 11px;
+  gap: 4px;
+  padding: 13px 14px 14px;
 }
 .badgeBoxTitle {
   font-family: var(--font-inter), sans-serif;
@@ -324,8 +321,12 @@
  * gradiente laranja→rosa→roxo + fill #0a0a0e, pill 999px, 12.5px/600. */
 .badgeCta {
   width: 100%;
-  margin-top: 9px;
-  padding: 8px 0;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 0;
   border: 1.5px solid transparent;
   border-radius: 999px;
   background:
@@ -337,6 +338,26 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+/* Pilha de 4 miniaturas antes do "Entrar no chat" (estilo chat). */
+.ctaAvatars {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.ctaAvatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #0a0a0e;
+  margin-left: -6px;
+  background: #1c1c24;
+}
+.ctaAvatar:first-child {
+  margin-left: 0;
+}
+.ctaLabel {
+  line-height: 1;
 }
 .badgeCta:hover {
   transform: translateY(-1px);

@@ -7,6 +7,7 @@ import { globeStore } from '@/lib/globeStore';
 import { useBrainstormFlags } from '@/lib/brainstormFlags';
 import { track } from '@/lib/analytics';
 import { SHOW_DAY, getShowDayPhase, type ShowDayPhase } from '@/lib/showDay';
+import { SHOW_DAY_FANS } from '@/data/showDayFeed';
 import styles from './ShowDayLayer.module.css';
 
 /* ============================================================
@@ -49,6 +50,10 @@ const BADGE_BOX_MIN = 9.2; // badge vira box (foto + título + CTA)
 
 /** Foto do box (z ≥ 9.2). */
 const SHOW_PHOTO = '/show-day/show-1.jpg';
+
+/** 4 rostos pra empilhar no CTA "Entrar no chat" (mesmos fãs do
+ *  chat do show) — reforça o "tem gente aqui agora". */
+const CTA_FACES = SHOW_DAY_FANS.slice(0, 4).map((f) => f.avatarUrl);
 
 type BadgeLevel = 'none' | 'simple' | 'city' | 'box';
 
@@ -373,7 +378,23 @@ export default function ShowDayLayer() {
       const cta = document.createElement('button');
       cta.type = 'button';
       cta.className = styles.badgeCta;
-      cta.textContent = 'Entrar no chat';
+      // 4 miniaturas sobrepostas antes da palavra "Entrar" (estilo
+      //  pilha de avatares do chat) + label.
+      const ctaAvatars = document.createElement('span');
+      ctaAvatars.className = styles.ctaAvatars;
+      CTA_FACES.forEach((url) => {
+        const face = document.createElement('img');
+        face.className = styles.ctaAvatar;
+        face.src = url;
+        face.alt = '';
+        face.loading = 'lazy';
+        ctaAvatars.appendChild(face);
+      });
+      const ctaLabel = document.createElement('span');
+      ctaLabel.className = styles.ctaLabel;
+      ctaLabel.textContent = 'Entrar no chat';
+      cta.appendChild(ctaAvatars);
+      cta.appendChild(ctaLabel);
       cta.addEventListener('click', (e) => {
         e.stopPropagation();
         openPanel();
