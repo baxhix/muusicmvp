@@ -227,6 +227,7 @@ type SubScreen =
   | 'terms'
   | 'privacy'
   | 'password'
+  | 'settings'
   | null;
 
 /** Mock de atividades do usuário com Fanpoints registrados */
@@ -302,9 +303,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<SubScreen>(null);
-  /* Agrupador "Configurações": colapsa de "Minha atividade" pra baixo
-   * num único item, pra não poluir o menu (collapsed por padrão). */
-  const [settingsOpen, setSettingsOpen] = useState(false);
   /* Modal in-app pra Termos / Privacidade. Aberto via item do
    * drawer (seção Legal). null = fechado. Mantido fora do drawer
    * pra que fechar o drawer não desmonte o modal involuntariamente. */
@@ -689,177 +687,20 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       <span>Editar perfil</span>
                       <DrawerChevron />
                     </button>
-                    {/* Configurações — agrupa tudo de "Minha atividade" pra
-                     *  baixo num único item colapsável, pra não poluir o
-                     *  menu pro usuário. Collapsed por padrão. */}
+                    {/* Configurações — abre como sub-tela deslizante
+                     *  (section === 'settings', mesmo mecanismo das
+                     *  outras sub-screens) com seta de voltar, em vez
+                     *  de expandir inline embaixo. */}
                     <button
                       type="button"
                       className={styles.drawerItem}
-                      onClick={() => setSettingsOpen((v) => !v)}
-                      aria-expanded={settingsOpen}
+                      onClick={() => setSection('settings')}
                     >
                       <DrawerItemIcon name="settings" />
                       <span>Configurações</span>
-                      <DrawerChevron open={settingsOpen} />
-                    </button>
-                  </div>
-
-                  {settingsOpen && (
-                  <>
-                  <div className={styles.drawerSection}>
-                    <span className={styles.drawerEyebrow}>Atividade</span>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
-                    >
-                      <DrawerItemIcon name="activity" />
-                      <span>Minha atividade</span>
                       <DrawerChevron />
                     </button>
                   </div>
-
-                  {/* Per product feedback "crie um controle de exibição
-                   *  do card de nível de zoom e coloque dentro de
-                   *  Configurações como toggle, tanto no desktop como
-                   *  no mobile. Quero remover ele da tela. Os itens de
-                   *  brainstorm devem ter o mesmo comportamento". 2
-                   *  toggles inline (estado persistido em localStorage
-                   *  via useDisplaySetting). */}
-                  <div className={styles.drawerSection}>
-                    <span className={styles.drawerEyebrow}>Exibição</span>
-                    <div className={styles.drawerToggleRow}>
-                      <div className={styles.drawerToggleText}>
-                        <span className={styles.drawerToggleTitle}>
-                          Indicador de zoom
-                        </span>
-                        <span className={styles.drawerToggleDesc}>
-                          Mostra o nível de zoom atual sobre o mapa
-                        </span>
-                      </div>
-                      <Toggle
-                        checked={showZoomIndicator}
-                        onChange={setShowZoomIndicator}
-                        ariaLabel="Exibir indicador de zoom"
-                      />
-                    </div>
-                    <div className={styles.drawerToggleRow}>
-                      <div className={styles.drawerToggleText}>
-                        <span className={styles.drawerToggleTitle}>
-                          Recursos em teste
-                        </span>
-                        <span className={styles.drawerToggleDesc}>
-                          Esconde os botões de brainstorm na tela inicial
-                        </span>
-                      </div>
-                      <Toggle
-                        checked={showBrainstormTriggers}
-                        onChange={setShowBrainstormTriggers}
-                        ariaLabel="Exibir recursos em teste"
-                      />
-                    </div>
-                    {/* Refazer tour de onboarding — apaga o flag
-                     *  localStorage e re-dispara os 3 tooltips
-                     *  (Fanpoints / Chat / Ranking). Útil pra
-                     *  rever a tour ou pra QA. */}
-                    <button
-                      type="button"
-                      className={styles.drawerItem}
-                      onClick={() => {
-                        resetOnboarding();
-                        setActiveOverlay(null);
-                      }}
-                    >
-                      <DrawerItemIcon name="info" />
-                      <span>Refazer tour de onboarding</span>
-                      <DrawerChevron />
-                    </button>
-                  </div>
-
-                  <div className={styles.drawerSection}>
-                    <span className={styles.drawerEyebrow}>Privacidade</span>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
-                    >
-                      <DrawerItemIcon name="messages" />
-                      <span>Mensagens</span>
-                      <DrawerChevron />
-                    </button>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
-                    >
-                      <DrawerItemIcon name="map" />
-                      <span>Mapa</span>
-                      <DrawerChevron />
-                    </button>
-                  </div>
-
-                  <div className={styles.drawerSection}>
-                    <span className={styles.drawerEyebrow}>Segurança</span>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
-                    >
-                      <DrawerItemIcon name="lock" />
-                      <span>Alterar senha</span>
-                      <DrawerChevron />
-                    </button>
-                  </div>
-
-                  <div className={styles.drawerSection}>
-                    <span className={styles.drawerEyebrow}>Legal</span>
-                    {/* Termos + Privacidade abrem como MODAL dentro do
-                     *  app (LegalDocumentModal) — não navegam pras
-                     *  páginas públicas /termos /privacidade. Mesmo
-                     *  efeito de scrim/blur das Notificações na
-                     *  bottombar per product feedback. Conteúdo vem
-                     *  de GET /api/legal/:kind (publicado em
-                     *  /admin/site/lgpd). */}
-                    <button
-                      type="button"
-                      className={styles.drawerItem}
-                      onClick={() => {
-                        closeAll();
-                        setLegalModalKind('terms_of_use');
-                      }}
-                    >
-                      <DrawerItemIcon name="file" />
-                      <span>Termos de Uso</span>
-                      <DrawerChevron />
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.drawerItem}
-                      onClick={() => {
-                        closeAll();
-                        setLegalModalKind('privacy_policy');
-                      }}
-                    >
-                      <DrawerItemIcon name="shield" />
-                      <span>Política de Privacidade</span>
-                      <DrawerChevron />
-                    </button>
-                    <button
-                      className={`${styles.drawerItem} ${styles.drawerItemDelete} ${styles.drawerItemDisabled}`}
-                      disabled
-                      aria-disabled="true"
-                      title="Em breve"
-                    >
-                      <DrawerItemIcon name="trash" />
-                      <span>Excluir conta</span>
-                    </button>
-                  </div>
-                  </>
-                  )}
                 </nav>
 
                 <div className={styles.drawerFooter}>
@@ -879,6 +720,167 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
 
               {/* ─────── Página 2: Sub-screen ─────── */}
               <div className={styles.drawerPane}>
+                {/* Configurações — sub-tela deslizante (seta de voltar +
+                 *  título), reusando o mesmo slide das demais
+                 *  sub-screens. Agrupa Atividade, Exibição, Privacidade,
+                 *  Segurança e Legal num único nível, em vez de expandir
+                 *  inline no menu principal. */}
+                {section === 'settings' && (
+                  <>
+                    <div className={styles.subHeader}>
+                      <button className={styles.subBackBtn} onClick={goBack} aria-label="Voltar">
+                        <BackArrow />
+                      </button>
+                      <h3 className={styles.subTitle}>Configurações</h3>
+                      <span className={styles.subHeaderSpacer} aria-hidden="true" />
+                    </div>
+                    <nav className={styles.drawerNav}>
+                      <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Atividade</span>
+                        <button
+                          className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                          disabled
+                          aria-disabled="true"
+                          title="Em breve"
+                        >
+                          <DrawerItemIcon name="activity" />
+                          <span>Minha atividade</span>
+                          <DrawerChevron />
+                        </button>
+                      </div>
+
+                      {/* Per product feedback: controle de exibição do card
+                       *  de nível de zoom + itens de brainstorm como toggles
+                       *  (persistidos em localStorage via useDisplaySetting). */}
+                      <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Exibição</span>
+                        <div className={styles.drawerToggleRow}>
+                          <div className={styles.drawerToggleText}>
+                            <span className={styles.drawerToggleTitle}>
+                              Indicador de zoom
+                            </span>
+                            <span className={styles.drawerToggleDesc}>
+                              Mostra o nível de zoom atual sobre o mapa
+                            </span>
+                          </div>
+                          <Toggle
+                            checked={showZoomIndicator}
+                            onChange={setShowZoomIndicator}
+                            ariaLabel="Exibir indicador de zoom"
+                          />
+                        </div>
+                        <div className={styles.drawerToggleRow}>
+                          <div className={styles.drawerToggleText}>
+                            <span className={styles.drawerToggleTitle}>
+                              Recursos em teste
+                            </span>
+                            <span className={styles.drawerToggleDesc}>
+                              Esconde os botões de brainstorm na tela inicial
+                            </span>
+                          </div>
+                          <Toggle
+                            checked={showBrainstormTriggers}
+                            onChange={setShowBrainstormTriggers}
+                            ariaLabel="Exibir recursos em teste"
+                          />
+                        </div>
+                        {/* Refazer tour de onboarding — apaga o flag
+                         *  localStorage e re-dispara os 3 tooltips. */}
+                        <button
+                          type="button"
+                          className={styles.drawerItem}
+                          onClick={() => {
+                            resetOnboarding();
+                            setActiveOverlay(null);
+                          }}
+                        >
+                          <DrawerItemIcon name="info" />
+                          <span>Refazer tour de onboarding</span>
+                          <DrawerChevron />
+                        </button>
+                      </div>
+
+                      <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Privacidade</span>
+                        <button
+                          className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                          disabled
+                          aria-disabled="true"
+                          title="Em breve"
+                        >
+                          <DrawerItemIcon name="messages" />
+                          <span>Mensagens</span>
+                          <DrawerChevron />
+                        </button>
+                        <button
+                          className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                          disabled
+                          aria-disabled="true"
+                          title="Em breve"
+                        >
+                          <DrawerItemIcon name="map" />
+                          <span>Mapa</span>
+                          <DrawerChevron />
+                        </button>
+                      </div>
+
+                      <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Segurança</span>
+                        <button
+                          className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
+                          disabled
+                          aria-disabled="true"
+                          title="Em breve"
+                        >
+                          <DrawerItemIcon name="lock" />
+                          <span>Alterar senha</span>
+                          <DrawerChevron />
+                        </button>
+                      </div>
+
+                      <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Legal</span>
+                        {/* Termos + Privacidade abrem como MODAL dentro do
+                         *  app (LegalDocumentModal). Conteúdo via
+                         *  GET /api/legal/:kind (publicado em /admin/site/lgpd). */}
+                        <button
+                          type="button"
+                          className={styles.drawerItem}
+                          onClick={() => {
+                            closeAll();
+                            setLegalModalKind('terms_of_use');
+                          }}
+                        >
+                          <DrawerItemIcon name="file" />
+                          <span>Termos de Uso</span>
+                          <DrawerChevron />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.drawerItem}
+                          onClick={() => {
+                            closeAll();
+                            setLegalModalKind('privacy_policy');
+                          }}
+                        >
+                          <DrawerItemIcon name="shield" />
+                          <span>Política de Privacidade</span>
+                          <DrawerChevron />
+                        </button>
+                        <button
+                          className={`${styles.drawerItem} ${styles.drawerItemDelete} ${styles.drawerItemDisabled}`}
+                          disabled
+                          aria-disabled="true"
+                          title="Em breve"
+                        >
+                          <DrawerItemIcon name="trash" />
+                          <span>Excluir conta</span>
+                        </button>
+                      </div>
+                    </nav>
+                  </>
+                )}
+
                 {section === 'activity' && (() => {
                   const groups: Activity['group'][] = ['today', 'yesterday', 'previous'];
                   const totalFP = 3480;
