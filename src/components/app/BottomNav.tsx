@@ -63,6 +63,38 @@ export default function BottomNav() {
     setMoreOpen(false);
   }, [pathname]);
 
+  /* Micro-interação (mobile, estilo Instagram): ao rolar QUALQUER
+   * superfície scrollável — menos o mapa — a bottom bar contrai 15%
+   * na largura, suave, e volta ao tamanho quando o scroll para.
+   * Listener em capture pega o scroll de qualquer scroller filho
+   * (scroll não borbulha). O mapa (Mapbox) não dispara 'scroll'
+   * (pan/zoom é transform interno), mas guardamos por garantia.
+   * prefers-reduced-motion desliga a interação. */
+  const [navContracted, setNavContracted] = useState(false);
+  useEffect(() => {
+    if (!isMobile) return;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+    let idle: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      // Ignora scroll originado no mapa.
+      if (t && t.nodeType === 1 && t.closest?.('.mapboxgl-map')) return;
+      setNavContracted(true);
+      if (idle) clearTimeout(idle);
+      idle = setTimeout(() => setNavContracted(false), 600);
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener('scroll', onScroll, { capture: true });
+      if (idle) clearTimeout(idle);
+    };
+  }, [isMobile]);
+
   /**
    * Lightweight prefetch helper — called on pointerenter / focus
    * of each routed slot so the chunk for the target route is
@@ -149,7 +181,10 @@ export default function BottomNav() {
     pathname.startsWith('/app/perfil') || pathname.startsWith('/app/u/');
 
   return (
-    <nav className={styles.nav} aria-label="Navegação principal">
+    <nav
+      className={`${styles.nav} ${navContracted ? styles.navContracted : ''}`}
+      aria-label="Navegação principal"
+    >
       <div className={styles.inner}>
         {/* Mapa — active when no other surface is taking over. */}
         <button
