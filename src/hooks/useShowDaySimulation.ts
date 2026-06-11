@@ -23,8 +23,8 @@ import {
  * parametrizado por FASE:
  *
  *   Timer A (fãs):     announced 6–12s · live 2–5s (1º tick 700ms)
- *   Timer B (Central): announced 60–90s texto · live 30–60s FOTO
- *                      (1º tick 4s pra foto aparecer logo)
+ *   Timer B (Central): FOTO + legenda em todas as fases (teaser/bastidores
+ *                      na announced, registros na live); 1º tick ~4s
  *   Timer C (count):   interval 4s — announced cresce ("chegando"),
  *                      live drifta ± com floor
  *   Seed:              6 mensagens determinísticas no rising edge
@@ -42,8 +42,8 @@ const FAN_TICK = {
 } as const;
 
 const CENTRAL_TICK = {
-  announced: { min: 60_000, max: 90_000 },
-  live: { min: 30_000, max: 60_000 },
+  announced: { min: 18_000, max: 34_000 },
+  live: { min: 26_000, max: 48_000 },
 } as const;
 
 function randBetween(min: number, max: number): number {
@@ -151,21 +151,20 @@ export function useShowDaySimulation(opts: {
       const caption = captions[captionCursorRef.current % captions.length];
       captionCursorRef.current += 3;
       counterRef.current += 1;
+      // A Central SEMPRE manda foto (bastidores/teaser na announced,
+      // registros do show na live) — é o diferencial da superfície.
       const msg: SimShowMessage = {
         id: counterRef.current,
         sender: CENTRAL_SENDER,
         body: caption,
+        photo: SHOW_DAY_PHOTOS[photoCursorRef.current % SHOW_DAY_PHOTOS.length],
       };
-      if (phase === 'live') {
-        msg.photo =
-          SHOW_DAY_PHOTOS[photoCursorRef.current % SHOW_DAY_PHOTOS.length];
-        photoCursorRef.current += 1;
-      }
+      photoCursorRef.current += 1;
       append(msg);
       timer = setTimeout(tick, randBetween(min, max));
     };
-    // Live: 1ª foto em 4s pro user ver o diferencial logo ao abrir.
-    timer = setTimeout(tick, phase === 'live' ? 4_000 : randBetween(min, max));
+    // 1ª foto em ~4s pro user ver o diferencial logo ao abrir (qualquer fase).
+    timer = setTimeout(tick, 4_000);
     return () => {
       if (timer) clearTimeout(timer);
     };

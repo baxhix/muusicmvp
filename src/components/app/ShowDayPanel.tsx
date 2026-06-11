@@ -162,8 +162,9 @@ export default function ShowDayPanel() {
 
   const content = (
     <div className={styles.content} data-phase={phase}>
-      {/* ── Header por fase ─────────────────────────────────── */}
+      {/* ── Header por fase — título do evento centralizado ──── */}
       <div className={styles.header}>
+        <span className={styles.eventTitle}>Show Ana Castela — Festa do Peão</span>
         <div className={styles.statusRow}>
           <span className={styles.statusBadge}>
             <span className={styles.statusDot} aria-hidden="true" />

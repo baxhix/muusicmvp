@@ -77,7 +77,9 @@
 .spots {
   position: absolute;
   left: 0;
-  bottom: 6px;
+  /* Base elevada pra os feixes nascerem ACIMA do badge — o badge
+   * "Show de hoje" fica logo abaixo dos spots. */
+  bottom: 50px;
   width: 0;
   height: 0;
   transform: translateX(-50%);
@@ -100,17 +102,19 @@
   clip-path: polygon(42% 100%, 58% 100%, 100% 0%, 0% 0%);
   transform-origin: bottom center;
   mix-blend-mode: screen;
+  /* Tons mais vibrantes nos feixes. */
+  filter: saturate(1.5);
   opacity: 0;
   will-change: transform, opacity;
 }
 .beamL {
-  background: linear-gradient(to top, rgba(168, 85, 247, 0.72), rgba(168, 85, 247, 0));
+  background: linear-gradient(to top, rgba(178, 60, 255, 0.95), rgba(178, 60, 255, 0));
 }
 .beamC {
-  background: linear-gradient(to top, rgba(252, 231, 243, 0.62), rgba(236, 72, 153, 0));
+  background: linear-gradient(to top, rgba(255, 130, 235, 0.9), rgba(244, 63, 180, 0));
 }
 .beamR {
-  background: linear-gradient(to top, rgba(236, 72, 153, 0.72), rgba(236, 72, 153, 0));
+  background: linear-gradient(to top, rgba(255, 40, 150, 0.95), rgba(255, 40, 150, 0));
 }
 
 /* Os 3 feixes varrem em announced + live (rápido). */
