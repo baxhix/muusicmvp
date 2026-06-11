@@ -213,21 +213,20 @@
 /* Estilo comum dos badges: fundo translúcido (padding-box) + BORDA
  * com gradiente (border-box), raio 4px, fonte 12px, SEM sombra. */
 
-/* "Show de hoje!" */
+/* "Hoje tem show!" — mesmo estilo do CTA "Entrar no chat":
+ * borda com gradiente laranja→rosa→roxo + fill #0a0a0e, pill 999px,
+ * 12.5px/600, sem blur/sombra. */
 .badgeSimple {
   align-items: center;
-  padding: 6px 13px;
+  padding: 7px 15px;
   border: 1.5px solid transparent;
   border-radius: 999px;
   background:
-    linear-gradient(rgba(10, 6, 16, 0.84), rgba(10, 6, 16, 0.84)) padding-box,
-    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+    linear-gradient(#0a0a0e, #0a0a0e) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
   font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-size: 12.5px;
+  font-weight: 600;
   color: #ffffff;
   white-space: nowrap;
 }

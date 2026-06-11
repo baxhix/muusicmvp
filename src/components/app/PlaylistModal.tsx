@@ -264,22 +264,6 @@ export default function PlaylistModal({
               <button
                 type="button"
                 role="tab"
-                aria-selected={tab === 'recentes'}
-                className={styles.tab}
-                onClick={() => setTab('recentes')}
-              >
-                {tab === 'recentes' && (
-                  <motion.span
-                    layoutId="playlistTabPill"
-                    className={styles.tabPill}
-                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                  />
-                )}
-                <span className={styles.tabLabel}>Recentes</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
                 aria-selected={tab === 'albums'}
                 className={styles.tab}
                 onClick={() => setTab('albums')}
@@ -292,6 +276,22 @@ export default function PlaylistModal({
                   />
                 )}
                 <span className={styles.tabLabel}>Álbuns</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === 'recentes'}
+                className={styles.tab}
+                onClick={() => setTab('recentes')}
+              >
+                {tab === 'recentes' && (
+                  <motion.span
+                    layoutId="playlistTabPill"
+                    className={styles.tabPill}
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <span className={styles.tabLabel}>Recentes</span>
               </button>
             </div>
           )}
