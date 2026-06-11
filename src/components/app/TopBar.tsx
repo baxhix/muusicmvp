@@ -205,15 +205,17 @@ function Toggle({
   checked,
   onChange,
   ariaLabel,
-}: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }) {
+  disabled,
+}: { checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={ariaLabel}
-      className={`${styles.toggle} ${checked ? styles.toggleOn : ''}`}
-      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      className={`${styles.toggle} ${checked ? styles.toggleOn : ''} ${disabled ? styles.toggleDisabled : ''}`}
+      onClick={() => { if (!disabled) onChange(!checked); }}
     >
       <span className={styles.toggleKnob} />
     </button>
@@ -416,22 +418,9 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
     special:   /[^A-Za-z0-9]/.test(pwdNew),
   };
 
-  // ── Status online ────────────────────────────────────────────────────────
-  const [online, setOnline] = useState(true);
-  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
-
-  // Fecha o popover de status ao clicar fora
-  useEffect(() => {
-    if (!statusMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(`.${styles.statusMenu}`) && !target.closest(`.${styles.drawerIdentityDot}`)) {
-        setStatusMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [statusMenuOpen]);
+  // Status "Online" removido per product feedback (era mocado — só
+  // estado local sem efeito real). No lugar, a identidade do drawer
+  // expõe o toggle real de visibilidade no mapa (location_consent).
 
   return (
     <>
@@ -482,7 +471,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
             />
           </svg>
         </button>
-        <div className={`${styles.avatar} ${online ? styles.avatarOnline : ''}`}>
+        <div className={styles.avatar}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             key={userAvatar}
@@ -490,7 +479,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
             alt="Meu perfil"
             className={styles.avatarImg}
           />
-          {online && <span className={styles.onlineDot} />}
         </div>
       </div>
 
@@ -532,57 +520,41 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       key={userAvatar}
                       src={userAvatar}
                       alt="Foto de perfil"
-                      className={`${styles.drawerIdentityAvatar} ${online ? styles.drawerIdentityAvatarOnline : ''}`}
+                      className={styles.drawerIdentityAvatar}
                     />
-                    <button
-                      type="button"
-                      className={`${styles.drawerIdentityDot} ${online ? styles.drawerIdentityDotOnline : ''}`}
-                      onClick={() => setStatusMenuOpen(v => !v)}
-                      aria-label={online ? 'Trocar status — você está online' : 'Trocar status — você está offline'}
-                      aria-expanded={statusMenuOpen}
-                    />
-                    {statusMenuOpen && (
-                      <div className={styles.statusMenu} role="menu">
-                        <button
-                          type="button"
-                          role="menuitemradio"
-                          aria-checked={online}
-                          className={`${styles.statusOption} ${online ? styles.statusOptionActive : ''}`}
-                          onClick={() => { setOnline(true); setStatusMenuOpen(false); }}
-                        >
-                          <span className={`${styles.statusBullet} ${styles.statusBulletOn}`} />
-                          Online
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitemradio"
-                          aria-checked={!online}
-                          className={`${styles.statusOption} ${!online ? styles.statusOptionActive : ''}`}
-                          onClick={() => { setOnline(false); setStatusMenuOpen(false); }}
-                        >
-                          <span className={`${styles.statusBullet} ${styles.statusBulletOff}`} />
-                          Offline
-                        </button>
-                      </div>
-                    )}
                   </div>
                   <h2 className={styles.drawerIdentityName}>{userLabel}</h2>
-                  <div className={styles.drawerIdentityStatusRow}>
-                    <span className={`${styles.drawerStatusDot} ${online ? styles.drawerStatusDotOn : styles.drawerStatusDotOff}`} />
-                    <span className={styles.drawerIdentityStatusLabel}>
-                      {online ? 'Online' : 'Offline'}
-                    </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={online}
-                      aria-label={online ? 'Ficar offline' : 'Ficar online'}
-                      className={`${styles.drawerStatusToggle} ${online ? styles.drawerStatusToggleOn : ''}`}
-                      onClick={() => setOnline(v => !v)}
-                    >
-                      <span className={styles.drawerStatusKnob} />
-                    </button>
+
+                  {/* Aparecer no mapa — visibilidade REAL no mapa
+                   *  (consentimento LGPD, location_consent). Substituiu o
+                   *  antigo toggle "Online" (que era só estado local
+                   *  mocado, sem efeito). Mesmo flag do "Aparecer no mapa"
+                   *  do Meu Perfil; update otimista + PATCH
+                   *  /api/me/location-consent. Aqui vem com mais contexto
+                   *  pro usuário entender o que liga/desliga. */}
+                  <div className={styles.drawerMapRow}>
+                    <div className={styles.drawerMapText}>
+                      <span className={styles.drawerMapTitle}>Aparecer no mapa</span>
+                      <span className={styles.drawerMapDesc}>
+                        {isMinor
+                          ? 'Indisponível para menores de 18 anos.'
+                          : 'Mostra você no mapa pros outros fãs com localização aproximada (nunca exata). Desligar te esconde na hora; religar mostra de novo.'}
+                      </span>
+                    </div>
+                    <Toggle
+                      checked={locationConsent}
+                      onChange={handleLocationConsentToggle}
+                      disabled={isMinor || consentBusy}
+                      ariaLabel="Aparecer no mapa"
+                    />
                   </div>
+                  {!isMinor && (
+                    <p className={styles.drawerMapNote}>
+                      Sua localização nunca é exibida de forma exata e não fica
+                      armazenada — aparece só uma região aproximada, alternando
+                      entre pontos dentro da sua cidade.
+                    </p>
+                  )}
                 </div>
 
                 <nav className={styles.drawerNav}>

@@ -435,7 +435,7 @@ export default function BottomNav() {
                   Loja Oficial
                 </a>
 
-                {/* 2. Configurações — abre drawer do TopBar via event. */}
+                {/* 2. Minha conta — abre o drawer do TopBar (conta) via event. */}
                 <button
                   type="button"
                   role="menuitem"
@@ -463,7 +463,7 @@ export default function BottomNav() {
                     <circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none" />
                     <circle cx="11" cy="17" r="2.2" fill="currentColor" stroke="none" />
                   </svg>
-                  Configurações
+                  Minha conta
                 </button>
 
                 {/* 3. Playlist — abre PlaylistModal. */}
