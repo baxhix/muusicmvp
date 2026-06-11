@@ -352,7 +352,9 @@ export default function ShowDayLayer() {
       badgeCity.appendChild(citySub);
       content.appendChild(badgeCity);
 
-      // Badge "box" (≥9.2): foto + título + CTA "Entrar no chat"
+      // Badge "box" (≥9.2): card vertical — foto full-bleed no topo +
+      // corpo (título "Show Ana Castela" + "Festa do Peão" regular/cinza
+      // na linha de baixo) + CTA "Entrar no chat".
       const badgeBox = document.createElement('div');
       badgeBox.className = styles.badgeBox;
       const photo = document.createElement('img');
@@ -360,9 +362,14 @@ export default function ShowDayLayer() {
       photo.src = SHOW_PHOTO;
       photo.alt = '';
       photo.loading = 'lazy';
+      const boxBody = document.createElement('div');
+      boxBody.className = styles.badgeBoxBody;
       const boxTitle = document.createElement('span');
       boxTitle.className = styles.badgeBoxTitle;
-      boxTitle.textContent = 'Show Ana Castela — Festa do Peão';
+      boxTitle.textContent = 'Show Ana Castela';
+      const boxSub = document.createElement('span');
+      boxSub.className = styles.badgeBoxSub;
+      boxSub.textContent = 'Festa do Peão';
       const cta = document.createElement('button');
       cta.type = 'button';
       cta.className = styles.badgeCta;
@@ -371,9 +378,11 @@ export default function ShowDayLayer() {
         e.stopPropagation();
         openPanel();
       });
+      boxBody.appendChild(boxTitle);
+      boxBody.appendChild(boxSub);
+      boxBody.appendChild(cta);
       badgeBox.appendChild(photo);
-      badgeBox.appendChild(boxTitle);
-      badgeBox.appendChild(cta);
+      badgeBox.appendChild(boxBody);
       content.appendChild(badgeBox);
 
       // Palco (arena) — visível a partir de z8 (data-stage='on').

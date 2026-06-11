@@ -190,71 +190,82 @@
   display: none;
 }
 
-/* "Show de hoje!" — pílula SEM borda, SEM dot. */
+/* Estilo comum dos badges: fundo translúcido (padding-box) + BORDA
+ * com gradiente (border-box), raio 4px, fonte 12px, SEM sombra. */
+
+/* "Show de hoje!" */
 .badgeSimple {
   align-items: center;
-  padding: 7px 15px;
-  border-radius: 999px;
-  background: rgba(10, 6, 16, 0.84);
+  padding: 6px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  background:
+    linear-gradient(rgba(10, 6, 16, 0.84), rgba(10, 6, 16, 0.84)) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.01em;
   color: #ffffff;
   white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.32);
 }
 .wrap[data-badge='simple'] .badgeSimple {
   display: inline-flex;
 }
 
-/* "Show de hoje às 23h00!" + "Salvador - BA" — sem borda, sem dot. */
+/* "Show de hoje às 23h00!" + "Salvador - BA" — alinhado à esquerda. */
 .badgeCity {
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
-  padding: 9px 16px;
-  border-radius: 16px;
-  background: rgba(10, 6, 16, 0.86);
+  padding: 7px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  background:
+    linear-gradient(rgba(10, 6, 16, 0.86), rgba(10, 6, 16, 0.86)) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 6px 22px rgba(236, 72, 153, 0.32);
 }
 .wrap[data-badge='city'] .badgeCity {
   display: flex;
 }
 .badgeCityTitle {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.005em;
   color: #ffffff;
   white-space: nowrap;
   line-height: 1.1;
+  text-align: left;
 }
 .badgeCitySub {
   font-family: var(--font-inter), sans-serif;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.62);
   line-height: 1;
+  text-align: left;
 }
 
-/* Box maior — foto + título + CTA, sem borda. */
+/* Box (≥9.2) — card vertical, borda com gradiente, foto full-bleed no
+ * topo (100% das laterais, colada no topo) + corpo com padding. Sem
+ * sombra. */
 .badgeBox {
   flex-direction: column;
-  width: 216px;
-  padding: 9px;
-  border-radius: 18px;
-  background: rgba(8, 5, 13, 0.9);
+  width: 188px;
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(8, 5, 13, 0.92), rgba(8, 5, 13, 0.92)) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow:
-    0 14px 38px rgba(0, 0, 0, 0.55),
-    0 0 26px rgba(236, 72, 153, 0.22);
-  gap: 9px;
+  gap: 0;
 }
 .wrap[data-badge='box'] .badgeBox {
   display: flex;
@@ -262,36 +273,53 @@
 .badgeBoxPhoto {
   display: block;
   width: 100%;
-  height: 98px;
+  height: 132px;
   object-fit: cover;
-  border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
 }
-.badgeBoxTitle {
-  padding: 0 3px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: -0.005em;
-  color: #ffffff;
-  line-height: 1.22;
+.badgeBoxBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 11px 11px;
 }
-.badgeCta {
-  width: 100%;
-  padding: 9px 0;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
-  color: #ffffff;
+.badgeBoxTitle {
   font-family: var(--font-inter), sans-serif;
   font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #ffffff;
+  line-height: 1.2;
+}
+/* "Festa do Peão" — regular, cinza, na linha de baixo. */
+.badgeBoxSub {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.2;
+}
+/* CTA "Entrar no chat" — pill totalmente arredondado, mesmo estilo de
+ * borda com gradiente. */
+.badgeCta {
+  width: 100%;
+  margin-top: 9px;
+  padding: 8px 0;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgba(8, 5, 13, 0.92), rgba(8, 5, 13, 0.92)) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.005em;
   cursor: pointer;
   transition: transform 0.14s ease, filter 0.14s ease;
 }
 .badgeCta:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.12);
 }
 .badgeCta:active {
   transform: scale(0.97);
