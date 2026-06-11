@@ -236,44 +236,44 @@
   color: #ffffff;
   white-space: nowrap;
 }
+/* "Hoje tem show!" aparece SÓ no hover (desktop) / tap-foco (mobile) —
+ * por padrão o marker no zoom baixo mostra só as luzes. */
 .wrap[data-badge='simple'] .badgeSimple {
   display: inline-flex;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+.wrap[data-badge='simple']:hover .badgeSimple,
+.wrap[data-badge='simple']:focus .badgeSimple,
+.wrap[data-badge='simple']:focus-within .badgeSimple,
+.wrap[data-badge='simple']:active .badgeSimple {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-/* "Show de hoje às 23h00!" + "Salvador - BA" — alinhado à esquerda. */
+/* "Hoje tem show às 23h00!" — MESMO estilo do badgeSimple (pill com
+ * borda gradiente laranja→rosa→roxo + fill #0a0a0e, 12.5px/600). */
 .badgeCity {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 8px 16px;
+  align-items: center;
+  padding: 7px 15px;
   border: 1.5px solid transparent;
   border-radius: 999px;
   background:
-    linear-gradient(rgba(10, 6, 16, 0.86), rgba(10, 6, 16, 0.86)) padding-box,
-    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+    linear-gradient(#0a0a0e, #0a0a0e) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+  white-space: nowrap;
 }
 .wrap[data-badge='city'] .badgeCity {
   display: flex;
 }
 .badgeCityTitle {
   font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.005em;
+  font-size: 12.5px;
+  font-weight: 600;
   color: #ffffff;
   white-space: nowrap;
-  line-height: 1.1;
-  text-align: left;
-}
-.badgeCitySub {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.62);
-  line-height: 1;
-  text-align: left;
 }
 
 /* Box (≥9.2) — card vertical, borda com gradiente, foto full-bleed no

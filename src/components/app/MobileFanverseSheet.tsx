@@ -241,6 +241,7 @@ export default function MobileFanverseSheet({
             <span className={sheetStyles.metaPointsValue}>
               {fanpoints.toLocaleString('pt-BR')}
             </span>
+            <span className={sheetStyles.metaPointsRank}>(Top 1!)</span>
             <span className={sheetStyles.metaPointsLabel}>Fanpoints</span>
           </button>
           {/* Botão "4 convites" removido do mobile per product

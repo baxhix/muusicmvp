@@ -120,10 +120,10 @@ function beamHeightFor(zoom: number): number {
 const ARENA_SVG = `
 <svg viewBox="0 0 128 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <radialGradient id="sdSky" cx="0.5" cy="0.32" r="0.78">
-      <stop offset="0" stop-color="#3d1268"/>
-      <stop offset="0.46" stop-color="#1b0a32"/>
-      <stop offset="1" stop-color="#06030e"/>
+    <radialGradient id="sdSky" cx="0.5" cy="0.42" r="0.72">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.62"/>
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="sdScreen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fce7f3"/>
@@ -227,20 +227,8 @@ const ARENA_SVG = `
     <rect x="91" y="29" width="6" height="3.4" rx="1"/><rect x="91.3" y="33" width="5.4" height="3.4" rx="1"/><rect x="91.6" y="37" width="4.8" height="3.4" rx="1"/><rect x="91.9" y="41" width="4.2" height="3.4" rx="1"/>
   </g>
 
-  <!-- Telão de LED (gradiente rosa→roxo) -->
+  <!-- Telão de LED (gradiente rosa→roxo, sem barras) -->
   <rect x="40" y="29.5" width="48" height="29" rx="2.5" fill="url(#sdScreen)"/>
-  <!-- Equalizer / conteúdo na tela -->
-  <g fill="#fdf4ff" fill-opacity="0.42">
-    <rect x="45" y="46" width="2.6" height="8" rx="0.6"/>
-    <rect x="49.5" y="41" width="2.6" height="13" rx="0.6"/>
-    <rect x="54" y="48" width="2.6" height="6" rx="0.6"/>
-    <rect x="58.5" y="38" width="2.6" height="16" rx="0.6"/>
-    <rect x="63" y="44" width="2.6" height="10" rx="0.6"/>
-    <rect x="67.5" y="40" width="2.6" height="14" rx="0.6"/>
-    <rect x="72" y="47" width="2.6" height="7" rx="0.6"/>
-    <rect x="76.5" y="42" width="2.6" height="12" rx="0.6"/>
-    <rect x="81" y="45" width="2.6" height="9" rx="0.6"/>
-  </g>
   <g stroke="#fdf4ff" stroke-opacity="0.12" stroke-width="0.6"><line x1="42" y1="36" x2="86" y2="36"/><line x1="42" y1="58" x2="86" y2="58"/></g>
   <rect x="40" y="29.5" width="48" height="29" rx="2.5" fill="none" stroke="#fbcfe8" stroke-width="0.9" stroke-opacity="0.6"/>
 
@@ -434,11 +422,7 @@ export default function ShowDayLayer() {
       const cityTitle = document.createElement('span');
       cityTitle.className = styles.badgeCityTitle;
       cityTitle.textContent = 'Hoje tem show às 23h00!';
-      const citySub = document.createElement('span');
-      citySub.className = styles.badgeCitySub;
-      citySub.textContent = `${SHOW_DAY.city} - ${SHOW_DAY.state}`;
       badgeCity.appendChild(cityTitle);
-      badgeCity.appendChild(citySub);
       content.appendChild(badgeCity);
 
       // Badge "box" (≥9.2): card vertical — foto full-bleed no topo +
