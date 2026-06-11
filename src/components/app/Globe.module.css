@@ -1003,6 +1003,9 @@
 }
 .quickComposerInput::placeholder {
   color: rgba(245, 245, 247, 0.45);
+  /* Placeholder menor que o texto digitado — o input mantém 16px
+   * (sem auto-zoom no iOS); só o placeholder encolhe. */
+  font-size: 12px;
 }
 .quickComposerInput:focus {
   border-color: rgba(168, 85, 247, 0.55);
