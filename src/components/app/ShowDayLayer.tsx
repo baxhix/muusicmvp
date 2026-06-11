@@ -70,6 +70,37 @@ function tierFor(zoom: number): Tier {
   return 'near';
 }
 
+/* Altura (px) dos feixes de luz por zoom — tabela travada com o
+ * produto pra dar a diferenciação de "tem show aqui" em cada nível:
+ *   z2.5→54 · z4→96 · z6→106 · z7.5→116 · z9.2→106 · z12→224.
+ * Interpolação linear por trechos; clamp nas pontas. O valor é
+ * escrito numa var CSS (--sdBeamH) e a `height` dos feixes a usa,
+ * então os spots crescem/encolhem suavemente conforme o zoom. */
+const BEAM_HEIGHT_STOPS: ReadonlyArray<readonly [number, number]> = [
+  [2.5, 54],
+  [4, 96],
+  [6, 106],
+  [7.5, 116],
+  [9.2, 106],
+  [12, 224],
+];
+
+function beamHeightFor(zoom: number): number {
+  const stops = BEAM_HEIGHT_STOPS;
+  if (zoom <= stops[0][0]) return stops[0][1];
+  const last = stops[stops.length - 1];
+  if (zoom >= last[0]) return last[1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [z0, h0] = stops[i];
+    const [z1, h1] = stops[i + 1];
+    if (zoom >= z0 && zoom <= z1) {
+      const t = (zoom - z0) / (z1 - z0);
+      return Math.round(h0 + (h1 - h0) * t);
+    }
+  }
+  return last[1];
+}
+
 /** Texto do chip de status por fase (countdown atualiza a cada 30s). */
 function chipContent(phase: ShowDayPhase): { text: string; sub: string } {
   if (phase === 'live') return { text: 'AO VIVO', sub: '' };
@@ -282,6 +313,15 @@ export default function ShowDayLayer() {
       wrapEl.dataset.tier = tier;
     };
 
+    /* Escala contínua da altura dos feixes conforme o zoom. Roda a
+     * cada evento de zoom — barato (um setProperty num subtree de
+     * 0×0; nenhum reflow de página), e a `height` dos feixes só
+     * afeta esse subtree absoluto. */
+    const applyBeamHeight = (map: MapboxMap) => {
+      if (!wrapEl) return;
+      wrapEl.style.setProperty('--sdBeamH', `${beamHeightFor(map.getZoom())}px`);
+    };
+
     /** Monta o DOM do marker (uma vez por attach). */
     const buildMarker = (map: MapboxMap) => {
       const wrap = document.createElement('div');
@@ -295,6 +335,7 @@ export default function ShowDayLayer() {
       wrap.dataset.phase = getShowDayPhase();
       wrap.dataset.tier = tierFor(map.getZoom());
       lastTier = tierFor(map.getZoom());
+      wrap.style.setProperty('--sdBeamH', `${beamHeightFor(map.getZoom())}px`);
 
       /* Anéis de pulso (mid + near). */
       const pulseA = document.createElement('span');
@@ -331,17 +372,23 @@ export default function ShowDayLayer() {
       mid.appendChild(makeChip());
       wrap.appendChild(mid);
 
-      /* Tier NEAR — feixes + arena + chip + viewers. */
-      const near = document.createElement('div');
-      near.className = styles.near;
-      const beams = document.createElement('div');
-      beams.className = styles.beams;
-      (['beamL2', 'beamL', 'beamC', 'beamR', 'beamR2'] as const).forEach((k) => {
+      /* Spots de luz — varredura de holofotes em TODOS os tiers
+       * (far/mid/near), o cue de "tem show aqui" que diferencia em
+       * cada zoom. Vive no wrapper (não dentro de .mid/.near); a
+       * altura escala com o zoom via --sdBeamH. 3 feixes L/C/R:
+       * o central aparece já no far, os laterais entram do mid. */
+      const spots = document.createElement('div');
+      spots.className = styles.spots;
+      (['beamL', 'beamC', 'beamR'] as const).forEach((k) => {
         const beam = document.createElement('span');
         beam.className = `${styles.beam} ${styles[k]}`;
-        beams.appendChild(beam);
+        spots.appendChild(beam);
       });
-      near.appendChild(beams);
+      wrap.appendChild(spots);
+
+      /* Tier NEAR — arena + chip + viewers (os feixes ficam no .spots). */
+      const near = document.createElement('div');
+      near.className = styles.near;
       const arena = document.createElement('span');
       arena.className = styles.arena;
       arena.innerHTML = ARENA_SVG;
@@ -472,6 +519,7 @@ export default function ShowDayLayer() {
         if (!marker) buildMarker(map);
         applyPhase();
         applyTier(map);
+        applyBeamHeight(map);
       };
       if (map.isStyleLoaded()) setup();
       else map.once('style.load', setup);
@@ -479,7 +527,10 @@ export default function ShowDayLayer() {
       styleHandler = () => ensureLayers(map);
       map.on('style.load', styleHandler);
 
-      zoomHandler = () => applyTier(map);
+      zoomHandler = () => {
+        applyTier(map);
+        applyBeamHeight(map);
+      };
       map.on('zoom', zoomHandler);
     };
 
