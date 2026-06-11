@@ -556,9 +556,12 @@
    * Altura: 470px = padding 32+32 + video 297 + gap 18 +
    * stageMsg 88 + border 3. Cards pareados visualmente. */
   top: 17%;
-  left: calc(50% + 304px);
-  right: auto;
-  width: 280px;
+  /* Largura 280 → 480px (per feedback). Ancorado à direita da tela
+   * pra caber sem estourar (left:calc(50%+304) com 480 transbordava
+   * em telas ≤1568px). */
+  left: auto;
+  right: 24px;
+  width: 480px;
   height: 470px;
   max-height: none;
   display: flex;

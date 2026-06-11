@@ -36,6 +36,13 @@
   cursor: pointer;
 }
 
+/* Durante o Show Ao Vivo / Cobertura ao vivo (html[data-showlive])
+ * as notificações mocadas não aparecem — não devem flutuar sobre
+ * o palco. */
+:global(html[data-showlive='true']) .root {
+  display: none !important;
+}
+
 /* Expanded mode: stack vira lista vertical com gap fixo. Cursor
  *  volta default já que o container não é o trigger principal —
  *  cada toast individual fica clicável. */

@@ -315,6 +315,12 @@
 .rxnLiked svg { fill: #f87171; stroke: none !important; }
 
 
+/* Durante o Show Ao Vivo / Cobertura ao vivo (html[data-showlive])
+ * o feed some — não deve flutuar sobre o palco. */
+:global(html[data-showlive='true']) .panel {
+  display: none !important;
+}
+
 /* ── Responsive ── */
 /* Viewport intermediário (1025-1440px) — quando o ArtistBox se
  * retrai pro ArtistBoxRail (rail vertical 52px), o Feed perde o

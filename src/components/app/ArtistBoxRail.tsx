@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
@@ -14,6 +15,10 @@ import {
 } from './ArtistBox';
 import { MaterialsTabContent } from './MaterialsTabContent';
 import styles from './ArtistBoxRail.module.css';
+/* Reuso direto do CSS do ArtistBox desktop pra que as tabs + a tab
+ * Missões fiquem idênticas (mesma ordem, segmented-control com pill
+ * animado, mesmos cards). */
+import boxStyles from './ArtistBox.module.css';
 
 /**
  * ArtistBoxRail — versão compacta vertical do ArtistBox usada em
@@ -60,25 +65,9 @@ export default function ArtistBoxRail() {
   const progress = Math.round((completed / TOTAL) * 100);
   const fpEarned = sumEarnedXp(MISSION_META, doneById);
 
-  /* Click fora do wrapper fecha o flyout. */
-  useEffect(() => {
-    if (!flyoutOpen) return;
-    const onDocClick = (e: MouseEvent) => {
-      const root = wrapperRef.current;
-      if (root && !root.contains(e.target as Node)) {
-        setFlyoutOpen(false);
-      }
-    };
-    /* setTimeout 0 evita fechar imediatamente no mesmo tick do click
-     * que abriu (event bubbling). */
-    const id = window.setTimeout(() => {
-      document.addEventListener('mousedown', onDocClick);
-    }, 0);
-    return () => {
-      window.clearTimeout(id);
-      document.removeEventListener('mousedown', onDocClick);
-    };
-  }, [flyoutOpen]);
+  /* Click fora NÃO fecha mais o flyout (per feedback): ele só fecha
+   * pela seta de voltar no topo, clicando de novo na foto de perfil
+   * (toggle) ou via Escape. Sem listener de click-outside. */
 
   /* Escape fecha o flyout. */
   useEffect(() => {
@@ -127,9 +116,9 @@ export default function ArtistBoxRail() {
          * de "identidade" do box. */}
         <button
           type="button"
-          className={`${styles.iconBtn} ${styles.avatarBtn}`}
-          onClick={() => openTab('missoes')}
-          aria-label="Abrir Fanverse Ana Castela"
+          className={`${styles.iconBtn} ${styles.avatarBtn} ${flyoutOpen ? styles.iconBtnActive : ''}`}
+          onClick={() => (flyoutOpen ? setFlyoutOpen(false) : openTab('missoes'))}
+          aria-label={flyoutOpen ? 'Fechar Fanverse Ana Castela' : 'Abrir Fanverse Ana Castela'}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -219,6 +208,19 @@ export default function ArtistBoxRail() {
           aria-modal="false"
           aria-label="Fanverse Ana Castela"
         >
+          {/* Seta de voltar — único jeito (junto do toggle no avatar)
+           * de fechar o flyout. Flutua no topo-esquerdo sobre o hero. */}
+          <button
+            type="button"
+            className={styles.flyoutBack}
+            onClick={() => setFlyoutOpen(false)}
+            aria-label="Voltar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+
           {/* Header do flyout — foto + nome + verified + Fanpoints */}
           <div className={styles.flyoutHeader}>
             <div className={styles.flyoutHero}>
@@ -244,35 +246,60 @@ export default function ArtistBoxRail() {
               </div>
             </div>
 
-            {/* Tab bar */}
-            <div className={styles.flyoutTabs} role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'missoes'}
-                className={`${styles.flyoutTab} ${activeTab === 'missoes' ? styles.flyoutTabActive : ''}`}
-                onClick={() => setActiveTab('missoes')}
-              >
-                Missões
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'ranking'}
-                className={`${styles.flyoutTab} ${activeTab === 'ranking' ? styles.flyoutTabActive : ''}`}
-                onClick={() => setActiveTab('ranking')}
-              >
-                Superfãs
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'materiais'}
-                className={`${styles.flyoutTab} ${activeTab === 'materiais' ? styles.flyoutTabActive : ''}`}
-                onClick={() => setActiveTab('materiais')}
-              >
-                Exclusivo
-              </button>
+            {/* Tab bar — MESMO estilo e ordem do ArtistBox desktop:
+             * segmented control com pill animado (Superfãs / Missões /
+             * Exclusivo). Reusa boxStyles + motion (layoutId próprio). */}
+            <div className={styles.flyoutTabs}>
+              <div className={boxStyles.tabs} role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'ranking'}
+                  className={boxStyles.tab}
+                  onClick={() => setActiveTab('ranking')}
+                >
+                  {activeTab === 'ranking' && (
+                    <motion.span
+                      layoutId="railTabPill"
+                      className={boxStyles.tabPill}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span className={boxStyles.tabLabel}>Superfãs</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'missoes'}
+                  className={boxStyles.tab}
+                  onClick={() => setActiveTab('missoes')}
+                >
+                  {activeTab === 'missoes' && (
+                    <motion.span
+                      layoutId="railTabPill"
+                      className={boxStyles.tabPill}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span className={boxStyles.tabLabel}>Missões</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'materiais'}
+                  className={boxStyles.tab}
+                  onClick={() => setActiveTab('materiais')}
+                >
+                  {activeTab === 'materiais' && (
+                    <motion.span
+                      layoutId="railTabPill"
+                      className={boxStyles.tabPill}
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span className={boxStyles.tabLabel}>Exclusivo</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -282,44 +309,60 @@ export default function ArtistBoxRail() {
            * render inline simplificado (sem sparkle celebration). */}
           <div className={styles.flyoutBody}>
             {activeTab === 'missoes' && (
-              <div className={styles.missionsList}>
-                {/* Header (sentence case) + Fanpoints na mesma linha,
-                 * acima da lista — per spec "coloque na linha de
-                 * cima junto com 120 Fanpoints". */}
-                <div className={styles.missionsHeader}>
-                  <span className={styles.missionsTitle}>
+              <>
+                {/* Header + lista + barra IDÊNTICOS ao ArtistBox desktop
+                 * (boxStyles): "Missões do dia" + info na esquerda, total
+                 * de Fanpoints na mesma linha à direita; cada card com
+                 * ícone | nome | check | +FP na MESMA linha. */}
+                <div className={boxStyles.missionsHeader}>
+                  <span className={boxStyles.missionsTitle}>
                     Missões do dia
-                  </span>
-                  <span className={styles.missionsProgress}>
-                    {fpEarned} Fanpoints
-                  </span>
-                </div>
-                {/* Progress bar — sem label de contagem per spec. */}
-                <div className={styles.missionsProgressBar} aria-hidden="true">
-                  <div
-                    className={styles.missionsProgressFill}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                {MISSION_META.map((m) => {
-                  const isDone = doneById[m.id] ?? false;
-                  return (
-                    <div
-                      key={m.id}
-                      className={`${styles.mission} ${isDone ? styles.missionDone : ''}`}
+                    <span
+                      className={boxStyles.missionsInfo}
+                      role="img"
+                      aria-label="Cada dia uma missão diferente. Aproveite!"
+                      data-tooltip="Cada dia uma missão diferente. Aproveite!"
                     >
-                      <span className={styles.missionIcon}>{m.icon}</span>
-                      <span className={styles.missionName}>{m.name}</span>
-                      <div className={styles.missionCheck}>
-                        <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1.5 4l2 2 3-3.5" />
-                        </svg>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                    </span>
+                  </span>
+                  <span className={boxStyles.xpTotal}>{fpEarned} Fanpoints</span>
+                </div>
+                <div className={boxStyles.missionsList}>
+                  {MISSION_META.map((m) => {
+                    const isDone = doneById[m.id] ?? false;
+                    return (
+                      <div
+                        key={m.id}
+                        className={`${boxStyles.mission} ${isDone ? boxStyles.missionDone : ''}`}
+                      >
+                        <span className={boxStyles.missionIcon}>{m.icon}</span>
+                        <div className={boxStyles.missionText}>
+                          <span className={boxStyles.missionName}>{m.name}</span>
+                        </div>
+                        <div className={boxStyles.missionCheck}>
+                          <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1.5 4l2 2 3-3.5" />
+                          </svg>
+                        </div>
+                        <span className={boxStyles.missionXp}>{m.xp}</span>
                       </div>
-                      <span className={styles.missionXp}>{m.xp}</span>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                <div className={boxStyles.progressWrap}>
+                  <div className={boxStyles.progressTrack}>
+                    <div
+                      className={boxStyles.progressFill}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              </>
             )}
             {activeTab === 'ranking' && <RankingTabContent />}
             {activeTab === 'materiais' && <MaterialsTabContent />}

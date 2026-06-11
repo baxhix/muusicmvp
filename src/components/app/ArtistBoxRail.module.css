@@ -300,12 +300,39 @@
   color: rgba(245, 245, 247, 0.55);
 }
 
-/* Tab bar (mesmo estilo dos tabs do ArtistBox). */
+/* Seta de voltar — flutua no topo-esquerdo sobre o hero. Fecha o
+ * flyout (junto com o toggle no avatar do rail). */
+.flyoutBack {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(10, 10, 14, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.flyoutBack:hover {
+  background: rgba(10, 10, 14, 0.82);
+}
+.flyoutBack svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Wrapper das tabs — só dá o padding lateral; o segmented control
+ * (boxStyles.tabs do ArtistBox desktop) vive dentro. */
 .flyoutTabs {
-  display: flex;
-  gap: 4px;
-  padding: 8px 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 8px 12px 10px;
 }
 .flyoutTab {
   flex: 1;
