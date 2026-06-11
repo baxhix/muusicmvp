@@ -324,7 +324,7 @@
  * posição central e ficar abaixo do banner no topo", reposicionamos
  * pra centralizado abaixo do DesktopTopBanner (banner topo 34px +
  * altura ~95px = 129; subimos 24px de breathing → top:153). */
-@media (min-width: 1025px) and (max-width: 1490px) {
+@media (min-width: 1025px) and (max-width: 1440px) {
   .panel {
     top: 153px;
     /* Altura do feed retraído +45px (era calc(100vh - 200px)) per
@@ -345,6 +345,28 @@
     right: auto;
     transform: translateX(-50%);
     width: min(520px, calc(100vw - 280px));
+  }
+}
+/* Faixa 1441-1490px — Fanverse já está em rail (compacto), mas aqui
+ * ainda cabe o feed NA LATERAL direita. Per product feedback "Na
+ * resolução 1470, compacte a largura do feed pra mesma largura do box
+ * Chat/Comunidade e mantenha na lateral". 398px = largura exata do
+ * CommunityPanel; right:104 = mesmo alinhamento (42px à esquerda do
+ * dock). Mantém o top/altura do feed retraído. */
+@media (min-width: 1441px) and (max-width: 1490px) {
+  .panel {
+    top: 153px;
+    height: calc(100vh - 155px);
+    left: auto;
+    transform: none;
+    right: 104px;
+    width: 398px;
+  }
+  .minimizedGradient {
+    left: auto;
+    transform: none;
+    right: 104px;
+    width: 398px;
   }
 }
 @media (max-width: 1024px) {
