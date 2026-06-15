@@ -549,6 +549,46 @@
   line-height: 0;
 }
 
+/* Medalhão de rank (Top 10) no canto sup-dir do avatar fixo —
+ * canto oposto ao chip de "now playing" (inf-dir). Coroa #1 /
+ * estrela #2–10, espelhando o RankMedallion das demais superfícies. */
+.rankMedallion {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #c99a2e;
+  border: 2px solid #0a0a14;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+  pointer-events: none;
+  line-height: 1;
+}
+.rankMedallion svg {
+  width: 62%;
+  height: 62%;
+  display: block;
+}
+.rankMedallionChampion {
+  width: 18px;
+  height: 18px;
+  top: -4px;
+  right: -4px;
+  background: radial-gradient(125% 125% at 50% 18%, #3a2606 0%, #130d02 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(244, 203, 75, 0.62),
+    0 1px 4px rgba(0, 0, 0, 0.6);
+}
+.rankMedallionChampion svg {
+  width: 80%;
+  height: 80%;
+}
+
 .userBadgeAvatar {
   width: 26px;
   height: 26px;

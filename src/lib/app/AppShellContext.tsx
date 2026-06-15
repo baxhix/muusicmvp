@@ -21,6 +21,7 @@ import {
   FAKE_CENTRAL_USER_ID,
 } from '@/lib/fakeAna';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useRankBands } from '@/components/app/RankBandsProvider';
 import { preloadDisplayPoints } from '@/lib/displayPoints';
 import { useRouter } from 'next/navigation';
 import {
@@ -453,6 +454,10 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
   ]);
 
   // Other online users — filter self, map to the live-presence shape.
+  // Anexa `rank` (ranking geral) pra o marker FIXO no mapa pintar o
+  // medalhão Top 10 — mesmo do avatar flutuante. rankOf entra nas deps
+  // pra re-push quando o ranking chega/muda.
+  const { rankOf } = useRankBands();
   useEffect(() => {
     const mapped = live.users
       .filter((u) => u.lat != null && u.lng != null && u.id !== authUser?.id)
@@ -464,9 +469,10 @@ export function AppShellProvider({ children }: { children: ReactNode }) {
         lng: u.lng as number,
         trackTitle: u.nowPlaying?.title ?? null,
         trackArtist: u.nowPlaying?.artist ?? null,
+        rank: rankOf(u.id),
       }));
     globeStore.setLiveUsers(mapped);
-  }, [live.users, authUser?.id]);
+  }, [live.users, authUser?.id, rankOf]);
 
   // Ambient Paraná dots — head-count of registered users.
   useEffect(() => {

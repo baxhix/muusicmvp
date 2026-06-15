@@ -79,11 +79,11 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppShellProvider>
-      <RankBandsProvider>
+    <RankBandsProvider>
+      <AppShellProvider>
         <Shell>{children}</Shell>
-      </RankBandsProvider>
-    </AppShellProvider>
+      </AppShellProvider>
+    </RankBandsProvider>
   );
 }
 

@@ -766,8 +766,8 @@
   /* Per product feedback "Aumente levemente os espaçamentos, mesmo
    * que for preciso aumentar a largura do bloco". gap 10 → 14,
    * padding 7×8 → 10×12. */
-  gap: 14px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 9px 8px;
   border-radius: 8px;
   background: transparent;
   transition: background 140ms ease;
@@ -792,11 +792,14 @@
    * Top3 (.tabRankingRankMedal) continua sobrescrevendo essas
    * regras com o gradient rosa/roxo + bold. */
   flex-shrink: 0;
-  width: 28px;
+  min-width: 24px;
   height: 28px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  /* Número à esquerda (não centralizado) pra colar a coluna de
+   * posição na borda e liberar largura pro nome quando o box
+   * está contraído. */
+  justify-content: flex-start;
   font-size: 12px;
   font-weight: 400;
   color: rgba(245, 245, 247, 0.55);
@@ -1039,8 +1042,8 @@
 .tabRankingAvatarWrap {
   position: relative;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   display: inline-block;
   line-height: 0;
 }
@@ -1048,8 +1051,8 @@
   /* Per product feedback "aumente o tamanho dos avatares" —
    * bump 26 → 34. Bordo + tint mais densos pra que o avatar
    * maior ainda sinalize "ring" sem ofuscar foto. */
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);

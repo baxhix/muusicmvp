@@ -21,6 +21,8 @@ export interface LiveMapUser {
   /** Optional now-playing track for the hover/preview UI. */
   trackTitle?: string | null;
   trackArtist?: string | null;
+  /** Posição 1-based no ranking geral (Top 10 → medalhão no avatar fixo). */
+  rank?: number | null;
 }
 
 /**
