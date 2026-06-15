@@ -214,6 +214,13 @@
   animation: fadeSlideOut 0.75s ease forwards;
 }
 
+/* Wrap relative do avatar — hospeda o medalhão de rank no canto. */
+.avatarWrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
 /* Avatar — 38px + borda verde estilo mock, mesmo visual do marker
    compacto do mapa (coerência entre flutuante e fixo). */
 .avatar {

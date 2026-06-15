@@ -3,6 +3,8 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { globeStore } from '@/lib/globeStore';
 import { useLiveUsers } from '@/hooks/useLiveUsers';
+import { useRanking } from '@/hooks/useRanking';
+import RankMedallion from './RankMedallion';
 import { track } from '@/lib/analytics';
 import { getSocket } from '@/lib/socket/client';
 import type { ApiOnlineUser } from '@/lib/api/types';
@@ -196,6 +198,16 @@ export default function FloatingUsers() {
   );
   const pool = useMemo(() => distributeFloatingUsers(offMapUsers), [offMapUsers]);
 
+  // Posição no ranking geral (por fanpoints) → medalhão Top 10 no
+  // avatar do mapa. Reusa o mesmo ranking das demais superfícies;
+  // index+1 = posição 1-based. (Parte 1 só decora Top 10.)
+  const { ranking } = useRanking(true);
+  const rankById = useMemo(() => {
+    const m = new Map<string, number>();
+    ranking.forEach((r, i) => m.set(r.userId, i + 1));
+    return m;
+  }, [ranking]);
+
   /**
    * Heart click on a floating user — mirrors the Globe Mapbox
    * marker flow per product feedback "Deixe o coração visível em
@@ -288,6 +300,7 @@ export default function FloatingUsers() {
           user={user}
           isLiked={likedIds.has(user.id)}
           isBursting={burstingIds.has(user.id)}
+          rankPosition={rankById.get(user.id) ?? null}
           onWave={handleWave}
         />
       ))}
@@ -314,6 +327,8 @@ interface FloatingUserBadgeProps {
   user: FloatingUser;
   isLiked: boolean;
   isBursting: boolean;
+  /** Posição 1-based no ranking geral; null/>10 → sem medalhão. */
+  rankPosition: number | null;
   /** Receives `(user, wasLiked, event)` — wasLiked comes from
    *  the parent's `isLiked` prop so the handler stays stable
    *  across renders (see `useCallback([])` upstream). */
@@ -328,6 +343,7 @@ function FloatingUserBadgeImpl({
   user,
   isLiked,
   isBursting,
+  rankPosition,
   onWave,
 }: FloatingUserBadgeProps) {
   const musicContainerRef = useRef<HTMLDivElement>(null);
@@ -373,8 +389,13 @@ function FloatingUserBadgeImpl({
       onClick={() => user.center && globeStore.flyTo(user.center, user.zoom ?? 10)}
     >
       <div className={`${styles.badge} ${styles.visible}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={user.img} alt={user.name} className={styles.avatar} />
+        <span className={styles.avatarWrap}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={user.img} alt={user.name} className={styles.avatar} />
+          {/* Medalhão Top 10 (coroa #1 / estrela #2–10) no canto sup-dir
+           * do avatar do mapa — o anel verde já comunica "online". */}
+          <RankMedallion position={rankPosition} size="sm" />
+        </span>
         <div className={`${styles.info} ${user.song ? styles.infoHasMusic : ''}`}>
           <span className={styles.name}>{user.name}</span>
 
@@ -514,6 +535,7 @@ const FloatingUserBadge = memo(
   (prev, next) => {
     if (prev.isLiked !== next.isLiked) return false;
     if (prev.isBursting !== next.isBursting) return false;
+    if (prev.rankPosition !== next.rankPosition) return false;
     if (prev.onWave !== next.onWave) return false;
     const a = prev.user;
     const b = next.user;
