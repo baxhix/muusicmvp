@@ -34,7 +34,7 @@ function RankMedallionBase({
 }: RankMedallionProps) {
   if (position == null || position < 1 || position > 10) return null;
   const isChampion = position === 1;
-  const src = isChampion ? '/badges/seal-gray.png' : '/badges/seal-gold.png';
+  const src = isChampion ? '/badges/seal-gold.png' : '/badges/seal-gray.png';
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img

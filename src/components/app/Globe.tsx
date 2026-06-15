@@ -827,7 +827,7 @@ export default function Globe() {
      */
     const rankMedallionHtml = (rank?: number | null): string => {
       if (rank == null || rank < 1 || rank > 10) return '';
-      const src = rank === 1 ? '/badges/seal-gray.png' : '/badges/seal-gold.png';
+      const src = rank === 1 ? '/badges/seal-gold.png' : '/badges/seal-gray.png';
       return `<img src="${src}" alt="" class="${styles.rankMedallion}" />`;
     };
 
