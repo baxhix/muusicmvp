@@ -4,6 +4,8 @@ import { useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import VerifiedBadge from './VerifiedBadge';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 import styles from './LiveChatStack.module.css';
 
 interface Props {
@@ -54,6 +56,7 @@ export default function LiveChatStack({
   const [hovered, setHovered] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const dockLimit = isMobile ? DOCK_LIMIT_MOBILE : DOCK_LIMIT_DESKTOP;
+  const { rankOf } = useRankBands();
 
   // Include DMs (resolvable other user) AND user-created groups.
   // O grupo "Superchat" (com ícone do chapéu Ana Castela) está
@@ -133,6 +136,15 @@ export default function LiveChatStack({
                   if (img.src.endsWith(fb)) return;
                   img.src = fb;
                 }}
+              />
+
+              {/* Medalhão de rank — Top 10. Canto sup-esquerdo pra não
+                  colidir com verified (sup-dir) nem presença (inf-dir).
+                  Só DMs (grupo não tem rank de 1 user). */}
+              <RankMedallion
+                position={isGroup ? null : rankOf(u?.id)}
+                size="sm"
+                corner="tl"
               />
 
               {/* Presence dot — DMs only. Groups don't have a

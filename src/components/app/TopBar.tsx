@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
 import { resetOnboarding } from '@/lib/onboarding';
@@ -273,6 +275,7 @@ interface TopBarProps {
 
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
   const { user, logout, refresh } = useAuth();
+  const { rankOf } = useRankBands();
   /* Per product feedback "as notificações vão para cima, ao lado
    * esquerdo da imagem do usuário no topo superior direito" —
    * trazemos o bell pro topo. Toggle do mesmo flag
@@ -479,6 +482,8 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
             alt="Meu perfil"
             className={styles.avatarImg}
           />
+          {/* Medalhão de rank — meu próprio status, se Top 10. */}
+          <RankMedallion position={rankOf(user?.id)} size="sm" />
         </div>
       </div>
 

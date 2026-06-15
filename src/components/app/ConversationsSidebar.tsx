@@ -5,6 +5,8 @@ import { motion } from 'motion/react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 import SwipeAction from './SwipeAction';
 import { showAppToast } from './AppToast';
 import { confirmDialog } from './ConfirmDialog';
@@ -57,6 +59,7 @@ export default function ConversationsSidebar({
   onConversationHidden,
 }: Props) {
   const [query, setQuery] = useState('');
+  const { rankOf } = useRankBands();
   /* Filtro por tipo de interação. null = mostrar tudo (default);
    * 'dm' = só conversas 1:1; 'group' = só grupos. Per product
    * feedback "dois pequenos botões de Conversas e Grupos, para
@@ -415,6 +418,13 @@ export default function ConversationsSidebar({
                       if (img.src.endsWith(fb)) return;
                       img.src = fb;
                     }}
+                  />
+                  {/* Medalhão de rank — Top 10. Canto sup-esquerdo
+                      (sup-dir = verified, inf-dir = presença). DMs só. */}
+                  <RankMedallion
+                    position={isGroup ? null : rankOf(u?.id)}
+                    size="sm"
+                    corner="tl"
                   />
                   {/* Status dash only for DMs — groups don't have a
                       single "online" state. */}

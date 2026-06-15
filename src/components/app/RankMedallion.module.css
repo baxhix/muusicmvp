@@ -78,6 +78,30 @@
   right: 6px;
 }
 
+/* Canto superior-esquerdo (onde o direito é ocupado por verified
+ * badge / presença — ex.: linhas de chat). Espelha os offsets. */
+.tl {
+  right: auto;
+}
+.tl.sm {
+  left: -4px;
+}
+.tl.md {
+  left: -5px;
+}
+.tl.lg {
+  left: 6px;
+}
+.champion.tl.sm {
+  left: -6px;
+}
+.champion.tl.md {
+  left: -7px;
+}
+.champion.tl.lg {
+  left: 2px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .medallion {
     transition: transform 0.18s ease;

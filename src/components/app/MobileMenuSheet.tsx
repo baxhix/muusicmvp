@@ -10,6 +10,8 @@ import {
   type Variants,
 } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { api } from '@/lib/api/client';
 import { track } from '@/lib/analytics';
@@ -46,6 +48,7 @@ interface MobileMenuSheetProps {
 export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps) {
   const router = useRouter();
   const { user, refresh } = useAuth();
+  const { rankOf } = useRankBands();
   const { setShowPlaylist } = useAppShell();
   const reduce = useReducedMotion();
 
@@ -298,6 +301,7 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
                   <span className={styles.accountAvatarWrap}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={avatar} alt="" className={styles.accountAvatar} />
+                    <RankMedallion position={rankOf(user?.id)} size="sm" />
                     {/* Dot de status — verde quando visível no mapa
                         (consent ON), cinza quando invisível. */}
                     <span

@@ -13,6 +13,12 @@ interface RankMedallionProps {
   position: number | null | undefined;
   /** Casa o tamanho com o avatar: sm ~32–44px, md ~44–64px, lg ~118px. */
   size?: RankMedallionSize;
+  /**
+   * Canto onde o medalhão ancora. Default 'tr' (superior-direito).
+   * Use 'tl' (superior-esquerdo) onde o canto direito já é ocupado
+   * por verified badge / presença (ex.: linhas de chat).
+   */
+  corner?: 'tr' | 'tl';
 }
 
 /**
@@ -25,12 +31,16 @@ interface RankMedallionProps {
  * onde isto é usado já são). `pointer-events: none` pra não bloquear o
  * clique no avatar/nome (que costumam ser Links).
  */
-function RankMedallionBase({ position, size = 'sm' }: RankMedallionProps) {
+function RankMedallionBase({
+  position,
+  size = 'sm',
+  corner = 'tr',
+}: RankMedallionProps) {
   if (position == null || position < 1 || position > 10) return null;
   const isChampion = position === 1;
   return (
     <span
-      className={`${styles.medallion} ${styles[size]} ${isChampion ? styles.champion : ''}`}
+      className={`${styles.medallion} ${styles[size]} ${isChampion ? styles.champion : ''} ${corner === 'tl' ? styles.tl : ''}`}
       aria-label={isChampion ? 'Top 1 do ranking' : `Top 10 · #${position} do ranking`}
       title={isChampion ? 'Top 1' : `Top 10 · #${position}`}
     >

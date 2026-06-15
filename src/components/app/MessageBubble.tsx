@@ -9,6 +9,8 @@ import type {
 import MessageBody, { stripReplyPrefix } from './MessageBody';
 import Lightbox from './Lightbox';
 import styles from './LiveChatPanel.module.css';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 
@@ -87,6 +89,7 @@ function MessageBubbleImpl({
   onLongPress,
 }: Props) {
   const msgReactions = m.reactions ?? [];
+  const { rankOf } = useRankBands();
 
   /* Long-press detection — pattern padrão de mobile.
    *
@@ -145,12 +148,15 @@ function MessageBubbleImpl({
          * dispensam porque já são 1:1 e o alignment esquerda/direita
          * marca a autoria. */
         <div className={styles.msgHead}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={senderAvatar(m)}
-            alt=""
-            className={styles.msgAvatar}
-          />
+          <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={senderAvatar(m)}
+              alt=""
+              className={styles.msgAvatar}
+            />
+            <RankMedallion position={rankOf(m.senderId)} size="sm" />
+          </span>
           <span className={styles.msgSender}>{senderLabel(m)}</span>
         </div>
       )}

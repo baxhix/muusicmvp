@@ -8,6 +8,8 @@ import type { ApiFeedComment, ApiFeedCommentReactionResult } from '@/lib/api/typ
 import CommentInput from './CommentInput';
 import HeartButton from './HeartButton';
 import styles from './CommentsPanel.module.css';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 
 /** Local mention-count helper. Mirrors the regex in CommentsPanel
  *  + the server-side parseMentions so analytics stay aligned. */
@@ -127,6 +129,7 @@ export default function CommentItem({
 }: Props) {
   const [replyComposerOpen, setReplyComposerOpen] = useState(false);
   const [replySubmitting, setReplySubmitting] = useState(false);
+  const { rankOf } = useRankBands();
 
   const canDelete =
     currentUserId !== null &&
@@ -235,12 +238,15 @@ export default function CommentItem({
 
   return (
     <div className={`${styles.comment} ${isReply ? styles.commentReply : ''}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        className={styles.avatar}
-        src={comment.author.avatarUrl ?? '/avatar-placeholder.svg'}
-        alt={comment.author.name ?? comment.author.email}
-      />
+      <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className={styles.avatar}
+          src={comment.author.avatarUrl ?? '/avatar-placeholder.svg'}
+          alt={comment.author.name ?? comment.author.email}
+        />
+        <RankMedallion position={rankOf(comment.author.id)} size="sm" />
+      </span>
       <div className={styles.body}>
         <div className={styles.identityRow}>
           <span className={styles.authorName}>

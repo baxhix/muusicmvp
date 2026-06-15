@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AppShellProvider, useAppShell } from '@/lib/app/AppShellContext';
+import { RankBandsProvider } from '@/components/app/RankBandsProvider';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
@@ -79,7 +80,9 @@ export default function AppLayout({
 }) {
   return (
     <AppShellProvider>
-      <Shell>{children}</Shell>
+      <RankBandsProvider>
+        <Shell>{children}</Shell>
+      </RankBandsProvider>
     </AppShellProvider>
   );
 }

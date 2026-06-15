@@ -7,6 +7,8 @@ import type { ApiMessage } from '@/lib/api/types';
 import ParticipantsModal from './ParticipantsModal';
 import MessageBody, { buildReplyBody, stripReplyPrefix } from './MessageBody';
 import styles from './SuperchatPanel.module.css';
+import RankMedallion from './RankMedallion';
+import { useRankBands } from './RankBandsProvider';
 
 /** Auto-resize do textarea: cresce com o conteúdo até MAX_PX, depois
  *  scroll interno. Reseta height pra `auto` antes de medir
@@ -413,6 +415,7 @@ function MessageRow({
   onReplyTo: (m: ApiMessage) => void;
 }) {
   const reactions = m.reactions ?? [];
+  const { rankOf } = useRankBands();
 
   // Picker visibility per row. Hover shows the smile + reply
   // buttons; clicking smile toggles the emoji picker popover.
@@ -455,8 +458,11 @@ function MessageRow({
     <div className={`${styles.msg} ${isMine ? styles.msgOut : styles.msgIn}`}>
       {showHead && (
         <div className={styles.msgHead}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={senderAvatarUrl(m)} alt="" className={styles.msgAvatar} />
+          <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={senderAvatarUrl(m)} alt="" className={styles.msgAvatar} />
+            <RankMedallion position={rankOf(m.senderId)} size="sm" />
+          </span>
           <span className={styles.msgSender}>{senderLabel(m)}</span>
         </div>
       )}
