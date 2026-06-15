@@ -533,9 +533,7 @@ function RankingTab({
                   key={r.userId}
                   className={`${styles.rankItem} ${isMe ? styles.rankItemMe : ''}`}
                 >
-                  <span className={styles.rankPosition}>
-                    {rank <= 3 ? rank : `#${rank}`}
-                  </span>
+                  <span className={styles.rankPosition}>{`#${rank}`}</span>
                   {/* Avatar do user no ranking per spec "inclua o
                    * avatar dos usuários do Ranking". Wrap relative
                    * pra hospedar o medalhão Top 10 no canto. */}

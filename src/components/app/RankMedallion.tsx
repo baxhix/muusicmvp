@@ -35,8 +35,18 @@ function RankMedallionBase({ position, size = 'sm' }: RankMedallionProps) {
       title={isChampion ? 'Top 1' : `Top 10 · #${position}`}
     >
       {isChampion ? (
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M4 18h16v2.4H4V18zM4 7.2l4.3 3 3.7-5.8 3.7 5.8 4.3-3-1.6 8.8H5.6L4 7.2z" />
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <linearGradient id="rankCrownGold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fff6cf" />
+              <stop offset="48%" stopColor="#f4cb4b" />
+              <stop offset="100%" stopColor="#a9740d" />
+            </linearGradient>
+          </defs>
+          <path
+            fill="url(#rankCrownGold)"
+            d="M4 18h16v2.4H4V18zM4 7.2l4.3 3 3.7-5.8 3.7 5.8 4.3-3-1.6 8.8H5.6L4 7.2z"
+          />
         </svg>
       ) : (
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

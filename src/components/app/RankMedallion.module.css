@@ -24,10 +24,38 @@
   display: block;
 }
 
-/* #1 — ouro mais vivo pra reforçar a coroa. */
+/* #1 — disco escuro com anel dourado pra a coroa em gradient
+ * dourado saltar; maior que as estrelas (ver overrides de tamanho
+ * + svg abaixo). */
 .champion {
-  background: #e6b22e;
-  color: #3d2c06;
+  background: radial-gradient(125% 125% at 50% 18%, #3a2606 0%, #130d02 100%);
+  border-color: #0a0a14;
+  box-shadow:
+    inset 0 0 0 1px rgba(244, 203, 75, 0.62),
+    0 1px 5px rgba(0, 0, 0, 0.6);
+}
+.champion svg {
+  width: 80%;
+  height: 80%;
+}
+/* Coroa do #1 maior que as estrelas dos demais. */
+.champion.sm {
+  width: 20px;
+  height: 20px;
+  top: -6px;
+  right: -6px;
+}
+.champion.md {
+  width: 26px;
+  height: 26px;
+  top: -7px;
+  right: -7px;
+}
+.champion.lg {
+  width: 38px;
+  height: 38px;
+  top: 2px;
+  right: 2px;
 }
 
 /* Tamanhos casando com o avatar do call-site. */

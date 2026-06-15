@@ -1033,9 +1033,10 @@ export function RankingTabContent() {
                 {/* Per product feedback "sinalize melhor o top 3":
                  * rank usa medal pillorada quando ≤3 (bg dourado/prata/
                  * bronze) em vez de só o emoji solto. */}
-                <span className={`${styles.tabRankingRank} ${isTop3 ? styles.tabRankingRankMedal : ''} ${rank === 1 ? styles.tabRankingRankGold : rank === 2 ? styles.tabRankingRankSilver : rank === 3 ? styles.tabRankingRankBronze : ''}`}>
-                  {isTop3 ? rank : `#${rank}`}
-                </span>
+                {/* Identificação do rank uniforme pra todos (#1, #2,
+                 * #3, #4…) — sem pílula medalhada no top 3. O status
+                 * do top fica no medalhão do avatar (coroa/estrela). */}
+                <span className={styles.tabRankingRank}>{`#${rank}`}</span>
                 {/* Avatar wrap — hospeda o dot de online/offline no
                  * canto inferior direito. Mesmo padrão visual dos
                  * avatares do chat (verde sólido + ring preto). */}
