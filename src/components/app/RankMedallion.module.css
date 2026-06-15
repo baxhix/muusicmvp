@@ -1,109 +1,37 @@
-/* Medalhão de rank — canto superior-direito do avatar.
- * Ouro (#2–10) / ouro mais vivo (#1). Borda na cor do fundo do app
- * pra separar do avatar, igual ao ring do dot de presença. Fica
- * acima do dot verde (z-index) e em canto oposto → nunca colide. */
+/* Selo de rank (PNG) no canto do avatar. #1 cinza / #2–10 dourado.
+ * 18px de largura; o selo já tem forma e brilho próprios, então sem
+ * disco/anel — só a imagem + uma sombra leve pra destacar do avatar.
+ * Canto oposto ao dot verde de presença. */
 .medallion {
   position: absolute;
   top: -5px;
   right: -5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #c99a2e;
-  color: #3d2c06;
-  border: 2px solid #0a0a14;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  width: 18px;
+  height: auto;
+  display: block;
   z-index: 6;
   pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
 
-.medallion svg {
-  width: 62%;
-  height: 62%;
-  display: block;
-}
-
-/* #1 — disco escuro com anel dourado pra a coroa em gradient
- * dourado saltar; maior que as estrelas (ver overrides de tamanho
- * + svg abaixo). */
-.champion {
-  background: radial-gradient(125% 125% at 50% 18%, #3a2606 0%, #130d02 100%);
-  border-color: #0a0a14;
-  box-shadow:
-    inset 0 0 0 1px rgba(244, 203, 75, 0.62),
-    0 1px 5px rgba(0, 0, 0, 0.6);
-}
-.champion svg {
-  width: 80%;
-  height: 80%;
-}
-/* Coroa do #1 maior que as estrelas dos demais. */
-.champion.sm {
-  width: 20px;
-  height: 20px;
-  top: -6px;
-  right: -6px;
-}
-.champion.md {
-  width: 26px;
-  height: 26px;
-  top: -7px;
-  right: -7px;
-}
-.champion.lg {
-  width: 38px;
-  height: 38px;
-  top: 2px;
-  right: 2px;
-}
-
-/* Tamanhos casando com o avatar do call-site. */
-.sm {
-  width: 16px;
-  height: 16px;
-  top: -4px;
-  right: -4px;
-}
+/* Offsets por tamanho de avatar (a imagem é sempre 18px). */
+.sm,
 .md {
-  width: 20px;
-  height: 20px;
   top: -5px;
   right: -5px;
 }
+/* Avatar grande (perfil ~118px): senta na borda do círculo. */
 .lg {
-  width: 30px;
-  height: 30px;
   top: 6px;
   right: 6px;
 }
 
 /* Canto superior-esquerdo (onde o direito é ocupado por verified
- * badge / presença — ex.: linhas de chat). Espelha os offsets. */
+ * badge / presença — ex.: linhas de chat). */
 .tl {
   right: auto;
-}
-.tl.sm {
-  left: -4px;
-}
-.tl.md {
   left: -5px;
 }
-.tl.lg {
+.lg.tl {
   left: 6px;
-}
-.champion.tl.sm {
-  left: -6px;
-}
-.champion.tl.md {
-  left: -7px;
-}
-.champion.tl.lg {
-  left: 2px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .medallion {
-    transition: transform 0.18s ease;
-  }
 }

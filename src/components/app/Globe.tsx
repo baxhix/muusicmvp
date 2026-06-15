@@ -827,11 +827,8 @@ export default function Globe() {
      */
     const rankMedallionHtml = (rank?: number | null): string => {
       if (rank == null || rank < 1 || rank > 10) return '';
-      const champ = rank === 1;
-      const icon = champ
-        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#f4cb4b" d="M4 18h16v2.4H4V18zM4 7.2l4.3 3 3.7-5.8 3.7 5.8 4.3-3-1.6 8.8H5.6L4 7.2z"/></svg>`
-        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#3d2c06" d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45 6.2 20.5l1.1-6.45-4.7-4.6 6.5-.95L12 2.6z"/></svg>`;
-      return `<span class="${styles.rankMedallion} ${champ ? styles.rankMedallionChampion : ''}" aria-hidden="true">${icon}</span>`;
+      const src = rank === 1 ? '/badges/seal-gray.png' : '/badges/seal-gold.png';
+      return `<img src="${src}" alt="" class="${styles.rankMedallion}" />`;
     };
 
     const buildAvatarMarkup = (
