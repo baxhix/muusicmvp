@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import NowPlaying from './NowPlaying';
 import Skeleton from './Skeleton';
 import NowPlayingPreview from './NowPlayingPreview';
+import RankMedallion from './RankMedallion';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
 import { useMyActivities } from '@/hooks/useMyActivities';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -375,6 +376,9 @@ export default function ProfilePanel({
               aria-label={user.isOnline ? 'Online' : 'Offline'}
               title={user.isOnline ? 'Online' : 'Offline'}
             />
+            {/* Medalhão Top 10 (coroa #1 / estrela #2–10) no canto
+             * sup-dir do avatar — oposto ao dot de presença. */}
+            <RankMedallion position={userRankPosition} size="lg" />
           </div>
         </div>
 

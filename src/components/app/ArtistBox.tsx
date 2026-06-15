@@ -15,6 +15,7 @@ import {
   useDailyMissions,
 } from '@/hooks/useDailyMissions';
 import VerifiedBadge from './VerifiedBadge';
+import RankMedallion from './RankMedallion';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { useIsSmallDesktop } from '@/hooks/useIsSmallDesktop';
 import ArtistBoxRail from './ArtistBoxRail';
@@ -1050,6 +1051,9 @@ export function RankingTabContent() {
                     aria-label={isOnline ? 'Online' : 'Offline'}
                     title={isOnline ? 'Online' : 'Offline'}
                   />
+                  {/* Medalhão Top 10 (coroa #1 / estrela #2–10) no canto
+                   * sup-dir — oposto ao dot de presença. */}
+                  <RankMedallion position={rank} size="sm" />
                 </span>
                 <div className={styles.tabRankingInfo}>
                   {/* Nome (clicável → /app/u/{id}) + cidade ABAIXO

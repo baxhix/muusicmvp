@@ -19,6 +19,7 @@ import {
   // pro FanpointsModal acessado via link "X Fanpoints").
 } from './ArtistBox';
 import VerifiedBadge from './VerifiedBadge';
+import RankMedallion from './RankMedallion';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { MaterialsTabContent } from './MaterialsTabContent';
 import Skeleton from './Skeleton';
@@ -535,6 +536,7 @@ function MobileRankingList() {
                     className={`${sheetStyles.rankingPresence} ${isOnline ? sheetStyles.rankingPresenceOn : ''}`}
                     aria-label={isOnline ? 'Online' : 'Offline'}
                   />
+                  <RankMedallion position={rank} size="md" />
                 </span>
 
                 {/* Info: nome (link) + cidade. */}
@@ -636,6 +638,7 @@ function Top3Podium({ entries, meId, onlineIds }: PodiumProps) {
                 className={`${sheetStyles.podiumPresence} ${isOnline ? sheetStyles.podiumPresenceOn : ''}`}
                 aria-label={isOnline ? 'Online' : 'Offline'}
               />
+              <RankMedallion position={rank} size="md" />
             </span>
             <Link
               href={`/app/u/${row.userId}`}

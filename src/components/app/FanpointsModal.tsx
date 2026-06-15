@@ -8,6 +8,7 @@ import Skeleton from './Skeleton';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
 import { BENEFITS, BenefitIcon } from './SuperfansPanel';
+import RankMedallion from './RankMedallion';
 import styles from './FanpointsModal.module.css';
 
 /**
@@ -536,13 +537,17 @@ function RankingTab({
                     {rank <= 3 ? rank : `#${rank}`}
                   </span>
                   {/* Avatar do user no ranking per spec "inclua o
-                   * avatar dos usuários do Ranking". */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatar}
-                    alt=""
-                    className={styles.rankAvatar}
-                  />
+                   * avatar dos usuários do Ranking". Wrap relative
+                   * pra hospedar o medalhão Top 10 no canto. */}
+                  <span className={styles.rankAvatarWrap}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={avatar}
+                      alt=""
+                      className={styles.rankAvatar}
+                    />
+                    <RankMedallion position={rank} size="sm" />
+                  </span>
                   <span className={styles.rankName}>{name}</span>
                   <span className={styles.rankPoints}>
                     {r.points.toLocaleString('pt-BR')} FP

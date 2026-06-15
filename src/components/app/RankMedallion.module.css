@@ -1,0 +1,57 @@
+/* Medalhão de rank — canto superior-direito do avatar.
+ * Ouro (#2–10) / ouro mais vivo (#1). Borda na cor do fundo do app
+ * pra separar do avatar, igual ao ring do dot de presença. Fica
+ * acima do dot verde (z-index) e em canto oposto → nunca colide. */
+.medallion {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #c99a2e;
+  color: #3d2c06;
+  border: 2px solid #0a0a14;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  z-index: 6;
+  pointer-events: none;
+}
+
+.medallion svg {
+  width: 62%;
+  height: 62%;
+  display: block;
+}
+
+/* #1 — ouro mais vivo pra reforçar a coroa. */
+.champion {
+  background: #e6b22e;
+  color: #3d2c06;
+}
+
+/* Tamanhos casando com o avatar do call-site. */
+.sm {
+  width: 16px;
+  height: 16px;
+  top: -4px;
+  right: -4px;
+}
+.md {
+  width: 20px;
+  height: 20px;
+  top: -5px;
+  right: -5px;
+}
+.lg {
+  width: 30px;
+  height: 30px;
+  top: 6px;
+  right: 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .medallion {
+    transition: transform 0.18s ease;
+  }
+}

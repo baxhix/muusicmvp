@@ -586,6 +586,11 @@
 }
 /* Avatar do user no item do ranking per spec "inclua o avatar
  * dos usuários do Ranking". */
+.rankAvatarWrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
 .rankAvatar {
   width: 32px;
   height: 32px;
