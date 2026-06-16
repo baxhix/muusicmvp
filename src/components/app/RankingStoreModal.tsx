@@ -3,27 +3,30 @@
 /**
  * RankingStoreModal — modal "Ranking completo + Loja" do Fanverse.
  *
- * Porte 1:1 do wireframe standalone (dc-runtime export) para a stack
- * do app: React + CSS Modules. TODOS os dados são mock client-side
- * nesta 1ª versão (ranking, períodos, missões, conquistas, catálogo
- * da loja) — vira real depois (useRanking/useUserProfile/schema da
- * loja). Resgate só simula (toast).
+ * Porte do wireframe standalone pra stack (React + CSS Modules).
+ *
+ * Dados REAIS já existentes na plataforma:
+ *  - ranking (lista + pódio + minha posição): useRanking() — all-time,
+ *    SUM(points) — com nome, avatar, cidade e Fanpoints reais.
+ *  - saldo de Fanpoints (Loja) + Fanpoints do painel pessoal:
+ *    useUserProfile(user.id).fanpoints.
+ *  - usuário logado: useAuth().
+ * Dados MOCK (gamificação ainda sem backend): tier/nível/sequência,
+ * sparkline, conquistas/benefícios, missões e o catálogo da Loja
+ * (produtos/experiências). O resgate só simula (toast). As tabs de
+ * período são cosméticas por ora (só existe ranking all-time) — todas
+ * mostram a mesma lista real.
  *
  * Abre via CustomEvent('app:open-ranking-store', { detail:{ screen }})
- * — mesmo padrão do FanpointsModal/FanverseSearch. O "Ver mais" da
- * aba Superfãs (ArtistBox/rail) abre no Ranking; o atalho/ícone Loja
- * abre na tela Loja. Fecha por Esc, backdrop ou X.
- *
- * Duas telas (state.screen):
- *  - 'ranking': painel pessoal (Minha Evolução + Missões) + pódio Top 3
- *    + lista #4..#N, com tabs de período (Diário/Semanal/Mensal/Anual).
- *  - 'loja': saldo + endereços + galeria (Experiências/Produtos) com
- *    troca por Fanpoints.
- *
- * Responsivo: desktop 2 colunas; <900px empilha; grid da loja colapsa.
+ * (mesmo padrão do FanpointsModal). Fecha por Esc, backdrop ou X.
+ * Header = só o título; as tabs de período + intervalo e os atalhos
+ * Loja/Presentes vivem numa toolbar no topo da área de conteúdo.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useRanking } from '@/hooks/useRanking';
 import styles from './RankingStoreModal.module.css';
 
 type Screen = 'ranking' | 'loja';
@@ -33,7 +36,7 @@ type Sort = 'relevancia' | 'menor' | 'maior' | 'novidades';
 type MissionTab = 'diaria' | 'semanal';
 type EvoTab = 'evolucao' | 'estatisticas';
 
-/* ── Mock data (portado de logic.js) ──────────────────────────── */
+/* ── Catálogo da Loja (mock — sem backend ainda) ──────────────── */
 
 interface StoreItem { name: string; cost: number; original?: number; discount?: string }
 
@@ -67,32 +70,7 @@ const EXPERIENCES: StoreItem[] = [
   { name: 'Aula de Viola com a banda', cost: 42000 },
 ];
 
-interface BaseFan { name: string; city: string; tier: string; lvl: number; w: number; delta: number }
-
-const BASE: BaseFan[] = [
-  { name: 'Marcelo Baxhix', city: 'Londrina, BR', tier: 'Lenda', lvl: 42, w: 311884, delta: 0 },
-  { name: 'Camila Reis', city: 'São Paulo, BR', tier: 'Mestre', lvl: 39, w: 184220, delta: 1 },
-  { name: 'Rafael Malmegrin', city: 'Curitiba, BR', tier: 'Diamante', lvl: 36, w: 142485, delta: -1 },
-  { name: 'VG', city: 'Goiânia, BR', tier: 'Diamante', lvl: 34, w: 98560, delta: 2 },
-  { name: 'Alberto Souza', city: 'Belo Horizonte, BR', tier: 'Platina', lvl: 31, w: 72020, delta: 0 },
-  { name: 'Isabela Martins', city: 'Recife, BR', tier: 'Platina', lvl: 29, w: 61340, delta: 3 },
-  { name: 'Caio Fernandes', city: 'Porto Alegre, BR', tier: 'Ouro', lvl: 26, w: 49870, delta: -2 },
-  { name: 'Bruna Lima', city: 'Salvador, BR', tier: 'Ouro', lvl: 24, w: 41230, delta: 1 },
-  { name: 'Diego Alves', city: 'Manaus, BR', tier: 'Prata', lvl: 21, w: 38910, delta: 0 },
-  { name: 'Marina Costa', city: 'Fortaleza, BR', tier: 'Prata', lvl: 19, w: 33450, delta: 4 },
-  { name: 'Thiago Nunes', city: 'Brasília, BR', tier: 'Prata', lvl: 18, w: 29700, delta: -1 },
-  { name: 'Patrícia Gomes', city: 'Natal, BR', tier: 'Prata', lvl: 16, w: 26840, delta: 2 },
-  { name: 'Rodrigo Dias', city: 'Vitória, BR', tier: 'Prata', lvl: 15, w: 24110, delta: -1 },
-];
-
-interface PMeta { label: string; range: string; mult: number; myRank: number; streak: number; percentile: string; spark: number[] }
-
-const PERIOD_META: Record<Period, PMeta> = {
-  diario:  { label: 'Hoje · 16 jun', range: 'Encerra em 13h 42min', mult: 0.071, myRank: 9, streak: 14, percentile: 'Top 7%', spark: [1.2, 2.1, 1.8, 2.6, 2.4, 3.6, 4.18].map((x) => x * 1000) },
-  semanal: { label: '10 – 16 jun', range: 'Semana 24 · termina em 2d 6h', mult: 1, myRank: 7, streak: 14, percentile: 'Top 4%', spark: [6.2, 9.1, 7.5, 12, 14.4, 11, 16.4].map((x) => x * 1000) },
-  mensal:  { label: 'Junho 2026', range: 'Termina em 14 dias', mult: 3.93, myRank: 6, streak: 14, percentile: 'Top 3%', spark: [38, 52, 46, 61, 58, 74, 84].map((x) => x * 1000) },
-  anual:   { label: '2026', range: 'Temporada anual', mult: 23.7, myRank: 5, streak: 14, percentile: 'Top 2%', spark: [120, 180, 240, 300, 360, 420, 480].map((x) => x * 1000) },
-};
+/* ── Gamificação ainda sem backend (mock) ─────────────────────── */
 
 interface MissionDef {
   title: string; count: string; pct: string; metaLeft: string; reward: string;
@@ -139,7 +117,20 @@ const PERKS = [
   { label: 'Frete grátis', sub: 'Próximo pedido' },
 ];
 
-const SALDO_FP = 54180;
+/* Perfil de gamificação ainda não modelado no backend — placeholders. */
+const MY_TIER = 'Ouro';
+const MY_LVL = 25;
+const MY_STREAK = 14;
+/* Sparkline decorativa (sem série temporal real ainda). */
+const MOCK_SPARK = [6.2, 9.1, 7.5, 12, 14.4, 11, 16.4].map((x) => x * 1000);
+
+/* Rótulo/intervalo cosmético por período (só ranking all-time existe). */
+const PERIOD_META: Record<Period, { label: string; range: string }> = {
+  diario:  { label: 'Hoje · 16 jun', range: 'Encerra em 13h 42min' },
+  semanal: { label: '10 – 16 jun', range: 'Semana 24 · termina em 2d 6h' },
+  mensal:  { label: 'Junho 2026', range: 'Termina em 14 dias' },
+  anual:   { label: '2026', range: 'Temporada anual' },
+};
 
 const RANK_TITLE: Record<Period, string> = {
   diario: 'Classificação de hoje',
@@ -152,44 +143,13 @@ const RANK_TITLE: Record<Period, string> = {
 
 const fmt = (n: number) => Math.round(n).toLocaleString('pt-BR');
 
+const initialsOf = (name: string) =>
+  name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]).join('').toUpperCase() || '·';
+
 interface Row {
   rank: number; pts: number; you: boolean; name: string; city: string;
-  tier: string; lvl: number; initials: string; points: string;
+  avatarUrl: string | null; initials: string; points: string;
   ring: string; rankColor: string; medal: string | null;
-  trendIcon: string; trendText: string; trendColor: string;
-}
-
-function buildRows(period: Period): Row[] {
-  const pm = PERIOD_META[period];
-  const others = BASE.map((p) => ({ ...p, pts: Math.round(p.w * pm.mult) }));
-  others.sort((a, b) => b.pts - a.pts);
-  const youPts = Math.round(54180 * pm.mult);
-  const youDeltaMap: Record<number, number> = { 9: 3, 7: 2, 6: 4, 5: 11 };
-  const you = {
-    name: 'Você · Lucas M.', city: 'Ribeirão Preto, BR', tier: 'Ouro', lvl: 25,
-    pts: youPts, delta: youDeltaMap[pm.myRank] ?? 2, you: true,
-  };
-  const arr: (BaseFan & { pts: number; you?: boolean })[] = others.slice();
-  arr.splice(pm.myRank - 1, 0, you as BaseFan & { pts: number; you?: boolean });
-  return arr.map((p, i) => {
-    const rank = i + 1;
-    const clean = p.name.replace('Você · ', '');
-    const initials = clean.split(' ').slice(0, 2).map((s) => s[0]).join('').toUpperCase();
-    const up = p.delta > 0;
-    const down = p.delta < 0;
-    const medal = rank === 1 ? '#d8d8dc' : rank === 2 ? '#a6a6ad' : rank === 3 ? '#7d7d84' : null;
-    return {
-      rank, pts: p.pts, you: !!p.you,
-      name: p.name, city: p.city, tier: p.tier, lvl: p.lvl, initials,
-      points: `${fmt(p.pts)} FP`,
-      ring: p.you ? 'rgba(255,255,255,.45)' : (medal || 'rgba(255,255,255,.14)'),
-      rankColor: medal || (p.you ? '#fff' : 'rgba(255,255,255,.6)'),
-      medal,
-      trendIcon: up ? '▲' : (down ? '▼' : '–'),
-      trendText: p.delta === 0 ? '' : String(Math.abs(p.delta)),
-      trendColor: up ? 'rgba(255,255,255,.7)' : (down ? 'rgba(255,255,255,.32)' : 'rgba(255,255,255,.3)'),
-    };
-  });
 }
 
 function chartPaths(spark: number[]) {
@@ -223,10 +183,16 @@ export default function RankingStoreModal() {
   const [evoTab, setEvoTab] = useState<EvoTab>('evolucao');
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query] = useState('');
   const [toast, setToast] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ── Dados reais ── */
+  const { user } = useAuth();
+  const { profile } = useUserProfile(user?.id ?? null);
+  const { ranking, loading: rankingLoading } = useRanking(open);
+  const saldoFP = profile?.fanpoints ?? 0;
 
   /* Abre via evento global (detail.screen opcional). */
   useEffect(() => {
@@ -270,27 +236,53 @@ export default function RankingStoreModal() {
   }, []);
 
   const pm = PERIOD_META[period];
-  const rows = useMemo(() => buildRows(period), [period]);
-  const me = useMemo(() => rows.find((r) => r.you)!, [rows]);
+
+  /* Linhas reais do ranking (all-time). O período é cosmético por
+   * enquanto — todas as abas mostram a mesma lista real. */
+  const rows = useMemo<Row[]>(() => {
+    return ranking.map((r, i) => {
+      const rank = i + 1;
+      const isMe = !!user?.id && r.userId === user.id;
+      const baseName = r.name?.trim() || 'Fã';
+      const medal = rank === 1 ? '#d8d8dc' : rank === 2 ? '#a6a6ad' : rank === 3 ? '#7d7d84' : null;
+      return {
+        rank,
+        pts: r.points,
+        you: isMe,
+        name: isMe ? `Você · ${baseName}` : baseName,
+        city: r.city ?? '',
+        avatarUrl: r.avatarUrl ?? null,
+        initials: initialsOf(baseName),
+        points: `${fmt(r.points)} FP`,
+        ring: isMe ? 'rgba(255,255,255,.45)' : (medal || 'rgba(255,255,255,.14)'),
+        rankColor: medal || (isMe ? '#fff' : 'rgba(255,255,255,.6)'),
+        medal,
+      };
+    });
+  }, [ranking, user?.id]);
+
   const podium = useMemo(() => rows.slice(0, 3), [rows]);
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
     return q
       ? rows.filter((r) => r.name.toLowerCase().includes(q))
-      : rows.filter((r) => r.rank >= 4 && r.rank <= 13);
+      : rows.filter((r) => r.rank >= 4);
   }, [rows, query]);
 
-  const ch = useMemo(() => chartPaths(pm.spark), [pm.spark]);
-  const sparkDelta = pm.spark[pm.spark.length - 1] - pm.spark[pm.spark.length - 2];
-  const youPts = me.pts;
+  const meIndex = useMemo(() => rows.findIndex((r) => r.you), [rows]);
+  const me = meIndex >= 0 ? rows[meIndex] : null;
+  const myRank = meIndex >= 0 ? meIndex + 1 : null;
+  const myPoints = me ? me.pts : saldoFP;
+
+  const ch = useMemo(() => chartPaths(MOCK_SPARK), []);
 
   const stats = [
-    { value: fmt(youPts), label: 'Fanpoints no período' },
-    { value: '#4', label: 'Melhor posição' },
-    { value: '128', label: 'Dias ativos' },
-    { value: String(pm.streak), label: 'Sequência atual' },
-    { value: '27', label: 'Conquistas' },
-    { value: '9.842', label: 'Curtidas dadas' },
+    { value: fmt(myPoints), label: 'Fanpoints' },
+    { value: myRank ? `#${myRank}` : '—', label: 'Posição atual' },
+    { value: fmt(rows.length), label: 'Fãs no ranking' },
+    { value: String(MY_STREAK), label: 'Sequência atual' },
+    { value: MY_TIER, label: 'Tier atual' },
+    { value: `Lv ${MY_LVL}`, label: 'Nível' },
   ];
 
   const mission = MISSIONS[missionTab];
@@ -303,8 +295,6 @@ export default function RankingStoreModal() {
     else if (sort === 'novidades') arr.reverse();
     return arr;
   }, [storeTab, sort]);
-
-  const setP = (p: Period) => { setPeriod(p); setQuery(''); setScreen('ranking'); };
 
   if (!open) return null;
 
@@ -323,52 +313,14 @@ export default function RankingStoreModal() {
       />
 
       <div className={`${styles.modal} ${closing ? styles.modalOut : ''}`}>
-        {/* ===== HEADER ===== */}
+        {/* ===== HEADER — apenas o título + fechar ===== */}
         <div className={styles.header}>
           <div className={styles.titleBlock}>
             <div className={styles.titleMain}>{isRanking ? 'Ranking Fanverse' : 'Loja Fanverse'}</div>
-            {isRanking ? (
-              <div className={styles.titleSubRow}>
-                <span className={styles.periodLabel}>{pm.label}</span>
-                <span className={styles.dot} />
-                <span className={styles.periodRange}>{pm.range}</span>
-              </div>
-            ) : (
-              <div className={styles.titleSub}>Troque seus Fanpoints por recompensas</div>
-            )}
+            {!isRanking && <div className={styles.titleSub}>Troque seus Fanpoints por recompensas</div>}
           </div>
 
           <div className={styles.spacer} />
-
-          {isRanking && (
-            <div className={styles.periodTabs} role="tablist">
-              {PERIOD_TABS.map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={period === key}
-                  className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
-                  onClick={() => setP(key)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className={styles.spacer} />
-
-          {isRanking && (
-            <div className={styles.headerActions}>
-              <button type="button" title="Loja" className={styles.iconBtn} onClick={() => setScreen('loja')} aria-label="Abrir loja">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.6-5h14.8L21 9M3 9h18M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 13h6" /></svg>
-              </button>
-              <button type="button" title="Presentes" className={styles.iconBtn} onClick={() => flash('Abrindo Presentes…')} aria-label="Presentes">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h16v4H4zM5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 21V8M12 8S11 3 8.5 3 6 6 6 6s.6 2 2.2 2M12 8s1-5 3.5-5S18 6 18 6s-.6 2-2.2 2" /></svg>
-              </button>
-            </div>
-          )}
 
           <button type="button" className={styles.closeBtn} onClick={close} aria-label="Fechar">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6 6 18" /></svg>
@@ -378,238 +330,298 @@ export default function RankingStoreModal() {
         {/* ===== BODY ===== */}
         <div className={styles.body}>
           {isRanking ? (
-            <div className={styles.grid}>
-              {/* PAINEL PESSOAL */}
-              <div className={styles.colPersonal}>
-                {/* MINHA EVOLUÇÃO */}
-                <div className={styles.card}>
-                  <div className={styles.evoHead}>
-                    <span className={styles.cardTitle}>Minha Evolução</span>
-                    <span className={styles.percentile}>{pm.percentile}</span>
-                  </div>
-
-                  <div className={styles.evoUser}>
-                    <span className={styles.evoAvatar} aria-hidden="true">LM</span>
-                    <div className={styles.evoUserText}>
-                      <div className={styles.evoName}>Você · Lucas M.</div>
-                      <div className={styles.evoMeta}>{me.tier} · Lv {me.lvl}</div>
-                    </div>
-                  </div>
-
-                  <div className={styles.segTabs}>
-                    {(['evolucao', 'estatisticas'] as EvoTab[]).map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        className={`${styles.seg} ${evoTab === k ? styles.segActive : ''}`}
-                        onClick={() => setEvoTab(k)}
-                      >
-                        {k === 'evolucao' ? 'Evolução' : 'Estatísticas'}
-                      </button>
-                    ))}
-                  </div>
-
-                  {evoTab === 'evolucao' ? (
-                    <>
-                      <div className={styles.evoPosRow}>
-                        <div>
-                          <div className={styles.kicker}>Posição</div>
-                          <div className={styles.posValueRow}>
-                            <span className={styles.posValue}>#{pm.myRank}</span>
-                            <span className={styles.posUp}>↑{me.trendText}</span>
-                          </div>
-                        </div>
-                        <div className={styles.spacer} />
-                        <div className={styles.fpBlock}>
-                          <div className={styles.kicker}>Fanpoints</div>
-                          <div className={styles.fpValue}>{fmt(youPts)} FP</div>
-                          <div className={styles.fpDelta}>+{fmt(sparkDelta)} FP</div>
-                        </div>
-                      </div>
-
-                      <div className={styles.chartWrap}>
-                        <svg viewBox="0 0 300 96" preserveAspectRatio="none" className={styles.chartSvg}>
-                          <defs>
-                            <linearGradient id="rkArea" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
-                              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-                          <path d={ch.area} fill="url(#rkArea)" />
-                          <path d={ch.line} fill="none" stroke="#d4d4d8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                          <circle cx={ch.cx} cy={ch.cy} r="3.6" fill="#fff" stroke="#121214" strokeWidth="2" />
-                        </svg>
-                      </div>
-
-                      <div className={styles.miniStats}>
-                        <div className={styles.miniStat}>
-                          <div className={styles.miniStatValue}>{pm.streak}</div>
-                          <div className={styles.miniStatLabel}>dias de sequência</div>
-                        </div>
-                        <div className={styles.miniStat}>
-                          <div className={styles.miniStatValue}>{me.tier}</div>
-                          <div className={styles.miniStatLabel}>tier atual · Lv {me.lvl}</div>
-                        </div>
-                      </div>
-
-                      {/* Conquistas */}
-                      <div className={styles.achWrap}>
-                        <button type="button" className={styles.achToggle} onClick={() => setAchievementsOpen((v) => !v)}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 14v4M14 14v4M8 21h8" /></svg>
-                          <span className={styles.achLabel}>Conquistas</span>
-                          <span className={styles.achCount}>12</span>
-                          <span className={styles.spacer} />
-                          <span className={`${styles.chevron} ${achievementsOpen ? styles.chevronOpen : ''}`}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
-                          </span>
-                        </button>
-
-                        {achievementsOpen && (
-                          <div className={styles.achPanel}>
-                            <div className={styles.badgeGrid}>
-                              {BADGES.map((b) => (
-                                <div key={b.label} className={styles.badge}>
-                                  <span className={styles.badgeIcon}>
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cfcfd2" strokeWidth="2" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" /></svg>
-                                  </span>
-                                  <div className={styles.badgeText}>
-                                    <div className={styles.badgeTitle}>{b.label}</div>
-                                    <div className={styles.badgeSub}>{b.sub}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className={styles.perksTitle}>Descontos e benefícios</div>
-                            <div className={styles.perkList}>
-                              {PERKS.map((pk) => (
-                                <div key={pk.label} className={styles.perk}>
-                                  <span className={styles.perkLabel}>{pk.label}</span>
-                                  <span className={styles.perkSub}>{pk.sub}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <div className={styles.statsGrid}>
-                      {stats.map((s) => (
-                        <div key={s.label} className={styles.statCard}>
-                          <div className={styles.statCardValue}>{s.value}</div>
-                          <div className={styles.statCardLabel}>{s.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            <>
+              {/* TOOLBAR — tabs de período + intervalo + atalhos */}
+              <div className={styles.toolbar}>
+                <div className={styles.periodTabs} role="tablist">
+                  {PERIOD_TABS.map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      aria-selected={period === key}
+                      className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                      onClick={() => setPeriod(key)}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
 
-                {/* MISSÕES */}
-                <div className={styles.card}>
-                  <div className={styles.missionsHead}>
-                    <span className={styles.cardTitle}>Missões</span>
-                    <div className={styles.missionTabs}>
-                      {(['diaria', 'semanal'] as MissionTab[]).map((k) => (
+                <div className={styles.periodMeta}>
+                  <span className={styles.periodLabel}>{pm.label}</span>
+                  <span className={styles.dot} />
+                  <span className={styles.periodRange}>{pm.range}</span>
+                </div>
+
+                <div className={styles.spacer} />
+
+                <div className={styles.headerActions}>
+                  <button type="button" title="Loja" className={styles.iconBtn} onClick={() => setScreen('loja')} aria-label="Abrir loja">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.6-5h14.8L21 9M3 9h18M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 13h6" /></svg>
+                  </button>
+                  <button type="button" title="Presentes" className={styles.iconBtn} onClick={() => flash('Abrindo Presentes…')} aria-label="Presentes">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h16v4H4zM5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 21V8M12 8S11 3 8.5 3 6 6 6 6s.6 2 2.2 2M12 8s1-5 3.5-5S18 6 18 6s-.6 2-2.2 2" /></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles.grid}>
+                {/* PAINEL PESSOAL */}
+                <div className={styles.colPersonal}>
+                  {/* MINHA EVOLUÇÃO */}
+                  <div className={styles.card}>
+                    <div className={styles.evoHead}>
+                      <span className={styles.cardTitle}>Minha Evolução</span>
+                    </div>
+
+                    <div className={styles.evoUser}>
+                      <span className={styles.evoAvatar} aria-hidden="true">
+                        {me?.avatarUrl
+                          ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={me.avatarUrl} alt="" className={styles.evoAvatarImg} />
+                          )
+                          : (me ? me.initials : 'VC')}
+                      </span>
+                      <div className={styles.evoUserText}>
+                        <div className={styles.evoName}>
+                          {me ? me.name.replace('Você · ', 'Você · ') : 'Você'}
+                        </div>
+                        <div className={styles.evoMeta}>{me?.city || `${MY_TIER} · Lv ${MY_LVL}`}</div>
+                      </div>
+                    </div>
+
+                    <div className={styles.segTabs}>
+                      {(['evolucao', 'estatisticas'] as EvoTab[]).map((k) => (
                         <button
                           key={k}
                           type="button"
-                          className={`${styles.segSm} ${missionTab === k ? styles.segActive : ''}`}
-                          onClick={() => setMissionTab(k)}
+                          className={`${styles.seg} ${evoTab === k ? styles.segActive : ''}`}
+                          onClick={() => setEvoTab(k)}
                         >
-                          {k === 'diaria' ? 'Diária' : 'Semanal'}
+                          {k === 'evolucao' ? 'Evolução' : 'Estatísticas'}
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                  <div className={styles.mProgressRow}>
-                    <span className={styles.mTitle}>{mission.title}</span>
-                    <span className={styles.mCount}>{mission.count}</span>
-                  </div>
-                  <div className={styles.mTrack}>
-                    <div className={styles.mFill} style={{ width: mission.pct }} />
-                  </div>
-                  <div className={styles.mMetaRow}>
-                    <span className={styles.mMeta}>{mission.metaLeft}</span>
-                    <span className={styles.mReward}>{mission.reward}</span>
-                  </div>
+                    {evoTab === 'evolucao' ? (
+                      <>
+                        <div className={styles.evoPosRow}>
+                          <div>
+                            <div className={styles.kicker}>Posição</div>
+                            <div className={styles.posValueRow}>
+                              <span className={styles.posValue}>{myRank ? `#${myRank}` : '—'}</span>
+                            </div>
+                          </div>
+                          <div className={styles.spacer} />
+                          <div className={styles.fpBlock}>
+                            <div className={styles.kicker}>Fanpoints</div>
+                            <div className={styles.fpValue}>{fmt(myPoints)} FP</div>
+                          </div>
+                        </div>
 
-                  <div className={styles.mDetailsWrap}>
-                    <button type="button" className={styles.mDetailsToggle} onClick={() => setMissionsOpen((v) => !v)}>
-                      <span>{missionsOpen ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
-                      <span className={`${styles.chevron} ${missionsOpen ? styles.chevronOpen : ''}`}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
-                      </span>
-                    </button>
-                    {missionsOpen && (
-                      <div className={styles.mDetails}>
-                        {mission.details.map((d) => (
-                          <div key={d.label} className={styles.mDetailRow}>
-                            <span className={`${styles.mCheck} ${d.done ? styles.mCheckDone : ''}`}>
-                              {d.done && (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth="3.4"><path d="M5 12l5 5L20 7" /></svg>
-                              )}
+                        <div className={styles.chartWrap}>
+                          <svg viewBox="0 0 300 96" preserveAspectRatio="none" className={styles.chartSvg}>
+                            <defs>
+                              <linearGradient id="rkArea" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
+                                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                              </linearGradient>
+                            </defs>
+                            <path d={ch.area} fill="url(#rkArea)" />
+                            <path d={ch.line} fill="none" stroke="#d4d4d8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx={ch.cx} cy={ch.cy} r="3.6" fill="#fff" stroke="#0d0d12" strokeWidth="2" />
+                          </svg>
+                        </div>
+
+                        <div className={styles.miniStats}>
+                          <div className={styles.miniStat}>
+                            <div className={styles.miniStatValue}>{MY_STREAK}</div>
+                            <div className={styles.miniStatLabel}>dias de sequência</div>
+                          </div>
+                          <div className={styles.miniStat}>
+                            <div className={styles.miniStatValue}>{MY_TIER}</div>
+                            <div className={styles.miniStatLabel}>tier atual · Lv {MY_LVL}</div>
+                          </div>
+                        </div>
+
+                        {/* Conquistas */}
+                        <div className={styles.achWrap}>
+                          <button type="button" className={styles.achToggle} onClick={() => setAchievementsOpen((v) => !v)}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 14v4M14 14v4M8 21h8" /></svg>
+                            <span className={styles.achLabel}>Conquistas</span>
+                            <span className={styles.achCount}>12</span>
+                            <span className={styles.spacer} />
+                            <span className={`${styles.chevron} ${achievementsOpen ? styles.chevronOpen : ''}`}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
                             </span>
-                            <span className={`${styles.mDetailLabel} ${d.done ? styles.mDetailDone : ''}`}>{d.label}</span>
+                          </button>
+
+                          {achievementsOpen && (
+                            <div className={styles.achPanel}>
+                              <div className={styles.badgeGrid}>
+                                {BADGES.map((b) => (
+                                  <div key={b.label} className={styles.badge}>
+                                    <span className={styles.badgeIcon}>
+                                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cfcfd2" strokeWidth="2" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" /></svg>
+                                    </span>
+                                    <div className={styles.badgeText}>
+                                      <div className={styles.badgeTitle}>{b.label}</div>
+                                      <div className={styles.badgeSub}>{b.sub}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className={styles.perksTitle}>Descontos e benefícios</div>
+                              <div className={styles.perkList}>
+                                {PERKS.map((pk) => (
+                                  <div key={pk.label} className={styles.perk}>
+                                    <span className={styles.perkLabel}>{pk.label}</span>
+                                    <span className={styles.perkSub}>{pk.sub}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className={styles.statsGrid}>
+                        {stats.map((s) => (
+                          <div key={s.label} className={styles.statCard}>
+                            <div className={styles.statCardValue}>{s.value}</div>
+                            <div className={styles.statCardLabel}>{s.label}</div>
                           </div>
                         ))}
-                        <div className={styles.mNote}>{mission.note}</div>
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* CLASSIFICAÇÃO */}
-              <div className={styles.colRanking}>
-                <div className={styles.rankCard}>
-                  <div className={styles.rankHead}>
-                    <span className={styles.cardTitle}>{RANK_TITLE[period]}</span>
-                    <span className={styles.rankCount}>{rows.length} fãs</span>
-                  </div>
+                  {/* MISSÕES */}
+                  <div className={styles.card}>
+                    <div className={styles.missionsHead}>
+                      <span className={styles.cardTitle}>Missões</span>
+                      <div className={styles.missionTabs}>
+                        {(['diaria', 'semanal'] as MissionTab[]).map((k) => (
+                          <button
+                            key={k}
+                            type="button"
+                            className={`${styles.segSm} ${missionTab === k ? styles.segActive : ''}`}
+                            onClick={() => setMissionTab(k)}
+                          >
+                            {k === 'diaria' ? 'Diária' : 'Semanal'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* Pódio Top 3 */}
-                  <div className={styles.podiumWrap}>
-                    <div className={styles.podiumLabel}>Top 3</div>
-                    <div className={styles.podiumGrid} style={{ opacity: pm.myRank <= 3 ? 1 : 0.7 }}>
-                      {podium.map((p) => (
-                        <div key={p.rank} className={styles.podiumCard}>
-                          <span className={styles.podiumPlace} style={{ background: p.ring }}>{p.rank}</span>
-                          <span className={styles.podiumAvatar}>{p.initials}</span>
-                          <div className={styles.podiumInfo}>
-                            <div className={styles.podiumName}>{p.name}</div>
-                            <div className={styles.podiumPoints}>{p.points}</div>
-                          </div>
+                    <div className={styles.mProgressRow}>
+                      <span className={styles.mTitle}>{mission.title}</span>
+                      <span className={styles.mCount}>{mission.count}</span>
+                    </div>
+                    <div className={styles.mTrack}>
+                      <div className={styles.mFill} style={{ width: mission.pct }} />
+                    </div>
+                    <div className={styles.mMetaRow}>
+                      <span className={styles.mMeta}>{mission.metaLeft}</span>
+                      <span className={styles.mReward}>{mission.reward}</span>
+                    </div>
+
+                    <div className={styles.mDetailsWrap}>
+                      <button type="button" className={styles.mDetailsToggle} onClick={() => setMissionsOpen((v) => !v)}>
+                        <span>{missionsOpen ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
+                        <span className={`${styles.chevron} ${missionsOpen ? styles.chevronOpen : ''}`}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
+                        </span>
+                      </button>
+                      {missionsOpen && (
+                        <div className={styles.mDetails}>
+                          {mission.details.map((d) => (
+                            <div key={d.label} className={styles.mDetailRow}>
+                              <span className={`${styles.mCheck} ${d.done ? styles.mCheckDone : ''}`}>
+                                {d.done && (
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth="3.4"><path d="M5 12l5 5L20 7" /></svg>
+                                )}
+                              </span>
+                              <span className={`${styles.mDetailLabel} ${d.done ? styles.mDetailDone : ''}`}>{d.label}</span>
+                            </div>
+                          ))}
+                          <div className={styles.mNote}>{mission.note}</div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  <div className={styles.divider} />
+                {/* CLASSIFICAÇÃO */}
+                <div className={styles.colRanking}>
+                  <div className={styles.rankCard}>
+                    <div className={styles.rankHead}>
+                      <span className={styles.cardTitle}>{RANK_TITLE[period]}</span>
+                      <span className={styles.rankCount}>{rows.length} fãs</span>
+                    </div>
 
-                  {/* Lista */}
-                  <div className={styles.list}>
-                    {list.map((r) => (
-                      <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
-                        <div className={styles.rankCol}>
-                          <span className={styles.rankNum} style={{ color: r.rankColor }}>{r.rank}</span>
-                          <span className={styles.trend} style={{ color: r.trendColor }}>{r.trendIcon}{r.trendText}</span>
+                    {/* Pódio Top 3 */}
+                    {podium.length === 3 && (
+                      <div className={styles.podiumWrap}>
+                        <div className={styles.podiumLabel}>Top 3</div>
+                        <div className={styles.podiumGrid}>
+                          {podium.map((p) => (
+                            <div key={p.rank} className={styles.podiumCard}>
+                              <span className={styles.podiumPlace} style={{ background: p.ring }}>{p.rank}</span>
+                              <span className={styles.podiumAvatar}>
+                                {p.avatarUrl
+                                  ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={p.avatarUrl} alt="" className={styles.podiumAvatarImg} />
+                                  )
+                                  : p.initials}
+                              </span>
+                              <div className={styles.podiumInfo}>
+                                <div className={styles.podiumName}>{p.name}</div>
+                                <div className={styles.podiumPoints}>{p.points}</div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <span className={styles.avatar} style={{ borderColor: r.ring }}>{r.initials}</span>
-                        <div className={styles.info}>
-                          <span className={styles.name}>{r.name}</span>
-                          <span className={styles.city}>{r.city}</span>
-                        </div>
-                        <span className={styles.points}>{r.points}</span>
                       </div>
-                    ))}
-                    {list.length === 0 && (
-                      <div className={styles.empty}>Nenhum fã encontrado para &quot;{query}&quot;.</div>
                     )}
+
+                    {podium.length === 3 && <div className={styles.divider} />}
+
+                    {/* Lista */}
+                    <div className={styles.list}>
+                      {list.map((r) => (
+                        <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
+                          <div className={styles.rankCol}>
+                            <span className={styles.rankNum} style={{ color: r.rankColor }}>{r.rank}</span>
+                          </div>
+                          <span className={styles.avatar} style={{ borderColor: r.ring }}>
+                            {r.avatarUrl
+                              ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={r.avatarUrl} alt="" className={styles.avatarImg} />
+                              )
+                              : r.initials}
+                          </span>
+                          <div className={styles.info}>
+                            <span className={styles.name}>{r.name}</span>
+                            {r.city && <span className={styles.city}>{r.city}</span>}
+                          </div>
+                          <span className={styles.points}>{r.points}</span>
+                        </div>
+                      ))}
+                      {list.length === 0 && (
+                        <div className={styles.empty}>
+                          {rankingLoading ? 'Carregando ranking…' : 'Sem fãs no ranking ainda.'}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             /* ===== LOJA ===== */
             <div className={styles.store}>
@@ -621,7 +633,7 @@ export default function RankingStoreModal() {
                     Voltar ao ranking
                   </button>
                   <div className={styles.balLabel}>Meu saldo</div>
-                  <div className={styles.balValue}>{fmt(SALDO_FP)} FP</div>
+                  <div className={styles.balValue}>{fmt(saldoFP)} FP</div>
                   <div className={styles.balSub}>disponível para troca</div>
                   <div className={styles.discountRow}>
                     <div>
@@ -683,10 +695,10 @@ export default function RankingStoreModal() {
 
                 <div className={styles.products}>
                   {gallery.map((p) => {
-                    const ok = SALDO_FP >= p.cost;
+                    const ok = saldoFP >= p.cost;
                     const cta = ok
                       ? (storeTab === 'produtos' ? 'Resgatar produto' : 'Resgatar experiência')
-                      : `Faltam ${fmt(p.cost - SALDO_FP)} FP`;
+                      : `Faltam ${fmt(p.cost - saldoFP)} FP`;
                     return (
                       <div key={p.name} className={styles.product}>
                         <div className={styles.productImg}>
