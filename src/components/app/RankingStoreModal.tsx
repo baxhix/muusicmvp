@@ -666,7 +666,7 @@ export default function RankingStoreModal() {
                       <button
                         key={k}
                         type="button"
-                        className={`${styles.storeTab} ${storeTab === k ? styles.segActive : ''}`}
+                        className={`${styles.storeTab} ${storeTab === k ? styles.storeTabActive : ''}`}
                         onClick={() => setStoreTab(k)}
                       >
                         {k === 'experiencias' ? 'Experiências' : 'Produtos'}
