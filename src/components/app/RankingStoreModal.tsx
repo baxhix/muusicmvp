@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
+import RankMedallion from './RankMedallion';
 import styles from './RankingStoreModal.module.css';
 
 type Screen = 'ranking' | 'loja';
@@ -149,7 +150,7 @@ const initialsOf = (name: string) =>
 interface Row {
   rank: number; pts: number; you: boolean; name: string; city: string;
   avatarUrl: string | null; initials: string; points: string;
-  ring: string; rankColor: string; medal: string | null;
+  ring: string; rankColor: string;
 }
 
 function chartPaths(spark: number[]) {
@@ -244,7 +245,9 @@ export default function RankingStoreModal() {
       const rank = i + 1;
       const isMe = !!user?.id && r.userId === user.id;
       const baseName = r.name?.trim() || 'Fã';
-      const medal = rank === 1 ? '#d8d8dc' : rank === 2 ? '#a6a6ad' : rank === 3 ? '#7d7d84' : null;
+      /* Estilo padronizado com a aba Superfãs: #N cinza uniforme
+       * (sem cor de medalha) — a colocação Top 10 é sinalizada pelo
+       * selo (RankMedallion) no avatar. */
       return {
         rank,
         pts: r.points,
@@ -254,19 +257,17 @@ export default function RankingStoreModal() {
         avatarUrl: r.avatarUrl ?? null,
         initials: initialsOf(baseName),
         points: `${fmt(r.points)} FP`,
-        ring: isMe ? 'rgba(255,255,255,.45)' : (medal || 'rgba(255,255,255,.14)'),
-        rankColor: medal || (isMe ? '#fff' : 'rgba(255,255,255,.6)'),
-        medal,
+        ring: isMe ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.12)',
+        rankColor: isMe ? '#fff' : 'rgba(245,245,247,.55)',
       };
     });
   }, [ranking, user?.id]);
 
-  const podium = useMemo(() => rows.slice(0, 3), [rows]);
+  /* Top 3 em lista, igual aos demais (sem pódio) — a lista mostra
+   * todas as colocações 1..N. */
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q
-      ? rows.filter((r) => r.name.toLowerCase().includes(q))
-      : rows.filter((r) => r.rank >= 4);
+    return q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows;
   }, [rows, query]);
 
   const meIndex = useMemo(() => rows.findIndex((r) => r.you), [rows]);
@@ -331,8 +332,15 @@ export default function RankingStoreModal() {
         <div className={styles.body}>
           {isRanking ? (
             <>
-              {/* TOOLBAR — tabs de período + intervalo + atalhos */}
+              {/* TOOLBAR — detalhe do período (esquerda) · tabs
+                  (centro) · atalhos (direita). Grid 1fr auto 1fr. */}
               <div className={styles.toolbar}>
+                <div className={styles.periodMeta}>
+                  <span className={styles.periodLabel}>{pm.label}</span>
+                  <span className={styles.dot} />
+                  <span className={styles.periodRange}>{pm.range}</span>
+                </div>
+
                 <div className={styles.periodTabs} role="tablist">
                   {PERIOD_TABS.map(([key, label]) => (
                     <button
@@ -347,14 +355,6 @@ export default function RankingStoreModal() {
                     </button>
                   ))}
                 </div>
-
-                <div className={styles.periodMeta}>
-                  <span className={styles.periodLabel}>{pm.label}</span>
-                  <span className={styles.dot} />
-                  <span className={styles.periodRange}>{pm.range}</span>
-                </div>
-
-                <div className={styles.spacer} />
 
                 <div className={styles.headerActions}>
                   <button type="button" title="Loja" className={styles.iconBtn} onClick={() => setScreen('loja')} aria-label="Abrir loja">
@@ -562,48 +562,22 @@ export default function RankingStoreModal() {
                       <span className={styles.rankCount}>{rows.length} fãs</span>
                     </div>
 
-                    {/* Pódio Top 3 */}
-                    {podium.length === 3 && (
-                      <div className={styles.podiumWrap}>
-                        <div className={styles.podiumLabel}>Top 3</div>
-                        <div className={styles.podiumGrid}>
-                          {podium.map((p) => (
-                            <div key={p.rank} className={styles.podiumCard}>
-                              <span className={styles.podiumPlace} style={{ background: p.ring }}>{p.rank}</span>
-                              <span className={styles.podiumAvatar}>
-                                {p.avatarUrl
-                                  ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={p.avatarUrl} alt="" className={styles.podiumAvatarImg} />
-                                  )
-                                  : p.initials}
-                              </span>
-                              <div className={styles.podiumInfo}>
-                                <div className={styles.podiumName}>{p.name}</div>
-                                <div className={styles.podiumPoints}>{p.points}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {podium.length === 3 && <div className={styles.divider} />}
-
-                    {/* Lista */}
+                    {/* Lista 1..N — top3 em linha, igual aos demais
+                        (sem pódio). #N + selo + FP no padrão Superfãs. */}
                     <div className={styles.list}>
                       {list.map((r) => (
                         <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
-                          <div className={styles.rankCol}>
-                            <span className={styles.rankNum} style={{ color: r.rankColor }}>{r.rank}</span>
-                          </div>
-                          <span className={styles.avatar} style={{ borderColor: r.ring }}>
-                            {r.avatarUrl
-                              ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={r.avatarUrl} alt="" className={styles.avatarImg} />
-                              )
-                              : r.initials}
+                          <span className={styles.rankNum} style={{ color: r.rankColor }}>{`#${r.rank}`}</span>
+                          <span className={styles.avatarWrap}>
+                            <span className={styles.avatar} style={{ borderColor: r.ring }}>
+                              {r.avatarUrl
+                                ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={r.avatarUrl} alt="" className={styles.avatarImg} />
+                                )
+                                : r.initials}
+                            </span>
+                            <RankMedallion position={r.rank} size="sm" />
                           </span>
                           <div className={styles.info}>
                             <span className={styles.name}>{r.name}</span>
