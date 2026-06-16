@@ -330,9 +330,17 @@
 }
 
 /* Wrapper das tabs — só dá o padding lateral; o segmented control
- * (boxStyles.tabs do ArtistBox desktop) vive dentro. */
+ * (boxStyles.tabs do ArtistBox desktop) vive dentro.
+ *
+ * Padding lateral 16px ESPELHA o box grande (`.discountRow`
+ * margin 0 16px), pra que o tab bar fique alinhado ao mesmo
+ * limite horizontal do conteúdo de cada tab — que já traz seu
+ * próprio padding 14-16px (.tabRanking / .missionsHeader /
+ * .missionsList / .materials). Antes era 12px e o `.flyoutBody`
+ * ainda somava +12px, deixando o conteúdo recuado ~28px vs tabs
+ * em 12px (desalinhado e estreito). */
 .flyoutTabs {
-  padding: 8px 12px 10px;
+  padding: 8px 16px 10px;
 }
 .flyoutTab {
   flex: 1;
@@ -357,9 +365,15 @@
   border-bottom-color: #a855f7;
 }
 
-/* Body — host do conteúdo de cada tab */
+/* Body — host do conteúdo de cada tab.
+ *
+ * SEM padding horizontal (espelha `.content` do box grande, que
+ * também é 0): cada tab já traz seu próprio padding lateral
+ * 14-16px, então o body não deve somar mais nada — senão o
+ * conteúdo fica duplamente recuado e estreito vs o tab bar.
+ * Vertical 12px preserva o respiro acima/abaixo. */
 .flyoutBody {
-  padding: 12px;
+  padding: 12px 0;
 }
 
 /* ── Missions list (render inline simplificado) ───────────── */
