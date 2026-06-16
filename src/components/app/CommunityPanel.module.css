@@ -555,7 +555,6 @@
   letter-spacing: 0.02em;
   color: #fbbf24;
   background: rgba(251, 191, 36, 0.14);
-  border: 1px solid rgba(251, 191, 36, 0.38);
   padding: 3px 8px;
   border-radius: 999px;
   flex-shrink: 0;
@@ -580,7 +579,6 @@
   letter-spacing: 0.01em;
   color: rgba(245, 245, 247, 0.85);
   background: rgba(168, 85, 247, 0.16);
-  border: 1px solid rgba(168, 85, 247, 0.38);
   padding: 2px 7px;
   border-radius: 999px;
   white-space: nowrap;
