@@ -16,9 +16,10 @@
 .backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(8, 8, 10, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* Backdrop do sistema (mesmo do FanpointsModal). */
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   animation: rkBackdropIn 0.35s ease;
 }
 .backdropOut { animation: rkBackdropOut 0.3s ease forwards; }
@@ -35,8 +36,11 @@
   flex-direction: column;
   border-radius: 20px;
   overflow: hidden;
-  background: #121214;
-  box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.8);
+  /* Superfície do sistema (FanpointsModal): near-black + hairline inset. */
+  background: #0d0d12;
+  box-shadow:
+    0 40px 120px -20px rgba(0, 0, 0, 0.8),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
   animation: rkModalIn 0.5s cubic-bezier(0.2, 0.9, 0.25, 1);
 }
 .modalOut { animation: rkModalOut 0.3s ease forwards; }
@@ -50,15 +54,20 @@
   align-items: center;
   gap: 22px;
   padding: 18px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: #161618;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
 }
 .titleBlock {
+  /* Coluna: título em cima, período/subtítulo embaixo (antes estavam
+   * lado a lado num flex row de 260px, o que cortava o título). Área
+   * ampliada pra o título nunca truncar. */
   display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 0 0 260px;
-  max-width: 260px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 360px;
   overflow: hidden;
 }
 .titleMain {
@@ -123,7 +132,7 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.iconBtn:hover { background: rgba(255, 255, 255, 0.12); }
+.iconBtn:hover { background: rgba(168, 85, 247, 0.18); color: #fff; }
 
 .closeBtn {
   width: 32px;
@@ -139,7 +148,7 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.closeBtn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 
 /* ── Body ───────────────────────────────────────────────── */
 .body {
@@ -169,7 +178,10 @@
 .card {
   border-radius: 16px;
   padding: 22px;
+  /* Card do sistema: branco-translúcido + hairline inset (mesmo
+   * "painel flutuante" usado nos boxes do app). */
   background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
 }
 .cardTitle { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
 
@@ -354,7 +366,7 @@
 .mNote { font-size: 12px; color: rgba(255, 255, 255, 0.38); margin-top: 2px; line-height: 1.45; }
 
 /* ── Classificação (ranking) ────────────────────────────── */
-.rankCard { border-radius: 16px; background: rgba(255, 255, 255, 0.02); overflow: hidden; }
+.rankCard { border-radius: 16px; background: rgba(255, 255, 255, 0.03); overflow: hidden; box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset; }
 .rankHead { display: flex; align-items: center; gap: 10px; padding: 18px 20px 14px; }
 .rankCount { font-size: 12px; color: rgba(255, 255, 255, 0.4); }
 
@@ -395,8 +407,10 @@
 .rankCard .divider { margin: 12px 20px 4px; }
 
 .list { display: flex; flex-direction: column; padding: 4px 12px 12px; }
-.row { display: flex; align-items: center; gap: 14px; padding: 13px 12px; border-radius: 12px; border: 1px solid transparent; }
+.row { display: flex; align-items: center; gap: 14px; padding: 13px 12px; border-radius: 12px; border: 1px solid transparent; transition: background 140ms ease; }
+.row:hover { background: rgba(168, 85, 247, 0.08); }
 .rowYou { background: rgba(255, 255, 255, 0.06); border: 1px dashed rgba(255, 255, 255, 0.4); }
+.rowYou:hover { background: rgba(168, 85, 247, 0.12); }
 .rankCol { width: 34px; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
 .rankNum { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
 .trend { font-size: 12px; font-weight: 600; line-height: 1; margin-top: 1px; }
@@ -524,7 +538,8 @@
 .sortSelect option { color: #0b0b0d; }
 
 .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.product { border-radius: 14px; background: rgba(255, 255, 255, 0.03); overflow: hidden; display: flex; flex-direction: column; }
+.product { border-radius: 14px; background: rgba(255, 255, 255, 0.03); overflow: hidden; display: flex; flex-direction: column; transition: background 140ms ease, box-shadow 140ms ease; }
+.product:hover { background: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.28) inset; }
 .productImg { position: relative; aspect-ratio: 4 / 3; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; }
 .discountTag { position: absolute; top: 12px; left: 12px; font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: #e8e8ea; color: #0b0b0d; }
 .productBody { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
