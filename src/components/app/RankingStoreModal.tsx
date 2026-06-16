@@ -181,6 +181,15 @@ const CHART_X_TIP: Record<Period, string> = {
   anual: 'Mês do ano',
 };
 
+/* Fração do total de Fanpoints atribuída a cada período (mock) — o valor
+ * do dia/semana/mês muda; o total (100%) fica embaixo. */
+const PERIOD_FP_RATIO: Record<Period, number> = {
+  diario: 0.03,
+  semanal: 0.12,
+  mensal: 0.45,
+  anual: 0.8,
+};
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 
 const fmt = (n: number) => Math.round(n).toLocaleString('pt-BR');
@@ -351,6 +360,9 @@ export default function RankingStoreModal() {
   const me = meIndex >= 0 ? rows[meIndex] : null;
   const myRank = meIndex >= 0 ? meIndex + 1 : null;
   const myPoints = me ? me.pts : saldoFP;
+  /* FP do período selecionado (dia/semana/mês/ano) — muda por aba; o
+   * total real fica embaixo. */
+  const periodFP = Math.round(myPoints * PERIOD_FP_RATIO[period]);
 
   /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima.
    * Recalcula ao trocar o período (os traços mudam). */
@@ -451,15 +463,14 @@ export default function RankingStoreModal() {
               </div>
 
               <div className={styles.grid}>
-                {/* PAINEL PESSOAL */}
-                <div className={styles.colPersonal}>
-                  {/* MINHA EVOLUÇÃO */}
-                  <div className={styles.card}>
+                  {/* MINHA EVOLUÇÃO — largura total */}
+                  <div className={`${styles.card} ${styles.evoFull}`}>
                     <div className={styles.evoHead}>
                       <span className={styles.cardTitle}>Minha Evolução</span>
                       <div className={styles.fpInline}>
                         <div className={styles.kicker}>{myRank ? `#${myRank}` : '#—'}</div>
-                        <div className={styles.fpValue}>{fmt(myPoints)} FP</div>
+                        <div className={styles.fpValue}>{fmt(periodFP)} FP</div>
+                        <div className={styles.fpTotal}>Total · {fmt(myPoints)} FP</div>
                       </div>
                     </div>
 
@@ -612,9 +623,8 @@ export default function RankingStoreModal() {
                       )}
                     </div>
                   </div>
-                </div>
 
-                {/* CLASSIFICAÇÃO */}
+                {/* CLASSIFICAÇÃO — abaixo do gráfico, à direita */}
                 <div className={styles.colRanking}>
                   <div className={styles.rankCard}>
                     <div className={styles.rankHead}>
