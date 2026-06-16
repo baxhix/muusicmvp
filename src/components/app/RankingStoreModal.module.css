@@ -103,6 +103,11 @@
 .periodLabel { font-size: 12.5px; font-weight: 600; color: #bcbcc0; }
 .dot { flex: 0 0 auto; width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); }
 .periodRange { font-size: 12px; color: rgba(255, 255, 255, 0.42); overflow: hidden; text-overflow: ellipsis; }
+/* Em resoluções menores, esconde o intervalo longo ("Semana 24 ·
+ * termina em 2d 6h") + o separador — fica só o rótulo do período. */
+@media (max-width: 860px) {
+  .periodRange, .periodMeta .dot { display: none; }
+}
 .titleSub { font-size: 12px; color: rgba(255, 255, 255, 0.42); margin-top: 3px; }
 
 .spacer { flex: 1; }
