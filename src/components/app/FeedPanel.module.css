@@ -508,7 +508,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   background: linear-gradient(180deg,
     rgba(0, 0, 0, 0.92) 0%,
     rgba(0, 0, 0, 0.65) 45%,
@@ -557,15 +556,6 @@
   filter: drop-shadow(0 0 6px var(--accent));
   animation: feedSpin 1.05s linear infinite;
 }
-.feedLoadingLabel {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 500;
-  color: #bdb7c8;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
-}
-
 @keyframes feedSpin {
   to { transform: rotate(360deg); }
 }

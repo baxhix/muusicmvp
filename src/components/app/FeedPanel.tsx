@@ -453,7 +453,6 @@ export default function FeedPanel() {
               <span className={styles.feedSpinnerGlow} />
               <span className={styles.feedSpinnerRing} />
             </span>
-            <p className={styles.feedLoadingLabel}>Procurando novas publicações…</p>
           </div>
         )}
       </div>
