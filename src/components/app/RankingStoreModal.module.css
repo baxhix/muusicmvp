@@ -29,7 +29,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   width: 93vw;
-  max-width: 1480px;
+  max-width: 1180px;
   height: 92vh;
   display: flex;
   flex-direction: column;
@@ -143,6 +143,9 @@
   z-index: 2;
   flex: 1;
   overflow-y: auto;
+  /* Sem scroll lateral: conteúdo cabe no modal (max 1180px); os
+   * filhos do grid usam min-width:0 pra encolher em vez de estourar. */
+  overflow-x: hidden;
   padding: 24px;
 }
 .body::-webkit-scrollbar { width: 9px; }
