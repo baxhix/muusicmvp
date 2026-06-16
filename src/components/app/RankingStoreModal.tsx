@@ -143,6 +143,21 @@ const RANK_TITLE: Record<Period, string> = {
   anual: 'Classificação geral',
 };
 
+/* Marcos do eixo X do gráfico (7 pontos) — dia / semana / mês conforme
+ * o período. */
+const CHART_X_LABELS: Record<Period, string[]> = {
+  diario:  ['0h', '4h', '8h', '12h', '16h', '20h', '24h'],
+  semanal: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+  mensal:  ['1', '5', '10', '15', '20', '25', '30'],
+  anual:   ['Jan', 'Mar', 'Mai', 'Jul', 'Set', 'Nov', 'Dez'],
+};
+const CHART_X_TIP: Record<Period, string> = {
+  diario: 'Hora do dia',
+  semanal: 'Dia da semana',
+  mensal: 'Dia do mês',
+  anual: 'Mês do ano',
+};
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 
 const fmt = (n: number) => Math.round(n).toLocaleString('pt-BR');
@@ -157,26 +172,25 @@ interface Row {
 }
 
 /* Gera os paths de N séries numa escala Y compartilhada (pra as
- * linhas serem comparáveis no mesmo gráfico). */
+ * linhas serem comparáveis no mesmo gráfico). Expõe também os pontos,
+ * a escala (min/max/span) e o mapeador toY pra desenhar os eixos. */
+const CHART_W = 300;
+const CHART_H = 96;
 function multiChartPaths(seriesList: number[][]) {
-  const W = 300;
-  const H = 96;
   const all = seriesList.flat();
   const min = Math.min(...all);
   const max = Math.max(...all);
   const span = (max - min) || 1;
-  return seriesList.map((spark) => {
+  const toY = (v: number) => 90 - ((v - min) / span) * 66;
+  const series = seriesList.map((spark) => {
     const n = spark.length;
-    const pts = spark.map((v, i) => {
-      const x = (i / (n - 1)) * W;
-      const y = 84 - ((v - min) / span) * 66 + 6;
-      return [x, y] as const;
-    });
+    const pts = spark.map((v, i) => [(i / (n - 1)) * CHART_W, toY(v)] as const);
     const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-    const area = `${line} L${W},${H} L0,${H} Z`;
+    const area = `${line} L${CHART_W},${CHART_H} L0,${CHART_H} Z`;
     const last = pts[pts.length - 1];
-    return { line, area, cx: last[0].toFixed(1), cy: last[1].toFixed(1) };
+    return { line, area, cx: last[0].toFixed(1), cy: last[1].toFixed(1), pts };
   });
+  return { series, min, max, span, toY };
 }
 
 /* Slider de imagens do produto (mock) — 2 fotos com dots pra trocar,
@@ -222,12 +236,13 @@ export default function RankingStoreModal() {
   const [sort, setSort] = useState<Sort>('relevancia');
   const [missionTab, setMissionTab] = useState<MissionTab>('diaria');
   const [missionsOpen, setMissionsOpen] = useState(false);
-  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [hoverPt, setHoverPt] = useState<number | null>(null);
   const [query] = useState('');
   const [visibleCount, setVisibleCount] = useState(20);
   const [toast, setToast] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const achRef = useRef<HTMLDivElement>(null);
 
   /* ── Dados reais ── */
   const { user } = useAuth();
@@ -316,7 +331,18 @@ export default function RankingStoreModal() {
   const myPoints = me ? me.pts : saldoFP;
 
   /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima. */
-  const charts = useMemo(() => multiChartPaths([SPARK_TOP1, SPARK_TOP10, SPARK_TOP50, SPARK_ME]), []);
+  const chart = useMemo(() => multiChartPaths([SPARK_TOP1, SPARK_TOP10, SPARK_TOP50, SPARK_ME]), []);
+  const series = chart.series;
+  const mePts = series[3].pts;
+  /* 4 marcos no eixo Y (pontos), do mínimo ao máximo da escala. */
+  const yTicks = useMemo(() => {
+    return [0, 1, 2, 3].map((k) => {
+      const v = chart.min + (chart.span * k) / 3;
+      const y = chart.toY(v);
+      return { v, y, top: (y / CHART_H) * 100, label: `${Math.round(v / 1000)}k` };
+    });
+  }, [chart]);
+  const xLabels = CHART_X_LABELS[period];
 
   const mission = MISSIONS[missionTab];
 
@@ -390,7 +416,7 @@ export default function RankingStoreModal() {
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.6-5h14.8L21 9M3 9h18M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 13h6" /></svg>
                     Loja
                   </button>
-                  <button type="button" className={styles.actionBtn} onClick={() => setAchievementsOpen(true)} aria-label="Benefícios">
+                  <button type="button" className={styles.actionBtn} onClick={() => achRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })} aria-label="Benefícios">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 14v4M14 14v4M8 21h8" /></svg>
                     Benefícios
                   </button>
@@ -422,37 +448,79 @@ export default function RankingStoreModal() {
                         {me?.city && <div className={styles.evoMeta}>{me.city}</div>}
                       </div>
                       <div className={styles.fpInline}>
-                        <div className={styles.kicker}>Fanpoints</div>
+                        <div className={styles.kicker}>{myRank ? `#${myRank}` : '#—'}</div>
                         <div className={styles.fpValue}>{fmt(myPoints)} FP</div>
                       </div>
                     </div>
 
-                    <div className={styles.evoPosRow}>
-                          <div>
-                            <div className={styles.kicker}>Posição</div>
-                            <div className={styles.posValueRow}>
-                              <span className={styles.posValue}>{myRank ? `#${myRank}` : '—'}</span>
+                        <div className={styles.chartWrap}>
+                          <div className={styles.chartArea}>
+                            {/* eixo Y — marcos de pontos */}
+                            <div className={styles.yAxis}>
+                              {yTicks.map((t) => (
+                                <span key={t.v} className={styles.yTick} style={{ top: `${t.top}%` }} title={`${fmt(t.v)} Fanpoints`}>{t.label}</span>
+                              ))}
+                            </div>
+
+                            <div className={styles.chartPlot}>
+                              <svg viewBox="0 0 300 96" preserveAspectRatio="none" className={styles.chartSvg}>
+                                <defs>
+                                  <linearGradient id="rkArea" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
+                                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                                  </linearGradient>
+                                </defs>
+                                {/* gridlines horizontais nos marcos do eixo Y */}
+                                {yTicks.map((t) => (
+                                  <line key={t.v} x1="0" y1={t.y} x2="300" y2={t.y} stroke="rgba(255,255,255,.06)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                                ))}
+                                {/* referência: Top 1 / Top 10 / Top 50 (linhas finas) */}
+                                <path d={series[0].line} fill="none" stroke="#ff2e9a" strokeWidth="1.6" strokeOpacity="0.85" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+                                <path d={series[1].line} fill="none" stroke="#a855f7" strokeWidth="1.6" strokeOpacity="0.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+                                <path d={series[2].line} fill="none" stroke="rgba(255,255,255,.42)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
+                                {/* você (linha branca cheia + área) */}
+                                <path d={series[3].area} fill="url(#rkArea)" />
+                                <path d={series[3].line} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                              </svg>
+
+                              {/* marcos clicáveis da minha linha + tooltip */}
+                              <div className={styles.chartDots}>
+                                {mePts.map((p, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    className={styles.chartDot}
+                                    style={{ left: `${(p[0] / CHART_W) * 100}%`, top: `${(p[1] / CHART_H) * 100}%` }}
+                                    title={`${xLabels[i]} · ${fmt(SPARK_ME[i])} FP`}
+                                    aria-label={`${xLabels[i]}: ${fmt(SPARK_ME[i])} Fanpoints`}
+                                    onMouseEnter={() => setHoverPt(i)}
+                                    onMouseLeave={() => setHoverPt(null)}
+                                    onFocus={() => setHoverPt(i)}
+                                    onBlur={() => setHoverPt(null)}
+                                  />
+                                ))}
+                                {hoverPt !== null && (
+                                  <div
+                                    className={styles.chartTip}
+                                    style={{ left: `${(mePts[hoverPt][0] / CHART_W) * 100}%`, top: `${(mePts[hoverPt][1] / CHART_H) * 100}%` }}
+                                  >
+                                    <strong>{fmt(SPARK_ME[hoverPt])} FP</strong>
+                                    <span>{xLabels[hoverPt]}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className={styles.chartWrap}>
-                          <svg viewBox="0 0 300 96" preserveAspectRatio="none" className={styles.chartSvg}>
-                            <defs>
-                              <linearGradient id="rkArea" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
-                                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                              </linearGradient>
-                            </defs>
-                            {/* referência: Top 1 / Top 10 / Top 50 (linhas finas) */}
-                            <path d={charts[0].line} fill="none" stroke="#ff2e9a" strokeWidth="1.6" strokeOpacity="0.85" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
-                            <path d={charts[1].line} fill="none" stroke="#a855f7" strokeWidth="1.6" strokeOpacity="0.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
-                            <path d={charts[2].line} fill="none" stroke="rgba(255,255,255,.42)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
-                            {/* você (linha branca cheia + área + ponta) */}
-                            <path d={charts[3].area} fill="url(#rkArea)" />
-                            <path d={charts[3].line} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                            <circle cx={charts[3].cx} cy={charts[3].cy} r="3.6" fill="#fff" stroke="#0d0d12" strokeWidth="2" />
-                          </svg>
+                          {/* eixo X — marcos de tempo (dia/semana/mês) */}
+                          <div className={styles.xAxis}>
+                            <div className={styles.xTicks} title={CHART_X_TIP[period]}>
+                              {xLabels.map((l, i) => (
+                                <span key={l} className={styles.xTick} style={{ left: `${(i / (xLabels.length - 1)) * 100}%` }} title={`${l} · ${fmt(SPARK_ME[i])} FP`}>{l}</span>
+                              ))}
+                            </div>
+                          </div>
+
                           <div className={styles.chartLegend}>
                             <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#fff' }} />Você</span>
                             <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#ff2e9a' }} />Top 1</span>
@@ -461,44 +529,36 @@ export default function RankingStoreModal() {
                           </div>
                         </div>
 
-                        {/* Conquistas */}
-                        <div className={styles.achWrap}>
-                          <button type="button" className={styles.achToggle} onClick={() => setAchievementsOpen((v) => !v)}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 14v4M14 14v4M8 21h8" /></svg>
-                            <span className={styles.achLabel}>Conquistas</span>
+                        {/* Conquistas — sempre exposto (sem toggle) */}
+                        <div className={styles.achWrap} ref={achRef}>
+                          <div className={styles.achHead}>
+                            <span className={styles.cardTitle}>Conquistas</span>
                             <span className={styles.achCount}>12</span>
-                            <span className={styles.spacer} />
-                            <span className={`${styles.chevron} ${achievementsOpen ? styles.chevronOpen : ''}`}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
-                            </span>
-                          </button>
-
-                          {achievementsOpen && (
-                            <div className={styles.achPanel}>
-                              <div className={styles.badgeGrid}>
-                                {BADGES.map((b) => (
-                                  <div key={b.label} className={styles.badge}>
-                                    <span className={styles.badgeIcon}>
-                                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cfcfd2" strokeWidth="2" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" /></svg>
-                                    </span>
-                                    <div className={styles.badgeText}>
-                                      <div className={styles.badgeTitle}>{b.label}</div>
-                                      <div className={styles.badgeSub}>{b.sub}</div>
-                                    </div>
+                          </div>
+                          <div className={styles.achPanel}>
+                            <div className={styles.badgeGrid}>
+                              {BADGES.map((b) => (
+                                <div key={b.label} className={styles.badge}>
+                                  <span className={styles.badgeIcon}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cfcfd2" strokeWidth="2" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" /></svg>
+                                  </span>
+                                  <div className={styles.badgeText}>
+                                    <div className={styles.badgeTitle}>{b.label}</div>
+                                    <div className={styles.badgeSub}>{b.sub}</div>
                                   </div>
-                                ))}
-                              </div>
-                              <div className={styles.perksTitle}>Benefícios desbloqueados</div>
-                              <div className={styles.perkList}>
-                                {PERKS.map((pk) => (
-                                  <div key={pk.label} className={styles.perk}>
-                                    <span className={styles.perkLabel}>{pk.label}</span>
-                                    <span className={styles.perkSub}>{pk.sub}</span>
-                                  </div>
-                                ))}
-                              </div>
+                                </div>
+                              ))}
                             </div>
-                          )}
+                            <div className={styles.perksTitle}>Benefícios desbloqueados</div>
+                            <div className={styles.perkList}>
+                              {PERKS.map((pk) => (
+                                <div key={pk.label} className={styles.perk}>
+                                  <span className={styles.perkLabel}>{pk.label}</span>
+                                  <span className={styles.perkSub}>{pk.sub}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                   </div>
 

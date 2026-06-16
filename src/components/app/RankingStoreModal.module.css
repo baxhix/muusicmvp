@@ -137,21 +137,22 @@
 .actionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 32px;
-  padding: 0 13px;
-  border-radius: 8px;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
   border: none;
   background: transparent;
   color: rgba(245, 245, 247, 0.55);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 140ms ease, color 140ms ease;
 }
 .actionBtn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.actionBtn svg { width: 15px; height: 15px; }
 
 .closeBtn {
   /* Fora do fluxo pra o título ficar centralizado de verdade. */
@@ -229,9 +230,10 @@
   border-radius: 16px;
   padding: 22px;
   /* Card do sistema: branco-translúcido + hairline inset (mesmo
-   * "painel flutuante" usado nos boxes do app). */
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+   * "painel flutuante" usado nos boxes do app). Background bem sutil
+   * pra mal destacar do fundo do modal. */
+  background: rgba(255, 255, 255, 0.018);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
 }
 .cardTitle { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
 
@@ -318,7 +320,80 @@
 .fpDelta { font-size: 12px; color: rgba(255, 255, 255, 0.55); font-weight: 600; }
 
 .chartWrap { margin-top: 16px; }
-.chartSvg { width: 100%; height: 84px; display: block; }
+/* Área do gráfico: coluna de eixo Y (pontos) + plot. */
+.chartArea { display: grid; grid-template-columns: 38px 1fr; gap: 8px; }
+.yAxis { position: relative; }
+.yTick {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}
+.chartPlot { position: relative; height: 120px; }
+.chartSvg { width: 100%; height: 100%; display: block; }
+/* Marcos (data points) da minha linha + tooltip. */
+.chartDots { position: absolute; inset: 0; }
+.chartDot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.chartDot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2px #0d0d12;
+  transition: transform 0.12s ease;
+}
+.chartDot:hover::after,
+.chartDot:focus-visible::after { transform: translate(-50%, -50%) scale(1.55); }
+.chartTip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 11px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: #1c1c1f;
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 6;
+}
+.chartTip strong { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.chartTip span { font-size: 10px; color: rgba(255, 255, 255, 0.55); }
+/* Eixo X — marcos de tempo (alinhados ao plot, à direita do eixo Y). */
+.xAxis { display: grid; grid-template-columns: 38px 1fr; gap: 8px; margin-top: 7px; }
+.xTicks { grid-column: 2; position: relative; height: 14px; }
+.xTick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+  cursor: default;
+}
+.xTick:first-child { transform: none; }
+.xTick:last-child { transform: translateX(-100%); }
 /* Legenda das 4 séries (Você + Top 1/10/50). */
 .chartLegend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 11px; }
 .legendItem { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: rgba(255, 255, 255, 0.55); }
@@ -330,7 +405,9 @@
 .miniStatLabel { font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 2px; }
 
 /* Conquistas */
-.achWrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.achWrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); scroll-margin-top: 16px; }
+/* "Conquistas" como título do bloco (sem toggle) + contador. */
+.achHead { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
 .achToggle {
   width: 100%;
   display: flex;
@@ -351,18 +428,15 @@
 .chevron { display: flex; color: rgba(255, 255, 255, 0.5); transition: transform 0.2s; }
 .chevronOpen { transform: rotate(180deg); }
 
-.achPanel { margin-top: 12px; animation: rkRise 0.25s; }
+.achPanel { margin-top: 0; }
 .badgeGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .badge { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 11px; background: rgba(255, 255, 255, 0.03); }
+/* Sem círculo de fundo — só o ícone. */
 .badgeIcon {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
 }
 .badgeText { min-width: 0; }
 .badgeTitle { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -370,7 +444,7 @@
 .perksTitle { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255, 255, 255, 0.4); margin: 14px 2px 8px; }
 .perkList { display: flex; flex-direction: column; gap: 8px; }
 .perk { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 11px; background: rgba(255, 255, 255, 0.03); }
-.perkLabel { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #0b0b0d; background: #cfcfd2; padding: 3px 9px; border-radius: 7px; }
+.perkLabel { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #0b0b0d; background: #cfcfd2; padding: 4px 12px; border-radius: 999px; }
 .perkSub { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
 
 /* Estatísticas */
@@ -629,7 +703,8 @@
 .product { border-radius: 14px; background: rgba(255, 255, 255, 0.03); overflow: hidden; display: flex; flex-direction: column; transition: background 140ms ease, box-shadow 140ms ease; }
 .product:hover { background: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.28) inset; }
 /* Slot de imagem com FUNDO BRANCO (slider de fotos do produto). */
-.productImg { position: relative; aspect-ratio: 4 / 3; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* Card mais vertical: imagem em retrato 3/4. */
+.productImg { position: relative; aspect-ratio: 3 / 4; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .productImgPhoto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 12px; opacity: 0; transition: opacity 0.4s ease; }
 .productImgActive { opacity: 1; }
 .productDots { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); z-index: 2; display: flex; gap: 6px; }
@@ -651,7 +726,7 @@
   border: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
 }
