@@ -986,7 +986,9 @@ export function RankingTabContent() {
    * usuários do Ranking" — cada clique revela 20 a mais sem ir
    * direto pra 100; o botão fica sempre próximo do scroll
    * position do usuário em vez de "explodir" o tamanho da lista. */
-  const [visibleCount, setVisibleCount] = useState(6);
+  /* Preview inline do top 6; o "Ver ranking completo" abre o modal
+   * RankingStoreModal com a lista inteira + Loja. */
+  const [visibleCount] = useState(6);
 
   /* Memoizado pra que o slice não recrie array a cada render
    * (ex.: cada update do hook useLiveUsers dispara render). */
@@ -1083,13 +1085,19 @@ export function RankingTabContent() {
         </div>
       )}
 
-      {visibleCount < ranking.length && (
+      {ranking.length > 0 && (
         <button
           type="button"
           className={styles.tabRankingLoadMore}
-          onClick={() => setVisibleCount((c) => c + 20)}
+          onClick={() => {
+            try {
+              window.dispatchEvent(
+                new CustomEvent('app:open-ranking-store', { detail: { screen: 'ranking' } }),
+              );
+            } catch { /* SSR */ }
+          }}
         >
-          Ver mais
+          Ver ranking completo
         </button>
       )}
     </div>

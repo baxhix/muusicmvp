@@ -46,6 +46,7 @@ import SimulationHUD from '@/components/app/SimulationHUD';
 import OnboardingTooltips from '@/components/app/OnboardingTooltips';
 import FanverseSearch from '@/components/app/FanverseSearch';
 import FanpointsModal from '@/components/app/FanpointsModal';
+import RankingStoreModal from '@/components/app/RankingStoreModal';
 import { InviteFriendsModal } from '@/components/app/ArtistBox';
 import ShowDayLayer from '@/components/app/ShowDayLayer';
 import ShowDayPanel from '@/components/app/ShowDayPanel';
@@ -548,6 +549,13 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  Self-mounting: ouve o evento global e renderiza overlay
        *  com 4 tabs (Conquistas/Fanpoints/Atividade/Como Trocar). */}
       <FanpointsModal />
+
+      {/* Modal "Ranking completo + Loja" — abre via
+       *  `app:open-ranking-store` (detail.screen 'ranking'|'loja').
+       *  Disparado pelo "Ver mais" da aba Superfãs (Ranking) e pelo
+       *  ícone Loja. Self-mounting: ouve o evento global e renderiza
+       *  o modal full-screen (mock). */}
+      <RankingStoreModal />
 
       {/* Modal "Convide seus amigos" (loop viral / referral) —
        *  abre via `app:open-invite` (dispatched pelo drawer do
