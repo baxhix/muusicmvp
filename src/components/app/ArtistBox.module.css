@@ -797,6 +797,12 @@
   /* min-width 24 → 20: coluna de posição mais justa pra encostar
    * o avatar/nome no número (#N). */
   min-width: 20px;
+  /* Desloca o grupo rank+avatar+nome 10px à esquerda (margin
+   * negativa no 1º item da row puxa toda a sequência junto),
+   * preservando o respiro entre #N e avatar e SEM cobrir o número.
+   * Os Fanpoints seguem fixos à direita (margin-left:auto).
+   * Desktop/rail apenas — o mobile usa classes próprias. */
+  margin-left: -10px;
   height: 28px;
   display: inline-flex;
   align-items: center;
