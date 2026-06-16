@@ -35,7 +35,6 @@ type Period = 'diario' | 'semanal' | 'mensal' | 'anual';
 type StoreTab = 'experiencias' | 'produtos';
 type Sort = 'relevancia' | 'menor' | 'maior' | 'novidades';
 type MissionTab = 'diaria' | 'semanal';
-type EvoTab = 'evolucao' | 'estatisticas';
 
 /* ── Catálogo da Loja (mock — sem backend ainda) ──────────────── */
 
@@ -118,10 +117,6 @@ const PERKS = [
   { label: 'Frete grátis', sub: 'Próximo pedido' },
 ];
 
-/* Perfil de gamificação ainda não modelado no backend — placeholders. */
-const MY_TIER = 'Ouro';
-const MY_LVL = 25;
-const MY_STREAK = 14;
 /* Sparkline decorativa (sem série temporal real ainda). */
 const MOCK_SPARK = [6.2, 9.1, 7.5, 12, 14.4, 11, 16.4].map((x) => x * 1000);
 
@@ -181,7 +176,6 @@ export default function RankingStoreModal() {
   const [storeTab, setStoreTab] = useState<StoreTab>('experiencias');
   const [sort, setSort] = useState<Sort>('relevancia');
   const [missionTab, setMissionTab] = useState<MissionTab>('diaria');
-  const [evoTab, setEvoTab] = useState<EvoTab>('evolucao');
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [query] = useState('');
@@ -276,15 +270,6 @@ export default function RankingStoreModal() {
   const myPoints = me ? me.pts : saldoFP;
 
   const ch = useMemo(() => chartPaths(MOCK_SPARK), []);
-
-  const stats = [
-    { value: fmt(myPoints), label: 'Fanpoints' },
-    { value: myRank ? `#${myRank}` : '—', label: 'Posição atual' },
-    { value: fmt(rows.length), label: 'Fãs no ranking' },
-    { value: String(MY_STREAK), label: 'Sequência atual' },
-    { value: MY_TIER, label: 'Tier atual' },
-    { value: `Lv ${MY_LVL}`, label: 'Nível' },
-  ];
 
   const mission = MISSIONS[missionTab];
 
@@ -388,26 +373,11 @@ export default function RankingStoreModal() {
                         <div className={styles.evoName}>
                           {me ? me.name.replace('Você · ', 'Você · ') : 'Você'}
                         </div>
-                        <div className={styles.evoMeta}>{me?.city || `${MY_TIER} · Lv ${MY_LVL}`}</div>
+                        {me?.city && <div className={styles.evoMeta}>{me.city}</div>}
                       </div>
                     </div>
 
-                    <div className={styles.segTabs}>
-                      {(['evolucao', 'estatisticas'] as EvoTab[]).map((k) => (
-                        <button
-                          key={k}
-                          type="button"
-                          className={`${styles.seg} ${evoTab === k ? styles.segActive : ''}`}
-                          onClick={() => setEvoTab(k)}
-                        >
-                          {k === 'evolucao' ? 'Evolução' : 'Estatísticas'}
-                        </button>
-                      ))}
-                    </div>
-
-                    {evoTab === 'evolucao' ? (
-                      <>
-                        <div className={styles.evoPosRow}>
+                    <div className={styles.evoPosRow}>
                           <div>
                             <div className={styles.kicker}>Posição</div>
                             <div className={styles.posValueRow}>
@@ -433,17 +403,6 @@ export default function RankingStoreModal() {
                             <path d={ch.line} fill="none" stroke="#d4d4d8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                             <circle cx={ch.cx} cy={ch.cy} r="3.6" fill="#fff" stroke="#0d0d12" strokeWidth="2" />
                           </svg>
-                        </div>
-
-                        <div className={styles.miniStats}>
-                          <div className={styles.miniStat}>
-                            <div className={styles.miniStatValue}>{MY_STREAK}</div>
-                            <div className={styles.miniStatLabel}>dias de sequência</div>
-                          </div>
-                          <div className={styles.miniStat}>
-                            <div className={styles.miniStatValue}>{MY_TIER}</div>
-                            <div className={styles.miniStatLabel}>tier atual · Lv {MY_LVL}</div>
-                          </div>
                         </div>
 
                         {/* Conquistas */}
@@ -473,7 +432,7 @@ export default function RankingStoreModal() {
                                   </div>
                                 ))}
                               </div>
-                              <div className={styles.perksTitle}>Descontos e benefícios</div>
+                              <div className={styles.perksTitle}>Benefícios desbloqueados</div>
                               <div className={styles.perkList}>
                                 {PERKS.map((pk) => (
                                   <div key={pk.label} className={styles.perk}>
@@ -485,17 +444,6 @@ export default function RankingStoreModal() {
                             </div>
                           )}
                         </div>
-                      </>
-                    ) : (
-                      <div className={styles.statsGrid}>
-                        {stats.map((s) => (
-                          <div key={s.label} className={styles.statCard}>
-                            <div className={styles.statCardValue}>{s.value}</div>
-                            <div className={styles.statCardLabel}>{s.label}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* MISSÕES */}
