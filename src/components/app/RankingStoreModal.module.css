@@ -30,7 +30,8 @@
   top: 50%;
   transform: translate(-50%, -50%);
   width: 93vw;
-  max-width: 1180px;
+  /* −30% da largura original (1180px → 826px). */
+  max-width: 826px;
   height: 92vh;
   display: flex;
   flex-direction: column;
@@ -621,7 +622,7 @@
 }
 .sortSelect option { color: #0b0b0d; }
 
-.products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+.products { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-items: stretch; }
 /* Cards de Experiência e Produto com tamanho idêntico (sem "pulo" ao
  * trocar de aba): grid stretch + imagem com aspect fixo + nome em 2
  * linhas + linha de preço com altura mínima reservada. */
