@@ -306,8 +306,6 @@ export default function RankingStoreModal() {
             {!isRanking && <div className={styles.titleSub}>Troque seus Fanpoints por recompensas</div>}
           </div>
 
-          <div className={styles.spacer} />
-
           <button type="button" className={styles.closeBtn} onClick={close} aria-label="Fechar">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
