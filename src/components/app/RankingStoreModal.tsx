@@ -108,8 +108,6 @@ const MISSIONS: Record<MissionTab, MissionDef> = {
 const BADGES = [
   { label: 'Superfã', sub: 'Verificado' },
   { label: 'Top 1%', sub: 'Mês de maio' },
-  { label: 'Maratonista', sub: 'Sequência 14d' },
-  { label: 'Primeira live', sub: 'Assistida' },
 ];
 
 const PERKS = [
