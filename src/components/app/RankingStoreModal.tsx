@@ -106,7 +106,6 @@ const MISSIONS: Record<MissionTab, MissionDef> = {
 };
 
 const BADGES = [
-  { label: 'Superfã', sub: 'Verificado' },
   { label: 'Top 1%', sub: 'Mês de maio' },
 ];
 
@@ -115,13 +114,37 @@ const PERKS = [
   { label: 'Frete grátis', sub: 'Próximo pedido' },
 ];
 
-/* Sparklines decorativas (sem série temporal real ainda). "Você" +
- * 3 linhas de referência (Top 1 / Top 10 / Top 50) pra situar onde o
- * usuário está vs o topo. Mock. */
-const SPARK_ME = [6.2, 9.1, 7.5, 12, 14.4, 11, 16.4].map((x) => x * 1000);
-const SPARK_TOP1 = [120, 138, 150, 168, 182, 200, 218].map((x) => x * 1000);
-const SPARK_TOP10 = [40, 47, 52, 58, 64, 71, 80].map((x) => x * 1000);
-const SPARK_TOP50 = [12, 14, 15.5, 17, 19, 21, 24].map((x) => x * 1000);
+/* Sparklines mock POR PERÍODO — "Você" + 3 referências (Top 1/10/50).
+ * Os traços do gráfico mudam ao alternar o período (diário/semanal/
+ * mensal/anual). */
+const K = (arr: number[]) => arr.map((x) => x * 1000);
+interface SparkSet { me: number[]; top1: number[]; top10: number[]; top50: number[] }
+const SPARKS: Record<Period, SparkSet> = {
+  diario: {
+    me:    K([0.4, 0.9, 1.4, 1.1, 2.0, 2.6, 3.1]),
+    top1:  K([12, 18, 25, 33, 40, 47, 54]),
+    top10: K([4, 6, 9, 12, 15, 18, 21]),
+    top50: K([1, 1.6, 2.2, 2.8, 3.4, 4, 4.6]),
+  },
+  semanal: {
+    me:    K([6.2, 9.1, 7.5, 12, 14.4, 11, 16.4]),
+    top1:  K([120, 138, 150, 168, 182, 200, 218]),
+    top10: K([40, 47, 52, 58, 64, 71, 80]),
+    top50: K([12, 14, 15.5, 17, 19, 21, 24]),
+  },
+  mensal: {
+    me:    K([20, 35, 48, 60, 76, 90, 110]),
+    top1:  K([400, 520, 640, 760, 880, 1000, 1150]),
+    top10: K([150, 200, 260, 320, 380, 440, 520]),
+    top50: K([50, 70, 90, 110, 135, 160, 190]),
+  },
+  anual: {
+    me:    K([120, 260, 410, 560, 720, 900, 1100]),
+    top1:  K([2000, 3200, 4600, 6000, 7600, 9200, 11000]),
+    top10: K([800, 1300, 1900, 2500, 3200, 4000, 4900]),
+    top50: K([300, 520, 760, 1000, 1300, 1650, 2050]),
+  },
+};
 
 /* Imagens do slider dos produtos (mock). Salve os arquivos em
  * public/store/ — fundo branco no slot, contain pra mostrar a peça
@@ -330,8 +353,13 @@ export default function RankingStoreModal() {
   const myRank = meIndex >= 0 ? meIndex + 1 : null;
   const myPoints = me ? me.pts : saldoFP;
 
-  /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima. */
-  const chart = useMemo(() => multiChartPaths([SPARK_TOP1, SPARK_TOP10, SPARK_TOP50, SPARK_ME]), []);
+  /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima.
+   * Recalcula ao trocar o período (os traços mudam). */
+  const meSpark = SPARKS[period].me;
+  const chart = useMemo(() => {
+    const s = SPARKS[period];
+    return multiChartPaths([s.top1, s.top10, s.top50, s.me]);
+  }, [period]);
   const series = chart.series;
   const mePts = series[3].pts;
   /* 4 marcos no eixo Y (pontos), do mínimo ao máximo da escala. */
@@ -430,23 +458,6 @@ export default function RankingStoreModal() {
                   <div className={styles.card}>
                     <div className={styles.evoHead}>
                       <span className={styles.cardTitle}>Minha Evolução</span>
-                    </div>
-
-                    <div className={styles.evoUser}>
-                      <span className={styles.evoAvatar} aria-hidden="true">
-                        {me?.avatarUrl
-                          ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={me.avatarUrl} alt="" className={styles.evoAvatarImg} />
-                          )
-                          : (me ? me.initials : 'VC')}
-                      </span>
-                      <div className={styles.evoUserText}>
-                        <div className={styles.evoName}>
-                          {me ? me.name.replace('Você · ', 'Você · ') : 'Você'}
-                        </div>
-                        {me?.city && <div className={styles.evoMeta}>{me.city}</div>}
-                      </div>
                       <div className={styles.fpInline}>
                         <div className={styles.kicker}>{myRank ? `#${myRank}` : '#—'}</div>
                         <div className={styles.fpValue}>{fmt(myPoints)} FP</div>
@@ -491,8 +502,8 @@ export default function RankingStoreModal() {
                                     type="button"
                                     className={styles.chartDot}
                                     style={{ left: `${(p[0] / CHART_W) * 100}%`, top: `${(p[1] / CHART_H) * 100}%` }}
-                                    title={`${xLabels[i]} · ${fmt(SPARK_ME[i])} FP`}
-                                    aria-label={`${xLabels[i]}: ${fmt(SPARK_ME[i])} Fanpoints`}
+                                    title={`${xLabels[i]} · ${fmt(meSpark[i])} FP`}
+                                    aria-label={`${xLabels[i]}: ${fmt(meSpark[i])} Fanpoints`}
                                     onMouseEnter={() => setHoverPt(i)}
                                     onMouseLeave={() => setHoverPt(null)}
                                     onFocus={() => setHoverPt(i)}
@@ -504,7 +515,7 @@ export default function RankingStoreModal() {
                                     className={styles.chartTip}
                                     style={{ left: `${(mePts[hoverPt][0] / CHART_W) * 100}%`, top: `${(mePts[hoverPt][1] / CHART_H) * 100}%` }}
                                   >
-                                    <strong>{fmt(SPARK_ME[hoverPt])} FP</strong>
+                                    <strong>{fmt(meSpark[hoverPt])} FP</strong>
                                     <span>{xLabels[hoverPt]}</span>
                                   </div>
                                 )}
@@ -516,7 +527,7 @@ export default function RankingStoreModal() {
                           <div className={styles.xAxis}>
                             <div className={styles.xTicks} title={CHART_X_TIP[period]}>
                               {xLabels.map((l, i) => (
-                                <span key={l} className={styles.xTick} style={{ left: `${(i / (xLabels.length - 1)) * 100}%` }} title={`${l} · ${fmt(SPARK_ME[i])} FP`}>{l}</span>
+                                <span key={l} className={styles.xTick} style={{ left: `${(i / (xLabels.length - 1)) * 100}%` }} title={`${l} · ${fmt(meSpark[i])} FP`}>{l}</span>
                               ))}
                             </div>
                           </div>
@@ -529,29 +540,15 @@ export default function RankingStoreModal() {
                           </div>
                         </div>
 
-                        {/* Conquistas — sempre exposto (sem toggle) */}
+                        {/* Conquistas — sempre exposto. Top 1% + benefícios,
+                            todos como boxes horizontais (sem subtítulos). */}
                         <div className={styles.achWrap} ref={achRef}>
                           <div className={styles.achHead}>
                             <span className={styles.cardTitle}>Conquistas</span>
-                            <span className={styles.achCount}>12</span>
                           </div>
                           <div className={styles.achPanel}>
-                            <div className={styles.badgeGrid}>
-                              {BADGES.map((b) => (
-                                <div key={b.label} className={styles.badge}>
-                                  <span className={styles.badgeIcon}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cfcfd2" strokeWidth="2" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z" /></svg>
-                                  </span>
-                                  <div className={styles.badgeText}>
-                                    <div className={styles.badgeTitle}>{b.label}</div>
-                                    <div className={styles.badgeSub}>{b.sub}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className={styles.perksTitle}>Benefícios desbloqueados</div>
                             <div className={styles.perkList}>
-                              {PERKS.map((pk) => (
+                              {[...BADGES, ...PERKS].map((pk) => (
                                 <div key={pk.label} className={styles.perk}>
                                   <span className={styles.perkLabel}>{pk.label}</span>
                                   <span className={styles.perkSub}>{pk.sub}</span>
