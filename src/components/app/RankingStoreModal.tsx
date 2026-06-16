@@ -115,8 +115,18 @@ const PERKS = [
   { label: 'Frete grátis', sub: 'Próximo pedido' },
 ];
 
-/* Sparkline decorativa (sem série temporal real ainda). */
-const MOCK_SPARK = [6.2, 9.1, 7.5, 12, 14.4, 11, 16.4].map((x) => x * 1000);
+/* Sparklines decorativas (sem série temporal real ainda). "Você" +
+ * 3 linhas de referência (Top 1 / Top 10 / Top 50) pra situar onde o
+ * usuário está vs o topo. Mock. */
+const SPARK_ME = [6.2, 9.1, 7.5, 12, 14.4, 11, 16.4].map((x) => x * 1000);
+const SPARK_TOP1 = [120, 138, 150, 168, 182, 200, 218].map((x) => x * 1000);
+const SPARK_TOP10 = [40, 47, 52, 58, 64, 71, 80].map((x) => x * 1000);
+const SPARK_TOP50 = [12, 14, 15.5, 17, 19, 21, 24].map((x) => x * 1000);
+
+/* Imagens do slider dos produtos (mock). Salve os arquivos em
+ * public/store/ — fundo branco no slot, contain pra mostrar a peça
+ * inteira. */
+const PRODUCT_IMAGES = ['/store/produto-1.jpg', '/store/produto-2.jpg'];
 
 /* Rótulo/intervalo cosmético por período (só ranking all-time existe). */
 const PERIOD_META: Record<Period, { label: string; range: string }> = {
@@ -146,22 +156,59 @@ interface Row {
   ring: string; rankColor: string;
 }
 
-function chartPaths(spark: number[]) {
-  const n = spark.length;
+/* Gera os paths de N séries numa escala Y compartilhada (pra as
+ * linhas serem comparáveis no mesmo gráfico). */
+function multiChartPaths(seriesList: number[][]) {
   const W = 300;
   const H = 96;
-  const min = Math.min(...spark);
-  const max = Math.max(...spark);
+  const all = seriesList.flat();
+  const min = Math.min(...all);
+  const max = Math.max(...all);
   const span = (max - min) || 1;
-  const pts = spark.map((v, i) => {
-    const x = (i / (n - 1)) * W;
-    const y = 84 - ((v - min) / span) * 66 + 6;
-    return [x, y] as const;
+  return seriesList.map((spark) => {
+    const n = spark.length;
+    const pts = spark.map((v, i) => {
+      const x = (i / (n - 1)) * W;
+      const y = 84 - ((v - min) / span) * 66 + 6;
+      return [x, y] as const;
+    });
+    const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const area = `${line} L${W},${H} L0,${H} Z`;
+    const last = pts[pts.length - 1];
+    return { line, area, cx: last[0].toFixed(1), cy: last[1].toFixed(1) };
   });
-  const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-  const area = `${line} L${W},${H} L0,${H} Z`;
-  const last = pts[pts.length - 1];
-  return { line, area, cx: last[0].toFixed(1), cy: last[1].toFixed(1) };
+}
+
+/* Slider de imagens do produto (mock) — 2 fotos com dots pra trocar,
+ * cross-fade, fundo branco. */
+function ProductSlider({ discount }: { discount?: string }) {
+  const [idx, setIdx] = useState(0);
+  return (
+    <div className={styles.productImg}>
+      {discount && <span className={styles.discountTag}>{discount}</span>}
+      {PRODUCT_IMAGES.map((src, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className={`${styles.productImgPhoto} ${i === idx ? styles.productImgActive : ''}`}
+          draggable={false}
+        />
+      ))}
+      <div className={styles.productDots}>
+        {PRODUCT_IMAGES.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`${styles.productDot} ${i === idx ? styles.productDotActive : ''}`}
+            onClick={() => setIdx(i)}
+            aria-label={`Imagem ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /* ── Component ────────────────────────────────────────────────── */
@@ -177,6 +224,7 @@ export default function RankingStoreModal() {
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [query] = useState('');
+  const [visibleCount, setVisibleCount] = useState(20);
   const [toast, setToast] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,7 +315,8 @@ export default function RankingStoreModal() {
   const myRank = meIndex >= 0 ? meIndex + 1 : null;
   const myPoints = me ? me.pts : saldoFP;
 
-  const ch = useMemo(() => chartPaths(MOCK_SPARK), []);
+  /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima. */
+  const charts = useMemo(() => multiChartPaths([SPARK_TOP1, SPARK_TOP10, SPARK_TOP50, SPARK_ME]), []);
 
   const mission = MISSIONS[missionTab];
 
@@ -301,7 +350,6 @@ export default function RankingStoreModal() {
         <div className={styles.header}>
           <div className={styles.titleBlock}>
             <div className={styles.titleMain}>{isRanking ? 'Ranking Fanverse' : 'Loja Fanverse'}</div>
-            {!isRanking && <div className={styles.titleSub}>Troque seus Fanpoints por recompensas</div>}
           </div>
 
           <button type="button" className={styles.closeBtn} onClick={close} aria-label="Fechar">
@@ -338,11 +386,13 @@ export default function RankingStoreModal() {
                 </div>
 
                 <div className={styles.headerActions}>
-                  <button type="button" title="Loja" className={styles.iconBtn} onClick={() => setScreen('loja')} aria-label="Abrir loja">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.6-5h14.8L21 9M3 9h18M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 13h6" /></svg>
+                  <button type="button" className={styles.actionBtn} onClick={() => setScreen('loja')} aria-label="Abrir loja">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.6-5h14.8L21 9M3 9h18M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 13h6" /></svg>
+                    Loja
                   </button>
-                  <button type="button" title="Presentes" className={styles.iconBtn} onClick={() => flash('Abrindo Presentes…')} aria-label="Presentes">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h16v4H4zM5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 21V8M12 8S11 3 8.5 3 6 6 6 6s.6 2 2.2 2M12 8s1-5 3.5-5S18 6 18 6s-.6 2-2.2 2" /></svg>
+                  <button type="button" className={styles.actionBtn} onClick={() => setAchievementsOpen(true)} aria-label="Benefícios">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 14v4M14 14v4M8 21h8" /></svg>
+                    Benefícios
                   </button>
                 </div>
               </div>
@@ -371,6 +421,10 @@ export default function RankingStoreModal() {
                         </div>
                         {me?.city && <div className={styles.evoMeta}>{me.city}</div>}
                       </div>
+                      <div className={styles.fpInline}>
+                        <div className={styles.kicker}>Fanpoints</div>
+                        <div className={styles.fpValue}>{fmt(myPoints)} FP</div>
+                      </div>
                     </div>
 
                     <div className={styles.evoPosRow}>
@@ -379,11 +433,6 @@ export default function RankingStoreModal() {
                             <div className={styles.posValueRow}>
                               <span className={styles.posValue}>{myRank ? `#${myRank}` : '—'}</span>
                             </div>
-                          </div>
-                          <div className={styles.spacer} />
-                          <div className={styles.fpBlock}>
-                            <div className={styles.kicker}>Fanpoints</div>
-                            <div className={styles.fpValue}>{fmt(myPoints)} FP</div>
                           </div>
                         </div>
 
@@ -395,10 +444,21 @@ export default function RankingStoreModal() {
                                 <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
                               </linearGradient>
                             </defs>
-                            <path d={ch.area} fill="url(#rkArea)" />
-                            <path d={ch.line} fill="none" stroke="#d4d4d8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                            <circle cx={ch.cx} cy={ch.cy} r="3.6" fill="#fff" stroke="#0d0d12" strokeWidth="2" />
+                            {/* referência: Top 1 / Top 10 / Top 50 (linhas finas) */}
+                            <path d={charts[0].line} fill="none" stroke="#ff2e9a" strokeWidth="1.6" strokeOpacity="0.85" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
+                            <path d={charts[1].line} fill="none" stroke="#a855f7" strokeWidth="1.6" strokeOpacity="0.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
+                            <path d={charts[2].line} fill="none" stroke="rgba(255,255,255,.42)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" />
+                            {/* você (linha branca cheia + área + ponta) */}
+                            <path d={charts[3].area} fill="url(#rkArea)" />
+                            <path d={charts[3].line} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx={charts[3].cx} cy={charts[3].cy} r="3.6" fill="#fff" stroke="#0d0d12" strokeWidth="2" />
                           </svg>
+                          <div className={styles.chartLegend}>
+                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#fff' }} />Você</span>
+                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#ff2e9a' }} />Top 1</span>
+                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#a855f7' }} />Top 10</span>
+                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: 'rgba(255,255,255,.5)' }} />Top 50</span>
+                          </div>
                         </div>
 
                         {/* Conquistas */}
@@ -509,7 +569,7 @@ export default function RankingStoreModal() {
                     {/* Lista 1..N — top3 em linha, igual aos demais
                         (sem pódio). #N + selo + FP no padrão Superfãs. */}
                     <div className={styles.list}>
-                      {list.map((r) => (
+                      {list.slice(0, visibleCount).map((r) => (
                         <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
                           <span className={styles.rankNum} style={{ color: r.rankColor }}>{`#${r.rank}`}</span>
                           <span className={styles.avatarWrap}>
@@ -536,6 +596,15 @@ export default function RankingStoreModal() {
                         </div>
                       )}
                     </div>
+                    {list.length > visibleCount && (
+                      <button
+                        type="button"
+                        className={styles.loadMore}
+                        onClick={() => setVisibleCount((c) => c + 20)}
+                      >
+                        Ver mais
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -546,10 +615,6 @@ export default function RankingStoreModal() {
               <div className={styles.storeLeft}>
                 {/* SALDO */}
                 <div className={styles.card}>
-                  <button type="button" className={styles.backBtn} onClick={() => setScreen('ranking')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-                    Voltar ao ranking
-                  </button>
                   <div className={styles.balLabel}>Meu saldo</div>
                   <div className={styles.balValue}>{fmt(saldoFP)} FP</div>
                   <div className={styles.balSub}>disponível para troca</div>
@@ -590,7 +655,10 @@ export default function RankingStoreModal() {
               {/* GALERIA */}
               <div className={styles.galleryCol}>
                 <div className={styles.galleryHead}>
-                  <div />
+                  <button type="button" className={styles.backBtn} onClick={() => setScreen('ranking')}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                    Voltar ao ranking
+                  </button>
                   <div className={styles.storeTabs}>
                     {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
                       <button
@@ -619,10 +687,7 @@ export default function RankingStoreModal() {
                       : `Faltam ${fmt(p.cost - saldoFP)} FP`;
                     return (
                       <div key={p.name} className={styles.product}>
-                        <div className={styles.productImg}>
-                          {p.discount && <span className={styles.discountTag}>{p.discount}</span>}
-                          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.28)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.6" /><path d="M21 16l-5-5L5 20" /></svg>
-                        </div>
+                        <ProductSlider discount={p.discount} />
                         <div className={styles.productBody}>
                           <div className={styles.productName}>{p.name}</div>
                           <div className={styles.productPriceRow}>
