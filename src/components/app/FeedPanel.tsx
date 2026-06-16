@@ -449,7 +449,11 @@ export default function FeedPanel() {
             `position: relative`). */}
         {!minimized && showIdleBanner && (
           <div className={styles.idleBanner} aria-hidden="true">
-            <span>Novas publicações</span>
+            <span className={styles.feedSpinner}>
+              <span className={styles.feedSpinnerGlow} />
+              <span className={styles.feedSpinnerRing} />
+            </span>
+            <p className={styles.feedLoadingLabel}>Procurando novas publicações…</p>
           </div>
         )}
       </div>

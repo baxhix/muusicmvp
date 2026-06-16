@@ -501,11 +501,14 @@
   right: 0;
   z-index: 6;
   pointer-events: none;
-  height: 88px;
-  padding: 14px 14px 0;
+  /* Indicador compacto: alto o bastante pro gradiente respirar,
+   * mas curto pra não cobrir as Stories logo abaixo do header. */
+  height: 64px;
+  padding: 8px 14px 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
+  gap: 10px;
   background: linear-gradient(180deg,
     rgba(0, 0, 0, 0.92) 0%,
     rgba(0, 0, 0, 0.65) 45%,
@@ -513,82 +516,68 @@
     rgba(0, 0, 0, 0.00) 100%);
   animation: feedIdleBannerIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.idleBanner > span {
-  /* Pill envelope matches the MockToastRotator toasts per
-   * product feedback ("o mesmo estilo das notificações que
-   * aparecem quando é dado um like") — dark frosted-glass
-   * surface, hairline border, soft drop shadow. ONLY the
-   * loading ring picks up the lilac/pink brand gradient,
-   * not the whole pill. */
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: #ffffff;
-  padding: 6px 14px 6px 10px;
-  border-radius: 999px;
-  background: linear-gradient(
-    160deg,
-    rgba(6, 6, 14, 0.96) 0%,
-    rgba(4, 4, 10, 0.96) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(20px) brightness(0.85) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) brightness(0.85) saturate(1.4);
-  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.75);
-}
-
-/* Loading spinner before the text — conic-gradient ring in the
- * lilac → pink brand colors per product feedback ("somente o
- * loading lilás/rosa"). The conic-gradient sweeps from lilac
- * to pink and back, and a radial mask carves a hollow ring
- * out of the disc so we get a true gradient stroke instead
- * of CSS-border arc approximations. */
-.idleBanner > span::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(168, 85, 247, 1) 0%,
-    rgba(236, 72, 153, 1) 35%,
-    rgba(168, 85, 247, 1) 70%,
-    rgba(168, 85, 247, 0) 100%
-  );
-  -webkit-mask: radial-gradient(
-    circle,
-    transparent 0,
-    transparent 4px,
-    black 4.6px,
-    black 7px
-  );
-  mask: radial-gradient(
-    circle,
-    transparent 0,
-    transparent 4px,
-    black 4.6px,
-    black 7px
-  );
-  animation: idleBannerSpin 0.85s linear infinite;
+/* Spinner do feed — glow radial pulsante atrás de um anel cônico
+ * rosa → roxo que gira (substitui o antigo pill "Novas
+ * publicações"). Escala reduzida (~28px) vs o mock original
+ * (66px) pra funcionar como indicador de topo sem cobrir as
+ * Stories. Sem pill/borda: só o spinner + label sobre o
+ * gradiente do banner.
+ *   --accent  = rosa
+ *   --accent2 = roxo */
+.feedSpinner {
+  --accent: #ff2e9a;
+  --accent2: #a855f7;
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
 }
+.feedSpinnerGlow {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent2) 0%, transparent 66%);
+  filter: blur(7px);
+  animation: feedSpinGlow 1.6s ease-in-out infinite;
+}
+.feedSpinnerRing {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: conic-gradient(from 90deg,
+    rgba(255, 255, 255, 0) 0%,
+    var(--accent2) 42%,
+    var(--accent) 92%,
+    rgba(255, 255, 255, 0) 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent 67%, #000 69%);
+          mask: radial-gradient(farthest-side, transparent 67%, #000 69%);
+  filter: drop-shadow(0 0 6px var(--accent));
+  animation: feedSpin 1.05s linear infinite;
+}
+.feedLoadingLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #bdb7c8;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+}
 
-@keyframes idleBannerSpin {
+@keyframes feedSpin {
   to { transform: rotate(360deg); }
+}
+@keyframes feedSpinGlow {
+  0%, 100% { opacity: 0.4;  transform: scale(0.9); }
+  50%      { opacity: 0.85; transform: scale(1.1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .idleBanner > span::before {
-    /* Show a static neutral dot for users who don't want motion —
-     * still signals "active" without spinning. */
-    animation: none;
-    border-color: rgba(255, 255, 255, 0.55);
-  }
+  /* Para quem não quer movimento: anel parado + glow estático. */
+  .feedSpinnerRing { animation: none; }
+  .feedSpinnerGlow { animation: none; opacity: 0.5; }
 }
 @keyframes feedIdleBannerIn {
   from { opacity: 0; transform: translateY(-6px); }
