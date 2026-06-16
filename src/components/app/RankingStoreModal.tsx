@@ -261,7 +261,6 @@ export default function RankingStoreModal() {
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [hoverPt, setHoverPt] = useState<number | null>(null);
   const [query] = useState('');
-  const [visibleCount, setVisibleCount] = useState(20);
   const [toast, setToast] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -620,13 +619,11 @@ export default function RankingStoreModal() {
                   <div className={styles.rankCard}>
                     <div className={styles.rankHead}>
                       <span className={styles.cardTitle}>{RANK_TITLE[period]}</span>
-                      <span className={styles.rankCount}>{rows.length} fãs</span>
                     </div>
 
-                    {/* Lista 1..N — top3 em linha, igual aos demais
-                        (sem pódio). #N + selo + FP no padrão Superfãs. */}
+                    {/* Só os 10 primeiros. #N + selo + FP no padrão Superfãs. */}
                     <div className={styles.list}>
-                      {list.slice(0, visibleCount).map((r) => (
+                      {list.slice(0, 10).map((r) => (
                         <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
                           <span className={styles.rankNum} style={{ color: r.rankColor }}>{`#${r.rank}`}</span>
                           <span className={styles.avatarWrap}>
@@ -653,15 +650,6 @@ export default function RankingStoreModal() {
                         </div>
                       )}
                     </div>
-                    {list.length > visibleCount && (
-                      <button
-                        type="button"
-                        className={styles.loadMore}
-                        onClick={() => setVisibleCount((c) => c + 20)}
-                      >
-                        Ver mais
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>

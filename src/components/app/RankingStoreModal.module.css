@@ -30,8 +30,8 @@
   top: 50%;
   transform: translate(-50%, -50%);
   width: 93vw;
-  /* −30% da largura original (1180px → 826px). */
-  max-width: 826px;
+  /* 826px + 15% = 950px. */
+  max-width: 950px;
   height: 92vh;
   display: flex;
   flex-direction: column;
@@ -575,7 +575,7 @@
 .name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 260px; }
 .city { font-size: 12px; color: rgba(255, 255, 255, 0.42); margin-top: 3px; display: block; }
 /* FP no padrão Superfãs: cinza regular, alinhado à direita. */
-.points { flex: 0 0 auto; margin-left: auto; text-align: right; font-weight: 400; font-size: 13px; color: rgba(245, 245, 247, 0.55); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.points { flex: 0 0 auto; margin-left: auto; text-align: right; font-weight: 400; font-size: 12px; color: rgba(245, 245, 247, 0.55); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .empty { padding: 48px; text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 14px; }
 /* "Ver mais" — pagina a lista 20 em 20 pra o modal não ficar gigante. */
 .loadMore {
