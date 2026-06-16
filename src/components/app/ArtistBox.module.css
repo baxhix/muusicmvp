@@ -763,10 +763,12 @@
 .tabRankingRow {
   display: flex;
   align-items: center;
-  /* Per product feedback "Aumente levemente os espaçamentos, mesmo
-   * que for preciso aumentar a largura do bloco". gap 10 → 14,
-   * padding 7×8 → 10×12. */
-  gap: 10px;
+  /* gap reduzido 10 → 6 pra aproximar o cluster avatar+nome da
+   * coluna de colocação (#N) per product feedback "posicione
+   * apenas o avatar e o nome mais próximos da colocação". A
+   * pontuação (.tabRankingPoints) NÃO se move: fica fixa à
+   * direita via margin-left:auto. */
+  gap: 6px;
   padding: 9px 8px;
   border-radius: 8px;
   background: transparent;
@@ -792,7 +794,9 @@
    * Top3 (.tabRankingRankMedal) continua sobrescrevendo essas
    * regras com o gradient rosa/roxo + bold. */
   flex-shrink: 0;
-  min-width: 24px;
+  /* min-width 24 → 20: coluna de posição mais justa pra encostar
+   * o avatar/nome no número (#N). */
+  min-width: 20px;
   height: 28px;
   display: inline-flex;
   align-items: center;
