@@ -421,17 +421,6 @@
     -webkit-backdrop-filter: blur(16px) brightness(0.72) saturate(1.4);
   }
 
-  /* Micro-interação (estilo Instagram): ao rolar, a pill contrai 15%
-   * na largura, suave. Anima `width` (não scaleX) pra os ícones não
-   * distorcerem; o .nav é flex-center, então a contração centraliza.
-   * .navContracted é setada via scroll listener no BottomNav. */
-  .inner {
-    transition: width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .navContracted .inner {
-    width: 224px; /* 280 × 0.80 (tablets 481-768px) */
-  }
-
   /* Override mobile .moreMenu vive APÓS o base rule (mais abaixo
    * no arquivo, ~linha 620+) pra ganhar no cascade. Aqui dentro
    * do @media (max-width: 768px) ficamos só com items styling. */
@@ -472,11 +461,6 @@
   .inner {
     width: calc(100% - 32px);
     max-width: 320px;
-  }
-  /* Contração 20% (micro-interação de scroll) no phone. */
-  .navContracted .inner {
-    width: calc((100% - 32px) * 0.8);
-    max-width: 256px; /* 320 × 0.80 */
   }
   /* Regra do bottom sheet movida pra @media (max-width: 768px) acima
    * — assim aplica em todos os mobiles, não só ≤480px. */

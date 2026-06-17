@@ -63,44 +63,6 @@ export default function BottomNav() {
     setMoreOpen(false);
   }, [pathname]);
 
-  /* Micro-interação (mobile, estilo Instagram): scroll pra BAIXO
-   * contrai a bottom bar 20% na largura; scroll pra CIMA expande de
-   * novo. Direcional (não por idle) pra não ficar "indo e voltando".
-   * Listener em capture pega o scroll de qualquer scroller filho
-   * (scroll não borbulha); ignora o mapa. Threshold anti-jitter
-   * absorve o micro-bounce do iOS. prefers-reduced-motion desliga. */
-  const [navContracted, setNavContracted] = useState(false);
-  useEffect(() => {
-    if (!isMobile) return;
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return;
-    }
-    /* Último scrollTop por scroller — direção = top atual − anterior. */
-    const lastTop = new WeakMap<object, number>();
-    const onScroll = (e: Event) => {
-      const node = e.target as HTMLElement | null;
-      if (!node || node.nodeType !== 1) return; // só elementos scrolláveis
-      if (node.closest?.('.mapboxgl-map')) return; // ignora o mapa
-      const top = node.scrollTop;
-      const prev = lastTop.get(node) ?? 0;
-      const delta = top - prev;
-      lastTop.set(node, top);
-      if (Math.abs(delta) < 6) return; // anti-jitter (bounce do iOS)
-      if (top <= 4) {
-        setNavContracted(false); // perto do topo: sempre expandida
-        return;
-      }
-      setNavContracted(delta > 0); // desceu → contrai; subiu → expande
-    };
-    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
-    return () => {
-      document.removeEventListener('scroll', onScroll, { capture: true });
-    };
-  }, [isMobile]);
-
   /**
    * Lightweight prefetch helper — called on pointerenter / focus
    * of each routed slot so the chunk for the target route is
@@ -188,7 +150,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className={`${styles.nav} ${navContracted ? styles.navContracted : ''}`}
+      className={styles.nav}
       aria-label="Navegação principal"
     >
       <div className={styles.inner}>
