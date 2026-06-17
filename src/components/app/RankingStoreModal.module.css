@@ -532,20 +532,23 @@
 .barTip strong { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .barTip span { font-size: 10px; color: rgba(255, 255, 255, 0.6); }
 @media (max-width: 720px) {
-  .barChart { height: 256px; gap: 10px; }
+  /* Mais alto no mobile pra caber as barras + os caps (avatar/#) sem
+   * cortar no topo. */
+  .barChart { height: 300px; gap: 10px; }
   .barCol { width: 38px; }
   .barFill { width: 24px; }
   .barAvatar { width: 22px; height: 22px; }
   /* 8 barras: em telas muito estreitas, rola horizontalmente em vez de
-   * estourar/cortar. Caps cabem na altura do plot (sem corte vertical).
-   * Alinha à esquerda pra o scroll começar no primeiro. */
+   * estourar/cortar. O overflow-x:auto força o eixo Y a recortar, então
+   * o padding-top reserva espaço pros caps (avatar + #) não serem
+   * cortados no topo. Alinha à esquerda pra o scroll começar no 1º. */
   .barCols {
     justify-content: flex-start;
     gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    padding: 0 2px;
+    padding: 48px 2px 0;
   }
   .barCols::-webkit-scrollbar { display: none; }
 }
