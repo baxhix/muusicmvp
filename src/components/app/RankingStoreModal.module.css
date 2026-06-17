@@ -65,7 +65,7 @@
   align-items: center;
   justify-content: center;
   gap: 22px;
-  padding: 18px 24px;
+  padding: 26px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -84,7 +84,7 @@
   overflow: hidden;
 }
 .titleMain {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.3px;
   line-height: 1.1;
@@ -1223,7 +1223,7 @@
 }
 @media (max-width: 720px) {
   .modal { width: 100vw; height: 100dvh; max-width: none; border-radius: 0; }
-  .header { flex-wrap: wrap; justify-content: center; gap: 12px; row-gap: 10px; padding: 12px 14px; }
+  .header { flex-wrap: wrap; justify-content: center; gap: 12px; row-gap: 10px; padding: 18px 14px; }
   .spacer { display: none; }
   .tabBar { padding: 12px 14px 2px; }
   .body { padding: 14px; }
@@ -1233,13 +1233,16 @@
   .card { padding: 16px; }
   .store { gap: 16px; }
   .storeLeft { gap: 16px; }
+  /* iOS só dá auto-zoom ao focar inputs com font-size < 16px; 16px
+   * mata o zoom sem mexer no visual desktop. */
+  .searchInput { font-size: 16px; }
 }
 @media (max-width: 600px) {
   .products { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
-  .header { padding: 11px 12px; gap: 10px; }
-  .titleMain { font-size: 16px; }
+  .header { padding: 16px 12px; gap: 10px; }
+  .titleMain { font-size: 18px; }
   .closeBtn { right: 12px; }
   .tabBar { padding: 10px 12px 2px; justify-content: flex-start; }
   .mainTab { padding: 8px 13px; font-size: 12.5px; }

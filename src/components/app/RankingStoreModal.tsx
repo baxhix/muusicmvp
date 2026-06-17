@@ -128,7 +128,7 @@ const PERIOD_META: Record<Period, { label: string; range: string }> = {
 /* Abas principais do modal. Ordem fixa pedida pelo produto. */
 const MAIN_TABS: [Tab, string][] = [
   ['classificacao', 'Classificação'],
-  ['evolucao', 'Minha evolução'],
+  ['evolucao', 'Evolução'],
   ['jornada', 'Jornada'],
   ['loja', 'Loja'],
 ];
