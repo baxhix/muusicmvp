@@ -201,6 +201,13 @@ const PERIOD_NAME: Record<Period, string> = {
   mensal: 'Este mês',
   anual: 'Este ano',
 };
+/* Rótulo curto pros badges discretos de filtro na Classificação. */
+const PERIOD_BADGE: Record<Period, string> = {
+  diario: 'Hoje',
+  semanal: 'Semana',
+  mensal: 'Mês',
+  anual: 'Ano',
+};
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -275,17 +282,18 @@ export default function RankingStoreModal() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [tab, setTab] = useState<Tab>('classificacao');
-  const [period, setPeriod] = useState<Period>('semanal');
+  const [period, setPeriod] = useState<Period>('diario');
   const [storeTab, setStoreTab] = useState<StoreTab>('experiencias');
   const [sort, setSort] = useState<Sort>('relevancia');
   const [searchOpen, setSearchOpen] = useState(false);
   const [storeQuery, setStoreQuery] = useState('');
+  const [rankSearchOpen, setRankSearchOpen] = useState(false);
   const [missionTab, setMissionTab] = useState<MissionTab>('diaria');
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [hoverPt, setHoverPt] = useState<number | null>(null);
   const [top3Open, setTop3Open] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(10);
-  const [query] = useState('');
+  const [query, setQuery] = useState('');
   const [toast, setToast] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -440,6 +448,23 @@ export default function RankingStoreModal() {
     const src = storeTab === 'produtos' ? PRODUCTS : EXPERIENCES;
     return src.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
   }, [storeQuery, storeTab]);
+
+  /* Autocomplete da busca da Classificação (nomes dos fãs). */
+  const rankSuggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [] as Row[];
+    return rows.filter((r) => r.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [query, rows]);
+
+  /* Validade do desconto: 30 dias a partir de hoje (cliente, modal só
+   * monta após evento → sem risco de hydration mismatch). */
+  const discountUntil = useMemo(
+    () =>
+      new Date(Date.now() + 30 * 86_400_000)
+        .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+        .replace('.', ''),
+    [],
+  );
 
   if (!open) return null;
 
@@ -759,24 +784,73 @@ export default function RankingStoreModal() {
                   <div className={styles.rankCard}>
                     {/* Filtro de dias + legenda do período, dentro do box. */}
                     <div className={styles.rankHeadTabs}>
-                      <div className={styles.periodMeta}>
-                        <span className={styles.periodLabel}>{pm.label}</span>
-                        <span className={styles.dot} />
-                        <span className={styles.periodRange}>{pm.range}</span>
-                      </div>
-                      <div className={styles.periodTabs} role="tablist">
-                        {PERIOD_TABS.map(([key, label]) => (
+                      {/* Filtro discreto (badges) — à esquerda, Hoje default. */}
+                      <div className={styles.periodBadges} role="tablist">
+                        {PERIOD_TABS.map(([key]) => (
                           <button
                             key={key}
                             type="button"
                             role="tab"
                             aria-selected={period === key}
-                            className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                            className={`${styles.periodBadge} ${period === key ? styles.periodBadgeActive : ''}`}
                             onClick={() => setPeriod(key)}
                           >
-                            {label}
+                            {PERIOD_BADGE[key]}
                           </button>
                         ))}
+                      </div>
+
+                      {/* Legenda do período — centralizada. */}
+                      <div className={styles.periodMeta}>
+                        <span className={styles.periodLabel}>{pm.label}</span>
+                        <span className={styles.dot} />
+                        <span className={styles.periodRange}>{pm.range}</span>
+                      </div>
+
+                      {/* Busca (mesmo comportamento da Loja) — à direita. */}
+                      <div className={styles.galleryTools}>
+                        <button
+                          type="button"
+                          className={`${styles.searchBtn} ${rankSearchOpen ? styles.searchBtnActive : ''}`}
+                          aria-label="Buscar fã"
+                          aria-expanded={rankSearchOpen}
+                          onClick={() => {
+                            setRankSearchOpen((v) => {
+                              if (v) setQuery('');
+                              return !v;
+                            });
+                          }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                        </button>
+                        {rankSearchOpen && (
+                          <div className={`${styles.searchWrap} ${styles.searchWrapRight}`}>
+                            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+                            <input
+                              autoFocus
+                              type="text"
+                              className={styles.searchInput}
+                              placeholder="Buscar fã…"
+                              value={query}
+                              onChange={(e) => setQuery(e.target.value)}
+                            />
+                            {rankSuggestions.length > 0 && (
+                              <ul className={styles.autocomplete}>
+                                {rankSuggestions.map((s) => (
+                                  <li key={s.rank}>
+                                    <button
+                                      type="button"
+                                      className={styles.autocompleteItem}
+                                      onClick={() => setQuery(s.name.replace('Você · ', ''))}
+                                    >
+                                      {s.name.replace('Você · ', '')}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -843,63 +917,39 @@ export default function RankingStoreModal() {
               <div className={styles.storeLeft}>
                 {/* SALDO */}
                 <div className={styles.card}>
-                  <div className={styles.balLabel}>Meu saldo</div>
-                  <div className={styles.balValue}>{fmt(saldoFP)} FP</div>
+                  <div className={styles.balTop}>
+                    <span className={styles.balAvatar} aria-hidden="true">
+                      {me?.avatarUrl
+                        ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={me.avatarUrl} alt="" className={styles.balAvatarImg} />
+                        )
+                        : (me ? me.initials : 'VC')}
+                    </span>
+                    <div className={styles.balText}>
+                      <div className={styles.balLabel}>Meu saldo</div>
+                      <div className={styles.balValue}>{fmt(saldoFP)} FP</div>
+                    </div>
+                  </div>
                   <div className={styles.balSub}>disponível para troca</div>
                   <div className={styles.discountRow}>
                     <div>
                       <div className={styles.discountInfo}>Desconto desbloqueado</div>
-                      <div className={styles.discountInfo}>válido na loja oficial</div>
+                      <div className={styles.discountInfo}>válido até {discountUntil}</div>
                     </div>
                     <span className={styles.discountBadge}>15% OFF</span>
                   </div>
-                  <div className={styles.divider} />
-                  <div className={styles.balStats}>
-                    <div className={styles.balStatRow}>
-                      <span className={styles.balStatLabel}>Resgates realizados</span>
-                      <span className={styles.balStatValue}>3</span>
-                    </div>
-                    <div className={styles.balStatRow}>
-                      <span className={styles.balStatLabel}>Itens disponíveis</span>
-                      <span className={styles.balStatValue}>{PRODUCTS.length}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* MEUS DADOS */}
-                <div className={styles.card}>
-                  <div className={styles.dataHead}>
-                    <span className={styles.cardTitle}>Meus dados</span>
-                    <button type="button" className={styles.linkBtn} onClick={() => flash('Gerenciar endereços…')}>Gerenciar endereços</button>
-                  </div>
-                  <div className={styles.addrBox}>
-                    <div className={styles.addrLabel}>Endereço cadastrado</div>
-                    <div className={styles.addrValue}>Rua das Boiadeiras, 123 — Centro<br />Ribeirão Preto, SP · 14000-000</div>
-                  </div>
-                  <button type="button" className={styles.newAddrBtn} onClick={() => flash('Cadastrar novo endereço…')}>+ Novo endereço</button>
+                  <button type="button" className={styles.dadosBtn} onClick={() => flash('Meus dados — gerenciar endereços…')}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    Meus dados
+                  </button>
                 </div>
               </div>
 
               {/* GALERIA */}
               <div className={styles.galleryCol}>
                 <div className={styles.galleryHead}>
-                  {/* Toggle discreto Experiências / Produtos */}
-                  <div className={styles.storeToggle} role="tablist">
-                    {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        role="tab"
-                        aria-selected={storeTab === k}
-                        className={`${styles.storeToggleBtn} ${storeTab === k ? styles.storeToggleActive : ''}`}
-                        onClick={() => setStoreTab(k)}
-                      >
-                        {k === 'experiencias' ? 'Experiências' : 'Produtos'}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Ferramentas: lupa (abre busca c/ autocomplete) + ordenação */}
+                  {/* Busca (lupa) — no lugar das antigas tabs, à esquerda */}
                   <div className={styles.galleryTools}>
                     <button
                       type="button"
@@ -915,7 +965,6 @@ export default function RankingStoreModal() {
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
                     </button>
-
                     {searchOpen && (
                       <div className={styles.searchWrap}>
                         {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
@@ -944,14 +993,31 @@ export default function RankingStoreModal() {
                         )}
                       </div>
                     )}
-
-                    <select className={styles.sortSelect} value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar">
-                      <option value="relevancia">Ordenar: Relevância</option>
-                      <option value="menor">Menor preço</option>
-                      <option value="maior">Maior preço</option>
-                      <option value="novidades">Novidades</option>
-                    </select>
                   </div>
+
+                  {/* Ordenação à direita */}
+                  <select className={styles.sortSelect} value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar">
+                    <option value="relevancia">Ordenar: Relevância</option>
+                    <option value="menor">Menor preço</option>
+                    <option value="maior">Maior preço</option>
+                    <option value="novidades">Novidades</option>
+                  </select>
+                </div>
+
+                {/* Filtros estilo e-commerce: Experiências / Produtos */}
+                <div className={styles.storeFilters} role="tablist">
+                  {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="tab"
+                      aria-selected={storeTab === k}
+                      className={`${styles.storeFilterChip} ${storeTab === k ? styles.storeFilterActive : ''}`}
+                      onClick={() => setStoreTab(k)}
+                    >
+                      {k === 'experiencias' ? 'Experiências' : 'Produtos'}
+                    </button>
+                  ))}
                 </div>
 
                 <div className={styles.products}>
@@ -966,7 +1032,10 @@ export default function RankingStoreModal() {
                         <div className={styles.productBody}>
                           <div className={styles.productName}>{p.name}</div>
                           <div className={styles.productPriceRow}>
-                            <span className={styles.productCost}>{fmt(p.cost)} FP</span>
+                            <span className={styles.productCost}>
+                              <svg className={styles.tagIcon} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L3 13V3h10l7.59 7.59a2 2 0 0 1 0 2.82z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>
+                              {fmt(p.cost)} FP
+                            </span>
                             {p.original && <span className={styles.productOriginal}>{fmt(p.original)} FP</span>}
                           </div>
                           <button
