@@ -579,51 +579,14 @@ function RankingTab({
  * ──────────────────────────────────────────────────────────── */
 export function BeneficiosTab({
   fanpoints,
-  currentTier,
 }: {
   fanpoints: number;
-  currentTier: { id: string; label: string; threshold: number } | null;
+  /* Mantido na assinatura por compat com os chamadores; não é mais
+   * usado aqui (a "Jornada de conquistas" foi removida). */
+  currentTier?: { id: string; label: string; threshold: number } | null;
 }) {
   return (
     <div className={styles.tabPanel}>
-      {/* Jornada de conquistas — migrada da tab Conquistas per spec
-       * "leve o item Jornada de conquistas para a tab benefícios".
-       * Ordem INVERTIDA per spec "inverta a ordenação dos cards":
-       * Top 1 primeiro (objetivo máximo) → Top 100 por último
-       * (degrau inicial). [...TIERS].reverse() não muda o array
-       * original. */}
-      <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>Jornada de conquistas</h3>
-        <ul className={styles.timeline}>
-          {[...TIERS].reverse().map((t) => {
-            const idx = TIERS.findIndex((x) => x.id === t.id);
-            const myIdx = currentTier
-              ? TIERS.findIndex((x) => x.id === currentTier.id)
-              : -1;
-            const state =
-              myIdx === -1
-                ? 'locked'
-                : idx < myIdx
-                ? 'done'
-                : idx === myIdx
-                ? 'current'
-                : 'locked';
-            return (
-              <li
-                key={t.id}
-                className={`${styles.timelineItem} ${styles[`timeline_${state}`]}`}
-              >
-                <span className={styles.timelineDot} aria-hidden="true" />
-                <span className={styles.timelineLabel}>{t.label}</span>
-                {state === 'current' && (
-                  <span className={styles.timelineCurrent}>atual</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>
           Marcos de Fanpoints
