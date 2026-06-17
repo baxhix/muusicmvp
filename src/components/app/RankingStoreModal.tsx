@@ -164,7 +164,7 @@ const PERIOD_BADGE: Record<Period, string> = {
 
 /* Altura do plot do gráfico de barras (px) — precisa bater com a
  * altura de .barChart no CSS pra converter o piso de 60px do usuário. */
-const BAR_PLOT_H = 252;
+const BAR_PLOT_H = 288;
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -438,13 +438,14 @@ export default function RankingStoreModal() {
       <div className={`${styles.modal} ${closing ? styles.modalOut : ''}`}>
         {/* ===== HEADER — apenas o título + fechar ===== */}
         <div className={styles.header}>
+          {/* Voltar (←) à esquerda — mesmo padrão dos demais blocos do app. */}
+          <button type="button" className={styles.closeBtn} onClick={close} aria-label="Voltar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
+
           <div className={styles.titleBlock}>
             <div className={styles.titleMain}>{TAB_TITLE[tab]}</div>
           </div>
-
-          <button type="button" className={styles.closeBtn} onClick={close} aria-label="Fechar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
         </div>
 
         {/* ===== ABAS PRINCIPAIS — fixas (fora do scroll) ===== */}

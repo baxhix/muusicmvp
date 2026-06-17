@@ -160,9 +160,10 @@
 .actionBtn svg { width: 15px; height: 15px; }
 
 .closeBtn {
-  /* Fora do fluxo pra o título ficar centralizado de verdade. */
+  /* Voltar (←) à ESQUERDA, fora do fluxo, pra o título ficar
+   * centralizado de verdade — mesmo padrão dos demais blocos. */
   position: absolute;
-  right: 24px;
+  left: 24px;
   top: 50%;
   transform: translateY(-50%);
   width: 32px;
@@ -399,7 +400,9 @@
   display: flex;
   align-items: stretch;
   gap: 12px;
-  height: 252px;
+  /* Mais alto — o gráfico agora é o elemento primário (vem antes da
+   * lista). Bate com BAR_PLOT_H no TSX (piso de 60px do usuário). */
+  height: 288px;
 }
 /* Eixo Y — Fanpoints (mantido; só o eixo de tempo embaixo foi removido). */
 .barYAxis {
@@ -502,7 +505,7 @@
 .barTip strong { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .barTip span { font-size: 10px; color: rgba(255, 255, 255, 0.6); }
 @media (max-width: 720px) {
-  .barChart { height: 220px; gap: 10px; }
+  .barChart { height: 256px; gap: 10px; }
   .barCol { width: 30px; }
   .barFill { width: 17px; }
   .barAvatar { width: 22px; height: 22px; }
@@ -529,10 +532,12 @@
 /* ── Minha Evolução: header + 2 colunas (stats + gráfico) ── */
 .evoTopRow { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .evoPeriod { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-/* Bloco esquerdo um pouco mais largo + gap maior = gráfico mais
- * estreito e melhor separado do placar. */
-.evoMain { display: grid; grid-template-columns: 290px 1fr; gap: 30px; align-items: start; }
+/* Ordem invertida: GRÁFICO primeiro (coluna larga, à esquerda / topo no
+ * mobile) e a LISTA "Por período" depois (coluna estreita, à direita). */
+.evoMain { display: grid; grid-template-columns: 1fr 290px; gap: 30px; align-items: start; }
 .evoMain > * { min-width: 0; }
+.evoMain .evoChartCol { order: 1; }
+.evoMain .evoStats { order: 2; }
 @media (max-width: 720px) { .evoMain { grid-template-columns: 1fr; gap: 20px; } }
 
 /* Box de dados do usuário logado (esquerda) — discreto (sem caixa). */
@@ -1243,8 +1248,9 @@
 @media (max-width: 480px) {
   .header { padding: 16px 12px; gap: 10px; }
   .titleMain { font-size: 18px; }
-  .closeBtn { right: 12px; }
-  .tabBar { padding: 10px 12px 2px; justify-content: flex-start; }
+  .closeBtn { left: 12px; }
+  /* Tabs centralizadas no mobile (cabem com "Evolução" encurtado). */
+  .tabBar { padding: 10px 12px 2px; justify-content: center; }
   .mainTab { padding: 8px 13px; font-size: 12.5px; }
   .body { padding: 12px; }
   .card { padding: 14px; }
