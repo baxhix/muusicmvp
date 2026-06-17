@@ -562,14 +562,13 @@
 /* ── Minha Evolução: header + 2 colunas (stats + gráfico) ── */
 .evoTopRow { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .evoPeriod { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-/* Ordem invertida: GRÁFICO primeiro (coluna larga, à esquerda / topo no
- * mobile) e a LISTA "Por período" depois (coluna estreita, à direita).
- * Coluna de stats 60px mais estreita (290→230) = 60px a mais de largura
- * pro gráfico no desktop. */
-.evoMain { display: grid; grid-template-columns: 1fr 230px; gap: 30px; align-items: start; }
+/* LISTA "Por período" à esquerda (coluna estreita, 230px) e GRÁFICO à
+ * direita (coluna larga, resto). No mobile empilha: lista em cima,
+ * gráfico embaixo. */
+.evoMain { display: grid; grid-template-columns: 230px 1fr; gap: 30px; align-items: start; }
 .evoMain > * { min-width: 0; }
-.evoMain .evoChartCol { order: 1; }
-.evoMain .evoStats { order: 2; }
+.evoMain .evoStats { order: 1; }
+.evoMain .evoChartCol { order: 2; }
 @media (max-width: 720px) { .evoMain { grid-template-columns: 1fr; gap: 20px; } }
 
 /* Box de dados do usuário logado (esquerda) — discreto (sem caixa). */
