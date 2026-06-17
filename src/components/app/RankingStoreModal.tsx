@@ -197,6 +197,13 @@ const PERIOD_FP_RATIO: Record<Period, number> = {
   mensal: 0.45,
   anual: 0.8,
 };
+/* Rótulo da variação (esquerda do gráfico). */
+const PERIOD_NAME: Record<Period, string> = {
+  diario: 'Hoje',
+  semanal: 'Esta semana',
+  mensal: 'Este mês',
+  anual: 'Este ano',
+};
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -376,6 +383,18 @@ export default function RankingStoreModal() {
    * total real fica embaixo. */
   const periodFP = Math.round(myPoints * PERIOD_FP_RATIO[period]);
 
+  /* Colocação por intervalo (mock determinístico) — posição + variação
+   * vs o mesmo período anterior (>0 subiu / <0 desceu). */
+  const posByPeriod = useMemo<Record<Period, { pos: number; delta: number }>>(() => {
+    const b = myRank ?? 0;
+    return {
+      diario:  { pos: b ? b + 1 : 0, delta: 3 },
+      semanal: { pos: b || 0, delta: 1 },
+      mensal:  { pos: b ? Math.max(1, b - 1) : 0, delta: -2 },
+      anual:   { pos: b ? Math.max(1, b - 2) : 0, delta: 5 },
+    };
+  }, [myRank]);
+
   /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima.
    * Recalcula ao trocar o período (os traços mudam). */
   const meSpark = SPARKS[period].me;
@@ -450,43 +469,96 @@ export default function RankingStoreModal() {
             ))}
           </div>
 
-          {/* Filtro de período no topo — só Minha evolução (Classificação
-              tem o seu próprio dentro do box). */}
-          {tab === 'evolucao' && (
-            <div className={styles.periodRow}>
-              <div className={styles.periodMeta}>
-                <span className={styles.periodLabel}>{pm.label}</span>
-                <span className={styles.dot} />
-                <span className={styles.periodRange}>{pm.range}</span>
-              </div>
-              <div className={styles.periodTabs} role="tablist">
-                {PERIOD_TABS.map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="tab"
-                    aria-selected={period === key}
-                    className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
-                    onClick={() => setPeriod(key)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ===== MINHA EVOLUÇÃO ===== */}
           {tab === 'evolucao' && (
                   <div className={styles.card}>
-                    <div className={styles.evoHead}>
+                    {/* Header: título + filtro de período (dentro do box) */}
+                    <div className={styles.evoTopRow}>
                       <span className={styles.cardTitle}>Minha Evolução</span>
-                      <div className={styles.fpInline}>
-                        <div className={styles.kicker}>{myRank ? `#${myRank}` : '#—'}</div>
-                        <div className={styles.fpValue}>{fmt(periodFP)} FP</div>
-                        <div className={styles.fpTotal}>Total · {fmt(myPoints)} FP</div>
+                      <div className={styles.evoPeriod}>
+                        <div className={styles.periodMeta}>
+                          <span className={styles.periodLabel}>{pm.label}</span>
+                          <span className={styles.dot} />
+                          <span className={styles.periodRange}>{pm.range}</span>
+                        </div>
+                        <div className={styles.periodTabs} role="tablist">
+                          {PERIOD_TABS.map(([key, label]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              role="tab"
+                              aria-selected={period === key}
+                              className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                              onClick={() => setPeriod(key)}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
+
+                    <div className={styles.evoMain}>
+                      {/* ESQUERDA — dados do usuário logado */}
+                      <div className={styles.evoStats}>
+                        <div className={styles.kicker}>Total de Fanpoints</div>
+                        <div className={styles.evoTotal}>{fmt(myPoints)} FP</div>
+                        <div className={styles.evoVarRow}>
+                          <span className={styles.evoVarLabel}>{PERIOD_NAME[period]}</span>
+                          <span className={`${styles.delta} ${styles.deltaUp}`}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                            {fmt(periodFP)} FP
+                          </span>
+                        </div>
+                        <div className={styles.divider} />
+                        <div className={styles.kicker}>Colocação por período</div>
+                        <div className={styles.posList}>
+                          {PERIOD_TABS.map(([key, label]) => {
+                            const info = posByPeriod[key];
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                className={`${styles.posRow} ${period === key ? styles.posRowActive : ''}`}
+                                onClick={() => setPeriod(key)}
+                              >
+                                <span className={styles.posLabel}>{label}</span>
+                                <span className={styles.posRank}>{info.pos ? `#${info.pos}` : '—'}</span>
+                                {info.delta !== 0 && (
+                                  <span className={`${styles.delta} ${info.delta > 0 ? styles.deltaUp : styles.deltaDown}`}>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d={info.delta > 0 ? 'M12 19V5M5 12l7-7 7 7' : 'M12 5v14M5 12l7 7 7-7'} /></svg>
+                                    {Math.abs(info.delta)}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* DIREITA — top 3 + gráfico */}
+                      <div className={styles.evoChartCol}>
+                        {rows.length > 0 && (
+                          <div className={styles.top3Row}>
+                            {rows.slice(0, 3).map((r) => (
+                              <div key={r.rank} className={styles.top3Chip}>
+                                <span className={styles.top3Avatar} style={{ borderColor: r.ring }}>
+                                  {r.avatarUrl
+                                    ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={r.avatarUrl} alt="" className={styles.top3AvatarImg} />
+                                    )
+                                    : r.initials}
+                                  <RankMedallion position={r.rank} size="sm" />
+                                </span>
+                                <div className={styles.top3Text}>
+                                  <span className={styles.top3Name}>{r.name.replace('Você · ', '')}</span>
+                                  <span className={styles.top3Fp}>{r.points}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                         <div className={styles.chartWrap}>
                           <div className={styles.chartArea}>
@@ -563,9 +635,10 @@ export default function RankingStoreModal() {
                             <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: 'rgba(255,255,255,.5)' }} />Top 50</span>
                           </div>
                         </div>
+                      </div>
+                    </div>
 
-                        {/* Conquistas — sempre exposto. Top 1% + benefícios,
-                            todos como boxes horizontais (sem subtítulos). */}
+                        {/* Conquistas — sempre exposto (achievements). */}
                         <div className={styles.achWrap} ref={achRef}>
                           <div className={styles.achHead}>
                             <span className={styles.cardTitle}>Conquistas</span>
@@ -581,68 +654,66 @@ export default function RankingStoreModal() {
                             </div>
                           </div>
                         </div>
+
+                        {/* MISSÕES — abaixo do gráfico, dentro de Minha evolução */}
+                        <div className={styles.missionsBlock}>
+                          <div className={styles.missionsHead}>
+                            <span className={styles.cardTitle}>Minhas Missões</span>
+                            <div className={styles.missionTabs}>
+                              {(['diaria', 'semanal'] as MissionTab[]).map((k) => (
+                                <button
+                                  key={k}
+                                  type="button"
+                                  className={`${styles.segSm} ${missionTab === k ? styles.segActive : ''}`}
+                                  onClick={() => setMissionTab(k)}
+                                >
+                                  {k === 'diaria' ? 'Diária' : 'Semanal'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className={styles.mProgressRow}>
+                            <span className={styles.mTitle}>{mission.title}</span>
+                            <span className={styles.mCount}>{mission.count}</span>
+                          </div>
+                          <div className={styles.mTrack}>
+                            <div className={styles.mFill} style={{ width: mission.pct }} />
+                          </div>
+                          <div className={styles.mMetaRow}>
+                            <span className={styles.mMeta}>{mission.metaLeft}</span>
+                            <span className={styles.mReward}>{mission.reward}</span>
+                          </div>
+
+                          <div className={styles.mDetailsWrap}>
+                            <button type="button" className={styles.mDetailsToggle} onClick={() => setMissionsOpen((v) => !v)}>
+                              <span>{missionsOpen ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
+                              <span className={`${styles.chevron} ${missionsOpen ? styles.chevronOpen : ''}`}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
+                              </span>
+                            </button>
+                            {missionsOpen && (
+                              <div className={styles.mDetails}>
+                                {mission.details.map((d) => (
+                                  <div key={d.label} className={styles.mDetailRow}>
+                                    <span className={`${styles.mCheck} ${d.done ? styles.mCheckDone : ''}`}>
+                                      {d.done && (
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth="3.4"><path d="M5 12l5 5L20 7" /></svg>
+                                      )}
+                                    </span>
+                                    <span className={`${styles.mDetailLabel} ${d.done ? styles.mDetailDone : ''}`}>{d.label}</span>
+                                  </div>
+                                ))}
+                                <div className={styles.mNote}>{mission.note}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                   </div>
                   )}
 
-                  {/* ===== JORNADA — Missões + Benefícios ===== */}
+                  {/* ===== JORNADA — Benefícios desbloqueados ===== */}
                   {tab === 'jornada' && (
-                    <div className={styles.jornadaGrid}>
-                  {/* MISSÕES */}
-                  <div className={styles.card}>
-                    <div className={styles.missionsHead}>
-                      <span className={styles.cardTitle}>Missões</span>
-                      <div className={styles.missionTabs}>
-                        {(['diaria', 'semanal'] as MissionTab[]).map((k) => (
-                          <button
-                            key={k}
-                            type="button"
-                            className={`${styles.segSm} ${missionTab === k ? styles.segActive : ''}`}
-                            onClick={() => setMissionTab(k)}
-                          >
-                            {k === 'diaria' ? 'Diária' : 'Semanal'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={styles.mProgressRow}>
-                      <span className={styles.mTitle}>{mission.title}</span>
-                      <span className={styles.mCount}>{mission.count}</span>
-                    </div>
-                    <div className={styles.mTrack}>
-                      <div className={styles.mFill} style={{ width: mission.pct }} />
-                    </div>
-                    <div className={styles.mMetaRow}>
-                      <span className={styles.mMeta}>{mission.metaLeft}</span>
-                      <span className={styles.mReward}>{mission.reward}</span>
-                    </div>
-
-                    <div className={styles.mDetailsWrap}>
-                      <button type="button" className={styles.mDetailsToggle} onClick={() => setMissionsOpen((v) => !v)}>
-                        <span>{missionsOpen ? 'Ocultar detalhes' : 'Ver detalhes'}</span>
-                        <span className={`${styles.chevron} ${missionsOpen ? styles.chevronOpen : ''}`}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
-                        </span>
-                      </button>
-                      {missionsOpen && (
-                        <div className={styles.mDetails}>
-                          {mission.details.map((d) => (
-                            <div key={d.label} className={styles.mDetailRow}>
-                              <span className={`${styles.mCheck} ${d.done ? styles.mCheckDone : ''}`}>
-                                {d.done && (
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth="3.4"><path d="M5 12l5 5L20 7" /></svg>
-                                )}
-                              </span>
-                              <span className={`${styles.mDetailLabel} ${d.done ? styles.mDetailDone : ''}`}>{d.label}</span>
-                            </div>
-                          ))}
-                          <div className={styles.mNote}>{mission.note}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* BENEFÍCIOS desbloqueados */}
                   <div className={styles.card}>
                     <div className={styles.achHead}>
                       <span className={styles.cardTitle}>Benefícios</span>
@@ -656,7 +727,6 @@ export default function RankingStoreModal() {
                       ))}
                     </div>
                   </div>
-                    </div>
                   )}
 
                 {/* ===== CLASSIFICAÇÃO ===== */}

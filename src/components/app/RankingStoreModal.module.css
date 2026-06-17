@@ -465,6 +465,81 @@
 .legendItem { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: rgba(255, 255, 255, 0.55); }
 .legendDot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
 
+/* ── Minha Evolução: header + 2 colunas (stats + gráfico) ── */
+.evoTopRow { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.evoPeriod { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.evoMain { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+.evoMain > * { min-width: 0; }
+@media (max-width: 720px) { .evoMain { grid-template-columns: 1fr; } }
+
+/* Box de dados do usuário logado (esquerda). */
+.evoStats {
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+}
+.evoTotal { font-size: 26px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+.evoVarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.evoVarLabel { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+.evoStats .divider { margin: 14px 0; }
+.posList { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.posRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.posRow:hover { background: rgba(255, 255, 255, 0.05); }
+.posRowActive { background: rgba(255, 255, 255, 0.07); }
+.posLabel { flex: 1; text-align: left; font-size: 12.5px; font-weight: 600; color: #e8e8ea; }
+.posRank { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #fff; }
+
+/* Top 3 (mini avatares + nome + FP) acima do gráfico. */
+.top3Row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.top3Chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+}
+.top3Avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #cfcfd2;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+}
+.top3AvatarImg { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.top3Text { min-width: 0; display: flex; flex-direction: column; }
+.top3Name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top3Fp { font-size: 11px; color: rgba(255, 255, 255, 0.5); font-variant-numeric: tabular-nums; }
+
+/* Missões dentro de Minha evolução (abaixo do gráfico). */
+.missionsBlock { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+
 .miniStats { display: flex; gap: 10px; margin-top: 14px; }
 .miniStat { flex: 1; padding: 11px 13px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
 .miniStatValue { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
