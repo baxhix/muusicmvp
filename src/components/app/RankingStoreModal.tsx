@@ -506,6 +506,14 @@ export default function RankingStoreModal() {
           </div>
         </div>
 
+        {/* Área de abas + conteúdo. position:relative pra ancorar o banner
+            de destaque da Loja ATRÁS das tabs (desktop). */}
+        <div className={styles.tabsArea}>
+        {/* Banner de destaque (desktop, só Loja): imagem fixa que fica
+            POR TRÁS das tabs e do topo do conteúdo; ao rolar, o conteúdo
+            + gradiente preto passam por cima. Oculto no mobile via CSS. */}
+        {tab === 'loja' && <div className={styles.storeBanner} aria-hidden="true" />}
+
         {/* ===== ABAS PRINCIPAIS — fixas (fora do scroll) ===== */}
         <div className={styles.tabBar}>
           <div className={styles.mainTabs} role="tablist">
@@ -891,10 +899,6 @@ export default function RankingStoreModal() {
 
                   {/* ===== LOJA ===== */}
                   {tab === 'loja' && (
-            <>
-            {/* Banner de destaque (desktop): imagem fixa no topo; ao rolar,
-                o conteúdo + gradiente preto passam por cima. Oculto no mobile. */}
-            <div className={styles.storeBanner} aria-hidden="true" />
             <div className={styles.store}>
               <div className={styles.storeLeft}>
                 {/* SALDO */}
@@ -1036,8 +1040,8 @@ export default function RankingStoreModal() {
                 </div>
               </div>
             </div>
-            </>
           )}
+        </div>
         </div>
       </div>
 

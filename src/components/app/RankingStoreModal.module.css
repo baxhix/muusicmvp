@@ -197,6 +197,17 @@
   padding: 18px 24px 24px;
 }
 
+/* Wrapper de abas + conteúdo. position:relative ancora o banner da
+ * Loja ATRÁS das tabs; é um passthrough flex (tabBar fixa + body que
+ * rola) — sem impacto visual fora da Loja. */
+.tabsArea {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Barra de abas FIXA (fora do scroll): tabs e conteúdo sempre no
  * mesmo lugar ao navegar. */
 .tabBar {
@@ -947,35 +958,46 @@
 .storeBanner { display: none; }
 
 @media (min-width: 721px) {
+  /* Imagem fixa ancorada no topo da .tabsArea (logo abaixo do header),
+   * POR TRÁS das tabs e do topo do conteúdo. */
   .storeBanner {
     display: block;
-    position: sticky;
-    /* -18 anula o padding-top do .body pra a imagem fixar colada no
-     * header (sem faixa vazia acima). */
-    top: -18px;
-    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 120px;
-    /* full-bleed: cancela o padding 18/24 do .body. */
-    margin: -18px -24px 0;
-    background: url('/store/banner-store.png') center / cover no-repeat;
+    z-index: 0;
+    /* Scrim escuro por cima da imagem: mais forte no topo (legibilidade
+     * das tabs), suavizando pra baixo. */
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.28) 55%, rgba(0, 0, 0, 0.12) 100%),
+      url('/store/banner-store.png') center / cover no-repeat;
+    pointer-events: none;
   }
-  /* Conteúdo da Loja sobe acima da imagem fixada. */
+  /* Tabs por cima da imagem (fundo transparente deixa a imagem aparecer
+   * ao redor do pill). */
+  .tabBar {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+  }
+  /* Conteúdo da Loja sobe por cima da imagem; backing escuro full-bleed
+   * + gradiente preto no topo suaviza a transição e, ao rolar, oculta a
+   * imagem. A parte atrás das tabs continua fixa. */
   .store {
     position: relative;
     z-index: 1;
   }
-  /* Backing escuro full-bleed + gradiente preto no topo: o gradiente
-   * (transparente→preto nos primeiros 56px, sobre a imagem) suaviza a
-   * transição; o restante sólido oculta a imagem ao rolar por cima. */
   .store::before {
     content: '';
     position: absolute;
     z-index: -1;
     left: -24px;
     right: -24px;
-    top: -56px;
+    top: -40px;
     bottom: -24px;
-    background: linear-gradient(to bottom, rgba(8, 8, 11, 0) 0, #08080b 56px);
+    background: linear-gradient(to bottom, rgba(8, 8, 11, 0) 0, #08080b 44px);
     pointer-events: none;
   }
 }

@@ -825,9 +825,9 @@
   overflow: hidden;
   transition: background 200ms ease;
 }
-/* Unlocked: bg gradient leve (sem borda). */
+/* Unlocked: cinza um pouco mais claro (tons preto/cinza, sem cor de marca). */
 .marcoUnlocked {
-  background: linear-gradient(180deg, rgba(40, 22, 32, 0.5) 0%, rgba(20, 14, 24, 0.7) 100%);
+  background: linear-gradient(180deg, rgba(36, 36, 42, 0.7) 0%, rgba(22, 22, 28, 0.75) 100%);
 }
 
 .marcoHeader {
@@ -911,9 +911,8 @@
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
 }
+/* Conquistado: cinza levemente mais claro (sem cor de marca, sem borda). */
 .marcoBenefitItem.benefitUnlocked {
-  background: rgba(168, 85, 247, 0.08);
-  border-color: rgba(168, 85, 247, 0.18);
+  background: rgba(255, 255, 255, 0.06);
 }

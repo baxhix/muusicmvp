@@ -588,20 +588,15 @@ export function BeneficiosTab({
   return (
     <div className={styles.tabPanel}>
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>
-          Marcos de Fanpoints
-        </h3>
         <p className={styles.paragraph}>
           Cada marco desbloqueia um benefício exclusivo na Fanverse.
           Quanto mais Fanpoints, mais conexão direta com o artista.
         </p>
       </section>
 
-      {/* Marcos agora organizados em accordion por tier (Top 1,
-       *  Top 5, Top 10, Top 50, Top 100). Cada card expansível
-       *  via motion AnimatePresence + height animation. Per
-       *  spec atualizado os 3 primeiros (Top 1 / Top 5 / Top 10)
-       *  ficam abertos por default. */}
+      {/* Marcos organizados em accordion por tier (Top 1, Top 5,
+       *  Top 10, Top 50, Top 100). Cada card expansível via motion
+       *  AnimatePresence + height animation. Todos começam fechados. */}
       <MarcosAccordion fanpoints={fanpoints} />
     </div>
   );
@@ -609,8 +604,7 @@ export function BeneficiosTab({
 
 /* ────────────────────────────────────────────────────────────
  * MarcosAccordion — agrupa BENEFITS por tier e renderiza um
- * card accordion (Motion) por tier. Top 1/5/10 abertos por
- * default per spec.
+ * card accordion (Motion) por tier. Todos fechados por default.
  * ──────────────────────────────────────────────────────────── */
 interface MarcosAccordionProps {
   fanpoints: number;
@@ -646,12 +640,9 @@ function MarcosAccordion({ fanpoints }: MarcosAccordionProps) {
     return out;
   }, []);
 
-  /* Set de cards abertos. Per spec, os 3 primeiros (Top 1, Top
-   *  5, Top 10) começam abertos. Toggle individual via click no
-   *  header. */
-  const [openSet, setOpenSet] = useState<Set<string>>(
-    () => new Set(['top1', 'top5', 'top10']),
-  );
+  /* Set de cards abertos. Todos começam FECHADOS; o usuário expande
+   *  o que quiser via click no header. */
+  const [openSet, setOpenSet] = useState<Set<string>>(() => new Set());
 
   const toggle = (id: string) => {
     setOpenSet((prev) => {
