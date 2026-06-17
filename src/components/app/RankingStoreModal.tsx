@@ -444,20 +444,21 @@ export default function RankingStoreModal() {
           {/* ===== MINHA EVOLUÇÃO ===== */}
           {tab === 'evolucao' && (
                   <div className={styles.card}>
-                    {/* Header: título + filtro de período (dentro do box) */}
+                    {/* Header: título + filtro de período em badges (mesmo
+                        estilo da Classificação: Hoje/Semana/Mês/Ano). */}
                     <div className={styles.evoTopRow}>
                       <span className={styles.cardTitle}>Minha Evolução</span>
-                      <div className={styles.periodTabs} role="tablist">
-                        {PERIOD_TABS.map(([key, label]) => (
+                      <div className={styles.periodBadges} role="tablist">
+                        {PERIOD_TABS.map(([key]) => (
                           <button
                             key={key}
                             type="button"
                             role="tab"
                             aria-selected={period === key}
-                            className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                            className={`${styles.periodBadge} ${period === key ? styles.periodBadgeActive : ''}`}
                             onClick={() => setPeriod(key)}
                           >
-                            {label}
+                            {PERIOD_BADGE[key]}
                           </button>
                         ))}
                       </div>
