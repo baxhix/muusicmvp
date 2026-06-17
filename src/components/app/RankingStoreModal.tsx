@@ -162,13 +162,29 @@ const PERIOD_BADGE: Record<Period, string> = {
   anual: 'Ano',
 };
 
-/* Altura do plot do gráfico de barras (px) — precisa bater com a
- * altura de .barChart no CSS pra converter o piso de 60px do usuário. */
-const BAR_PLOT_H = 288;
+/* Semente por período pro mock determinístico do gráfico de Evolução
+ * (score do período + posições subidas). Cada período "embaralha"
+ * diferente, então quem pontuou muito numa semana pode não ter pontuado
+ * no mês. */
+const PERIOD_SEED: Record<Period, number> = {
+  diario: 7,
+  semanal: 3,
+  mensal: 11,
+  anual: 5,
+};
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
 const fmt = (n: number) => Math.round(n).toLocaleString('pt-BR');
+
+/* PRNG determinístico (hash de 2 inteiros → 0..1). Sem histórico real
+ * ainda; serve pra ilustrar pontuação/posições por período de forma
+ * estável (mesmo resultado a cada render). */
+const prand = (a: number, b: number) => {
+  let x = (Math.imul(a, 374761393) + Math.imul(b, 668265263)) >>> 0;
+  x = (Math.imul(x ^ (x >>> 13), 1274126177)) >>> 0;
+  return (x % 1000) / 1000;
+};
 
 const initialsOf = (name: string) =>
   name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]).join('').toUpperCase() || '·';
@@ -177,6 +193,12 @@ interface Row {
   rank: number; pts: number; you: boolean; name: string; city: string;
   avatarUrl: string | null; initials: string; points: string;
   ring: string; rankColor: string; delta: number;
+}
+
+/* Uma barra do gráfico de Evolução: o usuário, os pontos que fez no
+ * período, quantas posições subiu e a altura (%) da barra. */
+interface BarUser {
+  row: Row; periodPts: number; climb: number; isTopScorer: boolean; h: number;
 }
 
 /* Slider de imagens do produto (mock) — 2 fotos com dots pra trocar,
@@ -350,35 +372,46 @@ export default function RankingStoreModal() {
     };
   }, [myRank]);
 
-  /* Barras (formação "montanha"): Top 10 + eu (se eu estiver fora do
-   * top 10; senão só os 10). O #1 é o MAIOR e fica no centro; os
-   * demais decrescem por colocação alternando lado — #2 à direita,
-   * #3 à esquerda, #4 à direita… Eu, fora do top 10, entro como o
-   * menor colocado (piso de 60px). Alturas ilustrativas. */
+  /* Barras: os 8 superfãs que MAIS pontuaram no PERÍODO selecionado —
+   * não necessariamente o top 8 geral (um #87 pode ter pontuado mais
+   * que o #2 naquela semana). Sem formação pirâmide: exibidos por
+   * colocação geral (asc), então as alturas ficam alternadas. Altura ∝
+   * pontos do período; dentro de cada barra vai a seta + nº de posições
+   * que aquele usuário subiu no período. Mock determinístico por período
+   * (sem histórico real ainda) — "você" entra sempre no conjunto. */
   const barUsers = useMemo(() => {
-    const top10 = rows.slice(0, 10);
-    const meIn = !!me && top10.some((r) => r.you);
-    const ranked = !me || meIn ? top10 : [...top10, me]; // crescente por rank
-    const n = ranked.length;
-    if (!n) return [] as { row: Row; h: number }[];
-    const TOP = 80, BOT = 32;
-    const MIN_PCT = (60 / BAR_PLOT_H) * 100; // piso de 60px do usuário
-    const withH = ranked.map((row, i) => {
-      let h = n > 1 ? TOP - (i / (n - 1)) * (TOP - BOT) : TOP;
-      if (row.you && !meIn) h = Math.max(h, MIN_PCT);
-      return { row, h };
+    if (!rows.length) return [] as BarUser[];
+    const seed = PERIOD_SEED[period];
+    const scored = rows.map((row) => {
+      const periodPts = Math.max(1, Math.round(row.pts * (0.35 + prand(row.rank, seed) * 1.05)));
+      const climb = 1 + Math.round(prand(row.rank, seed + 91) * 24); // 1..25 posições
+      return { row, periodPts, climb };
     });
-    /* #1 no centro; alterna direita (índices ímpares) / esquerda. */
-    const right: { row: Row; h: number }[] = [];
-    const left: { row: Row; h: number }[] = [];
-    withH.slice(1).forEach((item, k) => (k % 2 === 0 ? right : left).push(item));
-    return [...left.reverse(), withH[0], ...right];
-  }, [rows, me]);
+    let top = scored.slice().sort((a, b) => b.periodPts - a.periodPts).slice(0, 8);
+    /* Garante "você" no gráfico (a aba é "Minha Evolução"). */
+    if (me && !top.some((s) => s.row.you)) {
+      const mine = scored.find((s) => s.row.you);
+      if (mine) top = [...top.slice(0, 7), mine];
+    }
+    const max = Math.max(...top.map((s) => s.periodPts), 1);
+    const topScorerRank = top.reduce((a, b) => (b.periodPts > a.periodPts ? b : a)).row.rank;
+    const TOP = 94, BOT = 34;
+    return top
+      .slice()
+      .sort((a, b) => a.row.rank - b.row.rank) // colocação geral asc → alturas alternadas
+      .map((s) => ({
+        row: s.row,
+        periodPts: s.periodPts,
+        climb: s.climb,
+        isTopScorer: s.row.rank === topScorerRank,
+        h: BOT + (s.periodPts / max) * (TOP - BOT),
+      }));
+  }, [rows, me, period]);
 
-  /* Escala do eixo Y (Fanpoints) — derivada dos usuários exibidos.
-   * Rótulos top→base; ilustrativos (as barras não são proporcionais). */
+  /* Escala do eixo Y (Fanpoints do período) — derivada dos exibidos.
+   * Rótulos top→base; ilustrativos. */
   const barTicks = useMemo(() => {
-    const maxRaw = Math.max(...barUsers.map((b) => b.row.pts), 1);
+    const maxRaw = Math.max(...barUsers.map((b) => b.periodPts), 1);
     const mag = Math.pow(10, Math.floor(Math.log10(maxRaw)));
     const max = Math.ceil(maxRaw / mag) * mag;
     const lbl = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k` : `${Math.round(v)}`);
@@ -561,10 +594,10 @@ export default function RankingStoreModal() {
                               ))}
                             </div>
 
-                            <div className={styles.barCols} role="img" aria-label="Comparativo de Fanpoints entre superfãs">
-                              {barUsers.map(({ row, h }, i) => {
+                            <div className={styles.barCols} role="img" aria-label="Superfãs que mais pontuaram no período">
+                              {barUsers.map(({ row, h, climb, periodPts, isTopScorer }, i) => {
                                 const isYou = row.you;
-                                const isTop1 = row.rank === 1 && !isYou;
+                                const isTop = isTopScorer && !isYou;
                                 const cleanName = row.name.replace('Você · ', '');
                                 return (
                                   <div
@@ -575,20 +608,25 @@ export default function RankingStoreModal() {
                                   >
                                     <div className={styles.barTrack}>
                                       <motion.div
-                                        className={`${styles.barFill} ${isYou ? styles.barFillYou : isTop1 ? styles.barFillTop1 : ''}`}
+                                        className={`${styles.barFill} ${isYou ? styles.barFillYou : isTop ? styles.barFillTop1 : ''}`}
                                         initial={{ height: 0 }}
                                         animate={{ height: `${h}%` }}
                                         transition={{ duration: 0.7, delay: 0.08 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
                                       >
+                                        {/* Dentro da barra: posições que subiu no período. */}
+                                        <span className={styles.barClimb} aria-label={`Subiu ${climb} posições`}>
+                                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                                          {climb}
+                                        </span>
                                         {/* Topo da barra: avatar + colocação (sobe com a barra) */}
                                         <div className={styles.barCap}>
                                           {hoverBar === i && (
                                             <div className={styles.barTip}>
-                                              <strong>{row.points}</strong>
+                                              <strong>{fmt(periodPts)} FP</strong>
                                               <span>{isYou ? 'Você' : cleanName}</span>
                                             </div>
                                           )}
-                                          <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : isTop1 ? styles.barAvatarTop1 : ''}`} aria-hidden="true">
+                                          <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : isTop ? styles.barAvatarTop1 : ''}`} aria-hidden="true">
                                             {row.avatarUrl
                                               ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
@@ -596,7 +634,7 @@ export default function RankingStoreModal() {
                                               )
                                               : <span className={styles.barAvatarInitials}>{row.initials}</span>}
                                           </span>
-                                          <span className={`${styles.barRank} ${isYou ? styles.barRankYou : isTop1 ? styles.barRankTop1 : ''}`}>{row.rank ? `#${row.rank}` : ''}</span>
+                                          <span className={`${styles.barRank} ${isYou ? styles.barRankYou : isTop ? styles.barRankTop1 : ''}`}>{row.rank ? `#${row.rank}` : ''}</span>
                                         </div>
                                       </motion.div>
                                     </div>

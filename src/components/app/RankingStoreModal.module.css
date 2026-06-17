@@ -393,15 +393,17 @@
 .fpDelta { font-size: 12px; color: rgba(255, 255, 255, 0.55); font-weight: 600; }
 
 /* ── Gráfico de barras (Minha Evolução) ──────────────────────
- * 1 barra fina por usuário (7), EU sempre no centro e em destaque.
- * Eixo Y de Fanpoints à esquerda + grade de quadrantes atrás. Avatar
- * + colocação no topo de cada barra. Alturas só ILUSTRATIVAS. */
+ * Os 8 superfãs que MAIS pontuaram no período (não o top 8 geral) —
+ * alturas ∝ pontos do período, exibidos por colocação geral, então
+ * ficam alternados (sem pirâmide). Eixo Y de Fanpoints à esquerda +
+ * grade atrás. Avatar + colocação no topo de cada barra; dentro da
+ * barra, a seta + nº de posições que o usuário subiu. */
 .barChart {
   display: flex;
   align-items: stretch;
   gap: 12px;
   /* Mais alto — o gráfico agora é o elemento primário (vem antes da
-   * lista). Bate com BAR_PLOT_H no TSX (piso de 60px do usuário). */
+   * lista). Alturas das barras são proporcionais aos pontos do período. */
   height: 288px;
 }
 /* Eixo Y — Fanpoints (mantido; só o eixo de tempo embaixo foi removido). */
@@ -423,7 +425,9 @@
 .barCols { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; gap: 6px; }
 .barCol {
   flex: 0 0 auto;
-  width: 38px;
+  /* Levemente mais larga (são 8 barras): cabe a seta + nº de posições
+   * dentro da barra. */
+  width: 48px;
   height: 100%;
   display: flex;
   align-items: flex-end;
@@ -441,10 +445,10 @@
   background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
 }
-/* Barras finas. */
+/* Barras finas — um pouco mais largas pra caber a seta + nº dentro. */
 .barFill {
   position: relative;
-  width: 22px;
+  width: 34px;
   max-width: 100%;
   border-radius: 7px 7px 4px 4px;
   /* Não-eu: cinza escuro com gradiente pra um tom ainda mais escuro,
@@ -489,6 +493,29 @@
 .barRank { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
 .barRankYou { color: #fff; }
 .barRankTop1 { color: #fbbf24; }
+/* Posições que o usuário subiu no período — chip discreto DENTRO da
+ * barra, perto do topo. Fill escuro translúcido (sem borda) pra ler em
+ * qualquer cor de barra (cinza / marca / ouro). */
+.barClimb {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1px 5px 1px 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.30);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.barClimb svg { width: 9px; height: 9px; flex: 0 0 auto; }
 /* Tooltip preto (hover) — nome + FP acima do avatar. */
 .barTip {
   display: flex;
@@ -506,12 +533,12 @@
 .barTip span { font-size: 10px; color: rgba(255, 255, 255, 0.6); }
 @media (max-width: 720px) {
   .barChart { height: 256px; gap: 10px; }
-  .barCol { width: 30px; }
-  .barFill { width: 17px; }
+  .barCol { width: 38px; }
+  .barFill { width: 24px; }
   .barAvatar { width: 22px; height: 22px; }
-  /* Até 11 barras: em telas muito estreitas, rola horizontalmente em
-   * vez de estourar/cortar. Caps cabem na altura do plot (sem corte
-   * vertical). Alinha à esquerda pra o scroll começar no #1. */
+  /* 8 barras: em telas muito estreitas, rola horizontalmente em vez de
+   * estourar/cortar. Caps cabem na altura do plot (sem corte vertical).
+   * Alinha à esquerda pra o scroll começar no primeiro. */
   .barCols {
     justify-content: flex-start;
     gap: 6px;
@@ -522,10 +549,10 @@
   }
   .barCols::-webkit-scrollbar { display: none; }
 }
-/* Em celulares, barras mais finas pra os 11 caberem sem rolar na maioria. */
+/* Em celulares, barras mais finas pra as 8 caberem sem rolar na maioria. */
 @media (max-width: 480px) {
-  .barCol { width: 24px; }
-  .barFill { width: 14px; }
+  .barCol { width: 32px; }
+  .barFill { width: 20px; }
   .barCols { gap: 3px; }
 }
 
