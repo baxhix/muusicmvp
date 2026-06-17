@@ -891,6 +891,10 @@ export default function RankingStoreModal() {
 
                   {/* ===== LOJA ===== */}
                   {tab === 'loja' && (
+            <>
+            {/* Banner de destaque (desktop): imagem fixa no topo; ao rolar,
+                o conteúdo + gradiente preto passam por cima. Oculto no mobile. */}
+            <div className={styles.storeBanner} aria-hidden="true" />
             <div className={styles.store}>
               <div className={styles.storeLeft}>
                 {/* SALDO */}
@@ -1032,6 +1036,7 @@ export default function RankingStoreModal() {
                 </div>
               </div>
             </div>
+            </>
           )}
         </div>
       </div>

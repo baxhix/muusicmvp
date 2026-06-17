@@ -938,6 +938,47 @@
   gap: 20px;
   align-items: start;
 }
+
+/* ── Loja: banner de destaque (só desktop) ──────────────────────────
+ * Imagem fixa (sticky) no topo do conteúdo da Loja, 120px abaixo do
+ * header. Ao rolar, o conteúdo da Loja sobe POR CIMA da imagem com um
+ * gradiente preto que suaviza a transição (efeito parallax). O
+ * backing escuro do .store oculta a imagem fixada depois do gradiente. */
+.storeBanner { display: none; }
+
+@media (min-width: 721px) {
+  .storeBanner {
+    display: block;
+    position: sticky;
+    /* -18 anula o padding-top do .body pra a imagem fixar colada no
+     * header (sem faixa vazia acima). */
+    top: -18px;
+    z-index: 0;
+    height: 120px;
+    /* full-bleed: cancela o padding 18/24 do .body. */
+    margin: -18px -24px 0;
+    background: url('/store/banner-store.png') center / cover no-repeat;
+  }
+  /* Conteúdo da Loja sobe acima da imagem fixada. */
+  .store {
+    position: relative;
+    z-index: 1;
+  }
+  /* Backing escuro full-bleed + gradiente preto no topo: o gradiente
+   * (transparente→preto nos primeiros 56px, sobre a imagem) suaviza a
+   * transição; o restante sólido oculta a imagem ao rolar por cima. */
+  .store::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -24px;
+    right: -24px;
+    top: -56px;
+    bottom: -24px;
+    background: linear-gradient(to bottom, rgba(8, 8, 11, 0) 0, #08080b 56px);
+    pointer-events: none;
+  }
+}
 .storeLeft {
   display: flex;
   flex-direction: column;
