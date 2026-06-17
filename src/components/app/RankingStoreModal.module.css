@@ -1262,6 +1262,10 @@
   .header { flex-wrap: wrap; justify-content: center; gap: 12px; row-gap: 10px; padding: 18px 14px; }
   .spacer { display: none; }
   .tabBar { padding: 12px 14px 2px; }
+  /* Tabs ocupam a largura do box (mesma calha do .body): pill 100% e
+   * cada aba divide o espaço por igual, alinhando às bordas do conteúdo. */
+  .mainTabs { width: 100%; }
+  .mainTab { flex: 1; text-align: center; padding: 8px 6px; }
   .body { padding: 14px; }
   .titleBlock { flex-basis: auto; max-width: none; }
   .periodTabs { order: 3; }
@@ -1280,9 +1284,10 @@
   .header { padding: 16px 12px; gap: 10px; }
   .titleMain { font-size: 18px; }
   .closeBtn { left: 12px; }
-  /* Tabs centralizadas no mobile (cabem com "Evolução" encurtado). */
-  .tabBar { padding: 10px 12px 2px; justify-content: center; }
-  .mainTab { padding: 8px 13px; font-size: 12.5px; }
+  /* Tabs com a largura do box: pill 100% (do ≤720) + padding/fonte
+   * menores pra "Classificação" caber nas 4 abas iguais. */
+  .tabBar { padding: 10px 12px 2px; }
+  .mainTab { padding: 8px 4px; font-size: 11.5px; }
   .body { padding: 12px; }
   .card { padding: 14px; }
   /* Conquistas / Missões empilham mais cedo pra não espremer. */
