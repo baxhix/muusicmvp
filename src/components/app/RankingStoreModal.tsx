@@ -400,7 +400,9 @@ export default function RankingStoreModal() {
     }
     const max = Math.max(...top.map((s) => s.periodPts), 1);
     const topScorerRank = top.reduce((a, b) => (b.periodPts > a.periodPts ? b : a)).row.rank;
-    const TOP = 94, BOT = 34;
+    /* TOP deixa folga acima da barra mais alta pro cap (avatar + #)
+     * caber DENTRO da área do gráfico — sem ele estourar o topo. */
+    const TOP = 76, BOT = 34;
     return top
       .slice()
       .sort((a, b) => a.row.rank - b.row.rank) // colocação geral asc → alturas alternadas

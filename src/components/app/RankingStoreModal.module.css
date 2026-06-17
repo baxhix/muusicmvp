@@ -539,16 +539,16 @@
   .barFill { width: 24px; }
   .barAvatar { width: 22px; height: 22px; }
   /* 8 barras: em telas muito estreitas, rola horizontalmente em vez de
-   * estourar/cortar. O overflow-x:auto força o eixo Y a recortar, então
-   * o padding-top reserva espaço pros caps (avatar + #) não serem
-   * cortados no topo. Alinha à esquerda pra o scroll começar no 1º. */
+   * estourar/cortar. O overflow-x:auto força o eixo Y a recortar; com as
+   * barras mais baixas (TOP=76) o cap (avatar + #) já cabe, então só uma
+   * folga pequena no topo. Alinha à esquerda pra o scroll começar no 1º. */
   .barCols {
     justify-content: flex-start;
     gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    padding: 48px 2px 0;
+    padding: 10px 2px 0;
   }
   .barCols::-webkit-scrollbar { display: none; }
 }
