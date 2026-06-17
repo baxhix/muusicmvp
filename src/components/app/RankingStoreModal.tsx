@@ -24,6 +24,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
@@ -282,11 +283,14 @@ export default function RankingStoreModal() {
   const [missionTab, setMissionTab] = useState<MissionTab>('diaria');
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [hoverPt, setHoverPt] = useState<number | null>(null);
+  const [top3Open, setTop3Open] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(10);
   const [query] = useState('');
   const [toast, setToast] = useState('');
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const achRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   /* ── Dados reais ── */
   const { user } = useAuth();
@@ -334,6 +338,11 @@ export default function RankingStoreModal() {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(''), 2200);
   }, []);
+
+  /* Conteúdo sempre começa no topo ao trocar de aba (sem "pulo"). */
+  useEffect(() => {
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [tab]);
 
   const pm = PERIOD_META[period];
 
@@ -458,9 +467,8 @@ export default function RankingStoreModal() {
           </button>
         </div>
 
-        {/* ===== BODY ===== */}
-        <div className={styles.body}>
-          {/* ===== ABAS PRINCIPAIS ===== */}
+        {/* ===== ABAS PRINCIPAIS — fixas (fora do scroll) ===== */}
+        <div className={styles.tabBar}>
           <div className={styles.mainTabs} role="tablist">
             {MAIN_TABS.map(([key, label]) => (
               <button
@@ -475,41 +483,49 @@ export default function RankingStoreModal() {
               </button>
             ))}
           </div>
+        </div>
 
+        {/* ===== BODY ===== */}
+        <div className={styles.body} ref={bodyRef}>
           {/* ===== MINHA EVOLUÇÃO ===== */}
           {tab === 'evolucao' && (
                   <div className={styles.card}>
                     {/* Header: título + filtro de período (dentro do box) */}
                     <div className={styles.evoTopRow}>
                       <span className={styles.cardTitle}>Minha Evolução</span>
-                      <div className={styles.evoPeriod}>
-                        <div className={styles.periodMeta}>
-                          <span className={styles.periodLabel}>{pm.label}</span>
-                          <span className={styles.dot} />
-                          <span className={styles.periodRange}>{pm.range}</span>
-                        </div>
-                        <div className={styles.periodTabs} role="tablist">
-                          {PERIOD_TABS.map(([key, label]) => (
-                            <button
-                              key={key}
-                              type="button"
-                              role="tab"
-                              aria-selected={period === key}
-                              className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
-                              onClick={() => setPeriod(key)}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
+                      <div className={styles.periodTabs} role="tablist">
+                        {PERIOD_TABS.map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            role="tab"
+                            aria-selected={period === key}
+                            className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                            onClick={() => setPeriod(key)}
+                          >
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
                     <div className={styles.evoMain}>
                       {/* ESQUERDA — dados do usuário logado */}
                       <div className={styles.evoStats}>
-                        <div className={styles.kicker}>Total de Fanpoints</div>
-                        <div className={styles.evoTotal}>{fmt(myPoints)} FP</div>
+                        <div className={styles.evoStatsHead}>
+                          <span className={styles.evoStatsAvatar} aria-hidden="true">
+                            {me?.avatarUrl
+                              ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={me.avatarUrl} alt="" className={styles.evoStatsAvatarImg} />
+                              )
+                              : (me ? me.initials : 'VC')}
+                          </span>
+                          <div className={styles.evoStatsText}>
+                            <div className={styles.evoLabel}>Total</div>
+                            <div className={styles.evoTotal}>{fmt(myPoints)} FP</div>
+                          </div>
+                        </div>
                         <div className={styles.evoVarRow}>
                           <span className={styles.evoVarLabel}>{PERIOD_NAME[period]}</span>
                           <span className={`${styles.delta} ${styles.deltaUp}`}>
@@ -518,7 +534,7 @@ export default function RankingStoreModal() {
                           </span>
                         </div>
                         <div className={styles.divider} />
-                        <div className={styles.kicker}>Colocação por período</div>
+                        <div className={styles.evoLabel}>Por período</div>
                         <div className={styles.posList}>
                           {PERIOD_TABS.map(([key, label]) => {
                             const info = posByPeriod[key];
@@ -543,30 +559,8 @@ export default function RankingStoreModal() {
                         </div>
                       </div>
 
-                      {/* DIREITA — top 3 + gráfico */}
+                      {/* DIREITA — gráfico (top 3 sobre as linhas) */}
                       <div className={styles.evoChartCol}>
-                        {rows.length > 0 && (
-                          <div className={styles.top3Row}>
-                            {rows.slice(0, 3).map((r) => (
-                              <div key={r.rank} className={styles.top3Chip}>
-                                <span className={styles.top3Avatar} style={{ borderColor: r.ring }}>
-                                  {r.avatarUrl
-                                    ? (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={r.avatarUrl} alt="" className={styles.top3AvatarImg} />
-                                    )
-                                    : r.initials}
-                                  <RankMedallion position={r.rank} size="sm" />
-                                </span>
-                                <div className={styles.top3Text}>
-                                  <span className={styles.top3Name}>{r.name.replace('Você · ', '')}</span>
-                                  <span className={styles.top3Fp}>{r.points}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
                         <div className={styles.chartWrap}>
                           <div className={styles.chartArea}>
                             {/* eixo Y — marcos de pontos */}
@@ -623,6 +617,39 @@ export default function RankingStoreModal() {
                                   </div>
                                 )}
                               </div>
+
+                              {/* TOP 3 sobre as linhas — só avatar; nome + FP no
+                                  tooltip (hover no desktop, clique no mobile). */}
+                              <div className={styles.chartTop3}>
+                                {rows.slice(0, 3).map((r, i) => (
+                                  <button
+                                    key={r.rank}
+                                    type="button"
+                                    className={styles.top3Marker}
+                                    style={{ left: `${(Number(series[i].cx) / CHART_W) * 100}%`, top: `${(Number(series[i].cy) / CHART_H) * 100}%` }}
+                                    onMouseEnter={() => setTop3Open(i)}
+                                    onMouseLeave={() => setTop3Open(null)}
+                                    onClick={() => setTop3Open((v) => (v === i ? null : i))}
+                                    aria-label={`${r.name.replace('Você · ', '')}: ${r.points}`}
+                                  >
+                                    {r.avatarUrl
+                                      ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={r.avatarUrl} alt="" className={styles.top3MarkerImg} />
+                                      )
+                                      : <span className={styles.top3MarkerInitials}>{r.initials}</span>}
+                                  </button>
+                                ))}
+                                {top3Open !== null && rows[top3Open] && (
+                                  <div
+                                    className={styles.top3Tip}
+                                    style={{ left: `${(Number(series[top3Open].cx) / CHART_W) * 100}%`, top: `${(Number(series[top3Open].cy) / CHART_H) * 100}%` }}
+                                  >
+                                    <strong>{rows[top3Open].name.replace('Você · ', '')}</strong>
+                                    <span>{rows[top3Open].points}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -645,24 +672,7 @@ export default function RankingStoreModal() {
                       </div>
                     </div>
 
-                        {/* Conquistas — sempre exposto (achievements). */}
-                        <div className={styles.achWrap} ref={achRef}>
-                          <div className={styles.achHead}>
-                            <span className={styles.cardTitle}>Conquistas</span>
-                          </div>
-                          <div className={styles.achPanel}>
-                            <div className={styles.perkList}>
-                              {BADGES.map((pk) => (
-                                <div key={pk.label} className={styles.perk}>
-                                  <span className={styles.perkLabel}>{pk.label}</span>
-                                  <span className={styles.perkSub}>{pk.sub}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* MISSÕES — abaixo do gráfico, dentro de Minha evolução */}
+                        {/* MISSÕES — logo abaixo do gráfico (antes de Conquistas) */}
                         <div className={styles.missionsBlock}>
                           <div className={styles.missionsHead}>
                             <span className={styles.cardTitle}>Minhas Missões</span>
@@ -716,6 +726,23 @@ export default function RankingStoreModal() {
                             )}
                           </div>
                         </div>
+
+                        {/* Conquistas — depois das Missões (ordem invertida). */}
+                        <div className={styles.achWrap} ref={achRef}>
+                          <div className={styles.achHead}>
+                            <span className={styles.cardTitle}>Conquistas</span>
+                          </div>
+                          <div className={styles.achPanel}>
+                            <div className={styles.perkList}>
+                              {BADGES.map((pk) => (
+                                <div key={pk.label} className={styles.perk}>
+                                  <span className={styles.perkLabel}>{pk.label}</span>
+                                  <span className={styles.perkSub}>{pk.sub}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                   </div>
                   )}
 
@@ -755,8 +782,14 @@ export default function RankingStoreModal() {
 
                     {/* Top 10 — cada usuário em card individual. */}
                     <div className={styles.list}>
-                      {list.slice(0, 10).map((r) => (
-                        <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
+                      {list.slice(0, visibleCount).map((r) => (
+                        <motion.div
+                          key={r.rank}
+                          className={`${styles.row} ${r.you ? styles.rowYou : ''}`}
+                          whileHover={{ y: -2, scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                        >
                           <span className={styles.rankNum} style={{ color: r.rankColor }}>{`#${r.rank}`}</span>
                           <span className={styles.avatarWrap}>
                             <span className={styles.avatar} style={{ borderColor: r.ring }}>
@@ -784,7 +817,7 @@ export default function RankingStoreModal() {
                               </span>
                             )}
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
                       {list.length === 0 && (
                         <div className={styles.empty}>
@@ -792,6 +825,15 @@ export default function RankingStoreModal() {
                         </div>
                       )}
                     </div>
+                    {list.length > visibleCount && (
+                      <button
+                        type="button"
+                        className={styles.loadMore}
+                        onClick={() => setVisibleCount((c) => c + 10)}
+                      >
+                        Carregar mais
+                      </button>
+                    )}
                   </div>
                   )}
 

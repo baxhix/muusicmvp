@@ -189,7 +189,19 @@
   /* Sem scroll lateral: conteúdo cabe no modal (max 1180px); os
    * filhos do grid usam min-width:0 pra encolher em vez de estourar. */
   overflow-x: hidden;
-  padding: 24px;
+  /* Reserva sempre a calha da scrollbar pra o conteúdo (e as tabs
+   * acima) não "pularem" lateralmente ao trocar de aba. */
+  scrollbar-gutter: stable;
+  padding: 18px 24px 24px;
+}
+
+/* Barra de abas FIXA (fora do scroll): tabs e conteúdo sempre no
+ * mesmo lugar ao navegar. */
+.tabBar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 14px 24px 2px;
 }
 .body::-webkit-scrollbar { width: 9px; }
 .body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 20px; }
@@ -229,7 +241,7 @@
   background: rgba(255, 255, 255, 0.05);
   width: fit-content;
   max-width: 100%;
-  margin: 0 auto 18px;
+  margin: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -439,6 +451,43 @@
 }
 .chartTip strong { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .chartTip span { font-size: 10px; color: rgba(255, 255, 255, 0.55); }
+
+/* TOP 3 — mini avatares sobre as linhas do gráfico. */
+.chartTop3 { position: absolute; inset: 0; }
+.top3Marker {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: 2px solid rgba(13, 13, 18, 0.9);
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease;
+}
+.top3Marker:hover, .top3Marker:focus-visible { transform: translate(-50%, -50%) scale(1.18); z-index: 3; }
+.top3MarkerImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.top3MarkerInitials { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #cfcfd2; }
+.top3Tip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 16px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: #1c1c1f;
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 6;
+}
+.top3Tip strong { font-size: 12px; font-weight: 700; color: #fff; }
+.top3Tip span { font-size: 10px; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
 /* Eixo X — marcos de tempo (alinhados ao plot, à direita do eixo Y). */
 .xAxis { display: grid; grid-template-columns: 38px 1fr; gap: 8px; margin-top: 7px; }
 .xTicks { grid-column: 2; position: relative; height: 14px; }
@@ -465,15 +514,33 @@
 .evoMain > * { min-width: 0; }
 @media (max-width: 720px) { .evoMain { grid-template-columns: 1fr; } }
 
-/* Box de dados do usuário logado (esquerda). */
+/* Box de dados do usuário logado (esquerda) — discreto (sem caixa). */
 .evoStats {
-  padding: 16px;
+  padding: 4px 2px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
 }
-.evoTotal { font-size: 26px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
-.evoVarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+/* Label sutil, sem caixa alta. */
+.evoLabel { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.5); }
+/* Cabeçalho do box: foto de perfil + Total. */
+.evoStatsHead { display: flex; align-items: center; gap: 11px; }
+.evoStatsAvatar {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #cfcfd2;
+  background: rgba(255, 255, 255, 0.07);
+}
+.evoStatsAvatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.evoStatsText { min-width: 0; }
+.evoTotal { font-size: 22px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; letter-spacing: -0.4px; }
+.evoVarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
 .evoVarLabel { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
 .evoStats .divider { margin: 14px 0; }
 .posList { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
@@ -686,20 +753,28 @@
 
 /* Cada usuário num card individual (gap entre eles). */
 .list { display: flex; flex-direction: column; gap: 8px; padding: 2px 4px 6px; }
+/* Cards sem borda — só fill (per preferência: novos cards sem borda). */
 .row {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 11px 14px;
   border-radius: 13px;
-  border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
-  transition: background 140ms ease, box-shadow 140ms ease;
+  transition: background 140ms ease;
 }
-.row:hover { background: rgba(168, 85, 247, 0.1); box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.28) inset; }
-.rowYou { background: rgba(255, 255, 255, 0.07); border: 1px dashed rgba(255, 255, 255, 0.4); }
-.rowYou:hover { background: rgba(168, 85, 247, 0.14); }
+.row:hover { background: rgba(168, 85, 247, 0.12); }
+/* Usuário logado — borda com gradiente (mesma do botão de download no
+ * lightbox de Materiais): laranja → rosa → roxo. */
+.rowYou {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#16161b, #16161b) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+}
+.rowYou:hover { background:
+    linear-gradient(#1c1c22, #1c1c22) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box; }
 /* #N no padrão da aba Superfãs: cinza uniforme, regular, à esquerda. */
 .rankNum { flex: 0 0 auto; min-width: 24px; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
 /* Wrap do avatar — relative pra hospedar o RankMedallion (selo). */
@@ -732,23 +807,22 @@
 .deltaUp { color: #36d399; }
 .deltaDown { color: rgba(255, 255, 255, 0.6); }
 .empty { padding: 48px; text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 14px; }
-/* "Ver mais" — pagina a lista 20 em 20 pra o modal não ficar gigante. */
+/* "Carregar mais" — mesmo estilo do "Ver mais" da aba Exclusivo (pill). */
 .loadMore {
   display: block;
-  width: calc(100% - 20px);
-  margin: 2px 10px 14px;
-  padding: 9px 0;
-  border-radius: 10px;
+  margin: 10px auto 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
   border: none;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.82);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 140ms ease, color 140ms ease;
 }
-.loadMore:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.loadMore:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
 /* ── Loja ───────────────────────────────────────────────── */
 .store {
