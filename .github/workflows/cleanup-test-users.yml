@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────
-# Cleanup — usuários de teste de carga (@muusic-teste.local)
+# Cleanup — usuários de teste de carga (@muusic-test.local)
 #
 # Esses usuários foram criados por robô (k6) pra teste de carga. Não são contas
 # reais → hard-delete é apropriado (o fluxo LGPD normal é soft-delete +
@@ -55,7 +55,7 @@ jobs:
           # ON_ERROR_STOP garante exit !=0 em qualquer erro de SQL.
           PSQL="sudo docker compose exec -T postgres psql -U muusic -d muusic -v ON_ERROR_STOP=1"
 
-          WHERE="email LIKE '%@muusic-teste.local' AND role <> 'admin'"
+          WHERE="email LIKE '%@muusic-test.local' AND role <> 'admin'"
 
           echo "=> contando (read-only)…"
           $PSQL -c "SELECT count(*) AS matched FROM users WHERE ${WHERE};"
