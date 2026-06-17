@@ -61,6 +61,12 @@ jobs:
           $PSQL -c "SELECT count(*) AS matched FROM users WHERE ${WHERE};"
 
           if [ "${MODE}" != "delete" ]; then
+            echo "=> diagnóstico: total de usuários"
+            $PSQL -c "SELECT count(*) AS total_users FROM users;"
+            echo "=> diagnóstico: top 30 domínios de email (pra achar o padrão de teste)"
+            $PSQL -c "SELECT split_part(lower(email),'@',2) AS dominio, count(*) AS n FROM users GROUP BY 1 ORDER BY n DESC LIMIT 30;"
+            echo "=> diagnóstico: emails contendo 'teste' (case-insensitive, amostra 20)"
+            $PSQL -c "SELECT email FROM users WHERE email ILIKE '%teste%' ORDER BY email LIMIT 20;"
             echo "=> mode=count (dry-run) — nada apagado."
             exit 0
           fi
