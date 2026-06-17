@@ -164,12 +164,13 @@ const PERIOD_BADGE: Record<Period, string> = {
 
 /* Alturas ILUSTRATIVAS das barras (7 usuários) por período — só pra
  * mostrar diferença de tamanho lado a lado, sem precisão de
- * proporcionalidade. Variam por período pra a animação re-disparar. */
+ * proporcionalidade. O índice 3 é o usuário logado (sempre no centro).
+ * Teto ~74% pra sobrar espaço pro avatar/colocação no topo da barra. */
 const BAR_HEIGHTS: Record<Period, number[]> = {
-  diario:  [100, 78, 90, 58, 70, 46, 64],
-  semanal: [86, 100, 62, 74, 52, 82, 56],
-  mensal:  [74, 88, 100, 60, 68, 48, 84],
-  anual:   [100, 70, 84, 54, 92, 44, 66],
+  diario:  [50, 66, 72, 62, 70, 42, 56],
+  semanal: [60, 72, 46, 64, 52, 70, 50],
+  mensal:  [70, 52, 64, 60, 74, 44, 58],
+  anual:   [48, 72, 56, 62, 68, 40, 60],
 };
 
 /* ── Helpers ──────────────────────────────────────────────────── */
@@ -350,14 +351,31 @@ export default function RankingStoreModal() {
     };
   }, [myRank]);
 
-  /* Barras: 7 usuários (top 6 + eu, se eu não estiver no topo). Eu
-   * sempre presente e destacado. Alturas vêm de BAR_HEIGHTS[period] —
-   * ilustrativas, não proporcionais; re-animam ao trocar de período. */
+  /* Barras: 7 usuários com EU sempre no centro (índice 3), ladeado
+   * pelos vizinhos de colocação mais próximos (3 de cada lado),
+   * ordenados por rank. Alturas ilustrativas (BAR_HEIGHTS[period]). */
   const barUsers = useMemo(() => {
-    const top = rows.slice(0, 7);
-    const pick = me && !top.some((r) => r.you) ? [...rows.slice(0, 6), me] : top;
-    return pick.slice(0, 7).map((row, i) => ({ row, h: BAR_HEIGHTS[period][i] ?? 40 }));
-  }, [rows, me, period]);
+    const heights = BAR_HEIGHTS[period];
+    if (!me) return rows.slice(0, 7).map((row, i) => ({ row, h: heights[i] ?? 40 }));
+    const meRank = myRank ?? 1;
+    const nearest = rows
+      .filter((r) => !r.you)
+      .sort((a, b) => Math.abs(a.rank - meRank) - Math.abs(b.rank - meRank))
+      .slice(0, 6)
+      .sort((a, b) => a.rank - b.rank);
+    const ordered = [...nearest.slice(0, 3), me, ...nearest.slice(3)];
+    return ordered.map((row, i) => ({ row, h: heights[i] ?? 40 }));
+  }, [rows, me, myRank, period]);
+
+  /* Escala do eixo Y (Fanpoints) — derivada dos usuários exibidos.
+   * Rótulos top→base; ilustrativos (as barras não são proporcionais). */
+  const barTicks = useMemo(() => {
+    const maxRaw = Math.max(...barUsers.map((b) => b.row.pts), 1);
+    const mag = Math.pow(10, Math.floor(Math.log10(maxRaw)));
+    const max = Math.ceil(maxRaw / mag) * mag;
+    const lbl = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(v % 1000 === 0 ? 0 : 1)}k` : `${Math.round(v)}`);
+    return [3, 2, 1, 0].map((k) => ({ k, label: lbl((max * k) / 3) }));
+  }, [barUsers]);
 
   const mission = MISSIONS[missionTab];
 
@@ -514,46 +532,69 @@ export default function RankingStoreModal() {
                         </div>
                       </div>
 
-                      {/* DIREITA — gráfico de barras (1 por usuário; eu em
-                          destaque). Alturas só ilustrativas; sem eixos. */}
+                      {/* DIREITA — gráfico de barras (1 por usuário; eu sempre
+                          no centro e em destaque). Eixo Y de Fanpoints à
+                          esquerda + grade de quadrantes atrás das barras. */}
                       <div className={styles.evoChartCol}>
-                        <div className={styles.barChart} key={period} role="img" aria-label="Comparativo de Fanpoints entre superfãs">
-                          {barUsers.map(({ row, h }, i) => {
-                            const isYou = row.you;
-                            const cleanName = row.name.replace('Você · ', '');
-                            return (
-                              <div
-                                key={row.rank}
-                                className={styles.barCol}
-                                onMouseEnter={() => setHoverBar(i)}
-                                onMouseLeave={() => setHoverBar(null)}
-                              >
-                                <div className={styles.barTrack}>
-                                  <motion.div
-                                    className={`${styles.barFill} ${isYou ? styles.barFillYou : ''}`}
-                                    initial={{ height: 0 }}
-                                    animate={{ height: `${h}%` }}
-                                    transition={{ duration: 0.7, delay: 0.08 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                        <div className={styles.barChart} key={period}>
+                          {/* Eixo Y — Fanpoints (mantido; só o eixo de baixo saiu) */}
+                          <div className={styles.barYAxis} aria-hidden="true">
+                            {barTicks.map((t) => (
+                              <span key={t.k} className={styles.barYTick}>{t.label}</span>
+                            ))}
+                          </div>
+
+                          <div className={styles.barPlot}>
+                            {/* Quadrantes / grade atrás das barras */}
+                            <div className={styles.barGrid} aria-hidden="true">
+                              {[0, 1, 2, 3].map((k) => (
+                                <span key={k} className={styles.barGridLine} style={{ top: `${(k / 3) * 100}%` }} />
+                              ))}
+                            </div>
+
+                            <div className={styles.barCols} role="img" aria-label="Comparativo de Fanpoints entre superfãs">
+                              {barUsers.map(({ row, h }, i) => {
+                                const isYou = row.you;
+                                const cleanName = row.name.replace('Você · ', '');
+                                return (
+                                  <div
+                                    key={row.rank}
+                                    className={styles.barCol}
+                                    onMouseEnter={() => setHoverBar(i)}
+                                    onMouseLeave={() => setHoverBar(null)}
                                   >
-                                    {hoverBar === i && (
-                                      <div className={styles.barTip}>
-                                        <strong>{row.points}</strong>
-                                        <span>{isYou ? 'Você' : cleanName}</span>
-                                      </div>
-                                    )}
-                                  </motion.div>
-                                </div>
-                                <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : ''}`} aria-hidden="true">
-                                  {row.avatarUrl
-                                    ? (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={row.avatarUrl} alt="" className={styles.barAvatarImg} />
-                                    )
-                                    : <span className={styles.barAvatarInitials}>{row.initials}</span>}
-                                </span>
-                              </div>
-                            );
-                          })}
+                                    <div className={styles.barTrack}>
+                                      <motion.div
+                                        className={`${styles.barFill} ${isYou ? styles.barFillYou : ''}`}
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${h}%` }}
+                                        transition={{ duration: 0.7, delay: 0.08 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                                      >
+                                        {/* Topo da barra: avatar + colocação (sobe com a barra) */}
+                                        <div className={styles.barCap}>
+                                          {hoverBar === i && (
+                                            <div className={styles.barTip}>
+                                              <strong>{row.points}</strong>
+                                              <span>{isYou ? 'Você' : cleanName}</span>
+                                            </div>
+                                          )}
+                                          <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : ''}`} aria-hidden="true">
+                                            {row.avatarUrl
+                                              ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img src={row.avatarUrl} alt="" className={styles.barAvatarImg} />
+                                              )
+                                              : <span className={styles.barAvatarInitials}>{row.initials}</span>}
+                                          </span>
+                                          <span className={`${styles.barRank} ${isYou ? styles.barRankYou : ''}`}>{row.rank ? `#${row.rank}` : ''}</span>
+                                        </div>
+                                      </motion.div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

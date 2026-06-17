@@ -392,74 +392,83 @@
 .fpDelta { font-size: 12px; color: rgba(255, 255, 255, 0.55); font-weight: 600; }
 
 /* ── Gráfico de barras (Minha Evolução) ──────────────────────
- * 1 barra por usuário (7), lado a lado; alturas só ILUSTRATIVAS.
- * Sem eixos. Usuário logado em destaque (barra com gradiente). */
+ * 1 barra fina por usuário (7), EU sempre no centro e em destaque.
+ * Eixo Y de Fanpoints à esquerda + grade de quadrantes atrás. Avatar
+ * + colocação no topo de cada barra. Alturas só ILUSTRATIVAS. */
 .barChart {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  height: 240px;
-  padding: 8px 2px 0;
+  align-items: stretch;
+  gap: 12px;
+  height: 252px;
 }
-.barCol {
-  flex: 1 1 0;
-  min-width: 0;
+/* Eixo Y — Fanpoints (mantido; só o eixo de tempo embaixo foi removido). */
+.barYAxis {
+  flex: 0 0 auto;
+  width: 34px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 11px;
-  height: 100%;
-  cursor: default;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 2px 0;
 }
-/* Trilho: ocupa a altura toda; a barra cresce a partir da base. */
-.barTrack {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
+.barYTick { font-size: 10px; font-weight: 600; color: rgba(255, 255, 255, 0.4); font-variant-numeric: tabular-nums; line-height: 1; }
+.barPlot { position: relative; flex: 1; min-width: 0; }
+/* Quadrantes / grade horizontal atrás das barras. */
+.barGrid { position: absolute; inset: 0; pointer-events: none; }
+.barGridLine { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+/* Colunas próximas umas das outras (eixo de baixo removido). */
+.barCols { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; gap: 6px; }
+.barCol {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  cursor: default;
 }
-.barFill {
+/* "Quadrante" de cada usuário: célula faint atrás da barra. */
+.barTrack {
   position: relative;
   width: 100%;
-  max-width: 36px;
-  border-radius: 8px 8px 4px 4px;
-  background: rgba(255, 255, 255, 0.15);
-  transition: background 0.15s;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
 }
-.barCol:hover .barFill { background: rgba(255, 255, 255, 0.26); }
-/* Usuário logado: barra com gradiente (destaque). */
+/* Barras finas. */
+.barFill {
+  position: relative;
+  width: 22px;
+  max-width: 100%;
+  border-radius: 7px 7px 4px 4px;
+  /* Não-eu: cinza escuro com gradiente pra um tom ainda mais escuro,
+     distinto do fundo (não se mistura). */
+  background: linear-gradient(180deg, #71717b 0%, #3a3a42 100%);
+  transition: filter 0.15s;
+}
+.barCol:hover .barFill { filter: brightness(1.14); }
+/* Usuário logado: gradiente de marca (destaque). */
 .barFillYou { background: linear-gradient(180deg, #f97316 0%, #ec4899 55%, #a855f7 100%); }
-.barCol:hover .barFillYou { background: linear-gradient(180deg, #fb8a3c 0%, #f15ba6 55%, #b366f8 100%); }
-/* Tooltip preto, SEM borda, ancorado no topo da barra. */
-.barTip {
+/* Topo da barra: avatar + colocação (sobe junto com a barra). */
+.barCap {
   position: absolute;
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 8px;
+  margin-bottom: 7px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 6px 11px;
-  border-radius: 9px;
-  background: #000;
-  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.85);
+  gap: 3px;
   pointer-events: none;
-  white-space: nowrap;
-  z-index: 6;
 }
-.barTip strong { font-size: 12.5px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
-.barTip span { font-size: 10.5px; color: rgba(255, 255, 255, 0.6); }
-/* Avatar sob a barra — identifica o usuário sem precisar de eixo. */
 .barAvatar {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -469,10 +478,30 @@
 }
 .barAvatarYou { box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.9); }
 .barAvatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
-.barAvatarInitials { font-size: 11px; font-weight: 700; color: #cfcfd2; }
+.barAvatarInitials { font-size: 10px; font-weight: 700; color: #cfcfd2; }
+/* Colocação (#N) de cada usuário, no topo. */
+.barRank { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
+.barRankYou { color: #fff; }
+/* Tooltip preto (hover) — nome + FP acima do avatar. */
+.barTip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  margin-bottom: 2px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: #000;
+  box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+}
+.barTip strong { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+.barTip span { font-size: 10px; color: rgba(255, 255, 255, 0.6); }
 @media (max-width: 720px) {
-  .barChart { height: 200px; gap: 6px; }
-  .barAvatar { width: 26px; height: 26px; }
+  .barChart { height: 220px; gap: 8px; }
+  .barCol { width: 32px; }
+  .barFill { width: 18px; }
+  .barAvatar { width: 22px; height: 22px; }
 }
 
 /* ── Minha Evolução: header + 2 colunas (stats + gráfico) ── */
