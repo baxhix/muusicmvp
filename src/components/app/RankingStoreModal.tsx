@@ -345,12 +345,30 @@ export default function RankingStoreModal() {
     });
   }, [ranking, user?.id]);
 
+  /* Classificação por PERÍODO: reordena e renumera os usuários por uma
+   * pontuação determinística que muda a cada filtro (Hoje/Semana/Mês/Ano)
+   * — só pra demonstrar que os dados mudam. O ranking all-time real fica
+   * em `rows` (usado pela "minha" colocação e pelo gráfico de Evolução). */
+  const periodRows = useMemo<Row[]>(() => {
+    const seed = PERIOD_SEED[period];
+    return rows
+      .map((r) => ({ r, periodPts: 200 + Math.round(prand(r.rank, seed) * 9000) }))
+      .sort((a, b) => b.periodPts - a.periodPts)
+      .map(({ r, periodPts }, i) => ({
+        ...r,
+        rank: i + 1,
+        pts: periodPts,
+        points: `${fmt(periodPts)} FP`,
+        delta: (((i + 1) * 7 + seed) % 9) - 4,
+      }));
+  }, [rows, period]);
+
   /* Top 3 em lista, igual aos demais (sem pódio) — a lista mostra
-   * todas as colocações 1..N. */
+   * todas as colocações 1..N (já reordenadas pelo período). */
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows;
-  }, [rows, query]);
+    return q ? periodRows.filter((r) => r.name.toLowerCase().includes(q)) : periodRows;
+  }, [periodRows, query]);
 
   const meIndex = useMemo(() => rows.findIndex((r) => r.you), [rows]);
   const me = meIndex >= 0 ? rows[meIndex] : null;
@@ -449,8 +467,8 @@ export default function RankingStoreModal() {
   const rankSuggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [] as Row[];
-    return rows.filter((r) => r.name.toLowerCase().includes(q)).slice(0, 6);
-  }, [query, rows]);
+    return periodRows.filter((r) => r.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [query, periodRows]);
 
   /* Validade do desconto: 30 dias a partir de hoje. Formato fixo
    * "DD de mmm de AAAA" (ex.: 17 de jul de 2026), determinístico —
