@@ -277,8 +277,8 @@
 }
 
 /* Jornada — conteúdo de benefícios por marco (reusa BeneficiosTab do
- * modal Fanpoints). Centralizado e com largura confortável de leitura. */
-.jornada { max-width: 640px; margin: 0 auto; }
+ * modal Fanpoints). Ocupa a largura toda do modal. */
+.jornada { width: 100%; }
 
 /* Classificação à direita ocupa ~40% (painel pessoal 60% à esquerda). */
 .grid {
