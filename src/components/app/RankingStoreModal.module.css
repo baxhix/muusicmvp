@@ -264,16 +264,9 @@
   .periodRow { flex-wrap: wrap; justify-content: center; gap: 10px; }
 }
 
-/* Jornada — Missões + Benefícios lado a lado (empilha no mobile). */
-.jornadaGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-@media (max-width: 720px) {
-  .jornadaGrid { grid-template-columns: 1fr; }
-}
+/* Jornada — conteúdo de benefícios por marco (reusa BeneficiosTab do
+ * modal Fanpoints). Centralizado e com largura confortável de leitura. */
+.jornada { max-width: 640px; margin: 0 auto; }
 
 /* Classificação à direita ocupa ~40% (painel pessoal 60% à esquerda). */
 .grid {
@@ -825,30 +818,90 @@
 
 /* Galeria */
 .galleryCol { min-width: 0; }
-.galleryHead { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-bottom: 16px; gap: 10px; }
-/* "Voltar ao ranking" agora vive aqui (fora do box de saldo), alinhado
- * verticalmente com as tabs da loja. */
-.galleryHead .backBtn { margin-bottom: 0; justify-self: start; }
-.storeTabs { display: flex; gap: 6px; padding: 4px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); }
-.storeTab {
-  width: 118px;
-  padding: 7px 0;
-  text-align: center;
+.galleryHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+
+/* Toggle discreto Experiências / Produtos (texto, sem caixa grande). */
+.storeToggle { display: inline-flex; align-items: center; gap: 4px; }
+.storeToggleBtn {
+  padding: 5px 11px;
   border: none;
   border-radius: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.15s, background 0.15s;
 }
-.storeTab:hover { color: rgba(255, 255, 255, 0.8); }
-/* Ativo branco — classe própria definida APÓS .storeTab pra vencer a
- * ordem do CSS (a .segActive vinha antes e era sobrescrita). */
-.storeTabActive { background: #fff; color: #0b0b0d; }
-.storeTabActive:hover { color: #0b0b0d; }
+.storeToggleBtn:hover { color: rgba(255, 255, 255, 0.8); }
+.storeToggleActive { color: #fff; background: rgba(255, 255, 255, 0.08); }
+
+/* Ferramentas à direita: lupa (abre busca) + ordenação. */
+.galleryTools { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.searchBtn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.searchBtn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.searchBtnActive { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.searchWrap { position: relative; }
+.searchInput {
+  width: 180px;
+  max-width: 42vw;
+  height: 30px;
+  padding: 0 11px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.searchInput::placeholder { color: rgba(255, 255, 255, 0.4); }
+.autocomplete {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 12;
+  list-style: none;
+  margin: 0;
+  padding: 5px;
+  border-radius: 11px;
+  background: #1c1c1f;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.autocompleteItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #e8e8ea;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.12s;
+}
+.autocompleteItem:hover { background: rgba(255, 255, 255, 0.08); }
 .sortSelect {
   justify-self: end;
   background: transparent;
@@ -863,15 +916,15 @@
 }
 .sortSelect option { color: #0b0b0d; }
 
-.products { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-items: stretch; }
+.products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: stretch; }
 /* Cards de Experiência e Produto com tamanho idêntico (sem "pulo" ao
  * trocar de aba): grid stretch + imagem com aspect fixo + nome em 2
  * linhas + linha de preço com altura mínima reservada. */
 .product { border-radius: 14px; background: rgba(255, 255, 255, 0.03); overflow: hidden; display: flex; flex-direction: column; transition: background 140ms ease, box-shadow 140ms ease; }
 .product:hover { background: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.28) inset; }
-/* Slot de imagem com FUNDO BRANCO (slider de fotos do produto). */
-/* Card mais vertical: imagem em retrato 3/4. */
-.productImg { position: relative; aspect-ratio: 3 / 4; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* Slot de imagem com FUNDO BRANCO (slider de fotos do produto).
+ * Área menos alta (4/3 paisagem) pra o card ficar mais compacto. */
+.productImg { position: relative; aspect-ratio: 4 / 3; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .productImgPhoto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 12px; opacity: 0; transition: opacity 0.4s ease; }
 .productImgActive { opacity: 1; }
 .productDots { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); z-index: 2; display: flex; gap: 6px; }
@@ -884,21 +937,26 @@
 .productPriceRow { display: flex; align-items: baseline; gap: 8px; margin-top: 7px; margin-bottom: 13px; min-height: 18px; }
 .productCost { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.65); font-variant-numeric: tabular-nums; }
 .productOriginal { font-size: 12px; color: rgba(255, 255, 255, 0.35); text-decoration: line-through; font-variant-numeric: tabular-nums; }
+/* CTA no mesmo estilo do botão de download dos materiais exclusivos:
+ * ghost transparente, texto sutil, hover com leve fill. */
 .productCta {
   display: block;
   width: 100%;
   margin-top: auto;
-  padding: 10px 0;
-  border-radius: 8px;
+  padding: 9px 0;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
   font-family: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  transition: background 140ms ease, color 140ms ease;
 }
-.productCtaOk { background: #e8e8ea; color: #0b0b0d; }
-.productCtaOff { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.5); cursor: default; }
+.productCtaOk:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.productCtaOff { color: rgba(255, 255, 255, 0.35); cursor: default; }
 
 /* ── Toast ──────────────────────────────────────────────── */
 .toast {

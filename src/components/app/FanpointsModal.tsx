@@ -66,6 +66,16 @@ const TIERS = [
   { id: 'top1',   label: 'Top 1',    threshold: 1   },
 ];
 
+/* Tier atual a partir da colocação (reusado pela aba Jornada do
+ * RankingStoreModal). Retorna o tier mais exigente alcançado. */
+export function currentTierForRank(myRank: number) {
+  if (!myRank) return null;
+  for (let i = TIERS.length - 1; i >= 0; i--) {
+    if (myRank <= TIERS[i].threshold) return TIERS[i];
+  }
+  return null;
+}
+
 const REWARDS = [
   { icon: '🏅', label: 'Badge exclusivo no perfil' },
   { icon: '⭐', label: 'Destaque no Fanverse Search' },
@@ -567,7 +577,7 @@ function RankingTab({
  * threshold em FP, ícone, título e descrição. Tags de status:
  * "Conquistado" (threshold ≤ saldo) ou "Bloqueado".
  * ──────────────────────────────────────────────────────────── */
-function BeneficiosTab({
+export function BeneficiosTab({
   fanpoints,
   currentTier,
 }: {

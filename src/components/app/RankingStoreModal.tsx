@@ -28,6 +28,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
 import RankMedallion from './RankMedallion';
+import { BeneficiosTab, currentTierForRank } from './FanpointsModal';
 import styles from './RankingStoreModal.module.css';
 
 type Screen = 'ranking' | 'loja';
@@ -108,11 +109,6 @@ const MISSIONS: Record<MissionTab, MissionDef> = {
 
 const BADGES = [
   { label: 'Top 1%', sub: 'Mês de maio' },
-];
-
-const PERKS = [
-  { label: '15% OFF', sub: 'Loja oficial' },
-  { label: 'Frete grátis', sub: 'Próximo pedido' },
 ];
 
 /* Sparklines mock POR PERÍODO — "Você" + 3 referências (Top 1/10/50).
@@ -281,6 +277,8 @@ export default function RankingStoreModal() {
   const [period, setPeriod] = useState<Period>('semanal');
   const [storeTab, setStoreTab] = useState<StoreTab>('experiencias');
   const [sort, setSort] = useState<Sort>('relevancia');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [storeQuery, setStoreQuery] = useState('');
   const [missionTab, setMissionTab] = useState<MissionTab>('diaria');
   const [missionsOpen, setMissionsOpen] = useState(false);
   const [hoverPt, setHoverPt] = useState<number | null>(null);
@@ -418,12 +416,21 @@ export default function RankingStoreModal() {
 
   const gallery = useMemo(() => {
     const src = storeTab === 'produtos' ? PRODUCTS : EXPERIENCES;
-    const arr = src.slice();
-    if (sort === 'menor') arr.sort((a, b) => a.cost - b.cost);
-    else if (sort === 'maior') arr.sort((a, b) => b.cost - a.cost);
-    else if (sort === 'novidades') arr.reverse();
+    const q = storeQuery.trim().toLowerCase();
+    let arr = q ? src.filter((p) => p.name.toLowerCase().includes(q)) : src.slice();
+    if (sort === 'menor') arr = arr.slice().sort((a, b) => a.cost - b.cost);
+    else if (sort === 'maior') arr = arr.slice().sort((a, b) => b.cost - a.cost);
+    else if (sort === 'novidades') arr = arr.slice().reverse();
     return arr;
-  }, [storeTab, sort]);
+  }, [storeTab, sort, storeQuery]);
+
+  /* Sugestões do autocomplete da busca (nomes do catálogo atual). */
+  const storeSuggestions = useMemo(() => {
+    const q = storeQuery.trim().toLowerCase();
+    if (!q) return [] as StoreItem[];
+    const src = storeTab === 'produtos' ? PRODUCTS : EXPERIENCES;
+    return src.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [storeQuery, storeTab]);
 
   if (!open) return null;
 
@@ -712,21 +719,12 @@ export default function RankingStoreModal() {
                   </div>
                   )}
 
-                  {/* ===== JORNADA — Benefícios desbloqueados ===== */}
+                  {/* ===== JORNADA — o que os superfãs desbloqueiam por marco
+                       (mesmo conteúdo da aba Benefícios do modal Fanpoints) ===== */}
                   {tab === 'jornada' && (
-                  <div className={styles.card}>
-                    <div className={styles.achHead}>
-                      <span className={styles.cardTitle}>Benefícios</span>
+                    <div className={styles.jornada}>
+                      <BeneficiosTab fanpoints={saldoFP} currentTier={currentTierForRank(myRank ?? 0)} />
                     </div>
-                    <div className={styles.perkList}>
-                      {PERKS.map((pk) => (
-                        <div key={pk.label} className={styles.perk}>
-                          <span className={styles.perkLabel}>{pk.label}</span>
-                          <span className={styles.perkSub}>{pk.sub}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                   )}
 
                 {/* ===== CLASSIFICAÇÃO ===== */}
@@ -843,25 +841,75 @@ export default function RankingStoreModal() {
               {/* GALERIA */}
               <div className={styles.galleryCol}>
                 <div className={styles.galleryHead}>
-                  <div />
-                  <div className={styles.storeTabs}>
+                  {/* Toggle discreto Experiências / Produtos */}
+                  <div className={styles.storeToggle} role="tablist">
                     {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
                       <button
                         key={k}
                         type="button"
-                        className={`${styles.storeTab} ${storeTab === k ? styles.storeTabActive : ''}`}
+                        role="tab"
+                        aria-selected={storeTab === k}
+                        className={`${styles.storeToggleBtn} ${storeTab === k ? styles.storeToggleActive : ''}`}
                         onClick={() => setStoreTab(k)}
                       >
                         {k === 'experiencias' ? 'Experiências' : 'Produtos'}
                       </button>
                     ))}
                   </div>
-                  <select className={styles.sortSelect} value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar">
-                    <option value="relevancia">Ordenar: Relevância</option>
-                    <option value="menor">Menor preço</option>
-                    <option value="maior">Maior preço</option>
-                    <option value="novidades">Novidades</option>
-                  </select>
+
+                  {/* Ferramentas: lupa (abre busca c/ autocomplete) + ordenação */}
+                  <div className={styles.galleryTools}>
+                    <button
+                      type="button"
+                      className={`${styles.searchBtn} ${searchOpen ? styles.searchBtnActive : ''}`}
+                      aria-label="Buscar"
+                      aria-expanded={searchOpen}
+                      onClick={() => {
+                        setSearchOpen((v) => {
+                          if (v) setStoreQuery('');
+                          return !v;
+                        });
+                      }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+                    </button>
+
+                    {searchOpen && (
+                      <div className={styles.searchWrap}>
+                        {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+                        <input
+                          autoFocus
+                          type="text"
+                          className={styles.searchInput}
+                          placeholder="Buscar item…"
+                          value={storeQuery}
+                          onChange={(e) => setStoreQuery(e.target.value)}
+                        />
+                        {storeSuggestions.length > 0 && (
+                          <ul className={styles.autocomplete}>
+                            {storeSuggestions.map((s) => (
+                              <li key={s.name}>
+                                <button
+                                  type="button"
+                                  className={styles.autocompleteItem}
+                                  onClick={() => setStoreQuery(s.name)}
+                                >
+                                  {s.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    <select className={styles.sortSelect} value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="Ordenar">
+                      <option value="relevancia">Ordenar: Relevância</option>
+                      <option value="menor">Menor preço</option>
+                      <option value="maior">Maior preço</option>
+                      <option value="novidades">Novidades</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className={styles.products}>
