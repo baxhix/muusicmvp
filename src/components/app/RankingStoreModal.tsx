@@ -112,38 +112,6 @@ const BADGES = [
   { label: 'Top 1%', sub: 'Mês de maio' },
 ];
 
-/* Sparklines mock POR PERÍODO — "Você" + 3 referências (Top 1/10/50).
- * Os traços do gráfico mudam ao alternar o período (diário/semanal/
- * mensal/anual). */
-const K = (arr: number[]) => arr.map((x) => x * 1000);
-interface SparkSet { me: number[]; top1: number[]; top10: number[]; top50: number[] }
-const SPARKS: Record<Period, SparkSet> = {
-  diario: {
-    me:    K([0.4, 0.9, 1.4, 1.1, 2.0, 2.6, 3.1]),
-    top1:  K([12, 18, 25, 33, 40, 47, 54]),
-    top10: K([4, 6, 9, 12, 15, 18, 21]),
-    top50: K([1, 1.6, 2.2, 2.8, 3.4, 4, 4.6]),
-  },
-  semanal: {
-    me:    K([6.2, 9.1, 7.5, 12, 14.4, 11, 16.4]),
-    top1:  K([120, 138, 150, 168, 182, 200, 218]),
-    top10: K([40, 47, 52, 58, 64, 71, 80]),
-    top50: K([12, 14, 15.5, 17, 19, 21, 24]),
-  },
-  mensal: {
-    me:    K([20, 35, 48, 60, 76, 90, 110]),
-    top1:  K([400, 520, 640, 760, 880, 1000, 1150]),
-    top10: K([150, 200, 260, 320, 380, 440, 520]),
-    top50: K([50, 70, 90, 110, 135, 160, 190]),
-  },
-  anual: {
-    me:    K([120, 260, 410, 560, 720, 900, 1100]),
-    top1:  K([2000, 3200, 4600, 6000, 7600, 9200, 11000]),
-    top10: K([800, 1300, 1900, 2500, 3200, 4000, 4900]),
-    top50: K([300, 520, 760, 1000, 1300, 1650, 2050]),
-  },
-};
-
 /* Imagens do slider dos produtos (mock). Salve os arquivos em
  * public/store/ — fundo branco no slot, contain pra mostrar a peça
  * inteira. */
@@ -171,21 +139,6 @@ const TAB_TITLE: Record<Tab, string> = {
   loja: 'Loja Fanverse',
 };
 
-/* Marcos do eixo X do gráfico (7 pontos) — dia / semana / mês conforme
- * o período. */
-const CHART_X_LABELS: Record<Period, string[]> = {
-  diario:  ['0h', '4h', '8h', '12h', '16h', '20h', '24h'],
-  semanal: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-  mensal:  ['1', '5', '10', '15', '20', '25', '30'],
-  anual:   ['Jan', 'Mar', 'Mai', 'Jul', 'Set', 'Nov', 'Dez'],
-};
-const CHART_X_TIP: Record<Period, string> = {
-  diario: 'Hora do dia',
-  semanal: 'Dia da semana',
-  mensal: 'Dia do mês',
-  anual: 'Mês do ano',
-};
-
 /* Fração do total de Fanpoints atribuída a cada período (mock) — o valor
  * do dia/semana/mês muda; o total (100%) fica embaixo. */
 const PERIOD_FP_RATIO: Record<Period, number> = {
@@ -209,6 +162,16 @@ const PERIOD_BADGE: Record<Period, string> = {
   anual: 'Ano',
 };
 
+/* Alturas ILUSTRATIVAS das barras (7 usuários) por período — só pra
+ * mostrar diferença de tamanho lado a lado, sem precisão de
+ * proporcionalidade. Variam por período pra a animação re-disparar. */
+const BAR_HEIGHTS: Record<Period, number[]> = {
+  diario:  [100, 78, 90, 58, 70, 46, 64],
+  semanal: [86, 100, 62, 74, 52, 82, 56],
+  mensal:  [74, 88, 100, 60, 68, 48, 84],
+  anual:   [100, 70, 84, 54, 92, 44, 66],
+};
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 
 const fmt = (n: number) => Math.round(n).toLocaleString('pt-BR');
@@ -220,28 +183,6 @@ interface Row {
   rank: number; pts: number; you: boolean; name: string; city: string;
   avatarUrl: string | null; initials: string; points: string;
   ring: string; rankColor: string; delta: number;
-}
-
-/* Gera os paths de N séries numa escala Y compartilhada (pra as
- * linhas serem comparáveis no mesmo gráfico). Expõe também os pontos,
- * a escala (min/max/span) e o mapeador toY pra desenhar os eixos. */
-const CHART_W = 300;
-const CHART_H = 96;
-function multiChartPaths(seriesList: number[][]) {
-  const all = seriesList.flat();
-  const min = Math.min(...all);
-  const max = Math.max(...all);
-  const span = (max - min) || 1;
-  const toY = (v: number) => 90 - ((v - min) / span) * 66;
-  const series = seriesList.map((spark) => {
-    const n = spark.length;
-    const pts = spark.map((v, i) => [(i / (n - 1)) * CHART_W, toY(v)] as const);
-    const line = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-    const area = `${line} L${CHART_W},${CHART_H} L0,${CHART_H} Z`;
-    const last = pts[pts.length - 1];
-    return { line, area, cx: last[0].toFixed(1), cy: last[1].toFixed(1), pts };
-  });
-  return { series, min, max, span, toY };
 }
 
 /* Slider de imagens do produto (mock) — 2 fotos com dots pra trocar,
@@ -290,8 +231,7 @@ export default function RankingStoreModal() {
   const [rankSearchOpen, setRankSearchOpen] = useState(false);
   const [missionTab, setMissionTab] = useState<MissionTab>('diaria');
   const [missionsOpen, setMissionsOpen] = useState(false);
-  const [hoverPt, setHoverPt] = useState<number | null>(null);
-  const [top3Open, setTop3Open] = useState<number | null>(null);
+  const [hoverBar, setHoverBar] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(10);
   const [query, setQuery] = useState('');
   const [toast, setToast] = useState('');
@@ -410,24 +350,14 @@ export default function RankingStoreModal() {
     };
   }, [myRank]);
 
-  /* [top1, top10, top50, eu] — "eu" por último pra ficar por cima.
-   * Recalcula ao trocar o período (os traços mudam). */
-  const meSpark = SPARKS[period].me;
-  const chart = useMemo(() => {
-    const s = SPARKS[period];
-    return multiChartPaths([s.top1, s.top10, s.top50, s.me]);
-  }, [period]);
-  const series = chart.series;
-  const mePts = series[3].pts;
-  /* 4 marcos no eixo Y (pontos), do mínimo ao máximo da escala. */
-  const yTicks = useMemo(() => {
-    return [0, 1, 2, 3].map((k) => {
-      const v = chart.min + (chart.span * k) / 3;
-      const y = chart.toY(v);
-      return { v, y, top: (y / CHART_H) * 100, label: `${Math.round(v / 1000)}k` };
-    });
-  }, [chart]);
-  const xLabels = CHART_X_LABELS[period];
+  /* Barras: 7 usuários (top 6 + eu, se eu não estiver no topo). Eu
+   * sempre presente e destacado. Alturas vêm de BAR_HEIGHTS[period] —
+   * ilustrativas, não proporcionais; re-animam ao trocar de período. */
+  const barUsers = useMemo(() => {
+    const top = rows.slice(0, 7);
+    const pick = me && !top.some((r) => r.you) ? [...rows.slice(0, 6), me] : top;
+    return pick.slice(0, 7).map((row, i) => ({ row, h: BAR_HEIGHTS[period][i] ?? 40 }));
+  }, [rows, me, period]);
 
   const mission = MISSIONS[missionTab];
 
@@ -584,120 +514,53 @@ export default function RankingStoreModal() {
                         </div>
                       </div>
 
-                      {/* DIREITA — gráfico (top 3 sobre as linhas) */}
+                      {/* DIREITA — gráfico de barras (1 por usuário; eu em
+                          destaque). Alturas só ilustrativas; sem eixos. */}
                       <div className={styles.evoChartCol}>
-                        <div className={styles.chartWrap}>
-                          <div className={styles.chartArea}>
-                            {/* eixo Y — marcos de pontos */}
-                            <div className={styles.yAxis}>
-                              {yTicks.map((t) => (
-                                <span key={t.v} className={styles.yTick} style={{ top: `${t.top}%` }} title={`${fmt(t.v)} Fanpoints`}>{t.label}</span>
-                              ))}
-                            </div>
-
-                            <div className={styles.chartPlot}>
-                              <svg viewBox="0 0 300 96" preserveAspectRatio="none" className={styles.chartSvg}>
-                                <defs>
-                                  <linearGradient id="rkArea" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.16" />
-                                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                                  </linearGradient>
-                                </defs>
-                                {/* gridlines horizontais nos marcos do eixo Y */}
-                                {yTicks.map((t) => (
-                                  <line key={t.v} x1="0" y1={t.y} x2="300" y2={t.y} stroke="rgba(255,255,255,.06)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-                                ))}
-                                {/* referência: Top 1 / Top 10 / Top 50 (linhas finas) */}
-                                <path d={series[0].line} fill="none" stroke="#ff2e9a" strokeWidth="1.6" strokeOpacity="0.85" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-                                <path d={series[1].line} fill="none" stroke="#a855f7" strokeWidth="1.6" strokeOpacity="0.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-                                <path d={series[2].line} fill="none" stroke="rgba(255,255,255,.42)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" vectorEffect="non-scaling-stroke" />
-                                {/* você (linha branca cheia + área) */}
-                                <path d={series[3].area} fill="url(#rkArea)" />
-                                <path d={series[3].line} fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-                              </svg>
-
-                              {/* marcos clicáveis da minha linha + tooltip */}
-                              <div className={styles.chartDots}>
-                                {mePts.map((p, i) => (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    className={styles.chartDot}
-                                    style={{ left: `${(p[0] / CHART_W) * 100}%`, top: `${(p[1] / CHART_H) * 100}%` }}
-                                    title={`${xLabels[i]} · ${fmt(meSpark[i])} FP`}
-                                    aria-label={`${xLabels[i]}: ${fmt(meSpark[i])} Fanpoints`}
-                                    onMouseEnter={() => setHoverPt(i)}
-                                    onMouseLeave={() => setHoverPt(null)}
-                                    onFocus={() => setHoverPt(i)}
-                                    onBlur={() => setHoverPt(null)}
-                                  />
-                                ))}
-                                {hoverPt !== null && (
-                                  <div
-                                    className={styles.chartTip}
-                                    style={{ left: `${(mePts[hoverPt][0] / CHART_W) * 100}%`, top: `${(mePts[hoverPt][1] / CHART_H) * 100}%` }}
+                        <div className={styles.barChart} key={period} role="img" aria-label="Comparativo de Fanpoints entre superfãs">
+                          {barUsers.map(({ row, h }, i) => {
+                            const isYou = row.you;
+                            const cleanName = row.name.replace('Você · ', '');
+                            return (
+                              <div
+                                key={row.rank}
+                                className={styles.barCol}
+                                onMouseEnter={() => setHoverBar(i)}
+                                onMouseLeave={() => setHoverBar(null)}
+                              >
+                                <div className={styles.barTrack}>
+                                  <motion.div
+                                    className={`${styles.barFill} ${isYou ? styles.barFillYou : ''}`}
+                                    initial={{ height: 0 }}
+                                    animate={{ height: `${h}%` }}
+                                    transition={{ duration: 0.7, delay: 0.08 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
                                   >
-                                    <strong>{fmt(meSpark[hoverPt])} FP</strong>
-                                    <span>{xLabels[hoverPt]}</span>
-                                  </div>
-                                )}
+                                    {hoverBar === i && (
+                                      <div className={styles.barTip}>
+                                        <strong>{row.points}</strong>
+                                        <span>{isYou ? 'Você' : cleanName}</span>
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                </div>
+                                <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : ''}`} aria-hidden="true">
+                                  {row.avatarUrl
+                                    ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={row.avatarUrl} alt="" className={styles.barAvatarImg} />
+                                    )
+                                    : <span className={styles.barAvatarInitials}>{row.initials}</span>}
+                                </span>
                               </div>
-
-                              {/* TOP 3 sobre as linhas — só avatar; nome + FP no
-                                  tooltip (hover no desktop, clique no mobile). */}
-                              <div className={styles.chartTop3}>
-                                {rows.slice(0, 3).map((r, i) => (
-                                  <button
-                                    key={r.rank}
-                                    type="button"
-                                    className={styles.top3Marker}
-                                    style={{ left: `${(Number(series[i].cx) / CHART_W) * 100}%`, top: `${(Number(series[i].cy) / CHART_H) * 100}%` }}
-                                    onMouseEnter={() => setTop3Open(i)}
-                                    onMouseLeave={() => setTop3Open(null)}
-                                    onClick={() => setTop3Open((v) => (v === i ? null : i))}
-                                    aria-label={`${r.name.replace('Você · ', '')}: ${r.points}`}
-                                  >
-                                    {r.avatarUrl
-                                      ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={r.avatarUrl} alt="" className={styles.top3MarkerImg} />
-                                      )
-                                      : <span className={styles.top3MarkerInitials}>{r.initials}</span>}
-                                  </button>
-                                ))}
-                                {top3Open !== null && rows[top3Open] && (
-                                  <div
-                                    className={styles.top3Tip}
-                                    style={{ left: `${(Number(series[top3Open].cx) / CHART_W) * 100}%`, top: `${(Number(series[top3Open].cy) / CHART_H) * 100}%` }}
-                                  >
-                                    <strong>{rows[top3Open].name.replace('Você · ', '')}</strong>
-                                    <span>{rows[top3Open].points}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* eixo X — marcos de tempo (dia/semana/mês) */}
-                          <div className={styles.xAxis}>
-                            <div className={styles.xTicks} title={CHART_X_TIP[period]}>
-                              {xLabels.map((l, i) => (
-                                <span key={l} className={styles.xTick} style={{ left: `${(i / (xLabels.length - 1)) * 100}%` }} title={`${l} · ${fmt(meSpark[i])} FP`}>{l}</span>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className={styles.chartLegend}>
-                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#fff' }} />Você</span>
-                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#ff2e9a' }} />Top 1</span>
-                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: '#a855f7' }} />Top 10</span>
-                            <span className={styles.legendItem}><i className={styles.legendDot} style={{ background: 'rgba(255,255,255,.5)' }} />Top 50</span>
-                          </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
 
-                        {/* MISSÕES — logo abaixo do gráfico (antes de Conquistas) */}
+                        {/* MISSÕES + CONQUISTAS — lado a lado, dois boxes */}
+                        <div className={styles.evoBottomGrid}>
+                        {/* MISSÕES */}
                         <div className={styles.missionsBlock}>
                           <div className={styles.missionsHead}>
                             <span className={styles.cardTitle}>Minhas Missões</span>
@@ -767,6 +630,7 @@ export default function RankingStoreModal() {
                               ))}
                             </div>
                           </div>
+                        </div>
                         </div>
                   </div>
                   )}
