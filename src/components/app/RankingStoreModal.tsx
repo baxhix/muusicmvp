@@ -383,11 +383,16 @@ export default function RankingStoreModal() {
     if (!rows.length) return [] as BarUser[];
     const seed = PERIOD_SEED[period];
     const scored = rows.map((row) => {
-      const periodPts = Math.max(1, Math.round(row.pts * (0.35 + prand(row.rank, seed) * 1.05)));
+      /* "sel" decide QUEM entra; é independente do rank all-time → cada
+       * filtro (Hoje/Semana/Mês/Ano) destaca um conjunto diferente de
+       * superfãs. "periodPts" (altura/FP do período) é outro hash, então
+       * as alturas ficam bem espalhadas (não grudadas no topo). */
+      const sel = prand(row.rank, seed);
+      const periodPts = 300 + Math.round(prand(row.rank, seed + 313) * 4500); // ~300..4800
       const climb = 1 + Math.round(prand(row.rank, seed + 91) * 24); // 1..25 posições
-      return { row, periodPts, climb };
+      return { row, sel, periodPts, climb };
     });
-    let top = scored.slice().sort((a, b) => b.periodPts - a.periodPts).slice(0, 8);
+    let top = scored.slice().sort((a, b) => b.sel - a.sel).slice(0, 8);
     /* Garante "você" no gráfico (a aba é "Minha Evolução"). */
     if (me && !top.some((s) => s.row.you)) {
       const mine = scored.find((s) => s.row.you);
