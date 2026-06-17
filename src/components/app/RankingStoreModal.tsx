@@ -162,16 +162,9 @@ const PERIOD_BADGE: Record<Period, string> = {
   anual: 'Ano',
 };
 
-/* Alturas ILUSTRATIVAS das barras (7 usuários) por período — só pra
- * mostrar diferença de tamanho lado a lado, sem precisão de
- * proporcionalidade. O índice 3 é o usuário logado (sempre no centro).
- * Teto ~74% pra sobrar espaço pro avatar/colocação no topo da barra. */
-const BAR_HEIGHTS: Record<Period, number[]> = {
-  diario:  [50, 66, 72, 62, 70, 42, 56],
-  semanal: [60, 72, 46, 64, 52, 70, 50],
-  mensal:  [70, 52, 64, 60, 74, 44, 58],
-  anual:   [48, 72, 56, 62, 68, 40, 60],
-};
+/* Altura do plot do gráfico de barras (px) — precisa bater com a
+ * altura de .barChart no CSS pra converter o piso de 60px do usuário. */
+const BAR_PLOT_H = 252;
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -351,21 +344,30 @@ export default function RankingStoreModal() {
     };
   }, [myRank]);
 
-  /* Barras: 7 usuários com EU sempre no centro (índice 3), ladeado
-   * pelos vizinhos de colocação mais próximos (3 de cada lado),
-   * ordenados por rank. Alturas ilustrativas (BAR_HEIGHTS[period]). */
+  /* Barras (formação "montanha"): Top 10 + eu (se eu estiver fora do
+   * top 10; senão só os 10). O #1 é o MAIOR e fica no centro; os
+   * demais decrescem por colocação alternando lado — #2 à direita,
+   * #3 à esquerda, #4 à direita… Eu, fora do top 10, entro como o
+   * menor colocado (piso de 60px). Alturas ilustrativas. */
   const barUsers = useMemo(() => {
-    const heights = BAR_HEIGHTS[period];
-    if (!me) return rows.slice(0, 7).map((row, i) => ({ row, h: heights[i] ?? 40 }));
-    const meRank = myRank ?? 1;
-    const nearest = rows
-      .filter((r) => !r.you)
-      .sort((a, b) => Math.abs(a.rank - meRank) - Math.abs(b.rank - meRank))
-      .slice(0, 6)
-      .sort((a, b) => a.rank - b.rank);
-    const ordered = [...nearest.slice(0, 3), me, ...nearest.slice(3)];
-    return ordered.map((row, i) => ({ row, h: heights[i] ?? 40 }));
-  }, [rows, me, myRank, period]);
+    const top10 = rows.slice(0, 10);
+    const meIn = !!me && top10.some((r) => r.you);
+    const ranked = !me || meIn ? top10 : [...top10, me]; // crescente por rank
+    const n = ranked.length;
+    if (!n) return [] as { row: Row; h: number }[];
+    const TOP = 80, BOT = 32;
+    const MIN_PCT = (60 / BAR_PLOT_H) * 100; // piso de 60px do usuário
+    const withH = ranked.map((row, i) => {
+      let h = n > 1 ? TOP - (i / (n - 1)) * (TOP - BOT) : TOP;
+      if (row.you && !meIn) h = Math.max(h, MIN_PCT);
+      return { row, h };
+    });
+    /* #1 no centro; alterna direita (índices ímpares) / esquerda. */
+    const right: { row: Row; h: number }[] = [];
+    const left: { row: Row; h: number }[] = [];
+    withH.slice(1).forEach((item, k) => (k % 2 === 0 ? right : left).push(item));
+    return [...left.reverse(), withH[0], ...right];
+  }, [rows, me]);
 
   /* Escala do eixo Y (Fanpoints) — derivada dos usuários exibidos.
    * Rótulos top→base; ilustrativos (as barras não são proporcionais). */
@@ -555,6 +557,7 @@ export default function RankingStoreModal() {
                             <div className={styles.barCols} role="img" aria-label="Comparativo de Fanpoints entre superfãs">
                               {barUsers.map(({ row, h }, i) => {
                                 const isYou = row.you;
+                                const isTop1 = row.rank === 1 && !isYou;
                                 const cleanName = row.name.replace('Você · ', '');
                                 return (
                                   <div
@@ -565,7 +568,7 @@ export default function RankingStoreModal() {
                                   >
                                     <div className={styles.barTrack}>
                                       <motion.div
-                                        className={`${styles.barFill} ${isYou ? styles.barFillYou : ''}`}
+                                        className={`${styles.barFill} ${isYou ? styles.barFillYou : isTop1 ? styles.barFillTop1 : ''}`}
                                         initial={{ height: 0 }}
                                         animate={{ height: `${h}%` }}
                                         transition={{ duration: 0.7, delay: 0.08 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
@@ -578,7 +581,7 @@ export default function RankingStoreModal() {
                                               <span>{isYou ? 'Você' : cleanName}</span>
                                             </div>
                                           )}
-                                          <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : ''}`} aria-hidden="true">
+                                          <span className={`${styles.barAvatar} ${isYou ? styles.barAvatarYou : isTop1 ? styles.barAvatarTop1 : ''}`} aria-hidden="true">
                                             {row.avatarUrl
                                               ? (
                                                 // eslint-disable-next-line @next/next/no-img-element
@@ -586,7 +589,7 @@ export default function RankingStoreModal() {
                                               )
                                               : <span className={styles.barAvatarInitials}>{row.initials}</span>}
                                           </span>
-                                          <span className={`${styles.barRank} ${isYou ? styles.barRankYou : ''}`}>{row.rank ? `#${row.rank}` : ''}</span>
+                                          <span className={`${styles.barRank} ${isYou ? styles.barRankYou : isTop1 ? styles.barRankTop1 : ''}`}>{row.rank ? `#${row.rank}` : ''}</span>
                                         </div>
                                       </motion.div>
                                     </div>
