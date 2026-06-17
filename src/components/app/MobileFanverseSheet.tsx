@@ -224,19 +224,20 @@ export default function MobileFanverseSheet({
           </button>
         </div>
         <div className={sheetStyles.metaRow}>
-          {/* metaPoints é o TRIGGER do FanpointsModal per spec
-           * "o link para o modal Fanpoints deve ser a quantidade
-           * de Fanpoints + o nome Fanpoints que está abaixo do
-           * nome Ana Castela". */}
+          {/* metaPoints é o TRIGGER do modal Ranking Fanverse
+           * (Classificação · Minha evolução · Jornada · Loja),
+           * abrindo na aba "Minha evolução". */}
           <button
             type="button"
             className={sheetStyles.metaPoints}
             onClick={() => {
               try {
-                window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+                window.dispatchEvent(
+                  new CustomEvent('app:open-ranking-store', { detail: { screen: 'evolucao' } }),
+                );
               } catch { /* SSR */ }
             }}
-            aria-label="Abrir Fanpoints"
+            aria-label="Abrir Fanverse — Minha evolução"
           >
             <span className={sheetStyles.metaPointsValue}>
               {fanpoints.toLocaleString('pt-BR')}

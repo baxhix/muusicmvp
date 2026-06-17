@@ -32,7 +32,7 @@ import RankMedallion from './RankMedallion';
 import { BeneficiosTab, currentTierForRank } from './FanpointsModal';
 import styles from './RankingStoreModal.module.css';
 
-type Screen = 'ranking' | 'loja';
+type Screen = 'ranking' | 'evolucao' | 'loja';
 type Tab = 'classificacao' | 'evolucao' | 'jornada' | 'loja';
 type Period = 'diario' | 'semanal' | 'mensal' | 'anual';
 type StoreTab = 'experiencias' | 'produtos';
@@ -244,7 +244,13 @@ export default function RankingStoreModal() {
   useEffect(() => {
     const onOpen = (e: Event) => {
       const detail = (e as CustomEvent).detail as { screen?: Screen } | undefined;
-      setTab(detail?.screen === 'loja' ? 'loja' : 'classificacao');
+      setTab(
+        detail?.screen === 'loja'
+          ? 'loja'
+          : detail?.screen === 'evolucao'
+          ? 'evolucao'
+          : 'classificacao',
+      );
       setClosing(false);
       setOpen(true);
     };

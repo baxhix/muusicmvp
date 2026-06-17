@@ -400,10 +400,9 @@ export default function ArtistBox() {
                 className={styles.metaRow}
                 data-onboarding-anchor="fanpoints"
               >
-                {/* metaPoints agora é o TRIGGER do FanpointsModal
-                 * per spec "o link para o modal Fanpoints deve ser
-                 * a quantidade de Fanpoints + o nome Fanpoints que
-                 * está abaixo do nome Ana Castela". stopPropagation
+                {/* metaPoints é o TRIGGER do modal Ranking Fanverse
+                 * (Classificação · Minha evolução · Jornada · Loja),
+                 * abrindo na aba "Minha evolução". stopPropagation
                  * evita que o click vaze pro botão pai (.headerBtn)
                  * que faz toggle do dropdown. */}
                 <button
@@ -412,10 +411,12 @@ export default function ArtistBox() {
                   onClick={(e) => {
                     e.stopPropagation();
                     try {
-                      window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+                      window.dispatchEvent(
+                        new CustomEvent('app:open-ranking-store', { detail: { screen: 'evolucao' } }),
+                      );
                     } catch { /* SSR */ }
                   }}
-                  aria-label="Abrir Fanpoints"
+                  aria-label="Abrir Fanverse — Minha evolução"
                 >
                   <span className={styles.metaPointsValue}>
                     {/* NumberTicker: ao ganhar Fanpoints, o
