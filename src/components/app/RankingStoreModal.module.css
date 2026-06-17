@@ -533,8 +533,10 @@
 .evoTopRow { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
 .evoPeriod { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 /* Ordem invertida: GRÁFICO primeiro (coluna larga, à esquerda / topo no
- * mobile) e a LISTA "Por período" depois (coluna estreita, à direita). */
-.evoMain { display: grid; grid-template-columns: 1fr 290px; gap: 30px; align-items: start; }
+ * mobile) e a LISTA "Por período" depois (coluna estreita, à direita).
+ * Coluna de stats 60px mais estreita (290→230) = 60px a mais de largura
+ * pro gráfico no desktop. */
+.evoMain { display: grid; grid-template-columns: 1fr 230px; gap: 30px; align-items: start; }
 .evoMain > * { min-width: 0; }
 .evoMain .evoChartCol { order: 1; }
 .evoMain .evoStats { order: 2; }
