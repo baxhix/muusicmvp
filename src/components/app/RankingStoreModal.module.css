@@ -502,10 +502,28 @@
 .barTip strong { font-size: 12px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .barTip span { font-size: 10px; color: rgba(255, 255, 255, 0.6); }
 @media (max-width: 720px) {
-  .barChart { height: 220px; gap: 8px; }
-  .barCol { width: 32px; }
-  .barFill { width: 18px; }
+  .barChart { height: 220px; gap: 10px; }
+  .barCol { width: 30px; }
+  .barFill { width: 17px; }
   .barAvatar { width: 22px; height: 22px; }
+  /* Até 11 barras: em telas muito estreitas, rola horizontalmente em
+   * vez de estourar/cortar. Caps cabem na altura do plot (sem corte
+   * vertical). Alinha à esquerda pra o scroll começar no #1. */
+  .barCols {
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 2px;
+  }
+  .barCols::-webkit-scrollbar { display: none; }
+}
+/* Em celulares, barras mais finas pra os 11 caberem sem rolar na maioria. */
+@media (max-width: 480px) {
+  .barCol { width: 24px; }
+  .barFill { width: 14px; }
+  .barCols { gap: 3px; }
 }
 
 /* ── Minha Evolução: header + 2 colunas (stats + gráfico) ── */
@@ -1207,12 +1225,29 @@
   .modal { width: 100vw; height: 100dvh; max-width: none; border-radius: 0; }
   .header { flex-wrap: wrap; justify-content: center; gap: 12px; row-gap: 10px; padding: 12px 14px; }
   .spacer { display: none; }
+  .tabBar { padding: 12px 14px 2px; }
   .body { padding: 14px; }
   .titleBlock { flex-basis: auto; max-width: none; }
   .periodTabs { order: 3; }
+  /* Cards e boxes com padding menor pra ganhar largura útil no celular. */
+  .card { padding: 16px; }
+  .store { gap: 16px; }
+  .storeLeft { gap: 16px; }
 }
 @media (max-width: 600px) {
   .products { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .header { padding: 11px 12px; gap: 10px; }
+  .titleMain { font-size: 16px; }
+  .closeBtn { right: 12px; }
+  .tabBar { padding: 10px 12px 2px; justify-content: flex-start; }
+  .mainTab { padding: 8px 13px; font-size: 12.5px; }
+  .body { padding: 12px; }
+  .card { padding: 14px; }
+  /* Conquistas / Missões empilham mais cedo pra não espremer. */
+  .evoBottomGrid { grid-template-columns: 1fr; }
+  .badgeGrid, .statsGrid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   .backdrop, .modal, .mFill, .podiumCard, .achPanel, .mDetails, .toast { animation: none; }
