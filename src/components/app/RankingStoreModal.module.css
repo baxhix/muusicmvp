@@ -544,6 +544,8 @@
 .evoTotal { font-size: 22px; font-weight: 700; margin-top: 1px; font-variant-numeric: tabular-nums; letter-spacing: -0.4px; }
 .evoVarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
 .evoVarLabel { font-size: 12px; color: rgba(255, 255, 255, 0.55); }
+/* Total de FP do período (ex.: 9.486 FP "Hoje") em branco — não verde. */
+.evoVarRow .delta { color: #fff; }
 .evoStats .divider { margin: 14px 0; }
 /* Placar do período: itens mais juntos. Borda 1.5px transparente
  * reservada em todos pra o texto não "pular" ao selecionar. */
@@ -573,8 +575,11 @@
 }
 .posLabel { flex: 1; text-align: left; font-size: 12.5px; font-weight: 600; color: #e8e8ea; }
 /* #N cinza por padrão; branco SÓ quando o período está selecionado. */
-.posRank { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.5); }
-.posRowActive .posRank { color: #fff; }
+/* #N e a variação de posição: regular + cinza quando NÃO selecionado;
+ * bold + branco/colorido só no item selecionado. */
+.posRank { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.5); }
+.posRowActive .posRank { font-weight: 700; color: #fff; }
+.posRow:not(.posRowActive) .delta { color: rgba(255, 255, 255, 0.5); font-weight: 500; }
 
 /* Top 3 (mini avatares + nome + FP) acima do gráfico. */
 .top3Row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -612,7 +617,8 @@
 
 /* Minhas Missões + Conquistas lado a lado (2 colunas), cada um num
  * box visualmente separado. */
-.evoBottomGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; align-items: start; }
+/* align-items: stretch → os dois boxes ficam com a MESMA altura. */
+.evoBottomGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; align-items: stretch; }
 @media (max-width: 720px) { .evoBottomGrid { grid-template-columns: 1fr; } }
 
 /* Missões dentro de Minha evolução (box). */
@@ -1099,7 +1105,8 @@
   font-weight: 600;
   cursor: pointer;
 }
-.sortSelect option { color: #0b0b0d; }
+/* Dropdown do select em preto (combina com o modal escuro). */
+.sortSelect option { color: #fff; background: #000; }
 
 .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: stretch; }
 /* Cards de Experiência e Produto com tamanho idêntico (sem "pulo" ao
