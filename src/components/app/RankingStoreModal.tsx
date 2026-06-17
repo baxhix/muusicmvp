@@ -160,13 +160,6 @@ const PERIOD_META: Record<Period, { label: string; range: string }> = {
   anual:   { label: '2026', range: 'Temporada anual' },
 };
 
-const RANK_TITLE: Record<Period, string> = {
-  diario: 'Classificação de hoje',
-  semanal: 'Classificação da semana',
-  mensal: 'Classificação de junho',
-  anual: 'Classificação geral',
-};
-
 /* Abas principais do modal. Ordem fixa pedida pelo produto. */
 const MAIN_TABS: [Tab, string][] = [
   ['classificacao', 'Classificação'],
@@ -180,8 +173,6 @@ const TAB_TITLE: Record<Tab, string> = {
   jornada: 'Sua Jornada',
   loja: 'Loja Fanverse',
 };
-/* Só Classificação e Minha evolução têm filtro de período. */
-const TABS_WITH_PERIOD: Tab[] = ['classificacao', 'evolucao'];
 
 /* Marcos do eixo X do gráfico (7 pontos) — dia / semana / mês conforme
  * o período. */
@@ -217,7 +208,7 @@ const initialsOf = (name: string) =>
 interface Row {
   rank: number; pts: number; you: boolean; name: string; city: string;
   avatarUrl: string | null; initials: string; points: string;
-  ring: string; rankColor: string;
+  ring: string; rankColor: string; delta: number;
 }
 
 /* Gera os paths de N séries numa escala Y compartilhada (pra as
@@ -348,6 +339,9 @@ export default function RankingStoreModal() {
       const rank = i + 1;
       const isMe = !!user?.id && r.userId === user.id;
       const baseName = r.name?.trim() || 'Fã';
+      /* Variação de posição (mock determinístico — sem histórico real
+       * ainda): >0 subiu, <0 desceu, 0 manteve. */
+      const delta = ((rank * 7) % 9) - 4;
       /* Estilo padronizado com a aba Superfãs: #N cinza uniforme
        * (sem cor de medalha) — a colocação Top 10 é sinalizada pelo
        * selo (RankMedallion) no avatar. */
@@ -362,6 +356,7 @@ export default function RankingStoreModal() {
         points: `${fmt(r.points)} FP`,
         ring: isMe ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.12)',
         rankColor: isMe ? '#fff' : 'rgba(245,245,247,.55)',
+        delta,
       };
     });
   }, [ranking, user?.id]);
@@ -413,8 +408,6 @@ export default function RankingStoreModal() {
 
   if (!open) return null;
 
-  const showPeriod = TABS_WITH_PERIOD.includes(tab);
-
   const PERIOD_TABS: [Period, string][] = [
     ['diario', 'Diário'], ['semanal', 'Semanal'], ['mensal', 'Mensal'], ['anual', 'Anual'],
   ];
@@ -457,8 +450,9 @@ export default function RankingStoreModal() {
             ))}
           </div>
 
-          {/* Filtro de período — só Classificação e Minha evolução. */}
-          {showPeriod && (
+          {/* Filtro de período no topo — só Minha evolução (Classificação
+              tem o seu próprio dentro do box). */}
+          {tab === 'evolucao' && (
             <div className={styles.periodRow}>
               <div className={styles.periodMeta}>
                 <span className={styles.periodLabel}>{pm.label}</span>
@@ -668,11 +662,30 @@ export default function RankingStoreModal() {
                 {/* ===== CLASSIFICAÇÃO ===== */}
                 {tab === 'classificacao' && (
                   <div className={styles.rankCard}>
-                    <div className={styles.rankHead}>
-                      <span className={styles.cardTitle}>{RANK_TITLE[period]}</span>
+                    {/* Filtro de dias + legenda do período, dentro do box. */}
+                    <div className={styles.rankHeadTabs}>
+                      <div className={styles.periodMeta}>
+                        <span className={styles.periodLabel}>{pm.label}</span>
+                        <span className={styles.dot} />
+                        <span className={styles.periodRange}>{pm.range}</span>
+                      </div>
+                      <div className={styles.periodTabs} role="tablist">
+                        {PERIOD_TABS.map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            role="tab"
+                            aria-selected={period === key}
+                            className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                            onClick={() => setPeriod(key)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Só os 10 primeiros. #N + selo + FP no padrão Superfãs. */}
+                    {/* Top 10 — cada usuário em card individual. */}
                     <div className={styles.list}>
                       {list.slice(0, 10).map((r) => (
                         <div key={r.rank} className={`${styles.row} ${r.you ? styles.rowYou : ''}`}>
@@ -692,7 +705,17 @@ export default function RankingStoreModal() {
                             <span className={styles.name}>{r.name}</span>
                             {r.city && <span className={styles.city}>{r.city}</span>}
                           </div>
-                          <span className={styles.points}>{r.points}</span>
+                          <div className={styles.pointsCol}>
+                            <span className={styles.points}>{r.points}</span>
+                            {r.delta !== 0 && (
+                              <span className={`${styles.delta} ${r.delta > 0 ? styles.deltaUp : styles.deltaDown}`}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d={r.delta > 0 ? 'M12 19V5M5 12l7-7 7 7' : 'M12 5v14M5 12l7 7 7-7'} />
+                                </svg>
+                                {Math.abs(r.delta)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                       {list.length === 0 && (
