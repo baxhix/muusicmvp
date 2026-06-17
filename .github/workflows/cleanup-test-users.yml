@@ -1,0 +1,75 @@
+# ──────────────────────────────────────────────────────────────────────────
+# Cleanup — usuários de teste de carga (@muusic-teste.local)
+#
+# Esses usuários foram criados por robô (k6) pra teste de carga. Não são contas
+# reais → hard-delete é apropriado (o fluxo LGPD normal é soft-delete +
+# anonimização; aqui é lixo de teste, some de vez).
+#
+# Roda SÓ manualmente (workflow_dispatch), no runner self-hosted dentro do VPS,
+# via psql no container postgres. NÃO roda em push.
+#
+#   mode=count   → só conta (read-only). Default. Use pra ver o impacto antes.
+#   mode=delete  → apaga DE VEZ; exige confirm="APAGAR".
+#
+# O DELETE cascateia pelos FKs ON DELETE CASCADE (atividade, pontos, mensagens,
+# localização…). NUNCA toca role='admin' (guarda defensiva). Statement único =
+# atômico: se algum FK NO ACTION bloquear, nada é apagado e o job falha.
+# ──────────────────────────────────────────────────────────────────────────
+name: Cleanup test users
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'count (read-only) ou delete (apaga de vez)'
+        type: choice
+        options: [count, delete]
+        default: count
+      confirm:
+        description: 'Pra mode=delete, digite exatamente: APAGAR'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+# Não deixa duas execuções mexerem no banco ao mesmo tempo.
+concurrency:
+  group: cleanup-test-users
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Remove @muusic-teste.local
+    runs-on: [self-hosted, vps-muusic]
+    env:
+      MODE: ${{ inputs.mode }}
+      CONFIRM: ${{ inputs.confirm }}
+    steps:
+      - name: Count / delete via psql
+        run: |
+          set -euo pipefail
+          cd /opt/muusic || { echo "::error::cd /opt/muusic failed"; exit 1; }
+
+          # psql dentro do container postgres (socket local = trust, sem senha).
+          # ON_ERROR_STOP garante exit !=0 em qualquer erro de SQL.
+          PSQL="sudo docker compose exec -T postgres psql -U muusic -d muusic -v ON_ERROR_STOP=1"
+
+          WHERE="email LIKE '%@muusic-teste.local' AND role <> 'admin'"
+
+          echo "=> contando (read-only)…"
+          $PSQL -c "SELECT count(*) AS matched FROM users WHERE ${WHERE};"
+
+          if [ "${MODE}" != "delete" ]; then
+            echo "=> mode=count (dry-run) — nada apagado."
+            exit 0
+          fi
+
+          if [ "${CONFIRM}" != "APAGAR" ]; then
+            echo "::error::mode=delete exige confirm=APAGAR (recebido: '${CONFIRM}'). Abortado — nada apagado."
+            exit 1
+          fi
+
+          echo "=> apagando (cascata nos FKs)…"
+          $PSQL -c "WITH del AS (DELETE FROM users WHERE ${WHERE} RETURNING id) SELECT count(*) AS deleted FROM del;"
+          echo "=> done."
