@@ -220,6 +220,61 @@
   .periodMeta, .periodTabs, .headerActions { justify-self: center; }
 }
 
+/* ── Abas principais (Classificação / Minha evolução / Jornada / Loja) ── */
+.mainTabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mainTabs::-webkit-scrollbar { display: none; }
+.mainTab {
+  flex: 0 0 auto;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mainTab:hover { color: rgba(255, 255, 255, 0.85); }
+.mainTabActive { background: #fff; color: #0b0b0d; }
+.mainTabActive:hover { color: #0b0b0d; }
+
+/* Linha do filtro de período (detalhe à esquerda · tabs à direita). */
+.periodRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+@media (max-width: 720px) {
+  .periodRow { flex-wrap: wrap; justify-content: center; gap: 10px; }
+}
+
+/* Jornada — Missões + Benefícios lado a lado (empilha no mobile). */
+.jornadaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .jornadaGrid { grid-template-columns: 1fr; }
+}
+
 /* Classificação à direita ocupa ~40% (painel pessoal 60% à esquerda). */
 .grid {
   display: grid;

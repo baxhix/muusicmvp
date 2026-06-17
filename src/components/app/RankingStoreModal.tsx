@@ -31,6 +31,7 @@ import RankMedallion from './RankMedallion';
 import styles from './RankingStoreModal.module.css';
 
 type Screen = 'ranking' | 'loja';
+type Tab = 'classificacao' | 'evolucao' | 'jornada' | 'loja';
 type Period = 'diario' | 'semanal' | 'mensal' | 'anual';
 type StoreTab = 'experiencias' | 'produtos';
 type Sort = 'relevancia' | 'menor' | 'maior' | 'novidades';
@@ -166,6 +167,22 @@ const RANK_TITLE: Record<Period, string> = {
   anual: 'Classificação geral',
 };
 
+/* Abas principais do modal. Ordem fixa pedida pelo produto. */
+const MAIN_TABS: [Tab, string][] = [
+  ['classificacao', 'Classificação'],
+  ['evolucao', 'Minha evolução'],
+  ['jornada', 'Jornada'],
+  ['loja', 'Loja'],
+];
+const TAB_TITLE: Record<Tab, string> = {
+  classificacao: 'Ranking Fanverse',
+  evolucao: 'Minha Evolução',
+  jornada: 'Sua Jornada',
+  loja: 'Loja Fanverse',
+};
+/* Só Classificação e Minha evolução têm filtro de período. */
+const TABS_WITH_PERIOD: Tab[] = ['classificacao', 'evolucao'];
+
 /* Marcos do eixo X do gráfico (7 pontos) — dia / semana / mês conforme
  * o período. */
 const CHART_X_LABELS: Record<Period, string[]> = {
@@ -262,7 +279,7 @@ function ProductSlider({ discount }: { discount?: string }) {
 export default function RankingStoreModal() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [screen, setScreen] = useState<Screen>('ranking');
+  const [tab, setTab] = useState<Tab>('classificacao');
   const [period, setPeriod] = useState<Period>('semanal');
   const [storeTab, setStoreTab] = useState<StoreTab>('experiencias');
   const [sort, setSort] = useState<Sort>('relevancia');
@@ -285,7 +302,7 @@ export default function RankingStoreModal() {
   useEffect(() => {
     const onOpen = (e: Event) => {
       const detail = (e as CustomEvent).detail as { screen?: Screen } | undefined;
-      setScreen(detail?.screen === 'loja' ? 'loja' : 'ranking');
+      setTab(detail?.screen === 'loja' ? 'loja' : 'classificacao');
       setClosing(false);
       setOpen(true);
     };
@@ -396,14 +413,14 @@ export default function RankingStoreModal() {
 
   if (!open) return null;
 
-  const isRanking = screen === 'ranking';
+  const showPeriod = TABS_WITH_PERIOD.includes(tab);
 
   const PERIOD_TABS: [Period, string][] = [
     ['diario', 'Diário'], ['semanal', 'Semanal'], ['mensal', 'Mensal'], ['anual', 'Anual'],
   ];
 
   return (
-    <div className={styles.root} role="dialog" aria-modal="true" aria-label={isRanking ? 'Ranking Fanverse' : 'Loja Fanverse'}>
+    <div className={styles.root} role="dialog" aria-modal="true" aria-label={TAB_TITLE[tab]}>
       <div
         className={`${styles.backdrop} ${closing ? styles.backdropOut : ''}`}
         onClick={close}
@@ -414,7 +431,7 @@ export default function RankingStoreModal() {
         {/* ===== HEADER — apenas o título + fechar ===== */}
         <div className={styles.header}>
           <div className={styles.titleBlock}>
-            <div className={styles.titleMain}>{isRanking ? 'Ranking Fanverse' : 'Loja Fanverse'}</div>
+            <div className={styles.titleMain}>{TAB_TITLE[tab]}</div>
           </div>
 
           <button type="button" className={styles.closeBtn} onClick={close} aria-label="Fechar">
@@ -424,47 +441,50 @@ export default function RankingStoreModal() {
 
         {/* ===== BODY ===== */}
         <div className={styles.body}>
-          {isRanking ? (
-            <>
-              {/* TOOLBAR — detalhe do período (esquerda) · tabs
-                  (centro) · atalhos (direita). Grid 1fr auto 1fr. */}
-              <div className={styles.toolbar}>
-                <div className={styles.periodMeta}>
-                  <span className={styles.periodLabel}>{pm.label}</span>
-                  <span className={styles.dot} />
-                  <span className={styles.periodRange}>{pm.range}</span>
-                </div>
+          {/* ===== ABAS PRINCIPAIS ===== */}
+          <div className={styles.mainTabs} role="tablist">
+            {MAIN_TABS.map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={tab === key}
+                className={`${styles.mainTab} ${tab === key ? styles.mainTabActive : ''}`}
+                onClick={() => setTab(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-                <div className={styles.periodTabs} role="tablist">
-                  {PERIOD_TABS.map(([key, label]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      role="tab"
-                      aria-selected={period === key}
-                      className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
-                      onClick={() => setPeriod(key)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className={styles.headerActions}>
-                  <button type="button" className={styles.actionBtn} onClick={() => setScreen('loja')} aria-label="Abrir loja">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.6-5h14.8L21 9M3 9h18M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M9 13h6" /></svg>
-                    Loja
-                  </button>
-                  <button type="button" className={styles.actionBtn} onClick={() => achRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })} aria-label="Benefícios">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 18h6M10 14v4M14 14v4M8 21h8" /></svg>
-                    Benefícios
-                  </button>
-                </div>
+          {/* Filtro de período — só Classificação e Minha evolução. */}
+          {showPeriod && (
+            <div className={styles.periodRow}>
+              <div className={styles.periodMeta}>
+                <span className={styles.periodLabel}>{pm.label}</span>
+                <span className={styles.dot} />
+                <span className={styles.periodRange}>{pm.range}</span>
               </div>
+              <div className={styles.periodTabs} role="tablist">
+                {PERIOD_TABS.map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={period === key}
+                    className={`${styles.tab} ${period === key ? styles.tabActive : ''}`}
+                    onClick={() => setPeriod(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-              <div className={styles.grid}>
-                  {/* MINHA EVOLUÇÃO — largura total */}
-                  <div className={`${styles.card} ${styles.evoFull}`}>
+          {/* ===== MINHA EVOLUÇÃO ===== */}
+          {tab === 'evolucao' && (
+                  <div className={styles.card}>
                     <div className={styles.evoHead}>
                       <span className={styles.cardTitle}>Minha Evolução</span>
                       <div className={styles.fpInline}>
@@ -558,7 +578,7 @@ export default function RankingStoreModal() {
                           </div>
                           <div className={styles.achPanel}>
                             <div className={styles.perkList}>
-                              {[...BADGES, ...PERKS].map((pk) => (
+                              {BADGES.map((pk) => (
                                 <div key={pk.label} className={styles.perk}>
                                   <span className={styles.perkLabel}>{pk.label}</span>
                                   <span className={styles.perkSub}>{pk.sub}</span>
@@ -568,7 +588,11 @@ export default function RankingStoreModal() {
                           </div>
                         </div>
                   </div>
+                  )}
 
+                  {/* ===== JORNADA — Missões + Benefícios ===== */}
+                  {tab === 'jornada' && (
+                    <div className={styles.jornadaGrid}>
                   {/* MISSÕES */}
                   <div className={styles.card}>
                     <div className={styles.missionsHead}>
@@ -624,8 +648,25 @@ export default function RankingStoreModal() {
                     </div>
                   </div>
 
-                {/* CLASSIFICAÇÃO — abaixo do gráfico, à direita */}
-                <div className={styles.colRanking}>
+                  {/* BENEFÍCIOS desbloqueados */}
+                  <div className={styles.card}>
+                    <div className={styles.achHead}>
+                      <span className={styles.cardTitle}>Benefícios</span>
+                    </div>
+                    <div className={styles.perkList}>
+                      {PERKS.map((pk) => (
+                        <div key={pk.label} className={styles.perk}>
+                          <span className={styles.perkLabel}>{pk.label}</span>
+                          <span className={styles.perkSub}>{pk.sub}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                    </div>
+                  )}
+
+                {/* ===== CLASSIFICAÇÃO ===== */}
+                {tab === 'classificacao' && (
                   <div className={styles.rankCard}>
                     <div className={styles.rankHead}>
                       <span className={styles.cardTitle}>{RANK_TITLE[period]}</span>
@@ -661,11 +702,10 @@ export default function RankingStoreModal() {
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            /* ===== LOJA ===== */
+                  )}
+
+                  {/* ===== LOJA ===== */}
+                  {tab === 'loja' && (
             <div className={styles.store}>
               <div className={styles.storeLeft}>
                 {/* SALDO */}
@@ -710,10 +750,7 @@ export default function RankingStoreModal() {
               {/* GALERIA */}
               <div className={styles.galleryCol}>
                 <div className={styles.galleryHead}>
-                  <button type="button" className={styles.backBtn} onClick={() => setScreen('ranking')}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-                    Voltar ao ranking
-                  </button>
+                  <div />
                   <div className={styles.storeTabs}>
                     {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
                       <button
