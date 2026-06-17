@@ -910,6 +910,8 @@
 .discountRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 11px 13px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); }
 .discountInfo { font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 2px; }
 .discountInfo:first-child { margin-top: 0; }
+/* Data de validade em destaque (bold + branco). */
+.discountStrong { color: #fff; font-weight: 700; }
 /* Badge 15% OFF: fundo preto + borda em gradiente (mesmo estilo do usuário logado em Classificação). */
 .discountBadge {
   flex: 0 0 auto;
@@ -955,7 +957,8 @@
 .galleryHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 
 /* Filtros estilo e-commerce (Experiências / Produtos) abaixo do head. */
-.storeFilters { display: flex; gap: 8px; margin-bottom: 16px; }
+/* Filtros Experiências/Produtos no rodapé do box Meu saldo (coluna esq). */
+.storeFilters { display: flex; gap: 8px; }
 .storeFilterChip {
   padding: 7px 14px;
   border: none;
@@ -1086,10 +1089,13 @@
 .discountTag { position: absolute; top: 12px; left: 12px; z-index: 3; font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: #0b0b0d; color: #fff; }
 .productBody { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
 .productName { font-size: 13px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.85); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 34px; }
-.productPriceRow { display: flex; align-items: baseline; gap: 8px; margin-top: 7px; margin-bottom: 13px; min-height: 18px; }
+/* Preço em duas linhas: "De X FP" (riscado) em cima, preço com
+ * desconto embaixo. min-height reserva as 2 linhas pra os cards
+ * ficarem do mesmo tamanho mesmo sem preço "de". */
+.productPriceRow { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; margin-top: 7px; margin-bottom: 13px; min-height: 36px; }
 .productCost { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.65); font-variant-numeric: tabular-nums; }
 .tagIcon { flex: 0 0 auto; opacity: 0.7; }
-.productOriginal { font-size: 12px; color: rgba(255, 255, 255, 0.35); text-decoration: line-through; font-variant-numeric: tabular-nums; }
+.productOriginal { min-height: 15px; font-size: 12px; color: rgba(255, 255, 255, 0.35); text-decoration: line-through; font-variant-numeric: tabular-nums; }
 /* CTA no mesmo estilo do botão de download dos materiais exclusivos:
  * ghost transparente, texto sutil, hover com leve fill. */
 .productCta {

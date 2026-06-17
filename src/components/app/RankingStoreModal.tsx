@@ -115,7 +115,7 @@ const BADGES = [
 /* Imagens do slider dos produtos (mock). Salve os arquivos em
  * public/store/ — fundo branco no slot, contain pra mostrar a peça
  * inteira. */
-const PRODUCT_IMAGES = ['/store/produto-1.jpg', '/store/produto-2.jpg'];
+const PRODUCT_IMAGES = ['/store/produto-1.webp', '/store/produto-2.webp'];
 
 /* Rótulo/intervalo cosmético por período (só ranking all-time existe). */
 const PERIOD_META: Record<Period, { label: string; range: string }> = {
@@ -386,15 +386,14 @@ export default function RankingStoreModal() {
     return rows.filter((r) => r.name.toLowerCase().includes(q)).slice(0, 6);
   }, [query, rows]);
 
-  /* Validade do desconto: 30 dias a partir de hoje (cliente, modal só
-   * monta após evento → sem risco de hydration mismatch). */
-  const discountUntil = useMemo(
-    () =>
-      new Date(Date.now() + 30 * 86_400_000)
-        .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-        .replace('.', ''),
-    [],
-  );
+  /* Validade do desconto: 30 dias a partir de hoje. Formato fixo
+   * "DD de mmm de AAAA" (ex.: 17 de jul de 2026), determinístico —
+   * modal só monta após evento → sem risco de hydration mismatch. */
+  const discountUntil = useMemo(() => {
+    const d = new Date(Date.now() + 30 * 86_400_000);
+    const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    return `${String(d.getDate()).padStart(2, '0')} de ${MES[d.getMonth()]} de ${d.getFullYear()}`;
+  }, []);
 
   if (!open) return null;
 
@@ -798,8 +797,8 @@ export default function RankingStoreModal() {
                   <div className={styles.balSub}>disponível para troca</div>
                   <div className={styles.discountRow}>
                     <div>
-                      <div className={styles.discountInfo}>Desconto desbloqueado</div>
-                      <div className={styles.discountInfo}>válido até {discountUntil}</div>
+                      <div className={styles.discountInfo}>Desconto desbloqueado!</div>
+                      <div className={styles.discountInfo}>Válido até <strong className={styles.discountStrong}>{discountUntil}</strong></div>
                     </div>
                     <span className={styles.discountBadge}>15% OFF</span>
                   </div>
@@ -807,6 +806,22 @@ export default function RankingStoreModal() {
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                     Meus dados
                   </button>
+                </div>
+
+                {/* Filtros Experiências / Produtos — abaixo do box Meu saldo */}
+                <div className={styles.storeFilters} role="tablist">
+                  {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="tab"
+                      aria-selected={storeTab === k}
+                      className={`${styles.storeFilterChip} ${storeTab === k ? styles.storeFilterActive : ''}`}
+                      onClick={() => setStoreTab(k)}
+                    >
+                      {k === 'experiencias' ? 'Experiências' : 'Produtos'}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -868,22 +883,6 @@ export default function RankingStoreModal() {
                   </select>
                 </div>
 
-                {/* Filtros estilo e-commerce: Experiências / Produtos */}
-                <div className={styles.storeFilters} role="tablist">
-                  {(['experiencias', 'produtos'] as StoreTab[]).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      role="tab"
-                      aria-selected={storeTab === k}
-                      className={`${styles.storeFilterChip} ${storeTab === k ? styles.storeFilterActive : ''}`}
-                      onClick={() => setStoreTab(k)}
-                    >
-                      {k === 'experiencias' ? 'Experiências' : 'Produtos'}
-                    </button>
-                  ))}
-                </div>
-
                 <div className={styles.products}>
                   {gallery.map((p) => {
                     const ok = saldoFP >= p.cost;
@@ -896,11 +895,13 @@ export default function RankingStoreModal() {
                         <div className={styles.productBody}>
                           <div className={styles.productName}>{p.name}</div>
                           <div className={styles.productPriceRow}>
+                            {/* "De" (preço cheio riscado) na linha de cima; o
+                                preço com desconto fica na linha de baixo. */}
+                            <span className={styles.productOriginal}>{p.original ? `De ${fmt(p.original)} FP` : ' '}</span>
                             <span className={styles.productCost}>
                               <svg className={styles.tagIcon} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L3 13V3h10l7.59 7.59a2 2 0 0 1 0 2.82z" /><circle cx="7.5" cy="7.5" r="1.5" /></svg>
                               {fmt(p.cost)} FP
                             </span>
-                            {p.original && <span className={styles.productOriginal}>{fmt(p.original)} FP</span>}
                           </div>
                           <button
                             type="button"
