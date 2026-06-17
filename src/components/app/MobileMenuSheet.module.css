@@ -16,9 +16,13 @@
   z-index: 241;
   /* Dim do resto da tela — segura o contraste do texto agora que o
    * painel não escurece nada por conta própria. */
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px) saturate(1.05);
-  -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  background: rgba(0, 0, 0, 0.52);
+  /* Blur fica SÓ aqui (camada estática, só faz fade de opacity). O
+   * painel que desliza NÃO carrega backdrop-filter — senão o iOS
+   * re-amostra o blur a cada frame do transform e a tela "pisca/
+   * treme" ao abrir/fechar. */
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
 }
 
 .panel {
@@ -38,12 +42,12 @@
   /* Topo respira; base ergue o conteúdo acima da navbar (pill ~52 +
    * nav padding-bottom 24) + safe-area (home indicator). */
   padding: 28px 24px calc(env(safe-area-inset-bottom, 0px) + 100px);
-  /* SEM background nem escurecimento no menu — só blur (per spec
-   * "remova o background do menu"). O leve contraste pro texto vem do
-   * .backdrop (dim do resto da tela) por trás. */
+  /* SEM background nem backdrop-filter próprio: o blur vem do
+   * .backdrop (camada estática atrás). Um painel que DESLIZA com
+   * backdrop-filter faz o iOS re-amostrar o blur a cada frame →
+   * "pisca/treme". Sem blur aqui, o slide é só transform puro
+   * (compositor), 100% fluído. */
   background: transparent;
-  backdrop-filter: blur(36px) saturate(1.15);
-  -webkit-backdrop-filter: blur(36px) saturate(1.15);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   border-top-left-radius: 30px;
   border-top-right-radius: 30px;
@@ -185,9 +189,10 @@
   flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Sem backdrop-filter: o FAB desliza/escala dentro do painel; blur
+   * aqui re-amostra a cada frame e "pisca". Fica só fill translúcido
+   * (já há blur na camada do .backdrop por trás). */
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   display: grid;
   place-items: center;
