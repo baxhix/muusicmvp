@@ -248,6 +248,7 @@ function HeaderBar({
   trailing,
   centerTitle,
   stacked,
+  stackedTitle,
 }: {
   title: string;
   onBack?: () => void;
@@ -265,9 +266,13 @@ function HeaderBar({
    *  alinhado à esquerda e em 24px, SEM a seta de fechar à direita.
    *  Usado só pela tela "Nova comunidade". */
   stacked?: boolean;
+  /** Igual ao stacked (título 24px embaixo, à esquerda) MAS mantém os
+   *  controles da direita (kebab + fechar) na primeira linha. Usado no
+   *  detalhe de comunidade existente. */
+  stackedTitle?: boolean;
 }) {
   return (
-    <header className={`${styles.header} ${stacked ? styles.headerStacked : ''}`}>
+    <header className={`${styles.header} ${stacked ? styles.headerStacked : ''} ${stackedTitle ? styles.headerStackedTitle : ''}`}>
       {onBack && (
         <button
           type="button"
@@ -952,7 +957,7 @@ function CommunityDetailView({
   if (!community) {
     return (
       <>
-        <HeaderBar title="Comunidade" onBack={onBack} onClose={onClose} />
+        <HeaderBar title="Comunidade" onBack={onBack} onClose={onClose} stackedTitle />
         <div className={styles.body}>
           <div className={styles.emptyState}>{loading ? 'Carregando…' : 'Não encontrada.'}</div>
         </div>
@@ -993,6 +998,7 @@ function CommunityDetailView({
         onBack={onBack}
         onClose={onClose}
         trailing={<KebabMenu actions={headerActions} />}
+        stackedTitle
       />
 
       <div className={styles.body}>

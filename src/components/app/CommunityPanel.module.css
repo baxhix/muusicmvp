@@ -111,6 +111,35 @@
   text-align: left;
   font-size: 24px;
 }
+
+/* Detalhe de comunidade existente: mantém a seta de voltar + kebab +
+ * fechar na PRIMEIRA linha, mas joga o TÍTULO pra uma segunda linha,
+ * alinhado à esquerda e em 24px (mesmo formato visual do "Nova
+ * comunidade", só que sem remover os controles à direita). A seta
+ * empurra o grupo da direita (kebab + fechar) pra borda via
+ * margin-right:auto, e o título quebra pra próxima linha com
+ * flex-basis 100%. */
+.headerStackedTitle {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.headerStackedTitle .backBtn {
+  order: 1;
+  margin-right: auto;
+}
+.headerStackedTitle .kebabRoot {
+  order: 2;
+}
+.headerStackedTitle .closeBtn {
+  order: 3;
+}
+.headerStackedTitle .title {
+  order: 4;
+  flex: 0 0 100%;
+  width: 100%;
+  text-align: left;
+  font-size: 24px;
+}
 .closeBtn {
   width: 28px; height: 28px;
   display: inline-flex;
