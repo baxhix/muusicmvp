@@ -126,8 +126,8 @@
 
 .avatar {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.18);
   overflow: visible;
@@ -160,15 +160,15 @@
   display: block;
 }
 
-/* Bolinha on/offline — dimensionada pro avatar de 48px e recuada pra
+/* Bolinha on/offline — dimensionada pro avatar de 40px e recuada pra
  * assentar na borda inferior-direita do círculo. Verde quando online
  * (visível no mapa); cinza via .onlineDotOff. */
 .onlineDot {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 12px;
-  height: 12px;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid rgba(0,0,0,0.9);
@@ -253,9 +253,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  /* Conteúdo mais acima: header só segura o botão, com respiro mínimo
-   * no topo (encosta perto da borda do drawer flutuante). */
-  padding: 6px 16px 0;
+  /* Botão de fechar/voltar na MESMA altura que o X tinha (padding-top
+   * 14) — o 6px tinha subido o ícone demais. O "conteúdo mais acima"
+   * é mantido puxando a .drawerIdentity pra cima (margin-top negativo
+   * abaixo), em vez de encolher o respiro do header. */
+  padding: 14px 16px 0;
 }
 
 /* ── Identidade do usuário no topo do drawer ── */
@@ -264,7 +266,10 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  /* Sem padding-top: a identidade encosta logo abaixo do X. */
+  /* margin-top negativo compensa os +8px que o header voltou a ter
+   * (padding-top 6→14, pro botão fechar/voltar ficar na posição
+   * original) — mantém a identidade tão alta quanto estava. */
+  margin-top: -8px;
   padding: 0 24px 16px;
 }
 

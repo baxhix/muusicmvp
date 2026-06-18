@@ -137,6 +137,25 @@
   grid-column: auto;
 }
 
+/* Stack agrupado (>1 toast, collapsed): largura UNIFORME pra o
+ *  empilhamento ficar tidy mesmo com conteúdos de tamanhos
+ *  diferentes — sem cada card sobrar/poke pros lados atrás do
+ *  topo. Combina com o scale-down progressivo (peek) controlado
+ *  pelo motion, então a pilha lê como cards iguais decrescendo
+ *  pra trás. O texto vira single-line com ellipsis pra nunca
+ *  quebrar/estourar a largura fixa. */
+.toastStacked {
+  width: min(380px, calc(100vw - 32px));
+}
+.toastStacked .info {
+  min-width: 0;
+}
+.toastStacked .text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Animations CSS antigas mantidas pra fallback / @media reduced,
  *  mas .toastEnter/.toastExit não são mais aplicadas pelo JSX
  *  (motion handle enter/exit via initial/animate/exit). */

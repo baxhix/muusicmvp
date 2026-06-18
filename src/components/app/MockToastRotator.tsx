@@ -337,7 +337,7 @@ export default function MockToastRotator() {
             <motion.div
               key={item.id}
               layout
-              className={`${styles.toast} ${expanded ? styles.toastExpanded : ''} ${clickable ? styles.toastClickable : ''}`}
+              className={`${styles.toast} ${expanded ? styles.toastExpanded : ''} ${clickable ? styles.toastClickable : ''} ${!expanded && stack.length > 1 ? styles.toastStacked : ''}`}
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{
                 opacity: peekOpacity,
