@@ -191,25 +191,23 @@
 }
 
 /* ── Side Drawer ── */
-/* +18px além de 100% pra limpar a folga de 14px da borda + a sombra
+/* +40px além de 100% pra limpar a folga de 34px da borda + a sombra
  * quando o drawer está fechado (flutuante, afastado da tela). */
 @keyframes drawerIn {
-  from { transform: translateX(calc(100% + 18px)); }
+  from { transform: translateX(calc(100% + 40px)); }
   to   { transform: translateX(0); }
 }
 @keyframes drawerOut {
   from { transform: translateX(0); }
-  to   { transform: translateX(calc(100% + 18px)); }
+  to   { transform: translateX(calc(100% + 40px)); }
 }
 
 .drawer {
   position: fixed;
-  /* Flutuante: afastado das bordas da tela com cantos arredondados,
-   * nas MESMAS distâncias do box Fanverse Ana Castela (.box do
-   * ArtistBox): top 34px (mesma régua do banner/avatar) e lateral
-   * 14px (= left:14px do box). Base mantém 14px de respiro. */
+  /* Flutuante: afastado 34px do topo e da lateral (direita); base
+   * mantém 14px de respiro. */
   top: 34px;
-  right: 14px;
+  right: 34px;
   bottom: 14px;
   height: auto;
   width: 400px;
@@ -228,7 +226,7 @@
   box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
   /* Borda completa (flutuante) em vez de só border-left. */
   border: 1px solid rgba(255,255,255,0.06);
-  transform: translateX(calc(100% + 18px));
+  transform: translateX(calc(100% + 40px));
   transition: transform 0.32s cubic-bezier(0.16,1,0.3,1);
   pointer-events: none;
   overflow: hidden;
