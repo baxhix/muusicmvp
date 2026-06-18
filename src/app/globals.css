@@ -271,3 +271,36 @@ em, i, cite, var, address, dfn {
     font-size: max(16px, 1em);
   }
 }
+
+/* ── Foco de teclado visível (acessibilidade) ──────────────────
+ *
+ * Anel de foco consistente para quem navega por teclado. Usa
+ * :focus-visible, então NÃO aparece em clique de mouse/toque — só
+ * quando o foco chega via Tab. O !important é intencional: garante
+ * que o anel sobreviva aos `outline: none` espalhados pelos módulos
+ * CSS (que têm especificidade maior). Visibilidade de foco é
+ * requisito de acessibilidade, não estética opcional. Browsers
+ * modernos desenham o outline acompanhando o border-radius. */
+:focus-visible {
+  outline: 2px solid var(--accent, #3DDB74) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Preferência por menos movimento (acessibilidade) ──────────
+ *
+ * Safety-net global: para quem ativou "reduzir movimento" no SO,
+ * encurta animações/transições CSS para quase instantâneas (mantém
+ * o transitionend/animationend disparando — não usa display:none
+ * nem cancela, evitando deadlocks de JS que escutam esses eventos).
+ * Cobre as animações CSS do app de uma vez; animações em JS
+ * (motion/react) devem tratar via useReducedMotion caso a caso. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

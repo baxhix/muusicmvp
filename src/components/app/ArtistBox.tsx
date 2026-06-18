@@ -702,8 +702,22 @@ export default function ArtistBox() {
       )}
 
       {/* Dropdown footer — só a chevron de toggle agora; título +
-       * Fanpoints migraram pra cima (.missionsHeader). */}
-      <div className={styles.footer} onClick={() => setOpen(o => !o)}>
+       * Fanpoints migraram pra cima (.missionsHeader). Operável por
+       * teclado (role=button + Enter/Espaço) e expõe aria-expanded. */}
+      <div
+        className={styles.footer}
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? 'Recolher Fanverse' : 'Expandir Fanverse'}
+        onClick={() => setOpen(o => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen(o => !o);
+          }
+        }}
+      >
         <div className={styles.footerArrow}>
           <svg
             className={`${styles.footerChevron} ${open ? styles.footerChevronOpen : ''}`}
