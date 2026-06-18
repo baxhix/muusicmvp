@@ -186,6 +186,18 @@ function Shell({ children }: { children: React.ReactNode }) {
   const chatOrCommunityDrawerOpen =
     pathname.startsWith('/app/chat') || pathname.startsWith('/app/comunidades');
 
+  const communityDrawerOpen = pathname.startsWith('/app/comunidades');
+  /* Drawer de Chat (lista) aberto SEM uma conversa específica aberta. */
+  const chatListDrawerOpen =
+    pathname.startsWith('/app/chat') && !chatDetailOpen;
+  /* Drawer de Chat (lista) OU de Comunidades aberto. Nesse estado, em
+   * vez de sumir com o dock de conversas recentes (a "fricção de coisas
+   * desaparecendo"), mantemos ele montado só que "atrás do blur"
+   * (dimmed) — vira um fundo suave atrás do drawer. Vale pros dois boxes
+   * per feedback "no box comunidade também devem aparecer os avatares de
+   * conversas recentes ao fundo, com blur". */
+  const drawerListOpen = chatListDrawerOpen || communityDrawerOpen;
+
   // Home = /app. Every other route is a "subpage" that, on mobile,
   // gets the MobileRouteHeader (back arrow + centered title + drag-
   // down) and HIDES the persistent Fanverse header chrome (ArtistBox
@@ -383,13 +395,14 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  conversas", então o dock vira ruído visual e competia
        *  com o LiveChatPanel por pixels do canto direito.
        *
-       *  `chatOrCommunityDrawerOpen` esconde o dock enquanto o box de
-       *  Chat OU Comunidades está aberto: como o box agora é 100% opaco,
-       *  o dock atrás dele só apareceria como uma fração borrada colada
-       *  na borda direita — lido como "blur no box". Per feedback "só
-       *  deve ser visível o blur do que estiver fora do box", o dock
-       *  some de vez nesse estado. */}
-      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && !chatOrCommunityDrawerOpen && (
+       *  EXCEÇÃO (desktop): com o drawer de Chat (lista) OU de
+       *  Comunidades aberto o dock NÃO some — fica `dimmed` (borrado +
+       *  esmaecido, atrás do drawer) pra manter o contexto das conversas
+       *  recentes e suavizar a transição (per feedback "mantenha o
+       *  preview das conversas recentes, mas atrás do blur" + "no box
+       *  comunidade também"). Já com uma CONVERSA aberta
+       *  (chatDetailOpen) o dock continua escondido. */}
+      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && (
         <div className={fadeClass(5)}>
           <LiveChatStack
             conversations={chat.conversations}
@@ -401,6 +414,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             }}
             onOpenAll={() => router.push('/app/chat')}
             totalUnreadCount={chatUnreadCount}
+            dimmed={drawerListOpen && !isMobile}
           />
         </div>
       )}
