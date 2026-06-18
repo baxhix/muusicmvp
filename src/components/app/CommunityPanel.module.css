@@ -226,7 +226,9 @@
    * on top without overlapping the topic list. (Header height
    * bumped 52→68 per product feedback.) */
   .panel {
-    top: 56px;
+    /* 72px = altura do MobileRouteHeader na variante Chat/Comunidades
+     * (maior, em Borscha). Antes 56. */
+    top: 72px;
     bottom: 76px;
     left: 0;
     right: 0;

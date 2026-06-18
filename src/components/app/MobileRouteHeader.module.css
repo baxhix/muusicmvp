@@ -46,6 +46,20 @@
    * effectively pinned to the release moment. */
 }
 
+/* Variante Chat / Comunidades — header maior: mais respiro em
+ * cima/embaixo (72px vs 56px), SEM a linha separadora do header
+ * (border-bottom) e título em Borscha bold maior. Os painéis
+ * desses dois boxes usam `top: 72px` no mobile pra casar. */
+.barBig {
+  height: 72px;
+  border-bottom: none;
+}
+.titleBig {
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+
 /* Desktop: never visible. The layout already gates render on
  * isMobile, but this guard keeps a stray mount from breaking
  * layouts if the gate is removed later. */

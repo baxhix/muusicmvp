@@ -59,6 +59,12 @@ export default function MobileRouteHeader() {
   const pathname = usePathname();
   const router = useRouter();
 
+  /* Chat / Comunidades ganham header maior: título em Borscha bold +
+   *  mais respiro em cima/embaixo, sem o traço (drag handle) abaixo do
+   *  título e sem a linha separadora do header. Espelha o tratamento
+   *  do header desses dois boxes no desktop. */
+  const big = pathname === '/app/chat' || pathname === '/app/comunidades';
+
   // Drag state — translateY applied to the bar while the finger
   // is down. Reset to 0 on release (success → navigate; cancel →
   // CSS transition handles the snap-back).
@@ -104,7 +110,7 @@ export default function MobileRouteHeader() {
 
   return (
     <header
-      className={styles.bar}
+      className={`${styles.bar} ${big ? styles.barBig : ''}`}
       style={{ transform: `translateY(${dragY}px)` }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
@@ -128,15 +134,17 @@ export default function MobileRouteHeader() {
         </svg>
       </button>
 
-      <h1 className={styles.title}>{titleFor(pathname)}</h1>
+      <h1 className={`${styles.title} ${big ? styles.titleBig : ''}`}>{titleFor(pathname)}</h1>
 
       {/* Spacer mirrors the back-button footprint so the title sits
        *  visually centered without using absolute positioning. */}
       <span className={styles.spacer} aria-hidden="true" />
 
       {/* Pull-handle hint at the bottom edge — a small grey bar
-       *  that tells the user this surface can be dragged away. */}
-      <span className={styles.dragHandle} aria-hidden="true" />
+       *  that tells the user this surface can be dragged away.
+       *  Omitido no header maior de Chat/Comunidades (sem traço
+       *  abaixo do título, per feedback). */}
+      {!big && <span className={styles.dragHandle} aria-hidden="true" />}
     </header>
   );
 }
