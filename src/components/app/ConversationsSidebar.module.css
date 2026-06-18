@@ -196,30 +196,28 @@
 .fabMenuItem {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  gap: 8px;
+  /* Mesmo estilo do chip "Produtos" (não selecionado) do modal Loja:
+   * pill cinza translúcido (rgba branco .05), sem borda nem glow,
+   * texto rgba .55. Mantém o blur de fundo só pra legibilidade sobre
+   * a lista do drawer (o chip do modal não precisa, mas aqui flutua). */
+  padding: 8px 16px;
+  border: none;
   border-radius: 999px;
-  background: rgba(20, 12, 30, 0.92);
+  background: rgba(255, 255, 255, 0.05);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  color: #f5f5f7;
+  color: rgba(255, 255, 255, 0.55);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow:
-    0 6px 14px -4px rgba(0, 0, 0, 0.55),
-    0 2px 8px -2px rgba(168, 85, 247, 0.25);
-  transition: background 0.14s ease, border-color 0.14s ease,
-              transform 0.14s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .fabMenuItem:hover {
-  background: rgba(40, 22, 60, 0.94);
-  border-color: rgba(168, 85, 247, 0.55);
-  transform: translateX(-2px);
+  color: rgba(255, 255, 255, 0.85);
 }
 .fabMenuItem:active {
   transform: scale(0.97);
