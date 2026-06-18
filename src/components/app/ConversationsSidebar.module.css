@@ -86,13 +86,15 @@
   align-items: center;
   gap: 8px;
   padding: 20px 20px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* Sem linha separadora do header (border-bottom removida). */
   background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
   flex-shrink: 0;
 }
 .title {
   flex: 1;
   margin: 0;
+  /* Título do box em Borscha bold. */
+  font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
   font-size: 16px;
   font-weight: 700;
   color: #F5F5F7;
