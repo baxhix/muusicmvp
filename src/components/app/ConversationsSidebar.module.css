@@ -32,11 +32,12 @@
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  /* Cor sólida chapada — sem gradiente nem transparência. Não dá pra
-   * ver NADA do fundo (mapa, dock, veil) através do box, per feedback
-   * "deve ter cor sólida". O blur vive só na camada externa
-   * (.chatDrawerVeil, no shell), ao redor do box. */
-  background: #0b0b0d;
+  /* Cor sólida chapada e VISIVELMENTE distinta do fundo (mapa quase
+   * preto). Antes era #0b0b0d ≈ a cor do mapa, então o box "sumia" e
+   * parecia não mudar de cor. #17171d lê como um painel sólido claro o
+   * suficiente pra se destacar. Sem gradiente nem transparência: nada
+   * do fundo aparece através do box. */
+  background: #17171d;
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 22px;
   box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
