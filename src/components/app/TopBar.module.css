@@ -126,10 +126,8 @@
 
 .avatar {
   position: relative;
-  /* Mesmo tamanho do avatar da Artista no box contraído (.compactPhoto
-   * = 28px). */
-  width: 28px;
-  height: 28px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.18);
   overflow: visible;
@@ -162,14 +160,15 @@
   display: block;
 }
 
-/* Bolinha on/offline — dimensionada pro avatar de 28px. Verde quando
- * online (visível no mapa); cinza via .onlineDotOff. */
+/* Bolinha on/offline — dimensionada pro avatar de 48px e recuada pra
+ * assentar na borda inferior-direita do círculo. Verde quando online
+ * (visível no mapa); cinza via .onlineDotOff. */
 .onlineDot {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 9px;
-  height: 9px;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid rgba(0,0,0,0.9);
