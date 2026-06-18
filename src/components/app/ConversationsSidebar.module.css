@@ -351,6 +351,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Mesma cor/sheen do .header — a lista não destoa do topo. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, transparent 100%);
 }
 .empty {
   margin: 24px 14px;

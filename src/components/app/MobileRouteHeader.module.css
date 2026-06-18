@@ -85,9 +85,9 @@
   width: auto;
   max-width: 100%;
   text-align: left;
-  /* Alvo dobrado (64px), com teto responsivo pra "Comunidades" caber
-   * em uma linha em telas estreitas — min() escolhe o menor valor. */
-  font-size: min(64px, 13vw);
+  /* Reduzido 40% do alvo anterior (64px → 38.4px; teto vw 13 → 7.8),
+   * mantendo o teto responsivo pra "Comunidades" caber numa linha. */
+  font-size: min(38.4px, 7.8vw);
   font-weight: 700;
   line-height: 1.05;
   /* Sem o nowrap+ellipsis herdado do .title base: o título grande

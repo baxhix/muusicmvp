@@ -126,6 +126,13 @@
 .headerStackedTitle .backBtn {
   order: 1;
   margin-right: auto;
+  /* Alinha o chevron com a borda esquerda do título (glyph centrado no
+   * tap target de 32px). */
+  margin-left: -6px;
+}
+/* Mesmo alinhamento na tela "Nova comunidade" (header em coluna). */
+.headerStacked .backBtn {
+  margin-left: -6px;
 }
 .headerStackedTitle .kebabRoot {
   order: 2;
@@ -162,25 +169,27 @@
 /* Back chevron — shown on detail + topic views. Same circular
  * neutral pill as the close button (for visual consistency on
  * either side of the title). */
+/* Seta de voltar PADRÃO da plataforma — mesmo desenho/comportamento do
+ * "detalhe da conversa voltando pro chat" (LiveChatPanel): chevron
+ * `M15 5l-7 7 7 7` em botão circular transparente, ícone branco, só um
+ * leve fundo no hover (sem borda/fill em repouso). */
 .backBtn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(245, 245, 247, 0.65);
+  background: transparent;
+  border: none;
+  color: #F5F5F7;
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
-  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  transition: background 0.14s ease;
 }
 .backBtn:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
 }
 
 /* ── Body ── */
@@ -192,6 +201,8 @@
   flex-direction: column;
   padding: 16px 16px 20px;
   gap: 12px;
+  /* Mesma cor/sheen do .header — a lista deixa de destoar do topo. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, transparent 100%);
 }
 .placeholder {
   margin: auto;
