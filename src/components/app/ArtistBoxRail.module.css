@@ -347,10 +347,10 @@
  * ainda somava +12px, deixando o conteúdo recuado ~28px vs tabs
  * em 12px (desalinhado e estreito). */
 .flyoutTabs {
-  /* +16px de respiro acima das tabs (Superfãs / Missões / Exclusivo)
-   * na versão aberta do rail, per feedback de produto. */
-  margin-top: 16px;
-  padding: 0 16px 10px;
+  /* Sem respiro extra acima das tabs (Superfãs / Missões / Exclusivo):
+   * margin-top 0. Padding original 8px 16px 10px. */
+  margin-top: 0;
+  padding: 8px 16px 10px;
 }
 .flyoutTab {
   flex: 1;
