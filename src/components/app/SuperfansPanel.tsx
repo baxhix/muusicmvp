@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
 import { useRanking } from '@/hooks/useRanking';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiRankingRow } from '@/lib/api/types';
+import TruncatedText from './TruncatedText';
 import styles from './SuperfansPanel.module.css';
 
 interface SuperfansPanelProps {
@@ -555,8 +556,8 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
                       gold accents read as busy. */}
                 </div>
                 <div className={styles.fanInfo}>
-                  <span className={styles.fanName}>{fan.name}</span>
-                  <span className={styles.fanCity}>{fan.city}</span>
+                  <TruncatedText className={styles.fanName}>{fan.name}</TruncatedText>
+                  <TruncatedText className={styles.fanCity}>{fan.city}</TruncatedText>
                 </div>
                 <div className={styles.fanPoints}>
                   <span className={styles.fanPointsNum}>{formatPoints(fan.fanpoints)}</span>

@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useDailyMissions } from '@/hooks/useDailyMissions';
 import VerifiedBadge from './VerifiedBadge';
+import TruncatedText from './TruncatedText';
 import FanverseCore from '@/components/animations/FanverseCore';
 import {
   MISSION_META,
@@ -364,7 +365,7 @@ export default function ArtistBoxRail() {
                       >
                         <span className={boxStyles.missionIcon}>{m.icon}</span>
                         <div className={boxStyles.missionText}>
-                          <span className={boxStyles.missionName}>{m.name}</span>
+                          <TruncatedText className={boxStyles.missionName}>{m.name}</TruncatedText>
                         </div>
                         <div className={boxStyles.missionCheck}>
                           <svg viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

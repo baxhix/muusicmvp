@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import Lightbox from './Lightbox';
+import TruncatedText from './TruncatedText';
 import styles from './MaterialsTabContent.module.css';
 
 /* Helper pra montar URL de thumbnail de imagem mocada via Picsum.
@@ -446,12 +447,12 @@ function FileRow({
           className={`${styles.fileInfo} ${styles.fileInfoButton}`}
           aria-label={`Abrir ${item.name}`}
         >
-          <span className={styles.fileName}>{item.name}</span>
+          <TruncatedText className={styles.fileName}>{item.name}</TruncatedText>
           <span className={styles.fileSize}>{item.size}</span>
         </button>
       ) : (
         <div className={styles.fileInfo}>
-          <span className={styles.fileName}>{item.name}</span>
+          <TruncatedText className={styles.fileName}>{item.name}</TruncatedText>
           <span className={styles.fileSize}>{item.size}</span>
         </div>
       )}

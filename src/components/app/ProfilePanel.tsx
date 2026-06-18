@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import NowPlaying from './NowPlaying';
 import Skeleton from './Skeleton';
+import TruncatedText from './TruncatedText';
 import NowPlayingPreview from './NowPlayingPreview';
 import RankMedallion from './RankMedallion';
 import { useListeningHistory } from '@/hooks/useListeningHistory';
@@ -128,7 +129,7 @@ function ActivityRow({ item }: { item: ApiActivityItem }) {
         {activityIcon(item.kind)}
       </div>
       <div className={styles.activityInfo}>
-        <span className={styles.activityText}>{describeActivity(item)}</span>
+        <TruncatedText className={styles.activityText}>{describeActivity(item)}</TruncatedText>
         <span className={styles.activityTime}>{timeAgo(item.createdAt)}</span>
       </div>
       <span className={styles.activityPoints}>+{item.points}</span>
@@ -156,7 +157,7 @@ function HistoryRow({
         }}
       />
       <div className={styles.historyInfo}>
-        <span className={styles.historyTitle}>{item.title}</span>
+        <TruncatedText className={styles.historyTitle}>{item.title}</TruncatedText>
         <span className={styles.historyArtist}>
           {item.artist}
           {item.plays > 1 && (
@@ -671,7 +672,7 @@ export default function ProfilePanel({
                     )}
                   </div>
                   <div className={styles.communityInfo}>
-                    <span className={styles.communityName}>{c.name}</span>
+                    <TruncatedText className={styles.communityName}>{c.name}</TruncatedText>
                     <span className={styles.communityMembers}>
                       {c.memberCount.toLocaleString('pt-BR')} {c.memberCount === 1 ? 'membro' : 'membros'}
                     </span>
@@ -701,7 +702,7 @@ export default function ProfilePanel({
                 <div key={idol.id} className={styles.idolItem}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={idol.img} alt={idol.name} className={styles.idolImg} />
-                  <span className={styles.idolName}>{idol.name}</span>
+                  <TruncatedText className={styles.idolName}>{idol.name}</TruncatedText>
                   <span className={styles.idolGenre}>{idol.genre}</span>
                 </div>
               ))}

@@ -18,6 +18,7 @@ import {
   // pro FanpointsModal acessado via link "X Fanpoints").
 } from './ArtistBox';
 import VerifiedBadge from './VerifiedBadge';
+import TruncatedText from './TruncatedText';
 import RankMedallion from './RankMedallion';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { MaterialsTabContent } from './MaterialsTabContent';
@@ -350,7 +351,7 @@ export default function MobileFanverseSheet({
                   >
                     <span className={`${boxStyles.missionIcon} ${sheetStyles.missionIconMobile}`}>{m.icon}</span>
                     <div className={boxStyles.missionText}>
-                      <span className={`${boxStyles.missionName} ${sheetStyles.missionNameMobile}`}>{m.name}</span>
+                      <TruncatedText className={`${boxStyles.missionName} ${sheetStyles.missionNameMobile}`}>{m.name}</TruncatedText>
                     </div>
                     {/* Per product feedback "Missões, inverta a
                      * ordem do check e do badge FP" — check vem

@@ -15,6 +15,7 @@ import {
   useDailyMissions,
 } from '@/hooks/useDailyMissions';
 import VerifiedBadge from './VerifiedBadge';
+import TruncatedText from './TruncatedText';
 import RankMedallion from './RankMedallion';
 import FanverseCore from '@/components/animations/FanverseCore';
 import { useIsSmallDesktop } from '@/hooks/useIsSmallDesktop';
@@ -643,7 +644,7 @@ export default function ArtistBox() {
                 >
                   <span className={styles.missionIcon}>{m.icon}</span>
                   <div className={styles.missionText}>
-                    <span className={styles.missionName}>{m.name}</span>
+                    <TruncatedText className={styles.missionName}>{m.name}</TruncatedText>
                   </div>
                   {/* Per product feedback "Missões, inverta a ordem
                    * do check e do badge FP" — check VEM ANTES, badge

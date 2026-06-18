@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
+import TruncatedText from './TruncatedText';
 import VerifiedBadge from './VerifiedBadge';
 import RankMedallion from './RankMedallion';
 import { useRankBands } from './RankBandsProvider';
@@ -426,14 +427,14 @@ export default function ConversationsSidebar({
                 </span>
 
                 <span className={styles.rowInfo}>
-                  <span className={styles.rowName}>
+                  <TruncatedText className={styles.rowName} title={displayName}>
                     {displayName}
                     {isVerified && (
                       <VerifiedBadge size={13} className={styles.inlineVerified} />
                     )}
-                  </span>
+                  </TruncatedText>
                   {preview && (
-                    <span className={styles.rowPreview}>{preview}</span>
+                    <TruncatedText className={styles.rowPreview}>{preview}</TruncatedText>
                   )}
                 </span>
 

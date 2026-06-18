@@ -16,6 +16,7 @@ import MessageBubble, {
 import { showAppToast } from './AppToast';
 import { confirmDialog } from './ConfirmDialog';
 import VerifiedBadge from './VerifiedBadge';
+import TruncatedText from './TruncatedText';
 /* P2.7 — code-split: ReportModal e MentionAutocomplete são usados
  * só em paths secundários (kebab "Denunciar" + composer com @).
  * Carregar lazy reduz o JS inicial do painel (~12KB gzip cada),
@@ -751,12 +752,12 @@ export default function LiveChatPanel({
           </span>
         )}
         <div className={styles.headerInfo}>
-          <span className={styles.headerName}>
+          <TruncatedText className={styles.headerName} title={headerName}>
             {headerName}
             {isVerified && (
               <VerifiedBadge size={16} className={styles.headerInlineVerified} />
             )}
-          </span>
+          </TruncatedText>
           {/* DMs: now-playing line (track + artist).
               Groups: member count instead — same slot, different
               content, identical typography hierarchy so the header
@@ -1000,7 +1001,7 @@ export default function LiveChatPanel({
             <span className={styles.replyBannerSender}>
               Respondendo a {replyingTo.senderName}
             </span>
-            <span className={styles.replyBannerText}>{replyingTo.body}</span>
+            <TruncatedText className={styles.replyBannerText}>{replyingTo.body}</TruncatedText>
           </div>
           <button
             type="button"

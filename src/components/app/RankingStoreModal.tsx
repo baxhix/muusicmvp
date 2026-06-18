@@ -29,6 +29,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
 import RankMedallion from './RankMedallion';
+import TruncatedText from './TruncatedText';
 import { BeneficiosTab, currentTierForRank } from './FanpointsModal';
 import styles from './RankingStoreModal.module.css';
 
@@ -863,7 +864,7 @@ export default function RankingStoreModal() {
                             <RankMedallion position={r.rank} size="sm" />
                           </span>
                           <div className={styles.info}>
-                            <span className={styles.name}>{r.name}</span>
+                            <TruncatedText className={styles.name}>{r.name}</TruncatedText>
                             {r.city && <span className={styles.city}>{r.city}</span>}
                           </div>
                           <div className={styles.pointsCol}>

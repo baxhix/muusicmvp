@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import Skeleton from './Skeleton';
+import TruncatedText from './TruncatedText';
 import { api, ApiError } from '@/lib/api/client';
 import type {
   ApiCommunityCard,
@@ -550,7 +551,7 @@ function CommunityListView({
                       )}
                       <div className={styles.cardBody}>
                         <div className={styles.cardTitleRow}>
-                          <span className={styles.cardTitle}>{c.name}</span>
+                          <TruncatedText className={styles.cardTitle}>{c.name}</TruncatedText>
                           {c.isTrending && (
                             <span className={styles.trendingBadge} aria-label="Comunidade bombando">
                               🔥 Bombando
