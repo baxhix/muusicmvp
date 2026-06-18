@@ -46,18 +46,40 @@
    * effectively pinned to the release moment. */
 }
 
-/* Variante Chat / Comunidades — header maior: mais respiro em
- * cima/embaixo (72px vs 56px), SEM a linha separadora do header
- * (border-bottom) e título em Borscha bold maior. Os painéis
- * desses dois boxes usam `top: 72px` no mobile pra casar. */
+/* Variante Chat / Comunidades — header em COLUNA: a seta de voltar
+ * fica em cima e o título grande embaixo, alinhado à esquerda (em vez
+ * da linha centralizada padrão). Sem linha separadora. Os painéis
+ * desses dois boxes usam `top: 104px` no mobile pra casar com a
+ * altura maior. */
 .barBig {
-  height: 72px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  height: 104px;
+  padding: 6px 14px 12px;
   border-bottom: none;
+}
+/* Seta puxada pra esquerda pra alinhar o ícone com a borda esquerda
+ * do título (o ícone fica centrado nos 44px do tap target). */
+.barBig .backBtn {
+  margin-left: -10px;
+}
+/* O spacer só existe pra centralizar o título no layout em linha —
+ * no layout em coluna (esquerda) ele não serve. */
+.barBig .spacer {
+  display: none;
 }
 .titleBig {
   font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
-  font-size: 24px;
+  /* "Comunidades" ocupa ~40% da largura; "Chat" usa o mesmo tamanho.
+   * Override do flex:1 + text-align:center do .title base. */
+  flex: none;
+  width: auto;
+  text-align: left;
+  font-size: 32px;
   font-weight: 700;
+  line-height: 1.05;
 }
 
 /* Desktop: never visible. The layout already gates render on
