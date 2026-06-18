@@ -204,10 +204,11 @@
 
 .drawer {
   position: fixed;
-  /* Flutuante: afastado das bordas da tela com cantos arredondados.
-   * 14px = mesma distância do limite da tela do box Fanverse Ana
-   * Castela (.box do ArtistBox em left:14px). */
-  top: 14px;
+  /* Flutuante: afastado das bordas da tela com cantos arredondados,
+   * nas MESMAS distâncias do box Fanverse Ana Castela (.box do
+   * ArtistBox): top 34px (mesma régua do banner/avatar) e lateral
+   * 14px (= left:14px do box). Base mantém 14px de respiro. */
+  top: 34px;
   right: 14px;
   bottom: 14px;
   height: auto;
