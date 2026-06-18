@@ -1210,12 +1210,9 @@
    * agora é o background do próprio FAB em vez de viver no stroke
    * via ::after + mask-composite. Resultado: silhueta limpa sem
    * ring, gradient mais presente. */
-  background: linear-gradient(
-    90deg,
-    rgba(168, 85, 247, 0.95) 0%,
-    rgba(236, 72, 153, 1) 50%,
-    rgba(168, 85, 247, 0.95) 100%
-  );
+  /* Mesmo gradiente da pasta de Materiais Exclusivo (folderGradient:
+   * laranja → rosa → roxo, 135deg). Antes era lilás→rosa→lilás 90deg. */
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%);
   border: none;
   color: #ffffff;
   cursor: pointer;
