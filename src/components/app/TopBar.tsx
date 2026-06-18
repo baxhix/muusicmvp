@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import RankMedallion from './RankMedallion';
 import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
@@ -278,6 +279,7 @@ interface TopBarProps {
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
   const { user, logout, refresh } = useAuth();
   const { rankOf } = useRankBands();
+  const isMobile = useIsMobile();
   /* Fanpoints + posição reais do usuário logado (mesma fonte do
    * ArtistBox): saldo via useUserProfile, rank via useRanking. */
   const { profile } = useUserProfile(user?.id ?? null);
@@ -605,11 +607,26 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     className={styles.drawerFanpoints}
                     onClick={closeAll}
                   >
-                    <strong>{Math.round(fanpoints / 2).toLocaleString('pt-BR')}</strong> Fanpoints
+                    <strong>{fanpoints.toLocaleString('pt-BR')}</strong> Fanpoints
                     {rankBadge && (
                       <span className={styles.drawerFanpointsRank}>{rankBadge}</span>
                     )}
                   </Link>
+
+                  {/* Atalho rápido "Editar perfil" logo abaixo dos Fanpoints —
+                   *  só no mobile (o item completo continua na seção Conta).
+                   *  Per feedback "no mobile, deixe o atalho Editar perfil
+                   *  abaixo da quantidade de Fanpoints". */}
+                  {isMobile && (
+                    <button
+                      type="button"
+                      className={styles.drawerEditShortcut}
+                      onClick={() => { setOpen(false); onEditProfileOpen?.(); }}
+                    >
+                      <DrawerItemIcon name="edit" />
+                      <span>Editar perfil</span>
+                    </button>
+                  )}
 
                   {/* Box "Aparecer no mapa" — informativo. O controle vive no
                    *  toggle ao lado do nome + no clique sobre a foto; aqui

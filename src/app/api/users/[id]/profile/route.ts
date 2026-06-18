@@ -61,20 +61,27 @@ export async function GET(
   if (!u) return NextResponse.json({ error: 'not_found' }, { status: 404 });
 
   // Engagement aggregates + now playing in a single round trip.
+  // IMPORTANTE: fanpoints/streams vêm de SUBQUERIES escalares, NÃO de um
+  // JOIN com user_activities. Antes a query fazia
+  //   LEFT JOIN user_activities a + LEFT JOIN now_playing np + GROUP BY
+  // e, quando o user tinha mais de uma linha em now_playing, o join
+  // "fanava" as linhas de atividade e o SUM(a.points) DOBRAVA (bug do
+  // "mostra o dobro de pontos"). Isolando a agregação em subqueries, o
+  // saldo fica correto independente de quantas linhas de now_playing
+  // existam. O join de now_playing fica só pra faixa atual (LIMIT 1).
   const result = await db.execute(sql`
     SELECT
-      COALESCE(SUM(a.points), 0)::int                       AS fanpoints,
-      COUNT(*) FILTER (WHERE a.kind = 'stream')::int        AS streams,
+      COALESCE((SELECT SUM(points) FROM user_activities WHERE user_id = u.id), 0)::int                       AS fanpoints,
+      COALESCE((SELECT COUNT(*) FROM user_activities WHERE user_id = u.id AND kind = 'stream'), 0)::int       AS streams,
       np.track_id   AS np_track_id,
       t.title       AS np_title,
       t.artist      AS np_artist,
       t.youtube_id  AS np_youtube_id
     FROM users u
-    LEFT JOIN user_activities a ON a.user_id = u.id
     LEFT JOIN now_playing np    ON np.user_id = u.id
     LEFT JOIN tracks t          ON t.id = np.track_id
     WHERE u.id = ${id}
-    GROUP BY u.id, np.track_id, t.title, t.artist, t.youtube_id
+    LIMIT 1
   `);
   const agg = (result.rows[0] ?? {}) as {
     fanpoints?: number;
