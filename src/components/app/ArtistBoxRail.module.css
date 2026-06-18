@@ -350,7 +350,7 @@
   /* +16px de respiro acima das tabs (Superfãs / Missões / Exclusivo)
    * na versão aberta do rail, per feedback de produto. */
   margin-top: 16px;
-  padding: 8px 16px 10px;
+  padding: 0 16px 10px;
 }
 .flyoutTab {
   flex: 1;
