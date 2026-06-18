@@ -670,7 +670,8 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       }}
                     >
                       <DrawerItemIcon name="invite" />
-                      <span>Convidar amigos</span>
+                      <span className={styles.drawerItemGrow}>Convidar amigos</span>
+                      <span className={styles.drawerItemHint}>ganhe 300 Fanpoints</span>
                       <DrawerChevron />
                     </button>
                     {/* "Entre no Superchat" foi movido pro Brainstorm

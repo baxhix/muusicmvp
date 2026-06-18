@@ -571,6 +571,16 @@
   cursor: pointer;
   transition: background 0.13s, color 0.13s;
 }
+/* Label que cresce pra empurrar o hint + chevron pra direita. */
+.drawerItemGrow { flex: 1; min-width: 0; }
+/* Hint à direita do item (ex.: "ganhe 300 Fanpoints") — 12px regular cinza. */
+.drawerItemHint {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(245, 245, 247, 0.5);
+  letter-spacing: 0;
+}
 .drawerItem:hover {
   background: rgba(255,255,255,0.04);
   color: #F5F5F7;

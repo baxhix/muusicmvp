@@ -744,7 +744,7 @@ export function InviteFriendsModal() {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<ReferralData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* Instância global montada no layout — abre via CustomEvent
@@ -796,44 +796,32 @@ export function InviteFriendsModal() {
     };
   }, []);
 
+  /* 4 convites de uso único (mock pra demo): derivados do código real
+   * de referral, mesmo host. O backend hoje emite um código perpétuo
+   * só; aqui simulamos 4 convites distintos. */
+  const invites = useMemo(() => {
+    if (!data) return [] as { id: number; url: string }[];
+    const host = data.url.replace(/\/i\/.*$/, '');
+    return ['A1', 'B2', 'C3', 'D4'].map((s, i) => ({
+      id: i,
+      url: `${host}/i/${data.code}${s}`,
+    }));
+  }, [data]);
+
   if (!open) return null;
   const onClose = () => setOpen(false);
 
-  function markCopied() {
-    setCopied(true);
-    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
-  }
-
-  function handleCopy() {
-    if (!data) return;
-    const onDone = () => {
-      markCopied();
+  function copyInvite(inv: { id: number; url: string }) {
+    const done = () => {
+      setCopiedId(inv.id);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedId(null), 1600);
       track('invite_sent', { channel: 'copy_link' });
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(data.url).then(onDone).catch(onDone);
+      navigator.clipboard.writeText(inv.url).then(done).catch(done);
     } else {
-      onDone();
-    }
-  }
-
-  function handleShare() {
-    if (!data) return;
-    const shareData = {
-      title: 'Fanverse — Ana Castela',
-      text: 'Entra no Fanverse da Ana Castela comigo!',
-      url: data.url,
-    };
-    if (typeof navigator.share === 'function') {
-      navigator
-        .share(shareData)
-        .then(() => track('invite_sent', { channel: 'native_share' }))
-        .catch(() => {
-          /* usuário cancelou o share — não conta como envio. */
-        });
-    } else {
-      handleCopy();
+      done();
     }
   }
 
@@ -864,54 +852,44 @@ export function InviteFriendsModal() {
           </button>
         </div>
         <p className={styles.inviteSubtitle}>
-          {data
-            ? `Compartilhe seu link. Cada amigo que entrar e ativar a conta rende ${data.rewardPerFriend} Fanpoints pra você.`
-            : 'Compartilhe seu link. Cada amigo que entrar e ativar a conta rende Fanpoints pra você.'}
+          Compartilhe seu link. Ao ativar, seu amigo e você{' '}
+          <strong className={styles.inviteEm}>ganha 300 Fanpoints!</strong>
         </p>
 
         {loading ? (
-          <div className={styles.inviteLoading}>Gerando seu link…</div>
+          <div className={styles.inviteLoading}>Gerando seus convites…</div>
         ) : !data ? (
           <div className={styles.inviteLoading}>
-            Não foi possível carregar seu link. Tente de novo.
+            Não foi possível carregar seus convites. Tente de novo.
           </div>
         ) : (
           <>
-            {/* Link de convite + Copiar */}
-            <div className={styles.inviteRow}>
-              <span className={styles.inviteCode}>{data.url.replace(/^https?:\/\//, '')}</span>
-              <button
-                type="button"
-                className={`${styles.inviteCopyBtn} ${copied ? styles.inviteCopyBtnDone : ''}`}
-                onClick={handleCopy}
-              >
-                {copied ? 'Copiado!' : 'Copiar'}
-              </button>
-            </div>
-
-            {/* CTA primário de compartilhar (share nativo no mobile) */}
-            <button
-              type="button"
-              className={styles.inviteShareBtn}
-              onClick={handleShare}
-            >
-              Compartilhar convite
-            </button>
-
-            {/* Progresso do referral */}
-            <div className={styles.inviteStats}>
-              <div className={styles.inviteStat}>
-                <span className={styles.inviteStatValue}>{data.invited}</span>
-                <span className={styles.inviteStatLabel}>convidados</span>
-              </div>
-              <div className={styles.inviteStat}>
-                <span className={styles.inviteStatValue}>{data.activated}</span>
-                <span className={styles.inviteStatLabel}>ativaram</span>
-              </div>
-              <div className={styles.inviteStat}>
-                <span className={styles.inviteStatValue}>+{data.pointsEarned}</span>
-                <span className={styles.inviteStatLabel}>Fanpoints</span>
-              </div>
+            <p className={styles.inviteNote}>
+              Convites expiram em 48h. Caso não seja utilizado, voltam a ficar disponíveis.
+            </p>
+            {/* 4 convites de uso único, cada um com botão copiar
+                (mesmo estilo do download dos Materiais Exclusivos). */}
+            <div className={styles.inviteList}>
+              {invites.map((inv) => {
+                const isCopied = copiedId === inv.id;
+                return (
+                  <div key={inv.id} className={styles.inviteRow}>
+                    <span className={styles.inviteCode}>{inv.url.replace(/^https?:\/\//, '')}</span>
+                    <button
+                      type="button"
+                      className={`${styles.inviteCopyBtn} ${isCopied ? styles.inviteCopyBtnDone : ''}`}
+                      onClick={() => copyInvite(inv)}
+                      aria-label={isCopied ? 'Copiado' : 'Copiar convite'}
+                    >
+                      {isCopied ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
