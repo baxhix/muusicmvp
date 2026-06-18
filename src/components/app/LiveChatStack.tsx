@@ -31,6 +31,14 @@ interface Props {
    * conversas com unread), o badge não renderiza.
    */
   totalUnreadCount?: number;
+  /**
+   * Quando true, o dock fica como "preview atrás do blur": borrado,
+   * esmaecido e não-interativo. Usado no desktop enquanto o drawer de
+   * Chat está aberto — em vez de o dock sumir (fricção de "coisas
+   * desaparecendo"), ele continua visível só que de fundo, mantendo o
+   * contexto das conversas recentes.
+   */
+  dimmed?: boolean;
 }
 
 /** Limites por viewport, per product feedback "no desktop deixe
@@ -52,6 +60,7 @@ export default function LiveChatStack({
   onOpen,
   onOpenAll,
   totalUnreadCount = 0,
+  dimmed = false,
 }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -73,7 +82,7 @@ export default function LiveChatStack({
   const items = dockable.slice(0, dockLimit);
 
   return (
-    <div className={styles.dock}>
+    <div className={`${styles.dock} ${dimmed ? styles.dockDimmed : ''}`}>
       <span className={styles.label}>Chat</span>
 
       <div className={styles.list}>

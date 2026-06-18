@@ -44,6 +44,9 @@
      predictably even when other absolute-positioned elements join
      the page. */
   isolation: isolate;
+  /* Suaviza a entrada/saída do estado "atrás do blur" (.dockDimmed)
+     pra a transição feed→chat não ser seca. */
+  transition: filter 260ms ease, opacity 260ms ease;
 }
 .dock::before {
   content: '';
@@ -59,6 +62,17 @@
   );
   filter: blur(12px);
   z-index: -1;
+  pointer-events: none;
+}
+
+/* "Preview atrás do blur" — enquanto o drawer de Chat está aberto no
+   desktop, o dock continua montado (mantém o contexto das conversas
+   recentes) mas recua: borrado, esmaecido e não-clicável. Assim a
+   transição feed→chat não tem "coisas desaparecendo" de repente, só um
+   fundo suave atrás do drawer. */
+.dockDimmed {
+  filter: blur(4px);
+  opacity: 0.45;
   pointer-events: none;
 }
 

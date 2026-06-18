@@ -186,6 +186,17 @@ function Shell({ children }: { children: React.ReactNode }) {
   const chatOrCommunityDrawerOpen =
     pathname.startsWith('/app/chat') || pathname.startsWith('/app/comunidades');
 
+  /* Drawer de Comunidades aberto — aqui o dock de conversas recentes
+   * fica escondido de fato (não faz sentido listar conversas atrás de um
+   * drawer de comunidades). */
+  const communityDrawerOpen = pathname.startsWith('/app/comunidades');
+  /* Drawer de Chat (lista) aberto SEM uma conversa específica aberta.
+   * Nesse estado, em vez de sumir com o dock de conversas recentes (a
+   * "fricção de coisas desaparecendo"), mantemos ele montado só que
+   * "atrás do blur" (dimmed) — vira um fundo suave atrás do drawer. */
+  const chatListDrawerOpen =
+    pathname.startsWith('/app/chat') && !chatDetailOpen;
+
   // Home = /app. Every other route is a "subpage" that, on mobile,
   // gets the MobileRouteHeader (back arrow + centered title + drag-
   // down) and HIDES the persistent Fanverse header chrome (ArtistBox
@@ -381,8 +392,16 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  também esconde o dock no DESKTOP. No /app/chat o
        *  ConversationsSidebar já cobre o papel de "lista de
        *  conversas", então o dock vira ruído visual e competia
-       *  com o LiveChatPanel por pixels do canto direito. */}
-      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && !chatOrCommunityDrawerOpen && (
+       *  com o LiveChatPanel por pixels do canto direito.
+       *
+       *  EXCEÇÃO (desktop): com o drawer de Chat (lista) aberto o dock
+       *  NÃO some — fica `dimmed` (borrado + esmaecido, atrás do drawer)
+       *  pra manter o contexto das conversas recentes e suavizar a
+       *  transição feed→chat (per feedback "mantenha o preview das
+       *  conversas recentes, mas atrás do blur"). Já com uma CONVERSA
+       *  aberta (chatDetailOpen) o dock continua escondido, e em
+       *  Comunidades também. */}
+      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && !communityDrawerOpen && (
         <div className={fadeClass(5)}>
           <LiveChatStack
             conversations={chat.conversations}
@@ -394,6 +413,7 @@ function Shell({ children }: { children: React.ReactNode }) {
             }}
             onOpenAll={() => router.push('/app/chat')}
             totalUnreadCount={chatUnreadCount}
+            dimmed={chatListDrawerOpen && !isMobile}
           />
         </div>
       )}
