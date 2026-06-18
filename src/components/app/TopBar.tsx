@@ -525,16 +525,55 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                 </div>
 
                 <div className={styles.drawerIdentity}>
-                  <div className={styles.drawerIdentityAvatarWrap}>
+                  {/* Foto clicável: alterna on/off (visibilidade no mapa)
+                   *  diretamente. Bolinha verde quando online, cinza quando
+                   *  offline. Para menores, foto não é interativa (nunca
+                   *  aparecem no mapa). */}
+                  <button
+                    type="button"
+                    className={styles.drawerIdentityAvatarWrap}
+                    onClick={() => {
+                      if (!isMinor && !consentBusy) {
+                        handleLocationConsentToggle(!locationConsent);
+                      }
+                    }}
+                    disabled={isMinor || consentBusy}
+                    aria-label={locationConsent ? 'Ficar invisível no mapa' : 'Aparecer no mapa'}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       key={userAvatar}
                       src={userAvatar}
                       alt="Foto de perfil"
-                      className={styles.drawerIdentityAvatar}
+                      className={`${styles.drawerIdentityAvatar} ${locationConsent ? styles.drawerIdentityAvatarOnline : ''}`}
                     />
+                    {!isMinor && (
+                      <span
+                        className={`${styles.drawerIdentityDot} ${locationConsent ? styles.drawerIdentityDotOnline : ''}`}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
+
+                  {/* Nome + toggle on/offline à frente. O toggle é o mesmo
+                   *  flag de visibilidade no mapa (location_consent); a
+                   *  legenda online/offline fica logo abaixo dele. */}
+                  <div className={styles.drawerIdentityNameRow}>
+                    <h2 className={styles.drawerIdentityName}>{userLabel}</h2>
+                    {!isMinor && (
+                      <div className={styles.drawerIdentityStatus}>
+                        <Toggle
+                          checked={locationConsent}
+                          onChange={handleLocationConsentToggle}
+                          disabled={consentBusy}
+                          ariaLabel="Aparecer no mapa"
+                        />
+                        <span className={styles.drawerIdentityStatusCaption}>
+                          {locationConsent ? 'online' : 'offline'}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <h2 className={styles.drawerIdentityName}>{userLabel}</h2>
 
                   {/* Fanpoints + posição no ranking — logo abaixo do nome,
                    *  linkando pro ranking (/app/ranking). */}
@@ -547,49 +586,37 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     <span className={styles.drawerFanpointsRank}>(Top 1!)</span>
                   </Link>
 
-                  {/* Aparecer no mapa — visibilidade REAL no mapa
-                   *  (consentimento LGPD, location_consent). Substituiu o
-                   *  antigo toggle "Online" (que era só estado local
-                   *  mocado, sem efeito). Mesmo flag do "Aparecer no mapa"
-                   *  do Meu Perfil; update otimista + PATCH
-                   *  /api/me/location-consent. Aqui vem com mais contexto
-                   *  pro usuário entender o que liga/desliga. */}
-                  <div className={styles.drawerMapRow}>
-                    <div className={styles.drawerMapText}>
-                      <span className={styles.drawerMapTitle}>Aparecer no mapa</span>
-                      <span className={styles.drawerMapDesc}>
-                        {isMinor ? (
-                          'Indisponível para menores de 18 anos.'
-                        ) : (
-                          <>
-                            Mostra você no mapa para outros fãs com{' '}
-                            <strong className={styles.bold}>
-                              localização aleatória em raio de 25 Km
-                            </strong>{' '}
-                            ao redor da cidade que você selecionou.{' '}
-                            <strong className={styles.bold}>Nunca a exata</strong>.
-                          </>
-                        )}
-                      </span>
-                    </div>
-                    <Toggle
-                      checked={locationConsent}
-                      onChange={handleLocationConsentToggle}
-                      disabled={isMinor || consentBusy}
-                      ariaLabel="Aparecer no mapa"
-                    />
+                  {/* Box "Aparecer no mapa" — informativo. O controle vive no
+                   *  toggle ao lado do nome + no clique sobre a foto; aqui
+                   *  explicamos o que liga/desliga e a nota de privacidade. */}
+                  <div className={styles.drawerMapBox}>
+                    <span className={styles.drawerMapTitle}>Aparecer no mapa</span>
+                    <span className={styles.drawerMapDesc}>
+                      {isMinor ? (
+                        'Indisponível para menores de 18 anos.'
+                      ) : (
+                        <>
+                          Mostra você no mapa para outros fãs com{' '}
+                          <strong className={styles.bold}>
+                            localização aleatória em raio de 25 Km
+                          </strong>{' '}
+                          ao redor da cidade que você selecionou.{' '}
+                          <strong className={styles.bold}>Nunca a exata</strong>.
+                        </>
+                      )}
+                    </span>
+                    {!isMinor && (
+                      <p className={styles.drawerMapNote}>
+                        <strong className={styles.bold}>
+                          Sua localização nunca é exibida de forma exata
+                        </strong>{' '}
+                        e não fica armazenada em nosso banco de dados — aparece
+                        somente em uma região randômica, alternando entre pontos
+                        dentro da cidade de sua escolha. Sua segurança em
+                        primeiro lugar.
+                      </p>
+                    )}
                   </div>
-                  {!isMinor && (
-                    <p className={styles.drawerMapNote}>
-                      <strong className={styles.bold}>
-                        Sua localização nunca é exibida de forma exata
-                      </strong>{' '}
-                      e não fica armazenada em nosso banco de dados — aparece
-                      somente em uma região randômica, alternando entre pontos
-                      dentro da cidade de sua escolha. Sua segurança em primeiro
-                      lugar.
-                    </p>
-                  )}
                 </div>
 
                 <nav className={styles.drawerNav}>
