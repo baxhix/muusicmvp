@@ -41,7 +41,7 @@ import {
  */
 export default function ChatPage() {
   const router = useRouter();
-  const { chat, liveUsers, onlineUserIds } = useAppShell();
+  const { chat, liveUsers, onlineUserIds, setFeedOpen } = useAppShell();
   const { user: authUser } = useAuth();
 
   /* Os pickers de "Nova conversa" e "Novo grupo" foram movidos
@@ -86,7 +86,7 @@ export default function ChatPage() {
         conversations={chat.conversations}
         activeId={chat.activeId}
         onlineUserIds={onlineUserIds}
-        onClose={() => router.push('/app')}
+        onClose={() => { setFeedOpen(true); router.push('/app'); }}
         onOpenConversation={chat.open}
         onPickUser={(uid) => chat.openDmWith(uid)}
         onCreateGroup={async ({ name, memberIds }) => {

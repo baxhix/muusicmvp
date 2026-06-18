@@ -1,11 +1,12 @@
 /* ── FEED PANEL ── */
 .panel {
   position: fixed;
-  /* Feed occupies exactly 80vh, vertically centered. 10vh gutter
-   * top + bottom keeps the panel just shy of the viewport edges
-   * so the navbar and the topbar still have room to breathe. */
-  top: 10vh;
-  height: 80vh;
+  /* Mesma altura do box de Chat/Comunidades: recuo de 34px no topo e
+   * na base (em vez do antigo 80vh centralizado em 10vh). height:auto
+   * deriva da diferença top/bottom. */
+  top: 34px;
+  bottom: 34px;
+  height: auto;
   /* Anchored 42px to the LEFT of the chat dock list.
    *
    * Chat dock geometry (LiveChatStack.module.css):

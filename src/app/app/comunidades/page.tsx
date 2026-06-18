@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import CommunityPanel from '@/components/app/CommunityPanel';
+import { useAppShell } from '@/lib/app/AppShellContext';
 
 /**
  * Comunidades route — `/app/comunidades`.
@@ -17,7 +18,13 @@ import CommunityPanel from '@/components/app/CommunityPanel';
  */
 export default function CommunidadesPage() {
   const router = useRouter();
+  const { setFeedOpen } = useAppShell();
   return (
-    <CommunityPanel open onClose={() => router.push('/app')} />
+    <CommunityPanel
+      open
+      /* Ao fechar, garante o feed aberto (o feed deve permanecer
+       *  aberto ao sair de Comunidades). */
+      onClose={() => { setFeedOpen(true); router.push('/app'); }}
+    />
   );
 }

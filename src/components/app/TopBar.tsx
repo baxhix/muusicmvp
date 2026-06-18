@@ -294,7 +294,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
    * `activeOverlay === 'notifications'` que o BottomNav usava antes;
    * o NotificationBell component continua escutando esse flag
    * pra abrir/fechar o painel correspondente. */
-  const { activeOverlay, setActiveOverlay } = useAppShell();
+  const { activeOverlay, setActiveOverlay, setFeedOpen } = useAppShell();
   const notifOpen = activeOverlay === 'notifications';
 
   /* Toggles de exibição (persistidos via useDisplaySetting →
@@ -319,6 +319,16 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
   const userAvatar = user?.avatarUrl ?? '/avatar-placeholder.svg';
 
   const [open, setOpen] = useState(false);
+  /* Ao FECHAR o drawer Minha Conta (qualquer caminho: seta, clique
+   *  fora, Escape, item de menu), garante o feed aberto — "o feed
+   *  deve permanecer aberto ao fechar Minha Conta". No mobile abrir o
+   *  drawer passa pelo menu hamburger que zera o feedOpen; aqui a
+   *  gente restaura. */
+  const prevDrawerOpen = useRef(false);
+  useEffect(() => {
+    if (prevDrawerOpen.current && !open) setFeedOpen(true);
+    prevDrawerOpen.current = open;
+  }, [open, setFeedOpen]);
   const [section, setSection] = useState<SubScreen>(null);
   /* Modal in-app pra Termos / Privacidade. Aberto via item do
    * drawer (seção Legal). null = fechado. Mantido fora do drawer
