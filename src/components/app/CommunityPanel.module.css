@@ -315,7 +315,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 10px;
+  /* Sem margin-top extra: o gap de 12px do .body já dá o mesmo
+   * respiro search→badges do bloco Chat (searchWrap pb 12 → filterRow). */
   flex-shrink: 0;
 }
 /* Badges idênticos ao filtro de período (Hoje/Semana/Mês/Ano) do
@@ -424,7 +425,8 @@
   transition: background 0.14s ease;
 }
 .communityCard:hover {
-  background: rgba(255, 255, 255, 0.05);
+  /* Mesmo hover das listas de chat e das missões do ArtistBox. */
+  background: rgba(255, 255, 255, 0.04);
 }
 .cardOpenBtn {
   flex: 1;
@@ -531,7 +533,7 @@
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #fbbf24;
+  color: #fff;
   /* Fundo preto + borda com gradiente da marca (laranja→rosa→roxo),
    * mesmo padrão de borda usado em outros botões/badges do app. */
   border: 1.5px solid transparent;

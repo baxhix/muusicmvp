@@ -63,7 +63,6 @@ export default function ArtistBoxRail() {
     return map;
   }, [missions]);
   const completed = MISSION_META.filter((m) => doneById[m.id]).length;
-  const progress = Math.round((completed / TOTAL) * 100);
   const fpEarned = sumEarnedXp(MISSION_META, doneById);
 
   /* Click fora NÃO fecha mais o flyout (per feedback): ele só fecha
@@ -376,14 +375,6 @@ export default function ArtistBoxRail() {
                       </div>
                     );
                   })}
-                </div>
-                <div className={boxStyles.progressWrap}>
-                  <div className={boxStyles.progressTrack}>
-                    <div
-                      className={boxStyles.progressFill}
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
                 </div>
               </>
             )}

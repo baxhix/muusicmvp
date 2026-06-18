@@ -153,8 +153,6 @@ export default function ArtistBox() {
     return map;
   }, [missions]);
 
-  const completed = MISSION_META.filter((m) => doneById[m.id]).length;
-  const progress  = Math.round((completed / TOTAL) * 100);
   const fpEarned  = sumEarnedXp(MISSION_META, doneById);
 
   // ── Per-mission completion celebration ──
@@ -561,11 +559,6 @@ export default function ArtistBox() {
               </span>
               <span className={styles.xpTotal}>{fpEarned} Fanpoints</span>
             </div>
-            <div className={styles.progressWrap}>
-              <div className={styles.progressTrack}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-              </div>
-            </div>
           </div>
           {/* Affordance "expandir" — chevron pulsante apontando pra
            * baixo, agora abaixo do resumo de Missões. */}
@@ -690,16 +683,6 @@ export default function ArtistBox() {
           )}
         </div>
       </div>
-
-      {/* Progress bar — só na tab Missões. Per spec "remova '1/6
-       * missões 17%'. Deixe apenas a barra de progresso." */}
-      {activeTab === 'missoes' && (
-      <div className={styles.progressWrap}>
-        <div className={styles.progressTrack}>
-          <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-      )}
 
       {/* Dropdown footer — só a chevron de toggle agora; título +
        * Fanpoints migraram pra cima (.missionsHeader). Operável por

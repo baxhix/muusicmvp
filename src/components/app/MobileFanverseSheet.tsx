@@ -86,8 +86,6 @@ export default function MobileFanverseSheet({
     if (missions) for (const m of missions) map[m.id] = m.done;
     return map;
   }, [missions]);
-  const completed = MISSION_META.filter((m) => doneById[m.id]).length;
-  const progress = Math.round((completed / TOTAL_MISSIONS) * 100);
   const fpEarned = sumEarnedXp(MISSION_META, doneById);
 
   /* Mission celebration burst — espelha mecânica do desktop:
@@ -385,14 +383,6 @@ export default function MobileFanverseSheet({
                   </div>
                 );
               })}
-            </div>
-
-            {/* Progress bar — per spec "remova '1/6 missões 17%'.
-             * Deixe apenas a barra de progresso". */}
-            <div className={sheetStyles.missionsProgress}>
-              <div className={boxStyles.progressTrack}>
-                <div className={boxStyles.progressFill} style={{ width: `${progress}%` }} />
-              </div>
             </div>
           </>
         )}

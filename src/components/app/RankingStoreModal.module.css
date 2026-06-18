@@ -881,7 +881,9 @@
   background: rgba(255, 255, 255, 0.04);
   transition: background 140ms ease;
 }
-.row:hover { background: rgba(168, 85, 247, 0.12); }
+/* Hover igual ao dos itens da aba Jornada (.marcoHeader:hover) —
+ * overlay branco neutro, sem o tint roxo. */
+.row:hover { background: rgba(255, 255, 255, 0.03); }
 /* Usuário logado — borda com gradiente (mesma do botão de download no
  * lightbox de Materiais): laranja → rosa → roxo. */
 .rowYou {

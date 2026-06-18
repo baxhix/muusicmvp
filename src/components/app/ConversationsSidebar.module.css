@@ -380,7 +380,9 @@
   cursor: pointer;
   transition: background 0.12s ease;
 }
-.row:hover { background: rgba(255, 255, 255, 0.05); }
+/* Hover padronizado com as listas de outras áreas (missões do
+ * ArtistBox, cards de Comunidades): overlay branco rgba .04. */
+.row:hover { background: rgba(255, 255, 255, 0.04); }
 .row:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.25);
   outline-offset: -2px;
