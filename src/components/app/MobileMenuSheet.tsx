@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
-  AnimatePresence,
   motion,
   useReducedMotion,
   type Variants,
@@ -130,19 +129,6 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
             staggerDirection: -1,
           },
     },
-    exit: {
-      opacity: 0,
-      y: reduce ? 0 : '114%',
-      transition: reduce
-        ? { duration: 0.16 }
-        : {
-            duration: 0.28,
-            ease: [0.4, 0, 1, 1],
-            when: 'afterChildren',
-            staggerChildren: 0.022,
-            staggerDirection: 1,
-          },
-    },
   };
 
   const itemVariants: Variants = {
@@ -152,30 +138,27 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
       y: 0,
       transition: { type: 'spring', stiffness: 620, damping: 30 },
     },
-    exit: {
-      opacity: 0,
-      y: reduce ? 0 : 14,
-      transition: { duration: 0.16, ease: 'easeIn' },
-    },
   };
 
   const tap = reduce ? undefined : { scale: 0.95 };
 
   if (!mounted) return null;
 
+  /* Sem AnimatePresence: o menu ABRE com animação (initial → animate),
+   * mas FECHA instantâneo — desmonta na hora quando `open` vira false,
+   * sem animação de saída (per feedback "retire totalmente os efeitos
+   * de fechar o menu"). */
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            className={styles.backdrop}
-            aria-hidden="true"
-            onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.3, delay: 0.06 } }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          />
+    open ? (
+      <>
+        <motion.div
+          className={styles.backdrop}
+          aria-hidden="true"
+          onClick={onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        />
 
           <motion.div
             className={styles.panel}
@@ -184,7 +167,6 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
             variants={panelVariants}
             initial="hidden"
             animate="visible"
-            exit="exit"
             onTouchStart={(e) => {
               swipeStartY.current = e.touches[0]?.clientY ?? null;
             }}
@@ -330,28 +312,9 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
               </motion.div>
             </div>
 
-            {/* Fechar — FAB no canto inferior direito (acima da navbar). */}
-            <motion.button
-              variants={itemVariants}
-              whileTap={reduce ? undefined : { scale: 0.92 }}
-              type="button"
-              className={styles.closeFab}
-              onClick={onClose}
-              aria-label="Fechar menu"
-            >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M6 6l12 12M18 6L6 18"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </motion.button>
           </motion.div>
         </>
-      )}
-    </AnimatePresence>,
+      ) : null,
     document.body,
   );
 }
