@@ -73,32 +73,29 @@
 }
 .closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
 
-/* Inline mode: o header ganha um botão de voltar à esquerda em vez
- * do × fechar à direita. O título fica centrado entre o back btn e
- * o espaço vazio (sem closeBtn). Padding um pouco maior em cima pra
- * alinhar com o header original da ConversationsSidebar host.
- *
- * Centralização perfeita per product feedback "centralize o nome
- * da seção no centro do box no header": o `.title` ocupa flex:1
- * + text-align:center, e o `::after` reserva 26×26 à direita pra
- * espelhar o back btn — assim o texto fica visualmente no meio
- * do header em vez de slidar pra direita. */
+/* Inline mode (subview de Nova conversa / Novo grupo): mesmo layout
+ * do "Nova comunidade" — header em COLUNA, com a seta de voltar em
+ * cima e o título grande embaixo, alinhado à esquerda. */
 .headerInline {
+  flex-direction: column;
+  align-items: flex-start;
   padding: 16px 16px 12px;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-start;
 }
+/* Título no mesmo tamanho/posição do "Nova comunidade" stacked (24px,
+ * à esquerda, abaixo da seta). Override do .title base (14px). */
 .headerInline .title {
-  flex: 1;
-  text-align: center;
+  flex: none;
+  width: auto;
+  text-align: left;
+  font-size: 24px;
   min-width: 0;
 }
+/* Sem o shim de centralização — no layout em coluna o título já fica
+ * à esquerda, abaixo da seta. */
 .headerInline::after {
-  content: '';
-  display: block;
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
+  display: none;
 }
 .backBtn {
   width: 26px;
