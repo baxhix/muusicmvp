@@ -649,9 +649,9 @@
    * mounts on every non-home /app route. (Header height bumped
    * 52→68 per product feedback.) */
   .panel {
-    /* 104px = altura do MobileRouteHeader na variante Chat/Comunidades
-     * (coluna: seta em cima + título grande embaixo). Antes 72/56. */
-    top: 104px;
+    /* 132px = altura do MobileRouteHeader na variante Chat/Comunidades
+     * (título dobrado em 64px + seta). Antes 104/72/56. */
+    top: 132px;
     bottom: 76px;
     left: 0;
     right: 0;

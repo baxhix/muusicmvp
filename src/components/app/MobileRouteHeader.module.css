@@ -56,7 +56,9 @@
   align-items: flex-start;
   justify-content: center;
   gap: 0;
-  height: 104px;
+  /* Cresce pra comportar o título dobrado (64px) + a seta de 44px
+   * sem clipar. Painéis Chat/Comunidades usam top:132 no mobile. */
+  height: 132px;
   padding: 6px 14px 12px;
   border-bottom: none;
 }
@@ -77,9 +79,10 @@
   flex: none;
   width: auto;
   text-align: left;
-  font-size: 32px;
+  /* Dobrado (32 → 64px) exclusivamente no mobile, per feedback. */
+  font-size: 64px;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1;
 }
 
 /* Desktop: never visible. The layout already gates render on
