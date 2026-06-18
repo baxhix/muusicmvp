@@ -96,6 +96,21 @@
 .titleCentered {
   text-align: center;
 }
+/* Header em coluna (tela "Nova comunidade"): seta de voltar em cima,
+ * título embaixo alinhado à esquerda. */
+.headerStacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+/* Título da "Nova comunidade" em 24px (só nesta tela; o título base
+ * dos boxes é 28px). Override do flex:1 + center. */
+.titleStacked {
+  flex: none;
+  width: auto;
+  text-align: left;
+  font-size: 24px;
+}
 .closeBtn {
   width: 28px; height: 28px;
   display: inline-flex;

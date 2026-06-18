@@ -247,6 +247,7 @@ function HeaderBar({
   onClose,
   trailing,
   centerTitle,
+  stacked,
 }: {
   title: string;
   onBack?: () => void;
@@ -260,9 +261,13 @@ function HeaderBar({
    *  view 'list' não tem back (assimétrico), e centralizar
    *  deixaria o texto fora do centro visual. */
   centerTitle?: boolean;
+  /** Layout em COLUNA: seta de voltar em cima, título embaixo
+   *  alinhado à esquerda e em 24px, SEM a seta de fechar à direita.
+   *  Usado só pela tela "Nova comunidade". */
+  stacked?: boolean;
 }) {
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${stacked ? styles.headerStacked : ''}`}>
       {onBack && (
         <button
           type="button"
@@ -276,22 +281,26 @@ function HeaderBar({
         </button>
       )}
       <h2
-        className={`${styles.title} ${centerTitle ? styles.titleCentered : ''}`}
+        className={`${styles.title} ${centerTitle ? styles.titleCentered : ''} ${stacked ? styles.titleStacked : ''}`}
       >
         {title}
       </h2>
       {trailing}
-      <button
-        type="button"
-        className={styles.closeBtn}
-        onClick={onClose}
-        aria-label="Fechar"
-      >
-        {/* Seta à direita (substitui o X), igual ao drawer Minha Conta. */}
-        <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M3.5 9h11M10 4.5l4.5 4.5-4.5 4.5" />
-        </svg>
-      </button>
+      {/* Seta de fechar à direita — omitida no layout stacked (Nova
+       *  comunidade) per feedback "remova a seta que está à direita". */}
+      {!stacked && (
+        <button
+          type="button"
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label="Fechar"
+        >
+          {/* Seta à direita (substitui o X), igual ao drawer Minha Conta. */}
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3.5 9h11M10 4.5l4.5 4.5-4.5 4.5" />
+          </svg>
+        </button>
+      )}
     </header>
   );
 }
@@ -781,7 +790,7 @@ function CommunityCreateView({
         title="Nova comunidade"
         onBack={onBack}
         onClose={onClose}
-        centerTitle
+        stacked
       />
       <form className={styles.body} onSubmit={handleSubmit}>
         <label className={styles.modalField}>
