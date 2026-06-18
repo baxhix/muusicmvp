@@ -210,7 +210,8 @@
   right: 34px;
   bottom: 34px;
   height: auto;
-  width: 400px;
+  /* Mesma largura do box Fanverse Ana Castela (.box do ArtistBox). */
+  width: 280px;
   border-radius: 22px;
   /* z-index bumped 120 → 260 per spec — vê comentário em
    * .backdrop sobre o stack vs chat (z:200). */
