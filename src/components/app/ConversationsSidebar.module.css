@@ -32,17 +32,18 @@
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  /* Fill quase opaco — o mapa atrás quase não aparece, per feedback
-   * "menos transparente". O blur SAIU do box (era backdrop-filter):
-   * ele agora vive só na camada externa, atrás/por fora do drawer
-   * (.chatDrawerVeil, montado no shell). */
+  /* Fill 100% OPACO — nada do fundo (mapa, dock borrado, veil) aparece
+   * ATRAVÉS do box, per feedback "não dar pra ver nada com blur do
+   * fundo". Mesmo tom do header (sheen branco sutil por cima fica
+   * uniforme da borda do topo até a base). O blur vive só na camada
+   * externa (.chatDrawerVeil, no shell), ao redor do box. */
   background:
     radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 70%),
     linear-gradient(180deg,
-      rgba(11,11,13,0.97) 0%,
-      rgba(8,8,10,0.96) 35%,
-      rgba(4,4,5,0.97) 65%,
-      rgba(2,2,3,0.98) 100%);
+      #0b0b0d 0%,
+      #08080a 35%,
+      #040405 65%,
+      #020203 100%);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 22px;
   box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
