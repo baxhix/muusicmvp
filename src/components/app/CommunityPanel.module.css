@@ -81,9 +81,9 @@
 .title {
   flex: 1;
   margin: 0;
-  /* Título do box em Borscha bold. */
+  /* Título do box em Borscha bold, 28px. */
   font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
-  font-size: 16px;
+  font-size: 28px;
   font-weight: 700;
   color: #F5F5F7;
   letter-spacing: -0.01em;
@@ -279,12 +279,19 @@
   position: absolute;
   left: 12px;
   top: 50%;
-  transform: translateY(calc(-50% + 1px));
+  /* Mesmo offset vertical do ícone de busca do Chat (+2px). */
+  transform: translateY(calc(-50% + 2px));
   width: 14px;
   height: 14px;
   color: rgba(245, 245, 247, 0.45);
   pointer-events: none;
 }
+/* Idêntico ao .searchInput do Chat (ConversationsSidebar): mesmo
+ * padding/raio/bg/borda/tamanho. SEM font-family (o input usa a
+ * fonte default do controle, igual ao Chat — o reset global só
+ * cobre button, não input) e com o reset do botão nativo de limpar
+ * busca, pra o placeholder "Buscar comunidade…" ficar exatamente no
+ * mesmo estilo de "Buscar conversa…". */
 .searchField {
   width: 100%;
   padding: 9px 12px 9px 32px;
@@ -293,7 +300,6 @@
   border: 1px solid rgba(255, 255, 255, 0.07);
   color: #f5f5f7;
   font-size: 13px;
-  font-family: inherit;
   outline: none;
   transition: border-color 0.14s ease, background 0.14s ease;
 }
@@ -302,6 +308,7 @@
   border-color: rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.07);
 }
+.searchField::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
 
 /* ── Tabs Geral | Shows (motion Tab select) ─────────────────
  * Per spec "substitua as tabs pela Tab select do motion

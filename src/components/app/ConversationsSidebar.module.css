@@ -93,9 +93,9 @@
 .title {
   flex: 1;
   margin: 0;
-  /* Título do box em Borscha bold. */
+  /* Título do box em Borscha bold, 28px. */
   font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
-  font-size: 16px;
+  font-size: 28px;
   font-weight: 700;
   color: #F5F5F7;
   letter-spacing: -0.01em;
