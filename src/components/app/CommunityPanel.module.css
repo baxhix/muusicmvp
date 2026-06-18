@@ -409,6 +409,8 @@
  * weight balances the wider 56-72px thumbnails. */
 .communityCard {
   width: 100%;
+  /* Âncora pro botão Participar absoluto no canto inferior direito. */
+  position: relative;
   display: flex;
   /* Alinha pelo TOPO per product feedback "posicione os três
    * pontinhos para cima". Antes era center — o kebab ficava no
@@ -559,6 +561,9 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 2px;
+  /* Reserva à direita pro botão Participar (absoluto, canto inferior
+   * direito) não cobrir os chips. */
+  padding-right: 56px;
 }
 .cardChip {
   font-size: 10.5px;
@@ -578,6 +583,20 @@
   font-size: 12px;
   color: rgba(245, 245, 247, 0.6);
   letter-spacing: -0.005em;
+  /* Reserva à direita pro botão Participar (absoluto, canto inferior
+   * direito) não cobrir o texto de membros/tópicos. */
+  padding-right: 56px;
+}
+/* Número de membros + ícone (1 user / dois users) no lugar do texto
+ * "N membro(s)". */
+.cardMetaMembers {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cardMetaIcon {
+  flex-shrink: 0;
+  opacity: 0.9;
 }
 
 /* Discreet "Entrar" pill INSIDE the community list cards —
@@ -611,24 +630,29 @@
  * (ArtistBox.module.css): pill cinza translúcido + blur + sombra
  * suave, flat. */
 .cardJoinPill {
-  align-self: center;
+  /* Versão levemente menor + reposicionada no canto inferior direito
+   * do card, com o fundo alinhado ao limite inferior da imagem (a
+   * thumb de 64px define a altura do card, então bottom:10 = base da
+   * imagem). Antes ficava centralizado no eixo (align-self:center). */
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 11px;
   border-radius: 999px;
   border: none;
   background: rgba(40, 40, 48, 0.96);
   color: rgba(245, 245, 247, 0.92);
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  flex-shrink: 0;
   white-space: nowrap;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: background 140ms ease, color 140ms ease;
 }
 .cardJoinPill:hover {

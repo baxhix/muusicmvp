@@ -29,6 +29,50 @@ import {
 } from '@/data/showCommunities';
 import styles from './CommunityPanel.module.css';
 
+/** Ícone de 1 membro (single user) — usado quando memberCount === 1. */
+function IconMemberSingle() {
+  return (
+    <svg
+      className={styles.cardMetaIcon}
+      viewBox="0 0 16 16"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="5.4" r="2.6" />
+      <path d="M3.4 13c0-2.3 2.1-3.9 4.6-3.9s4.6 1.6 4.6 3.9" />
+    </svg>
+  );
+}
+
+/** Ícone de vários membros (two users) — usado quando memberCount > 1. */
+function IconMemberGroup() {
+  return (
+    <svg
+      className={styles.cardMetaIcon}
+      viewBox="0 0 20 16"
+      width="16"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="7" cy="5.4" r="2.5" />
+      <path d="M2.2 13c0-2.2 2.1-3.8 4.8-3.8S11.8 10.8 11.8 13" />
+      <path d="M13 3.1a2.5 2.5 0 0 1 0 4.7" />
+      <path d="M14.2 9.5c1.9.35 3.3 1.7 3.3 3.5" />
+    </svg>
+  );
+}
+
 /**
  * Communities (forum) panel — a view-state machine that hosts the
  * full Comunidade flow inside the right-column slot the other
@@ -559,7 +603,12 @@ function CommunityListView({
                           )}
                         </div>
                         <span className={styles.cardMeta}>
-                          {c.memberCount.toLocaleString('pt-BR')} {c.memberCount === 1 ? 'membro' : 'membros'}
+                          {/* "N membro(s)" → número + ícone: 1 user se
+                            * for 1, dois users se for mais de um. */}
+                          <span className={styles.cardMetaMembers}>
+                            {c.memberCount.toLocaleString('pt-BR')}
+                            {c.memberCount === 1 ? <IconMemberSingle /> : <IconMemberGroup />}
+                          </span>
                           {' · '}
                           {c.topicCount.toLocaleString('pt-BR')} {c.topicCount === 1 ? 'tópico' : 'tópicos'}
                         </span>
