@@ -204,11 +204,11 @@
 
 .drawer {
   position: fixed;
-  /* Flutuante: afastado 34px do topo e da lateral (direita); base
-   * mantém 14px de respiro. */
+  /* Flutuante: afastado 34px de todos os lados (topo, lateral direita
+   * e base). */
   top: 34px;
   right: 34px;
-  bottom: 14px;
+  bottom: 34px;
   height: auto;
   width: 400px;
   border-radius: 22px;
