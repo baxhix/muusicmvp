@@ -72,17 +72,29 @@
 .barBig .spacer {
   display: none;
 }
-.titleBig {
+/* IMPORTANTE: scoped sob `.barBig` de propósito. O `.title` base é
+ * declarado DEPOIS deste bloco no arquivo e, como o <h1> carrega as
+ * duas classes (`title titleBig`) com a MESMA especificidade, o
+ * `.title { font-size: 16px }` vencia por ordem de fonte e travava o
+ * título grande em 16px no mobile. `.barBig .titleBig` (0,2,0) vence
+ * o `.title` (0,1,0) e garante que o tamanho grande se aplique. */
+.barBig .titleBig {
   font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
-  /* "Comunidades" ocupa ~40% da largura; "Chat" usa o mesmo tamanho.
-   * Override do flex:1 + text-align:center do .title base. */
+  /* Override do flex:1 + text-align:center do .title base. */
   flex: none;
   width: auto;
+  max-width: 100%;
   text-align: left;
-  /* Dobrado (32 → 64px) exclusivamente no mobile, per feedback. */
-  font-size: 64px;
+  /* Alvo dobrado (64px), com teto responsivo pra "Comunidades" caber
+   * em uma linha em telas estreitas — min() escolhe o menor valor. */
+  font-size: min(64px, 13vw);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.05;
+  /* Sem o nowrap+ellipsis herdado do .title base: o título grande
+   * aparece inteiro, sem corte. */
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* Desktop: never visible. The layout already gates render on
