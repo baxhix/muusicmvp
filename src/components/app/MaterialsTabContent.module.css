@@ -274,6 +274,9 @@ button.fileIcon:hover {
 .fileIconImage {
   background: #0a0a0e;
   color: transparent;
+  /* Miniatura de imagem/vídeo com cantos 6px (o .fileIcon tem
+   * overflow:hidden, então a foto clipa nesse raio). */
+  border-radius: 6px;
 }
 .fileThumbImg {
   width: 100%;
