@@ -821,13 +821,16 @@
 }
 .marcoCard {
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(20, 20, 26, 0.65) 0%, rgba(14, 14, 20, 0.7) 100%);
+  /* Sem gradiente — overlay branco chapado, mesmo padrão de blocos do
+   * box Fanverse Ana Castela (ArtistBox usa rgba branco translúcido,
+   * nunca gradiente nem navy sólido). */
+  background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
   transition: background 200ms ease;
 }
-/* Unlocked: cinza um pouco mais claro (tons preto/cinza, sem cor de marca). */
+/* Unlocked: um degrau mais claro no mesmo overlay branco. */
 .marcoUnlocked {
-  background: linear-gradient(180deg, rgba(36, 36, 42, 0.7) 0%, rgba(22, 22, 28, 0.75) 100%);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .marcoHeader {
@@ -835,7 +838,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 14px 16px;
+  padding: 13px 14px;
   background: transparent;
   border: none;
   color: inherit;
@@ -881,8 +884,8 @@
 .marcoBody {
   /* Padding interno aplica APENAS quando aberto; o overflow:
    *  hidden no inline style do motion controla o clipping
-   *  durante o height transition. */
-  padding: 0 16px 14px;
+   *  durante o height transition. Horizontal alinhado ao header (14px). */
+  padding: 0 14px 14px;
 }
 .marcoDescription {
   font-size: 13px;
@@ -908,11 +911,14 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-}
-/* Conquistado: cinza levemente mais claro (sem cor de marca, sem borda). */
-.marcoBenefitItem.benefitUnlocked {
+  /* Bloco dentro de bloco — overlay branco um degrau mais claro que o
+   * card que o contém, mesmo padrão de elevação das missões do
+   * ArtistBox (sem cor de marca, sem borda). */
   background: rgba(255, 255, 255, 0.06);
+}
+/* Conquistado: mais um degrau de overlay branco. */
+.marcoBenefitItem.benefitUnlocked {
+  background: rgba(255, 255, 255, 0.09);
 }
