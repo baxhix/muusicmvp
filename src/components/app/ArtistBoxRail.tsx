@@ -108,6 +108,17 @@ export default function ArtistBoxRail() {
     } catch { /* SSR */ }
   };
 
+  /* Carrinho — abre o modal Ranking Fanverse direto na tab Loja
+   * (mesmo modal de 4 tabs: Classificação · Minha evolução · Jornada
+   * · Loja). */
+  const openStore = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('app:open-ranking-store', { detail: { screen: 'loja' } }),
+      );
+    } catch { /* SSR */ }
+  };
+
   return (
     <div ref={wrapperRef} className={styles.wrap}>
       {/* ── Rail vertical (sempre visível) ─────────────────────── */}
@@ -181,6 +192,17 @@ export default function ArtistBoxRail() {
         >
           <IconFolder />
           <Tooltip>Materiais</Tooltip>
+        </button>
+
+        {/* Loja — carrinho que abre o modal Ranking Fanverse na tab Loja. */}
+        <button
+          type="button"
+          className={styles.iconBtn}
+          onClick={openStore}
+          aria-label="Loja"
+        >
+          <IconCart />
+          <Tooltip>Loja</Tooltip>
         </button>
 
         {/* Divider antes do atalho do vídeo */}
@@ -412,6 +434,15 @@ function IconPlay() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" aria-hidden="true">
       <path d="M8 5v14l11-7z" />
+    </svg>
+  );
+}
+function IconCart() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="20" r="1.4" />
+      <circle cx="18" cy="20" r="1.4" />
+      <path d="M2.5 4h2.4l2 11.2a1.7 1.7 0 0 0 1.7 1.4h8.2a1.7 1.7 0 0 0 1.7-1.3L21.5 7H6" />
     </svg>
   );
 }
