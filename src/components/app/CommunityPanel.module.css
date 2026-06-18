@@ -532,7 +532,12 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #fbbf24;
-  background: rgba(251, 191, 36, 0.14);
+  /* Fundo preto + borda com gradiente da marca (laranja→rosa→roxo),
+   * mesmo padrão de borda usado em outros botões/badges do app. */
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
   padding: 3px 8px;
   border-radius: 999px;
   flex-shrink: 0;

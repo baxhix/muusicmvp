@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useRanking } from '@/hooks/useRanking';
 import RankMedallion from './RankMedallion';
 import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
@@ -276,6 +278,16 @@ interface TopBarProps {
 export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccountOpen }: TopBarProps) {
   const { user, logout, refresh } = useAuth();
   const { rankOf } = useRankBands();
+  /* Fanpoints + posição reais do usuário logado (mesma fonte do
+   * ArtistBox): saldo via useUserProfile, rank via useRanking. */
+  const { profile } = useUserProfile(user?.id ?? null);
+  const fanpoints = profile?.fanpoints ?? 0;
+  const { ranking: rankingForBadge } = useRanking(true);
+  const myRank = user
+    ? rankingForBadge.findIndex((r) => r.userId === user.id) + 1
+    : 0;
+  const rankBadge =
+    myRank === 1 ? '(Top 1!)' : myRank > 1 ? `(#${myRank}º)` : '';
   /* Per product feedback "as notificações vão para cima, ao lado
    * esquerdo da imagem do usuário no topo superior direito" —
    * trazemos o bell pro topo. Toggle do mesmo flag
@@ -582,8 +594,10 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     className={styles.drawerFanpoints}
                     onClick={closeAll}
                   >
-                    <strong>236.354</strong> Fanpoints
-                    <span className={styles.drawerFanpointsRank}>(Top 1!)</span>
+                    <strong>{fanpoints.toLocaleString('pt-BR')}</strong> Fanpoints
+                    {rankBadge && (
+                      <span className={styles.drawerFanpointsRank}>{rankBadge}</span>
+                    )}
                   </Link>
 
                   {/* Box "Aparecer no mapa" — informativo. O controle vive no
