@@ -254,8 +254,9 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  /* Conteúdo subiu: header só segura o X, com mínimo de respiro no topo. */
-  padding: 14px 16px 0;
+  /* Conteúdo mais acima: header só segura o botão, com respiro mínimo
+   * no topo (encosta perto da borda do drawer flutuante). */
+  padding: 6px 16px 0;
 }
 
 /* ── Identidade do usuário no topo do drawer ── */

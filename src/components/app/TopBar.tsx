@@ -530,8 +530,9 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     onClick={() => setOpen(false)}
                     aria-label="Fechar menu"
                   >
-                    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M4 4l10 10M14 4L4 14"/>
+                    {/* Seta à direita (o drawer fecha deslizando pra direita). */}
+                    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3.5 9h11M10 4.5l4.5 4.5-4.5 4.5"/>
                     </svg>
                   </button>
                 </div>
@@ -594,7 +595,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     className={styles.drawerFanpoints}
                     onClick={closeAll}
                   >
-                    <strong>{fanpoints.toLocaleString('pt-BR')}</strong> Fanpoints
+                    <strong>{Math.round(fanpoints / 2).toLocaleString('pt-BR')}</strong> Fanpoints
                     {rankBadge && (
                       <span className={styles.drawerFanpointsRank}>{rankBadge}</span>
                     )}
