@@ -313,54 +313,32 @@
  * via .tabBtn base. */
 .tabsRow {
   display: flex;
+  align-items: center;
   gap: 6px;
   margin-top: 10px;
   flex-shrink: 0;
 }
+/* Badges idênticos ao filtro de período (Hoje/Semana/Mês/Ano) do
+ * modal Ranking Fanverse: pílula branca translúcida, ativa = fundo
+ * mais claro + texto branco. */
 .tabBtn {
-  /* Position relative pra o pill absolute do filho ficar
-   *  ancorado dentro do botão. z-index 0 cria stacking
-   *  context pro pill negativo ficar atrás do label. */
-  position: relative;
-  z-index: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: transparent;
+  padding: 6px 12px;
   border: none;
-  color: rgba(245, 245, 247, 0.65);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: -0.005em;
   cursor: pointer;
-  transition: color 0.14s ease;
+  transition: background 0.15s, color 0.15s;
 }
 .tabBtn:hover {
-  color: #f5f5f7;
+  color: rgba(255, 255, 255, 0.8);
 }
-/* aria-selected dirige a cor do label sem precisar de classe
- *  extra. O pill roxo (via motion.span) sobrepõe o bg padrão. */
 .tabBtn[aria-selected='true'] {
-  color: #ffffff;
-}
-.tabBtnPill {
-  /* Pill animado via motion layoutId — desliza entre os botões
-   *  ativos. Tint roxo no fundo, SEM borda (per feedback). */
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: rgba(168, 85, 247, 0.16);
-  border: none;
-  z-index: -1;
-}
-.tabBtnLabel {
-  /* Z-index 1 garante que o texto fique acima do pill (que
-   *  tem z-index -1). position relative cria a stacking. */
-  position: relative;
-  z-index: 1;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
 
 /* Primary CTAs — purple pill (matches "Resolver" in QuizPost +

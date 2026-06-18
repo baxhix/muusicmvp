@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'motion/react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import VerifiedBadge from './VerifiedBadge';
@@ -271,11 +270,10 @@ export default function ConversationsSidebar({
         />
       </div>
 
-      {/* Filtros por tipo — chips com motion Tab select. Pill roxo
-       *  (layoutId="chatFilterPill") desliza entre Conversas/Grupos
-       *  quando o user troca; se ambos forem desativados (null), o
-       *  pill desmonta com fade automático via AnimatePresence
-       *  implícito do layoutId. */}
+      {/* Filtros por tipo — badges no mesmo estilo do filtro de período
+       *  (Hoje/Semana/Mês/Ano) do modal Ranking Fanverse: pílulas com
+       *  fundo branco translúcido, ativa = fundo mais claro + texto
+       *  branco. Sem pill animado (snap puro, como os period badges). */}
       <div className={styles.filterRow} role="group" aria-label="Filtrar por tipo">
         <button
           type="button"
@@ -283,14 +281,7 @@ export default function ConversationsSidebar({
           onClick={() => setTypeFilter((cur) => (cur === 'dm' ? null : 'dm'))}
           aria-pressed={typeFilter === 'dm'}
         >
-          {typeFilter === 'dm' && (
-            <motion.span
-              layoutId="chatFilterPill"
-              className={styles.filterChipPill}
-              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            />
-          )}
-          <span className={styles.filterChipLabel}>Conversas</span>
+          Conversas
         </button>
         <button
           type="button"
@@ -298,14 +289,7 @@ export default function ConversationsSidebar({
           onClick={() => setTypeFilter((cur) => (cur === 'group' ? null : 'group'))}
           aria-pressed={typeFilter === 'group'}
         >
-          {typeFilter === 'group' && (
-            <motion.span
-              layoutId="chatFilterPill"
-              className={styles.filterChipPill}
-              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            />
-          )}
-          <span className={styles.filterChipLabel}>Grupos</span>
+          Grupos
         </button>
       </div>
 

@@ -438,13 +438,10 @@ function CommunityListView({
           />
         </div>
 
-        {/* Tabs Geral | Shows — Tab select estilo motion: o pill
-         *  ativo é um motion.span com layoutId="commTabPill" que
-         *  desliza entre os botões quando o usuário troca de tab
-         *  (motion auto-anima posição+tamanho via FLIP layout).
-         *  Cores preservadas do design original: purple tint
-         *  rgba(168,85,247,.16) + border rgba(...,.55) + label
-         *  #d8b4fe. Resto vira transparente; só o pill anima. */}
+        {/* Tabs Geral | Shows — badges idênticos ao filtro de período
+         *  (Hoje/Semana/Mês/Ano) do modal Ranking Fanverse: pílula
+         *  branca translúcida, ativa = fundo mais claro + texto
+         *  branco. Snap puro (sem pill animado). */}
         <div
           className={styles.tabsRow}
           role="tablist"
@@ -457,14 +454,7 @@ function CommunityListView({
             className={styles.tabBtn}
             onClick={() => setActiveTab('general')}
           >
-            {activeTab === 'general' && (
-              <motion.span
-                layoutId="commTabPill"
-                className={styles.tabBtnPill}
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              />
-            )}
-            <span className={styles.tabBtnLabel}>Geral</span>
+            Geral
           </button>
           <button
             type="button"
@@ -473,14 +463,7 @@ function CommunityListView({
             className={styles.tabBtn}
             onClick={() => setActiveTab('shows')}
           >
-            {activeTab === 'shows' && (
-              <motion.span
-                layoutId="commTabPill"
-                className={styles.tabBtnPill}
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-              />
-            )}
-            <span className={styles.tabBtnLabel}>Shows</span>
+            Shows
           </button>
         </div>
 
