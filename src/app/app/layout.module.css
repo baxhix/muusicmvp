@@ -436,8 +436,12 @@
   right: 0;
   bottom: 0;
   width: 120px;
+  /* z:230 vive DENTRO do .shell (ver layout.tsx): acima do sino+avatar
+   * (z:200) e ABAIXO dos drawers (z:240), então fica atrás do drawer. */
   z-index: 230;
   pointer-events: none;
+  /* Gradiente horizontal: escuro na borda direita, esmaece pra
+   * esquerda (some antes de cruzar o drawer). */
   background: linear-gradient(
     to left,
     rgba(8, 8, 10, 0.92) 0%,
@@ -446,6 +450,21 @@
   );
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  /* Máscara vertical suaviza o TÉRMINO da faixa: opaca no topo (cobre
+   * o avatar, ~top:36) e dissolve pra baixo, em vez de cortar reto na
+   * base da tela. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 16%,
+    rgba(0, 0, 0, 0) 48%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 16%,
+    rgba(0, 0, 0, 0) 48%
+  );
   animation: chatDrawerVeilIn 280ms ease both;
 }
 @keyframes chatDrawerVeilIn {

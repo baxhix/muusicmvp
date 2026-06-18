@@ -208,15 +208,6 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className={styles.globePlaceholder} aria-hidden="true" />
       {showGlobe && <Globe />}
 
-      {/* Véu lateral direito — só no desktop (no mobile a .userMenu da
-       *  TopBar some e o drawer ocupa a tela toda). Com o drawer de
-       *  Chat/Comunidades acima do sino + avatar (z), a faixa de 34px
-       *  à direita do drawer ainda mostra uma fração do avatar; este
-       *  gradiente escuro + blur cobre essa lateral pra ofuscá-lo. */}
-      {!isMobile && chatOrCommunityDrawerOpen && (
-        <div className={styles.chatDrawerVeil} aria-hidden="true" />
-      )}
-
       {/* Sync headless de localização: captura/atualiza as coords de quem
        *  consentiu (LGPD) pra ele aparecer no mapa pros outros. Render
        *  null — restaura a captura que ficou órfã quando o LocateButton
@@ -233,6 +224,16 @@ function Shell({ children }: { children: React.ReactNode }) {
       {/* App shell (TopBar + map layer + BottomNav). Routes render
        *  inside `.mapLayer` via {children}. */}
       <div className={styles.shell}>
+        {/* Véu lateral direito — DENTRO do .shell (que é um contexto de
+         *  empilhamento próprio, z:55), junto do sino+avatar (z:200) e
+         *  dos drawers (z:240). Aqui o veil (z:230) fica ATRÁS do drawer
+         *  e à FRENTE do avatar, ofuscando a fração de avatar que aparece
+         *  no recuo de 34px à direita. Se ficasse fora do shell (root),
+         *  z:230 > shell z:55 e ele pintava NA FRENTE do drawer. Só
+         *  desktop; no mobile a .userMenu some e o drawer é fullscreen. */}
+        {!isMobile && chatOrCommunityDrawerOpen && (
+          <div className={styles.chatDrawerVeil} aria-hidden="true" />
+        )}
         {!hideShellChrome && (
           <div className={fadeClass(5)}>
             <TopBar
