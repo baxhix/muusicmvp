@@ -103,11 +103,18 @@
   border-radius: 50%;
   overflow: hidden;
   padding: 0;
-  background: #1a1a1f;
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  /* Borda em gradiente roxo/rosa (era cinza rgba .12). Técnica
+   * padding-box/border-box: o anel de 2px transparente revela a
+   * camada border-box (gradiente); a foto cobre o content-box. */
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#1a1a1f, #1a1a1f) padding-box,
+    linear-gradient(135deg, #ec4899 0%, #a855f7 100%) border-box;
 }
 .avatarBtn:hover {
-  border-color: rgba(168, 85, 247, 0.55);
+  /* Halo suave por fora do anel (border-color sólido apagaria o
+   * gradiente). */
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
 }
 .avatarImg {
   width: 100%;
@@ -340,6 +347,9 @@
  * ainda somava +12px, deixando o conteúdo recuado ~28px vs tabs
  * em 12px (desalinhado e estreito). */
 .flyoutTabs {
+  /* +16px de respiro acima das tabs (Superfãs / Missões / Exclusivo)
+   * na versão aberta do rail, per feedback de produto. */
+  margin-top: 16px;
   padding: 8px 16px 10px;
 }
 .flyoutTab {

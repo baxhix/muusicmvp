@@ -350,6 +350,7 @@ export default function ConversationsSidebar({
                *  removido. */
               <SwipeAction
                 key={c.id}
+                className={styles.swipeRow}
                 actionLabel="Apagar"
                 actionAriaLabel={`Apagar conversa com ${displayName}`}
                 onAction={() => handleHideConversation(c.id)}

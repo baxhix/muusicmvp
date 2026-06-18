@@ -366,6 +366,18 @@
   text-align: center;
 }
 
+/* Wrapper do SwipeAction (.root) — seu .foreground pinta um bg
+ * opaco (#0a0a0e) pra mascarar o botão "Apagar" vermelho no estado
+ * de repouso. O .root usa `border-radius: inherit`, e como o .list
+ * não tem radius, a caixa ficava QUADRADA em repouso e só parecia
+ * arredondada no hover (quando o overlay do .row, esse sim com
+ * radius 12, aparecia). Damos radius 12 ao wrapper pra que a caixa
+ * já nasça arredondada — o overflow:hidden do .root clipa o
+ * foreground no mesmo raio. */
+.swipeRow {
+  border-radius: 12px;
+}
+
 .row {
   position: relative; /* âncora pro kebab menu absolute */
   display: flex;
