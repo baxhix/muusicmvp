@@ -364,6 +364,35 @@ function Shell({ children }: { children: React.ReactNode }) {
             <BottomNav />
           </div>
         )}
+
+        {/* Dock de conversas recentes (avatares). Fica DENTRO do .shell
+         *  de propósito: assim divide o mesmo contexto de empilhamento do
+         *  veil (z:230) e do box de Chat/Comunidades (z:240). Antes vivia
+         *  fora do .shell e, como .shell é z:55, o dock (z:200, root)
+         *  pintava NA FRENTE do box (z:240 ficava "preso" no z:55 do
+         *  shell) e os avatares apareciam por cima da área do box. Dentro
+         *  do shell: dock(200) < veil(230) < box(240) → o box cobre o
+         *  dock; os avatares só aparecem na faixa lateral, atrás do blur.
+         *
+         *  `chatDetailOpen` esconde o dock (a conversa aberta cobre as
+         *  miniaturas). Com o drawer de Chat/Comunidades aberto ele fica
+         *  `dimmed` (borrado/esmaecido) atrás do box. */}
+        {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && (
+          <div className={fadeClass(5)}>
+            <LiveChatStack
+              conversations={chat.conversations}
+              activeId={chat.activeId}
+              onlineUserIds={onlineUserIds}
+              onOpen={(conversationId) => {
+                chat.open(conversationId);
+                router.push('/app/chat');
+              }}
+              onOpenAll={() => router.push('/app/chat')}
+              totalUnreadCount={chatUnreadCount}
+              dimmed={drawerListOpen && !isMobile}
+            />
+          </div>
+        )}
       </div>
 
       {/* ArtistBox (Fanverse identity + missions panel) — on
@@ -379,45 +408,9 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Avatar dock for the latest 3 conversations. Lives in the
-       *  layout (not on /app's page.tsx) so the dock stays visible
-       *  when the user routes to Superfãs, Comunidades, Perfil,
-       *  etc. — clicking the crown used to unmount the dock and
-       *  effectively hide the user's recent chats. On mobile o
-       *  dock fica restrito à home (subpáginas pegam o viewport
-       *  inteiro e a right rail some).
-       *
-       *  Per product feedback "quando o usuário estiver com uma
-       *  janela de chat aberta, ela deve ficar por cima das
-       *  miniaturas das últimas conversas" — `chatDetailOpen`
-       *  também esconde o dock no DESKTOP. No /app/chat o
-       *  ConversationsSidebar já cobre o papel de "lista de
-       *  conversas", então o dock vira ruído visual e competia
-       *  com o LiveChatPanel por pixels do canto direito.
-       *
-       *  EXCEÇÃO (desktop): com o drawer de Chat (lista) OU de
-       *  Comunidades aberto o dock NÃO some — fica `dimmed` (borrado +
-       *  esmaecido, atrás do drawer) pra manter o contexto das conversas
-       *  recentes e suavizar a transição (per feedback "mantenha o
-       *  preview das conversas recentes, mas atrás do blur" + "no box
-       *  comunidade também"). Já com uma CONVERSA aberta
-       *  (chatDetailOpen) o dock continua escondido. */}
-      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && (
-        <div className={fadeClass(5)}>
-          <LiveChatStack
-            conversations={chat.conversations}
-            activeId={chat.activeId}
-            onlineUserIds={onlineUserIds}
-            onOpen={(conversationId) => {
-              chat.open(conversationId);
-              router.push('/app/chat');
-            }}
-            onOpenAll={() => router.push('/app/chat')}
-            totalUnreadCount={chatUnreadCount}
-            dimmed={drawerListOpen && !isMobile}
-          />
-        </div>
-      )}
+      {/* (Dock de conversas recentes movido pra DENTRO do .shell — ver
+       *  comentário lá em cima. Ficava aqui fora e pintava por cima do
+       *  box de Chat por causa do contexto de empilhamento do .shell.) */}
 
       {/* SuperchatTrigger pill (top-right floater) was removed
        *  per product feedback "Remova o botão Entre no Superchat
