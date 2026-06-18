@@ -25,7 +25,10 @@
   bottom: 34px;
   height: auto;
   width: 350px;
-  z-index: 25;
+  /* z acima do .userMenu da TopBar (sino + avatar, z:200) pra que
+   * eles fiquem ATRÁS do drawer quando aberto; abaixo do detalhe da
+   * conversa (LiveChatPanel z:250) que continua sobrepondo a lista. */
+  z-index: 240;
   display: flex;
   flex-direction: column;
   isolation: isolate;

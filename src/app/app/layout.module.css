@@ -418,3 +418,37 @@
     radial-gradient(ellipse 80% 70% at 50% 50%, #0c1228 0%, #050614 75%, #000003 100%);
   pointer-events: none;
 }
+
+/* ── Véu lateral direito (Chat / Comunidades) ──
+ *
+ * Com os drawers de Chat/Comunidades acima da TopBar (.userMenu
+ * z:200 → drawers z:240), o sino de notificações e o avatar do
+ * usuário ficam ATRÁS do drawer. Mas o recuo de 34px entre a borda
+ * direita do drawer e a borda da tela deixa uma fração do avatar
+ * aparecendo nessa faixa. Este véu cobre só a lateral direita com um
+ * gradiente escuro (mais forte na borda) + blur de fundo pra ofuscar
+ * o avatar que ficou por trás. Fica ABAIXO do drawer (z:230 < 240),
+ * então só a porção à direita do drawer fica visível e o conteúdo do
+ * drawer não é embaçado. pointer-events:none = puramente visual. */
+.chatDrawerVeil {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 230;
+  pointer-events: none;
+  background: linear-gradient(
+    to left,
+    rgba(8, 8, 10, 0.92) 0%,
+    rgba(8, 8, 10, 0.6) 32%,
+    transparent 72%
+  );
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: chatDrawerVeilIn 280ms ease both;
+}
+@keyframes chatDrawerVeilIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
