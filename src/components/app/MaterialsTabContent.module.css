@@ -43,7 +43,8 @@
   align-items: center;
   gap: 6px;
   padding: 4px 4px 8px;
-  background: rgba(255, 255, 255, 0.03);
+  /* Padrão de card do Chat/Comunidades: repouso .025, hover .04. */
+  background: rgba(255, 255, 255, 0.025);
   /* Borda removida per spec "remova a borda dos cards que estão
    * na tab Exclusivo". O bg sutil já dá separação visual. */
   border: none;
@@ -56,7 +57,7 @@
 }
 .folder:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
 }
 .folder:active:not(:disabled) {
   transform: translateY(0);

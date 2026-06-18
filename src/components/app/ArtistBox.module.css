@@ -775,11 +775,12 @@
   gap: 6px;
   padding: 9px 8px;
   border-radius: 8px;
-  background: transparent;
+  /* Padrão de card do Chat/Comunidades: repouso .025, hover .04. */
+  background: rgba(255, 255, 255, 0.025);
   transition: background 140ms ease;
 }
 .tabRankingRow:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 /* Per product feedback "deixe o fundo do card do usuário logado
  * em cinza também" — fundo deixa de ser tinted roxo e passa pro
@@ -951,11 +952,12 @@
    * mais compacto e caber mais itens". */
   padding: 7px 8px;
   border-radius: 8px;
-  background: transparent;
+  /* Padrão de card do Chat/Comunidades: repouso .025, hover .04. */
+  background: rgba(255, 255, 255, 0.025);
   transition: background 140ms ease;
 }
 .tabBenefitRow:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 .tabBenefitRowLocked {
   opacity: 0.55;

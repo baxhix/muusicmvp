@@ -821,10 +821,9 @@
 }
 .marcoCard {
   border-radius: 14px;
-  /* Sem gradiente — overlay branco chapado, mesmo padrão de blocos do
-   * box Fanverse Ana Castela (ArtistBox usa rgba branco translúcido,
-   * nunca gradiente nem navy sólido). */
-  background: rgba(255, 255, 255, 0.03);
+  /* Overlay branco chapado, padrão de card do Chat/Comunidades:
+   * repouso .025 (hover do header em .04). */
+  background: rgba(255, 255, 255, 0.025);
   overflow: hidden;
   transition: background 200ms ease;
 }
@@ -849,7 +848,7 @@
   transition: background 160ms ease;
 }
 .marcoHeader:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .marcoHeaderLeft {

@@ -835,7 +835,7 @@
 .podiumWrap { padding: 0 16px 6px; }
 .podiumLabel { padding: 0 6px 8px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255, 255, 255, 0.4); }
 .podiumGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-.podiumCard { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 11px; background: rgba(255, 255, 255, 0.03); animation: rkRise 0.4s; }
+.podiumCard { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 11px; background: rgba(255, 255, 255, 0.025); animation: rkRise 0.4s; }
 .podiumPlace {
   flex: 0 0 auto;
   width: 22px;
@@ -879,12 +879,13 @@
   gap: 12px;
   padding: 11px 14px;
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.04);
+  /* Padrão de card do Chat/Comunidades: repouso .025, hover .04. */
+  background: rgba(255, 255, 255, 0.025);
   transition: background 140ms ease;
 }
 /* Hover igual ao dos itens da aba Jornada (.marcoHeader:hover) —
  * overlay branco neutro, sem o tint roxo. */
-.row:hover { background: rgba(255, 255, 255, 0.03); }
+.row:hover { background: rgba(255, 255, 255, 0.04); }
 /* Usuário logado — borda com gradiente (mesma do botão de download no
  * lightbox de Materiais): laranja → rosa → roxo. */
 .rowYou {
@@ -1238,8 +1239,8 @@
 /* Cards de Experiência e Produto com tamanho idêntico (sem "pulo" ao
  * trocar de aba): grid stretch + imagem com aspect fixo + nome em 2
  * linhas + linha de preço com altura mínima reservada. */
-.product { border-radius: 14px; background: rgba(255, 255, 255, 0.03); overflow: hidden; display: flex; flex-direction: column; transition: background 140ms ease, box-shadow 140ms ease; }
-.product:hover { background: rgba(255, 255, 255, 0.05); }
+.product { border-radius: 14px; background: rgba(255, 255, 255, 0.025); overflow: hidden; display: flex; flex-direction: column; transition: background 140ms ease, box-shadow 140ms ease; }
+.product:hover { background: rgba(255, 255, 255, 0.04); }
 /* Slot de imagem com FUNDO BRANCO (slider de fotos do produto).
  * Área menos alta (4/3 paisagem) pra o card ficar mais compacto. */
 .productImg { position: relative; aspect-ratio: 4 / 3; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
