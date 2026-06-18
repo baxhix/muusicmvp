@@ -191,21 +191,27 @@
 }
 
 /* ── Side Drawer ── */
+/* +16px além de 100% pra limpar a folga de 12px da borda + a sombra
+ * quando o drawer está fechado (flutuante, afastado da tela). */
 @keyframes drawerIn {
-  from { transform: translateX(100%); }
+  from { transform: translateX(calc(100% + 16px)); }
   to   { transform: translateX(0); }
 }
 @keyframes drawerOut {
   from { transform: translateX(0); }
-  to   { transform: translateX(100%); }
+  to   { transform: translateX(calc(100% + 16px)); }
 }
 
 .drawer {
   position: fixed;
-  top: 0;
-  right: 0;
-  height: 100dvh;
+  /* Flutuante: afastado das bordas da tela (12px) com cantos
+   * arredondados, em vez de colado/full-height. */
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  height: auto;
   width: 400px;
+  border-radius: 22px;
   /* z-index bumped 120 → 260 per spec — vê comentário em
    * .backdrop sobre o stack vs chat (z:200). */
   z-index: 260;
@@ -216,9 +222,11 @@
     linear-gradient(180deg, rgba(11,11,13,0.97) 0%, rgba(5,5,7,0.96) 50%, rgba(2,2,3,0.97) 100%);
   backdrop-filter: blur(40px) brightness(0.7) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.7) saturate(1.4);
-  box-shadow: -20px 0 60px rgba(0,0,0,0.5);
-  border-left: 1px solid rgba(255,255,255,0.05);
-  transform: translateX(100%);
+  /* Sombra omnidirecional de card flutuante (antes era só à esquerda). */
+  box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
+  /* Borda completa (flutuante) em vez de só border-left. */
+  border: 1px solid rgba(255,255,255,0.06);
+  transform: translateX(calc(100% + 16px));
   transition: transform 0.32s cubic-bezier(0.16,1,0.3,1);
   pointer-events: none;
   overflow: hidden;
