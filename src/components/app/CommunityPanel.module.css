@@ -73,7 +73,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 20px 20px 14px;
+  padding: 34px 20px 0px;
   /* Sem linha separadora do header (border-bottom removida). */
   background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
   flex-shrink: 0;
