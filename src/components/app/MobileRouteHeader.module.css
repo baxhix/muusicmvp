@@ -55,7 +55,9 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 0;
+  /* 16px de respiro entre a seta de voltar (em cima) e o título
+   * (embaixo), per feedback "16px mais abaixo da seta". */
+  gap: 16px;
   /* Cresce pra comportar o título dobrado (64px) + a seta de 44px
    * sem clipar. Painéis Chat/Comunidades usam top:132 no mobile. */
   height: 132px;
