@@ -55,6 +55,12 @@ export default function SwipeAction({
   /* Opacity do botão cresce de 0 a 1 conforme o drag avança até
    *  -actionWidth. Dá feedback visual antes do snap completar. */
   const actionOpacity = useTransform(x, [-actionWidth, -actionWidth / 2, 0], [1, 0.6, 0]);
+  /* Background do foreground ligado ao drag: TRANSPARENTE em repouso
+   *  (pro card herdar a cor translúcida do filho — ex: .row do chat
+   *  com rgba branco, igual aos cards de Comunidades) e OPACO assim
+   *  que o swipe começa, pra mascarar o botão "Apagar" vermelho atrás.
+   *  Em repouso o .action já está em opacity 0, então não vaza. */
+  const foregroundBg = useTransform(x, [-6, 0], ['#0a0a0e', 'rgba(10, 10, 14, 0)']);
   /* Captura ref pro acesso programático no onAction (fechar). */
   const isOpenRef = useRef(false);
 
@@ -121,7 +127,7 @@ export default function SwipeAction({
         dragConstraints={{ left: -actionWidth, right: 0 }}
         dragElastic={0.05}
         dragMomentum={false}
-        style={{ x, touchAction: 'pan-y' }}
+        style={{ x, touchAction: 'pan-y', background: foregroundBg }}
         onDragEnd={handleDragEnd}
         onClickCapture={handleForegroundClickCapture}
       >

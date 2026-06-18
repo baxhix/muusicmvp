@@ -385,7 +385,10 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: transparent;
+  /* Mesma cor de repouso dos cards de Comunidades (.communityCard):
+   * overlay branco rgba .025 sobre o vidro do painel. O foreground do
+   * SwipeAction fica transparente em repouso pra esse bg aparecer. */
+  background: rgba(255, 255, 255, 0.025);
   border: none;
   width: 100%;
   text-align: left;

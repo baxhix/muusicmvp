@@ -64,12 +64,12 @@
   z-index: 1;
   display: block;
   width: 100%;
-  /* Background opaco dark (matching chat panel) — necessário pra
-   *  mascarar o .action vermelho atrás quando a row está em
-   *  estado at-rest (row tem bg transparent, sem isso o vermelho
-   *  vazaria). Consumidor pode override com `--swipe-action-bg`
-   *  pra adaptar a outros surfaces. */
-  background: var(--swipe-action-bg, #0a0a0e);
+  /* Background agora é controlado por motion (inline style em
+   *  SwipeAction.tsx → `foregroundBg`): TRANSPARENTE em repouso (pro
+   *  card herdar a cor do filho, ex: .row do chat) e OPACO durante o
+   *  swipe pra mascarar o botão vermelho. Em repouso o .action já
+   *  está em opacity 0, então não vaza. */
+  background: transparent;
   /* will-change promove camada GPU desde o mount pra evitar
    *  flicker no primeiro drag. */
   will-change: transform;
