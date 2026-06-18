@@ -176,6 +176,15 @@ function Shell({ children }: { children: React.ReactNode }) {
   const chatDetailOpen =
     pathname.startsWith('/app/chat') && chat.activeId !== null;
   const hideShellChrome = chatDetailOpen && isMobile;
+  /* Drawer de Chat ou Comunidades aberto (rotas /app/chat e
+   * /app/comunidades). Agora que esses painéis viraram drawers
+   * flutuantes (estilo Minha Conta, recuo 34px à direita), o dock
+   * de conversas recentes ao lado vira redundância visual — some
+   * enquanto o drawer está aberto. Per product feedback "não tem
+   * porque a lista aparecer e ainda sim as conversas recentes
+   * aparecerem ao lado". */
+  const chatOrCommunityDrawerOpen =
+    pathname.startsWith('/app/chat') || pathname.startsWith('/app/comunidades');
 
   // Home = /app. Every other route is a "subpage" that, on mobile,
   // gets the MobileRouteHeader (back arrow + centered title + drag-
@@ -363,7 +372,7 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  ConversationsSidebar já cobre o papel de "lista de
        *  conversas", então o dock vira ruído visual e competia
        *  com o LiveChatPanel por pixels do canto direito. */}
-      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && (
+      {!hideShellChrome && !hideMobileHeader && !chatDetailOpen && !chatOrCommunityDrawerOpen && (
         <div className={fadeClass(5)}>
           <LiveChatStack
             conversations={chat.conversations}

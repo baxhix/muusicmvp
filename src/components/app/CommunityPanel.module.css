@@ -14,38 +14,30 @@
  */
 .panel {
   position: fixed;
-  top: 10vh;
-  height: 80vh;
-  right: 104px;
-  width: 398px;
-  /* Same overlay layer as ConversationsSidebar — sits ABOVE the
-   * FeedPanel (z:15) so the Community box covers the Feed cleanly
-   * when open. The activeOverlay singleton in /app/page.tsx makes
-   * sure Chat and Community are never both open at the same time. */
+  /* Envelope flutuante IGUAL ao drawer Minha Conta (e ao painel de
+   * Chat): recuo 34px topo/lateral-direita/base, 350px, cantos 22,
+   * borda completa + sombra omnidirecional. */
+  top: 34px;
+  right: 34px;
+  bottom: 34px;
+  height: auto;
+  width: 350px;
   z-index: 25;
   display: flex;
   flex-direction: column;
   isolation: isolate;
   background:
-    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 70%),
-    linear-gradient(180deg,
-      rgba(11,11,13,0.78) 0%,
-      rgba(5,5,7,0.74) 35%,
-      rgba(2,2,3,0.76) 65%,
-      rgba(2,2,3,0.80) 100%);
-  backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  border: none;
-  border-radius: 20px;
-  box-shadow:
-    0 32px 80px rgba(0,0,0,0.7),
-    0 0 0 0.5px rgba(255,255,255,0.04) inset,
-    0 1px 0 rgba(255,255,255,0.08) inset;
+    radial-gradient(120% 50% at 100% 0%, rgba(255,255,255,0.04) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(11,11,13,0.97) 0%, rgba(5,5,7,0.96) 50%, rgba(2,2,3,0.97) 100%);
+  backdrop-filter: blur(40px) brightness(0.7) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.7) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
   overflow: hidden;
-  /* Rise/fall — same curves as ConversationsSidebar. */
   opacity: 0;
   pointer-events: none;
-  transform: translateY(60vh) scale(0.97);
+  transform: translateY(40px) scale(0.98);
   visibility: hidden;
   transition:
     opacity 320ms cubic-bezier(0.7, 0, 0.84, 0),

@@ -1,26 +1,28 @@
 .panel {
   position: fixed;
-  top: 0; right: -420px;
-  width: min(420px, calc(100vw - 32px));
-  height: 100vh;
-  /* Sits ABOVE the right-rail chat dock (z:200) per product
-   * feedback — when a DM / group conversation is open the panel
-   * needs to cover the dock avatars so message reading and the
-   * input row aren't competing for the same pixels. The dock is
-   * intentionally still mounted underneath so the user can pick
-   * a different conversation by hovering the dock once the panel
-   * closes. */
+  /* Envelope flutuante IGUAL ao drawer Minha Conta / lista de Chat:
+   * card de 350px recuado 34px (topo/base), cantos 22. O detalhe da
+   * conversa abre POR CIMA da lista (z:250 > 25) no MESMO lugar e
+   * tamanho — lê como "dentro do mesmo bloco". Desliza da direita via
+   * `right` (o override mobile abaixo vira full-screen e continua
+   * usando `right`, então não há conflito de transform). */
+  top: 34px;
+  bottom: 34px;
+  height: auto;
+  right: -400px;
+  width: 350px;
   z-index: 250;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, rgba(11, 11, 13, 0.97), rgba(2, 2, 3, 0.98));
-  border-left: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: -16px 0 60px rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px -12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(40px) brightness(0.7) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) brightness(0.7) saturate(1.4);
   transition: right 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.panelOpen { right: 0; }
+.panelOpen { right: 34px; }
 
 .header {
   position: relative;
