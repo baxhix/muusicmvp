@@ -391,8 +391,10 @@
   );
   /* padding-top maior (36 → 80px) pra compensar o overlap +50
    *  que comeu metade do antigo espaço acima do eyebrow. O
-   *  eyebrow mantém ~30px de respiro do edge visível da foto. */
-  padding: 80px 16px 8px;
+   *  eyebrow mantém ~30px de respiro do edge visível da foto.
+   *  80 → 92 per feedback "desça levemente as informações
+   *  (Fanverse Ana Castela / Fanpoints)" no box expandido. */
+  padding: 92px 16px 8px;
 }
 
 /* Row externa do fold — coluna de texto (eyebrow + título +
@@ -607,7 +609,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 16px 12px;
+  /* margin-top 0 → 8: tabs levemente mais abaixo dos Fanpoints no
+   * box expandido (desktop), per feedback. */
+  margin: 8px 16px 12px;
   /* Tabs nunca shrinkam — quando .box bate max-height, é o
    * .content que rola, não os controles. */
   flex-shrink: 0;
