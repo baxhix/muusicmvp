@@ -450,22 +450,23 @@
   );
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  /* Máscara vertical cobre a faixa quase inteira pra que o blur fique
-   * por trás da COLUNA de avatares de conversas recentes (dock centrado
-   * verticalmente, ~top:50%) — antes dissolvia em 48% e os avatares
-   * ficavam abaixo do blur, aparecendo. Só dissolve perto da base
-   * (88→100%) pra não cortar reto na borda inferior nem cobrir o player. */
+  /* Máscara vertical: opaca no TOPO (cobre o avatar/sino, ~top:36) e
+   * dissolve até ~32%. NÃO cobre a coluna de avatares (dock centrado em
+   * ~top:50%): com o dock agora ATRÁS do veil (correção de stacking), se
+   * o veil cobrisse o centro o gradiente escuro + dimmed do dock somavam
+   * e os avatares sumiam. Assim os avatares aparecem na lateral, com o
+   * próprio blur/dimmed deles. */
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 88%,
-    rgba(0, 0, 0, 0) 100%
+    #000 14%,
+    rgba(0, 0, 0, 0) 32%
   );
   mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 88%,
-    rgba(0, 0, 0, 0) 100%
+    #000 14%,
+    rgba(0, 0, 0, 0) 32%
   );
   animation: chatDrawerVeilIn 280ms ease both;
 }
