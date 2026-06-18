@@ -322,15 +322,14 @@
 }
 
 /* ── Responsive ── */
-/* Viewport intermediário (1025-1440px) — quando o ArtistBox se
- * retrai pro ArtistBoxRail (rail vertical 52px), o Feed perde o
- * "irmão" largo do lado esquerdo e fica visualmente solto colado
- * na direita. Per product feedback "Conforme a tela vai diminuindo
- * e o box Fanverse Ana Castela se retrai, o feed deve assumir a
- * posição central e ficar abaixo do banner no topo", reposicionamos
- * pra centralizado abaixo do DesktopTopBanner (banner topo 34px +
- * altura ~95px = 129; subimos 24px de breathing → top:153). */
-@media (min-width: 1025px) and (max-width: 1440px) {
+/* Feed centralizado SOMENTE em larguras menores que 1080px (per
+ * product feedback "deixe o feed centralizado somente em resoluções
+ * menores que 1080 na largura"). De 1080px pra cima ele fica na
+ * lateral direita (blocos abaixo). Centralizado abaixo do
+ * DesktopTopBanner (top:153) com largura capada pra deixar espaço
+ * pro player de vídeo à esquerda. Limite inferior 769px pra não
+ * pegar o layout mobile (≤768 vira painel inferior full-width). */
+@media (min-width: 769px) and (max-width: 1079px) {
   .panel {
     top: 153px;
     /* Altura do feed retraído +45px (era calc(100vh - 200px)) per
@@ -353,13 +352,12 @@
     width: min(520px, calc(100vw - 280px));
   }
 }
-/* Faixa 1441-1490px — Fanverse já está em rail (compacto), mas aqui
- * ainda cabe o feed NA LATERAL direita. Per product feedback "Na
- * resolução 1470, compacte a largura do feed pra mesma largura do box
- * Chat/Comunidade e mantenha na lateral". 398px = largura exata do
- * CommunityPanel; right:104 = mesmo alinhamento (42px à esquerda do
- * dock). Mantém o top/altura do feed retraído. */
-@media (min-width: 1441px) and (max-width: 1490px) {
+/* Faixa 1080-1490px — feed NA LATERAL direita (não centraliza acima
+ * de 1080). 398px = largura exata do CommunityPanel; right:104 = mesmo
+ * alinhamento (42px à esquerda do dock). Mantém o top/altura do feed
+ * retraído (abaixo do banner). Acima de 1490 cai no base (.panel),
+ * que também é lateral direita mas verticalmente centralizado. */
+@media (min-width: 1080px) and (max-width: 1490px) {
   .panel {
     top: 153px;
     height: calc(100vh - 155px);
@@ -375,19 +373,9 @@
     width: 398px;
   }
 }
-@media (max-width: 1024px) {
-  /* Stay anchored 42px to the left of the chat dock on tablet too —
-   * same math as desktop (right: 104px). Width shrinks to give the
-   * left column room to breathe. */
-  .panel {
-    right: 104px;
-    width: 320px;
-  }
-  .minimizedGradient {
-    left: calc(100% - 104px - 320px);
-    right: 104px;
-  }
-}
+/* 769-1079px agora é coberto pelo bloco centralizado acima (o feed
+ * centraliza nessa faixa). O antigo bloco max-width:1024 que ancorava
+ * o feed à direita foi removido pra não sobrescrever a centralização. */
 @media (max-width: 768px) {
   /* Em mobile o feed vira um painel inferior full-width, escondido por padrão */
   .panel {
