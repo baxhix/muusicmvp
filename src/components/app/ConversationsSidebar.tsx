@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ApiConversationSummary } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import TruncatedText from './TruncatedText';
@@ -87,6 +87,16 @@ export default function ConversationsSidebar({
    *  optimistic hide enquanto o backend confirma. */
   const [hidingId, setHidingId] = useState<string | null>(null);
 
+  /* Fechar com saída discreta: marca `closing` (que remove o
+   *  .panelOpen → o painel reproduz a transição de saída de 320ms:
+   *  fade + desliza pra baixo) e só então navega/desmonta. Sem isso
+   *  o onClose roteava na hora e o fechamento ficava "seco". */
+  const [closing, setClosing] = useState(false);
+  const handleClose = useCallback(() => {
+    setClosing(true);
+    window.setTimeout(onClose, 300);
+  }, [onClose]);
+
   const handleHideConversation = async (id: string) => {
     if (hidingId) return;
     const ok = await confirmDialog({
@@ -150,11 +160,11 @@ export default function ConversationsSidebar({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [open, handleClose]);
 
   // DMs + grupos com nome. Filtra o "Superchat" (com ícone do
   // chapéu) per product feedback "Remova o item ou grupo
@@ -232,7 +242,7 @@ export default function ConversationsSidebar({
 
   return (
     <aside
-      className={`${styles.panel} ${open ? styles.panelOpen : ''}`}
+      className={`${styles.panel} ${open && !closing ? styles.panelOpen : ''}`}
       role="dialog"
       aria-label="Todas as conversas"
       aria-hidden={!open}
@@ -247,11 +257,12 @@ export default function ConversationsSidebar({
         <button
           type="button"
           className={styles.closeBtn}
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Fechar conversas"
         >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Seta à direita (substitui o X), igual ao drawer Minha Conta. */}
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3.5 9h11M10 4.5l4.5 4.5-4.5 4.5" />
           </svg>
         </button>
       </header>

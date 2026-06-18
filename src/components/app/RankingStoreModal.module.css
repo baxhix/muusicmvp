@@ -470,8 +470,9 @@
 .barCol:hover .barFill { filter: brightness(1.14); }
 /* Usuário logado: gradiente de marca (destaque). */
 .barFillYou { background: linear-gradient(180deg, #f97316 0%, #ec4899 55%, #a855f7 100%); }
-/* Top 1 do período: gradiente dourado (estilo ouro). */
-.barFillTop1 { background: linear-gradient(180deg, #fde68a 0%, #f5b40a 48%, #b8791a 100%); }
+/* Top 1 do período: cinza neutro mais claro (sem dourado, per
+   feedback). Mantém leve distinção do resto sem cor de ouro. */
+.barFillTop1 { background: linear-gradient(180deg, #a1a1aa 0%, #52525b 100%); }
 /* Topo da barra: avatar + colocação (sobe junto com a barra). */
 .barCap {
   position: absolute;
@@ -503,7 +504,7 @@
 /* Colocação (#N) de cada usuário, no topo. */
 .barRank { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
 .barRankYou { color: #fff; }
-.barRankTop1 { color: #fbbf24; }
+.barRankTop1 { color: #fff; }
 /* Posições que o usuário subiu no período — chip discreto DENTRO da
  * barra, perto do topo. Fill escuro translúcido (sem borda) pra ler em
  * qualquer cor de barra (cinza / marca / ouro). */

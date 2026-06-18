@@ -132,6 +132,15 @@ function relativeTime(iso: string): string {
 export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
   const [view, setView] = useState<View>({ kind: 'list' });
 
+  /* Fechar com saída discreta: marca `closing` (remove o .panelOpen
+   *  → o painel reproduz a transição de saída de 320ms) e só então
+   *  navega/desmonta. Sem isso o onClose roteava na hora ("seco"). */
+  const [closing, setClosing] = useState(false);
+  const handleClose = useCallback(() => {
+    setClosing(true);
+    window.setTimeout(onClose, 300);
+  }, [onClose]);
+
   // Reset to the list view ~360ms after the panel closes so
   // re-opening always starts at the top of the flow.
   useEffect(() => {
@@ -149,11 +158,11 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
       if (view.kind === 'topic') setView({ kind: 'detail', slug: view.slug });
       else if (view.kind === 'detail') setView({ kind: 'list' });
       else if (view.kind === 'create') setView({ kind: 'list' });
-      else onClose();
+      else handleClose();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open, view, onClose]);
+  }, [open, view, handleClose]);
 
   /* Per feedback "quando eu entro em um tópico de comunidade e
    * clico na seta de voltar, ele volta para a home e não ao item
@@ -190,14 +199,14 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
 
   return (
     <aside
-      className={`${styles.panel} ${open ? styles.panelOpen : ''}`}
+      className={`${styles.panel} ${open && !closing ? styles.panelOpen : ''}`}
       role="dialog"
       aria-label="Comunidade"
       aria-hidden={!open}
     >
       {view.kind === 'list' && (
         <CommunityListView
-          onClose={onClose}
+          onClose={handleClose}
           onOpenCommunity={(slug) => setView({ kind: 'detail', slug })}
           onOpenCreate={() => setView({ kind: 'create' })}
         />
@@ -205,7 +214,7 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
       {view.kind === 'create' && (
         <CommunityCreateView
           onBack={() => setView({ kind: 'list' })}
-          onClose={onClose}
+          onClose={handleClose}
           onCreated={(slug) => setView({ kind: 'detail', slug })}
         />
       )}
@@ -215,7 +224,7 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
           onBack={() => setView({ kind: 'list' })}
           onOpenTopic={(topicId) => setView({ kind: 'topic', slug: view.slug, topicId })}
           onLeftCommunity={() => setView({ kind: 'list' })}
-          onClose={onClose}
+          onClose={handleClose}
         />
       )}
       {view.kind === 'topic' && (
@@ -223,7 +232,7 @@ export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
           slug={view.slug}
           topicId={view.topicId}
           onBack={() => setView({ kind: 'detail', slug: view.slug })}
-          onClose={onClose}
+          onClose={handleClose}
         />
       )}
     </aside>
@@ -278,8 +287,9 @@ function HeaderBar({
         onClick={onClose}
         aria-label="Fechar"
       >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-          <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        {/* Seta à direita (substitui o X), igual ao drawer Minha Conta. */}
+        <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M3.5 9h11M10 4.5l4.5 4.5-4.5 4.5" />
         </svg>
       </button>
     </header>

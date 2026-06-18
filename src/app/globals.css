@@ -285,6 +285,16 @@ em, i, cite, var, address, dfn {
   outline: 2px solid var(--accent, #3DDB74) !important;
   outline-offset: 2px !important;
 }
+/* Campos de texto/busca já têm indicador de foco próprio (borda
+ * branca + leve mudança de bg). Com o cursor dentro eles casam
+ * :focus-visible e ganhariam o anel VERDE de acento — removido aqui
+ * pra que o foco do input não fique verde (vale chat, comunidades e
+ * qualquer outro campo). */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+}
 
 /* ── Preferência por menos movimento (acessibilidade) ──────────
  *
