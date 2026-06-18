@@ -191,24 +191,25 @@
 }
 
 /* ── Side Drawer ── */
-/* +16px além de 100% pra limpar a folga de 12px da borda + a sombra
+/* +18px além de 100% pra limpar a folga de 14px da borda + a sombra
  * quando o drawer está fechado (flutuante, afastado da tela). */
 @keyframes drawerIn {
-  from { transform: translateX(calc(100% + 16px)); }
+  from { transform: translateX(calc(100% + 18px)); }
   to   { transform: translateX(0); }
 }
 @keyframes drawerOut {
   from { transform: translateX(0); }
-  to   { transform: translateX(calc(100% + 16px)); }
+  to   { transform: translateX(calc(100% + 18px)); }
 }
 
 .drawer {
   position: fixed;
-  /* Flutuante: afastado das bordas da tela (12px) com cantos
-   * arredondados, em vez de colado/full-height. */
-  top: 12px;
-  right: 12px;
-  bottom: 12px;
+  /* Flutuante: afastado das bordas da tela com cantos arredondados.
+   * 14px = mesma distância do limite da tela do box Fanverse Ana
+   * Castela (.box do ArtistBox em left:14px). */
+  top: 14px;
+  right: 14px;
+  bottom: 14px;
   height: auto;
   width: 400px;
   border-radius: 22px;
@@ -226,7 +227,7 @@
   box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
   /* Borda completa (flutuante) em vez de só border-left. */
   border: 1px solid rgba(255,255,255,0.06);
-  transform: translateX(calc(100% + 16px));
+  transform: translateX(calc(100% + 18px));
   transition: transform 0.32s cubic-bezier(0.16,1,0.3,1);
   pointer-events: none;
   overflow: hidden;
