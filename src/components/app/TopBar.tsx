@@ -484,6 +484,12 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
           />
           {/* Medalhão de rank — meu próprio status, se Top 10. */}
           <RankMedallion position={rankOf(user?.id)} size="sm" />
+          {/* Identificador on/offline — verde quando visível no mapa
+           * (locationConsent), cinza quando invisível. */}
+          <span
+            className={`${styles.onlineDot} ${locationConsent ? '' : styles.onlineDotOff}`}
+            aria-hidden="true"
+          />
         </div>
       </div>
 
@@ -635,20 +641,19 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                       stays consistent across the app. */}
                   <div className={styles.drawerSection}>
                     <span className={styles.drawerEyebrow}>Fanverse</span>
-                    {/* Fanpoints — abre o FanpointsModal global. Per
-                     * spec "inclua o item Fanpoints no menu geral,
-                     * que abre ao clicar na imagem do usuário logado
-                     * no topo direito". Mesmo evento que o trigger
-                     * do .metaPoints do fold e do item Fanpoints
-                     * no hamburger menu (BottomNav) — mantém UX
-                     * consistente. */}
+                    {/* Fanpoints — abre o modal Ranking Fanverse (tabs
+                     * Classificação · Evolução · Jornada · Loja) na aba
+                     * Evolução (a centrada em Fanpoints). Mesmo evento
+                     * do trigger Total de Fanpoints do fold. */}
                     <button
                       type="button"
                       className={styles.drawerItem}
                       onClick={() => {
                         setOpen(false);
                         try {
-                          window.dispatchEvent(new CustomEvent('app:open-fanpoints'));
+                          window.dispatchEvent(
+                            new CustomEvent('app:open-ranking-store', { detail: { screen: 'evolucao' } }),
+                          );
                         } catch { /* SSR — ignore */ }
                       }}
                     >

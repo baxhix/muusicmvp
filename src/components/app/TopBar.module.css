@@ -18,8 +18,11 @@
      banner central, avatar direita. Régua descida 18px (16→34)
      per product feedback "Posicione 18px mais abaixo o banner
      Ana Castela, Box Fanverse Ana Castela e a imagem de perfil
-     no topo direito". */
-  top: 34px;
+     no topo direito".
+     Avatar agora 28px (= .compactPhoto do ArtistBox): top 34→36 pra
+     que o centro do avatar (36 + 18 = Y54) caia na mesma régua
+     horizontal do avatar da Artista no box contraído. */
+  top: 36px;
   right: 14px;
   /* High z-index + dedicated stacking context so the avatar isn't
      dimmed by the Globe's edge vignette (.vignette z=1) which
@@ -123,8 +126,10 @@
 
 .avatar {
   position: relative;
-  width: 52px;
-  height: 52px;
+  /* Mesmo tamanho do avatar da Artista no box contraído (.compactPhoto
+   * = 28px). */
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.18);
   overflow: visible;
@@ -157,16 +162,23 @@
   display: block;
 }
 
+/* Bolinha on/offline — dimensionada pro avatar de 28px. Verde quando
+ * online (visível no mapa); cinza via .onlineDotOff. */
 .onlineDot {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 13px;
-  height: 13px;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid rgba(0,0,0,0.9);
   box-shadow: 0 0 6px rgba(61,219,116,0.7);
+}
+/* Offline / invisível no mapa — cinza, sem glow. */
+.onlineDotOff {
+  background: #71717a;
+  box-shadow: none;
 }
 
 /* ── Backdrop — only rendered when drawer is open ── */
@@ -211,7 +223,7 @@
   bottom: 34px;
   height: auto;
   /* Mesma largura do box Fanverse Ana Castela (.box do ArtistBox). */
-  width: 280px;
+  width: 350px;
   border-radius: 22px;
   /* z-index bumped 120 → 260 per spec — vê comentário em
    * .backdrop sobre o stack vs chat (z:200). */
