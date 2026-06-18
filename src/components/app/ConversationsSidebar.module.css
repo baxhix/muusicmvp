@@ -32,18 +32,11 @@
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  /* Fill 100% OPACO — nada do fundo (mapa, dock borrado, veil) aparece
-   * ATRAVÉS do box, per feedback "não dar pra ver nada com blur do
-   * fundo". Mesmo tom do header (sheen branco sutil por cima fica
-   * uniforme da borda do topo até a base). O blur vive só na camada
-   * externa (.chatDrawerVeil, no shell), ao redor do box. */
-  background:
-    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 70%),
-    linear-gradient(180deg,
-      #0b0b0d 0%,
-      #08080a 35%,
-      #040405 65%,
-      #020203 100%);
+  /* Cor sólida chapada — sem gradiente nem transparência. Não dá pra
+   * ver NADA do fundo (mapa, dock, veil) através do box, per feedback
+   * "deve ter cor sólida". O blur vive só na camada externa
+   * (.chatDrawerVeil, no shell), ao redor do box. */
+  background: #0b0b0d;
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 22px;
   box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
