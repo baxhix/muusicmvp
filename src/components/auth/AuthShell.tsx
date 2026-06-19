@@ -6,6 +6,10 @@ import { type ReactNode } from 'react';
 import Sparkles from '@/components/teste/Sparkles';
 import styles from './AuthShell.module.css';
 
+/* Fotos da Ana (fundo transparente) que se intercalam no media pane do
+ * desktop via crossfade CSS. Ordem = ordem de exibição no ciclo. */
+const AUTH_MEDIA = ['/ana-01.webp', '/ana-02.webp', '/ana-03.webp', '/ana-04.webp'];
+
 /**
  * AuthShell — layout compartilhado das telas de autenticação
  * + onboarding. Garante consistência visual entre os 6 steps
@@ -59,10 +63,16 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
        *  tudo, mesma identidade visual da landing /teste. */}
       <Sparkles count={42} seed={5} />
 
-      {/* Media pane — box cinza de MARCAÇÃO (60% no desktop). A foto
-       *  enorme entra aqui depois; por ora é só placeholder. Escondido
-       *  no mobile/tablet, onde o fluxo segue em coluna única. */}
-      <aside className={styles.mediaPane} aria-hidden="true" />
+      {/* Media pane — 60% no desktop. Slideshow das fotos da Ana
+       *  (fundo transparente) ocupando 80% da altura, centralizado, com
+       *  crossfade automático. Escondido no mobile/tablet, onde o fluxo
+       *  segue em coluna única. */}
+      <aside className={styles.mediaPane} aria-hidden="true">
+        {AUTH_MEDIA.map((src) => {
+          // eslint-disable-next-line @next/next/no-img-element
+          return <img key={src} src={src} alt="" className={styles.mediaImg} loading="lazy" />;
+        })}
+      </aside>
 
       {/* Form pane — 40% no desktop / 100% no mobile. Carrega o topo
        *  (voltar + logo), a barra de progresso e o conteúdo do step. */}

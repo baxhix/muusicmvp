@@ -139,22 +139,30 @@
     min-height: 100dvh;
     position: relative;
     z-index: 1;
-    /* Marcação cinza até a foto entrar. */
-    background: linear-gradient(135deg, #2a2a30 0%, #16161a 100%);
+    /* Fundo transparente — extensão do fundo escuro do shell (as fotos
+     * têm fundo transparente e não preenchem 100% do espaço). */
+    background: transparent;
+    overflow: hidden;
   }
-  /* Rótulo discreto pra deixar claro que é placeholder. */
-  .mediaPane::after {
-    content: 'Foto';
+  /* Slideshow: cada foto ocupa 80% da altura, centralizada, com
+   * crossfade automático (opacity + leve zoom). 4 imagens × 6s. */
+  .mediaImg {
     position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: rgba(255, 255, 255, 0.22);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    top: 50%;
+    left: 50%;
+    height: 80vh;
+    width: auto;
+    max-width: 90%;
+    object-fit: contain;
+    transform: translate(-50%, -50%) scale(1.04);
+    opacity: 0;
+    pointer-events: none;
+    animation: authMediaCycle 24s ease-in-out infinite;
   }
+  .mediaImg:nth-child(1) { animation-delay: 0s; }
+  .mediaImg:nth-child(2) { animation-delay: 6s; }
+  .mediaImg:nth-child(3) { animation-delay: 12s; }
+  .mediaImg:nth-child(4) { animation-delay: 18s; }
   .formPane {
     flex: 0 0 40%;
     max-width: 40%;
@@ -164,5 +172,26 @@
    * feedback (no split, o form não fica mais colado no topo). */
   .content {
     padding-top: 200px;
+  }
+}
+
+/* Crossfade das fotos: cada uma aparece (fade-in + leve zoom-out),
+ * segura, e some — com overlap pro próximo, num loop de 24s (4×6s). */
+@keyframes authMediaCycle {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
+  5%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  27%  { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
+}
+
+/* Reduced-motion: sem ciclo — mostra só a 1ª foto, estática. */
+@media (prefers-reduced-motion: reduce) {
+  .mediaImg {
+    animation: none;
+    transform: translate(-50%, -50%);
+  }
+  .mediaImg:first-child {
+    opacity: 1;
   }
 }
