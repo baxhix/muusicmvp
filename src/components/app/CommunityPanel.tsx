@@ -324,9 +324,11 @@ function HeaderBar({
         {title}
       </h2>
       {trailing}
-      {/* Seta de fechar à direita — omitida no layout stacked (Nova
-       *  comunidade) per feedback "remova a seta que está à direita". */}
-      {!stacked && (
+      {/* Seta de fechar à direita — existe SÓ na lista de comunidades.
+       *  Omitida em todas as subviews internas (Nova comunidade =
+       *  stacked, detalhe = stackedTitle, tópico = topicTitle): nelas só
+       *  a seta da esquerda (voltar) aparece, per product feedback. */}
+      {!stacked && !stackedTitle && !topicTitle && (
         <button
           type="button"
           className={styles.closeBtn}

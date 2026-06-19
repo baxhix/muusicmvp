@@ -43,17 +43,17 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
 }
-/* Header avatar bumped from 36 → 56 — the chat detail is the focal
-   view, so the user's face should read at the same weight as the
-   name beside it. Border thickness + radius scale stay the same
-   proportionally. */
+/* Header avatar = 42×42 (era 56) per product feedback. O wrap recebe
+   margin-left negativo pra puxar o avatar levemente pra esquerda
+   (reduz o gap de 12px pro botão voltar). */
 .headerAvatarWrap {
   position: relative;
   flex-shrink: 0;
   display: inline-flex;
+  margin-left: -4px;
 }
 .headerAvatar {
-  width: 56px; height: 56px;
+  width: 42px; height: 42px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.2);
@@ -755,8 +755,8 @@
     -webkit-backdrop-filter: blur(14px);
   }
   .headerAvatar {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
   }
   .headerName {
     font-size: 15px;
