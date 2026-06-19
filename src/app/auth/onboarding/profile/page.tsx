@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { track } from '@/lib/analytics';
 import { loadOnboarding, saveOnboarding } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
+import StepFrame from '@/components/auth/StepFrame';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './profile.module.css';
 
@@ -78,7 +79,7 @@ export default function ProfilePage() {
 
   return (
     <AuthShell back="/auth/onboarding/birth-date" progress={4 / 5}>
-      <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <StepFrame backHref="/auth/onboarding/birth-date">
         <h1 className={fields.heading}>Como devemos te chamar?</h1>
         <p className={fields.subtitle}>
           Esse é o nome que outros usuários verão quando você comentar, curtir
@@ -137,7 +138,7 @@ export default function ProfilePage() {
             {submitting ? 'Salvando…' : 'Continuar'}
           </button>
         </form>
-      </div>
+      </StepFrame>
     </AuthShell>
   );
 }

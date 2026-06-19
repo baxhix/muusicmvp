@@ -10,6 +10,7 @@ import {
   calculateAge,
 } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
+import StepFrame from '@/components/auth/StepFrame';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './birth-date.module.css';
 
@@ -142,7 +143,7 @@ export default function BirthDatePage() {
 
   return (
     <AuthShell back="/auth/verify" progress={3 / 5}>
-      <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <StepFrame backHref="/auth/verify">
         <h1 className={fields.heading}>Quando você nasceu?</h1>
         <p className={fields.subtitle}>
           Sua experiência na plataforma será adaptada à sua faixa etária.
@@ -209,7 +210,7 @@ export default function BirthDatePage() {
             {submitting ? 'Salvando…' : 'Continuar'}
           </button>
         </form>
-      </div>
+      </StepFrame>
     </AuthShell>
   );
 }

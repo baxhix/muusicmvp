@@ -100,7 +100,7 @@ export default function SuccessPage() {
 
   return (
     <AuthShell back="hide" progress={5 / 5}>
-      <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         {status === 'saving' && (
           <>
             <div className={styles.spinner} aria-hidden="true">

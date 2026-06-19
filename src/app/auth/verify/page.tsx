@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { track } from '@/lib/analytics';
 import { loadOnboarding, saveOnboarding } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
+import StepFrame from '@/components/auth/StepFrame';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './verify.module.css';
 
@@ -129,15 +130,7 @@ export default function VerifyPage() {
 
   return (
     <AuthShell back="/auth" progress={2 / 5}>
-      <div
-        className={fields.fadeIn}
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      <StepFrame backHref="/auth">
         <div className={styles.envelope} aria-hidden="true">
           <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
             <rect x="6" y="14" width="52" height="36" rx="6" stroke="currentColor" strokeWidth="2.5" />
@@ -218,7 +211,7 @@ export default function VerifyPage() {
           <br />
           Confere o spam. Link e código expiram em 15 minutos.
         </p>
-      </div>
+      </StepFrame>
     </AuthShell>
   );
 }
