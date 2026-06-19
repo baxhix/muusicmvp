@@ -183,6 +183,8 @@ export default function Navbar() {
           <nav className={styles.nav} aria-label="Principal">
             <a href="#o-app"        className={styles.navLink}>O App</a>
             <a href="/para-artistas" className={styles.navLink}>Para Artistas</a>
+            <a href="/blog"          className={styles.navLink}>Blog</a>
+            <a href="#imprensa"      className={styles.navLink}>Imprensa</a>
             <a href="/auth" className={styles.ctaPill}>
               {/* Pill preto sólido + sombra gradient animada atrás
                *  (::before pseudo, ver Navbar.module.css). O orb
