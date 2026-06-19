@@ -46,6 +46,7 @@ import SimulationHUD from '@/components/app/SimulationHUD';
 import FanverseSearch from '@/components/app/FanverseSearch';
 import FanpointsModal from '@/components/app/FanpointsModal';
 import RankingStoreModal from '@/components/app/RankingStoreModal';
+import OnboardingTour from '@/components/app/OnboardingTour';
 import { InviteFriendsModal } from '@/components/app/ArtistBox';
 import ShowDayLayer from '@/components/app/ShowDayLayer';
 import ShowDayPanel from '@/components/app/ShowDayPanel';
@@ -587,6 +588,12 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  TopBar + hamburger do BottomNav). Self-mounting: ouve o
        *  evento global e renderiza o link de convite + stats. */}
       <InviteFriendsModal />
+
+      {/* Tour de boas-vindas (deck animado) — self-mounting: abre
+       *  automaticamente 1× pra cadastro novo (após o welcome reveal)
+       *  e via `app:open-tour` (botão "Rever tour" nas Configurações).
+       *  Portal pro body, z acima de tudo. */}
+      <OnboardingTour />
 
       {/* ── Brainstorm + Map Simulation ──
        *

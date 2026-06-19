@@ -253,6 +253,15 @@ export interface EventPayloadMap {
    *  zera lat/lng/city/country e o some do mapa na hora. */
   location_consent_revoked: Record<string, never>;
 
+  // ── ONBOARDING TOUR (deck animado de boas-vindas) ─────────────
+  /** Tour de boas-vindas aberto. `source`: 'auto' (cadastro novo,
+   *  após welcome reveal) ou 'manual' (botão "Rever tour"). */
+  onboarding_tour_opened:    { source: 'auto' | 'manual' };
+  /** Usuário concluiu o tour (chegou ao último passo / tela final). */
+  onboarding_tour_completed: Record<string, never>;
+  /** Usuário pulou o tour ("Pular tudo"). `at` = índice do passo. */
+  onboarding_tour_skipped:   { at: number };
+
   // ── ADMIN ─────────────────────────────────────────────────────
   admin_feed_post_created:   { post_id: string; type: string; action: 'publish' | 'schedule' | 'draft' };
   admin_feed_post_updated:   { post_id: string; action: 'publish' | 'schedule' | 'draft' };
@@ -405,6 +414,11 @@ export const EVENT_META: Record<EventName, EventMeta> = {
   location_consent_granted: { category: 'privacy', importance: 'high', description: 'Usuário consentiu em compartilhar localização aproximada.', trigger: 'Toggle ON no onboarding/Configurações ou tap no LocateButton.', ga4: true },
   location_consent_denied:  { category: 'privacy', importance: 'high', description: 'Usuário deixou o consentimento de localização OFF no onboarding.', trigger: 'Submit do passo Perfil com o toggle desligado.' },
   location_consent_revoked: { category: 'privacy', importance: 'high', description: 'Usuário revogou o consentimento; backend zera localização.', trigger: 'Toggle OFF nas Configurações.', ga4: true },
+
+  // Onboarding tour (deck animado de boas-vindas)
+  onboarding_tour_opened:    { category: 'onboarding', importance: 'medium', description: 'Tour de boas-vindas aberto (auto no 1º acesso ou via "Rever tour").', trigger: 'OnboardingTour abre (welcome reveal ou CustomEvent app:open-tour).' },
+  onboarding_tour_completed: { category: 'onboarding', importance: 'medium', description: 'Usuário concluiu o tour de boas-vindas.', trigger: 'Avançou além do último passo (tela final).', ga4: true },
+  onboarding_tour_skipped:   { category: 'onboarding', importance: 'low', description: 'Usuário pulou o tour de boas-vindas.', trigger: 'Clique em "Pular tudo".' },
 
   // Admin
   admin_feed_post_created:   { category: 'admin', importance: 'high', description: 'Post criado pelo admin (/admin/feed).', trigger: 'POST /api/admin/feed retorna 201.' },

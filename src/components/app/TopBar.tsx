@@ -811,6 +811,21 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                     </div>
                     <nav className={styles.drawerNav}>
                       <div className={styles.drawerSection}>
+                        <span className={styles.drawerEyebrow}>Tutorial</span>
+                        <button
+                          className={styles.drawerItem}
+                          onClick={() => {
+                            closeAll();
+                            window.dispatchEvent(new CustomEvent('app:open-tour'));
+                          }}
+                        >
+                          <DrawerItemIcon name="info" />
+                          <span>Rever tour de boas-vindas</span>
+                          <DrawerChevron />
+                        </button>
+                      </div>
+
+                      <div className={styles.drawerSection}>
                         <span className={styles.drawerEyebrow}>Atividade</span>
                         <button
                           className={`${styles.drawerItem} ${styles.drawerItemDisabled}`}
