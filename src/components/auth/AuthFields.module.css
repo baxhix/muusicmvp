@@ -234,7 +234,11 @@
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.45);
   text-align: left;
-  margin-top: 24px;
+  /* Empurra o disclaimer de Termos pro rodapé da página. O wrapper do
+   * step é flex column + flex:1, então margin-top:auto joga o hint pro
+   * fim (antes era 24px = colado no botão; agora vale desktop + mobile). */
+  margin-top: auto;
+  padding-top: 24px;
 }
 .hint a {
   color: rgba(255, 255, 255, 0.75);
