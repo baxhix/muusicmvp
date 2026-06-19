@@ -59,6 +59,14 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
        *  tudo, mesma identidade visual da landing /teste. */}
       <Sparkles count={42} seed={5} />
 
+      {/* Media pane — box cinza de MARCAÇÃO (60% no desktop). A foto
+       *  enorme entra aqui depois; por ora é só placeholder. Escondido
+       *  no mobile/tablet, onde o fluxo segue em coluna única. */}
+      <aside className={styles.mediaPane} aria-hidden="true" />
+
+      {/* Form pane — 40% no desktop / 100% no mobile. Carrega o topo
+       *  (voltar + logo), a barra de progresso e o conteúdo do step. */}
+      <div className={styles.formPane}>
       <header className={styles.topBar}>
         {showBack && (
           <button
@@ -105,6 +113,7 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
       )}
 
       <section className={styles.content}>{children}</section>
+      </div>
     </main>
   );
 }

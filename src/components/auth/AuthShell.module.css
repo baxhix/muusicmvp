@@ -14,6 +14,24 @@
   overflow: hidden;
 }
 
+/* Form pane — coluna com topo + conteúdo do step. No mobile ocupa a
+ * tela toda; no desktop vira a coluna de 40% ao lado da foto. */
+.formPane {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Media pane — box cinza de MARCAÇÃO da foto (60% no desktop). A foto
+ * real entra depois; por ora é só placeholder. Escondido no
+ * mobile/tablet (<1024px), onde o fluxo é coluna única. */
+.mediaPane {
+  display: none;
+}
+
 /* topBar, progressTrack, content devem ficar acima do
  * Sparkles que renderiza atrás. */
 .topBar, .progressTrack, .content {
@@ -103,4 +121,41 @@
   .topBar { padding: 16px 18px; min-height: 56px; }
   .logo { height: 20px; }
   .backBtn { left: 12px; width: 36px; height: 36px; }
+}
+
+/* ── Desktop split (≥1024px) ──
+ * 60% foto (placeholder cinza) à esquerda + 40% form à direita.
+ * Abaixo de 1024px volta pra coluna única (media pane some). */
+@media (min-width: 1024px) {
+  .shell {
+    flex-direction: row;
+  }
+  .mediaPane {
+    display: block;
+    flex: 0 0 60%;
+    max-width: 60%;
+    min-height: 100dvh;
+    position: relative;
+    z-index: 1;
+    /* Marcação cinza até a foto entrar. */
+    background: linear-gradient(135deg, #2a2a30 0%, #16161a 100%);
+  }
+  /* Rótulo discreto pra deixar claro que é placeholder. */
+  .mediaPane::after {
+    content: 'Foto';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .formPane {
+    flex: 0 0 40%;
+    max-width: 40%;
+    min-height: 100dvh;
+  }
 }
