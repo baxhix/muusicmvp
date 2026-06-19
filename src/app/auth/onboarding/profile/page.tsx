@@ -7,6 +7,7 @@ import { track } from '@/lib/analytics';
 import { loadOnboarding, saveOnboarding } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
+import AuthStateButton from '@/components/auth/AuthStateButton';
 import fields from '@/components/auth/AuthFields.module.css';
 
 /**
@@ -91,13 +92,13 @@ export default function ProfilePage() {
 
           {error && <div className={fields.error} role="alert">{error}</div>}
 
-          <button
+          <AuthStateButton
             type="submit"
-            className={fields.btn}
-            disabled={submitting || displayName.trim().length < 2}
-          >
-            {submitting ? 'Salvando…' : 'Continuar'}
-          </button>
+            state={submitting ? 'pending' : 'idle'}
+            idleLabel="Continuar"
+            pendingLabel="Salvando…"
+            disabled={displayName.trim().length < 2}
+          />
         </form>
       </StepFrame>
     </AuthShell>

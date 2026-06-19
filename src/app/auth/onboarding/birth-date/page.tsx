@@ -12,6 +12,7 @@ import {
 import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
 import MotionCheckbox from '@/components/auth/MotionCheckbox';
+import AuthStateButton from '@/components/auth/AuthStateButton';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './birth-date.module.css';
 
@@ -112,8 +113,6 @@ export default function BirthDatePage() {
     return { isoDate, age, isMinor: age < 18 };
   }, [dateInput]);
 
-  const canSubmit = !!parsed && acceptedTerms && !submitting;
-
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!parsed) {
@@ -199,13 +198,13 @@ export default function BirthDatePage() {
 
           {submitError && <div className={fields.error} role="alert">{submitError}</div>}
 
-          <button
+          <AuthStateButton
             type="submit"
-            className={fields.btn}
-            disabled={!canSubmit}
-          >
-            {submitting ? 'Salvando…' : 'Continuar'}
-          </button>
+            state={submitting ? 'pending' : 'idle'}
+            idleLabel="Continuar"
+            pendingLabel="Salvando…"
+            disabled={!parsed || !acceptedTerms}
+          />
         </form>
       </StepFrame>
     </AuthShell>

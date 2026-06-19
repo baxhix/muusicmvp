@@ -12,6 +12,7 @@ import {
 } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
 import AuthSessionLoading from '@/components/auth/AuthSessionLoading';
+import AuthStateButton from '@/components/auth/AuthStateButton';
 import fields from '@/components/auth/AuthFields.module.css';
 
 /* Tempo mínimo (ms) que o splash de "Retomando sua sessão" fica
@@ -169,7 +170,7 @@ export default function EmailStep() {
           </div>
         )}
 
-        <h1 className={fields.heading}>Bem-vindo ao Fanverse<br />Ana Castela</h1>
+        <h1 className={fields.heading}>Bem-vindo ao<br />Fanverse Ana Castela</h1>
         <p className={fields.subtitle}>
           Digita seu e-mail pra entrar ou criar sua conta.
           <br />
@@ -197,13 +198,13 @@ export default function EmailStep() {
 
           {error && <div className={fields.error} role="alert">{error}</div>}
 
-          <button
+          <AuthStateButton
             type="submit"
-            className={fields.btn}
-            disabled={submitting || !email.trim()}
-          >
-            {submitting ? 'Enviando…' : 'Continuar'}
-          </button>
+            state={submitting ? 'pending' : 'idle'}
+            idleLabel="Continuar"
+            pendingLabel="Enviando…"
+            disabled={!email.trim()}
+          />
         </form>
 
         {/* Login social — Google + Facebook, discreto e DESABILITADO

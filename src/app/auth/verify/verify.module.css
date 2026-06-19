@@ -89,9 +89,27 @@
   .spinnerDot { animation: none; }
 }
 
+/* Links secundários lado a lado ("Reenviar link e código" · "Usar
+ * outro e-mail"), separados por um divisor fino. */
 .actions {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
+}
+.actions button {
+  width: auto;
+  flex: 0 1 auto;
+  height: auto;
+  padding: 6px 2px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.actionsSep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.16);
 }

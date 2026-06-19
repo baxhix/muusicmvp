@@ -7,6 +7,7 @@ import { track } from '@/lib/analytics';
 import { loadOnboarding, saveOnboarding } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
+import AuthStateButton from '@/components/auth/AuthStateButton';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './verify.module.css';
 
@@ -163,13 +164,13 @@ export default function VerifyPage() {
 
           {otpError && <div className={fields.error} role="alert">{otpError}</div>}
 
-          <button
+          <AuthStateButton
             type="submit"
-            className={fields.btn}
-            disabled={otp.length !== 6 || otpSubmitting}
-          >
-            {otpSubmitting ? 'Verificando…' : 'Entrar com código'}
-          </button>
+            state={otpSubmitting ? 'pending' : 'idle'}
+            idleLabel="Entrar com código"
+            pendingLabel="Verificando…"
+            disabled={otp.length !== 6}
+          />
         </form>
 
         <div className={styles.divider}>
@@ -189,6 +190,8 @@ export default function VerifyPage() {
                 ? 'Reenviando…'
                 : 'Reenviar link e código'}
           </button>
+
+          <span className={styles.actionsSep} aria-hidden="true" />
 
           <button
             type="button"
