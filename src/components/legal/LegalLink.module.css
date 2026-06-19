@@ -1,0 +1,19 @@
+/* Reset de <button> pra que o LegalLink se comporte como texto
+ * inline (a cor/peso/underline vêm da classe do contexto que é
+ * passada junto, ex: .hint button, .termsLink, .col li button). */
+.reset {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}

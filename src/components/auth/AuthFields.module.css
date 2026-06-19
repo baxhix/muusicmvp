@@ -295,13 +295,15 @@
   font-weight: 400;
   color: rgba(255, 255, 255, 0.45);
 }
-.hint a {
+.hint a,
+.hint button {
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.hint a:hover { color: #fff; }
+.hint a:hover,
+.hint button:hover { color: #fff; }
 
 /* No desktop o bloco do step fica centralizado verticalmente (auto
  * height), então o margin-top:auto não empurra mais o disclaimer.

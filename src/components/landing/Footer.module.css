@@ -61,12 +61,14 @@
   flex-direction: column;
   gap: 10px;
 }
-.col li a {
+.col li a,
+.col li button {
   font-size: 13.5px;
   color: var(--ink-soft);
   transition: color 0.2s ease;
 }
-.col li a:hover { color: var(--ink); }
+.col li a:hover,
+.col li button:hover { color: var(--ink); }
 
 /* ── Bottom ── */
 .bottom {

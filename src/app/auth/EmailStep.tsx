@@ -15,6 +15,7 @@ import AuthShell from '@/components/auth/AuthShell';
 import AuthSessionLoading from '@/components/auth/AuthSessionLoading';
 import AuthStateButton from '@/components/auth/AuthStateButton';
 import FanverseCore from '@/components/animations/FanverseCore';
+import LegalLink from '@/components/legal/LegalLink';
 import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import fields from '@/components/auth/AuthFields.module.css';
 
@@ -260,11 +261,9 @@ export default function EmailStep() {
       <p className={`${fields.hint} ${fields.hintFooter}`}>
         Continuando, você concorda com nossos
         <br />
-        <a href="/termos" target="_blank" rel="noopener noreferrer">Termos</a>{' '}
+        <LegalLink kind="terms_of_use">Termos</LegalLink>{' '}
         e{' '}
-        <a href="/privacidade" target="_blank" rel="noopener noreferrer">
-          Política de Privacidade
-        </a>
+        <LegalLink kind="privacy_policy">Política de Privacidade</LegalLink>
         .
       </p>
     </AuthShell>

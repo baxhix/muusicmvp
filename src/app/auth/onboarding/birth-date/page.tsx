@@ -13,6 +13,7 @@ import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
 import MotionCheckbox from '@/components/auth/MotionCheckbox';
 import AuthStateButton from '@/components/auth/AuthStateButton';
+import LegalLink from '@/components/legal/LegalLink';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './birth-date.module.css';
 
@@ -185,14 +186,14 @@ export default function BirthDatePage() {
             ariaLabel="Concordo com os Termos de Uso e a Política de Privacidade"
           >
             Concordo com os{' '}
-            <a className={styles.termsLink} href="/termos" target="_blank" rel="noopener noreferrer">
+            <LegalLink className={styles.termsLink} kind="terms_of_use">
               Termos de Uso
-            </a>
+            </LegalLink>
             <br />
             e a{' '}
-            <a className={styles.termsLink} href="/privacidade" target="_blank" rel="noopener noreferrer">
+            <LegalLink className={styles.termsLink} kind="privacy_policy">
               Política de Privacidade
-            </a>
+            </LegalLink>
             .
           </MotionCheckbox>
 

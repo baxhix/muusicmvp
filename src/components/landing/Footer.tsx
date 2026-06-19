@@ -1,3 +1,4 @@
+import LegalLink from '@/components/legal/LegalLink';
 import styles from './Footer.module.css';
 
 export default function Footer() {
@@ -69,8 +70,8 @@ export default function Footer() {
             <div className={styles.col}>
               <h5>Legal</h5>
               <ul>
-                <li><a href="/privacidade">Privacidade</a></li>
-                <li><a href="/termos">Termos</a></li>
+                <li><LegalLink kind="privacy_policy">Privacidade</LegalLink></li>
+                <li><LegalLink kind="terms_of_use">Termos</LegalLink></li>
                 <li><a href="#">Cookies</a></li>
               </ul>
             </div>

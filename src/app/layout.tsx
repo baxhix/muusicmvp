@@ -6,6 +6,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import GlobalErrorLogger from '@/components/GlobalErrorLogger';
 import TrackingTags from '@/components/TrackingTags';
 import AnalyticsProvider from '@/lib/analytics/AnalyticsProvider';
+import LegalDrawer from '@/components/legal/LegalDrawer';
 import './globals.css';
 
 const inter = Inter({
@@ -137,6 +138,9 @@ export default function RootLayout({
             <UniverseProvider>{children}</UniverseProvider>
           </AuthProvider>
         </ErrorBoundary>
+        {/* Drawer lateral global de Termos/Privacidade — montado uma
+            vez aqui; qualquer link público abre via openLegalDrawer(). */}
+        <LegalDrawer />
       </body>
     </html>
   );
