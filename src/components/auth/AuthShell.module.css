@@ -98,6 +98,19 @@
   display: block;
 }
 
+/* Sparkles do background — escondidas no mobile (email step usa fundo
+ * limpo). No desktop seguem como decoração. (≤768 = breakpoint do
+ * useIsMobile, que monta o orbe no lugar do logo.) */
+@media (max-width: 768px) {
+  .sparklesLayer {
+    display: none;
+  }
+  /* Logo escondido no mobile quando o step usa o orbe no lugar. */
+  .logoLinkHideMobile {
+    display: none;
+  }
+}
+
 /* ── Progress (opcional) ─────────────────
  * Linha fina abaixo do top bar mostrando avanço do fluxo. */
 .progressTrack {

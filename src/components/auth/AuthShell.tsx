@@ -42,9 +42,12 @@ export interface AuthShellProps {
   back?: string | 'hide';
   /** 0..1 — progresso do fluxo (0 = email, 1 = success). */
   progress?: number;
+  /** Esconde o logotipo do header no mobile (ex: email step usa o orbe
+   *  no lugar). No desktop o logo continua aparecendo. */
+  hideLogoMobile?: boolean;
 }
 
-export default function AuthShell({ children, back, progress }: AuthShellProps) {
+export default function AuthShell({ children, back, progress, hideLogoMobile }: AuthShellProps) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -59,9 +62,12 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
 
   return (
     <main className={styles.shell}>
-      {/* Background universo — sparkles espalhadas atrás de
-       *  tudo, mesma identidade visual da landing /teste. */}
-      <Sparkles count={42} seed={5} />
+      {/* Background universo — sparkles espalhadas atrás de tudo.
+       *  Escondidas no mobile per product feedback ("remova as
+       *  estrelas do background"). */}
+      <div className={styles.sparklesLayer} aria-hidden="true">
+        <Sparkles count={42} seed={5} />
+      </div>
 
       {/* Header (logo + voltar) — barra FULL-WIDTH no topo, acima do
        *  split (per product feedback "a barra do header deve ocupar 100%
@@ -92,7 +98,11 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
 
         {/* Logo aponta pra / (raiz do site, muusic.live) — saída
          *  do fluxo de auth pro home principal. */}
-        <Link href="/" className={styles.logoLink} aria-label="Fanverse — voltar pra home">
+        <Link
+          href="/"
+          className={`${styles.logoLink} ${hideLogoMobile ? styles.logoLinkHideMobile : ''}`}
+          aria-label="Fanverse — voltar pra home"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/teste/fanverse-logo.svg"

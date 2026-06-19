@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { track } from '@/lib/analytics';
 import {
   loadOnboarding,
@@ -13,7 +14,34 @@ import {
 import AuthShell from '@/components/auth/AuthShell';
 import AuthSessionLoading from '@/components/auth/AuthSessionLoading';
 import AuthStateButton from '@/components/auth/AuthStateButton';
+import FanverseCore from '@/components/animations/FanverseCore';
 import fields from '@/components/auth/AuthFields.module.css';
+
+/**
+ * useKeyboardInset — altura (px) que o teclado virtual ocupa, via
+ * visualViewport. 0 quando fechado. Usado pra "ancorar" o botão de
+ * continuar logo acima do teclado no mobile. Ignora deltas pequenos
+ * (barra de endereço) com um threshold.
+ */
+function useKeyboardInset(): number {
+  const [inset, setInset] = useState(0);
+  useEffect(() => {
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!vv) return;
+    const update = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setInset(kb > 90 ? kb : 0);
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+  return inset;
+}
 
 /* Tempo mínimo (ms) que o splash de "Retomando sua sessão" fica
  * visível mesmo se o /api/auth/me responder rápido. Garante que
@@ -53,6 +81,12 @@ export default function EmailStep() {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Altura do teclado virtual (mobile) — ancora o CTA logo acima dele.
+  const kbInset = useKeyboardInset();
+  // Orbe (FanverseCore/WebGL) só monta no mobile — evita rodar canvas
+  // no desktop, onde ele fica escondido.
+  const isMobile = useIsMobile();
 
   /* Splash de validação de sessão — fica visível enquanto o
    * AuthContext consulta /api/auth/me E enquanto o min-hold timer
@@ -141,16 +175,19 @@ export default function EmailStep() {
   }
 
   return (
-    <AuthShell back="/" progress={1 / 5}>
-      {/* flex: 1 + flex column → permite empurrar o `.hint`
-       *  (Termos) pro fim da tela em mobile via margin-top:
-       *  auto. Em desktop o hint segue logo abaixo do botão
-       *  (não há espaço suficiente pra "empurrar"). */}
+    <AuthShell back="/" progress={1 / 5} hideLogoMobile>
+      {/* Orbe (mobile) — substitui o logotipo no topo, alinhado à
+       *  esquerda em 120x120. Só monta no mobile (WebGL). */}
+      {isMobile && (
+        <div className={fields.mobileOrb} aria-hidden="true">
+          <FanverseCore />
+        </div>
+      )}
+
       <div
-        className={fields.fadeIn}
+        className={`${fields.fadeIn} ${fields.emailBlock}`}
         style={{
           width: '100%',
-          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
@@ -170,12 +207,8 @@ export default function EmailStep() {
           </div>
         )}
 
-        <h1 className={fields.heading}>Bem-vindo ao<br />Fanverse Ana Castela</h1>
-        <p className={fields.subtitle}>
-          Digita seu e-mail pra entrar ou criar sua conta.
-          <br />
-          Sem senhas.
-        </p>
+        <h1 className={`${fields.heading} ${fields.headingTight}`}>Bem-vindo ao<br />Fanverse Ana Castela</h1>
+        <p className={fields.subtitle}>Digite seu e-mail para continuar</p>
 
         <form onSubmit={onSubmit} className={fields.form} noValidate>
           <input
@@ -191,25 +224,38 @@ export default function EmailStep() {
               setEmail(e.target.value);
               if (error) setError(null);
             }}
-            className={fields.input}
+            className={`${fields.input} ${fields.inputSm}`}
             disabled={submitting}
             aria-label="E-mail"
           />
 
           {error && <div className={fields.error} role="alert">{error}</div>}
 
-          <AuthStateButton
-            type="submit"
-            state={submitting ? 'pending' : 'idle'}
-            idleLabel="Continuar"
-            pendingLabel="Enviando…"
-            disabled={!email.trim()}
-          />
+          {/* Dock do CTA — no mobile, quando o teclado abre, o botão
+           *  vira fixed logo acima dele (kbInset via visualViewport).
+           *  Sem teclado/desktop: fluxo normal. */}
+          <div
+            className={fields.submitDock}
+            style={
+              kbInset > 0
+                ? { position: 'fixed', left: 20, right: 20, bottom: kbInset + 14, zIndex: 60 }
+                : undefined
+            }
+          >
+            <AuthStateButton
+              type="submit"
+              state={submitting ? 'pending' : 'idle'}
+              idleLabel="Continuar"
+              pendingLabel="Enviando…"
+              disabled={!email.trim()}
+            />
+          </div>
         </form>
+      </div>
 
-        {/* Login social — Google + Facebook, discreto e DESABILITADO
-         *  (visual apenas). Caption 12px cinza logo abaixo. */}
-        <div className={fields.social}>
+      {/* Login social — logo acima dos termos (rodapé). Discreto e
+       *  DESABILITADO (visual apenas). */}
+      <div className={fields.social}>
           <div className={fields.socialRow}>
             <button type="button" className={fields.socialBtn} disabled aria-label="Entrar com Google">
               <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -232,7 +278,6 @@ export default function EmailStep() {
           </div>
           <p className={fields.socialNote}>Login social desabilitado</p>
         </div>
-      </div>
 
       {/* Disclaimer de Termos — rodapé da página. No desktop fica
        *  ancorado no fundo do form pane (fora do bloco centralizado);

@@ -296,7 +296,8 @@
   color: rgba(255, 255, 255, 0.45);
 }
 .hint a {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -403,4 +404,39 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .stepInner { animation: none; }
+}
+
+/* ── Redesign mobile do email step ───────────────────────
+ * Orbe no topo (substitui o logo), bloco mais abaixo, título e input
+ * menores, social logo acima dos termos. Tudo escopo ≤768px (mesmo
+ * breakpoint do useIsMobile que monta o orbe). */
+.mobileOrb {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 0 4px;
+  flex-shrink: 0;
+}
+.submitDock {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  /* Bloco posicionado mais abaixo (abaixo do orbe). */
+  .emailBlock {
+    margin-top: 5vh;
+  }
+  /* Título -20% (32 → ~26px). */
+  .headingTight {
+    font-size: 26px;
+  }
+  /* Input -15% de altura (56 → 48px). Mantém font-size 16px pra não
+   * disparar o auto-zoom do iOS. */
+  .inputSm {
+    height: 48px;
+  }
+  /* Social empurrado pro rodapé (logo acima dos termos). */
+  .social {
+    margin-top: auto;
+  }
 }
