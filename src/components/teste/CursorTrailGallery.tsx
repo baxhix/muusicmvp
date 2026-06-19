@@ -208,13 +208,14 @@ export default function CursorTrailGallery() {
 
   return (
     <div className={styles.root}>
-      {/* Headline centralizado. Desktop: uma linha. Mobile: duas
-       *  linhas forçadas via <br> que só aparece no mobile (per
-       *  spec "no mobile, deixe o headline em duas linhas"). Com
-       *  display:none no desktop, o whitespace ao redor colapsa
-       *  e o título volta a ler "Conteúdo exclusivo" numa linha. */}
+      {/* Headline centralizado. "e restrito" sempre na linha de baixo
+       *  (via <br> fixo). No desktop fica "Conteúdo exclusivo" / "e
+       *  restrito" (2 linhas); no mobile o .titleBreak (display:none no
+       *  desktop) também quebra "Conteúdo" / "exclusivo" → 3 linhas. */}
       <h3 className={styles.featureTitle}>
         Conteúdo<br className={styles.titleBreak} /> exclusivo
+        <br />
+        e restrito
       </h3>
 
       {/* Diferenciais — bullets com os destaques do conteúdo
