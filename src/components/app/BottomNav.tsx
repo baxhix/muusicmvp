@@ -278,7 +278,6 @@ export default function BottomNav() {
           aria-label={pathname.startsWith('/app/chat') ? 'Fechar chat' : 'Abrir chat'}
           aria-pressed={!isMobile ? pathname.startsWith('/app/chat') : undefined}
           data-tooltip={pathname.startsWith('/app/chat') ? 'Fechar' : 'Chat'}
-          data-onboarding-anchor="chat"
         >
           <svg viewBox="0 0 22 22" fill="none">
             <path

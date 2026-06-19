@@ -395,10 +395,7 @@ export default function ArtistBox() {
                   <VerifiedBadge size={18} className={styles.foldVerified} />
                 </div>
               </div>
-              <div
-                className={styles.metaRow}
-                data-onboarding-anchor="fanpoints"
-              >
+              <div className={styles.metaRow}>
                 {/* metaPoints é o TRIGGER do modal Ranking Fanverse
                  * (Classificação · Minha evolução · Jornada · Loja),
                  * abrindo na aba "Minha evolução". stopPropagation
@@ -485,7 +482,6 @@ export default function ArtistBox() {
             aria-selected={activeTab === 'ranking'}
             className={styles.tab}
             onClick={() => { setActiveTab('ranking'); if (!open) setOpen(true); }}
-            data-onboarding-anchor="ranking"
           >
             {activeTab === 'ranking' && (
               <motion.span

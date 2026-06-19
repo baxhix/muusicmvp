@@ -11,7 +11,6 @@ import RankMedallion from './RankMedallion';
 import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
-import { resetOnboarding } from '@/lib/onboarding';
 import { api } from '@/lib/api/client';
 import { track } from '@/lib/analytics';
 import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
@@ -860,20 +859,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
                             ariaLabel="Exibir recursos em teste"
                           />
                         </div>
-                        {/* Refazer tour de onboarding — apaga o flag
-                         *  localStorage e re-dispara os 3 tooltips. */}
-                        <button
-                          type="button"
-                          className={styles.drawerItem}
-                          onClick={() => {
-                            resetOnboarding();
-                            setActiveOverlay(null);
-                          }}
-                        >
-                          <DrawerItemIcon name="info" />
-                          <span>Refazer tour de onboarding</span>
-                          <DrawerChevron />
-                        </button>
                       </div>
 
                       <div className={styles.drawerSection}>
