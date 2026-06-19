@@ -22,7 +22,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  height: 120%;
+  /* Mais expandido — o glow vaza bem além do aparelho (era 120%),
+   * sem ficar preso ao box do mockup. */
+  height: 185%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   background: conic-gradient(
@@ -34,12 +36,13 @@
     #ff9f45,
     #ff3b81
   );
-  filter: blur(46px);
+  filter: blur(64px);
   opacity: 0.5;
   z-index: 0;
   pointer-events: none;
+  /* Gira mais devagar (era 7s). */
   animation:
-    ap-spin 7s linear infinite,
+    ap-spin 16s linear infinite,
     ap-breathe 4.5s ease-in-out infinite;
 }
 
@@ -85,15 +88,17 @@
     #ff3b81
   );
   filter: blur(22px);
-  animation: ap-spin 5s linear infinite;
+  /* Gira mais devagar (era 5s). */
+  animation: ap-spin 11s linear infinite;
 }
 
-/* Máscara escura cobrindo o centro → só a "moldura" de ~14px brilha. */
+/* Máscara escura cobrindo o centro → diminui o espaço onde o gradiente
+ * passa: a "moldura" que brilha agora é mais fina (~8px, era ~14px). */
 .screen::after {
   content: '';
   position: absolute;
-  inset: 14px;
-  border-radius: 28px;
+  inset: 8px;
+  border-radius: 32px;
   background: #05050a;
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
 }

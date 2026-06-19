@@ -10,7 +10,12 @@
    * aparecia em buracos como a região do orbe pre-footer. */
   background: transparent;
   color: #fff;
-  overflow: hidden;
+  /* overflow-x:clip continua segurando qualquer estouro horizontal (o
+   * .page também tem overflow-x:clip), mas overflow-y:visible deixa o
+   * bloom do ApplePhone vazar pra fora da section — "mais expandido,
+   * sem se limitar ao box" (era overflow:hidden, que cortava o glow). */
+  overflow-x: clip;
+  overflow-y: visible;
   display: flex;
   /* Headline mais ao topo via padding 22vh + ajuste fino de
    * 50px per product feedback "posicione 50px mais abaixo
