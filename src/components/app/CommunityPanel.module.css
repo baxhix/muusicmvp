@@ -597,24 +597,31 @@
   flex: 1;
   min-width: 0;
 }
-/* Trending badge — bumped contrast for the bigger card. The
- * fire-orange tint still reads as "hot right now" without
- * yelling for attention. */
-.trendingBadge {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #fff;
-  /* Fundo preto + borda com gradiente da marca (laranja→rosa→roxo),
-   * mesmo padrão de borda usado em outros botões/badges do app. */
-  border: 1.5px solid transparent;
-  background:
-    linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
-  padding: 3px 8px;
-  border-radius: 999px;
-  flex-shrink: 0;
+/* Atividade recente do card — 🔥 + seta verde "subindo" + nº de posts
+ * nas últimas 24h. Substitui o antigo badge "Bombando" + chip "Mais
+ * ativa hoje". Inline, sem fundo nem borda (badge sem borda = padrão da
+ * plataforma): só os três elementos lado a lado. */
+.activityStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1;
   white-space: nowrap;
+}
+/* Seta apontando pra cima — verde de tendência (mesmo verde do dot de
+ * online do chat). */
+.activityArrow {
+  width: 13px;
+  height: 13px;
+  color: #3ddb74;
+  flex-shrink: 0;
+}
+.activityCount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #3ddb74;
+  letter-spacing: -0.01em;
 }
 /* Secondary info chip-row inside the card body — sits BELOW the
  * meta line and carries small contextual chips ("Mais ativa",
@@ -631,20 +638,6 @@
   /* Reserva à direita pro botão Participar (absoluto, canto inferior
    * direito) não cobrir os chips. */
   padding-right: 56px;
-}
-.cardChip {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: rgba(245, 245, 247, 0.85);
-  background: rgba(168, 85, 247, 0.16);
-  padding: 2px 7px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-.trendingInline {
-  color: #f59e0b;
-  font-weight: 600;
 }
 .cardMeta {
   font-size: 12px;

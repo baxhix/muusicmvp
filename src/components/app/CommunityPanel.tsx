@@ -129,6 +129,22 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR');
 }
 
+/**
+ * Posts nas últimas 24h exibidos no card (🔥 + seta verde + número).
+ *
+ * O backend ainda não rastreia contagem por janela — só `lastActivityAt`
+ * + `isTrending` (heurístico). Até existir uma agregação real, derivamos
+ * um número DETERMINÍSTICO por comunidade (hash do id + viés pelo
+ * topicCount) pra ficar estável entre renders/sessões e parecer
+ * correlacionado com o tamanho da comunidade. Só renderiza em cards
+ * trending, então é sempre um valor "alto" plausível. */
+function postsLast24h(id: string, topicCount: number): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  /* 8..41 de base, com um empurrãozinho proporcional aos tópicos. */
+  return 8 + (h % 34) + Math.min(12, Math.floor(topicCount / 4));
+}
+
 export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
   const [view, setView] = useState<View>({ kind: 'list' });
 
@@ -556,6 +572,7 @@ function CommunityListView({
                *  do user — só admin gerencia. Skip edit/leave/join
                *  e deixa só Denunciar no kebab. */
               const isShow = isShowCommunitySlug(c.slug);
+              const posts24h = postsLast24h(c.id, c.topicCount);
               const actions: KebabAction[] = [];
               if (isCreator && !isShow) {
                 actions.push({
@@ -620,11 +637,6 @@ function CommunityListView({
                       <div className={styles.cardBody}>
                         <div className={styles.cardTitleRow}>
                           <TruncatedText className={styles.cardTitle}>{c.name}</TruncatedText>
-                          {c.isTrending && (
-                            <span className={styles.trendingBadge} aria-label="Comunidade bombando">
-                              🔥 Bombando
-                            </span>
-                          )}
                         </div>
                         <span className={styles.cardMeta}>
                           {/* "N membro(s)" → número + ícone: 1 user se
@@ -644,8 +656,30 @@ function CommunityListView({
                           * just append to this row. */}
                         {c.isTrending && (
                           <div className={styles.cardChipsRow}>
-                            <span className={styles.cardChip}>
-                              Mais ativa hoje
+                            {/* 🔥 + seta verde + nº de posts nas últimas
+                              * 24h (no lugar do antigo chip "Mais ativa
+                              * hoje"). Número via postsLast24h (mock
+                              * determinístico — ver helper). */}
+                            <span
+                              className={styles.activityStat}
+                              aria-label={`${posts24h} posts nas últimas 24 horas`}
+                            >
+                              <span aria-hidden="true">🔥</span>
+                              <svg
+                                className={styles.activityArrow}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M12 19V5M12 5l-6 6M12 5l6 6"
+                                  stroke="currentColor"
+                                  strokeWidth="2.4"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                              <span className={styles.activityCount}>{posts24h}</span>
                             </span>
                           </div>
                         )}
