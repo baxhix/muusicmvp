@@ -31,6 +31,81 @@
   border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
+/* ── Scroll state (desktop) — header colapsa ──────────
+ * Per product feedback: ao scrollar, em vez do header fixo full-width
+ * com os itens à mostra, o chrome se reorganiza:
+ *   · o ORBE sozinho vai pro centro do topo (wordmark some);
+ *   · os 3 itens (O App / Para Artistas / Meu Fanverse) viram uma
+ *     BARRA VERTICAL fixa na lateral esquerda, centralizada na altura.
+ * Só no desktop (>720px). No mobile o header mantém o shelf + brand
+ * centralizado (os 3 itens já ficam escondidos lá). */
+@media (min-width: 721px) {
+  /* Sem shelf full-width — o novo chrome flutua sobre o conteúdo, e a
+   * faixa do topo deixa de capturar cliques (os filhos reabilitam). */
+  .navbarScrolled {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom-color: transparent;
+    pointer-events: none;
+  }
+  .navbarScrolled .brand,
+  .navbarScrolled .nav,
+  .navbarScrolled .menuTrigger {
+    pointer-events: auto;
+  }
+
+  /* Brand → só o orbe, centralizado no topo da página. */
+  .navbarScrolled .brand {
+    position: fixed;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    gap: 0;
+    animation: navOrbIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .navbarScrolled .brandLogo {
+    display: none;
+  }
+
+  /* Nav (os 3 itens) → barra vertical fixa na lateral esquerda. */
+  .navbarScrolled .nav {
+    position: fixed;
+    left: clamp(16px, 2.2vw, 36px);
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background: rgba(8, 8, 12, 0.6);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+    box-shadow: 0 18px 50px -22px rgba(0, 0, 0, 0.7);
+    animation: navRailIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  /* CTA no rail um pouco mais compacto, alinhado aos links acima. */
+  .navbarScrolled .ctaPill {
+    padding: 12px 22px;
+    margin-top: 4px;
+  }
+}
+
+/* Entradas suaves do novo chrome ao cruzar o threshold de scroll. */
+@keyframes navOrbIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.9); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes navRailIn {
+  from { opacity: 0; transform: translateY(-50%) translateX(-12px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navbarScrolled .brand,
+  .navbarScrolled .nav { animation: none; }
+}
+
 /* Container responsivo per product feedback "em telas menores,
  * deixe o menu mais afastado do select de idiomas... o container
  * deve ficar responsivo e menor".
