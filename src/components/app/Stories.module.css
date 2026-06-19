@@ -30,27 +30,55 @@
 .storyBtn:hover { transform: scale(1.06) translateY(-2px); }
 .storyBtnFirst  { flex-shrink: 0; }
 
-/* ── Gradient ring ── */
+/* ── Gradient ring ──
+ * O gradiente vive num ::before que GIRA (movimento). O .ring em si é
+ * transparente pra a rotação não arrastar a foto (que é filha do .ring).
+ * O gap de 3px entre o anel e a imagem é geométrico (ver inline no TSX):
+ * .ring = size+12, .ringInner = size+6, foto = size → gap (6/2)=3px e a
+ * banda do gradiente (size+12 − (size+6))/2 = 3px. */
 .ring {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  background: transparent;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   /* Purple → yellow gradient border */
   background: conic-gradient(
-    from 200deg,
+    from 0deg,
     #9333ea 0%,
     #a855f7 20%,
     #f59e0b 55%,
     #fbbf24 70%,
     #9333ea 100%
   );
-  flex-shrink: 0;
-  transition: opacity 0.2s;
+  /* Gira lentamente — só o ::before (z-index:-1), atrás do gap layer +
+   * foto, então a banda do anel "circula" sem mexer na imagem. */
+  animation: storyRingSpin 6s linear infinite;
+  z-index: -1;
+}
+@keyframes storyRingSpin {
+  to { transform: rotate(360deg); }
 }
 
-.ringSeen {
-  background: rgba(255,255,255,0.15);
+/* Story "visto" — traçado cinza chapado e SEM movimento (igual ao anel
+ * apagado do Instagram depois de visualizar). */
+.ringSeen::before {
+  background: #3f3f46;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring::before { animation: none; }
 }
 
 .ringInner {
@@ -58,7 +86,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #09090f; /* gap between gradient and photo */
+  background: #09090f; /* gap entre gradiente e foto */
 }
 
 .avatar {

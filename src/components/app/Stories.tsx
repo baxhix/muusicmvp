@@ -73,7 +73,9 @@ const STORIES: Story[] = [
     user: 'Ana Castela',
     avatar: '/central-anacastela.png',
     img: '/stories/ana-3.png',
-    seen: false,
+    /* Marcado como "visto" pra demonstrar o anel cinza (traçado de
+     * story já visualizado). Os demais ficam com o gradiente animado. */
+    seen: true,
   },
 ];
 
@@ -293,9 +295,9 @@ export default function Stories() {
               {/* Gradient ring */}
               <span
                 className={`${styles.ring} ${story.seen ? styles.ringSeen : ''}`}
-                style={{ width: size + 8, height: size + 8 }}
+                style={{ width: size + 12, height: size + 12 }}
               >
-                <span className={styles.ringInner} style={{ width: size + 2, height: size + 2 }}>
+                <span className={styles.ringInner} style={{ width: size + 6, height: size + 6 }}>
                   {/* Rail thumbnail uses the story's content image
                       (e.g. /stories/ana-1.png) per product feedback —
                       previously rendered `story.avatar` which was the
