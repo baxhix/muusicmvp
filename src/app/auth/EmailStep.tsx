@@ -152,7 +152,7 @@ export default function EmailStep() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'flex-start',
         }}
       >
         {/* Banner contextual quando o user chega aqui via redirect

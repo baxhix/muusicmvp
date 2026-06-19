@@ -13,7 +13,7 @@
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.25;
-  text-align: center;
+  text-align: left;
   color: #fff;
 }
 
@@ -25,7 +25,7 @@
   font-weight: 400;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.6);
-  text-align: center;
+  text-align: left;
   max-width: 380px;
 }
 
@@ -175,7 +175,7 @@
   padding: 8px 12px;
   background: rgba(255, 93, 131, 0.08);
   border-radius: 10px;
-  text-align: center;
+  text-align: left;
 }
 
 /* ── Banner "sessão expirada" (?expired=1) ──
@@ -233,7 +233,7 @@
   font-weight: 400;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.45);
-  text-align: center;
+  text-align: left;
   margin-top: 24px;
 }
 .hint a {

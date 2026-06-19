@@ -108,12 +108,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* Conteúdo alinhado à esquerda (era center) per product feedback. */
+  align-items: flex-start;
   justify-content: flex-start;
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
   padding: 48px 24px 48px;
+  text-align: left;
 }
 
 @media (max-width: 480px) {
@@ -157,5 +159,10 @@
     flex: 0 0 40%;
     max-width: 40%;
     min-height: 100dvh;
+  }
+  /* Conteúdo posicionado ~200px abaixo do topo no desktop per product
+   * feedback (no split, o form não fica mais colado no topo). */
+  .content {
+    padding-top: 200px;
   }
 }
