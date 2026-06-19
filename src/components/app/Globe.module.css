@@ -1539,17 +1539,18 @@
  * ───────────────────────────────────────────────────────────── */
 .anaFlightWrap {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 5;
 }
 
-/* Soft pink halo behind the airplane so it pops against any
- * basemap color — pulses gently to telegraph "live event"
- * without competing with the Ana check-in pin's louder pulse. */
+/* Soft BLACK shadow halo behind the airplane (antes era rosa) — pulsa
+ * de leve pra telegrafar "live event" sem competir com o pulso mais
+ * forte do pin de check-in da Ana. Per product feedback "deixe a sombra
+ * do avião preta e não rosa". */
 .anaFlightWrap::before {
   content: '';
   position: absolute;
@@ -1557,8 +1558,8 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(236, 72, 153, 0.55) 0%,
-    rgba(236, 72, 153, 0.22) 45%,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.32) 45%,
     transparent 75%
   );
   filter: blur(6px);
@@ -1577,10 +1578,12 @@
 .anaFlightGlyph {
   position: relative;
   z-index: 1;
-  width: 24px;
-  height: 24px;
+  /* Levemente maior (antes 24px). */
+  width: 28px;
+  height: 28px;
   color: #ec4899;
-  filter: drop-shadow(0 2px 6px rgba(236, 72, 153, 0.6));
+  /* Sombra preta (antes rosa). */
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
   transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
 }
@@ -1628,5 +1631,5 @@
  * the rotation lives in inline style on the same element — they
  * compose via the order: rotate first, scale after). */
 .anaFlightWrap:hover .anaFlightGlyph {
-  filter: drop-shadow(0 4px 10px rgba(236, 72, 153, 0.7));
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
 }

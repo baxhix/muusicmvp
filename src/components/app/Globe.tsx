@@ -2072,20 +2072,17 @@ export default function Globe() {
           wrapper.className = styles.anaFlightWrap;
           wrapper.style.cursor = 'pointer';
           // Airplane silhouette — top-down view, nose UP at native
-          // orientation. Two paths: solid pink fill for the body
-          // and a thin white outline that lifts the plane against
-          // any basemap color. Replaces the paper-airplane (Send)
-          // glyph used in v1 — that one read as "DM/message" more
-          // than "in-flight aircraft" once paired with a route line.
+          // orientation. Solid pink fill only (sem outline branco,
+          // per product feedback "remova a borda branca"). Replaces
+          // the paper-airplane (Send) glyph used in v1 — that one read
+          // as "DM/message" more than "in-flight aircraft" once paired
+          // with a route line.
           wrapper.innerHTML = `
             <div class="${styles.anaFlightGlyph}" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none">
                 <path
                   d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
                   fill="currentColor"
-                  stroke="rgba(255, 255, 255, 0.92)"
-                  stroke-width="0.8"
-                  stroke-linejoin="round"
                 />
               </svg>
             </div>
