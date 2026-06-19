@@ -32,12 +32,19 @@
   display: flex;
   flex-direction: column;
   isolation: isolate;
-  /* Cor sólida chapada e VISIVELMENTE distinta do fundo (mapa quase
-   * preto). Antes era #0b0b0d ≈ a cor do mapa, então o box "sumia" e
-   * parecia não mudar de cor. #17171d lê como um painel sólido claro o
-   * suficiente pra se destacar. Sem gradiente nem transparência: nada
-   * do fundo aparece através do box. */
-  background: #17171d;
+  /* Mesma cor/tratamento do box de Comunidade (CommunityPanel.panel),
+   * per product feedback "deixe as cores do box de Chat no mesmo padrão
+   * que o de Comunidade": fill 100% OPACO — radial sheen branco sutil no
+   * topo + linear escuro #0b0b0d→#020203. Nada do fundo aparece através
+   * do box; o blur vive só na camada externa (.chatDrawerVeil). Manter
+   * em sync com o CommunityPanel pra os dois lerem como o mesmo envelope. */
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 70%),
+    linear-gradient(180deg,
+      #0b0b0d 0%,
+      #08080a 35%,
+      #040405 65%,
+      #020203 100%);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 22px;
   box-shadow: 0 24px 70px -12px rgba(0,0,0,0.6);
@@ -369,7 +376,8 @@
  * já nasça arredondada — o overflow:hidden do .root clipa o
  * foreground no mesmo raio. */
 .swipeRow {
-  border-radius: 12px;
+  /* Mesmo raio dos cards de Comunidade (.communityCard = 16). */
+  border-radius: 16px;
 }
 
 .row {
@@ -378,7 +386,8 @@
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 12px;
+  /* Mesmo raio dos cards de Comunidade (.communityCard = 16). */
+  border-radius: 16px;
   /* Mesma cor de repouso dos cards de Comunidades (.communityCard):
    * overlay branco rgba .025 sobre o vidro do painel. O foreground do
    * SwipeAction fica transparente em repouso pra esse bg aparecer. */
@@ -398,8 +407,11 @@
   outline: 2px solid rgba(255, 255, 255, 0.25);
   outline-offset: -2px;
 }
-.rowActive { background: rgba(61, 219, 116, 0.10); }
-.rowActive:hover { background: rgba(61, 219, 116, 0.14); }
+/* Conversa selecionada — tint lilás (mesma família de acento do box de
+ * Comunidade: rgba(168,85,247,…) usada em joinPill/primaryCta/chips) no
+ * lugar do verde antigo, pra o Chat seguir a mesma paleta. */
+.rowActive { background: rgba(168, 85, 247, 0.14); }
+.rowActive:hover { background: rgba(168, 85, 247, 0.20); }
 
 /* Kebab "⋮" — só aparece no hover/focus do row pra não poluir a
  * lista quando inativo. Em touch o opacity:1 pelo media query mais
