@@ -7,12 +7,13 @@
  * product feedback "no fluxo de autenticação, fontes 32px
  * deixe com 18". */
 .heading {
-  margin: 8px 0 10px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 18px;
+  margin: 8px 0 12px;
+  /* Título em Borscha bold (display da marca) per product feedback. */
+  font-family: 'Borscha', var(--font-inter), sans-serif;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
   text-align: left;
   color: #fff;
 }
@@ -44,10 +45,9 @@
   height: 56px;
   padding: 0 20px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  /* border-radius reduzido 14 → 6px per "diminua para 6px
-   * o border radius dos botões". Inputs seguem a mesma
-   * curva pra coerência visual com os botões. */
+  /* Sem borda per product feedback "remova a borda do input" — só o
+   * fill sutil dá a affordance. */
+  border: none;
   border-radius: 6px;
   color: #fff;
   font-family: var(--font-inter), sans-serif;
@@ -70,7 +70,6 @@
 }
 .input:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.24);
 }
 .input:disabled {
   opacity: 0.5;

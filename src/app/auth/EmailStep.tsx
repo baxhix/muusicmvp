@@ -169,7 +169,7 @@ export default function EmailStep() {
           </div>
         )}
 
-        <h1 className={fields.heading}>Bem-vindo ao Fanverse</h1>
+        <h1 className={fields.heading}>Bem-vindo ao Fanverse<br />Ana Castela</h1>
         <p className={fields.subtitle}>
           Digita seu e-mail pra entrar ou criar sua conta.
           <br />
@@ -218,6 +218,12 @@ export default function EmailStep() {
                 <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C40.9 36 44 30.6 44 24c0-1.3-.1-2.5-.4-3.5z" />
               </svg>
               Google
+            </button>
+            <button type="button" className={fields.socialBtn} disabled aria-label="Entrar com Apple">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#fff" d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.1-2.01-3.77-2.04-1.6-.16-3.13.94-3.94.94-.81 0-2.07-.92-3.4-.89-1.75.03-3.36 1.02-4.26 2.58-1.82 3.16-.47 7.84 1.3 10.41.86 1.26 1.89 2.67 3.24 2.62 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.28 3.15-2.55.99-1.46 1.4-2.87 1.42-2.94-.03-.01-2.72-1.04-2.75-4.13l.04-.01zM14.46 4.5c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.32-.58 3.03-1.46z" />
+              </svg>
+              Apple
             </button>
             <button type="button" className={fields.socialBtn} disabled aria-label="Entrar com Facebook">
               <svg viewBox="0 0 24 24" aria-hidden="true">
