@@ -63,20 +63,9 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
        *  tudo, mesma identidade visual da landing /teste. */}
       <Sparkles count={42} seed={5} />
 
-      {/* Media pane — 60% no desktop. Slideshow das fotos da Ana
-       *  (fundo transparente) ocupando 80% da altura, centralizado, com
-       *  crossfade automático. Escondido no mobile/tablet, onde o fluxo
-       *  segue em coluna única. */}
-      <aside className={styles.mediaPane} aria-hidden="true">
-        {AUTH_MEDIA.map((src) => {
-          // eslint-disable-next-line @next/next/no-img-element
-          return <img key={src} src={src} alt="" className={styles.mediaImg} loading="lazy" />;
-        })}
-      </aside>
-
-      {/* Form pane — 40% no desktop / 100% no mobile. Carrega o topo
-       *  (voltar + logo), a barra de progresso e o conteúdo do step. */}
-      <div className={styles.formPane}>
+      {/* Header (logo + voltar) — barra FULL-WIDTH no topo, acima do
+       *  split (per product feedback "a barra do header deve ocupar 100%
+       *  da largura"). Logo centralizado, back chevron absoluto à esq. */}
       <header className={styles.topBar}>
         {showBack && (
           <button
@@ -122,7 +111,21 @@ export default function AuthShell({ children, back, progress }: AuthShellProps) 
         </div>
       )}
 
-      <section className={styles.content}>{children}</section>
+      {/* Split: imagem (60% desktop) + form (40% desktop). No mobile só
+       *  o form (a imagem fica display:none e nem baixa — foco em perf). */}
+      <div className={styles.split}>
+        {/* Media pane — slideshow das fotos da Ana (fundo transparente),
+         *  ancorado ao rodapé, 80% da altura (encolhe com a tela). */}
+        <aside className={styles.mediaPane} aria-hidden="true">
+          {AUTH_MEDIA.map((src) => {
+            // eslint-disable-next-line @next/next/no-img-element
+            return <img key={src} src={src} alt="" className={styles.mediaImg} loading="lazy" />;
+          })}
+        </aside>
+
+        <div className={styles.formPane}>
+          <section className={styles.content}>{children}</section>
+        </div>
       </div>
     </main>
   );

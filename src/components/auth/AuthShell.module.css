@@ -25,6 +25,17 @@
   min-width: 0;
 }
 
+/* Split — área abaixo do header full-width. Empilha no mobile (só o
+ * form) e vira 2 colunas no desktop (foto 60% + form 40%). */
+.split {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* Media pane — box cinza de MARCAÇÃO da foto (60% no desktop). A foto
  * real entra depois; por ora é só placeholder. Escondido no
  * mobile/tablet (<1024px), onde o fluxo é coluna única. */
@@ -129,14 +140,14 @@
  * 60% foto (placeholder cinza) à esquerda + 40% form à direita.
  * Abaixo de 1024px volta pra coluna única (media pane some). */
 @media (min-width: 1024px) {
-  .shell {
+  /* Split vira 2 colunas (o header full-width fica ACIMA, fora do split). */
+  .split {
     flex-direction: row;
   }
   .mediaPane {
     display: block;
     flex: 0 0 60%;
     max-width: 60%;
-    min-height: 100dvh;
     position: relative;
     z-index: 1;
     /* Fundo transparente — extensão do fundo escuro do shell (as fotos
@@ -144,17 +155,20 @@
     background: transparent;
     overflow: hidden;
   }
-  /* Slideshow: cada foto ocupa 80% da altura, centralizada, com
+  /* Slideshow: cada foto ANCORADA no rodapé (bottom:0), 80% da altura
+   * (encolhe junto com a tela), centralizada na horizontal, com
    * crossfade automático (opacity + leve zoom). 4 imagens × 6s. */
   .mediaImg {
     position: absolute;
-    top: 50%;
+    bottom: 0;
     left: 50%;
     height: 80vh;
     width: auto;
     max-width: 90%;
     object-fit: contain;
-    transform: translate(-50%, -50%) scale(1.04);
+    object-position: bottom;
+    transform: translateX(-50%) scale(1.04);
+    transform-origin: bottom center;
     opacity: 0;
     pointer-events: none;
     animation: authMediaCycle 24s ease-in-out infinite;
@@ -166,7 +180,6 @@
   .formPane {
     flex: 0 0 40%;
     max-width: 40%;
-    min-height: 100dvh;
   }
   /* Conteúdo posicionado ~200px abaixo do topo no desktop per product
    * feedback (no split, o form não fica mais colado no topo). */
@@ -176,20 +189,21 @@
 }
 
 /* Crossfade das fotos: cada uma aparece (fade-in + leve zoom-out),
- * segura, e some — com overlap pro próximo, num loop de 24s (4×6s). */
+ * segura, e some — com overlap pro próximo, num loop de 24s (4×6s).
+ * Ancorada no rodapé: transform só na horizontal + escala. */
 @keyframes authMediaCycle {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
-  5%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  27%  { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.04); }
+  0%   { opacity: 0; transform: translateX(-50%) scale(1.04); }
+  5%   { opacity: 1; transform: translateX(-50%) scale(1); }
+  22%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  27%  { opacity: 0; transform: translateX(-50%) scale(1.04); }
+  100% { opacity: 0; transform: translateX(-50%) scale(1.04); }
 }
 
 /* Reduced-motion: sem ciclo — mostra só a 1ª foto, estática. */
 @media (prefers-reduced-motion: reduce) {
   .mediaImg {
     animation: none;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
   }
   .mediaImg:first-child {
     opacity: 1;
