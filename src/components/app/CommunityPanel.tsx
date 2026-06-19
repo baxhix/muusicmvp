@@ -145,6 +145,19 @@ function postsLast24h(id: string, topicCount: number): number {
   return 8 + (h % 34) + Math.min(12, Math.floor(topicCount / 4));
 }
 
+/** Contagem compacta estilo "1.8k" / "1.2k" / "3M" (ponto decimal, sufixo
+ *  k/M). Usado no stack de membros do detalhe de comunidade no lugar do
+ *  "N.NNN membros" longo. */
+function compactCount(n: number): string {
+  if (n < 1000) return n.toLocaleString('pt-BR');
+  if (n < 1_000_000) {
+    const k = n / 1000;
+    return `${k >= 10 || Number.isInteger(k) ? Math.round(k) : k.toFixed(1)}k`;
+  }
+  const m = n / 1_000_000;
+  return `${m >= 10 || Number.isInteger(m) ? Math.round(m) : m.toFixed(1)}M`;
+}
+
 export default function CommunityPanel({ open, onClose }: CommunityPanelProps) {
   const [view, setView] = useState<View>({ kind: 'list' });
 
@@ -265,6 +278,7 @@ function HeaderBar({
   centerTitle,
   stacked,
   stackedTitle,
+  topicTitle,
 }: {
   title: string;
   onBack?: () => void;
@@ -286,9 +300,12 @@ function HeaderBar({
    *  controles da direita (kebab + fechar) na primeira linha. Usado no
    *  detalhe de comunidade existente. */
   stackedTitle?: boolean;
+  /** Header do detalhe de TÓPICO: título embaixo da seta (igual ao
+   *  stackedTitle), mas em Inter 16px (não Borscha 24px). */
+  topicTitle?: boolean;
 }) {
   return (
-    <header className={`${styles.header} ${stacked ? styles.headerStacked : ''} ${stackedTitle ? styles.headerStackedTitle : ''}`}>
+    <header className={`${styles.header} ${stacked ? styles.headerStacked : ''} ${stackedTitle ? styles.headerStackedTitle : ''} ${topicTitle ? styles.headerTopicTitle : ''}`}>
       {onBack && (
         <button
           type="button"
@@ -1185,7 +1202,6 @@ function MembersStack({
   onViewAll: () => void;
 }) {
   const shown = previews.slice(0, 5);
-  const overflow = Math.max(memberCount - shown.length, 0);
   return (
     <button
       type="button"
@@ -1213,14 +1229,15 @@ function MembersStack({
             </span>
           ),
         )}
-        {overflow > 0 && (
-          <span className={styles.membersStackMore} aria-hidden="true">
-            +{overflow}
-          </span>
-        )}
+        {/* Sem o chip "+N" per product feedback — só os avatares de
+            preview; a contagem total vai no label compacto ao lado. */}
       </div>
       <span className={styles.membersStackLabel}>
-        {memberCount.toLocaleString('pt-BR')} {memberCount === 1 ? 'membro' : 'membros'}
+        {/* "1.8k" + ícone de dois usuários (no lugar do "N membros"). */}
+        <span className={styles.membersStackCount}>
+          {compactCount(memberCount)}
+          <IconMemberGroup />
+        </span>
         <span className={styles.membersStackDot}>·</span>
         <span className={styles.membersStackLink}>Ver todos</span>
       </span>
@@ -1431,11 +1448,13 @@ function TopicDetailView({
 
   return (
     <>
-      {/* The topic title IS the header now — no inline title card. */}
+      {/* The topic title IS the header now — no inline title card.
+          topicTitle: nome do tópico em Inter 16px, embaixo da seta. */}
       <HeaderBar
         title={topic?.title ?? 'Tópico'}
         onBack={onBack}
         onClose={onClose}
+        topicTitle
       />
 
       <div className={styles.body}>

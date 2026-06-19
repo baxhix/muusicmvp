@@ -46,11 +46,12 @@ export function isShowCommunitySlug(slug: string): boolean {
 
 /* ── Cards (lista) ──────────────────────────────────────────── */
 
-/** Avatar genérico do "perfil oficial" da equipe — usado como
- *  criador e como autor dos tópicos. URL externa estável (Ana
- *  Castela no Spotify CDN), com fallback de iniciais via UI. */
-const STAFF_AVATAR =
-  'https://i.scdn.co/image/ab6761610000e5eb7d3b1f5e1c6c8e4f1b3a8e8f';
+/** Avatar do "perfil oficial" da equipe — usado como criador e como
+ *  autor dos tópicos. Mesma imagem da Central Ana Castela
+ *  (FAKE_CENTRAL_AVATAR_URL = /central-anacastela.png), per product
+ *  feedback "substitua a imagem da Equipe Ana Castela pela usada na
+ *  Central Ana Castela". */
+const STAFF_AVATAR = '/central-anacastela.png';
 
 const STAFF_PREVIEW = {
   id: 'staff-tour-2026',
