@@ -1,27 +1,53 @@
-.spinner {
-  margin-bottom: 24px;
-  animation: spin 1.4s linear infinite;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Tela "Preparando experiências" — fotos das experiências +
+ * barra de progresso (Motion) de 4s antes de cair no app. */
+
+.prep {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.checkmark {
-  margin-bottom: 24px;
-  animation: checkPop 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes checkPop {
-  from {
-    opacity: 0;
-    transform: scale(0.7);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* Par de fotos lado a lado, cantos arredondados. Cada uma entra
+ * com fade+rise escalonado (no .tsx, via Motion). */
+.prepImages {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 28px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .spinner { animation: none; }
-  .checkmark { animation: none; }
+.prepCard {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.prepImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Barra de progresso — track fino + fill com gradient da marca.
+ * O fill anima 0→100% em 4s via Motion no .tsx. */
+.progressTrack {
+  width: 100%;
+  height: 6px;
+  margin-top: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff00b4, #5b00d1);
 }

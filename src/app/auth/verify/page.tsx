@@ -8,6 +8,7 @@ import { loadOnboarding, saveOnboarding } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
 import AuthStateButton from '@/components/auth/AuthStateButton';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './verify.module.css';
 
@@ -39,6 +40,9 @@ export default function VerifyPage() {
   const [otpSubmitting, setOtpSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+
+  // Altura do teclado virtual (mobile) — ancora o CTA logo acima dele.
+  const kbInset = useKeyboardInset();
 
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -134,14 +138,11 @@ export default function VerifyPage() {
       <StepFrame backHref="/auth">
         <h1 className={fields.heading}>Confira seu e-mail</h1>
         <p className={fields.subtitle}>
-          Enviamos um link e um código pra<br />
+          Digite o código que enviamos para{' '}
           <strong className={styles.emailStrong}>{email}</strong>
         </p>
 
         <form onSubmit={handleOtpSubmit} className={fields.form} noValidate>
-          <label className={fields.label} htmlFor="otp">
-            Digite o código de 6 dígitos
-          </label>
           <input
             id="otp"
             type="text"
@@ -164,18 +165,23 @@ export default function VerifyPage() {
 
           {otpError && <div className={fields.error} role="alert">{otpError}</div>}
 
-          <AuthStateButton
-            type="submit"
-            state={otpSubmitting ? 'pending' : 'idle'}
-            idleLabel="Entrar com código"
-            pendingLabel="Verificando…"
-            disabled={otp.length !== 6}
-          />
+          <div
+            className={fields.submitDock}
+            style={
+              kbInset > 0
+                ? { position: 'fixed', left: 20, right: 20, bottom: kbInset + 14, zIndex: 60 }
+                : undefined
+            }
+          >
+            <AuthStateButton
+              type="submit"
+              state={otpSubmitting ? 'pending' : 'idle'}
+              idleLabel="Entrar com código"
+              pendingLabel="Verificando…"
+              disabled={otp.length !== 6}
+            />
+          </div>
         </form>
-
-        <div className={styles.divider}>
-          <span>ou</span>
-        </div>
 
         <div className={styles.actions}>
           <button
@@ -201,12 +207,6 @@ export default function VerifyPage() {
             Usar outro e-mail
           </button>
         </div>
-
-        <p className={fields.hint}>
-          Não chegou?
-          <br />
-          Confere o spam. Link e código expiram em 15 minutos.
-        </p>
       </StepFrame>
     </AuthShell>
   );

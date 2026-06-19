@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, useReducedMotion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { track } from '@/lib/analytics';
 import { api, ApiError } from '@/lib/api/client';
@@ -14,33 +15,40 @@ import fields from '@/components/auth/AuthFields.module.css';
 import styles from './success.module.css';
 
 /**
- * Step 6 — Success. Salva o onboarding no backend, mostra
- * confirmação animada e redireciona pro /app.
+ * Step 6 — Success. Salva o onboarding no backend, mostra a
+ * tela "Preparando experiências" (fotos + barra de progresso
+ * do Motion, 4s) e redireciona pro /app.
  *
  * Backend call: POST /api/auth/onboarding com displayName,
- * birthDate, age, isMinor, interests, termsAcceptedAt. Se
- * endpoint não existir ainda, falha silenciosamente — o
+ * birthDate, age, isMinor, locationConsent, termsAcceptedAt. Se
+ * o endpoint não existir ainda (404), trata como sucesso — o
  * store local mantém os dados pra retry futuro.
  */
 
-const REDIRECT_DELAY_MS = 2400;
+const REDIRECT_DELAY_MS = 4000;
+
+const PREP_IMAGES = ['/xp-01.jpg', '/xp-02.jpg'];
 
 export default function SuccessPage() {
   const router = useRouter();
   const { user, loading: authLoading, refresh } = useAuth();
+  const prefersReduced = useReducedMotion();
 
-  const [status, setStatus] = useState<'saving' | 'done' | 'error'>('saving');
+  const [status, setStatus] = useState<'preparing' | 'error'>('preparing');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   /**
-   * Guard ref: garante que complete() roda EXATAMENTE UMA VEZ
-   * por mount. Sem isso, a chamada `await refresh()` mexia no
-   * AuthContext.user — que está no deps do useEffect — e
-   * disparava re-execução; cada re-exec marcava o cancelled
-   * antigo como true e nunca chegava no router.replace, deixando
-   * o usuário preso na tela "Bem-vindo... te levando ao app".
+   * Guard ref: garante que o efeito roda EXATAMENTE UMA VEZ por
+   * mount. Sem isso, `await refresh()` mexe no AuthContext.user
+   * (que está no deps do useEffect) e dispara re-execução,
+   * deixando o usuário preso na tela.
    */
   const startedRef = useRef(false);
+  // Timer fixo do redirect. Guardado em ref só pra o catch poder
+  // cancelar em caso de erro real. NÃO retornamos cleanup do
+  // efeito de propósito: a mudança de `user` (via refresh) faria o
+  // React limpar o timer e nunca redirecionar (bug antigo).
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -52,6 +60,13 @@ export default function SuccessPage() {
     startedRef.current = true;
 
     const stored = loadOnboarding();
+
+    // Cronômetro fixo da tela de preparo: a barra de progresso
+    // anima por 4s e, ao fim, leva pro app. O save roda em
+    // paralelo e normalmente termina bem antes.
+    redirectTimerRef.current = setTimeout(() => {
+      router.replace('/app?welcome=1');
+    }, REDIRECT_DELAY_MS);
 
     async function complete() {
       try {
@@ -68,27 +83,14 @@ export default function SuccessPage() {
 
         await refresh();
         clearOnboarding();
-        setStatus('done');
-        track('onboarding_completed', {
-          is_minor: stored.isMinor,
-        });
+        track('onboarding_completed', { is_minor: stored.isMinor });
         track('account_created', { method: 'email_magic_link' });
-
-        // Redireciona depois da animação (window.setTimeout
-        // direto — sem cleanup, sem flag cancelled. Se o
-        // componente desmontar antes, router.replace ainda é
-        // seguro de chamar via window.location fallback).
-        window.setTimeout(() => {
-          router.replace('/app?welcome=1');
-        }, REDIRECT_DELAY_MS);
       } catch (err) {
-        if (err instanceof ApiError && err.status === 404) {
-          setStatus('done');
-          window.setTimeout(() => {
-            router.replace('/app?welcome=1');
-          }, REDIRECT_DELAY_MS);
-          return;
-        }
+        // 404 = endpoint ainda não existe → segue o fluxo normal
+        // (dados ficam no store local pra retry).
+        if (err instanceof ApiError && err.status === 404) return;
+        // Falha real — cancela o redirect e mostra erro.
+        if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
         setStatus('error');
         setErrorMsg('Algo deu errado ao finalizar. Tenta de novo?');
         track('auth_login_failed', { reason: 'onboarding_finalize' });
@@ -100,59 +102,42 @@ export default function SuccessPage() {
 
   return (
     <AuthShell back="hide" progress={5 / 5}>
-      <div className={fields.fadeIn} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        {status === 'saving' && (
-          <>
-            <div className={styles.spinner} aria-hidden="true">
-              <svg viewBox="0 0 50 50" width="56" height="56">
-                <circle
-                  cx="25"
-                  cy="25"
-                  r="20"
-                  fill="none"
-                  stroke="url(#successGradient)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray="80 60"
-                />
-                <defs>
-                  <linearGradient id="successGradient" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stopColor="#ff00b4" />
-                    <stop offset="1" stopColor="#5b00d1" />
-                  </linearGradient>
-                </defs>
-              </svg>
+      <div
+        className={fields.fadeIn}
+        style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}
+      >
+        {status === 'preparing' && (
+          <div className={styles.prep}>
+            <div className={styles.prepImages} aria-hidden="true">
+              {PREP_IMAGES.map((src, i) => (
+                <motion.div
+                  key={src}
+                  className={styles.prepCard}
+                  initial={prefersReduced ? false : { opacity: 0, y: 18, scale: 0.94 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className={styles.prepImg} />
+                </motion.div>
+              ))}
             </div>
-            <h1 className={fields.heading}>Quase lá…</h1>
-            <p className={fields.subtitle}>Estamos preparando seu Fanverse.</p>
-          </>
-        )}
 
-        {status === 'done' && (
-          <>
-            <div className={styles.checkmark} aria-hidden="true">
-              <svg viewBox="0 0 56 56" width="56" height="56" fill="none">
-                <circle cx="28" cy="28" r="26" stroke="url(#successGradientDone)" strokeWidth="2.5" />
-                <path
-                  d="M16 28.5l8 8 16-17"
-                  stroke="url(#successGradientDone)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <defs>
-                  <linearGradient id="successGradientDone" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stopColor="#ff00b4" />
-                    <stop offset="1" stopColor="#5b00d1" />
-                  </linearGradient>
-                </defs>
-              </svg>
+            <h1 className={fields.heading}>Preparando experiências</h1>
+
+            <div
+              className={styles.progressTrack}
+              role="progressbar"
+              aria-label="Preparando experiências"
+            >
+              <motion.div
+                className={styles.progressFill}
+                initial={{ width: prefersReduced ? '100%' : '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: prefersReduced ? 0 : 4, ease: 'easeInOut' }}
+              />
             </div>
-            <h1 className={fields.heading}>Tudo pronto!</h1>
-            <p className={fields.subtitle}>
-              Bem-vindo ao Fanverse. Te levando ao app…
-            </p>
-          </>
+          </div>
         )}
 
         {status === 'error' && (

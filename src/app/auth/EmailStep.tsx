@@ -15,33 +15,8 @@ import AuthShell from '@/components/auth/AuthShell';
 import AuthSessionLoading from '@/components/auth/AuthSessionLoading';
 import AuthStateButton from '@/components/auth/AuthStateButton';
 import FanverseCore from '@/components/animations/FanverseCore';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import fields from '@/components/auth/AuthFields.module.css';
-
-/**
- * useKeyboardInset — altura (px) que o teclado virtual ocupa, via
- * visualViewport. 0 quando fechado. Usado pra "ancorar" o botão de
- * continuar logo acima do teclado no mobile. Ignora deltas pequenos
- * (barra de endereço) com um threshold.
- */
-function useKeyboardInset(): number {
-  const [inset, setInset] = useState(0);
-  useEffect(() => {
-    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
-    if (!vv) return;
-    const update = () => {
-      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setInset(kb > 90 ? kb : 0);
-    };
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    update();
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
-  }, []);
-  return inset;
-}
 
 /* Tempo mínimo (ms) que o splash de "Retomando sua sessão" fica
  * visível mesmo se o /api/auth/me responder rápido. Garante que

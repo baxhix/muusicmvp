@@ -421,6 +421,15 @@
   width: 100%;
 }
 
+/* Desktop: títulos dos steps em 44px per product feedback ("no
+ * desktop, deixe os títulos no tamanho de 44px, mas mantenha ainda
+ * em duas linhas" — o <br/> do heading do email continua). */
+@media (min-width: 769px) {
+  .heading {
+    font-size: 44px;
+  }
+}
+
 @media (max-width: 768px) {
   /* Bloco posicionado mais abaixo (abaixo do orbe). */
   .emailBlock {
