@@ -131,13 +131,6 @@ export default function VerifyPage() {
   return (
     <AuthShell back="/auth" progress={2 / 5}>
       <StepFrame backHref="/auth">
-        <div className={styles.envelope} aria-hidden="true">
-          <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
-            <rect x="6" y="14" width="52" height="36" rx="6" stroke="currentColor" strokeWidth="2.5" />
-            <path d="m8 18 24 18 24-18" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
-          </svg>
-        </div>
-
         <h1 className={fields.heading}>Confira seu e-mail</h1>
         <p className={fields.subtitle}>
           Enviamos um link e um código pra<br />

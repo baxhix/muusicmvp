@@ -3,14 +3,13 @@
  * estados de erro. Manter ESTRITAMENTE consistente entre as
  * 6 telas pra que o usuário sinta "um único fluxo". */
 
-/* Heading reduzido de clamp(26,4.5vw,32px) → 18px per
- * product feedback "no fluxo de autenticação, fontes 32px
- * deixe com 18". */
+/* Título dos steps em 32px per product feedback "deixe o título
+ * dos steps na fonte 32px". */
 .heading {
   margin: 8px 0 12px;
   /* Título em Borscha bold (display da marca) per product feedback. */
   font-family: 'Borscha', var(--font-inter), sans-serif;
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
@@ -131,10 +130,20 @@
 .btn:active:not(:disabled) {
   transform: translateY(0);
 }
+/* Enquanto o botão não pode ser submetido (inválido), fica em
+ * preto e branco — fill cinza neutro + texto apagado, sem o
+ * gradient colorido — comunicando claramente o estado inativo.
+ * Ao validar, o gradient magenta→indigo volta. Per product
+ * feedback "enquanto o botão não for validado, deixe-o em preto
+ * e branco, bem com a comunicação de estar inativo". */
 .btn:disabled {
-  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.14);
+  background-image: none;
+  color: rgba(255, 255, 255, 0.42);
+  opacity: 1;
   cursor: not-allowed;
   animation: none;
+  box-shadow: none;
 }
 @keyframes btnGradientShift {
   from { background-position: 0% 50%; }
@@ -256,29 +265,27 @@
 }
 .socialRow {
   display: flex;
-  gap: 10px;
+  gap: 22px;
   width: 100%;
+  justify-content: center;
 }
+/* Botão de login social: só o ícone — sem borda nem caixa de fundo,
+ * per product feedback "remova a borda dos botões de login social e
+ * deixe apenas o ícone". Continua desabilitado (visual apenas). */
 .socialBtn {
-  flex: 1;
-  height: 46px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.65);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 .socialBtn svg {
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
 }
 .socialNote {

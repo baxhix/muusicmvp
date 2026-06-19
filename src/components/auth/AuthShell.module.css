@@ -182,11 +182,16 @@
   .formPane {
     flex: 0 0 40%;
     max-width: 40%;
+    /* Centra o bloco do step verticalmente na coluna do form (desktop). */
+    justify-content: center;
   }
-  /* Conteúdo posicionado ~200px abaixo do topo no desktop per product
-   * feedback (no split, o form não fica mais colado no topo). */
+  /* No desktop o conteúdo NÃO estica pra preencher a coluna: fica com a
+   * altura do próprio bloco e é centralizado na vertical pelo formPane
+   * (per product feedback "o bloco de login é centralizado na vertical;
+   * estava muito posicionado pra baixo"). flex:0 1 auto neutraliza o
+   * flex:1 dos wrappers internos (stepInner / wrapper do email). */
   .content {
-    padding-top: 200px;
+    flex: 0 1 auto;
   }
 }
 
