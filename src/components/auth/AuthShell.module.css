@@ -17,6 +17,8 @@
 /* Form pane — coluna com topo + conteúdo do step. No mobile ocupa a
  * tela toda; no desktop vira a coluna de 40% ao lado da foto. */
 .formPane {
+  /* position:relative = âncora pro .hintFooter (disclaimer de Termos)
+   * ficar no rodapé desta coluna no desktop. */
   position: relative;
   z-index: 1;
   flex: 1;

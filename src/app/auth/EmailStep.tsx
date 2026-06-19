@@ -232,18 +232,21 @@ export default function EmailStep() {
           </div>
           <p className={fields.socialNote}>Login social desabilitado</p>
         </div>
-
-        <p className={fields.hint}>
-          Continuando, você concorda com nossos
-          <br />
-          <a href="/termos" target="_blank" rel="noopener noreferrer">Termos</a>{' '}
-          e{' '}
-          <a href="/privacidade" target="_blank" rel="noopener noreferrer">
-            Política de Privacidade
-          </a>
-          .
-        </p>
       </div>
+
+      {/* Disclaimer de Termos — rodapé da página. No desktop fica
+       *  ancorado no fundo do form pane (fora do bloco centralizado);
+       *  no mobile/tablet o wrapper flex empurra pro fim da tela. */}
+      <p className={`${fields.hint} ${fields.hintFooter}`}>
+        Continuando, você concorda com nossos
+        <br />
+        <a href="/termos" target="_blank" rel="noopener noreferrer">Termos</a>{' '}
+        e{' '}
+        <a href="/privacidade" target="_blank" rel="noopener noreferrer">
+          Política de Privacidade
+        </a>
+        .
+      </p>
     </AuthShell>
   );
 }

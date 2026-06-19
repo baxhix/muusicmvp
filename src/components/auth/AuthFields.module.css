@@ -302,6 +302,31 @@
 }
 .hint a:hover { color: #fff; }
 
+/* No desktop o bloco do step fica centralizado verticalmente (auto
+ * height), então o margin-top:auto não empurra mais o disclaimer.
+ * .hintFooter tira o hint do fluxo e ancora no rodapé do form pane
+ * (formPane é position:relative). No mobile/tablet (<1024) o hint
+ * volta a ser empurrado pelo flex (margin-top:auto). */
+@media (min-width: 1024px) {
+  .hintFooter {
+    /* Rodapé da página: fixo no fundo da coluna do form. O split é
+     * 60% foto / 40% form, então left:60% right:0 cobre a coluna do
+     * form e o text-align:center (herdado de .hint) centraliza nela.
+     * (Absolute não serve: o .content é position:relative e viraria
+     * a âncora; fixed ancora na viewport, e o shell não rola.) */
+    position: fixed;
+    left: 60%;
+    right: 0;
+    bottom: 22px;
+    width: auto;
+    max-width: none;
+    transform: none;
+    padding: 0 24px;
+    margin: 0;
+    z-index: 3;
+  }
+}
+
 /* Mobile: empurra o hint pra parte inferior da tela —
  * funciona como um "footer" do step quando o parent é flex
  * column + flex: 1. Per product feedback "no mobile, deixe o
