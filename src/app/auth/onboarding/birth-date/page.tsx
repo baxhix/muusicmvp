@@ -11,6 +11,7 @@ import {
 } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
+import MotionCheckbox from '@/components/auth/MotionCheckbox';
 import fields from '@/components/auth/AuthFields.module.css';
 import styles from './birth-date.module.css';
 
@@ -146,7 +147,7 @@ export default function BirthDatePage() {
       <StepFrame backHref="/auth/verify">
         <h1 className={fields.heading}>Quando você nasceu?</h1>
         <p className={fields.subtitle}>
-          Sua experiência na plataforma será adaptada à sua faixa etária.
+          Sua experiência na plataforma será adaptada à sua idade.
         </p>
 
         <form onSubmit={onSubmit} className={fields.form} noValidate>
@@ -174,31 +175,27 @@ export default function BirthDatePage() {
             <div className={styles.minorNotice} role="status">
               <strong>Você tem {parsed.age} anos.</strong>
               <br />
-              Sua experiência na plataforma será adaptada
-              para sua faixa etária.
+              Sua experiência na plataforma será adaptada à sua idade.
             </div>
           )}
 
-          <label className={styles.termsRow}>
-            <input
-              type="checkbox"
-              checked={acceptedTerms}
-              onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className={styles.checkbox}
-              disabled={submitting}
-            />
-            <span>
-              Concordo com os{' '}
-              <a href="/termos" target="_blank" rel="noopener noreferrer">
-                Termos de Uso
-              </a>{' '}
-              e a{' '}
-              <a href="/privacidade" target="_blank" rel="noopener noreferrer">
-                Política de Privacidade
-              </a>
-              .
-            </span>
-          </label>
+          <MotionCheckbox
+            checked={acceptedTerms}
+            onChange={setAcceptedTerms}
+            disabled={submitting}
+            ariaLabel="Concordo com os Termos de Uso e a Política de Privacidade"
+          >
+            Concordo com os{' '}
+            <a className={styles.termsLink} href="/termos" target="_blank" rel="noopener noreferrer">
+              Termos de Uso
+            </a>
+            <br />
+            e a{' '}
+            <a className={styles.termsLink} href="/privacidade" target="_blank" rel="noopener noreferrer">
+              Política de Privacidade
+            </a>
+            .
+          </MotionCheckbox>
 
           {submitError && <div className={fields.error} role="alert">{submitError}</div>}
 

@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
+import AuthPathLoader from './AuthPathLoader';
 import fields from './AuthFields.module.css';
 
 /**
@@ -37,19 +38,19 @@ export default function StepFrame({
   if (loading) {
     return (
       <div className={fields.stepLoading} aria-live="polite" aria-busy="true">
-        <span className={fields.stepSpinner} aria-hidden="true" />
+        <AuthPathLoader />
       </div>
     );
   }
 
   return (
     <div className={fields.stepInner}>
-      {/* Seta de voltar — reforço pro usuário voltar ao step anterior. */}
-      <Link href={backHref} className={fields.stepBack} aria-label="Voltar">
+      {/* Seta + "Voltar" — reforço pro usuário voltar ao step anterior. */}
+      <Link href={backHref} className={fields.stepBack}>
         <svg
           viewBox="0 0 24 24"
-          width="22"
-          height="22"
+          width="20"
+          height="20"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -59,6 +60,7 @@ export default function StepFrame({
         >
           <path d="m15 18-6-6 6-6" />
         </svg>
+        <span>Voltar</span>
       </Link>
       {children}
     </div>

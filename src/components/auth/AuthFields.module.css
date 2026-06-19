@@ -339,21 +339,25 @@
   animation: stepFadeIn 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Seta de voltar (reforço) logo acima do título, alinhada à esquerda.
+/* Seta + "Voltar" (reforço) logo acima do título, alinhada à esquerda.
  * margin-left negativo alinha o glyph com a borda esquerda do título. */
 .stepBack {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin: 0 0 6px -8px;
-  border-radius: 50%;
+  gap: 5px;
+  align-self: flex-start;
+  height: 34px;
+  padding: 0 12px 0 7px;
+  margin: 0 0 10px -7px;
+  border-radius: 999px;
   color: rgba(255, 255, 255, 0.6);
   background: transparent;
   cursor: pointer;
   text-decoration: none;
   flex-shrink: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
   transition: background 180ms ease-out, color 180ms ease-out;
 }
 .stepBack:hover {
@@ -361,8 +365,9 @@
   color: #fff;
 }
 
-/* Loading curto (2s) entre steps — spinner pequeno centralizado na
- * área do form (o resto do shell permanece). */
+/* Loading curto (2s) entre steps — loader "infinite path drawing"
+ * (AuthPathLoader) centralizado na área do form; o resto do shell
+ * (header + foto) permanece. */
 .stepLoading {
   flex: 1;
   width: 100%;
@@ -371,18 +376,6 @@
   justify-content: center;
   min-height: 180px;
 }
-.stepSpinner {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 2.5px solid rgba(255, 255, 255, 0.12);
-  border-top-color: #ff00b4;
-  animation: stepSpin 0.8s linear infinite;
-}
-@keyframes stepSpin {
-  to { transform: rotate(360deg); }
-}
 @media (prefers-reduced-motion: reduce) {
   .stepInner { animation: none; }
-  .stepSpinner { animation-duration: 1.6s; }
 }

@@ -29,31 +29,15 @@
   font-weight: 600;
 }
 
-.termsRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 4px 4px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
-  font-weight: 400;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.65);
-  cursor: pointer;
-  user-select: none;
-}
-.termsRow a {
-  color: rgba(255, 255, 255, 0.85);
+/* Espaço acima do MotionCheckbox de termos (antes era padding do
+ * .termsRow). Aplicado via wrapper no form gap; mantido aqui só o
+ * estilo dos links (bold per product feedback). */
+.termsLink {
+  color: #fff;
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.termsRow a:hover { color: #fff; }
-
-.checkbox {
-  flex-shrink: 0;
-  margin-top: 2px;
-  width: 18px;
-  height: 18px;
-  accent-color: #ff00b4;
-  cursor: pointer;
+.termsLink:hover {
+  color: #fff;
 }

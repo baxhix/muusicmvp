@@ -8,7 +8,6 @@ import { loadOnboarding, saveOnboarding } from '@/lib/auth/onboardingStore';
 import AuthShell from '@/components/auth/AuthShell';
 import StepFrame from '@/components/auth/StepFrame';
 import fields from '@/components/auth/AuthFields.module.css';
-import styles from './profile.module.css';
 
 /**
  * Step 4 — Profile. Nome de exibição + consentimento de localização
@@ -19,11 +18,6 @@ export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
-  // Consentimento LGPD de localização — default OFF (opt-in afirmativo).
-  const [locationConsent, setLocationConsent] = useState(false);
-  // Menores nunca compartilham localização: o toggle some e o valor é
-  // forçado false no submit (e de novo no servidor).
-  const [isMinor, setIsMinor] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,10 +34,6 @@ export default function ProfilePage() {
       return;
     }
     if (stored.displayName) setDisplayName(stored.displayName);
-    setIsMinor(Boolean(stored.isMinor));
-    if (typeof stored.locationConsent === 'boolean') {
-      setLocationConsent(stored.locationConsent);
-    }
   }, [user, authLoading, router]);
 
   function onSubmit(e: FormEvent) {
@@ -62,16 +52,12 @@ export default function ProfilePage() {
 
     track('profile_name_submitted', { length: trimmed.length });
 
-    // Menores nunca consentem (LGPD); o servidor reforça isso.
-    const consent = isMinor ? false : locationConsent;
-    track(consent ? 'location_consent_granted' : 'location_consent_denied', {
-      surface: 'onboarding',
-    });
-
-    // Interests step removido — vai direto pro success/finalize.
+    // Opt-in de localização saiu do onboarding (feedback de produto:
+    // bloco "quero aparecer no mapa" removido). O usuário habilita
+    // depois nas Configurações; aqui salvamos sempre false.
     saveOnboarding({
       displayName: trimmed,
-      locationConsent: consent,
+      locationConsent: false,
       step: 'success',
     });
     router.push('/auth/success');
@@ -102,31 +88,6 @@ export default function ProfilePage() {
             maxLength={40}
             aria-label="Nome de exibição"
           />
-
-          {isMinor ? (
-            <p className={styles.minorNote}>
-              O compartilhamento de localização não está disponível para
-              menores de 18 anos.
-            </p>
-          ) : (
-            <label className={styles.consentRow}>
-              <input
-                type="checkbox"
-                checked={locationConsent}
-                onChange={(e) => setLocationConsent(e.target.checked)}
-                className={styles.checkbox}
-                disabled={submitting}
-              />
-              <span>
-                Quero aparecer no mapa para outros fãs (localização aproximada
-                — nunca exata). Você pode mudar isso quando quiser nas{' '}
-                <a href="/privacidade" target="_blank" rel="noopener noreferrer">
-                  configurações de privacidade
-                </a>
-                .
-              </span>
-            </label>
-          )}
 
           {error && <div className={fields.error} role="alert">{error}</div>}
 
