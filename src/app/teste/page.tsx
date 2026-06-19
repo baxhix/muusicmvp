@@ -5,7 +5,6 @@ import HeroSection from '@/components/teste/HeroSection';
 import SectionTwo from '@/components/teste/SectionTwo';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionFour from '@/components/teste/SectionFour';
-import SectionSix from '@/components/teste/SectionSix';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
 import GalaxyBackdrop from '@/components/teste/GalaxyBackdrop';
@@ -57,8 +56,10 @@ export default function TestePage() {
        *  page-level com `circling: true` (slide-in radial +
        *  drift sutil contínuo). */}
       <SectionFour />
-      {/* SectionFive "Artistas" removida per spec. */}
-      <SectionSix />
+      {/* SectionFive "Artistas" e SectionSix "Baixe o app" removidas
+       *  per spec. O phase 2 dos avatares passa a ser disparado só pelo
+       *  footer (AvatarConstellation faz `if (!el) continue` pros ids
+       *  de section ausentes). */}
       {/* O orbe FanverseCore 390×390 que vivia aqui foi removido
        *  per product feedback (e por motivos de performance —
        *  era a segunda instância de WebGL2 shader rodando em
