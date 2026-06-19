@@ -654,12 +654,13 @@ function CommunityListView({
                           * trending communities; future signals
                           * (newcomer surge, region-of-day, etc.)
                           * just append to this row. */}
-                        {c.isTrending && (
+                        {activeTab === 'general' && (
                           <div className={styles.cardChipsRow}>
                             {/* 🔥 + seta verde + nº de posts nas últimas
                               * 24h (no lugar do antigo chip "Mais ativa
-                              * hoje"). Número via postsLast24h (mock
-                              * determinístico — ver helper). */}
+                              * hoje"). Aparece em TODAS as comunidades da
+                              * tab Geral (antes só nas trending). Número
+                              * via postsLast24h (mock determinístico). */}
                             <span
                               className={styles.activityStat}
                               aria-label={`${posts24h} posts nas últimas 24 horas`}
