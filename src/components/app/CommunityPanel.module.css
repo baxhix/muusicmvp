@@ -202,8 +202,14 @@
   flex-direction: column;
   padding: 16px 16px 20px;
   gap: 12px;
-  /* Mesma cor/sheen do .header — a lista deixa de destoar do topo. */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, transparent 100%);
+  /* Sem sheen próprio. O .header já tem o gradiente 0.022→transparent;
+   * se o .body reiniciasse o sheen em 0.022 aqui (logo abaixo do header)
+   * criava um "degrau" de brilho = divisão visível header↔conteúdo. Com
+   * background transparente, a área abaixo do header continua o fundo do
+   * painel sem costura — igual ao box de Chat (cuja zona pós-header,
+   * .searchWrap, também é transparente). Per product feedback "deixe como
+   * o Chat, sem nenhuma diferença entre os elementos". */
+  background: transparent;
 }
 .placeholder {
   margin: auto;

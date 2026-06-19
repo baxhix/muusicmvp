@@ -353,8 +353,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  /* Mesma cor/sheen do .header — a lista não destoa do topo. */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022) 0%, transparent 100%);
+  /* Sem sheen próprio — fundo do painel uniforme do topo à base, sem
+   * "degrau" de brilho. (Mantido em sync com CommunityPanel.body.) */
+  background: transparent;
 }
 .empty {
   margin: 24px 14px;
