@@ -1,3 +1,4 @@
+import ApplePhone from './ApplePhone';
 import styles from './HeroSection.module.css';
 
 /**
@@ -54,13 +55,10 @@ export default function HeroSection() {
           Meu Fanverse
         </a>
         <div className={styles.phonesWrap}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/teste/phones-mockup.png"
-            alt="Três smartphones mostrando o app Fanverse"
-            className={styles.phonesImg}
-            loading="eager"
-          />
+          {/* Mockup de celular com o brilho animado estilo "Apple
+           *  Intelligence" (gradiente girando nas bordas + bloom
+           *  externo respirando). Substitui o PNG dos 3 smartphones. */}
+          <ApplePhone />
         </div>
       </div>
     </section>
