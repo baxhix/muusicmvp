@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { track } from '@/lib/analytics';
-import { DEFAULT_ONBOARDING_TOUR, type OnboardingTourConfig } from '@/lib/app/onboardingTourSteps';
+import {
+  DEFAULT_ONBOARDING_TOUR,
+  type OnboardingTourConfig,
+  type OnboardingTourStep,
+} from '@/lib/app/onboardingTourSteps';
 import OnboardingTourView from './OnboardingTourView';
 
 /**
@@ -42,6 +46,30 @@ export default function OnboardingTour({
 }) {
   const { welcomeStage } = useAppShell();
   const reduce = useReducedMotion() ?? false;
+
+  /* Config efetiva: começa com a prop (default estático) e, no
+   * mount, tenta sobrescrever os passos com os cards publicados no
+   * admin (GET /api/onboarding-tour). Se a API falhar ou vier
+   * vazia, mantém o DEFAULT_ONBOARDING_TOUR — o tour nunca quebra. */
+  const [resolvedConfig, setResolvedConfig] = useState<OnboardingTourConfig>(config);
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const res = await fetch('/api/onboarding-tour', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = (await res.json()) as { steps?: OnboardingTourStep[] };
+        if (alive && data.steps && data.steps.length > 0) {
+          setResolvedConfig((c) => ({ ...c, steps: data.steps! }));
+        }
+      } catch {
+        /* offline / erro — segue com o fallback estático */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const [phase, setPhase] = useState<'closed' | 'steps' | 'done'>('closed');
   const [idx, setIdx] = useState(0);
@@ -103,7 +131,7 @@ export default function OnboardingTour({
     return () => window.clearTimeout(t);
   }, [welcomeStage, phase, open]);
 
-  const steps = config.steps;
+  const steps = resolvedConfig.steps;
   const last = steps.length - 1;
 
   const next = useCallback(() => {
@@ -166,7 +194,7 @@ export default function OnboardingTour({
 
   return (
     <OnboardingTourView
-      config={config}
+      config={resolvedConfig}
       phase={phase}
       idx={idx}
       dir={dir}

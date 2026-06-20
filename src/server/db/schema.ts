@@ -915,6 +915,52 @@ export const faqEntries = pgTable(
   }),
 );
 
+/* ── Onboarding tour cards ───────────────────────────────────────
+ *
+ * Cards do tour de orientação in-app (deck animado mostrado ao
+ * usuário no /app). Gerido pelo painel admin (CRUD em
+ * /admin/onboarding); o app consome os publicados via
+ * `GET /api/onboarding-tour`. Substitui o `DEFAULT_ONBOARDING_TOUR`
+ * estático de src/lib/app/onboardingTourSteps.ts (que vira fallback).
+ *
+ * Mesma convenção do FAQ: `sortOrder` controla a ordem dos passos,
+ * `publishedAt` é soft-publish (null = rascunho, não aparece pro
+ * usuário). `decor` = 'globe' liga a decoração de bolhas; `anchor`
+ * é reservado pro spotlight ancorado (Fase futura).
+ */
+export const onboardingTourCards = pgTable(
+  'onboarding_tour_cards',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    emoji: text('emoji'),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    cta: text('cta').notNull(),
+    decor: text('decor'),
+    anchor: text('anchor'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    updatedBy: uuid('updated_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (t) => ({
+    onboardingTourOrderIdx: index('onboarding_tour_cards_order_idx').on(
+      t.sortOrder,
+      t.createdAt,
+    ),
+  }),
+);
+
 /* ── Communities (foruns) ────────────────────────────────────────
  *
  * User-created communities. Anyone with ≥10k Fanpoints can spawn

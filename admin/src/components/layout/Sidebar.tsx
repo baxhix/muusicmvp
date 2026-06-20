@@ -130,6 +130,9 @@ const NAV: NavEntry[] = [
        * para publicação no feed". */
       { kind: 'leaf', href: '/agenda',        label: 'Agenda' },
       { kind: 'leaf', href: '/comunidades',   label: 'Comunidades' },
+      /* Onboarding — gestão dos cards do tour de orientação in-app
+       * (CRUD em /admin/onboarding; o /app consome os publicados). */
+      { kind: 'leaf', href: '/onboarding',    label: 'Onboarding' },
       { kind: 'leaf', href: '/moderation',    label: 'Moderação', badge: 12 },
       { kind: 'leaf', href: '/notificacoes',  label: 'Notificações' },
       /* "Chat" — gestão de features do universo de chat
