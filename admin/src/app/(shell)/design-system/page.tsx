@@ -34,8 +34,7 @@ import Avatar, { AvatarGroup } from '@/components/ui/Avatar';
 import Tooltip from '@/components/ui/Tooltip';
 import SearchInput from '@/components/ui/SearchInput';
 import { Card, CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
-import Dialog, { ConfirmDialog } from '@/components/ui/Dialog';
-import Drawer from '@/components/ui/Drawer';
+import dynamic from 'next/dynamic';
 import EmptyState, { LoadingState } from '@/components/ui/EmptyState';
 import Table, { type Column } from '@/components/ui/Table';
 import StatCard from '@/components/ui/StatCard';
@@ -50,6 +49,17 @@ import {
   IconSettings,
 } from '@/components/icons';
 import styles from './page.module.css';
+
+/* Lazy load: os modais só são baixados quando o usuário abre um —
+ * cada um vira um chunk separado, fora do bundle inicial da página
+ * (next/dynamic). Padrão recomendado pra qualquer surface gated por
+ * interação no admin. */
+const Dialog = dynamic(() => import('@/components/ui/Dialog'), { ssr: false });
+const ConfirmDialog = dynamic(
+  () => import('@/components/ui/Dialog').then((m) => m.ConfirmDialog),
+  { ssr: false }
+);
+const Drawer = dynamic(() => import('@/components/ui/Drawer'), { ssr: false });
 
 /* ════════════════════════════════════════════════════════════
    Helpers de layout DESTA página (não são componentes do DS).
@@ -446,14 +456,15 @@ function ComponentesSection() {
       <Spec
         name="Botões"
         category="Componentes"
-        description="Ação primária da interface. 6 variantes × 3 tamanhos, com ícones, loading e icon-only."
+        description="Ação primária. 6 variantes × 3 tamanhos, com ícones, loading, sucesso e icon-only. Multi-state animado + press tátil via Motion."
         stageCol
         meta={[
           ['Componente', code('Button')],
           ['Onde é usado', 'praticamente toda página — toolbars, formulários, dialogs'],
           ['Variações', '6 variantes · 3 tamanhos (sm 28 / md 34 / lg 40) · iconOnly · leading/trailingIcon'],
-          ['Props', <>{code('variant')} {code('size')} {code('loading')} {code('disabled')} {code('iconOnly')}</>],
-          ['Observações', <>Variante danger agora usa o token {code('--danger-fg')} (antes #FFFFFF fixo)</>],
+          ['Props', <>{code('variant')} {code('size')} {code('loading')} {code('success')} {code('disabled')} {code('iconOnly')}</>],
+          ['Motion', <>multi-state {code('idle → loading → success')} (spring pop) + press {code('scale(0.97)')}; respeita reduced-motion</>],
+          ['Observações', <>Variante danger usa o token {code('--danger-fg')} (antes #FFFFFF fixo)</>],
         ]}
       >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, width: '100%' }}>
@@ -481,6 +492,9 @@ function ComponentesSection() {
           </Cell>
           <Cell label="Loading">
             <Button loading>Salvando</Button>
+          </Cell>
+          <Cell label="Sucesso">
+            <Button variant="primary" success>Salvo</Button>
           </Cell>
           <Cell label="Disabled">
             <Button disabled>Indisponível</Button>
@@ -1068,11 +1082,13 @@ function DataSection() {
       <Spec
         name="Modais"
         category="Data Display"
-        description="Diálogo centralizado sobre overlay. Dialog genérico + ConfirmDialog para ações destrutivas."
+        description="Diálogo centralizado sobre overlay. Dialog genérico + ConfirmDialog para ações destrutivas. Entrada/saída family-style (spring) via Motion."
         meta={[
           ['Componentes', <>{code('Dialog')} · {code('ConfirmDialog')}</>],
           ['Onde é usado', 'criação/edição em CRUD, confirmação de exclusão'],
           ['Variações', 'size md/lg/xl · footer customizável · destructive'],
+          ['Motion', <>backdrop fade + painel {code('scale + y')} (spring family-style) com saída animada (AnimatePresence)</>],
+          ['Lazy', <>carregado via {code('next/dynamic')} só ao abrir (fora do bundle inicial)</>],
         ]}
       >
         <Button variant="primary" onClick={() => setDialogOpen(true)}>Abrir Dialog</Button>
@@ -1108,11 +1124,13 @@ function DataSection() {
       <Spec
         name="Drawers"
         category="Data Display"
-        description="Painel deslizante a partir da direita. Mesma API do Dialog; ideal pra detalhe/edição extensa."
+        description="Painel deslizante a partir da direita. Mesma API do Dialog; ideal pra detalhe/edição extensa. Slide-in com spring (Motion)."
         meta={[
           ['Componente', code('Drawer')],
           ['Onde é usado', 'painéis de detalhe e edição lateral'],
           ['Variações', 'size md/lg/xl · footer · hideCloseButton'],
+          ['Motion', <>painel {code('x: 100% → 0')} (spring) + backdrop fade, saída animada</>],
+          ['Lazy', <>carregado via {code('next/dynamic')} só ao abrir</>],
         ]}
       >
         <Button onClick={() => setDrawerOpen(true)}>Abrir Drawer</Button>
@@ -1196,29 +1214,46 @@ const AUDITS: Audit[] = [
     status: 'parcial',
   },
   {
+    title: 'Dois verdes (brand vs success)',
+    desc: 'Resolvido: --success agora aponta pra --brand (um único verde no sistema). Identidade e estado positivo deixam de competir. Reversível trocando por literais.',
+    where: 'app/globals.css',
+    kind: 'inconsistencia',
+    status: 'resolvido',
+  },
+  {
+    title: 'Família pill sem tokens',
+    desc: 'Resolvido: criados os tokens --pill-h/-pad/-font/-radius e o Badge passou a consumi-los. Geometria de rótulos compactos num só lugar.',
+    where: 'app/globals.css + Badge.module.css',
+    kind: 'inconsistencia',
+    status: 'resolvido',
+  },
+  {
     title: 'Tamanhos de tipografia literais',
-    desc: 'Parcial: criada a escala --text-xs … --text-2xl. Falta adotar nos componentes que ainda usam px literal (PageHeader, etc.).',
+    desc: 'Parcial: escala --text-xs … --text-2xl criada e adotada em Input (label/helper/erro), Card, Dialog e PageHeader (eyebrow/descrição). Resta o resto do admin; título de página fica display 22px de propósito.',
     where: 'app/globals.css + *.module.css',
     kind: 'inconsistencia',
     status: 'parcial',
   },
   {
     title: 'Três padrões de campo "input"',
-    desc: 'Input, Select e SearchInput repetem a mesma moldura com CSS próprio em cada um, em vez de compartilhar uma base. Risco de drift visual.',
+    desc: 'Resolvido: Select e SearchInput já importam o Input.module.css — a moldura de campo (altura, borda, foco) é uma só. Não há CSS duplicado.',
     where: 'Input / Select / SearchInput',
     kind: 'inconsistencia',
+    status: 'resolvido',
   },
   {
     title: 'Tamanhos de ícone sem escala',
-    desc: 'O size dos ícones é passado caso a caso (14/15/16/18/20…). Sem uma escala tokenizada, surgem tamanhos arbitrários entre telas.',
-    where: 'uso de @/components/icons',
+    desc: 'Parcial: criados os tokens --icon-sm/md/lg. Adoção nos call sites (que ainda passam size literal) é gradual.',
+    where: 'app/globals.css + @/components/icons',
     kind: 'inconsistencia',
+    status: 'parcial',
   },
   {
     title: 'Medidas px hardcoded em componentes',
-    desc: 'Input, Avatar e Badge fixam dimensões em px no CSS em vez de derivar de --s-* / --r-*. Ajustes globais exigem editar cada arquivo.',
-    where: 'Input / Avatar / Badge .module.css',
+    desc: 'Parcial: Badge migrou pra --pill-*; Card/StatCard pra --pad-surface. Avatar e a altura do input ainda fixam px — candidatos a tokenizar.',
+    where: 'Avatar / Input .module.css',
     kind: 'inconsistencia',
+    status: 'parcial',
   },
   {
     title: 'Sem primitivo Alert',

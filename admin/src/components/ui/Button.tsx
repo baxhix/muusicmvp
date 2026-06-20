@@ -1,6 +1,9 @@
+'use client';
+
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { IconLoader } from '@/components/icons';
+import { IconLoader, IconCheck } from '@/components/icons';
 import styles from './Button.module.css';
 
 export type ButtonVariant =
@@ -18,6 +21,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   iconOnly?: boolean;
   loading?: boolean;
+  /**
+   * Multi-state: quando true, mostra um check (spring pop) no lugar
+   * do label — confirma visualmente que a ação concluiu. Use junto
+   * com loading (loading → success → idle) pra um botão que conta a
+   * história da ação. O press feedback (scale) é global a todos.
+   */
+  success?: boolean;
   leadingIcon?: React.ReactNode;
   trailingIcon?: React.ReactNode;
 }
@@ -28,6 +38,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     size = 'md',
     iconOnly = false,
     loading = false,
+    success = false,
     leadingIcon,
     trailingIcon,
     className,
@@ -38,6 +49,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   },
   ref
 ) {
+  const reduce = useReducedMotion();
+  // Esconde o label sempre que houver um estado (spinner/check) no ar.
+  const hasState = loading || success;
+
   return (
     <button
       ref={ref}
@@ -49,7 +64,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         styles[variant],
         styles[size],
         iconOnly && styles.iconOnly,
-        loading && styles.loading,
+        hasState && styles.loading,
         className
       )}
       {...rest}
@@ -57,11 +72,32 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       {leadingIcon}
       {children}
       {trailingIcon}
-      {loading && (
-        <span className={styles.loadingSpinner}>
-          <IconLoader size={14} />
-        </span>
-      )}
+      <AnimatePresence initial={false}>
+        {loading && (
+          <motion.span
+            key="loading"
+            className={styles.loadingSpinner}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+            animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+            transition={reduce ? { duration: 0.12 } : { type: 'spring', stiffness: 520, damping: 30 }}
+          >
+            <IconLoader size={14} />
+          </motion.span>
+        )}
+        {success && !loading && (
+          <motion.span
+            key="success"
+            className={styles.loadingSpinner}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+            animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
+            transition={reduce ? { duration: 0.12 } : { type: 'spring', stiffness: 520, damping: 26 }}
+          >
+            <IconCheck size={15} />
+          </motion.span>
+        )}
+      </AnimatePresence>
     </button>
   );
 });

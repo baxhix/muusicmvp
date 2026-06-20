@@ -53,6 +53,20 @@
   --pad-surface: 18px;
   --pad-surface-sm: 14px;
 
+  /* ── Pill / Badge ──
+   * Geometria única da família pill (Badge, StatusBadge, contadores).
+   * Mudar aqui propaga em todos os rótulos compactos. */
+  --pill-h-sm: 18px;
+  --pill-h-md: 20px;
+  --pill-h-lg: 28px;
+  --pill-pad-sm: 6px;
+  --pill-pad-md: 7px;
+  --pill-pad-lg: 12px;
+  --pill-font-sm: 11px;
+  --pill-font-md: 11.5px;
+  --pill-font-lg: 13px;
+  --pill-radius: var(--r-sm);
+
   /* ── Motion ── */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -123,9 +137,11 @@
   --info-soft:     rgba(125, 211, 252, 0.12);
   --info-line:     rgba(125, 211, 252, 0.30);
 
-  --success:       #22C55E;
-  --success-soft:  rgba(34, 197, 94, 0.12);
-  --success-line:  rgba(34, 197, 94, 0.30);
+  /* Mesclado com --brand: um único verde no sistema (identidade =
+   * estado positivo). Pra separar de novo, troque por literais. */
+  --success:       var(--brand);
+  --success-soft:  var(--brand-soft);
+  --success-line:  var(--brand-line);
 
   --warning:       #FCB76B;
   --warning-soft:  rgba(252, 183, 107, 0.12);
@@ -190,9 +206,10 @@
   --info-soft:     rgba(2, 132, 199, 0.10);
   --info-line:     rgba(2, 132, 199, 0.30);
 
-  --success:       #15803D;
-  --success-soft:  rgba(21, 128, 61, 0.10);
-  --success-line:  rgba(21, 128, 61, 0.30);
+  /* Mesclado com --brand (ver tema escuro). */
+  --success:       var(--brand);
+  --success-soft:  var(--brand-soft);
+  --success-line:  var(--brand-line);
 
   --warning:       #B45309;
   --warning-soft:  rgba(180, 83, 9, 0.10);

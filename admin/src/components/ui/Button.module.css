@@ -27,8 +27,14 @@
   pointer-events: none;
 }
 
+/* Press feedback tátil (family-style). Reduzido em prefers-reduced-motion. */
 .button:active:not(:disabled) {
-  transform: translateY(0.5px);
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  .button:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 /* ── Sizes ───────────────────────── */

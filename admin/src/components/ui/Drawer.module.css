@@ -1,9 +1,10 @@
+/* Entrada/saída governadas pelo Motion (AnimatePresence + spring)
+ * no Drawer.tsx — sem animation CSS aqui. */
 .backdrop {
   position: fixed;
   inset: 0;
   background: var(--overlay);
   z-index: var(--z-drawer);
-  animation: fade-in var(--dur-base) var(--ease-out);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
@@ -21,7 +22,6 @@
   box-shadow: var(--shadow-pop);
   display: flex;
   flex-direction: column;
-  animation: slide-in-right var(--dur-slow) var(--ease-out);
 }
 
 .lg { width: 640px; }
