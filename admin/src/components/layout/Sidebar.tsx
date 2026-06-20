@@ -203,6 +203,7 @@ const NAV: NavEntry[] = [
     icon: IconSettings,
     children: [
       { kind: 'leaf', href: '/settings',      label: 'Configurações' },
+      { kind: 'leaf', href: '/design-system', label: 'Design System' },
       { kind: 'leaf', href: '/desenvolvedor', label: 'Desenvolvedor' },
     ],
   },

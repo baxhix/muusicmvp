@@ -1,0 +1,270 @@
+/* Design System — documentação viva dos elementos do Admin.
+ * Usa só os tokens do globals.css; nenhuma cor/medida hardcoded
+ * fora dos próprios swatches (que existem pra MOSTRAR o token). */
+
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tabsBar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 0;
+  background: var(--bg);
+}
+
+/* Seção (Foundations/Componentes/…) */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sectionLead {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  max-width: 70ch;
+}
+
+/* Bloco de spec por componente — usa o Card real como casca. */
+.spec {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Palco onde o componente vivo é renderizado. */
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+.stageCol {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Célula rotulada (pra estados/variações lado a lado). */
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.cellLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* Metadados do componente (usado em / variações / props / obs). */
+.meta {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 6px 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.metaKey {
+  color: var(--text-mute);
+  font-weight: 600;
+}
+.metaVal {
+  color: var(--text-soft);
+}
+.metaVal code,
+.code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* ── Foundations: swatches ─────────────────────────────── */
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.swatchBox {
+  height: 52px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-soft);
+}
+.swatchName {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text);
+}
+.swatchHint {
+  font-size: 11px;
+  color: var(--text-mute);
+}
+
+/* Spacing bars */
+.spaceRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.spaceBar {
+  height: 14px;
+  border-radius: var(--r-xs);
+  background: var(--accent);
+  opacity: 0.85;
+}
+.spaceTok {
+  font-family: var(--font-mono);
+  width: 120px;
+  flex-shrink: 0;
+  color: var(--text-mute);
+}
+
+/* Radius boxes */
+.radiusBox {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: end center;
+  padding-bottom: 6px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+/* Shadow boxes */
+.shadowBox {
+  width: 150px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+/* Type scale */
+.typeRow {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.typeTok {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+  width: 150px;
+  flex-shrink: 0;
+}
+
+/* Icons */
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.iconCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+}
+.iconCell span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-mute);
+  text-align: center;
+  word-break: break-all;
+}
+
+/* Ad-hoc reproduction note (padrões que NÃO são componentes). */
+.adhocBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-line);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+/* Listagem row pattern (reprodução do padrão usado em FAQ/onboarding). */
+.listRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.listRowMain { flex: 1; min-width: 0; }
+.listRowTitle { font-size: 14px; font-weight: 600; color: var(--text); }
+.listRowSub { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
+
+/* Audit */
+.audit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auditItem {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.auditItemGap {
+  border-left-color: var(--info);
+}
+.auditBody { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.auditTitle { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.auditDesc { font-size: 12.5px; line-height: 1.5; color: var(--text-soft); }
+.auditWhere {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+}
