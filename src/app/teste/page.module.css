@@ -65,7 +65,12 @@
    * frame). O pseudo já é `position: fixed`, então o
    * background acompanha naturalmente o viewport sem precisar
    * desse hack. */
-  will-change: transform, opacity;
+  will-change: transform, opacity, filter;
+  /* Gradiente posicionado bem mais abaixo (+360px): o topo da tela
+   * fica mais limpo e a cor se concentra na metade inferior. Esse
+   * translateY base vale pra reduced-motion (sem animação); o
+   * keyframe abaixo embute o mesmo +360px durante o drift. */
+  transform: translate3d(0, 360px, 0);
   /* Fade-in das nebulae conforme o usuário scrolla — per
    * product feedback "a primeira seção mais para um tom
    * escuro e os gradientes começassem após ela, de forma
@@ -83,18 +88,20 @@
 
 /* Drift ambient — independe do scroll. Movimento contínuo e
  * ORGÂNICO: caminho irregular (não monotônico) + leve scale
- * pra a galáxia "respirar"/morfar de forma amorfa, em vez do
- * deslize linear antigo. Loop fechado (100% == 0%) pra rodar
- * `infinite` sem o salto do `alternate`. O parallax-com-scroll
- * vive no componente GalaxyBackdrop. */
+ * pra a galáxia "respirar"/morfar de forma amorfa. Cada Y embute
+ * +360px (gradiente posicionado bem mais abaixo). O `filter`
+ * INTERCALA a intensidade das cores conforme o movimento —
+ * brilho/saturação sobem e descem em fase com o drift, em vez de
+ * ficar constante. Loop fechado (100% == 0%) pra `infinite` sem
+ * salto. O parallax-com-scroll vive no GalaxyBackdrop. */
 @keyframes galaxy-drift {
-  0%   { transform: translate3d(-3%, -1.5%, 0) scale(1); }
-  18%  { transform: translate3d(2%, 2.5%, 0) scale(1.035); }
-  37%  { transform: translate3d(4%, -1%, 0) scale(1.015); }
-  54%  { transform: translate3d(-1.5%, 3.5%, 0) scale(1.05); }
-  71%  { transform: translate3d(3%, 0.5%, 0) scale(1.02); }
-  88%  { transform: translate3d(-2.5%, -2.5%, 0) scale(1.03); }
-  100% { transform: translate3d(-3%, -1.5%, 0) scale(1); }
+  0%   { transform: translate3d(-3%, calc(-1.5% + 360px), 0) scale(1);     filter: brightness(0.86) saturate(0.9); }
+  18%  { transform: translate3d(2%, calc(2.5% + 360px), 0) scale(1.035);   filter: brightness(1.3) saturate(1.32); }
+  37%  { transform: translate3d(4%, calc(-1% + 360px), 0) scale(1.015);    filter: brightness(0.8) saturate(0.88); }
+  54%  { transform: translate3d(-1.5%, calc(3.5% + 360px), 0) scale(1.05); filter: brightness(1.34) saturate(1.38); }
+  71%  { transform: translate3d(3%, calc(0.5% + 360px), 0) scale(1.02);    filter: brightness(0.9) saturate(1); }
+  88%  { transform: translate3d(-2.5%, calc(-2.5% + 360px), 0) scale(1.03);filter: brightness(1.22) saturate(1.24); }
+  100% { transform: translate3d(-3%, calc(-1.5% + 360px), 0) scale(1);     filter: brightness(0.86) saturate(0.9); }
 }
 
 @media (prefers-reduced-motion: reduce) {
