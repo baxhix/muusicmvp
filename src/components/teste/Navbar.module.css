@@ -257,6 +257,7 @@
 .ctaPill {
   display: inline-flex;
   align-items: center;
+  gap: 0.5em;
   padding: 17px 30px;
   background: #000000;
   border: none;
@@ -275,6 +276,14 @@
   position: relative;
   isolation: isolate;
   transition: transform 200ms ease-out;
+}
+
+/* Ícone log-in do CTA — dimensionado em `em` pra escalar junto com
+ * o texto (14px na navbar topo, 28px na barra inferior do scroll). */
+.ctaIcon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 
 /* Sombra-gradient em movimento ATRÁS do fill preto.

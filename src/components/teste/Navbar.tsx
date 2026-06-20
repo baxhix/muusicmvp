@@ -188,10 +188,23 @@ export default function Navbar() {
             <a href="#imprensa"      className={styles.navLink}>Imprensa</a>
             <a href="/auth" className={styles.ctaPill}>
               {/* Pill preto sólido + sombra gradient animada atrás
-               *  (::before pseudo, ver Navbar.module.css). O orb
-               *  interno foi removido — toda a energia visual fica
-               *  na sombra que desliza atrás do botão. */}
-              Meu Fanverse
+               *  (::before pseudo, ver Navbar.module.css). Ícone
+               *  log-in (lucide) + "Entrar". */}
+              <svg
+                className={styles.ctaIcon}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" x2="3" y1="12" y2="12" />
+              </svg>
+              Entrar
             </a>
           </nav>
         </div>

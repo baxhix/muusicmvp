@@ -211,6 +211,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5em;
     padding: 16px 28px;
     border-radius: 999px;
     background: #000;
@@ -223,6 +224,13 @@
     isolation: isolate;
     z-index: 6;
     animation: tloop-fadeup 1000ms cubic-bezier(0.22, 1, 0.36, 1) 240ms both;
+  }
+  /* Ícone log-in do CTA mobile — acima da lux (::before z:-1). */
+  .heroCtaIcon {
+    position: relative;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
   }
   .heroMobileCta::before {
     content: '';
