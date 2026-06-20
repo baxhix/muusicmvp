@@ -52,11 +52,11 @@
 }
 
 .body {
-  padding: 18px;
+  padding: var(--pad-surface);
 }
 
 .bodyCompact {
-  padding: 12px 14px;
+  padding: 12px var(--pad-surface-sm);
 }
 
 .footer {

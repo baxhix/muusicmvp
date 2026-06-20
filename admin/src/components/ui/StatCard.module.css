@@ -5,7 +5,8 @@
 .card {
   background: var(--surface);
   border-radius: var(--r-md);
-  padding: 16px 18px;
+  /* Mesclado com Card: padding único de superfície (era 16/18). */
+  padding: var(--pad-surface);
   display: flex;
   flex-direction: column;
   gap: 4px;

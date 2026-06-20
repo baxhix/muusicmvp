@@ -177,13 +177,13 @@ const RADII: [string, string][] = [
 
 const SHADOWS = ['--shadow-xs', '--shadow-sm', '--shadow-md', '--shadow-lg', '--shadow-pop'];
 
-const TYPE_SCALE: { label: string; size: number; weight: number; note: string }[] = [
-  { label: 'Título de página', size: 20, weight: 600, note: 'PageHeader.title' },
-  { label: 'Título de card / seção', size: 15, weight: 600, note: 'Card.title' },
-  { label: 'Corpo', size: 14, weight: 400, note: 'inputs, tabelas, texto base' },
-  { label: 'Corpo pequeno / label', size: 13, weight: 500, note: 'labels, badges' },
-  { label: 'Auxiliar (helper)', size: 12.5, weight: 400, note: 'helperText, descrições' },
-  { label: 'Caption / eyebrow', size: 11, weight: 600, note: 'rótulos uppercase' },
+const TYPE_SCALE: { token: string; px: string; weight: number; label: string }[] = [
+  { token: '--text-2xl', px: '24px', weight: 700, label: 'Display / número de KPI' },
+  { token: '--text-xl', px: '20px', weight: 600, label: 'Título de página' },
+  { token: '--text-lg', px: '16px', weight: 600, label: 'Título de card / seção' },
+  { token: '--text-base', px: '14px', weight: 400, label: 'Corpo — inputs, tabelas' },
+  { token: '--text-sm', px: '12.5px', weight: 400, label: 'Auxiliar (helper)' },
+  { token: '--text-xs', px: '11px', weight: 600, label: 'Caption / eyebrow' },
 ];
 
 const MOTION_TOKENS: [string, string][] = [
@@ -233,9 +233,9 @@ function FoundationsSection() {
         stageCol
         meta={[
           ['Onde é usado', 'Toda a UI — superfícies, texto, estados e badges'],
-          ['Variações', 'base · soft · line · fg (accent)'],
+          ['Variações', 'base · soft · line · fg (accent / danger)'],
           ['Tema', 'dark (padrão) + light espelhado'],
-          ['Observações', 'Botão danger usa #FFFFFF fixo em vez de um token --danger-fg (ver Auditoria)'],
+          ['Observações', 'Mesclados: --neutral=--text-soft, --accent=--text, --surface-hover=--surface-3. Novo --danger-fg (ver Auditoria)'],
         ]}
       >
         {COLOR_GROUPS.map((g) => (
@@ -283,24 +283,22 @@ function FoundationsSection() {
       <Spec
         name="Tipografia"
         category="Foundations"
-        description="Família Inter (via next/font) para a interface e fonte mono para tokens/código. Pesos 400–600."
+        description="Família Inter (via next/font) para a interface e fonte mono para tokens/código. Pesos 400–700."
         stageCol
         meta={[
           ['Família', <>Inter ({code('--font-sans')}) · mono ({code('--font-mono')})</>],
           ['Onde é usado', 'Toda a tipografia do painel'],
-          ['Observações', 'NÃO há tokens de tamanho — cada componente define font-size literal. Escala abaixo é observada, não tokenizada (ver Auditoria)'],
+          ['Escala', <>tokenizada em {code('--text-xs')} … {code('--text-2xl')} (amostras abaixo renderizam direto dos tokens)</>],
+          ['Observações', 'Tokens criados; adoção nos componentes é gradual (alguns ainda usam px literal)'],
         ]}
       >
         {TYPE_SCALE.map((t) => (
-          <div key={t.label} className={styles.typeRow} style={{ width: '100%' }}>
+          <div key={t.token} className={styles.typeRow} style={{ width: '100%' }}>
             <span className={styles.typeTok}>
-              {t.size}px / {t.weight}
+              {t.token} · {t.px}
             </span>
-            <span style={{ fontSize: t.size, fontWeight: t.weight, color: 'var(--text)' }}>
+            <span style={{ fontSize: `var(${t.token})`, fontWeight: t.weight, color: 'var(--text)' }}>
               {t.label}
-            </span>
-            <span className={styles.swatchHint} style={{ marginLeft: 'auto' }}>
-              {t.note}
             </span>
           </div>
         ))}
@@ -455,7 +453,7 @@ function ComponentesSection() {
           ['Onde é usado', 'praticamente toda página — toolbars, formulários, dialogs'],
           ['Variações', '6 variantes · 3 tamanhos (sm 28 / md 34 / lg 40) · iconOnly · leading/trailingIcon'],
           ['Props', <>{code('variant')} {code('size')} {code('loading')} {code('disabled')} {code('iconOnly')}</>],
-          ['Observações', 'Variante danger pinta o texto com #FFFFFF fixo (não usa token) — ver Auditoria'],
+          ['Observações', <>Variante danger agora usa o token {code('--danger-fg')} (antes #FFFFFF fixo)</>],
         ]}
       >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, width: '100%' }}>
@@ -1172,26 +1170,37 @@ interface Audit {
   desc: string;
   where: string;
   kind: 'inconsistencia' | 'gap';
+  status?: 'resolvido' | 'parcial';
 }
 
 const AUDITS: Audit[] = [
   {
+    title: 'Tokens de cor duplicados (mesmo valor, nomes diferentes)',
+    desc: 'Resolvido: --neutral agora aponta pra --text-soft, --accent pra --text e --surface-hover pra --surface-3 (idênticos nos dois temas). Single source of truth. --border-soft e --focus-ring foram mantidos: divergem no tema claro.',
+    where: 'app/globals.css',
+    kind: 'inconsistencia',
+    status: 'resolvido',
+  },
+  {
     title: 'Cor hardcoded na variante danger do Button',
-    desc: 'O texto do botão danger usa #FFFFFF fixo em vez de um token (ex.: --danger-fg, que nem existe). Quebra a troca de tema e a centralização de cores.',
+    desc: 'Resolvido: criado o token --danger-fg (#FFFFFF nos dois temas); o botão danger e o spinner agora consomem o token em vez do hex fixo.',
     where: 'components/ui/Button.module.css',
     kind: 'inconsistencia',
+    status: 'resolvido',
   },
   {
     title: 'Paddings de card divergentes',
-    desc: 'Card (~18px), StatCard (16/18px) e Dialog (12/20/18px) usam paddings diferentes — sem um token de "padding de superfície" compartilhado.',
-    where: 'Card / StatCard / Dialog .module.css',
+    desc: 'Parcial: Card e StatCard convergem em --pad-surface (18px). Dialog mantém padding assimétrico por ter anatomia própria (header/body/footer).',
+    where: 'Card / StatCard .module.css',
     kind: 'inconsistencia',
+    status: 'parcial',
   },
   {
     title: 'Tamanhos de tipografia literais',
-    desc: 'Não há tokens de font-size. Cada componente declara px direto (PageHeader 14/12.5px, etc.), dificultando uma escala tipográfica consistente.',
-    where: 'vários *.module.css',
+    desc: 'Parcial: criada a escala --text-xs … --text-2xl. Falta adotar nos componentes que ainda usam px literal (PageHeader, etc.).',
+    where: 'app/globals.css + *.module.css',
     kind: 'inconsistencia',
+    status: 'parcial',
   },
   {
     title: 'Três padrões de campo "input"',
@@ -1263,9 +1272,16 @@ function AuditoriaSection() {
         <CardBody>
           <div className={styles.audit}>
             {incs.map((a) => (
-              <div key={a.title} className={styles.auditItem}>
+              <div
+                key={a.title}
+                className={`${styles.auditItem} ${a.status === 'resolvido' ? styles.auditItemDone : ''}`}
+              >
                 <div className={styles.auditBody}>
-                  <span className={styles.auditTitle}>{a.title}</span>
+                  <span className={styles.auditTitle}>
+                    {a.title}
+                    {a.status === 'resolvido' && <Badge tone="success" size="sm">Resolvido</Badge>}
+                    {a.status === 'parcial' && <Badge tone="warning" size="sm">Parcial</Badge>}
+                  </span>
                   <span className={styles.auditDesc}>{a.desc}</span>
                   <span className={styles.auditWhere}>{a.where}</span>
                 </div>

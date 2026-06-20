@@ -88,7 +88,7 @@
 /* Danger */
 .danger {
   background: var(--danger);
-  color: #FFFFFF;
+  color: var(--danger-fg);
   border-color: var(--danger);
 }
 .danger:hover:not(:disabled) {
@@ -120,5 +120,5 @@
 .secondary .loadingSpinner,
 .outline .loadingSpinner,
 .ghost .loadingSpinner { color: var(--text); }
-.danger .loadingSpinner { color: #FFFFFF; }
+.danger .loadingSpinner { color: var(--danger-fg); }
 .dangerGhost .loadingSpinner { color: var(--danger); }

@@ -30,6 +30,29 @@
   --s-12: 48px;
   --s-16: 64px;
 
+  /* ── Type scale ──
+   * Escala tipográfica tokenizada (antes cada componente fixava
+   * px literal). Adotar gradualmente nos componentes; já consumida
+   * na doc do Design System. */
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  /* ── Icon scale ──
+   * Tamanhos canônicos de ícone (em vez de size por chamada). */
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 20px;
+
+  /* ── Surface padding ──
+   * Padding único de superfície de card (Card + StatCard
+   * convergem aqui; antes 18 vs 16/18). */
+  --pad-surface: 18px;
+  --pad-surface-sm: 14px;
+
   /* ── Motion ── */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -67,7 +90,9 @@
   --surface:      #0F0F0F;
   --surface-2:    #161616;
   --surface-3:    #1C1C1C;
-  --surface-hover: #1A1A1A;
+  /* Mesclado: era #1A1A1A (Δ2 do surface-3, imperceptível); no
+   * tema claro já eram idênticos. Single source of truth. */
+  --surface-hover: var(--surface-3);
   --overlay:      rgba(0, 0, 0, 0.72);
 
   /* Text */
@@ -83,7 +108,9 @@
   --focus-ring:    rgba(255, 255, 255, 0.18);
 
   /* Brand & semantic accents */
-  --accent:        #FAFAFA;
+  /* Mesclado: era #FAFAFA, idêntico a --text nos dois temas. Pra
+   * um accent colorido no futuro, troque por um literal. */
+  --accent:        var(--text);
   --accent-fg:     #0A0A0A;
   --accent-soft:   rgba(255, 255, 255, 0.10);
   --accent-line:   rgba(255, 255, 255, 0.18);
@@ -107,8 +134,10 @@
   --danger:        #F87171;
   --danger-soft:   rgba(248, 113, 113, 0.12);
   --danger-line:   rgba(248, 113, 113, 0.30);
+  --danger-fg:     #FFFFFF;
 
-  --neutral:       #A1A1AA;
+  /* Mesclado: era #A1A1AA, idêntico a --text-soft nos dois temas. */
+  --neutral:       var(--text-soft);
   --neutral-soft:  rgba(161, 161, 170, 0.12);
   --neutral-line:  rgba(161, 161, 170, 0.30);
 
@@ -130,7 +159,8 @@
   --surface:      #FFFFFF;
   --surface-2:    #FAFAFA;
   --surface-3:    #F4F4F5;
-  --surface-hover: #F4F4F5;
+  /* Mesclado: já era idêntico a --surface-3 no tema claro. */
+  --surface-hover: var(--surface-3);
   --overlay:      rgba(0, 0, 0, 0.40);
 
   /* Text */
@@ -146,7 +176,8 @@
   --focus-ring:    rgba(0, 0, 0, 0.20);
 
   /* Brand & semantic accents */
-  --accent:        #0A0A0A;
+  /* Mesclado: era #0A0A0A, idêntico a --text. */
+  --accent:        var(--text);
   --accent-fg:     #FFFFFF;
   --accent-soft:   rgba(0, 0, 0, 0.06);
   --accent-line:   rgba(0, 0, 0, 0.16);
@@ -170,8 +201,10 @@
   --danger:        #DC2626;
   --danger-soft:   rgba(220, 38, 38, 0.10);
   --danger-line:   rgba(220, 38, 38, 0.30);
+  --danger-fg:     #FFFFFF;
 
-  --neutral:       #52525B;
+  /* Mesclado: era #52525B, idêntico a --text-soft. */
+  --neutral:       var(--text-soft);
   --neutral-soft:  rgba(82, 82, 91, 0.08);
   --neutral-line:  rgba(82, 82, 91, 0.20);
 
