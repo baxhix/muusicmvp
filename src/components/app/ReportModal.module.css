@@ -65,7 +65,7 @@
 .closeBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .lead {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   color: rgba(245, 245, 247, 0.7);
   margin: 0 0 18px;
@@ -78,13 +78,13 @@
   background: rgba(248, 113, 113, 0.14);
   border: 1px solid rgba(248, 113, 113, 0.35);
   color: #fca5a5;
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .fieldLabel {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(245, 245, 247, 0.85);
   letter-spacing: -0.005em;
@@ -103,7 +103,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--ink);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   resize: vertical;
   min-height: 70px;
@@ -137,7 +137,7 @@
   border: 1px dashed rgba(255, 255, 255, 0.18);
   color: rgba(245, 245, 247, 0.85);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
@@ -193,7 +193,7 @@
   border: none;
   color: #061110;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.005em;
   cursor: pointer;
@@ -214,7 +214,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(245, 245, 247, 0.85);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.14s ease, border-color 0.14s ease;

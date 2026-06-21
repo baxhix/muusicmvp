@@ -78,7 +78,7 @@
 /* ── Label opcional acima de input ───── */
 .label {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0;
   color: rgba(255, 255, 255, 0.6);
@@ -177,7 +177,7 @@
 /* ── Erro inline ──────────────────────── */
 .error {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   color: #ff5d83;
   padding: 8px 12px;
@@ -197,7 +197,7 @@
   align-items: flex-start;
   gap: 10px;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #f5d76e;
   padding: 12px 14px;
@@ -230,14 +230,14 @@
   display: block;
   color: #fff8d8;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 12px;
   margin-bottom: 2px;
 }
 
 /* ── Disclaimer / hint pequeno ────────── */
 .hint {
   font-family: var(--font-inter), sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 400;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.45);

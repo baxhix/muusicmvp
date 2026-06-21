@@ -167,7 +167,7 @@
   border: 1px solid rgba(168, 85, 247, 0.4);
   color: #d8b4fe;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.005em;
   cursor: pointer;
@@ -236,7 +236,7 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
   color: rgba(245, 245, 247, 0.55);
-  font-size: 13px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -340,7 +340,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(245, 245, 247, 0.85);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.005em;
   cursor: pointer;

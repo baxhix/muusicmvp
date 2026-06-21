@@ -296,13 +296,13 @@
   margin-top: 2px;
 }
 .flyoutMetaValue {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .flyoutMetaLabel {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
 }
@@ -399,7 +399,7 @@
   margin-bottom: 4px;
 }
 .missionsTitle {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
 }
@@ -441,7 +441,7 @@
   line-height: 1;
 }
 .missionName {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.85);
   white-space: nowrap;

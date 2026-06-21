@@ -270,7 +270,7 @@
 
 /* Post text */
 .text {
-  font-size: 12.5px; line-height: 1.58;
+  font-size: 12px; line-height: 1.58;
   color: rgba(245,245,247,0.82);
   margin: 0 0 11px;
 }

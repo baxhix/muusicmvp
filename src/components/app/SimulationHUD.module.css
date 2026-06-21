@@ -53,7 +53,7 @@
   .counterDot { animation: none; }
 }
 .counterNum {
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -75,7 +75,7 @@
     top: 113px;
     padding: 6px 12px 6px 10px;
   }
-  .counterNum { font-size: 12.5px; }
+  .counterNum { font-size: 12px; }
   .counterLbl { font-size: 11px; }
 }
 
@@ -128,7 +128,7 @@
   box-shadow: none;
 }
 .hoverName {
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.005em;
   color: #fff;
@@ -211,7 +211,7 @@
   to   { opacity: 1; transform: translate(-50%, calc(-100% - 14px)); }
 }
 .clusterPillText {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.005em;
   color: #fff;
@@ -295,6 +295,6 @@
     transform: translateX(-50%);
     padding: 5px 10px 6px;
   }
-  .zoomNum { font-size: 13px; }
+  .zoomNum { font-size: 12px; }
   .zoomTier { font-size: 9px; }
 }

@@ -72,7 +72,7 @@
 }
 
 .title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.015em;
   color: var(--ink);
@@ -154,7 +154,7 @@
   background: #fff;
   color: #050505;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.005em;
   white-space: nowrap;

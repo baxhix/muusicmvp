@@ -45,7 +45,7 @@ function CallbackInner() {
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
               Não consegui conectar ao Spotify
             </div>
-            <div style={{ fontSize: 13, color: '#A1A1AA', marginBottom: 20 }}>{error}</div>
+            <div style={{ fontSize: 12, color: '#A1A1AA', marginBottom: 20 }}>{error}</div>
             <a
               href="/app"
               style={{
@@ -56,7 +56,7 @@ function CallbackInner() {
                 borderRadius: 999,
                 textDecoration: 'none',
                 fontWeight: 600,
-                fontSize: 13,
+                fontSize: 12,
               }}
             >
               Voltar ao app
@@ -65,7 +65,7 @@ function CallbackInner() {
         ) : (
           <>
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Conectando ao Spotify…</div>
-            <div style={{ fontSize: 13, color: '#A1A1AA' }}>Só um instante.</div>
+            <div style={{ fontSize: 12, color: '#A1A1AA' }}>Só um instante.</div>
           </>
         )}
       </div>

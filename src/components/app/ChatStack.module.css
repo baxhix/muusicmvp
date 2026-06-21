@@ -148,7 +148,7 @@
 .bubbleOut { animation: bubbleOut 0.22s ease-in both; }
 
 .bubbleText {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink);
   line-height: 1.45;

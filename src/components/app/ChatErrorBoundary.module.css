@@ -24,7 +24,7 @@
 
 .fallbackTitle {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -33,7 +33,7 @@
 
 .fallbackText {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: rgba(245, 245, 247, 0.55);
   max-width: 320px;
@@ -52,7 +52,7 @@
   color: #061110;
   border: none;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.14s ease;

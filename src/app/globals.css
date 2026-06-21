@@ -73,13 +73,14 @@
      byte-idêntica. Ver /admin → DS Plataforma.
      ════════════════════════════════════════════════════════════ */
 
-  /* Escala tipográfica — corpo é --text-md (15px). O cluster 11–15
-   * tem passos de 1px porque o app usa todos; acima salta. */
-  --text-2xs: 11px;
+  /* Escala tipográfica (DS Plataforma) — 12(mín) · 14 · 16 · 18 · 22 · 28.
+   * Saíram os fracionários (12.5/13/13.5) e o 15; 12 é o piso, então
+   * 2xs/xs/sm ancoram nele. Display (40/56) fica pros títulos grandes. */
+  --text-2xs: 12px;
   --text-xs:  12px;
-  --text-sm:  13px;
+  --text-sm:  12px;
   --text-base:14px;
-  --text-md:  15px;
+  --text-md:  16px;
   --text-lg:  18px;
   --text-xl:  22px;
   --text-2xl: 28px;
@@ -174,7 +175,7 @@ html, body {
 
 body {
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
 }
 

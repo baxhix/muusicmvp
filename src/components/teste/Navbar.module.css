@@ -800,11 +800,11 @@
     font-size: clamp(18px, 5.4vw, 28px);
   }
   .megaSubitemLabel {
-    font-size: 13px;
+    font-size: 12px;
   }
   .langPill {
     padding: 6px 0;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   /* Em viewports mobile altos (iPhone Pro), 70vh continua

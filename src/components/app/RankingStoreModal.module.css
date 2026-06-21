@@ -100,7 +100,7 @@
   margin-top: 3px;
   white-space: nowrap;
 }
-.periodLabel { font-size: 12.5px; font-weight: 600; color: #bcbcc0; }
+.periodLabel { font-size: 12px; font-weight: 600; color: #bcbcc0; }
 .dot { flex: 0 0 auto; width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); }
 .periodRange { font-size: 12px; color: rgba(255, 255, 255, 0.42); overflow: hidden; text-overflow: ellipsis; }
 /* Em resoluções menores, esconde o intervalo longo ("Semana 24 ·
@@ -267,7 +267,7 @@
   background: transparent;
   color: rgba(255, 255, 255, 0.5);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -396,7 +396,7 @@
 .evoPosRow { display: flex; align-items: flex-end; gap: 16px; margin-top: 16px; }
 .posValueRow { display: flex; align-items: baseline; gap: 6px; margin-top: 3px; }
 .posValue { font-size: 30px; font-weight: 600; line-height: 1; color: rgba(255, 255, 255, 0.8); font-variant-numeric: tabular-nums; }
-.posUp { font-size: 13px; font-weight: 700; color: #bcbcc0; }
+.posUp { font-size: 12px; font-weight: 700; color: #bcbcc0; }
 .fpBlock { text-align: right; }
 .fpValue { font-size: 22px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
 /* Total real, abaixo do valor do período. */
@@ -604,7 +604,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #cfcfd2;
   background: rgba(255, 255, 255, 0.07);
@@ -643,11 +643,11 @@
     linear-gradient(#16161b, #16161b) padding-box,
     var(--grad-tri) border-box;
 }
-.posLabel { flex: 1; text-align: left; font-size: 12.5px; font-weight: 600; color: #e8e8ea; }
+.posLabel { flex: 1; text-align: left; font-size: 12px; font-weight: 600; color: #e8e8ea; }
 /* #N cinza por padrão; branco SÓ quando o período está selecionado. */
 /* #N e a variação de posição: regular + cinza quando NÃO selecionado;
  * bold + branco/colorido só no item selecionado. */
-.posRank { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.5); }
+.posRank { font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.5); }
 .posRowActive .posRank { font-weight: 700; color: #fff; }
 .posRow:not(.posRowActive) .delta { color: rgba(255, 255, 255, 0.5); font-weight: 500; }
 
@@ -718,7 +718,7 @@
   transition: background 0.15s;
 }
 .achToggle:hover { background: rgba(255, 255, 255, 0.08); }
-.achLabel { font-size: 13px; font-weight: 700; }
+.achLabel { font-size: 12px; font-weight: 700; }
 .achCount { font-size: 12px; color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; }
 .chevron { display: flex; color: rgba(255, 255, 255, 0.5); transition: transform 0.2s; }
 .chevronOpen { transform: rotate(180deg); }
@@ -752,7 +752,7 @@
 .missionsHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .missionTabs { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: rgba(255, 255, 255, 0.04); }
 .mProgressRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.mTitle { font-size: 13px; font-weight: 600; color: #e8e8ea; }
+.mTitle { font-size: 12px; font-weight: 600; color: #e8e8ea; }
 .mCount { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #cfcfd2; font-variant-numeric: tabular-nums; }
 .mTrack { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
 .mFill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ff2e9a, var(--purple)); transform-origin: left; animation: rkBar 0.7s cubic-bezier(0.2, 0.9, 0.25, 1); }
@@ -864,7 +864,7 @@
 }
 .podiumAvatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .podiumInfo { flex: 1; min-width: 0; }
-.podiumName { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.podiumName { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .podiumPoints { font-size: 12px; color: rgba(255, 255, 255, 0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 .divider { height: 1px; background: rgba(255, 255, 255, 0.06); }
@@ -898,7 +898,7 @@
     linear-gradient(#1c1c22, #1c1c22) padding-box,
     var(--grad-tri) border-box; }
 /* #N no padrão da aba Superfãs: cinza uniforme, regular, à esquerda. */
-.rankNum { flex: 0 0 auto; min-width: 24px; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rankNum { flex: 0 0 auto; min-width: 24px; font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; }
 /* Wrap do avatar — relative pra hospedar o RankMedallion (selo). */
 .avatarWrap { position: relative; flex: 0 0 auto; line-height: 0; }
 .avatar {
@@ -911,7 +911,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   color: #cfcfd2;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.14);
@@ -1063,7 +1063,7 @@
   background: rgba(255, 255, 255, 0.04);
   color: rgba(245, 245, 247, 0.82);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -1091,14 +1091,14 @@
 .balStats { display: flex; flex-direction: column; gap: 12px; }
 .balStatRow { display: flex; align-items: center; justify-content: space-between; }
 .balStatLabel { font-size: 12px; color: rgba(255, 255, 255, 0.5); }
-.balStatValue { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.balStatValue { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .dataHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .linkBtn { background: transparent; border: none; cursor: pointer; padding: 0; color: rgba(255, 255, 255, 0.55); font-family: inherit; font-size: 12px; font-weight: 600; }
 .linkBtn:hover { color: #fff; }
 .addrBox { margin-top: 14px; padding: 13px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
 .addrLabel { font-size: 12px; color: rgba(255, 255, 255, 0.45); }
-.addrValue { font-size: 13px; font-weight: 600; color: #e8e8ea; margin-top: 6px; line-height: 1.45; }
+.addrValue { font-size: 12px; font-weight: 600; color: #e8e8ea; margin-top: 6px; line-height: 1.45; }
 .newAddrBtn {
   width: 100%;
   margin-top: 14px;
@@ -1108,7 +1108,7 @@
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
@@ -1129,7 +1129,7 @@
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.55);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -1147,7 +1147,7 @@
   background: transparent;
   color: rgba(255, 255, 255, 0.45);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
@@ -1183,7 +1183,7 @@
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
 }
 .searchInput::placeholder { color: rgba(255, 255, 255, 0.4); }
@@ -1212,7 +1212,7 @@
   background: transparent;
   color: #e8e8ea;
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -1252,12 +1252,12 @@
 /* Tag de desconto escura (legível sobre o fundo branco). */
 .discountTag { position: absolute; top: 12px; left: 12px; z-index: 3; font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: #0b0b0d; color: #fff; }
 .productBody { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
-.productName { font-size: 13px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.85); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 34px; }
+.productName { font-size: 12px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.85); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 34px; }
 /* Preço em duas linhas: "De X FP" (riscado) em cima, preço com
  * desconto embaixo. min-height reserva as 2 linhas pra os cards
  * ficarem do mesmo tamanho mesmo sem preço "de". */
 .productPriceRow { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; margin-top: 7px; margin-bottom: 13px; min-height: 36px; }
-.productCost { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.65); font-variant-numeric: tabular-nums; }
+.productCost { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.65); font-variant-numeric: tabular-nums; }
 .tagIcon { flex: 0 0 auto; opacity: 0.7; }
 .productOriginal { min-height: 15px; font-size: 12px; color: rgba(255, 255, 255, 0.35); text-decoration: line-through; font-variant-numeric: tabular-nums; }
 /* CTA no mesmo estilo do botão de download dos materiais exclusivos:
@@ -1297,7 +1297,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
   animation: rkToast 2.2s ease forwards;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 600;
 }
 

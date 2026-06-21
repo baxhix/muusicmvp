@@ -41,7 +41,7 @@
   margin-bottom: 12px;
 }
 .brandCol p {
-  font-size: 13.5px;
+  font-size: 12px;
   color: var(--ink-soft);
   line-height: 1.55;
   max-width: 280px;
@@ -63,7 +63,7 @@
 }
 .col li a,
 .col li button {
-  font-size: 13.5px;
+  font-size: 12px;
   color: var(--ink-soft);
   transition: color 0.2s ease;
 }

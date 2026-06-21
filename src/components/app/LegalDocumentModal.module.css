@@ -58,7 +58,7 @@
 }
 .headerSpacer { width: 28px; }
 .title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -0.01em;
@@ -116,7 +116,7 @@
   padding: 60px 24px;
   text-align: center;
   color: rgba(245, 245, 247, 0.55);
-  font-size: 13.5px;
+  font-size: 12px;
   line-height: 1.6;
 }
 .placeholder h3 {
@@ -135,5 +135,5 @@
   background: rgba(248, 113, 113, 0.10);
   border: 1px solid rgba(248, 113, 113, 0.32);
   color: #f87171;
-  font-size: 13px;
+  font-size: 12px;
 }

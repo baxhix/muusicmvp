@@ -248,7 +248,7 @@
 }
 
 .mePointsNum {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.018em;
@@ -318,7 +318,7 @@
   border-radius: 8px;
   border: none;
   background: none;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   font-family: inherit;
   color: rgba(245, 245, 247, 0.55);
@@ -450,7 +450,7 @@
   gap: 2px;
 }
 .benefitTitle {
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: -0.005em;
   color: #fff;
@@ -511,7 +511,7 @@
 .emptyState {
   padding: 36px 20px;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: rgba(245, 245, 247, 0.5);
 }

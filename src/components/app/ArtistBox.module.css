@@ -558,7 +558,7 @@
   border-radius: 4px;
 }
 .metaPointsValue {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
   font-variant-numeric: tabular-nums;
@@ -566,7 +566,7 @@
   font-family: var(--sans);
 }
 .metaPointsLabel {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
   font-family: var(--sans);
@@ -577,7 +577,7 @@
  * a colocação do usuário logado no ranking, nesse formato (#11º),
  * com exceção se for o primeiro, deve ser (Top 1!)". */
 .metaRankBadge {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(245, 245, 247, 0.72);
   font-family: var(--sans);
@@ -707,7 +707,7 @@
   border: none;
   color: rgba(192, 132, 252, 0.92);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: -0.005em;
   text-decoration: none;
@@ -833,7 +833,7 @@
  * usuário". text-decoration none + hover underline pra que pareça
  * um link sem competir com a estética compacta da linha. */
 .tabRankingName {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
   overflow: hidden;
@@ -985,7 +985,7 @@
   flex: 1;
 }
 .tabBenefitTitle {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
   letter-spacing: -0.005em;
@@ -1115,7 +1115,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: #fff;
   text-align: center;
@@ -1344,7 +1344,7 @@
    * padrão que o nome no ranking: missão cumprida: regular cinza;
    * missão não cumprida, branca, igual o nome de usuário". Bate
    * com .tabRankingName (12.5px / 600 / #fff). */
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
   line-height: 1.2;
@@ -1869,7 +1869,7 @@
 .inviteSubtitle {
   margin: 0;
   font-family: var(--sans);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.62);
   line-height: 1.4;
@@ -1906,7 +1906,7 @@
 .inviteCode {
   flex: 1;
   font-family: var(--mono, ui-monospace);
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
   letter-spacing: 0.04em;
@@ -1948,7 +1948,7 @@
   padding: 14px 12px;
   text-align: center;
   font-family: var(--sans);
-  font-size: 12.5px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
 }
 /* Encolhe a URL longa no .inviteCode sem quebrar layout. */

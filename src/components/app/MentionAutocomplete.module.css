@@ -67,7 +67,7 @@
 .name {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink);
   letter-spacing: -0.005em;

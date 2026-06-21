@@ -509,7 +509,7 @@
   background: transparent;
   border: none;
   color: var(--ink-soft);
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   padding: 12px 14px;
   border-radius: 8px;
@@ -696,7 +696,7 @@
   gap: 3px;
 }
 .mpTitle {
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--ink);
   letter-spacing: -0.01em;
@@ -783,7 +783,7 @@
     top: auto;
     position: fixed;
   }
-  .sub { white-space: normal; max-width: 88vw; font-size: 15px; }
+  .sub { white-space: normal; max-width: 88vw; font-size: 16px; }
 
   /* Botão "Entrar no Fanverse" ancorado pelo bottom no mobile per
    * product feedback "que o botão se ajuste dentro da tela sem

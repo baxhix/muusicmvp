@@ -399,7 +399,7 @@ export default function MediaPost({ data }: { data: MediaPostData }) {
         <div
           style={{
             padding: '10px 14px 0',
-            fontSize: 12.5,
+            fontSize: 12,
             lineHeight: 1.5,
             color: 'rgba(245, 245, 247, 0.82)',
             letterSpacing: '-0.005em',

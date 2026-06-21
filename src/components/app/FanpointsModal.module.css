@@ -141,7 +141,7 @@
   background: none;
   border: none;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: -0.005em;
   color: rgba(245, 245, 247, 0.55);
@@ -270,7 +270,7 @@
 }
 .balanceUnit {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
   margin-top: 2px;
@@ -286,7 +286,7 @@
 .sectionTitle {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(245, 245, 247, 0.55);
   letter-spacing: 0.04em;
@@ -296,7 +296,7 @@
 .paragraph {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 400;
   color: rgba(245, 245, 247, 0.82);
   line-height: 1.5;
@@ -317,7 +317,7 @@
 }
 .levelRank {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.55);
   font-variant-numeric: tabular-nums;
@@ -344,7 +344,7 @@
 .progressNote {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.65);
   line-height: 1.45;
 }
@@ -425,7 +425,7 @@
   background: rgba(255, 255, 255, 0.02);
   border-radius: 10px;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.82);
 }
@@ -452,13 +452,13 @@
 .earnName  {
   flex: 1;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.82);
 }
 .earnPoints {
   font-family: var(--font-inter), sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(167, 139, 250, 0.95);
   font-variant-numeric: tabular-nums;
@@ -473,7 +473,7 @@
   flex-direction: column;
   gap: 4px;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.82);
   line-height: 1.55;
 }
@@ -504,7 +504,7 @@
 }
 .activityName {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.9);
   white-space: nowrap;
@@ -519,7 +519,7 @@
 }
 .activityPoints {
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(167, 139, 250, 0.95);
   font-variant-numeric: tabular-nums;
@@ -529,7 +529,7 @@
 .empty {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.55);
   line-height: 1.5;
   padding: 12px 0;
@@ -578,7 +578,7 @@
 }
 .rankPosition {
   width: 32px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: rgba(245, 245, 247, 0.78);
   font-variant-numeric: tabular-nums;
@@ -604,7 +604,7 @@
 }
 .rankName {
   flex: 1;
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(245, 245, 247, 0.92);
   white-space: nowrap;
@@ -612,7 +612,7 @@
   text-overflow: ellipsis;
 }
 .rankPoints {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(245, 245, 247, 0.68);
   font-variant-numeric: tabular-nums;
@@ -689,7 +689,7 @@
 }
 .benefitDescription {
   font-family: var(--font-inter), sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 400;
   color: rgba(245, 245, 247, 0.68);
   line-height: 1.4;
@@ -737,7 +737,7 @@
     padding: 14px 16px 12px;
   }
   .title    { font-size: 19px; }
-  .subtitle { font-size: 12.5px; line-height: 1.4; }
+  .subtitle { font-size: 12px; line-height: 1.4; }
   .closeBtn { width: 36px; height: 36px; }
   .closeBtn svg { width: 20px; height: 20px; }
 
@@ -795,17 +795,17 @@
   /* Activity items: nome + data em uma coluna que ocupa mais
    * espaço; pontos à direita compactos. */
   .activityItem { padding: 10px 12px; }
-  .activityName { font-size: 13px; }
+  .activityName { font-size: 12px; }
   .activityDate { font-size: 11px; }
-  .activityPoints { font-size: 12.5px; }
+  .activityPoints { font-size: 12px; }
 
   /* Timeline (jornada) compacta em mobile. */
   .timelineItem { padding: 6px 10px; gap: 10px; }
-  .timelineLabel { font-size: 13.5px; }
+  .timelineLabel { font-size: 12px; }
 
   /* Earn list (lista "como acumular") padding menor. */
   .earnItem { padding: 9px 12px; }
-  .earnName  { font-size: 13px; }
+  .earnName  { font-size: 12px; }
   .earnPoints { font-size: 12px; }
 }
 
@@ -858,7 +858,7 @@
   min-width: 0;
 }
 .marcoLabel {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.01em;
@@ -887,13 +887,13 @@
   padding: 0 14px 14px;
 }
 .marcoDescription {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: rgba(245, 245, 247, 0.65);
   margin: 0 0 12px;
 }
 .marcoEmpty {
-  font-size: 12.5px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.45);
   margin: 0;
   font-style: normal;

@@ -426,7 +426,7 @@
    * do @media (max-width: 768px) ficamos só com items styling. */
   .moreItem {
     padding: 16px 14px;
-    font-size: 15px;
+    font-size: 16px;
   }
 }
 
@@ -641,7 +641,7 @@
    * pra respirar e border-radius pra hover/active highlight. */
   .moreItem {
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 16px;
     background: transparent;
     border: none;
     border-radius: 10px;

@@ -52,7 +52,7 @@
   border-radius: 999px;
   color: #fff;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
+  font-size: 12px;
   letter-spacing: -0.005em;
   outline: none;
   transition: border-color 200ms ease-out, background 200ms ease-out, width 220ms ease-out;
@@ -166,11 +166,11 @@
   }
   .cluster { gap: 10px; }
   .nav { gap: 12px; }
-  .navLink, .navLinkAccent { font-size: 12.5px; }
+  .navLink, .navLinkAccent { font-size: 12px; }
   .brandTag { display: none; }
   /* Em mobile compacta o input pra fit + dropa o focus
    * grow. */
-  .searchInput { width: 120px; font-size: 12.5px; padding: 6px 10px 6px 28px; }
+  .searchInput { width: 120px; font-size: 12px; padding: 6px 10px 6px 28px; }
   .searchInput:focus { width: 140px; }
   .searchIcon { left: 10px; }
 }

@@ -77,7 +77,7 @@
 .searchResult {
   margin: 16px 0 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
 }
 .searchResult em {
@@ -95,7 +95,7 @@
 }
 .empty p {
   margin: 0 0 16px;
-  font-size: 15px;
+  font-size: 16px;
 }
 .empty em {
   color: #fff;
@@ -110,7 +110,7 @@
   border-radius: 999px;
   color: #fff;
   font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: background 200ms ease-out;
