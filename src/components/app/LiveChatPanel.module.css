@@ -1033,7 +1033,7 @@
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 200;
+  z-index: var(--z-nav);
   display: flex;
   align-items: flex-end;
   justify-content: center;

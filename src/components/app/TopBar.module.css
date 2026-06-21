@@ -28,7 +28,7 @@
      dimmed by the Globe's edge vignette (.vignette z=1) which
      covers the right side of the screen with a radial-black wash.
      Was 110 — bumped to 200 to clear any future overlay. */
-  z-index: 200;
+  z-index: var(--z-nav);
   isolation: isolate;
   pointer-events: auto;
   display: flex;

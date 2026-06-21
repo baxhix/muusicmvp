@@ -5,7 +5,7 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--z-portal);
   display: flex;
   justify-content: flex-end;
   background: rgba(0, 0, 0, 0.55);

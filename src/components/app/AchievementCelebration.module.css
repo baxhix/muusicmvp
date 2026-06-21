@@ -5,7 +5,7 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1500;
+  z-index: var(--z-celebration);
   display: flex;
   align-items: center;
   justify-content: center;

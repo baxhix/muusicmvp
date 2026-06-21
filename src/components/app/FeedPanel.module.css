@@ -391,7 +391,7 @@
      * flutuantes do LiveChatStack (z:90 mobile). Per product
      * feedback "Quando o feed mobile estiver ativo, deve ficar
      * acima das minuaturas do chat flutuantes". */
-    z-index: 100;
+    z-index: var(--z-sticky);
   }
   .panelMinimized {
     /* Push fully off-screen on mobile — no peeking header. The

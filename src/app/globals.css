@@ -106,17 +106,18 @@
   --space-12:  48px;
   --space-16:  64px;
 
-  /* Camadas de empilhamento — substitui os magic numbers atuais
-   * (800/1000/1500/8500/9000/9500/9999). --z-max é escape hatch. */
-  --z-base:     1;
-  --z-raised:   10;
-  --z-sticky:   100;
-  --z-nav:      200;
-  --z-dropdown: 300;
-  --z-overlay:  400;
-  --z-modal:    500;
-  --z-toast:    600;
-  --z-max:      9999;
+  /* Camadas de empilhamento — valores alinhados às camadas REAIS do
+   * app (byte-idêntico ao tokenizar). As bandas intermediárias
+   * bagunçadas (130–135, 240–260 com micro-ordem, 800, 8500–9500)
+   * ficam como literais até um redesign dedicado de layering. */
+  --z-base:        1;
+  --z-raised:      10;
+  --z-sticky:      100;  /* chrome sticky: Header, FeedPanel, Globe */
+  --z-nav:         200;  /* TopBar, BottomNav, painéis, toasts base */
+  --z-modal:       300;  /* diálogos: Confirm, Fanpoints, Legal */
+  --z-portal:      1000; /* modais portados: ModalShell, Drawer */
+  --z-celebration: 1500; /* celebração de conquista */
+  --z-max:         9999; /* topo absoluto (escape hatch) */
 
   /* Gradientes assinatura — colapsa as definições duplicadas
    * (o tri-cor aparecia ≈19× verbatim). */

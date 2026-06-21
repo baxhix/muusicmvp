@@ -34,7 +34,7 @@
           a ::before pseudo. The halo cancels the vignette's
           darkness specifically in the avatar area so each photo
           reads as crisp regardless of what's underneath. */
-  z-index: 200;
+  z-index: var(--z-nav);
   display: flex;
   flex-direction: column;
   align-items: center;

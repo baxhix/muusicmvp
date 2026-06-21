@@ -534,7 +534,7 @@
  * pointer, so :hover fires reliably on the inner element. */
 :global(.mapboxgl-marker):has(.liveUserBadge:hover),
 :global(.mapboxgl-marker):has(.userBadge:hover) {
-  z-index: 100;
+  z-index: var(--z-sticky);
 }
 
 /* Anchor for the compact audio-bars chip — same dimensions as the
