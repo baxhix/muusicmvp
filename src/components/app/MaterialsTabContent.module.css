@@ -397,7 +397,7 @@ button.fileIcon:hover {
 .lightbox {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-max);
   /* Bg quase opaco + blur — paleta dark do app. */
   background: rgba(8, 8, 12, 0.96);
   backdrop-filter: blur(20px);

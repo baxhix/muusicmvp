@@ -231,7 +231,7 @@
 .zoom {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-max);
   /* Overlay quase opaco — plataforma é dark theme, então
    *  preto puro casa com o background do app. */
   background: rgba(0, 0, 0, 0.96);
