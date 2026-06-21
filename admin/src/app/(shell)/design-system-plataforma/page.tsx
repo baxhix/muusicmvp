@@ -384,101 +384,326 @@ function MotionSection() {
 
 /* ───────────────────────── AUDITORIA ───────────────────────── */
 
-interface Audit {
+type Sev = 'alta' | 'média' | 'baixa';
+type Eff = 'baixo' | 'médio' | 'alto';
+
+interface Vis {
+  cat: string;
   title: string;
-  count: string;
   desc: string;
   where: string;
-  arch?: boolean;
+  sev?: Sev;
+  eff?: Eff;
+  rec?: string;
+  done?: boolean; // resolvido no P0
+  via?: string;
 }
 
-const AUDITS: Audit[] = [
+/* Já resolvido no P0 (byte-idêntico, no ar). */
+const RESOLVED: Vis[] = [
   {
-    title: 'Cores hardcoded (tokens ignorados)',
-    count: '40+ hex',
-    desc: 'Mesma cor escrita de várias formas: branco como #fff (≈209×), #ffffff (≈175×) e #FFFFFF (≈21×); accent como #3ddb74 e #3DDB74. Os tokens --ink/--accent existem mas quase não são usados.',
-    where: 'layout.module.css · verify.module.css · CommunityPanel.module.css',
+    cat: 'Cores',
+    title: 'Mesma cor em 3 formatos (branco/preto)',
+    desc: 'Branco aparecia como #fff / #ffffff / #FFFFFF e preto como #000/#000000; accent como #3ddb74 e #3DDB74.',
+    where: '64 arquivos',
+    done: true,
+    via: 'normalizado #ffffff→#fff, #000000→#000 (213×)',
   },
   {
-    title: 'Sem escala tipográfica',
-    count: '≈39 tamanhos',
-    desc: 'Cada módulo fixa font-size em px (12/13/14/11 + frações 12.5/13.5 + outliers 48/56/72). Zero tokens --text-*.',
-    where: '*.module.css (≈150 arquivos)',
+    cat: 'Cores',
+    title: 'Cores de texto hardcoded',
+    desc: 'Os tons de texto (#F5F5F7/#A1A1AA/#71717A/#3F3F46) repetidos como literais em vez dos tokens.',
+    where: '53 arquivos',
+    done: true,
+    via: 'tokenizado var(--ink-*) (241×)',
   },
   {
-    title: 'Border-radius redundante',
-    count: '12 valores',
-    desc: '50% (≈314×) e 999px (≈184×) usados pro mesmo pill; raios soltos 6/8/10/14/16/20. Tokens --r-* praticamente não consumidos.',
-    where: 'page.module.css · UserPicker · FeedPanel',
+    cat: 'Gradientes',
+    title: 'Gradiente assinatura duplicado ≈19×',
+    desc: 'O tri-cor laranja→rosa→roxo (e os outros 3 de marca) copiados verbatim em vários arquivos.',
+    where: '17 arquivos',
+    done: true,
+    via: 'tokenizado var(--grad-*) (25×)',
   },
   {
-    title: 'Gradientes duplicados',
-    count: '≈205 / top 19×',
-    desc: 'O gradiente tri-cor #f97316→#ec4899→#a855f7 aparece verbatim em ≈19 arquivos. Nenhum gradiente é tokenizado.',
-    where: 'UserPicker · CommunityPanel · RankingStoreModal · ShowDayLayer',
-  },
-  {
-    title: 'Sem escala de espaçamento',
-    count: '≈32 valores',
-    desc: 'Paddings/margins/gaps 100% hardcoded; padding: 10px 12px repetido ≈24×. Sem grid de 8px nem tokens --space-*.',
-    where: 'QuizPost · UserPicker · CommunityPanel',
-  },
-  {
-    title: 'z-index sem escala',
-    count: '44 valores',
-    desc: 'Magic numbers (9999, 9500, 9000, 8500, 1500, 1000, 800) sem hierarquia documentada — risco alto de colisão de stacking.',
-    where: 'Lightbox · FanverseSearch · MaterialsTabContent',
-  },
-  {
-    title: 'Breakpoints fragmentados',
-    count: '9 distintos',
-    desc: 'Media queries em 480/560/600/640/720/768/880/900/1024/1100 sem mapa — responsivo imprevisível entre componentes.',
-    where: 'HeroSection · layout.module.css · CommunityPanel',
-  },
-  {
-    title: '!important espalhado',
-    count: '≈178',
-    desc: 'Parte justificada (acessibilidade), parte como força bruta de cascata — sintoma de especificidade descontrolada.',
-    where: 'globals.css · layout.module.css · modais',
-  },
-  {
-    title: 'Arquitetura: sem camada de primitivos',
-    count: '0 ui/',
-    desc: 'Não há src/components/ui/. Pior: componentes sequestram variáveis globais (FeedPanel redefine --accent para #ff2e9a), quebrando o significado dos tokens.',
-    where: 'src/components/** (feature-first)',
-    arch: true,
+    cat: 'Camadas',
+    title: 'z-index magic numbers (camadas principais)',
+    desc: 'Valores 100/200/300/1000/1500/9999 espalhados como literais sem hierarquia.',
+    where: '21 arquivos',
+    done: true,
+    via: 'tokens --z-* (25×); bandas especiais ainda pendentes (ver abaixo)',
   },
 ];
 
+/* Pendente — para avaliar e decidir. Ordenado por severidade. */
+const PENDING: Vis[] = [
+  {
+    cat: 'Componentes',
+    title: 'Sem botão canônico',
+    desc: 'Não existe um Button(variant, size). CTAs e botões de ação são bespoke por feature — padding, hover, foco, raio e tipografia divergem entre telas. É o elemento mais visível e repetido do app.',
+    where: 'MotionStateButton · AuthStateButton · HeartButton · <button> inline',
+    sev: 'alta',
+    eff: 'alto',
+    rec: 'Criar Button em src/components/ui/ e migrar. Maior ganho de consistência visual do app inteiro.',
+  },
+  {
+    cat: 'Cores',
+    title: 'Duas CTAs assinatura diferentes',
+    desc: 'A landing usa pill magenta→indigo; o app usa roxo→rosa. Duas identidades de CTA convivendo — o usuário vê dois "botões principais" distintos entre landing e produto.',
+    where: 'SectionCTA/Navbar (landing) vs MotionStateButton/Auth (app)',
+    sev: 'média',
+    eff: 'baixo',
+    rec: 'Decidir UMA CTA assinatura — ou assumir landing vs app de propósito e documentar.',
+  },
+  {
+    cat: 'Cores',
+    title: 'FeedPanel sequestra o verde da marca',
+    desc: 'O FeedPanel redefine --accent global para rosa (#ff2e9a) e --accent2 roxo. O "verde Fanverse" vira rosa só nessa superfície — quebra o significado do token.',
+    where: 'FeedPanel.module.css',
+    sev: 'média',
+    eff: 'baixo',
+    rec: 'Usar token próprio (--feed-accent) em vez de redefinir a variável global --accent.',
+  },
+  {
+    cat: 'Componentes',
+    title: 'Cards ad-hoc por feature',
+    desc: 'Não há Card base. Cada superfície define borda/sombra/padding/hover do seu jeito — densidade e elevação inconsistentes entre cards parecidos.',
+    where: 'ActivityCard · PostCard · ProfileCardStack + cards inline',
+    sev: 'média',
+    eff: 'médio',
+    rec: 'Card base com variantes; adotar nas features.',
+  },
+  {
+    cat: 'Componentes',
+    title: 'Badges / pills sem padrão',
+    desc: 'VerifiedBadge, LiveBadge, StatsPill, RankMedallion + pills inline — alturas, raios e cores variados pro mesmo papel de rótulo.',
+    where: '8+ módulos com .pill / .badge próprios',
+    sev: 'média',
+    eff: 'médio',
+    rec: 'Badge(tone, size) + tokens de pill (altura/raio/padding).',
+  },
+  {
+    cat: 'Componentes',
+    title: 'Tabs em dois modelos',
+    desc: 'FilterTabs usa indicador CSS estático; ArtistBox usa pill animado (layoutId). Interação e visual diferentes pro mesmo padrão de abas.',
+    where: 'FilterTabs vs ArtistBox/ProfilePanel/FanpointsModal',
+    sev: 'média',
+    eff: 'baixo',
+    rec: 'Padronizar no pill animado (layoutId) em todas as abas.',
+  },
+  {
+    cat: 'Componentes',
+    title: 'Sem componente de Avatar',
+    desc: '<img> inline com placeholder; tamanho, anel, fallback e o selo de verificado são posicionados caso a caso. Inconsistência de tamanho/borda entre telas.',
+    where: 'ArtistBox · UserPicker · CommunityPanel · ranking',
+    sev: 'média',
+    eff: 'médio',
+    rec: 'Avatar(size, status, fallback) com VerifiedBadge composável.',
+  },
+  {
+    cat: 'Componentes',
+    title: '4 toasts independentes',
+    desc: 'AppToast, PointsToast, SocialAchievementToast e SameTrackToast têm animação, posição e tempo de vida próprios. Quatro estilos de notificação coexistindo.',
+    where: 'components/app/*Toast.tsx',
+    sev: 'média',
+    eff: 'médio',
+    rec: 'ToastProvider único + useToast (espelhar o que o admin já tem).',
+  },
+  {
+    cat: 'Componentes',
+    title: 'Modais: 1 fora do padrão + 3 tiers de z',
+    desc: 'Há 2 shells bons (Motion/MobileSheet), mas o PlaylistModal anima por conta própria (state machine + keyframes). E modais aparecem em 130, 300 e 1000 de z-index.',
+    where: 'PlaylistModal vs MotionModalShell · z 130/300/1000',
+    sev: 'média',
+    eff: 'médio',
+    rec: 'Portar PlaylistModal pro shell; unificar o tier de z dos modais.',
+  },
+  {
+    cat: 'Camadas',
+    title: 'z-index: bandas especiais e micro-ordem',
+    desc: 'A banda 240–260 (TopBar/BottomNav) tem ordem proposital de 1px e os overlays especiais (800/8500/9000/9500) são magic numbers. Não dá pra colapsar sem redesenhar o layering.',
+    where: 'TopBar · BottomNav · FanverseSearch · FindMyLove · HeartsCascade',
+    sev: 'média',
+    eff: 'alto',
+    rec: 'Redesign de layering (camadas canônicas + mover overlays) com QA no /app — não é sweep mecânico.',
+  },
+  {
+    cat: 'Tipografia',
+    title: 'Sem escala tipográfica adotada',
+    desc: '≈39 tamanhos em px (incl. frações 12.5/13.5). A escala --text-* já existe (P0) mas os componentes ainda usam px literal — hierarquia inconsistente entre telas.',
+    where: '*.module.css (≈150 arquivos)',
+    sev: 'média',
+    eff: 'alto',
+    rec: 'Adotar --text-* por superfície, com QA (muda pixels — snap pro valor mais próximo).',
+  },
+  {
+    cat: 'Cores',
+    title: 'Paleta roxo/rosa não tokenizada',
+    desc: 'Vários roxos/rosas quase iguais convivem (#a855f7/#9333ea/#c084fc/#d946ef/#ec4899/#f472b6) sem token canônico.',
+    where: 'gradientes e fills de vários módulos',
+    sev: 'baixa',
+    eff: 'médio',
+    rec: 'Definir 3–4 roxos canônicos e tokenizar.',
+  },
+  {
+    cat: 'Forma',
+    title: 'Raios de pill/card variados',
+    desc: '50% e 999px pro mesmo pill; cards em 8/10/12/14/16/18. Cantos inconsistentes entre elementos do mesmo tipo.',
+    where: 'UserPicker · FeedPanel · cards diversos',
+    sev: 'baixa',
+    eff: 'médio',
+    rec: 'Snap pra --r-* (e um --pill-radius único).',
+  },
+  {
+    cat: 'Espaçamento',
+    title: 'Densidade inconsistente',
+    desc: 'Padding de "card" varia (10×12, 12×14, 8×14). A escala --space-* existe (P0) mas não é usada — espaçamento ad-hoc.',
+    where: 'QuizPost · UserPicker · CommunityPanel',
+    sev: 'baixa',
+    eff: 'alto',
+    rec: 'Adotar --space-* gradualmente (grid de 4px).',
+  },
+  {
+    cat: 'Estados',
+    title: 'Empty / error states só texto',
+    desc: 'Estados vazios e de erro são texto puro, sem ícone/ilustração/ação consistentes. Skeleton existe e é bom, mas o resto é ad-hoc.',
+    where: 'modais, listas, painéis',
+    sev: 'baixa',
+    eff: 'médio',
+    rec: 'Componente de estado (ícone + texto + ação) reutilizável.',
+  },
+  {
+    cat: 'Responsivo',
+    title: 'Breakpoints fragmentados',
+    desc: '9 breakpoints distintos (480/560/600/640/720/768/880/900/1024/1100) sem mapa — comportamento responsivo imprevisível entre componentes.',
+    where: 'HeroSection · layout · CommunityPanel',
+    sev: 'baixa',
+    eff: 'alto',
+    rec: 'Mapa canônico (sm/md/lg/xl/2xl) via postcss-custom-media + migrar.',
+  },
+  {
+    cat: 'Motion',
+    title: 'Reduced-motion incompleto',
+    desc: '≈70% das animações respeitam prefers-reduced-motion; faltam checks em MotionStateButton, MotionSwitch e NumberTicker (acessibilidade).',
+    where: 'componentes de motion',
+    sev: 'baixa',
+    eff: 'baixo',
+    rec: 'Adicionar useReducedMotion nos componentes faltantes.',
+  },
+];
+
+const SEV_TONE: Record<Sev, BadgeTone> = { alta: 'danger', média: 'warning', baixa: 'neutral' };
+
+const SEV_BORDER: Record<Sev, string> = {
+  alta: 'var(--danger)',
+  média: 'var(--warning)',
+  baixa: 'var(--border-strong)',
+};
+
+function CatTag({ children }: { children: ReactNode }) {
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        color: 'var(--text-mute)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--r-full)',
+        padding: '1px 8px',
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 function AuditoriaSection() {
+  const order: Sev[] = ['alta', 'média', 'baixa'];
+  const pending = [...PENDING].sort((a, b) => order.indexOf(a.sev!) - order.indexOf(b.sev!));
+  const counts = {
+    alta: pending.filter((p) => p.sev === 'alta').length,
+    média: pending.filter((p) => p.sev === 'média').length,
+    baixa: pending.filter((p) => p.sev === 'baixa').length,
+  };
+
   return (
     <div className={styles.section}>
       <p className={styles.sectionLead}>
-        O diagnóstico em uma frase: <strong>os sistemas existem mas são
-        ignorados na prática</strong>. Cada componente reinventa o estilo
-        localmente. Evidência quantificada (varredura de {code('src/**/*.css')}):
+        Catálogo de <strong>inconsistências visuais</strong> da plataforma, pra
+        você avaliar item a item e decidir o que implementar. O P0 já resolveu a
+        base (byte-idêntico, no ar); o resto está pendente com{' '}
+        <strong>severidade · esforço · recomendação</strong>. Nada aqui foi
+        aplicado ainda — é a sua lista de decisão.
       </p>
 
+      <div className={styles.notice} style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+        <span>
+          <strong>{RESOLVED.length} resolvido no P0</strong> · {pending.length} pendente
+          {' '}({counts.alta} alta, {counts.média} média, {counts.baixa} baixa severidade).
+          Severidade = impacto visual/consistência. Esforço = tamanho da implementação.
+          Tudo pendente <strong>muda pixels</strong> → exige QA no /app (agora possível).
+        </span>
+      </div>
+
+      {/* Resolvido no P0 */}
       <Card>
         <CardHeader
-          title="Inconsistências em escala"
-          description="Contagens aproximadas + exemplos representativos"
-          actions={<Badge tone="warning">{AUDITS.length}</Badge>}
+          title="✅ Resolvido no P0"
+          description="Tokenização byte-idêntica, já no ar (zero mudança visual)"
+          actions={<Badge tone="success">{RESOLVED.length}</Badge>}
         />
         <CardBody>
           <div className={styles.audit}>
-            {AUDITS.map((a) => (
+            {RESOLVED.map((a) => (
+              <div key={a.title} className={styles.auditItem} style={{ borderLeftColor: 'var(--brand)' }}>
+                <div className={styles.auditBody}>
+                  <span className={styles.auditTitle}>
+                    {a.title}
+                    <CatTag>{a.cat}</CatTag>
+                    <Badge tone="success" size="sm">resolvido</Badge>
+                  </span>
+                  <span className={styles.auditDesc}>{a.desc}</span>
+                  <span className={styles.auditWhere}>{a.where} — {a.via}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Pendente — decisão */}
+      <Card>
+        <CardHeader
+          title="Pendente — avalie e decida"
+          description="Cada item muda pixels; recomendação + esforço pra você priorizar"
+          actions={<Badge tone="warning">{pending.length}</Badge>}
+        />
+        <CardBody>
+          <div className={styles.audit}>
+            {pending.map((a) => (
               <div
                 key={a.title}
-                className={`${styles.auditItem} ${a.arch ? styles.auditItemArch : ''}`}
+                className={styles.auditItem}
+                style={{ borderLeftColor: SEV_BORDER[a.sev!] }}
               >
                 <div className={styles.auditBody}>
                   <span className={styles.auditTitle}>
                     {a.title}
-                    <Badge tone={a.arch ? 'danger' : 'neutral'} size="sm">{a.count}</Badge>
+                    <CatTag>{a.cat}</CatTag>
+                    <Badge tone={SEV_TONE[a.sev!]} size="sm">severidade {a.sev}</Badge>
+                    <Badge tone="neutral" size="sm">esforço {a.eff}</Badge>
                   </span>
                   <span className={styles.auditDesc}>{a.desc}</span>
                   <span className={styles.auditWhere}>{a.where}</span>
+                  <span
+                    className={styles.auditDesc}
+                    style={{ color: 'var(--text)', marginTop: 2 }}
+                  >
+                    <strong style={{ color: 'var(--brand)' }}>Recomendação: </strong>
+                    {a.rec}
+                  </span>
                 </div>
               </div>
             ))}
