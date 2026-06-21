@@ -440,20 +440,20 @@ const PENDING: Vis[] = [
   {
     cat: 'Componentes',
     title: 'Sem botão canônico',
-    desc: 'Não existe um Button(variant, size). CTAs e botões de ação são bespoke por feature — padding, hover, foco, raio e tipografia divergem entre telas. É o elemento mais visível e repetido do app.',
-    where: 'MotionStateButton · AuthStateButton · HeartButton · <button> inline',
+    desc: '✓ DECIDIDO: o padrão é o visual do SectionCTA (pill magenta→indigo), em 2 tamanhos — padrão 14px e menor 10px. MotionStateButton, AuthStateButton e o ctaPill da Navbar saem. HeartButton fica só na versão preenchida (a cor indica o estado: cinza = normal, #ec4899 = curtido).',
+    where: 'remover: MotionStateButton · AuthStateButton · Navbar ctaPill · coração contorno',
     sev: 'alta',
     eff: 'alto',
-    rec: 'Criar Button em src/components/ui/ e migrar. Maior ganho de consistência visual do app inteiro.',
+    rec: 'Implementar na plataforma (branch + QA no /app): Button canônico com o visual do SectionCTA (tamanhos 14/10px), migrar os call sites e remover os 3 componentes. Atenção: MotionState/Auth carregam estado loading/success — o Button canônico precisa absorver isso pra não perder a UX assíncrona.',
   },
   {
     cat: 'Cores',
     title: 'Duas CTAs assinatura diferentes',
-    desc: 'A landing usa pill magenta→indigo; o app usa roxo→rosa. Duas identidades de CTA convivendo — o usuário vê dois "botões principais" distintos entre landing e produto.',
-    where: 'SectionCTA/Navbar (landing) vs MotionStateButton/Auth (app)',
+    desc: '✓ DECIDIDO: o padrão é o magenta→indigo — linear-gradient(90deg, #ff00b4, #5b00d1) (token --grad-cta). O roxo→rosa (--grad-cta-app) será removido.',
+    where: 'manter --grad-cta · remover --grad-cta-app',
     sev: 'média',
     eff: 'baixo',
-    rec: 'Decidir UMA CTA assinatura — ou assumir landing vs app de propósito e documentar.',
+    rec: 'Trocar os usos de --grad-cta-app por --grad-cta e remover o token. Vai junto com a unificação do botão canônico.',
   },
   {
     cat: 'Cores',
@@ -683,39 +683,33 @@ const avatarCircle = (size: number, ring: string, extra?: React.CSSProperties): 
 const REPROS: Record<string, ReactNode> = {
   'Sem botão canônico': (
     <>
-      <RC tag="MotionStateButton · primário · 135° roxo→rosa · r999 · 13.5px">
-        <span style={{ ...btnBase, padding: '10px 18px', fontSize: 13.5, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', boxShadow: '0 6px 18px rgba(168,85,247,0.35)' }}>Salvar</span>
-      </RC>
-      <RC tag="MotionStateButton · danger · #ef4444">
-        <span style={{ ...btnBase, padding: '10px 18px', fontSize: 13.5, background: '#ef4444', boxShadow: '0 4px 14px rgba(239,68,68,0.32)' }}>Excluir</span>
-      </RC>
-      <RC tag="AuthStateButton · 90° magenta→indigo · r999 · 16px">
-        <span style={{ ...btnBase, padding: '15px 26px', fontSize: 16, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Continuar</span>
-      </RC>
-      <RC tag="SectionCTA (landing) · 90° magenta→indigo · 14px">
+      <RC tag="✓ PADRÃO · SectionCTA · 90° magenta→indigo · 14px">
         <span style={{ ...btnBase, padding: '17px 30px', fontSize: 14, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Meu Fanverse</span>
       </RC>
-      <RC tag="Navbar ctaPill · preto + glow magenta">
-        <span style={{ position: 'relative', display: 'inline-flex' }}>
-          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, borderRadius: 999, background: 'linear-gradient(90deg,#ff00b4,#5b00d1,#ff00b4)', filter: 'blur(16px)', opacity: 0.75 }} />
-          <span style={{ ...btnBase, position: 'relative', padding: '14px 26px', fontSize: 14, background: '#000' }}>Entrar</span>
-        </span>
+      <RC tag="✓ PADRÃO menor · mesmo gradiente · 10px">
+        <span style={{ ...btnBase, padding: '9px 18px', fontSize: 10, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Entrar</span>
       </RC>
-      <RC tag="HeartButton · idle vs ativo · r8 · #ec4899">
-        <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center', padding: '6px 4px' }}>
+      <RC tag="HeartButton · normal · sempre preenchido (cinza)">
+        <Heart fill="rgba(245,245,247,0.55)" color="rgba(245,245,247,0.55)" />
+      </RC>
+      <RC tag="HeartButton · curtido · preenchido #ec4899">
+        <Heart fill="#ec4899" color="#ec4899" />
+      </RC>
+      <RC tag="✕ REMOVER · MotionState / Auth / ctaPill / coração contorno">
+        <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center', opacity: 0.38 }}>
+          <span style={{ ...btnBase, padding: '8px 14px', fontSize: 12, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', textDecoration: 'line-through' }}>roxo→rosa</span>
           <Heart fill="none" color="rgba(245,245,247,0.55)" />
-          <Heart fill="#ec4899" color="#ec4899" />
         </span>
       </RC>
     </>
   ),
   'Duas CTAs assinatura diferentes': (
     <>
-      <RC tag="Landing · linear-gradient(90deg, #ff00b4, #5b00d1)">
+      <RC tag="✓ PADRÃO · linear-gradient(90deg, #ff00b4, #5b00d1)">
         <span style={{ ...btnBase, padding: '16px 30px', fontSize: 15, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Meu Fanverse</span>
       </RC>
-      <RC tag="App · linear-gradient(135deg, #a855f7, #ec4899)">
-        <span style={{ ...btnBase, padding: '16px 30px', fontSize: 15, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', boxShadow: '0 6px 18px rgba(168,85,247,0.35)' }}>Confirmar</span>
+      <RC tag="✕ REMOVER · 135° roxo→rosa (--grad-cta-app)">
+        <span style={{ ...btnBase, padding: '16px 30px', fontSize: 15, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', opacity: 0.38, textDecoration: 'line-through' }}>Confirmar</span>
       </RC>
     </>
   ),
