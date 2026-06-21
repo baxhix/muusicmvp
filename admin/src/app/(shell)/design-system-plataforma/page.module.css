@@ -2,6 +2,36 @@
  * (src/). NÃO renderiza componentes ao vivo (app separado): reproduz
  * tokens por valor + cataloga padrões e inconsistências. */
 
+/* Palco de reprodução — fundo near-black do app (os componentes da
+ * plataforma são desenhados pra esse fundo, então reproduzimos sobre
+ * ele independente do tema do admin). */
+.reproStage {
+  margin-top: 12px;
+  background: #08080c;
+  border: 1px solid #1c1c22;
+  border-radius: var(--r-lg);
+  padding: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+.reproStage.col { flex-direction: column; align-items: stretch; }
+.reproCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  max-width: 220px;
+}
+.reproTag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  color: #82828e;
+  text-align: center;
+}
+
 .body {
   padding: 24px;
   display: flex;

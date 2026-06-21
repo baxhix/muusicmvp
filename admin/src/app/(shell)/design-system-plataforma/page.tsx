@@ -619,6 +619,300 @@ function CatTag({ children }: { children: ReactNode }) {
   );
 }
 
+/* ── Reproduções literais (estilos copiados verbatim de src/) ── */
+
+function RC({ tag, children }: { tag: string; children: ReactNode }) {
+  return (
+    <div className={styles.reproCell}>
+      {children}
+      <span className={styles.reproTag}>{tag}</span>
+    </div>
+  );
+}
+function Verified() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="11" fill="#1d9bf0" />
+      <path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function Star() {
+  return (
+    <svg width={13} height={13} viewBox="0 0 24 24" fill="#f59e0b" aria-hidden="true">
+      <path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 21.4l1.4-6.8L2.2 9.6l6.9-.7z" />
+    </svg>
+  );
+}
+function Check() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#3ddb74" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5l4.5 4.5L19 7" />
+    </svg>
+  );
+}
+function Heart({ fill, color }: { fill: string; color: string }) {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20s-7-4.6-9.3-8.4C1.2 9 2.3 5.8 5.4 5.2 7.6 4.8 9.6 6 12 8.6 14.4 6 16.4 4.8 18.6 5.2c3.1.6 4.2 3.8 2.7 6.4C19 15.4 12 20 12 20z" />
+    </svg>
+  );
+}
+
+const btnBase: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.45em',
+  border: 'none',
+  borderRadius: 999,
+  color: '#fff',
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+};
+const avatarCircle = (size: number, ring: string, extra?: React.CSSProperties): React.CSSProperties => ({
+  width: size,
+  height: size,
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg,#3a3a44,#1c1c22)',
+  border: ring,
+  position: 'relative',
+  ...extra,
+});
+
+const REPROS: Record<string, ReactNode> = {
+  'Sem botão canônico': (
+    <>
+      <RC tag="MotionStateButton · primário · 135° roxo→rosa · r999 · 13.5px">
+        <span style={{ ...btnBase, padding: '10px 18px', fontSize: 13.5, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', boxShadow: '0 6px 18px rgba(168,85,247,0.35)' }}>Salvar</span>
+      </RC>
+      <RC tag="MotionStateButton · danger · #ef4444">
+        <span style={{ ...btnBase, padding: '10px 18px', fontSize: 13.5, background: '#ef4444', boxShadow: '0 4px 14px rgba(239,68,68,0.32)' }}>Excluir</span>
+      </RC>
+      <RC tag="AuthStateButton · 90° magenta→indigo · r999 · 16px">
+        <span style={{ ...btnBase, padding: '15px 26px', fontSize: 16, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Continuar</span>
+      </RC>
+      <RC tag="SectionCTA (landing) · 90° magenta→indigo · 14px">
+        <span style={{ ...btnBase, padding: '17px 30px', fontSize: 14, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Meu Fanverse</span>
+      </RC>
+      <RC tag="Navbar ctaPill · preto + glow magenta">
+        <span style={{ position: 'relative', display: 'inline-flex' }}>
+          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, borderRadius: 999, background: 'linear-gradient(90deg,#ff00b4,#5b00d1,#ff00b4)', filter: 'blur(16px)', opacity: 0.75 }} />
+          <span style={{ ...btnBase, position: 'relative', padding: '14px 26px', fontSize: 14, background: '#000' }}>Entrar</span>
+        </span>
+      </RC>
+      <RC tag="HeartButton · idle vs ativo · r8 · #ec4899">
+        <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center', padding: '6px 4px' }}>
+          <Heart fill="none" color="rgba(245,245,247,0.55)" />
+          <Heart fill="#ec4899" color="#ec4899" />
+        </span>
+      </RC>
+    </>
+  ),
+  'Duas CTAs assinatura diferentes': (
+    <>
+      <RC tag="Landing · linear-gradient(90deg, #ff00b4, #5b00d1)">
+        <span style={{ ...btnBase, padding: '16px 30px', fontSize: 15, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Meu Fanverse</span>
+      </RC>
+      <RC tag="App · linear-gradient(135deg, #a855f7, #ec4899)">
+        <span style={{ ...btnBase, padding: '16px 30px', fontSize: 15, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', boxShadow: '0 6px 18px rgba(168,85,247,0.35)' }}>Confirmar</span>
+      </RC>
+    </>
+  ),
+  'FeedPanel sequestra o verde da marca': (
+    <>
+      <RC tag="--accent (marca) · #3DDB74">
+        <span style={{ width: 96, height: 56, borderRadius: 10, background: '#3DDB74' }} />
+      </RC>
+      <RC tag="FeedPanel sobrescreve --accent · #ff2e9a">
+        <span style={{ width: 96, height: 56, borderRadius: 10, background: '#ff2e9a' }} />
+      </RC>
+      <RC tag="FeedPanel --accent2 · #a855f7">
+        <span style={{ width: 96, height: 56, borderRadius: 10, background: '#a855f7' }} />
+      </RC>
+    </>
+  ),
+  'Cards ad-hoc por feature': (
+    <>
+      <RC tag="ActivityCard · pill r999 · glow rosa">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 8px', borderRadius: 999, background: 'linear-gradient(145deg, rgba(10,6,18,0.90), rgba(7,5,14,0.88))', boxShadow: '0 0 0 1px rgba(219,39,119,0.55), 0 0 18px rgba(219,39,119,0.15), 0 8px 28px rgba(0,0,0,0.5)' }}>
+          <span style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)' }} />
+          <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.6)' }}>Ana C. <strong style={{ color: 'rgba(245,245,247,0.95)' }}>curtiu</strong></span>
+        </span>
+      </RC>
+      <RC tag="PostCard (blog) · r8 · borda sutil">
+        <span style={{ display: 'block', width: 150, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+          <span style={{ display: 'block', height: 56, background: 'linear-gradient(135deg,#1c1c1c,#0c0c0c)' }} />
+          <span style={{ display: 'block', padding: 10, fontSize: 13, color: 'rgba(255,255,255,0.92)', fontWeight: 700 }}>Título do post</span>
+        </span>
+      </RC>
+      <RC tag="QuizPost/MediaPost · r16 · glow roxo + borda">
+        <span style={{ display: 'block', width: 170, borderRadius: 16, background: 'linear-gradient(145deg, rgba(5,3,8,0.92), rgba(3,2,5,0.9))', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 0 0 1px rgba(168,85,247,0.15), 0 8px 32px rgba(0,0,0,0.55)', padding: '12px 13px' }}>
+          <span style={{ fontSize: 13, color: 'rgba(245,245,247,0.85)', fontWeight: 600 }}>Enquete / mídia</span>
+        </span>
+      </RC>
+    </>
+  ),
+  'Badges / pills sem padrão': (
+    <>
+      <RC tag="VerifiedBadge · #1d9bf0">
+        <Verified />
+      </RC>
+      <RC tag="LiveBadge-style · pill escuro blur + dot verde">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 40, background: 'rgba(0,0,0,0.92)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3DDB74', boxShadow: '0 0 6px #3DDB74' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#F5F5F7' }}>AO VIVO</span>
+        </span>
+      </RC>
+      <RC tag="StatsPill · pill escuro r999">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 999, background: 'rgba(0,0,0,0.92)', border: '1px solid rgba(255,255,255,0.05)', fontSize: 11, color: '#A1A1AA' }}>
+          <strong style={{ color: '#F5F5F7', fontSize: 12 }}>1.2k</strong> ouvindo
+        </span>
+      </RC>
+      <RC tag="CommunityPanel joinPill · roxo translúcido r999">
+        <span style={{ display: 'inline-flex', padding: '6px 12px', borderRadius: 999, background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.45)', color: '#F5F5F7', fontSize: 11.5, fontWeight: 700 }}>Participar</span>
+      </RC>
+      <RC tag="UserPicker addBtn · pill branco r999">
+        <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 999, background: '#fff', color: '#000', fontSize: 12.5, fontWeight: 600 }}>Adicionar</span>
+      </RC>
+    </>
+  ),
+  'Sem componente de Avatar': (
+    <>
+      <RC tag="30px · ring 1.5px rgba(255,255,255,.2)">
+        <span style={avatarCircle(30, '1.5px solid rgba(255,255,255,0.2)')} />
+      </RC>
+      <RC tag="36px · ring 1.5px rgba(255,255,255,.18)">
+        <span style={avatarCircle(36, '1.5px solid rgba(255,255,255,0.18)')} />
+      </RC>
+      <RC tag="40px · ring 1px .12 + dot presença">
+        <span style={avatarCircle(40, '1px solid rgba(255,255,255,0.12)')}>
+          <span style={{ position: 'absolute', bottom: -1, right: -1, width: 10, height: 10, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #0a0a14' }} />
+        </span>
+      </RC>
+      <RC tag="64px · sem borda, só sombra inset">
+        <span style={avatarCircle(64, 'none', { background: '#1a1a1f', boxShadow: '0 8px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset' })} />
+      </RC>
+    </>
+  ),
+  'Tabs em dois modelos': (
+    <>
+      <RC tag="FilterTabs · ativo = pill branco em container blur">
+        <span style={{ display: 'inline-flex', gap: 8, padding: 5, borderRadius: 999, background: 'rgba(8,8,10,0.9)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ padding: '8px 18px', borderRadius: 999, background: '#fff', color: '#000', fontSize: 12, fontWeight: 600 }}>Todos</span>
+          <span style={{ padding: '8px 18px', borderRadius: 999, color: '#71717A', fontSize: 12, fontWeight: 600 }}>Perto</span>
+        </span>
+      </RC>
+      <RC tag="ArtistBox · ativo = pill translúcido r8">
+        <span style={{ display: 'inline-flex', gap: 1, padding: 2, borderRadius: 10, background: 'rgba(255,255,255,0.04)' }}>
+          <span style={{ padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 12, fontWeight: 600 }}>Missões</span>
+          <span style={{ padding: '6px 14px', borderRadius: 8, color: 'rgba(245,245,247,0.55)', fontSize: 12, fontWeight: 600 }}>Ranking</span>
+        </span>
+      </RC>
+    </>
+  ),
+  '4 toasts independentes': (
+    <>
+      <RC tag="AppToast · pill cinza r999">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 999, background: 'linear-gradient(180deg, rgba(20,20,22,0.95), rgba(8,8,10,0.96))', border: '1px solid rgba(61,219,116,0.35)', color: '#c5f5d4', fontSize: 13 }}>
+          <Check /> Salvo com sucesso
+        </span>
+      </RC>
+      <RC tag="PointsToast · pill escuro + estrela âmbar">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, background: 'linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96))', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12.5, color: 'rgba(245,245,247,0.7)' }}>
+          <Star /> <strong style={{ color: '#fff' }}>+50</strong> fanpoints
+        </span>
+      </RC>
+      <RC tag="SocialAchievementToast · card r14 + avatar">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 14px 10px 10px', borderRadius: 14, background: 'rgba(8,8,10,0.92)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
+          <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)', border: '1.5px solid rgba(255,255,255,0.14)' }} />
+          <span style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#F5F5F7' }}>Ana C.</span>
+            <span style={{ fontSize: 11.5, color: 'rgba(245,245,247,0.65)' }}>novo <strong style={{ color: '#3ddb74' }}>marco</strong></span>
+          </span>
+        </span>
+      </RC>
+      <RC tag="SameTrackToast · pill r999 + barras verdes">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 14px 8px 8px', borderRadius: 999, background: 'linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96))', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)', border: '1.5px solid rgba(255,255,255,0.2)' }} />
+          <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.65)' }}><strong style={{ color: '#fff' }}>João</strong> ouvindo Boiadeira</span>
+        </span>
+      </RC>
+    </>
+  ),
+  'Paleta roxo/rosa não tokenizada': (
+    <>
+      {[
+        ['#a855f7', 'roxo'],
+        ['#9333ea', 'roxo-2'],
+        ['#c084fc', 'roxo-3'],
+        ['#d946ef', 'fúcsia'],
+        ['#ec4899', 'rosa'],
+        ['#f472b6', 'rosa-2'],
+        ['#f97316', 'laranja'],
+      ].map(([hex, name]) => (
+        <RC key={hex} tag={`${hex} · ${name}`}>
+          <span style={{ width: 64, height: 48, borderRadius: 10, background: hex, border: '1px solid rgba(255,255,255,0.08)' }} />
+        </RC>
+      ))}
+    </>
+  ),
+  'Raios de pill/card variados': (
+    <>
+      {[
+        ['50%', '50% (círculo/pill)'],
+        ['999px', '999px (pill)'],
+        ['8px', '8px'],
+        ['12px', '12px'],
+        ['16px', '16px'],
+        ['18px', '18px'],
+      ].map(([r, label]) => (
+        <RC key={label} tag={label}>
+          <span style={{ width: 64, height: 48, borderRadius: r, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }} />
+        </RC>
+      ))}
+    </>
+  ),
+  'Sem escala tipográfica adotada': (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#F5F5F7' }}>
+      {[11, 12, 12.5, 13, 13.5, 14, 15, 16, 18, 22, 28].map((s) => (
+        <span key={s} style={{ fontSize: s, lineHeight: 1.1 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#82828e', marginRight: 10 }}>{s}px</span>
+          O lugar do superfã
+        </span>
+      ))}
+    </div>
+  ),
+  'Densidade inconsistente': (
+    <>
+      {[
+        ['10px 12px', '10×12'],
+        ['12px 14px', '12×14'],
+        ['8px 14px', '8×14'],
+        ['10px 16px', '10×16'],
+      ].map(([pad, label]) => (
+        <RC key={label} tag={`padding: ${label}`}>
+          <span style={{ display: 'inline-block', padding: pad, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F5F5F7', fontSize: 13 }}>Item</span>
+        </RC>
+      ))}
+    </>
+  ),
+  'Empty / error states só texto': (
+    <>
+      <RC tag="Hoje · só texto">
+        <span style={{ display: 'grid', placeItems: 'center', width: 200, height: 90, borderRadius: 12, border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(245,245,247,0.45)', fontSize: 13 }}>Sem resultados</span>
+      </RC>
+      <RC tag="Ideal · ícone + texto + ação">
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 200, height: 90, justifyContent: 'center', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+          <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.6)' }}>Nada por aqui</span>
+          <span style={{ fontSize: 11, color: '#3ddb74', fontWeight: 600 }}>Adicionar</span>
+        </span>
+      </RC>
+    </>
+  ),
+};
+
 function AuditoriaSection() {
   const order: Sev[] = ['alta', 'média', 'baixa'];
   const pending = [...PENDING].sort((a, b) => order.indexOf(a.sev!) - order.indexOf(b.sev!));
@@ -704,6 +998,9 @@ function AuditoriaSection() {
                     <strong style={{ color: 'var(--brand)' }}>Recomendação: </strong>
                     {a.rec}
                   </span>
+                  {REPROS[a.title] && (
+                    <div className={styles.reproStage}>{REPROS[a.title]}</div>
+                  )}
                 </div>
               </div>
             ))}
