@@ -440,11 +440,11 @@ const PENDING: Vis[] = [
   {
     cat: 'Componentes',
     title: 'Sem botão canônico',
-    desc: '✓ DECIDIDO: o padrão é o visual do SectionCTA (pill magenta→indigo), em 2 tamanhos — padrão 14px e menor 10px. MotionStateButton, AuthStateButton e o ctaPill da Navbar saem. HeartButton fica só na versão preenchida (a cor indica o estado: cinza = normal, #ec4899 = curtido).',
-    where: 'remover: MotionStateButton · AuthStateButton · Navbar ctaPill · coração contorno',
+    desc: '✓ DECIDIDO + primitivo CRIADO (src/components/ui/Button.tsx, branch ds/button-canonico): pill magenta→indigo em 2 tamanhos (md 14px · sm 10px) + variantes primary/danger/ghost, absorvendo os estados idle/loading/success/erro. A galeria abaixo simula tudo: estados, escala menor, e o inventário do que MESCLA no canônico vs o que MANTÉM como variação própria.',
+    where: 'mesclam: MotionStateButton · AuthStateButton · Navbar ctaPill · primaryCta/joinPill · Quiz solveBtn · ConfirmDialog. mantêm: HeartButton · ícones (add/close/back) · FAB · tabs',
     sev: 'alta',
     eff: 'alto',
-    rec: 'Implementar na plataforma (branch + QA no /app): Button canônico com o visual do SectionCTA (tamanhos 14/10px), migrar os call sites e remover os 3 componentes. Atenção: MotionState/Auth carregam estado loading/success — o Button canônico precisa absorver isso pra não perder a UX assíncrona.',
+    rec: 'Migrar os 9 call sites pro Button canônico (auth = QA no /app) e remover MotionStateButton/AuthStateButton/ctaPill/--grad-cta-app. Pontos a fechar na galeria: ConfirmDialog verde (vira primary ou ganha variante "confirm"?), primaryCta/joinPill roxo translúcido (vira ghost/tonal?), TopBar branco (variante light?).',
   },
   {
     cat: 'Cores',
@@ -694,29 +694,116 @@ const toastShell: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+/* ── Galeria de botões (Button canônico) ───────────────────
+ * Simula o Button canônico (variantes × tamanhos × estados) + o
+ * inventário dos botões da plataforma hoje, marcando o que MESCLA
+ * nele e o que se MANTÉM como variação. Reproduz por valor (admin
+ * não importa componentes da plataforma). Estado real do canônico:
+ * src/components/app... → src/components/ui/Button.tsx (branch). */
+const GRAD_CTA = 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)';
+const SZ_MD: React.CSSProperties = { fontSize: 14, padding: '11px 22px' };
+const SZ_SM: React.CSSProperties = { fontSize: 10, padding: '6px 14px' };
+const ST_SUCCESS: React.CSSProperties = { background: '#2bb673' };
+const ST_ERROR: React.CSSProperties = { background: '#e5484d' };
+const ST_DISABLED: React.CSSProperties = { background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.42)' };
+
+function SpinIco({ c = '#fff' }: { c?: string }) {
+  return <svg width={13} height={13} viewBox="0 0 16 16" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M14 8a6 6 0 1 1-3-5.196" /></svg>;
+}
+function ChkIco({ c = '#fff' }: { c?: string }) {
+  return <svg width={13} height={13} viewBox="0 0 16 16" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8l3.5 3.5L13 5" /></svg>;
+}
+function CrsIco({ c = '#fff' }: { c?: string }) {
+  return <svg width={12} height={12} viewBox="0 0 16 16" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>;
+}
+function GHead({ children }: { children: ReactNode }) {
+  return <div style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#9a9aa6', marginTop: 8 }}>{children}</div>;
+}
+function GRow({ children }: { children: ReactNode }) {
+  return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start' }}>{children}</div>;
+}
+function GBtn({ s, label, ico, tag, dim, strike }: { s: React.CSSProperties; label: string; ico?: ReactNode; tag: string; dim?: boolean; strike?: boolean }) {
+  return (
+    <RC tag={tag}>
+      <span style={{ ...btnBase, ...s, opacity: dim ? 0.4 : 1, textDecoration: strike ? 'line-through' : undefined }}>{ico}{label}</span>
+    </RC>
+  );
+}
+
+function ButtonGallery() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%' }}>
+      <GHead>① Button canônico — primary · estados (md · 14px)</GHead>
+      <GRow>
+        <GBtn s={{ ...SZ_MD, background: GRAD_CTA }} label="Meu Fanverse" tag="idle" />
+        <GBtn s={{ ...SZ_MD, background: GRAD_CTA }} ico={<SpinIco />} label="Enviando…" tag="loading" />
+        <GBtn s={{ ...SZ_MD, ...ST_SUCCESS }} ico={<ChkIco />} label="Pronto" tag="success" />
+        <GBtn s={{ ...SZ_MD, ...ST_ERROR }} ico={<CrsIco />} label="Erro" tag="erro" />
+        <GBtn s={{ ...SZ_MD, ...ST_DISABLED }} label="Inativo" tag="disabled" />
+      </GRow>
+
+      <GHead>② primary · escala menor (sm · 10px) — mesma família de estados</GHead>
+      <GRow>
+        <GBtn s={{ ...SZ_SM, background: GRAD_CTA }} label="Entrar" tag="idle · sm" />
+        <GBtn s={{ ...SZ_SM, background: GRAD_CTA }} ico={<SpinIco />} label="Enviando…" tag="loading · sm" />
+        <GBtn s={{ ...SZ_SM, ...ST_SUCCESS }} ico={<ChkIco />} label="Pronto" tag="success · sm" />
+        <GBtn s={{ ...SZ_SM, ...ST_DISABLED }} label="Inativo" tag="disabled · sm" />
+      </GRow>
+
+      <GHead>③ danger — destrutivo (Apagar conta) · estados</GHead>
+      <GRow>
+        <GBtn s={{ ...SZ_MD, background: '#e5484d' }} label="Apagar conta" tag="idle" />
+        <GBtn s={{ ...SZ_MD, background: '#e5484d' }} ico={<SpinIco />} label="Apagando…" tag="loading" />
+        <GBtn s={{ ...SZ_MD, ...ST_SUCCESS }} ico={<ChkIco />} label="Apagado" tag="success" />
+        <GBtn s={{ ...SZ_MD, ...ST_DISABLED }} label="Apagar conta" tag="disabled" />
+      </GRow>
+
+      <GHead>④ ghost — secundário / cancelar · md + sm</GHead>
+      <GRow>
+        <GBtn s={{ ...SZ_MD, background: 'rgba(255,255,255,0.06)', color: '#F5F5F7' }} label="Cancelar" tag="ghost · md" />
+        <GBtn s={{ ...SZ_SM, background: 'rgba(255,255,255,0.06)', color: '#F5F5F7' }} label="Cancelar" tag="ghost · sm" />
+        <GBtn s={{ ...SZ_MD, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.42)' }} label="Cancelar" tag="ghost · disabled" />
+      </GRow>
+
+      <GHead>↳ MESCLAM no Button canônico (hoje são componentes/estilos separados)</GHead>
+      <GRow>
+        <GBtn s={{ ...SZ_MD, background: 'linear-gradient(135deg, #9333ea 0%, #ec4899 100%)' }} ico={<SpinIco />} label="Enviando…" tag="MotionStateButton (roxo + estados) → primary" />
+        <GBtn s={{ fontSize: 16, padding: '0 26px', height: 50, minWidth: 170, background: GRAD_CTA }} label="Continuar" tag="AuthStateButton (full · 16px) → primary lg" />
+        <GBtn s={{ ...SZ_MD, background: GRAD_CTA }} label="Meu Fanverse" tag="Navbar ctaPill → primary" />
+        <GBtn s={{ ...SZ_MD, background: 'rgba(168,85,247,0.18)', color: '#F5F5F7', border: '1px solid rgba(168,85,247,0.45)' }} label="Participar" tag="primaryCta / joinPill (roxo transl.) → ghost/tonal" />
+        <GBtn s={{ ...SZ_MD, background: 'rgba(168,85,247,0.22)', color: '#F5F5F7', border: '1px solid rgba(168,85,247,0.5)' }} label="Resolver" tag="Quiz solveBtn → ghost/tonal" />
+        <GBtn s={{ ...SZ_MD, background: '#3ddb74', color: '#061110' }} label="Confirmar" tag="ConfirmDialog (verde) → primary ou variante confirm?" />
+        <GBtn s={{ ...SZ_MD, background: '#F5F5F7', color: '#08080A' }} label="Entrar" tag="TopBar btnPrimaryWhite → variante light?" />
+      </GRow>
+
+      <GHead>↳ MANTÊM como variação própria (não viram o pill)</GHead>
+      <GRow>
+        <RC tag="HeartButton · normal (cinza, preenchido)"><Heart fill="rgba(245,245,247,0.55)" color="rgba(245,245,247,0.55)" /></RC>
+        <RC tag="HeartButton · curtido (#ec4899)"><Heart fill="#ec4899" color="#ec4899" /></RC>
+        <RC tag="addBtn · ícone (+) verde"><span style={{ width: 30, height: 30, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(61,219,116,0.12)', border: '1px solid rgba(61,219,116,0.45)', color: '#3ddb74', fontSize: 16 }}>+</span></RC>
+        <RC tag="closeBtn / backBtn · ícone utilitário"><span style={{ width: 30, height: 30, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', color: 'rgba(245,245,247,0.7)', fontSize: 13 }}>✕</span></RC>
+        <RC tag="FAB Nova comunidade · grad-tri"><span style={{ width: 46, height: 46, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#f97316,#ec4899,#9333ea)', color: '#fff', fontSize: 22 }}>+</span></RC>
+      </GRow>
+      <GRow>
+        <RC tag="Tabs pill (Comunidades) — modelo A · mantido">
+          <span style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 999, background: 'rgba(255,255,255,0.05)' }}>
+            <span style={{ padding: '6px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.14)', color: '#fff', fontSize: 12, fontWeight: 600 }}>Geral</span>
+            <span style={{ padding: '6px 12px', borderRadius: 999, color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600 }}>Shows</span>
+          </span>
+        </RC>
+        <RC tag="Tabs underline (Fanpoints) — modelo B · mantido">
+          <span style={{ display: 'inline-flex', gap: 14 }}>
+            <span style={{ paddingBottom: 6, color: '#fff', fontSize: 12, fontWeight: 600, borderBottom: '2px solid #a78bfa' }}>Conquistas</span>
+            <span style={{ paddingBottom: 6, color: 'rgba(245,245,247,0.55)', fontSize: 12, fontWeight: 500 }}>Benefícios</span>
+          </span>
+        </RC>
+      </GRow>
+    </div>
+  );
+}
+
 const REPROS: Record<string, ReactNode> = {
-  'Sem botão canônico': (
-    <>
-      <RC tag="✓ PADRÃO · SectionCTA · 90° magenta→indigo · 14px">
-        <span style={{ ...btnBase, padding: '17px 30px', fontSize: 14, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Meu Fanverse</span>
-      </RC>
-      <RC tag="✓ PADRÃO menor · mesmo gradiente · 10px">
-        <span style={{ ...btnBase, padding: '9px 18px', fontSize: 10, background: 'linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%)' }}>Entrar</span>
-      </RC>
-      <RC tag="HeartButton · normal · sempre preenchido (cinza)">
-        <Heart fill="rgba(245,245,247,0.55)" color="rgba(245,245,247,0.55)" />
-      </RC>
-      <RC tag="HeartButton · curtido · preenchido #ec4899">
-        <Heart fill="#ec4899" color="#ec4899" />
-      </RC>
-      <RC tag="✕ REMOVER · MotionState / Auth / ctaPill / coração contorno">
-        <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center', opacity: 0.38 }}>
-          <span style={{ ...btnBase, padding: '8px 14px', fontSize: 12, background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', textDecoration: 'line-through' }}>roxo→rosa</span>
-          <Heart fill="none" color="rgba(245,245,247,0.55)" />
-        </span>
-      </RC>
-    </>
-  ),
+  'Sem botão canônico': <ButtonGallery />,
   'Duas CTAs assinatura diferentes': (
     <>
       <RC tag="✓ PADRÃO · linear-gradient(90deg, #ff00b4, #5b00d1)">
