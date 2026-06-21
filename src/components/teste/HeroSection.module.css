@@ -76,7 +76,7 @@
 
 /* Headline — 1 palavra ALL CAPS centralizada 160px.
  *
- * Cor via gradient linear diagonal (135deg) de #FFFFFF →
+ * Cor via gradient linear diagonal (135deg) de #fff →
  * #EBEBEB per product feedback. background-clip: text +
  * text-fill-color transparent é a técnica canônica pra
  * pintar texto com gradient — funciona em todos os
@@ -104,11 +104,11 @@
    * com background-clip: text). */
   background: linear-gradient(
     120deg,
-    #FFFFFF 0%,
+    #fff 0%,
     #E6E6E6 30%,
-    #FFFFFF 50%,
+    #fff 50%,
     #E6E6E6 70%,
-    #FFFFFF 100%
+    #fff 100%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;

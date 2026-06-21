@@ -66,7 +66,7 @@
   letter-spacing: -0.005em;
   line-height: 1.2;
   white-space: nowrap;
-  color: #ffffff;
+  color: #fff;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
   animation: waveMessageIn 320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
 }

@@ -424,7 +424,7 @@
 .waveOverlay .waveBar {
   width: 2.5px;
   border-radius: 2px;
-  background: #FFFFFF;
+  background: #fff;
   transform-origin: center;
 }
 .waveOverlay .waveBar:nth-child(1) { height: 6px;  animation: waveBar 0.55s ease-in-out infinite alternate; animation-delay: 0s;    }

@@ -79,7 +79,7 @@
 }
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* ── Hero — avatar + title ─────────────────────────────────── */
@@ -133,7 +133,7 @@
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: #fff;
   line-height: 1.1;
 }
 .subtitle {
@@ -274,7 +274,7 @@
   border-radius: 999px;
   background:
     linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
-  color: #ffffff;
+  color: #fff;
   border: none;
   font-family: inherit;
   font-size: 13.5px;

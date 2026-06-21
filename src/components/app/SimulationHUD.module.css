@@ -57,7 +57,7 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  color: #ffffff;
+  color: #fff;
 }
 .counterLbl {
   font-size: 11.5px;
@@ -131,7 +131,7 @@
   font-size: 13.5px;
   font-weight: 700;
   letter-spacing: -0.005em;
-  color: #ffffff;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -214,7 +214,7 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.005em;
-  color: #ffffff;
+  color: #fff;
   font-variant-numeric: tabular-nums;
 }
 
@@ -275,7 +275,7 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
-  color: #ffffff;
+  color: #fff;
   line-height: 1.1;
 }
 .zoomTier {

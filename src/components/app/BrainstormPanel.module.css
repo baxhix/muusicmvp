@@ -168,7 +168,7 @@
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.018em;
-  color: #ffffff;
+  color: #fff;
   line-height: 1.15;
   text-align: center;
 }
@@ -193,7 +193,7 @@
 }
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* ── Toggle list ─────────────────────────────────────────── */
@@ -281,7 +281,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #fff;
   transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }

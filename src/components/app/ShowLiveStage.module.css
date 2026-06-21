@@ -899,7 +899,7 @@
   text-transform: uppercase;
   /* Branco sem border + bg sutil — antes era roxo (#d8b4fe)
    * com pill bordeado; agora só ícone + texto em branco. */
-  color: #ffffff;
+  color: #fff;
   padding: 0;
   background: transparent;
   border: 0;

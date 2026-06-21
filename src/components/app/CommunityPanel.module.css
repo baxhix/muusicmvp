@@ -582,7 +582,7 @@
     rgba(244, 114, 182, 0.95) 0%,
     rgba(217, 70, 239, 0.95) 100%
   );
-  color: #ffffff;
+  color: #fff;
   font-family: inherit;
   font-size: 8.5px;
   font-weight: 700;
@@ -617,7 +617,7 @@
 .cardTitle {
   font-size: 14.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.005em;
   white-space: nowrap;
   overflow: hidden;
@@ -746,7 +746,7 @@
 }
 .cardJoinPill:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  color: #fff;
 }
 .cardJoinPill:disabled {
   opacity: 0.45;
@@ -1294,7 +1294,7 @@
    * laranja → rosa → roxo, 135deg). Antes era lilás→rosa→lilás 90deg. */
   background: var(--grad-tri);
   border: none;
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   box-shadow:
     0 8px 18px -6px rgba(0, 0, 0, 0.65),

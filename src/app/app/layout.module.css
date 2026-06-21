@@ -155,7 +155,7 @@
     background: transparent !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    color: #ffffff;
+    color: #fff;
     box-shadow: none !important;
   }
   .shortcutBtn:hover,
@@ -176,7 +176,7 @@
   .shortcutBtn svg {
     width: 20px !important;
     height: 20px !important;
-    color: #ffffff !important;
+    color: #fff !important;
   }
   /* Active overlay state — soft lilac tint on the icon itself
    * so the open state reads without a background pill. White
@@ -265,7 +265,7 @@
   padding: 0 6px;
   border-radius: 11px;
   background: #ef4444;
-  color: #ffffff;
+  color: #fff;
   font-size: 12px;
   font-weight: 800;
   display: inline-flex;

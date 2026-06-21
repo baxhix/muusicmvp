@@ -38,11 +38,11 @@
    * shimmer da Hero). */
   background: linear-gradient(
     120deg,
-    #FFFFFF 0%,
+    #fff 0%,
     #E6E6E6 30%,
-    #FFFFFF 50%,
+    #fff 50%,
     #E6E6E6 70%,
-    #FFFFFF 100%
+    #fff 100%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;

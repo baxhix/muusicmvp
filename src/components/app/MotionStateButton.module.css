@@ -32,14 +32,14 @@
 /* ── Tones ─────────────────────────────────────────────── */
 .primary {
   background: var(--grad-cta-app);
-  color: #ffffff;
+  color: #fff;
   box-shadow: 0 6px 18px rgba(168, 85, 247, 0.35);
 }
 .primary:hover:not(:disabled) { filter: brightness(1.07); }
 
 .danger {
   background: #ef4444;
-  color: #ffffff;
+  color: #fff;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.32);
 }
 .danger:hover:not(:disabled) { background: #dc2626; }
@@ -60,13 +60,13 @@
 /* Success: vira verde iOS independente do tone. */
 .success {
   background: #34c759 !important;
-  color: #ffffff !important;
+  color: #fff !important;
   box-shadow: 0 4px 14px rgba(52, 199, 89, 0.32) !important;
 }
 /* Error: vermelho mais escuro pra distinguir do danger idle. */
 .error {
   background: #b91c1c !important;
-  color: #ffffff !important;
+  color: #fff !important;
   box-shadow: 0 4px 14px rgba(185, 28, 28, 0.35) !important;
 }
 /* Pending: ligeiramente atenuado pra sinalizar "processando". */

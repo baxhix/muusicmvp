@@ -127,7 +127,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: #fff;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s ease;
@@ -176,7 +176,7 @@
 .addMemberBtn:hover:not(:disabled) {
   background: rgba(168, 85, 247, 0.2);
   border-color: rgba(168, 85, 247, 0.65);
-  color: #ffffff;
+  color: #fff;
 }
 .addMemberBtn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -349,7 +349,7 @@
 .leaveBtn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
+  color: #fff;
 }
 .leaveBtn:disabled { opacity: 0.45; cursor: not-allowed; }
 

@@ -116,8 +116,8 @@
   margin: 0 0 8px 0;
   border: 0;
   border-radius: 20px;
-  background: #000000;
-  color: #ffffff;
+  background: #000;
+  color: #fff;
   font-family: var(--sans), system-ui, sans-serif;
   text-align: left;
   cursor: pointer;
@@ -151,7 +151,7 @@
 }
 .mapsim-reveal-msg-text {
   display: block;
-  color: #ffffff;
+  color: #fff;
   font-size: 13px;
   line-height: 1.32;
   font-weight: 500;
@@ -163,7 +163,7 @@
   padding: 2px 9px;
   border-radius: 999px;
   background: rgba(11, 11, 14, 0.92);
-  color: #ffffff;
+  color: #fff;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: -0.005em;
@@ -514,7 +514,7 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   white-space: nowrap;
   font-family: var(--sans), system-ui, sans-serif;
-  color: #ffffff;
+  color: #fff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
   /* Fechado por padrão. Hover no .mapsim-pulse-hit abre. */
   opacity: 0;

@@ -45,7 +45,7 @@
 
 /* ── Design tokens (app palette) ── */
 :root {
-  --bg:        #000000;
+  --bg:        #000;
   --surface:   rgba(0,0,0,0.80);
   --surface-2: rgba(0,0,0,0.88);
   --surface-3: rgba(10,10,10,0.92);
@@ -156,7 +156,7 @@
 }
 
 html {
-  background: #000000;
+  background: #000;
 }
 
 html, body {

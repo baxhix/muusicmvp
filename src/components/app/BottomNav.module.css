@@ -201,7 +201,7 @@
   padding: 0 4px;
   border-radius: 999px;
   background: #ef4444;
-  color: #ffffff;
+  color: #fff;
   font-size: 10px;
   font-weight: 700;
   line-height: 16px;
@@ -242,11 +242,11 @@
   transform: translateY(-1px);
 }
 .itemActive {
-  color: #ffffff;
+  color: #fff;
 }
 .itemActive:hover {
   /* Active items stay pure white through hover — no flicker. */
-  color: #ffffff;
+  color: #fff;
 }
 
 /* ── Tooltips (unchanged behaviour) ──────────────────────────── */
@@ -363,7 +363,7 @@
   /* No color/opacity here — `.item` (the shared parent class on
    * the same button) provides the gray-inactive / white-active
    * binary for both regular items and the center crown.
-   * Previously this rule forced the center to `color: #ffffff`
+   * Previously this rule forced the center to `color: #fff`
    * unconditionally, which made the crown read as active forever
    * even when the user was on a different route. */
   min-width: auto;
@@ -444,7 +444,7 @@
   }
   .item.itemActive:hover,
   .itemCenter.itemActive:hover {
-    color: #ffffff;
+    color: #fff;
   }
 }
 
@@ -686,7 +686,7 @@
 .moreItem:hover,
 .moreItem:active {
   background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  color: #fff;
 }
 .moreItem:active {
   transform: scale(0.99);
@@ -702,7 +702,7 @@
 }
 .moreItem:hover svg,
 .moreItem:active svg {
-  color: #ffffff;
+  color: #fff;
 }
 
 /* Unread-count pill next to the "Conversas" item — sits on the
@@ -716,7 +716,7 @@
   padding: 0 7px;
   border-radius: 10px;
   background: #ef4444;
-  color: #ffffff;
+  color: #fff;
   font-size: 11px;
   font-weight: 800;
   display: inline-flex;

@@ -136,7 +136,7 @@
    * laranja → rosa → roxo, 135deg). Antes era lilás→rosa→lilás 90deg. */
   background: var(--grad-tri);
   border: none;
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   box-shadow:
     0 8px 18px -6px rgba(0, 0, 0, 0.65),
@@ -490,7 +490,7 @@
 }
 .kebabItemDanger:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* Mobile/touch: kebab visível por padrão (sem hover state). */

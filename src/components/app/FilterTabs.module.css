@@ -31,10 +31,10 @@
 }
 .tab:hover { color: var(--ink); }
 .tabActive {
-  background: #ffffff;
-  color: #000000;
+  background: #fff;
+  color: #000;
 }
-.tabActive:hover { color: #000000; }
+.tabActive:hover { color: #000; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

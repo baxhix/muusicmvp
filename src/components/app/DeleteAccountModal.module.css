@@ -274,8 +274,8 @@
   transition: background 160ms ease, color 160ms ease, border-color 160ms ease, opacity 160ms ease;
 }
 .btnDelete:hover:not(:disabled) {
-  background: #FFFFFF;
-  border-color: #FFFFFF;
+  background: #fff;
+  border-color: #fff;
 }
 .btnDelete:active:not(:disabled) { transform: scale(0.99); }
 .btnDelete:disabled {

@@ -330,12 +330,12 @@
 }
 .actionBtn:hover {
   background: rgba(38, 38, 42, 0.95);
-  color: #ffffff;
+  color: #fff;
   transform: scale(1.08);
 }
 .actionBtn[aria-expanded='true'] {
   background: rgba(38, 38, 42, 0.95);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* Floating 6-emoji picker — opens just above the actions row. Side
@@ -494,7 +494,7 @@
 }
 .replyBannerClose:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: #fff;
 }
 
 .inputArea {
@@ -567,11 +567,11 @@
   max-width: 92%;
 }
 .activity strong {
-  color: #ffffff;
+  color: #fff;
   font-weight: 700;
 }
 .activity em {
-  color: #ffffff;
+  color: #fff;
   font-style: normal;
   font-weight: 600;
 }

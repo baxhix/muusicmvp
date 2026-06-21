@@ -68,7 +68,7 @@
     radial-gradient(ellipse 38% 28% at 50% 6%,   rgba(0,30,120,0.09) 0%, transparent 72%),
     radial-gradient(ellipse 34% 52% at 95% 42%,  rgba(0,100,180,0.05) 0%, transparent 68%),
     radial-gradient(ellipse 46% 36% at 10% 90%,  rgba(0,40,160,0.06) 0%, transparent 66%),
-    radial-gradient(ellipse 160% 130% at 50% 50%, #020204 0%, #010102 60%, #000000 100%);
+    radial-gradient(ellipse 160% 130% at 50% 50%, #020204 0%, #010102 60%, #000 100%);
   background-size:
     130% 130%,
     130% 130%,
@@ -426,8 +426,8 @@
   align-items: center;
   gap: 8px;
   padding: 14px 26px;
-  background: #000000;
-  color: #ffffff;
+  background: #000;
+  color: #fff;
   border: none;
   border-radius: 999px;
   font-size: 14px;

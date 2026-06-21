@@ -310,13 +310,13 @@
 }
 /* "Adicionado" = estado invertido: fundo branco, texto preto. */
 .addBtn.addBtnOn {
-  background: #ffffff;
+  background: #fff;
   border: none;
-  color: #000000;
+  color: #000;
 }
 .addBtn.addBtnOn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.88);
-  color: #000000;
+  color: #000;
 }
 
 /* Single mode: overlay invisível sobre a row inteira pra

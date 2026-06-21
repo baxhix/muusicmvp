@@ -125,7 +125,7 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   /* Sombra sutil (sem glow rosa/violeta). */
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
-  color: #ffffff;
+  color: #fff;
   text-align: center;
   pointer-events: auto;
   animation: fmlCardIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -148,7 +148,7 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   margin-bottom: 3px;
-  color: #ffffff;
+  color: #fff;
 }
 
 .matchCardCity {
@@ -176,7 +176,7 @@
   background: rgba(255, 255, 255, 0.03);
 }
 .matchFact strong {
-  color: #ffffff;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -198,7 +198,7 @@
   margin: 0;
 }
 .matchAffinityCopy strong {
-  color: #ffffff;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -228,14 +228,14 @@
 }
 .btnSecondary:hover {
   background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* Primary discreto: branco translúcido em vez do gradient pink→
  * violet. Hover sobe um pouco a opacidade. */
 .btnPrimary {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .btnPrimary:hover {
@@ -290,7 +290,7 @@
   border-radius: 999px;
   background: rgba(11, 11, 14, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #ffffff;
+  color: #fff;
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.01em;

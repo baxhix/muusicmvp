@@ -96,7 +96,7 @@
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  background: linear-gradient(180deg, #c6c6cf 0%, #ffffff 80%);
+  background: linear-gradient(180deg, #c6c6cf 0%, #fff 80%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -193,7 +193,7 @@
    * aqui re-amostra a cada frame e "pisca". Fica só fill translúcido
    * (já há blur na camada do .backdrop por trás). */
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: #fff;
   display: grid;
   place-items: center;
   cursor: pointer;

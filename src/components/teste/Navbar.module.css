@@ -259,9 +259,9 @@
   align-items: center;
   gap: 0.5em;
   padding: 17px 30px;
-  background: #000000;
+  background: #000;
   border: none;
-  color: #ffffff;
+  color: #fff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   font-weight: 600;

@@ -101,7 +101,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: none;
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -199,7 +199,7 @@
    * Castela" — bump 32 → 38px. */
   font-size: 38px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.02em;
   line-height: 1.05;
   overflow: hidden;
@@ -284,7 +284,7 @@
 .metaPointsValue {
   font-size: 12.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
   font-family: var(--sans);
@@ -318,7 +318,7 @@
     linear-gradient(#000, #000) padding-box,
     linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
   border: 1.5px solid transparent;
-  color: #ffffff;
+  color: #fff;
   font-family: var(--sans);
   font-size: 12px;
   font-weight: 700;
@@ -481,7 +481,7 @@
 .missionsTotalXp {
   font-size: 12.5px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   font-family: var(--sans);
   letter-spacing: 0.02em;
 }
@@ -637,7 +637,7 @@
   justify-content: center;
   font-size: 13px;
   font-weight: 800;
-  color: #ffffff;
+  color: #fff;
   background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
   line-height: 1;
@@ -693,7 +693,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.005em;
   text-decoration: none;
   cursor: pointer;
@@ -719,7 +719,7 @@
 .podiumPointsValue {
   font-size: 14px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.005em;
   font-family: var(--sans);
@@ -801,7 +801,7 @@
   border-radius: 50%;
   font-size: 14px;
   font-weight: 800;
-  color: #ffffff;
+  color: #fff;
   line-height: 1;
   background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
@@ -861,7 +861,7 @@
 .rankingName {
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.005em;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -121,7 +121,7 @@
   flex-shrink: 0;
 }
 .headerTrackTitle {
-  color: #ffffff;
+  color: #fff;
   font-weight: 700;
   max-width: 50%;
   overflow: hidden;
@@ -203,7 +203,7 @@
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
-.kebabItem:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+.kebabItem:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 /* "Destructive variant" mantido como hook de className pra
  * compatibilidade com call-sites antigos, mas SEM cor vermelha
  * per product feedback "remova a cor vermelha dos botões
@@ -211,7 +211,7 @@
  * herda o tom neutro do .kebabItem — sem highlight de
  * "consequência" visual. */
 .kebabItemDanger { color: inherit; }
-.kebabItemDanger:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+.kebabItemDanger:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 
 /* × close — hidden everywhere now that the back arrow covers
  * both "voltar à lista" and "fechar conversa". Kept in the CSS
@@ -442,12 +442,12 @@
 }
 .actionBtn:hover {
   background: rgba(38, 38, 42, 0.95);
-  color: #ffffff;
+  color: #fff;
   transform: scale(1.08);
 }
 .actionBtn[aria-expanded='true'] {
   background: rgba(38, 38, 42, 0.95);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* ── Reaction picker popover ──────────────────────────────────
@@ -612,7 +612,7 @@
 }
 .replyBannerClose:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: #fff;
 }
 
 .inputArea {

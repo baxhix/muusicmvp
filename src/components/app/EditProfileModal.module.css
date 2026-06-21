@@ -278,7 +278,7 @@
   cursor: pointer;
   transition: background 160ms ease, transform 160ms ease;
 }
-.btnPrimary:hover { background: #ffffff; }
+.btnPrimary:hover { background: #fff; }
 .btnPrimary:active { transform: scale(0.99); }
 
 /* ── Mobile ─────────────────────────────── */

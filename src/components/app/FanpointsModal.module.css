@@ -83,7 +83,7 @@
 }
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  color: #fff;
 }
 .closeBtn svg {
   width: 18px;
@@ -105,7 +105,7 @@
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.015em;
   line-height: 1;
 }
@@ -154,7 +154,7 @@
   color: rgba(245, 245, 247, 0.9);
 }
 .tabActive {
-  color: #ffffff;
+  color: #fff;
 }
 /* Underline indicator embaixo da tab ativa — accent purple,
  * 2px alto, alinha com o border-bottom da linha de tabs. */
@@ -244,7 +244,7 @@
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-size: 22px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.015em;
   line-height: 1.1;
   white-space: nowrap;
@@ -263,7 +263,7 @@
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-size: 36px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.02em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -312,7 +312,7 @@
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.015em;
 }
 .levelRank {
@@ -349,7 +349,7 @@
   line-height: 1.45;
 }
 .progressNote strong {
-  color: #ffffff;
+  color: #fff;
   font-weight: 600;
 }
 
@@ -397,7 +397,7 @@
   font-weight: 500;
   color: rgba(245, 245, 247, 0.78);
 }
-.timeline_current .timelineLabel { color: #ffffff; font-weight: 600; }
+.timeline_current .timelineLabel { color: #fff; font-weight: 600; }
 .timeline_locked  .timelineLabel { color: rgba(245, 245, 247, 0.42); }
 
 .timelineCurrent {
@@ -671,7 +671,7 @@
   font-family: var(--font-inter), sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.005em;
   line-height: 1.3;
   white-space: nowrap;

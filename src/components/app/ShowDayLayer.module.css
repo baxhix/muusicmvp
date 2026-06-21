@@ -237,7 +237,7 @@
   font-family: var(--font-inter), sans-serif;
   font-size: 12.5px;
   font-weight: 600;
-  color: #ffffff;
+  color: #fff;
   white-space: nowrap;
 }
 /* "Hoje tem show!" aparece SÓ no hover (desktop) / tap-foco (mobile) —
@@ -276,7 +276,7 @@
   font-family: var(--font-inter), sans-serif;
   font-size: 12.5px;
   font-weight: 600;
-  color: #ffffff;
+  color: #fff;
   white-space: nowrap;
 }
 
@@ -349,7 +349,7 @@
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.005em;
-  color: #ffffff;
+  color: #fff;
   line-height: 1.2;
 }
 /* "Festa do Peão" — regular, cinza, na linha de baixo. */
@@ -381,7 +381,7 @@
   background:
     linear-gradient(#0a0a0e, #0a0a0e) padding-box,
     var(--grad-tri) border-box;
-  color: #ffffff;
+  color: #fff;
   font-family: var(--font-inter), sans-serif;
   font-size: 12.5px;
   font-weight: 600;

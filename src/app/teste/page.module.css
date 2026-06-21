@@ -58,7 +58,7 @@
     /* Base preta absoluta — mais escura agora pra dar mais
      * contraste com as estrelas do GalaxyBackdrop (espelha
      * o `space-color: #000005` do Mapbox no /app). */
-    radial-gradient(ellipse 160% 120% at 50% 50%, #020006 0%, #000002 60%, #000000 100%);
+    radial-gradient(ellipse 160% 120% at 50% 50%, #020006 0%, #000002 60%, #000 100%);
   /* `background-attachment: fixed` foi REMOVIDO daqui — era um
    * dos maiores travadores de scroll, especialmente em iOS
    * Safari (forçava repaint da viewport inteira a cada

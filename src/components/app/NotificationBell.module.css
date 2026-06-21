@@ -38,7 +38,7 @@
 }
 .bell:hover {
   border-color: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
+  color: #fff;
   transform: translateY(-1px);
 }
 .bell svg { width: 16px; height: 16px; display: block; }
@@ -353,7 +353,7 @@
   line-height: 1.4;
 }
 .itemStrong {
-  color: #ffffff;
+  color: #fff;
   font-weight: 700;
 }
 .itemMeta {

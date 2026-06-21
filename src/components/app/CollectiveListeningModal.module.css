@@ -76,7 +76,7 @@
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(8px);
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -231,7 +231,7 @@
   align-items: center;
   gap: 5px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
 }
 .albumLineSep {
   color: rgba(245, 245, 247, 0.4);
@@ -330,7 +330,7 @@
 .playerWave span {
   width: 2.5px;
   border-radius: 2px;
-  background: #ffffff;
+  background: #fff;
   transform-origin: center;
   animation: collective-player-wave 0.55s ease-in-out infinite alternate;
 }
@@ -359,7 +359,7 @@
 .playerTrackName {
   font-size: 12px;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   letter-spacing: -0.005em;
   white-space: nowrap;
   overflow: hidden;
@@ -386,7 +386,7 @@
   border: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.10);
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.15s ease;
 }
@@ -588,7 +588,7 @@
    * action color matches the rest of the modal palette. */
   background:
     linear-gradient(135deg, #fbbf24 0%, #f97316 55%, #dc2626 100%);
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 12px -4px rgba(249, 115, 22, 0.55);
   transition: transform 0.12s ease, opacity 0.15s ease;
