@@ -64,6 +64,70 @@
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --serif: 'Instrument Serif', Georgia, serif;
   --mono: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ════════════════════════════════════════════════════════════
+     ESCALA — fundação de tokens (DS Plataforma · roadmap P0).
+     Aditivo: nada referencia ainda → zero mudança visual. A
+     migração dos componentes pra estes tokens é o passo seguinte;
+     os valores cobrem os de-facto mais comuns pra que a troca seja
+     byte-idêntica. Ver /admin → DS Plataforma.
+     ════════════════════════════════════════════════════════════ */
+
+  /* Escala tipográfica — corpo é --text-md (15px). O cluster 11–15
+   * tem passos de 1px porque o app usa todos; acima salta. */
+  --text-2xs: 11px;
+  --text-xs:  12px;
+  --text-sm:  13px;
+  --text-base:14px;
+  --text-md:  15px;
+  --text-lg:  18px;
+  --text-xl:  22px;
+  --text-2xl: 28px;
+  --text-3xl: 40px;
+  --text-display: 56px;
+
+  /* Espaçamento — grid de 4px. Os meios-passos (2.5/3.5 = 10/14px)
+   * existem porque o app os usa muito; tendência é convergir pro
+   * grid cheio com o tempo. */
+  --space-0:   0;
+  --space-px:  1px;
+  --space-0-5: 2px;
+  --space-1:   4px;
+  --space-1-5: 6px;
+  --space-2:   8px;
+  --space-2-5: 10px;
+  --space-3:   12px;
+  --space-3-5: 14px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  /* Camadas de empilhamento — substitui os magic numbers atuais
+   * (800/1000/1500/8500/9000/9500/9999). --z-max é escape hatch. */
+  --z-base:     1;
+  --z-raised:   10;
+  --z-sticky:   100;
+  --z-nav:      200;
+  --z-dropdown: 300;
+  --z-overlay:  400;
+  --z-modal:    500;
+  --z-toast:    600;
+  --z-max:      9999;
+
+  /* Gradientes assinatura — colapsa as definições duplicadas
+   * (o tri-cor aparecia ≈19× verbatim). */
+  --grad-cta:     linear-gradient(90deg, #ff00b4, #5b00d1);
+  --grad-cta-app: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  --grad-tri:     linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%);
+  --grad-success: linear-gradient(135deg, #5dffa1 0%, #3ddb74 100%);
+
+  /* Breakpoints canônicos (referência — CSS @media não consome var):
+   *   sm 480 · md 640 · lg 768 · xl 1024 · 2xl 1280
+   * Hoje o app usa 9 valores diferentes; alvo é convergir nestes. */
 }
 
 /* ── Landing page palette overrides (applied on landing layout) ── */
