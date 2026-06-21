@@ -33,7 +33,7 @@
   justify-content: center;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  border-radius: 999px;
   color: #fff;
   cursor: pointer;
   z-index: 12;
@@ -146,7 +146,7 @@
   justify-content: center;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  border-radius: 999px;
   color: rgba(245, 245, 247, 0.92);
   cursor: pointer;
   z-index: 11;
@@ -217,7 +217,7 @@
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(255, 255, 255, 0.28);
   cursor: pointer;

@@ -11,7 +11,7 @@
 .dot {
   position: absolute;
   background: #fff;
-  border-radius: 50%;
+  border-radius: 999px;
   animation: tloop-twinkle 5s ease-in-out infinite;
   will-change: opacity, transform;
 }

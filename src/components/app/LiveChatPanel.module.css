@@ -54,7 +54,7 @@
 }
 .headerAvatar {
   width: 42px; height: 42px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
@@ -233,7 +233,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
@@ -282,7 +282,7 @@
 .msgAvatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
   flex-shrink: 0;
@@ -433,7 +433,7 @@
   justify-content: center;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(20, 20, 22, 0.85);
   color: rgba(245, 245, 247, 0.7);
   cursor: pointer;
@@ -604,7 +604,7 @@
   justify-content: center;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(245, 245, 247, 0.7);
   cursor: pointer;
@@ -681,7 +681,7 @@
 .sendBtn {
   width: 38px; height: 38px;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--accent, #3ddb74);
   color: #061110;
   cursor: pointer;
@@ -927,7 +927,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(0, 0, 0, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;

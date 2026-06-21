@@ -145,7 +145,7 @@
   transform: translateY(-50%);
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(20, 20, 24, 0.65);
   backdrop-filter: blur(8px);
@@ -205,7 +205,7 @@
 .dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(255, 255, 255, 0.22);
   cursor: pointer;
@@ -259,7 +259,7 @@
   right: max(16px, env(safe-area-inset-right, 0px));
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(40, 40, 48, 0.78);
   color: rgba(245, 245, 247, 0.92);

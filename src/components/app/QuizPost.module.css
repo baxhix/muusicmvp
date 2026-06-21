@@ -7,7 +7,7 @@
 
 .card {
   margin: 16px 14px 0;
-  border-radius: 16px;
+  border-radius: 8px;
   /* Per spec atualizado "deixe o roxo no background dos posts
    *  mais próximos do preto". Mesma escala aplicada nos outros
    *  Posts (Media/Poll/Audio) — só um whisper roxo no B. */
@@ -57,7 +57,7 @@
 .avatar {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -114,7 +114,7 @@
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
+  border-radius: 8px;
   /* Option labels are secondary content — slightly muted
    * gray with regular weight, per the typography standard. */
   color: rgba(245, 245, 247, 0.75);
@@ -137,7 +137,7 @@
 .bullet {
   width: 14px;
   height: 14px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.22);
   flex-shrink: 0;
   transition: border-color 0.14s ease, background 0.14s ease;

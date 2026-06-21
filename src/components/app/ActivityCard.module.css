@@ -21,7 +21,7 @@
 
 /* Message-type card: não é pill, largura maior por ter preview */
 .cardMessage {
-  border-radius: 16px;
+  border-radius: 8px;
   min-width: 240px;
 }
 
@@ -121,7 +121,7 @@
 .avatar {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   display: block;
   border: none;

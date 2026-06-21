@@ -293,7 +293,7 @@
   transform: translate(-50%, -50%);
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255,255,255,0.96);
   color: #08080A;
   display: grid;
@@ -336,7 +336,7 @@
 /* ── Capa ── */
 .art {
   width: 38px; height: 38px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   flex-shrink: 0;
   position: relative;
@@ -417,7 +417,7 @@
   justify-content: center;
   gap: 3px;
   background: rgba(0, 0, 0, 0.45);
-  border-radius: 50%;
+  border-radius: 999px;
   z-index: 1;
   pointer-events: none;
 }
@@ -471,7 +471,7 @@
 .miniPlay {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(255,255,255,0.1);
   color: var(--ink);
@@ -492,7 +492,7 @@
 .miniQueue {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: none;
   color: rgba(245,245,247,0.45);
@@ -515,7 +515,7 @@
 .miniNext {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: none;
   color: rgba(245,245,247,0.45);
@@ -602,7 +602,7 @@
 
 .ctrlPlay {
   width: 40px; height: 40px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--ink);
   color: var(--bg);
   padding: 0;
@@ -692,7 +692,7 @@
   right: -2px;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #1DB954;        /* verde Spotify */
   border: 2px solid rgba(8,8,10,0.95);
   box-shadow: 0 0 8px rgba(29, 185, 84, 0.55);

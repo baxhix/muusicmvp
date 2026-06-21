@@ -99,7 +99,7 @@
   transform: translateY(-50%);
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.03);
   color: rgba(245,245,247,0.6);

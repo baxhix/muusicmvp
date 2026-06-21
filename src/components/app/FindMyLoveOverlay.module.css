@@ -134,7 +134,7 @@
 .matchCardAvatar {
   width: 88px;
   height: 88px;
-  border-radius: 50%;
+  border-radius: 999px;
   /* Borda branca suave em vez do pink-500 sólido. */
   border: 2px solid rgba(255, 255, 255, 0.10);
   margin: -52px auto 14px;
@@ -249,7 +249,7 @@
 .endpoint {
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(245, 245, 247, 0.85);
   border: 2px solid rgba(11, 11, 14, 0.8);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
@@ -274,7 +274,7 @@
 .matchAvatar {
   width: 52px;
   height: 52px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
   background-size: cover;

@@ -42,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   flex-shrink: 0;
   transition: opacity 0.2s;
@@ -51,7 +51,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 50%;
+  border-radius: 999px;
   /* Purple → yellow gradient border */
   background: conic-gradient(
     from 0deg,
@@ -85,12 +85,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #09090f; /* gap entre gradiente e foto */
 }
 
 .avatar {
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   display: block;
   flex-shrink: 0;
@@ -139,7 +139,7 @@
   position: relative;
   width: min(400px, 92vw);
   height: min(700px, 88vh);
-  border-radius: 18px;
+  border-radius: 8px;
   overflow: hidden;
   background: #000;
   box-shadow: 0 32px 80px rgba(0,0,0,0.8);
@@ -201,7 +201,7 @@
 .viewerAvatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 2px solid rgba(255,255,255,0.6);
 }
@@ -217,7 +217,7 @@
 .closeBtn {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(0,0,0,0.4);
   color: #fff;

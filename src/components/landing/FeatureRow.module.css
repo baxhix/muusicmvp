@@ -174,7 +174,7 @@
 }
 .mediaPulseCore {
   width: 14px; height: 14px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--accent);
   animation: media-pulse 2.4s ease-out infinite;
 }
@@ -182,7 +182,7 @@
   position: absolute;
   width: 5px; height: 5px;
   background: var(--ink);
-  border-radius: 50%;
+  border-radius: 999px;
   opacity: 0.7;
 }
 
@@ -212,7 +212,7 @@
 .mediaNetNode {
   position: absolute;
   width: 8px; height: 8px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--ink-soft);
 }
 .mediaNetNodeCenter {

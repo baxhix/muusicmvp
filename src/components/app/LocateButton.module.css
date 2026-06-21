@@ -6,7 +6,7 @@
   z-index: 25;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background:
     radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,0.04) 0%, transparent 60%),
@@ -57,7 +57,7 @@
   content: '';
   position: absolute;
   inset: -4px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid var(--accent, #3ddb74);
   opacity: 0;
   animation: locate-halo 1.8s ease-out infinite;

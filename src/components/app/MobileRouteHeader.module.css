@@ -120,7 +120,7 @@
   background: transparent;
   color: var(--ink);
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 999px;
   transition: background 0.15s;
   flex-shrink: 0;
 }

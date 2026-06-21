@@ -42,7 +42,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   background: linear-gradient(135deg, #3a3a3a, #1c1c1c);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -120,7 +120,7 @@
   height: 32px;
   display: inline-grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.65);

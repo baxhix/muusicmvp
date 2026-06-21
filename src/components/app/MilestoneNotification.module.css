@@ -28,7 +28,7 @@
   align-items: center;
   gap: 4px;
   padding: 12px 22px;
-  border-radius: 18px;
+  border-radius: 8px;
   background: linear-gradient(160deg,
     rgba(11, 11, 13, 0.96) 0%,
     rgba(5, 5, 7, 0.96) 100%);

@@ -73,7 +73,7 @@
   flex: none;
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   /* Empurra levemente pra baixo pra alinhar com o tail do bubble. */
   margin-bottom: 1px;
@@ -137,7 +137,7 @@
   /* dots 5×5 → 6×6 (+15% ≈). */
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(245, 245, 247, 0.72);
   display: inline-block;
 }

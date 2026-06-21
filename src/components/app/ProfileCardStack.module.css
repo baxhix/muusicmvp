@@ -59,7 +59,7 @@
 .photoImg {
   width: 128px;
   height: 128px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   display: block;
   pointer-events: none;

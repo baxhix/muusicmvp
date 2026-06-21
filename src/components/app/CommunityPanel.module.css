@@ -181,7 +181,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(245, 245, 247, 0.65);
@@ -208,7 +208,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   border: none;
   color: var(--ink);
@@ -253,7 +253,7 @@
   display: inline-flex;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   align-items: center;
@@ -919,13 +919,13 @@
 .topicHeroAvatar {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
 }
 .topicHeroAvatarPlaceholder {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.10);
 }
@@ -973,14 +973,14 @@
 .commentAvatar {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
 .commentAvatarPlaceholder {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.10);
   flex-shrink: 0;
@@ -1045,7 +1045,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(168, 85, 247, 0.20);
   color: var(--ink);
   cursor: pointer;
@@ -1207,14 +1207,14 @@
 .memberAvatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
 .memberAvatarPlaceholder {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.10);
   flex-shrink: 0;
@@ -1284,7 +1284,7 @@
   height: 52px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 999px;
   /* Per product feedback "os botões flutuantes não devem ter borda
    * e o gradiente é no preenchimento", o gradient lilás→rosa→lilás
    * agora é o background do próprio FAB em vez de viver no stroke
@@ -1338,7 +1338,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   border: 1px solid transparent;
   color: rgba(245, 245, 247, 0.55);
@@ -1424,14 +1424,14 @@
 .creatorAvatar {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
 .creatorAvatarPlaceholder {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.10);
   flex-shrink: 0;
@@ -1471,7 +1471,7 @@
 .membersStackAvatar {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 2px solid rgba(11, 11, 13, 0.95);
   margin-left: -8px;
@@ -1496,7 +1496,7 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(245, 245, 247, 0.75);
   font-size: 10px;
@@ -1618,14 +1618,14 @@
 .replyAvatar {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
 .replyAvatarPlaceholder {
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.10);
   flex-shrink: 0;
@@ -1670,7 +1670,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   color: rgba(245, 245, 247, 0.55);
   font-size: 16px;

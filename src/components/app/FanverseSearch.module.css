@@ -178,7 +178,7 @@
   border: none;
   color: #fff;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 999px;
   transition: background 140ms ease;
   z-index: 6;
 }
@@ -258,7 +258,7 @@
   position: absolute;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   background: #1a1a1f;
   border: 2px solid #000;
@@ -526,7 +526,7 @@
 .matchAvatar {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   background: #1a1a1f;
   flex-shrink: 0;
@@ -563,7 +563,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--pink);
   flex-shrink: 0;
@@ -722,7 +722,7 @@
 .loadMoreAvatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   flex-shrink: 0;
   background: linear-gradient(
     90deg,
@@ -788,7 +788,7 @@
 .userAvatar {
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   background: #1a1a1f;
   flex-shrink: 0;
@@ -849,7 +849,7 @@
   border: none;
   color: rgba(245, 245, 247, 0.5);
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 999px;
   transition: color 140ms ease, background 140ms ease;
 }
 .userHeart:hover {

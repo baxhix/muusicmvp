@@ -213,7 +213,7 @@
   flex-shrink: 0;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(245, 215, 110, 0.18);
   color: #f5d76e;
   display: inline-grid;

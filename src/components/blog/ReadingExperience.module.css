@@ -62,7 +62,7 @@
 .btn {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   border: 0;
   color: rgba(255, 255, 255, 0.7);

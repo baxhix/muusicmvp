@@ -707,7 +707,7 @@
   display: inline-block;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
   flex-shrink: 0;
 }

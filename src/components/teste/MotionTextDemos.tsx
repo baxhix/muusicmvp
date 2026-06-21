@@ -342,7 +342,7 @@ export function MotionTextDemoSection({
           style={{
             width: 4,
             height: 4,
-            borderRadius: '50%',
+            borderRadius: '999px',
             background:
               'linear-gradient(135deg, #ec4899 0%, #9333ea 100%)',
           }}

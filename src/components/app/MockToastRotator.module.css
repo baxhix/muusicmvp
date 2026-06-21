@@ -177,7 +177,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(255, 255, 255, 0.1);
   color: rgba(245, 245, 247, 0.78);
@@ -261,7 +261,7 @@
 .avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
@@ -285,7 +285,7 @@
 .avatarStackItem {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 1.5px solid rgba(20, 20, 24, 0.96);
   margin-left: -10px;
@@ -317,7 +317,7 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1.5px solid rgba(255, 255, 255, 0.12);
   color: rgba(245, 245, 247, 0.9);

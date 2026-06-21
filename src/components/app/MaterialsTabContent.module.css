@@ -120,7 +120,7 @@
   justify-content: center;
   background: rgba(11, 11, 14, 0.92);
   border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 50%;
+  border-radius: 999px;
   color: rgba(245, 245, 247, 0.85);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
 }
@@ -326,7 +326,7 @@ button.fileIcon:hover {
   justify-content: center;
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
-  border-radius: 50%;
+  border-radius: 999px;
   pointer-events: none;
 }
 .fileVideoBadge svg {
@@ -421,7 +421,7 @@ button.fileIcon:hover {
   justify-content: center;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  border-radius: 999px;
   color: #fff;
   cursor: pointer;
   /* z-index alto pra estar SEMPRE acima da imagem e do stage. */
@@ -541,7 +541,7 @@ button.fileIcon:hover {
   justify-content: center;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  border-radius: 999px;
   color: rgba(245, 245, 247, 0.92);
   cursor: pointer;
   /* z-index acima da img pra nav buttons receberem clicks
@@ -615,7 +615,7 @@ button.fileIcon:hover {
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(255, 255, 255, 0.28);
   cursor: pointer;

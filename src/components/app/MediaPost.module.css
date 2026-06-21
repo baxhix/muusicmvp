@@ -45,7 +45,7 @@
 .avatar {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -136,7 +136,7 @@
   transform: translateY(-50%);
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   background: rgba(0,0,0,0.55);
   backdrop-filter: blur(8px);
@@ -172,7 +172,7 @@
 .carouselDot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: none;
   padding: 0;
   background: rgba(255,255,255,0.4);
@@ -368,7 +368,7 @@
 .playIcon {
   width: 52px;
   height: 52px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(0,0,0,0.55);
   backdrop-filter: blur(8px);
   display: grid;
@@ -396,7 +396,7 @@
   z-index: 3;
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(8px);
   border: none;

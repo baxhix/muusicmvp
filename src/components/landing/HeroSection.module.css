@@ -326,7 +326,7 @@
 
 .eyebrowDot {
   width: 6px; height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft, rgba(125,211,252,0.10));
   animation: pulse-soft 2s ease-in-out infinite;
@@ -586,7 +586,7 @@
 
 .globeUserAvatar {
   width: 36px; height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid rgba(255,255,255,0.85);
   overflow: hidden;
   flex-shrink: 0;
@@ -713,7 +713,7 @@
 }
 .mpArtistDot {
   width: 6px; height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #3DDB74;
   box-shadow: 0 0 0 3px rgba(61,219,116,0.18);
   flex-shrink: 0;

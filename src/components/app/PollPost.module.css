@@ -7,7 +7,7 @@
 
 .card {
   margin: 16px 14px 0;
-  border-radius: 16px;
+  border-radius: 8px;
   /* Per spec atualizado "deixe o roxo no background dos posts
    *  mais próximos do preto" — mesmo tom usado nos outros
    *  cards do feed. */
@@ -47,7 +47,7 @@
 .avatar {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -115,7 +115,7 @@
   position: relative;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }

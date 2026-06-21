@@ -375,7 +375,7 @@
 .timelineDot {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   flex-shrink: 0;
 }
@@ -594,7 +594,7 @@
 .rankAvatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.06);

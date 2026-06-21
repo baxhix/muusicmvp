@@ -124,7 +124,7 @@
   height: 52px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 999px;
   /* Gradient horizontal lilás → rosa → lilás (mesmo da BottomNav)
    * AGORA no preenchimento per product feedback "os botões
    * flutuantes não devem ter borda e o gradiente é no
@@ -248,7 +248,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(245, 245, 247, 0.65);
@@ -507,7 +507,7 @@
 .avatar {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   border: 2px solid rgba(160, 160, 165, 0.55);
   display: block;
@@ -546,7 +546,7 @@
   right: 0;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid rgba(8, 8, 10, 0.95);
   pointer-events: none;
 }

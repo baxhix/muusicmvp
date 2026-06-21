@@ -38,7 +38,7 @@
   position: absolute;
   inset: -10%;
   z-index: -1;
-  border-radius: 50%;
+  border-radius: 999px;
   background: radial-gradient(
     circle at 50% 50%,
     rgba(244, 63, 94, 0.32) 0%,    /* rose-500 inner */

@@ -149,7 +149,7 @@
 .accountAvatar {
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: 999px;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -160,7 +160,7 @@
   bottom: 0;
   width: 14px;
   height: 14px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--ink-mute);
   border: 3px solid rgba(4, 4, 6, 0.95);
 }
@@ -187,7 +187,7 @@
   width: 54px;
   height: 54px;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   /* Sem backdrop-filter: o FAB desliza/escala dentro do painel; blur
    * aqui re-amostra a cada frame e "pisca". Fica só fill translúcido

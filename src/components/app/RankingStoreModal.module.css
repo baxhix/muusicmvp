@@ -101,7 +101,7 @@
   white-space: nowrap;
 }
 .periodLabel { font-size: 12px; font-weight: 600; color: #bcbcc0; }
-.dot { flex: 0 0 auto; width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); }
+.dot { flex: 0 0 auto; width: 3px; height: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.3); }
 .periodRange { font-size: 12px; color: rgba(255, 255, 255, 0.42); overflow: hidden; text-overflow: ellipsis; }
 /* Em resoluções menores, esconde o intervalo longo ("Semana 24 ·
  * termina em 2d 6h") + o separador — fica só o rótulo do período. */
@@ -336,7 +336,7 @@
   width: 46px;
   height: 46px;
   flex: 0 0 auto;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -490,7 +490,7 @@
   flex: 0 0 auto;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -599,7 +599,7 @@
   flex: 0 0 auto;
   width: 46px;
   height: 46px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -669,7 +669,7 @@
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: visible;
   display: flex;
   align-items: center;
@@ -680,7 +680,7 @@
   background: rgba(255, 255, 255, 0.06);
   border: 2px solid rgba(255, 255, 255, 0.14);
 }
-.top3AvatarImg { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.top3AvatarImg { width: 100%; height: 100%; border-radius: 999px; object-fit: cover; display: block; }
 .top3Text { min-width: 0; display: flex; flex-direction: column; }
 .top3Name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .top3Fp { font-size: 11px; color: rgba(255, 255, 255, 0.5); font-variant-numeric: tabular-nums; }
@@ -852,7 +852,7 @@
   flex: 0 0 auto;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -905,7 +905,7 @@
   width: 38px;
   height: 38px;
   flex: 0 0 auto;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -1034,7 +1034,7 @@
 .balAvatar {
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   flex: 0 0 auto;
   display: flex;
@@ -1247,7 +1247,7 @@
 .productImgPhoto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 12px; opacity: 0; transition: opacity 0.4s ease; }
 .productImgActive { opacity: 1; }
 .productDots { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); z-index: 2; display: flex; gap: 6px; }
-.productDot { width: 6px; height: 6px; padding: 0; border: none; border-radius: 50%; background: rgba(0, 0, 0, 0.25); cursor: pointer; transition: background 0.15s, transform 0.15s; }
+.productDot { width: 6px; height: 6px; padding: 0; border: none; border-radius: 999px; background: rgba(0, 0, 0, 0.25); cursor: pointer; transition: background 0.15s, transform 0.15s; }
 .productDotActive { background: #0b0b0d; transform: scale(1.3); }
 /* Tag de desconto escura (legível sobre o fundo branco). */
 .discountTag { position: absolute; top: 12px; left: 12px; z-index: 3; font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: #0b0b0d; color: #fff; }

@@ -36,7 +36,7 @@
 .counterDot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #3DDB74;
   /* box-shadow trocado por glow simples (filter: drop-shadow) só
    * no estado fully-opaque do pulse — evita repaint contínuo da
@@ -118,7 +118,7 @@
 .hoverDot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #3DDB74;
   box-shadow: 0 0 6px rgba(61, 219, 116, 0.55);
   flex-shrink: 0;

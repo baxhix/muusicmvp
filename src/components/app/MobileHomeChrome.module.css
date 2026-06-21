@@ -198,7 +198,7 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 999px;
   transition: transform 160ms ease;
   /* CRÍTICO: o .chrome pai tem pointer-events:none (deixa o map
    * receber drag por baixo). Sem auto aqui o botão nunca recebe

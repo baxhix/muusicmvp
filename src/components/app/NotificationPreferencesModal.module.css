@@ -144,7 +144,7 @@
   left: 2px;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #fff;
   transition: left 0.16s;
 }

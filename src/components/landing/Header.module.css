@@ -49,7 +49,7 @@
 .brandMark {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1.5px solid var(--ink);
   position: relative;
   background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), transparent 60%);
@@ -62,7 +62,7 @@
   transform: translate(-50%,-50%);
   width: 5px; height: 5px;
   background: var(--ink);
-  border-radius: 50%;
+  border-radius: 999px;
 }
 
 /* ── Nav ── */

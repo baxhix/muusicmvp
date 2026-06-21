@@ -96,7 +96,7 @@
 }
 .liveEyebrowDot {
   width: 8px; height: 8px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 0 3px rgba(125,211,252,0.18);
   animation: pulse-soft 1.6s ease-in-out infinite;
@@ -187,7 +187,7 @@
 }
 .liveMetaDot {
   width: 6px; height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--ink-mute);
   animation: pulse-soft 2.4s ease-in-out infinite;
 }

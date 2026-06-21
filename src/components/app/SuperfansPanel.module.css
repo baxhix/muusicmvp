@@ -130,7 +130,7 @@
 .closeBtn {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.03);
   color: rgba(245,245,247,0.55);
@@ -185,7 +185,7 @@
 .meAvatar {
   width: 42px;
   height: 42px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
   object-fit: cover;
 }
@@ -424,7 +424,7 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: rgba(245, 245, 247, 0.85);
 }
@@ -551,7 +551,7 @@
 .fanAvatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
   object-fit: cover;
 }

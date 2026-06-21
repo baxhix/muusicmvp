@@ -100,7 +100,7 @@
 .avatarBtn {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   padding: 0;
   /* Borda em gradiente roxo/rosa (era cinza rgba .12). Técnica
@@ -129,7 +129,7 @@
 .orbBtn {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 999px;
   overflow: hidden;
   padding: 0;
   background: transparent;
@@ -320,7 +320,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(10, 10, 14, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -454,7 +454,7 @@
 .missionCheck {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
   color: transparent;
   display: inline-flex;

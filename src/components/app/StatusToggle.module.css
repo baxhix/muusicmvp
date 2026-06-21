@@ -60,7 +60,7 @@
 .dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 999px;
   flex-shrink: 0;
   transition: background 0.2s, box-shadow 0.2s;
 }
