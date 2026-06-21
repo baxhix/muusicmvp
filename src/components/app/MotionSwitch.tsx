@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import styles from './MotionSwitch.module.css';
 
 /**
@@ -33,6 +33,9 @@ export default function MotionSwitch({
   size = 'md',
   disabled = false,
 }: MotionSwitchProps) {
+  /* prefers-reduced-motion: o thumb troca de lado instantâneo (sem
+   *  spring) — estado final idêntico, só sem a animação de deslize. */
+  const reduce = useReducedMotion();
   return (
     <button
       type="button"
@@ -46,7 +49,7 @@ export default function MotionSwitch({
       <motion.span
         className={styles.thumb}
         layout
-        transition={{ type: 'spring', stiffness: 700, damping: 36 }}
+        transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 700, damping: 36 }}
       />
     </button>
   );

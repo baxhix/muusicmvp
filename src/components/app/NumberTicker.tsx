@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { animate, useMotionValue, useTransform, motion } from 'motion/react';
+import { animate, useMotionValue, useTransform, motion, useReducedMotion } from 'motion/react';
 
 /**
  * NumberTicker — número que interpola do valor anterior pro novo
@@ -36,6 +36,7 @@ export default function NumberTicker({
   prefix = '',
   className,
 }: NumberTickerProps) {
+  const reduce = useReducedMotion();
   const motionValue = useMotionValue(value);
   /* useTransform produz string formatada toda vez que motionValue
    *  muda — o motion.span re-renderiza só esse text node. */
@@ -57,14 +58,20 @@ export default function NumberTicker({
   }, [display]);
 
   /* Anima sempre que `value` prop muda. animate() retorna controls
-   *  pra cancelar se um novo value chega antes do anterior terminar. */
+   *  pra cancelar se um novo value chega antes do anterior terminar.
+   *  prefers-reduced-motion: pula a interpolação e salta pro valor
+   *  final (mesmo número exibido, sem o efeito de contador subindo). */
   useEffect(() => {
+    if (reduce) {
+      motionValue.set(value);
+      return;
+    }
     const controls = animate(motionValue, value, {
       duration: durationMs / 1000,
       ease: [0.22, 1, 0.36, 1],
     });
     return () => controls.stop();
-  }, [value, durationMs, motionValue]);
+  }, [value, durationMs, motionValue, reduce]);
 
   return (
     <motion.span className={className} aria-live="polite">
