@@ -565,7 +565,7 @@
   justify-content: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
-  color: #ec4899;
+  color: var(--pink);
   flex-shrink: 0;
 }
 .matchHeart svg { width: 16px; height: 16px; }
@@ -857,7 +857,7 @@
   background: rgba(255, 255, 255, 0.06);
 }
 .userHeartActive {
-  color: #ec4899;
+  color: var(--pink);
 }
 .userHeart svg { width: 20px; height: 20px; }
 

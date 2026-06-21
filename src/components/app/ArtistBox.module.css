@@ -746,7 +746,7 @@
 }
 .tabRankingProgressFill {
   height: 100%;
-  background: linear-gradient(90deg, #a855f7 0%, #c084fc 100%);
+  background: var(--grad-cta);
   border-radius: 999px;
   transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -850,7 +850,7 @@
 .tabRankingName:hover {
   /* Per product feedback "remova o underline no hover do nome
    * do usuário" — só troca de cor pra sinalizar afordance. */
-  color: #c084fc;
+  color: var(--purple);
 }
 
 /* .tabRankingSubline retirada — cidade agora é filha direta de
@@ -1120,7 +1120,7 @@
   color: #fff;
   text-align: center;
   line-height: 1;
-  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
 }
 /* Variantes legacy mantidas como aliases inertes — JSX ainda
@@ -1618,7 +1618,7 @@
    * Mantém a entrada violet pro brand mas tira o laranja final. */
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #9333ea 0%, #fff 100%);
+  background: linear-gradient(90deg, var(--purple) 0%, #fff 100%);
   transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
 }
 
@@ -1763,7 +1763,7 @@
   border-radius: 999px;
   background:
     linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
+    var(--grad-cta) border-box;
   border: 1.5px solid transparent;
   color: #fff;
   font-family: var(--sans);

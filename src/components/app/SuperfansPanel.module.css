@@ -275,7 +275,7 @@
 .meProgressFill {
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, #9333ea 0%, #f59e0b 100%);
+  background: linear-gradient(90deg, var(--purple) 0%, #f59e0b 100%);
   transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 

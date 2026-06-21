@@ -368,7 +368,7 @@
 .confettiPiece:nth-child(1) { --tx:  22px; --ty: -18px; background: #fbbf24; animation-delay: 0.0s; }
 .confettiPiece:nth-child(2) { --tx:  26px; --ty:   2px; background: #f97316; animation-delay: 0.2s; }
 .confettiPiece:nth-child(3) { --tx:  20px; --ty:  18px; background: #ef4444; animation-delay: 0.4s; }
-.confettiPiece:nth-child(4) { --tx:   0px; --ty:  24px; background: #ec4899; animation-delay: 0.6s; }
+.confettiPiece:nth-child(4) { --tx:   0px; --ty:  24px; background: var(--pink); animation-delay: 0.6s; }
 .confettiPiece:nth-child(5) { --tx: -22px; --ty:  18px; background: #a78bfa; animation-delay: 0.1s; }
 .confettiPiece:nth-child(6) { --tx: -26px; --ty:   2px; background: #38bdf8; animation-delay: 0.3s; }
 .confettiPiece:nth-child(7) { --tx: -20px; --ty: -18px; background: #34d399; animation-delay: 0.5s; }

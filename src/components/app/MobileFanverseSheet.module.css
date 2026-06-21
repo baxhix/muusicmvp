@@ -316,7 +316,7 @@
   border-radius: 999px;
   background:
     linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%) border-box;
+    var(--grad-cta) border-box;
   border: 1.5px solid transparent;
   color: #fff;
   font-family: var(--sans);
@@ -638,7 +638,7 @@
   font-size: 13px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
   line-height: 1;
 }
@@ -707,7 +707,7 @@
   overflow-wrap: anywhere;
 }
 .podiumName:hover {
-  color: #c084fc;
+  color: var(--purple);
 }
 
 /* Fanpoints — valor + label "FP" em pílula sutil. */
@@ -803,7 +803,7 @@
   font-weight: 800;
   color: #fff;
   line-height: 1;
-  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 100%);
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
 }
 /* Variantes legacy mantidas como aliases inertes — JSX ainda
@@ -871,7 +871,7 @@
   transition: color 140ms ease;
 }
 .rankingName:hover {
-  color: #c084fc;
+  color: var(--purple);
 }
 .rankingCity {
   font-size: 12px;

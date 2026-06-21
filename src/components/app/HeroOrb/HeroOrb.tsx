@@ -86,7 +86,7 @@ const DEFAULTS = {
   // Three stops still cycle through the curve color phase but they
   // all sit in the pink/violet range now.
   colors: {
-    primary:   '#a855f7', // violet-500 — base tangle hue
+    primary:   '#9333ea', // violet-500 — base tangle hue
     secondary: '#ec4899', // pink-500 — mid color
     accent:    '#f43f5e', // rose-500 — the bright glowing red on the rim
   },

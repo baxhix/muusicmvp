@@ -469,7 +469,7 @@
 }
 .barCol:hover .barFill { filter: brightness(1.14); }
 /* Usuário logado: gradiente de marca (destaque). */
-.barFillYou { background: linear-gradient(180deg, #f97316 0%, #ec4899 55%, #a855f7 100%); }
+.barFillYou { background: linear-gradient(180deg, #f97316 0%, var(--pink) 55%, var(--purple) 100%); }
 /* Top 1 do período: cinza neutro mais claro (sem dourado, per
    feedback). Mantém leve distinção do resto sem cor de ouro. */
 .barFillTop1 { background: linear-gradient(180deg, var(--ink-soft) 0%, #52525b 100%); }
@@ -755,7 +755,7 @@
 .mTitle { font-size: 13px; font-weight: 600; color: #e8e8ea; }
 .mCount { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #cfcfd2; font-variant-numeric: tabular-nums; }
 .mTrack { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
-.mFill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ff2e9a, #a855f7); transform-origin: left; animation: rkBar 0.7s cubic-bezier(0.2, 0.9, 0.25, 1); }
+.mFill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ff2e9a, var(--purple)); transform-origin: left; animation: rkBar 0.7s cubic-bezier(0.2, 0.9, 0.25, 1); }
 .mMetaRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
 .mMeta { font-size: 12px; color: rgba(255, 255, 255, 0.5); }
 .mReward { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #e8e8ea; padding: 3px 9px; border-radius: 7px; background: rgba(255, 255, 255, 0.06); }

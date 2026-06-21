@@ -72,7 +72,7 @@
 .line2 strong {
   /* TOP 10 callout — gradient brand violet, slightly bigger so it
    * reads as the standout signal on the second line. */
-  background: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #d946ef 100%);
+  background: var(--grad-cta);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

@@ -420,7 +420,7 @@
   border: none;
   border-radius: 50%;
   background:
-    linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+    var(--grad-cta);
   color: #fff;
   cursor: pointer;
   box-shadow: 0 4px 12px -4px rgba(236, 72, 153, 0.55);

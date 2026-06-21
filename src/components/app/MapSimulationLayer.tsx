@@ -2158,7 +2158,7 @@ const TIER_LABEL: Record<UserHoverInfo['tier'], string> = {
 
 const TIER_COLOR_CSS: Record<UserHoverInfo['tier'], string> = {
   superfan: '#fbbf24',
-  top100:   '#a855f7',
+  top100:   '#9333ea',
   top1000:  '#6366f1',
   fan:      '#9ca3af',
 };

@@ -581,8 +581,8 @@ export default function Globe() {
             'interpolate',
             ['linear'],
             ['line-progress'],
-            0, '#a855f7',
-            0.5, '#d946ef',
+            0, '#9333ea',
+            0.5, '#ec4899',
             1, '#ec4899',
           ],
           'line-width': [

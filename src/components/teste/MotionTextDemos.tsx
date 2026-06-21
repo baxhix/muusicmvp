@@ -88,7 +88,7 @@ function TickerChar({ char, index }: { char: string; index: number }) {
           position: 'absolute',
           top: '100%',
           left: 0,
-          background: 'linear-gradient(135deg, #ec4899 0%, #a855f7 60%, #6366f1 100%)',
+          background: 'linear-gradient(135deg, #ec4899 0%, #9333ea 60%, #6366f1 100%)',
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -344,7 +344,7 @@ export function MotionTextDemoSection({
             height: 4,
             borderRadius: '50%',
             background:
-              'linear-gradient(135deg, #ec4899 0%, #a855f7 100%)',
+              'linear-gradient(135deg, #ec4899 0%, #9333ea 100%)',
           }}
         />
         <span>{effectName}</span>

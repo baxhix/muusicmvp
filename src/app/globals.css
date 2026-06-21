@@ -119,11 +119,17 @@
   --z-celebration: 1500; /* celebração de conquista */
   --z-max:         9999; /* topo absoluto (escape hatch) */
 
+  /* Cores de marca canônicas (DS Plataforma) — toda a paleta roxo/rosa
+   * converge nestes 2 tons. Saíram: a855f7/c084fc (→roxo), d946ef/f472b6
+   * (→rosa). Gradientes de mesma família viram --grad-cta. */
+  --purple: #9333ea;
+  --pink:   #ec4899;
+
   /* Gradientes assinatura — colapsa as definições duplicadas
    * (o tri-cor aparecia ≈19× verbatim). */
   --grad-cta:     linear-gradient(90deg, #ff00b4, #5b00d1);
-  --grad-cta-app: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  --grad-tri:     linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%);
+  --grad-cta-app: linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%);
+  --grad-tri:     linear-gradient(135deg, #f97316 0%, var(--pink) 50%, var(--purple) 100%);
   --grad-success: linear-gradient(135deg, #5dffa1 0%, #3ddb74 100%);
 
   /* Breakpoints canônicos (referência — CSS @media não consome var):

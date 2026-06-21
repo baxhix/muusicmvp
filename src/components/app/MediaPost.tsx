@@ -530,7 +530,7 @@ function MaterialAlertMedia({
             <linearGradient id="materialAlertGradient" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#f97316" />
               <stop offset="50%" stopColor="#ec4899" />
-              <stop offset="100%" stopColor="#a855f7" />
+              <stop offset="100%" stopColor="#9333ea" />
             </linearGradient>
           </defs>
           <path

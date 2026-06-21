@@ -200,7 +200,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   padding: 3px 8px 3px 7px;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  background: var(--grad-cta);
   border-radius: 4px;
   color: #fff;
   text-transform: uppercase;
@@ -371,7 +371,7 @@
   letter-spacing: 0.04em;
   padding: 1px 5px;
   border-radius: 3px;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  background: var(--grad-cta);
   color: #fff;
 }
 .chatLineSuperfan .chatName {
@@ -381,7 +381,7 @@
 /* Central Ana Castela (staff) — accent de marca na borda esquerda. */
 .chatLineStaff .chatBody {
   border-left: 2px solid;
-  border-image: linear-gradient(180deg, #d946ef, #ec4899) 1;
+  border-image: var(--grad-cta) 1;
   padding-left: 8px;
 }
 .chatLineStaff .chatName {

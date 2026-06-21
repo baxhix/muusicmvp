@@ -182,8 +182,8 @@
 }
 .stageSpotRight {
   right: 22%;
-  /* Spot direito agora ROSA — left fica roxo (#a855f7 ≈
-   * 168,85,247), right fica rosa pink/magenta (#ec4899 ≈
+  /* Spot direito agora ROSA — left fica roxo (var(--purple) ≈
+   * 168,85,247), right fica rosa pink/magenta (var(--pink) ≈
    * 236,72,153). Cria contraste de luzes cênicas no palco
    * conforme feedback "um dos spots em rosa e outro roxo". */
   background: linear-gradient(
@@ -276,7 +276,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   padding: 3px 8px 3px 7px;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  background: var(--grad-cta);
   border-radius: 4px;
   color: #fff;
   text-transform: uppercase;
@@ -470,7 +470,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   padding: 3px 8px 3px 7px;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  background: var(--grad-cta);
   border-radius: 4px;
   color: #fff;
 }
@@ -490,7 +490,7 @@
   font-size: 38px;
   font-weight: 900;
   letter-spacing: 0.08em;
-  background: linear-gradient(135deg, #9333ea, #d8b4fe, #a855f7);
+  background: linear-gradient(135deg, var(--purple), #d8b4fe, var(--purple));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -708,7 +708,7 @@
   letter-spacing: 0.04em;
   padding: 1px 5px;
   border-radius: 3px;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
+  background: var(--grad-cta);
   color: #fff;
 }
 .chatLineMod .chatTierBadge {

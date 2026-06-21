@@ -233,7 +233,7 @@
    *  da paleta brand (magenta → indigo) pra puxar foco. */
   width: 22px;
   border-radius: 5px;
-  background: linear-gradient(135deg, #ec4899 0%, #a855f7 60%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 60%, #6366f1 100%);
 }
 
 /* Mobile — botões nav menores + perf: removemos os

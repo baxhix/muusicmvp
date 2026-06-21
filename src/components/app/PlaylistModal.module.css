@@ -546,7 +546,7 @@
 }
 .nowPlayingBadge > span {
   width: 2px;
-  background: #a855f7;
+  background: var(--purple);
   border-radius: 2px;
   transform-origin: bottom;
   animation: pl-wave 0.55s ease-in-out infinite alternate;
@@ -611,7 +611,7 @@
   transform: scale(1.06);
 }
 .itemActive .playBtn {
-  background: #a855f7;
+  background: var(--purple);
   color: #fff;
 }
 .itemActive:hover .playBtn {

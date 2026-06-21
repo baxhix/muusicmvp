@@ -127,7 +127,7 @@ const ARENA_SVG = `
     </radialGradient>
     <linearGradient id="sdScreen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fce7f3"/>
-      <stop offset="0.32" stop-color="#f472b6"/>
+      <stop offset="0.32" stop-color="#ec4899"/>
       <stop offset="0.68" stop-color="#c026d3"/>
       <stop offset="1" stop-color="#7c3aed"/>
     </linearGradient>
@@ -141,24 +141,24 @@ const ARENA_SVG = `
     </radialGradient>
     <linearGradient id="sdRayP" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#f5d0fe" stop-opacity="0.9"/>
-      <stop offset="0.55" stop-color="#d946ef" stop-opacity="0.28"/>
-      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#ec4899" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#9333ea" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="sdRayK" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#fbcfe8" stop-opacity="0.9"/>
-      <stop offset="0.55" stop-color="#f472b6" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#ec4899" stop-opacity="0.28"/>
       <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
     </linearGradient>
     <radialGradient id="sdPoolP" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#a855f7" stop-opacity="0.95"/>
-      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+      <stop offset="0" stop-color="#9333ea" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#9333ea" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="sdPoolK" cx="0.5" cy="0.5" r="0.5">
       <stop offset="0" stop-color="#ec4899" stop-opacity="0.95"/>
       <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="sdHaze" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#c084fc" stop-opacity="0"/>
+      <stop offset="0" stop-color="#9333ea" stop-opacity="0"/>
       <stop offset="1" stop-color="#7c3aed" stop-opacity="0.2"/>
     </linearGradient>
   </defs>

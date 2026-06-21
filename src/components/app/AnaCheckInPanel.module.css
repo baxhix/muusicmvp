@@ -62,7 +62,7 @@
   height: 38px;
   border-radius: 50%;
   padding: 2px;
-  background: conic-gradient(from 0deg, #ec4899, #f472b6, #fb7185, #ec4899);
+  background: conic-gradient(from 0deg, var(--pink), var(--pink), #fb7185, var(--pink));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -217,11 +217,11 @@
   background: rgba(255, 255, 255, 0.36);
 }
 .dotActive {
-  background: #ec4899;
+  background: var(--pink);
   transform: scale(1.18);
 }
 .dotActive:hover {
-  background: #f472b6;
+  background: var(--pink);
 }
 
 @media (max-width: 600px) {

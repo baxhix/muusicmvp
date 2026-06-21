@@ -336,7 +336,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #d946ef;
+  background: var(--pink);
   box-shadow: 0 0 6px rgba(217, 70, 239, 0.55);
   opacity: 0;
   transition: opacity 180ms ease-out;

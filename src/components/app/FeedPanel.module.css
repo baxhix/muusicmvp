@@ -514,7 +514,7 @@
  *   --accent2 = roxo */
 .feedSpinner {
   --accent: #ff2e9a;
-  --accent2: #a855f7;
+  --accent2: var(--purple);
   position: relative;
   width: 28px;
   height: 28px;

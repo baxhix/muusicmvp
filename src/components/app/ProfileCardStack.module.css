@@ -150,7 +150,7 @@
 .heartBtnLiked {
   /* Liked = brand magenta, mas SEM o vermelho saturado típico
    *  de likes — fica alinhado com a paleta brand. */
-  color: #ec4899;
+  color: var(--pink);
 }
 .city {
   font-size: 12px;

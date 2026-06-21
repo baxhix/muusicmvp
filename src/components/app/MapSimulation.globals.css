@@ -432,7 +432,7 @@
  * Per feedback "Teste ondas pulsantes em 4 outros locais com outra
  * cor. O rosa/roxo que estamos usando no sistema".
  *
- * Cor: #a855f7 (purple-500, mesmo magenta/indigo do gradient da
+ * Cor: var(--purple) (purple-500, mesmo magenta/indigo do gradient da
  * landing CTA "Meu Fanverse"). Aplicado em cidades selecionadas
  * via classList.add('mapsim-pulse-alt') quando pulseOverride.color
  * === 'pink'. Sobrescreve gradient + core + badge accent. */
@@ -445,7 +445,7 @@
   );
 }
 .mapsim-pulse-alt .mapsim-pulse-core {
-  background: #a855f7;
+  background: var(--purple);
   box-shadow: 0 0 8px rgba(168, 85, 247, 0.55);
 }
 

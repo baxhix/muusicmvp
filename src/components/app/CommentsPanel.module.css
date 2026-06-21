@@ -294,7 +294,7 @@
 /* Inline @mention chip — reuses the message body style identity
    so a mention reads the same in feed comments and group chats. */
 .mention {
-  color: #c084fc;
+  color: var(--purple);
   font-weight: 600;
   background: rgba(168, 85, 247, 0.12);
   padding: 0 4px;
@@ -380,7 +380,7 @@
   letter-spacing: -0.005em;
   transition: color 0.15s;
 }
-.viewReplies:hover { color: #c084fc; }
+.viewReplies:hover { color: var(--purple); }
 .viewReplies .threadDash {
   display: inline-block;
   width: 16px;

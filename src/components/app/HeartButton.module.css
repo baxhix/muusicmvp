@@ -1,5 +1,5 @@
 /* HeartButton — root é o botão, .iconWrap segura o svg + sparkles
- * absolute. Cor controlada via .active (rosa #ec4899 quando on,
+ * absolute. Cor controlada via .active (rosa var(--pink) quando on,
  * cinza translúcido quando off). */
 
 .root {
@@ -26,10 +26,10 @@
   cursor: not-allowed;
 }
 .active {
-  color: #ec4899; /* pink-500 — Instagram-like heart */
+  color: var(--pink); /* pink-500 — Instagram-like heart */
 }
 .active:hover:not(:disabled) {
-  color: #ec4899;
+  color: var(--pink);
 }
 
 /* .iconWrap precisa de position:relative pra sparkles absolute. */
@@ -57,7 +57,7 @@
   margin-top: -2px;
   margin-left: -2px;
   border-radius: 50%;
-  background: #ec4899;
+  background: var(--pink);
   pointer-events: none;
   will-change: transform, opacity;
 }
