@@ -179,7 +179,7 @@
  * the live-user pin on the map. */
 .trackTitle {
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.005em;
 }
 .trackArtist {
@@ -244,7 +244,7 @@
 .name {
   font-size: 12px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   white-space: nowrap;
   display: flex;
   align-items: center;

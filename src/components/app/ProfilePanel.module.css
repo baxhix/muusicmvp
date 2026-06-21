@@ -71,7 +71,7 @@
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.022em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 0;
   line-height: 1.1;
   text-align: center;
@@ -105,7 +105,7 @@
 }
 .closeBtn:hover {
   background: rgba(255,255,255,0.08);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255,255,255,0.10);
 }
 .closeBtn:active { transform: scale(0.94); }
@@ -265,7 +265,7 @@
 .mapRowTitle {
   font-size: 14px;
   font-weight: 600;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 .mapRowDesc {
@@ -294,7 +294,7 @@
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.10);
   background: transparent;
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
@@ -356,7 +356,7 @@
   margin: 0 0 6px;
   font-size: 18px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -397,7 +397,7 @@
   gap: 6px;
 }
 .userStreamsNum {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -411,7 +411,7 @@
  * feedback "Deixe a cor dos Fanpoints branco" — accent green
  * retirado também no desktop (mobile já estava branco via @media). */
 .userFanpointsNum {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -461,7 +461,7 @@
 .reportMenuBtn:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.18);
-  color: #f5f5f7;
+  color: var(--ink);
 }
 
 .reportMenu {
@@ -498,7 +498,7 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   padding: 0 16px;
   border-radius: 999px;
-  color: #f5f5f7;
+  color: var(--ink);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -556,9 +556,9 @@
   transition: color 0.15s;
   white-space: nowrap;
 }
-.tab:hover { color: #F5F5F7; }
+.tab:hover { color: var(--ink); }
 .tab[aria-selected='true'] {
-  color: #F5F5F7;
+  color: var(--ink);
 }
 .tabPill {
   position: absolute;
@@ -613,7 +613,7 @@
 .historyTitle {
   font-size: 14px;
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -685,7 +685,7 @@
 .activityTotalValue {
   font-size: 22px;
   font-weight: 800;
-  color: #f5f5f7;
+  color: var(--ink);
   font-family: var(--mono, ui-monospace);
   letter-spacing: -0.02em;
 }
@@ -735,7 +735,7 @@
 }
 .activityText {
   font-size: 13px;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.005em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -791,7 +791,7 @@
 .communityName {
   font-size: 14px;
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -861,7 +861,7 @@
 .idolName {
   font-size: 12px;
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -968,7 +968,7 @@
   }
 
   /* Per product feedback "Deixe a quantidade de FP na cor branca". */
-  .userFanpointsNum { color: #F5F5F7; }
+  .userFanpointsNum { color: var(--ink); }
 
   /* Per product feedback "Centralize o player, quando aparecer". */
   .playerRow {

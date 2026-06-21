@@ -256,7 +256,7 @@
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 0;
   line-height: 1.2;
   text-align: center;
@@ -279,7 +279,7 @@
 .markAll:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 .empty {
@@ -388,7 +388,7 @@
 }
 .viewMoreBtn:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 /* Mobile: dropdown panel takes the viewport, anchored from the trigger. */

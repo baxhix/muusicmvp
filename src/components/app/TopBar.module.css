@@ -176,7 +176,7 @@
 }
 /* Offline / invisível no mapa — cinza, sem glow. */
 .onlineDotOff {
-  background: #71717a;
+  background: var(--ink-mute);
   box-shadow: none;
 }
 
@@ -363,8 +363,8 @@
   text-align: left;
   transition: background 140ms ease, color 140ms ease;
 }
-.statusOption:hover { background: rgba(255,255,255,0.05); color: #F5F5F7; }
-.statusOptionActive { color: #F5F5F7; background: rgba(255,255,255,0.04); }
+.statusOption:hover { background: rgba(255,255,255,0.05); color: var(--ink); }
+.statusOptionActive { color: var(--ink); background: rgba(255,255,255,0.04); }
 
 .statusBullet {
   width: 8px;
@@ -386,7 +386,7 @@
 .drawerIdentityName {
   font-size: 20px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.022em;
   line-height: 1.05;
   margin: 0;
@@ -620,7 +620,7 @@
 }
 .drawerItem:hover {
   background: rgba(255,255,255,0.04);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 .drawerItem > span {
   flex: 1;
@@ -675,7 +675,7 @@
 }
 .drawerItemLogout:hover {
   background: rgba(255,255,255,0.04);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 .drawerItemDelete {
@@ -779,7 +779,7 @@
 .subBackBtn svg { width: 16px; height: 16px; }
 .subBackBtn:hover {
   background: rgba(255,255,255,0.08);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 .subBackBtn:active { transform: scale(0.94); }
 
@@ -788,7 +788,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.012em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 0;
   text-align: center;
 }
@@ -808,7 +808,7 @@
   font-size: 14.5px;
   font-weight: 700;
   letter-spacing: -0.012em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 14px 0 4px;
 }
 
@@ -820,7 +820,7 @@
   letter-spacing: -0.005em;
 }
 .subBody.subBodyStrong {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -844,7 +844,7 @@
 .settingTitle {
   font-size: 14.5px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.012em;
   flex: 1;
   min-width: 0;
@@ -945,7 +945,7 @@
   transition: color 0.16s ease;
 }
 .drawerEditShortcut:hover {
-  color: #f5f5f7;
+  color: var(--ink);
 }
 
 /* Trecho em negrito branco dentro das descrições do mapa (per spec
@@ -997,7 +997,7 @@
 .fieldLabel {
   font-size: 14px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 .fieldInput {
@@ -1006,7 +1006,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 14px;
   font-family: inherit;
   outline: none;
@@ -1055,7 +1055,7 @@
   padding: 14px 20px;
   border-radius: 6px;
   border: none;
-  background: #F5F5F7;
+  background: var(--ink);
   color: #08080A;
   font-size: 14px;
   font-weight: 700;
@@ -1085,7 +1085,7 @@
 }
 .btnGhost:hover {
   background: rgba(255,255,255,0.04);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255,255,255,0.10);
 }
 
@@ -1109,7 +1109,7 @@
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(255,255,255,0.04);
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -1139,7 +1139,7 @@
 .activitySummaryNum {
   font-size: 26px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.022em;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -1262,7 +1262,7 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: transparent;
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
@@ -1286,7 +1286,7 @@
   transition: color 160ms ease;
   text-align: center;
 }
-.editProfilePhotoLink:hover { color: #F5F5F7; }
+.editProfilePhotoLink:hover { color: var(--ink); }
 
 /* ── Idioma — pills ── */
 .langPills {
@@ -1312,12 +1312,12 @@
 }
 .langPill:hover {
   background: rgba(255, 255, 255, 0.04);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 .langPillActive {
-  background: #F5F5F7;
+  background: var(--ink);
   color: #08080A;
-  border-color: #F5F5F7;
+  border-color: var(--ink);
 }
 .langPillActive:hover {
   background: #ffffff;
@@ -1352,7 +1352,7 @@
 }
 
 .deleteLossList li strong {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 700;
 }
 
@@ -1369,7 +1369,7 @@
   background: rgba(255,255,255,0.06);
   border-radius: 6px;
   padding: 2px 8px;
-  color: #F5F5F7;
+  color: var(--ink);
   font-family: var(--mono, monospace);
   letter-spacing: 0;
 }

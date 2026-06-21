@@ -87,7 +87,7 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.022em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 0;
   text-align: center;
 }
@@ -111,7 +111,7 @@
 }
 .closeBtn:hover {
   background: rgba(255,255,255,0.08);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255,255,255,0.10);
 }
 .closeBtn:active { transform: translateY(-50%) scale(0.94); }
@@ -140,7 +140,7 @@
   letter-spacing: -0.005em;
 }
 .intro strong {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 700;
 }
 
@@ -148,7 +148,7 @@
   font-size: 14.5px;
   font-weight: 700;
   letter-spacing: -0.012em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 8px 0 4px;
 }
 
@@ -184,7 +184,7 @@
 }
 
 .lossList li strong {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 700;
 }
 
@@ -193,7 +193,7 @@
   background: rgba(255,255,255,0.06);
   border-radius: 6px;
   padding: 2px 8px;
-  color: #F5F5F7;
+  color: var(--ink);
   font-family: var(--mono, monospace);
   letter-spacing: 0;
 }
@@ -204,7 +204,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 14px;
   font-family: inherit;
   outline: none;
@@ -250,7 +250,7 @@
 }
 .btnGhost:hover {
   background: rgba(255,255,255,0.04);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255,255,255,0.10);
 }
 
@@ -263,8 +263,8 @@
   width: 100%;
   padding: 13px 18px;
   border-radius: 6px;
-  border: 1px solid #F5F5F7;
-  background: #F5F5F7;
+  border: 1px solid var(--ink);
+  background: var(--ink);
   color: #08080A;
   font-size: 14px;
   font-weight: 700;

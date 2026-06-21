@@ -378,7 +378,7 @@
 .tooltipName {
   font-size: 10px;
   font-weight: 600;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.005em;
   text-align: left;
   max-width: 100%;

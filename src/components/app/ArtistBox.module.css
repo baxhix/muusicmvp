@@ -177,7 +177,7 @@
   min-width: 0;
   font-size: 12px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
@@ -654,7 +654,7 @@
   overflow: hidden;
 }
 .tab:hover {
-  color: #f5f5f7;
+  color: var(--ink);
 }
 /* Pill ativo via motion.span layoutId="artistBoxTabPill" —
  *  desliza entre as 3 tabs preservando o look segmented-control
@@ -1506,7 +1506,7 @@
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   background: #14141c;
-  color: #f5f5f7;
+  color: var(--ink);
   font-size: 11px;
   font-weight: 500;
   font-family: var(--sans);
@@ -1840,7 +1840,7 @@
   font-family: 'Borscha', var(--font-inter), sans-serif;
   font-size: 19px;
   font-weight: 700;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.01em;
   line-height: 1.2;
 }

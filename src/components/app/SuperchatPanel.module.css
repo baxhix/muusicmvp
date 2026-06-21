@@ -61,7 +61,7 @@
 /* Standardized panel header — keep in sync with FeedPanel /
  * ConversationsSidebar / CommunityPanel:
  *   padding:        20px 20px 14px
- *   title:          16px / 700 / -0.01em letter-spacing / #F5F5F7
+ *   title:          16px / 700 / -0.01em letter-spacing / var(--ink)
  *   bottom border:  1px rgba(255,255,255,0.06)
  * Superchat-specific extras: the participantsStack chip sits
  * after the title, the closeBtn hugs the right (margin-left:auto).
@@ -83,7 +83,7 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.2;
-  color: #F5F5F7;
+  color: var(--ink);
   text-align: left;
   /* No flex grow — the title hugs its content so the participants
      stack can sit right after it. */
@@ -165,7 +165,7 @@
 }
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.08);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255, 255, 255, 0.16);
 }
 .closeBtn:focus-visible {
@@ -258,7 +258,7 @@
      (shouldn't happen in practice — the JSX always sets one for
      incoming). Subtle neutral chip so the layout never collapses. */
   background: rgba(255, 255, 255, 0.06);
-  color: #f5f5f7;
+  color: var(--ink);
   border-top-left-radius: 4px;
   /* Soft shadow under the gradient so it lifts off the panel rather
      than blending into the dark bg. */
@@ -268,7 +268,7 @@
    asymmetry. Right-alignment comes from the parent .msgOut class. */
 .msgOut .bubble {
   background: transparent;
-  color: #f5f5f7;
+  color: var(--ink);
   padding-left: 2px;
   padding-right: 2px;
 }
@@ -516,7 +516,7 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #f5f5f7;
+  color: var(--ink);
   font-size: 14px;
   line-height: 1.4;
   outline: none;
@@ -620,7 +620,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.015em;
 }
 

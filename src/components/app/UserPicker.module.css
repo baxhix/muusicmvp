@@ -57,7 +57,7 @@
 .title {
   font-size: 14px;
   font-weight: 700;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 .closeBtn {
@@ -71,7 +71,7 @@
   color: rgba(245, 245, 247, 0.7);
   cursor: pointer;
 }
-.closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: #f5f5f7; }
+.closeBtn:hover { background: rgba(255, 255, 255, 0.1); color: var(--ink); }
 
 /* Inline mode (subview de Nova conversa / Novo grupo): mesmo layout
  * do "Nova comunidade" — header em COLUNA, com a seta de voltar em
@@ -113,7 +113,7 @@
   border-radius: 50%;
   background: transparent;
   border: none;
-  color: #f5f5f7;
+  color: var(--ink);
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
@@ -149,7 +149,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #f5f5f7;
+  color: var(--ink);
   font-size: 13px;
   outline: none;
   transition: border-color 0.14s ease, background 0.14s ease;
@@ -228,7 +228,7 @@
 .itemName {
   font-size: 14px;
   font-weight: 600;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -260,7 +260,7 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #f5f5f7;
+  color: var(--ink);
   font-size: 14px;
   font-weight: 600;
   outline: none;

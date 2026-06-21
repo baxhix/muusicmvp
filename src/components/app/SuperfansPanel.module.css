@@ -121,7 +121,7 @@
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 0;
   line-height: 1.2;
   text-align: center;
@@ -143,7 +143,7 @@
 }
 .closeBtn:hover {
   background: rgba(255,255,255,0.08);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255,255,255,0.10);
 }
 .closeBtn:focus-visible {
@@ -201,7 +201,7 @@
 .meName {
   font-size: 14px;
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.012em;
 }
 
@@ -237,7 +237,7 @@
 .meBenefitsBtn:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 .mePoints {
@@ -252,7 +252,7 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.018em;
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 .mePointsLabel {
@@ -327,7 +327,7 @@
   white-space: nowrap;
 }
 .tab:hover {
-  color: #f5f5f7;
+  color: var(--ink);
 }
 .tabActive {
   background: rgba(255, 255, 255, 0.08);
@@ -572,7 +572,7 @@
 .fanName {
   font-size: 14px;
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.012em;
   white-space: nowrap;
   overflow: hidden;
@@ -599,7 +599,7 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.012em;
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 .trend {
@@ -639,7 +639,7 @@
 }
 .seeMoreBtn:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 /* ── Mobile / narrow ──────────────────────

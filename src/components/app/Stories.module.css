@@ -73,7 +73,7 @@
 /* Story "visto" — traçado cinza chapado e SEM movimento (igual ao anel
  * apagado do Instagram depois de visualizar). */
 .ringSeen::before {
-  background: #3f3f46;
+  background: var(--ink-faint);
   animation: none;
 }
 

@@ -231,7 +231,7 @@
 }
 .shortcutBtn:hover {
   border-color: rgba(255, 255, 255, 0.32);
-  color: #F5F5F7;
+  color: var(--ink);
   background: rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
@@ -280,7 +280,7 @@
 .shortcutBtnActive:hover {
   background: rgba(168, 85, 247, 0.18);
   border-color: rgba(168, 85, 247, 0.55);
-  color: #F5F5F7;
+  color: var(--ink);
   box-shadow: 0 0 14px -2px rgba(168, 85, 247, 0.45);
 }
 
@@ -379,7 +379,7 @@
 .playerRestorePill:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.25);
-  color: #F5F5F7;
+  color: var(--ink);
   transform: translateY(-2px);
 }
 .playerRestorePill:active {

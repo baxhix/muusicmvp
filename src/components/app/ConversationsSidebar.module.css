@@ -78,7 +78,7 @@
  *    FeedPanel.module.css `.header` and CommunityPanel.module.css
  *    `.header`):
  *      padding:        20px 20px 14px
- *      title:          16px / 700 / -0.01em letter-spacing / #F5F5F7
+ *      title:          16px / 700 / -0.01em letter-spacing / var(--ink)
  *      bottom border:  1px rgba(255,255,255,0.06)
  *    Action buttons (new conversation, new group, close) sit on
  *    the right with neutral white tints — no accent green so the
@@ -99,7 +99,7 @@
   font-family: 'Borscha', var(--font-inter), -apple-system, sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
@@ -259,7 +259,7 @@
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 /* ── Search field ──────────────────────────────────────────────
@@ -289,7 +289,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  color: #f5f5f7;
+  color: var(--ink);
   font-size: 13px;
   outline: none;
   transition: border-color 0.14s ease, background 0.14s ease;
@@ -438,7 +438,7 @@
 }
 .kebabBtn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.08);
-  color: #f5f5f7;
+  color: var(--ink);
 }
 .kebabBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -468,7 +468,7 @@
   border-radius: 6px;
   background: transparent;
   border: none;
-  color: #f5f5f7;
+  color: var(--ink);
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -568,7 +568,7 @@
 .rowName {
   font-size: 14px;
   font-weight: 600;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.005em;
   overflow: hidden;
   text-overflow: ellipsis;

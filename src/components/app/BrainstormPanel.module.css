@@ -141,7 +141,7 @@
   box-shadow:
     0 30px 80px -12px rgba(0, 0, 0, 0.8),
     0 0 0 1px rgba(251, 191, 36, 0.08) inset;
-  color: #f5f5f7;
+  color: var(--ink);
   animation: brainstorm-panel-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes brainstorm-panel-in {
@@ -225,7 +225,7 @@
 .itemTitle {
   font-size: 14px;
   font-weight: 700;
-  color: #f5f5f7;
+  color: var(--ink);
   letter-spacing: -0.005em;
   line-height: 1.2;
 }

@@ -472,7 +472,7 @@
 .barFillYou { background: linear-gradient(180deg, #f97316 0%, #ec4899 55%, #a855f7 100%); }
 /* Top 1 do período: cinza neutro mais claro (sem dourado, per
    feedback). Mantém leve distinção do resto sem cor de ouro. */
-.barFillTop1 { background: linear-gradient(180deg, #a1a1aa 0%, #52525b 100%); }
+.barFillTop1 { background: linear-gradient(180deg, var(--ink-soft) 0%, #52525b 100%); }
 /* Topo da barra: avatar + colocação (sobe junto com a barra). */
 .barCap {
   position: absolute;

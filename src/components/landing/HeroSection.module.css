@@ -613,8 +613,8 @@
   gap: 5px;
   margin-bottom: 2px;
 }
-.globeUserName   { color: #F5F5F7; font-weight: 700; }
-.globeUserCity   { color: #71717A; font-weight: 400; }
+.globeUserName   { color: var(--ink); font-weight: 700; }
+.globeUserCity   { color: var(--ink-mute); font-weight: 400; }
 
 .globeUserSongRow {
   display: flex;
@@ -639,9 +639,9 @@
 .globeUserAudio span:nth-child(2) { height: 8px; animation-delay: 0.1s; }
 .globeUserAudio span:nth-child(3) { height: 5px; animation-delay: 0.2s; }
 
-.globeUserSong   { color: #F5F5F7; font-weight: 700; }
-.globeUserDotSep { color: #71717A; font-weight: 400; }
-.globeUserArtist { color: #71717A; font-weight: 400; }
+.globeUserSong   { color: var(--ink); font-weight: 700; }
+.globeUserDotSep { color: var(--ink-mute); font-weight: 400; }
+.globeUserArtist { color: var(--ink-mute); font-weight: 400; }
 
 /* ── Mini Player ── */
 .miniPlayer {

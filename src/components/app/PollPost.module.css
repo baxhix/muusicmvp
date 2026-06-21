@@ -157,7 +157,7 @@
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -213,7 +213,7 @@
 .voteBtn:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.18);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 .voteCount {
   align-self: stretch;

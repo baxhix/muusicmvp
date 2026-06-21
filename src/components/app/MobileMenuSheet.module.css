@@ -161,7 +161,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #71717a;
+  background: var(--ink-mute);
   border: 3px solid rgba(4, 4, 6, 0.95);
 }
 .accountDotOn {

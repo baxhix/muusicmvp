@@ -53,7 +53,7 @@
   box-shadow:
     0 40px 100px -12px rgba(0, 0, 0, 0.85),
     0 0 0 1px rgba(249, 115, 22, 0.14) inset;
-  color: #f5f5f7;
+  color: var(--ink);
   overflow: hidden;
   animation: collective-panel-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -539,7 +539,7 @@
 .chatMessage {
   font-size: 13.5px;
   font-weight: 500;
-  color: #f5f5f7;
+  color: var(--ink);
   word-break: break-word;
   letter-spacing: -0.005em;
 }
@@ -561,7 +561,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f5f5f7;
+  color: var(--ink);
   font-size: 13.5px;
   font-family: inherit;
   outline: none;

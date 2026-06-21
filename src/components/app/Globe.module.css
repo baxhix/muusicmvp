@@ -183,7 +183,7 @@
   -webkit-backdrop-filter: blur(10px);
 }
 .clusterTooltip strong {
-  color: #F5F5F7;
+  color: var(--ink);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   margin-right: 1px;
@@ -591,7 +591,7 @@
 .userBadgeName {
   font-size: 12px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
@@ -636,7 +636,7 @@
    secondary that .userBadgeSong already used (0.55 alpha on white). */
 .trackTitle {
   font-weight: 600;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.005em;
 }
 .trackArtist {
@@ -794,7 +794,7 @@
 .liveUserName {
   font-size: 12px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -1414,7 +1414,7 @@
    * the drop shadow + the inner highlight inset alone. */
   border: none;
   border-radius: 14px;
-  color: #f5f5f7;
+  color: var(--ink);
   /* Force Inter — Mapbox GL's CSS resets font-family on the popup
    * root to `'Open Sans','Helvetica Neue',Arial,sans-serif`, which
    * blocks our `body { font-family: var(--sans) }` from reaching
@@ -1454,7 +1454,7 @@
 }
 .anaShowPopup :global(.mapboxgl-popup-close-button:hover) {
   background: rgba(255, 255, 255, 0.10);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 /* Inner card body — same look as the previous custom popover,

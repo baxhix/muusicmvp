@@ -96,7 +96,7 @@
 }
 .headerTitle {
   font-size: 13.5px;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.01em;
   font-weight: 500;
 }
@@ -126,7 +126,7 @@
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.10);
   border-color: rgba(255, 255, 255, 0.18);
-  color: #F5F5F7;
+  color: var(--ink);
 }
 
 /* ── Media stage ── */
@@ -168,7 +168,7 @@
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #F5F5F7;
+  color: var(--ink);
   cursor: pointer;
   transition: background 0.14s ease, transform 0.14s ease;
   backdrop-filter: blur(6px);

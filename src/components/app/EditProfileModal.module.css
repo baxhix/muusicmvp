@@ -87,7 +87,7 @@
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.022em;
-  color: #F5F5F7;
+  color: var(--ink);
   margin: 0;
   text-align: center;
 }
@@ -111,7 +111,7 @@
 }
 .closeBtn:hover {
   background: rgba(255,255,255,0.08);
-  color: #F5F5F7;
+  color: var(--ink);
   border-color: rgba(255,255,255,0.10);
 }
 .closeBtn:active { transform: translateY(-50%) scale(0.94); }
@@ -168,7 +168,7 @@
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: transparent;
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -200,7 +200,7 @@
   padding: 4px 8px;
   transition: color 160ms ease;
 }
-.photoLink:hover { color: #F5F5F7; }
+.photoLink:hover { color: var(--ink); }
 .photoLink svg {
   width: 12px;
   height: 12px;
@@ -216,7 +216,7 @@
 .fieldLabel {
   font-size: 14px;
   font-weight: 700;
-  color: #F5F5F7;
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 .fieldInput {
@@ -225,7 +225,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  color: #F5F5F7;
+  color: var(--ink);
   font-size: 14px;
   font-family: inherit;
   outline: none;
@@ -269,7 +269,7 @@
   padding: 13px 20px;
   border-radius: 6px;
   border: none;
-  background: #F5F5F7;
+  background: var(--ink);
   color: #08080A;
   font-size: 14px;
   font-weight: 700;
