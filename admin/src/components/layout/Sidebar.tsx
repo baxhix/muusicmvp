@@ -202,9 +202,10 @@ const NAV: NavEntry[] = [
     label: 'Sistema',
     icon: IconSettings,
     children: [
-      { kind: 'leaf', href: '/settings',      label: 'Configurações' },
-      { kind: 'leaf', href: '/design-system', label: 'Design System' },
-      { kind: 'leaf', href: '/desenvolvedor', label: 'Desenvolvedor' },
+      { kind: 'leaf', href: '/settings',                label: 'Configurações' },
+      { kind: 'leaf', href: '/design-system',           label: 'DS Admin' },
+      { kind: 'leaf', href: '/design-system-plataforma', label: 'DS Plataforma' },
+      { kind: 'leaf', href: '/desenvolvedor',           label: 'Desenvolvedor' },
     ],
   },
 ];

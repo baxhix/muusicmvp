@@ -1,0 +1,303 @@
+/* DS Plataforma — auditoria/documentação de referência do app principal
+ * (src/). NÃO renderiza componentes ao vivo (app separado): reproduz
+ * tokens por valor + cataloga padrões e inconsistências. */
+
+.body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sectionLead {
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text-soft);
+  max-width: 72ch;
+}
+.sectionLead code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.spec {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+.stageCol {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cellLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 6px 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.metaKey {
+  color: var(--text-mute);
+  font-weight: 600;
+}
+.metaVal {
+  color: var(--text-soft);
+}
+.metaVal code,
+.code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* ── Swatches ─────────────────────────────────────────── */
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.swatchBox {
+  height: 52px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-soft);
+}
+.swatchName {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text);
+}
+.swatchHint {
+  font-size: 11px;
+  color: var(--text-mute);
+}
+
+/* ── Gradient bars ────────────────────────────────────── */
+.gradientGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.gradientRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gradientBar {
+  height: 46px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-soft);
+}
+.gradientMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gradientName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.gradientCode {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+}
+
+/* Radius boxes */
+.radiusBox {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: end center;
+  padding-bottom: 6px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-soft);
+}
+
+/* Type scale rows */
+.typeRow {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.typeTok {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+  width: 168px;
+  flex-shrink: 0;
+}
+
+/* ── Verdict rows (component inventory) ───────────────── */
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.verdictItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.verdictHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.verdictName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.verdictDesc {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+.verdictWhere {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-mute);
+}
+
+/* ── Audit ────────────────────────────────────────────── */
+.audit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auditItem {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.auditItemArch {
+  border-left-color: var(--danger);
+}
+.auditBody { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.auditTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.auditDesc { font-size: 12.5px; line-height: 1.55; color: var(--text-soft); }
+.auditWhere { font-family: var(--font-mono); font-size: 11px; color: var(--text-mute); }
+
+/* ── Roadmap ──────────────────────────────────────────── */
+.roadmap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.phase {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.phaseNum {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 13px;
+}
+.phaseBody { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.phaseTitle { font-size: 14px; font-weight: 700; color: var(--text); }
+.phaseList { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+.phaseList li { font-size: 12.5px; line-height: 1.5; color: var(--text-soft); }
+.phaseList li code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--surface-3);
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  color: var(--text);
+}
+
+/* Banner de contexto (app separado) */
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--info-soft);
+  border: 1px solid var(--info-line);
+  color: var(--text-soft);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.notice strong { color: var(--text); }
