@@ -134,7 +134,7 @@
    * background do próprio elemento. */
   /* Mesmo gradiente da pasta de Materiais Exclusivo (folderGradient:
    * laranja → rosa → roxo, 135deg). Antes era lilás→rosa→lilás 90deg. */
-  background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%);
+  background: var(--grad-tri);
   border: none;
   color: #ffffff;
   cursor: pointer;

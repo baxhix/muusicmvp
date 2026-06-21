@@ -363,7 +363,7 @@
   border-radius: 999px;
   background:
     linear-gradient(#0a0a0e, #0a0a0e) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
   border: 1.5px solid transparent;
   color: #fff;
   font-family: inherit;

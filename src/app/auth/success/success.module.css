@@ -49,5 +49,5 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ff00b4, #5b00d1);
+  background: var(--grad-cta);
 }

@@ -502,7 +502,7 @@
   border-radius: 999px;
   background:
     linear-gradient(#0a0a0e, #0a0a0e) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
   border: 4px solid transparent;
   box-shadow: 0 12px 28px rgba(236, 72, 153, 0.22), 0 2px 8px rgba(0, 0, 0, 0.4);
   cursor: pointer;
@@ -632,14 +632,14 @@
    *  ProfileCardStack pra reforçar a conexão visual. */
   background:
     linear-gradient(#0a0a0e, #0a0a0e) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
   border: 1.5px solid transparent;
   color: #fff;
 }
 .cardsToggleActive:hover {
   background:
     linear-gradient(#15151b, #15151b) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
 }
 
 /* Shared stage-in keyframe — usado por headline/pills/list quando

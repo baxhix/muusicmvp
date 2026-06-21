@@ -641,7 +641,7 @@
 .posRowActive:hover {
   background:
     linear-gradient(#16161b, #16161b) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
 }
 .posLabel { flex: 1; text-align: left; font-size: 12.5px; font-weight: 600; color: #e8e8ea; }
 /* #N cinza por padrão; branco SÓ quando o período está selecionado. */
@@ -892,11 +892,11 @@
   border: 1.5px solid transparent;
   background:
     linear-gradient(#16161b, #16161b) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
 }
 .rowYou:hover { background:
     linear-gradient(#1c1c22, #1c1c22) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box; }
+    var(--grad-tri) border-box; }
 /* #N no padrão da aba Superfãs: cinza uniforme, regular, à esquerda. */
 .rankNum { flex: 0 0 auto; min-width: 24px; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
 /* Wrap do avatar — relative pra hospedar o RankMedallion (selo). */
@@ -1082,7 +1082,7 @@
   font-weight: 700;
   color: #fff;
   background: linear-gradient(#000, #000) padding-box,
-    linear-gradient(135deg, #f97316 0%, #ec4899 50%, #a855f7 100%) border-box;
+    var(--grad-tri) border-box;
   border: 1.5px solid transparent;
   padding: 3px 9px;
   border-radius: 999px;

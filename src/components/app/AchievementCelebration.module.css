@@ -49,7 +49,7 @@
 .headline em {
   font-style: normal;
   font-weight: 700;
-  background: linear-gradient(135deg, #5dffa1 0%, #3DDB74 100%);
+  background: var(--grad-success);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

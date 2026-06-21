@@ -121,7 +121,7 @@
 .progressFill {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #ff00b4, #5b00d1);
+  background: var(--grad-cta);
   transform-origin: 0 50%;
   transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
 }
