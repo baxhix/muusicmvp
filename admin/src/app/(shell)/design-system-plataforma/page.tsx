@@ -458,56 +458,56 @@ const PENDING: Vis[] = [
   {
     cat: 'Cores',
     title: 'FeedPanel sequestra o verde da marca',
-    desc: 'O FeedPanel redefine --accent global para rosa (#ff2e9a) e --accent2 roxo. O "verde Fanverse" vira rosa só nessa superfície — quebra o significado do token.',
+    desc: '✓ DECIDIDO (seguir recomendação): o FeedPanel deixa de redefinir --accent global; passa a usar tokens próprios --feed-accent (#ff2e9a) e --feed-accent2 (#a855f7).',
     where: 'FeedPanel.module.css',
     sev: 'média',
     eff: 'baixo',
-    rec: 'Usar token próprio (--feed-accent) em vez de redefinir a variável global --accent.',
+    rec: 'Trocar as redefinições de --accent/--accent2 no FeedPanel por --feed-accent/--feed-accent2 locais.',
   },
   {
     cat: 'Componentes',
     title: 'Cards ad-hoc por feature',
-    desc: 'Não há Card base. Cada superfície define borda/sombra/padding/hover do seu jeito — densidade e elevação inconsistentes entre cards parecidos.',
-    where: 'ActivityCard · PostCard · ProfileCardStack + cards inline',
+    desc: '✓ DECIDIDO: ActivityCard adota o estilo do SameTrackToast (pill r999, gradiente escuro + blur). QuizPost/MediaPost passam a r6 (eram r16). PostCard mantém r8.',
+    where: 'ActivityCard → SameTrackToast · QuizPost/MediaPost r16→6 · PostCard r8',
     sev: 'média',
     eff: 'médio',
-    rec: 'Card base com variantes; adotar nas features.',
+    rec: 'Aplicar na plataforma: ActivityCard → casca do SameTrackToast; QuizPost/MediaPost border-radius 16→6.',
   },
   {
     cat: 'Componentes',
     title: 'Badges / pills sem padrão',
-    desc: 'VerifiedBadge, LiveBadge, StatsPill, RankMedallion + pills inline — alturas, raios e cores variados pro mesmo papel de rótulo.',
-    where: '8+ módulos com .pill / .badge próprios',
+    desc: '✓ DECIDIDO: VerifiedBadge mantido. Pill padrão = branco r999 (estilo do UserPicker addBtn); o joinPill roxo do CommunityPanel passa a seguir esse padrão. LiveBadge e StatsPill saem.',
+    where: 'manter VerifiedBadge + pill branco · remover LiveBadge + StatsPill',
     sev: 'média',
     eff: 'médio',
-    rec: 'Badge(tone, size) + tokens de pill (altura/raio/padding).',
+    rec: 'Migrar joinPill pro pill branco; remover LiveBadge e StatsPill; manter VerifiedBadge.',
   },
   {
     cat: 'Componentes',
     title: 'Tabs em dois modelos',
-    desc: 'FilterTabs usa indicador CSS estático; ArtistBox usa pill animado (layoutId). Interação e visual diferentes pro mesmo padrão de abas.',
-    where: 'FilterTabs vs ArtistBox/ProfilePanel/FanpointsModal',
-    sev: 'média',
+    desc: '✓ DECIDIDO: manter os dois estilos (FilterTabs estático e ArtistBox pill animado) — usos diferentes, convivência intencional.',
+    where: 'FilterTabs + ArtistBox/ProfilePanel/FanpointsModal',
+    sev: 'baixa',
     eff: 'baixo',
-    rec: 'Padronizar no pill animado (layoutId) em todas as abas.',
+    rec: 'Sem mudança de código — só documentar quando usar cada um.',
   },
   {
     cat: 'Componentes',
     title: 'Sem componente de Avatar',
-    desc: '<img> inline com placeholder; tamanho, anel, fallback e o selo de verificado são posicionados caso a caso. Inconsistência de tamanho/borda entre telas.',
-    where: 'ArtistBox · UserPicker · CommunityPanel · ranking',
+    desc: '✓ DECIDIDO: componente Avatar único com o padrão do 40px (anel 1px rgba(255,255,255,.12) + dot de presença), em 6 tamanhos: 32, 36, 40, 42, 56, 64px.',
+    where: 'criar Avatar(size, status) · migrar usos inline',
     sev: 'média',
     eff: 'médio',
-    rec: 'Avatar(size, status, fallback) com VerifiedBadge composável.',
+    rec: 'Avatar(size, status, fallback) com os 6 tamanhos + VerifiedBadge composável; migrar os <img> inline.',
   },
   {
     cat: 'Componentes',
     title: '4 toasts independentes',
-    desc: 'AppToast, PointsToast, SocialAchievementToast e SameTrackToast têm animação, posição e tempo de vida próprios. Quatro estilos de notificação coexistindo.',
-    where: 'components/app/*Toast.tsx',
+    desc: '✓ DECIDIDO: a estrutura do SameTrackToast (pill r999, gradiente 160° escuro + blur + borda) vira o padrão dos 4 toasts. AppToast, PointsToast e SocialAchievement adotam a mesma casca; o conteúdo (ícone/avatar/barras) varia por tipo.',
+    where: 'casca = SameTrackToast · AppToast/PointsToast/SocialAchievement adotam',
     sev: 'média',
     eff: 'médio',
-    rec: 'ToastProvider único + useToast (espelhar o que o admin já tem).',
+    rec: 'Unificar num ToastProvider/useToast com a casca do SameTrackToast (espelhar o admin).',
   },
   {
     cat: 'Componentes',
@@ -530,11 +530,11 @@ const PENDING: Vis[] = [
   {
     cat: 'Tipografia',
     title: 'Sem escala tipográfica adotada',
-    desc: '≈39 tamanhos em px (incl. frações 12.5/13.5). A escala --text-* já existe (P0) mas os componentes ainda usam px literal — hierarquia inconsistente entre telas.',
+    desc: '✓ DECIDIDO: escala = 12 (mínimo) · 14 · 16 · 18 · 22 · 28. Os fracionários 12.5/13/13.5 snapam pra 12; o 15 sai. Nada abaixo de 12.',
     where: '*.module.css (≈150 arquivos)',
     sev: 'média',
     eff: 'alto',
-    rec: 'Adotar --text-* por superfície, com QA (muda pixels — snap pro valor mais próximo).',
+    rec: 'Redefinir --text-* nessa escala (12/14/16/18/22/28) e migrar os componentes (muda pixels — snap pro valor mais próximo, QA no /app).',
   },
   {
     cat: 'Cores',
@@ -680,6 +680,20 @@ const avatarCircle = (size: number, ring: string, extra?: React.CSSProperties): 
   ...extra,
 });
 
+const toastShell: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
+  padding: '8px 14px',
+  borderRadius: 999,
+  background: 'linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96))',
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 12px 32px -8px rgba(0,0,0,0.7)',
+  fontSize: 12.5,
+  color: 'rgba(245,245,247,0.7)',
+  whiteSpace: 'nowrap',
+};
+
 const REPROS: Record<string, ReactNode> = {
   'Sem botão canônico': (
     <>
@@ -728,65 +742,61 @@ const REPROS: Record<string, ReactNode> = {
   ),
   'Cards ad-hoc por feature': (
     <>
-      <RC tag="ActivityCard · pill r999 · glow rosa">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 8px', borderRadius: 999, background: 'linear-gradient(145deg, rgba(10,6,18,0.90), rgba(7,5,14,0.88))', boxShadow: '0 0 0 1px rgba(219,39,119,0.55), 0 0 18px rgba(219,39,119,0.15), 0 8px 28px rgba(0,0,0,0.5)' }}>
+      <RC tag="✓ ActivityCard → estilo SameTrackToast (pill r999 + blur)">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 14px 8px 8px', borderRadius: 999, background: 'linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96))', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 12px 32px -8px rgba(0,0,0,0.7)' }}>
           <span style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)' }} />
-          <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.6)' }}>Ana C. <strong style={{ color: 'rgba(245,245,247,0.95)' }}>curtiu</strong></span>
+          <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.65)' }}>Ana C. <strong style={{ color: '#fff' }}>curtiu</strong></span>
         </span>
       </RC>
-      <RC tag="PostCard (blog) · r8 · borda sutil">
+      <RC tag="✓ QuizPost/MediaPost · r6 (era r16)">
+        <span style={{ display: 'block', width: 170, borderRadius: 6, background: 'linear-gradient(145deg, rgba(5,3,8,0.92), rgba(3,2,5,0.9))', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 0 0 1px rgba(168,85,247,0.15), 0 8px 32px rgba(0,0,0,0.55)', padding: '12px 13px' }}>
+          <span style={{ fontSize: 13, color: 'rgba(245,245,247,0.85)', fontWeight: 600 }}>Enquete / mídia</span>
+        </span>
+      </RC>
+      <RC tag="PostCard (blog) · r8 · mantido">
         <span style={{ display: 'block', width: 150, borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.04)', overflow: 'hidden' }}>
           <span style={{ display: 'block', height: 56, background: 'linear-gradient(135deg,#1c1c1c,#0c0c0c)' }} />
           <span style={{ display: 'block', padding: 10, fontSize: 13, color: 'rgba(255,255,255,0.92)', fontWeight: 700 }}>Título do post</span>
-        </span>
-      </RC>
-      <RC tag="QuizPost/MediaPost · r16 · glow roxo + borda">
-        <span style={{ display: 'block', width: 170, borderRadius: 16, background: 'linear-gradient(145deg, rgba(5,3,8,0.92), rgba(3,2,5,0.9))', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 0 0 1px rgba(168,85,247,0.15), 0 8px 32px rgba(0,0,0,0.55)', padding: '12px 13px' }}>
-          <span style={{ fontSize: 13, color: 'rgba(245,245,247,0.85)', fontWeight: 600 }}>Enquete / mídia</span>
         </span>
       </RC>
     </>
   ),
   'Badges / pills sem padrão': (
     <>
-      <RC tag="VerifiedBadge · #1d9bf0">
+      <RC tag="✓ VerifiedBadge · mantido">
         <Verified />
       </RC>
-      <RC tag="LiveBadge-style · pill escuro blur + dot verde">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 40, background: 'rgba(0,0,0,0.92)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3DDB74', boxShadow: '0 0 6px #3DDB74' }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#F5F5F7' }}>AO VIVO</span>
+      <RC tag="✓ PADRÃO pill · branco r999 (UserPicker addBtn)">
+        <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 999, background: '#fff', color: '#000', fontSize: 12, fontWeight: 600 }}>Adicionar</span>
+      </RC>
+      <RC tag="✓ joinPill → segue o padrão branco">
+        <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 999, background: '#fff', color: '#000', fontSize: 12, fontWeight: 600 }}>Participar</span>
+      </RC>
+      <RC tag="✕ REMOVER · LiveBadge + StatsPill">
+        <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center', opacity: 0.38 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 40, background: 'rgba(0,0,0,0.92)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3DDB74' }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#F5F5F7' }}>AO VIVO</span>
+          </span>
+          <span style={{ display: 'inline-flex', padding: '8px 20px', borderRadius: 999, background: 'rgba(0,0,0,0.92)', border: '1px solid rgba(255,255,255,0.05)', fontSize: 11, color: '#A1A1AA' }}>
+            <strong style={{ color: '#F5F5F7' }}>1.2k</strong>
+          </span>
         </span>
-      </RC>
-      <RC tag="StatsPill · pill escuro r999">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 999, background: 'rgba(0,0,0,0.92)', border: '1px solid rgba(255,255,255,0.05)', fontSize: 11, color: '#A1A1AA' }}>
-          <strong style={{ color: '#F5F5F7', fontSize: 12 }}>1.2k</strong> ouvindo
-        </span>
-      </RC>
-      <RC tag="CommunityPanel joinPill · roxo translúcido r999">
-        <span style={{ display: 'inline-flex', padding: '6px 12px', borderRadius: 999, background: 'rgba(168,85,247,0.18)', border: '1px solid rgba(168,85,247,0.45)', color: '#F5F5F7', fontSize: 11.5, fontWeight: 700 }}>Participar</span>
-      </RC>
-      <RC tag="UserPicker addBtn · pill branco r999">
-        <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 999, background: '#fff', color: '#000', fontSize: 12.5, fontWeight: 600 }}>Adicionar</span>
       </RC>
     </>
   ),
   'Sem componente de Avatar': (
     <>
-      <RC tag="30px · ring 1.5px rgba(255,255,255,.2)">
-        <span style={avatarCircle(30, '1.5px solid rgba(255,255,255,0.2)')} />
-      </RC>
-      <RC tag="36px · ring 1.5px rgba(255,255,255,.18)">
-        <span style={avatarCircle(36, '1.5px solid rgba(255,255,255,0.18)')} />
-      </RC>
-      <RC tag="40px · ring 1px .12 + dot presença">
-        <span style={avatarCircle(40, '1px solid rgba(255,255,255,0.12)')}>
-          <span style={{ position: 'absolute', bottom: -1, right: -1, width: 10, height: 10, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #0a0a14' }} />
-        </span>
-      </RC>
-      <RC tag="64px · sem borda, só sombra inset">
-        <span style={avatarCircle(64, 'none', { background: '#1a1a1f', boxShadow: '0 8px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset' })} />
-      </RC>
+      {[32, 36, 40, 42, 56, 64].map((size) => {
+        const dot = Math.max(8, Math.round(size * 0.26));
+        return (
+          <RC key={size} tag={`${size}px${size === 40 ? ' · padrão' : ''}`}>
+            <span style={avatarCircle(size, '1px solid rgba(255,255,255,0.12)')}>
+              <span style={{ position: 'absolute', bottom: -1, right: -1, width: dot, height: dot, borderRadius: '50%', background: '#22c55e', border: '1.5px solid #0a0a14', boxShadow: '0 0 6px rgba(34,197,94,0.55)' }} />
+            </span>
+          </RC>
+        );
+      })}
     </>
   ),
   'Tabs em dois modelos': (
@@ -807,29 +817,22 @@ const REPROS: Record<string, ReactNode> = {
   ),
   '4 toasts independentes': (
     <>
-      <RC tag="AppToast · pill cinza r999">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 999, background: 'linear-gradient(180deg, rgba(20,20,22,0.95), rgba(8,8,10,0.96))', border: '1px solid rgba(61,219,116,0.35)', color: '#c5f5d4', fontSize: 13 }}>
-          <Check /> Salvo com sucesso
-        </span>
-      </RC>
-      <RC tag="PointsToast · pill escuro + estrela âmbar">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 999, background: 'linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96))', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12.5, color: 'rgba(245,245,247,0.7)' }}>
-          <Star /> <strong style={{ color: '#fff' }}>+50</strong> fanpoints
-        </span>
-      </RC>
-      <RC tag="SocialAchievementToast · card r14 + avatar">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 14px 10px 10px', borderRadius: 14, background: 'rgba(8,8,10,0.92)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' }}>
-          <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)', border: '1.5px solid rgba(255,255,255,0.14)' }} />
-          <span style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#F5F5F7' }}>Ana C.</span>
-            <span style={{ fontSize: 11.5, color: 'rgba(245,245,247,0.65)' }}>novo <strong style={{ color: '#3ddb74' }}>marco</strong></span>
-          </span>
-        </span>
-      </RC>
-      <RC tag="SameTrackToast · pill r999 + barras verdes">
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 14px 8px 8px', borderRadius: 999, background: 'linear-gradient(160deg, rgba(6,6,14,0.96), rgba(4,4,10,0.96))', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <RC tag="✓ PADRÃO = casca do SameTrackToast (pill r999 + blur)">
+        <span style={{ ...toastShell, gap: 10, padding: '8px 14px 8px 8px', boxShadow: '0 12px 32px -8px rgba(0,0,0,0.7), 0 0 18px -4px rgba(61,219,116,0.25)' }}>
           <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)', border: '1.5px solid rgba(255,255,255,0.2)' }} />
-          <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.65)' }}><strong style={{ color: '#fff' }}>João</strong> ouvindo Boiadeira</span>
+          <span style={{ color: 'rgba(245,245,247,0.65)' }}><strong style={{ color: '#fff' }}>João</strong> ouvindo Boiadeira</span>
+        </span>
+      </RC>
+      <RC tag="Sucesso · mesma casca + check">
+        <span style={toastShell}><Check /> Salvo com sucesso</span>
+      </RC>
+      <RC tag="Pontos · mesma casca + estrela">
+        <span style={toastShell}><Star /> <strong style={{ color: '#fff' }}>+50</strong> fanpoints</span>
+      </RC>
+      <RC tag="Conquista · mesma casca + avatar">
+        <span style={{ ...toastShell, gap: 10 }}>
+          <span style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#3a3a44,#1c1c22)' }} />
+          <span><strong style={{ color: '#fff' }}>Ana C.</strong> novo <strong style={{ color: '#3ddb74' }}>marco</strong></span>
         </span>
       </RC>
     </>
@@ -868,9 +871,12 @@ const REPROS: Record<string, ReactNode> = {
     </>
   ),
   'Sem escala tipográfica adotada': (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#F5F5F7' }}>
-      {[11, 12, 12.5, 13, 13.5, 14, 15, 16, 18, 22, 28].map((s) => (
-        <span key={s} style={{ fontSize: s, lineHeight: 1.1 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, color: '#F5F5F7' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#82828e' }}>
+        Escala decidida: 12 (mín) · 14 · 16 · 18 · 22 · 28 — removidos 12.5/13/13.5→12 e 15
+      </span>
+      {[12, 14, 16, 18, 22, 28].map((s) => (
+        <span key={s} style={{ fontSize: s, lineHeight: 1.15 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#82828e', marginRight: 10 }}>{s}px</span>
           O lugar do superfã
         </span>
