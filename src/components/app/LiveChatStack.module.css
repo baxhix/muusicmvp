@@ -284,7 +284,7 @@
    de miniatura de grupos de chat", grupos NÃO levam o ring verde
    do `.item:not(.itemOffline) .avatar` (grupos não têm presence). */
 .avatarGroup {
-  border-radius: 50% !important;
+  border-radius: 999px !important;
   border-color: rgba(160, 160, 165, 0.65) !important;
 }
 

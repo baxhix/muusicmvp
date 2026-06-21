@@ -1,0 +1,15 @@
+{
+  "$comment": "DS Plataforma guardrail — NÃO estende config padrão (evita ruído nos ~150 CSS legados). Só trava a REGRESSÃO das consolidações já feitas: tons roxo/rosa removidos, border-radius:50% (use 999px) e os font-sizes fracionários removidos (12.5/13.5/15). Roda no quality.yml. Ver /admin → DS Plataforma.",
+  "rules": {
+    "declaration-property-value-disallowed-list": {
+      "/^(color|fill|stroke|background|background-color|background-image|border|border-color|box-shadow|outline-color|caret-color|--.+)$/": [
+        "/#a855f7/i",
+        "/#c084fc/i",
+        "/#d946ef/i",
+        "/#f472b6/i"
+      ],
+      "border-radius": ["/^50%$/"],
+      "font-size": ["/^12\\.5px$/", "/^13\\.5px$/", "/^15px$/"]
+    }
+  }
+}

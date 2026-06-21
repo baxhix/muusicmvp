@@ -1,0 +1,41 @@
+name: Quality
+
+# Guardrail do Design System da plataforma. Roda em paralelo ao deploy
+# (NÃO bloqueia o deploy.yml por si só — pra virar gate obrigatório,
+# ligar branch protection exigindo o check "DS guardrail"). Hoje serve
+# como sinal vermelho/verde por commit + gate em PRs.
+#
+# O que trava: regressão das consolidações do DS — tons roxo/rosa
+# removidos (a855f7/c084fc/d946ef/f472b6), border-radius:50% (use 999px)
+# e os font-sizes fracionários removidos (12.5/13.5/15). Regras em
+# .stylelintrc.json (sem config padrão → zero ruído no CSS legado).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ds-lint:
+    name: DS guardrail (stylelint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install deps
+        run: npm ci
+      - name: Lint Design System tokens
+        run: npm run lint:ds
