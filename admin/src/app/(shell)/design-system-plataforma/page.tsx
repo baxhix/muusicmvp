@@ -539,56 +539,56 @@ const PENDING: Vis[] = [
   {
     cat: 'Cores',
     title: 'Paleta roxo/rosa não tokenizada',
-    desc: 'Vários roxos/rosas quase iguais convivem (#a855f7/#9333ea/#c084fc/#d946ef/#ec4899/#f472b6) sem token canônico.',
+    desc: '✓ DECIDIDO: 2 canônicos. Todo roxo vira #9333ea (saem #a855f7 e #c084fc); todo rosa/fúcsia vira #ec4899 (saem #d946ef e #f472b6).',
     where: 'gradientes e fills de vários módulos',
     sev: 'baixa',
     eff: 'médio',
-    rec: 'Definir 3–4 roxos canônicos e tokenizar.',
+    rec: 'Tokenizar como --purple (#9333ea) e --pink (#ec4899) e migrar os fills/gradientes (muda pixels nos tons removidos — QA no /app).',
   },
   {
     cat: 'Forma',
     title: 'Raios de pill/card variados',
-    desc: '50% e 999px pro mesmo pill; cards em 8/10/12/14/16/18. Cantos inconsistentes entre elementos do mesmo tipo.',
+    desc: '✓ DECIDIDO: pill/círculo = 999px (sai o 50%); card = 8px (saem 12/16/18). QuizPost/Media seguem em 6px (decidido antes). Nada de raios intermediários.',
     where: 'UserPicker · FeedPanel · cards diversos',
     sev: 'baixa',
     eff: 'médio',
-    rec: 'Snap pra --r-* (e um --pill-radius único).',
+    rec: 'Snap pra --r-card (8px) e --r-pill (999px); migrar os 12/16/18/50% (muda cantos — QA no /app).',
   },
   {
     cat: 'Espaçamento',
     title: 'Densidade inconsistente',
-    desc: 'Padding de "card" varia (10×12, 12×14, 8×14). A escala --space-* existe (P0) mas não é usada — espaçamento ad-hoc.',
+    desc: '✓ DECIDIDO: adotar a escala --space-* (grid de 4px). Os paddings ad-hoc (10×12, 12×14, 8×14) snapam pro múltiplo de 4 mais próximo.',
     where: 'QuizPost · UserPicker · CommunityPanel',
     sev: 'baixa',
     eff: 'alto',
-    rec: 'Adotar --space-* gradualmente (grid de 4px).',
+    rec: 'Migrar pra --space-* gradualmente, por superfície (muda pixels — QA no /app).',
   },
   {
     cat: 'Estados',
     title: 'Empty / error states só texto',
-    desc: 'Estados vazios e de erro são texto puro, sem ícone/ilustração/ação consistentes. Skeleton existe e é bom, mas o resto é ad-hoc.',
+    desc: '✓ DECIDIDO: criar um componente de estado reutilizável (ícone + texto + ação). Substitui os textos puros de vazio/erro espalhados.',
     where: 'modais, listas, painéis',
     sev: 'baixa',
     eff: 'médio',
-    rec: 'Componente de estado (ícone + texto + ação) reutilizável.',
+    rec: 'EmptyState reutilizável (ícone + título + ação opcional) e trocar os call sites — Skeleton continua pros loadings.',
   },
   {
     cat: 'Responsivo',
     title: 'Breakpoints fragmentados',
-    desc: '9 breakpoints distintos (480/560/600/640/720/768/880/900/1024/1100) sem mapa — comportamento responsivo imprevisível entre componentes.',
+    desc: '✓ DECIDIDO: manter TODOS os breakpoints (foram colocados de forma minuciosa, caso a caso) — só documentar/nomear um mapa de referência, sem remover nenhum.',
     where: 'HeroSection · layout · CommunityPanel',
     sev: 'baixa',
     eff: 'alto',
-    rec: 'Mapa canônico (sm/md/lg/xl/2xl) via postcss-custom-media + migrar.',
+    rec: 'Documentar o mapa (480/560/600/640/720/768/880/900/1024/1100) como referência — sem migração que mude comportamento.',
   },
   {
     cat: 'Motion',
     title: 'Reduced-motion incompleto',
-    desc: '≈70% das animações respeitam prefers-reduced-motion; faltam checks em MotionStateButton, MotionSwitch e NumberTicker (acessibilidade).',
+    desc: '✓ DECIDIDO + IMPLEMENTADO: useReducedMotion adicionado nos componentes que faltavam (MotionSwitch, NumberTicker). Zero mudança visual no padrão — só quem liga "reduzir movimento" no SO pula a animação.',
     where: 'componentes de motion',
     sev: 'baixa',
     eff: 'baixo',
-    rec: 'Adicionar useReducedMotion nos componentes faltantes.',
+    rec: 'Feito: hook respeitado em todos os componentes de motion. (MotionStateButton sai na padronização de botões.)',
   },
 ];
 
@@ -840,16 +840,16 @@ const REPROS: Record<string, ReactNode> = {
   'Paleta roxo/rosa não tokenizada': (
     <>
       {[
-        ['#a855f7', 'roxo'],
-        ['#9333ea', 'roxo-2'],
-        ['#c084fc', 'roxo-3'],
-        ['#d946ef', 'fúcsia'],
-        ['#ec4899', 'rosa'],
-        ['#f472b6', 'rosa-2'],
-        ['#f97316', 'laranja'],
-      ].map(([hex, name]) => (
-        <RC key={hex} tag={`${hex} · ${name}`}>
-          <span style={{ width: 64, height: 48, borderRadius: 10, background: hex, border: '1px solid rgba(255,255,255,0.08)' }} />
+        ['#9333ea', '✓ PADRÃO roxo', false],
+        ['#ec4899', '✓ PADRÃO rosa', false],
+        ['#a855f7', '✕ → #9333ea', true],
+        ['#c084fc', '✕ → #9333ea', true],
+        ['#d946ef', '✕ → #ec4899', true],
+        ['#f472b6', '✕ → #ec4899', true],
+        ['#f97316', 'laranja (grad-tri)', false],
+      ].map(([hex, label, removed]) => (
+        <RC key={hex as string} tag={`${hex} · ${label}`}>
+          <span style={{ width: 64, height: 48, borderRadius: 10, background: hex as string, border: '1px solid rgba(255,255,255,0.08)', opacity: removed ? 0.32 : 1, filter: removed ? 'grayscale(0.4)' : 'none' }} />
         </RC>
       ))}
     </>
@@ -857,15 +857,16 @@ const REPROS: Record<string, ReactNode> = {
   'Raios de pill/card variados': (
     <>
       {[
-        ['50%', '50% (círculo/pill)'],
-        ['999px', '999px (pill)'],
-        ['8px', '8px'],
-        ['12px', '12px'],
-        ['16px', '16px'],
-        ['18px', '18px'],
-      ].map(([r, label]) => (
-        <RC key={label} tag={label}>
-          <span style={{ width: 64, height: 48, borderRadius: r, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }} />
+        ['999px', '✓ PADRÃO pill/círculo', false],
+        ['8px', '✓ PADRÃO card', false],
+        ['6px', 'QuizPost/Media (decidido)', false],
+        ['50%', '✕ → 999px', true],
+        ['12px', '✕ remover', true],
+        ['16px', '✕ remover', true],
+        ['18px', '✕ remover', true],
+      ].map(([r, label, removed]) => (
+        <RC key={label as string} tag={`${r} · ${label}`}>
+          <span style={{ width: 64, height: 48, borderRadius: r as string, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', opacity: removed ? 0.32 : 1 }} />
         </RC>
       ))}
     </>
@@ -886,23 +887,24 @@ const REPROS: Record<string, ReactNode> = {
   'Densidade inconsistente': (
     <>
       {[
-        ['10px 12px', '10×12'],
-        ['12px 14px', '12×14'],
-        ['8px 14px', '8×14'],
-        ['10px 16px', '10×16'],
-      ].map(([pad, label]) => (
-        <RC key={label} tag={`padding: ${label}`}>
-          <span style={{ display: 'inline-block', padding: pad, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F5F5F7', fontSize: 13 }}>Item</span>
+        ['12px 16px', '✓ grid 4px (12×16)', false],
+        ['10px 12px', '✕ 10×12 → 12×12', true],
+        ['12px 14px', '✕ 12×14 → 12×16', true],
+        ['8px 14px', '✕ 8×14 → 8×16', true],
+        ['10px 16px', '✕ 10×16 → 12×16', true],
+      ].map(([pad, label, off]) => (
+        <RC key={label as string} tag={label as string}>
+          <span style={{ display: 'inline-block', padding: pad as string, borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F5F5F7', fontSize: 13, opacity: off ? 0.4 : 1 }}>Item</span>
         </RC>
       ))}
     </>
   ),
   'Empty / error states só texto': (
     <>
-      <RC tag="Hoje · só texto">
-        <span style={{ display: 'grid', placeItems: 'center', width: 200, height: 90, borderRadius: 12, border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(245,245,247,0.45)', fontSize: 13 }}>Sem resultados</span>
+      <RC tag="✕ hoje · só texto">
+        <span style={{ display: 'grid', placeItems: 'center', width: 200, height: 90, borderRadius: 8, border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(245,245,247,0.45)', fontSize: 13 }}>Sem resultados</span>
       </RC>
-      <RC tag="Ideal · ícone + texto + ação">
+      <RC tag="✓ PADRÃO · ícone + texto + ação">
         <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: 200, height: 90, justifyContent: 'center', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
           <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
           <span style={{ fontSize: 12, color: 'rgba(245,245,247,0.6)' }}>Nada por aqui</span>
@@ -910,6 +912,38 @@ const REPROS: Record<string, ReactNode> = {
         </span>
       </RC>
     </>
+  ),
+  'Breakpoints fragmentados': (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#82828e' }}>
+        Mapa de referência — todos mantidos (cada um foi colocado de propósito)
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+        {[480, 560, 600, 640, 720, 768, 880, 900, 1024, 1100].map((bp) => (
+          <span key={bp} style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.06)', color: 'rgba(245,245,247,0.7)' }}>
+            {bp}px
+          </span>
+        ))}
+      </div>
+    </div>
+  ),
+  'Reduced-motion incompleto': (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#82828e' }}>
+        useReducedMotion respeitado nos componentes de motion
+      </span>
+      {[
+        ['MotionSwitch', '✓ implementado'],
+        ['NumberTicker', '✓ implementado'],
+        ['ModalShell · listas · toasts', '✓ já respeitavam'],
+        ['MotionStateButton', '— sai na padronização de botões'],
+      ].map(([name, state]) => (
+        <span key={name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: 'rgba(245,245,247,0.7)', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{name}</span>
+          <span style={{ color: state.startsWith('✓') ? '#3ddb74' : 'rgba(245,245,247,0.4)' }}>{state}</span>
+        </span>
+      ))}
+    </div>
   ),
 };
 
