@@ -96,6 +96,29 @@
   align-items: center;
   gap: 5px;
 }
+/* DM: nome é botão pro perfil. Reset de botão + herda a tipografia
+ * do .headerName; hover sublinha discreto pra indicar que é link. */
+.headerNameLink {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  max-width: 100%;
+  font-family: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.headerNameLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.headerNameLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 /* Inline verified check next to the name in the chat header. */
 .headerInlineVerified {
   flex-shrink: 0;

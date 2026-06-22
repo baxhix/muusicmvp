@@ -17,6 +17,7 @@ import { showAppToast } from './AppToast';
 import { confirmDialog } from './ConfirmDialog';
 import VerifiedBadge from './VerifiedBadge';
 import TruncatedText from './TruncatedText';
+import { globeStore } from '@/lib/globeStore';
 /* P2.7 — code-split: ReportModal e MentionAutocomplete são usados
  * só em paths secundários (kebab "Denunciar" + composer com @).
  * Carregar lazy reduz o JS inicial do painel (~12KB gzip cada),
@@ -752,7 +753,20 @@ export default function LiveChatPanel({
           </span>
         )}
         <div className={styles.headerInfo}>
-          <TruncatedText className={styles.headerName} title={headerName}>
+          {/* DM: nome vira link pro perfil do usuário (mesma ação do
+              "Ver perfil" no kebab). Grupo: nome é o título do grupo,
+              fica estático (não há perfil). */}
+          <TruncatedText
+            as={!isGroup && other ? 'button' : 'span'}
+            type={!isGroup && other ? 'button' : undefined}
+            className={`${styles.headerName}${!isGroup && other ? ` ${styles.headerNameLink}` : ''}`}
+            title={headerName}
+            onClick={
+              !isGroup && other
+                ? () => { if (other) globeStore.openUserProfile(other.id); }
+                : undefined
+            }
+          >
             {headerName}
             {isVerified && (
               <VerifiedBadge size={16} className={styles.headerInlineVerified} />
@@ -840,6 +854,17 @@ export default function LiveChatPanel({
                   </>
                 ) : (
                   <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.kebabItem}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (other) globeStore.openUserProfile(other.id);
+                      }}
+                    >
+                      Ver perfil
+                    </button>
                     <button
                       type="button"
                       role="menuitem"
