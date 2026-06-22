@@ -235,7 +235,7 @@ export async function getUserActivities(
   userId: string,
   opts: { limit?: number; before?: Date } = {},
 ): Promise<{ items: MyActivityRow[]; hasMore: boolean }> {
-  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
+  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const cursor = opts.before ? opts.before.toISOString() : null;
 
   const result = await db.execute(sql`

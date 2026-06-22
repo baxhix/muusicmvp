@@ -189,6 +189,31 @@ export const metricsService = {
     return mapActivity(res.items);
   },
 
+  /**
+   * Página do feed cross-user com cursor — usada pela página
+   * "Atividade" (não pelo card resumido do dashboard). Passe
+   * `before` (o createdAt do item mais antigo já carregado) pra
+   * puxar o bloco anterior; o "Carregar mais" caminha o cursor
+   * pra trás até o backend dizer `hasMore: false`, então o admin
+   * alcança o histórico inteiro (não só os últimos dias).
+   */
+  activityPage: async (
+    before?: string,
+  ): Promise<{ items: ActivityEntry[]; hasMore: boolean; nextCursor: string | null }> => {
+    const qs = new URLSearchParams({ limit: '100' });
+    if (before) qs.set('before', before);
+    const res = await api.get<{ items: BackendActivity[]; hasMore: boolean }>(
+      `/api/admin/activities?${qs.toString()}`,
+    );
+    const items = mapActivity(res.items);
+    const oldest = items[items.length - 1];
+    return {
+      items,
+      hasMore: Boolean(res.hasMore),
+      nextCursor: oldest?.createdAt ?? null,
+    };
+  },
+
   // ── No backing data yet — return empty arrays so the chart cards
   // render in their empty state instead of mixing fake mock numbers
   // alongside the real KPIs above. When billing / moderation / plan

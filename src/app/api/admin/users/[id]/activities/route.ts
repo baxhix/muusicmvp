@@ -53,6 +53,7 @@ interface AdminActivityEvent {
 
 const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional(),
+  before: z.string().datetime().optional(),
 });
 
 /** Map a single ledger row's kind into the admin event shape. */
@@ -169,6 +170,7 @@ export async function GET(
   const url = new URL(req.url);
   const parsed = querySchema.safeParse({
     limit: url.searchParams.get('limit') ?? undefined,
+    before: url.searchParams.get('before') ?? undefined,
   });
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid_query' }, { status: 400 });
@@ -176,12 +178,16 @@ export async function GET(
 
   // The ledger query already merges in track + conversation
   // labels via JOINs, so we can map straight from MyActivityRow
-  // to the admin event shape without further fan-out.
-  const { items } = await getUserActivities(id, {
-    limit: parsed.data.limit ?? 100,
+  // to the admin event shape without further fan-out. `before` is
+  // a created_at cursor — the admin client walks it page by page
+  // (200 at a time) until `hasMore` is false to load a user's
+  // ENTIRE history since signup.
+  const { items, hasMore } = await getUserActivities(id, {
+    limit: parsed.data.limit ?? 200,
+    before: parsed.data.before ? new Date(parsed.data.before) : undefined,
   });
 
   const events = items.map((row) => mapToAdminEvent(id, row));
 
-  return NextResponse.json({ events });
+  return NextResponse.json({ events, hasMore });
 }

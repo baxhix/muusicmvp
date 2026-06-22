@@ -41,7 +41,36 @@ export const usersService = {
    * action: 'track_played'` rows so the audit doubles as a
    * listening log. Per product feedback "salve no admin junto
    * das atividades do usuário".
+   *
+   * "Ver atividades completas" deve listar TUDO desde o cadastro,
+   * então paginamos o cursor `before` (created_at) em blocos de 200
+   * até o backend dizer `hasMore: false`. O safety cap de 100 páginas
+   * (20.000 eventos) só existe pra blindar contra loop infinito —
+   * está muito acima de qualquer histórico real.
    */
-  activities: (id: string) =>
-    api.get<{ events: UserActivityEvent[] }>(`/api/admin/users/${id}/activities`),
+  activities: async (id: string): Promise<{ events: UserActivityEvent[] }> => {
+    const PAGE = 200;
+    const MAX_PAGES = 100;
+    const all: UserActivityEvent[] = [];
+    let before: string | undefined;
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const qs = new URLSearchParams({ limit: String(PAGE) });
+      if (before) qs.set('before', before);
+      const res = await api.get<{ events: UserActivityEvent[]; hasMore?: boolean }>(
+        `/api/admin/users/${id}/activities?${qs.toString()}`,
+      );
+
+      const events = res?.events ?? [];
+      all.push(...events);
+
+      // Cursor = timestamp do evento mais antigo desta página (a lista
+      // vem ordenada do mais novo pro mais antigo).
+      const oldest = events[events.length - 1];
+      if (!res?.hasMore || events.length === 0 || !oldest?.timestamp) break;
+      before = oldest.timestamp;
+    }
+
+    return { events: all };
+  },
 };

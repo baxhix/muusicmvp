@@ -448,7 +448,7 @@ export default function UserActivitiesPage() {
           label="Eventos totais"
           value={String(summary.total)}
           icon={<IconFeed size={14} />}
-          trendLabel="Últimos 90 dias"
+          trendLabel="Desde o cadastro"
         />
         <StatCard
           label="Logins (30 dias)"

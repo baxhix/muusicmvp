@@ -1,20 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import Avatar from '@/components/ui/Avatar';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import { metricsService } from '@/services/metrics';
 import { formatRelative } from '@/lib/format';
 import type { ActivityEntry } from '@/types';
 import styles from './page.module.css';
 
 /**
- * Atividade recente — página dedicada (cross-user). Lista as últimas
- * ações dos usuários na plataforma COM avatar, nome, categoria e
- * tempo relativo. Reusa metricsService.activity() (GET
- * /api/admin/activities), que já entrega user.avatarUrl.
+ * Atividade recente — página dedicada (cross-user). Lista as ações
+ * dos usuários na plataforma COM avatar, nome, categoria e tempo
+ * relativo. Usa metricsService.activityPage() (GET
+ * /api/admin/activities), que já entrega user.avatarUrl e um cursor
+ * `before`. O "Carregar mais" caminha o cursor pra trás até o fim do
+ * histórico — a lista alcança as atividades de sempre, não só os
+ * últimos dias.
  */
 
 /** kind cru → badge de categoria (tom padronizado pelo Badge do admin). */
@@ -30,13 +34,19 @@ const KIND_BADGE: Record<
 export default function AtividadePage() {
   const [items, setItems] = useState<ActivityEntry[] | null>(null);
   const [error, setError] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     metricsService
-      .activity()
-      .then((rows) => {
-        if (!cancelled) setItems(rows);
+      .activityPage()
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res.items);
+        setHasMore(res.hasMore);
+        setCursor(res.nextCursor);
       })
       .catch(() => {
         if (!cancelled) setError(true);
@@ -45,6 +55,21 @@ export default function AtividadePage() {
       cancelled = true;
     };
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await metricsService.activityPage(cursor);
+      setItems((prev) => [...(prev ?? []), ...res.items]);
+      setHasMore(res.hasMore);
+      setCursor(res.nextCursor);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cursor, loadingMore]);
 
   return (
     <>
@@ -100,6 +125,19 @@ export default function AtividadePage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {items !== null && items.length > 0 && hasMore && (
+          <div className={styles.loadMore}>
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={loadingMore}
+              onClick={loadMore}
+            >
+              Carregar mais
+            </Button>
           </div>
         )}
       </Card>
