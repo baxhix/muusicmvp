@@ -460,12 +460,12 @@ function ComponentesSection() {
       <Spec
         name="Botões"
         category="Componentes"
-        description="Ação primária. 6 variantes × 3 tamanhos, com ícones, loading, sucesso e icon-only. Multi-state animado + press tátil via Motion."
+        description="Ação primária. 6 variantes × 4 tamanhos, com ícones, loading, sucesso e icon-only. Multi-state animado + press tátil via Motion."
         stageCol
         meta={[
           ['Componente', code('Button')],
           ['Onde é usado', 'praticamente toda página — toolbars, formulários, dialogs'],
-          ['Variações', '6 variantes · 3 tamanhos (sm 28 / md 34 / lg 40) · iconOnly · leading/trailingIcon'],
+          ['Variações', '6 variantes · 4 tamanhos (sm 28 / md 34 / lg 40 / xl 48) · iconOnly · leading/trailingIcon'],
           ['Props', <>{code('variant')} {code('size')} {code('loading')} {code('success')} {code('disabled')} {code('iconOnly')}</>],
           ['Motion', <>multi-state {code('idle → loading → success')} (spring pop) + press {code('scale(0.97)')}; respeita reduced-motion</>],
           ['Observações', <>Variante danger usa o token {code('--danger-fg')} (antes #FFFFFF fixo)</>],
@@ -484,7 +484,13 @@ function ComponentesSection() {
               <Button size="sm">sm</Button>
               <Button size="md">md</Button>
               <Button size="lg">lg</Button>
+              <Button size="xl">xl</Button>
             </div>
+          </Cell>
+          <Cell label="CTA grande (primary)">
+            <Button variant="primary" size="xl" leadingIcon={<IconPlus size={18} />}>
+              Ação principal
+            </Button>
           </Cell>
           <Cell label="Com ícone">
             <Button leadingIcon={<IconPlus size={15} />}>Novo</Button>
