@@ -160,7 +160,9 @@ const COLOR_GROUPS: { title: string; hint: string; tokens: string[] }[] = [
   },
 ];
 
-const SEMANTIC_TONES = ['brand', 'info', 'success', 'warning', 'danger', 'neutral'] as const;
+// --success foi mesclado com --brand (um único verde no sistema:
+// identidade = estado positivo), então a paleta mostra só --brand.
+const SEMANTIC_TONES = ['brand', 'info', 'warning', 'danger', 'neutral'] as const;
 
 const SPACING: [string, string][] = [
   ['--s-1', '4px'],
@@ -188,8 +190,8 @@ const RADII: [string, string][] = [
 const SHADOWS = ['--shadow-xs', '--shadow-sm', '--shadow-md', '--shadow-lg', '--shadow-pop'];
 
 const TYPE_SCALE: { token: string; px: string; weight: number; label: string }[] = [
-  { token: '--text-2xl', px: '24px', weight: 700, label: 'Display / número de KPI' },
-  { token: '--text-xl', px: '20px', weight: 600, label: 'Título de página' },
+  { token: '--text-2xl', px: '28px', weight: 700, label: 'Display / número de KPI' },
+  { token: '--text-xl', px: '24px', weight: 600, label: 'Título de página' },
   { token: '--text-lg', px: '16px', weight: 600, label: 'Título de card / seção' },
   { token: '--text-base', px: '14px', weight: 400, label: 'Corpo — inputs, tabelas' },
   { token: '--text-sm', px: '12.5px', weight: 400, label: 'Auxiliar (helper)' },
@@ -264,7 +266,9 @@ function FoundationsSection() {
         ))}
 
         <div style={{ width: '100%' }}>
-          <span className={styles.cellLabel}>Semânticas (base · soft · line)</span>
+          <span className={styles.cellLabel}>
+            Semânticas (base · soft · line) — --success = --brand (verde único)
+          </span>
           <div className={styles.swatchGrid} style={{ marginTop: 8 }}>
             {SEMANTIC_TONES.map((tone) => (
               <div key={tone} className={styles.swatch}>

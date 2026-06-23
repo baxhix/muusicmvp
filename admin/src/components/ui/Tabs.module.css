@@ -40,6 +40,7 @@
   height: 38px;
   padding: 0 14px 0 12px;
   margin-bottom: -1px;
+  font-weight: 600;
 }
 .bordered .tab::after {
   content: '';
