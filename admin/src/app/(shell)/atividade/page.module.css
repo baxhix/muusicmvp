@@ -1,3 +1,10 @@
+/* Mesmo container das demais tabelas do admin (pre-save, detalhe do
+ * usuário): card arredondado com borda completa + sombra. `overflow`
+ * recorta as linhas full-width nos cantos arredondados. */
+.tableCard {
+  overflow: hidden;
+}
+
 .list {
   display: flex;
   flex-direction: column;

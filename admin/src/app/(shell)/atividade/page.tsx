@@ -7,7 +7,7 @@ import Avatar from '@/components/ui/Avatar';
 import Badge, { type BadgeTone } from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { metricsService } from '@/services/metrics';
-import { formatRelative } from '@/lib/format';
+import { formatDateTime } from '@/lib/format';
 import type { ActivityEntry } from '@/types';
 import styles from './page.module.css';
 
@@ -78,7 +78,7 @@ export default function AtividadePage() {
         description="Últimas ações dos usuários na plataforma — streams, logins e conversas."
       />
 
-      <Card flush>
+      <Card className={styles.tableCard}>
         {items === null && !error && (
           <div className={styles.list} aria-hidden="true">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -121,7 +121,7 @@ export default function AtividadePage() {
                       {badge.label}
                     </Badge>
                   )}
-                  <span className={styles.when}>{formatRelative(a.createdAt)}</span>
+                  <span className={styles.when}>{formatDateTime(a.createdAt)}</span>
                 </div>
               );
             })}
