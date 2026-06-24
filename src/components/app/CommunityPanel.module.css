@@ -195,31 +195,34 @@
   color: var(--ink);
 }
 
-/* CTA rotulado do header ("Criar comunidade") — pill lilás soft
- * (fill, sem borda). Vive no slot `trailing` do HeaderBar, à direita
- * do título e antes da seta de fechar. Some no mobile junto com
- * `.header` (display:none ≤768px); lá o FAB "+" é a entrada. */
-.headerCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  padding: 7px 14px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(168, 85, 247, 0.16);
-  color: #fff;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.14s ease, transform 0.16s ease;
+/* CTA rotulado "Criar comunidade" — MOBILE-ONLY (per feedback "no
+ * desktop não exibir, apenas no mobile"). No desktop fica oculto
+ * (display:none); no mobile vira botão full-width no topo do corpo
+ * (o header interno some ≤768px). Pill lilás soft, sem borda. */
+.headerCta { display: none; }
+@media (max-width: 768px) {
+  .headerCta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 2px 0 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(168, 85, 247, 0.18);
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.14s ease, transform 0.16s ease;
+  }
+  .headerCta:active { transform: scale(0.98); }
+  .headerCta svg { width: 16px; height: 16px; }
 }
-.headerCta:hover { background: rgba(168, 85, 247, 0.26); }
-.headerCta:active { transform: scale(0.97); }
-.headerCta svg { width: 14px; height: 14px; }
 
 /* Back chevron — shown on detail + topic views. Same circular
  * neutral pill as the close button (for visual consistency on

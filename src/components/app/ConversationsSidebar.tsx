@@ -249,26 +249,11 @@ export default function ConversationsSidebar({
     >
       <header className={styles.header}>
         <h2 className={styles.title}>Chat</h2>
-        {/* CTA rotulado "Iniciar conversa" alinhado à direita (antes da
-         *  seta de fechar). Atalho rápido pro fluxo de nova conversa
-         *  individual (setCreateView('single')) — o FAB lilás abaixo
-         *  segue oferecendo conversa OU grupo. Vive no header interno,
-         *  que é display:none no mobile (lá o FAB é a entrada). */}
-        <button
-          type="button"
-          className={styles.headerCta}
-          onClick={() => setCreateView('single')}
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M8 3v10M3 8h10" />
-          </svg>
-          Iniciar conversa
-        </button>
-        {/* Os botões "Nova conversa" / "Novo grupo" SAÍRAM do
-         *  header per product feedback. Agora vivem dentro de um
-         *  menu expansível ancorado ao FAB lilás no canto
-         *  inferior direito do painel (ver `.fab` + `.fabMenu`
-         *  abaixo). Mesmo padrão do CommunityPanel. */}
+        {/* As ações de criar (Nova conversa / Novo grupo) vivem no FAB
+         *  lilás no canto inferior direito (ver `.fab`/`.fabMenu`). O
+         *  CTA rotulado "Iniciar conversa" é MOBILE-ONLY e foi movido
+         *  pro corpo do painel (abaixo) — per feedback "no desktop não
+         *  exibir, apenas no mobile". */}
         <button
           type="button"
           className={styles.closeBtn}
@@ -281,6 +266,20 @@ export default function ConversationsSidebar({
           </svg>
         </button>
       </header>
+
+      {/* CTA "Iniciar conversa" — MOBILE-ONLY (`.headerCta` é display:none
+       *  no desktop). No mobile o header interno some, então este botão
+       *  rotulado fica no topo do corpo como atalho de nova conversa. */}
+      <button
+        type="button"
+        className={styles.headerCta}
+        onClick={() => setCreateView('single')}
+      >
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" />
+        </svg>
+        Iniciar conversa
+      </button>
 
       <div className={styles.searchWrap}>
         <svg className={styles.searchIcon} viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

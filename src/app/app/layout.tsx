@@ -300,28 +300,25 @@ function Shell({ children }: { children: React.ReactNode }) {
            * verticalmente) e o BottomNav já está cheio. */}
           {!hideShellChrome && !hideMobileHeader && isMobile && !feedOpen && (
             <div className={`${styles.topBar} ${fadeClass(5)}`}>
+              {/* Atalho de NOTIFICAÇÕES (ícone de coração) — substitui o
+               *  antigo atalho de Conversas (paper-plane). O Chat segue
+               *  acessível pela BottomNav; aqui o coração abre o painel
+               *  de notificações (mesmo overlay do NotificationBell). */}
               <button
                 type="button"
-                className={`${styles.shortcutBtn} ${pathname.startsWith('/app/chat') ? styles.shortcutBtnActive : ''}`}
-                onClick={() => {
-                  if (pathname.startsWith('/app/chat')) {
-                    router.push('/app');
-                  } else {
-                    router.push('/app/chat');
-                  }
-                }}
-                aria-label={pathname.startsWith('/app/chat') ? 'Fechar conversas' : 'Conversas'}
-                aria-pressed={pathname.startsWith('/app/chat')}
-                title="Conversas"
+                className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
+                onClick={() =>
+                  setActiveOverlay((curr) =>
+                    curr === 'notifications' ? null : 'notifications',
+                  )
+                }
+                aria-label={showNotifications ? 'Fechar notificações' : 'Notificações'}
+                aria-pressed={showNotifications}
+                title="Notificações"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21.5 2.5L11 13M21.5 2.5L14.5 21.5L10.5 13L2 9L21.5 2.5z" />
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                 </svg>
-                {chatUnreadCount > 0 && (
-                  <span className={styles.shortcutBtnBadge} aria-hidden="true">
-                    {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                  </span>
-                )}
               </button>
             </div>
           )}
