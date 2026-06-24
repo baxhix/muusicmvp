@@ -686,7 +686,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 0 16px 8px;
+  /* top 4px = mesmo respiro da tab Exclusivo (.materials padding-top). */
+  padding: 4px 16px 8px;
 }
 
 /* Link "Conquistas" inline dentro da tab Superfãs.
@@ -1453,7 +1454,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  margin: 2px 0 8px;
+  /* top 4px = mesmo respiro da tab Exclusivo (.materials padding-top). */
+  margin: 4px 0 8px;
 }
 
 .missionsTitle {
