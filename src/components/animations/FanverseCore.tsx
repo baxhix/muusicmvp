@@ -85,6 +85,12 @@ void main(){
   vec2 res = uResolution;
   vec2 uv = (vUv * res - 0.5*res) / min(res.x, res.y);
   uv.y = -uv.y;
+  // Zoom-out (1.3): a esfera tem R=0.55 e os halos vão até ~0.65, mas a
+  // borda do canvas fica em 0.5 — então o orbe encostava/cortava nas 4
+  // bordas, lendo como um "box" que cortava a sombra/forma. Escalando o
+  // uv por 1.3 o conteúdo inteiro (corpo + halo) cabe dentro do canvas
+  // com folga, restaurando o orbe "free-floating, no frame" do design.
+  uv *= 1.3;
 
   // Varying speed in a loop: slow -> fast -> slow via integrated sine
   // d/dt(t) = 3.0 + 1.5*cos(uTime*0.5) → ranges ~ 1.5 .. 4.5
