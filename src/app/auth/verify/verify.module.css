@@ -55,3 +55,15 @@
   height: 14px;
   background: rgba(255, 255, 255, 0.16);
 }
+
+/* Desktop: os botões "Reenviar link e código" · "Usar outro e-mail"
+ * ficam centralizados na MESMA coluna de 386px do CTA (per feedback
+ * "centralize ... de acordo com o cta"). align-self:flex-start ancora a
+ * row na borda esquerda do form; max-width 386 + justify-content:center
+ * centralizam os botões exatamente sob o botão principal. */
+@media (min-width: 1024px) {
+  .actions {
+    align-self: flex-start;
+    max-width: 386px;
+  }
+}

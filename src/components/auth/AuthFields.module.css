@@ -269,22 +269,21 @@
  * (formPane é position:relative). No mobile/tablet (<1024) o hint
  * volta a ser empurrado pelo flex (margin-top:auto). */
 @media (min-width: 1024px) {
+  /* Termos em FLUXO, logo abaixo do form, na MESMA coluna de 386px do
+   * CTA e com texto centralizado nela (per feedback "centralize a frase
+   * de termos de acordo com o cta"). Antes era position:fixed centrado
+   * na metade direita da viewport, o que deixava a frase deslocada à
+   * direita do botão. align-self:flex-start ancora a caixa na borda
+   * esquerda (mesma do input/CTA); max-width 386 + text-align center
+   * centralizam o texto exatamente sobre o botão. */
   .hintFooter {
-    /* Rodapé da página: fixo no fundo da coluna do form. O split é
-     * 60% foto / 40% form, então left:60% right:0 cobre a coluna do
-     * form e o text-align:center (herdado de .hint) centraliza nela.
-     * (Absolute não serve: o .content é position:relative e viraria
-     * a âncora; fixed ancora na viewport, e o shell não rola.) */
-    position: fixed;
-    left: 50%;
-    right: 0;
-    bottom: 22px;
-    width: auto;
-    max-width: none;
-    transform: none;
-    padding: 0 24px;
+    position: static;
+    align-self: flex-start;
+    width: 100%;
+    max-width: 386px;
+    text-align: center;
     margin: 0;
-    z-index: 3;
+    padding-top: 28px;
   }
   /* No desktop o box de conteúdo é largo (560) pra o título caber numa
    * linha, mas o input + CTA ficam em 386px, alinhados à esquerda com o
@@ -410,5 +409,27 @@
    * disparar o auto-zoom do iOS. */
   .inputSm {
     height: 48px;
+  }
+}
+
+/* ── Desktop: posicionamento vertical do "Voltar" ────────────────
+ * Colocado no FIM do arquivo de propósito: a regra base de .stepBack
+ * vem depois do bloco @media de 1024px lá em cima, então um override
+ * lá não venceria por ordem de fonte. Aqui (após a base) ele vale.
+ *
+ * "Voltar" mais acima e afastado do h1: a margem inferior grande
+ * empurra o link pro topo do bloco (centralizado na vertical) e abre
+ * respiro até o título. Como o bloco recentraliza, o h1 desce um pouco,
+ * alinhando-o com a posição do step 1 (que tem o orbe acima do título). */
+@media (min-width: 1024px) {
+  .stepBack {
+    margin-bottom: 72px;
+  }
+  /* Empurra o bloco do step 1 (orbe + título) um pouco pra baixo, de
+   * modo que o h1 caia na MESMA altura do step 2 (que desceu com o
+   * respiro do "Voltar"). Per feedback "posicione o conteúdo do step 1
+   * na mesma posição que o step 2". */
+  .mobileOrb {
+    margin-top: 38px;
   }
 }
