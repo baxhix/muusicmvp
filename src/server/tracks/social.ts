@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { tracks, trackLikes, trackComments, users } from '../db/schema';
 import { TRACKS_CATALOG } from '@/data/tracksCatalog';
+import { publicFirstName } from '../users/serialize';
 
 /**
  * Social de faixa — comentários + likes por música. Tudo é endereçado
@@ -123,6 +124,7 @@ export async function listTrackComments(args: {
       createdAt: trackComments.createdAt,
       authorId: trackComments.authorId,
       authorName: users.name,
+      authorIsMinor: users.isMinor,
       authorAvatar: users.avatarUrl,
     })
     .from(trackComments)
@@ -143,7 +145,12 @@ export async function listTrackComments(args: {
       id: r.id,
       body: r.body,
       createdAt: r.createdAt.toISOString(),
-      author: { id: r.authorId, name: r.authorName, avatarUrl: r.authorAvatar },
+      // Proteção a menores: só primeiro nome pra menores (listagem pública).
+      author: {
+        id: r.authorId,
+        name: publicFirstName(r.authorName, Boolean(r.authorIsMinor)),
+        avatarUrl: r.authorAvatar,
+      },
       isMine: r.authorId === args.viewerId,
     })),
     hasMore,

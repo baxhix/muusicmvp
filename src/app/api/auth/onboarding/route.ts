@@ -5,6 +5,8 @@ import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { getCurrentUser } from '@/server/auth/session';
 import { maybeRewardReferral } from '@/server/referral/queries';
+import { sendParentSignupNotice } from '@/server/email/parentNotice';
+import { logger } from '@/server/log';
 
 export const runtime = 'nodejs';
 
@@ -45,6 +47,8 @@ const bodySchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   age: z.number().int().min(0).max(150).optional(),
   isMinor: z.boolean().optional(),
+  // E-mail do responsável — obrigatório no fluxo de menor (12–17).
+  parentEmail: z.string().email().max(254).optional(),
   // Consentimento LGPD de localização escolhido no passo Perfil.
   locationConsent: z.boolean().optional(),
   interests: z.array(z.string().max(40)).max(50).optional(),
@@ -78,11 +82,20 @@ export async function POST(req: Request) {
 
   // Constrói patch só com os campos presentes — não sobrescreve
   // valores existentes com undefined.
+  // is_minor calculado no servidor a partir da data (não confia no
+  // flag do cliente). Cai pro flag do cliente só se faltar a data.
+  const serverIsMinor = parsed.birthDate
+    ? ageFromBirthDateISO(parsed.birthDate) < 18
+    : Boolean(parsed.isMinor);
+
   const patch: Record<string, unknown> = { isOnboarded: true };
   if (parsed.displayName) patch.name = parsed.displayName;
   if (parsed.birthDate) patch.birthDate = parsed.birthDate;
   if (typeof parsed.age === 'number') patch.age = parsed.age;
   if (typeof parsed.isMinor === 'boolean') patch.isMinor = parsed.isMinor;
+  // E-mail do responsável só é guardado pra contas de menor — pra
+  // adulto é descartado mesmo que o cliente envie por engano.
+  if (serverIsMinor && parsed.parentEmail) patch.parentEmail = parsed.parentEmail;
   // Guard server-side: menor NUNCA consente localização, mesmo que o
   // cliente envie true (o toggle já fica escondido na UI).
   if (typeof parsed.locationConsent === 'boolean') {
@@ -94,6 +107,24 @@ export async function POST(req: Request) {
   }
 
   await db.update(users).set(patch).where(eq(users.id, me.id));
+
+  /* Aviso ao responsável: conta de menor (12–17) com e-mail do
+   * responsável informado → manda o e-mail de "seu filho se cadastrou".
+   * Best-effort — uma falha no envio NÃO bloqueia a finalização da
+   * conta (o aviso é importante mas não pode travar o onboarding). */
+  if (serverIsMinor && parsed.parentEmail) {
+    try {
+      await sendParentSignupNotice({
+        to: parsed.parentEmail,
+        childName: parsed.displayName ?? me.name,
+      });
+    } catch (err) {
+      logger.warn('auth.onboarding.parent-notice-failed', {
+        userId: me.id,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
 
   /* Ativação do referral — este é o momento de "first value" que
    * dispara o reward (não o signup puro, anti-fraude). Se o usuário

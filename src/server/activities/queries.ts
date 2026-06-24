@@ -192,6 +192,9 @@ export async function getRanking(limit = 100): Promise<RankingRow[]> {
       COALESCE(SUM(a.points), 0)::int                      AS points
     FROM users u
     LEFT JOIN user_activities a ON a.user_id = u.id
+    -- Proteção a menores: contas de menor não aparecem em listagens
+    -- públicas (ranking). Soft-deleted também ficam de fora.
+    WHERE u.is_minor = false AND u.deleted_at IS NULL
     GROUP BY u.id, u.name, u.avatar_url, u.city, u.country, u.location_consent
     ORDER BY points DESC, streams DESC, u.created_at ASC
     LIMIT ${limit}

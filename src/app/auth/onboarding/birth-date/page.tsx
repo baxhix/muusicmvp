@@ -40,6 +40,11 @@ const CURRENT_YEAR = new Date().getFullYear();
 const MIN_YEAR = CURRENT_YEAR - 110;
 const MAX_YEAR = CURRENT_YEAR - 5;
 
+/** Validação rasa de e-mail (mesmo critério do step de e-mail). */
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 /** Auto-formata digitos brutos em "DD/MM/AAAA". */
 function formatDateInput(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 8);
@@ -67,6 +72,7 @@ export default function BirthDatePage() {
   const { user, loading: authLoading } = useAuth();
 
   const [dateInput, setDateInput] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -89,6 +95,7 @@ export default function BirthDatePage() {
       }
       setAcceptedTerms(Boolean(stored.termsAcceptedAt));
     }
+    if (stored.parentEmail) setParentEmail(stored.parentEmail);
   }, [user, authLoading, router]);
 
   /**
@@ -114,6 +121,11 @@ export default function BirthDatePage() {
     return { isoDate, age, isMinor: age < 18 };
   }, [dateInput]);
 
+  // Menor de idade válido pra criar conta (12–17): exige e-mail do
+  // responsável. Abaixo de 12 a conta nem é criada, então não pede.
+  const needsParentEmail = Boolean(parsed && parsed.isMinor && parsed.age >= 12);
+  const parentEmailValid = isValidEmail(parentEmail);
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!parsed) {
@@ -123,6 +135,10 @@ export default function BirthDatePage() {
     // Menores de 12 anos não podem criar conta (o servidor também bloqueia).
     if (parsed.age < 12) {
       setSubmitError('Você precisa ter pelo menos 12 anos para criar uma conta.');
+      return;
+    }
+    if (needsParentEmail && !parentEmailValid) {
+      setSubmitError('Informe um e-mail válido do seu pai, mãe ou responsável.');
       return;
     }
     if (!acceptedTerms) {
@@ -139,6 +155,9 @@ export default function BirthDatePage() {
       birthDate: parsed.isoDate,
       age: parsed.age,
       isMinor: parsed.isMinor,
+      // Só guarda o e-mail do responsável quando é menor (12–17);
+      // limpa pra adultos pra não vazar valor digitado por engano.
+      parentEmail: needsParentEmail ? parentEmail.trim() : undefined,
       birthDateVerified: true,
       termsAcceptedAt: new Date().toISOString(),
       step: 'profile',
@@ -185,11 +204,33 @@ export default function BirthDatePage() {
               Não é possível criar uma conta no Fanverse com menos de 12 anos.
             </div>
           ) : parsed?.isMinor ? (
-            <div className={styles.minorNotice} role="status">
-              <strong>Você tem {parsed.age} anos.</strong>
-              <br />
-              Sua experiência na plataforma será adaptada à sua idade.
-            </div>
+            <>
+              <div className={styles.minorNotice} role="status">
+                <strong>Você tem {parsed.age} anos.</strong>
+                <br />
+                Sua experiência na plataforma será adaptada à sua idade. Por
+                segurança, precisamos avisar seu pai, mãe ou responsável.
+              </div>
+              <label className={styles.parentField}>
+                <span className={styles.parentLabel}>
+                  E-mail do seu pai, mãe ou responsável
+                </span>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="responsavel@email.com"
+                  value={parentEmail}
+                  onChange={(e) => {
+                    setParentEmail(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  className={fields.input}
+                  aria-label="E-mail do responsável"
+                  disabled={submitting}
+                />
+              </label>
+            </>
           ) : null}
 
           <MotionCheckbox
@@ -217,7 +258,12 @@ export default function BirthDatePage() {
             state={submitting ? 'pending' : 'idle'}
             idleLabel="Continuar"
             pendingLabel="Salvando…"
-            disabled={!parsed || !acceptedTerms}
+            disabled={
+              !parsed ||
+              !acceptedTerms ||
+              parsed.age < 12 ||
+              (needsParentEmail && !parentEmailValid)
+            }
           />
         </form>
         </div>

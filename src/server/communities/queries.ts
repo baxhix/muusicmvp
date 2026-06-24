@@ -19,6 +19,7 @@ import {
   users,
 } from '../db/schema';
 import { getUserPoints } from '../activities/queries';
+import { publicFirstName } from '../users/serialize';
 
 /* ── Communities (forum) data layer ───────────────────────────
  *
@@ -203,10 +204,11 @@ export async function getCommunityBySlug(
   // Member previews — 5 most-recent for the avatar stack. Public:
   // anyone visiting the community page sees who's in it (matches
   // the open-by-default forum convention).
-  const previewRows = await db
+  const previewRowsRaw = await db
     .select({
       id: users.id,
       name: users.name,
+      isMinor: users.isMinor,
       avatarUrl: users.avatarUrl,
     })
     .from(communityMembers)
@@ -214,11 +216,22 @@ export async function getCommunityBySlug(
     .where(eq(communityMembers.communityId, row.id))
     .orderBy(desc(communityMembers.joinedAt))
     .limit(5);
+  // Proteção a menores: só primeiro nome pra membros menores de idade.
+  const previewRows = previewRowsRaw.map((m) => ({
+    id: m.id,
+    name: publicFirstName(m.name, Boolean(m.isMinor)),
+    avatarUrl: m.avatarUrl,
+  }));
 
   // Creator mini-avatar. Resolved separately so it's stable even
   // if the creator dropped out of the latest-5 preview window.
   const [creatorRow] = await db
-    .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+    .select({
+      id: users.id,
+      name: users.name,
+      isMinor: users.isMinor,
+      avatarUrl: users.avatarUrl,
+    })
     .from(users)
     .where(eq(users.id, row.creatorId))
     .limit(1);
@@ -243,7 +256,7 @@ export async function getCommunityBySlug(
     creator: creatorRow
       ? {
           id: creatorRow.id,
-          name: creatorRow.name,
+          name: publicFirstName(creatorRow.name, Boolean(creatorRow.isMinor)),
           avatarUrl: creatorRow.avatarUrl,
         }
       : null,
@@ -482,6 +495,7 @@ export async function listMembers(args: {
     .select({
       userId: users.id,
       name: users.name,
+      isMinor: users.isMinor,
       avatarUrl: users.avatarUrl,
       joinedAt: communityMembers.joinedAt,
     })
@@ -493,7 +507,8 @@ export async function listMembers(args: {
 
   const items: ApiCommunityMember[] = rows.map((r) => ({
     userId: r.userId,
-    name: r.name,
+    // Proteção a menores: só primeiro nome pra membros menores de idade.
+    name: publicFirstName(r.name, Boolean(r.isMinor)),
     avatarUrl: r.avatarUrl,
     joinedAt: r.joinedAt.toISOString(),
     isCreator: r.userId === row.creatorId,

@@ -24,6 +24,28 @@
  * users, ranking, superchat participants, profile).
  */
 
+/**
+ * Nome público de um usuário, com proteção a menores.
+ *
+ * Requisito (proteção a menores): "oculte Sobrenome completo". Quando a
+ * row pertence a um MENOR de idade e está sendo exibida pra OUTRA pessoa,
+ * só o primeiro nome aparece — nunca o nome completo. Pra adultos (ou
+ * self-view) o nome volta intacto.
+ *
+ * Mantém o mesmo critério em todos os formatos cross-user que carregam
+ * `name` (profile, ranking, comentários, etc.), igual ao redactLocation.
+ */
+export function publicFirstName(
+  name: string | null | undefined,
+  isMinor: boolean,
+): string | null {
+  if (!name) return name ?? null;
+  if (!isMinor) return name;
+  // Primeiro token não-vazio (lida com espaços extras).
+  const first = name.trim().split(/\s+/)[0];
+  return first || name;
+}
+
 /** Subconjunto de localização que pode aparecer num formato público de
  *  usuário. Cada formato carrega só um subconjunto destes campos. */
 export interface RedactableLocation {

@@ -32,6 +32,9 @@ export interface OnboardingState {
   /** Calculado no submit do birth-date step. */
   age?: number;
   isMinor?: boolean;
+  /** E-mail do responsável — obrigatório quando isMinor (12–17).
+   *  Recebe o aviso de cadastro no finalize /api/auth/onboarding. */
+  parentEmail?: string;
   birthDateVerified?: boolean;
   termsAcceptedAt?: string;
   displayName?: string;

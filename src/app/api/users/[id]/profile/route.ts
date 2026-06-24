@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '@/server/db';
 import { users } from '@/server/db/schema';
 import { requireUser } from '@/server/auth/requireUser';
+import { publicFirstName } from '@/server/users/serialize';
 import { env } from '@/server/env';
 
 export const runtime = 'nodejs';
@@ -50,6 +51,7 @@ export async function GET(
       country: users.country,
       countryCode: users.countryCode,
       locationConsent: users.locationConsent,
+      isMinor: users.isMinor,
       avatarUrl: users.avatarUrl,
       lastSeenAt: users.lastSeenAt,
     })
@@ -101,7 +103,9 @@ export async function GET(
   return NextResponse.json({
     user: {
       id: u.id,
-      name: u.name,
+      // Proteção a menores: pra OUTRA pessoa, só o primeiro nome do
+      // menor aparece (oculta sobrenome completo). Self vê o nome cheio.
+      name: isSelf ? u.name : publicFirstName(u.name, Boolean(u.isMinor)),
       // Hide email on cross-user lookups; only return it for self.
       email: isSelf ? u.email : null,
       city: showLocation ? u.city : null,

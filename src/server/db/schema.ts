@@ -50,6 +50,9 @@ export const users = pgTable('users', {
    *  pode aplicar restrições de conteúdo / consentimento
    *  parental baseado nessa flag. */
   isMinor: boolean('is_minor').notNull().default(false),
+  /** E-mail do responsável/pais — obrigatório pra contas de menores
+   *  de idade (12–17). Recebe o aviso de que o filho se cadastrou. */
+  parentEmail: text('parent_email'),
   /** Consentimento LGPD pra DERIVAR, ARMAZENAR e COMPARTILHAR a
    *  localização aproximada (city-level, jittered ~4km — nunca GPS
    *  exato). Sem este flag = true: o auto-sync não roda, o POST

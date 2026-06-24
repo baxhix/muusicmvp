@@ -77,6 +77,7 @@ export default function SuccessPage() {
           birthDate: stored.birthDate,
           age: stored.age,
           isMinor: stored.isMinor,
+          parentEmail: stored.parentEmail,
           locationConsent: stored.locationConsent,
           termsAcceptedAt: stored.termsAcceptedAt,
         });

@@ -47,6 +47,22 @@
   font-weight: 600;
 }
 
+/* Campo de e-mail do responsável — só aparece pra menores (12–17).
+ * Logo abaixo do aviso de idade, antes do aceite de termos. */
+.parentField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.parentLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
+}
+
 /* Espaço acima do MotionCheckbox de termos (antes era padding do
  * .termsRow). Aplicado via wrapper no form gap; mantido aqui só o
  * estilo dos links (bold per product feedback). */

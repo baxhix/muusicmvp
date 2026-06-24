@@ -8,6 +8,7 @@ import {
   users,
 } from '../db/schema';
 import { recordActivity } from '../activities/queries';
+import { publicFirstName } from '../users/serialize';
 
 /**
  * Feed comments + reactions server module.
@@ -288,6 +289,7 @@ export async function listComments(args: {
       authorId: feedComments.authorId,
       authorName: users.name,
       authorEmail: users.email,
+      authorIsMinor: users.isMinor,
       authorAvatar: users.avatarUrl,
     })
     .from(feedComments)
@@ -313,10 +315,12 @@ export async function listComments(args: {
     body: r.body,
     createdAt: r.createdAt,
     deletedAt: r.deletedAt,
+    // Proteção a menores: só primeiro nome e SEM e-mail pra menores
+    // (comentários são uma listagem pública). Ver [[publicFirstName]].
     author: {
       id: r.authorId,
-      name: r.authorName,
-      email: r.authorEmail ?? '',
+      name: publicFirstName(r.authorName, Boolean(r.authorIsMinor)),
+      email: r.authorIsMinor ? '' : (r.authorEmail ?? ''),
       avatarUrl: r.authorAvatar,
     },
     reactions: reactionAgg.get(r.id) ?? { count: 0, mine: false },
@@ -353,6 +357,7 @@ export async function listReplies(args: {
       authorId: feedComments.authorId,
       authorName: users.name,
       authorEmail: users.email,
+      authorIsMinor: users.isMinor,
       authorAvatar: users.avatarUrl,
     })
     .from(feedComments)
@@ -371,10 +376,11 @@ export async function listReplies(args: {
     body: r.body,
     createdAt: r.createdAt,
     deletedAt: r.deletedAt,
+    // Proteção a menores: só primeiro nome e SEM e-mail pra menores.
     author: {
       id: r.authorId,
-      name: r.authorName,
-      email: r.authorEmail ?? '',
+      name: publicFirstName(r.authorName, Boolean(r.authorIsMinor)),
+      email: r.authorIsMinor ? '' : (r.authorEmail ?? ''),
       avatarUrl: r.authorAvatar,
     },
     reactions: reactionAgg.get(r.id) ?? { count: 0, mine: false },
