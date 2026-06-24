@@ -789,14 +789,17 @@
      *  container alinha o .nav (ctaPill) à direita. */
     justify-content: flex-end;
   }
-  /* Brand centralizado no viewport (ancorado ao .navbar
-   *  position:fixed que é o positioning context mais próximo).
+  /* Per spec mobile "padding top no logotipo + posicione 44px à
+   *  esquerda" — brand ancorado no topo-esquerda (não mais centrado):
+   *  left fixo a 44px da borda da viewport e padding-top dá o respiro
+   *  do topo (sem ele o orb de 84px sangraria pra fora da tela).
    *  pointer-events:auto reabilita o click no link âncora. */
   .brand {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 44px;
+    transform: none;
+    padding-top: 16px;
     pointer-events: auto;
   }
   /* Per spec mobile "deixe o logotipo centralizado e maior" — escala
@@ -812,9 +815,11 @@
   }
   .navLink { display: none; }
   .nav { gap: 0; }
-  /* Per spec atualizado "No mobile, deixe esse CTA abaixo do
-   *  headline Superfãs" — escondemos o CTA da navbar; a Hero
-   *  renderiza sua própria CTA (.heroMobileCta) abaixo do título. */
+  /* CTA da navbar fica escondido no mobile — o "Entrar" mobile é a
+   *  .heroMobileCta (HeroSection), agora fixa no rodapé da viewport.
+   *  Não dá pra fixar este .ctaPill aqui: o backdrop-filter da navbar
+   *  cria um containing block, então `position:fixed` se ancoraria na
+   *  navbar (~37px) em vez da viewport. */
   .ctaPill {
     display: none;
   }

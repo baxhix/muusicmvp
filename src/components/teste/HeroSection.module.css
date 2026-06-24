@@ -198,16 +198,20 @@
 }
 @media (max-width: 720px) {
   .heroMobileCta {
-    /* Per spec atualizado "posicione abaixo dos smartphones
-     *  o CTA" — moveu da row 2 (junto da phrase) pra row 4
-     *  (depois dos phones). align-self center deixa o pill
-     *  centralizado horizontalmente; margin-top dá respiro
-     *  do mockup acima. */
-    grid-row: 4;
-    align-self: center;
-    justify-self: center;
-    margin: 28px auto 0;
-    position: relative;
+    /* Per spec mobile "mantenha o botão Entrar fixo na parte de baixo
+     *  da tela" — saiu do fluxo do grid (era grid-row 4, abaixo dos
+     *  phones) e virou um CTA FIXO, colado no rodapé da viewport (acima
+     *  da safe-area do iOS). Fixa direto na viewport porque .hero/.center
+     *  não têm transform/filter (nenhum containing block no caminho).
+     *  Centragem por margin auto (left/right:0 + width:fit-content), NÃO
+     *  por translateX — assim a animação tloop-fadeup e o :active (ambos
+     *  usam transform) não brigam com a centragem. */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    width: fit-content;
+    margin-inline: auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
