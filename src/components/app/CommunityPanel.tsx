@@ -515,7 +515,28 @@ function CommunityListView({
 
   return (
     <>
-      <HeaderBar title="Comunidades" onClose={onClose} />
+      <HeaderBar
+        title="Comunidades"
+        onClose={onClose}
+        /* CTA rotulado "Criar comunidade" à direita do título (antes da
+         *  seta de fechar). Só aparece quando o usuário tem Fanpoints
+         *  suficientes — mesmo gate do FAB. Vive no header interno, que
+         *  é display:none no mobile (lá o FAB "+" é a entrada). */
+        trailing={
+          canCreate ? (
+            <button
+              type="button"
+              className={styles.headerCta}
+              onClick={onOpenCreate}
+            >
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+              Criar comunidade
+            </button>
+          ) : undefined
+        }
+      />
 
       <div className={styles.body}>
         <div className={styles.searchRow}>

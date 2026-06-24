@@ -195,6 +195,32 @@
   color: var(--ink);
 }
 
+/* CTA rotulado do header ("Criar comunidade") — pill lilás soft
+ * (fill, sem borda). Vive no slot `trailing` do HeaderBar, à direita
+ * do título e antes da seta de fechar. Some no mobile junto com
+ * `.header` (display:none ≤768px); lá o FAB "+" é a entrada. */
+.headerCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.16);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.16s ease;
+}
+.headerCta:hover { background: rgba(168, 85, 247, 0.26); }
+.headerCta:active { transform: scale(0.97); }
+.headerCta svg { width: 14px; height: 14px; }
+
 /* Back chevron — shown on detail + topic views. Same circular
  * neutral pill as the close button (for visual consistency on
  * either side of the title). */
@@ -334,8 +360,12 @@
   .header { display: none; }
 
   /* iOS/Android só dão auto-zoom ao focar inputs com font-size < 16px.
-   * 16px mata o zoom sem mexer no visual desktop. */
-  .searchField { font-size: 16px; }
+   * 16px mata o zoom sem mexer no visual desktop. Precisa de
+   * especificidade > base `.searchField{font-size:12px}` (declarada
+   * DEPOIS deste @media no fonte) — `.searchRow .searchField` (0,2,0)
+   * vence `.searchField` (0,1,0) independente da ordem. Sem isso a
+   * base ganhava por ordem e o zoom voltava. */
+  .searchRow .searchField { font-size: 16px; }
 
   /* Align body content with the MobileRouteHeader back arrow.
    * The back arrow's icon left edge sits at ~16px from the

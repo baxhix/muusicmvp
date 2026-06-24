@@ -249,6 +249,21 @@ export default function ConversationsSidebar({
     >
       <header className={styles.header}>
         <h2 className={styles.title}>Chat</h2>
+        {/* CTA rotulado "Iniciar conversa" alinhado à direita (antes da
+         *  seta de fechar). Atalho rápido pro fluxo de nova conversa
+         *  individual (setCreateView('single')) — o FAB lilás abaixo
+         *  segue oferecendo conversa OU grupo. Vive no header interno,
+         *  que é display:none no mobile (lá o FAB é a entrada). */}
+        <button
+          type="button"
+          className={styles.headerCta}
+          onClick={() => setCreateView('single')}
+        >
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" />
+          </svg>
+          Iniciar conversa
+        </button>
         {/* Os botões "Nova conversa" / "Novo grupo" SAÍRAM do
          *  header per product feedback. Agora vivem dentro de um
          *  menu expansível ancorado ao FAB lilás no canto
