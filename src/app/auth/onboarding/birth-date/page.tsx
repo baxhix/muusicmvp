@@ -145,6 +145,9 @@ export default function BirthDatePage() {
   return (
     <AuthShell back="/auth/verify" progress={3 / 5}>
       <StepFrame backHref="/auth/verify">
+        {/* Bloco centralizado na vertical (Título → Continuar) — o
+         *  "Voltar" do StepFrame fica acima, na posição original. */}
+        <div className={styles.centerBlock}>
         <h1 className={fields.heading}>Quando você nasceu?</h1>
         <p className={fields.subtitle}>
           Sua experiência na plataforma será adaptada à sua idade.
@@ -207,6 +210,7 @@ export default function BirthDatePage() {
             disabled={!parsed || !acceptedTerms}
           />
         </form>
+        </div>
       </StepFrame>
     </AuthShell>
   );
