@@ -613,6 +613,7 @@
 /* Hint à direita do item (ex.: "ganhe 300 Fanpoints") — 12px regular cinza. */
 .drawerItemHint {
   flex-shrink: 0;
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 400;
   color: rgba(245, 245, 247, 0.5);
