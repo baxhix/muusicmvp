@@ -1384,12 +1384,15 @@
   .card { padding: 16px; }
   .store { gap: 16px; }
   .storeLeft { gap: 16px; }
+  /* Tabs Experiências/Produtos centralizadas no mobile. */
+  .storeFilters { justify-content: center; }
   /* iOS só dá auto-zoom ao focar inputs com font-size < 16px; 16px
    * mata o zoom sem mexer no visual desktop. */
   .searchInput { font-size: 16px; }
 }
 @media (max-width: 600px) {
-  .products { grid-template-columns: 1fr; }
+  /* Mobile: mantém 2 colunas (gap menor pra caber). */
+  .products { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
 @media (max-width: 480px) {
   .header { padding: 16px 12px; gap: 10px; }

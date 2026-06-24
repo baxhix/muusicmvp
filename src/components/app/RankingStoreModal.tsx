@@ -979,6 +979,11 @@ export default function RankingStoreModal() {
                     Saldo disponível para troca:{' '}
                     <strong className={styles.balStrong}>{fmt(saldoFP)} Fanpoints</strong>
                   </div>
+                  {/* Meus dados ANTES do box de desconto (ordem invertida). */}
+                  <button type="button" className={styles.dadosBtn} onClick={() => flash('Meus dados — gerenciar endereços…')}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    Meus dados
+                  </button>
                   {/* Desconto desbloqueado: badge (15% OFF) + validade na
                    *  MESMA linha. O badge já comunica o desconto liberado. */}
                   <div className={styles.discountRow}>
@@ -988,10 +993,6 @@ export default function RankingStoreModal() {
                       <strong className={styles.discountStrong}>{discountUntil}</strong>
                     </span>
                   </div>
-                  <button type="button" className={styles.dadosBtn} onClick={() => flash('Meus dados — gerenciar endereços…')}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                    Meus dados
-                  </button>
                 </div>
 
                 {/* Filtros Experiências / Produtos — abaixo do box Meu saldo */}
