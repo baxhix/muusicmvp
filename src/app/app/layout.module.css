@@ -191,17 +191,17 @@
   .shortcutBtnActive:hover svg {
     color: #d8b4fe !important;
   }
-  /* Unread pill — slightly bigger per product feedback so the
-   * count reads more confidently at thumb distance. Was
-   * 18×18 / 10.5px; bumped to 22×22 / 12px. */
+  /* Unread pill — per product feedback "diminua levemente e posicione
+   * mais abaixo pra dar pra ver o coração": 22→18px e desce do overhang
+   * de cima (top -3 → 2) pro canto, revelando os lóbulos do coração. */
   .shortcutBtnBadge {
-    min-width: 22px;
-    height: 22px;
-    font-size: 12px;
-    top: -3px;
-    right: -3px;
-    padding: 0 6px;
-    border-radius: 11px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 11px;
+    top: 2px;
+    right: -2px;
+    padding: 0 5px;
+    border-radius: 9px;
   }
 }
 
@@ -254,19 +254,17 @@
 }
 .shortcutBtnBadge {
   position: absolute;
-  /* Slightly bigger across the board per product feedback —
-   * was 18×18 / 10.5px, now 22×22 / 12px. Desktop and mobile
-   * use roughly the same scale now; the mobile @media above
-   * keeps a slightly tighter top/right offset. */
-  top: -3px;
-  right: -3px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 11px;
+  /* Menor e mais abaixo per product feedback (18×18 / 11px, top 2)
+   * pra não cobrir o coração. Mesma escala no mobile @media acima. */
+  top: 2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
   background: #ef4444;
   color: #fff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   display: inline-flex;
   align-items: center;

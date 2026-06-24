@@ -178,7 +178,7 @@ export default function NotificationBell({
   open: openProp,
   onOpenChange,
 }: NotificationBellProps = {}) {
-  const { notifications, unreadCount, markRead, markAllRead } =
+  const { notifications, unreadCount, markRead, clearAll } =
     useNotificationsLive();
   // Uncontrolled fallback — used when the parent doesn't pass an
   // explicit open prop. In /app we go full-controlled.
@@ -324,10 +324,24 @@ export default function NotificationBell({
           aria-label="Notificações"
         >
           <div className={styles.head}>
+            {/* Fechar (X) à esquerda — affordance explícita de fechar o
+             *  painel além do tap no scrim. */}
+            <button
+              type="button"
+              className={styles.headClose}
+              onClick={() => setOpen(false)}
+              aria-label="Fechar notificações"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
             <span className={styles.headTitle}>Notificações</span>
-            {unreadCount > 0 && (
-              <button className={styles.markAll} onClick={markAllRead}>
-                Marcar todas
+            {/* Limpar à direita — marca tudo como lido e esvazia a lista. */}
+            {notifications.length > 0 && (
+              <button className={styles.clearAll} onClick={clearAll}>
+                Limpar
               </button>
             )}
           </div>

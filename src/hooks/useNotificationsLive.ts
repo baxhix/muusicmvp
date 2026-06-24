@@ -12,6 +12,10 @@ interface UseNotificationsLiveResult {
   loading: boolean;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  /** Limpa a lista: marca tudo como lido (persiste) e esvazia a lista
+   *  localmente. Não há endpoint de delete — então é um clear de view +
+   *  read-state; um refetch traria os itens de volta já como lidos. */
+  clearAll: () => Promise<void>;
 }
 
 /**
@@ -142,7 +146,20 @@ export function useNotificationsLive(): UseNotificationsLiveResult {
     await Promise.all(unread.map((n) => markRead(n.id)));
   }, [notifications, markRead]);
 
+  const clearAll = useCallback(async () => {
+    // Esvazia a view na hora (otimista) e persiste o read-state das não
+    // lidas em paralelo. Sem endpoint de delete, esse é o "Limpar"
+    // possível: some da lista até o próximo refetch, e o badge zera.
+    const unread = notifications.filter((n) => !n.readAt);
+    setNotifications([]);
+    try {
+      await Promise.all(unread.map((n) => api.post(`/api/notifications/${n.id}/read`)));
+    } catch (err) {
+      console.error('clearAll failed:', err);
+    }
+  }, [notifications]);
+
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
-  return { notifications, unreadCount, loading, markRead, markAllRead };
+  return { notifications, unreadCount, loading, markRead, markAllRead, clearAll };
 }

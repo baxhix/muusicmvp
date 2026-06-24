@@ -188,10 +188,14 @@
  * uma "respiração" sobre a navbar (~12px acima do top dela). */
 @media (max-width: 768px) {
   .panelFixed {
-    bottom: 72px;
-    /* Ajusta o cap proporcionalmente pra manter ~16px de respiro
-     * no topo da viewport quando a lista cresce. */
-    max-height: calc(100vh - 96px);
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    /* Fix do header escondido pela barra do navegador: o cap usava 100vh
+     * (viewport GRANDE, atrás da address bar), então com a lista cheia o
+     * topo do painel subia atrás da barra do navegador e título/X/Limpar
+     * sumiam. Agora usa 100dvh (viewport VISÍVEL) menos o gap inferior, a
+     * safe-area do topo (notch) e um respiro de 24px — o topo do painel
+     * nunca passa atrás do chrome do navegador. */
+    max-height: calc(100dvh - 72px - env(safe-area-inset-top, 0px) - 24px);
   }
 }
 
@@ -239,15 +243,50 @@
  * "Marcar todas" CTA floats to the right anchored absolutely so
  * the title stays optically centered against the panel width. */
 .head {
-  position: relative;
+  /* Sticky (era relative) — fica colado no topo do painel enquanto a
+   *  lista rola por baixo, então título / X / Limpar nunca somem ao
+   *  scrollar. Bg escuro semi-opaco + blur pra ocluir o conteúdo que
+   *  passa atrás. Cantos arredondados batendo com o painel. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 22px 18px 18px;
+  /* Padding lateral generoso pra o título centralizado não colidir com
+   *  o X (esquerda) nem o Limpar (direita), ambos absolute. */
+  padding: 18px 56px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: linear-gradient(180deg, rgba(255,255,255,0.022) 0%, transparent 100%);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  background: linear-gradient(180deg, rgba(10, 10, 12, 0.96) 0%, rgba(10, 10, 12, 0.82) 100%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   flex-shrink: 0;
 }
+.headClose {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.7);
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s;
+}
+.headClose:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+}
+.headClose svg { display: block; }
 .headTitle {
   /* Unified with Comunidade / Feed / Chat headers per product
    * feedback (was 22px / -0.022em / line-height 1.1). All three
@@ -261,10 +300,10 @@
   line-height: 1.2;
   text-align: center;
 }
-.markAll {
+.clearAll {
   position: absolute;
   top: 50%;
-  right: 18px;
+  right: 14px;
   transform: translateY(-50%);
   font-size: 12px;
   font-weight: 600;
@@ -272,11 +311,11 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  padding: 5px 11px;
+  padding: 5px 12px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.markAll:hover {
+.clearAll:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.16);
   color: var(--ink);
