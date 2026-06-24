@@ -8,6 +8,7 @@ import SectionFour from '@/components/teste/SectionFour';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
 import GalaxyBackdrop from '@/components/teste/GalaxyBackdrop';
+import CookieConsent from '@/components/teste/CookieConsent';
 import styles from './page.module.css';
 
 /**
@@ -67,6 +68,9 @@ export default function TestePage() {
        *  scroll-driven do GalaxyBackdrop seguem como ambient
        *  visual da página. */}
       <Footer />
+      {/* Barra-pílula de consentimento de cookies/termos (740×66,
+       *  fixed bottom-center, persiste a escolha em localStorage). */}
+      <CookieConsent />
     </div>
   );
 }
