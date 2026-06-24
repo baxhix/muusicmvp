@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import LegalLink from '@/components/legal/LegalLink';
 import styles from './CookieConsent.module.css';
 
 const STORAGE_KEY = 'teste-cookie-consent';
@@ -50,13 +50,13 @@ export default function CookieConsent() {
       <p className={styles.text}>
         Usamos cookies para personalizar sua experiência. Ao continuar, você
         concorda com nossos{' '}
-        <Link href="/termos" className={styles.link}>
+        <LegalLink kind="terms_of_use" surface="site" className={styles.link}>
           Termos de Uso
-        </Link>{' '}
+        </LegalLink>{' '}
         e a{' '}
-        <Link href="/privacidade" className={styles.link}>
+        <LegalLink kind="privacy_policy" surface="site" className={styles.link}>
           Política de Privacidade
-        </Link>
+        </LegalLink>
         .
       </p>
       <div className={styles.actions}>

@@ -41,9 +41,20 @@ export default function LegalDrawer() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const prefersReduced = useReducedMotion();
 
   useEffect(() => setMounted(true), []);
+
+  // Mobile (<=640px) → bottom-sheet (desliza de baixo); desktop →
+  // drawer lateral (desliza da direita). matchMedia só no client.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Escuta o evento de abertura disparado de qualquer lugar.
   useEffect(() => {
@@ -139,9 +150,9 @@ export default function LegalDrawer() {
         >
           <motion.aside
             className={styles.panel}
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            animate={isMobile ? { y: 0 } : { x: 0 }}
+            exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={
               prefersReduced
                 ? { duration: 0 }

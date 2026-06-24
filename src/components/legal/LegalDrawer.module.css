@@ -123,3 +123,22 @@
   color: #ffb4b4;
   font-size: 12px;
 }
+
+/* Mobile: bottom-sheet — full width, ancorado embaixo, cantos
+ * superiores arredondados. O eixo da animação (Y, de baixo pra
+ * cima) é trocado no LegalDrawer.tsx via matchMedia. */
+@media (max-width: 640px) {
+  .scrim {
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .panel {
+    width: 100%;
+    height: auto;
+    max-height: 88vh;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -28px 70px -20px rgba(0, 0, 0, 0.7);
+  }
+}
