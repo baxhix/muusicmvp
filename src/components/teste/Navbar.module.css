@@ -766,6 +766,17 @@
     transform: translate(-50%, -50%);
     pointer-events: auto;
   }
+  /* Per spec mobile "deixe o logotipo centralizado e maior" — escala
+   *  orb + wordmark proporcionalmente acima dos valores de desktop
+   *  (orb 64→84, wordmark 20→27) pra dar mais presença à marca no
+   *  centro do header, onde no mobile ela fica sozinha. */
+  .brandOrb {
+    width: 84px;
+    height: 84px;
+  }
+  .brandLogo {
+    height: 27px;
+  }
   .navLink { display: none; }
   .nav { gap: 0; }
   /* Per spec atualizado "No mobile, deixe esse CTA abaixo do
