@@ -2,7 +2,11 @@
 .dateInput {
   text-align: center;
   font-variant-numeric: tabular-nums;
-  font-size: 20px;
+  /* 20px proposital (data centralizada, legível). É o único input
+   * >16px do app; o guard global de auto-zoom (globals.css) tem
+   * especificidade (0,1,1) e encolheria pra 16px — `!important`
+   * preserva os 20px sem reintroduzir zoom (20 ≥ 16). */
+  font-size: 20px !important;
   font-weight: 600;
   letter-spacing: 0.06em;
 }

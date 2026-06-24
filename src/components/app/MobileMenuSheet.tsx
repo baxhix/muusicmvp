@@ -107,24 +107,23 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
   const swipeStartY = useRef<number | null>(null);
 
   /* ── Variants ──────────────────────────────────────────────
-   * Painel: sobe da base com spring; no exit desce DEPOIS dos
-   * itens (when: afterChildren). Stagger de entrada de baixo pra
-   * cima (staggerDirection: -1, último filho = mais perto da base).
-   * prefers-reduced-motion: só fade, sem deslocamento/stagger. */
+   * Painel: SÓ fade de opacity (sem translate). Antes subia da base
+   * com `y: 100% → 0`, mas agora o painel carrega backdrop-filter
+   * (blur do drawer) e backdrop-filter + transform faz o iOS
+   * re-amostrar o blur por frame → "pisca/treme". Sem translate no
+   * painel, o blur é estável; o "subir" continua pelo stagger dos
+   * itens (cada um entra com y:26 → 0, de baixo pra cima). */
   const panelVariants: Variants = {
-    hidden: reduce ? { opacity: 0 } : { opacity: 0, y: '100%' },
+    hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      y: 0,
       transition: reduce
         ? { duration: 0.16 }
         : {
-            type: 'spring',
-            stiffness: 580,
-            damping: 36,
-            mass: 0.7,
+            duration: 0.22,
+            ease: 'easeOut',
             when: 'beforeChildren',
-            delayChildren: 0.02,
+            delayChildren: 0.04,
             staggerChildren: 0.032,
             staggerDirection: -1,
           },

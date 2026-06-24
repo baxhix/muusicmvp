@@ -335,11 +335,22 @@ em, i, cite, var, address, dfn {
  * in the app. This rule pins the minimum interactive font-size
  * to 16px across the board on phones — `max(16px, 1em)` honors
  * any component that already declared a LARGER size while
- * raising any 13/14px declarations up to the safe threshold. */
+ * raising any 13/14px declarations up to the safe threshold.
+ *
+ * ⚠️ Especificidade: o seletor de elemento `input` é (0,0,1) e
+ * PERDIA para qualquer classe de CSS module no campo
+ * (`.searchField{font-size:12px}` = 0,1,0), que reintroduzia o
+ * auto-zoom (Playlist, álbuns, modais…). A variante `[class]`
+ * eleva o guard a (0,1,1) e vence essas regras single-class, sem
+ * `!important`. O único input propositalmente >16px (`.dateInput`,
+ * 20px) se protege com `!important` no próprio módulo. */
 @media (max-width: 768px) {
   input,
   textarea,
-  select {
+  select,
+  input[class],
+  textarea[class],
+  select[class] {
     font-size: max(16px, 1em);
   }
 }

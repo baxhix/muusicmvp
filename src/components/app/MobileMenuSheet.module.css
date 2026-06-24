@@ -14,15 +14,11 @@
   /* Abaixo da navbar (245); acima do resto do chrome (LiveChatStack
    * 200, MobileFanverseSheet 240). */
   z-index: 241;
-  /* Dim do resto da tela — segura o contraste do texto agora que o
-   * painel não escurece nada por conta própria. */
-  background: rgba(0, 0, 0, 0.52);
-  /* Blur fica SÓ aqui (camada estática, só faz fade de opacity). O
-   * painel que desliza NÃO carrega backdrop-filter — senão o iOS
-   * re-amostra o blur a cada frame do transform e a tela "pisca/
-   * treme" ao abrir/fechar. */
-  backdrop-filter: blur(20px) saturate(1.1);
-  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  /* Só um DIM leve — per feedback "blur apenas no drawer, não na
+   * tela inteira". O blur saiu daqui e foi pro .panel; a tela atrás
+   * fica visível (só levemente escurecida pra dar contraste ao
+   * drawer e marcar a área de tap-to-close). */
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .panel {
@@ -39,22 +35,28 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  /* Topo respira; base ergue o conteúdo acima da navbar (pill ~52 +
-   * nav padding-bottom 24) + safe-area (home indicator). */
-  padding: 28px 24px calc(env(safe-area-inset-bottom, 0px) + 100px);
-  /* SEM background nem backdrop-filter próprio: o blur vem do
-   * .backdrop (camada estática atrás). Um painel que DESLIZA com
-   * backdrop-filter faz o iOS re-amostrar o blur a cada frame →
-   * "pisca/treme". Sem blur aqui, o slide é só transform puro
-   * (compositor), 100% fluído. */
-  background: transparent;
+  /* Conteúdo MAIS ABAIXO (per feedback): reduz a reserva inferior pra
+   * descer os itens em direção à navbar/polegar. A navbar (.inner)
+   * mede 88px, então a reserva fica em +92px (≈4px de folga) — antes
+   * eram +100px. Não dá pra ir muito além sem o último item
+   * (toggle "Visível no mapa") encostar/escorregar sob a navbar. */
+  padding: 28px 24px calc(env(safe-area-inset-bottom, 0px) + 92px);
+  /* Blur AGORA no drawer (frosted glass), não na tela inteira (per
+   * feedback). Pra não piscar no iOS — backdrop-filter + transform =
+   * re-amostragem por frame — o painel NÃO translada mais; só faz
+   * fade de opacity (o "subir" fica no stagger dos itens). Ordem
+   * -webkit- ANTES do padrão por causa do lightningcss/Next, que
+   * dropa a prop se vier depois (saturate em %, não unitless). */
+  background: rgba(10, 10, 12, 0.72);
+  -webkit-backdrop-filter: blur(22px) saturate(118%);
+  backdrop-filter: blur(22px) saturate(118%);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   border-top-left-radius: 30px;
   border-top-right-radius: 30px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Slide é só transform → compositor; declara pra GPU. */
-  will-change: transform;
+  /* Painel é camada estática (só opacity-fade) → declara opacity. */
+  will-change: opacity;
 }
 
 /* Handle de swipe — afor­dance de "arraste pra baixo pra fechar". */
@@ -213,7 +215,8 @@
  * caberem sem corte. */
 @media (max-height: 780px) {
   .panel {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+    /* Itens menores aqui; ainda precisa limpar a navbar (~88px). */
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
   }
   .grabber {
     margin-bottom: 12px;
