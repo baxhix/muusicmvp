@@ -280,8 +280,11 @@ export default function BottomNav() {
           data-tooltip={pathname.startsWith('/app/chat') ? 'Fechar' : 'Chat'}
         >
           {/* Ícone Lucide "send" (paper-plane COM o traço diagonal no
-           *  meio) — https://lucide.dev/icons/send. */}
-          <svg viewBox="0 0 24 24" fill="none">
+           *  meio) — https://lucide.dev/icons/send. ViewBox com padding
+           *  (-2 -2 28 28) pra o glyph não encher a caixa toda e ficar
+           *  do mesmo tamanho visual dos outros ícones da navbar (que
+           *  preenchem ~73% da viewBox). */}
+          <svg viewBox="-2 -2 28 28" fill="none">
             <path
               d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"
               stroke="currentColor"

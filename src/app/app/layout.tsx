@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { AppShellProvider, useAppShell } from '@/lib/app/AppShellContext';
 import { RankBandsProvider } from '@/components/app/RankBandsProvider';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useNotificationsLive } from '@/hooks/useNotificationsLive';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
 import ArtistBox from '@/components/app/ArtistBox';
@@ -120,6 +121,11 @@ function Shell({ children }: { children: React.ReactNode }) {
     feedOpen,
     welcomeStage,
   } = useAppShell();
+
+  /* Contador de notificações não lidas — alimenta o badge do
+   *  coração no header mobile (per feedback "os corações no header
+   *  devem ter, quando houver, o contador de notificações"). */
+  const { unreadCount: notifUnread } = useNotificationsLive();
 
   // Helper pra wrappar elementos com fade controlado pelo
   // welcomeStage. Retorna a className combinada — opacity 0 +
@@ -319,6 +325,11 @@ function Shell({ children }: { children: React.ReactNode }) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                 </svg>
+                {notifUnread > 0 && (
+                  <span className={styles.shortcutBtnBadge} aria-hidden="true">
+                    {notifUnread > 9 ? '9+' : notifUnread}
+                  </span>
+                )}
               </button>
             </div>
           )}
