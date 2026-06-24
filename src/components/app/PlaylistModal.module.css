@@ -511,16 +511,23 @@
 .itemLi {
   position: relative;
 }
-/* Reserva espaço à direita pro botão de comentários não cobrir o play. */
+/* Reserva espaço à direita pro grupo de ações (curtir + comentar)
+ * + o indicador de play não se sobreporem. */
 .itemLi .item {
-  padding-right: 46px;
+  padding-right: 84px;
 }
-.commentBtn {
+/* Grupo de ações sociais da faixa, ancorado à direita da row. */
+.trackActions {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.trackActionBtn {
   width: 32px;
   height: 32px;
   display: inline-flex;
@@ -529,16 +536,16 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: rgba(245, 245, 247, 0.5);
+  color: rgba(245, 245, 247, 0.6);
   cursor: pointer;
-  transition: background 0.14s ease, color 0.14s ease;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
 }
-.commentBtn:hover {
+.trackActionBtn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
 }
-.commentBtn:active {
-  transform: translateY(-50%) scale(0.92);
+.trackActionBtn:active {
+  transform: scale(0.9);
 }
 /* Highlight (focused via teclado/hover) */
 .itemHighlight {
