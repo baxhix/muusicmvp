@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { type ReactNode } from 'react';
 import Sparkles from '@/components/teste/Sparkles';
+import MediaBlinds from './MediaBlinds';
 import styles from './AuthShell.module.css';
 
 /* Fotos da Ana (fundo transparente) que se intercalam no media pane do
@@ -131,6 +132,8 @@ export default function AuthShell({ children, back, progress, hideLogoMobile }: 
             // eslint-disable-next-line @next/next/no-img-element
             return <img key={src} src={src} alt="" className={styles.mediaImg} loading="lazy" />;
           })}
+          {/* Reveal "persiana" sobre a foto no carregamento (desktop). */}
+          <MediaBlinds />
         </aside>
 
         <div className={styles.formPane}>

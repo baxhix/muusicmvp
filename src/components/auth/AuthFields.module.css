@@ -276,7 +276,7 @@
      * (Absolute não serve: o .content é position:relative e viraria
      * a âncora; fixed ancora na viewport, e o shell não rola.) */
     position: fixed;
-    left: 60%;
+    left: 50%;
     right: 0;
     bottom: 22px;
     width: auto;

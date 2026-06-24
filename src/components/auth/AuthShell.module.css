@@ -161,8 +161,10 @@
   }
   .mediaPane {
     display: block;
-    flex: 0 0 60%;
-    max-width: 60%;
+    /* Coluna da foto encolhida (60% → 50%) pra dar mais largura ao box
+     * de login à direita — assim "Fanverse Ana Castela" cabe numa linha. */
+    flex: 0 0 50%;
+    max-width: 50%;
     position: relative;
     z-index: 1;
     /* Fundo transparente — extensão do fundo escuro do shell (as fotos
@@ -195,8 +197,10 @@
   .mediaImg:nth-child(3) { animation-delay: 14s; }
   .mediaImg:nth-child(4) { animation-delay: 21s; }
   .formPane {
-    flex: 0 0 40%;
-    max-width: 40%;
+    /* Box de login mais largo (40% → 50%) — cabe o título "Fanverse
+     * Ana Castela" numa linha só (Bem-vindo ao na linha de cima). */
+    flex: 0 0 50%;
+    max-width: 50%;
     /* Centra o bloco do step verticalmente na coluna do form (desktop). */
     justify-content: center;
   }
@@ -207,6 +211,9 @@
    * flex:1 dos wrappers internos (stepInner / wrapper do email). */
   .content {
     flex: 0 1 auto;
+    /* Box mais largo no desktop (440 → 560) pra "Fanverse Ana Castela"
+     * (≈461px em Borscha 44px) caber numa linha só. */
+    max-width: 560px;
   }
 }
 

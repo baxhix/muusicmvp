@@ -1,0 +1,18 @@
+/* Overlay de slats que cobrem a imagem do media pane e abrem no mount
+ * (efeito persiana). Acima das fotos (z:1) e abaixo de qualquer chrome. */
+.blinds {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  pointer-events: none;
+}
+
+/* Cada slat — near-black com um gradiente sutil pra a "lâmina" pegar
+ * uma pontinha de luz enquanto recolhe. scaleY animado no JS (motion). */
+.strip {
+  flex: 1 1 0;
+  height: 100%;
+  background: linear-gradient(180deg, #050507 0%, #0b0b10 100%);
+  will-change: transform;
+}
