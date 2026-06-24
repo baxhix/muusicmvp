@@ -181,7 +181,6 @@ export default function CommentsPanel({
           author: {
             id: currentUserId ?? 'me',
             name: user?.name ?? 'Você',
-            email: user?.email ?? '',
             avatarUrl: currentUserAvatar,
           },
           reactions: { count: 0, mine: false },
@@ -197,7 +196,7 @@ export default function CommentsPanel({
         setSubmitting(false);
       }
     },
-    [currentUserAvatar, currentUserId, postKey, user?.email, user?.name],
+    [currentUserAvatar, currentUserId, postKey, user?.name],
   );
 
   // ── Local state mutations called by CommentItem ────────────────

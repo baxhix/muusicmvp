@@ -218,7 +218,6 @@ export default function CommentItem({
           author: {
             id: currentUserId ?? 'me',
             name: 'Você',
-            email: '',
             avatarUrl: currentUserAvatar,
           },
           reactions: { count: 0, mine: false },
@@ -243,14 +242,14 @@ export default function CommentItem({
         <img
           className={styles.avatar}
           src={comment.author.avatarUrl ?? '/avatar-placeholder.svg'}
-          alt={comment.author.name ?? comment.author.email}
+          alt={comment.author.name ?? 'Fã'}
         />
         <RankMedallion position={rankOf(comment.author.id)} size="sm" />
       </span>
       <div className={styles.body}>
         <div className={styles.identityRow}>
           <span className={styles.authorName}>
-            {comment.author.name ?? comment.author.email}
+            {comment.author.name ?? 'Fã'}
           </span>
           {/* @handle removed per product feedback — the display name +
               avatar already identify the author, and the handle was

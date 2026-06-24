@@ -385,7 +385,8 @@ export interface ApiFeedComment {
   author: {
     id: string;
     name: string | null;
-    email: string;
+    /* e-mail NÃO é exposto cross-user (PII). Sem nome, o cliente
+     * exibe "Fã" como fallback (ver CommentItem). */
     avatarUrl: string | null;
   };
   reactions: {

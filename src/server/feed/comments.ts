@@ -59,7 +59,6 @@ export interface HydratedComment {
   author: {
     id: string;
     name: string | null;
-    email: string;
     avatarUrl: string | null;
   };
   reactions: {
@@ -288,7 +287,6 @@ export async function listComments(args: {
       deletedAt: feedComments.deletedAt,
       authorId: feedComments.authorId,
       authorName: users.name,
-      authorEmail: users.email,
       authorIsMinor: users.isMinor,
       authorAvatar: users.avatarUrl,
     })
@@ -315,12 +313,11 @@ export async function listComments(args: {
     body: r.body,
     createdAt: r.createdAt,
     deletedAt: r.deletedAt,
-    // Proteção a menores: só primeiro nome e SEM e-mail pra menores
-    // (comentários são uma listagem pública). Ver [[publicFirstName]].
+    // E-mail NUNCA é exposto a outros usuários (política central em
+    // serialize.ts). Só primeiro nome pra menores. Ver [[publicFirstName]].
     author: {
       id: r.authorId,
       name: publicFirstName(r.authorName, Boolean(r.authorIsMinor)),
-      email: r.authorIsMinor ? '' : (r.authorEmail ?? ''),
       avatarUrl: r.authorAvatar,
     },
     reactions: reactionAgg.get(r.id) ?? { count: 0, mine: false },
@@ -356,7 +353,6 @@ export async function listReplies(args: {
       deletedAt: feedComments.deletedAt,
       authorId: feedComments.authorId,
       authorName: users.name,
-      authorEmail: users.email,
       authorIsMinor: users.isMinor,
       authorAvatar: users.avatarUrl,
     })
@@ -376,11 +372,10 @@ export async function listReplies(args: {
     body: r.body,
     createdAt: r.createdAt,
     deletedAt: r.deletedAt,
-    // Proteção a menores: só primeiro nome e SEM e-mail pra menores.
+    // E-mail nunca exposto a outros usuários; só primeiro nome pra menores.
     author: {
       id: r.authorId,
       name: publicFirstName(r.authorName, Boolean(r.authorIsMinor)),
-      email: r.authorIsMinor ? '' : (r.authorEmail ?? ''),
       avatarUrl: r.authorAvatar,
     },
     reactions: reactionAgg.get(r.id) ?? { count: 0, mine: false },

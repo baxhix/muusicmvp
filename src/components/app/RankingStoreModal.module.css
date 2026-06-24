@@ -1314,20 +1314,28 @@
   display: block;
   width: 100%;
   margin-top: auto;
-  padding: 9px 0;
-  border-radius: 6px;
+  padding: 10px 0;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
-  background: transparent;
-  color: rgba(245, 245, 247, 0.55);
-  transition: background 140ms ease, color 140ms ease;
+  /* Estado normal já LÊ como botão: fill sólido visível + texto branco
+   * (antes era transparent + texto apagado, que parecia link). */
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
 }
-.productCtaOk:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-.productCtaOff { color: rgba(255, 255, 255, 0.35); cursor: default; }
+.productCtaOk:hover { background: rgba(255, 255, 255, 0.2); }
+.productCtaOk:active { transform: translateY(1px); }
+/* Saldo insuficiente: fill bem discreto + texto apagado, claramente inativo. */
+.productCtaOff {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: default;
+}
 
 /* ── Toast ──────────────────────────────────────────────── */
 .toast {

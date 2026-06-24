@@ -14,7 +14,7 @@
   max-width: calc(100vw - 32px);
   padding: 10px 16px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(20, 20, 22, 0.95), rgba(8, 8, 10, 0.96));
+  background: linear-gradient(180deg, rgba(8, 8, 9, 0.97), rgba(0, 0, 0, 0.97));
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--ink);
   font-size: 12px;
