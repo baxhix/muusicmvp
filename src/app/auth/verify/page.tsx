@@ -136,6 +136,9 @@ export default function VerifyPage() {
   return (
     <AuthShell back="/auth" progress={2 / 5}>
       <StepFrame backHref="/auth">
+        {/* Bloco centralizado verticalmente (Título → reenviar) — o
+         *  "Voltar" do StepFrame fica acima, na posição original. */}
+        <div className={styles.centerBlock}>
         <h1 className={fields.heading}>Confira seu e-mail</h1>
         <p className={fields.subtitle}>
           Digite o código que enviamos para{' '}
@@ -206,6 +209,7 @@ export default function VerifyPage() {
           >
             Usar outro e-mail
           </button>
+        </div>
         </div>
       </StepFrame>
     </AuthShell>

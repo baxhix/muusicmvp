@@ -151,7 +151,7 @@ export default function EmailStep() {
   }
 
   return (
-    <AuthShell back="/" progress={1 / 5} hideLogoMobile>
+    <AuthShell back="/" progress={1 / 5}>
       {/* Orbe (mobile) — substitui o logotipo no topo, alinhado à
        *  esquerda em 120x120. Só monta no mobile (WebGL). */}
       {isMobile && (
@@ -223,37 +223,12 @@ export default function EmailStep() {
               state={submitting ? 'pending' : 'idle'}
               idleLabel="Continuar"
               pendingLabel="Enviando…"
-              disabled={!email.trim()}
+              /* Só habilita quando o e-mail tem formato válido. */
+              disabled={!EMAIL_REGEX.test(email.trim().toLowerCase())}
             />
           </div>
         </form>
       </div>
-
-      {/* Login social — logo acima dos termos (rodapé). Discreto e
-       *  DESABILITADO (visual apenas). */}
-      <div className={fields.social}>
-          <div className={fields.socialRow}>
-            <button type="button" className={fields.socialBtn} disabled aria-label="Entrar com Google">
-              <svg viewBox="0 0 48 48" aria-hidden="true">
-                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.5-.4-3.5z" />
-                <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 5.1 29.5 3 24 3 16 3 9.1 7.6 6.3 14.7z" />
-                <path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.5-5.2l-6.2-5.2C29.2 36.3 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-7l-6.5 5C9 40.3 16 45 24 45z" />
-                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C40.9 36 44 30.6 44 24c0-1.3-.1-2.5-.4-3.5z" />
-              </svg>
-            </button>
-            <button type="button" className={fields.socialBtn} disabled aria-label="Entrar com Apple">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#fff" d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.1-2.01-3.77-2.04-1.6-.16-3.13.94-3.94.94-.81 0-2.07-.92-3.4-.89-1.75.03-3.36 1.02-4.26 2.58-1.82 3.16-.47 7.84 1.3 10.41.86 1.26 1.89 2.67 3.24 2.62 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.28 3.15-2.55.99-1.46 1.4-2.87 1.42-2.94-.03-.01-2.72-1.04-2.75-4.13l.04-.01zM14.46 4.5c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.32-.58 3.03-1.46z" />
-              </svg>
-            </button>
-            <button type="button" className={fields.socialBtn} disabled aria-label="Entrar com Facebook">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.469h-2.796v8.385C19.612 22.954 24 17.99 24 12z" />
-              </svg>
-            </button>
-          </div>
-          <p className={fields.socialNote}>Login social desabilitado</p>
-        </div>
 
       {/* Disclaimer de Termos — rodapé da página. No desktop fica
        *  ancorado no fundo do form pane (fora do bloco centralizado);

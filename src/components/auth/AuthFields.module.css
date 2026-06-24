@@ -252,55 +252,13 @@
   padding-top: 24px;
 }
 
-/* ── Login social (desabilitado) ──────────
- * Botões discretos Google + Facebook (estado desabilitado) + caption
- * 12px cinza logo abaixo. */
-.social {
-  width: 100%;
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.socialRow {
-  display: flex;
-  gap: 22px;
-  width: 100%;
-  justify-content: center;
-}
-/* Botão de login social: só o ícone — sem borda nem caixa de fundo,
- * per product feedback "remova a borda dos botões de login social e
- * deixe apenas o ícone". Continua desabilitado (visual apenas). */
-.socialBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-.socialBtn svg {
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-}
-.socialNote {
-  margin: 0;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
-}
+/* Links de Termos / Política de Privacidade — sem underline (per
+ * feedback), só cor + peso pra destacar do texto do disclaimer. */
 .hint a,
 .hint button {
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
 }
 .hint a:hover,
 .hint button:hover { color: #fff; }
@@ -437,17 +395,14 @@
   .emailBlock {
     margin-top: 5vh;
   }
-  /* Título -20% (32 → ~26px). */
+  /* Título maior no mobile (per feedback "aumente o tamanho do
+   * título"): escala com a viewport e não estoura em telas pequenas. */
   .headingTight {
-    font-size: 26px;
+    font-size: clamp(30px, 8.4vw, 38px);
   }
   /* Input -15% de altura (56 → 48px). Mantém font-size 16px pra não
    * disparar o auto-zoom do iOS. */
   .inputSm {
     height: 48px;
-  }
-  /* Social empurrado pro rodapé (logo acima dos termos). */
-  .social {
-    margin-top: auto;
   }
 }

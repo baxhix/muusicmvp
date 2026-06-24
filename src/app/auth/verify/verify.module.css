@@ -15,8 +15,23 @@
   padding-right: 12px;
 }
 
+/* Bloco do conteúdo (Título → reenviar) centralizado verticalmente.
+ * No mobile o .stepInner é flex:1 (altura total), então flex:1 +
+ * justify-content:center empurra o bloco pro meio da tela, com o
+ * "Voltar" ancorado no topo. No desktop o .content tem altura do
+ * próprio conteúdo (flex:0 1 auto), então isso não altera o layout. */
+.centerBlock {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
 /* Links secundários lado a lado ("Reenviar link e código" · "Usar
- * outro e-mail"), separados por um divisor fino. */
+ * outro e-mail"), separados por um divisor fino. O espaço pro CTA
+ * acima é dobrado (per feedback). */
 .actions {
   display: flex;
   flex-direction: row;
@@ -24,6 +39,7 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
+  margin-top: 32px;
 }
 .actions button {
   width: auto;
