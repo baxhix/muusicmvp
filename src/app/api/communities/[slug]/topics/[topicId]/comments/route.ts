@@ -50,6 +50,10 @@ export async function POST(
 ) {
   const auth = await requireUser();
   if (auth instanceof NextResponse) return auth;
+  /* Menor de idade não escreve em comunidades (comentar em tópico). */
+  if (auth.isMinor) {
+    return NextResponse.json({ error: 'minor_blocked' }, { status: 403 });
+  }
 
   const { topicId } = await ctx.params;
   let body: unknown;

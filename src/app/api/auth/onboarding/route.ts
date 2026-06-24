@@ -8,6 +8,21 @@ import { maybeRewardReferral } from '@/server/referral/queries';
 
 export const runtime = 'nodejs';
 
+/** Idade a partir de "YYYY-MM-DD" — calculada no servidor (não confia
+ *  no `age` enviado pelo cliente). */
+function ageFromBirthDateISO(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number);
+  const t = new Date();
+  let age = t.getFullYear() - y;
+  const mo = t.getMonth() + 1;
+  const day = t.getDate();
+  if (mo < m || (mo === m && day < d)) age -= 1;
+  return age;
+}
+
+/** Idade mínima pra ter conta na plataforma. */
+const MIN_ACCOUNT_AGE = 12;
+
 /**
  * Finaliza o onboarding do usuário recém-cadastrado.
  *
@@ -47,6 +62,18 @@ export async function POST(req: Request) {
     parsed = bodySchema.parse(await req.json());
   } catch {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+  }
+
+  /* Proteção a menores de 12 anos: NÃO podem criar conta. Idade
+   * calculada no servidor a partir da data (cliente não é confiável).
+   * Se <12, soft-delete o stub recém-criado e recusa — getCurrentUser
+   * filtra deletedAt, então a sessão morre na hora. */
+  if (parsed.birthDate && ageFromBirthDateISO(parsed.birthDate) < MIN_ACCOUNT_AGE) {
+    await db
+      .update(users)
+      .set({ deletedAt: new Date() })
+      .where(eq(users.id, me.id));
+    return NextResponse.json({ error: 'underage' }, { status: 403 });
   }
 
   // Constrói patch só com os campos presentes — não sobrescreve

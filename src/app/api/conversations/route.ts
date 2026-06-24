@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireUser } from '@/server/auth/requireUser';
 import { listConversationsForUser } from '@/server/chat/queries';
-import { getOrCreateDm, userExists } from '@/server/chat/dm';
+import { getOrCreateDm, userExists, userIsMinor } from '@/server/chat/dm';
 import { createGroup } from '@/server/chat/groups';
 import { limitByIp, writeLimiter } from '@/server/rateLimit';
 import { logger } from '@/server/log';
@@ -111,6 +111,10 @@ export async function POST(req: Request) {
   }
   if (!(await userExists(parsed.data.otherUserId))) {
     return NextResponse.json({ error: 'user_not_found' }, { status: 404 });
+  }
+  /* Ninguém pode iniciar conversa com perfil de menor de idade. */
+  if (await userIsMinor(parsed.data.otherUserId)) {
+    return NextResponse.json({ error: 'recipient_minor' }, { status: 403 });
   }
 
   const { id, created } = await getOrCreateDm(user.id, parsed.data.otherUserId);

@@ -120,6 +120,11 @@ export default function BirthDatePage() {
       setSubmitError('Data inválida. Confere o formato DD/MM/AAAA.');
       return;
     }
+    // Menores de 12 anos não podem criar conta (o servidor também bloqueia).
+    if (parsed.age < 12) {
+      setSubmitError('Você precisa ter pelo menos 12 anos para criar uma conta.');
+      return;
+    }
     if (!acceptedTerms) {
       setSubmitError('É preciso aceitar os termos pra continuar.');
       return;
@@ -171,16 +176,21 @@ export default function BirthDatePage() {
             autoFocus
           />
 
-          {/* Aviso reativo pra menor de idade — aparece assim
-           *  que os 8 dígitos formam uma data válida abaixo
-           *  de 18 anos. */}
-          {parsed?.isMinor && (
+          {/* Aviso reativo: <12 = bloqueio de criação de conta;
+           *  12–17 = aviso de experiência adaptada. */}
+          {parsed && parsed.age < 12 ? (
+            <div className={styles.minorNotice} role="status">
+              <strong>Você precisa ter pelo menos 12 anos.</strong>
+              <br />
+              Não é possível criar uma conta no Fanverse com menos de 12 anos.
+            </div>
+          ) : parsed?.isMinor ? (
             <div className={styles.minorNotice} role="status">
               <strong>Você tem {parsed.age} anos.</strong>
               <br />
               Sua experiência na plataforma será adaptada à sua idade.
             </div>
-          )}
+          ) : null}
 
           <MotionCheckbox
             checked={acceptedTerms}

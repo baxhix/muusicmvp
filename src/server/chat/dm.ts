@@ -95,6 +95,17 @@ export async function userExists(userId: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+/** True se o usuário é menor de idade — outras pessoas NÃO podem
+ *  iniciar conversa/comunicar com perfis de menores. */
+export async function userIsMinor(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ isMinor: users.isMinor })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return Boolean(row?.isMinor);
+}
+
 /** Auto-join a user to the Superchat group conversation. Idempotent. */
 export async function ensureSuperchatMembership(userId: string): Promise<void> {
   const superchat = await db

@@ -946,6 +946,7 @@ function CommunityDetailView({
   onLeftCommunity: () => void;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const [community, setCommunity] = useState<ApiCommunityDetail | null>(null);
   const [topics, setTopics] = useState<ApiCommunityTopic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1195,8 +1196,9 @@ function CommunityDetailView({
       </div>
 
       {/* Footer: smaller "Novo tópico" CTA below the topics list.
-       *  Hidden em show communities — só admin cria tópico lá. */}
-      {community.isMember && !isShow && (
+       *  Hidden em show communities — só admin cria tópico lá. Oculto
+       *  pra menores (não escrevem em comunidades). */}
+      {community.isMember && !isShow && !user?.isMinor && (
         <footer className={styles.footer}>
           <button
             type="button"
@@ -1528,7 +1530,11 @@ function TopicDetailView({
 
             <ul className={styles.commentList}>
               {topLevel.length === 0 ? (
-                <li className={styles.emptyComments}>Seja o primeiro a comentar.</li>
+                /* Menor de idade não escreve em comunidades → o convite
+                 *  "Seja o primeiro a comentar" não aparece pra ele. */
+                user?.isMinor ? null : (
+                  <li className={styles.emptyComments}>Seja o primeiro a comentar.</li>
+                )
               ) : (
                 topLevel.map((c) => (
                   <CommentRow
@@ -1546,7 +1552,7 @@ function TopicDetailView({
         )}
       </div>
 
-      {community?.isMember && user && !loading && topic && (
+      {community?.isMember && user && !user.isMinor && !loading && topic && (
         <form className={styles.composer} onSubmit={handleSubmit}>
           {replyTarget && (
             <div className={styles.replyBanner}>

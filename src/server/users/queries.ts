@@ -107,7 +107,15 @@ export async function searchUsers(
       locationConsent: users.locationConsent,
     })
     .from(users)
-    .where(and(ne(users.id, excludeUserId), ilike(users.name, like)))
+    // Exclui menores de idade — não devem ser encontráveis pra DM
+    // (ninguém pode se comunicar com perfis de menores).
+    .where(
+      and(
+        ne(users.id, excludeUserId),
+        eq(users.isMinor, false),
+        ilike(users.name, like),
+      ),
+    )
     .orderBy(users.name)
     .limit(limit);
 
