@@ -27,16 +27,14 @@
   justify-content: center;
   padding: calc(22vh + 50px) 24px 24px;
 }
-/* Per spec atualizado "era pra aumentar a altura do header
- *  mobile não do desktop" — correção: a iteração anterior
- *  usou calc(16vh + 60px) que em viewports mobile típicos
- *  (~800px tall) dava ~188px, MENOR que o default desktop
- *  22vh+50=226. Agora cresce pra calc(28vh + 100px) ≈ 324px
- *  num viewport de 800px — bem acima do original e dando o
- *  respiro pedido. Desktop continua intacto (default acima). */
+/* Per spec mobile "aumente o H1 no mobile e posicione mais acima" —
+ *  o padding-top do hero (que empurrava o headline pra baixo) cai de
+ *  calc(28vh + 100px) ≈ 324px pra calc(14vh + 48px) ≈ 162px num
+ *  viewport de 812px, subindo o headline ~160px (sem colidir com o
+ *  logo, que termina ~100px do topo). Desktop intacto (default acima). */
 @media (max-width: 720px) {
   .hero {
-    padding-top: calc(28vh + 100px);
+    padding-top: calc(14vh + 48px);
     padding-bottom: 80px;
   }
 }
@@ -128,6 +126,17 @@
   animation:
     tloop-fadeup 800ms cubic-bezier(0.22, 1, 0.36, 1) both,
     tloop-headlineShimmer 7s ease-in-out infinite;
+}
+
+/* H1 maior no mobile per spec "aumente o H1 no mobile". Precisa vir
+ *  DEPOIS da regra base acima: o 9.35vw do clamp base fica abaixo do
+ *  floor num viewport mobile, então o tamanho efetivo era sempre 48px.
+ *  Floor sobe pra 60px. (Em @media — mesma especificidade da base —,
+ *  então a ordem de fonte é o que decide.) */
+@media (max-width: 720px) {
+  .headline {
+    font-size: clamp(60px, 16vw, 96px);
+  }
 }
 
 /* Lead — wrapper da frase de apoio + CTA "Entrar com código".
