@@ -1,0 +1,220 @@
+/* AddressBookModal — CRUD de endereços (Loja Fanverse / Meus dados).
+ * Painel central escuro, portalado pra body. Estética alinhada com os
+ * demais modais do /app (EditProfileModal). */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: addrFade 200ms ease forwards;
+}
+.backdropOut {
+  animation: addrFadeOut 200ms ease forwards;
+}
+
+.panel {
+  position: fixed;
+  z-index: 141;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100vw - 24px));
+  max-height: min(86vh, 760px);
+  display: flex;
+  flex-direction: column;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 28px 80px -24px rgba(0, 0, 0, 0.8);
+  animation: addrRise 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.panelOut {
+  animation: addrFall 200ms ease forwards;
+}
+
+@keyframes addrFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes addrFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes addrRise {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes addrFall {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, calc(-50% + 10px)) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel, .backdrop, .panelOut, .backdropOut { animation: none; }
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+.headerSpacer { width: 32px; height: 32px; flex-shrink: 0; }
+.backBtn,
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.backBtn:hover,
+.closeBtn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+/* Body (scrollable) */
+.body {
+  padding: 16px;
+  overflow-y: auto;
+}
+.intro {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 245, 247, 0.6);
+}
+.muted { color: rgba(245, 245, 247, 0.5); font-size: 13px; }
+.empty { padding: 24px 0; text-align: center; }
+
+/* Address list */
+.list { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+.cardMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cardTopline { display: flex; align-items: center; gap: 8px; }
+.recipient { font-size: 13px; font-weight: 600; color: #fff; }
+.defaultBadge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 0, 180, 0.5);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.addrLine { font-size: 12px; line-height: 1.45; color: rgba(245, 245, 247, 0.62); }
+.cardActions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.55);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.iconBtn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.confirmDel {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 80, 80, 0.16);
+  color: #ff8a8a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Add button (clearly a button) */
+.addBtn {
+  width: 100%;
+  padding: 11px 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.addBtn:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; }
+.field { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.fieldLabel { font-size: 12px; font-weight: 500; color: rgba(245, 245, 247, 0.6); }
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.input:focus { border-color: rgba(255, 0, 180, 0.5); background: rgba(255, 255, 255, 0.07); }
+.input::placeholder { color: rgba(245, 245, 247, 0.3); }
+.ufInput { width: 64px; text-align: center; }
+.numInput { width: 90px; }
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(245, 245, 247, 0.78);
+  cursor: pointer;
+}
+.checkRow input { width: 16px; height: 16px; accent-color: #ff00b4; }
+
+.saveBtn {
+  width: 100%;
+  height: 48px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
+  background-size: 200% 100%;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 140ms ease, opacity 140ms ease;
+}
+.saveBtn:hover:not(:disabled) { transform: translateY(-1px); }
+.saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.errorBox {
+  padding: 10px 12px;
+  background: rgba(255, 93, 131, 0.1);
+  border-radius: 10px;
+  color: #ff8aa3;
+  font-size: 12px;
+}

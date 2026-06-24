@@ -1442,3 +1442,43 @@ export const notificationSettings = pgTable('notification_settings', {
 });
 
 export type NotificationSettingsRow = typeof notificationSettings.$inferSelect;
+
+/* ──────────────────────────────────────────────────────────────
+ * Endereços de entrega (Loja Fanverse / Meus dados).
+ *
+ * Onde os produtos resgatados pelo usuário serão enviados. CRUD pelo
+ * próprio usuário (rotas /api/me/addresses); refletido read-only no
+ * detalhe do usuário no admin (/api/admin/users/[id]/addresses).
+ * Formato brasileiro (CEP, logradouro, bairro, UF). Um endereço pode
+ * ser marcado como padrão (is_default) — usado como destino default
+ * no resgate.
+ * ────────────────────────────────────────────────────────────── */
+export const userAddresses = pgTable(
+  'user_addresses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Nome de quem recebe (pode diferir do nome da conta). */
+    recipient: text('recipient').notNull(),
+    cep: text('cep').notNull(),
+    street: text('street').notNull(),
+    number: text('number').notNull(),
+    complement: text('complement'),
+    district: text('district').notNull(),
+    city: text('city').notNull(),
+    state: text('state').notNull(),
+    country: text('country').notNull().default('Brasil'),
+    isDefault: boolean('is_default').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index('user_addresses_user_idx').on(t.userId)],
+);
+
+export type UserAddressRow = typeof userAddresses.$inferSelect;

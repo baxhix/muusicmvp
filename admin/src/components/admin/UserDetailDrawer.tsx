@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
@@ -17,6 +18,7 @@ import {
 } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
+import { addressService, type UserAddress } from '@/services/addresses';
 import { formatDateTime } from '@/lib/format';
 import styles from './UserDetailDrawer.module.css';
 
@@ -53,6 +55,23 @@ export default function UserDetailDrawer({
   onDelete,
 }: UserDetailDrawerProps) {
   const router = useRouter();
+
+  // Endereços de entrega cadastrados pelo usuário (read-only). Busca
+  // ao abrir o drawer; reflete o que ele gerencia em Meus dados.
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [addrLoading, setAddrLoading] = useState(false);
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!open || !userId) return;
+    let active = true;
+    setAddrLoading(true);
+    addressService
+      .listForUser(userId)
+      .then((res) => { if (active) setAddresses(res.addresses); })
+      .catch(() => { if (active) setAddresses([]); })
+      .finally(() => { if (active) setAddrLoading(false); });
+    return () => { active = false; };
+  }, [open, userId]);
 
   if (!user) {
     return <Drawer open={open} onClose={onClose}>{null}</Drawer>;
@@ -172,6 +191,39 @@ export default function UserDetailDrawer({
             </Button>
           )}
         </div>
+      </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionTitle}>Endereços de entrega</span>
+          <span className={styles.sectionDescription}>
+            Onde os produtos resgatados na Loja Fanverse serão enviados.
+          </span>
+        </div>
+
+        {addrLoading ? (
+          <div className={styles.streamCard}>
+            <span className={styles.streamMeta}>Carregando endereços…</span>
+          </div>
+        ) : addresses.length === 0 ? (
+          <div className={styles.streamCard}>
+            <span className={styles.streamMeta}>Nenhum endereço cadastrado.</span>
+          </div>
+        ) : (
+          addresses.map((a) => (
+            <div key={a.id} className={styles.streamCard}>
+              <span className={styles.streamTitle}>
+                {a.recipient}
+                {a.isDefault && <span className={styles.streamArtist}> · Padrão</span>}
+              </span>
+              <span className={styles.streamMeta}>
+                {a.street}, {a.number}
+                {a.complement ? ` — ${a.complement}` : ''} · {a.district} ·{' '}
+                {a.city}/{a.state} · {a.cep}
+              </span>
+            </div>
+          ))
+        )}
       </div>
 
       <div className={styles.section}>

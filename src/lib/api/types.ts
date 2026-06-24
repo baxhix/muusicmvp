@@ -507,3 +507,22 @@ export interface ApiCommunityCommentReactionResult {
   mine: boolean;
 }
 
+
+/**
+ * Endereço de entrega do usuário (Loja Fanverse / Meus dados).
+ * Espelha o retorno de /api/me/addresses. Formato brasileiro.
+ */
+export interface ApiUserAddress {
+  id: string;
+  recipient: string;
+  cep: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  district: string;
+  city: string;
+  state: string;
+  country: string;
+  isDefault: boolean;
+  createdAt: string;
+}

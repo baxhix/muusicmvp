@@ -47,6 +47,7 @@ import SimulationHUD from '@/components/app/SimulationHUD';
 import FanverseSearch from '@/components/app/FanverseSearch';
 import FanpointsModal from '@/components/app/FanpointsModal';
 import RankingStoreModal from '@/components/app/RankingStoreModal';
+import AddressBookModal from '@/components/app/AddressBookModal';
 import OnboardingTour from '@/components/app/OnboardingTour';
 import { InviteFriendsModal } from '@/components/app/ArtistBox';
 import ShowDayLayer from '@/components/app/ShowDayLayer';
@@ -590,6 +591,10 @@ function Shell({ children }: { children: React.ReactNode }) {
        *  ícone Loja. Self-mounting: ouve o evento global e renderiza
        *  o modal full-screen (mock). */}
       <RankingStoreModal />
+
+      {/* Modal "Meus endereços" — CRUD de endereços de entrega da Loja.
+       *  Abre via `app:open-address-book` (botão "Meus dados" da Loja). */}
+      <AddressBookModal />
 
       {/* Modal "Convide seus amigos" (loop viral / referral) —
        *  abre via `app:open-invite` (dispatched pelo drawer do
