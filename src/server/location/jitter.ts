@@ -29,3 +29,31 @@ export function jitterCoords(
 
   return [lng + dLng * Math.cos(angle), lat + dLat * Math.sin(angle)];
 }
+
+/**
+ * Ponto EXIBIDO no mapa ao vivo: re-embaralha o ponto já aproximado do
+ * usuário num raio pequeno, trocando a cada janela de tempo (`bucketMs`).
+ *
+ * Objetivo: reforçar que a localização é APROXIMADA. Um ponto fixo, mesmo
+ * sendo falso, passa a impressão de ser exato; movendo de tempos em tempos
+ * fica claro que é uma região, não um endereço.
+ *
+ * Propriedades:
+ *  - NÃO escreve no banco (calculado na leitura) → barato.
+ *  - NÃO toca em GPS real (parte do ponto já aproximado salvo) → seguro.
+ *  - Determinístico dentro da janela (seed = userId + bucket) → todos que
+ *    olham veem o MESMO ponto naquele intervalo; oscila em torno do ponto
+ *    salvo (não acumula deriva, não foge da cidade).
+ *
+ * `nowMs` é injetado pelo chamador (testabilidade). `bucketMs` default 1h.
+ */
+export function rotatingDisplayPoint(
+  stored: [number, number], // [lng, lat] já aproximado (centroid + jitter)
+  userId: string,
+  nowMs: number,
+  bucketMs = 60 * 60 * 1000, // 1h
+  radiusKm = 1.5,
+): [number, number] {
+  const bucket = Math.floor(nowMs / bucketMs);
+  return jitterCoords(stored, `${userId}:rot:${bucket}`, radiusKm);
+}

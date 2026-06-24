@@ -2,6 +2,7 @@ import { and, desc, eq, gt, ilike, isNotNull, ne } from 'drizzle-orm';
 import { db } from '../db';
 import { nowPlaying, tracks, users } from '../db/schema';
 import { redactLocation } from './serialize';
+import { rotatingDisplayPoint } from '../location/jitter';
 
 const ONLINE_WINDOW_MS = 60_000; // last_seen_at within 60s = online
 
@@ -49,22 +50,34 @@ export async function listOnlineUsers(excludeUserId: string, limit = 200) {
     .orderBy(desc(users.lastSeenAt))
     .limit(limit);
 
-  return rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    avatarUrl: r.avatarUrl,
-    city: r.city,
-    country: r.country,
-    lat: r.lat,
-    lng: r.lng,
-    nowPlaying: r.trackTitle
-      ? {
-          title: r.trackTitle,
-          artist: r.trackArtist,
-          youtubeId: r.trackYoutubeId,
-        }
-      : null,
-  }));
+  // Ponto exibido NÃO é fixo: oscila dentro da cidade a cada janela de
+  // tempo (rotatingDisplayPoint) pra reforçar que é APROXIMADO — um ponto
+  // fixo passaria a falsa impressão de ser exato. Calculado na leitura
+  // (sem escrita no banco); o lat/lng salvo segue canônico pros outros usos.
+  const nowMs = Date.now();
+  return rows.map((r) => {
+    let lng = r.lng;
+    let lat = r.lat;
+    if (lat != null && lng != null) {
+      [lng, lat] = rotatingDisplayPoint([lng, lat], r.id, nowMs);
+    }
+    return {
+      id: r.id,
+      name: r.name,
+      avatarUrl: r.avatarUrl,
+      city: r.city,
+      country: r.country,
+      lat,
+      lng,
+      nowPlaying: r.trackTitle
+        ? {
+            title: r.trackTitle,
+            artist: r.trackArtist,
+            youtubeId: r.trackYoutubeId,
+          }
+        : null,
+    };
+  });
 }
 
 /**
