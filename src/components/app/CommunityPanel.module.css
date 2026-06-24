@@ -931,9 +931,56 @@
   color: var(--ink);
   letter-spacing: -0.005em;
 }
+/* Linha de baixo do tópico — cinza, 12px, avatar do autor (18×18) +
+ * nome + data; contagem de comentários ancorada à direita. */
 .topicMeta {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
   color: rgba(245, 245, 247, 0.5);
+}
+.topicAvatar {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.08);
+}
+.topicAvatarFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.topicAuthor {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+}
+.topicDot {
+  opacity: 0.55;
+}
+.topicTime {
+  white-space: nowrap;
+}
+/* Contagem + ícone de fórum, no lugar do "N comentários". */
+.topicComments {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.topicForumIcon {
+  width: 14px;
+  height: 14px;
 }
 
 /* ── Topic hero (forum view) ── */

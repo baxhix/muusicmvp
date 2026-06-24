@@ -1155,8 +1155,37 @@ function CommunityDetailView({
                 >
                   <span className={styles.topicTitle}>{t.title}</span>
                   <span className={styles.topicMeta}>
-                    {t.authorName ?? 'Anônimo'} · {relativeTime(t.createdAt)} ·{' '}
-                    {t.commentCount} {t.commentCount === 1 ? 'comentário' : 'comentários'}
+                    {/* Linha de baixo (cinza, 12px): avatar 18×18 do autor +
+                        nome + data; contagem de comentários + ícone de fórum
+                        ancorada à direita (substitui "N comentários"). */}
+                    {t.authorAvatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={t.authorAvatar} alt="" className={styles.topicAvatar} />
+                    ) : (
+                      <span
+                        className={`${styles.topicAvatar} ${styles.topicAvatarFallback}`}
+                        aria-hidden="true"
+                      >
+                        {(t.authorName ?? 'A').slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span className={styles.topicAuthor}>{t.authorName ?? 'Anônimo'}</span>
+                    <span className={styles.topicDot} aria-hidden="true">·</span>
+                    <span className={styles.topicTime}>{relativeTime(t.createdAt)}</span>
+                    <span
+                      className={styles.topicComments}
+                      aria-label={`${t.commentCount} ${t.commentCount === 1 ? 'comentário' : 'comentários'}`}
+                    >
+                      {t.commentCount}
+                      <svg
+                        className={styles.topicForumIcon}
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z" />
+                      </svg>
+                    </span>
                   </span>
                 </button>
               </li>
