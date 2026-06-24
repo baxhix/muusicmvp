@@ -1048,7 +1048,9 @@
 }
 .commentText {
   margin: 2px 0 0;
-  font-size: 12px;
+  /* 13px per feedback — corpo dos comentários e respostas nos tópicos
+   *  (mesma classe usada por comentário e reply). */
+  font-size: 13px;
   color: rgba(245, 245, 247, 0.82);
   line-height: 1.45;
   white-space: pre-wrap;

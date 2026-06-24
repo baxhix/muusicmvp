@@ -993,12 +993,9 @@
     position: relative;
     z-index: 2;
   }
-  /* Na Loja, o tabBar é TRANSPARENTE → a imagem do banner passa por
-   * trás das tabs, ganhando mais área visível. A legibilidade das tabs
-   * vem do scrim escuro no topo do .storeBanner (0.5 → 0.12). */
-  .tabsAreaLoja .tabBar {
-    background: transparent;
-  }
+  /* Na Loja o tabBar usa EXATAMENTE o mesmo estilo das demais abas
+   * (sem override de cor) — per feedback "deixe a tab da loja igual às
+   * demais. Não precisa mudar a cor exclusivamente". */
   /* Conteúdo da Loja sobe por cima da imagem; backing escuro full-bleed
    * + gradiente preto no topo suaviza a transição e, ao rolar, oculta a
    * imagem. A parte atrás das tabs continua fixa. `margin-top` empurra o
@@ -1088,15 +1085,22 @@
 
 /* Título "Loja da Boiadeira" acima do card de saldo. */
 .lojaHeading {
-  font-size: 17px;
+  /* 20px per feedback "aumente a palavra Loja da Boiadeira pra 20px". */
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #fff;
   margin: 0;
 }
-/* Saldo em linha única, menor (substitui o número grande). */
+/* Saldo: rótulo na 1ª linha, valor (Fanpoints) na linha de baixo. */
 .balLine { font-size: 12px; color: rgba(255, 255, 255, 0.5); line-height: 1.4; }
-.balStrong { color: rgba(255, 255, 255, 0.9); font-weight: 600; font-variant-numeric: tabular-nums; }
+.balStrong {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 
 /* Desconto numa única linha: badge + validade, sem quebrar. */
 .discountRow {
