@@ -34,7 +34,9 @@
  *  logo, que termina ~100px do topo). Desktop intacto (default acima). */
 @media (max-width: 720px) {
   .hero {
-    padding-top: calc(14vh + 48px);
+    /* +52px per spec "posicione 52px mais abaixo o h1 do mobile"
+     *  (48 → 100px no termo fixo do calc). */
+    padding-top: calc(14vh + 100px);
     padding-bottom: 80px;
   }
 }
