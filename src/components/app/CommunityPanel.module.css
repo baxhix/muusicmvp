@@ -367,8 +367,11 @@
   position: absolute;
   left: 12px;
   top: 50%;
-  /* Mesmo offset vertical do ícone de busca do Chat (+2px). */
-  transform: translateY(calc(-50% + 2px));
+  /* Centralizado no input: aqui o .searchRow NÃO tem padding assimétrico
+   * (diferente do Chat, cujo +2px corrige o padding 16/12 do .searchWrap),
+   * então o ícone já fica centrado só com -50%. Antes tinha +2px copiado
+   * do Chat, o que deslocava 2px pra baixo. */
+  transform: translateY(-50%);
   width: 14px;
   height: 14px;
   color: rgba(245, 245, 247, 0.45);
