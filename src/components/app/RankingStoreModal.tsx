@@ -28,6 +28,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
+import { globeStore } from '@/lib/globeStore';
 import RankMedallion from './RankMedallion';
 import TruncatedText from './TruncatedText';
 import { BeneficiosTab, currentTierForRank } from './FanpointsModal';
@@ -109,22 +110,18 @@ const MISSIONS: Record<MissionTab, MissionDef> = {
   },
 };
 
-const BADGES = [
-  { label: 'Top 1%', sub: 'Mês de maio' },
-];
+/* Conquistas (mock) — o rótulo do mês é calculado em runtime (mês
+ * anterior ao atual), não fixo, pra não envelhecer. Ver `badges` no
+ * componente. */
 
 /* Imagens do slider dos produtos (mock). Salve os arquivos em
  * public/store/ — fundo branco no slot, contain pra mostrar a peça
  * inteira. */
 const PRODUCT_IMAGES = ['/store/produto-1.webp', '/store/produto-2.webp'];
 
-/* Rótulo/intervalo cosmético por período (só ranking all-time existe). */
-const PERIOD_META: Record<Period, { label: string; range: string }> = {
-  diario:  { label: 'Hoje · 16 jun', range: 'Encerra em 13h 42min' },
-  semanal: { label: '10 – 16 jun', range: 'Semana 24 · termina em 2d 6h' },
-  mensal:  { label: 'Junho 2026', range: 'Termina em 14 dias' },
-  anual:   { label: '2026', range: 'Temporada anual' },
-};
+/* Rótulo/intervalo cosmético por período — calculado em runtime a
+ * partir da data atual (ver `periodMeta` no componente). Antes era
+ * fixo ("Hoje · 16 jun"), o que envelhecia. */
 
 /* Abas principais do modal. Ordem fixa pedida pelo produto. */
 const MAIN_TABS: [Tab, string][] = [
@@ -191,7 +188,7 @@ const initialsOf = (name: string) =>
   name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]).join('').toUpperCase() || '·';
 
 interface Row {
-  rank: number; pts: number; you: boolean; name: string; city: string;
+  rank: number; pts: number; you: boolean; userId: string; name: string; city: string;
   avatarUrl: string | null; initials: string; points: string;
   ring: string; rankColor: string; delta: number;
 }
@@ -315,7 +312,67 @@ export default function RankingStoreModal() {
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
   }, [tab]);
 
-  const pm = PERIOD_META[period];
+  /* Rótulo/intervalo por período derivados da data REAL (recalcula a
+   * cada abertura). Sem hydration risk: o modal só monta após o evento
+   * de abertura (client). Antes era fixo "Hoje · 16 jun / Encerra em
+   * 13h 42min" e envelhecia. */
+  const periodMeta = useMemo<Record<Period, { label: string; range: string }>>(() => {
+    const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    const MESLONG = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const now = new Date();
+    const dd = (d: Date) => String(d.getDate()).padStart(2, '0');
+
+    // Diário — encerra à meia-noite.
+    const eod = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const msDay = eod.getTime() - now.getTime();
+    const hDay = Math.floor(msDay / 3_600_000);
+    const mDay = Math.floor((msDay % 3_600_000) / 60_000);
+
+    // Semanal — segunda a domingo.
+    const dow = (now.getDay() + 6) % 7; // 0 = segunda
+    const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+    const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    const eow = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + 1);
+    const msWeek = eow.getTime() - now.getTime();
+    const dWeek = Math.floor(msWeek / 86_400_000);
+    const hWeek = Math.floor((msWeek % 86_400_000) / 3_600_000);
+    const startYear = new Date(now.getFullYear(), 0, 1);
+    const week = Math.ceil(((now.getTime() - startYear.getTime()) / 86_400_000 + startYear.getDay() + 1) / 7);
+    const weekLabel = mon.getMonth() === sun.getMonth()
+      ? `${dd(mon)} – ${dd(sun)} ${MES[sun.getMonth()]}`
+      : `${dd(mon)} ${MES[mon.getMonth()]} – ${dd(sun)} ${MES[sun.getMonth()]}`;
+
+    // Mensal — dias até o fim do mês.
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysLeft = lastDay - now.getDate();
+
+    return {
+      diario:  { label: `Hoje · ${dd(now)} ${MES[now.getMonth()]}`, range: `Encerra em ${hDay}h ${String(mDay).padStart(2, '0')}min` },
+      semanal: { label: weekLabel, range: `Semana ${week} · termina em ${dWeek}d ${hWeek}h` },
+      mensal:  { label: `${MESLONG[now.getMonth()]} ${now.getFullYear()}`, range: `Termina em ${daysLeft} ${daysLeft === 1 ? 'dia' : 'dias'}` },
+      anual:   { label: `${now.getFullYear()}`, range: 'Temporada anual' },
+    };
+    // `open` é dep proposital: recalcula a data/contagem a cada abertura.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const pm = periodMeta[period];
+
+  /* Conquistas (mock) — mês anterior calculado em runtime. */
+  const badges = useMemo(() => {
+    const MESLONG = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const prev = MESLONG[(new Date().getMonth() + 11) % 12];
+    return [{ label: 'Top 1%', sub: `Mês de ${prev}` }];
+    // `open` é dep proposital: recalcula o mês a cada abertura.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  /* Abre o perfil do fã (fecha o modal e navega via globeStore). */
+  const openProfile = useCallback((userId: string) => {
+    if (!userId) return;
+    globeStore.openUserProfile(userId);
+    close();
+  }, [close]);
 
   /* Linhas reais do ranking (all-time). O período é cosmético por
    * enquanto — todas as abas mostram a mesma lista real. */
@@ -334,6 +391,7 @@ export default function RankingStoreModal() {
         rank,
         pts: r.points,
         you: isMe,
+        userId: r.userId,
         name: isMe ? `Você · ${baseName}` : baseName,
         city: r.city ?? '',
         avatarUrl: r.avatarUrl ?? null,
@@ -508,8 +566,10 @@ export default function RankingStoreModal() {
         </div>
 
         {/* Área de abas + conteúdo. position:relative pra ancorar o banner
-            de destaque da Loja ATRÁS das tabs (desktop). */}
-        <div className={styles.tabsArea}>
+            de destaque da Loja ATRÁS das tabs (desktop). Na Loja ganha a
+            classe `tabsAreaLoja` → tabBar preto (tabs como nas outras abas)
+            + conteúdo empurrado pra baixo (mostra mais a imagem). */}
+        <div className={`${styles.tabsArea} ${tab === 'loja' ? styles.tabsAreaLoja : ''}`}>
         {/* Banner de destaque (desktop, só Loja): imagem fixa que fica
             POR TRÁS das tabs e do topo do conteúdo; ao rolar, o conteúdo
             + gradiente preto passam por cima. Oculto no mobile via CSS. */}
@@ -745,7 +805,7 @@ export default function RankingStoreModal() {
                           </div>
                           <div className={styles.achPanel}>
                             <div className={styles.perkList}>
-                              {BADGES.map((pk) => (
+                              {badges.map((pk) => (
                                 <div key={pk.label} className={styles.perk}>
                                   <span className={styles.perkLabel}>{pk.label}</span>
                                   <span className={styles.perkSub}>{pk.sub}</span>
@@ -864,7 +924,15 @@ export default function RankingStoreModal() {
                             <RankMedallion position={r.rank} size="sm" />
                           </span>
                           <div className={styles.info}>
-                            <TruncatedText className={styles.name}>{r.name}</TruncatedText>
+                            <TruncatedText
+                              as="button"
+                              type="button"
+                              className={styles.name}
+                              title={r.name.replace('Você · ', '')}
+                              onClick={() => openProfile(r.userId)}
+                            >
+                              {r.name}
+                            </TruncatedText>
                             {r.city && <span className={styles.city}>{r.city}</span>}
                           </div>
                           <div className={styles.pointsCol}>

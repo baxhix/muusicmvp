@@ -918,7 +918,16 @@
 }
 .avatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .info { flex: 1; min-width: 0; }
-.name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 260px; }
+/* Nome do fã — botão inline (abre o perfil). Reset do chrome de
+ * <button> + underline no hover pra sinalizar que é link. */
+.name {
+  font-size: 14px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: block; max-width: 260px;
+  background: none; border: 0; padding: 0; margin: 0;
+  font-family: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.name:hover { text-decoration: underline; }
 .city { font-size: 12px; color: rgba(255, 255, 255, 0.42); margin-top: 3px; display: block; }
 /* FP + variação de posição, empilhados à direita. */
 .pointsCol { flex: 0 0 auto; margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
@@ -970,7 +979,8 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 120px;
+    /* Mais alto pra sobrar imagem visível abaixo do tabBar (preto). */
+    height: 230px;
     z-index: 0;
     /* Scrim escuro por cima da imagem: mais forte no topo (legibilidade
      * das tabs), suavizando pra baixo. */
@@ -979,19 +989,24 @@
       url('/store/banner-store.png') center / cover no-repeat;
     pointer-events: none;
   }
-  /* Tabs por cima da imagem (fundo transparente deixa a imagem aparecer
-   * ao redor do pill). */
   .tabBar {
     position: relative;
     z-index: 2;
-    background: transparent;
+  }
+  /* Na Loja, o tabBar fica PRETO por cima da imagem → as tabs ficam
+   * com a mesma cor das demais abas (não vaza a imagem ao redor do
+   * pill). A imagem aparece abaixo do tabBar, no respiro até o conteúdo. */
+  .tabsAreaLoja .tabBar {
+    background: #0b0b0d;
   }
   /* Conteúdo da Loja sobe por cima da imagem; backing escuro full-bleed
    * + gradiente preto no topo suaviza a transição e, ao rolar, oculta a
-   * imagem. A parte atrás das tabs continua fixa. */
+   * imagem. A parte atrás das tabs continua fixa. `margin-top` empurra o
+   * conteúdo pra baixo, revelando mais a imagem de fundo. */
   .store {
     position: relative;
     z-index: 1;
+    margin-top: 124px;
   }
   .store::before {
     content: '';
