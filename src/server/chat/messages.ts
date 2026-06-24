@@ -156,6 +156,19 @@ export async function sendMessage(
   if (!trimmed && !normalizedAttachments) throw new Error('empty_message');
   if (trimmed.length > 4000) throw new Error('message_too_long');
 
+  /* Proteção a menores (segurança/LGPD): usuário menor de idade NÃO
+   * envia mensagem pra ninguém — nem DM, nem grupo. Backstop no ponto
+   * mais baixo do envio: cobre TODAS as superfícies (REST + socket +
+   * qualquer caller futuro), então a regra não depende de cada entry
+   * point lembrar de checar. Os entry points mapeiam este throw pra
+   * um erro limpo (403 / ack 'minor_blocked'). */
+  const [senderRow] = await db
+    .select({ isMinor: users.isMinor })
+    .from(users)
+    .where(eq(users.id, senderId))
+    .limit(1);
+  if (senderRow?.isMinor) throw new Error('minor_messaging_blocked');
+
   const txResult = await db.transaction(async (tx) => {
     const [msg] = await tx
       .insert(messages)

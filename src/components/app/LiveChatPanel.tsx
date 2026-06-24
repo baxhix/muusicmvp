@@ -653,6 +653,11 @@ export default function LiveChatPanel({
    * influencia a renderização do system_leave message
    * (badge "Você saiu" vs "{X} saiu do grupo"). */
   const hasLeftGroup = isGroup && !!conversation?.myLeftAt;
+  /* Menor de idade NÃO envia mensagem pra ninguém (proteção/LGPD). O
+   * servidor bloqueia em todas as superfícies; aqui escondemos o
+   * composer e mostramos um aviso pra dar feedback claro em vez de o
+   * envio falhar com erro. */
+  const isMinorBlocked = !!user?.isMinor;
   // Display identity is shape-dependent:
   //   DM    → conversation.otherUser.{name,avatar,verified}
   //   Group → conversation.{name,imageUrl} (no verified concept)
@@ -1041,7 +1046,16 @@ export default function LiveChatPanel({
         </div>
       )}
 
-      {hasLeftGroup ? (
+      {isMinorBlocked ? (
+        /* Conta de menor de idade — sem composer (não envia mensagem
+         *  pra ninguém). Reusa o estilo do banner read-only. */
+        <div className={styles.leftBanner}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M7 1v6M7 11v.01M7 13a6 6 0 1 0 0-12 6 6 0 0 0 0 12z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <span>Contas de menores de idade não podem enviar mensagens.</span>
+        </div>
+      ) : hasLeftGroup ? (
         /* Read-only banner — user saiu do grupo (ou foi kickado).
          * Pode continuar lendo o histórico, mas o composer desaparece
          * pra evitar tentativa de envio que renderia 403 no servidor.

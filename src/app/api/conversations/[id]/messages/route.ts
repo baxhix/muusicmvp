@@ -122,6 +122,12 @@ export async function POST(
   if (auth instanceof NextResponse) return auth;
   const user = auth;
 
+  /* Proteção a menores: menor de idade não envia mensagem pra ninguém.
+   * Checa cedo (evita o trabalho) — o sendMessage() tem o backstop. */
+  if (user.isMinor) {
+    return NextResponse.json({ error: 'minor_blocked' }, { status: 403 });
+  }
+
   const { id } = await ctx.params;
   /* POST exige membro ATIVO — usuários que SAÍRAM do grupo
    * (leftAt != null) recebem 403 com error='left_conversation'
@@ -150,6 +156,11 @@ export async function POST(
      * `attachments_*` quando o payload de anexo é inválido. Tudo
      * é erro do client → 400. */
     const code = err instanceof Error ? err.message : 'send_failed';
+    // Backstop do sendMessage() pra menor de idade (caso o early-check
+    // acima não pegue por algum motivo) → 403.
+    if (code === 'minor_messaging_blocked') {
+      return NextResponse.json({ error: 'minor_blocked' }, { status: 403 });
+    }
     if (
       code === 'empty_message' ||
       code === 'message_too_long' ||

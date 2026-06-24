@@ -62,6 +62,12 @@ export async function POST(req: Request) {
   if (auth instanceof NextResponse) return auth;
   const user = auth;
 
+  /* Proteção a menores: menor de idade não inicia conversa com ninguém
+   * (DM nem grupo) — alinha com o bloqueio de envio de mensagens. */
+  if (user.isMinor) {
+    return NextResponse.json({ error: 'minor_blocked' }, { status: 403 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

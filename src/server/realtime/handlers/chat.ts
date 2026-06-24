@@ -199,6 +199,12 @@ export function registerChatHandlers(io: AppServer, socket: AppSocket): void {
 
       ack?.({ ok: true, messageId: result.message.id });
     } catch (err) {
+      /* Menor de idade não envia mensagem (backstop do sendMessage) →
+       * ack limpo pro cliente, sem logar como erro de servidor. */
+      const code = err instanceof Error ? err.message : 'send_failed';
+      if (code === 'minor_messaging_blocked') {
+        return ack?.({ ok: false, error: 'minor_blocked' });
+      }
       logger.error('realtime.chat.chatsend-handler', err)
       ack?.({ ok: false, error: 'send_failed' });
     }
