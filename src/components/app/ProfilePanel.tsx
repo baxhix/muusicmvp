@@ -267,11 +267,16 @@ export default function ProfilePanel({
     setAppearOnMap(next);
     setConsentBusy(true);
     try {
-      // Ligar captura a localização no gesto (prompt confiável) + grava
-      // coords; sem coords o usuário não aparece pros outros no mapa.
-      const res = await setMapVisibility(next);
+      // Liga o flag na hora; só captura a geoloc (prompt) se ainda não
+      // houver coords — quem já compartilhou alterna instantâneo.
+      const hasCoords = authUser?.lat != null && authUser?.lng != null;
+      const res = await setMapVisibility(next, { hasCoords });
       if (!res.ok) {
-        setAppearOnMap(!next); // não ligou de fato → reverte
+        setAppearOnMap(!next); // falha de rede → reverte
+        return;
+      }
+      // Ligou mas sem coords (geoloc negada/falhou): mantém ON e avisa.
+      if (next && res.needsLocation && res.reason) {
         try {
           window.dispatchEvent(
             new CustomEvent('app:toast', {
@@ -279,7 +284,6 @@ export default function ProfilePanel({
             }),
           );
         } catch { /* SSR */ }
-        return;
       }
       if (next) track('location_consent_granted', { surface: 'settings' });
       else track('location_consent_revoked', {});

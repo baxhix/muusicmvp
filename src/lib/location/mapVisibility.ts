@@ -4,7 +4,22 @@ import { api, ApiError } from '@/lib/api/client';
 
 export type MapVisibilityReason = 'denied' | 'unavailable' | 'no_city' | 'error';
 
-export type MapVisibilityResult = { ok: true } | { ok: false; reason: MapVisibilityReason };
+/**
+ * Resultado do toggle.
+ *   - ok:false        → falha de rede ao gravar o flag → o chamador reverte
+ *                       o switch.
+ *   - ok:true         → o consentimento foi gravado como pedido (o switch
+ *                       fica onde o usuário colocou — NUNCA reverte).
+ *   - needsLocation   → ligou o flag mas não há coords (geoloc negada/falhou):
+ *                       o chamador mantém o switch ON e mostra um aviso com
+ *                       `reason` explicando que precisa permitir a localização
+ *                       pra de fato aparecer no mapa.
+ */
+export type MapVisibilityResult = {
+  ok: boolean;
+  needsLocation?: boolean;
+  reason?: MapVisibilityReason;
+};
 
 /**
  * Pede a geolocalização do navegador. Resolve (nunca rejeita) com as
@@ -32,31 +47,45 @@ function getBrowserCoords(): Promise<
 /**
  * Liga/desliga a visibilidade no mapa ("Visível no mapa" / switch online).
  *
- * O bug que isso corrige: ligar SÓ o consentimento (PATCH location-consent)
- * nunca colocava o usuário no mapa, porque `listOnlineUsers` exige lat/lng
- * não-nulos e a captura das coords ficava num effect PASSIVO
- * (useLocationSync) que no desktop quase nunca dispara o prompt do
- * navegador. Resultado: switch ON + coords NULL = invisível em silêncio.
+ * O switch SEMPRE reflete a escolha do usuário (liga e fica ligado). A
+ * captura de coords é só uma ação best-effort que acontece quando ainda
+ * não há coords salvas:
  *
- * Aqui a captura roda DENTRO do gesto do toggle e grava coords +
- * consentimento de uma vez (POST /api/me/location grantConsent), que é
- * o que efetivamente coloca o usuário no mapa.
+ *   OFF                       → PATCH consent:false.
+ *   ON  + já tem coords       → PATCH consent:true (instantâneo, sem prompt).
+ *                               É o caso comum de quem já compartilhou a
+ *                               localização antes — não relê o GPS toda vez
+ *                               (era essa a regressão que travava o switch).
+ *   ON  + sem coords          → PATCH consent:true e, no mesmo gesto, tenta
+ *                               capturar a localização (prompt confiável) +
+ *                               grava coords (POST grantConsent). Se a geoloc
+ *                               falhar, o flag continua ON e retornamos
+ *                               needsLocation:true pro chamador avisar.
  *
- *   ON  → captura coords no gesto → POST (coords + consent). Se a
- *         geolocalização (ou a cidade) falhar, NÃO liga o flag e retorna
- *         {ok:false, reason} pro chamador reverter o switch e avisar.
- *   OFF → PATCH consent:false (coords aproximadas ficam guardadas mas
- *         escondidas; religar mostra na hora).
+ * `hasCoords` vem do auth user (lat/lng != null) — evita o prompt
+ * desnecessário pra quem já tem coords.
  */
-export async function setMapVisibility(next: boolean): Promise<MapVisibilityResult> {
+export async function setMapVisibility(
+  next: boolean,
+  opts?: { hasCoords?: boolean },
+): Promise<MapVisibilityResult> {
   if (!next) {
     await api.patch('/api/me/location-consent', { consent: false });
     return { ok: true };
   }
 
-  const coords = await getBrowserCoords();
-  if ('error' in coords) return { ok: false, reason: coords.error };
+  // ON — honra o toggle ligando o flag primeiro (vale mesmo se a captura
+  // de coords falhar depois).
+  await api.patch('/api/me/location-consent', { consent: true });
 
+  // Já tem coords → nada mais a fazer (instantâneo, sem prompt).
+  if (opts?.hasCoords) return { ok: true };
+
+  // Sem coords → captura no gesto pra de fato entrar no mapa.
+  const coords = await getBrowserCoords();
+  if ('error' in coords) {
+    return { ok: true, needsLocation: true, reason: coords.error };
+  }
   try {
     await api.post('/api/me/location', {
       lat: coords.lat,
@@ -65,10 +94,9 @@ export async function setMapVisibility(next: boolean): Promise<MapVisibilityResu
     });
     return { ok: true };
   } catch (err) {
-    if (err instanceof ApiError && err.status === 422) {
-      return { ok: false, reason: 'no_city' };
-    }
-    return { ok: false, reason: 'error' };
+    const reason: MapVisibilityReason =
+      err instanceof ApiError && err.status === 422 ? 'no_city' : 'error';
+    return { ok: true, needsLocation: true, reason };
   }
 }
 
@@ -76,12 +104,12 @@ export async function setMapVisibility(next: boolean): Promise<MapVisibilityResu
 export function mapVisibilityErrorMessage(reason: MapVisibilityReason): string {
   switch (reason) {
     case 'denied':
-      return 'Permita o acesso à localização no navegador pra aparecer no mapa.';
+      return 'Você está visível, mas precisa permitir a localização no navegador pra aparecer no mapa.';
     case 'unavailable':
-      return 'Não consegui acessar sua localização agora. Tente de novo.';
+      return 'Você está visível, mas não consegui acessar sua localização agora.';
     case 'no_city':
-      return 'Não encontramos sua cidade a partir da localização. Tente de novo.';
+      return 'Você está visível, mas não encontramos sua cidade a partir da localização.';
     default:
-      return 'Não foi possível te colocar no mapa agora. Tente de novo.';
+      return 'Você está visível, mas não consegui salvar sua localização agora.';
   }
 }

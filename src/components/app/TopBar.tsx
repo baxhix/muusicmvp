@@ -371,14 +371,17 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
     setLocationConsent(next); // otimista
     setConsentBusy(true);
     try {
-      // Ligar captura a localização DENTRO do gesto (prompt confiável) e
-      // grava coords + consentimento — sem coords o usuário fica com o
-      // switch ON mas invisível pros outros no mapa (era esse o bug).
-      const res = await setMapVisibility(next);
+      // Liga o flag na hora; só captura a geoloc (prompt) se ainda não
+      // houver coords — quem já compartilhou alterna instantâneo.
+      const hasCoords = user?.lat != null && user?.lng != null;
+      const res = await setMapVisibility(next, { hasCoords });
       if (!res.ok) {
-        setLocationConsent(!next); // não ligou de fato → reverte
-        showAppToast({ message: mapVisibilityErrorMessage(res.reason), tone: 'error' });
+        setLocationConsent(!next); // falha de rede → reverte
         return;
+      }
+      // Ligou mas sem coords (geoloc negada/falhou): mantém ON e avisa.
+      if (next && res.needsLocation && res.reason) {
+        showAppToast({ message: mapVisibilityErrorMessage(res.reason), tone: 'error' });
       }
       if (next) {
         track('location_consent_granted', { surface: 'settings' });

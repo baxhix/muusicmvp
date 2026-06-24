@@ -71,14 +71,17 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
     setConsent(next); // otimista
     setConsentBusy(true);
     try {
-      // Ligar captura a localização DENTRO do gesto (prompt confiável) e
-      // grava coords + consentimento — sem coords o usuário não aparece
-      // pros outros no mapa.
-      const res = await setMapVisibility(next);
+      // Liga o flag na hora; só captura a geoloc (prompt) se ainda não
+      // houver coords — quem já compartilhou alterna instantâneo.
+      const hasCoords = user?.lat != null && user?.lng != null;
+      const res = await setMapVisibility(next, { hasCoords });
       if (!res.ok) {
-        setConsent(!next); // não ligou de fato → reverte o switch
-        showAppToast({ message: mapVisibilityErrorMessage(res.reason), tone: 'error' });
+        setConsent(!next); // falha de rede → reverte
         return;
+      }
+      // Ligou mas sem coords (geoloc negada/falhou): mantém ON e avisa.
+      if (next && res.needsLocation && res.reason) {
+        showAppToast({ message: mapVisibilityErrorMessage(res.reason), tone: 'error' });
       }
       if (next) track('location_consent_granted', { surface: 'settings' });
       else track('location_consent_revoked', {});
