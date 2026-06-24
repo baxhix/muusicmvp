@@ -748,6 +748,39 @@
  * empilhados). Title tamanho mais contido pra caber em 70vh
  * mesmo com 4 grupos. */
 @media (max-width: 720px) {
+  /* Per spec mobile "substitua o background do header por uma camada de
+   *  gradient suave apenas para melhorar o contraste de leitura do
+   *  logotipo" — em vez do frosted shelf (bg sólido + blur), um scrim
+   *  de gradient que só escurece o topo de cima pra baixo e dissolve.
+   *  Dá contraste ao logotipo centralizado sobre o hero sem barra dura.
+   *  height fixo (não inset:0): a navbar tem ~36px de altura mas o orb
+   *  (84px) sangra bem abaixo dela — o scrim precisa cobrir todo o logo
+   *  + um respiro de fade. */
+  .navbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 128px;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(6, 6, 10, 0.7) 0%,
+      rgba(6, 6, 10, 0.32) 50%,
+      rgba(6, 6, 10, 0) 100%
+    );
+  }
+  /* Ao scrollar, o scrim já dá o contraste — dispensa o frosted shelf
+   *  (bg sólido + blur) do estado .navbarScrolled no mobile. */
+  .navbarScrolled {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom-color: transparent;
+  }
+
   .container {
     /* Reserva 64px pro trigger (44px + gap). */
     max-width: calc(100vw - 2 * clamp(16px, 4vw, 56px) - 64px);
