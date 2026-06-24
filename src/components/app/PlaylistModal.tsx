@@ -6,6 +6,7 @@ import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { ANA_ALBUMS, type AnaAlbum } from '@/data/anaAlbums';
 import MobileSheetShell from './MobileSheetShell';
+import TrackCommentsModal, { type TrackRef } from './TrackCommentsModal';
 import styles from './PlaylistModal.module.css';
 
 /** Normaliza string pra busca: minúsculas + sem acentos */
@@ -52,6 +53,8 @@ export default function PlaylistModal({
    *  product feedback "que mude sempre para baixo após clicar no
    *  botão 'mais...'". */
   const [userExpandedPanel, setUserExpandedPanel] = useState(false);
+  /* Faixa cujo painel de comentários/likes está aberto (null = fechado). */
+  const [commentsTrack, setCommentsTrack] = useState<TrackRef | null>(null);
   // Live catalog — replaces the old static `SONGS` import. We derive
   // the cover image from the YouTube id right here so the modal stays
   // self-contained (matches the shape NowPlaying composes too).
@@ -458,7 +461,7 @@ export default function PlaylistModal({
                 const isCurrent = s.originalIdx === currentIdx;
                 const isHighlighted = i === highlightIdx;
                 return (
-                  <li key={s.youtubeId}>
+                  <li key={s.youtubeId} className={styles.itemLi}>
                     <button
                       type="button"
                       id={`playlist-item-${s.originalIdx}`}
@@ -508,6 +511,28 @@ export default function PlaylistModal({
                           </svg>
                         )}
                       </span>
+                    </button>
+                    {/* Comentários da faixa — botão IRMÃO do row-button
+                     *  (não pode aninhar <button>). Abre o
+                     *  TrackCommentsModal (comentários + like da música). */}
+                    <button
+                      type="button"
+                      className={styles.commentBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCommentsTrack({
+                          youtubeId: s.youtubeId,
+                          title: s.title,
+                          artist: s.artist,
+                          img: s.img,
+                        });
+                      }}
+                      aria-label={`Comentários de ${s.title}`}
+                      title="Comentários"
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.5 8.5 0 1 1 21 11.5z" />
+                      </svg>
                     </button>
                   </li>
                 );
@@ -579,6 +604,12 @@ export default function PlaylistModal({
         </header>
         {bodyContent}
       </aside>
+      {commentsTrack && (
+        <TrackCommentsModal
+          track={commentsTrack}
+          onClose={() => setCommentsTrack(null)}
+        />
+      )}
     </>
   );
 }

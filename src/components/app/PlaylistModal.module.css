@@ -505,6 +505,41 @@
   transition: background 160ms ease;
 }
 .item:hover { background: rgba(255,255,255,0.04); }
+
+/* Wrapper relativo de cada row — ancora o botão de comentários (irmão
+ * do row-button; não pode aninhar <button>). */
+.itemLi {
+  position: relative;
+}
+/* Reserva espaço à direita pro botão de comentários não cobrir o play. */
+.itemLi .item {
+  padding-right: 46px;
+}
+.commentBtn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(245, 245, 247, 0.5);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.commentBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+.commentBtn:active {
+  transform: translateY(-50%) scale(0.92);
+}
 /* Highlight (focused via teclado/hover) */
 .itemHighlight {
   background: rgba(255,255,255,0.05);

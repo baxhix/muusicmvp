@@ -555,6 +555,33 @@ export const trackLikes = pgTable(
 );
 
 /**
+ * Comentários por faixa/música — discussão temática sobre uma música
+ * específica (ex.: "Eu Não Vou Mudar"). Flat (sem replies); soft-delete
+ * via `deletedAt`. Os likes da faixa ficam em `trackLikes`.
+ */
+export const trackComments = pgTable(
+  'track_comments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    trackId: uuid('track_id')
+      .notNull()
+      .references(() => tracks.id, { onDelete: 'cascade' }),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('track_comments_track_created_idx').on(t.trackId, t.createdAt),
+    index('track_comments_author_idx').on(t.authorId),
+  ],
+);
+
+/**
  * Append-only ledger of point-bearing activities. The user's total score
  * is just SUM(points) over this table — single source of truth, no
  * denormalized counter to drift.
