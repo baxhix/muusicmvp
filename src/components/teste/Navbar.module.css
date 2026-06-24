@@ -442,6 +442,12 @@
   pointer-events: none;
   transition: opacity 280ms ease-out;
   z-index: 60;
+  /* Engole gestos de toque no dimmer (sem pan/scroll/pull-to-refresh
+   *  da página atrás). overscroll-behavior:none corta o scroll-chaining
+   *  pro documento; touch-action:none impede o navegador de interpretar
+   *  o arraste como scroll/refresh. O tap pra fechar (onClick) continua. */
+  overscroll-behavior: none;
+  touch-action: none;
 }
 .megaOverlayOpen {
   opacity: 1;
@@ -478,6 +484,9 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Corta o scroll-chaining do panel pro documento (belt-and-suspenders
+   *  junto do scroll-lock em position:fixed no body — ver Navbar.tsx). */
+  overscroll-behavior: contain;
 }
 .megaPanelOpen {
   transform: translateY(0);

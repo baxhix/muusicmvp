@@ -127,16 +127,37 @@ export default function Navbar() {
     };
   }, []);
 
-  /* Outside click + Escape fecham. Quando fecha, devolve o
-   * foco pro trigger pra não deixar o usuário de teclado
-   * "preso" no fim do DOM. Body scroll é trancado enquanto o
-   * menu está aberto (overflow:hidden) pra evitar scroll
-   * fantasma por baixo. */
+  /* Outside click + Escape fecham. Quando fecha, devolve o foco pro
+   * trigger pra não deixar o usuário de teclado "preso" no fim do DOM.
+   *
+   * Scroll-lock robusto pro mobile: só `overflow:hidden` no body NÃO
+   * segura o pull-to-refresh nem o drag da página no iOS/Android (o
+   * arraste do panel vazava pro documento e recarregava o navegador).
+   * Travamos o body em `position:fixed` preservando o scrollY (e
+   * restaurando ao fechar) + `overscroll-behavior:none` no <html>. Assim
+   * a página fica de fato imóvel enquanto o menu está aberto. */
   useEffect(() => {
     if (!menuOpen) return;
 
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const html = document.documentElement;
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      overscroll: html.style.overscrollBehavior,
+    };
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
 
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -146,7 +167,14 @@ export default function Navbar() {
     }
     document.addEventListener('keydown', handleKey);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      html.style.overscrollBehavior = prev.overscroll;
+      window.scrollTo(0, scrollY);
       document.removeEventListener('keydown', handleKey);
     };
   }, [menuOpen]);
