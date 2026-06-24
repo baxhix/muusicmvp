@@ -128,14 +128,15 @@
     tloop-headlineShimmer 7s ease-in-out infinite;
 }
 
-/* H1 maior no mobile per spec "aumente o H1 no mobile". Precisa vir
- *  DEPOIS da regra base acima: o 9.35vw do clamp base fica abaixo do
- *  floor num viewport mobile, então o tamanho efetivo era sempre 48px.
- *  Floor sobe pra 60px. (Em @media — mesma especificidade da base —,
- *  então a ordem de fonte é o que decide.) */
+/* H1 no mobile per spec "diminua a fonte pra 'Universo do' ficar sempre
+ *  na mesma linha". Em 375px o limite empírico é ~57px (58px já quebra
+ *  "Universo" e "do" em linhas separadas). Uso 14vw (≈52.5px em 375)
+ *  com margem de folga, e floor 46 mantém "Universo do" inteiro até em
+ *  viewports de 320px. Precisa vir DEPOIS da regra base (mesma
+ *  especificidade — a ordem de fonte decide). */
 @media (max-width: 720px) {
   .headline {
-    font-size: clamp(60px, 16vw, 96px);
+    font-size: clamp(46px, 14vw, 78px);
   }
 }
 
@@ -166,6 +167,18 @@
   margin-right: 0;
   text-align: center;
   animation: tloop-fadeup 900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+/* Quebra de linha da frase só no mobile, após "conexão" — per spec
+ *  "entre o Artista e o Fã ficam na linha de baixo". No desktop o <br>
+ *  fica display:none e a frase flui natural. */
+.phraseBreakMobile {
+  display: none;
+}
+@media (max-width: 720px) {
+  .phraseBreakMobile {
+    display: inline;
+  }
 }
 
 /* Mockup de phones — row 3 do grid (180px abaixo do

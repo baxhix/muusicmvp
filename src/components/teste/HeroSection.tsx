@@ -43,7 +43,9 @@ export default function HeroSection() {
          *  (O CTA "Entrar com código" foi removido per spec.) */}
         <div className={styles.heroLead}>
           <p className={styles.phrase}>
-            O lugar perfeito de conexão entre o Artista e o Fã
+            O lugar perfeito de conexão{' '}
+            <br className={styles.phraseBreakMobile} />
+            entre o Artista e o Fã
           </p>
         </div>
         {/* CTA mobile — só aparece em mobile per spec atualizado
