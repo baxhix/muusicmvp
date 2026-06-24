@@ -333,6 +333,10 @@
 @media (max-width: 768px) {
   .header { display: none; }
 
+  /* iOS/Android só dão auto-zoom ao focar inputs com font-size < 16px.
+   * 16px mata o zoom sem mexer no visual desktop. */
+  .searchField { font-size: 16px; }
+
   /* Align body content with the MobileRouteHeader back arrow.
    * The back arrow's icon left edge sits at ~16px from the
    * viewport (bar padding 6 + 22px icon centered in a 44px

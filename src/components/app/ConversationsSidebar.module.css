@@ -642,6 +642,9 @@
      * (nem borrar) nada do fundo ATRAVÉS dele. O blur fica só na
      * camada externa (.chatDrawerVeil), ao redor do box. */
   }
+  /* iOS/Android só dão auto-zoom ao focar inputs com font-size < 16px.
+   * 16px mata o zoom sem mexer no visual desktop. */
+  .searchInput { font-size: 16px; }
 }
 @media (max-width: 480px) {
   /* Small mobile: near full-screen — `bottom: 76px` leaves the
