@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ApiConversationSummary } from '@/lib/api/types';
+import { api } from '@/lib/api/client';
+import type { ApiConversationSummary, ApiSearchUser } from '@/lib/api/types';
 import { stripReplyPrefix } from './MessageBody';
 import TruncatedText from './TruncatedText';
 import VerifiedBadge from './VerifiedBadge';
@@ -200,6 +201,58 @@ export default function ConversationsSidebar({
     });
   }, [dms, query, typeFilter]);
 
+  /* ── Busca de USUÁRIOS da plataforma ───────────────────────────
+   * Per feedback "ao pesquisar conversas no input do chat também
+   * funcione para pesquisar usuários na plataforma, não exclusivamente
+   * no botão Nova conversa". Consulta o MESMO endpoint do UserPicker
+   * (/api/users/search, debounce 250ms, ≥2 chars). Os resultados
+   * aparecem numa seção "Pessoas" abaixo das conversas; clicar inicia
+   * o DM via `onPickUser` (mesmo fluxo do picker). */
+  const [userResults, setUserResults] = useState<ApiSearchUser[]>([]);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setUserResults([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.get<{ users: ApiSearchUser[] }>(
+          `/api/users/search?q=${encodeURIComponent(q)}`,
+        );
+        if (!cancelled) setUserResults(res.users);
+      } catch {
+        if (!cancelled) setUserResults([]);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [query]);
+
+  /* Usuários da busca que ainda NÃO têm DM aberto (evita duplicar
+   * com as conversas listadas acima). Só com busca ativa. */
+  const extraUsers = useMemo(() => {
+    if (!query.trim()) return [];
+    const dmPartnerIds = new Set(
+      conversations
+        .filter((c) => c.type === 'dm' && c.otherUser)
+        .map((c) => c.otherUser!.id),
+    );
+    return userResults.filter((u) => !dmPartnerIds.has(u.id));
+  }, [userResults, conversations, query]);
+
+  const handlePickUserFromSearch = useCallback(
+    (uid: string) => {
+      setQuery('');
+      setUserResults([]);
+      onPickUser(uid);
+    },
+    [onPickUser],
+  );
+
   /* Subview inline do UserPicker. Quando `createView` está setado,
    * o painel hospeda o picker no lugar da lista de conversas —
    * o picker traz seu próprio header (com back button), input de
@@ -320,10 +373,10 @@ export default function ConversationsSidebar({
       </div>
 
       <div className={styles.list}>
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && extraUsers.length === 0 ? (
           <div className={styles.empty}>
             {query
-              ? `Nenhuma conversa para "${query}".`
+              ? `Nenhuma conversa ou usuário para "${query}".`
               : typeFilter === 'group'
                 ? 'Você ainda não está em nenhum grupo.'
                 : typeFilter === 'dm'
@@ -331,7 +384,8 @@ export default function ConversationsSidebar({
                   : 'Você ainda não tem conversas. Toque em + para começar.'}
           </div>
         ) : (
-          filtered.map((c) => {
+          <>
+          {filtered.map((c) => {
             const isGroup = c.type === 'group';
             const u = c.otherUser;
             const seedId = isGroup ? c.id : (u?.id ?? c.id);
@@ -476,7 +530,57 @@ export default function ConversationsSidebar({
               </div>
               </SwipeAction>
             );
-          })
+          })}
+          {/* Seção "Pessoas" — resultados da busca de usuários da
+           *  plataforma que ainda não têm conversa. Clicar inicia o DM. */}
+          {extraUsers.length > 0 && (
+            <div className={styles.peopleSection}>
+              <div className={styles.peopleLabel}>Pessoas na plataforma</div>
+              {extraUsers.map((u) => {
+                const name = u.name ?? 'Anônimo';
+                const img = u.avatarUrl ?? '/avatar-placeholder.svg';
+                return (
+                  <div
+                    key={`search-user-${u.id}`}
+                    role="button"
+                    tabIndex={0}
+                    className={styles.row}
+                    onClick={() => handlePickUserFromSearch(u.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handlePickUserFromSearch(u.id);
+                      }
+                    }}
+                  >
+                    <span className={styles.avatarWrap}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={img}
+                        alt=""
+                        className={`${styles.avatar} ${styles.avatarOnline}`}
+                        onError={(e) => {
+                          const el = e.currentTarget;
+                          const fb = '/avatar-placeholder.svg';
+                          if (el.src.endsWith(fb)) return;
+                          el.src = fb;
+                        }}
+                      />
+                    </span>
+                    <span className={styles.rowInfo}>
+                      <TruncatedText className={styles.rowName} title={name}>
+                        {name}
+                      </TruncatedText>
+                      <TruncatedText className={styles.rowPreview}>
+                        {u.city ? u.city : 'Iniciar conversa'}
+                      </TruncatedText>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          </>
         )}
       </div>
 
