@@ -970,29 +970,23 @@ export default function RankingStoreModal() {
                   {tab === 'loja' && (
             <div className={styles.store}>
               <div className={styles.storeLeft}>
+                {/* Título da loja, acima do card de saldo. */}
+                <div className={styles.lojaHeading}>Loja da Boiadeira</div>
                 {/* SALDO */}
                 <div className={styles.card}>
-                  <div className={styles.balTop}>
-                    <span className={styles.balAvatar} aria-hidden="true">
-                      {me?.avatarUrl
-                        ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={me.avatarUrl} alt="" className={styles.balAvatarImg} />
-                        )
-                        : (me ? me.initials : 'VC')}
-                    </span>
-                    <div className={styles.balText}>
-                      <div className={styles.balLabel}>Meu saldo</div>
-                      <div className={styles.balValue}>{fmt(saldoFP)} FP</div>
-                    </div>
+                  {/* Saldo numa única linha menor. */}
+                  <div className={styles.balLine}>
+                    Saldo disponível para troca:{' '}
+                    <strong className={styles.balStrong}>{fmt(saldoFP)} Fanpoints</strong>
                   </div>
-                  <div className={styles.balSub}>disponível para troca</div>
+                  {/* Desconto desbloqueado: badge (15% OFF) + validade na
+                   *  MESMA linha. O badge já comunica o desconto liberado. */}
                   <div className={styles.discountRow}>
-                    <div>
-                      <div className={styles.discountInfo}>Desconto desbloqueado!</div>
-                      <div className={styles.discountInfo}>Válido até <strong className={styles.discountStrong}>{discountUntil}</strong></div>
-                    </div>
                     <span className={styles.discountBadge}>15% OFF</span>
+                    <span className={styles.discountInfo}>
+                      Válido até{' '}
+                      <strong className={styles.discountStrong}>{discountUntil}</strong>
+                    </span>
                   </div>
                   <button type="button" className={styles.dadosBtn} onClick={() => flash('Meus dados — gerenciar endereços…')}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>

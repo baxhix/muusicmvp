@@ -993,11 +993,11 @@
     position: relative;
     z-index: 2;
   }
-  /* Na Loja, o tabBar fica PRETO por cima da imagem → as tabs ficam
-   * com a mesma cor das demais abas (não vaza a imagem ao redor do
-   * pill). A imagem aparece abaixo do tabBar, no respiro até o conteúdo. */
+  /* Na Loja, o tabBar é TRANSPARENTE → a imagem do banner passa por
+   * trás das tabs, ganhando mais área visível. A legibilidade das tabs
+   * vem do scrim escuro no topo do .storeBanner (0.5 → 0.12). */
   .tabsAreaLoja .tabBar {
-    background: #0b0b0d;
+    background: transparent;
   }
   /* Conteúdo da Loja sobe por cima da imagem; backing escuro full-bleed
    * + gradiente preto no topo suaviza a transição e, ao rolar, oculta a
@@ -1085,21 +1085,50 @@
 }
 .dadosBtn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .balSub { font-size: 12px; color: rgba(255, 255, 255, 0.45); margin-top: 2px; }
-.discountRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding: 11px 13px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); }
-.discountInfo { font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 2px; }
-.discountInfo:first-child { margin-top: 0; }
+
+/* Título "Loja da Boiadeira" acima do card de saldo. */
+.lojaHeading {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0;
+}
+/* Saldo em linha única, menor (substitui o número grande). */
+.balLine { font-size: 12px; color: rgba(255, 255, 255, 0.5); line-height: 1.4; }
+.balStrong { color: rgba(255, 255, 255, 0.9); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Desconto numa única linha: badge + validade, sem quebrar. */
+.discountRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.discountInfo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
 /* Data de validade em destaque (bold + branco). */
 .discountStrong { color: #fff; font-weight: 700; }
 /* Badge 15% OFF: fundo preto + borda em gradiente (mesmo estilo do usuário logado em Classificação). */
 .discountBadge {
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #fff;
   background: linear-gradient(#000, #000) padding-box,
     var(--grad-tri) border-box;
   border: 1.5px solid transparent;
-  padding: 3px 9px;
+  padding: 2px 7px;
   border-radius: 999px;
 }
 .store .divider { margin: 18px 0; }
