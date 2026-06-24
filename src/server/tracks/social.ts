@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { tracks, trackLikes, trackComments, users } from '../db/schema';
 import { TRACKS_CATALOG } from '@/data/tracksCatalog';
@@ -195,4 +195,69 @@ export async function deleteTrackComment(
     )
     .returning({ id: trackComments.id });
   return res.length > 0;
+}
+
+/**
+ * Social de VÁRIAS faixas de uma vez (likeCount/likedByMe/commentCount),
+ * endereçadas por youtubeId. Uma só ida ao banco por métrica — usado
+ * pela PlaylistModal pra pintar os contadores de cada row sem N
+ * requests. Faixas sem row em `tracks` (nunca tocadas/curtidas) saem
+ * com tudo zerado. NÃO cria rows (read-only).
+ */
+export async function getTracksSocialBatch(
+  youtubeIds: string[],
+  viewerId: string,
+): Promise<Record<string, TrackSocial>> {
+  const out: Record<string, TrackSocial> = {};
+  for (const yt of youtubeIds) {
+    out[yt] = { likeCount: 0, likedByMe: false, commentCount: 0 };
+  }
+  if (youtubeIds.length === 0) return out;
+
+  const trackRows = await db
+    .select({ id: tracks.id, youtubeId: tracks.youtubeId })
+    .from(tracks)
+    .where(inArray(tracks.youtubeId, youtubeIds));
+  if (trackRows.length === 0) return out;
+
+  const idToYt = new Map(trackRows.map((r) => [r.id, r.youtubeId]));
+  const trackIds = trackRows.map((r) => r.id);
+
+  const [likeCounts, mine, commentCounts] = await Promise.all([
+    db
+      .select({ trackId: trackLikes.trackId, n: sql<number>`count(*)::int` })
+      .from(trackLikes)
+      .where(inArray(trackLikes.trackId, trackIds))
+      .groupBy(trackLikes.trackId),
+    db
+      .select({ trackId: trackLikes.trackId })
+      .from(trackLikes)
+      .where(
+        and(inArray(trackLikes.trackId, trackIds), eq(trackLikes.userId, viewerId)),
+      ),
+    db
+      .select({ trackId: trackComments.trackId, n: sql<number>`count(*)::int` })
+      .from(trackComments)
+      .where(
+        and(
+          inArray(trackComments.trackId, trackIds),
+          sql`${trackComments.deletedAt} is null`,
+        ),
+      )
+      .groupBy(trackComments.trackId),
+  ]);
+
+  for (const r of likeCounts) {
+    const yt = idToYt.get(r.trackId);
+    if (yt) out[yt].likeCount = r.n;
+  }
+  for (const r of mine) {
+    const yt = idToYt.get(r.trackId);
+    if (yt) out[yt].likedByMe = true;
+  }
+  for (const r of commentCounts) {
+    const yt = idToYt.get(r.trackId);
+    if (yt) out[yt].commentCount = r.n;
+  }
+  return out;
 }

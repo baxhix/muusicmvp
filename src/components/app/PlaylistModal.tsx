@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type AnimationEvent } from 'react';
 import { motion } from 'motion/react';
+import { api } from '@/lib/api/client';
 import { useTracksCatalog } from '@/hooks/useTracksCatalog';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { ANA_ALBUMS, type AnaAlbum } from '@/data/anaAlbums';
@@ -163,6 +164,51 @@ export default function PlaylistModal({
   // "Ver mais" (or types a search, which auto-expands).
   const visible = showAll ? filtered : filtered.slice(0, PREVIEW_COUNT);
   const hiddenCount = filteredCount - visible.length;
+
+  /* Social (likes/comentários) das faixas VISÍVEIS — busca em lote pra
+   * pintar os contadores de cada row sem N requests. Re-busca quando a
+   * lista muda (key = ids concatenados). */
+  const visibleKey = visible.map((s) => s.youtubeId).join(',');
+  const [social, setSocial] = useState<
+    Record<string, { likeCount: number; likedByMe: boolean; commentCount: number }>
+  >({});
+  useEffect(() => {
+    if (!open || visible.length === 0) return;
+    let cancelled = false;
+    api
+      .post<{
+        social: Record<
+          string,
+          { likeCount: number; likedByMe: boolean; commentCount: number }
+        >;
+      }>('/api/tracks/social', { youtubeIds: visible.map((s) => s.youtubeId) })
+      .then((res) => {
+        if (!cancelled) setSocial((cur) => ({ ...cur, ...res.social }));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, visibleKey]);
+
+  /* Toggle do like da faixa — otimista (atualiza contador + estado na
+   * hora) + POST. Heart fica com gradiente quando curtido. */
+  function toggleTrackLike(yt: string) {
+    setSocial((cur) => {
+      const s = cur[yt] ?? { likeCount: 0, likedByMe: false, commentCount: 0 };
+      const liked = !s.likedByMe;
+      return {
+        ...cur,
+        [yt]: {
+          ...s,
+          likedByMe: liked,
+          likeCount: Math.max(0, s.likeCount + (liked ? 1 : -1)),
+        },
+      };
+    });
+    api.post(`/api/tracks/${encodeURIComponent(yt)}/like`).catch(() => {});
+  }
 
   // Reset highlight quando a query / tab / álbum mudam.
   useEffect(() => { setHighlightIdx(0); }, [query, tab, selectedAlbumId]);
@@ -499,43 +545,13 @@ export default function PlaylistModal({
                           ) : null}
                         </span>
                       </div>
-                      <span className={styles.playBtn} aria-hidden="true">
-                        {isCurrent ? (
-                          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                            <rect x="3.5" y="2.5" width="3" height="11" rx="1"/>
-                            <rect x="9.5" y="2.5" width="3" height="11" rx="1"/>
-                          </svg>
-                        ) : (
-                          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                            <path d="M4 3l9 5-9 5V3z"/>
-                          </svg>
-                        )}
-                      </span>
                     </button>
-                    {/* Ações sociais da faixa — IRMÃS do row-button (não
-                     *  pode aninhar <button>). Curtir + Comentar abrem o
-                     *  TrackCommentsModal (like com contador + comentários
-                     *  da música). */}
+                    {/* Ações da faixa — IRMÃS do row-button (não pode
+                     *  aninhar <button>). Ordem: comentar → curtir → play
+                     *  (play no fim do card). Curtir é like INLINE com
+                     *  gradiente quando ativo; contadores de comentários e
+                     *  likes ao lado dos ícones. */}
                     <div className={styles.trackActions}>
-                      <button
-                        type="button"
-                        className={styles.trackActionBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCommentsTrack({
-                            youtubeId: s.youtubeId,
-                            title: s.title,
-                            artist: s.artist,
-                            img: s.img,
-                          });
-                        }}
-                        aria-label={`Curtir ${s.title}`}
-                        title="Curtir"
-                      >
-                        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
-                      </button>
                       <button
                         type="button"
                         className={styles.trackActionBtn}
@@ -551,9 +567,65 @@ export default function PlaylistModal({
                         aria-label={`Comentários de ${s.title}`}
                         title="Comentários"
                       >
-                        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.8L3 21l1.9-5.2A8.5 8.5 0 1 1 21 11.5z" />
                         </svg>
+                        {(social[s.youtubeId]?.commentCount ?? 0) > 0 && (
+                          <span className={styles.actionCount}>{social[s.youtubeId]?.commentCount}</span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.trackActionBtn} ${social[s.youtubeId]?.likedByMe ? styles.trackActionLiked : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTrackLike(s.youtubeId);
+                        }}
+                        aria-label={social[s.youtubeId]?.likedByMe ? `Descurtir ${s.title}` : `Curtir ${s.title}`}
+                        aria-pressed={!!social[s.youtubeId]?.likedByMe}
+                        title="Curtir"
+                      >
+                        {social[s.youtubeId]?.likedByMe ? (
+                          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                            <defs>
+                              <linearGradient id={`hg-${s.youtubeId}`} x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stopColor="rgb(255, 122, 61)" />
+                                <stop offset="50%" stopColor="rgb(236, 72, 153)" />
+                                <stop offset="100%" stopColor="rgb(168, 85, 247)" />
+                              </linearGradient>
+                            </defs>
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill={`url(#hg-${s.youtubeId})`} />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                          </svg>
+                        )}
+                        {(social[s.youtubeId]?.likeCount ?? 0) > 0 && (
+                          <span className={styles.actionCount}>{social[s.youtubeId]?.likeCount}</span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.trackPlayBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(s.originalIdx);
+                          onClose();
+                        }}
+                        aria-label={`Tocar ${s.title}`}
+                        title="Tocar"
+                      >
+                        {isCurrent ? (
+                          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <rect x="3.5" y="2.5" width="3" height="11" rx="1"/>
+                            <rect x="9.5" y="2.5" width="3" height="11" rx="1"/>
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M4 3l9 5-9 5V3z"/>
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </li>

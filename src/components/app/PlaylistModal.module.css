@@ -511,12 +511,12 @@
 .itemLi {
   position: relative;
 }
-/* Reserva espaço à direita pro grupo de ações (curtir + comentar)
- * + o indicador de play não se sobreporem. */
+/* Reserva à direita pro grupo [comentar][curtir][play] + contadores. */
 .itemLi .item {
-  padding-right: 84px;
+  padding-right: 122px;
 }
-/* Grupo de ações sociais da faixa, ancorado à direita da row. */
+/* Grupo de ações da faixa, ancorado à direita da row. Ordem visual:
+ * comentar, curtir, play (play no fim). */
 .trackActions {
   position: absolute;
   right: 6px;
@@ -525,14 +525,16 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
 }
 .trackActionBtn {
-  width: 32px;
+  min-width: 30px;
   height: 32px;
+  padding: 0 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -545,6 +547,43 @@
   color: var(--ink);
 }
 .trackActionBtn:active {
+  transform: scale(0.9);
+}
+/* Contador (likes/comentários) ao lado do ícone. */
+.actionCount {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(245, 245, 247, 0.7);
+}
+/* Curtido: o gradiente vive no fill do SVG; o contador acompanha. */
+.trackActionLiked .actionCount {
+  color: rgb(236, 72, 153);
+}
+/* Play no fim do card — círculo neutro, ícone branco. */
+.trackPlayBtn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.85);
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.14s ease;
+}
+.trackPlayBtn svg {
+  width: 13px;
+  height: 13px;
+  margin-left: 1px;
+}
+.trackPlayBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.trackPlayBtn:active {
   transform: scale(0.9);
 }
 /* Highlight (focused via teclado/hover) */
