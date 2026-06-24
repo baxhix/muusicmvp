@@ -286,6 +286,12 @@
     margin: 0;
     z-index: 3;
   }
+  /* No desktop o box de conteúdo é largo (560) pra o título caber numa
+   * linha, mas o input + CTA ficam em 386px, alinhados à esquerda com o
+   * resto do conteúdo (o .form é flex-start dentro do .content). */
+  .form {
+    max-width: 386px;
+  }
 }
 
 /* Mobile: empurra o hint pra parte inferior da tela —

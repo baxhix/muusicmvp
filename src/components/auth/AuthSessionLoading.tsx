@@ -16,22 +16,20 @@ import styles from './AuthSessionLoading.module.css';
  * O componente em si só renderiza o splash; o controle de quando
  * exibí-lo é responsabilidade do consumidor (EmailStep).
  */
-export default function AuthSessionLoading({
-  caption = 'Retomando sua sessão',
-}: {
-  caption?: string;
-}) {
+export default function AuthSessionLoading() {
   return (
     <div
       className={styles.root}
       role="status"
       aria-live="polite"
-      aria-label={caption}
+      /* Sem texto visível (per feedback "remova o texto Retomando sua
+       *  sessão") — só o orbe. aria-label mantém o anúncio pra leitores
+       *  de tela. */
+      aria-label="Carregando"
     >
       <div className={styles.orbWrap} aria-hidden="true">
         <FanverseCore />
       </div>
-      <div className={styles.caption}>{caption}</div>
     </div>
   );
 }
