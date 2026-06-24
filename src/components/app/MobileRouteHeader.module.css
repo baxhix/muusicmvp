@@ -99,6 +99,37 @@
   text-overflow: clip;
 }
 
+/* Linha do título (Chat/Comunidades): título à esquerda + CTA de
+ * criação à direita, ancorado na BASE da tipografia (align-items:
+ * flex-end alinha o fundo do pill com o fundo do título). */
+.titleRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+/* CTA "Iniciar conversa" / "Criar comunidade" — mesmo estilo do
+ * "Ver mais": pill cinza translúcido, sem borda, fill only. */
+.cta {
+  flex-shrink: 0;
+  margin-bottom: 3px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 245, 247, 0.8);
+  font-family: var(--font-inter), -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.14s ease, transform 0.16s ease;
+}
+.cta:hover { background: rgba(255, 255, 255, 0.1); }
+.cta:active { transform: scale(0.97); }
+
 /* Desktop: never visible. The layout already gates render on
  * isMobile, but this guard keeps a stray mount from breaking
  * layouts if the gate is removed later. */

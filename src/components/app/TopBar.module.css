@@ -717,6 +717,15 @@
    * .avatar { width: 44px; height: 44px; }
    * .drawer { width: 300px; }
    */
+  /* Drawer "Minha conta" CENTRALIZADO no mobile. Antes herdava a
+   * geometria desktop (right:34 + width:350), o que numa tela ~390px
+   * deixava ~6px à esquerda e 34px à direita → parecia deslocado pra
+   * esquerda. left+right iguais + width:auto = gutters simétricos. */
+  .drawer {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
 }
 
 /* ============================================================

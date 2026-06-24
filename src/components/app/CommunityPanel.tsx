@@ -513,28 +513,28 @@ function CommunityListView({
     alert(`Comunidade "${card.name}" reportada. Obrigado!`);
   }, []);
 
+  /* CTA "Criar comunidade" do MobileRouteHeader (mobile) dispara
+   * `app:route-cta`. Com Fanpoints suficientes abre a criação; senão
+   * avisa o gate (mesmo limiar do FAB). */
+  useEffect(() => {
+    const onCta = () => {
+      if (canCreate) {
+        onOpenCreate();
+      } else {
+        alert(
+          `Acumule ${CREATE_FP_THRESHOLD.toLocaleString('pt-BR')} Fanpoints para criar a sua própria comunidade.`,
+        );
+      }
+    };
+    window.addEventListener('app:route-cta', onCta);
+    return () => window.removeEventListener('app:route-cta', onCta);
+  }, [canCreate, onOpenCreate]);
+
   return (
     <>
       <HeaderBar title="Comunidades" onClose={onClose} />
 
       <div className={styles.body}>
-        {/* CTA "Criar comunidade" — MOBILE-ONLY (`.headerCta` é
-         *  display:none no desktop, per feedback "no desktop não
-         *  exibir, apenas no mobile"). Gated por Fanpoints (mesmo gate
-         *  do FAB "+"). No mobile o header interno some, então fica no
-         *  topo do corpo como botão full-width. */}
-        {canCreate && (
-          <button
-            type="button"
-            className={styles.headerCta}
-            onClick={onOpenCreate}
-          >
-            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M8 3v10M3 8h10" />
-            </svg>
-            Criar comunidade
-          </button>
-        )}
         <div className={styles.searchRow}>
           <svg
             className={styles.searchIcon}

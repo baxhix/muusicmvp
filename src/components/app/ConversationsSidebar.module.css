@@ -690,6 +690,9 @@
   /* iOS/Android só dão auto-zoom ao focar inputs com font-size < 16px.
    * 16px mata o zoom sem mexer no visual desktop. */
   .searchInput { font-size: 16px; }
+  /* Placeholder menor que o texto digitado (zoom olha o input, não o
+   * placeholder). */
+  .searchInput::placeholder { font-size: 13px; }
 }
 @media (max-width: 480px) {
   /* Small mobile: near full-screen — `bottom: 76px` leaves the

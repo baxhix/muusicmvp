@@ -65,6 +65,19 @@ export default function MobileRouteHeader() {
    *  do header desses dois boxes no desktop. */
   const big = pathname === '/app/chat' || pathname === '/app/comunidades';
 
+  /* CTA de criação ancorado ao título (Chat → "Iniciar conversa",
+   * Comunidades → "Criar comunidade"), per feedback "no mobile os CTAs
+   * devem ter o estilo do Ver mais e ficar alinhados ao título". Clicar
+   * dispara `app:route-cta`, que o painel correspondente
+   * (ConversationsSidebar / CommunityPanel) escuta pra abrir o fluxo de
+   * criação. */
+  const cta =
+    pathname === '/app/chat'
+      ? 'Iniciar conversa'
+      : pathname === '/app/comunidades'
+        ? 'Criar comunidade'
+        : null;
+
   // Drag state — translateY applied to the bar while the finger
   // is down. Reset to 0 on release (success → navigate; cancel →
   // CSS transition handles the snap-back).
@@ -134,11 +147,35 @@ export default function MobileRouteHeader() {
         </svg>
       </button>
 
-      <h1 className={`${styles.title} ${big ? styles.titleBig : ''}`}>{titleFor(pathname)}</h1>
-
-      {/* Spacer mirrors the back-button footprint so the title sits
-       *  visually centered without using absolute positioning. */}
-      <span className={styles.spacer} aria-hidden="true" />
+      {big ? (
+        /* Linha do título (Chat/Comunidades): título à esquerda + CTA
+         *  ancorado na base da tipografia (align-items:flex-end). */
+        <div className={styles.titleRow}>
+          <h1 className={`${styles.title} ${styles.titleBig}`}>{titleFor(pathname)}</h1>
+          {cta && (
+            <button
+              type="button"
+              className={styles.cta}
+              onClick={() => {
+                try {
+                  window.dispatchEvent(new CustomEvent('app:route-cta'));
+                } catch {
+                  /* SSR — ignore */
+                }
+              }}
+            >
+              {cta}
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <h1 className={styles.title}>{titleFor(pathname)}</h1>
+          {/* Spacer mirrors the back-button footprint so the title sits
+           *  visually centered without using absolute positioning. */}
+          <span className={styles.spacer} aria-hidden="true" />
+        </>
+      )}
 
       {/* Pull-handle hint at the bottom edge — a small grey bar
        *  that tells the user this surface can be dragged away.

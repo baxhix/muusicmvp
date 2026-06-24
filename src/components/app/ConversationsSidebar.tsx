@@ -253,6 +253,14 @@ export default function ConversationsSidebar({
     [onPickUser],
   );
 
+  /* CTA "Iniciar conversa" do MobileRouteHeader (mobile) dispara
+   * `app:route-cta` — abre o picker de nova conversa individual. */
+  useEffect(() => {
+    const onCta = () => setCreateView('single');
+    window.addEventListener('app:route-cta', onCta);
+    return () => window.removeEventListener('app:route-cta', onCta);
+  }, []);
+
   /* Subview inline do UserPicker. Quando `createView` está setado,
    * o painel hospeda o picker no lugar da lista de conversas —
    * o picker traz seu próprio header (com back button), input de
@@ -319,20 +327,6 @@ export default function ConversationsSidebar({
           </svg>
         </button>
       </header>
-
-      {/* CTA "Iniciar conversa" — MOBILE-ONLY (`.headerCta` é display:none
-       *  no desktop). No mobile o header interno some, então este botão
-       *  rotulado fica no topo do corpo como atalho de nova conversa. */}
-      <button
-        type="button"
-        className={styles.headerCta}
-        onClick={() => setCreateView('single')}
-      >
-        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-          <path d="M8 3v10M3 8h10" />
-        </svg>
-        Iniciar conversa
-      </button>
 
       <div className={styles.searchWrap}>
         <svg className={styles.searchIcon} viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

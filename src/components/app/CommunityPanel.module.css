@@ -369,6 +369,9 @@
    * vence `.searchField` (0,1,0) independente da ordem. Sem isso a
    * base ganhava por ordem e o zoom voltava. */
   .searchRow .searchField { font-size: 16px; }
+  /* O input fica 16px (anti-zoom), mas o PLACEHOLDER pode ser menor —
+   * o zoom do iOS olha o font-size do input, não do placeholder. */
+  .searchRow .searchField::placeholder { font-size: 13px; }
 
   /* Align body content with the MobileRouteHeader back arrow.
    * The back arrow's icon left edge sits at ~16px from the

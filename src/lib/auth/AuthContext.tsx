@@ -56,18 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setUser(null);
-        /* SAFETY NET: se o user JÁ estava autenticado nesta
-         * page load E está numa rota privada, força redirect
-         * pro /auth com flag ?expired=1 (a página de auth pode
-         * exibir uma mensagem "Sua sessão expirou"). Sem isso
-         * o user fica preso numa /app vazia sem entender o que
-         * aconteceu — exatamente o sintoma reportado:
-         * "perdeu meus dados, foi substituído por outro user
-         * sem aviso". */
-        if (wasAuthed && isOnPrivateRoute() && typeof window !== 'undefined') {
-          const expiredUrl = '/auth?expired=1';
-          if (window.location.pathname + window.location.search !== expiredUrl) {
-            window.location.href = expiredUrl;
+        /* Qualquer 401 numa rota privada (/app, /admin) redireciona
+         * pro /auth — inclusive no PRIMEIRO load (visitante anônimo
+         * que abre /app direto, ex.: aba anônima num deep-link). Sem
+         * isso o shell logado (vazio) ficava acessível sem sessão.
+         * `/auth` não é rota privada, então não há loop.
+         *   - wasAuthed (sessão expirou no meio) → ?expired=1 ("sua
+         *     sessão expirou").
+         *   - anônimo (nunca logou) → /auth puro (tela de login). */
+        if (isOnPrivateRoute() && typeof window !== 'undefined') {
+          const target = wasAuthed ? '/auth?expired=1' : '/auth';
+          if (window.location.pathname + window.location.search !== target) {
+            window.location.href = target;
           }
         }
       } else {
