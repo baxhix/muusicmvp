@@ -15,6 +15,7 @@ import { useCommunities } from '@/hooks/useCommunities';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { api } from '@/lib/api/client';
+import { setMapVisibility, mapVisibilityErrorMessage } from '@/lib/location/mapVisibility';
 import { track } from '@/lib/analytics';
 import MotionSwitch from './MotionSwitch';
 import type { ApiActivityItem, ApiHistoryItem } from '@/lib/api/types';
@@ -266,7 +267,20 @@ export default function ProfilePanel({
     setAppearOnMap(next);
     setConsentBusy(true);
     try {
-      await api.patch('/api/me/location-consent', { consent: next });
+      // Ligar captura a localização no gesto (prompt confiável) + grava
+      // coords; sem coords o usuário não aparece pros outros no mapa.
+      const res = await setMapVisibility(next);
+      if (!res.ok) {
+        setAppearOnMap(!next); // não ligou de fato → reverte
+        try {
+          window.dispatchEvent(
+            new CustomEvent('app:toast', {
+              detail: { message: mapVisibilityErrorMessage(res.reason), tone: 'error' },
+            }),
+          );
+        } catch { /* SSR */ }
+        return;
+      }
       if (next) track('location_consent_granted', { surface: 'settings' });
       else track('location_consent_revoked', {});
       await refreshAuth();

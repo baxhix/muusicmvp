@@ -12,7 +12,8 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import RankMedallion from './RankMedallion';
 import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
-import { api } from '@/lib/api/client';
+import { setMapVisibility, mapVisibilityErrorMessage } from '@/lib/location/mapVisibility';
+import { showAppToast } from './AppToast';
 import { track } from '@/lib/analytics';
 import MotionSwitch from './MotionSwitch';
 import styles from './MobileMenuSheet.module.css';
@@ -67,10 +68,18 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
 
   async function toggleConsent(next: boolean) {
     if (consentBusy || isMinor) return;
-    setConsent(next);
+    setConsent(next); // otimista
     setConsentBusy(true);
     try {
-      await api.patch('/api/me/location-consent', { consent: next });
+      // Ligar captura a localização DENTRO do gesto (prompt confiável) e
+      // grava coords + consentimento — sem coords o usuário não aparece
+      // pros outros no mapa.
+      const res = await setMapVisibility(next);
+      if (!res.ok) {
+        setConsent(!next); // não ligou de fato → reverte o switch
+        showAppToast({ message: mapVisibilityErrorMessage(res.reason), tone: 'error' });
+        return;
+      }
       if (next) track('location_consent_granted', { surface: 'settings' });
       else track('location_consent_revoked', {});
       await refresh();

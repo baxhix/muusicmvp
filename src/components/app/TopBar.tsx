@@ -11,7 +11,8 @@ import RankMedallion from './RankMedallion';
 import { useRankBands } from './RankBandsProvider';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useDisplaySetting, DISPLAY_KEYS } from '@/hooks/useDisplaySetting';
-import { api } from '@/lib/api/client';
+import { setMapVisibility, mapVisibilityErrorMessage } from '@/lib/location/mapVisibility';
+import { showAppToast } from './AppToast';
 import { track } from '@/lib/analytics';
 import LegalDocumentModal, { type LegalKind } from './LegalDocumentModal';
 import styles from './TopBar.module.css';
@@ -370,7 +371,15 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
     setLocationConsent(next); // otimista
     setConsentBusy(true);
     try {
-      await api.patch('/api/me/location-consent', { consent: next });
+      // Ligar captura a localização DENTRO do gesto (prompt confiável) e
+      // grava coords + consentimento — sem coords o usuário fica com o
+      // switch ON mas invisível pros outros no mapa (era esse o bug).
+      const res = await setMapVisibility(next);
+      if (!res.ok) {
+        setLocationConsent(!next); // não ligou de fato → reverte
+        showAppToast({ message: mapVisibilityErrorMessage(res.reason), tone: 'error' });
+        return;
+      }
       if (next) {
         track('location_consent_granted', { surface: 'settings' });
       } else {
