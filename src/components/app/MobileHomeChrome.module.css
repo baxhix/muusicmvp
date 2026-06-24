@@ -184,7 +184,8 @@
   position: absolute;
   /* Top inalterado (23). left 34 → 28 (-6px) per product feedback
    * "o orbe levemente mais à esquerda". */
-  top: 23px;
+  /* 16px mais acima (23 → 7) per feedback. */
+  top: 7px;
   left: 28px;
   /* +15% (70 → 80) per feedback "aumente 15% o orbe no header mobile". */
   width: 80px;
@@ -218,7 +219,8 @@
   /* Phones pequenos (<360px): left 28 → 22 (-6px) acompanhando
    * o nudge do break maior. */
   .headerOrb {
-    top: 29px;
+    /* 16px mais acima (29 → 13). */
+    top: 13px;
     left: 22px;
     /* +15% (58 → 67). */
     width: 67px;

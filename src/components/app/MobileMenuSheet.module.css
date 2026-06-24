@@ -181,19 +181,20 @@
   cursor: default;
 }
 
-/* Botão fechar — FAB circular no canto inferior direito (acima da
- * navbar, dentro do padding-bottom do painel). */
+/* Botão fechar — X no canto SUPERIOR direito do painel. Absoluto pra
+ * não roubar espaço vertical dos itens (eles continuam ancorados na
+ * base). */
 .closeFab {
-  align-self: flex-end;
-  margin-top: 22px;
-  width: 54px;
-  height: 54px;
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  /* Sem backdrop-filter: o FAB desliza/escala dentro do painel; blur
-   * aqui re-amostra a cada frame e "pisca". Fica só fill translúcido
-   * (já há blur na camada do .backdrop por trás). */
+  /* Sem backdrop-filter: fill translúcido (já há blur no .panel). */
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   display: grid;

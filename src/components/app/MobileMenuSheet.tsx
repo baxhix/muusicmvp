@@ -311,6 +311,20 @@ export default function MobileMenuSheet({ open, onClose }: MobileMenuSheetProps)
               </motion.div>
             </div>
 
+            {/* Botão fechar — X no canto superior direito do painel
+             *  (absoluto, não rouba espaço vertical dos itens). Fecha o
+             *  menu. Antes a classe existia mas o botão sumiu do JSX. */}
+            <button
+              type="button"
+              className={styles.closeFab}
+              onClick={onClose}
+              aria-label="Fechar menu"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+
           </motion.div>
         </>
       ) : null,

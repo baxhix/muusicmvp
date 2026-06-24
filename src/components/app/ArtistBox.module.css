@@ -849,9 +849,9 @@
   min-width: 0;
 }
 .tabRankingName:hover {
-  /* Per product feedback "remova o underline no hover do nome
-   * do usuário" — só troca de cor pra sinalizar afordance. */
-  color: var(--purple);
+  /* Hover neutro (branco) — per feedback "retire a cor roxa do hover
+   * no nome dos usuários". */
+  color: var(--ink);
 }
 
 /* .tabRankingSubline retirada — cidade agora é filha direta de
