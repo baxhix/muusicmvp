@@ -3,7 +3,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { track } from '@/lib/analytics';
 import {
   loadOnboarding,
@@ -60,9 +59,6 @@ export default function EmailStep() {
 
   // Altura do teclado virtual (mobile) — ancora o CTA logo acima dele.
   const kbInset = useKeyboardInset();
-  // Orbe (FanverseCore/WebGL) só monta no mobile — evita rodar canvas
-  // no desktop, onde ele fica escondido.
-  const isMobile = useIsMobile();
 
   /* Splash de validação de sessão — fica visível enquanto o
    * AuthContext consulta /api/auth/me E enquanto o min-hold timer
@@ -152,13 +148,11 @@ export default function EmailStep() {
 
   return (
     <AuthShell back="/" progress={1 / 5}>
-      {/* Orbe (mobile) — substitui o logotipo no topo, alinhado à
-       *  esquerda em 120x120. Só monta no mobile (WebGL). */}
-      {isMobile && (
-        <div className={fields.mobileOrb} aria-hidden="true">
-          <FanverseCore />
-        </div>
-      )}
+      {/* Orbe (FanverseCore/WebGL) logo acima do H1 — no mobile e também
+       *  no desktop (per feedback). 120x120, alinhado à esquerda. */}
+      <div className={fields.mobileOrb} aria-hidden="true">
+        <FanverseCore />
+      </div>
 
       <div
         className={`${fields.fadeIn} ${fields.emailBlock}`}
