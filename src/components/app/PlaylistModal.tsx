@@ -39,7 +39,11 @@ export default function PlaylistModal({
   const [phase, setPhase] = useState<'idle' | 'in' | 'open' | 'out'>(open ? 'in' : 'idle');
   const [query, setQuery] = useState('');
   const [highlightIdx, setHighlightIdx] = useState(0);
-  const [tab, setTab] = useState<TabId>('albums');
+  // Abre direto em "Recentes" (lista de faixas) pra que os ícones de
+  // curtir/comentar de cada música fiquem visíveis logo de cara — o
+  // grid de "Álbuns" (capas, sem faixas) escondia o like ao abrir a
+  // Playlist (desktop e mobile). Álbuns fica a um toque de distância.
+  const [tab, setTab] = useState<TabId>('recentes');
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   /** Truncate the list to a small "above the fold" set by default;
    *  user expands via the "Ver mais" CTA below. Reset on close so
@@ -70,7 +74,8 @@ export default function PlaylistModal({
   );
 
   // Reseta estados ao fechar — incluindo o tab e o álbum selecionado
-  // pra que reabrir comece sempre em "Álbuns" no nível raiz.
+  // pra que reabrir comece sempre em "Recentes" (faixas com like/comentário
+  // visíveis), no nível raiz.
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => {
@@ -78,7 +83,7 @@ export default function PlaylistModal({
         setHighlightIdx(0);
         setShowAll(false);
         setUserExpandedPanel(false);
-        setTab('albums');
+        setTab('recentes');
         setSelectedAlbumId(null);
       }, 360);
       return () => clearTimeout(t);
