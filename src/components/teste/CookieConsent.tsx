@@ -48,14 +48,13 @@ export default function CookieConsent() {
       aria-label="Aviso de cookies e termos de uso"
     >
       <p className={styles.text}>
-        Usamos cookies para personalizar sua experiência. Ao continuar, você
-        concorda com nossos{' '}
+        Cookies para melhorar sua experiência.{' '}
         <LegalLink kind="terms_of_use" surface="site" className={styles.link}>
-          Termos de Uso
+          Termos
         </LegalLink>{' '}
-        e a{' '}
+        e{' '}
         <LegalLink kind="privacy_policy" surface="site" className={styles.link}>
-          Política de Privacidade
+          Privacidade
         </LegalLink>
         .
       </p>
