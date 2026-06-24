@@ -8,9 +8,26 @@
  * na mesma transação. O primeiro endereço vira padrão automaticamente.
  */
 
+import { z } from 'zod';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { userAddresses, type UserAddressRow } from '../db/schema';
+
+/** Validação de entrada de endereço — compartilhada pelas rotas POST/PATCH.
+ *  Mora aqui (e não no route.ts) porque arquivos route.ts do App Router só
+ *  podem exportar handlers + config; um `export const` extra quebra o build. */
+export const addressSchema = z.object({
+  recipient: z.string().trim().min(1).max(120),
+  cep: z.string().trim().min(8).max(9),
+  street: z.string().trim().min(1).max(200),
+  number: z.string().trim().min(1).max(20),
+  complement: z.string().trim().max(120).nullish(),
+  district: z.string().trim().min(1).max(120),
+  city: z.string().trim().min(1).max(120),
+  state: z.string().trim().min(2).max(40),
+  country: z.string().trim().max(60).optional(),
+  isDefault: z.boolean().optional(),
+});
 
 export interface AddressInput {
   recipient: string;

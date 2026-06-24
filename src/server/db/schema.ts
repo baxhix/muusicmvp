@@ -1482,3 +1482,48 @@ export const userAddresses = pgTable(
 );
 
 export type UserAddressRow = typeof userAddresses.$inferSelect;
+
+/* ──────────────────────────────────────────────────────────────
+ * Produtos da Loja Fanverse (admin → /produtos).
+ *
+ * Catálogo de produtos resgatáveis na plataforma. Preço em Fanpoints
+ * (priceFrom = "de", priceTo = "por" — o efetivo). Imagens via upload
+ * (array de URLs). `audience` reaproveita os tiers de Materiais e
+ * define QUAIS usuários podem comprar (Top 1 / 10 / 50 / 100 / todos).
+ * `active` controla disponibilidade na loja.
+ * ────────────────────────────────────────────────────────────── */
+export const products = pgTable(
+  'products',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    description: text('description'),
+    /** Preço "de" (FP) — opcional, mostra como riscado quando há desconto. */
+    priceFrom: integer('price_from'),
+    /** Preço "por" (FP) — o preço efetivo de resgate. */
+    priceTo: integer('price_to').notNull().default(0),
+    /** URLs das imagens (upload). Primeira = capa. */
+    imageUrls: jsonb('image_urls').notNull().default([]),
+    /** Quem pode comprar — mesmos tiers de Materiais. */
+    audience: text('audience', {
+      enum: ['top1', 'top10', 'top50', 'top100', 'all'],
+    })
+      .notNull()
+      .default('all'),
+    /** Disponível na loja. */
+    active: boolean('active').notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdById: uuid('created_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index('products_order_idx').on(t.sortOrder, t.createdAt)],
+);
+
+export type ProductRow = typeof products.$inferSelect;

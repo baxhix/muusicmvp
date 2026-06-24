@@ -156,6 +156,7 @@ const NAV: NavEntry[] = [
      * Fanpoints segundo, Superchat e Níveis depois". */
     children: [
       { kind: 'leaf', href: '/materiais',     label: 'Materiais' },
+      { kind: 'leaf', href: '/produtos',      label: 'Produtos' },
       { kind: 'leaf', href: '/fanpoints',     label: 'Fanpoints' },
       { kind: 'leaf', href: '/superchat',     label: 'Superchat' },
       { kind: 'leaf', href: '/niveis',        label: 'Níveis' },
