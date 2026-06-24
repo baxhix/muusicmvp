@@ -404,9 +404,16 @@
     width: 28px;
     height: 28px;
   }
-  /* The base `.item` / `.itemActive` rules now own the
-   * gray-inactive / white-active binary across every viewport.
-   * Mobile no longer needs a separate color override here. */
+  /* Mobile: ícones um pouco mais finos (CSS stroke-width vence o
+   * atributo strokeWidth=1.6/1.8 dos SVGs) e os inativos levemente
+   * mais claros (0.45 → 0.58). O ativo segue branco. */
+  .item svg :is(circle, rect, path, line, polyline, polygon),
+  .itemCenter svg :is(circle, rect, path, line, polyline, polygon) {
+    stroke-width: 1.4;
+  }
+  .item:not(.itemActive) {
+    color: rgba(245, 245, 247, 0.58);
+  }
 
   /* ── Mobile blur reduction (perf) ──
    * The nav pill + "more" menu both ride above an actively
