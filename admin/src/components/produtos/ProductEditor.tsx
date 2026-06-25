@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Reorder } from 'motion/react';
 import PageHeader from '@/components/ui/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -192,7 +192,7 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
 
   if (loadError) {
     return (
-      <div className={styles.page}>
+      <>
         <PageHeader
           title={pageTitle}
           actions={
@@ -201,17 +201,21 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
             </Button>
           }
         />
-        <Card>
-          <div className={styles.errorBanner}>
-            <IconAlert size={14} /> {loadError}
-          </div>
-        </Card>
-      </div>
+        <div className={styles.body}>
+          <Card>
+            <CardBody>
+              <div className={styles.errorBanner}>
+                <IconAlert size={14} /> {loadError}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <>
       <PageHeader
         title={pageTitle}
         description={
@@ -238,105 +242,104 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
         }
       />
 
-      {loading ? (
-        <Card>
-          <div className={styles.loading}>Carregando…</div>
-        </Card>
-      ) : (
-        <div className={styles.layout}>
-          {/* ── Dados ───────────────────────────────────────── */}
+      <div className={styles.body}>
+        {loading ? (
           <Card>
-            <div className={styles.formBody}>
-              <Input
-                label="Nome"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={200}
-                placeholder="Ex: Chapéu Ana Castela — Couro Preto"
-                disabled={saving}
-              />
-
-              <Textarea
-                label="Descrição"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={5000}
-                rows={4}
-                placeholder="Detalhes do produto"
-                disabled={saving}
-              />
-
-              <div className={styles.priceRow}>
-                <Input
-                  label="Preço de (FP)"
-                  type="number"
-                  min={0}
-                  value={priceFrom}
-                  onChange={(e) => setPriceFrom(e.target.value)}
-                  placeholder="Opcional"
-                  helperText="Preço cheio (riscado)"
-                  disabled={saving}
-                />
-                <Input
-                  label="Preço por (FP)"
-                  required
-                  type="number"
-                  min={0}
-                  value={priceTo}
-                  onChange={(e) => setPriceTo(e.target.value)}
-                  placeholder="0"
-                  helperText="Preço efetivo de resgate"
-                  disabled={saving}
-                />
-              </div>
-
-              <Select
-                label="Quem pode comprar"
-                options={PRODUCT_AUDIENCE_OPTIONS}
-                value={audience}
-                onChange={(e) => setAudience(e.target.value as ProductAudience)}
-                helperText="Restringe a compra por tier de fãs."
-                disabled={saving}
-              />
-
-              <div className={styles.activeToggle}>
-                <span>
-                  {active ? 'Disponível na loja' : 'Inativo'}
-                  <em>
-                    {active
-                      ? 'Aparece na Loja Fanverse para o público selecionado.'
-                      : 'Fica salvo aqui mas não aparece na loja.'}
-                  </em>
-                </span>
-                <Switch checked={active} onChange={(e) => setActive(e.target.checked)} disabled={saving} aria-label="Disponível" />
-              </div>
-            </div>
+            <div className={styles.loading}>Carregando…</div>
           </Card>
+        ) : (
+          <div className={styles.layout}>
+            {/* ── Dados ───────────────────────────────────────── */}
+            <Card>
+              <CardHeader title="Dados do produto" />
+              <CardBody className={styles.formBody}>
+                <Input
+                  label="Nome"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={200}
+                  placeholder="Ex: Chapéu Ana Castela — Couro Preto"
+                  disabled={saving}
+                />
 
-          {/* ── Mídia ───────────────────────────────────────── */}
-          <Card>
-            <div className={styles.mediaBlock}>
-              <div className={styles.mediaHead}>
-                <div>
-                  <span className={styles.mediaTitle}>Mídia</span>
-                  <span className={styles.mediaHint}>
-                    Imagens e vídeos. Arraste para reordenar — a ordem é a sequência que o usuário vê (1º item = capa).
-                  </span>
+                <Textarea
+                  label="Descrição"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={5000}
+                  rows={4}
+                  placeholder="Detalhes do produto"
+                  disabled={saving}
+                />
+
+                <div className={styles.priceRow}>
+                  <Input
+                    label="Preço de (FP)"
+                    type="number"
+                    min={0}
+                    value={priceFrom}
+                    onChange={(e) => setPriceFrom(e.target.value)}
+                    placeholder="Opcional"
+                    helperText="Preço cheio (riscado)"
+                    disabled={saving}
+                  />
+                  <Input
+                    label="Preço por (FP)"
+                    required
+                    type="number"
+                    min={0}
+                    value={priceTo}
+                    onChange={(e) => setPriceTo(e.target.value)}
+                    placeholder="0"
+                    helperText="Preço efetivo de resgate"
+                    disabled={saving}
+                  />
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  leadingIcon={<IconUpload size={14} />}
-                  onClick={() => fileRef.current?.click()}
-                  loading={uploading}
-                  disabled={uploading || saving}
-                >
-                  {uploading ? 'Enviando…' : 'Adicionar mídia'}
-                </Button>
-              </div>
 
-              {media.length === 0 ? (
+                <Select
+                  label="Quem pode comprar"
+                  options={PRODUCT_AUDIENCE_OPTIONS}
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value as ProductAudience)}
+                  helperText="Restringe a compra por tier de fãs."
+                  disabled={saving}
+                />
+
+                <div className={styles.activeToggle}>
+                  <span>
+                    {active ? 'Disponível na loja' : 'Inativo'}
+                    <em>
+                      {active
+                        ? 'Aparece na Loja Fanverse para o público selecionado.'
+                        : 'Fica salvo aqui mas não aparece na loja.'}
+                    </em>
+                  </span>
+                  <Switch checked={active} onChange={(e) => setActive(e.target.checked)} disabled={saving} aria-label="Disponível" />
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* ── Mídia ───────────────────────────────────────── */}
+            <Card>
+              <CardHeader
+                title="Mídia"
+                description="Imagens e vídeos. Arraste para reordenar — a ordem é a sequência que o usuário vê (1º item = capa)."
+                actions={
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    leadingIcon={<IconUpload size={14} />}
+                    onClick={() => fileRef.current?.click()}
+                    loading={uploading}
+                    disabled={uploading || saving}
+                  >
+                    {uploading ? 'Enviando…' : 'Adicionar mídia'}
+                  </Button>
+                }
+              />
+              <CardBody className={styles.mediaBody}>
+                {media.length === 0 ? (
                 <button
                   type="button"
                   className={styles.dropzone}
@@ -395,19 +398,20 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
                 </Reorder.Group>
               )}
 
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,video/ogg"
-                multiple
-                onChange={onPickFiles}
-                style={{ display: 'none' }}
-              />
-            </div>
-          </Card>
-        </div>
-      )}
-    </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,video/ogg"
+                  multiple
+                  onChange={onPickFiles}
+                  style={{ display: 'none' }}
+                />
+              </CardBody>
+            </Card>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

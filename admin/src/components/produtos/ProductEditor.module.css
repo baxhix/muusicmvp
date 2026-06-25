@@ -1,5 +1,9 @@
-/* ProductEditor — página dedicada de cadastro/edição de produto. */
-.page {
+/* ProductEditor — página dedicada de cadastro/edição de produto.
+ *
+ * Estrutura padrão das telas do admin: <PageHeader/> como filho direto
+ * do shell (barra full-width) + .body centralizado abaixo. Mesma fórmula
+ * do .body das páginas de listagem (max-width + margin auto + padding 24). */
+.body {
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -33,24 +37,28 @@
   font-size: 13px;
 }
 
-/* Duas colunas no desktop: dados | mídia. Colapsa no mobile. */
+/* Duas colunas no desktop: dados | mídia. Colapsa no mobile.
+ * gap 16 = mesmo gap entre cards das demais telas. Breakpoint 1100
+ * espelha o PostEditor (outra tela de cadastro full-page). */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr;
   }
 }
 
 /* ── Dados ─────────────────────────────────────────────────── */
+/* O padding vem do <CardBody> (--pad-surface), igual aos cards do
+ * resto do admin; aqui só o empilhamento + gap dos campos (14px). */
 .formBody {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 .priceRow {
   display: flex;
@@ -83,32 +91,12 @@
 }
 
 /* ── Mídia ─────────────────────────────────────────────────── */
-.mediaBlock {
+/* Título + descrição + botão "Adicionar mídia" vivem no <CardHeader>
+ * (anatomia de card padrão). Aqui é só o corpo: dropzone OU galeria. */
+.mediaBody {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-.mediaHead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.mediaHead > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.mediaTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: #f5f5f7;
-}
-.mediaHint {
-  font-size: 12px;
-  color: rgba(245, 245, 247, 0.5);
-  line-height: 1.4;
 }
 
 .dropzone {
