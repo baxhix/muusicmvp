@@ -835,7 +835,10 @@
   .ctaPill {
     display: none;
   }
-  .menuTrigger { width: 42px; height: 42px; }
+  /* Mobile: hambúrguer removido completamente — as ações essenciais
+   *  (Sou Fã / Sou artista) vivem nos CTAs fixos do rodapé e a
+   *  navegação secundária nas colunas do footer. Sem menu colapsado. */
+  .menuTrigger { display: none; }
 
   /* Megamenu mobile: 4 colunas vira 2 colunas no mobile —
    * caber 4 numa viewport <720px ficaria ilegível. */

@@ -243,24 +243,30 @@
   }
   .wordmarkWrap { display: none; }
   .inner { max-width: 100%; }
-  /* Colunas de links espalhadas: esquerda na margem esquerda, direita na
-   * margem direita (per feedback). */
-  .linksGrid { justify-content: space-between; }
-  /* Barra legal: copyright em 1 linha + Termos | Privacidade em 1 linha,
-   * duas colunas (uma em cada margem). */
+  /* Colunas espalhadas nas margens, com MAIS respiro vertical entre as
+   * duas linhas (2x2) — organização visual mais clara. */
+  .linksGrid {
+    justify-content: space-between;
+    row-gap: 48px;
+  }
+  /* Barra legal CENTRALIZADA: copyright + Termos · Privacidade, ambos
+   * no centro, com respiro maior. */
   .legalBar {
     flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    margin-top: 56px;
   }
   .copyright {
     white-space: nowrap;
     font-size: 12px;
+    text-align: center;
   }
   .legalLinks {
-    justify-content: space-between;
-    width: 100%;
-    gap: 0;
+    justify-content: center;
+    width: auto;
+    gap: 24px;
   }
   .legalLink { white-space: nowrap; }
 }

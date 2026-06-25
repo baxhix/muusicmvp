@@ -124,19 +124,6 @@
   transform: translateY(-3px);
 }
 
-.cardIndex {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  /* Numeral com o gradient da marca (magenta→indigo) — mesmo da lux. */
-  background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
 .cardTitle {
   margin: 0;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
@@ -162,53 +149,67 @@
   margin-top: clamp(40px, 6vh, 64px);
 }
 
-/* Pill preto + lux estática atrás (mesmo padrão do CTA do Navbar/Hero). */
+/* Pill preto sólido + borda branca + avatar de uma pessoa à esquerda.
+ * Padding esquerdo menor pra o avatar respirar; boa área de toque. */
 .cta {
-  position: relative;
-  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 34px;
+  gap: 10px;
+  padding: 12px 26px 12px 12px;
   border-radius: 999px;
   background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.85);
   color: #fff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.005em;
   text-decoration: none;
-  transition: transform 200ms ease-out;
+  transition: transform 200ms ease-out, background 200ms ease-out;
 }
-.cta::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
-  background-size: 300% 100%;
-  background-position: 0% 50%;
-  animation: artists-cta-shift 6s linear infinite;
-  filter: blur(24px);
-  opacity: 0.75;
-  pointer-events: none;
+.ctaAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
 }
 .cta:hover {
   transform: translateY(-1px);
-}
-.cta:hover::before {
-  opacity: 0.95;
+  background: rgba(255, 255, 255, 0.06);
 }
 .cta:active {
   transform: translateY(0);
 }
-@keyframes artists-cta-shift {
-  from { background-position: 0% 50%; }
-  to { background-position: -200% 50%; }
+
+/* Mobile: stacked cards (cards empilhados). Sem numeração, sem eyebrow.
+ * Cada card é position:sticky com `top` em cascata (inline, por índice),
+ * então ao rolar eles empilham com profundidade — o de baixo fica
+ * espreitando alguns px acima do próximo. Fundo opaco pra ocluir os de
+ * trás; sombra dá a profundidade; hierarquia por espaçamento. */
+@media (max-width: 720px) {
+  .eyebrow {
+    display: none;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .card {
+    position: sticky;
+    /* `top` vem do style inline (cascata por índice) */
+    background: rgba(16, 16, 22, 0.97);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -10px 44px -18px rgba(0, 0, 0, 0.75);
+    margin-bottom: 18px;
+    transition: transform 220ms ease-out, border-color 220ms ease-out;
+  }
 }
 
-/* Mobile: "Para Artistas" em UMA linha (per feedback anterior). */
+/* "Para Artistas" em UMA linha + tipografia menor em telas estreitas. */
 @media (max-width: 600px) {
   .headline {
     white-space: nowrap;
@@ -226,8 +227,5 @@
   .headline {
     animation: none;
     background-position: 0% 50%;
-  }
-  .cta::before {
-    animation: none;
   }
 }

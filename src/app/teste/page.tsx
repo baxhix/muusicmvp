@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/teste/Navbar';
 import HeroSection from '@/components/teste/HeroSection';
+import SectionFanPurpose from '@/components/teste/SectionFanPurpose';
 import SectionTwo from '@/components/teste/SectionTwo';
 import HorizontalShowcase from '@/components/teste/HorizontalShowcase';
 import SectionThree from '@/components/teste/SectionThree';
@@ -52,6 +53,9 @@ export default function TestePage() {
       {/* Phones mockup agora vive DENTRO do HeroSection (180px
        *  abaixo do headline) — não tem mais section dedicada. */}
       <HeroSection />
+      {/* Manifesto "Sou Fã" — frase única de impacto (Borscha grande)
+       *  resumindo o propósito de ser fã no Fanverse. */}
+      <SectionFanPurpose />
       <SectionTwo />
       {/* Galeria scroll-horizontal (Motion) com as verticais de conteúdo
        *  exclusivo — fecha a narrativa da seção "A conexão real entre Fã

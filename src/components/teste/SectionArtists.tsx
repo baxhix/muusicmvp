@@ -66,10 +66,11 @@ export default function SectionArtists() {
 
         <ul className={styles.grid}>
           {FEATURES.map((f, i) => (
-            <li key={f.title} className={styles.card}>
-              <span className={styles.cardIndex} aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
-              </span>
+            <li
+              key={f.title}
+              className={styles.card}
+              style={{ top: `calc(88px + ${i * 14}px)` }}
+            >
               <h3 className={styles.cardTitle}>{f.title}</h3>
               <p className={styles.cardDesc}>{f.desc}</p>
             </li>
@@ -78,6 +79,13 @@ export default function SectionArtists() {
 
         <div className={styles.ctaWrap}>
           <a href={DEMO_MAILTO} className={styles.cta}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/teste/user-01.png"
+              alt=""
+              aria-hidden="true"
+              className={styles.ctaAvatar}
+            />
             Agendar demonstração
           </a>
         </div>

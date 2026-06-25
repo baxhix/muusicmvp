@@ -1,0 +1,67 @@
+/* Section "Sou Fã" — manifesto de uma frase, Borscha grande sobre a galáxia. */
+
+.section {
+  position: relative;
+  width: 100%;
+  background: transparent;
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(100px, 18vh, 220px) 24px;
+}
+
+/* Frase única em Borscha 900, gradient branco→cinza com shimmer.
+ * Grande e centralizada — leitura emocional. */
+.manifesto {
+  position: relative;
+  z-index: 5;
+  margin: 0;
+  max-width: 14ch;
+  text-align: center;
+  font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: clamp(34px, 6.4vw, 76px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  background: linear-gradient(
+    120deg,
+    #fff 0%,
+    #e6e6e6 28%,
+    #fff 50%,
+    #e6e6e6 72%,
+    #fff 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  -webkit-font-smoothing: antialiased;
+  animation: fan-purpose-shimmer 8s ease-in-out infinite;
+}
+@keyframes fan-purpose-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Mobile: a frase ocupa ~7 linhas (max-width estreito) e respira. */
+@media (max-width: 720px) {
+  .section {
+    padding: clamp(80px, 14vh, 140px) 22px;
+  }
+  .manifesto {
+    max-width: 16ch;
+    font-size: clamp(28px, 8vw, 42px);
+    line-height: 1.12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manifesto {
+    animation: none;
+    background-position: 0% 50%;
+  }
+}
