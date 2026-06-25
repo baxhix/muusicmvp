@@ -1518,6 +1518,10 @@ export const products = pgTable(
     /** Disponível na loja. */
     active: boolean('active').notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
+    /** Categoria do produto (opcional). SET NULL ao apagar a categoria. */
+    categoryId: uuid('category_id').references(() => productCategories.id, {
+      onDelete: 'set null',
+    }),
     createdById: uuid('created_by_id').references(() => users.id, {
       onDelete: 'set null',
     }),
@@ -1532,3 +1536,30 @@ export const products = pgTable(
 );
 
 export type ProductRow = typeof products.$inferSelect;
+
+/* ──────────────────────────────────────────────────────────────
+ * PRODUCT_CATEGORIES — categorias da Loja Fanverse.
+ *
+ * Agrupamento simples (nome + descrição) usado no cadastro de
+ * produto e como filtro na loja. Um produto pertence a no máximo
+ * uma categoria (products.category_id, SET NULL ao apagar).
+ * ────────────────────────────────────────────────────────────── */
+export const productCategories = pgTable(
+  'product_categories',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    description: text('description'),
+    active: boolean('active').notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index('product_categories_order_idx').on(t.sortOrder, t.name)],
+);
+
+export type ProductCategoryRow = typeof productCategories.$inferSelect;

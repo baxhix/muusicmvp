@@ -41,6 +41,8 @@ export const productSchema = z.object({
   audience: z.enum(['top1', 'top10', 'top50', 'top100', 'all']).optional(),
   active: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(100000).optional(),
+  /** Categoria (UUID) ou null p/ "sem categoria". */
+  categoryId: z.string().uuid().nullish(),
 });
 
 export interface ProductInput {
@@ -53,6 +55,7 @@ export interface ProductInput {
   audience?: ProductAudience;
   active?: boolean;
   sortOrder?: number;
+  categoryId?: string | null;
 }
 
 export interface ApiProduct {
@@ -66,6 +69,7 @@ export interface ApiProduct {
   audience: ProductAudience;
   active: boolean;
   sortOrder: number;
+  categoryId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -104,6 +108,7 @@ function serialize(r: ProductRow): ApiProduct {
     audience: r.audience as ProductAudience,
     active: r.active,
     sortOrder: r.sortOrder,
+    categoryId: r.categoryId,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
   };
@@ -149,6 +154,7 @@ export async function createProduct(
       audience: input.audience ?? 'all',
       active: input.active ?? true,
       sortOrder: input.sortOrder ?? 0,
+      categoryId: input.categoryId ?? null,
       createdById,
     })
     .returning();
@@ -174,6 +180,7 @@ export async function updateProduct(
   if (input.audience !== undefined) patch.audience = input.audience;
   if (input.active !== undefined) patch.active = input.active;
   if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
+  if (input.categoryId !== undefined) patch.categoryId = input.categoryId;
 
   const [row] = await db
     .update(products)

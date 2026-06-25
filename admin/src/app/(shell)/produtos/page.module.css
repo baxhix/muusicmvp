@@ -9,6 +9,85 @@
   width: 100%;
 }
 
+/* ── Aba Categorias (CRUD em tabela) ─────────────────────────── */
+.tabBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Card de filtros: linha com busca. */
+.filters2 {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.filters2 > :first-child {
+  flex: 1;
+}
+/* Card que envolve a Table — sem padding pra tabela encostar nas bordas. */
+.tableCard {
+  padding: 0;
+  overflow: hidden;
+}
+.cellName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cellPrimary {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.cellSecondary {
+  font-size: 12px;
+  color: var(--text-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 420px;
+}
+.muteCell {
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+/* Formulário do Dialog de categoria. */
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dialogToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+.dialogToggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--text);
+}
+.dialogToggle em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+/* Chip de categoria no meta da linha de produto. */
+.categoryChip {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-mute);
+}
+
 .loading {
   padding: 24px;
   text-align: center;

@@ -90,15 +90,20 @@ interface MockProduct {
   audience: string;
   active: boolean;
   sortOrder: number;
+  categoryId: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+function mockId(): string {
+  return (globalThis.crypto?.randomUUID?.() ?? `mock-${Date.now()}`) as string;
 }
 
 function makeMockProduct(seed: Partial<MockProduct>): MockProduct {
   const media = seed.media ?? [];
   const now = new Date().toISOString();
   return {
-    id: (globalThis.crypto?.randomUUID?.() ?? `mock-${Date.now()}`) as string,
+    id: mockId(),
     name: seed.name ?? 'Produto',
     description: seed.description ?? null,
     priceFrom: seed.priceFrom ?? null,
@@ -108,10 +113,40 @@ function makeMockProduct(seed: Partial<MockProduct>): MockProduct {
     audience: seed.audience ?? 'all',
     active: seed.active ?? true,
     sortOrder: seed.sortOrder ?? 0,
+    categoryId: seed.categoryId ?? null,
     createdAt: now,
     updatedAt: now,
   };
 }
+
+/* Categorias de produtos — mesmo padrão de store em memória. */
+interface MockProductCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function makeMockCategory(seed: Partial<MockProductCategory>): MockProductCategory {
+  const now = new Date().toISOString();
+  return {
+    id: mockId(),
+    name: seed.name ?? 'Categoria',
+    description: seed.description ?? null,
+    active: seed.active ?? true,
+    sortOrder: seed.sortOrder ?? 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+const mockCategories: MockProductCategory[] = [
+  makeMockCategory({ name: 'Vestuário', description: 'Roupas e acessórios oficiais.' }),
+  makeMockCategory({ name: 'Colecionáveis', description: 'Itens autografados e edições limitadas.' }),
+];
 
 const mockProducts: MockProduct[] = [
   makeMockProduct({
@@ -120,6 +155,7 @@ const mockProducts: MockProduct[] = [
     priceFrom: 12000,
     priceTo: 9000,
     audience: 'top100',
+    categoryId: mockCategories[1].id,
     media: [
       { type: 'image', url: 'https://picsum.photos/seed/chapeu1/640/640' },
       { type: 'image', url: 'https://picsum.photos/seed/chapeu2/640/640' },
@@ -130,9 +166,52 @@ const mockProducts: MockProduct[] = [
     description: 'Camiseta oficial da turnê.',
     priceTo: 4500,
     audience: 'all',
+    categoryId: mockCategories[0].id,
     media: [{ type: 'image', url: 'https://picsum.photos/seed/camiseta/640/640' }],
   }),
 ];
+
+function mockProductCategoriesRoute(
+  method: Method,
+  path: string,
+  body?: unknown,
+): unknown | undefined {
+  if (path === '/api/admin/produtos/categorias') {
+    if (method === 'GET') return { items: mockCategories };
+    if (method === 'POST') {
+      const c = makeMockCategory((body ?? {}) as Partial<MockProductCategory>);
+      mockCategories.push(c);
+      return { category: c };
+    }
+  }
+  const m = path.match(/^\/api\/admin\/produtos\/categorias\/([^/]+)$/);
+  if (m) {
+    const id = m[1];
+    const idx = mockCategories.findIndex((c) => c.id === id);
+    if (method === 'PATCH') {
+      if (idx < 0) return { error: 'not_found' };
+      const merged = {
+        ...mockCategories[idx],
+        ...((body ?? {}) as Partial<MockProductCategory>),
+        updatedAt: new Date().toISOString(),
+      };
+      mockCategories[idx] = merged;
+      return { category: merged };
+    }
+    if (method === 'DELETE') {
+      if (idx >= 0) {
+        // espelha o SET NULL do backend: desvincula produtos.
+        const removed = mockCategories[idx].id;
+        mockProducts.forEach((p) => {
+          if (p.categoryId === removed) p.categoryId = null;
+        });
+        mockCategories.splice(idx, 1);
+      }
+      return { ok: true };
+    }
+  }
+  return undefined;
+}
 
 function mockProductsRoute(
   method: Method,
@@ -169,6 +248,12 @@ function mockProductsRoute(
 
 const mockCall: ApiCall<unknown> = async (method, path, body) => {
   await wait(mockLatencyMs);
+  // Categorias ANTES de produtos: o regex de produto-por-id capturaria
+  // `/produtos/categorias` (id="categorias") se checado primeiro.
+  const categorias = mockProductCategoriesRoute(method, path, body);
+  if (categorias !== undefined) {
+    return JSON.parse(JSON.stringify(categorias));
+  }
   // Produtos têm store mutável próprio (CRUD), checado antes do mapa estático.
   const produtos = mockProductsRoute(method, path, body);
   if (produtos !== undefined) {

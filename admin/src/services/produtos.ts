@@ -39,6 +39,8 @@ export interface Product {
   audience: ProductAudience;
   active: boolean;
   sortOrder: number;
+  /** Categoria (UUID) ou null. */
+  categoryId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,6 +54,7 @@ export interface ProductInput {
   audience?: ProductAudience;
   active?: boolean;
   sortOrder?: number;
+  categoryId?: string | null;
 }
 
 export const productService = {
@@ -61,6 +64,38 @@ export const productService = {
   update: (id: string, input: Partial<ProductInput>) =>
     api.patch<{ product: Product }>(`/api/admin/produtos/${id}`, input),
   remove: (id: string) => api.delete<{ ok: true }>(`/api/admin/produtos/${id}`),
+};
+
+/* ── Categorias de produtos ──────────────────────────────────── */
+export interface ProductCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductCategoryInput {
+  name: string;
+  description?: string | null;
+  active?: boolean;
+  sortOrder?: number;
+}
+
+export const productCategoryService = {
+  list: () =>
+    api.get<{ items: ProductCategory[] }>('/api/admin/produtos/categorias'),
+  create: (input: ProductCategoryInput) =>
+    api.post<{ category: ProductCategory }>('/api/admin/produtos/categorias', input),
+  update: (id: string, input: Partial<ProductCategoryInput>) =>
+    api.patch<{ category: ProductCategory }>(
+      `/api/admin/produtos/categorias/${id}`,
+      input,
+    ),
+  remove: (id: string) =>
+    api.delete<{ ok: true }>(`/api/admin/produtos/categorias/${id}`),
 };
 
 /** Limites espelhados do backend (src/server/feed/storage.ts). */

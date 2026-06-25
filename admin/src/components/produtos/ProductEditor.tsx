@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Reorder } from 'motion/react';
 import PageHeader from '@/components/ui/PageHeader';
@@ -22,12 +22,14 @@ import {
 } from '@/components/icons';
 import {
   productService,
+  productCategoryService,
   uploadProductMedia,
   PRODUCT_AUDIENCE_OPTIONS,
   PRODUCT_IMAGE_MAX_BYTES,
   PRODUCT_VIDEO_MAX_BYTES,
   type ProductAudience,
   type ProductMedia,
+  type ProductCategory,
 } from '@/services/produtos';
 import styles from './ProductEditor.module.css';
 
@@ -70,10 +72,26 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
   const [audience, setAudience] = useState<ProductAudience>('all');
   const [active, setActive] = useState(true);
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Categorias disponíveis (p/ o select). Carregadas nos dois modos.
+  useEffect(() => {
+    let alive = true;
+    productCategoryService
+      .list()
+      .then(({ items }) => {
+        if (alive) setCategories(items);
+      })
+      .catch((err) => console.error('categorias load failed:', err));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Hidrata o form no modo edição. Não há GET por id — busca na lista
   // e encontra o produto (escala de admin, ok).
@@ -97,6 +115,7 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
         setPriceTo(String(p.priceTo));
         setAudience(p.audience);
         setActive(p.active);
+        setCategoryId(p.categoryId ?? '');
         setMedia(toMediaItems(p.media));
       } catch (err) {
         console.error('produto load failed:', err);
@@ -152,6 +171,20 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
     setMedia((cur) => cur.filter((m) => m.key !== key));
   }, []);
 
+  // Opções do select: "Sem categoria" + categorias ativas. Se a
+  // categoria atual do produto estiver inativa, ainda aparece (rotulada)
+  // pra não sumir silenciosamente do vínculo existente.
+  const categoryOptions = useMemo(() => {
+    const visible = categories.filter((c) => c.active || c.id === categoryId);
+    return [
+      { value: '', label: 'Sem categoria' },
+      ...visible.map((c) => ({
+        value: c.id,
+        label: c.active ? c.name : `${c.name} (inativa)`,
+      })),
+    ];
+  }, [categories, categoryId]);
+
   const canSubmit =
     name.trim().length > 0 && priceTo.trim().length > 0 && !saving && !uploading;
 
@@ -168,6 +201,7 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
         media: media.map(({ type, url }) => ({ type, url })),
         audience,
         active,
+        categoryId: categoryId || null,
       };
       if (mode === 'create') {
         await productService.create(payload);
@@ -185,7 +219,7 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
     }
   }, [
     canSubmit, name, description, priceFrom, priceTo, media, audience, active,
-    mode, productId, push, router,
+    categoryId, mode, productId, push, router,
   ]);
 
   const pageTitle = mode === 'create' ? 'Novo produto' : 'Editar produto';
@@ -296,6 +330,15 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
                     disabled={saving}
                   />
                 </div>
+
+                <Select
+                  label="Categoria"
+                  options={categoryOptions}
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  helperText="Agrupa o produto na loja. Gerencie em Produtos → Categorias."
+                  disabled={saving}
+                />
 
                 <Select
                   label="Quem pode comprar"
