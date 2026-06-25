@@ -77,12 +77,6 @@
   100% { background-position: 0% 50%; }
 }
 
-/* Quebra do headline só no mobile (após "Para") — no desktop fica
- * display:none e "Para Artistas" flui numa linha só. */
-.headlineBreak {
-  display: none;
-}
-
 .lead {
   margin: 0;
   max-width: 620px;
@@ -242,14 +236,13 @@
   }
 }
 
-/* "Para Artistas" em DUAS linhas (Para / Artistas) no mobile, via <br>. */
+/* Headline "Fanverse / para Artistas" no mobile: nowrap + fonte que cabe
+ * "para Artistas" numa linha só até 320px (em 14vw estourava e virava 3
+ * linhas). 13vw com floor 40 mantém as 2 linhas limpas. */
 @media (max-width: 600px) {
   .headline {
-    white-space: normal;
-    font-size: clamp(44px, 14vw, 72px);
-  }
-  .headlineBreak {
-    display: inline;
+    white-space: nowrap;
+    font-size: clamp(40px, 13vw, 72px);
   }
   .lead {
     font-size: 16px;
