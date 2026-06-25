@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { motion, useScroll, useMotionValueEvent } from 'motion/react';
 import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './Navbar.module.css';
 
@@ -127,6 +128,37 @@ export default function Navbar() {
     };
   }, []);
 
+  /* ── Scroll Direction: Hide Header (Motion) ───────────────
+   * Scroll pra BAIXO → header desliza pra fora (translateY -100%);
+   * scroll pra CIMA → reaparece. Detecção via useScroll +
+   * useMotionValueEvent (direção pela diferença com o valor anterior).
+   *
+   * O transform só é aplicado no MOBILE: no desktop o header
+   * "scrolled" reorganiza brand+nav em elementos `position: fixed`,
+   * e um transform no header viraria containing block desses filhos
+   * (quebraria a barra inferior). matchMedia controla isso. */
+  const [hidden, setHidden] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 720px)');
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    if (menuOpen) {
+      setHidden(false);
+      return;
+    }
+    const prev = scrollY.getPrevious() ?? 0;
+    if (y > prev && y > 120) setHidden(true);
+    else if (y < prev) setHidden(false);
+  });
+
   /* Outside click + Escape fecham. Quando fecha, devolve o foco pro
    * trigger pra não deixar o usuário de teclado "preso" no fim do DOM.
    *
@@ -188,7 +220,15 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''}`}>
+      <motion.header
+        className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''}`}
+        {...(isMobile
+          ? {
+              animate: { y: hidden ? '-100%' : '0%' },
+              transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+            }
+          : {})}
+      >
         {/* Container 1200px com brand + nav nas pontas. */}
         <div className={styles.container}>
           <a href="/teste" className={styles.brand} aria-label="Fanverse — início">
@@ -253,7 +293,7 @@ export default function Navbar() {
           <span className={styles.menuBar} />
           <span className={styles.menuBar} />
         </button>
-      </header>
+      </motion.header>
 
       {/* Overlay full-viewport — sob o panel, captura outside
        *  clicks. Click fecha. */}

@@ -1,16 +1,15 @@
-/* Section "Para Artistas" — H1 grande centrado sobre a galáxia. */
+/* Section "Para Artistas" — pitch SaaS p/ escritórios: headline 84px +
+ * grid de 6 funcionalidades + CTA de demonstração, sobre a galáxia. */
 
 .section {
   position: relative;
   width: 100%;
-  min-height: 82vh;
   background: transparent;
   color: #fff;
   overflow: hidden;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: clamp(80px, 14vh, 200px) 24px;
+  padding: clamp(96px, 14vh, 200px) 24px;
 }
 
 .inner {
@@ -19,18 +18,37 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 18px;
-  max-width: 880px;
+  width: 100%;
+  max-width: 1120px;
 }
 
-/* H1 grande — mesma família/escala dos headlines da landing (Borscha 900,
- * gradient cinza→branco com shimmer). Clamp generoso pra ficar "grande". */
+/* ── Cabeçalho da seção ──────────────────────────────────── */
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin-bottom: clamp(40px, 6vh, 72px);
+}
+
+.eyebrow {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Headline em Borscha 84px (per feedback "deixe no tamanho 84px"), gradient
+ * cinza→branco com shimmer. Cap em 84 no desktop; escala por vw em telas
+ * menores. */
 .headline {
   font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
-  font-size: clamp(56px, 13vw, 150px);
-  line-height: 0.95;
+  font-size: clamp(48px, 9vw, 84px);
+  line-height: 0.98;
   letter-spacing: -0.02em;
   background: linear-gradient(
     120deg,
@@ -55,14 +73,152 @@
   100% { background-position: 0% 50%; }
 }
 
-/* Mobile: "Para Artistas" em UMA linha. O floor de 56px do clamp
- * estourava a largura em telas estreitas e quebrava em duas linhas;
- * aqui o tamanho passa a ser governado por vw (sem floor alto) +
- * white-space:nowrap, então o título encolhe pra caber numa linha só. */
+.lead {
+  margin: 0;
+  max-width: 620px;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* ── Grid de 6 funcionalidades ───────────────────────────── */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 24px 22px;
+  text-align: left;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: border-color 220ms ease-out, background 220ms ease-out, transform 220ms ease-out;
+}
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-3px);
+}
+
+.cardIndex {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  /* Numeral com o gradient da marca (magenta→indigo) — mesmo da lux. */
+  background: linear-gradient(135deg, #ff00b4 0%, #5b00d1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.cardDesc {
+  margin: 0;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── CTA de demonstração ─────────────────────────────────── */
+.ctaWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(40px, 6vh, 64px);
+}
+
+/* Pill preto + lux estática atrás (mesmo padrão do CTA do Navbar/Hero). */
+.cta {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 34px;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transition: transform 200ms ease-out;
+}
+.cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 50%, #ff00b4 100%);
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: artists-cta-shift 6s linear infinite;
+  filter: blur(24px);
+  opacity: 0.75;
+  pointer-events: none;
+}
+.cta:hover {
+  transform: translateY(-1px);
+}
+.cta:hover::before {
+  opacity: 0.95;
+}
+.cta:active {
+  transform: translateY(0);
+}
+@keyframes artists-cta-shift {
+  from { background-position: 0% 50%; }
+  to { background-position: -200% 50%; }
+}
+
+/* Mobile: "Para Artistas" em UMA linha (per feedback anterior). */
 @media (max-width: 600px) {
   .headline {
     white-space: nowrap;
     font-size: clamp(34px, 12vw, 60px);
+  }
+  .lead {
+    font-size: 16px;
+  }
+  .card {
+    padding: 20px 18px;
   }
 }
 
@@ -70,5 +226,8 @@
   .headline {
     animation: none;
     background-position: 0% 50%;
+  }
+  .cta::before {
+    animation: none;
   }
 }
