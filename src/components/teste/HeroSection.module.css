@@ -140,7 +140,7 @@
   .headline {
     /* 14→12vw: o headline ganhou o "O" ("O Universo do"), que a 14vw
      *  estourava a largura e quebrava em 3 linhas. 12vw mantém "O
-     *  Universo do" numa linha só e "Superfan" sozinho na 2ª (com folga
+     *  Universo do" numa linha só e "Superfã" sozinho na 2ª (com folga
      *  até ~320px). */
     font-size: clamp(38px, 12vw, 70px);
   }

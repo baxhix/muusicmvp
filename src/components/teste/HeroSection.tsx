@@ -32,11 +32,11 @@ export default function HeroSection() {
       <div className={styles.center}>
         {/* Per spec atualizado:
          *   linha 1: "O Universo do"
-         *   linha 2: "Superfan" (mesma fonte/peso, fica
+         *   linha 2: "Superfã" (mesma fonte/peso, fica
          *            inline-block como uma 2ª linha do headline,
          *            não um caption à parte). */}
         <h1 className={styles.headline}>
-          O Universo do<br />Superfan
+          O Universo do<br />Superfã
         </h1>
         {/* Lead: frase de apoio. Wrapper ocupa a row 2 do grid
          *  (align-start), preservando o Y dos phones na row 3.
