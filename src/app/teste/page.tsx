@@ -7,7 +7,6 @@ import SectionTwo from '@/components/teste/SectionTwo';
 import HorizontalShowcase from '@/components/teste/HorizontalShowcase';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionArtists from '@/components/teste/SectionArtists';
-import SectionFour from '@/components/teste/SectionFour';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
 import GalaxyBackdrop from '@/components/teste/GalaxyBackdrop';
@@ -61,15 +60,11 @@ export default function TestePage() {
       <SectionThree />
       {/* Pivô fã → artista: seção "Para Artistas" com H1 grande + CTA. */}
       <SectionArtists />
-      {/* Section 4 — canvas vazio onde 12 avatares formam um
-       *  círculo (no texto). Os avatares vivem na constellation
-       *  page-level com `circling: true` (slide-in radial +
-       *  drift sutil contínuo). */}
-      <SectionFour />
-      {/* SectionFive "Artistas" e SectionSix "Baixe o app" removidas
-       *  per spec. O phase 2 dos avatares passa a ser disparado só pelo
-       *  footer (AvatarConstellation faz `if (!el) continue` pros ids
-       *  de section ausentes). */}
+      {/* SectionFour (canvas vazio do círculo de avatares) removida per
+       *  feedback "remova o espaço grande entre Para Artistas e Manifesto"
+       *  — era uma section de 100vh sem texto, só gatilho de scroll. O
+       *  AvatarConstellation faz `if (!el) continue` pros ids ausentes,
+       *  então o phase 2 dos avatares passa a ser disparado pelo footer. */}
       {/* O orbe FanverseCore 390×390 que vivia aqui foi removido
        *  per product feedback (e por motivos de performance —
        *  era a segunda instância de WebGL2 shader rodando em
