@@ -70,8 +70,110 @@ const mockRoutes: Record<string, () => unknown> = {
   'GET /settings/workspace':        () => MOCK_WORKSPACE,
 };
 
-const mockCall: ApiCall<unknown> = async (method, path) => {
+/* ── Produtos: mock store em memória ─────────────────────────
+ * O CRUD real de produtos vive em /api/admin/produtos/* no backend.
+ * Quando o admin roda standalone (sem BASE_URL), este store em memória
+ * mantém a tela viva — cria/edita/reordena/apaga durante a sessão SPA
+ * (reseta no reload). Some quando o httpDriver assume. */
+interface MockProductMedia {
+  type: 'image' | 'video';
+  url: string;
+}
+interface MockProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  priceFrom: number | null;
+  priceTo: number;
+  imageUrls: string[];
+  media: MockProductMedia[];
+  audience: string;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function makeMockProduct(seed: Partial<MockProduct>): MockProduct {
+  const media = seed.media ?? [];
+  const now = new Date().toISOString();
+  return {
+    id: (globalThis.crypto?.randomUUID?.() ?? `mock-${Date.now()}`) as string,
+    name: seed.name ?? 'Produto',
+    description: seed.description ?? null,
+    priceFrom: seed.priceFrom ?? null,
+    priceTo: seed.priceTo ?? 0,
+    media,
+    imageUrls: media.filter((m) => m.type === 'image').map((m) => m.url),
+    audience: seed.audience ?? 'all',
+    active: seed.active ?? true,
+    sortOrder: seed.sortOrder ?? 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+const mockProducts: MockProduct[] = [
+  makeMockProduct({
+    name: 'Chapéu Ana Castela — Couro Preto',
+    description: 'Chapéu de couro legítimo autografado, edição limitada.',
+    priceFrom: 12000,
+    priceTo: 9000,
+    audience: 'top100',
+    media: [
+      { type: 'image', url: 'https://picsum.photos/seed/chapeu1/640/640' },
+      { type: 'image', url: 'https://picsum.photos/seed/chapeu2/640/640' },
+    ],
+  }),
+  makeMockProduct({
+    name: 'Camiseta Boiadeira',
+    description: 'Camiseta oficial da turnê.',
+    priceTo: 4500,
+    audience: 'all',
+    media: [{ type: 'image', url: 'https://picsum.photos/seed/camiseta/640/640' }],
+  }),
+];
+
+function mockProductsRoute(
+  method: Method,
+  path: string,
+  body?: unknown,
+): unknown | undefined {
+  if (path === '/api/admin/produtos') {
+    if (method === 'GET') return { items: mockProducts };
+    if (method === 'POST') {
+      const p = makeMockProduct((body ?? {}) as Partial<MockProduct>);
+      mockProducts.unshift(p);
+      return { product: p };
+    }
+  }
+  const m = path.match(/^\/api\/admin\/produtos\/([^/]+)$/);
+  if (m) {
+    const id = m[1];
+    const idx = mockProducts.findIndex((p) => p.id === id);
+    if (method === 'PATCH') {
+      if (idx < 0) return { error: 'not_found' };
+      const patch = (body ?? {}) as Partial<MockProduct>;
+      const merged = { ...mockProducts[idx], ...patch, updatedAt: new Date().toISOString() };
+      if (patch.media) merged.imageUrls = patch.media.filter((x) => x.type === 'image').map((x) => x.url);
+      mockProducts[idx] = merged;
+      return { product: merged };
+    }
+    if (method === 'DELETE') {
+      if (idx >= 0) mockProducts.splice(idx, 1);
+      return { ok: true };
+    }
+  }
+  return undefined;
+}
+
+const mockCall: ApiCall<unknown> = async (method, path, body) => {
   await wait(mockLatencyMs);
+  // Produtos têm store mutável próprio (CRUD), checado antes do mapa estático.
+  const produtos = mockProductsRoute(method, path, body);
+  if (produtos !== undefined) {
+    return JSON.parse(JSON.stringify(produtos));
+  }
   const handler = mockRoutes[`${method} ${path}`];
   if (!handler) {
     throw new Error(`[mock-api] no handler for ${method} ${path}`);

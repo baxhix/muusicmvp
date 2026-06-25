@@ -386,6 +386,13 @@
       "when": 1782700000000,
       "tag": "0055_products",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1782800000000,
+      "tag": "0056_product_media",
+      "breakpoints": true
     }
   ]
 }

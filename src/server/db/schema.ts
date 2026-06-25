@@ -1502,8 +1502,13 @@ export const products = pgTable(
     priceFrom: integer('price_from'),
     /** Preço "por" (FP) — o preço efetivo de resgate. */
     priceTo: integer('price_to').notNull().default(0),
-    /** URLs das imagens (upload). Primeira = capa. */
+    /** URLs das imagens (upload). Primeira = capa.
+     *  @deprecated mantido p/ back-compat; `media` é a fonte canônica. */
     imageUrls: jsonb('image_urls').notNull().default([]),
+    /** Galeria unificada: imagens + vídeos numa lista ordenada.
+     *  `[{ type: 'image' | 'video', url }]`. A ORDEM do array é a
+     *  sequência que o usuário vê (primeiro item = capa). */
+    media: jsonb('media').notNull().default([]),
     /** Quem pode comprar — mesmos tiers de Materiais. */
     audience: text('audience', {
       enum: ['top1', 'top10', 'top50', 'top100', 'all'],
