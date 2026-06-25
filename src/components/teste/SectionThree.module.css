@@ -95,3 +95,14 @@
   position: relative;
   z-index: 4;
 }
+
+/* No mobile a .section (flex center) deixava o .features encolher pro
+ * tamanho do conteúdo (~218px), espremendo título e chat. Full-width dá
+ * espaço — entre outras coisas, pro título "Conteúdo exclusivo" caber em
+ * uma linha (→ 2 linhas no total). O chat tem max-width próprio, então não
+ * estica demais. */
+@media (max-width: 900px) {
+  .features {
+    width: 100%;
+  }
+}

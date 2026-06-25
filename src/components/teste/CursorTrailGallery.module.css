@@ -147,17 +147,24 @@
   .root {
     gap: 24px;
   }
-  /* Per spec atualizado "no mobile, deixe em duas linhas o
-   *  headline Conteúdo exclusivo" — destrava o nowrap e
-   *  permite o wrap natural entre as duas palavras. line-height
-   *  sobe pra 1.1 pra acomodar 2 linhas sem cortar. */
+  /* Per feedback "no mobile, título em DUAS linhas" → "Conteúdo exclusivo"
+   *  / "e restrito". Mantém nowrap (a 1ª linha não quebra) com a fonte
+   *  reduzida pra "Conteúdo exclusivo" caber inteiro mesmo a 320px;
+   *  overflow visível evita reticências. */
   .featureTitle {
-    white-space: normal;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: clamp(24px, 7vw, 52px);
     line-height: 1.1;
   }
-  /* Ativa a quebra forçada → "Conteúdo" / "exclusivo". */
+  /* titleBreak escondido → some a quebra "Conteúdo" / "exclusivo" (que
+   *  fazia 3 linhas); o <br> fixo antes de "e restrito" garante as 2. */
   .titleBreak {
-    display: inline;
+    display: none;
+  }
+  .root {
+    padding: 0 16px;
   }
   /* Bullets um pouco menores no mobile pra caber bem ao wrappar. */
   .perks {
