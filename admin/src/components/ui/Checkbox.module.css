@@ -1,4 +1,10 @@
 .wrap {
+  /* position:relative é OBRIGATÓRIO: o .input é position:absolute com
+   * width/height:100%. Sem um containing block aqui, o 100% resolve
+   * contra o ancestral posicionado mais próximo (o container da tabela,
+   * ~1270x850) e o input invisível explode sobre a página inteira,
+   * interceptando cliques em filtros/controles vizinhos. */
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
