@@ -146,27 +146,34 @@
 .ctaWrap {
   display: flex;
   justify-content: center;
+  /* Largura total do .inner pra o CTA acompanhar a mesma largura dos
+   * boxes de features acima (a grid também é width:100% do .inner). */
+  width: 100%;
   margin-top: clamp(40px, 6vh, 64px);
 }
 
-/* Pill preto sólido + borda branca + avatar de uma pessoa à esquerda.
- * Padding esquerdo menor pra o avatar respirar; boa área de toque. */
+/* Pill preto sólido + BORDA com gradiente da marca + avatar à esquerda.
+ * Ocupa a mesma largura dos boxes acima (width:100%). Borda gradiente via
+ * dois backgrounds (fill no padding-box + gradiente no border-box). */
 .cta {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: center;
   gap: 10px;
   padding: 12px 26px 12px 12px;
   border-radius: 999px;
-  background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(100deg, #ff00b4 0%, #5b00d1 100%) border-box;
   color: #fff;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.005em;
   text-decoration: none;
-  transition: transform 200ms ease-out, background 200ms ease-out;
+  transition: transform 200ms ease-out, filter 200ms ease-out;
 }
 .ctaAvatar {
   width: 32px;
@@ -178,7 +185,7 @@
 }
 .cta:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.06);
+  filter: brightness(1.12);
 }
 .cta:active {
   transform: translateY(0);

@@ -313,17 +313,20 @@
     height: 1em;
     flex-shrink: 0;
   }
-  /* Primário "Sou Fã" — preto sólido flat (per feedback "deixe ambos os
-   *  CTAs black"). O `.heroMobileCta` base já é preto; mantemos a classe
-   *  explícita por clareza e pra sobrescrever qualquer estado herdado. */
+  /* Primário "Entrar" — preto sólido flat, sem borda (ícone log-in + texto). */
   .heroMobileCtaPrimary {
     background: #000;
     color: #fff;
   }
-  /* Secundário "Sou artista" — preto sólido flat, sem borda. */
+  /* Secundário "Sou artista" — preto sólido + BORDA com gradiente da marca
+   *  (per feedback "apenas a borda com gradiente"). Técnica de dois
+   *  backgrounds: fill preto no padding-box + gradiente no border-box, com
+   *  a border transparente — dá borda gradiente respeitando o border-radius. */
   .heroMobileCtaSecondary {
-    background: #000;
-    border: none;
+    border: 1px solid transparent;
+    background:
+      linear-gradient(#000, #000) padding-box,
+      linear-gradient(100deg, #ff00b4 0%, #5b00d1 100%) border-box;
     color: #fff;
   }
   .heroMobileCta:active {

@@ -8,11 +8,11 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  /* Manifesto alinhado à ESQUERDA (per feedback) — encosta na mesma
-   * margem horizontal do footer (clamp(20px, 4vw, 56px)), de modo que
-   * a frase fique alinhada com a coluna "Empresa" logo abaixo. */
-  justify-content: flex-start;
-  padding: clamp(100px, 18vh, 220px) clamp(20px, 4vw, 56px);
+  /* Manifesto num container CENTRADO de 1120px (o mesmo dos boxes de
+   * features) — left edge casa com os boxes e com as colunas do footer.
+   * Padding horizontal 24px = igual ao da SectionArtists. */
+  justify-content: center;
+  padding: clamp(100px, 18vh, 220px) 24px;
 }
 
 /* Frase única em Borscha 900, gradient branco→cinza com shimmer.
@@ -21,7 +21,9 @@
   position: relative;
   z-index: 5;
   margin: 0;
-  max-width: 18ch;
+  /* Largura do texto = container dos boxes de features (1120px). */
+  width: 100%;
+  max-width: 1120px;
   text-align: left;
   font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 900;
@@ -53,12 +55,10 @@
 /* Mobile: a frase ocupa ~7 linhas (max-width estreito) e respira. */
 @media (max-width: 720px) {
   .section {
-    /* Mesma margem lateral do footer no mobile pra a frase alinhar
-     * com a coluna "Empresa" logo abaixo. */
-    padding: clamp(80px, 14vh, 140px) clamp(16px, 5vw, 28px);
+    /* 24px = mesma margem dos boxes de features e do footer no mobile. */
+    padding: clamp(80px, 14vh, 140px) 24px;
   }
   .manifesto {
-    max-width: 18ch;
     font-size: clamp(28px, 8vw, 42px);
     line-height: 1.12;
   }

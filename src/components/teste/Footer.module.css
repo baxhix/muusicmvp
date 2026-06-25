@@ -16,23 +16,18 @@
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   color: #fff;
-  /* Horizontal padding MATCH ao da navbar — clamp(20, 4vw, 56)
-   * — pra que as colunas do footer fiquem ALINHADAS com o
-   * logotipo do header per product feedback "alinhe as colunas
-   * do footer junto ao logotipo à esquerda". Sem padding-bottom:
-   * FANVERSE cola na base. */
-  padding: 96px clamp(20px, 4vw, 56px) 0;
+  /* Horizontal padding 24px = igual ao da SectionArtists, pra que as
+   * colunas do footer fiquem alinhadas com o container dos boxes de
+   * features (per feedback). Sem padding-bottom: FANVERSE cola na base. */
+  padding: 96px 24px 0;
 }
 
 .inner {
   position: relative;
-  /* Mesma fórmula responsiva do .container do Navbar — mantém
-   * o footer alinhado com o logo do header em qualquer
-   * viewport. Sem essa fórmula, em telas estreitas o footer
-   * (max-width 1200, full disponível) ficaria mais largo que
-   * o container do navbar (que reserva 200px pro lang
-   * toggle), desalinhando. */
-  max-width: min(1200px, calc(100vw - 2 * clamp(20px, 4vw, 56px) - 200px));
+  /* 1120px centrado = MESMO container dos boxes de features
+   * (SectionArtists .inner), pra as colunas do footer ficarem
+   * alinhadas com os boxes/manifesto logo acima (per feedback). */
+  max-width: 1120px;
   margin: 0 auto;
 }
 
@@ -222,7 +217,7 @@
 
 /* Mobile responsivo */
 @media (max-width: 880px) {
-  .footer { padding: 64px 0 0; }
+  .footer { padding: 64px 24px 0; }
   .wordmarkWrap { margin-top: 56px; }
 }
 @media (max-width: 560px) {
@@ -239,7 +234,7 @@
    * do .inner reserva 200px e espremia tudo a ~135px num celular). Agora
    * o conteúdo encosta nas margens esquerda/direita. */
   .footer {
-    padding: 64px clamp(16px, 5vw, 28px) calc(104px + env(safe-area-inset-bottom));
+    padding: 64px 24px calc(104px + env(safe-area-inset-bottom));
   }
   .wordmarkWrap { display: none; }
   .inner { max-width: 100%; }
