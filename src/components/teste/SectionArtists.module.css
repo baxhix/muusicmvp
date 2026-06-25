@@ -55,6 +55,17 @@
   100% { background-position: 0% 50%; }
 }
 
+/* Mobile: "Para Artistas" em UMA linha. O floor de 56px do clamp
+ * estourava a largura em telas estreitas e quebrava em duas linhas;
+ * aqui o tamanho passa a ser governado por vw (sem floor alto) +
+ * white-space:nowrap, então o título encolhe pra caber numa linha só. */
+@media (max-width: 600px) {
+  .headline {
+    white-space: nowrap;
+    font-size: clamp(34px, 12vw, 60px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .headline {
     animation: none;
