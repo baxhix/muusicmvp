@@ -55,6 +55,12 @@ export default function HeroSection() {
           <ApplePhone />
         </div>
       </div>
+      {/* Scrim full-width atrás dos CTAs fixos (mobile). Fica FORA do
+       *  `.heroMobileCtas` porque aquele container tem transform (animação
+       *  de entrada) — e transform vira containing block do position:fixed,
+       *  limitando o scrim à largura do container (gerava o "corte"). Como
+       *  filho direto do `.hero` (sem transform) o fixed cobre 100vw. */}
+      <div className={styles.heroMobileScrim} aria-hidden="true" />
       {/* CTAs mobile — DOIS botões flutuantes fixos no rodapé (só
        *  aparecem em mobile; no desktop vivem na Navbar). VIVEM FORA
        *  do `.center` de propósito: o `.center` é position:relative +

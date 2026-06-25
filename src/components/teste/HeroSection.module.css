@@ -225,6 +225,15 @@
 .heroMobileCtas {
   display: none;
 }
+/* Scrim full-width atrás dos CTAs fixos (mobile). É um ELEMENTO próprio
+ * (não ::before do .heroMobileCtas) de propósito: o container dos CTAs tem
+ * transform vindo da animação de entrada, e transform cria um containing
+ * block pro position:fixed — o que limitava o scrim à largura do container
+ * (90vw) e gerava a sensação de "corte". Como filho direto do `.hero` (sem
+ * transform), o fixed se resolve contra a viewport e cobre 100% da largura. */
+.heroMobileScrim {
+  display: none;
+}
 @media (max-width: 720px) {
   .heroMobileCtas {
     /* Row FIXA colada no rodapé da viewport (acima da safe-area do iOS),
@@ -248,19 +257,18 @@
     z-index: 999;
     animation: tloop-fadeup 1000ms cubic-bezier(0.22, 1, 0.36, 1) 240ms both;
   }
-  /* Camada de gradiente atrás dos botões — FULL-WIDTH, edge-to-edge.
-   *  Fixa na viewport (left:0/right:0, sem width:100vw pra evitar
-   *  overflow), sem margens laterais nem áreas vazias. Combina um scrim
-   *  escuro (grounding/contraste) com um glow sutil da marca, animado de
-   *  forma quase imperceptível (drift de ±8% em 26s). */
-  .heroMobileCtas::before {
-    content: '';
+  /* Scrim full-width (edge-to-edge), fixo na viewport (left:0/right:0, sem
+   *  width:100vw pra evitar overflow horizontal). Scrim escuro de grounding
+   *  + glow sutil da marca, drift quase imperceptível (±8% em 26s).
+   *  z-index 998: abaixo dos CTAs (999), acima do conteúdo da página. */
+  .heroMobileScrim {
+    display: block;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     height: 240px;
-    z-index: -1;
+    z-index: 998;
     pointer-events: none;
     background:
       radial-gradient(
@@ -345,5 +353,5 @@
     background-position: 0% 50%;
   }
   .phrase, .heroMobileCta { animation: none; }
-  .heroMobileCtas::before { animation: none; }
+  .heroMobileScrim { animation: none; }
 }
