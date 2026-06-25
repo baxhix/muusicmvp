@@ -218,15 +218,9 @@ export default function CursorTrailGallery() {
         e restrito
       </h3>
 
-      {/* Diferenciais — bullets com os destaques do conteúdo
-       *  exclusivo. Row centralizada que wrappa no mobile; cada
-       *  item tem um dot com o gradient da marca. */}
-      <ul className={styles.perks}>
-        <li>Lives</li>
-        <li>Backstage</li>
-        <li>Grupos fechados</li>
-        <li>Pré-lançamentos</li>
-      </ul>
+      {/* Bullets (Lives / Backstage / Grupos fechados / Pré-lançamentos)
+       *  removidos per feedback — esses itens agora vivem na galeria
+       *  scroll-horizontal (HorizontalShowcase) da seção anterior. */}
 
       {/* Surface full-width abaixo do headline. Sem box (sem bg
        *  gradient, sem border): a trail é desenhada direto sobre

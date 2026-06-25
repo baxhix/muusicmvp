@@ -3,7 +3,10 @@
 
 .section {
   position: relative;
-  min-height: 100dvh;
+  /* Per feedback "aproxime os cards do título": a section deixou de ser
+   * 100dvh (que jogava ~78vh de vazio entre o título e a galeria) — agora
+   * tem só a altura do título + um respiro curto, então o scroll-horizontal
+   * (HorizontalShowcase, a seguir) começa logo abaixo do headline. */
   width: 100%;
   /* Transparente pra deixar a galáxia (GalaxyBackdrop + .page::before)
    * transparecer. Antes era #000 sólido — cobria o backdrop. */
@@ -11,10 +14,11 @@
   color: #fff;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
   /* Headline mais ao topo (alinha com Hero). */
-  align-items: flex-start;
-  justify-content: center;
-  padding: 22vh 24px 24px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(110px, 18vh, 220px) 24px clamp(24px, 5vh, 56px);
 }
 
 .center {

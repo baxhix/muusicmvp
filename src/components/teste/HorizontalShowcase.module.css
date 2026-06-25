@@ -147,47 +147,37 @@
 }
 
 /* ── Mobile/tablet (≤768px) ───────────────────────────────────────────
- * O scroll-jacking pinado é ótimo no desktop, mas no touch a melhor UX é
- * swipe horizontal nativo. Inline `height` (do TSX) é vencido aqui pra a
- * section voltar à altura natural; o miolo vira um scroller horizontal com
- * scroll-snap. A track ignora o transform (o snap nativo cuida do X). */
+ * Per feedback "experiência no mobile tão fluída quanto o desktop": o mobile
+ * usa O MESMO efeito pinado scroll-driven (sticky + track transladada com o
+ * spring do Motion). Antes virava scroller nativo (interação diferente);
+ * agora é idêntico ao desktop, só com card/respiros calibrados pra touch.
+ * 100dvh (não 100vh) no miolo evita pulo quando a barra do navegador
+ * recolhe/aparece durante o scroll. */
 @media (max-width: 768px) {
-  .scrollSection {
-    height: auto !important;
-    min-height: 0;
-    padding: 6vh 0;
-  }
   .sticky {
-    position: static;
-    height: auto;
-    overflow-x: auto;
-    overflow-y: visible;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .sticky::-webkit-scrollbar {
-    display: none;
+    height: 100dvh;
   }
   .track {
-    /* Anula o translateX do motion (style inline) no mobile — o scroll
-     * nativo é quem move. */
-    transform: none !important;
-    gap: 14px;
-    padding: 0 20px;
+    gap: 16px;
+    padding: 0 16px;
   }
   .card {
-    width: 78vw;
-    max-width: 360px;
-    height: 60vh;
-    max-height: 520px;
-    scroll-snap-align: center;
+    /* ~82vw deixa entrever a borda do próximo card → comunica que desliza.
+     * Altura em dvh acompanha o miolo. */
+    width: 82vw;
+    max-width: 380px;
+    height: min(62dvh, 520px);
+  }
+  .cardText {
+    padding: 20px 22px 24px;
   }
   /* Sem hover no touch — mantém o leve zoom de repouso. */
   .card:hover .cardImg {
     transform: scale(1.02);
   }
   .progressTrack {
-    display: none;
+    left: 16px;
+    right: 16px;
+    bottom: clamp(18px, 4dvh, 40px);
   }
 }
