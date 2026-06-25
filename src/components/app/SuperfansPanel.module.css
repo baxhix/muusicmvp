@@ -569,6 +569,15 @@
   gap: 2px;
 }
 
+.fanNameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.fanVerified {
+  flex-shrink: 0;
+}
 .fanName {
   font-size: 14px;
   font-weight: 600;

@@ -5,6 +5,7 @@ import { useRanking } from '@/hooks/useRanking';
 import { useAuth } from '@/lib/auth/AuthContext';
 import type { ApiRankingRow } from '@/lib/api/types';
 import TruncatedText from './TruncatedText';
+import VerifiedBadge from './VerifiedBadge';
 import styles from './SuperfansPanel.module.css';
 
 interface SuperfansPanelProps {
@@ -556,7 +557,13 @@ export default function SuperfansPanel({ open, onClose }: SuperfansPanelProps) {
                       gold accents read as busy. */}
                 </div>
                 <div className={styles.fanInfo}>
-                  <TruncatedText className={styles.fanName}>{fan.name}</TruncatedText>
+                  <span className={styles.fanNameRow}>
+                    {/* Selo de verificado sempre no Top 1, na frente do nome. */}
+                    {fan.rank === 1 && (
+                      <VerifiedBadge size={14} className={styles.fanVerified} />
+                    )}
+                    <TruncatedText className={styles.fanName}>{fan.name}</TruncatedText>
+                  </span>
                   <TruncatedText className={styles.fanCity}>{fan.city}</TruncatedText>
                 </div>
                 <div className={styles.fanPoints}>

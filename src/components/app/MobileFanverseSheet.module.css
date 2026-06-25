@@ -858,6 +858,15 @@
   gap: 2px;
   min-width: 0;
 }
+.rankingNameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.rankingVerified {
+  flex-shrink: 0;
+}
 .rankingName {
   font-size: 16px;
   font-weight: 600;

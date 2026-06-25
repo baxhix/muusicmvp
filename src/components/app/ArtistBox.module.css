@@ -833,6 +833,15 @@
  * "o nome do usuário deve ser clicável e aparecer o perfil de
  * usuário". text-decoration none + hover underline pra que pareça
  * um link sem competir com a estética compacta da linha. */
+.tabRankingNameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.tabRankingVerified {
+  flex-shrink: 0;
+}
 .tabRankingName {
   font-size: 12px;
   font-weight: 600;

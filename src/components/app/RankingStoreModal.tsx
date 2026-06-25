@@ -31,6 +31,7 @@ import { useRanking } from '@/hooks/useRanking';
 import { globeStore } from '@/lib/globeStore';
 import RankMedallion from './RankMedallion';
 import TruncatedText from './TruncatedText';
+import VerifiedBadge from './VerifiedBadge';
 import { BeneficiosTab, currentTierForRank } from './FanpointsModal';
 import styles from './RankingStoreModal.module.css';
 
@@ -924,15 +925,21 @@ export default function RankingStoreModal() {
                             <RankMedallion position={r.rank} size="sm" />
                           </span>
                           <div className={styles.info}>
-                            <TruncatedText
-                              as="button"
-                              type="button"
-                              className={styles.name}
-                              title={r.name.replace('Você · ', '')}
-                              onClick={() => openProfile(r.userId)}
-                            >
-                              {r.name}
-                            </TruncatedText>
+                            <span className={styles.nameRow}>
+                              {/* Selo de verificado sempre no Top 1, na frente do nome. */}
+                              {r.rank === 1 && (
+                                <VerifiedBadge size={14} className={styles.verifiedBadge} />
+                              )}
+                              <TruncatedText
+                                as="button"
+                                type="button"
+                                className={styles.name}
+                                title={r.name.replace('Você · ', '')}
+                                onClick={() => openProfile(r.userId)}
+                              >
+                                {r.name}
+                              </TruncatedText>
+                            </span>
                             {r.city && <span className={styles.city}>{r.city}</span>}
                           </div>
                           <div className={styles.pointsCol}>

@@ -524,13 +524,19 @@ function MobileRankingList() {
 
                 {/* Info: nome (link) + cidade. */}
                 <div className={sheetStyles.rankingInfo}>
-                  <Link
-                    href={`/app/u/${r.userId}`}
-                    className={sheetStyles.rankingName}
-                    prefetch={false}
-                  >
-                    {name}
-                  </Link>
+                  <span className={sheetStyles.rankingNameRow}>
+                    {/* Selo de verificado sempre no Top 1, na frente do nome. */}
+                    {rank === 1 && (
+                      <VerifiedBadge size={15} className={sheetStyles.rankingVerified} />
+                    )}
+                    <Link
+                      href={`/app/u/${r.userId}`}
+                      className={sheetStyles.rankingName}
+                      prefetch={false}
+                    >
+                      {name}
+                    </Link>
+                  </span>
                   {r.city && (
                     <span className={sheetStyles.rankingCity}>{r.city}</span>
                   )}

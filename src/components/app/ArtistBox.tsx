@@ -1036,13 +1036,19 @@ export function RankingTabContent() {
                    * em linha separada. Per product feedback "Deixe
                    * o nome da cidade logo abaixo e a pontuação à
                    * direita, como no mobile". */}
-                  <Link
-                    href={`/app/u/${r.userId}`}
-                    className={styles.tabRankingName}
-                    prefetch={false}
-                  >
-                    {name}
-                  </Link>
+                  <span className={styles.tabRankingNameRow}>
+                    {/* Selo de verificado sempre no Top 1, na frente do nome. */}
+                    {rank === 1 && (
+                      <VerifiedBadge size={14} className={styles.tabRankingVerified} />
+                    )}
+                    <Link
+                      href={`/app/u/${r.userId}`}
+                      className={styles.tabRankingName}
+                      prefetch={false}
+                    >
+                      {name}
+                    </Link>
+                  </span>
                   {r.city && (
                     <span className={styles.tabRankingCity}>{r.city}</span>
                   )}
