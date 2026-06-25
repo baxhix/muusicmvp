@@ -37,6 +37,10 @@ export default function HorizontalShowcase() {
   // Distância horizontal a percorrer = largura total da track menos a
   // viewport. Medida no cliente (depende de fontes/imagens/breakpoint).
   const [travel, setTravel] = useState(0);
+  // Offset inicial: a track começa deslocada PRA DIREITA (x positivo) — os
+  // cards entram da direita e o trajeto fica mais longo. Per feedback
+  // "deixe o início mais à direita pra percorrer mais o trajeto".
+  const [startX, setStartX] = useState(0);
 
   // progress 0 quando o TOPO da section encosta no topo da viewport (o pin
   // começa); 1 quando a BASE encosta na base (o pin termina).
@@ -50,12 +54,19 @@ export default function HorizontalShowcase() {
     damping: 30,
     mass: 0.4,
   });
-  const x = useTransform(smooth, [0, 1], [0, -travel]);
+  // Começa em +startX (track empurrada pra direita) e termina em -travel
+  // (último card encostado na borda direita). Distância total percorrida =
+  // startX + travel.
+  const x = useTransform(smooth, [0, 1], [startX, -travel]);
 
   useEffect(() => {
     const track = trackRef.current;
     const calc = () => {
-      if (track) setTravel(Math.max(0, track.scrollWidth - window.innerWidth));
+      if (!track) return;
+      setTravel(Math.max(0, track.scrollWidth - window.innerWidth));
+      // ~55% da viewport de respiro inicial à esquerda — começa bem mais à
+      // direita sem jogar o 1º card totalmente pra fora da tela.
+      setStartX(Math.round(window.innerWidth * 0.55));
     };
     calc();
     // Recalcula depois que fontes/imagens assentam (a largura da track muda
@@ -72,7 +83,7 @@ export default function HorizontalShowcase() {
     <section
       ref={sectionRef}
       className={styles.scrollSection}
-      style={{ height: `calc(100vh + ${travel}px)` }}
+      style={{ height: `calc(100vh + ${travel + startX}px)` }}
       aria-label="O que você desbloqueia no Fanverse"
     >
       <div className={styles.sticky}>
