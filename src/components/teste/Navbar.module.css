@@ -56,10 +56,12 @@
     pointer-events: auto;
   }
 
-  /* Brand → só o orbe, centralizado no topo da página. */
+  /* Brand → só o orbe, centralizado no topo da página. `top` maior
+   * (era 6px) pra o orbe não colar no topo da viewport ao scrollar
+   * (per feedback "aumente o padding top do logotipo"). */
   .navbarScrolled .brand {
     position: fixed;
-    top: 6px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     gap: 0;
