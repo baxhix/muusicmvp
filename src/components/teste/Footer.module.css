@@ -170,13 +170,9 @@
 .legalLink:hover {
   color: #fff;
 }
-@media (max-width: 560px) {
-  .legalBar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-  }
-}
+/* (Regra .legalBar @560 removida — o tratamento mobile do legalBar
+ *  agora vive no @media 720px acima, com align-items:stretch pros links
+ *  ocuparem as duas margens.) */
 
 /* ── Wordmark wrap ──────────────────────
  * Fora do .inner pra ocupar 90vw (max-width none). Gap de
@@ -239,6 +235,32 @@
  * ~50px de altura) — sem essa folga os links de Termos/
  * Privacidade ficariam intocáveis atrás dos botões. */
 @media (max-width: 720px) {
-  .footer { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  /* Mobile: footer ocupa a largura toda com margens próprias (a fórmula
+   * do .inner reserva 200px e espremia tudo a ~135px num celular). Agora
+   * o conteúdo encosta nas margens esquerda/direita. */
+  .footer {
+    padding: 64px clamp(16px, 5vw, 28px) calc(104px + env(safe-area-inset-bottom));
+  }
   .wordmarkWrap { display: none; }
+  .inner { max-width: 100%; }
+  /* Colunas de links espalhadas: esquerda na margem esquerda, direita na
+   * margem direita (per feedback). */
+  .linksGrid { justify-content: space-between; }
+  /* Barra legal: copyright em 1 linha + Termos | Privacidade em 1 linha,
+   * duas colunas (uma em cada margem). */
+  .legalBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .copyright {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .legalLinks {
+    justify-content: space-between;
+    width: 100%;
+    gap: 0;
+  }
+  .legalLink { white-space: nowrap; }
 }
