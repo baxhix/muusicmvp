@@ -179,8 +179,8 @@
   font-weight: 500;
   letter-spacing: -0.005em;
   white-space: nowrap;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Sem borda + cantos bem arredondados (pill) per feedback. */
+  border-radius: 999px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 140ms ease, transform 140ms ease;
