@@ -48,32 +48,35 @@ export default function HeroSection() {
             entre o Artista e o Fã
           </p>
         </div>
-        {/* CTAs mobile — só aparecem em mobile. No desktop os CTAs
-         *  vivem na Navbar; no mobile a navbar os esconde e
-         *  mostramos DOIS botões flutuantes fixos no rodapé:
-         *  "Sou artista" (secundário, glass) + "Entrar" (primário,
-         *  pill preto + lux estática — mesmo padrão do Navbar). A
-         *  largura é só a dos botões (row centralizada). */}
-        <div className={styles.heroMobileCtas}>
-          <a
-            href="/para-artistas"
-            className={`${styles.heroMobileCta} ${styles.heroMobileCtaSecondary}`}
-          >
-            Sou artista
-          </a>
-          <a
-            href="/auth"
-            className={`${styles.heroMobileCta} ${styles.heroMobileCtaPrimary}`}
-          >
-            Sou Fã
-          </a>
-        </div>
         <div className={styles.phonesWrap}>
           {/* Mockup de celular com o brilho animado estilo "Apple
            *  Intelligence" (gradiente girando nas bordas + bloom
            *  externo respirando). Substitui o PNG dos 3 smartphones. */}
           <ApplePhone />
         </div>
+      </div>
+      {/* CTAs mobile — DOIS botões flutuantes fixos no rodapé (só
+       *  aparecem em mobile; no desktop vivem na Navbar). VIVEM FORA
+       *  do `.center` de propósito: o `.center` é position:relative +
+       *  z-index:5 (stacking context), então qualquer filho fixed ficava
+       *  preso nesse nível e era coberto pelas sections seguintes (z=5,
+       *  depois no DOM), avatares (30), navbar (50) e megamenu (60-80).
+       *  Como filhos diretos do `.hero` (que NÃO cria stacking context),
+       *  o z-index alto vale no contexto raiz e os CTAs ficam por cima
+       *  de tudo. Ambos pretos (per feedback). */}
+      <div className={styles.heroMobileCtas}>
+        <a
+          href="/para-artistas"
+          className={`${styles.heroMobileCta} ${styles.heroMobileCtaSecondary}`}
+        >
+          Sou artista
+        </a>
+        <a
+          href="/auth"
+          className={`${styles.heroMobileCta} ${styles.heroMobileCtaPrimary}`}
+        >
+          Sou Fã
+        </a>
       </div>
     </section>
   );

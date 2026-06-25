@@ -229,8 +229,11 @@
   .heroMobileCtas {
     /* Row FIXA colada no rodapé da viewport (acima da safe-area do iOS),
      *  ocupando 90% da largura (per feedback). Centrada por margin auto.
-     *  z-index alto: fica POR CIMA de tudo (navbar 50, avatares 30,
-     *  megamenu 60/70/80) — os CTAs nunca são cobertos no mobile. */
+     *  z-index 999: fica POR CIMA DE TUDO (per feedback) — sections (5),
+     *  avatares (30), navbar (50), megamenu (60/70/80). Só o banner legal
+     *  de cookies (1000) segue acima, de propósito. Pra esse z-index valer
+     *  os CTAs vivem FORA do `.center` (z-index:5), no `.hero` que não cria
+     *  stacking context — ver HeroSection.tsx. */
     position: fixed;
     left: 0;
     right: 0;
@@ -242,7 +245,7 @@
     align-items: stretch;
     justify-content: center;
     gap: 12px;
-    z-index: 90;
+    z-index: 999;
     animation: tloop-fadeup 1000ms cubic-bezier(0.22, 1, 0.36, 1) 240ms both;
   }
   /* Camada de gradiente atrás dos botões — FULL-WIDTH, edge-to-edge.
@@ -310,24 +313,12 @@
     height: 1em;
     flex-shrink: 0;
   }
-  /* Primário "Sou Fã" — fill com o GRADIENTE OFICIAL da marca
-   *  (magenta→indigo), animado de forma suave e discreta (drift de cor
-   *  via background-position, sem mover o elemento). */
+  /* Primário "Sou Fã" — preto sólido flat (per feedback "deixe ambos os
+   *  CTAs black"). O `.heroMobileCta` base já é preto; mantemos a classe
+   *  explícita por clareza e pra sobrescrever qualquer estado herdado. */
   .heroMobileCtaPrimary {
-    background: linear-gradient(
-      100deg,
-      #ff00b4 0%,
-      #5b00d1 50%,
-      #ff00b4 100%
-    );
-    background-size: 200% 100%;
-    background-position: 0% 50%;
+    background: #000;
     color: #fff;
-    animation: heroPrimaryShift 9s ease-in-out infinite;
-  }
-  @keyframes heroPrimaryShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
   }
   /* Secundário "Sou artista" — preto sólido flat, sem borda. */
   .heroMobileCtaSecondary {
@@ -351,6 +342,5 @@
     background-position: 0% 50%;
   }
   .phrase, .heroMobileCta { animation: none; }
-  .heroMobileCtaPrimary { animation: none; }
   .heroMobileCtas::before { animation: none; }
 }

@@ -53,9 +53,6 @@ export default function TestePage() {
       {/* Phones mockup agora vive DENTRO do HeroSection (180px
        *  abaixo do headline) — não tem mais section dedicada. */}
       <HeroSection />
-      {/* Manifesto "Sou Fã" — frase única de impacto (Borscha grande)
-       *  resumindo o propósito de ser fã no Fanverse. */}
-      <SectionFanPurpose />
       <SectionTwo />
       {/* Galeria scroll-horizontal (Motion) com as verticais de conteúdo
        *  exclusivo — fecha a narrativa da seção "A conexão real entre Fã
@@ -79,6 +76,10 @@ export default function TestePage() {
        *  paralelo com o orb da navbar). A galáxia + nebulae
        *  scroll-driven do GalaxyBackdrop seguem como ambient
        *  visual da página. */}
+      {/* Manifesto "Sou Fã" — frase única de impacto (Borscha grande),
+       *  alinhada à esquerda, logo ACIMA do footer: fecha a narrativa
+       *  reafirmando o propósito de ser fã no Fanverse. */}
+      <SectionFanPurpose />
       <Footer />
       {/* Barra-pílula de consentimento de cookies/termos (740×66,
        *  fixed bottom-center, persiste a escolha em localStorage). */}
