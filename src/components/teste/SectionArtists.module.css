@@ -157,11 +157,12 @@
 }
 
 /* Pill preto sólido + BORDA com gradiente da marca + avatar à esquerda.
- * Ocupa a mesma largura dos boxes acima (width:100%). Borda gradiente via
- * dois backgrounds (fill no padding-box + gradiente no border-box). */
+ * Desktop: tamanho do conteúdo (pequeno, centrado). No mobile vira
+ * full-width (ver @720) pra acompanhar os boxes empilhados. Borda
+ * gradiente via dois backgrounds (fill no padding-box + gradiente no
+ * border-box). */
 .cta {
-  display: flex;
-  width: 100%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
@@ -220,6 +221,11 @@
     box-shadow: 0 -14px 40px -14px rgba(0, 0, 0, 0.85);
     margin-bottom: 18px;
     transition: transform 220ms ease-out;
+  }
+  /* Mobile: CTA full-width, acompanhando a largura dos boxes empilhados. */
+  .cta {
+    display: flex;
+    width: 100%;
   }
 }
 
