@@ -234,7 +234,9 @@
    * do .inner reserva 200px e espremia tudo a ~135px num celular). Agora
    * o conteúdo encosta nas margens esquerda/direita. */
   .footer {
-    padding: 64px 24px calc(104px + env(safe-area-inset-bottom));
+    /* Coluna mais estreita no mobile (per feedback) — mesma fórmula do
+     * manifesto pra manter o left edge das colunas alinhado com a frase. */
+    padding: 64px clamp(34px, 11vw, 56px) calc(104px + env(safe-area-inset-bottom));
   }
   .wordmarkWrap { display: none; }
   .inner { max-width: 100%; }

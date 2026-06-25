@@ -17,8 +17,10 @@ export default function SectionFanPurpose() {
     >
       <Sparkles count={9} seed={23} />
       <p className={styles.manifesto}>
-        Ser fã é pertencer a algo maior que você — e o Fanverse transforma
-        essa paixão em conexão real, presença e recompensa.
+        Ser fã é pertencer a algo maior que você{' '}
+        <span className={styles.heart} role="img" aria-label="amor">❤️</span>{' '}
+        e o Fanverse transforma essa paixão em conexão real, presença e
+        recompensa.
       </p>
     </section>
   );

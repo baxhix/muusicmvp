@@ -34,6 +34,11 @@
  *  logo, que termina ~100px do topo). Desktop intacto (default acima). */
 @media (max-width: 720px) {
   .hero {
+    /* `svh` (viewport pequeno ESTÁVEL) em vez de `dvh`: no mobile o `dvh`
+     * cresce/encolhe quando a barra do navegador some/aparece durante o
+     * scroll, reflowando tudo abaixo (o "conteúdo se mexendo" na tela). Com
+     * `svh` a altura é fixa e o conteúdo fica encaixado, sem jiggle. */
+    min-height: 100svh;
     /* +52px per spec "posicione 52px mais abaixo o h1 do mobile"
      *  (48 → 100px no termo fixo do calc). */
     padding-top: calc(14vh + 100px);

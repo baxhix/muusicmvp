@@ -52,11 +52,23 @@
   100% { background-position: 0% 50%; }
 }
 
+/* Coração: o `.manifesto` pinta o texto com gradiente via background-clip +
+ * text-fill transparent. Pra o emoji aparecer com a cor dele (e não ficar
+ * "vazado" pelo gradiente), o span sai do clip restaurando o text-fill. */
+.heart {
+  -webkit-text-fill-color: initial;
+  color: initial;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
 /* Mobile: a frase ocupa ~7 linhas (max-width estreito) e respira. */
 @media (max-width: 720px) {
   .section {
-    /* 24px = mesma margem dos boxes de features e do footer no mobile. */
-    padding: clamp(80px, 14vh, 140px) 24px;
+    /* Coluna mais estreita no mobile (per feedback) — margem lateral maior
+     * deixa o manifesto "encaixado" e centrado. Mesma fórmula do footer pra
+     * o left edge dos dois continuar alinhado. */
+    padding: clamp(80px, 14vh, 140px) clamp(34px, 11vw, 56px);
   }
   .manifesto {
     font-size: clamp(28px, 8vw, 42px);
