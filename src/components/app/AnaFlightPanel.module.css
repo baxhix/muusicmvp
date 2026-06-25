@@ -38,19 +38,13 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(120% 60% at 50% 0%, rgba(236, 72, 153, 0.16) 0%, transparent 70%),
-    linear-gradient(180deg,
-      rgba(11, 11, 13, 0.97) 0%,
-      rgba(5, 5, 7, 0.96) 50%,
-      rgba(2, 2, 3, 0.97) 100%);
+  /* Fundo sólido (sem gradiente) e sem borda — per feedback "remova o
+   * gradiente e a borda do box do em voo agora". */
+  background: rgba(10, 10, 12, 0.98);
   backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
   -webkit-backdrop-filter: blur(40px) brightness(0.72) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 22px;
-  box-shadow:
-    0 40px 100px -12px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(236, 72, 153, 0.1) inset;
+  box-shadow: 0 40px 100px -12px rgba(0, 0, 0, 0.85);
   color: var(--ink);
   padding: 28px 24px 24px;
   animation: ana-flight-panel-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -114,7 +108,8 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(236, 72, 153, 0.95);
+  /* "Em voo agora" em cinza (era rosa) per feedback. */
+  color: rgba(245, 245, 247, 0.6);
 }
 .kickerDot {
   width: 6px;

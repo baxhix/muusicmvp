@@ -77,6 +77,8 @@ export interface AdminUserRow {
   /** Data de nascimento ISO (YYYY-MM-DD) salva no onboarding. Pode
    *  ser null quando o user pulou ou ainda não fez onboarding. */
   birthDate: string | null;
+  /** Menor de idade (users.is_minor, setado no onboarding pela data). */
+  isMinor: boolean;
   sex: 'NaoInformado';
   phone: string;
   city: string;
@@ -177,6 +179,7 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
       u.name,
       u.birth_date,
       u.age,
+      u.is_minor,
       u.city,
       u.country,
       u.country_code,
@@ -267,6 +270,9 @@ export async function listAllUsers(opts: { limit?: number; offset?: number } = {
         return age >= 0 && age < 150 ? age : 0;
       })(),
       birthDate: (r.birth_date as string | null) ?? null,
+      /* Menor de idade — flag definido no onboarding (source of truth).
+       *  Usado no admin pra filtrar/diferenciar menores na listagem. */
+      isMinor: r.is_minor === true,
       sex: 'NaoInformado',
       phone: '',
       city: (r.city as string | null) ?? '',

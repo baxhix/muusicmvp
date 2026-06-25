@@ -34,6 +34,9 @@ export interface User {
   /** Data de nascimento ISO (YYYY-MM-DD) salva no onboarding.
    *  null quando o usuário não preencheu (legacy ou skip). */
   birthDate: string | null;
+  /** Menor de idade — vem da API (users.is_minor). Opcional pra não
+   *  quebrar os mocks legados; ausente é tratado como false. */
+  isMinor?: boolean;
   sex: UserSex;
   phone: string;
   city: string;

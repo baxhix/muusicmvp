@@ -35,7 +35,7 @@ type AgeRange = '' | 'minor' | '18-24' | '25-34' | '35-44' | '45+';
 
 const AGE_RANGE_OPTIONS = [
   { value: '',       label: 'Todas as idades' },
-  { value: 'minor',  label: 'Menor de idade' },
+  { value: 'minor',  label: 'Apenas menores de idade' },
   { value: '18-24',  label: '18–24 anos' },
   { value: '25-34',  label: '25–34 anos' },
   { value: '35-44',  label: '35–44 anos' },
@@ -127,7 +127,7 @@ export default function UsersPage() {
     if (!users) return null;
     const total = users.length;
     const active = users.filter((u) => u.status === 'active').length;
-    const minors = users.filter((u) => u.age < 18).length;
+    const minors = users.filter((u) => u.isMinor).length;
     const totalStreams = users.reduce((acc, u) => acc + u.totalStreams, 0);
     const avgStreams = total > 0 ? Math.round(totalStreams / total) : 0;
     return {
@@ -161,7 +161,16 @@ export default function UsersPage() {
         const hay = `${u.city} ${u.state} ${u.city.toLowerCase()}-${u.state.toLowerCase()}`.toLowerCase();
         if (!hay.includes(location)) return false;
       }
-      if (deferredFilters.age && !ageInRange(u.age, deferredFilters.age)) return false;
+      if (deferredFilters.age) {
+        // "minor" usa o flag is_minor (fonte da verdade do onboarding),
+        // não age<18 — age pode ser 0/desconhecida. As demais faixas
+        // continuam pela idade calculada.
+        if (deferredFilters.age === 'minor') {
+          if (!u.isMinor) return false;
+        } else if (!ageInRange(u.age, deferredFilters.age)) {
+          return false;
+        }
+      }
       if (deferredFilters.sex && u.sex !== deferredFilters.sex) return false;
       if (targetDate) {
         if (!u.lastStream || formatStreamDate(u.lastStream.playedAt) !== targetDate) return false;
@@ -286,6 +295,11 @@ export default function UsersPage() {
               {isFlagged && (
                 <Badge tone="danger" size="sm" className={styles.moderationBadge}>
                   {isBanned ? 'Banido' : 'Bloqueado'}
+                </Badge>
+              )}
+              {u.isMinor && (
+                <Badge tone="warning" size="sm" className={styles.moderationBadge}>
+                  Menor de idade
                 </Badge>
               )}
             </div>
