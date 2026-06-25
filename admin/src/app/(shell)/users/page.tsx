@@ -101,8 +101,11 @@ export default function UsersPage() {
   });
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /** Seleção múltipla da tabela (exclusão em massa). */
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingAction, setPendingAction] = useState<
     | { kind: 'ban' | 'block' | 'delete'; user: User }
+    | { kind: 'bulk-delete'; ids: string[] }
     | null
   >(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -194,6 +197,49 @@ export default function UsersPage() {
   }
   async function confirmAction() {
     if (!pendingAction || !users) return;
+
+    // Exclusão em massa dos selecionados. Cada delete é o mesmo
+    // soft-delete + revoga sessões do delete individual; rodamos em
+    // paralelo e reportamos sucesso/falha por item (allSettled).
+    if (pendingAction.kind === 'bulk-delete') {
+      const ids = pendingAction.ids;
+      setActionLoading(true);
+      try {
+        const results = await Promise.allSettled(
+          ids.map((id) => usersService.remove(id)),
+        );
+        const okIds = ids.filter((_, i) => results[i].status === 'fulfilled');
+        const failed = ids.length - okIds.length;
+        const okSet = new Set(okIds);
+        setUsers(users.filter((u) => !okSet.has(u.id)));
+        setSelectedIds([]);
+        if (selectedUser && okSet.has(selectedUser.id)) {
+          setDrawerOpen(false);
+          setSelectedUser(null);
+        }
+        push({
+          type: failed === 0 ? 'success' : 'warning',
+          title:
+            failed === 0
+              ? `${okIds.length} ${okIds.length === 1 ? 'usuário removido' : 'usuários removidos'}`
+              : `${okIds.length} removido(s), ${failed} não pôde(puderam) ser excluído(s)`,
+          description:
+            'Contas marcadas como excluídas e sessões revogadas. ' +
+            'Os dados são anonimizados após o período de retenção (LGPD).',
+        });
+        setPendingAction(null);
+      } catch {
+        push({
+          type: 'error',
+          title: 'Não foi possível excluir em massa',
+          description: 'Tente novamente. Se persistir, verifique o log do servidor.',
+        });
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
     const { kind, user } = pendingAction;
 
     // Delete vai pro backend real (LGPD: soft-delete + revoga sessões).
@@ -506,6 +552,21 @@ export default function UsersPage() {
             columns={columns}
             data={filtered}
             rowId={(u) => u.id}
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            bulkActions={
+              <Button
+                variant="dangerGhost"
+                size="sm"
+                leadingIcon={<IconTrash size={14} />}
+                onClick={() =>
+                  setPendingAction({ kind: 'bulk-delete', ids: selectedIds })
+                }
+              >
+                Excluir selecionados
+              </Button>
+            }
             onRowClick={openDrawer}
             pageSize={12}
             loading={users === null}
@@ -528,32 +589,40 @@ export default function UsersPage() {
         onConfirm={confirmAction}
         loading={actionLoading}
         destructive={
-          pendingAction?.kind === 'ban' || pendingAction?.kind === 'delete'
+          pendingAction?.kind === 'ban' ||
+          pendingAction?.kind === 'delete' ||
+          pendingAction?.kind === 'bulk-delete'
         }
         title={
-          pendingAction?.kind === 'ban'
-            ? `Banir ${pendingAction.user.name}?`
-            : pendingAction?.kind === 'block'
-              ? `Bloquear ${pendingAction.user.name}?`
-              : pendingAction?.kind === 'delete'
-                ? `Excluir ${pendingAction.user.name}?`
-                : ''
+          pendingAction?.kind === 'bulk-delete'
+            ? `Excluir ${pendingAction.ids.length} ${pendingAction.ids.length === 1 ? 'usuário' : 'usuários'}?`
+            : pendingAction?.kind === 'ban'
+              ? `Banir ${pendingAction.user.name}?`
+              : pendingAction?.kind === 'block'
+                ? `Bloquear ${pendingAction.user.name}?`
+                : pendingAction?.kind === 'delete'
+                  ? `Excluir ${pendingAction.user.name}?`
+                  : ''
         }
         description={
-          pendingAction?.kind === 'ban'
-            ? 'A conta perde acesso permanente à plataforma. Essa ação pode ser revertida só por um admin senior.'
-            : pendingAction?.kind === 'block'
-              ? 'O acesso é suspenso temporariamente. Você pode reativar depois pela tela de detalhe.'
-              : pendingAction?.kind === 'delete'
-                ? 'A conta sai da listagem imediatamente e todas as sessões são encerradas. Os dados pessoais são anonimizados após o período de retenção legal (LGPD).'
-                : ''
+          pendingAction?.kind === 'bulk-delete'
+            ? 'As contas selecionadas saem da listagem imediatamente e todas as sessões são encerradas. Os dados pessoais são anonimizados após o período de retenção legal (LGPD).'
+            : pendingAction?.kind === 'ban'
+              ? 'A conta perde acesso permanente à plataforma. Essa ação pode ser revertida só por um admin senior.'
+              : pendingAction?.kind === 'block'
+                ? 'O acesso é suspenso temporariamente. Você pode reativar depois pela tela de detalhe.'
+                : pendingAction?.kind === 'delete'
+                  ? 'A conta sai da listagem imediatamente e todas as sessões são encerradas. Os dados pessoais são anonimizados após o período de retenção legal (LGPD).'
+                  : ''
         }
         confirmLabel={
-          pendingAction?.kind === 'ban'
-            ? 'Banir conta'
-            : pendingAction?.kind === 'delete'
-              ? 'Excluir conta'
-              : 'Bloquear conta'
+          pendingAction?.kind === 'bulk-delete'
+            ? 'Excluir selecionados'
+            : pendingAction?.kind === 'ban'
+              ? 'Banir conta'
+              : pendingAction?.kind === 'delete'
+                ? 'Excluir conta'
+                : 'Bloquear conta'
         }
       />
     </>
