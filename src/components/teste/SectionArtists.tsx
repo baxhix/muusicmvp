@@ -57,7 +57,11 @@ export default function SectionArtists() {
       <div className={styles.inner}>
         <header className={styles.head}>
           <span className={styles.eyebrow}>Fanverse para escritórios</span>
-          <h2 className={styles.headline}>Para Artistas</h2>
+          <h2 className={styles.headline}>
+            Para{' '}
+            <br className={styles.headlineBreak} />
+            Artistas
+          </h2>
           <p className={styles.lead}>
             Toda a infraestrutura de relacionamento direto com os fãs — operada
             pelo seu escritório como uma plataforma única.
