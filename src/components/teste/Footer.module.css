@@ -47,24 +47,26 @@
  * Sobra espaço à direita pra futuro conteúdo. */
 .linksGrid {
   display: grid;
-  grid-template-columns: repeat(3, max-content);
+  /* 4 colunas (Empresa / Superfãs / Para Artistas / Conta),
+   * alinhadas à esquerda. Gap responsivo: generoso em desktop
+   * largo, encolhe em desktops menores pra as 4 colunas caberem
+   * no .inner sem overflow horizontal. */
+  grid-template-columns: repeat(4, max-content);
   justify-content: start;
-  /* gap dobrado per product feedback "duplique o espaço entre
-   * as colunas no footer" (48 → 96px). Mobile escala
-   * proporcional. */
-  gap: 96px;
+  gap: clamp(32px, 4vw, 72px);
   flex-shrink: 0;
 }
+/* Tablet/mobile: 2x2. */
 @media (max-width: 720px) {
   .linksGrid {
-    grid-template-columns: repeat(3, max-content);
-    gap: 48px;
+    grid-template-columns: repeat(2, max-content);
+    gap: 28px 48px;
   }
 }
 @media (max-width: 480px) {
   .linksGrid {
-    grid-template-columns: max-content max-content;
-    gap: 32px 40px;
+    grid-template-columns: repeat(2, max-content);
+    gap: 28px 36px;
   }
 }
 
@@ -124,6 +126,57 @@
 .col:nth-child(3) .link:hover {
   background: rgba(0, 200, 220, 0.16);
 }
+/* col 4 (Conta) — âmbar quente, completa a paleta. */
+.col:nth-child(4) .link:hover {
+  background: rgba(245, 158, 11, 0.16);
+}
+
+/* ── Barra legal ────────────────────────
+ * Copyright à esquerda + Termos/Privacidade à direita.
+ * Vive dentro do .inner (alinhada às colunas) abaixo da grid;
+ * no desktop fica acima do FANVERSE gigante, no mobile (sem
+ * wordmark) é o rodapé visual. */
+.legalBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 48px;
+  padding: 24px 0 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.copyright {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.4);
+}
+.legalLinks {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+}
+.legalLink {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+  transition: color 200ms ease-out;
+}
+.legalLink:hover {
+  color: #fff;
+}
+@media (max-width: 560px) {
+  .legalBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
 
 /* ── Wordmark wrap ──────────────────────
  * Fora do .inner pra ocupar 90vw (max-width none). Gap de
@@ -178,4 +231,14 @@
 }
 @media (max-width: 560px) {
   .wordmarkWrap { margin-top: 40px; width: 94vw; }
+}
+/* Mobile: sem a palavra FANVERSE gigante per product feedback —
+ * a barra legal vira o rodapé visual. Padding-bottom generoso
+ * pra que a barra legal (copyright + Termos/Privacidade) não
+ * fique COBERTA pelos dois CTAs flutuantes fixos (bottom:20px,
+ * ~50px de altura) — sem essa folga os links de Termos/
+ * Privacidade ficariam intocáveis atrás dos botões. */
+@media (max-width: 720px) {
+  .footer { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  .wordmarkWrap { display: none; }
 }

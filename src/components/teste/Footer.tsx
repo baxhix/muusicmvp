@@ -4,51 +4,61 @@ import styles from './Footer.module.css';
 /**
  * Footer do /teste.
  *
- * Estrutura per wireframe + product feedback:
- *   - 3 colunas de links (Company / Superfãs / Para Artistas)
- *     na esquerda, alinhadas ao topo.
- *   - Endereço de email "hello@fanverse.com.br" enorme à
- *     direita.
- *   - 150px de gap (CSS) entre as colunas e a palavra
- *     gigante "FANVERSE".
- *   - "FANVERSE" gigante via SVG com `textLength` +
- *     `lengthAdjust="spacingAndGlyphs"` — assim o texto
- *     escala pra ocupar 100% do container (max 1200px),
- *     independente da fonte aplicada. Aceita Peace Sans
- *     quando o .woff2 for adicionado em /fonts/, ou Inter
- *     900 como fallback.
- *
- * Política removida per product feedback ("Remova Políticas de
- * Privacidade e Termos de uso").
+ * Estrutura:
+ *   - 4 colunas de links (Empresa / Superfãs / Para Artistas /
+ *     Conta) alinhadas à esquerda, no topo.
+ *   - Barra legal abaixo: copyright + Termos de uso + Política
+ *     de Privacidade.
+ *   - "FANVERSE" gigante via SVG (só no desktop — escondido no
+ *     mobile) que escala pra ocupar 90vw, colado na base.
  */
 export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
-        {/* Linha das colunas de links. O email "hello@fanverse"
-         *  foi removido per product feedback — agora só as 3
-         *  cols ocupam o topo do footer. */}
+        {/* 4 colunas de links — alinhadas à esquerda. */}
         <div className={styles.linksGrid}>
           <div className={styles.col}>
-            <h4 className={styles.colTitle}>Company</h4>
+            <h4 className={styles.colTitle}>Empresa</h4>
             <a href="#sobre"    className={styles.link}>Sobre</a>
             <Link href="/blog"  className={styles.link}>Blog</Link>
             <a href="#imprensa" className={styles.link}>Imprensa</a>
+            <a href="#time"     className={styles.link}>Time</a>
           </div>
           <div className={styles.col}>
             <h4 className={styles.colTitle}>Superfãs</h4>
-            <a href="#sf-1"    className={styles.link}>Manifesto</a>
-            <a href="#sf-2"    className={styles.link}>Manifesto</a>
-            <a href="#sf-3"    className={styles.link}>Manifesto</a>
-            <a href="#sf-time" className={styles.link}>Time</a>
+            <a href="#manifesto"   className={styles.link}>Manifesto</a>
+            <a href="#comunidades" className={styles.link}>Comunidades</a>
+            <a href="#fanpoints"   className={styles.link}>Fanpoints</a>
+            <a href="#fire-arena"  className={styles.link}>Fire Arena</a>
           </div>
           <div className={styles.col}>
             <h4 className={styles.colTitle}>Para Artistas</h4>
-            <a href="#pa-1"    className={styles.link}>Manifesto</a>
-            <a href="#pa-2"    className={styles.link}>Manifesto</a>
-            <a href="#pa-3"    className={styles.link}>Manifesto</a>
-            <a href="#pa-time" className={styles.link}>Time</a>
+            <Link href="/para-artistas" className={styles.link}>Para Artistas</Link>
+            <a href="#pre-save"   className={styles.link}>Pre-save</a>
+            <a href="#solucoes"   className={styles.link}>Soluções</a>
+            <a href="#cases"      className={styles.link}>Cases</a>
           </div>
+          <div className={styles.col}>
+            <h4 className={styles.colTitle}>Conta</h4>
+            <Link href="/auth" className={styles.link}>Entrar</Link>
+            <Link href="/auth" className={styles.link}>Criar conta</Link>
+            <a href="mailto:suporte@fanverse.com.br" className={styles.link}>Suporte</a>
+            <a href="#status"   className={styles.link}>Status</a>
+          </div>
+        </div>
+
+        {/* Barra legal — copyright + links de Termos / Privacidade. */}
+        <div className={styles.legalBar}>
+          <span className={styles.copyright}>
+            © 2026 Fanverse. Todos os direitos reservados.
+          </span>
+          <nav className={styles.legalLinks} aria-label="Links legais">
+            <Link href="/termos" className={styles.legalLink}>Termos de uso</Link>
+            <Link href="/privacidade" className={styles.legalLink}>
+              Política de Privacidade
+            </Link>
+          </nav>
         </div>
       </div>
 
