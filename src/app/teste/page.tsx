@@ -5,6 +5,7 @@ import HeroSection from '@/components/teste/HeroSection';
 import SectionTwo from '@/components/teste/SectionTwo';
 import HorizontalShowcase from '@/components/teste/HorizontalShowcase';
 import SectionThree from '@/components/teste/SectionThree';
+import SectionArtists from '@/components/teste/SectionArtists';
 import SectionFour from '@/components/teste/SectionFour';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
 import Footer from '@/components/teste/Footer';
@@ -57,6 +58,8 @@ export default function TestePage() {
        *  e Artista" mostrando o que o superfã desbloqueia. */}
       <HorizontalShowcase />
       <SectionThree />
+      {/* Pivô fã → artista: seção "Para Artistas" com H1 grande + CTA. */}
+      <SectionArtists />
       {/* Section 4 — canvas vazio onde 12 avatares formam um
        *  círculo (no texto). Os avatares vivem na constellation
        *  page-level com `circling: true` (slide-in radial +

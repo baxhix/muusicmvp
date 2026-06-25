@@ -19,16 +19,47 @@ interface ShowcaseItem {
   title: string;
   desc: string;
   img: string;
+  details: string;
 }
 
 // Mock provisório — imagens locais em /public. Trocar por arte definitiva
 // + copy real quando o conteúdo de cada vertical existir.
 const ITEMS: ShowcaseItem[] = [
-  { title: 'Lives', desc: 'Shows e Q&As ao vivo, só pra quem é de dentro.', img: '/xp-01.jpg' },
-  { title: 'Backstage', desc: 'Os bastidores que mais ninguém vê.', img: '/xp-02.jpg' },
-  { title: 'Grupos fechados', desc: 'Comunidades privadas com o artista.', img: '/xp-03.jpg' },
-  { title: 'Pré-lançamentos', desc: 'Ouça antes de todo mundo.', img: '/ana-01.webp' },
-  { title: 'Mídia direcionada', desc: 'Conteúdo feito sob medida pra você.', img: '/ana-02.webp' },
+  {
+    title: 'Lives',
+    desc: 'Shows e Q&As ao vivo, só pra quem é de dentro.',
+    img: '/xp-01.jpg',
+    details:
+      'Transmissões ao vivo exclusivas: shows, ensaios e Q&As em tempo real, com chat só pra superfãs e replays liberados depois. Você entra na sala antes de todo mundo.',
+  },
+  {
+    title: 'Backstage',
+    desc: 'Os bastidores que mais ninguém vê.',
+    img: '/xp-02.jpg',
+    details:
+      'Fotos e vídeos do camarim, da passagem de som e da estrada — o lado da rotina do artista que o público geral nunca enxerga. Conteúdo cru, direto da fonte.',
+  },
+  {
+    title: 'Grupos fechados',
+    desc: 'Comunidades privadas com o artista.',
+    img: '/xp-03.jpg',
+    details:
+      'Comunidades privadas pra trocar com o artista e com outros superfãs, sem ruído e sem algoritmo. Enquetes, recados e decisões tomadas junto com quem mais importa.',
+  },
+  {
+    title: 'Pré-lançamentos',
+    desc: 'Ouça antes de todo mundo.',
+    img: '/ana-01.webp',
+    details:
+      'Acesso antecipado a singles, clipes e novidades antes do lançamento oficial — e a chance de reagir e influenciar o que vem por aí.',
+  },
+  {
+    title: 'Mídia direcionada',
+    desc: 'Conteúdo feito sob medida pra você.',
+    img: '/ana-02.webp',
+    details:
+      'Recomendações e conteúdos selecionados com base no que você curte, ouve e acompanha. O Fanverse aprende com você pra te mostrar o que importa.',
+  },
 ];
 
 export default function HorizontalShowcase() {
@@ -41,6 +72,10 @@ export default function HorizontalShowcase() {
   // cards entram da direita e o trajeto fica mais longo. Per feedback
   // "deixe o início mais à direita pra percorrer mais o trajeto".
   const [startX, setStartX] = useState(0);
+  // Card com detalhes abertos (overlay por cima da própria imagem). null =
+  // nenhum aberto. Per feedback "Ver mais discreto que mostra detalhes por
+  // cima do mesmo card".
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   // progress 0 quando o TOPO da section encosta no topo da viewport (o pin
   // começa); 1 quando a BASE encosta na base (o pin termina).
@@ -105,15 +140,46 @@ export default function HorizontalShowcase() {
               <div className={styles.cardText}>
                 <h3 className={styles.cardTitle}>{item.title}</h3>
                 <p className={styles.cardDesc}>{item.desc}</p>
+                {/* "Ver mais" discreto — abre os detalhes por cima do card. */}
+                <button
+                  type="button"
+                  className={styles.cardMore}
+                  onClick={() => setOpenIdx(i)}
+                  aria-expanded={openIdx === i}
+                >
+                  Ver mais
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Detalhes — overlay POR CIMA da mesma imagem do card (scrim
+               *  escuro + blur, a foto fica esmaecida atrás). Toggle por
+               *  opacidade. */}
+              <div
+                className={`${styles.cardDetails} ${openIdx === i ? styles.cardDetailsOpen : ''}`}
+                role="group"
+                aria-label={`Detalhes — ${item.title}`}
+              >
+                <button
+                  type="button"
+                  className={styles.cardDetailsClose}
+                  onClick={() => setOpenIdx(null)}
+                  aria-label="Fechar detalhes"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+                <h4 className={styles.cardDetailsTitle}>{item.title}</h4>
+                <p className={styles.cardDetailsText}>{item.details}</p>
               </div>
             </article>
           ))}
         </motion.div>
-
-        {/* Barra de progresso — preenche conforme a galeria desliza. */}
-        <div className={styles.progressTrack} aria-hidden="true">
-          <motion.div className={styles.progressBar} style={{ scaleX: smooth }} />
-        </div>
       </div>
     </section>
   );

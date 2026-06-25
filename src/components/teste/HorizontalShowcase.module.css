@@ -120,24 +120,96 @@
   max-width: 32ch;
 }
 
-/* Barra de progresso da galeria — fixa no rodapé do miolo. */
-.progressTrack {
-  position: absolute;
-  left: clamp(20px, 6vw, 96px);
-  right: clamp(20px, 6vw, 96px);
-  bottom: clamp(24px, 5vh, 56px);
-  height: 2px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
+/* "Ver mais" — discreto, abaixo da descrição. Seta desliza no hover. */
+.cardMore {
+  align-self: flex-start;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 0.18s ease, gap 0.18s ease;
 }
-.progressBar {
-  height: 100%;
-  width: 100%;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 100%);
-  transform-origin: left center;
-  transform: scaleX(0);
+.cardMore:hover {
+  color: #fff;
+  gap: 9px;
+}
+.cardMore svg {
+  display: block;
+}
+
+/* Detalhes — overlay POR CIMA da própria imagem do card. Scrim escuro +
+ * blur (a foto fica esmaecida atrás), revelado por opacidade. */
+.cardDetails {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 28px;
+  background: linear-gradient(
+    to top,
+    rgba(6, 6, 10, 0.94) 0%,
+    rgba(6, 6, 10, 0.86) 55%,
+    rgba(6, 6, 10, 0.78) 100%
+  );
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.34s ease;
+}
+.cardDetailsOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cardDetailsClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.cardDetailsClose:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.cardDetailsTitle {
+  font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: clamp(24px, 2vw, 34px);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: #fff;
+  margin: 0;
+}
+.cardDetailsText {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -175,9 +247,7 @@
   .card:hover .cardImg {
     transform: scale(1.02);
   }
-  .progressTrack {
-    left: 16px;
-    right: 16px;
-    bottom: clamp(18px, 4dvh, 40px);
+  .cardDetails {
+    padding: 22px;
   }
 }
