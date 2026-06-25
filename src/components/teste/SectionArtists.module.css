@@ -135,6 +135,8 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #fff;
+  /* Título da feature sempre em UMA linha (per feedback). */
+  white-space: nowrap;
 }
 
 .cardDesc {
@@ -221,13 +223,6 @@
     box-shadow: 0 -14px 40px -14px rgba(0, 0, 0, 0.85);
     margin-bottom: 18px;
     transition: transform 220ms ease-out;
-  }
-  /* Mobile: título do card em DUAS linhas (per feedback). max-width estreito
-   * (13ch) força a quebra mesmo no título mais curto ("CRM de superfãs"=15ch);
-   * text-wrap:balance distribui as duas linhas de forma equilibrada. */
-  .cardTitle {
-    max-width: 11ch;
-    text-wrap: balance;
   }
   /* Mobile: CTA full-width, acompanhando a largura dos boxes empilhados. */
   .cta {
