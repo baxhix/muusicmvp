@@ -31,12 +31,12 @@ export default function HeroSection() {
        *  independente do tamanho do texto da frase. */}
       <div className={styles.center}>
         {/* Per spec atualizado:
-         *   linha 1: "Universo do"
-         *   linha 2: "Superfã" (mesma fonte/peso, fica
+         *   linha 1: "O Universo do"
+         *   linha 2: "Superfan" (mesma fonte/peso, fica
          *            inline-block como uma 2ª linha do headline,
          *            não um caption à parte). */}
         <h1 className={styles.headline}>
-          Universo do<br />Superfã
+          O Universo do<br />Superfan
         </h1>
         {/* Lead: frase de apoio. Wrapper ocupa a row 2 do grid
          *  (align-start), preservando o Y dos phones na row 3.
