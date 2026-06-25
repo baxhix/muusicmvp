@@ -3,6 +3,7 @@
 import Navbar from '@/components/teste/Navbar';
 import HeroSection from '@/components/teste/HeroSection';
 import SectionTwo from '@/components/teste/SectionTwo';
+import HorizontalShowcase from '@/components/teste/HorizontalShowcase';
 import SectionThree from '@/components/teste/SectionThree';
 import SectionFour from '@/components/teste/SectionFour';
 import AvatarConstellation from '@/components/teste/AvatarConstellation';
@@ -51,6 +52,10 @@ export default function TestePage() {
        *  abaixo do headline) — não tem mais section dedicada. */}
       <HeroSection />
       <SectionTwo />
+      {/* Galeria scroll-horizontal (Motion) com as verticais de conteúdo
+       *  exclusivo — fecha a narrativa da seção "A conexão real entre Fã
+       *  e Artista" mostrando o que o superfã desbloqueia. */}
+      <HorizontalShowcase />
       <SectionThree />
       {/* Section 4 — canvas vazio onde 12 avatares formam um
        *  círculo (no texto). Os avatares vivem na constellation

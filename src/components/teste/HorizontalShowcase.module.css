@@ -1,0 +1,193 @@
+/* HorizontalShowcase — galeria scroll-horizontal (padrão Motion
+ * react-scroll-horizontal). Section alta + miolo sticky 100vh + track
+ * transladada em X via scroll. */
+
+.scrollSection {
+  position: relative;
+  width: 100%;
+  /* `height` (100vh + travel) é setado imperativamente no TSX (sec.style)
+   * — define quanto de scroll vertical mapeia pro deslize horizontal. O
+   * min-height evita colapso no 1º paint, antes do JS medir. */
+  min-height: 100vh;
+  background: transparent;
+}
+
+/* Miolo fixo durante a travessia. overflow:hidden recorta os cards fora da
+ * viewport. NÃO usa overflow no eixo Y do ancestral (a .page usa
+ * overflow-x:clip, que não quebra o sticky). */
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 28px);
+  /* max-content pra track não quebrar linha — fica tão larga quanto os
+   * cards somados. O padding lateral emoldura o 1º e o último card. */
+  width: max-content;
+  padding: 0 clamp(20px, 6vw, 96px);
+  will-change: transform;
+}
+
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(300px, 30vw, 440px);
+  height: min(64vh, 560px);
+  border-radius: 24px;
+  overflow: hidden;
+  background: #0b0b0f;
+  box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.7);
+  isolation: isolate;
+}
+
+.cardImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Zoom-out sutil em repouso → zoom-in no hover (desktop). */
+  transform: scale(1.02);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+}
+.card:hover .cardImg {
+  transform: scale(1.08);
+}
+
+/* Gradiente de baixo pra cima — dá legibilidade ao título sobre a foto. */
+.cardOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.4) 38%,
+    rgba(0, 0, 0, 0) 70%
+  );
+}
+
+.cardIndex {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 2;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.cardText {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 26px 28px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cardTitle {
+  font-family: 'Borscha', var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: clamp(28px, 2.4vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: #fff;
+  margin: 0;
+}
+.cardDesc {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+  max-width: 32ch;
+}
+
+/* Barra de progresso da galeria — fixa no rodapé do miolo. */
+.progressTrack {
+  position: absolute;
+  left: clamp(20px, 6vw, 96px);
+  right: clamp(20px, 6vw, 96px);
+  bottom: clamp(24px, 5vh, 56px);
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.progressBar {
+  height: 100%;
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #ff00b4 0%, #5b00d1 100%);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardImg {
+    transition: none;
+  }
+}
+
+/* ── Mobile/tablet (≤768px) ───────────────────────────────────────────
+ * O scroll-jacking pinado é ótimo no desktop, mas no touch a melhor UX é
+ * swipe horizontal nativo. Inline `height` (do TSX) é vencido aqui pra a
+ * section voltar à altura natural; o miolo vira um scroller horizontal com
+ * scroll-snap. A track ignora o transform (o snap nativo cuida do X). */
+@media (max-width: 768px) {
+  .scrollSection {
+    height: auto !important;
+    min-height: 0;
+    padding: 6vh 0;
+  }
+  .sticky {
+    position: static;
+    height: auto;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sticky::-webkit-scrollbar {
+    display: none;
+  }
+  .track {
+    /* Anula o translateX do motion (style inline) no mobile — o scroll
+     * nativo é quem move. */
+    transform: none !important;
+    gap: 14px;
+    padding: 0 20px;
+  }
+  .card {
+    width: 78vw;
+    max-width: 360px;
+    height: 60vh;
+    max-height: 520px;
+    scroll-snap-align: center;
+  }
+  /* Sem hover no touch — mantém o leve zoom de repouso. */
+  .card:hover .cardImg {
+    transform: scale(1.02);
+  }
+  .progressTrack {
+    display: none;
+  }
+}
