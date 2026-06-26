@@ -1,6 +1,7 @@
-/* ── AUDIO POST — card compacto, plano (sem borda/gradiente), em UMA linha:
- *  imagem (com play) + waveform + título "Áudio da Ana!". Abaixo, curtir +
- *  comentar. Waveform preenche conforme o tempo REAL do áudio avança. */
+/* ── AUDIO POST — card compacto e plano (sem borda/gradiente).
+ *  Cabeçalho: imagem da Ana + "Áudio da Ana!" ACIMA das barras.
+ *  Player: botão de play no INÍCIO das barras + waveform fina/baixa que
+ *  preenche conforme o tempo REAL do áudio. Abaixo: curtir + comentar. */
 
 .card {
   margin: 16px 14px 0;
@@ -9,79 +10,87 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Plano: sem borda, sem gradiente — só um fill sutil. */
   background: rgba(255, 255, 255, 0.05);
   color: rgba(245, 245, 247, 0.95);
 }
 
-/* ── Linha única ── */
-.row {
+/* ── Cabeçalho: avatar + título ── */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Player: play (início) + waveform ── */
+.player {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
-
-/* Imagem da Ana = botão de play (overlay com ícone). */
-.playAvatar {
-  position: relative;
-  width: 40px;
-  height: 40px;
+.playBtn {
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   border: none;
-  padding: 0;
-  border-radius: 999px;
   cursor: pointer;
-  background: none;
-  overflow: hidden;
-}
-.avatarImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.playOverlay {
-  position: absolute;
-  inset: 0;
+  border-radius: 999px;
+  background: var(--accent);
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.42);
-  transition: background 0.15s;
+  transition: transform 0.12s, filter 0.12s;
 }
-.playAvatar:hover .playOverlay {
-  background: rgba(0, 0, 0, 0.55);
+.playBtn:hover {
+  filter: brightness(1.1);
 }
-.playOverlay svg {
-  width: 15px;
-  height: 15px;
+.playBtn:active {
+  transform: scale(0.92);
+}
+.playBtn svg {
+  width: 13px;
+  height: 13px;
   color: #fff;
   margin-left: 1px;
 }
 
-/* Waveform — ocupa o meio da linha. Compacto. */
+/* Waveform fina e baixa (per feedback). */
 .waveform {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 24px;
+  height: 18px;
   cursor: pointer;
 }
 .bar {
   flex: 1;
-  min-width: 2px;
-  border-radius: 2px;
+  min-width: 1px;
+  border-radius: 1px;
   background: rgba(255, 255, 255, 0.2);
   transform-origin: center;
   transition: background-color 0.25s ease, transform 0.2s ease;
 }
-/* Tocado (à esquerda do playhead): cor sólida da marca (sem gradiente). */
 .barPlayed {
   background: var(--accent);
 }
-/* Barra no playhead pulsa — animação na posição real do áudio. */
 .waveformPlaying .barHead {
   background: #fff;
   animation: audioHead 0.7s ease-in-out infinite;
@@ -91,21 +100,11 @@
   50% { transform: scaleY(0.5); }
 }
 
-.title {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #fff;
-  white-space: nowrap;
-}
-
 /* ── Ações: curtir + comentar ── */
 .actions {
   display: flex;
   align-items: center;
   gap: 18px;
-  padding-left: 50px; /* alinha sob o waveform (avatar 40 + gap 10) */
 }
 .action {
   display: inline-flex;

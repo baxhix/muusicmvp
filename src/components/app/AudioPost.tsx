@@ -14,10 +14,13 @@ export interface AudioPostProps {
   peaks?: number[];
 }
 
+/* Mais barras → cada barra (flex:1) fica mais fina. */
 const DEFAULT_PEAKS = [
-  0.3, 0.5, 0.72, 0.55, 0.85, 0.95, 0.6, 0.4, 0.55, 0.78,
+  0.3, 0.5, 0.7, 0.55, 0.85, 0.95, 0.6, 0.4, 0.55, 0.78,
   0.9, 0.5, 0.32, 0.5, 0.72, 1, 0.6, 0.42, 0.3, 0.58,
   0.82, 0.6, 0.4, 0.52, 0.76, 0.9, 0.5, 0.34, 0.6, 0.8,
+  0.55, 0.38, 0.62, 0.85, 0.5, 0.3, 0.55, 0.75, 0.45, 0.6,
+  0.82, 0.5, 0.36, 0.58, 0.7, 0.44, 0.6, 0.4,
 ];
 
 export default function AudioPost({
@@ -42,7 +45,6 @@ export default function AudioPost({
   const progress = total > 0 ? Math.min(1, current / total) : 0;
   const playedCount = Math.round(progress * bars.length);
 
-  /* Modo demo (sem src): avança o tempo via rAF — com src, o <audio> dita. */
   useEffect(() => {
     if (src || !playing) return;
     lastTsRef.current = 0;
@@ -116,27 +118,31 @@ export default function AudioPost({
         }}
       />
 
-      {/* Linha única: imagem (com play) + waveform + título. */}
-      <div className={styles.row}>
+      {/* Cabeçalho: imagem da Ana + título ACIMA das barras. */}
+      <div className={styles.head}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={avatar} alt="" className={styles.avatar} />
+        <span className={styles.title}>{title}</span>
+      </div>
+
+      {/* Player: botão de play no INÍCIO das barras + waveform. */}
+      <div className={styles.player}>
         <button
-          className={styles.playAvatar}
+          type="button"
+          className={styles.playBtn}
           onClick={toggle}
           aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatar} alt="" className={styles.avatarImg} />
-          <span className={styles.playOverlay} aria-hidden="true">
-            {playing ? (
-              <svg viewBox="0 0 16 16" fill="currentColor">
-                <rect x="3.5" y="2.5" width="3" height="11" rx="1" />
-                <rect x="9.5" y="2.5" width="3" height="11" rx="1" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 16 16" fill="currentColor">
-                <path d="M4.5 3l8 5-8 5V3z" />
-              </svg>
-            )}
-          </span>
+          {playing ? (
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <rect x="3.5" y="2.5" width="3" height="11" rx="1" />
+              <rect x="9.5" y="2.5" width="3" height="11" rx="1" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M4.5 3l8 5-8 5V3z" />
+            </svg>
+          )}
         </button>
 
         <div
@@ -165,13 +171,11 @@ export default function AudioPost({
                 className={`${styles.bar} ${played ? styles.barPlayed : ''} ${
                   atHead ? styles.barHead : ''
                 }`}
-                style={{ height: `${Math.max(16, Math.round(h * 100))}%` }}
+                style={{ height: `${Math.max(18, Math.round(h * 100))}%` }}
               />
             );
           })}
         </div>
-
-        <span className={styles.title}>{title}</span>
       </div>
 
       {/* Ações — curtir + comentar. */}
