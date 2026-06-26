@@ -1,37 +1,89 @@
 'use client';
 
+import { useAuth } from '@/lib/auth/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useRanking } from '@/hooks/useRanking';
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
+
+/** Imagem da Ana dentro do box. */
+const HEADER_IMAGE = '/ana-header-mobile.png';
 
 /**
  * Header mobile — VARIAÇÃO 2 (A/B). Reescrita do zero.
  *
- * Container: box preto translúcido, cantos 32px, 90% da largura da tela
- * e 136px de altura, flutuando centralizado no topo. Conteúdo em
- * construção — por enquanto a imagem da Ana à direita.
+ * Box preto translúcido (95% × 136px, cantos 32px) com a imagem da Ana +
+ * camadas de gradiente e, por cima de tudo, o conteúdo: Fanverse / Ana
+ * Castela / Fanpoints + Top1 (ancorado embaixo-esquerda) e o orbe à
+ * direita.
+ *
+ * Gatilhos reaproveitados:
+ *   - orbe → `app:open-fanverse-search`
+ *   - Fanpoints → `app:open-ranking-store` (Ranking Fanverse)
  */
 export default function MobileFanverseHeader() {
+  const { user } = useAuth();
+  const { profile } = useUserProfile(user?.id ?? null);
+  const fanpoints = profile?.fanpoints ?? 0;
+
+  const { ranking } = useRanking(true);
+  const myRank = user ? ranking.findIndex((r) => r.userId === user.id) + 1 : 0;
+  const rankBadge = myRank === 1 ? 'Top1' : myRank > 1 ? `#${myRank}º` : '';
+
+  const openSearch = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
+    } catch {
+      /* SSR */
+    }
+  };
+  const openRanking = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('app:open-ranking-store', { detail: { screen: 'ranking' } }),
+      );
+    } catch {
+      /* SSR */
+    }
+  };
+
   return (
     <header className={styles.header} aria-label="Fanverse Ana Castela">
-      {/* Imagem da Ana — mesma altura do box, a 100px da borda direita. */}
+      {/* Imagem da Ana — mesma altura do box, a 70px da borda direita. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/ana-header-mobile.png"
-        alt="Ana Castela"
-        className={styles.heroImg}
-      />
+      <img src={HEADER_IMAGE} alt="Ana Castela" className={styles.heroImg} />
 
-      {/* Tint magenta (#D900FF @ 22%), direção ~11h40 — parte do canto
-       *  superior-direito e desce. Fica ABAIXO do gradiente preto. */}
+      {/* Tint magenta (#D900FF @ 22%), ~11h40 — abaixo do gradiente preto. */}
       <div className={styles.imgTint} aria-hidden="true" />
-
-      {/* Camada de gradiente preto→transparente sobre a imagem (direção
-       *  ~11h25 no relógio). Confinada ao box (overflow:hidden) → respeita
-       *  o border-radius. */}
+      {/* Gradiente preto→transparente (~11h25). */}
       <div className={styles.imgGradient} aria-hidden="true" />
-
-      {/* Camada por cima de tudo: black→transparente de baixo pra cima
-       *  (direção ~5h55), preto a 90% de opacidade na base. */}
+      {/* Fade preto de baixo pra cima (~5h55) — por cima das camadas. */}
       <div className={styles.bottomFade} aria-hidden="true" />
+
+      {/* Conteúdo — acima de tudo, ancorado embaixo-esquerda. */}
+      <div className={styles.content}>
+        <span className={styles.eyebrow}>Fanverse</span>
+        <div className={styles.titleRow}>
+          <span className={styles.title}>Ana Castela</span>
+        </div>
+        <button type="button" className={styles.meta} onClick={openRanking}>
+          <span className={styles.metaValue}>
+            {fanpoints.toLocaleString('pt-BR')}
+          </span>
+          <span className={styles.metaLabel}>Fanpoints</span>
+          {rankBadge && <span className={styles.metaRank}>{rankBadge}</span>}
+        </button>
+      </div>
+
+      {/* Orbe — a 28px da extremidade direita, acima de tudo. */}
+      <button
+        type="button"
+        className={styles.orb}
+        onClick={openSearch}
+        aria-label="Abrir Fanverse Search"
+      >
+        <FanverseCore />
+      </button>
     </header>
   );
 }

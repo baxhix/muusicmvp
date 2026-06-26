@@ -62,3 +62,90 @@
   pointer-events: none;
   background: linear-gradient(358deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
 }
+
+/* ── Conteúdo sobreposto (acima de todas as camadas) ─────────
+ * Ancorado a 28px da borda esquerda e inferior, alinhado à esquerda. */
+.content {
+  position: absolute;
+  left: 28px;
+  bottom: 28px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.eyebrow {
+  /* "Fanverse" em Inter regular, cinza ~#838383. */
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: #838383;
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.title {
+  font-family: 'Borscha', serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  /* Gradiente branco → cinza (#999999) na diagonal vindo de ~22h20
+   *  (≈130deg). Recortado no texto via background-clip; fallback branco. */
+  background-image: linear-gradient(130deg, #ffffff 0%, #999999 100%);
+  color: #fff;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Linha secundária — Fanpoints + Top1 (toca = abre Ranking Fanverse). */
+.meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.metaValue {
+  /* Número de Fanpoints — cinza, regular. */
+  font-size: 12px;
+  font-weight: 400;
+  color: #838383;
+  font-variant-numeric: tabular-nums;
+}
+.metaLabel {
+  /* "Fanpoints" — cinza, regular. */
+  font-size: 12px;
+  font-weight: 400;
+  color: #838383;
+}
+.metaRank {
+  /* "Top1" — branco, bold. */
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Orbe — 28px da extremidade direita, centralizado verticalmente,
+ * acima de todas as camadas. */
+.orb {
+  position: absolute;
+  top: 50%;
+  right: 28px;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 74px;
+  height: 74px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
