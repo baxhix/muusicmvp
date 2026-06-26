@@ -41,10 +41,10 @@ interface Props {
   dimmed?: boolean;
 }
 
-/** Limites por viewport, per product feedback "no desktop deixe
- *  apenas 6 usuários recentes ... no mobile, mantenha apenas 4"
- *  (antes 5 mobile / 7 desktop). */
-const DOCK_LIMIT_MOBILE = 4;
+/** Limites por viewport. Mobile: 3 avatares recentes + o CTA "+"
+ *  (per feedback "no mobile, deixe apenas as 3 últimas conversas e o
+ *  CTA +"). Desktop mantém 6. */
+const DOCK_LIMIT_MOBILE = 3;
 const DOCK_LIMIT_DESKTOP = 6;
 
 /**
