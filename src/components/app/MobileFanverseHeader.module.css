@@ -15,9 +15,10 @@
   z-index: 5;
   border-radius: 32px;
   overflow: hidden;
-  /* Preto com 88% de transparência (convenção do projeto = 88% de
-   *  opacidade, igual à barra do desktop com "75% de transparência"). */
-  background: rgba(0, 0, 0, 0.88);
+  /* Cinza-escuro levemente azulado (em vez de preto puro) pra o box se
+   *  diferenciar sutilmente quando o fundo é o universo (preto), e não
+   *  o planeta. ~90% de opacidade. */
+  background: rgba(28, 28, 36, 0.9);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
@@ -26,8 +27,8 @@
 .heroImg {
   position: absolute;
   top: 0;
-  /* 30px mais à direita (era 100px da borda direita). */
-  right: 70px;
+  /* 18px mais à frente (à direita): era 70px da borda direita. */
+  right: 52px;
   height: 100%;
   width: auto;
   user-select: none;
@@ -163,12 +164,14 @@
  * acima de todas as camadas. */
 .orb {
   position: absolute;
-  /* Canto inferior-direito; mais abaixo (por cima da barra de rodapé). */
+  /* Canto inferior-direito; mais abaixo (por cima da barra de rodapé)
+   *  e mais ao lado direito. */
   bottom: 10px;
-  right: 22px;
+  right: 14px;
   z-index: 3;
-  width: 74px;
-  height: 74px;
+  /* +20% (era 74px). */
+  width: 89px;
+  height: 89px;
   padding: 0;
   border: none;
   background: none;
