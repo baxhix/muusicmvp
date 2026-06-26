@@ -18,6 +18,25 @@
   font-family: var(--sans), system-ui, sans-serif;
 }
 
+/* Scrim preto → transparente ATRÁS do rail (sangra pro mapa), pra dar
+ * contraste aos ícones/avatares fixos quando o mapa por trás está claro.
+ * Radial centrado no rail que dissolve em todas as direções (sem borda
+ * dura). z-index:-1 fica abaixo do rail mas acima do mapa; pointer-events
+ * none pra não capturar cliques. */
+.wrap::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -32px -72px -32px -14px;
+  pointer-events: none;
+  background: radial-gradient(
+    130% 85% at 28% 50%,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.34) 40%,
+    transparent 72%
+  );
+}
+
 /* ── Rail vertical ─────────────────────────────────────────── */
 .rail {
   /* Largura 52 → 64 pra acomodar o orbe 56×56 (per product
