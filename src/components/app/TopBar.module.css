@@ -90,6 +90,9 @@
  * domina; bell discreto ao lado). */
 .notifBtn {
   position: relative;
+  /* Um pouco mais acima que o avatar, per feedback (offset relativo —
+   *  não conflita com o transform do hover). */
+  top: -6px;
   width: 36px;
   height: 36px;
   display: inline-flex;

@@ -88,8 +88,9 @@
  * Ancorado a 28px da borda esquerda e inferior, alinhado à esquerda. */
 .content {
   position: absolute;
-  left: 28px;
-  bottom: 22px;
+  /* 4px mais à esquerda (28→24) e mais abaixo (22→18). */
+  left: 24px;
+  bottom: 18px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -115,9 +116,10 @@
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-  /* Gradiente branco → cinza (#999999) na diagonal vindo de ~22h20
-   *  (≈130deg). Recortado no texto via background-clip; fallback branco. */
-  background-image: linear-gradient(130deg, #ffffff 0%, #999999 100%);
+  /* Gradiente branco → cinza claro (#cccccc, mais próximo do branco) na
+   *  diagonal vindo de ~22h20 (≈130deg). Recortado no texto via
+   *  background-clip; fallback branco. */
+  background-image: linear-gradient(130deg, #ffffff 0%, #cccccc 100%);
   color: #fff;
   -webkit-background-clip: text;
   background-clip: text;
