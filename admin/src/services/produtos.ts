@@ -154,3 +154,72 @@ export async function uploadProductMedia(file: File): Promise<ProductMedia> {
   }
   throw new Error('unsupported_type');
 }
+
+/* ── Upload com PROGRESSO + cancelamento (XHR) ──────────────────
+ * Espelha o uploadFile de Materiais: fetch não expõe upload.onprogress
+ * em nenhum browser, então usamos XHR pra alimentar a barra de
+ * progresso e o AbortSignal pra cancelar. Usado pela fila de upload
+ * (FloatingUploadPanel) reaproveitada de Materiais. */
+export interface UploadProgressOpts {
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}
+
+function uploadXHR(path: string, file: File, opts: UploadProgressOpts): Promise<string> {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+  return new Promise<string>((resolve, reject) => {
+    const form = new FormData();
+    form.append('file', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${base}${path}`, true);
+    xhr.withCredentials = true;
+    if (opts.onProgress) {
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          opts.onProgress?.(Math.round((e.loaded / e.total) * 100));
+        }
+      });
+    }
+    if (opts.signal) {
+      opts.signal.addEventListener('abort', () => xhr.abort());
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText) as { url: string };
+          resolve(data.url);
+        } catch {
+          reject(new Error('parse_error'));
+        }
+      } else {
+        let code = `http_${xhr.status}`;
+        try {
+          const body = JSON.parse(xhr.responseText) as { error?: string };
+          if (body.error) code = body.error;
+        } catch {
+          /* resposta não-JSON — mantém o code default */
+        }
+        reject(new Error(code));
+      }
+    };
+    xhr.onerror = () => reject(new Error('network_error'));
+    xhr.onabort = () => reject(new Error('aborted'));
+    xhr.send(form);
+  });
+}
+
+/** Versão com progresso/cancelamento de uploadProductMedia. */
+export async function uploadProductMediaXHR(
+  file: File,
+  opts: UploadProgressOpts = {},
+): Promise<ProductMedia> {
+  if (file.type.startsWith('image/')) {
+    const url = await uploadXHR('/api/admin/feed/upload', file, opts);
+    return { type: 'image', url };
+  }
+  if (file.type.startsWith('video/')) {
+    const url = await uploadXHR('/api/admin/feed/upload-video', file, opts);
+    return { type: 'video', url };
+  }
+  throw new Error('unsupported_type');
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Reorder } from 'motion/react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -23,7 +23,7 @@ import {
 import {
   productService,
   productCategoryService,
-  uploadProductMedia,
+  uploadProductMediaXHR,
   PRODUCT_AUDIENCE_OPTIONS,
   PRODUCT_IMAGE_MAX_BYTES,
   PRODUCT_VIDEO_MAX_BYTES,
@@ -31,6 +31,10 @@ import {
   type ProductMedia,
   type ProductCategory,
 } from '@/services/produtos';
+// Mesmo painel de upload usado em Materiais (fila + progresso + cancelar).
+import FloatingUploadPanel, {
+  type UploadItem,
+} from '@/app/(shell)/materiais/FloatingUploadPanel';
 import styles from './ProductEditor.module.css';
 
 /**
@@ -60,6 +64,9 @@ function toMediaItems(media: ProductMedia[]): MediaItem[] {
 
 export default function ProductEditor({ mode, productId }: ProductEditorProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // "Copiar registro": /produtos/novo?from=<id> pré-preenche o form.
+  const duplicateFromId = mode === 'create' ? searchParams.get('from') : null;
   const { push } = useToast();
 
   const [loading, setLoading] = useState(mode === 'edit');
@@ -76,7 +83,16 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
   const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState<ProductCategory[]>([]);
 
-  const [uploading, setUploading] = useState(false);
+  // Fila de upload (mesmo modelo de Materiais): itens com progresso real
+  // (XHR), até 3 simultâneos. Ao concluir, o item entra na galeria.
+  const [queue, setQueue] = useState<UploadItem[]>([]);
+  const queueRef = useRef<UploadItem[]>([]);
+  const abortRef = useRef<Map<string, AbortController>>(new Map());
+  const activeRef = useRef(0);
+  const uploadKeySeq = useRef(0);
+  const uploading = queue.some(
+    (it) => it.status === 'pending' || it.status === 'uploading',
+  );
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -133,43 +149,145 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
     };
   }, [mode, productId]);
 
-  const onPickFiles = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files ?? []);
-      e.target.value = '';
-      if (files.length === 0) return;
-      setUploading(true);
+  // "Copiar registro": pré-preenche o form de criação a partir de um
+  // produto existente (name ganha " (cópia)"). Salvar cria um NOVO.
+  useEffect(() => {
+    if (mode !== 'create' || !duplicateFromId) return;
+    let alive = true;
+    (async () => {
       try {
-        for (const file of files) {
-          const isImage = file.type.startsWith('image/');
-          const isVideo = file.type.startsWith('video/');
-          if (!isImage && !isVideo) {
-            push({ type: 'error', title: 'Arquivo não suportado', description: `${file.name} não é imagem nem vídeo.` });
-            continue;
-          }
-          const max = isVideo ? PRODUCT_VIDEO_MAX_BYTES : PRODUCT_IMAGE_MAX_BYTES;
-          if (file.size > max) {
-            push({
-              type: 'error',
-              title: 'Arquivo muito grande',
-              description: `${file.name} excede o limite (${isVideo ? '100 MB' : '8 MB'}).`,
-            });
-            continue;
-          }
-          try {
-            const m = await uploadProductMedia(file);
-            setMedia((cur) => [...cur, { ...m, key: `m${mediaKeySeq++}` }]);
-          } catch (err) {
-            const code = err instanceof Error ? err.message : 'upload_failed';
-            push({ type: 'error', title: 'Falha no upload', description: humanUploadError(code) });
-          }
-        }
-      } finally {
-        setUploading(false);
+        const { items } = await productService.list();
+        const p = items.find((i) => i.id === duplicateFromId);
+        if (!alive || !p) return;
+        setName(`${p.name} (cópia)`);
+        setDescription(p.description ?? '');
+        setPriceFrom(p.priceFrom != null ? String(p.priceFrom) : '');
+        setPriceTo(String(p.priceTo));
+        setQuantityAvailable(
+          p.quantityAvailable != null ? String(p.quantityAvailable) : '',
+        );
+        setAudience(p.audience);
+        setActive(p.active);
+        setCategoryId(p.categoryId ?? '');
+        setMedia(toMediaItems(p.media));
+      } catch (err) {
+        console.error('produto duplicate load failed:', err);
       }
-    },
-    [push],
-  );
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [mode, duplicateFromId]);
+
+  /* ── Fila de upload (mesmo comportamento de Materiais) ──────────
+   * queueRef é atualizado de forma SÍNCRONA pra o worker pool não
+   * repicar o mesmo item antes do setState comitar. Até 3 uploads
+   * simultâneos; ao concluir, a mídia entra na galeria reordenável. */
+  const MAX_CONCURRENT = 3;
+
+  function writeQueue(updater: (q: UploadItem[]) => UploadItem[]) {
+    const next = updater(queueRef.current);
+    queueRef.current = next;
+    setQueue(next);
+  }
+
+  async function runUpload(key: string, file: File) {
+    const ctrl = new AbortController();
+    abortRef.current.set(key, ctrl);
+    try {
+      const m = await uploadProductMediaXHR(file, {
+        signal: ctrl.signal,
+        onProgress: (p) =>
+          writeQueue((q) =>
+            q.map((it) => (it.key === key ? { ...it, progress: p } : it)),
+          ),
+      });
+      setMedia((cur) => [...cur, { ...m, key: `m${mediaKeySeq++}` }]);
+      writeQueue((q) =>
+        q.map((it) =>
+          it.key === key ? { ...it, status: 'done', progress: 100 } : it,
+        ),
+      );
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'upload_failed';
+      const aborted = code === 'aborted';
+      writeQueue((q) =>
+        q.map((it) =>
+          it.key === key
+            ? {
+                ...it,
+                status: aborted ? 'cancelled' : 'error',
+                message: aborted ? undefined : humanUploadError(code),
+              }
+            : it,
+        ),
+      );
+    } finally {
+      abortRef.current.delete(key);
+      activeRef.current = Math.max(0, activeRef.current - 1);
+      pumpQueue();
+    }
+  }
+
+  function pumpQueue() {
+    while (activeRef.current < MAX_CONCURRENT) {
+      const next = queueRef.current.find((it) => it.status === 'pending');
+      if (!next) break;
+      activeRef.current += 1;
+      writeQueue((q) =>
+        q.map((it) =>
+          it.key === next.key ? { ...it, status: 'uploading', progress: 0 } : it,
+        ),
+      );
+      void runUpload(next.key, next.file);
+    }
+  }
+
+  function enqueueFiles(files: File[]) {
+    if (files.length === 0) return;
+    const items: UploadItem[] = files.map((file) => {
+      const key = `u${uploadKeySeq.current++}`;
+      const err = validateProductFile(file);
+      return {
+        key,
+        file,
+        status: err ? 'invalid' : 'pending',
+        progress: 0,
+        message: err ?? undefined,
+      };
+    });
+    writeQueue((q) => [...q, ...items]);
+    pumpQueue();
+  }
+
+  const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    enqueueFiles(files);
+  };
+
+  const cancelUpload = (key: string) => {
+    abortRef.current.get(key)?.abort();
+    writeQueue((q) =>
+      q.map((it) =>
+        it.key === key && it.status === 'pending'
+          ? { ...it, status: 'cancelled' }
+          : it,
+      ),
+    );
+  };
+  const cancelAllUploads = () => {
+    abortRef.current.forEach((c) => c.abort());
+    writeQueue((q) =>
+      q.map((it) => (it.status === 'pending' ? { ...it, status: 'cancelled' } : it)),
+    );
+  };
+  const dismissUpload = (key: string) =>
+    writeQueue((q) => q.filter((it) => it.key !== key));
+  const clearFinishedUploads = () =>
+    writeQueue((q) =>
+      q.filter((it) => it.status === 'pending' || it.status === 'uploading'),
+    );
 
   const removeMedia = useCallback((key: string) => {
     setMedia((cur) => cur.filter((m) => m.key !== key));
@@ -402,6 +520,13 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
                 }
               />
               <CardBody className={styles.mediaBody}>
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    enqueueFiles(Array.from(e.dataTransfer.files));
+                  }}
+                >
                 {media.length === 0 ? (
                 <button
                   type="button"
@@ -460,6 +585,7 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
                   ))}
                 </Reorder.Group>
               )}
+                </div>
 
                 <input
                   ref={fileRef}
@@ -474,8 +600,31 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
           </div>
         )}
       </div>
+
+      {/* Mesmo painel de upload de Materiais (canto inferior-direito):
+       *  fila + progresso real + cancelar. */}
+      <FloatingUploadPanel
+        items={queue}
+        onCancelItem={cancelUpload}
+        onCancelAll={cancelAllUploads}
+        onDismissItem={dismissUpload}
+        onClearFinished={clearFinishedUploads}
+      />
     </>
   );
+}
+
+/** Valida um arquivo de produto antes do upload (espelha limites do
+ *  backend). Retorna mensagem PT-BR ou null se válido. */
+function validateProductFile(file: File): string | null {
+  const isImage = file.type.startsWith('image/');
+  const isVideo = file.type.startsWith('video/');
+  if (!isImage && !isVideo) return 'Formato não suportado (use imagem ou vídeo).';
+  const max = isVideo ? PRODUCT_VIDEO_MAX_BYTES : PRODUCT_IMAGE_MAX_BYTES;
+  if (file.size > max) {
+    return `Arquivo muito grande (limite ${isVideo ? '100 MB' : '8 MB'}).`;
+  }
+  return null;
 }
 
 function humanUploadError(code: string): string {
@@ -486,6 +635,8 @@ function humanUploadError(code: string): string {
       return 'Formato não suportado.';
     case 'no_file':
       return 'Nenhum arquivo recebido.';
+    case 'network_error':
+      return 'Falha de rede. Tente de novo.';
     default:
       return 'Tente novamente.';
   }

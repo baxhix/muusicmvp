@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/Dialog';
 import EmptyState from '@/components/ui/EmptyState';
-import { IconPlus, IconEdit, IconTrash, IconAlert, IconVideo } from '@/components/icons';
+import { IconPlus, IconEdit, IconCopy, IconTrash, IconAlert, IconVideo } from '@/components/icons';
 import {
   productService,
   productCategoryService,
@@ -125,17 +125,23 @@ export default function ProdutosAdminPage() {
               </div>
             )}
 
-            <Card>
-              {loading ? (
+            {loading ? (
+              <Card>
                 <div className={styles.loading}>Carregando…</div>
-              ) : items.length === 0 ? (
+              </Card>
+            ) : items.length === 0 ? (
+              <Card>
                 <EmptyState
                   icon={<IconAlert />}
                   title="Nenhum produto cadastrado"
                   description="Crie o primeiro produto clicando em 'Novo produto' no canto superior direito."
                 />
-              ) : (
-                <div className={styles.list}>
+              </Card>
+            ) : (
+              /* Cada linha já é um card (borda + radius próprios). Sem
+               *  <Card> em volta pra não dar "caixa dentro de caixa"
+               *  com radii diferentes. */
+              <div className={styles.list}>
                   {items.map((p) => {
                     const cover = p.media[0];
                     const categoryName = p.categoryId
@@ -208,6 +214,16 @@ export default function ProdutosAdminPage() {
                             variant="ghost"
                             size="sm"
                             iconOnly
+                            onClick={() => router.push(`/produtos/novo?from=${p.id}`)}
+                            aria-label="Copiar registro"
+                            title="Copiar registro (criar a partir deste)"
+                          >
+                            <IconCopy size={14} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            iconOnly
                             onClick={() => router.push(`/produtos/${p.id}/editar`)}
                             aria-label="Editar"
                             title="Editar"
@@ -230,7 +246,6 @@ export default function ProdutosAdminPage() {
                   })}
                 </div>
               )}
-            </Card>
           </>
         )}
       </div>
