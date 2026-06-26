@@ -316,13 +316,22 @@
  * stroke weight comes from the SVGs themselves (all 1.6). */
 .item svg { width: 22px; height: 22px; }
 
-/* Orbe (FanverseCore) no slot central — um pouco maior que os ícones
- * pra ancorar o centro da navbar. */
+/* Orbe (FanverseCore) no slot central — 3× maior que os ícones
+ * (era 26px → 78px) pra ancorar o centro da navbar como elemento
+ * hero. Sai do fluxo (absolute) e fica centralizado sobre a própria
+ * coluna: assim o orbe gigante NÃO estica a altura do pill (o botão
+ * que o contém colapsa pro tamanho do padding, a row segue ~34px) e
+ * o orbe transborda ~13px acima/abaixo do pill. Cliques no orbe ainda
+ * disparam o onClick do botão pai (bolha de evento independe da
+ * geometria), então toda a área de 78px é clicável. */
 .navOrb {
-  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 78px;
+  height: 78px;
   border-radius: 999px;
   overflow: hidden;
 }
