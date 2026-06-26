@@ -1,108 +1,30 @@
-/* ── HEADER MOBILE — VARIAÇÃO 2 (reescrita do zero) ──────────
- * Etapa 1 — container: box preto translúcido flutuante, centralizado
- * no topo. Overlay fixo (não empurra o globo da home). */
+/* ── HEADER MOBILE — VARIAÇÃO 2 ──────────────────────────────
+ * Box flutuante no topo usando header-ana.png como background (arte
+ * completa: Ana + gradientes já embutidos). Por cima, só o conteúdo
+ * em texto (Fanverse / Ana Castela / Fanpoints) e o orbe. */
 .header {
   position: fixed;
   /* Flutuante (cantos arredondados em volta): mesma distância do topo
-   *  que nas laterais. 95% da largura → 2,5% de cada lado = 2.5vw; o
-   *  topo usa 2.5vw pra casar com esse respiro lateral. */
+   *  que nas laterais — 95% da largura → 2,5% de cada lado = 2.5vw. */
   top: 2.5vw;
   left: 50%;
   transform: translateX(-50%);
   width: 95%;
-  /* +12px (era 122px). */
   height: 134px;
   z-index: 5;
   border-radius: 16px;
   overflow: hidden;
-  /* Bem escuro com tom levemente azulado (em vez de preto puro) pra o
-   *  box se diferenciar sutilmente quando o fundo é o universo (preto),
-   *  e não o planeta. ~92% de opacidade. */
-  background: rgba(14, 14, 20, 0.92);
+  /* Imagem-arte cobrindo todo o box; cor escura de fallback atrás
+   *  (cantos transparentes do PNG). */
+  background: url('/header-ana.png') center / cover no-repeat
+    rgba(14, 14, 20, 0.92);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
-/* Imagem da Ana: mesma altura do box (100%), largura proporcional, a
- * 100px da extremidade direita do box. */
-.heroImg {
-  position: absolute;
-  top: 0;
-  /* 18px mais à frente (à direita): era 70px da borda direita. */
-  right: 52px;
-  height: 100%;
-  width: auto;
-  user-select: none;
-}
-
-/* Camada leve dark de cima pra baixo: preto a 60% de opacidade no topo,
- * some na base. */
-.topFade {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
-}
-
-/* Tint do canto superior-direito (~11h40 / 240°): lilás (#D900FF)
- * mesclado bem sutilmente com rosa, descendo até transparente. */
-.imgTint {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    240deg,
-    rgba(217, 0, 255, 0.2) 0%,
-    rgba(255, 64, 170, 0.16) 32%,
-    transparent 65%
-  );
-}
-
-/* Vinheta radial: transparente sobre o rosto (centro-direita ≈75%/36%),
- * escurecendo em direção às bordas — mantém o rosto iluminado e dá
- * gradiente nas bordas. Confinada ao box pelo overflow:hidden. */
-.imgGradient {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    120% 125% at 75% 36%,
-    transparent 0%,
-    transparent 38%,
-    rgba(0, 0, 0, 0.45) 68%,
-    rgba(0, 0, 0, 0.92) 100%
-  );
-}
-
-/* Fade preto inferior suave (grounding do texto) — só a base, sem
- * escurecer o rosto. Intensidade reduzida pra não competir com a vinheta. */
-.bottomFade {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(358deg, rgba(0, 0, 0, 0.55) 0%, transparent 48%);
-}
-
-/* Barra de gradiente no rodapé: preto na base subindo, confinada aos
- * 15% de baixo do box, com queda eased (stops adensados embaixo) pra o
- * topo da barra ser imperceptível. Acima da imagem, abaixo do texto. */
-.bottomBar {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.92) 0%,
-    rgba(0, 0, 0, 0.5) 6.5%,
-    rgba(0, 0, 0, 0.2) 13%,
-    transparent 19.5%
-  );
-}
-
-/* ── Conteúdo sobreposto (acima de todas as camadas) ─────────
- * Ancorado a 28px da borda esquerda e inferior, alinhado à esquerda. */
+/* ── Conteúdo sobreposto (acima da imagem) ───────────────────
+ * Ancorado embaixo-esquerda, alinhado à esquerda. */
 .content {
   position: absolute;
-  /* Mais à esquerda (28→20) e mais abaixo (22→18). */
   left: 20px;
   bottom: 18px;
   z-index: 2;
@@ -130,9 +52,8 @@
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-  /* Gradiente branco → cinza claro (#cccccc, mais próximo do branco) na
-   *  diagonal vindo de ~22h20 (≈130deg). Recortado no texto via
-   *  background-clip; fallback branco. */
+  /* Gradiente branco → cinza claro na diagonal (~130deg), recortado no
+   *  texto via background-clip; fallback branco. */
   background-image: linear-gradient(130deg, #ffffff 0%, #cccccc 100%);
   color: #fff;
   -webkit-background-clip: text;
@@ -145,7 +66,6 @@
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
-  /* Mais perto do nome (cancela o gap de 3px do .content e puxa +1px). */
   margin-top: -4px;
   padding: 0;
   border: none;
@@ -173,16 +93,12 @@
   color: #fff;
 }
 
-/* Orbe — 28px da extremidade direita, centralizado verticalmente,
- * acima de todas as camadas. */
+/* Orbe — canto inferior-direito, acima da imagem. */
 .orb {
   position: absolute;
-  /* Canto inferior-direito; mais abaixo (por cima da barra de rodapé)
-   *  e mais ao lado direito. */
   bottom: 10px;
   right: 14px;
   z-index: 3;
-  /* +20% (era 74px). */
   width: 89px;
   height: 89px;
   padding: 0;

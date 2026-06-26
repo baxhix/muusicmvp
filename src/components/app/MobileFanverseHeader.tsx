@@ -6,16 +6,13 @@ import { useRanking } from '@/hooks/useRanking';
 import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
 
-/** Imagem da Ana dentro do box. */
-const HEADER_IMAGE = '/ana-header-mobile.png';
-
 /**
- * Header mobile — VARIAÇÃO 2 (A/B). Reescrita do zero.
+ * Header mobile — VARIAÇÃO 2 (A/B).
  *
- * Box preto translúcido (95% × 136px, cantos 32px) com a imagem da Ana +
- * camadas de gradiente e, por cima de tudo, o conteúdo: Fanverse / Ana
- * Castela / Fanpoints + Top1 (ancorado embaixo-esquerda) e o orbe à
- * direita.
+ * Box flutuante (95% × 134px, cantos 16px) com `header-ana.png` como
+ * background (arte completa: Ana + gradientes já embutidos) e, por cima,
+ * só o conteúdo em texto: Fanverse / Ana Castela / Fanpoints + Top1
+ * (ancorado embaixo-esquerda) e o orbe à direita.
  *
  * Gatilhos reaproveitados:
  *   - orbe → `app:open-fanverse-search`
@@ -49,28 +46,7 @@ export default function MobileFanverseHeader() {
 
   return (
     <header className={styles.header} aria-label="Fanverse Ana Castela">
-      {/* Imagem da Ana — mesma altura do box, a 70px da borda direita. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={HEADER_IMAGE} alt="Ana Castela" className={styles.heroImg} />
-
-      {/* Camada leve dark de cima pra baixo (preto a 60% de opacidade no
-       *  topo, some na base). */}
-      <div className={styles.topFade} aria-hidden="true" />
-
-      {/* Vinheta radial: clara sobre o rosto (centro-direita), escura nas
-       *  bordas — deixa o rosto iluminado e as bordas com gradiente. */}
-      <div className={styles.imgGradient} aria-hidden="true" />
-      {/* Fade preto inferior (grounding do texto). */}
-      <div className={styles.bottomFade} aria-hidden="true" />
-      {/* Tint roxo/rosa no canto superior-direito — por cima das pretas. */}
-      <div className={styles.imgTint} aria-hidden="true" />
-
-      {/* Barra de gradiente preto no rodapé (bottom 15%), de baixo pra
-       *  cima com queda suave (fim imperceptível). Acima da imagem,
-       *  abaixo do texto. */}
-      <div className={styles.bottomBar} aria-hidden="true" />
-
-      {/* Conteúdo — acima de tudo, ancorado embaixo-esquerda. */}
+      {/* Conteúdo — acima da imagem de background, ancorado embaixo-esquerda. */}
       <div className={styles.content}>
         <span className={styles.eyebrow}>Fanverse</span>
         <div className={styles.titleRow}>
