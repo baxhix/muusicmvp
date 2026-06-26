@@ -22,26 +22,6 @@
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
-/* Borda só na lateral esquerda — 1px com gradiente cinza → cinza um
- * pouco mais claro a 40% de opacidade, pra reforçar a diferenciação do
- * box com o fundo. Fica acima das camadas (z-index alto), recortada
- * pelos cantos arredondados (overflow:hidden do .header). */
-.header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 1px;
-  z-index: 4;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(150, 150, 150, 0.4) 0%,
-    rgba(210, 210, 210, 0.4) 100%
-  );
-}
-
 /* Imagem da Ana: mesma altura do box (100%), largura proporcional, a
  * 100px da extremidade direita do box. */
 .heroImg {
