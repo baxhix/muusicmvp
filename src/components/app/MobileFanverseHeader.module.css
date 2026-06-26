@@ -4,12 +4,12 @@
 .header {
   position: fixed;
   /* Flutuante (cantos arredondados em volta): mesma distância do topo
-   *  que nas laterais. 90% da largura → 5% de cada lado = 5vw; o topo
-   *  usa 5vw pra casar com esse respiro lateral. */
-  top: 5vw;
+   *  que nas laterais. 95% da largura → 2,5% de cada lado = 2.5vw; o
+   *  topo usa 2.5vw pra casar com esse respiro lateral. */
+  top: 2.5vw;
   left: 50%;
   transform: translateX(-50%);
-  width: 90%;
+  width: 95%;
   /* −30% da altura (era 194px). */
   height: 136px;
   z-index: 5;
