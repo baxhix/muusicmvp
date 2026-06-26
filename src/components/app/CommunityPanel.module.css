@@ -17,7 +17,7 @@
   /* Envelope flutuante IGUAL ao drawer Minha Conta (e ao painel de
    * Chat): recuo 34px topo/lateral-direita/base, 350px, cantos 22,
    * borda completa + sombra omnidirecional. */
-  top: 34px;
+  top: 54px; /* abaixo da barra do topo (46px) no desktop */
   right: 34px;
   bottom: 34px;
   height: auto;

@@ -6,7 +6,7 @@
    * tamanho — lê como "dentro do mesmo bloco". Desliza da direita via
    * `right` (o override mobile abaixo vira full-screen e continua
    * usando `right`, então não há conflito de transform). */
-  top: 34px;
+  top: 54px; /* abaixo da barra do topo (46px) no desktop */
   bottom: 34px;
   height: auto;
   right: -400px;

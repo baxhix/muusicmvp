@@ -184,15 +184,6 @@ function Shell({ children }: { children: React.ReactNode }) {
   const chatDetailOpen =
     pathname.startsWith('/app/chat') && chat.activeId !== null;
   const hideShellChrome = chatDetailOpen && isMobile;
-  /* Drawer de Chat ou Comunidades aberto (rotas /app/chat e
-   * /app/comunidades). Agora que esses painéis viraram drawers
-   * flutuantes (estilo Minha Conta, recuo 34px à direita), o dock
-   * de conversas recentes ao lado vira redundância visual — some
-   * enquanto o drawer está aberto. Per product feedback "não tem
-   * porque a lista aparecer e ainda sim as conversas recentes
-   * aparecerem ao lado". */
-  const chatOrCommunityDrawerOpen =
-    pathname.startsWith('/app/chat') || pathname.startsWith('/app/comunidades');
 
   const communityDrawerOpen = pathname.startsWith('/app/comunidades');
   /* Drawer de Chat (lista) aberto SEM uma conversa específica aberta. */
@@ -244,16 +235,10 @@ function Shell({ children }: { children: React.ReactNode }) {
       {/* App shell (TopBar + map layer + BottomNav). Routes render
        *  inside `.mapLayer` via {children}. */}
       <div className={styles.shell}>
-        {/* Véu lateral direito — DENTRO do .shell (que é um contexto de
-         *  empilhamento próprio, z:55), junto do sino+avatar (z:200) e
-         *  dos drawers (z:240). Aqui o veil (z:230) fica ATRÁS do drawer
-         *  e à FRENTE do avatar, ofuscando a fração de avatar que aparece
-         *  no recuo de 34px à direita. Se ficasse fora do shell (root),
-         *  z:230 > shell z:55 e ele pintava NA FRENTE do drawer. Só
-         *  desktop; no mobile a .userMenu some e o drawer é fullscreen. */}
-        {!isMobile && chatOrCommunityDrawerOpen && (
-          <div className={styles.chatDrawerVeil} aria-hidden="true" />
-        )}
+        {/* (Véu lateral direito removido — existia só pra ofuscar o
+         *  avatar flutuante do topo-direito quando Chat/Comunidades
+         *  abriam. Esse avatar saiu do desktop pra DesktopTopBar, então
+         *  o blur sobre a imagem do usuário não é mais necessário.) */}
         {!hideShellChrome && (
           <div className={fadeClass(5)}>
             <TopBar
