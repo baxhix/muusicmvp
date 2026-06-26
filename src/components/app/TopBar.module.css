@@ -1414,3 +1414,10 @@
   color: rgba(245,245,247,0.35);
   border-color: rgba(255,255,255,0.05);
 }
+
+/* Desktop: o avatar+sino flutuante saiu pra DesktopTopBar (barra fixa
+ * no topo). O drawer continua montado (portal) e abre via evento
+ * `app:open-account-drawer`. No mobile o .userMenu já é oculto acima. */
+@media (min-width: 769px) {
+  .userMenu { display: none; }
+}

@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useNotificationsLive } from '@/hooks/useNotificationsLive';
 import BottomNav from '@/components/app/BottomNav';
 import TopBar from '@/components/app/TopBar';
+import DesktopTopBar from '@/components/app/DesktopTopBar';
 import ArtistBox from '@/components/app/ArtistBox';
 import DesktopTopBanner from '@/components/app/DesktopTopBanner';
 import LiveChatStack from '@/components/app/LiveChatStack';
@@ -264,6 +265,10 @@ function Shell({ children }: { children: React.ReactNode }) {
               onEditProfileOpen={() => setShowEditProfile(true)}
               onDeleteAccountOpen={() => router.push('/app/perfil')}
             />
+            {/* Barra superior fixa do desktop (avatar + sino + atalhos).
+             *  Oculta no mobile via CSS; o TopBar flutuante atrás dela
+             *  fica oculto no desktop (ver TopBar.module.css). */}
+            <DesktopTopBar />
           </div>
         )}
 
