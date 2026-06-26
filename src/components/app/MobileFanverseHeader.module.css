@@ -13,12 +13,12 @@
   /* Altura reduzida −10% (era 136px). */
   height: 122px;
   z-index: 5;
-  border-radius: 32px;
+  border-radius: 16px;
   overflow: hidden;
-  /* Cinza-escuro levemente azulado (em vez de preto puro) pra o box se
-   *  diferenciar sutilmente quando o fundo é o universo (preto), e não
-   *  o planeta. ~90% de opacidade. */
-  background: rgba(28, 28, 36, 0.9);
+  /* Bem escuro com tom levemente azulado (em vez de preto puro) pra o
+   *  box se diferenciar sutilmente quando o fundo é o universo (preto),
+   *  e não o planeta. ~92% de opacidade. */
+  background: rgba(14, 14, 20, 0.92);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
@@ -93,8 +93,8 @@
  * Ancorado a 28px da borda esquerda e inferior, alinhado à esquerda. */
 .content {
   position: absolute;
-  /* 4px mais à esquerda (28→24) e mais abaixo (22→18). */
-  left: 24px;
+  /* Mais à esquerda (28→20) e mais abaixo (22→18). */
+  left: 20px;
   bottom: 18px;
   z-index: 2;
   display: flex;
