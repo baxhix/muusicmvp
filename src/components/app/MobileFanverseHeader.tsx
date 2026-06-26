@@ -7,7 +7,7 @@ import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
 
 /** Arte completa do header (composição pronta — fundo + Ana + gradiente). */
-const HEADER_IMAGE = '/header.png';
+const HEADER_IMAGE = '/header.webp';
 
 /**
  * Header mobile — VARIAÇÃO 2 (A/B).
