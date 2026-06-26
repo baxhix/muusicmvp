@@ -3,9 +3,10 @@
  * no topo. Overlay fixo (não empurra o globo da home). */
 .header {
   position: fixed;
-  /* Flutuante (cantos arredondados em volta): pequeno respiro do topo
-   *  e centralizado horizontalmente (80% da largura → 10% de cada lado). */
-  top: 12px;
+  /* Flutuante (cantos arredondados em volta): mesma distância do topo
+   *  que nas laterais. 80% da largura → 10% de cada lado = 10vw; o topo
+   *  usa 10vw pra casar com esse respiro lateral. */
+  top: 10vw;
   left: 50%;
   transform: translateX(-50%);
   width: 80%;

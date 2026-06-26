@@ -16,8 +16,8 @@
   backdrop-filter: blur(10px);
 }
 .toggleLow {
-  /* Abaixo do card flutuante da Opção 2 (top 12 + 194 = base 206). */
-  top: 214px;
+  /* Acompanha a base do card flutuante da Opção 2 (top 10vw + 194 + 8). */
+  top: calc(10vw + 202px);
 }
 
 .seg {
