@@ -12,6 +12,7 @@ const HEADER_IMAGES = [
   '/ana-01-header.webp',
   '/ana-02-header.webp',
   '/ana-03-header.webp',
+  '/ana-04-header.png',
 ];
 const HEADER_ROTATE_MS = 15000;
 

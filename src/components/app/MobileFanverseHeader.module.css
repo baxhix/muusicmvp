@@ -58,10 +58,10 @@
   height: 100%;
   /* `contain` em vez de `cover`: as imagens (todas menos largas que
    *  o header) aparecem INTEIRAS encostando na altura do header, sem
-   *  corte vertical, sobre o fundo black. Ancoradas à esquerda pra
-   *  Ana ficar longe do orbe (direita). */
+   *  corte vertical, sobre o fundo black. Centralizadas no header
+   *  per feedback. */
   object-fit: contain;
-  object-position: left center;
+  object-position: center;
   user-select: none;
   /* Crossfade entre as 3 imagens (a ativa recebe .heroImgActive). */
   opacity: 0;
@@ -98,11 +98,11 @@
   min-width: 0;
 }
 .eyebrow {
+  /* Mesmo estilo da palavra "Fanpoints" (.metaLabel), per feedback. */
   font-family: var(--sans);
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(245, 245, 247, 0.78);
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.58);
 }
 .titleRow {
   display: flex;
@@ -115,7 +115,8 @@
 }
 .title {
   font-family: 'Borscha', serif;
-  font-size: 26px;
+  /* +3px per feedback (era 26px). */
+  font-size: 29px;
   font-weight: 700;
   line-height: 1;
   color: #fff;
