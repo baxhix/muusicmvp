@@ -8,7 +8,7 @@
   top: 2.5vw;
   left: 50%;
   transform: translateX(-50%);
-  width: 95%;
+  width: 90%;
   /* A imagem-arte (header-ana.png, 1179×514) É o box: aspect-ratio casa
    *  com o PNG pra mostrar a imagem inteira, sem corte. O PNG já tem
    *  cantos arredondados + fundo próprios, então nada de caixa/sombra

@@ -17,8 +17,8 @@
 }
 .toggleLow {
   /* Acompanha a base do header da Opção 2: top 2.5vw + altura da imagem
-   *  (95vw × 514/1179 ≈ 41.4vw) + 8px de respiro. */
-  top: calc(43.9vw + 8px);
+   *  (90vw × 514/1179 ≈ 39.2vw) + 8px de respiro. */
+  top: calc(41.7vw + 8px);
 }
 
 .seg {
