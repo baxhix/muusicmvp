@@ -1,106 +1,20 @@
-/* ── HEADER MOBILE — VARIAÇÃO 2 ──────────────────────────────
- * Box flutuante no topo usando header-ana.png como background (arte
- * completa: Ana + gradientes já embutidos). Por cima, só o conteúdo
- * em texto (Fanverse / Ana Castela / Fanpoints) e o orbe. */
+/* ── HEADER MOBILE — VARIAÇÃO 2 (recriação) ──────────────────
+ * Etapa 1 — container: box dark flutuante no topo. Overlay fixo (não
+ * empurra o globo da home). Full-width respeitando 28px de padding nas
+ * laterais e no topo. */
 .header {
   position: fixed;
-  /* Flutuante: mesma distância do topo que nas laterais (2.5vw). */
-  top: 2.5vw;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  /* A imagem-arte (header-ana.png, 1179×514) É o box: aspect-ratio casa
-   *  com o PNG pra mostrar a imagem inteira, sem corte. O PNG já tem
-   *  cantos arredondados + fundo próprios, então nada de caixa/sombra
-   *  extra atrás (era isso que gerava o "segundo box"). */
-  aspect-ratio: 1179 / 514;
+  top: 28px;
+  left: 28px;
+  right: 28px;
+  /* Altura placeholder — ajustável quando o conteúdo entrar. */
+  height: 134px;
   z-index: 5;
-  background: url('/header-ana.png') center / cover no-repeat;
-}
-
-/* ── Conteúdo sobreposto (acima da imagem) ───────────────────
- * Ancorado embaixo-esquerda, alinhado à esquerda. */
-.content {
-  position: absolute;
-  left: 20px;
-  bottom: 18px;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  min-width: 0;
-}
-.eyebrow {
-  /* "Fanverse" em Inter regular, cinza ~#838383. */
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 400;
-  color: #838383;
-}
-.titleRow {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-.title {
-  font-family: 'Borscha', serif;
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-  /* Gradiente branco → cinza claro na diagonal (~130deg), recortado no
-   *  texto via background-clip; fallback branco. */
-  background-image: linear-gradient(130deg, #ffffff 0%, #cccccc 100%);
-  color: #fff;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Linha secundária — Fanpoints + Top 1 (toca = abre Ranking Fanverse). */
-.meta {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  /* +3px de respiro em relação a "Ana Castela" (era -4px). */
-  margin-top: -1px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-}
-.metaValue {
-  /* Número de Fanpoints — cinza, regular. */
-  font-size: 12px;
-  font-weight: 400;
-  color: #838383;
-  font-variant-numeric: tabular-nums;
-}
-.metaLabel {
-  /* "Fanpoints" — cinza, regular. */
-  font-size: 12px;
-  font-weight: 400;
-  color: #838383;
-}
-.metaRank {
-  /* "Top1" — branco, bold. */
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-}
-
-/* Orbe — canto inferior-direito, acima da imagem. */
-.orb {
-  position: absolute;
-  bottom: 10px;
-  right: 14px;
-  z-index: 3;
-  width: 89px;
-  height: 89px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
+  border-radius: 16px;
+  /* Box dark translúcido (~92% de opacidade). */
+  background: rgba(14, 14, 20, 0.92);
+  /* Borda 1px cinza, um pouco mais clara que o fundo. */
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  /* Sombra externa pra profundidade. */
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }

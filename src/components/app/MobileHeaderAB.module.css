@@ -16,9 +16,8 @@
   backdrop-filter: blur(10px);
 }
 .toggleLow {
-  /* Opção 2 não tem header — o controle fica no topo (mesma distância
-   *  do topo que as laterais usavam: 2.5vw). */
-  top: 2.5vw;
+  /* Acompanha a base do box da Opção 2: top 28 + altura 134 + 8 de respiro. */
+  top: 170px;
 }
 
 .seg {
