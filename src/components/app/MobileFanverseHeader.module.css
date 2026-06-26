@@ -1,16 +1,17 @@
 /* ── HEADER MOBILE — VARIAÇÃO 2 ──────────────────────────────
- * Card "Fanverse Ana Castela" adaptado pro mobile: imagem da Ana
- * à esquerda, gradiente preto pra contraste, conteúdo sobreposto
- * embaixo à esquerda e orbe à direita. Overlay fixo no topo (não
- * empurra o conteúdo da home, que é o globo em tela cheia). */
+ * Agora é APENAS a arte (header.webp) como background full-bleed —
+ * sem conteúdo sobreposto (texto/Fanpoints/orbe removidos). Overlay
+ * fixo no topo (não empurra o globo da home, em tela cheia). */
 .header {
   position: fixed;
   /* Colado no topo e nas laterais; só a base arredondada. */
   top: 0;
   left: 0;
   right: 0;
-  /* Mais alto pra caber o box (top 90px) + título 42px + Fanpoints. */
-  height: 184px;
+  /* Altura ≈ proporção da arte (618×251 ≈ 2,46:1) numa largura típica
+   *  de mobile (~390px) — mostra a imagem quase inteira; o `cover`
+   *  apara só uma fração nas demais larguras. */
+  height: 158px;
   z-index: 5;
   /* Mesmo raio da Opção 1 (MobileHomeChrome): cantos inferiores 40px. */
   border-radius: 0 0 40px 40px;
@@ -19,144 +20,12 @@
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
 }
 
-/* Borda inferior com gradiente parcial — idêntica à Opção 1
- * (MobileHomeChrome `.chrome::after`): anel confinado aos 33% de baixo. */
-.header::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  border: 1px solid transparent;
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(168, 85, 247, 0.55) 2%,
-    rgba(236, 72, 153, 0.8) 50%,
-    rgba(168, 85, 247, 0.55) 98%,
-    transparent 100%
-  );
-  background-position: 0 100%;
-  background-size: 100% 33%;
-  background-repeat: no-repeat;
-  background-origin: border-box;
-  background-clip: border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  z-index: 3;
-}
-
 .heroImg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  /* Arte completa do header como background full-bleed: preenche o
-   *  header inteiro (corta um pouco as laterais quando o aspecto da
-   *  tela difere do da arte). */
   object-fit: cover;
   object-position: center;
   user-select: none;
-}
-.heroImgActive {
-  opacity: 1;
-}
-
-/* Conteúdo sobreposto — ancorado no topo-esquerdo (32px da esquerda,
- * 90px do topo), sobre a área escura da arte. */
-.content {
-  position: absolute;
-  left: 32px;
-  top: 90px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  min-width: 0;
-}
-.eyebrow {
-  /* "Fanverse" em Inter regular, cinza ~#838383 per feedback. */
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 400;
-  color: #838383;
-}
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.verified {
-  flex-shrink: 0;
-}
-.title {
-  font-family: 'Borscha', serif;
-  font-size: 42px;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-  /* Gradiente branco → cinza (#999999) na diagonal vindo de ~22h20
-   *  (canto superior-esquerdo → inferior-direito ≈ 130deg). Recortado
-   *  no texto via background-clip. Fallback branco se não suportado. */
-  background-image: linear-gradient(130deg, #ffffff 0%, #999999 100%);
-  color: #fff;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Linha secundária — Fanpoints + rank (toca = abre Ranking Fanverse). */
-.meta {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  margin-top: 3px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-}
-.metaValue {
-  /* Número de Fanpoints — cinza, regular. */
-  font-size: 12px;
-  font-weight: 400;
-  color: #838383;
-  font-variant-numeric: tabular-nums;
-}
-.metaLabel {
-  /* "Fanpoints" — cinza, regular. */
-  font-size: 12px;
-  font-weight: 400;
-  color: #838383;
-}
-.metaRank {
-  /* "Top1" — branco, bold. */
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-}
-
-/* Orbe à direita — mesma linguagem do desktop. */
-.orb {
-  position: absolute;
-  /* 16px mais abaixo do centro vertical do header. */
-  top: calc(50% + 16px);
-  /* 32px da extremidade direita per feedback. */
-  right: 32px;
-  transform: translateY(-50%);
-  width: 74px;
-  height: 74px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  z-index: 2;
 }
