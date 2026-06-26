@@ -1,20 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
 import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
 
-/** Imagens da Ana que se alternam no header (crossfade a cada 15s). */
-const HEADER_IMAGES = [
-  '/ana-01-header.webp',
-  '/ana-02-header.webp',
-  '/ana-03-header.webp',
-  '/ana-04-header.png',
-];
-const HEADER_ROTATE_MS = 15000;
+/** Imagem fixa da Ana no header (sem transição automática). */
+const HEADER_IMAGE = '/ana-01-header.webp';
 
 /**
  * Header mobile — VARIAÇÃO 2 (A/B).
@@ -38,15 +31,6 @@ export default function MobileFanverseHeader() {
   const myRank = user ? ranking.findIndex((r) => r.userId === user.id) + 1 : 0;
   const rankBadge = myRank === 1 ? '(Top 1!)' : myRank > 1 ? `(#${myRank}º)` : '';
 
-  // Alterna as 3 imagens da Ana a cada 15s (crossfade via CSS).
-  const [imgIdx, setImgIdx] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setImgIdx((i) => (i + 1) % HEADER_IMAGES.length);
-    }, HEADER_ROTATE_MS);
-    return () => window.clearInterval(id);
-  }, []);
-
   const openSearch = () => {
     try {
       window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
@@ -66,17 +50,13 @@ export default function MobileFanverseHeader() {
 
   return (
     <header className={styles.header}>
-      {/* 3 imagens da Ana empilhadas; só a ativa fica visível (crossfade). */}
-      {HEADER_IMAGES.map((src, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={src}
-          src={src}
-          alt="Ana Castela"
-          aria-hidden={i === imgIdx ? undefined : true}
-          className={`${styles.heroImg} ${i === imgIdx ? styles.heroImgActive : ''}`}
-        />
-      ))}
+      {/* Imagem fixa da Ana (sem transição automática). */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={HEADER_IMAGE}
+        alt="Ana Castela"
+        className={`${styles.heroImg} ${styles.heroImgActive}`}
+      />
       {/* Gradiente preto pra legibilidade (base + esquerda). */}
       <div className={styles.overlay} aria-hidden="true" />
 
