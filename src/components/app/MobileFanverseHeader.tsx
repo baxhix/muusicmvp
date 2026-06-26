@@ -61,6 +61,11 @@ export default function MobileFanverseHeader() {
       {/* Tint roxo/rosa no canto superior-direito — por cima das pretas. */}
       <div className={styles.imgTint} aria-hidden="true" />
 
+      {/* Barra de gradiente preto no rodapé (bottom 15%), de baixo pra
+       *  cima com queda suave (fim imperceptível). Acima da imagem,
+       *  abaixo do texto. */}
+      <div className={styles.bottomBar} aria-hidden="true" />
+
       {/* Conteúdo — acima de tudo, ancorado embaixo-esquerda. */}
       <div className={styles.content}>
         <span className={styles.eyebrow}>Fanverse</span>
