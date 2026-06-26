@@ -24,6 +24,8 @@ export default function DesktopTopBar() {
   const { activeOverlay, setActiveOverlay } = useAppShell();
   const avatar = user?.avatarUrl ?? '/avatar-placeholder.svg';
   const notifOpen = activeOverlay === 'notifications';
+  // Visível no mapa (location_consent) → bolinha verde; senão cinza.
+  const online = Boolean(user?.locationConsent);
 
   const openDrawer = () =>
     window.dispatchEvent(new CustomEvent('app:open-account-drawer'));
@@ -72,22 +74,41 @@ export default function DesktopTopBar() {
             <path
               d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
               stroke="currentColor"
-              strokeWidth="1.6"
+              strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
         </button>
 
-        {/* Avatar do usuário logado — abre o mesmo drawer "Minha conta". */}
+        {/* Avatar do usuário logado — borda + bolinha on/offline +
+            seta pra baixo (affordance de clicável). Abre o drawer. */}
         <button
           type="button"
           className={styles.avatarBtn}
           onClick={openDrawer}
           aria-label="Minha conta"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatar} alt="" className={styles.avatarImg} />
+          <span className={styles.avatarWrap}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={avatar} alt="" className={styles.avatarImg} />
+            <span
+              className={`${styles.onlineDot} ${online ? '' : styles.onlineDotOff}`}
+              aria-hidden="true"
+            />
+          </span>
+          <svg
+            className={styles.chevron}
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 6l4 4 4-4" />
+          </svg>
         </button>
       </nav>
     </header>
