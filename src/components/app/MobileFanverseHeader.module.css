@@ -34,6 +34,15 @@
   user-select: none;
 }
 
+/* Camada leve dark de cima pra baixo: preto a 60% de opacidade no topo,
+ * some na base. */
+.topFade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+}
+
 /* Tint do canto superior-direito (~11h40 / 240°): lilás (#D900FF)
  * mesclado bem sutilmente com rosa, descendo até transparente. */
 .imgTint {

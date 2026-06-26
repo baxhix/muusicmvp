@@ -53,6 +53,10 @@ export default function MobileFanverseHeader() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={HEADER_IMAGE} alt="Ana Castela" className={styles.heroImg} />
 
+      {/* Camada leve dark de cima pra baixo (preto a 60% de opacidade no
+       *  topo, some na base). */}
+      <div className={styles.topFade} aria-hidden="true" />
+
       {/* Vinheta radial: clara sobre o rosto (centro-direita), escura nas
        *  bordas — deixa o rosto iluminado e as bordas com gradiente. */}
       <div className={styles.imgGradient} aria-hidden="true" />

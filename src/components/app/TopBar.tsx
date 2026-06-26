@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
@@ -297,32 +296,7 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
    * `activeOverlay === 'notifications'` que o BottomNav usava antes;
    * o NotificationBell component continua escutando esse flag
    * pra abrir/fechar o painel correspondente. */
-  const { activeOverlay, setActiveOverlay, setFeedOpen } = useAppShell();
-  const notifOpen = activeOverlay === 'notifications';
-
-  /* Variante do header mobile (A/B). Quando a Opção 2 (Fanverse) está
-   * ativa na home, o coração de notificações sai do topo per product
-   * feedback "remova o coração do header na opção dois" — o orbe do
-   * próprio header já ocupa o canto superior-direito. Lê do mesmo
-   * localStorage do MobileHeaderAB e reage ao evento de troca. */
-  const pathname = usePathname();
-  const [headerVariant, setHeaderVariant] = useState<'option1' | 'option2'>('option1');
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('fanverse:mobile-header-variant');
-      if (saved === 'option1' || saved === 'option2') setHeaderVariant(saved);
-    } catch {
-      /* localStorage indisponível */
-    }
-    const onVariant = (e: Event) => {
-      const v = (e as CustomEvent<'option1' | 'option2'>).detail;
-      if (v === 'option1' || v === 'option2') setHeaderVariant(v);
-    };
-    window.addEventListener('app:mobile-header-variant', onVariant);
-    return () => window.removeEventListener('app:mobile-header-variant', onVariant);
-  }, []);
-  // Esconde o coração só na home (/app) com a Opção 2 ativa, no mobile.
-  const hideHeart = isMobile && pathname === '/app' && headerVariant === 'option2';
+  const { setFeedOpen } = useAppShell();
 
   /* Toggles de exibição (persistidos via useDisplaySetting →
    * localStorage + CustomEvent). Per product feedback "controle
@@ -499,42 +473,6 @@ export default function TopBar({ onProfileOpen, onEditProfileOpen, onDeleteAccou
         aria-expanded={open}
         aria-label="Menu do usuário"
       >
-        {/* Bell de notificações — à esquerda do avatar per product
-         * feedback. stopPropagation no click impede que o handler
-         * do userMenu wrapper (abrir drawer) dispare junto.
-         * `data-overlay-toggle="notifications"` é o marker que o
-         * NotificationBell escuta pra ignorar outside-click neste
-         * trigger (evita flap aberto/fechado).
-         *
-         * Oculto na home com a Opção 2 do header (hideHeart) per
-         * feedback "remova o coração do header na opção dois". */}
-        {!hideHeart && (
-          <button
-            type="button"
-            className={`${styles.notifBtn} ${notifOpen ? styles.notifBtnActive : ''}`}
-            data-overlay-toggle="notifications"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveOverlay((curr) =>
-                curr === 'notifications' ? null : 'notifications',
-              );
-            }}
-            aria-label={notifOpen ? 'Fechar notificações' : 'Abrir notificações'}
-            aria-pressed={notifOpen}
-          >
-            {/* Ícone de coração (era sino) — per feedback "no desktop,
-             *  substitua o ícone de notificações pelo de coração". */}
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        )}
         <div className={styles.avatar}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
