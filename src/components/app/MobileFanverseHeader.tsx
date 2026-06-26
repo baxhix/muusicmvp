@@ -9,9 +9,9 @@ import styles from './MobileFanverseHeader.module.css';
 /**
  * Header mobile — VARIAÇÃO 2 (A/B).
  *
- * Box flutuante (95% × 134px, cantos 16px) com `header-ana.png` como
- * background (arte completa: Ana + gradientes já embutidos) e, por cima,
- * só o conteúdo em texto: Fanverse / Ana Castela / Fanpoints + Top1
+ * A própria `header-ana.png` (arte completa: Ana + gradientes + cantos)
+ * É o box — container com aspect-ratio da imagem, sem caixa extra. Por
+ * cima, só o conteúdo em texto: Fanverse / Ana Castela / Fanpoints + Top1
  * (ancorado embaixo-esquerda) e o orbe à direita.
  *
  * Gatilhos reaproveitados:

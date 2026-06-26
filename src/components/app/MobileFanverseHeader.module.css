@@ -4,21 +4,18 @@
  * em texto (Fanverse / Ana Castela / Fanpoints) e o orbe. */
 .header {
   position: fixed;
-  /* Flutuante (cantos arredondados em volta): mesma distância do topo
-   *  que nas laterais — 95% da largura → 2,5% de cada lado = 2.5vw. */
+  /* Flutuante: mesma distância do topo que nas laterais (2.5vw). */
   top: 2.5vw;
   left: 50%;
   transform: translateX(-50%);
   width: 95%;
-  height: 134px;
+  /* A imagem-arte (header-ana.png, 1179×514) É o box: aspect-ratio casa
+   *  com o PNG pra mostrar a imagem inteira, sem corte. O PNG já tem
+   *  cantos arredondados + fundo próprios, então nada de caixa/sombra
+   *  extra atrás (era isso que gerava o "segundo box"). */
+  aspect-ratio: 1179 / 514;
   z-index: 5;
-  border-radius: 16px;
-  overflow: hidden;
-  /* Imagem-arte cobrindo todo o box; cor escura de fallback atrás
-   *  (cantos transparentes do PNG). */
-  background: url('/header-ana.png') center / cover no-repeat
-    rgba(14, 14, 20, 0.92);
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+  background: url('/header-ana.png') center / cover no-repeat;
 }
 
 /* ── Conteúdo sobreposto (acima da imagem) ───────────────────
