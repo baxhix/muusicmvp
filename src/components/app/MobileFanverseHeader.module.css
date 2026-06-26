@@ -4,17 +4,21 @@
  * laterais e no topo. */
 .header {
   position: fixed;
-  top: 28px;
-  left: 28px;
-  right: 28px;
-  /* Altura placeholder — ajustável quando o conteúdo entrar. */
-  height: 134px;
+  top: 22px;
+  left: 22px;
+  right: 22px;
+  /* Altura -20% (era 134px). */
+  height: 107px;
   z-index: 5;
   border-radius: 16px;
-  /* Box dark translúcido (~92% de opacidade). */
-  background: rgba(14, 14, 20, 0.92);
-  /* Borda 1px cinza, um pouco mais clara que o fundo. */
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  /* Box bem dark, translúcido o suficiente pra o blur do fundo aparecer. */
+  background: rgba(8, 8, 12, 0.86);
+  /* Borda 1px cinza escura (mais escura que antes). */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Frosted glass: desfoca o que está atrás (globo). -webkit antes do
+   *  padrão senão o lightningcss do Next descarta a propriedade. */
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   /* Sombra externa pra profundidade. */
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
