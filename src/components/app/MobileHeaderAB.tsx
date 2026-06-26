@@ -8,6 +8,17 @@ import styles from './MobileHeaderAB.module.css';
 
 type Variant = 'option1' | 'option2';
 const STORAGE_KEY = 'fanverse:mobile-header-variant';
+/** Evento disparado quando a variante muda — o TopBar escuta pra
+ *  esconder o coração de notificações quando a Opção 2 está ativa. */
+const VARIANT_EVENT = 'app:mobile-header-variant';
+
+function broadcastVariant(v: Variant) {
+  try {
+    window.dispatchEvent(new CustomEvent(VARIANT_EVENT, { detail: v }));
+  } catch {
+    /* SSR */
+  }
+}
 
 /**
  * Switch A/B do header MOBILE da home (/app).
@@ -27,7 +38,10 @@ export default function MobileHeaderAB() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'option1' || saved === 'option2') setVariant(saved);
+      if (saved === 'option1' || saved === 'option2') {
+        setVariant(saved);
+        broadcastVariant(saved);
+      }
     } catch {
       /* localStorage indisponível */
     }
@@ -35,6 +49,7 @@ export default function MobileHeaderAB() {
 
   const choose = (v: Variant) => {
     setVariant(v);
+    broadcastVariant(v);
     try {
       localStorage.setItem(STORAGE_KEY, v);
     } catch {
