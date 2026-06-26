@@ -202,8 +202,9 @@ export default function MobileFanverseSheet({
         <span className={sheetStyles.foldEyebrow}>Fanverse</span>
         <div className={sheetStyles.foldTitleRow}>
           <div className={sheetStyles.foldTitle}>
-            <span className={sheetStyles.foldTitleName}>Ana Castela</span>
+            {/* Selo de verificado à FRENTE do nome (per feedback). */}
             <VerifiedBadge size={22} className={sheetStyles.foldVerified} />
+            <span className={sheetStyles.foldTitleName}>Ana Castela</span>
           </div>
           {/* Orb agora é CLICÁVEL — abre o overlay FanverseSearch
            * ("Analisando atividade do mundo"). Mesmo padrão do
@@ -504,7 +505,7 @@ function MobileRankingList() {
               >
                 {/* Rank uniforme #N pra todos (inclusive top3). */}
                 <span className={sheetStyles.rankingRank}>
-                  {`#${rank}`}
+                  {rank === 1 ? '👑' : `#${rank}`}
                 </span>
 
                 {/* Avatar + presence dot. */}

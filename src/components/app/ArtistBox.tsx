@@ -391,8 +391,9 @@ export default function ArtistBox() {
               <span className={styles.foldEyebrow}>Fanverse</span>
               <div className={styles.foldTitleRow}>
                 <div className={styles.foldTitle}>
-                  <span className={styles.foldTitleName}>Ana Castela</span>
+                  {/* Selo de verificado à FRENTE do nome (per feedback). */}
                   <VerifiedBadge size={18} className={styles.foldVerified} />
+                  <span className={styles.foldTitleName}>Ana Castela</span>
                 </div>
               </div>
               <div className={styles.metaRow}>
@@ -1011,7 +1012,7 @@ export function RankingTabContent() {
                 {/* Identificação do rank uniforme pra todos (#1, #2,
                  * #3, #4…) — sem pílula medalhada no top 3. O status
                  * do top fica no medalhão do avatar (coroa/estrela). */}
-                <span className={styles.tabRankingRank}>{`#${rank}`}</span>
+                <span className={styles.tabRankingRank}>{rank === 1 ? '👑' : `#${rank}`}</span>
                 {/* Avatar wrap — hospeda o dot de online/offline no
                  * canto inferior direito. Mesmo padrão visual dos
                  * avatares do chat (verde sólido + ring preto). */}

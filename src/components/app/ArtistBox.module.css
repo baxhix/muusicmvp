@@ -665,13 +665,16 @@
   z-index: 0;
 }
 .tab[aria-selected='true'] {
-  color: #fff;
+  /* Tab ativa: texto preto sobre pílula branca (per feedback). */
+  color: #000;
 }
 .tabPill {
   position: absolute;
   inset: 0;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  /* Ativo branco sólido (per feedback) — contrasta com as tabs inativas. */
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   z-index: -1;
 }
 .tabLabel {
