@@ -84,7 +84,7 @@
 .eyebrow {
   /* "Fanverse" em Inter regular, cinza ~#838383. */
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: #838383;
 }
@@ -95,7 +95,7 @@
 }
 .title {
   font-family: 'Borscha', serif;
-  font-size: 34px;
+  font-size: 32px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -123,20 +123,20 @@
 }
 .metaValue {
   /* Número de Fanpoints — cinza, regular. */
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: #838383;
   font-variant-numeric: tabular-nums;
 }
 .metaLabel {
   /* "Fanpoints" — cinza, regular. */
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: #838383;
 }
 .metaRank {
   /* "Top1" — branco, bold. */
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
 }
