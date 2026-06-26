@@ -90,7 +90,7 @@
 }
 .title {
   font-family: 'Borscha', serif;
-  font-size: 40px;
+  font-size: 34px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -103,11 +103,13 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Linha secundária — Fanpoints + Top1 (toca = abre Ranking Fanverse). */
+/* Linha secundária — Fanpoints + Top 1 (toca = abre Ranking Fanverse). */
 .meta {
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
+  /* Mais perto do nome (cancela o gap de 3px do .content e puxa +1px). */
+  margin-top: -4px;
   padding: 0;
   border: none;
   background: none;

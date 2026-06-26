@@ -28,7 +28,7 @@ export default function MobileFanverseHeader() {
 
   const { ranking } = useRanking(true);
   const myRank = user ? ranking.findIndex((r) => r.userId === user.id) + 1 : 0;
-  const rankBadge = myRank === 1 ? 'Top1' : myRank > 1 ? `#${myRank}º` : '';
+  const rankBadge = myRank === 1 ? 'Top 1' : myRank > 1 ? `#${myRank}º` : '';
 
   const openSearch = () => {
     try {
