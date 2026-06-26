@@ -1,0 +1,125 @@
+/* ── HEADER MOBILE — VARIAÇÃO 2 ──────────────────────────────
+ * Card "Fanverse Ana Castela" adaptado pro mobile: imagem da Ana
+ * à esquerda, gradiente preto pra contraste, conteúdo sobreposto
+ * embaixo à esquerda e orbe à direita. Overlay fixo no topo (não
+ * empurra o conteúdo da home, que é o globo em tela cheia). */
+.header {
+  position: fixed;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  height: 128px;
+  z-index: 5;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0a0a12;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+}
+
+.heroImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Imagem ancorada à esquerda — Ana fica do lado esquerdo, longe
+   *  do orbe (direita) e legível sob o gradiente. */
+  object-position: left 28%;
+  user-select: none;
+}
+
+/* Gradiente preto: escurece a base (texto) + a esquerda (legibilidade)
+ * e deixa a direita mais limpa pro orbe respirar. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 8, 14, 0) 34%, rgba(8, 8, 14, 0.92) 100%),
+    linear-gradient(90deg, rgba(8, 8, 14, 0.8) 0%, rgba(8, 8, 14, 0.3) 46%, rgba(8, 8, 14, 0) 74%);
+}
+
+/* Conteúdo sobreposto — embaixo à esquerda. */
+.content {
+  position: absolute;
+  left: 16px;
+  right: 96px; /* reserva espaço pro orbe */
+  bottom: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(245, 245, 247, 0.78);
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.verified {
+  flex-shrink: 0;
+}
+.title {
+  font-family: 'Borscha', serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Linha secundária — Fanpoints + rank (toca = abre Ranking Fanverse). */
+.meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.metaValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.metaLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(245, 245, 247, 0.58);
+}
+.metaRank {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(245, 245, 247, 0.72);
+}
+.metaRankTop {
+  color: #fbbf24; /* âmbar — destaque do Top 1 (igual ao desktop) */
+}
+
+/* Orbe à direita — mesma linguagem do desktop. */
+.orb {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  width: 74px;
+  height: 74px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  z-index: 2;
+}

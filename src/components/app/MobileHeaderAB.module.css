@@ -1,0 +1,37 @@
+/* Controle A/B do header mobile — pílula flutuante logo abaixo do
+ * header. top base = abaixo do header atual (101px); .toggleLow =
+ * abaixo do header novo (top 8 + 128 de altura). Sem borda (pill). */
+.toggle {
+  position: fixed;
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.toggleLow {
+  top: 148px;
+}
+
+.seg {
+  border: none;
+  background: none;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(245, 245, 247, 0.68);
+  cursor: pointer;
+  transition: background 0.16s, color 0.16s;
+}
+.segActive {
+  background: #fff;
+  color: #000;
+}

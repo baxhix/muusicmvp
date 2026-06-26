@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import MockToastRotator from '@/components/app/MockToastRotator';
 import FloatingUsers from '@/components/app/FloatingUsers';
 import FeedPanel from '@/components/app/FeedPanel';
-import MobileHomeChrome from '@/components/app/MobileHomeChrome';
+import MobileHeaderAB from '@/components/app/MobileHeaderAB';
 /* Brainstorm + Map Simulation (BrainstormGate, BrainstormPanel,
  * Superlive/CollectiveListening/ShowLive/FindMyLove triggers,
  * MapSimulationLayer, MapPulses, SimulationHUD, MapZoomIndicator)
@@ -61,8 +61,11 @@ export default function AppPage() {
           right-rail cluster so the floating elements share one
           continuous surface and the strip beneath the divider
           holds whatever "outras informações" the team plugs in
-          next. Unmounts on desktop and on every non-home route. */}
-      <MobileHomeChrome />
+          next. Unmounts on desktop and on every non-home route.
+
+          Switch A/B: alterna entre o header atual (Opção 1) e o novo
+          header Fanverse (Opção 2) com um controle logo abaixo. */}
+      <MobileHeaderAB />
 
       {/* ArtistBox and LiveChatStack moved to /app/layout.tsx so
           the Fanverse pill AND the 3-latest chat dock stay visible
