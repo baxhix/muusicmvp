@@ -18,6 +18,9 @@ export interface Story {
    *  has a single slide; admin posts may have up to 10 (one per
    *  uploaded image). */
   slides?: { url: string; alt?: string | null }[];
+  /** Optional headline overlaid no topo do card (estilo Globo).
+   *  Mock stories não têm; admin posts mapeiam do `title`. */
+  caption?: string;
 }
 
 /** Adapt an admin post (type='story') to the Story shape consumed
@@ -33,6 +36,7 @@ function adminStoryToStory(p: ApiFeedPost): Story | null {
     img: p.media[0].url,
     seen: false,
     slides: p.media.map((m) => ({ url: m.url, alt: m.alt })),
+    caption: p.title ?? undefined,
   };
 }
 
@@ -98,6 +102,11 @@ function Viewer({
   const [slideIdx, setSlideIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Play/pause (botão do chrome desktop). Guardamos num ref pra
+  // congelar o progresso sem reiniciar o intervalo a cada toggle.
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const [muted, setMuted] = useState(true);
   const DURATION = 5000; // ms per slide
   const TICK = 50;
 
@@ -144,6 +153,7 @@ function Viewer({
     setProgress(0);
     intervalRef.current = setInterval(() => {
       setProgress(p => {
+        if (pausedRef.current) return p; // pausado → congela o progresso
         const next = p + (TICK / DURATION) * 100;
         if (next >= 100) { clearInterval(intervalRef.current!); goNext(); return 100; }
         return next;
@@ -160,55 +170,183 @@ function Viewer({
     return () => document.removeEventListener('keydown', h);
   }, [onClose]);
 
+  const togglePause = () => {
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+  };
+  const jumpTo = (target: number) => {
+    setIdx(target);
+    setSlideIdx(0);
+    setProgress(0);
+  };
+  const share = () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        void navigator.share({ title: story.user, text: `Story de ${story.user}` });
+      }
+    } catch {
+      /* usuário cancelou / não suportado */
+    }
+  };
+
+  const canPrev = idx > 0 || slideIdx > 0;
+  const canNext = idx < stories.length - 1 || slideIdx < slideCount - 1;
+
+  // Cards vizinhos (até 2 de cada lado) — preview no formato carrossel
+  // do desktop (estilo Globoesporte). Mais distante primeiro à esquerda,
+  // mais próximo primeiro à direita; ficam escondidos no mobile via CSS.
+  const leftPeeks = [2, 1]
+    .map((d) => ({ i: idx - d, depth: d }))
+    .filter((p) => p.i >= 0);
+  const rightPeeks = [1, 2]
+    .map((d) => ({ i: idx + d, depth: d }))
+    .filter((p) => p.i < stories.length);
+
+  const renderPeek = (p: { i: number; depth: number }) => (
+    <button
+      key={stories[p.i].id}
+      className={`${styles.peek} ${p.depth === 2 ? styles.peekFar : ''}`}
+      onClick={() => jumpTo(p.i)}
+      aria-label={`Abrir story de ${stories[p.i].user}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={stories[p.i].img} alt="" className={styles.peekImg} />
+    </button>
+  );
+
   return createPortal(
     <div className={styles.viewerOverlay} onClick={onClose}>
-      <div className={styles.viewerCard} onClick={e => e.stopPropagation()}>
 
-        {/* Progress bars. Each STORY gets its own row that
-         *  subdivides into one bar per SLIDE — single-slide stories
-         *  still render exactly one bar so the mock content is
-         *  unchanged. */}
-        <div className={styles.progressRow}>
-          {stories.flatMap((s, storyI) => {
-            const segments = Math.max(1, s.slides?.length ?? 1);
-            return Array.from({ length: segments }).map((_, segI) => {
-              const before = storyI < idx || (storyI === idx && segI < slideIdx);
-              const current = storyI === idx && segI === slideIdx;
-              return (
-                <div key={`${s.id}:${segI}`} className={styles.progressTrack}>
-                  <div
-                    className={styles.progressFill}
-                    style={{ width: before ? '100%' : current ? `${progress}%` : '0%' }}
-                  />
-                </div>
-              );
-            });
-          })}
+      {/* Fechar — chrome global (desktop). No mobile usa o X do header. */}
+      <button className={styles.overlayClose} onClick={onClose} aria-label="Fechar">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <path d="M4 4l10 10M14 4L4 14" />
+        </svg>
+      </button>
+
+      {/* Controles à direita (desktop): mudo · play/pause · compartilhar */}
+      <div className={styles.controlCol} onClick={(e) => e.stopPropagation()}>
+        <button
+          className={styles.ctrlBtn}
+          onClick={() => setMuted((m) => !m)}
+          aria-label={muted ? 'Ativar som' : 'Silenciar'}
+        >
+          {muted ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9h3l4-3v12l-4-3H4z" />
+              <path d="M16 9l5 6M21 9l-5 6" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 9h3l4-3v12l-4-3H4z" />
+              <path d="M16 8.5a4 4 0 0 1 0 7" />
+              <path d="M18.5 6a7 7 0 0 1 0 12" />
+            </svg>
+          )}
+        </button>
+        <button
+          className={`${styles.ctrlBtn} ${styles.ctrlBtnPrimary}`}
+          onClick={togglePause}
+          aria-label={paused ? 'Reproduzir' : 'Pausar'}
+        >
+          {paused ? (
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5l12 7-12 7V5z" /></svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="5" width="4" height="14" rx="1.3" />
+              <rect x="14" y="5" width="4" height="14" rx="1.3" />
+            </svg>
+          )}
+        </button>
+        <button className={styles.ctrlBtn} onClick={share} aria-label="Compartilhar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Palco em carrossel: cards vizinhos espreitando + card central. */}
+      <div className={styles.stage}>
+        <div className={`${styles.side} ${styles.sideLeft}`} onClick={(e) => e.stopPropagation()}>
+          {leftPeeks.map(renderPeek)}
         </div>
 
-        {/* Header */}
-        <div className={styles.viewerHeader}>
-          <div className={styles.viewerUser}>
+        <div className={styles.center} onClick={(e) => e.stopPropagation()}>
+          <button
+            className={`${styles.navArrow} ${styles.navPrev}`}
+            onClick={goPrev}
+            disabled={!canPrev}
+            aria-label="Anterior"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3L5 8l5 5" /></svg>
+          </button>
+
+          <div className={styles.viewerCard}>
+
+            {/* Progress bars. Each STORY gets its own row that
+             *  subdivides into one bar per SLIDE — single-slide stories
+             *  still render exactly one bar so the mock content is
+             *  unchanged. */}
+            <div className={styles.progressRow}>
+              {stories.flatMap((s, storyI) => {
+                const segments = Math.max(1, s.slides?.length ?? 1);
+                return Array.from({ length: segments }).map((_, segI) => {
+                  const before = storyI < idx || (storyI === idx && segI < slideIdx);
+                  const current = storyI === idx && segI === slideIdx;
+                  return (
+                    <div key={`${s.id}:${segI}`} className={styles.progressTrack}>
+                      <div
+                        className={styles.progressFill}
+                        style={{ width: before ? '100%' : current ? `${progress}%` : '0%' }}
+                      />
+                    </div>
+                  );
+                });
+              })}
+            </div>
+
+            {/* Header */}
+            <div className={styles.viewerHeader}>
+              <div className={styles.viewerUser}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={story.avatar} alt={story.user} className={styles.viewerAvatar} />
+                <span className={styles.viewerName}>{story.user}</span>
+              </div>
+              <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.2"
+                     strokeLinecap="round">
+                  <path d="M4 4l10 10M14 4L4 14"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Caption opcional (headline estilo Globo). */}
+            {story.caption && <div className={styles.caption}>{story.caption}</div>}
+
+            {/* Story slide. For multi-slide admin stories, the source
+             *  follows the slide cursor. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={story.avatar} alt={story.user} className={styles.viewerAvatar} />
-            <span className={styles.viewerName}>{story.user}</span>
+            <img src={currentSlideUrl} alt={story.user} className={styles.viewerImg} />
+
+            {/* Tap zones */}
+            <button className={styles.tapLeft}  onClick={goPrev} aria-label="Anterior" />
+            <button className={styles.tapRight} onClick={goNext} aria-label="Próximo"  />
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
-            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2.2"
-                 strokeLinecap="round">
-              <path d="M4 4l10 10M14 4L4 14"/>
-            </svg>
+
+          <button
+            className={`${styles.navArrow} ${styles.navNext}`}
+            onClick={goNext}
+            disabled={!canNext}
+            aria-label="Próximo"
+          >
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3l5 5-5 5" /></svg>
           </button>
         </div>
 
-        {/* Story slide. For multi-slide admin stories, the source
-         *  follows the slide cursor. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={currentSlideUrl} alt={story.user} className={styles.viewerImg} />
-
-        {/* Tap zones */}
-        <button className={styles.tapLeft}  onClick={goPrev} aria-label="Anterior" />
-        <button className={styles.tapRight} onClick={goNext} aria-label="Próximo"  />
+        <div className={`${styles.side} ${styles.sideRight}`} onClick={(e) => e.stopPropagation()}>
+          {rightPeeks.map(renderPeek)}
+        </div>
       </div>
     </div>,
     document.body

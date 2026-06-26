@@ -126,13 +126,34 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-nav);
-  background: rgba(0,0,0,0.88);
+  background: rgba(0,0,0,0.92);
   display: flex;
   align-items: center;
   justify-content: center;
   animation: overlayIn 0.22s ease both;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* ── Palco em carrossel (estilo Globoesporte no desktop) ──
+ * 3 zonas: lado esquerdo (peeks), centro (card ativo), lado direito
+ * (peeks). As laterais têm flex:1 iguais → o card central fica SEMPRE
+ * centrado, mesmo quando há menos vizinhos de um lado. No mobile só o
+ * card central aparece (laterais/arrows/controles escondidos). */
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.side { display: none; } /* mobile: sem carrossel */
+.center {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
 }
 
 .viewerCard {
@@ -145,6 +166,26 @@
   box-shadow: 0 32px 80px rgba(0,0,0,0.8);
   animation: cardIn 0.28s cubic-bezier(0.16,1,0.3,1) both;
 }
+
+/* ── Caption (headline estilo Globo, opcional) ── */
+.caption {
+  position: absolute;
+  top: 62px;
+  left: 16px;
+  right: 16px;
+  z-index: 9;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.85);
+}
+
+/* ── Chrome do carrossel (escondido no mobile) ── */
+.overlayClose,
+.controlCol,
+.navArrow { display: none; }
 
 /* Story image */
 .viewerImg {
@@ -225,6 +266,7 @@
   place-items: center;
   cursor: pointer;
   transition: background 0.15s;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 .closeBtn:hover { background: rgba(0,0,0,0.65); }
@@ -244,3 +286,152 @@
 }
 .tapLeft  { left: 0;  }
 .tapRight { right: 0; }
+
+/* ── DESKTOP: carrossel estilo Globoesporte ──────────────────
+ * A partir de 900px o viewer vira um carrossel: card central maior +
+ * cards vizinhos espreitando dos lados, setas de navegação flanqueando
+ * o centro, X global no topo-direito e coluna de controles (mudo ·
+ * play/pause · compartilhar) na margem direita. */
+@media (min-width: 900px) {
+  /* Card central dimensionado pela altura da viewport (proporção 9:16). */
+  .viewerCard {
+    width: auto;
+    height: min(84vh, 760px);
+    aspect-ratio: 9 / 16;
+    border-radius: 14px;
+  }
+
+  /* X do header some — usamos o X global. */
+  .closeBtn { display: none; }
+
+  /* Zonas laterais: flex iguais mantêm o centro centrado; overflow
+   * hidden faz os cards mais distantes serem cortados pelas bordas. */
+  .side {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    align-items: center;
+    gap: 16px;
+    overflow: hidden;
+  }
+  .sideLeft  { justify-content: flex-end;   padding-left: 24px;  }
+  .sideRight { justify-content: flex-start; padding-right: 100px; } /* espaço pra coluna de controles */
+
+  /* Cards vizinhos (preview, clicáveis). */
+  .peek {
+    flex-shrink: 0;
+    display: block;
+    height: min(60vh, 540px);
+    aspect-ratio: 9 / 16;
+    padding: 0;
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+    cursor: pointer;
+    opacity: 0.5;
+    filter: brightness(0.62);
+    transition: opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+  }
+  .peek:hover {
+    opacity: 0.92;
+    filter: brightness(0.95);
+    transform: scale(1.03);
+  }
+  .peekFar {
+    height: min(52vh, 470px);
+    opacity: 0.32;
+  }
+  .peekImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Setas de navegação flanqueando o card central. */
+  .navArrow {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    cursor: pointer;
+    z-index: 12;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .navArrow:hover { background: rgba(255,255,255,0.26); }
+  .navArrow:disabled { opacity: 0.25; cursor: default; }
+  .navArrow svg { width: 18px; height: 18px; }
+  .navPrev { left: -62px;  }
+  .navNext { right: -62px; }
+
+  /* X global no topo-direito. */
+  .overlayClose {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 26px;
+    right: 28px;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    cursor: pointer;
+    z-index: 14;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition: background 0.15s;
+  }
+  .overlayClose:hover { background: rgba(255,255,255,0.26); }
+  .overlayClose svg { width: 16px; height: 16px; }
+
+  /* Coluna de controles na margem direita (mudo · play · compartilhar). */
+  .controlCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    position: absolute;
+    top: 50%;
+    right: 28px;
+    transform: translateY(-50%);
+    z-index: 14;
+  }
+  .ctrlBtn {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition: background 0.15s, transform 0.12s;
+  }
+  .ctrlBtn:hover  { background: rgba(255,255,255,0.26); }
+  .ctrlBtn:active { transform: scale(0.92); }
+  .ctrlBtn svg { width: 20px; height: 20px; }
+  .ctrlBtnPrimary {
+    width: 54px;
+    height: 54px;
+    border: 2px solid rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.10);
+  }
+  .ctrlBtnPrimary svg { width: 22px; height: 22px; }
+
+  .caption { font-size: 18px; }
+}
