@@ -409,9 +409,9 @@
   position: relative;
 }
 .foldHead {
-  /* Margem direita = orb width (64) + gap (10) — reserva o
+  /* Margem direita = orb width (77) + gap (10) — reserva o
    * espaço lateral pro orbe absolutely positioned. */
-  margin-right: 74px;
+  margin-right: 87px;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -496,8 +496,9 @@
   right: 0;
   top: 37px;
   transform: translateY(-50%);
-  width: 64px;
-  height: 64px;
+  /* +20% (64 → 77) per feedback. */
+  width: 77px;
+  height: 77px;
   display: inline-block;
   line-height: 0;
   padding: 0;
