@@ -26,7 +26,8 @@
 .heroImg {
   position: absolute;
   top: 0;
-  right: 100px;
+  /* 30px mais à direita (era 100px da borda direita). */
+  right: 70px;
   height: 100%;
   width: auto;
   user-select: none;
