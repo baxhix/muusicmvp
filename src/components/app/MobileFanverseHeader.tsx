@@ -20,10 +20,18 @@ export default function MobileFanverseHeader() {
         className={styles.heroImg}
       />
 
+      {/* Tint magenta (#D900FF @ 22%), direção ~11h40 — parte do canto
+       *  superior-direito e desce. Fica ABAIXO do gradiente preto. */}
+      <div className={styles.imgTint} aria-hidden="true" />
+
       {/* Camada de gradiente preto→transparente sobre a imagem (direção
        *  ~11h25 no relógio). Confinada ao box (overflow:hidden) → respeita
        *  o border-radius. */}
       <div className={styles.imgGradient} aria-hidden="true" />
+
+      {/* Camada por cima de tudo: black→transparente de baixo pra cima
+       *  (direção ~5h55), preto a 90% de opacidade na base. */}
+      <div className={styles.bottomFade} aria-hidden="true" />
     </header>
   );
 }
