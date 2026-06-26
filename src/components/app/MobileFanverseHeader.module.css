@@ -34,14 +34,18 @@
   user-select: none;
 }
 
-/* Tint magenta (#D900FF @ 22%) — direção ~11h40 (ponteiro de minutos
- * em :40 → 8h/240°): parte do canto superior-direito (oposto, 60°) e
- * desce. Fica ABAIXO do gradiente preto (vem antes no DOM). */
+/* Tint do canto superior-direito (~11h40 / 240°): lilás (#D900FF)
+ * mesclado bem sutilmente com rosa, descendo até transparente. */
 .imgTint {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(240deg, rgba(217, 0, 255, 0.22) 0%, transparent 65%);
+  background: linear-gradient(
+    240deg,
+    rgba(217, 0, 255, 0.2) 0%,
+    rgba(255, 64, 170, 0.16) 32%,
+    transparent 65%
+  );
 }
 
 /* Vinheta radial: transparente sobre o rosto (centro-direita ≈75%/36%),
