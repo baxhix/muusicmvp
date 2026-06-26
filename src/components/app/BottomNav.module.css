@@ -316,6 +316,17 @@
  * stroke weight comes from the SVGs themselves (all 1.6). */
 .item svg { width: 22px; height: 22px; }
 
+/* Orbe (FanverseCore) no slot central — um pouco maior que os ícones
+ * pra ancorar o centro da navbar. */
+.navOrb {
+  display: block;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
 .label { display: none; }
 
 .labelHint {

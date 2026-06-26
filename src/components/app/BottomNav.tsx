@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useAppShell } from '@/lib/app/AppShellContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { globeStore } from '@/lib/globeStore';
+import FanverseCore from '@/components/animations/FanverseCore';
 import MobileMenuSheet from './MobileMenuSheet';
 import styles from './BottomNav.module.css';
 
@@ -177,69 +178,9 @@ export default function BottomNav() {
           <span className={styles.label}>Mapa</span>
         </button>
 
-        {/* Superfã crown — slot 2 per feedback "inverta a ordem dos
-         * ícones de superfã e feed na bottom bar" (antes era slot 3
-         * com `itemCenter`; agora promovido pra slot 2 como item
-         * normal, com label igual aos demais).
-         *
-         * Mobile: routes to /app/ranking (toggleNav back to /app
-         *   on re-tap).
-         * Desktop: toggles the layered `superfans` overlay so o
-         *   Feed (e o resto montado em /app/page.tsx) fica visível
-         *   atrás do leaderboard. */}
-        {(() => {
-          /* Desktop: dispatcha CustomEvent que o ArtistBox escuta
-           * pra abrir o box + ativar a tab "Ranking" — per product
-           * feedback "ao clicar no ícone de coroa no bottom bar,
-           * deve abrir a tab ranking do Box Fanverse". Aria-pressed
-           * fica false (não temos signal global de "ArtistBox
-           * aberto em ranking"); o usuário sempre re-clicar abre
-           * de novo no ranking (idempotente). Mobile: comportamento
-           * anterior preservado — toggle /app/ranking. */
-          const superfansActive = isMobile
-            ? pathname.startsWith('/app/ranking')
-            : false;
-          return (
-            <button
-              type="button"
-              className={`${styles.item} ${superfansActive ? styles.itemActive : ''}`}
-              onClick={() => {
-                if (isMobile) {
-                  dismissShellOverlays();
-                  toggleNav('/app/ranking');
-                } else {
-                  /* Sair de qualquer overlay desktop conflitante e
-                   * sinalizar pro ArtistBox abrir no ranking. */
-                  dismissShellOverlays();
-                  window.dispatchEvent(
-                    new CustomEvent('app:open-fanverse-ranking'),
-                  );
-                }
-              }}
-              onPointerEnter={() => isMobile && prefetch('/app/ranking')}
-              onFocus={() => isMobile && prefetch('/app/ranking')}
-              aria-label={superfansActive ? 'Fechar Superfãs' : 'Superfãs'}
-              aria-pressed={!isMobile ? superfansActive : undefined}
-              data-tooltip={superfansActive ? 'Fechar' : 'Superfãs'}
-            >
-              <svg viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M3.5 8.5l2 9.5h13l2-9.5-5 3.5-3.5-7-3.5 7-5-3.5z"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-                <path d="M6.5 21h11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-              <span className={styles.dot} aria-hidden="true" />
-              <span className={styles.label}>Superfãs</span>
-            </button>
-          );
-        })()}
-
-        {/* Feed — slot 3 (centro), promovido do slot 2 per feedback
-         * "inverta a ordem". Toggles a bottom-sheet via shell's
-         * `feedOpen` state. State survives navigation gap. */}
+        {/* Feed — slot 2 (era a coroa de Superfãs) per feedback
+         * "substitua o ícone de coroa pelo ícone do feed". Abre o
+         * bottom-sheet via `feedOpen` do shell. */}
         <button
           type="button"
           className={`${styles.item} ${feedOpen ? styles.itemActive : ''}`}
@@ -262,6 +203,28 @@ export default function BottomNav() {
           </svg>
           <span className={styles.dot} aria-hidden="true" />
           <span className={styles.label}>Feed</span>
+        </button>
+
+        {/* Orbe — slot 3 (centro) per feedback "coloque o orbe no
+         * centro". Abre o FanverseSearch (mesmo gatilho dos demais
+         * orbes do app). */}
+        <button
+          type="button"
+          className={styles.item}
+          onClick={() => {
+            try {
+              window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
+            } catch {
+              /* SSR */
+            }
+          }}
+          aria-label="Abrir Fanverse"
+          data-tooltip="Fanverse"
+        >
+          <span className={styles.navOrb} aria-hidden="true">
+            <FanverseCore />
+          </span>
+          <span className={styles.label}>Fanverse</span>
         </button>
 
         {/* 4th slot — Chat. Per product feedback "inverta o ícone
