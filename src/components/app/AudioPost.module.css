@@ -1,34 +1,49 @@
-/* ── AUDIO POST — card compacto e plano (sem borda/gradiente).
- *  Cabeçalho: imagem da Ana + "Áudio da Ana!" ACIMA das barras.
- *  Player: botão de play no INÍCIO de uma waveform fina e compacta
- *  (estilo WhatsApp/Telegram) que preenche conforme o tempo REAL do
- *  áudio. Curtir/comentar/enviar reusam o action bar dos demais posts
- *  (MediaPost.module.css) + CommentsPanel. */
+/* ── AUDIO POST — card no estilo dos demais posts (fundo quase-preto).
+ *  Linha única: avatar GRANDE à esquerda + (título "Áudio da Ana!" e a
+ *  waveform empilhados) logo à frente → card mais baixo. Barra lilás,
+ *  botão de play verde. Fundo idêntico ao MediaPost pra o CommentsPanel
+ *  (que é desenhado pra esse fundo) encaixar sem emenda ao comentar. */
 
 .card {
   margin: 16px 14px 0;
   padding: 10px 12px 2px;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  /* Mesmo fundo dos demais posts (MediaPost): gradiente quase-preto. */
+  background: linear-gradient(145deg,
+    rgba(5, 3, 8, 0.92) 0%,
+    rgba(3, 2, 5, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 0 0 1px rgba(168, 85, 247, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   color: rgba(245, 245, 247, 0.95);
+  overflow: hidden;
 }
 
-/* ── Cabeçalho: avatar + título ── */
-.head {
+/* ── Linha: avatar grande + coluna (título sobre waveform) ── */
+.row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
   object-fit: cover;
   flex-shrink: 0;
+}
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 .title {
   font-size: 14px;
@@ -40,7 +55,7 @@
   text-overflow: ellipsis;
 }
 
-/* ── Player: play (início) + waveform ── */
+/* ── Player: play (verde) + waveform fina lilás ── */
 .player {
   display: flex;
   align-items: center;
@@ -54,13 +69,13 @@
   border: none;
   cursor: pointer;
   border-radius: 999px;
-  background: var(--accent);
+  background: rgb(61, 219, 116); /* verde */
   display: grid;
   place-items: center;
   transition: transform 0.12s, filter 0.12s;
 }
 .playBtn:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
 .playBtn:active {
   transform: scale(0.92);
@@ -68,19 +83,17 @@
 .playBtn svg {
   width: 13px;
   height: 13px;
-  color: #fff;
+  color: #06140c;
   margin-left: 1px;
 }
 
-/* Waveform fina, discreta e estreita — estilo WhatsApp/Telegram.
- * Barras de LARGURA FIXA (2px) e gap pequeno: a waveform NÃO estica
- * pra preencher a linha, fica compacta à esquerda do card. */
+/* Waveform fina, discreta e estreita — estilo WhatsApp/Telegram. */
 .waveform {
   flex: 0 1 auto;
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 22px;
+  height: 18px;
   cursor: pointer;
 }
 .bar {
@@ -92,7 +105,7 @@
   transition: background-color 0.25s ease, transform 0.2s ease;
 }
 .barPlayed {
-  background: var(--accent);
+  background: rgb(167, 139, 250); /* lilás */
 }
 .waveformPlaying .barHead {
   background: #fff;

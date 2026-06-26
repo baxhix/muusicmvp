@@ -167,63 +167,66 @@ export default function AudioPost({
         }}
       />
 
-      {/* Cabeçalho: imagem da Ana + título ACIMA das barras. */}
-      <div className={styles.head}>
+      {/* Linha única: avatar GRANDE à esquerda + (título sobre a
+       *  waveform, empilhados) logo à frente → card mais baixo. */}
+      <div className={styles.row}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={avatar} alt="" className={styles.avatar} />
-        <span className={styles.title}>{title}</span>
-      </div>
+        <div className={styles.col}>
+          <span className={styles.title}>{title}</span>
 
-      {/* Player: play no início + waveform fina (WhatsApp/Telegram). */}
-      <div className={styles.player}>
-        <button
-          type="button"
-          className={styles.playBtn}
-          onClick={toggle}
-          aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
-        >
-          {playing ? (
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <rect x="3.5" y="2.5" width="3" height="11" rx="1" />
-              <rect x="9.5" y="2.5" width="3" height="11" rx="1" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M4.5 3l8 5-8 5V3z" />
-            </svg>
-          )}
-        </button>
+          {/* Player: play (verde) + waveform fina lilás. */}
+          <div className={styles.player}>
+            <button
+              type="button"
+              className={styles.playBtn}
+              onClick={toggle}
+              aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
+            >
+              {playing ? (
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <rect x="3.5" y="2.5" width="3" height="11" rx="1" />
+                  <rect x="9.5" y="2.5" width="3" height="11" rx="1" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M4.5 3l8 5-8 5V3z" />
+                </svg>
+              )}
+            </button>
 
-        <div
-          className={`${styles.waveform} ${playing ? styles.waveformPlaying : ''}`}
-          role="slider"
-          aria-label="Progresso do áudio"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(progress * 100)}
-          tabIndex={0}
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            seekTo((e.clientX - rect.left) / rect.width);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowRight') seekTo(progress + 0.05);
-            else if (e.key === 'ArrowLeft') seekTo(progress - 0.05);
-          }}
-        >
-          {bars.map((h, i) => {
-            const played = i < playedCount;
-            const atHead = playing && i === playedCount;
-            return (
-              <span
-                key={i}
-                className={`${styles.bar} ${played ? styles.barPlayed : ''} ${
-                  atHead ? styles.barHead : ''
-                }`}
-                style={{ height: `${Math.max(22, Math.round(h * 100))}%` }}
-              />
-            );
-          })}
+            <div
+              className={`${styles.waveform} ${playing ? styles.waveformPlaying : ''}`}
+              role="slider"
+              aria-label="Progresso do áudio"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progress * 100)}
+              tabIndex={0}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                seekTo((e.clientX - rect.left) / rect.width);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight') seekTo(progress + 0.05);
+                else if (e.key === 'ArrowLeft') seekTo(progress - 0.05);
+              }}
+            >
+              {bars.map((h, i) => {
+                const played = i < playedCount;
+                const atHead = playing && i === playedCount;
+                return (
+                  <span
+                    key={i}
+                    className={`${styles.bar} ${played ? styles.barPlayed : ''} ${
+                      atHead ? styles.barHead : ''
+                    }`}
+                    style={{ height: `${Math.max(22, Math.round(h * 100))}%` }}
+                  />
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
