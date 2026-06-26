@@ -14,8 +14,20 @@
   height: 136px;
   z-index: 5;
   border-radius: 32px;
+  overflow: hidden;
   /* Preto com 88% de transparência (convenção do projeto = 88% de
    *  opacidade, igual à barra do desktop com "75% de transparência"). */
   background: rgba(0, 0, 0, 0.88);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+}
+
+/* Imagem da Ana: mesma altura do box (100%), largura proporcional, a
+ * 100px da extremidade direita do box. */
+.heroImg {
+  position: absolute;
+  top: 0;
+  right: 100px;
+  height: 100%;
+  width: auto;
+  user-select: none;
 }
