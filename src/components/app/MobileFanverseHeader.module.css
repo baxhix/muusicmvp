@@ -43,24 +43,29 @@
   background: linear-gradient(240deg, rgba(217, 0, 255, 0.22) 0%, transparent 65%);
 }
 
-/* Camada de gradiente preto → transparente sobre a imagem, na direção
- * ~11h25 do relógio (preto ancorado perto do topo-esquerda ≈342°; some
- * na diagonal oposta ≈162deg). Confinada ao box pelo overflow:hidden +
- * border-radius do .header. */
+/* Vinheta radial: transparente sobre o rosto (centro-direita ≈75%/36%),
+ * escurecendo em direção às bordas — mantém o rosto iluminado e dá
+ * gradiente nas bordas. Confinada ao box pelo overflow:hidden. */
 .imgGradient {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(162deg, #000 0%, transparent 100%);
+  background: radial-gradient(
+    120% 125% at 75% 36%,
+    transparent 0%,
+    transparent 38%,
+    rgba(0, 0, 0, 0.45) 68%,
+    rgba(0, 0, 0, 0.92) 100%
+  );
 }
 
-/* Camada por cima de tudo: black → transparente de baixo pra cima
- * (direção ~5h55 ≈ vertical, 358deg), preto a 90% de opacidade na base. */
+/* Fade preto inferior suave (grounding do texto) — só a base, sem
+ * escurecer o rosto. Intensidade reduzida pra não competir com a vinheta. */
 .bottomFade {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(358deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+  background: linear-gradient(358deg, rgba(0, 0, 0, 0.55) 0%, transparent 48%);
 }
 
 /* ── Conteúdo sobreposto (acima de todas as camadas) ─────────

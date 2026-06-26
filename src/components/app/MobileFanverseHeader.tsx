@@ -53,12 +53,13 @@ export default function MobileFanverseHeader() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={HEADER_IMAGE} alt="Ana Castela" className={styles.heroImg} />
 
-      {/* Tint magenta (#D900FF @ 22%), ~11h40 — abaixo do gradiente preto. */}
-      <div className={styles.imgTint} aria-hidden="true" />
-      {/* Gradiente preto→transparente (~11h25). */}
+      {/* Vinheta radial: clara sobre o rosto (centro-direita), escura nas
+       *  bordas — deixa o rosto iluminado e as bordas com gradiente. */}
       <div className={styles.imgGradient} aria-hidden="true" />
-      {/* Fade preto de baixo pra cima (~5h55) — por cima das camadas. */}
+      {/* Fade preto inferior (grounding do texto). */}
       <div className={styles.bottomFade} aria-hidden="true" />
+      {/* Tint roxo/rosa no canto superior-direito — por cima das pretas. */}
+      <div className={styles.imgTint} aria-hidden="true" />
 
       {/* Conteúdo — acima de tudo, ancorado embaixo-esquerda. */}
       <div className={styles.content}>
