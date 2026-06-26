@@ -4,44 +4,27 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './AudioPost.module.css';
 
 export interface AudioPostProps {
-  /** URL do áudio. Com src, o card toca de verdade e a animação segue o
-   *  tempo real do áudio. Sem src, roda em modo demo (progresso simulado
-   *  pela duração informada) — usado pelos cards estáticos do feed. */
+  /** URL do áudio. Default = clipe da Ana em /public. */
   src?: string;
   title?: string;
-  caption?: string;
   avatar?: string;
-  /** Duração em segundos — usada no modo demo e como fallback antes do
-   *  metadata do áudio carregar. */
+  /** Fallback de duração (modo demo, antes do metadata carregar). */
   durationSec?: number;
-  /** Perfil do waveform (alturas relativas 0..1). Determinístico — NÃO é
-   *  random: representa a silhueta do áudio. */
+  /** Silhueta do waveform (alturas relativas 0..1). Determinístico. */
   peaks?: number[];
 }
 
-/* Silhueta padrão do waveform (alturas relativas 0..1). Estável entre
- * renders — a animação de "tocar" vem do preenchimento por tempo real,
- * não de pulsar todas as barras aleatoriamente. */
 const DEFAULT_PEAKS = [
-  0.22, 0.4, 0.65, 0.5, 0.8, 0.95, 0.6, 0.35, 0.5, 0.72,
-  0.9, 0.55, 0.3, 0.45, 0.7, 1, 0.62, 0.4, 0.25, 0.55,
-  0.82, 0.6, 0.38, 0.5, 0.74, 0.92, 0.48, 0.3, 0.58, 0.8,
-  0.66, 0.42, 0.28, 0.5, 0.7, 0.45,
+  0.3, 0.5, 0.72, 0.55, 0.85, 0.95, 0.6, 0.4, 0.55, 0.78,
+  0.9, 0.5, 0.32, 0.5, 0.72, 1, 0.6, 0.42, 0.3, 0.58,
+  0.82, 0.6, 0.4, 0.52, 0.76, 0.9, 0.5, 0.34, 0.6, 0.8,
 ];
 
-function fmt(secs: number): string {
-  if (!Number.isFinite(secs) || secs < 0) secs = 0;
-  const m = Math.floor(secs / 60);
-  const s = Math.floor(secs % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
 export default function AudioPost({
-  src,
-  title = 'Áudio da Ana',
-  caption,
+  src = '/audio-ana-castela.mp3',
+  title = 'Áudio da Ana!',
   avatar = '/ana-castela.png',
-  durationSec = 214,
+  durationSec = 30,
   peaks,
 }: AudioPostProps) {
   const bars = peaks && peaks.length ? peaks : DEFAULT_PEAKS;
@@ -53,13 +36,13 @@ export default function AudioPost({
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [total, setTotal] = useState(durationSec);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(1280);
 
   const progress = total > 0 ? Math.min(1, current / total) : 0;
   const playedCount = Math.round(progress * bars.length);
 
-  /* Modo demo (sem src): avança o tempo via rAF enquanto "toca", limitado
-   * pela duração — assim o waveform preenche de forma coerente com a
-   * duração mesmo sem arquivo real. Com src, o <audio> dita o tempo. */
+  /* Modo demo (sem src): avança o tempo via rAF — com src, o <audio> dita. */
   useEffect(() => {
     if (src || !playing) return;
     lastTsRef.current = 0;
@@ -111,58 +94,49 @@ export default function AudioPost({
     [src, total],
   );
 
+  function toggleLike() {
+    setLikeCount((c) => c + (liked ? -1 : 1));
+    setLiked((v) => !v);
+  }
+
   return (
     <div className={styles.card}>
-      {src && (
-        <audio
-          ref={audioRef}
-          src={src}
-          preload="metadata"
-          onLoadedMetadata={(e) => {
-            const d = e.currentTarget.duration;
-            if (Number.isFinite(d) && d > 0) setTotal(d);
-          }}
-          onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
-          onEnded={() => {
-            setPlaying(false);
-            setCurrent(0);
-          }}
-        />
-      )}
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="metadata"
+        onLoadedMetadata={(e) => {
+          const d = e.currentTarget.duration;
+          if (Number.isFinite(d) && d > 0) setTotal(d);
+        }}
+        onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}
+        onEnded={() => {
+          setPlaying(false);
+          setCurrent(0);
+        }}
+      />
 
-      {/* Header — avatar + tag "ÁUDIO DA ANA" + título. Distinto dos
-          demais cards (que abrem com mídia/imagem). */}
-      <div className={styles.head}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={avatar} alt={title} className={styles.avatar} />
-        <div className={styles.headText}>
-          <span className={styles.eyebrow}>
-            <span className={styles.eyebrowDot} aria-hidden="true" />
-            Áudio da Ana
-          </span>
-          <span className={styles.title}>{title}</span>
-        </div>
-      </div>
-
-      {caption && <p className={styles.caption}>{caption}</p>}
-
-      {/* Player — botão grande gradiente + waveform de progresso + tempo. */}
-      <div className={styles.player}>
+      {/* Linha única: imagem (com play) + waveform + título. */}
+      <div className={styles.row}>
         <button
-          className={styles.playBtn}
+          className={styles.playAvatar}
           onClick={toggle}
           aria-label={playing ? 'Pausar áudio' : 'Reproduzir áudio'}
         >
-          {playing ? (
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <rect x="3" y="2" width="3.5" height="12" rx="1.2" />
-              <rect x="9.5" y="2" width="3.5" height="12" rx="1.2" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M4 2.5l10 5.5-10 5.5V2.5z" />
-            </svg>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={avatar} alt="" className={styles.avatarImg} />
+          <span className={styles.playOverlay} aria-hidden="true">
+            {playing ? (
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <rect x="3.5" y="2.5" width="3" height="11" rx="1" />
+                <rect x="9.5" y="2.5" width="3" height="11" rx="1" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4.5 3l8 5-8 5V3z" />
+              </svg>
+            )}
+          </span>
         </button>
 
         <div
@@ -191,15 +165,36 @@ export default function AudioPost({
                 className={`${styles.bar} ${played ? styles.barPlayed : ''} ${
                   atHead ? styles.barHead : ''
                 }`}
-                style={{ height: `${Math.max(14, Math.round(h * 100))}%` }}
+                style={{ height: `${Math.max(16, Math.round(h * 100))}%` }}
               />
             );
           })}
         </div>
 
-        <span className={styles.time}>
-          {fmt(current)} / {fmt(total)}
-        </span>
+        <span className={styles.title}>{title}</span>
+      </div>
+
+      {/* Ações — curtir + comentar. */}
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={`${styles.action} ${liked ? styles.actionLiked : ''}`}
+          onClick={toggleLike}
+          aria-pressed={liked}
+          aria-label="Curtir"
+        >
+          <svg viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
+          </svg>
+          <span className={styles.actionCount}>{likeCount.toLocaleString('pt-BR')}</span>
+        </button>
+
+        <button type="button" className={styles.action} aria-label="Comentar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.6 8.6 0 0 1-3.9-.9L3 21l1.9-5.6a8.4 8.4 0 0 1-.9-3.9A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" />
+          </svg>
+          <span className={styles.actionCount}>86</span>
+        </button>
       </div>
     </div>
   );

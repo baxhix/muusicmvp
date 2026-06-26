@@ -1,195 +1,143 @@
-/* ── AUDIO POST — layout próprio, distinto dos outros cards do feed.
- *  Borda gradiente da marca + header (avatar + tag "Áudio da Ana" + título)
- *  + caption + player com waveform de PROGRESSO coerente com o áudio: as
- *  barras à esquerda do playhead acendem conforme o tempo real avança e a
- *  barra do playhead pulsa. Sem mais "todas as barras pulsando random". */
+/* ── AUDIO POST — card compacto, plano (sem borda/gradiente), em UMA linha:
+ *  imagem (com play) + waveform + título "Áudio da Ana!". Abaixo, curtir +
+ *  comentar. Waveform preenche conforme o tempo REAL do áudio avança. */
 
 .card {
   margin: 16px 14px 0;
-  padding: 14px;
-  border-radius: 16px;
+  padding: 10px 12px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
+  gap: 8px;
+  /* Plano: sem borda, sem gradiente — só um fill sutil. */
+  background: rgba(255, 255, 255, 0.05);
   color: rgba(245, 245, 247, 0.95);
-  /* Borda gradiente da marca (técnica de 2 backgrounds: fill escuro no
-   * padding-box + gradiente no border-box). É o que diferencia o card de
-   * áudio dos demais (que são planos). */
-  border: 1px solid transparent;
-  background:
-    linear-gradient(150deg, rgba(20, 8, 30, 0.96) 0%, rgba(6, 4, 10, 0.96) 100%) padding-box,
-    linear-gradient(120deg, rgba(168, 85, 247, 0.6) 0%, rgba(249, 168, 212, 0.5) 100%) border-box;
-  box-shadow:
-    0 10px 36px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(168, 85, 247, 0.1);
 }
 
-/* Glow ambiente roxo no canto superior direito. */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(120% 80% at 100% 0%, rgba(168, 85, 247, 0.18) 0%, transparent 55%);
-}
-
-/* ── Header ── */
-.head {
+/* ── Linha única ── */
+.row {
   display: flex;
   align-items: center;
   gap: 10px;
-  position: relative;
-}
-
-.avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1.5px solid rgba(249, 168, 212, 0.5);
-  box-shadow: 0 0 14px rgba(168, 85, 247, 0.3);
-}
-
-.headText {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
   min-width: 0;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(249, 168, 212, 0.95);
-}
-
-.eyebrowDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: #f9a8d4;
-  box-shadow: 0 0 8px rgba(249, 168, 212, 0.9);
-  animation: audioDot 1.6s ease-in-out infinite;
-}
-@keyframes audioDot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.caption {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: rgba(245, 245, 247, 0.7);
+/* Imagem da Ana = botão de play (overlay com ícone). */
+.playAvatar {
   position: relative;
-}
-
-/* ── Player ── */
-.player {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  position: relative;
-}
-
-.playBtn {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border: none;
-  cursor: pointer;
+  padding: 0;
   border-radius: 999px;
-  /* Botão gradiente da marca — distinto do botão branco dos outros posts. */
-  background: linear-gradient(135deg, var(--accent) 0%, #f9a8d4 100%);
+  cursor: pointer;
+  background: none;
+  overflow: hidden;
+}
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.playOverlay {
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
-  box-shadow: 0 6px 18px rgba(168, 85, 247, 0.45);
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s;
+  background: rgba(0, 0, 0, 0.42);
+  transition: background 0.15s;
 }
-.playBtn:hover {
-  filter: brightness(1.08);
-  transform: scale(1.06);
+.playAvatar:hover .playOverlay {
+  background: rgba(0, 0, 0, 0.55);
 }
-.playBtn:active {
-  transform: scale(0.95);
-}
-.playBtn svg {
-  width: 16px;
-  height: 16px;
-  color: #0a0512;
-  margin-left: 1px; /* centra óptico do triângulo de play */
+.playOverlay svg {
+  width: 15px;
+  height: 15px;
+  color: #fff;
+  margin-left: 1px;
 }
 
-/* ── Waveform ── */
+/* Waveform — ocupa o meio da linha. Compacto. */
 .waveform {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 2.5px;
-  height: 38px;
+  gap: 2px;
+  height: 24px;
   cursor: pointer;
 }
-
 .bar {
   flex: 1;
   min-width: 2px;
   border-radius: 2px;
-  /* Não tocado: apagado. */
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   transform-origin: center;
   transition: background-color 0.25s ease, transform 0.2s ease;
 }
-
-/* Tocado (à esquerda do playhead): aceso com o gradiente da marca. */
+/* Tocado (à esquerda do playhead): cor sólida da marca (sem gradiente). */
 .barPlayed {
-  background: linear-gradient(180deg, #f9a8d4 0%, var(--accent) 100%);
+  background: var(--accent);
 }
-
-/* Barra no playhead: pulsa enquanto toca — animação localizada na posição
- * REAL do áudio (não no waveform inteiro). */
+/* Barra no playhead pulsa — animação na posição real do áudio. */
 .waveformPlaying .barHead {
   background: #fff;
   animation: audioHead 0.7s ease-in-out infinite;
 }
 @keyframes audioHead {
   0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(0.55); }
+  50% { transform: scaleY(0.5); }
 }
 
-.time {
+.title {
   flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: var(--mono);
-  color: rgba(245, 245, 247, 0.5);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
   white-space: nowrap;
+}
+
+/* ── Ações: curtir + comentar ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-left: 50px; /* alinha sob o waveform (avatar 40 + gap 10) */
+}
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(245, 245, 247, 0.55);
+  transition: color 0.15s, transform 0.1s;
+}
+.action:hover {
+  color: rgba(245, 245, 247, 0.9);
+}
+.action:active {
+  transform: scale(0.92);
+}
+.actionLiked {
+  color: #ff3b6b;
+}
+.action svg {
+  width: 18px;
+  height: 18px;
+}
+.actionCount {
+  font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eyebrowDot,
   .waveformPlaying .barHead {
     animation: none;
   }
