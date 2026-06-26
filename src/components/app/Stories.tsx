@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAdminStories } from '@/hooks/useAdminStories';
 import type { ApiFeedPost } from '@/lib/api/types';
 import styles from './Stories.module.css';
+
+/** Reações rápidas no viewer de stories (estilo Instagram). */
+const STORY_REACTIONS = ['❤️', '🔥', '👏', '😍', '😮', '😂'];
 
 export interface Story {
   id: string;
@@ -189,6 +193,18 @@ function Viewer({
     }
   };
 
+  // Reações: emoji selecionado + bursts flutuantes (sobem e somem).
+  const [reaction, setReaction] = useState<string | null>(null);
+  const [bursts, setBursts] = useState<{ id: number; emoji: string }[]>([]);
+  const burstSeq = useRef(0);
+  const react = (emoji: string) => {
+    setReaction(emoji);
+    const id = burstSeq.current++;
+    setBursts((b) => [...b, { id, emoji }]);
+  };
+  const removeBurst = (id: number) =>
+    setBursts((b) => b.filter((x) => x.id !== id));
+
   const canPrev = idx > 0 || slideIdx > 0;
   const canNext = idx < stories.length - 1 || slideIdx < slideCount - 1;
 
@@ -324,14 +340,58 @@ function Viewer({
             {/* Caption opcional (headline estilo Globo). */}
             {story.caption && <div className={styles.caption}>{story.caption}</div>}
 
-            {/* Story slide. For multi-slide admin stories, the source
-             *  follows the slide cursor. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={currentSlideUrl} alt={story.user} className={styles.viewerImg} />
+            {/* Story slide — crossfade suave ao alternar (Motion). Para
+             *  stories multi-slide a fonte segue o cursor de slide. */}
+            <AnimatePresence initial={false}>
+              <motion.img
+                key={currentSlideUrl}
+                src={currentSlideUrl}
+                alt={story.user}
+                className={styles.viewerImg}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              />
+            </AnimatePresence>
 
             {/* Tap zones */}
             <button className={styles.tapLeft}  onClick={goPrev} aria-label="Anterior" />
             <button className={styles.tapRight} onClick={goNext} aria-label="Próximo"  />
+
+            {/* Reações rápidas (estilo Instagram). */}
+            <div className={styles.reactions}>
+              {STORY_REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className={`${styles.reactionBtn} ${reaction === emoji ? styles.reactionActive : ''}`}
+                  onClick={() => react(emoji)}
+                  aria-label={`Reagir ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            {/* Camada dos bursts das reações (sobem e somem). */}
+            <div className={styles.burstLayer} aria-hidden="true">
+              <AnimatePresence>
+                {bursts.map((b) => (
+                  <motion.span
+                    key={b.id}
+                    className={styles.burst}
+                    initial={{ opacity: 0, y: 0, scale: 0.6 }}
+                    animate={{ opacity: [0, 1, 1, 0], y: -170, x: ((b.id % 5) - 2) * 18, scale: 1.25 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.5, ease: 'easeOut' }}
+                    onAnimationComplete={() => removeBurst(b.id)}
+                  >
+                    {b.emoji}
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
 
           <button

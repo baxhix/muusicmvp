@@ -187,8 +187,11 @@
 .controlCol,
 .navArrow { display: none; }
 
-/* Story image */
+/* Story image — absoluta pra os slides se sobreporem no crossfade. */
 .viewerImg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -304,6 +307,9 @@
   /* X do header some — usamos o X global. */
   .closeBtn { display: none; }
 
+  /* Folga horizontal entre o card central e os vizinhos mais próximos. */
+  .center { margin: 0 26px; }
+
   /* Zonas laterais: flex iguais mantêm o centro centrado; overflow
    * hidden faz os cards mais distantes serem cortados pelas bordas. */
   .side {
@@ -311,7 +317,7 @@
     flex: 1 1 0;
     min-width: 0;
     align-items: center;
-    gap: 16px;
+    gap: 28px; /* espaçamento entre um card e outro */
     overflow: hidden;
   }
   .sideLeft  { justify-content: flex-end;   padding-left: 24px;  }
@@ -434,4 +440,61 @@
   .ctrlBtnPrimary svg { width: 22px; height: 22px; }
 
   .caption { font-size: 18px; }
+}
+
+/* ── Reações (estilo Instagram) ──────────────────────────────
+ * Barra de emojis no rodapé do card central + bursts que sobem ao
+ * tocar. Aparece em desktop e mobile. */
+.reactions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none; /* gaps deixam passar o tap de navegação */
+}
+.reactionBtn {
+  pointer-events: auto;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.38);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.14s;
+}
+.reactionBtn:hover { transform: scale(1.18); background: rgba(0, 0, 0, 0.55); }
+.reactionBtn:active { transform: scale(0.9); }
+.reactionActive { background: rgba(255, 255, 255, 0.22); transform: scale(1.12); }
+
+.burstLayer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 58px;
+  z-index: 12;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+.burst {
+  position: absolute;
+  font-size: 34px;
+  line-height: 1;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reactionBtn { transition: none; }
 }

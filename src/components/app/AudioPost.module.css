@@ -15,11 +15,8 @@
   background: linear-gradient(145deg,
     rgba(5, 3, 8, 0.92) 0%,
     rgba(3, 2, 5, 0.9) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    0 0 0 1px rgba(168, 85, 247, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  /* Sem borda (per feedback) — só uma sombra suave pra dar profundidade. */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   color: rgba(245, 245, 247, 0.95);
   overflow: hidden;
 }

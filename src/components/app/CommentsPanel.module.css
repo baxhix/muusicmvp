@@ -11,11 +11,10 @@
 
 .panel {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(
-    180deg,
-    rgba(10, 7, 20, 0.55) 0%,
-    rgba(8, 6, 16, 0.78) 100%
-  );
+  /* Sem fundo próprio: herda o fundo do card do post (MediaPost/AudioPost)
+   *  pra o bloco de comentários ter exatamente a MESMA cor do post — sem
+   *  emenda ao abrir. É a intenção do componente (extensão do post). */
+  background: transparent;
   padding: 6px 14px 12px;
   animation: panelIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
