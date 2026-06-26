@@ -180,6 +180,19 @@ export default function ProdutosAdminPage() {
                                 {p.media.length} {p.media.length === 1 ? 'mídia' : 'mídias'}
                               </span>
                             )}
+                            {p.quantityAvailable != null && (
+                              <span
+                                className={
+                                  p.quantityAvailable === 0
+                                    ? `${styles.statusBadge} ${styles.statusInactive}`
+                                    : styles.mediaCount
+                                }
+                              >
+                                {p.quantityAvailable === 0
+                                  ? 'Esgotado'
+                                  : `${p.quantityAvailable.toLocaleString('pt-BR')} em estoque`}
+                              </span>
+                            )}
                             <span
                               className={`${styles.statusBadge} ${
                                 p.active ? styles.statusActive : styles.statusInactive

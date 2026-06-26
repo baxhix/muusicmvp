@@ -40,6 +40,8 @@ export const productSchema = z.object({
     .optional(),
   audience: z.enum(['top1', 'top10', 'top50', 'top100', 'all']).optional(),
   active: z.boolean().optional(),
+  /** Estoque. null = ilimitado (sem controle); número = unidades restantes. */
+  quantityAvailable: z.number().int().min(0).max(1_000_000).nullish(),
   sortOrder: z.number().int().min(0).max(100000).optional(),
   /** Categoria (UUID) ou null p/ "sem categoria". */
   categoryId: z.string().uuid().nullish(),
@@ -54,6 +56,8 @@ export interface ProductInput {
   media?: ProductMedia[];
   audience?: ProductAudience;
   active?: boolean;
+  /** Estoque disponível; null = ilimitado. */
+  quantityAvailable?: number | null;
   sortOrder?: number;
   categoryId?: string | null;
 }
@@ -68,6 +72,8 @@ export interface ApiProduct {
   media: ProductMedia[];
   audience: ProductAudience;
   active: boolean;
+  /** Estoque disponível; null = ilimitado. */
+  quantityAvailable: number | null;
   sortOrder: number;
   categoryId: string | null;
   createdAt: string;
@@ -107,6 +113,7 @@ function serialize(r: ProductRow): ApiProduct {
     media,
     audience: r.audience as ProductAudience,
     active: r.active,
+    quantityAvailable: r.quantityAvailable,
     sortOrder: r.sortOrder,
     categoryId: r.categoryId,
     createdAt: r.createdAt.toISOString(),
@@ -153,6 +160,7 @@ export async function createProduct(
       media,
       audience: input.audience ?? 'all',
       active: input.active ?? true,
+      quantityAvailable: input.quantityAvailable ?? null,
       sortOrder: input.sortOrder ?? 0,
       categoryId: input.categoryId ?? null,
       createdById,
@@ -179,6 +187,8 @@ export async function updateProduct(
   }
   if (input.audience !== undefined) patch.audience = input.audience;
   if (input.active !== undefined) patch.active = input.active;
+  if (input.quantityAvailable !== undefined)
+    patch.quantityAvailable = input.quantityAvailable;
   if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
   if (input.categoryId !== undefined) patch.categoryId = input.categoryId;
 

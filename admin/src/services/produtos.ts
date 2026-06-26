@@ -38,6 +38,8 @@ export interface Product {
   media: ProductMedia[];
   audience: ProductAudience;
   active: boolean;
+  /** Estoque disponível; null = ilimitado (sem controle), 0 = esgotado. */
+  quantityAvailable: number | null;
   sortOrder: number;
   /** Categoria (UUID) ou null. */
   categoryId: string | null;
@@ -53,6 +55,8 @@ export interface ProductInput {
   media?: ProductMedia[];
   audience?: ProductAudience;
   active?: boolean;
+  /** Estoque disponível; null = ilimitado. */
+  quantityAvailable?: number | null;
   sortOrder?: number;
   categoryId?: string | null;
 }

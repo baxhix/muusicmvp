@@ -1517,6 +1517,9 @@ export const products = pgTable(
       .default('all'),
     /** Disponível na loja. */
     active: boolean('active').notNull().default(true),
+    /** Quantidade disponível em estoque. NULL = ilimitado (sem controle
+     *  de estoque); número = unidades restantes (0 = esgotado). */
+    quantityAvailable: integer('quantity_available'),
     sortOrder: integer('sort_order').notNull().default(0),
     /** Categoria do produto (opcional). SET NULL ao apagar a categoria. */
     categoryId: uuid('category_id').references(() => productCategories.id, {

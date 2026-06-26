@@ -69,6 +69,7 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
   const [description, setDescription] = useState('');
   const [priceFrom, setPriceFrom] = useState('');
   const [priceTo, setPriceTo] = useState('');
+  const [quantityAvailable, setQuantityAvailable] = useState('');
   const [audience, setAudience] = useState<ProductAudience>('all');
   const [active, setActive] = useState(true);
   const [media, setMedia] = useState<MediaItem[]>([]);
@@ -113,6 +114,9 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
         setDescription(p.description ?? '');
         setPriceFrom(p.priceFrom != null ? String(p.priceFrom) : '');
         setPriceTo(String(p.priceTo));
+        setQuantityAvailable(
+          p.quantityAvailable != null ? String(p.quantityAvailable) : '',
+        );
         setAudience(p.audience);
         setActive(p.active);
         setCategoryId(p.categoryId ?? '');
@@ -197,6 +201,10 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
         description: description.trim() || null,
         priceFrom: priceFrom.trim() ? Number(priceFrom) : null,
         priceTo: Number(priceTo) || 0,
+        // Estoque: vazio = ilimitado (null); número = unidades disponíveis.
+        quantityAvailable: quantityAvailable.trim()
+          ? Math.max(0, Math.trunc(Number(quantityAvailable)))
+          : null,
         // strip a key local — o backend só quer {type, url}, na ordem atual.
         media: media.map(({ type, url }) => ({ type, url })),
         audience,
@@ -218,8 +226,8 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
       setSaving(false);
     }
   }, [
-    canSubmit, name, description, priceFrom, priceTo, media, audience, active,
-    categoryId, mode, productId, push, router,
+    canSubmit, name, description, priceFrom, priceTo, quantityAvailable, media,
+    audience, active, categoryId, mode, productId, push, router,
   ]);
 
   const pageTitle = mode === 'create' ? 'Novo produto' : 'Editar produto';
@@ -330,6 +338,18 @@ export default function ProductEditor({ mode, productId }: ProductEditorProps) {
                     disabled={saving}
                   />
                 </div>
+
+                <Input
+                  label="Quantidade disponível"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={quantityAvailable}
+                  onChange={(e) => setQuantityAvailable(e.target.value)}
+                  placeholder="Ilimitado"
+                  helperText="Estoque do produto. Deixe em branco para ilimitado; 0 = esgotado."
+                  disabled={saving}
+                />
 
                 <Select
                   label="Categoria"
