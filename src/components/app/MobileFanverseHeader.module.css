@@ -56,10 +56,12 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  /* Imagem ancorada à esquerda — Ana fica do lado esquerdo, longe
-   *  do orbe (direita) e legível sob o gradiente. */
-  object-position: left 28%;
+  /* `contain` em vez de `cover`: as imagens (todas menos largas que
+   *  o header) aparecem INTEIRAS encostando na altura do header, sem
+   *  corte vertical, sobre o fundo black. Ancoradas à esquerda pra
+   *  Ana ficar longe do orbe (direita). */
+  object-fit: contain;
+  object-position: left center;
   user-select: none;
   /* Crossfade entre as 3 imagens (a ativa recebe .heroImgActive). */
   opacity: 0;
@@ -74,11 +76,14 @@
 .overlay {
   position: absolute;
   inset: 0;
-  /* Gradiente preto mais intenso (per feedback) — base mais escura +
-   *  esquerda mais opaca pra reforçar o contraste do texto. */
+  /* Gradiente suavizado (per feedback "dá pra ver melhor a imagem"):
+   *  o topo fica livre e só a base escurece o suficiente pro texto
+   *  (apoiado também pelo text-shadow do título). O véu da esquerda
+   *  foi bem reduzido pra não tampar a Ana, que agora aparece
+   *  inteira no header. */
   background:
-    linear-gradient(180deg, rgba(8, 8, 14, 0) 16%, rgba(8, 8, 14, 0.62) 52%, rgba(8, 8, 14, 0.98) 100%),
-    linear-gradient(90deg, rgba(8, 8, 14, 0.92) 0%, rgba(8, 8, 14, 0.52) 48%, rgba(8, 8, 14, 0.08) 78%);
+    linear-gradient(180deg, rgba(8, 8, 14, 0) 45%, rgba(8, 8, 14, 0.35) 70%, rgba(8, 8, 14, 0.85) 100%),
+    linear-gradient(90deg, rgba(8, 8, 14, 0.45) 0%, rgba(8, 8, 14, 0.12) 40%, rgba(8, 8, 14, 0) 65%);
 }
 
 /* Conteúdo sobreposto — embaixo à esquerda. */
@@ -133,7 +138,9 @@
   text-align: left;
 }
 .metaValue {
-  font-size: 14px;
+  /* Mesmo tamanho da palavra "Fanpoints" (.metaLabel, 12px), per
+   *  feedback — só o peso diferencia o número. */
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
   font-variant-numeric: tabular-nums;
