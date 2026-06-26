@@ -16,8 +16,8 @@
   backdrop-filter: blur(10px);
 }
 .toggleLow {
-  /* Abaixo do header novo da Opção 2 (184px). */
-  top: 192px;
+  /* Abaixo do card flutuante da Opção 2 (top 12 + 194 = base 206). */
+  top: 214px;
 }
 
 .seg {

@@ -1,3 +1,19 @@
-/* ── HEADER MOBILE — VARIAÇÃO 2 ──────────────────────────────
- * Clean slate: estilos removidos por completo pra reescrita do zero.
- * (O componente renderiza `null` por enquanto.) */
+/* ── HEADER MOBILE — VARIAÇÃO 2 (reescrita do zero) ──────────
+ * Etapa 1 — container: box preto translúcido flutuante, centralizado
+ * no topo. Overlay fixo (não empurra o globo da home). */
+.header {
+  position: fixed;
+  /* Flutuante (cantos arredondados em volta): pequeno respiro do topo
+   *  e centralizado horizontalmente (80% da largura → 10% de cada lado). */
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 194px;
+  z-index: 5;
+  border-radius: 32px;
+  /* Preto com 88% de transparência (convenção do projeto = 88% de
+   *  opacidade, igual à barra do desktop com "75% de transparência"). */
+  background: rgba(0, 0, 0, 0.88);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+}

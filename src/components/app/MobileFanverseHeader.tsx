@@ -1,11 +1,14 @@
 'use client';
 
+import styles from './MobileFanverseHeader.module.css';
+
 /**
- * Header mobile — VARIAÇÃO 2 (A/B).
+ * Header mobile — VARIAÇÃO 2 (A/B). Reescrita do zero.
  *
- * Clean slate: o header anterior foi removido por completo pra ser
- * reescrito do zero. Por enquanto não renderiza nada.
+ * Etapa 1 — o container: box preto translúcido, cantos 32px, 80% da
+ * largura da tela e 194px de altura, flutuando centralizado no topo.
+ * O conteúdo (texto/orbe/etc) entra nas próximas etapas.
  */
 export default function MobileFanverseHeader() {
-  return null;
+  return <header className={styles.header} aria-label="Fanverse Ana Castela" />;
 }
