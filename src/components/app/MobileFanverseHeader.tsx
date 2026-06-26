@@ -4,7 +4,6 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRanking } from '@/hooks/useRanking';
 import FanverseCore from '@/components/animations/FanverseCore';
-import VerifiedBadge from './VerifiedBadge';
 import styles from './MobileFanverseHeader.module.css';
 
 /**
@@ -62,7 +61,6 @@ export default function MobileFanverseHeader() {
       <div className={styles.content}>
         <span className={styles.eyebrow}>Fanverse</span>
         <div className={styles.titleRow}>
-          <VerifiedBadge size={16} className={styles.verified} />
           <span className={styles.title}>Ana Castela</span>
         </div>
         <button type="button" className={styles.meta} onClick={openRanking}>

@@ -202,8 +202,6 @@ export default function MobileFanverseSheet({
         <span className={sheetStyles.foldEyebrow}>Fanverse</span>
         <div className={sheetStyles.foldTitleRow}>
           <div className={sheetStyles.foldTitle}>
-            {/* Selo de verificado à FRENTE do nome (per feedback). */}
-            <VerifiedBadge size={22} className={sheetStyles.foldVerified} />
             <span className={sheetStyles.foldTitleName}>Ana Castela</span>
           </div>
           {/* Orb agora é CLICÁVEL — abre o overlay FanverseSearch

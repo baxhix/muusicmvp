@@ -391,8 +391,6 @@ export default function ArtistBox() {
               <span className={styles.foldEyebrow}>Fanverse</span>
               <div className={styles.foldTitleRow}>
                 <div className={styles.foldTitle}>
-                  {/* Selo de verificado à FRENTE do nome (per feedback). */}
-                  <VerifiedBadge size={18} className={styles.foldVerified} />
                   <span className={styles.foldTitleName}>Ana Castela</span>
                 </div>
               </div>
