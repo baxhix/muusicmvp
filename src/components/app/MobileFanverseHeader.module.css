@@ -9,7 +9,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 140px; /* +12px */
+  /* Mais alto pra caber o box (top 90px) + título 42px + Fanpoints. */
+  height: 184px;
   z-index: 5;
   /* Mesmo raio da Opção 1 (MobileHomeChrome): cantos inferiores 40px. */
   border-radius: 0 0 40px 40px;
@@ -56,53 +57,35 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  /* `contain` em vez de `cover`: as imagens (todas menos largas que
-   *  o header) aparecem INTEIRAS encostando na altura do header, sem
-   *  corte vertical, sobre o fundo black. Centralizadas no header
-   *  per feedback. */
-  object-fit: contain;
+  /* Arte completa do header como background full-bleed: preenche o
+   *  header inteiro (corta um pouco as laterais quando o aspecto da
+   *  tela difere do da arte). */
+  object-fit: cover;
   object-position: center;
   user-select: none;
-  /* Crossfade entre as 3 imagens (a ativa recebe .heroImgActive). */
-  opacity: 0;
-  transition: opacity 1s ease;
 }
 .heroImgActive {
   opacity: 1;
 }
 
-/* Gradiente preto: escurece a base (texto) + a esquerda (legibilidade)
- * e deixa a direita mais limpa pro orbe respirar. */
-.overlay {
-  position: absolute;
-  inset: 0;
-  /* Gradiente suavizado (per feedback "dá pra ver melhor a imagem"):
-   *  o topo fica livre e só a base escurece o suficiente pro texto
-   *  (apoiado também pelo text-shadow do título). O véu da esquerda
-   *  foi bem reduzido pra não tampar a Ana, que agora aparece
-   *  inteira no header. */
-  background:
-    linear-gradient(180deg, rgba(8, 8, 14, 0) 45%, rgba(8, 8, 14, 0.35) 70%, rgba(8, 8, 14, 0.85) 100%),
-    linear-gradient(90deg, rgba(8, 8, 14, 0.45) 0%, rgba(8, 8, 14, 0.12) 40%, rgba(8, 8, 14, 0) 65%);
-}
-
-/* Conteúdo sobreposto — embaixo à esquerda. */
+/* Conteúdo sobreposto — ancorado no topo-esquerdo (32px da esquerda,
+ * 90px do topo), sobre a área escura da arte. */
 .content {
   position: absolute;
-  left: 16px;
-  right: 96px; /* reserva espaço pro orbe */
-  bottom: 13px;
+  left: 32px;
+  top: 90px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 3px;
   min-width: 0;
 }
 .eyebrow {
-  /* Mesmo estilo da palavra "Fanpoints" (.metaLabel), per feedback. */
+  /* "Fanverse" em Inter regular, cinza ~#838383 per feedback. */
   font-family: var(--sans);
   font-size: 12px;
-  font-weight: 500;
-  color: rgba(245, 245, 247, 0.58);
+  font-weight: 400;
+  color: #838383;
 }
 .titleRow {
   display: flex;
@@ -115,15 +98,18 @@
 }
 .title {
   font-family: 'Borscha', serif;
-  /* +3px per feedback (era 26px). */
-  font-size: 29px;
+  font-size: 42px;
   font-weight: 700;
   line-height: 1;
-  color: #fff;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Gradiente branco → cinza (#999999) na diagonal vindo de ~22h20
+   *  (canto superior-esquerdo → inferior-direito ≈ 130deg). Recortado
+   *  no texto via background-clip. Fallback branco se não suportado. */
+  background-image: linear-gradient(130deg, #ffffff 0%, #999999 100%);
+  color: #fff;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Linha secundária — Fanpoints + rank (toca = abre Ranking Fanverse). */
@@ -139,25 +125,23 @@
   text-align: left;
 }
 .metaValue {
-  /* Mesmo tamanho da palavra "Fanpoints" (.metaLabel, 12px), per
-   *  feedback — só o peso diferencia o número. */
+  /* Número de Fanpoints — cinza, regular. */
   font-size: 12px;
-  font-weight: 700;
-  color: #fff;
+  font-weight: 400;
+  color: #838383;
   font-variant-numeric: tabular-nums;
 }
 .metaLabel {
+  /* "Fanpoints" — cinza, regular. */
   font-size: 12px;
-  font-weight: 500;
-  color: rgba(245, 245, 247, 0.58);
+  font-weight: 400;
+  color: #838383;
 }
 .metaRank {
+  /* "Top1" — branco, bold. */
   font-size: 12px;
   font-weight: 700;
-  color: rgba(245, 245, 247, 0.72);
-}
-.metaRankTop {
-  color: #fbbf24; /* âmbar — destaque do Top 1 (igual ao desktop) */
+  color: #fff;
 }
 
 /* Orbe à direita — mesma linguagem do desktop. */
@@ -165,7 +149,8 @@
   position: absolute;
   /* 16px mais abaixo do centro vertical do header. */
   top: calc(50% + 16px);
-  right: 14px;
+  /* 32px da extremidade direita per feedback. */
+  right: 32px;
   transform: translateY(-50%);
   width: 74px;
   height: 74px;

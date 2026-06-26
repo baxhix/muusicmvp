@@ -16,7 +16,8 @@
   backdrop-filter: blur(10px);
 }
 .toggleLow {
-  top: 148px;
+  /* Abaixo do header novo da Opção 2 (184px). */
+  top: 192px;
 }
 
 .seg {

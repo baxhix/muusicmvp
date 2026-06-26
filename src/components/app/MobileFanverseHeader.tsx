@@ -6,8 +6,8 @@ import { useRanking } from '@/hooks/useRanking';
 import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
 
-/** Imagem fixa da Ana no header (sem transição automática). */
-const HEADER_IMAGE = '/ana-01-header.webp';
+/** Arte completa do header (composição pronta — fundo + Ana + gradiente). */
+const HEADER_IMAGE = '/header.png';
 
 /**
  * Header mobile — VARIAÇÃO 2 (A/B).
@@ -29,7 +29,7 @@ export default function MobileFanverseHeader() {
 
   const { ranking } = useRanking(true);
   const myRank = user ? ranking.findIndex((r) => r.userId === user.id) + 1 : 0;
-  const rankBadge = myRank === 1 ? '(Top 1!)' : myRank > 1 ? `(#${myRank}º)` : '';
+  const rankBadge = myRank === 1 ? 'Top1' : myRank > 1 ? `#${myRank}º` : '';
 
   const openSearch = () => {
     try {
@@ -50,17 +50,16 @@ export default function MobileFanverseHeader() {
 
   return (
     <header className={styles.header}>
-      {/* Imagem fixa da Ana (sem transição automática). */}
+      {/* Arte completa do header como background (já traz fundo +
+       *  gradiente + Ana integrados). */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={HEADER_IMAGE}
         alt="Ana Castela"
         className={`${styles.heroImg} ${styles.heroImgActive}`}
       />
-      {/* Gradiente preto pra legibilidade (base + esquerda). */}
-      <div className={styles.overlay} aria-hidden="true" />
 
-      {/* Conteúdo sobreposto, alinhado embaixo à esquerda. */}
+      {/* Conteúdo sobreposto, ancorado no topo-esquerdo. */}
       <div className={styles.content}>
         <span className={styles.eyebrow}>Fanverse</span>
         <div className={styles.titleRow}>
@@ -71,13 +70,7 @@ export default function MobileFanverseHeader() {
             {fanpoints.toLocaleString('pt-BR')}
           </span>
           <span className={styles.metaLabel}>Fanpoints</span>
-          {rankBadge && (
-            <span
-              className={`${styles.metaRank} ${myRank === 1 ? styles.metaRankTop : ''}`}
-            >
-              {rankBadge}
-            </span>
-          )}
+          {rankBadge && <span className={styles.metaRank}>{rankBadge}</span>}
         </button>
       </div>
 
