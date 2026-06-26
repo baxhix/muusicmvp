@@ -1,11 +1,13 @@
 /* ── AUDIO POST — card compacto e plano (sem borda/gradiente).
  *  Cabeçalho: imagem da Ana + "Áudio da Ana!" ACIMA das barras.
- *  Player: botão de play no INÍCIO das barras + waveform fina/baixa que
- *  preenche conforme o tempo REAL do áudio. Abaixo: curtir + comentar. */
+ *  Player: botão de play no INÍCIO de uma waveform fina e compacta
+ *  (estilo WhatsApp/Telegram) que preenche conforme o tempo REAL do
+ *  áudio. Curtir/comentar/enviar reusam o action bar dos demais posts
+ *  (MediaPost.module.css) + CommentsPanel. */
 
 .card {
   margin: 16px 14px 0;
-  padding: 10px 12px;
+  padding: 10px 12px 2px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -70,21 +72,22 @@
   margin-left: 1px;
 }
 
-/* Waveform fina e baixa (per feedback). */
+/* Waveform fina, discreta e estreita — estilo WhatsApp/Telegram.
+ * Barras de LARGURA FIXA (2px) e gap pequeno: a waveform NÃO estica
+ * pra preencher a linha, fica compacta à esquerda do card. */
 .waveform {
-  flex: 1;
-  min-width: 0;
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 18px;
+  height: 22px;
   cursor: pointer;
 }
 .bar {
-  flex: 1;
-  min-width: 1px;
-  border-radius: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 2px;
+  flex: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
   transform-origin: center;
   transition: background-color 0.25s ease, transform 0.2s ease;
 }
@@ -98,42 +101,6 @@
 @keyframes audioHead {
   0%, 100% { transform: scaleY(1); }
   50% { transform: scaleY(0.5); }
-}
-
-/* ── Ações: curtir + comentar ── */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.action {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  color: rgba(245, 245, 247, 0.55);
-  transition: color 0.15s, transform 0.1s;
-}
-.action:hover {
-  color: rgba(245, 245, 247, 0.9);
-}
-.action:active {
-  transform: scale(0.92);
-}
-.actionLiked {
-  color: #ff3b6b;
-}
-.action svg {
-  width: 18px;
-  height: 18px;
-}
-.actionCount {
-  font-size: 12px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
