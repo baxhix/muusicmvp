@@ -31,3 +31,14 @@
   width: auto;
   user-select: none;
 }
+
+/* Camada de gradiente preto → transparente sobre a imagem, na direção
+ * ~11h25 do relógio (preto ancorado perto do topo-esquerda ≈342°; some
+ * na diagonal oposta ≈162deg). Confinada ao box pelo overflow:hidden +
+ * border-radius do .header. */
+.imgGradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(162deg, #000 0%, transparent 100%);
+}

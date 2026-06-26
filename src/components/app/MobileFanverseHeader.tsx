@@ -19,6 +19,11 @@ export default function MobileFanverseHeader() {
         alt="Ana Castela"
         className={styles.heroImg}
       />
+
+      {/* Camada de gradiente preto→transparente sobre a imagem (direção
+       *  ~11h25 no relógio). Confinada ao box (overflow:hidden) → respeita
+       *  o border-radius. */}
+      <div className={styles.imgGradient} aria-hidden="true" />
     </header>
   );
 }
