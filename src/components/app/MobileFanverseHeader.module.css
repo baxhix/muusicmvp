@@ -39,15 +39,26 @@
 .heroImg {
   position: absolute;
   top: 0;
-  /* 14px à esquerda da borda do box (transborda pra fora). */
   left: -14px;
   height: 100%;
   width: auto;
-  /* Arredonda o canto inferior-esquerdo igual ao box pra a imagem que
-   *  transborda não destoar. */
-  border-bottom-left-radius: 18px;
+  /* Confina a imagem ao box: recorta os 14px que transbordam à esquerda
+   *  e arredonda os cantos esquerdos (18px) pra casar com o box — assim
+   *  a imagem não "vaza" pra fora. */
+  clip-path: inset(0 0 0 14px round 18px 0 0 18px);
   user-select: none;
   pointer-events: none;
+}
+
+/* Sombra diagonal sutil (black → transparente, de cima pra baixo) por
+ * cima da imagem — dá profundidade sem escurecer demais. */
+.imgShade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 18px;
+  background: linear-gradient(150deg, rgba(0, 0, 0, 0.4) 0%, transparent 58%);
 }
 
 /* Fade preto de baixo pra cima — escurece só a base da imagem; o topo
@@ -87,8 +98,8 @@
 /* ── Conteúdo de texto — acima de tudo, ancorado embaixo-esquerda ──── */
 .content {
   position: absolute;
-  /* Logo à frente da imagem da Ana, 18px mais à esquerda (era 150px). */
-  left: 132px;
+  /* Logo à frente da imagem da Ana, 6px mais à esquerda (era 132px). */
+  left: 126px;
   bottom: 18px;
   z-index: 3;
   display: flex;
@@ -108,7 +119,7 @@
   /* "Ana Castela" — Borscha bold 32px, gradiente branco → cinza (#999999)
    *  na diagonal vinda de ~22h20 (≈130deg), recortado no texto. */
   font-family: 'Borscha', serif;
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -124,9 +135,14 @@
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
-  padding: 0;
+  /* Badge pill por trás pra contraste quando a linha fica sobre a imagem.
+   *  margin-left negativo compensa o padding pra o número alinhar com o
+   *  título. */
+  margin-left: -8px;
+  padding: 3px 8px;
   border: none;
-  background: none;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
   cursor: pointer;
   text-align: left;
 }
