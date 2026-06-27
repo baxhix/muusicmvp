@@ -11,21 +11,13 @@
   height: 107px;
   z-index: 5;
   border-radius: 18px;
-  /* Preenchimento: tint roxo/lilás bem sutil (sem chamar atenção, só pra
-   *  diferenciar) por cima do gradiente vertical dark (dark → cor atual).
-   *  Mais transparente que antes pra deixar o globo aparecer. Sem borda. */
-  background:
-    linear-gradient(
-      180deg,
-      rgba(217, 0, 255, 0.15) 0%,
-      rgba(150, 70, 230, 0.05) 22%,
-      transparent 42%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.6) 0%,
-      rgba(14, 14, 22, 0.38) 100%
-    );
+  /* Preenchimento: gradiente vertical dark (dark → cor atual), mais
+   *  transparente pra deixar o globo aparecer. Sem borda. */
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(14, 14, 22, 0.38) 100%
+  );
   /* Frosted glass: desfoca o que está atrás (globo). -webkit antes do
    *  padrão senão o lightningcss do Next descarta a propriedade. */
   -webkit-backdrop-filter: blur(12px);
