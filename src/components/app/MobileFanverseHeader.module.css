@@ -4,13 +4,13 @@
  * laterais e no topo. */
 .header {
   position: fixed;
-  /* Sem padding nas laterais e topo — box edge-to-edge. */
-  top: 0;
-  left: 0;
-  right: 0;
+  /* Padding de 12px nas laterais e topo. */
+  top: 12px;
+  left: 12px;
+  right: 12px;
   height: 107px;
   z-index: 5;
-  border-radius: 16px;
+  border-radius: 18px;
   /* Preenchimento: tint roxo/lilás bem sutil (sem chamar atenção, só pra
    *  diferenciar) por cima do gradiente vertical dark (dark → cor atual).
    *  Mais transparente que antes pra deixar o globo aparecer. Sem borda. */
@@ -39,8 +39,8 @@
 .heroImg {
   position: absolute;
   top: 0;
-  /* 16px mais à esquerda (era 50% - 10px). */
-  left: calc(50% - 26px);
+  /* Totalmente à esquerda do box. */
+  left: 0;
   height: 100%;
   width: auto;
   user-select: none;
@@ -55,7 +55,7 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  border-radius: 16px;
+  border-radius: 18px;
   background: linear-gradient(
     0deg,
     rgba(0, 0, 0, 0.82) 0%,
@@ -85,7 +85,8 @@
 /* ── Conteúdo de texto — acima de tudo, ancorado embaixo-esquerda ──── */
 .content {
   position: absolute;
-  left: 18px;
+  /* Logo à frente da imagem da Ana (~146px de largura a 107 de altura). */
+  left: 150px;
   bottom: 18px;
   z-index: 3;
   display: flex;
