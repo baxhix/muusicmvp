@@ -12,14 +12,21 @@
   border-radius: 16px;
   /* Recorta a imagem da Ana aos cantos arredondados do box. */
   overflow: hidden;
-  /* Preenchimento em gradiente vertical (dark → cor atual) pra dar
-   *  movimento/sofisticação; mais transparente que antes pra deixar o
-   *  globo aparecer com mais evidência. Sem borda. */
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.6) 0%,
-    rgba(14, 14, 22, 0.38) 100%
-  );
+  /* Preenchimento: tint roxo/lilás bem sutil (sem chamar atenção, só pra
+   *  diferenciar) por cima do gradiente vertical dark (dark → cor atual).
+   *  Mais transparente que antes pra deixar o globo aparecer. Sem borda. */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(217, 0, 255, 0.13) 0%,
+      rgba(150, 70, 230, 0.05) 42%,
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(14, 14, 22, 0.38) 100%
+    );
   /* Frosted glass: desfoca o que está atrás (globo). -webkit antes do
    *  padrão senão o lightningcss do Next descarta a propriedade. */
   -webkit-backdrop-filter: blur(12px);
@@ -33,7 +40,8 @@
 .heroImg {
   position: absolute;
   top: 0;
-  left: calc(50% + 30px);
+  /* 20px à esquerda (era 50% + 30px). */
+  left: calc(50% + 10px);
   height: 100%;
   width: auto;
   user-select: none;
