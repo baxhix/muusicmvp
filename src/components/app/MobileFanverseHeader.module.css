@@ -54,3 +54,68 @@
   background: none;
   cursor: pointer;
 }
+
+/* ── Conteúdo de texto — acima de tudo, ancorado embaixo-esquerda ──── */
+.content {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.eyebrow {
+  /* "Fanverse" — Inter regular, cinza ~#838383. */
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: #838383;
+}
+.title {
+  /* "Ana Castela" — Borscha bold 32px, gradiente branco → cinza (#999999)
+   *  na diagonal vinda de ~22h20 (≈130deg), recortado no texto. */
+  font-family: 'Borscha', serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  background-image: linear-gradient(130deg, #ffffff 0%, #999999 100%);
+  color: #fff;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Linha — Fanpoints + Top 1 (toca = abre Ranking Fanverse). */
+.meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.metaValue {
+  /* Número de Fanpoints — cinza, regular. */
+  font-size: 12px;
+  font-weight: 400;
+  color: #838383;
+  font-variant-numeric: tabular-nums;
+}
+.metaLabel {
+  /* "Fanpoints" — cinza, regular. */
+  font-size: 12px;
+  font-weight: 400;
+  color: #838383;
+}
+.metaRank {
+  /* "Top 1" — branco, bold. */
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
