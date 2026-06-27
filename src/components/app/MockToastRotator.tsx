@@ -47,6 +47,9 @@ interface MockUser {
   avatar: string;
 }
 
+/* Avatares mocados — usados pelos rostos do toast `listening_together`
+ * ("+455 pessoas ouvindo com você"). NÃO são mais usados para simular
+ * mensagem recebida (entries message_sent/ana_message saíram da ROTATION). */
 const MOCK_USERS: MockUser[] = [
   { name: 'Beatriz K.', avatar: 'https://i.pravatar.cc/72?img=47' },
   { name: 'Rafael S.', avatar: 'https://i.pravatar.cc/72?img=12' },
@@ -92,23 +95,21 @@ type MockToast =
  */
 /* Per feedback "Remova a simulação de aceno automático da plataforma":
  * todas as entries `{ kind: 'waved' }` foram retiradas da ROTATION.
- * O type 'waved' continua definido em MockToast pra não quebrar tipos,
- * mas não rota mais — sem toast textual "X te acenou" mocado, sem
- * cascata de 👋 disparada por timer. Acenos reais (via socket /
- * useNotificationsLive) continuam funcionando normalmente. */
+ *
+ * Per feedback "Remova todas as simulações de que outros usuários estão
+ * me mandando mensagem": as entries `{ kind: 'message_sent' }` e
+ * `{ kind: 'ana_message' }` também saíram da ROTATION — nada de toast
+ * mocado "X enviou uma mensagem"/"Ana mandou uma mensagem". Os types e
+ * os cases de render continuam definidos pra não quebrar tipos, mas não
+ * rotam mais. Mensagens REAIS (socket → real_message) seguem normais. */
 const ROTATION: MockToast[] = [
   { kind: 'listening_together', count: 455 },
-  { kind: 'ana_message' },
-  { kind: 'message_sent', user: MOCK_USERS[0] },
   { kind: 'listening_together', count: 482 },
   { kind: 'new_publication' },
   { kind: 'top_track', track: MOCK_TRACKS[0] },
-  { kind: 'message_sent', user: MOCK_USERS[1] },
   { kind: 'top_20', rank: 18 },
   { kind: 'listening_together', count: 471 },
-  { kind: 'ana_message' },
   { kind: 'top_track', track: MOCK_TRACKS[1] },
-  { kind: 'message_sent', user: MOCK_USERS[3] },
   { kind: 'listening_together', count: 493 },
   { kind: 'new_publication' },
   { kind: 'top_20', rank: 12 },
