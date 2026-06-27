@@ -50,6 +50,27 @@
   pointer-events: none;
 }
 
+/* Linha de gradiente no rodapé do box — mesmo gradiente da borda da
+ * Opção 1 (lilás → rosa → lilás, com fades transparentes nas pontas). */
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(168, 85, 247, 0.55) 4%,
+    rgba(236, 72, 153, 0.8) 50%,
+    rgba(168, 85, 247, 0.55) 96%,
+    transparent 100%
+  );
+}
+
 /* Sombra diagonal sutil (black → transparente, de cima pra baixo) por
  * cima da imagem — dá profundidade sem escurecer demais. */
 .imgShade {
