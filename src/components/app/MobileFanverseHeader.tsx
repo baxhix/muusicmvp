@@ -7,7 +7,7 @@ import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
 
 /** Recorte da Ana (fundo transparente) dentro do box. */
-const HEADER_IMAGE = '/img-ana-header.png';
+const HEADER_IMAGE = '/ana-04-header.png';
 
 /** Abre o Fanverse Search (mesmo gatilho do orbe nas outras surfaces). */
 function openSearch() {
