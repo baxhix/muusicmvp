@@ -4,9 +4,10 @@
  * laterais e no topo. */
 .header {
   position: fixed;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  /* Sem padding nas laterais e topo — box edge-to-edge. */
+  top: 0;
+  left: 0;
+  right: 0;
   height: 107px;
   z-index: 5;
   border-radius: 16px;
@@ -67,8 +68,9 @@
 .orb {
   position: absolute;
   top: 58%;
-  /* 16px mais à direita (era 6px) — transborda um pouco o box. */
-  right: -10px;
+  /* 6px da borda — box agora é edge-to-edge, então o orbe fica no mesmo
+   *  ponto da tela (compensa os 16px que a borda do box andou). */
+  right: 6px;
   transform: translateY(-50%);
   z-index: 2;
   /* +15% (era 84px). */
