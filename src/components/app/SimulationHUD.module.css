@@ -66,17 +66,10 @@
 }
 
 @media (max-width: 640px) {
+  /* Badge "X online agora" removido no mobile per feedback. */
   .counter {
-    /* Per product feedback "no mobile, o badge X online agora
-     * deve ficar 12px do header e não do topo da página".
-     * MobileHomeChrome vai do top:0 até top:101 (chrome height).
-     * Counter desce pra 101 + 12 = 113, garantindo o gap fixo
-     * de 12px abaixo da borda inferior do header. */
-    top: 113px;
-    padding: 6px 12px 6px 10px;
+    display: none;
   }
-  .counterNum { font-size: 12px; }
-  .counterLbl { font-size: 11px; }
 }
 
 /* Card "Cidade X bombando" foi removido per feedback de produto.
