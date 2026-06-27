@@ -52,6 +52,10 @@ export default function MobileFanverseHeader() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={HEADER_IMAGE} alt="Ana Castela" className={styles.heroImg} />
 
+      {/* Fade preto de baixo pra cima — escurece só a base da imagem,
+       *  deixa o rosto (topo) iluminado. Acima da imagem, abaixo do texto. */}
+      <div className={styles.bottomFade} aria-hidden="true" />
+
       {/* Conteúdo — acima de tudo, ancorado embaixo-esquerda. */}
       <div className={styles.content}>
         <span className={styles.eyebrow}>Fanverse</span>
