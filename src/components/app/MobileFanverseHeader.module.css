@@ -10,11 +10,13 @@
   height: 107px;
   z-index: 5;
   border-radius: 16px;
-  /* Preenchimento em gradiente diagonal (dark → cor atual) pra dar
+  /* Recorta a imagem da Ana aos cantos arredondados do box. */
+  overflow: hidden;
+  /* Preenchimento em gradiente vertical (dark → cor atual) pra dar
    *  movimento/sofisticação; mais transparente que antes pra deixar o
    *  globo aparecer com mais evidência. Sem borda. */
   background: linear-gradient(
-    135deg,
+    180deg,
     rgba(0, 0, 0, 0.6) 0%,
     rgba(14, 14, 22, 0.38) 100%
   );
@@ -26,12 +28,25 @@
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
-/* Orbe — lado direito, centralizado verticalmente. */
+/* Imagem da Ana (recorte, fundo transparente): altura exata do box,
+ * largura proporcional, começando 30px à direita do centro do header. */
+.heroImg {
+  position: absolute;
+  top: 0;
+  left: calc(50% + 30px);
+  height: 100%;
+  width: auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Orbe — lado direito e mais pra baixo. Acima da imagem. */
 .orb {
   position: absolute;
-  top: 50%;
-  right: 16px;
+  top: 58%;
+  right: 6px;
   transform: translateY(-50%);
+  z-index: 2;
   width: 84px;
   height: 84px;
   padding: 0;
