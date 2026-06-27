@@ -40,8 +40,8 @@
 .heroImg {
   position: absolute;
   top: 0;
-  /* Mais próxima ao centro do box (era 50% + 10px). */
-  left: calc(50% - 10px);
+  /* 16px mais à esquerda (era 50% - 10px). */
+  left: calc(50% - 26px);
   height: 100%;
   width: auto;
   user-select: none;
@@ -78,7 +78,7 @@
 .eyebrow {
   /* "Fanverse" — Inter regular, cinza ~#838383. */
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
   color: #838383;
 }
@@ -110,20 +110,20 @@
 }
 .metaValue {
   /* Número de Fanpoints — cinza, regular. */
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
   color: #838383;
   font-variant-numeric: tabular-nums;
 }
 .metaLabel {
   /* "Fanpoints" — cinza, regular. */
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
   color: #838383;
 }
 .metaRank {
   /* "Top 1" — branco, bold. */
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: #fff;
 }
