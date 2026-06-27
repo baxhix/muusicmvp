@@ -1,13 +1,36 @@
+'use client';
+
+import FanverseCore from '@/components/animations/FanverseCore';
 import styles from './MobileFanverseHeader.module.css';
+
+/** Abre o Fanverse Search (mesmo gatilho do orbe nas outras surfaces). */
+function openSearch() {
+  try {
+    window.dispatchEvent(new CustomEvent('app:open-fanverse-search'));
+  } catch {
+    /* SSR */
+  }
+}
 
 /**
  * Header mobile — VARIAÇÃO 2 (A/B). Recriação do zero.
  *
- * Etapa 1 — container: box dark flutuante no topo (overlay fixo, não
- * empurra o globo da home). Full-width com 28px de padding nas laterais
- * e no topo, cantos 16px, borda cinza sutil e sombra externa pra dar
- * profundidade. O conteúdo (textos + orbe) entra nas próximas etapas.
+ * Box dark flutuante (overlay fixo) com preenchimento em gradiente
+ * translúcido + frosted glass, e o orbe no lado direito. Textos entram
+ * nas próximas etapas.
  */
 export default function MobileFanverseHeader() {
-  return <header className={styles.header} aria-label="Fanverse Ana Castela" />;
+  return (
+    <header className={styles.header} aria-label="Fanverse Ana Castela">
+      {/* Orbe — lado direito, centralizado verticalmente. */}
+      <button
+        type="button"
+        className={styles.orb}
+        onClick={openSearch}
+        aria-label="Abrir Fanverse Search"
+      >
+        <FanverseCore />
+      </button>
+    </header>
+  );
 }

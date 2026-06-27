@@ -16,8 +16,8 @@
   backdrop-filter: blur(10px);
 }
 .toggleLow {
-  /* Acompanha a base do box da Opção 2: top 22 + altura 107 + 8 de respiro. */
-  top: 137px;
+  /* Acompanha a base do box da Opção 2: top 16 + altura 107 + 8 de respiro. */
+  top: 131px;
 }
 
 .seg {
