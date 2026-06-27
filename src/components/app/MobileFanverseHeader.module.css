@@ -135,14 +135,9 @@
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
-  /* Badge pill por trás pra contraste quando a linha fica sobre a imagem.
-   *  margin-left negativo compensa o padding pra o número alinhar com o
-   *  título. */
-  margin-left: -8px;
-  padding: 3px 8px;
+  padding: 0;
   border: none;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 999px;
+  background: none;
   cursor: pointer;
   text-align: left;
 }
