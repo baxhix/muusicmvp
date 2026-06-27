@@ -39,10 +39,13 @@
 .heroImg {
   position: absolute;
   top: 0;
-  /* Totalmente à esquerda do box. */
-  left: 0;
+  /* 14px à esquerda da borda do box (transborda pra fora). */
+  left: -14px;
   height: 100%;
   width: auto;
+  /* Arredonda o canto inferior-esquerdo igual ao box pra a imagem que
+   *  transborda não destoar. */
+  border-bottom-left-radius: 18px;
   user-select: none;
   pointer-events: none;
 }
@@ -68,9 +71,8 @@
 .orb {
   position: absolute;
   top: 58%;
-  /* 6px da borda — box agora é edge-to-edge, então o orbe fica no mesmo
-   *  ponto da tela (compensa os 16px que a borda do box andou). */
-  right: 6px;
+  /* Mais à direita — transborda 6px o box. */
+  right: -6px;
   transform: translateY(-50%);
   z-index: 2;
   /* +15% (era 84px). */
@@ -85,8 +87,8 @@
 /* ── Conteúdo de texto — acima de tudo, ancorado embaixo-esquerda ──── */
 .content {
   position: absolute;
-  /* Logo à frente da imagem da Ana (~146px de largura a 107 de altura). */
-  left: 150px;
+  /* Logo à frente da imagem da Ana, 18px mais à esquerda (era 150px). */
+  left: 132px;
   bottom: 18px;
   z-index: 3;
   display: flex;

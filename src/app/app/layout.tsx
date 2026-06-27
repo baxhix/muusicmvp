@@ -124,10 +124,10 @@ function Shell({ children }: { children: React.ReactNode }) {
     welcomeStage,
   } = useAppShell();
 
-  /* Contador de notificações não lidas — alimenta o badge do
-   *  coração no header mobile (per feedback "os corações no header
-   *  devem ter, quando houver, o contador de notificações"). */
-  const { unreadCount: notifUnread } = useNotificationsLive();
+  /* Subscription de notificações ao vivo — o atalho de coração no header
+   *  mobile foi removido, mas mantemos a subscription viva (o painel via
+   *  NotificationBell continua consumindo o estado). */
+  useNotificationsLive();
 
   // Helper pra wrappar elementos com fade controlado pelo
   // welcomeStage. Retorna a className combinada — opacity 0 +
@@ -295,35 +295,9 @@ function Shell({ children }: { children: React.ReactNode }) {
            * No mobile o atalho de Chat segue aqui porque o
            * LiveChatStack tem footprint diferente (avatares menores
            * verticalmente) e o BottomNav já está cheio. */}
-          {!hideShellChrome && !hideMobileHeader && isMobile && !feedOpen && (
-            <div className={`${styles.topBar} ${fadeClass(5)}`}>
-              {/* Atalho de NOTIFICAÇÕES (ícone de coração) — substitui o
-               *  antigo atalho de Conversas (paper-plane). O Chat segue
-               *  acessível pela BottomNav; aqui o coração abre o painel
-               *  de notificações (mesmo overlay do NotificationBell). */}
-              <button
-                type="button"
-                className={`${styles.shortcutBtn} ${showNotifications ? styles.shortcutBtnActive : ''}`}
-                onClick={() =>
-                  setActiveOverlay((curr) =>
-                    curr === 'notifications' ? null : 'notifications',
-                  )
-                }
-                aria-label={showNotifications ? 'Fechar notificações' : 'Notificações'}
-                aria-pressed={showNotifications}
-                title="Notificações"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                </svg>
-                {notifUnread > 0 && (
-                  <span className={styles.shortcutBtnBadge} aria-hidden="true">
-                    {notifUnread > 9 ? '9+' : notifUnread}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
+          {/* Atalho de NOTIFICAÇÕES (ícone de coração) removido do header
+           *  per feedback. O painel de notificações segue acessível pelo
+           *  NotificationBell (controlled, montado abaixo). */}
 
           {/* NotificationBell — controlled, hidden trigger. The
            *  visible affordance is the bell button in the right
