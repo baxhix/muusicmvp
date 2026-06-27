@@ -17,10 +17,10 @@
    *  Mais transparente que antes pra deixar o globo aparecer. Sem borda. */
   background:
     linear-gradient(
-      135deg,
-      rgba(217, 0, 255, 0.13) 0%,
-      rgba(150, 70, 230, 0.05) 42%,
-      transparent 72%
+      180deg,
+      rgba(217, 0, 255, 0.15) 0%,
+      rgba(150, 70, 230, 0.05) 22%,
+      transparent 42%
     ),
     linear-gradient(
       180deg,
@@ -40,8 +40,8 @@
 .heroImg {
   position: absolute;
   top: 0;
-  /* 20px à esquerda (era 50% + 30px). */
-  left: calc(50% + 10px);
+  /* Mais próxima ao centro do box (era 50% + 10px). */
+  left: calc(50% - 10px);
   height: 100%;
   width: auto;
   user-select: none;
@@ -86,7 +86,7 @@
   /* "Ana Castela" — Borscha bold 32px, gradiente branco → cinza (#999999)
    *  na diagonal vinda de ~22h20 (≈130deg), recortado no texto. */
   font-family: 'Borscha', serif;
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
